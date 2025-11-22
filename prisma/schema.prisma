@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model bookmarks {
+  id        String   @id
+  userId    String
+  listId    String
+  createdAt DateTime @default(now())
+  lists     lists    @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listId])
+  @@index([listId])
+  @@index([userId])
+}
+
+model categories {
+  id          String   @id
+  name        String
+  slug        String   @unique
+  icon        String
+  color       String   @default("#6366F1")
+  description String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  lists       lists[]
+}
+
+model item_votes {
+  id        String   @id
+  userId    String
+  itemId    String
+  value     Int
+  createdAt DateTime @default(now())
+  items     items    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@index([itemId])
+  @@index([userId])
+}
+
+model items {
+  id          String       @id
+  title       String
+  description String?
+  imageUrl    String?
+  externalUrl String?
+  listId      String
+  order       Int          @default(0)
+  metadata    Json?
+  voteCount   Int          @default(0)
+  rating      Float        @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  item_votes  item_votes[]
+  lists       lists        @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@index([listId])
+}
+
+model list_likes {
+  id        String   @id
+  userId    String
+  listId    String
+  createdAt DateTime @default(now())
+  lists     lists    @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listId])
+  @@index([listId])
+  @@index([userId])
+}
+
+model lists {
+  id          String       @id
+  title       String
+  slug        String       @unique
+  description String?
+  coverImage  String?
+  categoryId  String
+  userId      String
+  badge       ListBadge?
+  isPublic    Boolean      @default(true)
+  isFeatured  Boolean      @default(false)
+  viewCount   Int          @default(0)
+  likeCount   Int          @default(0)
+  saveCount   Int          @default(0)
+  itemCount   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  isActive    Boolean      @default(true)
+  bookmarks   bookmarks[]
+  items       items[]
+  list_likes  list_likes[]
+  categories  categories   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  users       users        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model settings {
+  id                   String   @id @default("settings")
+  openaiApiKey         String?
+  tmdbApiKey           String?
+  liaraBucketName      String?
+  liaraEndpoint        String?
+  liaraAccessKey       String?
+  liaraSecretKey       String?
+  updatedAt            DateTime
+  createdAt            DateTime @default(now())
+  omdbApiKey           String?
+  googleApiKey         String?
+  googleSearchEngineId String?
+}
+
+model users {
+  id            String       @id
+  name          String?
+  email         String       @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole     @default(USER)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime
+  bookmarks     bookmarks[]
+  item_votes    item_votes[]
+  list_likes    list_likes[]
+  lists         lists[]
+}
+
+enum ListBadge {
+  TRENDING
+  NEW
+  FEATURED
+}
+
+enum UserRole {
+  USER
+  EDITOR
+  ADMIN
+}
