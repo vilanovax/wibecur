@@ -219,6 +219,7 @@ export default function ItemsPageClient({
                     alt={item.title}
                     fill
                     className="object-cover"
+                    unoptimized={true}
                   />
                 </div>
               )}

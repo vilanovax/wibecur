@@ -197,6 +197,7 @@ export default function ListsPageClient({
                     alt={list.title}
                     fill
                     className="object-cover"
+                    unoptimized={true}
                   />
                 </div>
               )}
@@ -252,6 +253,7 @@ export default function ListsPageClient({
                       alt={list.title}
                       fill
                       className="object-cover"
+                      unoptimized={true}
                     />
                   </div>
                 )}
