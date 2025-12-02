@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
 
 // GET /api/admin/comments/reports - لیست ریپورت‌ها
 export async function GET(request: NextRequest) {
@@ -25,39 +26,41 @@ export async function GET(request: NextRequest) {
     }
 
     const [totalCount, reports] = await Promise.all([
-      prisma.comment_reports.count({ where }),
-      prisma.comment_reports.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          comments: {
-            include: {
-              users: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
+      dbQuery(() => prisma.comment_reports.count({ where })),
+      dbQuery(() =>
+        prisma.comment_reports.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            comments: {
+              include: {
+                users: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
                 },
-              },
-              items: {
-                select: {
-                  id: true,
-                  title: true,
+                items: {
+                  select: {
+                    id: true,
+                    title: true,
+                  },
                 },
               },
             },
-          },
-          users: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
+            users: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
             },
           },
-        },
-      }),
+        })
+      ),
     ]);
 
     // Group reports by commentId

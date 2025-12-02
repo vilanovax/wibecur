@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
 
 // PUT /api/admin/comments/[id] - ویرایش کامنت
 export async function PUT(
@@ -10,7 +11,10 @@ export async function PUT(
   try {
     const session = await checkAdminAuth();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
     const { id: commentId } = await params;
@@ -22,33 +26,52 @@ export async function PUT(
     if (isApproved !== undefined) updateData.isApproved = isApproved;
     if (isFiltered !== undefined) updateData.isFiltered = isFiltered;
 
-    const comment = await prisma.comments.update({
-      where: { id: commentId },
-      data: updateData,
-      include: {
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    // Update comment and resolve all reports in a transaction
+    const result = await dbQuery(() =>
+      prisma.$transaction(async (tx) => {
+        // Update comment
+        const comment = await tx.comments.update({
+          where: { id: commentId },
+          data: updateData,
+          include: {
+            users: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            items: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
           },
-        },
-        items: {
-          select: {
-            id: true,
-            title: true,
+        });
+
+        // Resolve all unresolved reports for this comment
+        await tx.comment_reports.updateMany({
+          where: {
+            commentId,
+            resolved: false,
           },
-        },
-      },
-    });
+          data: {
+            resolved: true,
+          },
+        });
+
+        return comment;
+      })
+    );
 
     return NextResponse.json({
       success: true,
       data: {
         comment: {
-          ...comment,
-          createdAt: comment.createdAt.toISOString(),
-          updatedAt: comment.updatedAt.toISOString(),
+          ...result,
+          createdAt: result.createdAt.toISOString(),
+          updatedAt: result.updatedAt.toISOString(),
         },
       },
     });
@@ -69,14 +92,34 @@ export async function DELETE(
   try {
     const session = await checkAdminAuth();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
     const { id: commentId } = await params;
 
-    await prisma.comments.delete({
-      where: { id: commentId },
-    });
+    // Resolve all reports before deleting (though they'll be cascade deleted)
+    // This ensures they're marked as resolved in case of any delay
+    await dbQuery(() =>
+      prisma.comment_reports.updateMany({
+        where: {
+          commentId,
+          resolved: false,
+        },
+        data: {
+          resolved: true,
+        },
+      })
+    );
+
+    // Delete comment (reports will be cascade deleted)
+    await dbQuery(() =>
+      prisma.comments.delete({
+        where: { id: commentId },
+      })
+    );
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
 
 // GET /api/admin/comments - لیست کامنت‌ها
 export async function GET(request: NextRequest) {
@@ -19,7 +20,9 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: any = {
+      deletedAt: null, // Only show non-deleted comments by default
+    };
     if (filter === 'approved') {
       where.isApproved = true;
       where.isFiltered = false;
@@ -94,7 +97,10 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await checkAdminAuth();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -107,9 +113,28 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.comments.delete({
-      where: { id: commentId },
-    });
+    // Resolve all reports before soft deleting
+    await dbQuery(() =>
+      prisma.comment_reports.updateMany({
+        where: {
+          commentId,
+          resolved: false,
+        },
+        data: {
+          resolved: true,
+        },
+      })
+    );
+
+    // Soft delete comment (set deletedAt instead of deleting)
+    await dbQuery(() =>
+      prisma.comments.update({
+        where: { id: commentId },
+        data: {
+          deletedAt: new Date(),
+        },
+      })
+    );
 
     return NextResponse.json({
       success: true,

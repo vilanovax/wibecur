@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface HeaderProps {
   title?: string;
@@ -10,6 +12,9 @@ interface HeaderProps {
 
 export default function Header({ title, showBack = false }: HeaderProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const userImage = session?.user?.image;
+  const userName = session?.user?.name || session?.user?.email || 'کاربر';
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -43,21 +48,22 @@ export default function Header({ title, showBack = false }: HeaderProps) {
         </div>
         <Link
           href="/profile"
-          className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0"
+          className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-gray-200 hover:bg-gray-300 transition-colors"
         >
-          <svg
-            className="w-6 h-6 text-gray-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          {userImage ? (
+            <Image
+              src={userImage}
+              alt={userName}
+              width={40}
+              height={40}
+              className="object-cover w-full h-full"
+              unoptimized={true}
             />
-          </svg>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-white text-sm font-bold">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+          )}
         </Link>
       </div>
     </header>

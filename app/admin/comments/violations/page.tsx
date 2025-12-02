@@ -39,10 +39,15 @@ export default async function ViolationsPage({
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   const serializedViolations = violations.map((v) => ({
-    ...v,
+    id: v.id,
+    userId: v.userId,
+    commentId: v.commentId,
+    violationType: v.violationType,
+    violationCount: v.violationCount,
+    totalPenaltyScore: v.totalPenaltyScore || 0,
+    lastViolationDate: v.lastViolationDate.toISOString(),
     createdAt: v.createdAt.toISOString(),
     updatedAt: v.updatedAt.toISOString(),
-    lastViolationDate: v.lastViolationDate.toISOString(),
     user: {
       ...v.users,
       createdAt: v.users.createdAt.toISOString(),

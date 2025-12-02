@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import SessionProvider from '@/components/providers/SessionProvider';
 
 export const metadata: Metadata = {
   title: 'WibeCur - لیست‌های کیوریتد لایف‌استایل',
@@ -29,7 +30,9 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className="antialiased font-sans">{children}</body>
+      <body className="antialiased font-sans">
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }

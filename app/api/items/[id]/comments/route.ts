@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
 
 // GET /api/items/[id]/comments - دریافت کامنت‌های یک آیتم
 export async function GET(
@@ -28,11 +29,16 @@ export async function GET(
       console.warn('Could not fetch bad words:', err);
     }
 
-    // Fetch comments
+    // Fetch comments (include filtered comments too, but exclude rejected ones and deleted ones)
+    // Show approved comments and filtered comments (which may or may not be approved yet)
     const comments = await prisma.comments.findMany({
       where: {
         itemId,
-        isApproved: true, // Only show approved comments
+        deletedAt: null, // Exclude soft-deleted comments
+        OR: [
+          { isApproved: true }, // Show approved comments
+          { isFiltered: true }, // Show filtered comments (even if not approved yet)
+        ],
       },
       include: {
         users: {
@@ -74,10 +80,14 @@ export async function GET(
     const formattedComments = comments.map((comment) => {
       // Filter bad words from content if isFiltered
       let displayContent = comment.content;
-      if (comment.isFiltered) {
+      if (comment.isFiltered && badWordsList.length > 0) {
         badWordsList.forEach((word) => {
-          const regex = new RegExp(word, 'gi');
-          displayContent = displayContent.replace(regex, '*****');
+          // Escape special regex characters
+          const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Create regex for case-insensitive matching
+          const regex = new RegExp(escapedWord, 'gi');
+          // Replace with asterisks equal to word length
+          displayContent = displayContent.replace(regex, '*'.repeat(word.length));
         });
       }
 
@@ -169,8 +179,9 @@ export async function POST(
     );
 
     // Create comment
-    const comment = await prisma.$transaction(async (tx) => {
-      const newComment = await tx.comments.create({
+    const comment = await dbQuery(async () => {
+      return await prisma.$transaction(async (tx) => {
+        const newComment = await tx.comments.create({
         data: {
           itemId,
           userId,
@@ -226,7 +237,8 @@ export async function POST(
         }
       }
 
-      return newComment;
+        return newComment;
+      });
     });
 
     return NextResponse.json({
@@ -256,8 +268,14 @@ export async function POST(
     });
   } catch (error: any) {
     console.error('Error creating comment:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { 
+        success: false, 
+        error: error.message || 'Internal server error',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

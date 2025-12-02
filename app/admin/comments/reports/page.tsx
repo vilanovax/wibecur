@@ -1,5 +1,6 @@
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
 import Pagination from '@/components/admin/shared/Pagination';
 import ReportsPageClient from './ReportsPageClient';
 
@@ -16,6 +17,12 @@ export default async function ReportsPage({
   const currentPage = parseInt(page, 10) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
+  // Get bad words for filtering
+  const badWords = await prisma.bad_words.findMany({
+    select: { word: true },
+  });
+  const badWordsList = badWords.map((bw) => bw.word.toLowerCase());
+
   const where: any = {};
   if (resolved === 'false') {
     where.resolved = false;
@@ -23,40 +30,48 @@ export default async function ReportsPage({
     where.resolved = true;
   }
 
+  // Only show reports for non-deleted comments (exclude soft-deleted comments)
+  // Filter out reports where the comment is soft-deleted
+  where.comments = {
+    deletedAt: null,
+  };
+
   const [totalCount, reportsRaw] = await Promise.all([
-    prisma.comment_reports.count({ where }),
-    prisma.comment_reports.findMany({
-      where,
-      skip,
-      take: ITEMS_PER_PAGE,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        comments: {
-          include: {
-            users: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
+    dbQuery(() => prisma.comment_reports.count({ where })),
+    dbQuery(() =>
+      prisma.comment_reports.findMany({
+        where,
+        skip,
+        take: ITEMS_PER_PAGE,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          comments: {
+            include: {
+              users: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
               },
-            },
-            items: {
-              select: {
-                id: true,
-                title: true,
+              items: {
+                select: {
+                  id: true,
+                  title: true,
+                },
               },
             },
           },
-        },
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
         },
-      },
-    }),
+      })
+    ),
   ]);
 
   // Group reports by commentId
@@ -78,6 +93,7 @@ export default async function ReportsPage({
     ...r,
     comment: {
       ...r.comment,
+      deletedAt: r.comment.deletedAt ? r.comment.deletedAt.toISOString() : null,
       createdAt: r.comment.createdAt.toISOString(),
       updatedAt: r.comment.updatedAt.toISOString(),
     },
@@ -94,6 +110,7 @@ export default async function ReportsPage({
       <ReportsPageClient
         reports={reports}
         currentResolved={resolved}
+        badWords={badWordsList}
       />
       <Pagination
         currentPage={currentPage}

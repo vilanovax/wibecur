@@ -17,19 +17,28 @@ export default async function CommentsPage({
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
   // Build where clause
-  const where: any = {};
+  const where: any = {
+    deletedAt: null, // Always exclude soft-deleted comments
+  };
   if (filter === 'approved') {
     where.isApproved = true;
-    where.isFiltered = false;
-  } else if (filter === 'reported') {
-    where.comment_reports = { some: { resolved: false } };
   } else if (filter === 'filtered') {
+    // Only show comments with bad words (isFiltered = true)
     where.isFiltered = true;
+  } else if (filter === 'reported') {
+    // Only show comments that are reported (regardless of isFiltered)
+    where.comment_reports = { some: { resolved: false } };
   }
 
   if (search) {
     where.content = { contains: search, mode: 'insensitive' };
   }
+
+  // Get bad words for filtering
+  const badWords = await prisma.bad_words.findMany({
+    select: { word: true },
+  });
+  const badWordsList = badWords.map((bw) => bw.word.toLowerCase());
 
   const [totalCount, comments] = await Promise.all([
     prisma.comments.count({ where }),
@@ -69,6 +78,7 @@ export default async function CommentsPage({
     ...c,
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
+    deletedAt: c.deletedAt ? c.deletedAt.toISOString() : null,
   }));
 
   return (
@@ -77,6 +87,7 @@ export default async function CommentsPage({
         comments={serializedComments}
         currentFilter={filter}
         currentSearch={search}
+        badWords={badWordsList}
       />
       <Pagination
         currentPage={currentPage}

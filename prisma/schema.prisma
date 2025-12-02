@@ -7,6 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model bad_words {
+  id        String   @id
+  word      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@index([word])
+}
+
 model bookmarks {
   id        String   @id
   userId    String
@@ -32,6 +41,76 @@ model categories {
   createdAt   DateTime @default(now())
   updatedAt   DateTime
   lists       lists[]
+}
+
+model comment_likes {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+  comments  comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
+}
+
+model comment_penalties {
+  id           String   @id @default(cuid())
+  commentId    String
+  userId       String
+  adminId      String
+  penaltyScore Int      @default(0)
+  action       String   @default("delete")
+  createdAt    DateTime @default(now())
+  comments     comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([commentId])
+  @@index([userId])
+}
+
+model comment_reports {
+  id           String   @id @default(cuid())
+  commentId    String
+  userId       String
+  reason       String?
+  resolved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  penaltyScore Int?     @default(0)
+  comments     comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([commentId])
+  @@index([resolved])
+  @@index([userId])
+}
+
+model comments {
+  id                String              @id @default(cuid())
+  itemId            String
+  userId            String
+  content           String
+  isFiltered        Boolean             @default(false)
+  isApproved        Boolean             @default(true)
+  likeCount         Int                 @default(0)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?
+  comment_likes     comment_likes[]
+  comment_penalties comment_penalties[]
+  comment_reports   comment_reports[]
+  items             items               @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  users             users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([isApproved])
+  @@index([isFiltered])
+  @@index([itemId])
+  @@index([userId])
 }
 
 model item_votes {
@@ -61,8 +140,8 @@ model items {
   rating      Float        @default(0)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime
-  item_votes  item_votes[]
   comments    comments[]
+  item_votes  item_votes[]
   lists       lists        @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@index([listId])
@@ -125,24 +204,41 @@ model settings {
   googleSearchEngineId String?
 }
 
+model user_violations {
+  id                String   @id @default(cuid())
+  userId            String
+  commentId         String?
+  violationType     String   @default("bad_word")
+  violationCount    Int      @default(1)
+  lastViolationDate DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime
+  totalPenaltyScore Int      @default(0)
+  users             users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([violationType])
+}
+
 model users {
-  id               String             @id
-  name             String?
-  email            String             @unique
-  emailVerified    DateTime?
-  image            String?
-  password         String?
-  role             UserRole           @default(USER)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime
-  bookmarks        bookmarks[]
-  item_votes       item_votes[]
-  list_likes       list_likes[]
-  lists            lists[]
-  comments         comments[]
-  comment_likes    comment_likes[]
-  comment_reports  comment_reports[]
-  user_violations  user_violations[]
+  id                String              @id
+  name              String?
+  email             String              @unique
+  emailVerified     DateTime?
+  image             String?
+  password          String?
+  role              UserRole            @default(USER)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  bookmarks         bookmarks[]
+  comment_likes     comment_likes[]
+  comment_penalties comment_penalties[]
+  comment_reports   comment_reports[]
+  comments          comments[]
+  item_votes        item_votes[]
+  list_likes        list_likes[]
+  lists             lists[]
+  user_violations   user_violations[]
 }
 
 enum ListBadge {
@@ -155,78 +251,4 @@ enum UserRole {
   USER
   EDITOR
   ADMIN
-}
-
-model comments {
-  id          String            @id @default(cuid())
-  itemId      String
-  userId      String
-  content     String
-  isFiltered  Boolean           @default(false)
-  isApproved  Boolean           @default(true)
-  likeCount   Int               @default(0)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  items       items             @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  users       users             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  comment_likes comment_likes[]
-  comment_reports comment_reports[]
-
-  @@index([itemId])
-  @@index([userId])
-  @@index([createdAt])
-  @@index([isApproved])
-  @@index([isFiltered])
-}
-
-model comment_likes {
-  id        String   @id @default(cuid())
-  commentId String
-  userId    String
-  createdAt DateTime @default(now())
-  comments  comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([commentId, userId])
-  @@index([commentId])
-  @@index([userId])
-}
-
-model comment_reports {
-  id        String   @id @default(cuid())
-  commentId String
-  userId    String
-  reason    String?
-  resolved  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  comments  comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([commentId])
-  @@index([userId])
-  @@index([resolved])
-}
-
-model bad_words {
-  id        String   @id @default(cuid())
-  word      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([word])
-}
-
-model user_violations {
-  id                String   @id @default(cuid())
-  userId            String
-  commentId         String?
-  violationType     String   @default("bad_word")
-  violationCount    Int      @default(1)
-  lastViolationDate DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  users             users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([violationType])
 }

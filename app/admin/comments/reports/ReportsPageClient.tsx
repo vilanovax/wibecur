@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Trash2, Edit, Flag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
+import PenaltyModal from '@/components/admin/comments/PenaltyModal';
 
 interface Comment {
   id: string;
@@ -12,6 +13,7 @@ interface Comment {
   isFiltered: boolean;
   isApproved: boolean;
   likeCount: number;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
   users: {
@@ -48,49 +50,110 @@ interface ReportGroup {
 interface ReportsPageClientProps {
   reports: ReportGroup[];
   currentResolved: string | undefined;
+  badWords?: string[];
 }
 
 export default function ReportsPageClient({
   reports = [],
   currentResolved,
+  badWords = [],
 }: ReportsPageClientProps) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
+  const [penaltyModal, setPenaltyModal] = useState<{
+    isOpen: boolean;
+    commentId: string | null;
+    commentContent: string;
+    action: 'delete' | 'edit' | 'report';
+  }>({
+    isOpen: false,
+    commentId: null,
+    commentContent: '',
+    action: 'delete',
+  });
+  const [penaltyLoading, setPenaltyLoading] = useState(false);
 
-  const handleApprove = async (commentId: string) => {
+  const handleApprove = async (commentId: string, commentContent: string) => {
+    // Show penalty modal for reported comments
+    setPenaltyModal({
+      isOpen: true,
+      commentId,
+      commentContent,
+      action: 'report',
+    });
+  };
+
+  const performApprove = async (commentId: string) => {
     try {
       const res = await fetch(`/api/admin/comments/${commentId}/approve`, {
         method: 'POST',
       });
 
-      if (!res.ok) throw new Error('Failed to approve');
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to approve');
+      }
 
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error approving comment:', error);
-      alert('خطا در تایید کامنت');
+      alert(error.message || 'خطا در تایید کامنت');
     }
   };
 
-  const handleDelete = async (commentId: string) => {
+  const handleDelete = async (commentId: string, commentContent: string) => {
     if (!confirm('آیا از حذف این کامنت اطمینان دارید؟')) return;
 
+    // Show penalty modal for reported comments
+    setPenaltyModal({
+      isOpen: true,
+      commentId,
+      commentContent,
+      action: 'delete',
+    });
+  };
+
+  const performDelete = async (commentId: string) => {
     try {
-      const res = await fetch(`/api/admin/comments/${commentId}`, {
+      const res = await fetch(`/api/admin/comments?id=${commentId}`, {
         method: 'DELETE',
       });
 
-      if (!res.ok) throw new Error('Failed to delete');
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to delete');
+      }
 
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting comment:', error);
-      alert('خطا در حذف کامنت');
+      alert(error.message || 'خطا در حذف کامنت');
     }
   };
 
   const handleEdit = async (commentId: string) => {
+    if (!editedContent.trim()) {
+      alert('لطفاً متن کامنت را وارد کنید');
+      return;
+    }
+
+    // Get comment content before showing penalty modal
+    const reportGroup = reports.find((r) => r.comment.id === commentId);
+    if (!reportGroup) return;
+
+    // Show penalty modal for reported comments
+    setPenaltyModal({
+      isOpen: true,
+      commentId,
+      commentContent: reportGroup.comment.content,
+      action: 'edit',
+    });
+  };
+
+  const performEdit = async (commentId: string) => {
     if (!editedContent.trim()) {
       alert('لطفاً متن کامنت را وارد کنید');
       return;
@@ -105,27 +168,96 @@ export default function ReportsPageClient({
         body: JSON.stringify({ content: editedContent }),
       });
 
-      if (!res.ok) throw new Error('Failed to update');
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update');
+      }
 
       setEditingId(null);
       setEditedContent('');
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating comment:', error);
-      alert('خطا در ویرایش کامنت');
+      alert(error.message || 'خطا در ویرایش کامنت');
+    }
+  };
+
+  const handlePenaltySubmit = async (score: number) => {
+    if (!penaltyModal.commentId) return;
+
+    setPenaltyLoading(true);
+    try {
+      // Submit penalty
+      const penaltyRes = await fetch(
+        `/api/admin/comments/${penaltyModal.commentId}/penalty`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            penaltyScore: score,
+            action: penaltyModal.action,
+          }),
+        }
+      );
+
+      const penaltyData = await penaltyRes.json();
+
+      if (!penaltyRes.ok || !penaltyData.success) {
+        throw new Error(penaltyData.error || 'Failed to submit penalty');
+      }
+
+      // Perform the action
+      if (penaltyModal.action === 'delete') {
+        await performDelete(penaltyModal.commentId);
+      } else if (penaltyModal.action === 'edit') {
+        await performEdit(penaltyModal.commentId);
+      } else if (penaltyModal.action === 'report') {
+        await performApprove(penaltyModal.commentId);
+      }
+
+      // Close modal
+      setPenaltyModal({
+        isOpen: false,
+        commentId: null,
+        commentContent: '',
+        action: 'delete',
+      });
+    } catch (error: any) {
+      console.error('Error submitting penalty:', error);
+      alert(error.message || 'خطا در ثبت امتیاز');
+    } finally {
+      setPenaltyLoading(false);
     }
   };
 
   const startEdit = (comment: Comment) => {
     setEditingId(comment.id);
+    // Use original content (not filtered) for editing
     setEditedContent(comment.content);
+  };
+
+  // Helper function to replace bad words with asterisks
+  const filterBadWords = (text: string): string => {
+    if (!badWords || badWords.length === 0) return text;
+    
+    let filteredText = text;
+    badWords.forEach((badWord) => {
+      // Create regex that matches the bad word (case insensitive)
+      const regex = new RegExp(badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      filteredText = filteredText.replace(regex, '*'.repeat(badWord.length));
+    });
+    
+    return filteredText;
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900">ریپورت‌های کامنت‌ها</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <a
             href="/admin/comments/reports?resolved=false"
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -215,7 +347,9 @@ export default function ReportsPageClient({
                           reportGroup.comment.isFiltered ? 'text-gray-500 italic' : ''
                         }`}
                       >
-                        {reportGroup.comment.content}
+                        {reportGroup.comment.isFiltered
+                          ? filterBadWords(reportGroup.comment.content)
+                          : reportGroup.comment.content}
                       </p>
                     )}
                     <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
@@ -232,7 +366,12 @@ export default function ReportsPageClient({
                   <div className="flex gap-2 mr-4">
                     {!reportGroup.comment.isApproved && (
                       <button
-                        onClick={() => handleApprove(reportGroup.comment.id)}
+                        onClick={() =>
+                          handleApprove(
+                            reportGroup.comment.id,
+                            reportGroup.comment.content
+                          )
+                        }
                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                         title="تایید و پاک کردن ریپورت‌ها"
                       >
@@ -247,7 +386,12 @@ export default function ReportsPageClient({
                       <Edit className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(reportGroup.comment.id)}
+                      onClick={() =>
+                        handleDelete(
+                          reportGroup.comment.id,
+                          reportGroup.comment.content
+                        )
+                      }
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="حذف"
                     >
@@ -293,6 +437,23 @@ export default function ReportsPageClient({
           ))}
         </div>
       )}
+
+      {/* Penalty Modal */}
+      <PenaltyModal
+        isOpen={penaltyModal.isOpen}
+        onClose={() =>
+          setPenaltyModal({
+            isOpen: false,
+            commentId: null,
+            commentContent: '',
+            action: 'delete',
+          })
+        }
+        onSubmit={handlePenaltySubmit}
+        commentContent={penaltyModal.commentContent}
+        action={penaltyModal.action}
+        isLoading={penaltyLoading}
+      />
     </div>
   );
 }

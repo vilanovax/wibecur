@@ -19,6 +19,7 @@ interface Violation {
   commentId: string | null;
   violationType: string;
   violationCount: number;
+  totalPenaltyScore: number;
   lastViolationDate: string;
   createdAt: string;
   updatedAt: string;
@@ -58,10 +59,10 @@ export default function ViolationsPageClient({
                     کاربر
                   </th>
                   <th className="px-6 py-4 text-right text-sm font-medium text-gray-700">
-                    نوع تخلف
+                    تعداد تخلف
                   </th>
                   <th className="px-6 py-4 text-right text-sm font-medium text-gray-700">
-                    تعداد تخلف
+                    مجموع امتیاز منفی
                   </th>
                   <th className="px-6 py-4 text-right text-sm font-medium text-gray-700">
                     آخرین تخلف
@@ -102,14 +103,16 @@ export default function ViolationsPageClient({
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                        {violation.violationType === 'bad_word' ? 'کلمه نامناسب' : violation.violationType}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="w-5 h-5 text-red-500" />
                         <span className="font-bold text-red-600">{violation.violationCount}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-bold">
+                          ⚠️ {violation.totalPenaltyScore || 0}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">

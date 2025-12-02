@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import * as React from 'react';
 import {
   LayoutDashboard,
   List,
@@ -15,6 +17,8 @@ import {
   AlertTriangle,
   Ban,
   Shield,
+  ChevronDown,
+  ChevronLeft,
 } from 'lucide-react';
 
 const menuItems = [
@@ -66,6 +70,12 @@ const menuItems = [
     icon: MessageSquare,
     color: 'text-cyan-600',
     bgColor: 'bg-cyan-50',
+    submenu: [
+      { href: '/admin/comments', label: 'همه کامنت‌ها', icon: MessageSquare },
+      { href: '/admin/comments/reports', label: 'ریپورت‌ها', icon: AlertTriangle },
+      { href: '/admin/comments/bad-words', label: 'کلمات بد', icon: Ban },
+      { href: '/admin/comments/violations', label: 'کاربران خاطی', icon: Shield },
+    ],
   },
   {
     href: '/admin/settings',
@@ -78,6 +88,20 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  // Auto-expand comments menu if on any comments page
+  const shouldExpandComments = pathname?.startsWith('/admin/comments');
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(
+    shouldExpandComments ? '/admin/comments' : null
+  );
+
+  // Update expanded state when pathname changes
+  React.useEffect(() => {
+    if (shouldExpandComments && expandedMenu !== '/admin/comments') {
+      setExpandedMenu('/admin/comments');
+    }
+  }, [pathname, shouldExpandComments]);
+
+  const isCommentsPage = pathname?.startsWith('/admin/comments');
 
   return (
     <aside className="w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl min-h-screen border-l border-gray-200">
@@ -98,34 +122,110 @@ export default function Sidebar() {
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
+            const hasSubmenu = item.submenu && item.submenu.length > 0;
+            const isExpanded = expandedMenu === item.href;
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? 'bg-primary text-white shadow-md shadow-primary/20'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <div
-                  className={`p-1.5 rounded-md transition-all duration-200 ${
-                    isActive
-                      ? 'bg-white/20'
-                      : `${item.bgColor} group-hover:scale-110`
-                  }`}
-                >
-                  <Icon
-                    className={`w-5 h-5 ${
-                      isActive ? 'text-white' : item.color
+              <div key={item.href}>
+                {hasSubmenu ? (
+                  <>
+                    <Link
+                      href={item.href}
+                      className={`group w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isCommentsPage
+                          ? 'bg-primary text-white shadow-md shadow-primary/20'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={(e) => {
+                        if (e.target === e.currentTarget || (e.target as HTMLElement).closest('button')) {
+                          e.preventDefault();
+                          setExpandedMenu(isExpanded ? null : item.href);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-1.5 rounded-md transition-all duration-200 ${
+                            isCommentsPage
+                              ? 'bg-white/20'
+                              : `${item.bgColor} group-hover:scale-110`
+                          }`}
+                        >
+                          <Icon
+                            className={`w-5 h-5 ${
+                              isCommentsPage ? 'text-white' : item.color
+                            }`}
+                          />
+                        </div>
+                        <span className="font-medium text-sm">{item.label}</span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setExpandedMenu(isExpanded ? null : item.href);
+                        }}
+                        className="p-1 hover:bg-white/20 rounded"
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronLeft className="w-4 h-4" />
+                        )}
+                      </button>
+                    </Link>
+                    {isExpanded && (
+                      <div className="mr-4 mt-1 space-y-1 border-r-2 border-gray-200">
+                        {item.submenu?.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          const isSubActive = pathname === subItem.href;
+                          return (
+                            <Link
+                              key={subItem.href}
+                              href={subItem.href}
+                              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 text-sm ${
+                                isSubActive
+                                  ? 'bg-primary/10 text-primary font-medium border-r-2 border-primary'
+                                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                              }`}
+                            >
+                              <SubIcon className="w-4 h-4" />
+                              <span>{subItem.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={`group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-primary text-white shadow-md shadow-primary/20'
+                        : 'text-gray-700 hover:bg-gray-100'
                     }`}
-                  />
-                </div>
-                <span className="font-medium text-sm">{item.label}</span>
-                {isActive && (
-                  <div className="mr-auto w-1 h-1 rounded-full bg-white"></div>
+                  >
+                    <div
+                      className={`p-1.5 rounded-md transition-all duration-200 ${
+                        isActive
+                          ? 'bg-white/20'
+                          : `${item.bgColor} group-hover:scale-110`
+                      }`}
+                    >
+                      <Icon
+                        className={`w-5 h-5 ${
+                          isActive ? 'text-white' : item.color
+                        }`}
+                      />
+                    </div>
+                    <span className="font-medium text-sm">{item.label}</span>
+                    {isActive && (
+                      <div className="mr-auto w-1 h-1 rounded-full bg-white"></div>
+                    )}
+                  </Link>
                 )}
-              </Link>
+              </div>
             );
           })}
         </nav>
