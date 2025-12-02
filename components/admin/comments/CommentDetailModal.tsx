@@ -56,6 +56,7 @@ export default function CommentDetailModal({
   const [isSaving, setIsSaving] = useState(false);
   const [showPenaltyModal, setShowPenaltyModal] = useState(false);
   const [penaltyScore, setPenaltyScore] = useState(0);
+  const [penaltyAction, setPenaltyAction] = useState<'delete' | 'edit' | 'report'>('edit');
 
   if (!isOpen || !comment) return null;
 
@@ -152,6 +153,7 @@ export default function CommentDetailModal({
       await onEdit(comment.id, editedContent);
       setIsEditing(false);
       // Always show penalty modal after editing
+      setPenaltyAction('edit');
       setShowPenaltyModal(true);
     } catch (error: any) {
       alert(error.message || 'خطا در ویرایش کامنت');
@@ -161,9 +163,10 @@ export default function CommentDetailModal({
 
   const handlePenaltySubmit = async () => {
     try {
-      await onPenaltySubmit(comment.id, penaltyScore, 'edit');
+      await onPenaltySubmit(comment.id, penaltyScore, penaltyAction);
       setShowPenaltyModal(false);
       setPenaltyScore(0);
+      setPenaltyAction('edit');
       onClose();
     } catch (error: any) {
       alert(error.message || 'خطا در ثبت امتیاز');
@@ -175,6 +178,7 @@ export default function CommentDetailModal({
     
     // If filtered or reported, show penalty modal first
     if (comment.isFiltered || comment._count.comment_reports > 0) {
+      setPenaltyAction('delete');
       setShowPenaltyModal(true);
     } else {
       await onDelete(comment.id);
@@ -185,6 +189,7 @@ export default function CommentDetailModal({
   const handleApprove = async () => {
     // If filtered or reported, show penalty modal first
     if (comment.isFiltered || comment._count.comment_reports > 0) {
+      setPenaltyAction('report');
       setShowPenaltyModal(true);
     } else {
       await onApprove(comment.id);
@@ -201,6 +206,8 @@ export default function CommentDetailModal({
           onClick={() => {
             setShowPenaltyModal(false);
             setPenaltyScore(0);
+            setPenaltyAction('edit');
+            setPenaltyAction('edit');
           }} 
         />
         <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10">
@@ -210,6 +217,7 @@ export default function CommentDetailModal({
               onClick={() => {
                 setShowPenaltyModal(false);
                 setPenaltyScore(0);
+            setPenaltyAction('edit');
               }}
               className="p-2 hover:bg-gray-100 rounded-lg"
             >
@@ -257,6 +265,7 @@ export default function CommentDetailModal({
               onClick={() => {
                 setShowPenaltyModal(false);
                 setPenaltyScore(0);
+            setPenaltyAction('edit');
               }}
               className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               disabled={isLoading}

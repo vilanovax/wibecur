@@ -127,7 +127,7 @@ export async function DELETE(request: NextRequest) {
     );
 
     // Soft delete comment (set deletedAt instead of deleting)
-    await dbQuery(() =>
+    const deletedComment = await dbQuery(() =>
       prisma.comments.update({
         where: { id: commentId },
         data: {
@@ -135,6 +135,11 @@ export async function DELETE(request: NextRequest) {
         },
       })
     );
+
+    console.log('Comment soft deleted:', {
+      id: commentId,
+      deletedAt: deletedComment.deletedAt,
+    });
 
     return NextResponse.json({
       success: true,

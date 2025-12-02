@@ -135,11 +135,14 @@ export default function CommentsPageClient({
         throw new Error(data.error || 'Failed to delete');
       }
 
-      // Update local state immediately
+      // Remove from local state immediately
       setLocalComments((prev) => prev.filter((comment) => comment.id !== id));
 
-      // Force a full page reload to ensure deleted comments are removed
-      window.location.reload();
+      // Force a full page reload to ensure deleted comments are removed from the server
+      // Use setTimeout to ensure the API call completes before reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     } catch (error: any) {
       console.error('Error deleting comment:', error);
       alert(error.message || 'خطا در حذف کامنت');
@@ -332,15 +335,18 @@ export default function CommentsPageClient({
       // Perform the action based on type
       if (action === 'delete') {
         await handleDeleteFromModal(commentId);
+        // handleDeleteFromModal will call performDelete which reloads the page
+        return;
       } else if (action === 'edit') {
-        // Already edited, just close modal
+        // Already edited, just close modal and refresh
         setIsDetailModalOpen(false);
         setSelectedComment(null);
+        window.location.reload();
       } else if (action === 'report') {
         await handleApproveFromModal(commentId);
+        // Refresh after approve
+        window.location.reload();
       }
-
-      router.refresh();
     } catch (error: any) {
       console.error('Error submitting penalty:', error);
       alert(error.message || 'خطا در ثبت امتیاز');
