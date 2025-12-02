@@ -11,6 +11,10 @@ import {
   BarChart3,
   Settings,
   Sparkles,
+  MessageSquare,
+  AlertTriangle,
+  Ban,
+  Shield,
 } from 'lucide-react';
 
 const menuItems = [
@@ -55,6 +59,13 @@ const menuItems = [
     icon: BarChart3,
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-50',
+  },
+  {
+    href: '/admin/comments',
+    label: 'کامنت‌ها',
+    icon: MessageSquare,
+    color: 'text-cyan-600',
+    bgColor: 'bg-cyan-50',
   },
   {
     href: '/admin/settings',

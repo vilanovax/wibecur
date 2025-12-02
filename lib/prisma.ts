@@ -6,18 +6,27 @@ const globalForPrisma = globalThis as unknown as {
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
 });
 
-// Test connection on startup
-if (process.env.NODE_ENV === 'development') {
-  prisma.$connect()
-    .then(() => {
-      console.log('✅ Database connected successfully');
-    })
-    .catch((error) => {
-      console.error('❌ Failed to connect to database:', error.message);
-      console.error('Please check your DATABASE_URL in .env.local');
-    });
+// Optimize connection pool settings
+if (globalForPrisma.prisma) {
+  // Reuse existing connection
+} else {
+  // Test connection on startup
+  if (process.env.NODE_ENV === 'development') {
+    prisma.$connect()
+      .then(() => {
+        console.log('✅ Database connected successfully');
+      })
+      .catch((error) => {
+        console.error('❌ Failed to connect to database:', error.message);
+      });
+  }
 }
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

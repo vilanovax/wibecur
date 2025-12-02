@@ -46,3 +46,6 @@ next-env.d.ts
 
 /app/generated/prisma
 /public/uploads
+
+# YoYo AI version control directory
+.yoyo/

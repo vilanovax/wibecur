@@ -4,11 +4,12 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
 
+    const { id } = await params;
     const body = await request.json();
     const { name, slug, icon, color, description, order, isActive } = body;
 
@@ -22,7 +23,7 @@ export async function PUT(
 
     // Check if category exists
     const existingCategory = await prisma.categories.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingCategory) {
@@ -48,7 +49,7 @@ export async function PUT(
 
     // Update category
     const category = await prisma.categories.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         slug,
@@ -72,14 +73,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
 
+    const { id } = await params;
     // Check if category exists
     const existingCategory = await prisma.categories.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: { lists: true },
@@ -106,7 +108,7 @@ export async function DELETE(
 
     // Delete category
     await prisma.categories.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
@@ -121,11 +123,12 @@ export async function DELETE(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const category = await prisma.categories.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: { lists: true },

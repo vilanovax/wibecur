@@ -20,12 +20,14 @@ interface ItemsPageClientProps {
   items: ItemWithRelations[];
   lists: ListWithCategory[];
   initialListId?: string;
+  itemCountsByList?: Record<string, number>;
 }
 
 export default function ItemsPageClient({
   items,
   lists,
   initialListId,
+  itemCountsByList = {},
 }: ItemsPageClientProps) {
   const router = useRouter();
   const [selectedListId, setSelectedListId] = useState<string>(
@@ -57,11 +59,8 @@ export default function ItemsPageClient({
 
   const handleListFilterChange = (listId: string) => {
     setSelectedListId(listId);
-    if (listId === 'all') {
-      router.push('/admin/items');
-    } else {
-      router.push(`/admin/items?listId=${listId}`);
-    }
+    // No need to push to router - we filter client-side
+    // This allows dropdown to always show all lists
   };
 
   // Get lists filtered by selected category
@@ -173,15 +172,26 @@ export default function ItemsPageClient({
           <option value="all">
             {selectedCategory === 'all'
               ? `همه لیست‌ها (${items.length})`
-              : `همه لیست‌های این دسته (${filteredItems.length})`}
+              : `همه لیست‌های این دسته (${items.filter(item => 
+                  selectedCategory === 'all' || item.lists.categories.id === selectedCategory
+                ).length})`}
           </option>
           {filteredLists.map((list) => {
-            const count = filteredItems.filter(
-              (item) => item.listId === list.id
-            ).length;
+            // Use item count from server if available, otherwise count from current items
+            const totalCount = itemCountsByList[list.id] || 0;
+            // If category filter is active, we need to count from items (limited to current page)
+            // This is not perfect but better than showing wrong counts
+            const visibleCount = selectedCategory === 'all' 
+              ? totalCount
+              : items.filter((item) => {
+                  const categoryMatch = item.lists.categories.id === selectedCategory;
+                  const listMatch = item.listId === list.id;
+                  return categoryMatch && listMatch;
+                }).length;
+            
             return (
               <option key={list.id} value={list.id}>
-                {list.categories.icon} {list.title} ({count})
+                {list.categories.icon} {list.title} ({selectedCategory === 'all' ? totalCount : visibleCount})
               </option>
             );
           })}

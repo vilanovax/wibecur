@@ -6,13 +6,14 @@ import EditListForm from './EditListForm';
 export default async function EditListPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   await requireAdmin();
 
+  const { id } = await params;
   const [list, categories] = await Promise.all([
     prisma.lists.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         categories: true,
         items: {

@@ -1,15 +1,19 @@
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
+import { requireAuth } from '@/lib/auth';
+import ProfilePageClient from './ProfilePageClient';
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const session = await requireAuth();
+  const userId = (session.user as any).id;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header title="پروفایل" />
       <main className="px-4 py-6">
-        <p className="text-gray-600">صفحه پروفایل - در حال توسعه</p>
+        <ProfilePageClient userId={userId} />
       </main>
       <BottomNav />
     </div>
   );
 }
-

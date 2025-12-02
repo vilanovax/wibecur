@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Category } from '@prisma/client';
+import { categories } from '@prisma/client';
 
 interface CategoryEditFormProps {
-  category: Category;
+  category: categories;
 }
 
 export default function CategoryEditForm({ category }: CategoryEditFormProps) {

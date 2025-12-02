@@ -4,11 +4,12 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
 
+    const { id } = await params;
     const body = await request.json();
     const {
       title,
@@ -58,7 +59,7 @@ export async function PUT(
 
     // Update list
     const list = await prisma.lists.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title,
         slug,
@@ -84,14 +85,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
 
+    const { id } = await params;
     // Check if list exists
     const existingList = await prisma.lists.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingList) {
@@ -103,7 +105,7 @@ export async function DELETE(
 
     // Delete list (items will be deleted automatically due to cascade)
     await prisma.lists.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
@@ -118,11 +120,12 @@ export async function DELETE(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const list = await prisma.lists.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         categories: true,
         users: {

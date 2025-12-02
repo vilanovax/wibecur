@@ -3,32 +3,47 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Category, List, User } from '@prisma/client';
+import { categories, lists, users } from '@prisma/client';
 
-type ListWithRelations = List & {
-  categories: Category;
-  users: User;
-  _count: {
-    items: number;
-    list_likes: number;
-    bookmarks: number;
-  };
+type ListWithRelations = Pick<lists, 
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'description'
+  | 'coverImage'
+  | 'categoryId'
+  | 'userId'
+  | 'badge'
+  | 'isPublic'
+  | 'isFeatured'
+  | 'isActive'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'viewCount'
+  | 'likeCount'
+  | 'saveCount'
+  | 'itemCount'
+> & {
+  categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'>;
+  users: Pick<users, 'id' | 'name' | 'email'>;
 };
 
 interface ListsPageClientProps {
   lists: ListWithRelations[];
-  categories: Category[];
+  categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color' | 'order' | 'isActive'>[];
 }
 
 export default function ListsPageClient({
-  lists,
-  categories,
+  lists = [],
+  categories = [],
 }: ListsPageClientProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const filteredLists = lists.filter((list) => {
+  // Filter out any undefined/null lists and apply filters
+  const filteredLists = (lists || []).filter((list): list is ListWithRelations => {
+    if (!list) return false;
     const categoryMatch =
       selectedCategory === 'all' || list.categoryId === selectedCategory;
     const statusMatch =
@@ -185,69 +200,15 @@ export default function ListsPageClient({
       {/* Lists Display */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredLists.map((list) => (
-            <div
-              key={list.id}
-              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
-            >
-              {list.coverImage && (
-                <div className="relative h-48">
-                  <Image
-                    src={list.coverImage}
-                    alt={list.title}
-                    fill
-                    className="object-cover"
-                    unoptimized={true}
-                  />
-                </div>
-              )}
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{list.categories.icon}</span>
-                    <span className="text-xs text-gray-500">
-                      {list.categories.name}
-                    </span>
-                  </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      list.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {list.isActive ? 'فعال' : 'غیرفعال'}
-                  </span>
-                </div>
-                <h3 className="font-bold text-lg mb-2">{list.title}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                  {list.description}
-                </p>
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                  <span>📋 {list._count.items}</span>
-                  <span>❤️ {list._count.list_likes}</span>
-                  <span>⭐ {list._count.bookmarks}</span>
-                </div>
-                <Link
-                  href={`/admin/lists/${list.id}/edit`}
-                  className="block text-center bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                >
-                  ویرایش
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filteredLists.map((list) => (
-            <div
-              key={list.id}
-              className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all border border-gray-100"
-            >
-              <div className="flex items-center gap-4">
+          {filteredLists.map((list) => {
+            if (!list) return null;
+            return (
+              <div
+                key={list.id}
+                className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
+              >
                 {list.coverImage && (
-                  <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+                  <div className="relative h-48">
                     <Image
                       src={list.coverImage}
                       alt={list.title}
@@ -257,12 +218,14 @@ export default function ListsPageClient({
                     />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">{list.categories.icon}</span>
-                    <span className="text-xs text-gray-500">
-                      {list.categories.name}
-                    </span>
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{list.categories.icon}</span>
+                      <span className="text-xs text-gray-500">
+                        {list.categories.name}
+                      </span>
+                    </div>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${
                         list.isActive
@@ -273,25 +236,83 @@ export default function ListsPageClient({
                       {list.isActive ? 'فعال' : 'غیرفعال'}
                     </span>
                   </div>
-                  <h3 className="font-bold text-lg mb-1">{list.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-1">
+                  <h3 className="font-bold text-lg mb-2">{list.title}</h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {list.description}
                   </p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>📋 {list._count.items} آیتم</span>
-                    <span>❤️ {list._count.list_likes} لایک</span>
-                    <span>⭐ {list._count.bookmarks} ذخیره</span>
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                    <span>📋 {list?.itemCount ?? 0}</span>
+                    <span>❤️ {list?.likeCount ?? 0}</span>
+                    <span>⭐ {list?.saveCount ?? 0}</span>
                   </div>
+                  <Link
+                    href={`/admin/lists/${list.id}/edit`}
+                    className="block text-center bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    ویرایش
+                  </Link>
                 </div>
-                <Link
-                  href={`/admin/lists/${list.id}/edit`}
-                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
-                >
-                  ویرایش
-                </Link>
               </div>
-            </div>
-          ))}
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredLists.map((list) => {
+            if (!list) return null;
+            return (
+              <div
+                key={list.id}
+                className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all border border-gray-100"
+              >
+                <div className="flex items-center gap-4">
+                  {list.coverImage && (
+                    <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+                      <Image
+                        src={list.coverImage}
+                        alt={list.title}
+                        fill
+                        className="object-cover"
+                        unoptimized={true}
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{list.categories.icon}</span>
+                      <span className="text-xs text-gray-500">
+                        {list.categories.name}
+                      </span>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          list.isActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {list.isActive ? 'فعال' : 'غیرفعال'}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-lg mb-1">{list.title}</h3>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-1">
+                      {list.description}
+                    </p>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <span>📋 {list?.itemCount ?? 0} آیتم</span>
+                      <span>❤️ {list?.likeCount ?? 0} لایک</span>
+                      <span>⭐ {list?.saveCount ?? 0} ذخیره</span>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/admin/lists/${list.id}/edit`}
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
+                  >
+                    ویرایش
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

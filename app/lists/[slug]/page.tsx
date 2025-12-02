@@ -165,9 +165,10 @@ export default async function ListDetailPage({
           ) : (
             <div className="space-y-3">
               {list.items.map((item, index) => (
-                <div
+                <Link
                   key={item.id}
-                  className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all"
+                  href={`/items/${item.id}`}
+                  className="block bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all"
                 >
                   <div className="flex gap-4">
                     {/* Number */}
@@ -199,19 +200,14 @@ export default async function ListDetailPage({
                         </p>
                       )}
                       {item.externalUrl && (
-                        <a
-                          href={item.externalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
-                        >
+                        <div className="inline-flex items-center gap-1 text-xs text-primary mt-1">
                           <span>🔗</span>
                           <span>اطلاعات بیشتر</span>
-                        </a>
+                        </div>
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

@@ -6,12 +6,13 @@ import CategoryEditForm from './CategoryEditForm';
 export default async function EditCategoryPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   await requireAdmin();
 
+  const { id } = await params;
   const category = await prisma.categories.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!category) {

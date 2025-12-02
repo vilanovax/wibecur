@@ -2,14 +2,15 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { notFound } from 'next/navigation';
 
-export default function CategoryPage({
+export default async function CategoryPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
   const categories = ['movies', 'books', 'cafe', 'car', 'podcast', 'lifestyle'];
   
-  if (!categories.includes(params.slug)) {
+  if (!categories.includes(slug)) {
     notFound();
   }
 
@@ -24,10 +25,10 @@ export default function CategoryPage({
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Header title={categoryNames[params.slug]} />
+      <Header title={categoryNames[slug]} />
       <main className="px-4 py-6">
         <p className="text-gray-600">
-          لیست‌های دسته‌بندی {categoryNames[params.slug]} - در حال توسعه
+          لیست‌های دسته‌بندی {categoryNames[slug]} - در حال توسعه
         </p>
       </main>
       <BottomNav />
