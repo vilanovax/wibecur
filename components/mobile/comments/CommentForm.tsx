@@ -85,10 +85,16 @@ export default function CommentForm({
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
               placeholder="نظر خود را بنویسید..."
               disabled={isLoading}
+              maxLength={undefined} // Will be validated server-side based on settings
             />
-            <p className="mt-2 text-xs text-gray-500">
-              کامنت‌های نامناسب به صورت خودکار فیلتر می‌شوند
-            </p>
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                کامنت‌های نامناسب به صورت خودکار فیلتر می‌شوند
+              </p>
+              <p className="text-xs text-gray-400">
+                {content.length} کاراکتر
+              </p>
+            </div>
           </div>
         </div>
 

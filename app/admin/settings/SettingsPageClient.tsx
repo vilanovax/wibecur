@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Key, Database, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Settings, Key, Database, CheckCircle, XCircle, Loader2, MessageSquare } from 'lucide-react';
 
 interface SettingsData {
   openaiApiKey: string | null;
@@ -45,10 +45,73 @@ export default function SettingsPageClient() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
 
+  // Comment settings state
+  const [commentSettings, setCommentSettings] = useState({
+    defaultMaxComments: null as number | null,
+    defaultCommentsEnabled: true,
+    maxCommentLength: null as number | null,
+    rateLimitMinutes: 5,
+    globalRateLimitMinutes: null as number | null,
+  });
+  const [commentSettingsLoading, setCommentSettingsLoading] = useState(false);
+
   // Load current settings
   useEffect(() => {
     fetchSettings();
+    fetchCommentSettings();
   }, []);
+
+  const fetchCommentSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings/comment-settings');
+      const data = await res.json();
+      
+      if (!res.ok) {
+        const errorMsg = data.error || 'خطا در دریافت تنظیمات کامنت';
+        console.error('Error fetching comment settings:', errorMsg);
+        // Don't show error message to user, just use defaults
+        return;
+      }
+
+      if (data.success && data.data) {
+        setCommentSettings({
+          defaultMaxComments: data.data.defaultMaxComments ?? null,
+          defaultCommentsEnabled: data.data.defaultCommentsEnabled ?? true,
+          maxCommentLength: data.data.maxCommentLength ?? null,
+          rateLimitMinutes: data.data.rateLimitMinutes ?? 5,
+          globalRateLimitMinutes: data.data.globalRateLimitMinutes ?? null,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching comment settings:', error);
+      // Don't show error message to user, just use defaults
+    }
+  };
+
+  const handleSaveCommentSettings = async () => {
+    try {
+      setCommentSettingsLoading(true);
+      setMessage(null);
+
+      const res = await fetch('/api/admin/settings/comment-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commentSettings),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در ذخیره تنظیمات کامنت');
+      }
+
+      setMessage({ type: 'success', text: 'تنظیمات کامنت با موفقیت ذخیره شد' });
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    } finally {
+      setCommentSettingsLoading(false);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -450,6 +513,154 @@ export default function SettingsPageClient() {
             <p className="text-xs text-gray-500">
               برای آپلود تصاویر فیلم‌ها و سریال‌ها در سرورهای ایرانی استفاده می‌شود
             </p>
+          </div>
+        </div>
+
+        {/* Comment Settings Section */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <MessageSquare className="w-5 h-5 text-gray-700" />
+            <h2 className="text-xl font-semibold text-gray-900">تنظیمات کامنت‌ها</h2>
+          </div>
+
+          <div className="space-y-4">
+            {/* Default Comments Enabled */}
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={commentSettings.defaultCommentsEnabled}
+                  onChange={(e) =>
+                    setCommentSettings({
+                      ...commentSettings,
+                      defaultCommentsEnabled: e.target.checked,
+                    })
+                  }
+                  className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  فعال بودن کامنت‌ها به صورت پیش‌فرض
+                </span>
+              </label>
+              <p className="text-xs text-gray-500 mt-1 mr-8">
+                این تنظیم برای آیتم‌های جدید اعمال می‌شود
+              </p>
+            </div>
+
+            {/* Max Comment Length */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                حداکثر تعداد کاراکتر کامنت
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={commentSettings.maxCommentLength ?? ''}
+                onChange={(e) =>
+                  setCommentSettings({
+                    ...commentSettings,
+                    maxCommentLength: e.target.value
+                      ? parseInt(e.target.value)
+                      : null,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="بدون محدودیت (خالی بگذارید)"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                اگر خالی بگذارید، محدودیتی وجود نخواهد داشت
+              </p>
+            </div>
+
+            {/* Default Max Comments */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                حداکثر تعداد کامنت پیش‌فرض برای هر آیتم
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={commentSettings.defaultMaxComments ?? ''}
+                onChange={(e) =>
+                  setCommentSettings({
+                    ...commentSettings,
+                    defaultMaxComments: e.target.value
+                      ? parseInt(e.target.value)
+                      : null,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="بدون محدودیت (خالی بگذارید)"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                این تنظیم برای آیتم‌های جدید اعمال می‌شود
+              </p>
+            </div>
+
+            {/* Rate Limit Minutes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                حداقل فاصله زمانی بین کامنت‌ها (دقیقه)
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={commentSettings.rateLimitMinutes}
+                onChange={(e) =>
+                  setCommentSettings({
+                    ...commentSettings,
+                    rateLimitMinutes: parseInt(e.target.value) || 5,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                حداقل فاصله زمانی که کاربر باید بین کامنت‌های خود در یک آیتم رعایت کند
+              </p>
+            </div>
+
+            {/* Global Rate Limit Minutes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                حداقل فاصله زمانی سراسری بین کامنت‌ها (دقیقه)
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={commentSettings.globalRateLimitMinutes ?? ''}
+                onChange={(e) =>
+                  setCommentSettings({
+                    ...commentSettings,
+                    globalRateLimitMinutes: e.target.value
+                      ? parseInt(e.target.value)
+                      : null,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="غیرفعال (خالی بگذارید)"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                حداقل فاصله زمانی که کاربر باید بین تمام کامنت‌های خود در همه آیتم‌ها رعایت کند (اگر خالی بگذارید، غیرفعال است)
+              </p>
+            </div>
+
+            {/* Save Comment Settings Button */}
+            <div className="flex justify-end pt-4 border-t border-gray-200">
+              <button
+                onClick={handleSaveCommentSettings}
+                disabled={commentSettingsLoading}
+                className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {commentSettingsLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    در حال ذخیره...
+                  </>
+                ) : (
+                  'ذخیره تنظیمات کامنت'
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

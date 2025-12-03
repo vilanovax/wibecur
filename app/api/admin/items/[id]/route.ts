@@ -54,6 +54,8 @@ export async function PUT(
       externalUrl,
       order,
       metadata,
+      commentsEnabled,
+      maxComments,
     } = body;
 
     // Check if item exists
@@ -95,6 +97,8 @@ export async function PUT(
         externalUrl,
         order,
         metadata: metadataValidation.data || {},
+        commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
+        maxComments: maxComments !== undefined ? maxComments : null,
         updatedAt: new Date(),
       },
       include: {

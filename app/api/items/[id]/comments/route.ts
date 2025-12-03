@@ -61,6 +61,34 @@ export async function GET(
           : { createdAt: 'desc' },
     });
 
+    // Get item with its category to check comments enabled status
+    const item = await prisma.items.findUnique({
+      where: { id: itemId },
+      include: {
+        lists: {
+          include: {
+            categories: true,
+          },
+        },
+      },
+    });
+
+    // Get global comment settings
+    let globalSettings: any = null;
+    try {
+      if (prisma.comment_settings) {
+        globalSettings = await prisma.comment_settings.findFirst();
+      }
+    } catch (err) {
+      console.warn('Could not fetch comment settings:', err);
+    }
+
+    // Check if comments are enabled
+    const category = item?.lists?.categories;
+    const categoryCommentsEnabled = category?.commentsEnabled ?? true;
+    const itemCommentsEnabled = item?.commentsEnabled ?? globalSettings?.defaultCommentsEnabled ?? true;
+    const commentsEnabled = categoryCommentsEnabled && itemCommentsEnabled;
+
     // Get user's likes for this item's comments (only if there are comments)
     const userLikes =
       userId && comments.length > 0
@@ -111,7 +139,10 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: { comments: formattedComments },
+      data: {
+        comments: formattedComments,
+        commentsEnabled,
+      },
     });
   } catch (error: any) {
     console.error('Error fetching comments:', error);
@@ -149,9 +180,41 @@ export async function POST(
       );
     }
 
-    // Check if item exists
+    // Get global comment settings for max length check
+    let globalSettings: any = null;
+    try {
+      if (prisma.comment_settings) {
+        globalSettings = await prisma.comment_settings.findFirst();
+      }
+    } catch (err) {
+      console.warn('Could not fetch comment settings:', err);
+    }
+
+    // Check max comment length
+    const maxCommentLength = globalSettings?.maxCommentLength ?? null;
+    if (maxCommentLength !== null && maxCommentLength !== undefined) {
+      const contentLength = content.trim().length;
+      if (contentLength > maxCommentLength) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `طول کامنت نباید بیشتر از ${maxCommentLength} کاراکتر باشد. (فعلی: ${contentLength})`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check if item exists with its list and category
     const item = await prisma.items.findUnique({
       where: { id: itemId },
+      include: {
+        lists: {
+          include: {
+            categories: true,
+          },
+        },
+      },
     });
 
     if (!item) {
@@ -161,17 +224,18 @@ export async function POST(
       );
     }
 
-    // Get global comment settings
-    let globalSettings: any = null;
-    try {
-      globalSettings = await prisma.comment_settings.findFirst();
-    } catch (err) {
-      console.warn('Could not fetch comment settings:', err);
+    // Check if comments are enabled for the category
+    const category = item.lists?.categories;
+    if (category && category.commentsEnabled === false) {
+      return NextResponse.json(
+        { success: false, error: 'کامنت‌ها برای این دسته‌بندی غیرفعال است' },
+        { status: 403 }
+      );
     }
 
-    // Check if comments are enabled (priority: item > global settings)
-    const commentsEnabled = item.commentsEnabled ?? globalSettings?.defaultCommentsEnabled ?? true;
-    if (!commentsEnabled) {
+    // Check if comments are enabled for the item (priority: item > global settings)
+    const itemCommentsEnabled = item.commentsEnabled ?? globalSettings?.defaultCommentsEnabled ?? true;
+    if (!itemCommentsEnabled) {
       return NextResponse.json(
         { success: false, error: 'کامنت‌ها برای این آیتم غیرفعال است' },
         { status: 403 }

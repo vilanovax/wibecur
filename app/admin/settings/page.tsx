@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { requireAdmin } from '@/lib/auth';
 import SettingsPageClient from './SettingsPageClient';
 
 export const metadata: Metadata = {
@@ -6,7 +7,9 @@ export const metadata: Metadata = {
   description: 'مدیریت تنظیمات و کلیدهای API',
 };
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  await requireAdmin();
+  
   return <SettingsPageClient />;
 }
 

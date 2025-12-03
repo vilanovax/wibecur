@@ -11,7 +11,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, slug, icon, color, description, order, isActive } = body;
+    const { name, slug, icon, color, description, order, isActive, commentsEnabled } = body;
 
     // Validate required fields
     if (!name || !slug || !icon) {
@@ -58,6 +58,7 @@ export async function PUT(
         description,
         order: order || 0,
         isActive: isActive !== undefined ? isActive : true,
+        commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
       },
     });
 

@@ -50,6 +50,8 @@ export async function POST(request: NextRequest) {
       listId,
       order = 0,
       metadata,
+      commentsEnabled,
+      maxComments,
     } = body;
 
     // Validation
@@ -97,6 +99,8 @@ export async function POST(request: NextRequest) {
         listId,
         order,
         metadata: metadataValidation.data || {},
+        commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
+        maxComments: maxComments !== undefined ? maxComments : null,
         updatedAt: new Date(),
       },
       include: {

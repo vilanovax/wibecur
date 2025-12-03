@@ -21,6 +21,7 @@ export default function CategoryEditForm({ category }: CategoryEditFormProps) {
     description: category.description || '',
     order: category.order,
     isActive: category.isActive,
+    commentsEnabled: (category as any).commentsEnabled ?? true,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -251,6 +252,26 @@ export default function CategoryEditForm({ category }: CategoryEditFormProps) {
               فعال
             </label>
           </div>
+
+          {/* Comments Enabled */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="commentsEnabled"
+              name="commentsEnabled"
+              checked={formData.commentsEnabled}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, commentsEnabled: e.target.checked }))
+              }
+              className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+            />
+            <label htmlFor="commentsEnabled" className="mr-2 text-sm font-medium text-gray-700">
+              فعال بودن کامنت‌ها برای این دسته
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mr-6">
+            اگر غیرفعال باشد، کامنت‌ها برای تمام آیتم‌های این دسته غیرفعال می‌شود
+          </p>
         </div>
 
         <div className="flex gap-3 mt-8">

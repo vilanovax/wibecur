@@ -35,6 +35,7 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [commentsEnabled, setCommentsEnabled] = useState(true);
 
   useEffect(() => {
     fetchComments();
@@ -50,6 +51,7 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
 
       if (data.success) {
         setComments(data.data.comments);
+        setCommentsEnabled(data.data.commentsEnabled ?? true);
       }
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -152,13 +154,19 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
               کامنت‌ها ({comments.length})
             </h3>
           </div>
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            کامنت جدید
-          </button>
+          {commentsEnabled ? (
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              کامنت جدید
+            </button>
+          ) : (
+            <span className="text-sm text-gray-500">
+              کامنت‌ها برای این آیتم غیرفعال است
+            </span>
+          )}
         </div>
 
         {/* Sort Buttons */}

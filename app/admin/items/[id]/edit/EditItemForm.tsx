@@ -32,6 +32,8 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
     listId: item.listId || '',
     order: item.order || 0,
     metadata: item.metadata || {},
+    commentsEnabled: (item.commentsEnabled !== undefined ? item.commentsEnabled : true),
+    maxComments: item.maxComments ?? null,
   });
 
   const selectedList = useMemo(
@@ -439,6 +441,54 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
             />
           </div>
         )}
+
+        {/* Comment Settings */}
+        <div className="border-t border-gray-200 pt-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">تنظیمات کامنت</h3>
+          
+          {/* Comments Enabled */}
+          <div className="flex items-center mb-4">
+            <input
+              type="checkbox"
+              id="commentsEnabled"
+              checked={formData.commentsEnabled}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, commentsEnabled: e.target.checked }))
+              }
+              className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+            />
+            <label htmlFor="commentsEnabled" className="mr-2 text-sm font-medium text-gray-700">
+              فعال بودن کامنت‌ها برای این آیتم
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mb-4 mr-6">
+            اگر غیرفعال باشد، کامنت‌ها برای این آیتم غیرفعال می‌شود (اولویت بالاتر از تنظیمات دسته‌بندی)
+          </p>
+
+          {/* Max Comments */}
+          <div>
+            <label htmlFor="maxComments" className="block text-sm font-medium text-gray-700 mb-2">
+              حداکثر تعداد کامنت
+            </label>
+            <input
+              type="number"
+              id="maxComments"
+              min="1"
+              value={formData.maxComments ?? ''}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  maxComments: e.target.value ? parseInt(e.target.value) : null,
+                }))
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="بدون محدودیت (خالی بگذارید)"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              حداکثر تعداد کامنتی که می‌توان برای این آیتم ثبت کرد. اگر خالی بگذارید، از تنظیمات پیش‌فرض استفاده می‌شود.
+            </p>
+          </div>
+        </div>
 
         {/* Actions */}
         <div className="flex gap-3 pt-6 border-t border-gray-200">

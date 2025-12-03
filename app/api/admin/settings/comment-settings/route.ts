@@ -13,21 +13,35 @@ export async function GET(request: NextRequest) {
 
     // Get or create settings (singleton)
     const settings = await dbQuery(async () => {
-      let existingSettings = await prisma.comment_settings.findFirst();
-      
-      if (!existingSettings) {
-        // Create default settings
-        existingSettings = await prisma.comment_settings.create({
-          data: {
-            defaultMaxComments: null,
-            defaultCommentsEnabled: true,
-            rateLimitMinutes: 5,
-            globalRateLimitMinutes: null,
-          },
-        });
+      try {
+        // Check if comment_settings model exists
+        if (!prisma.comment_settings) {
+          console.error('❌ prisma.comment_settings is undefined');
+          throw new Error('مدل comment_settings در Prisma Client موجود نیست. لطفاً Prisma Client را generate کنید.');
+        }
+
+        let existingSettings = await prisma.comment_settings.findFirst();
+        
+        if (!existingSettings) {
+          // Create default settings
+          console.log('📝 Creating default comment_settings...');
+          existingSettings = await prisma.comment_settings.create({
+            data: {
+              defaultMaxComments: null,
+              defaultCommentsEnabled: true,
+              maxCommentLength: null,
+              rateLimitMinutes: 5,
+              globalRateLimitMinutes: null,
+            },
+          });
+          console.log('✅ Default comment_settings created:', existingSettings.id);
+        }
+        
+        return existingSettings;
+      } catch (error: any) {
+        console.error('❌ Error in dbQuery for comment_settings:', error);
+        throw error;
       }
-      
-      return existingSettings;
     });
 
     return NextResponse.json({
@@ -55,6 +69,7 @@ export async function PUT(request: NextRequest) {
     const {
       defaultMaxComments,
       defaultCommentsEnabled,
+      maxCommentLength,
       rateLimitMinutes,
       globalRateLimitMinutes,
     } = body;
@@ -63,6 +78,13 @@ export async function PUT(request: NextRequest) {
     if (defaultMaxComments !== null && defaultMaxComments !== undefined && defaultMaxComments < 1) {
       return NextResponse.json(
         { success: false, error: 'حداکثر تعداد کامنت باید بیشتر از 0 باشد' },
+        { status: 400 }
+      );
+    }
+
+    if (maxCommentLength !== null && maxCommentLength !== undefined && maxCommentLength < 1) {
+      return NextResponse.json(
+        { success: false, error: 'حداکثر تعداد کاراکتر باید بیشتر از 0 باشد' },
         { status: 400 }
       );
     }
@@ -83,27 +105,42 @@ export async function PUT(request: NextRequest) {
 
     // Update or create settings (singleton)
     const settings = await dbQuery(async () => {
-      const existingSettings = await prisma.comment_settings.findFirst();
+      try {
+        // Check if comment_settings model exists
+        if (!prisma.comment_settings) {
+          console.error('❌ prisma.comment_settings is undefined');
+          throw new Error('مدل comment_settings در Prisma Client موجود نیست. لطفاً Prisma Client را generate کنید.');
+        }
+
+        const existingSettings = await prisma.comment_settings.findFirst();
       
       if (existingSettings) {
+        console.log('📝 Updating existing comment_settings:', existingSettings.id);
         return await prisma.comment_settings.update({
           where: { id: existingSettings.id },
           data: {
             defaultMaxComments: defaultMaxComments !== undefined ? defaultMaxComments : null,
             defaultCommentsEnabled: defaultCommentsEnabled !== undefined ? defaultCommentsEnabled : true,
+            maxCommentLength: maxCommentLength !== undefined ? maxCommentLength : null,
             rateLimitMinutes: rateLimitMinutes !== undefined ? rateLimitMinutes : 5,
             globalRateLimitMinutes: globalRateLimitMinutes !== undefined ? globalRateLimitMinutes : null,
           },
         });
       } else {
+        console.log('📝 Creating new comment_settings...');
         return await prisma.comment_settings.create({
           data: {
             defaultMaxComments: defaultMaxComments !== undefined ? defaultMaxComments : null,
             defaultCommentsEnabled: defaultCommentsEnabled !== undefined ? defaultCommentsEnabled : true,
+            maxCommentLength: maxCommentLength !== undefined ? maxCommentLength : null,
             rateLimitMinutes: rateLimitMinutes !== undefined ? rateLimitMinutes : 5,
             globalRateLimitMinutes: globalRateLimitMinutes !== undefined ? globalRateLimitMinutes : null,
           },
         });
+      }
+      } catch (error: any) {
+        console.error('❌ Error in dbQuery for comment_settings PUT:', error);
+        throw error;
       }
     });
 
