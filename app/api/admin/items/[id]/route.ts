@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
+import { notifyListBookmarkers } from '@/lib/utils/notifications';
 
 // GET /api/admin/items/[id] - Get single item
 export async function GET(
@@ -56,6 +57,7 @@ export async function PUT(
       metadata,
       commentsEnabled,
       maxComments,
+      listId,
     } = body;
 
     // Check if item exists
@@ -73,6 +75,8 @@ export async function PUT(
     if (!existingItem) {
       return NextResponse.json({ error: 'آیتم یافت نشد' }, { status: 404 });
     }
+
+    const previousListId = existingItem.listId;
 
     // Validate metadata based on category
     const metadataValidation = validateMetadata(
@@ -99,6 +103,7 @@ export async function PUT(
         metadata: metadataValidation.data || {},
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
         maxComments: maxComments !== undefined ? maxComments : null,
+        listId: listId !== undefined ? listId : existingItem.listId,
         updatedAt: new Date(),
       },
       include: {
@@ -109,6 +114,22 @@ export async function PUT(
         },
       },
     });
+
+    // If listId changed, notify users who bookmarked the new list
+    if (listId && listId !== previousListId) {
+      const newList = await prisma.lists.findUnique({
+        where: { id: listId },
+        select: { title: true },
+      });
+
+      if (newList) {
+        notifyListBookmarkers(
+          listId,
+          item.title,
+          newList.title || 'لیست'
+        ).catch(console.error);
+      }
+    }
 
     return NextResponse.json(item);
   } catch (error: any) {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import NotificationIcon from './NotificationIcon';
 
 interface HeaderProps {
   title?: string;
@@ -46,25 +47,28 @@ export default function Header({ title, showBack = false }: HeaderProps) {
             <h1 className="text-xl font-bold text-primary">WibeCur</h1>
           )}
         </div>
-        <Link
-          href="/profile"
-          className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-gray-200 hover:bg-gray-300 transition-colors"
-        >
-          {userImage ? (
-            <Image
-              src={userImage}
-              alt={userName}
-              width={40}
-              height={40}
-              className="object-cover w-full h-full"
-              unoptimized={true}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-white text-sm font-bold">
-              {userName.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </Link>
+        <div className="flex items-center gap-2">
+          {session?.user && <NotificationIcon />}
+          <Link
+            href="/profile"
+            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-gray-200 hover:bg-gray-300 transition-colors"
+          >
+            {userImage ? (
+              <Image
+                src={userImage}
+                alt={userName}
+                width={40}
+                height={40}
+                className="object-cover w-full h-full"
+                unoptimized={true}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-white text-sm font-bold">
+                {userName.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </Link>
+        </div>
       </div>
     </header>
   );

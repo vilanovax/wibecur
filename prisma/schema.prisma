@@ -30,18 +30,19 @@ model bookmarks {
 }
 
 model categories {
-  id               String   @id
+  id               String            @id
   name             String
-  slug             String   @unique
+  slug             String            @unique
   icon             String
-  color            String   @default("#6366F1")
+  color            String            @default("#6366F1")
   description      String?
-  order            Int      @default(0)
-  isActive         Boolean  @default(true)
-  commentsEnabled  Boolean  @default(true)  // فعال/غیرفعال کردن کامنت برای دسته
-  createdAt        DateTime @default(now())
+  order            Int               @default(0)
+  isActive         Boolean           @default(true)
+  commentsEnabled  Boolean           @default(true)  // فعال/غیرفعال کردن کامنت برای دسته
+  createdAt        DateTime          @default(now())
   updatedAt        DateTime
   lists            lists[]
+  suggested_lists  suggested_lists[]
 }
 
 model comment_likes {
@@ -182,28 +183,29 @@ model list_likes {
 }
 
 model lists {
-  id          String       @id
-  title       String
-  slug        String       @unique
-  description String?
-  coverImage  String?
-  categoryId  String
-  userId      String
-  badge       ListBadge?
-  isPublic    Boolean      @default(true)
-  isFeatured  Boolean      @default(false)
-  viewCount   Int          @default(0)
-  likeCount   Int          @default(0)
-  saveCount   Int          @default(0)
-  itemCount   Int          @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime
-  isActive    Boolean      @default(true)
-  bookmarks   bookmarks[]
-  items       items[]
-  list_likes  list_likes[]
-  categories  categories   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  users       users        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String            @id
+  title            String
+  slug             String            @unique
+  description      String?
+  coverImage       String?
+  categoryId       String
+  userId           String
+  badge            ListBadge?
+  isPublic         Boolean           @default(true)
+  isFeatured       Boolean           @default(false)
+  viewCount        Int               @default(0)
+  likeCount        Int               @default(0)
+  saveCount        Int               @default(0)
+  itemCount        Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  isActive         Boolean           @default(true)
+  bookmarks        bookmarks[]
+  items            items[]
+  list_likes       list_likes[]
+  suggested_items  suggested_items[]
+  categories       categories        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  users            users             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
   @@index([createdAt])
@@ -261,6 +263,9 @@ model users {
   list_likes        list_likes[]
   lists             lists[]
   user_violations   user_violations[]
+  suggested_items   suggested_items[]
+  suggested_lists   suggested_lists[]
+  notifications     notifications[]
 }
 
 enum ListBadge {
@@ -284,4 +289,60 @@ model comment_settings {
   globalRateLimitMinutes  Int?     // حداقل فاصله برای همه کامنت‌ها (null = غیرفعال)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
+}
+
+model suggested_items {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  imageUrl    String?
+  externalUrl String?
+  listId      String
+  userId      String
+  metadata    Json?
+  status      String   @default("pending") // pending, approved, rejected
+  adminNotes  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lists       lists    @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([listId])
+  @@index([userId])
+  @@index([status])
+}
+
+model suggested_lists {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  coverImage  String?
+  categoryId  String
+  userId      String
+  status      String     @default("pending") // pending, approved, rejected
+  adminNotes  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  categories  categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  users       users      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([userId])
+  @@index([status])
+}
+
+model notifications {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // 'suggestion_approved', 'suggestion_rejected', 'admin_message', etc.
+  title     String
+  message   String
+  link      String?  // Optional link to related content
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
 }

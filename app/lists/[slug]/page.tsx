@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -33,7 +34,22 @@ export default async function ListDetailPage({
   
   const list = await prisma.lists.findUnique({
     where: { slug },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      description: true,
+      coverImage: true,
+      badge: true,
+      isPublic: true,
+      isFeatured: true,
+      isActive: true,
+      viewCount: true,
+      likeCount: true,
+      saveCount: true,
+      itemCount: true,
+      createdAt: true,
+      updatedAt: true,
       categories: true,
       items: {
         orderBy: { order: 'asc' },
@@ -48,7 +64,6 @@ export default async function ListDetailPage({
         select: {
           items: true,
           list_likes: true,
-          bookmarks: true,
         },
       },
     },
@@ -121,19 +136,19 @@ export default async function ListDetailPage({
           <div className="flex items-center gap-6 text-sm text-gray-600">
             <span className="flex items-center gap-1">
               <span>📋</span>
-              <span>{list._count.items} آیتم</span>
+              <span>{list.itemCount ?? list._count.items ?? 0} آیتم</span>
             </span>
             <span className="flex items-center gap-1">
               <span>❤️</span>
-              <span>{list._count.list_likes}</span>
+              <span>{list.likeCount ?? list._count.list_likes ?? 0}</span>
             </span>
             <span className="flex items-center gap-1">
               <span>⭐</span>
-              <span>{list._count.bookmarks}</span>
+              <span>{list.saveCount ?? 0}</span>
             </span>
             <span className="flex items-center gap-1">
               <span>👁</span>
-              <span>{list.viewCount}</span>
+              <span>{list.viewCount ?? 0}</span>
             </span>
           </div>
 
@@ -142,9 +157,12 @@ export default async function ListDetailPage({
             <button className="flex-1 bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/30">
               ❤️ لایک
             </button>
-            <button className="px-6 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium hover:border-primary transition-colors">
-              ⭐ ذخیره
-            </button>
+            <BookmarkButton
+              listId={list.id}
+              initialBookmarkCount={list.saveCount ?? 0}
+              variant="button"
+              size="md"
+            />
             <button className="px-6 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium hover:border-primary transition-colors">
               📤
             </button>

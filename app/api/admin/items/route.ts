@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { nanoid } from 'nanoid';
+import { notifyListBookmarkers } from '@/lib/utils/notifications';
 
 // GET /api/admin/items - Get items (optionally filtered by listId)
 export async function GET(request: NextRequest) {
@@ -121,6 +122,9 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Notify users who bookmarked this list
+    notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
 
     return NextResponse.json(item, { status: 201 });
   } catch (error: any) {

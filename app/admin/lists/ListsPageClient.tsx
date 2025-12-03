@@ -33,6 +33,8 @@ interface ListsPageClientProps {
   categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color' | 'order' | 'isActive'>[];
 }
 
+type SortOption = 'date_desc' | 'date_asc' | 'items_desc' | 'items_asc' | 'likes_desc' | 'likes_asc' | 'bookmarks_desc' | 'bookmarks_asc';
+
 export default function ListsPageClient({
   lists = [],
   categories = [],
@@ -40,6 +42,7 @@ export default function ListsPageClient({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<SortOption>('date_desc');
 
   // Filter out any undefined/null lists and apply filters
   const filteredLists = (lists || []).filter((list): list is ListWithRelations => {
@@ -51,6 +54,30 @@ export default function ListsPageClient({
       (statusFilter === 'active' && list.isActive) ||
       (statusFilter === 'inactive' && !list.isActive);
     return categoryMatch && statusMatch;
+  });
+
+  // Sort filtered lists
+  const sortedLists = [...filteredLists].sort((a, b) => {
+    switch (sortBy) {
+      case 'date_desc':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case 'date_asc':
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case 'items_desc':
+        return (b.itemCount ?? 0) - (a.itemCount ?? 0);
+      case 'items_asc':
+        return (a.itemCount ?? 0) - (b.itemCount ?? 0);
+      case 'likes_desc':
+        return (b.likeCount ?? 0) - (a.likeCount ?? 0);
+      case 'likes_asc':
+        return (a.likeCount ?? 0) - (b.likeCount ?? 0);
+      case 'bookmarks_desc':
+        return (b.saveCount ?? 0) - (a.saveCount ?? 0);
+      case 'bookmarks_asc':
+        return (a.saveCount ?? 0) - (b.saveCount ?? 0);
+      default:
+        return 0;
+    }
   });
 
   // Get category counts
@@ -81,6 +108,29 @@ export default function ListsPageClient({
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-700">دسته‌بندی‌ها</h2>
           <div className="flex items-center gap-3">
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-8 py-2 pl-4 text-sm font-medium text-gray-700 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-right"
+              >
+                <option value="date_desc">📅 تاریخ (جدیدترین)</option>
+                <option value="date_asc">📅 تاریخ (قدیمی‌ترین)</option>
+                <option value="items_desc">📋 تعداد آیتم‌ها (بیشترین)</option>
+                <option value="items_asc">📋 تعداد آیتم‌ها (کمترین)</option>
+                <option value="likes_desc">❤️ تعداد لایک‌ها (بیشترین)</option>
+                <option value="likes_asc">❤️ تعداد لایک‌ها (کمترین)</option>
+                <option value="bookmarks_desc">⭐ تعداد بوک‌مارک (بیشترین)</option>
+                <option value="bookmarks_asc">⭐ تعداد بوک‌مارک (کمترین)</option>
+              </select>
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
             {/* View Mode Toggle */}
             <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
               <button
@@ -200,7 +250,7 @@ export default function ListsPageClient({
       {/* Lists Display */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredLists.map((list) => {
+          {sortedLists.map((list) => {
             if (!list) return null;
             return (
               <div
@@ -258,7 +308,7 @@ export default function ListsPageClient({
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredLists.map((list) => {
+          {sortedLists.map((list) => {
             if (!list) return null;
             return (
               <div
@@ -316,7 +366,7 @@ export default function ListsPageClient({
         </div>
       )}
 
-      {filteredLists.length === 0 && (
+      {sortedLists.length === 0 && (
         <div className="text-center py-12 bg-white rounded-xl">
           <p className="text-gray-500">
             {lists.length === 0

@@ -61,7 +61,9 @@ export default function ImageSearchModal({
     setSearchResults([]);
 
     try {
-      const res = await fetch('/api/admin/items/search-google-images', {
+      // Try public API first, fallback to admin API
+      const apiEndpoint = '/api/images/search';
+      const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: searchQuery }),
@@ -73,9 +75,12 @@ export default function ImageSearchModal({
       }
 
       const data = await res.json();
-      setSearchResults(data.results || []);
+      
+      // Handle both formats: { success, results } or { results }
+      const results = data.success ? data.results : (data.results || []);
+      setSearchResults(results);
 
-      if (data.results.length === 0) {
+      if (results.length === 0) {
         setError('هیچ تصویری یافت نشد');
       }
     } catch (err: any) {
@@ -127,7 +132,7 @@ export default function ImageSearchModal({
   const modalContent = (
     <div 
       data-image-search-modal="true"
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
       onClick={handleBackdropClick}
     >
       <div 

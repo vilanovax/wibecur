@@ -1,16 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { lists, categories } from '@prisma/client';
+import FloatingActionButton from '@/components/mobile/lists/FloatingActionButton';
+import SuggestModal from '@/components/mobile/lists/SuggestModal';
+import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 
 type ListWithCategory = lists & {
   categories: categories;
+  saveCount?: number;
+  itemCount?: number;
+  likeCount?: number;
+  viewCount?: number;
   _count: {
     items: number;
     list_likes: number;
-    bookmarks: number;
   };
 };
 
@@ -25,6 +30,7 @@ export default function ListsPageClient({ lists, categories }: ListsPageClientPr
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
 
   // Load saved preferences from localStorage
   useEffect(() => {
@@ -191,20 +197,39 @@ export default function ListsPageClient({ lists, categories }: ListsPageClientPr
               {/* Cover Image */}
               {list.coverImage ? (
                 <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden">
-                  <Image
+                  <img
                     src={list.coverImage}
                     alt={list.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                    unoptimized={true}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => {
+                      // Replace with fallback on error
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent && !parent.querySelector('.fallback-icon')) {
+                        const fallback = document.createElement('div');
+                        fallback.className = 'h-full w-full flex items-center justify-center fallback-icon';
+                        fallback.innerHTML = `<span class="text-6xl">${list.categories.icon}</span>`;
+                        parent.appendChild(fallback);
+                      }
+                    }}
                   />
+                  {/* Bookmark Button */}
+                  <div className="absolute top-3 right-3 z-20">
+                    <BookmarkButton
+                      listId={list.id}
+                      initialBookmarkCount={list.saveCount ?? list._count?.bookmarks ?? 0}
+                      variant="icon"
+                      size="md"
+                    />
+                  </div>
                   {list.isFeatured && (
-                    <div className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                    <div className="absolute top-3 right-12 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
                       ⭐ ویژه
                     </div>
                   )}
                   {list.badge && (
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold">
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold z-10">
                       {list.badge === 'TRENDING' && '🔥 ترند'}
                       {list.badge === 'NEW' && '🆕 جدید'}
                       {list.badge === 'FEATURED' && '⭐ برگزیده'}
@@ -212,8 +237,17 @@ export default function ListsPageClient({ lists, categories }: ListsPageClientPr
                   )}
                 </div>
               ) : (
-                <div className="h-48 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex items-center justify-center">
+                <div className="relative h-48 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex items-center justify-center">
                   <span className="text-6xl">{list.categories.icon}</span>
+                  {/* Bookmark Button */}
+                  <div className="absolute top-3 right-3 z-20">
+                    <BookmarkButton
+                      listId={list.id}
+                      initialBookmarkCount={list.saveCount ?? list._count?.bookmarks ?? 0}
+                      variant="icon"
+                      size="md"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -251,7 +285,7 @@ export default function ListsPageClient({ lists, categories }: ListsPageClientPr
                   </span>
                   <span className="flex items-center gap-1">
                     <span>⭐</span>
-                    <span>{list._count.bookmarks}</span>
+                    <span>{list.saveCount ?? 0}</span>
                   </span>
                   <span className="flex items-center gap-1 mr-auto">
                     <span>👁</span>
@@ -266,6 +300,15 @@ export default function ListsPageClient({ lists, categories }: ListsPageClientPr
 
       {/* Bottom Spacing for BottomNav */}
       <div className="h-8"></div>
+
+      {/* Floating Action Button */}
+      <FloatingActionButton onClick={() => setIsSuggestModalOpen(true)} />
+
+      {/* Suggest Modal */}
+      <SuggestModal
+        isOpen={isSuggestModalOpen}
+        onClose={() => setIsSuggestModalOpen(false)}
+      />
     </div>
   );
 }

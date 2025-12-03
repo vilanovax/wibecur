@@ -66,10 +66,13 @@ async function main() {
       where: { email: 'admin@wibecur.com' },
       update: {},
       create: {
+        id: 'admin-user-id', // Prisma will generate if using @default(cuid())
         email: 'admin@wibecur.com',
         name: 'Admin',
         password: hashedPassword,
         role: 'ADMIN',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
     console.log('✅ Default admin user created');
@@ -89,6 +92,7 @@ async function main() {
           description: category.description,
           order: category.order,
           isActive: category.isActive,
+          commentsEnabled: category.commentsEnabled !== undefined ? category.commentsEnabled : true,
           updatedAt: new Date(category.updatedAt),
         },
         create: {
@@ -100,6 +104,7 @@ async function main() {
           description: category.description,
           order: category.order,
           isActive: category.isActive,
+          commentsEnabled: category.commentsEnabled !== undefined ? category.commentsEnabled : true,
           createdAt: new Date(category.createdAt),
           updatedAt: new Date(category.updatedAt),
         },
@@ -121,7 +126,14 @@ async function main() {
       await prisma.categories.upsert({
         where: { slug: cat.slug },
         update: {},
-        create: cat,
+        create: {
+          ...cat,
+          id: `cat-${cat.slug}`, // Prisma will generate if using @default(cuid())
+          commentsEnabled: true,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       });
     }
     console.log('✅ Default categories created');
@@ -190,6 +202,8 @@ async function main() {
           metadata: item.metadata,
           voteCount: item.voteCount,
           rating: item.rating,
+          commentsEnabled: item.commentsEnabled !== undefined ? item.commentsEnabled : true,
+          maxComments: item.maxComments !== undefined ? item.maxComments : null,
           updatedAt: new Date(item.updatedAt),
         },
         create: {
@@ -203,6 +217,8 @@ async function main() {
           metadata: item.metadata,
           voteCount: item.voteCount,
           rating: item.rating,
+          commentsEnabled: item.commentsEnabled !== undefined ? item.commentsEnabled : true,
+          maxComments: item.maxComments !== undefined ? item.maxComments : null,
           createdAt: new Date(item.createdAt),
           updatedAt: new Date(item.updatedAt),
         },
@@ -475,6 +491,39 @@ async function main() {
       });
     }
     console.log('✅ Settings seeded (sensitive keys excluded)');
+  }
+
+  // Seed Comment Settings
+  if (exportedData?.commentSettings && exportedData.commentSettings.length > 0) {
+    console.log(`📦 Seeding ${exportedData.commentSettings.length} comment settings...`);
+    for (const commentSetting of exportedData.commentSettings) {
+      try {
+        await prisma.comment_settings.upsert({
+          where: { id: commentSetting.id },
+          update: {
+            defaultMaxComments: commentSetting.defaultMaxComments,
+            defaultCommentsEnabled: commentSetting.defaultCommentsEnabled,
+            maxCommentLength: commentSetting.maxCommentLength,
+            rateLimitMinutes: commentSetting.rateLimitMinutes,
+            globalRateLimitMinutes: commentSetting.globalRateLimitMinutes,
+            updatedAt: new Date(commentSetting.updatedAt),
+          },
+          create: {
+            id: commentSetting.id,
+            defaultMaxComments: commentSetting.defaultMaxComments,
+            defaultCommentsEnabled: commentSetting.defaultCommentsEnabled,
+            maxCommentLength: commentSetting.maxCommentLength,
+            rateLimitMinutes: commentSetting.rateLimitMinutes,
+            globalRateLimitMinutes: commentSetting.globalRateLimitMinutes,
+            createdAt: new Date(commentSetting.createdAt),
+            updatedAt: new Date(commentSetting.updatedAt),
+          },
+        });
+      } catch (error) {
+        console.warn('⚠️  Could not seed comment_settings:', error);
+      }
+    }
+    console.log('✅ Comment settings seeded');
   }
 
   console.log('✅ Database seeding completed!');

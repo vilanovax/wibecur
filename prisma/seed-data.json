@@ -21,6 +21,7 @@
       "description": "بهترین فیلم‌ها و سریال‌های پیشنهادی",
       "order": 1,
       "isActive": true,
+      "commentsEnabled": true,
       "createdAt": "2025-11-19T10:41:15.490Z",
       "updatedAt": "2025-11-19T10:41:15.490Z"
     },
@@ -33,6 +34,7 @@
       "description": "کتاب‌های پیشنهادی در انواع ژانرها",
       "order": 2,
       "isActive": true,
+      "commentsEnabled": true,
       "createdAt": "2025-11-19T10:41:15.490Z",
       "updatedAt": "2025-11-19T10:41:15.490Z"
     },
@@ -45,6 +47,7 @@
       "description": "بهترین کافه‌ها و رستوران‌های شهر",
       "order": 3,
       "isActive": true,
+      "commentsEnabled": true,
       "createdAt": "2025-11-19T10:41:15.490Z",
       "updatedAt": "2025-11-19T10:41:15.490Z"
     },
@@ -57,6 +60,7 @@
       "description": "پادکست‌های جذاب و آموزنده",
       "order": 4,
       "isActive": true,
+      "commentsEnabled": true,
       "createdAt": "2025-11-19T10:41:15.490Z",
       "updatedAt": "2025-11-19T10:41:15.490Z"
     },
@@ -69,6 +73,7 @@
       "description": "محصولات و توصیه‌های لایف‌استایل",
       "order": 5,
       "isActive": true,
+      "commentsEnabled": true,
       "createdAt": "2025-11-19T10:41:15.490Z",
       "updatedAt": "2025-11-19T10:41:15.490Z"
     },
@@ -81,6 +86,7 @@
       "description": "ماشین‌ها و فناوری‌های جدید",
       "order": 6,
       "isActive": true,
+      "commentsEnabled": true,
       "createdAt": "2025-11-19T10:41:15.490Z",
       "updatedAt": "2025-11-19T10:41:15.490Z"
     }
@@ -477,7 +483,7 @@
       "badge": null,
       "isPublic": true,
       "isFeatured": false,
-      "viewCount": 469,
+      "viewCount": 473,
       "likeCount": 43,
       "saveCount": 23,
       "itemCount": 22,
@@ -659,23 +665,23 @@
   ],
   "items": [
     {
-      "id": "s73McmvKjc2hods1e9uwn",
-      "title": "Crash",
-      "description": "فیلم \"Crash\" با بررسی تصادف‌های انسانی و اجتماعی در زندگی روزمره، به بررسی موضوعاتی چون نژادپرستی، تبعیض و ارتباطات انسانی می‌پردازد. داستان به صورت چندلایه و با شخصیت‌های مختلف روایت می‌شود که سرنوشت‌هایشان به هم گره خورده است. این فیلم به دلیل نگاهی عمیق به مشکلات اجتماعی و لحظات احساسی‌اش، تماشاگران را به تفکر وادار می‌کند.",
-      "imageUrl": "https://image.tmdb.org/t/p/w500/86BdPC6RDX88NC880pLidKn2LCj.jpg",
+      "id": "YLVeEJvg3e6oQX-AQtrHz",
+      "title": "کوری",
+      "description": "کتاب \"کوری\" نوشته ژوزه ساراماگو، داستانی پر از سمبل و اندیشه است که در آن جامعه‌ای ناگهان با پدیده‌ای عجیب به نام کوری مواجه می‌شود. این رمان به بررسی مسائل انسانی، ارتباطات اجتماعی و مفهوم بینایی می‌پردازد و با نثر خاص و شاعرانه‌اش، خواننده را به تفکر وا می‌دارد. این اثر نه تنها داستانی جذاب دارد بلکه به عمق فلسفی زندگی نیز می‌پردازد.",
+      "imageUrl": "https://www.iranketab.ir/Images/ProductImages/8148528125a34659ab4621c909a91909.jpg",
       "externalUrl": "",
-      "listId": "42wnMObrGCgLX86mDzUgE",
+      "listId": "URhvlZLi2nKsujTxNu9mh",
       "order": 0,
       "metadata": {
-        "year": 2004,
-        "genre": "اکشن",
-        "director": "پل هگیس",
-        "imdbRating": "7.8"
+        "genre": "علمی-تخیلی",
+        "author": "ژوزه ساراماگو"
       },
       "voteCount": 0,
       "rating": 0,
-      "createdAt": "2025-11-19T11:39:01.582Z",
-      "updatedAt": "2025-11-19T12:46:46.269Z"
+      "maxComments": null,
+      "commentsEnabled": true,
+      "createdAt": "2025-11-19T12:56:36.195Z",
+      "updatedAt": "2025-12-02T06:18:00.178Z"
     },
     {
       "id": "uu8lu9ABDU7rlU9iyH_MX",
@@ -693,6 +699,8 @@
       },
       "voteCount": 0,
       "rating": 0,
+      "maxComments": null,
+      "commentsEnabled": true,
       "createdAt": "2025-11-22T13:22:01.462Z",
       "updatedAt": "2025-11-22T13:22:16.961Z"
     },
@@ -710,25 +718,31 @@
       },
       "voteCount": 0,
       "rating": 0,
+      "maxComments": null,
+      "commentsEnabled": true,
       "createdAt": "2025-11-22T14:51:59.342Z",
       "updatedAt": "2025-11-22T14:57:16.197Z"
     },
     {
-      "id": "YLVeEJvg3e6oQX-AQtrHz",
-      "title": "کوری",
-      "description": "کتاب \"کوری\" نوشته ژوزه ساراماگو، داستانی پر از سمبل و اندیشه است که در آن جامعه‌ای ناگهان با پدیده‌ای عجیب به نام کوری مواجه می‌شود. این رمان به بررسی مسائل انسانی، ارتباطات اجتماعی و مفهوم بینایی می‌پردازد و با نثر خاص و شاعرانه‌اش، خواننده را به تفکر وا می‌دارد. این اثر نه تنها داستانی جذاب دارد بلکه به عمق فلسفی زندگی نیز می‌پردازد.",
-      "imageUrl": "https://www.iranketab.ir/Images/ProductImages/8148528125a34659ab4621c909a91909.jpg",
+      "id": "s73McmvKjc2hods1e9uwn",
+      "title": "Crash",
+      "description": "فیلم \"Crash\" با بررسی تصادف‌های انسانی و اجتماعی در زندگی روزمره، به بررسی موضوعاتی چون نژادپرستی، تبعیض و ارتباطات انسانی می‌پردازد. داستان به صورت چندلایه و با شخصیت‌های مختلف روایت می‌شود که سرنوشت‌هایشان به هم گره خورده است. این فیلم به دلیل نگاهی عمیق به مشکلات اجتماعی و لحظات احساسی‌اش، تماشاگران را به تفکر وادار می‌کند.",
+      "imageUrl": "https://image.tmdb.org/t/p/w500/86BdPC6RDX88NC880pLidKn2LCj.jpg",
       "externalUrl": "",
-      "listId": "URhvlZLi2nKsujTxNu9mh",
+      "listId": "42wnMObrGCgLX86mDzUgE",
       "order": 0,
       "metadata": {
-        "genre": "علمی-تخیلی",
-        "author": "ژوزه ساراماگو"
+        "year": 2004,
+        "genre": "اکشن",
+        "director": "پل هگیس",
+        "imdbRating": "7.8"
       },
       "voteCount": 0,
       "rating": 0,
-      "createdAt": "2025-11-19T12:56:36.195Z",
-      "updatedAt": "2025-12-02T06:18:00.178Z"
+      "maxComments": null,
+      "commentsEnabled": true,
+      "createdAt": "2025-11-19T11:39:01.582Z",
+      "updatedAt": "2025-11-19T12:46:46.269Z"
     },
     {
       "id": "195f552cba9ae4871c3d84567be0955a",
@@ -746,6 +760,8 @@
       },
       "voteCount": 0,
       "rating": 0,
+      "maxComments": null,
+      "commentsEnabled": true,
       "createdAt": "2025-12-01T10:01:31.218Z",
       "updatedAt": "2025-12-01T10:01:28.750Z"
     },
@@ -765,6 +781,8 @@
       },
       "voteCount": 0,
       "rating": 0,
+      "maxComments": null,
+      "commentsEnabled": true,
       "createdAt": "2025-12-01T10:01:32.110Z",
       "updatedAt": "2025-12-01T10:01:32.109Z"
     },
@@ -784,6 +802,8 @@
       },
       "voteCount": 0,
       "rating": 0,
+      "maxComments": null,
+      "commentsEnabled": true,
       "createdAt": "2025-12-01T10:01:32.595Z",
       "updatedAt": "2025-12-01T10:01:32.594Z"
     },
@@ -803,6 +823,8 @@
       },
       "voteCount": 0,
       "rating": 0,
+      "maxComments": null,
+      "commentsEnabled": true,
       "createdAt": "2025-12-01T10:01:33.118Z",
       "updatedAt": "2025-12-01T10:12:11.567Z"
     },
@@ -822,8 +844,10 @@
       },
       "voteCount": 0,
       "rating": 0,
+      "maxComments": null,
+      "commentsEnabled": false,
       "createdAt": "2025-12-01T10:01:33.746Z",
-      "updatedAt": "2025-12-01T10:11:00.730Z"
+      "updatedAt": "2025-12-03T04:02:17.351Z"
     }
   ],
   "bookmarks": [],
@@ -912,6 +936,42 @@
       "likeCount": 0,
       "createdAt": "2025-12-02T13:13:31.966Z",
       "updatedAt": "2025-12-02T13:13:31.966Z",
+      "deletedAt": null
+    },
+    {
+      "id": "cmipfwira0005xsbeabechngr",
+      "itemId": "138675cb75b1c5ea9013569f041f7d92",
+      "userId": "xu1X-3aY7WOD-Yu-RFnLV",
+      "content": "واویلا لیلی !",
+      "isFiltered": false,
+      "isApproved": true,
+      "likeCount": 0,
+      "createdAt": "2025-12-03T03:20:58.101Z",
+      "updatedAt": "2025-12-03T03:20:58.101Z",
+      "deletedAt": null
+    },
+    {
+      "id": "cmipgi6wc0009xsbek7jjwqnt",
+      "itemId": "195f552cba9ae4871c3d84567be0955a",
+      "userId": "xu1X-3aY7WOD-Yu-RFnLV",
+      "content": "این چقودر خوبه",
+      "isFiltered": false,
+      "isApproved": true,
+      "likeCount": 0,
+      "createdAt": "2025-12-03T03:37:49.164Z",
+      "updatedAt": "2025-12-03T03:37:49.164Z",
+      "deletedAt": null
+    },
+    {
+      "id": "cmiph95e10002xsbzhsw4nidx",
+      "itemId": "195f552cba9ae4871c3d84567be0955a",
+      "userId": "xu1X-3aY7WOD-Yu-RFnLV",
+      "content": "sghl dgsjjdjdjdjjdsljdljsldsdlk;ms;mkd;sm",
+      "isFiltered": false,
+      "isApproved": true,
+      "likeCount": 0,
+      "createdAt": "2025-12-03T03:58:46.922Z",
+      "updatedAt": "2025-12-03T03:58:46.922Z",
       "deletedAt": null
     }
   ],
@@ -1082,6 +1142,38 @@
       "updatedAt": "2025-12-02T12:11:43.358Z"
     }
   ],
+  "itemReports": [
+    {
+      "id": "cmiopsi3k0001xsbeyrf6x2gb",
+      "itemId": "195f552cba9ae4871c3d84567be0955a",
+      "userId": "xu1X-3aY7WOD-Yu-RFnLV",
+      "reason": "spelling_error",
+      "description": null,
+      "resolved": false,
+      "createdAt": "2025-12-02T15:10:00.607Z",
+      "penaltyScore": 0
+    },
+    {
+      "id": "cmioq2mj90003xsbeztu44pri",
+      "itemId": "138675cb75b1c5ea9013569f041f7d92",
+      "userId": "xu1X-3aY7WOD-Yu-RFnLV",
+      "reason": "other",
+      "description": "این فیلم چیع ؟",
+      "resolved": true,
+      "createdAt": "2025-12-02T15:17:52.917Z",
+      "penaltyScore": 0
+    },
+    {
+      "id": "cmipgfedi0007xsbewn9m7x2j",
+      "itemId": "138675cb75b1c5ea9013569f041f7d92",
+      "userId": "xu1X-3aY7WOD-Yu-RFnLV",
+      "reason": "incorrect_info",
+      "description": null,
+      "resolved": false,
+      "createdAt": "2025-12-03T03:35:38.886Z",
+      "penaltyScore": 0
+    }
+  ],
   "userViolations": [
     {
       "id": "cmioiwxct0003xswzpj3yqmw5",
@@ -1093,6 +1185,18 @@
       "createdAt": "2025-12-02T11:57:29.693Z",
       "updatedAt": "2025-12-02T12:34:48.573Z",
       "totalPenaltyScore": 21
+    }
+  ],
+  "commentSettings": [
+    {
+      "id": "cmiph1cvx0000xsbzadjyfkla",
+      "defaultMaxComments": null,
+      "defaultCommentsEnabled": true,
+      "maxCommentLength": 300,
+      "rateLimitMinutes": 1,
+      "globalRateLimitMinutes": null,
+      "createdAt": "2025-12-03T03:52:43.390Z",
+      "updatedAt": "2025-12-03T03:52:57.406Z"
     }
   ],
   "settings": [

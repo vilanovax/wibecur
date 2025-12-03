@@ -103,6 +103,16 @@ async function exportDatabase() {
     data.userViolations = userViolations;
     console.log(`✅ Exported ${userViolations.length} user violations`);
 
+    // Comment Settings
+    try {
+      const commentSettings = await prisma.comment_settings.findMany();
+      data.commentSettings = commentSettings;
+      console.log(`✅ Exported ${commentSettings.length} comment settings`);
+    } catch (error) {
+      console.warn('⚠️  Could not export comment_settings (table may not exist):', error);
+      data.commentSettings = [];
+    }
+
     // Settings (excluding sensitive keys)
     const settings = await prisma.settings.findMany();
     data.settings = settings.map((s) => ({

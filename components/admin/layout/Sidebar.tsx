@@ -19,6 +19,7 @@ import {
   Shield,
   ChevronDown,
   ChevronLeft,
+  Lightbulb,
 } from 'lucide-react';
 
 const menuItems = [
@@ -79,6 +80,17 @@ const menuItems = [
     ],
   },
   {
+    href: '/admin/suggestions',
+    label: 'پیشنهادها',
+    icon: Lightbulb,
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+    submenu: [
+      { href: '/admin/suggestions?tab=lists', label: 'پیشنهادات لیست', icon: List },
+      { href: '/admin/suggestions?tab=items', label: 'پیشنهادات آیتم', icon: Package },
+    ],
+  },
+  {
     href: '/admin/settings',
     label: 'تنظیمات',
     icon: Settings,
@@ -91,18 +103,23 @@ export default function Sidebar() {
   const pathname = usePathname();
   // Auto-expand comments menu if on any comments page
   const shouldExpandComments = pathname?.startsWith('/admin/comments');
+  // Auto-expand suggestions menu if on any suggestions page
+  const shouldExpandSuggestions = pathname?.startsWith('/admin/suggestions');
   const [expandedMenu, setExpandedMenu] = useState<string | null>(
-    shouldExpandComments ? '/admin/comments' : null
+    shouldExpandComments ? '/admin/comments' : shouldExpandSuggestions ? '/admin/suggestions' : null
   );
 
   // Update expanded state when pathname changes
   React.useEffect(() => {
     if (shouldExpandComments && expandedMenu !== '/admin/comments') {
       setExpandedMenu('/admin/comments');
+    } else if (shouldExpandSuggestions && expandedMenu !== '/admin/suggestions') {
+      setExpandedMenu('/admin/suggestions');
     }
-  }, [pathname, shouldExpandComments]);
+  }, [pathname, shouldExpandComments, shouldExpandSuggestions]);
 
   const isCommentsPage = pathname?.startsWith('/admin/comments');
+  const isSuggestionsPage = pathname?.startsWith('/admin/suggestions');
 
   return (
     <aside className="w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl min-h-screen border-l border-gray-200">
@@ -133,7 +150,8 @@ export default function Sidebar() {
                     <Link
                       href={item.href}
                       className={`group w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
-                        isCommentsPage
+                        (isCommentsPage && item.href === '/admin/comments') ||
+                        (isSuggestionsPage && item.href === '/admin/suggestions')
                           ? 'bg-primary text-white shadow-md shadow-primary/20'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
@@ -147,14 +165,18 @@ export default function Sidebar() {
                       <div className="flex items-center gap-3">
                         <div
                           className={`p-1.5 rounded-md transition-all duration-200 ${
-                            isCommentsPage
+                            ((isCommentsPage && item.href === '/admin/comments') ||
+                             (isSuggestionsPage && item.href === '/admin/suggestions'))
                               ? 'bg-white/20'
                               : `${item.bgColor} group-hover:scale-110`
                           }`}
                         >
                           <Icon
                             className={`w-5 h-5 ${
-                              isCommentsPage ? 'text-white' : item.color
+                              ((isCommentsPage && item.href === '/admin/comments') ||
+                               (isSuggestionsPage && item.href === '/admin/suggestions'))
+                                ? 'text-white'
+                                : item.color
                             }`}
                           />
                         </div>
