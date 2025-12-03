@@ -72,7 +72,8 @@ const menuItems = [
     bgColor: 'bg-cyan-50',
     submenu: [
       { href: '/admin/comments', label: 'همه کامنت‌ها', icon: MessageSquare },
-      { href: '/admin/comments/reports', label: 'ریپورت‌ها', icon: AlertTriangle },
+      { href: '/admin/comments/reports', label: 'ریپورت کامنت‌ها', icon: AlertTriangle },
+      { href: '/admin/comments/item-reports', label: 'ریپورت آیتم‌ها', icon: Package },
       { href: '/admin/comments/bad-words', label: 'کلمات بد', icon: Ban },
       { href: '/admin/comments/violations', label: 'کاربران خاطی', icon: Shield },
     ],

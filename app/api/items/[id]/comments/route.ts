@@ -161,6 +161,102 @@ export async function POST(
       );
     }
 
+    // Get global comment settings
+    let globalSettings: any = null;
+    try {
+      globalSettings = await prisma.comment_settings.findFirst();
+    } catch (err) {
+      console.warn('Could not fetch comment settings:', err);
+    }
+
+    // Check if comments are enabled (priority: item > global settings)
+    const commentsEnabled = item.commentsEnabled ?? globalSettings?.defaultCommentsEnabled ?? true;
+    if (!commentsEnabled) {
+      return NextResponse.json(
+        { success: false, error: 'کامنت‌ها برای این آیتم غیرفعال است' },
+        { status: 403 }
+      );
+    }
+
+    // Check max comments limit (priority: item > global settings)
+    const maxComments = item.maxComments ?? globalSettings?.defaultMaxComments ?? null;
+    if (maxComments !== null && maxComments !== undefined) {
+      const currentCommentCount = await prisma.comments.count({
+        where: {
+          itemId,
+          deletedAt: null, // Only count non-deleted comments
+        },
+      });
+
+      if (currentCommentCount >= maxComments) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `حداکثر تعداد کامنت (${maxComments}) برای این آیتم تکمیل شده است`,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Check rate limit
+    // Priority: global rate limit > item-specific rate limit > default (5 minutes)
+    const rateLimitMinutes =
+      globalSettings?.globalRateLimitMinutes ??
+      globalSettings?.rateLimitMinutes ??
+      5;
+
+    if (rateLimitMinutes > 0) {
+      const rateLimitMs = rateLimitMinutes * 60 * 1000;
+      const timeLimit = new Date(Date.now() - rateLimitMs);
+
+      // Check if user has commented on this specific item recently
+      const recentItemComment = await prisma.comments.findFirst({
+        where: {
+          itemId,
+          userId,
+          createdAt: { gte: timeLimit },
+          deletedAt: null,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (recentItemComment) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `لطفاً ${rateLimitMinutes} دقیقه صبر کنید قبل از ارسال کامنت بعدی`,
+          },
+          { status: 429 }
+        );
+      }
+
+      // Check global rate limit (if enabled)
+      if (globalSettings?.globalRateLimitMinutes) {
+        const globalTimeLimit = new Date(
+          Date.now() - globalSettings.globalRateLimitMinutes * 60 * 1000
+        );
+        const recentGlobalComment = await prisma.comments.findFirst({
+          where: {
+            userId,
+            createdAt: { gte: globalTimeLimit },
+            deletedAt: null,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (recentGlobalComment) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `لطفاً ${globalSettings.globalRateLimitMinutes} دقیقه صبر کنید قبل از ارسال کامنت بعدی`,
+            },
+            { status: 429 }
+          );
+        }
+      }
+    }
+
     // Get bad words (with try-catch)
     let badWordsList: string[] = [];
     try {

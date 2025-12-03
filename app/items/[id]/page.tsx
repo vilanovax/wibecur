@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import CommentSection from '@/components/mobile/comments/CommentSection';
+import ItemReportButton from '@/components/mobile/items/ItemReportButton';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -109,16 +110,19 @@ export default async function ItemDetailPage({
             </a>
           )}
 
-          {/* Stats */}
-          <div className="flex items-center gap-6 text-sm text-gray-600">
-            <span className="flex items-center gap-1">
-              <span>⭐</span>
-              <span>{item.rating || 0}</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span>👍</span>
-              <span>{item.voteCount || 0}</span>
-            </span>
+          {/* Stats and Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6 text-sm text-gray-600">
+              <span className="flex items-center gap-1">
+                <span>⭐</span>
+                <span>{item.rating || 0}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span>👍</span>
+                <span>{item.voteCount || 0}</span>
+              </span>
+            </div>
+            <ItemReportButton itemId={item.id} />
           </div>
         </div>
 

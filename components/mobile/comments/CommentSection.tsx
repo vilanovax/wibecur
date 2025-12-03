@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { MessageSquare, Plus, Loader2, TrendingUp, Clock } from 'lucide-react';
 import CommentItem from './CommentItem';
 import CommentForm from './CommentForm';
+import Toast from '@/components/shared/Toast';
 
 interface Comment {
   id: string;
@@ -31,6 +32,9 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
     fetchComments();
@@ -98,13 +102,19 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
       const data = await response.json();
 
       if (data.success) {
-        alert('کامنت با موفقیت گزارش شد');
+        setToastMessage('کامنت با موفقیت گزارش شد. از همکاری شما متشکریم!');
+        setToastType('success');
+        setShowToast(true);
       } else {
-        alert(data.error || 'خطا در گزارش کامنت');
+        setToastMessage(data.error || 'خطا در گزارش کامنت');
+        setToastType('error');
+        setShowToast(true);
       }
     } catch (error) {
       console.error('Error reporting comment:', error);
-      alert('خطا در گزارش کامنت');
+      setToastMessage('خطا در گزارش کامنت');
+      setToastType('error');
+      setShowToast(true);
     } finally {
       setIsActionLoading(false);
     }
@@ -213,6 +223,16 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
         itemId={itemId}
         onSubmit={fetchComments}
       />
+
+      {/* Toast Notification */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          duration={3000}
+          onClose={() => setShowToast(false)}
+        />
+      )}
     </>
   );
 }

@@ -127,22 +127,42 @@ model item_votes {
   @@index([userId])
 }
 
+model item_reports {
+  id           String   @id @default(cuid())
+  itemId       String
+  userId       String
+  reason       String   // spelling_error, incorrect_info, offensive, other
+  description  String?  // توضیحات اضافی برای reason: other
+  resolved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  penaltyScore Int?     @default(0)
+  items        items    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([resolved])
+  @@index([userId])
+}
+
 model items {
-  id          String       @id
-  title       String
-  description String?
-  imageUrl    String?
-  externalUrl String?
-  listId      String
-  order       Int          @default(0)
-  metadata    Json?
-  voteCount   Int          @default(0)
-  rating      Float        @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime
-  comments    comments[]
-  item_votes  item_votes[]
-  lists       lists        @relation(fields: [listId], references: [id], onDelete: Cascade)
+  id               String         @id
+  title            String
+  description      String?
+  imageUrl         String?
+  externalUrl      String?
+  listId           String
+  order            Int            @default(0)
+  metadata         Json?
+  voteCount        Int            @default(0)
+  rating           Float          @default(0)
+  maxComments      Int?           // حداکثر تعداد کامنت
+  commentsEnabled  Boolean        @default(true)  // فعال/غیرفعال بودن کامنت
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime
+  comments         comments[]
+  item_votes       item_votes[]
+  item_reports     item_reports[]
+  lists            lists          @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@index([listId])
 }
@@ -236,6 +256,7 @@ model users {
   comment_reports   comment_reports[]
   comments          comments[]
   item_votes        item_votes[]
+  item_reports      item_reports[]
   list_likes        list_likes[]
   lists             lists[]
   user_violations   user_violations[]
@@ -251,4 +272,14 @@ enum UserRole {
   USER
   EDITOR
   ADMIN
+}
+
+model comment_settings {
+  id                      String   @id @default(cuid())
+  defaultMaxComments      Int?     // پیش‌فرض برای آیتم‌های جدید
+  defaultCommentsEnabled  Boolean  @default(true)
+  rateLimitMinutes        Int      @default(5)  // حداقل فاصله بین کامنت‌ها برای یک آیتم (دقیقه)
+  globalRateLimitMinutes  Int?     // حداقل فاصله برای همه کامنت‌ها (null = غیرفعال)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 }
