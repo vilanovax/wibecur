@@ -43,8 +43,12 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
   const fetchCategories = async () => {
     setIsLoadingCategories(true);
     try {
-      const res = await fetch('/api/categories');
-      const data = await res.json();
+      const { fetchWithCache } = await import('@/lib/utils/cache-client');
+      const data = await fetchWithCache<{ success: boolean; data: Category[] }>(
+        '/api/categories',
+        {},
+        60 * 60 * 1000 // 1 hour cache for categories (they change rarely)
+      );
       if (data.success && data.data) {
         const activeCategories = data.data.filter((cat: Category) => cat);
         setCategories(activeCategories);

@@ -36,8 +36,12 @@ export default function ImageSearchModal({
 
   // Update search query when modal opens with new initialQuery
   useEffect(() => {
-    if (isOpen && initialQuery) {
-      setSearchQuery(initialQuery);
+    if (isOpen) {
+      if (initialQuery) {
+        setSearchQuery(initialQuery);
+      } else {
+        setSearchQuery('');
+      }
     }
   }, [isOpen, initialQuery]);
 

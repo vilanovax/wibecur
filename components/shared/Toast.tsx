@@ -30,7 +30,7 @@ const toastStyles = {
 export default function Toast({
   message,
   type = 'success',
-  duration = 3000,
+  duration = 5000,
   onClose,
 }: ToastProps) {
   useEffect(() => {
@@ -48,11 +48,12 @@ export default function Toast({
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: -50, scale: 0.95 }}
+        initial={{ opacity: 0, y: 50, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+        exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] min-w-[320px] max-w-[90vw] ${toastStyles[type]} rounded-xl shadow-2xl flex items-center gap-3 p-4`}
+        className={`fixed bottom-6 left-4 right-4 mx-auto z-[100] max-w-md ${toastStyles[type]} rounded-xl shadow-2xl flex items-center gap-3 p-4`}
+        style={{ marginLeft: 'auto', marginRight: 'auto' }}
       >
         <Icon className="w-6 h-6 flex-shrink-0" />
         <p className="flex-1 text-sm font-medium pr-2">{message}</p>

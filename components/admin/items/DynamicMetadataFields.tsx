@@ -6,6 +6,7 @@ import {
   PRICE_RANGES,
   CUISINE_TYPES,
 } from '@/lib/schemas/item-metadata';
+import { parseYear } from '@/lib/utils/number-converter';
 
 interface DynamicMetadataFieldsProps {
   categorySlug: string;
@@ -22,6 +23,19 @@ export default function DynamicMetadataFields({
     onChange({ ...metadata, [field]: value });
   };
 
+  const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    
+    // Allow empty input
+    if (!inputValue || !inputValue.trim()) {
+      handleChange('year', undefined);
+      return;
+    }
+    
+    const parsedYear = parseYear(inputValue);
+    handleChange('year', parsedYear || undefined);
+  };
+
   // Movie/Series metadata fields
   if (categorySlug === 'movie' || categorySlug === 'film' || categorySlug === 'movies') {
     return (
@@ -34,17 +48,17 @@ export default function DynamicMetadataFields({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             سال تولید (اختیاری)
+            <span className="text-xs text-gray-500 font-normal mr-2">
+              - اعداد فارسی و سال شمسی قابل قبول است
+            </span>
           </label>
           <input
-            type="number"
-            min="1800"
-            max="2100"
+            type="text"
+            inputMode="numeric"
             value={metadata?.year || ''}
-            onChange={(e) =>
-              handleChange('year', e.target.value ? Number(e.target.value) : undefined)
-            }
+            onChange={handleYearChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="2024"
+            placeholder="2024 یا ۱۴۰۳"
           />
         </div>
 
