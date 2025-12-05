@@ -15,10 +15,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = (session.user as any).id;
+    let userId = (session.user as any).id;
+    
+    // If userId is not available in session, try to get it from email
+    if (!userId && session.user?.email) {
+      const userByEmail = await prisma.users.findUnique({
+        where: { email: session.user.email },
+        select: { id: true },
+      });
+      userId = userByEmail?.id;
+    }
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'User ID not found' },
+        { status: 401 }
+      );
+    }
 
     // دریافت اطلاعات کاربر به همراه آمار
-    const [user, listsCount, bookmarksCount, likesCount, itemVotesCount] = await Promise.all([
+    const [user, listsCount, bookmarksCount, likesCount, itemLikesCount] = await Promise.all([
       prisma.users.findUnique({
         where: { id: userId },
         select: {
@@ -34,7 +50,7 @@ export async function GET(request: NextRequest) {
       prisma.lists.count({ where: { userId } }),
       prisma.bookmarks.count({ where: { userId } }),
       prisma.list_likes.count({ where: { userId } }),
-      prisma.item_votes.count({ where: { userId } }),
+      prisma.item_votes.count({ where: { userId } }), // آیتم‌هایی که کاربر لایک کرده
     ]);
 
     if (!user) {
@@ -53,7 +69,7 @@ export async function GET(request: NextRequest) {
             listsCreated: listsCount,
             bookmarks: bookmarksCount,
             likes: likesCount,
-            itemVotes: itemVotesCount,
+            itemLikes: itemLikesCount, // تعداد آیتم‌هایی که کاربر لایک کرده
           },
         },
       },

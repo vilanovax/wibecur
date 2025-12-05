@@ -40,6 +40,7 @@ export default async function ItemsPage() {
                   id: true,
                   title: true,
                   slug: true,
+                  categoryId: true,
                   categories: {
                     select: {
                       id: true,

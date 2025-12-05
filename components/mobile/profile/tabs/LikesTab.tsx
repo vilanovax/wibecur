@@ -2,17 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { categories, lists } from '@prisma/client';
-
-type ListWithCategory = lists & {
-  categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'>;
-  _count: {
-    items: number;
-    list_likes: number;
-    bookmarks: number;
-  };
-};
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { categories } from '@prisma/client';
 
 interface Activity {
   id: string;
@@ -20,6 +11,7 @@ interface Activity {
   title: string;
   description: string;
   image: string | null;
+  itemId?: string;
   slug?: string;
   category: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'>;
   createdAt: string;
@@ -71,54 +63,59 @@ export default function LikesTab({ userId }: LikesTabProps) {
   if (likes.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl">
-        <p className="text-gray-500">هنوز لیستی لایک نکرده‌اید</p>
+        <p className="text-gray-500">هنوز آیتمی لایک نکرده‌اید</p>
       </div>
     );
   }
 
-  const displayedLikes = showAll ? likes : likes.slice(0, 4);
+  const displayedLikes = showAll ? likes : likes.slice(0, 8);
 
   return (
-    <div className="space-y-4">
-      {displayedLikes.map((like) => (
-        <Link
-          key={like.id}
-          href={`/lists/${like.slug || like.title.replace(/\s+/g, '-').toLowerCase()}`}
-          className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
-        >
-          {like.image && (
-            <div className="relative h-48">
-              <Image
-                src={like.image}
-                alt={like.title}
-                fill
-                className="object-cover"
-                unoptimized={true}
-              />
-            </div>
-          )}
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">{like.category.icon}</span>
-              <span className="text-xs text-gray-500">{like.category.name}</span>
-              <span className="ml-auto text-xs text-gray-400">❤️ لایک شده</span>
-            </div>
-            <h3 className="font-bold text-lg mb-2">{like.title}</h3>
-            {like.description && (
-              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                {like.description}
-              </p>
+    <div>
+      <div className="grid grid-cols-2 gap-4">
+        {displayedLikes.map((like) => (
+          <Link
+            key={like.id}
+            href={`/items/${like.itemId || like.id}`}
+            className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
+          >
+            {like.image ? (
+              <div className="relative h-40 bg-gradient-to-br from-purple-100 to-blue-100">
+                <ImageWithFallback
+                  src={like.image}
+                  alt={like.title}
+                  className="w-full h-full object-cover"
+                  fallbackIcon={like.category.icon}
+                  fallbackClassName="h-full w-full"
+                />
+              </div>
+            ) : (
+              <div className="relative h-40 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                <span className="text-4xl">{like.category.icon}</span>
+              </div>
             )}
-          </div>
-        </Link>
-      ))}
+            <div className="p-3">
+              <div className="flex items-center gap-1 mb-2">
+                <span className="text-sm">{like.category.icon}</span>
+                <span className="text-xs text-gray-500 truncate">{like.category.name}</span>
+              </div>
+              <h3 className="font-bold text-sm mb-1 line-clamp-2 leading-tight">{like.title}</h3>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-red-500 flex items-center gap-1">
+                  <span>❤️</span>
+                </span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
 
-      {!showAll && likes.length > 4 && (
+      {!showAll && likes.length > 8 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
         >
-          مشاهده بیشتر ({likes.length - 4} مورد دیگر)
+          مشاهده بیشتر ({likes.length - 8} مورد دیگر)
         </button>
       )}
     </div>

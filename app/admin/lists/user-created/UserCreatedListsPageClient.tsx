@@ -6,6 +6,7 @@ import { Trash2, Edit, CheckCircle, XCircle, AlertTriangle, Eye } from 'lucide-r
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import Link from 'next/link';
+import Image from 'next/image';
 import Pagination from '@/components/admin/shared/Pagination';
 import ListItemsModal from '@/components/admin/lists/ListItemsModal';
 
@@ -28,7 +29,7 @@ interface List {
     slug: string;
     icon: string;
     color: string;
-  };
+  } | null;
   users: {
     id: string;
     name: string | null;
@@ -196,7 +197,7 @@ export default function UserCreatedListsPageClient({
       title: list.title,
       description: list.description || '',
       coverImage: list.coverImage || '',
-      categoryId: list.categories.id,
+      categoryId: list.categories?.id || '',
       isPublic: list.isPublic,
       isActive: list.isActive,
       commentsEnabled: list.commentsEnabled ?? true,
@@ -269,6 +270,16 @@ export default function UserCreatedListsPageClient({
             عمومی
           </button>
           <button
+            onClick={() => handleFilterChange('private')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filter === 'private'
+                ? 'bg-purple-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            خصوصی
+          </button>
+          <button
             onClick={() => handleFilterChange('inactive')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'inactive'
@@ -298,140 +309,144 @@ export default function UserCreatedListsPageClient({
         </form>
       </div>
 
-      {/* Lists Table */}
+      {/* Lists Grid */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  عنوان
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  خالق
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  دسته‌بندی
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  آیتم‌ها
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  وضعیت
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  عملیات
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {localLists.map((list) => (
-                <tr key={list.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {editingId === list.id ? (
-                      <input
-                        type="text"
-                        value={editForm.title}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, title: e.target.value })
-                        }
-                        className="w-full px-2 py-1 border border-gray-300 rounded"
-                      />
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {list.hasBadWord && (
-                          <AlertTriangle className="w-4 h-4 text-red-500" />
-                        )}
-                        <span className="font-medium text-gray-900">
-                          {highlightBadWords(list.title)}
-                        </span>
-                      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
+          {localLists.map((list) => (
+            <div
+              key={list.id}
+              className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all"
+            >
+              {/* Cover Image */}
+              {list.coverImage ? (
+                <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100">
+                  <Image
+                    src={list.coverImage}
+                    alt={list.title}
+                    fill
+                    className="object-cover"
+                    unoptimized={true}
+                  />
+                </div>
+              ) : (
+                <div className="h-48 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                  <span className="text-6xl">
+                    {list.categories?.icon || '📋'}
+                  </span>
+                </div>
+              )}
+
+              {/* Content */}
+              <div className="p-4">
+                {/* Title */}
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-bold text-lg text-gray-900 line-clamp-2 flex-1">
+                    {list.hasBadWord && (
+                      <AlertTriangle className="w-4 h-4 text-red-500 inline ml-1" />
                     )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {highlightBadWords(list.title)}
+                  </h3>
+                </div>
+
+                {/* Category & Creator */}
+                <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
+                  <span className="text-lg">
+                    {list.categories?.icon || '📋'}
+                  </span>
+                  <span className="text-xs">
+                    {list.categories?.name || 'بدون دسته‌بندی'}
+                  </span>
+                  <span className="text-gray-300 mx-1">•</span>
+                  <span className="text-xs">
                     {list.users.name || list.users.email.split('@')[0]}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm">{list.categories.icon}</span>
-                    <span className="text-sm text-gray-700 mr-1">
-                      {list.categories.name}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {list.itemCount ?? list._count.items}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col gap-1">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          list.isPublic
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
+                  </span>
+                </div>
+
+                {/* Description */}
+                {list.description && (
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                    {list.description}
+                  </p>
+                )}
+
+                {/* Stats */}
+                <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                  <span>📋 {list.itemCount ?? list._count.items} آیتم</span>
+                </div>
+
+                {/* Status Badges */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      list.isPublic
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-purple-100 text-purple-800'
+                    }`}
+                  >
+                    {list.isPublic ? 'عمومی' : 'خصوصی'}
+                  </span>
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      list.isActive
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {list.isActive ? 'فعال' : 'غیرفعال'}
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
+                  {editingId === list.id ? (
+                    <>
+                      <button
+                        onClick={() => handleSaveEdit(list.id)}
+                        className="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
                       >
-                        {list.isPublic ? 'عمومی' : 'شخصی'}
-                      </span>
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          list.isActive
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
+                        ذخیره
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
                       >
-                        {list.isActive ? 'فعال' : 'غیرفعال'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      {editingId === list.id ? (
-                        <>
-                          <button
-                            onClick={() => handleSaveEdit(list.id)}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            <CheckCircle className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="text-gray-600 hover:text-gray-900"
-                          >
-                            <XCircle className="w-5 h-5" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => {
-                              setViewingListId(list.id);
-                              setViewingListTitle(list.title);
-                            }}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="مشاهده آیتم‌ها"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(list)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(list.id)}
-                            disabled={deletingId === list.id}
-                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        لغو
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setViewingListId(list.id);
+                          setViewingListTitle(list.title);
+                        }}
+                        className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm flex items-center justify-center gap-1"
+                        title="مشاهده آیتم‌ها"
+                      >
+                        <Eye className="w-4 h-4" />
+                        مشاهده
+                      </button>
+                      <button
+                        onClick={() => handleEdit(list)}
+                        className="px-3 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
+                        title="ویرایش"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(list.id)}
+                        disabled={deletingId === list.id}
+                        className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                        title="حذف"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {localLists.length === 0 && (

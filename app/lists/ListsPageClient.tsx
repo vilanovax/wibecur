@@ -6,6 +6,7 @@ import { lists, categories } from '@prisma/client';
 import FloatingActionButton from '@/components/mobile/lists/FloatingActionButton';
 import SuggestModal from '@/components/mobile/lists/SuggestModal';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 type ListWithCategory = lists & {
   categories: categories;
@@ -197,22 +198,12 @@ export default function ListsPageClient({ lists, categories }: ListsPageClientPr
               {/* Cover Image */}
               {list.coverImage ? (
                 <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden">
-                  <img
+                  <ImageWithFallback
                     src={list.coverImage}
                     alt={list.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      // Replace with fallback on error
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      const parent = target.parentElement;
-                      if (parent && !parent.querySelector('.fallback-icon')) {
-                        const fallback = document.createElement('div');
-                        fallback.className = 'h-full w-full flex items-center justify-center fallback-icon';
-                        fallback.innerHTML = `<span class="text-6xl">${list.categories.icon}</span>`;
-                        parent.appendChild(fallback);
-                      }
-                    }}
+                    fallbackIcon={list.categories.icon}
+                    fallbackClassName="h-full w-full"
                   />
                   {/* Bookmark Button */}
                   <div className="absolute top-3 right-3 z-20">

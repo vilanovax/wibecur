@@ -13,7 +13,7 @@ interface UserProfile {
     listsCreated: number;
     bookmarks: number;
     likes: number;
-    itemVotes: number;
+    itemLikes: number;
   };
 }
 

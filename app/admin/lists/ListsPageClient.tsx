@@ -24,7 +24,7 @@ type ListWithRelations = Pick<lists,
   | 'saveCount'
   | 'itemCount'
 > & {
-  categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'>;
+  categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'> | null;
   users: Pick<users, 'id' | 'name' | 'email' | 'role'>;
 };
 
@@ -271,9 +271,9 @@ export default function ListsPageClient({
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">{list.categories.icon}</span>
+                      <span className="text-xl">{list.categories?.icon || '📋'}</span>
                       <span className="text-xs text-gray-500">
-                        {list.categories.name}
+                        {list.categories?.name || 'بدون دسته‌بندی'}
                       </span>
                     </div>
                     <span
@@ -329,9 +329,9 @@ export default function ListsPageClient({
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{list.categories.icon}</span>
+                      <span className="text-lg">{list.categories?.icon || '📋'}</span>
                       <span className="text-xs text-gray-500">
-                        {list.categories.name}
+                        {list.categories?.name || 'بدون دسته‌بندی'}
                       </span>
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${

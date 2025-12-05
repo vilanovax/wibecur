@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -93,21 +94,12 @@ export default async function ListDetailPage({
         {/* Cover Image */}
         {list.coverImage && (
           <div className="relative h-64 bg-gradient-to-br from-purple-100 to-blue-100">
-            <img
+            <ImageWithFallback
               src={list.coverImage}
               alt={list.title}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const parent = target.parentElement;
-                if (parent && !parent.querySelector('.fallback-icon')) {
-                  const fallback = document.createElement('div');
-                  fallback.className = 'h-full w-full flex items-center justify-center fallback-icon';
-                  fallback.innerHTML = `<span class="text-6xl">${list.categories.icon}</span>`;
-                  parent.appendChild(fallback);
-                }
-              }}
+              fallbackIcon={list.categories.icon}
+              fallbackClassName="h-full w-full"
             />
             {list.isFeatured && (
               <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
@@ -169,9 +161,6 @@ export default async function ListDetailPage({
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <button className="flex-1 bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/30">
-              ❤️ لایک
-            </button>
             <BookmarkButton
               listId={list.id}
               initialBookmarkCount={list.saveCount ?? 0}

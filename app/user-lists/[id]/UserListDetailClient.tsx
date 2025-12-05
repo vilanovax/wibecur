@@ -188,9 +188,6 @@ export default function UserListDetailClient({
             {/* Action Buttons */}
             {list.isPublic && (
               <div className="flex gap-3">
-                <button className="flex-1 bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/30">
-                  ❤️ لایک
-                </button>
                 <BookmarkButton
                   listId={list.id}
                   initialBookmarkCount={list.saveCount ?? 0}

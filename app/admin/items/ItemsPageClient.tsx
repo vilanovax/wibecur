@@ -8,12 +8,12 @@ import { Item, List, Category } from '@prisma/client';
 
 type ItemWithRelations = Item & {
   lists: List & {
-    categories: Category;
+    categories: Category | null;
   };
 };
 
 type ListWithCategory = List & {
-  categories: Category;
+  categories: Category | null;
 };
 
 interface ItemsPageClientProps {
@@ -36,13 +36,21 @@ export default function ItemsPageClient({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Get unique categories from lists
+  // Get unique categories from lists (filter out lists without categories)
   const categories = Array.from(
-    new Map(lists.map((list) => [list.categories.id, list.categories])).values()
+    new Map(
+      lists
+        .filter((list) => list.categories !== null)
+        .map((list) => [list.categories!.id, list.categories!])
+    ).values()
   );
 
   // Filter items by category first, then by list
   const filteredItems = items.filter((item) => {
+    // Skip items whose list doesn't have a category (personal lists)
+    if (!item.lists.categories) {
+      return false;
+    }
     const categoryMatch =
       selectedCategory === 'all' ||
       item.lists.categories.id === selectedCategory;
@@ -67,7 +75,7 @@ export default function ItemsPageClient({
   const filteredLists =
     selectedCategory === 'all'
       ? lists
-      : lists.filter((list) => list.categories.id === selectedCategory);
+      : lists.filter((list) => list.categories?.id === selectedCategory);
 
   const handleDelete = async (id: string) => {
     if (!confirm('آیا از حذف این آیتم اطمینان دارید؟')) return;
@@ -133,7 +141,7 @@ export default function ItemsPageClient({
           </button>
           {categories.map((category) => {
             const count = items.filter(
-              (item) => item.lists.categories.id === category.id
+              (item) => item.lists.categories?.id === category.id
             ).length;
             return (
               <button
@@ -173,7 +181,7 @@ export default function ItemsPageClient({
             {selectedCategory === 'all'
               ? `همه لیست‌ها (${items.length})`
               : `همه لیست‌های این دسته (${items.filter(item => 
-                  selectedCategory === 'all' || item.lists.categories.id === selectedCategory
+                  selectedCategory === 'all' || item.lists.categories?.id === selectedCategory
                 ).length})`}
           </option>
           {filteredLists.map((list) => {
@@ -184,14 +192,14 @@ export default function ItemsPageClient({
             const visibleCount = selectedCategory === 'all' 
               ? totalCount
               : items.filter((item) => {
-                  const categoryMatch = item.lists.categories.id === selectedCategory;
+                  const categoryMatch = item.lists.categories?.id === selectedCategory;
                   const listMatch = item.listId === list.id;
                   return categoryMatch && listMatch;
                 }).length;
             
             return (
               <option key={list.id} value={list.id}>
-                {list.categories.icon} {list.title} ({selectedCategory === 'all' ? totalCount : visibleCount})
+                {list.categories?.icon || '📋'} {list.title} ({selectedCategory === 'all' ? totalCount : visibleCount})
               </option>
             );
           })}
@@ -236,7 +244,7 @@ export default function ItemsPageClient({
               <div className="p-4">
                 {/* List & Category Badge */}
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm">{item.lists.categories.icon}</span>
+                  <span className="text-sm">{item.lists.categories?.icon || '📋'}</span>
                   <span className="text-xs text-gray-500">
                     {item.lists.title}
                   </span>
@@ -256,7 +264,7 @@ export default function ItemsPageClient({
                 {/* Metadata */}
                 {item.metadata && Object.keys(item.metadata).length > 0 && (
                   <div className="bg-gray-50 rounded-lg p-3 mb-3 text-sm">
-                    {renderMetadata(item.metadata, item.lists.categories.slug)}
+                    {item.lists.categories && renderMetadata(item.metadata, item.lists.categories.slug)}
                   </div>
                 )}
 

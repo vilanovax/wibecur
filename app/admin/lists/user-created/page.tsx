@@ -63,9 +63,13 @@ export default async function UserCreatedListsPage({
   } else if (filter === 'public') {
     where.isPublic = true;
     where.isActive = true;
+  } else if (filter === 'private') {
+    where.isPublic = false;
+    where.isActive = true;
   } else if (filter === 'inactive') {
     where.isActive = false;
   }
+  // For 'all' filter, show all lists (no additional filter conditions)
 
   if (search) {
     where.OR = [

@@ -92,22 +92,26 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // دریافت لایک‌ها
+    // دریافت لایک‌های آیتم‌ها (نه لیست‌ها)
     if (type === 'all' || type === 'likes') {
-      const likes = await prisma.list_likes.findMany({
+      const itemLikes = await prisma.item_votes.findMany({
         where: { userId },
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          lists: {
+          items: {
             include: {
-              categories: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  icon: true,
-                  color: true,
+              lists: {
+                include: {
+                  categories: {
+                    select: {
+                      id: true,
+                      name: true,
+                      slug: true,
+                      icon: true,
+                      color: true,
+                    },
+                  },
                 },
               },
             },
@@ -115,15 +119,16 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      likes.forEach((like) => {
+      itemLikes.forEach((like) => {
         activities.push({
-          id: `like-${like.id}`,
-          type: 'like',
-          title: like.lists.title,
-          description: like.lists.description || '',
-          image: like.lists.coverImage,
-          slug: like.lists.slug,
-          category: like.lists.categories,
+          id: `item-like-${like.id}`,
+          type: 'item_like',
+          title: like.items.title,
+          description: like.items.description || '',
+          image: like.items.imageUrl,
+          itemId: like.items.id,
+          slug: like.items.lists.slug, // لیست مربوطه
+          category: like.items.lists.categories,
           createdAt: like.createdAt,
         });
       });

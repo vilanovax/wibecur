@@ -18,7 +18,7 @@ interface ProfileHeaderProps {
       listsCreated: number;
       bookmarks: number;
       likes: number;
-      itemVotes: number;
+      itemLikes: number;
     };
   };
   onUpdate: () => void;
@@ -92,7 +92,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 pt-6 border-t border-gray-200">
+        <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900">
               {user.stats.listsCreated}
@@ -107,15 +107,9 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900">
-              {user.stats.likes}
+              {user.stats.itemLikes ?? 0}
             </div>
             <div className="text-xs text-gray-600 mt-1">لایک</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              {user.stats.itemVotes}
-            </div>
-            <div className="text-xs text-gray-600 mt-1">رأی</div>
           </div>
         </div>
       </div>
