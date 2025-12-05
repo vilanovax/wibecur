@@ -11,6 +11,11 @@ export async function GET(request: NextRequest) {
     const where: any = {
       isActive: true,
       isPublic: true,
+      users: {
+        role: {
+          not: 'USER', // Only show lists created by admins (ADMIN or EDITOR)
+        },
+      },
     };
 
     if (categoryId) {

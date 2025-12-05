@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 
 interface FloatingActionButtonProps {
   onClick: () => void;
+  label?: string;
 }
 
 export default function FloatingActionButton({ onClick }: FloatingActionButtonProps) {

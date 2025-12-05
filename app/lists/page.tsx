@@ -10,11 +10,17 @@ export const metadata = {
 
 export default async function ListsPage() {
   // Fetch lists and categories from database
+  // Only show lists created by admins, not users
   const [lists, categories] = await Promise.all([
     prisma.lists.findMany({
       where: {
         isActive: true,
         isPublic: true,
+        users: {
+          role: {
+            not: 'USER', // Only show lists created by admins (ADMIN or EDITOR)
+          },
+        },
       },
       select: {
         id: true,
@@ -34,6 +40,11 @@ export default async function ListsPage() {
         createdAt: true,
         updatedAt: true,
         categories: true,
+        users: {
+          select: {
+            role: true,
+          },
+        },
         _count: {
           select: {
             items: true,

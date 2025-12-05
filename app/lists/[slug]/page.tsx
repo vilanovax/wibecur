@@ -58,6 +58,7 @@ export default async function ListDetailPage({
         select: {
           name: true,
           email: true,
+          role: true,
         },
       },
       _count: {
@@ -71,6 +72,11 @@ export default async function ListDetailPage({
 
   if (!list || !list.isActive || !list.isPublic) {
     notFound();
+  }
+
+  // Check if list is created by a user (not admin) - if so, don't show it here
+  if (list.users?.role === 'USER') {
+    notFound(); // Don't show user-created lists on the main lists page
   }
 
   // Increment view count (in background)
@@ -87,12 +93,21 @@ export default async function ListDetailPage({
         {/* Cover Image */}
         {list.coverImage && (
           <div className="relative h-64 bg-gradient-to-br from-purple-100 to-blue-100">
-            <Image
+            <img
               src={list.coverImage}
               alt={list.title}
-              fill
-              className="object-cover"
-              unoptimized={true}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent && !parent.querySelector('.fallback-icon')) {
+                  const fallback = document.createElement('div');
+                  fallback.className = 'h-full w-full flex items-center justify-center fallback-icon';
+                  fallback.innerHTML = `<span class="text-6xl">${list.categories.icon}</span>`;
+                  parent.appendChild(fallback);
+                }
+              }}
             />
             {list.isFeatured && (
               <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg">

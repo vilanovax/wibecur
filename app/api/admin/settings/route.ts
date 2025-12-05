@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { getDecryptedSettings, updateSettings } from '@/lib/settings';
+import { prisma } from '@/lib/prisma';
 
 // GET /api/admin/settings
 export async function GET(request: NextRequest) {
@@ -23,6 +24,11 @@ export async function GET(request: NextRequest) {
     const settings = await getDecryptedSettings();
     console.log('Settings fetched successfully:', Object.keys(settings));
 
+    // Get raw settings for non-encrypted fields
+    const rawSettings = await prisma.settings.findUnique({
+      where: { id: 'settings' },
+    });
+
     // Mask sensitive keys (show only first/last few characters)
     const maskedSettings = {
       openaiApiKey: settings.openaiApiKey
@@ -40,9 +46,12 @@ export async function GET(request: NextRequest) {
       liaraSecretKey: settings.liaraSecretKey
         ? maskApiKey(settings.liaraSecretKey)
         : null,
+      minItemsForPublicList: rawSettings?.minItemsForPublicList ?? 5,
+      maxPersonalLists: rawSettings?.maxPersonalLists ?? 3,
+      personalListPublicInstructions: rawSettings?.personalListPublicInstructions ?? null,
     };
 
-    return NextResponse.json(maskedSettings);
+    return NextResponse.json({ success: true, data: maskedSettings });
   } catch (error: any) {
     console.error('Error fetching settings:', error);
     return NextResponse.json(
@@ -75,6 +84,9 @@ export async function PUT(request: NextRequest) {
       liaraEndpoint,
       liaraAccessKey,
       liaraSecretKey,
+      minItemsForPublicList,
+      maxPersonalLists,
+      personalListPublicInstructions,
     } = body;
 
     await updateSettings({
@@ -87,6 +99,9 @@ export async function PUT(request: NextRequest) {
       liaraEndpoint,
       liaraAccessKey,
       liaraSecretKey,
+      minItemsForPublicList,
+      maxPersonalLists,
+      personalListPublicInstructions,
     });
 
     return NextResponse.json({ success: true });

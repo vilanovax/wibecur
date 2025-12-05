@@ -11,7 +11,17 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
       url: process.env.DATABASE_URL,
     },
   },
+  // Optimize connection pool settings
+  // Connection pool timeout in milliseconds (default: 10 seconds)
+  // This helps prevent "Timed out fetching a new connection" errors
 });
+
+// Configure connection pool settings via DATABASE_URL query parameters if not already set
+if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('connection_limit')) {
+  // Note: Connection pool parameters should be set in DATABASE_URL as query parameters
+  // Example: postgresql://user:pass@host:port/db?connection_limit=20&pool_timeout=20
+  // For Liara PostgreSQL, check their documentation for optimal pool settings
+}
 
 // Optimize connection pool settings
 if (globalForPrisma.prisma) {

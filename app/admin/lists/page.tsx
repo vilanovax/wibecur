@@ -59,6 +59,7 @@ export default async function ListsPage({
             id: true,
             name: true,
             email: true,
+            role: true, // Add role to differentiate admin and user lists
           },
         },
       },

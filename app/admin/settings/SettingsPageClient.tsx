@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Key, Database, CheckCircle, XCircle, Loader2, MessageSquare } from 'lucide-react';
+import { Settings, Key, Database, CheckCircle, XCircle, Loader2, MessageSquare, List } from 'lucide-react';
 
 interface SettingsData {
   openaiApiKey: string | null;
@@ -13,6 +13,9 @@ interface SettingsData {
   liaraEndpoint: string | null;
   liaraAccessKey: string | null;
   liaraSecretKey: string | null;
+  minItemsForPublicList: number;
+  maxPersonalLists: number;
+  personalListPublicInstructions: string | null;
 }
 
 export default function SettingsPageClient() {
@@ -26,6 +29,9 @@ export default function SettingsPageClient() {
     liaraEndpoint: null,
     liaraAccessKey: null,
     liaraSecretKey: null,
+    minItemsForPublicList: 5,
+    maxPersonalLists: 3,
+    personalListPublicInstructions: null,
   });
 
   const [formData, setFormData] = useState<SettingsData>({
@@ -38,6 +44,9 @@ export default function SettingsPageClient() {
     liaraEndpoint: '',
     liaraAccessKey: '',
     liaraSecretKey: '',
+    minItemsForPublicList: 5,
+    maxPersonalLists: 3,
+    personalListPublicInstructions: '',
   });
 
   const [loading, setLoading] = useState(true);
@@ -133,6 +142,9 @@ export default function SettingsPageClient() {
         liaraEndpoint: data.liaraEndpoint || '',
         liaraAccessKey: '',
         liaraSecretKey: '',
+        minItemsForPublicList: data.minItemsForPublicList || 5,
+        maxPersonalLists: data.maxPersonalLists || 3,
+        personalListPublicInstructions: data.personalListPublicInstructions || '',
       });
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message });
@@ -158,6 +170,9 @@ export default function SettingsPageClient() {
       if (formData.liaraEndpoint?.trim()) dataToSend.liaraEndpoint = formData.liaraEndpoint;
       if (formData.liaraAccessKey?.trim()) dataToSend.liaraAccessKey = formData.liaraAccessKey;
       if (formData.liaraSecretKey?.trim()) dataToSend.liaraSecretKey = formData.liaraSecretKey;
+      if (formData.minItemsForPublicList !== undefined) dataToSend.minItemsForPublicList = formData.minItemsForPublicList;
+      if (formData.maxPersonalLists !== undefined) dataToSend.maxPersonalLists = formData.maxPersonalLists;
+      if (formData.personalListPublicInstructions !== undefined) dataToSend.personalListPublicInstructions = formData.personalListPublicInstructions || null;
 
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
@@ -660,6 +675,81 @@ export default function SettingsPageClient() {
                   'ذخیره تنظیمات کامنت'
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* User Lists Settings */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <List className="w-5 h-5 text-gray-700" />
+            <h2 className="text-xl font-semibold text-gray-900">تنظیمات لیست‌های کاربران</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                حداقل تعداد آیتم برای عمومی شدن لیست
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={formData.minItemsForPublicList}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    minItemsForPublicList: parseInt(e.target.value) || 5,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                کاربران باید حداقل این تعداد آیتم به لیست خود اضافه کنند تا بتوانند لیست را عمومی کنند
+              </p>
+            </div>
+
+            {/* Max Personal Lists */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                حداکثر تعداد لیست‌های خصوصی برای هر کاربر
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={formData.maxPersonalLists}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    maxPersonalLists: parseInt(e.target.value) || 3,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                حداکثر تعداد لیست‌های خصوصی که هر کاربر می‌تواند ایجاد کند
+              </p>
+            </div>
+
+            {/* Personal List Public Instructions */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                پیام راهنمایی برای عمومی شدن لیست
+              </label>
+              <textarea
+                value={formData.personalListPublicInstructions || ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    personalListPublicInstructions: e.target.value,
+                  })
+                }
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                placeholder="پیام راهنمایی که به کاربران نمایش داده می‌شود هنگام عمومی کردن لیست..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                این پیام در صفحه تنظیمات لیست برای کاربر نمایش داده می‌شود
+              </p>
             </div>
           </div>
         </div>

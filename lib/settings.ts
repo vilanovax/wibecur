@@ -40,6 +40,7 @@ export async function getDecryptedSettings() {
     liaraSecretKey: settings.liaraSecretKey
       ? decrypt(settings.liaraSecretKey)
       : null,
+    minItemsForPublicList: settings.minItemsForPublicList ?? 5,
   };
 }
 
@@ -56,6 +57,9 @@ export async function updateSettings(data: {
   liaraEndpoint?: string;
   liaraAccessKey?: string;
   liaraSecretKey?: string;
+  minItemsForPublicList?: number;
+  maxPersonalLists?: number;
+  personalListPublicInstructions?: string | null;
 }) {
   const updateData: any = {};
 
@@ -99,6 +103,18 @@ export async function updateSettings(data: {
     updateData.liaraSecretKey = data.liaraSecretKey
       ? encrypt(data.liaraSecretKey)
       : null;
+  }
+
+  if (data.minItemsForPublicList !== undefined) {
+    updateData.minItemsForPublicList = data.minItemsForPublicList;
+  }
+
+  if (data.maxPersonalLists !== undefined) {
+    updateData.maxPersonalLists = data.maxPersonalLists;
+  }
+
+  if (data.personalListPublicInstructions !== undefined) {
+    updateData.personalListPublicInstructions = data.personalListPublicInstructions || null;
   }
 
   return await prisma.settings.update({

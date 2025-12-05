@@ -5,7 +5,7 @@ import { cache } from 'react';
 export async function dbQuery<T>(
   queryFn: () => Promise<T>,
   retries = 2,
-  delay = 500
+  delay = 1000
 ): Promise<T> {
   for (let i = 0; i < retries; i++) {
     try {
@@ -13,24 +13,32 @@ export async function dbQuery<T>(
     } catch (error: any) {
       const isLastAttempt = i === retries - 1;
       
+      // Check for connection pool timeout errors
+      const isConnectionPoolError = 
+        error?.code === 'P1001' || // Can't reach database
+        error?.code === 'P1008' || // Operations timed out
+        error?.message?.includes("Can't reach database") ||
+        error?.message?.includes("connection pool") ||
+        error?.message?.includes("Timed out fetching") ||
+        error?.kind === 'Closed';
+      
       // Only retry connection errors
-      if (error?.code === 'P1001' || 
-          error?.code === 'P1008' ||
-          error?.message?.includes("Can't reach database") ||
-          error?.kind === 'Closed') {
+      if (isConnectionPoolError) {
         if (isLastAttempt) {
-          // Try to reconnect once more
+          // Try to reconnect once more with a delay
           try {
+            await new Promise((resolve) => setTimeout(resolve, delay * 2));
+            await prisma.$disconnect();
             await prisma.$connect();
             return await queryFn();
           } catch {
             throw new Error(
-              'خطا در اتصال به دیتابیس. لطفاً اتصال اینترنت و تنظیمات دیتابیس را بررسی کنید.'
+              'خطا در اتصال به دیتابیس. ممکن است connection pool اشباع شده باشد. لطفاً لحظه‌ای صبر کنید و دوباره تلاش کنید.'
             );
           }
         }
-        // Wait before retrying (reduced delay)
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        // Wait before retrying with exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
         continue;
       }
       

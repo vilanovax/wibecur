@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, Edit, CheckCircle, XCircle, Trash2, Loader2 } from 'lucide-react';
+import { Eye, Edit, CheckCircle, XCircle, Trash2, Loader2, ArrowUpDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import EditItemSuggestionModal from './EditItemSuggestionModal';
@@ -46,6 +46,8 @@ interface ItemSuggestionsTableProps {
   onPageChange: (page: number) => void;
 }
 
+type SortOrder = 'newest' | 'oldest';
+
 export default function ItemSuggestionsTable({
   status,
   currentPage,
@@ -56,6 +58,7 @@ export default function ItemSuggestionsTable({
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [selectedSuggestion, setSelectedSuggestion] = useState<ItemSuggestion | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -65,7 +68,7 @@ export default function ItemSuggestionsTable({
 
   useEffect(() => {
     fetchSuggestions();
-  }, [status, currentPage]);
+  }, [status, currentPage, sortOrder]);
 
   const fetchSuggestions = async () => {
     setLoading(true);
@@ -73,6 +76,7 @@ export default function ItemSuggestionsTable({
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '20',
+        sort: sortOrder,
       });
       if (status) {
         params.set('status', status);
@@ -162,6 +166,35 @@ export default function ItemSuggestionsTable({
 
   return (
     <>
+      {/* Sort Controls */}
+      <div className="mb-4 flex items-center justify-end gap-2">
+        <label className="text-sm font-medium text-gray-700">مرتب‌سازی:</label>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSortOrder('newest')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+              sortOrder === 'newest'
+                ? 'bg-primary text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <ArrowUpDown className="w-4 h-4" />
+            جدیدترین
+          </button>
+          <button
+            onClick={() => setSortOrder('oldest')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+              sortOrder === 'oldest'
+                ? 'bg-primary text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <ArrowUpDown className="w-4 h-4 rotate-180" />
+            قدیمی‌ترین
+          </button>
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

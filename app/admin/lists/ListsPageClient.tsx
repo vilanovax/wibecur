@@ -25,7 +25,7 @@ type ListWithRelations = Pick<lists,
   | 'itemCount'
 > & {
   categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'>;
-  users: Pick<users, 'id' | 'name' | 'email'>;
+  users: Pick<users, 'id' | 'name' | 'email' | 'role'>;
 };
 
 interface ListsPageClientProps {

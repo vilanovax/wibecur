@@ -20,6 +20,7 @@ async function exportDatabase() {
         emailVerified: true,
         image: true,
         role: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true,
         // password excluded for security
@@ -125,6 +126,70 @@ async function exportDatabase() {
       googleApiKey: null,
     }));
     console.log(`✅ Exported ${settings.length} settings (sensitive keys excluded)`);
+
+    // Suggested Lists
+    try {
+      const suggestedLists = await prisma.suggested_lists.findMany();
+      data.suggestedLists = suggestedLists;
+      console.log(`✅ Exported ${suggestedLists.length} suggested lists`);
+    } catch (error) {
+      console.warn('⚠️  Could not export suggested_lists (table may not exist):', error);
+      data.suggestedLists = [];
+    }
+
+    // Suggested Items
+    try {
+      const suggestedItems = await prisma.suggested_items.findMany();
+      data.suggestedItems = suggestedItems;
+      console.log(`✅ Exported ${suggestedItems.length} suggested items`);
+    } catch (error) {
+      console.warn('⚠️  Could not export suggested_items (table may not exist):', error);
+      data.suggestedItems = [];
+    }
+
+    // Notifications
+    try {
+      const notifications = await prisma.notifications.findMany();
+      data.notifications = notifications;
+      console.log(`✅ Exported ${notifications.length} notifications`);
+    } catch (error) {
+      console.warn('⚠️  Could not export notifications (table may not exist):', error);
+      data.notifications = [];
+    }
+
+    // List Comments
+    try {
+      const listComments = await prisma.list_comments.findMany({
+        where: {
+          deletedAt: null,
+        },
+      });
+      data.listComments = listComments;
+      console.log(`✅ Exported ${listComments.length} list comments`);
+    } catch (error) {
+      console.warn('⚠️  Could not export list_comments (table may not exist):', error);
+      data.listComments = [];
+    }
+
+    // List Comment Likes
+    try {
+      const listCommentLikes = await prisma.list_comment_likes.findMany();
+      data.listCommentLikes = listCommentLikes;
+      console.log(`✅ Exported ${listCommentLikes.length} list comment likes`);
+    } catch (error) {
+      console.warn('⚠️  Could not export list_comment_likes (table may not exist):', error);
+      data.listCommentLikes = [];
+    }
+
+    // List Comment Reports
+    try {
+      const listCommentReports = await prisma.list_comment_reports.findMany();
+      data.listCommentReports = listCommentReports;
+      console.log(`✅ Exported ${listCommentReports.length} list comment reports`);
+    } catch (error) {
+      console.warn('⚠️  Could not export list_comment_reports (table may not exist):', error);
+      data.listCommentReports = [];
+    }
 
     // Write to JSON file
     const exportPath = path.join(process.cwd(), 'prisma', 'seed-data.json');

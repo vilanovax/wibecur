@@ -188,7 +188,7 @@ model lists {
   slug             String            @unique
   description      String?
   coverImage       String?
-  categoryId       String
+  categoryId       String?
   userId           String
   badge            ListBadge?
   isPublic         Boolean           @default(true)
@@ -197,6 +197,7 @@ model lists {
   likeCount        Int               @default(0)
   saveCount        Int               @default(0)
   itemCount        Int               @default(0)
+  commentsEnabled  Boolean           @default(true)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   isActive         Boolean           @default(true)
@@ -204,7 +205,8 @@ model lists {
   items            items[]
   list_likes       list_likes[]
   suggested_items  suggested_items[]
-  categories       categories        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  list_comments    list_comments[]
+  categories       categories?       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   users            users             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
@@ -213,18 +215,21 @@ model lists {
 }
 
 model settings {
-  id                   String   @id @default("settings")
-  openaiApiKey         String?
-  tmdbApiKey           String?
-  liaraBucketName      String?
-  liaraEndpoint        String?
-  liaraAccessKey       String?
-  liaraSecretKey       String?
-  updatedAt            DateTime
-  createdAt            DateTime @default(now())
-  omdbApiKey           String?
-  googleApiKey         String?
-  googleSearchEngineId String?
+  id                           String   @id @default("settings")
+  openaiApiKey                 String?
+  tmdbApiKey                   String?
+  liaraBucketName              String?
+  liaraEndpoint                String?
+  liaraAccessKey               String?
+  liaraSecretKey               String?
+  updatedAt                    DateTime
+  createdAt                    DateTime @default(now())
+  omdbApiKey                   String?
+  googleApiKey                 String?
+  googleSearchEngineId         String?
+  minItemsForPublicList        Int      @default(5)
+  maxPersonalLists             Int      @default(3)
+  personalListPublicInstructions String?
 }
 
 model user_violations {
@@ -251,6 +256,7 @@ model users {
   image             String?
   password          String?
   role              UserRole            @default(USER)
+  isActive          Boolean             @default(true)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime
   bookmarks         bookmarks[]
@@ -266,6 +272,9 @@ model users {
   suggested_items   suggested_items[]
   suggested_lists   suggested_lists[]
   notifications     notifications[]
+  list_comment_likes list_comment_likes[]
+  list_comment_reports list_comment_reports[]
+  list_comments     list_comments[]
 }
 
 enum ListBadge {
@@ -345,4 +354,57 @@ model notifications {
   @@index([userId])
   @@index([read])
   @@index([createdAt])
+}
+
+model list_comments {
+  id                String              @id @default(cuid())
+  listId            String
+  userId            String
+  content           String
+  isFiltered        Boolean             @default(false)
+  isApproved        Boolean             @default(true)
+  likeCount         Int                 @default(0)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deletedAt         DateTime?
+  list_comment_likes list_comment_likes[]
+  list_comment_reports list_comment_reports[]
+  lists             lists               @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users             users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([isApproved])
+  @@index([isFiltered])
+  @@index([listId])
+  @@index([userId])
+}
+
+model list_comment_likes {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+  list_comments list_comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
+}
+
+model list_comment_reports {
+  id           String   @id @default(cuid())
+  commentId    String
+  userId       String
+  reason       String?
+  resolved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  penaltyScore Int?     @default(0)
+  list_comments list_comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([commentId])
+  @@index([resolved])
+  @@index([userId])
 }

@@ -130,6 +130,7 @@ export async function PUT(
             metadata: validatedMetadata,
             commentsEnabled: true,
             maxComments: null,
+            updatedAt: new Date(),
           },
         })
       );

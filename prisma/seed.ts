@@ -43,6 +43,7 @@ async function main() {
           emailVerified: user.emailVerified ? new Date(user.emailVerified) : null,
           image: user.image,
           role: user.role,
+          isActive: user.isActive !== undefined ? user.isActive : true,
           updatedAt: new Date(user.updatedAt),
         },
         create: {
@@ -53,6 +54,7 @@ async function main() {
           image: user.image,
           password: password,
           role: user.role,
+          isActive: user.isActive !== undefined ? user.isActive : true,
           createdAt: new Date(user.createdAt),
           updatedAt: new Date(user.updatedAt),
         },
@@ -478,6 +480,7 @@ async function main() {
           liaraBucketName: setting.liaraBucketName,
           liaraEndpoint: setting.liaraEndpoint,
           googleSearchEngineId: setting.googleSearchEngineId,
+          minItemsForPublicList: setting.minItemsForPublicList !== undefined ? setting.minItemsForPublicList : 5,
           updatedAt: new Date(setting.updatedAt),
         },
         create: {
@@ -485,6 +488,7 @@ async function main() {
           liaraBucketName: setting.liaraBucketName,
           liaraEndpoint: setting.liaraEndpoint,
           googleSearchEngineId: setting.googleSearchEngineId,
+          minItemsForPublicList: setting.minItemsForPublicList !== undefined ? setting.minItemsForPublicList : 5,
           createdAt: new Date(setting.createdAt),
           updatedAt: new Date(setting.updatedAt),
         },
@@ -524,6 +528,211 @@ async function main() {
       }
     }
     console.log('✅ Comment settings seeded');
+  }
+
+  // Seed Suggested Lists
+  if (exportedData?.suggestedLists && exportedData.suggestedLists.length > 0) {
+    console.log(`📦 Seeding ${exportedData.suggestedLists.length} suggested lists...`);
+    for (const suggestedList of exportedData.suggestedLists) {
+      try {
+        await prisma.suggested_lists.upsert({
+          where: { id: suggestedList.id },
+          update: {
+            userId: suggestedList.userId,
+            title: suggestedList.title,
+            description: suggestedList.description,
+            coverImage: suggestedList.coverImage,
+            categoryId: suggestedList.categoryId,
+            status: suggestedList.status,
+            adminNotes: suggestedList.adminNotes,
+            updatedAt: new Date(suggestedList.updatedAt),
+          },
+          create: {
+            id: suggestedList.id,
+            userId: suggestedList.userId,
+            title: suggestedList.title,
+            description: suggestedList.description,
+            coverImage: suggestedList.coverImage,
+            categoryId: suggestedList.categoryId,
+            status: suggestedList.status,
+            adminNotes: suggestedList.adminNotes,
+            createdAt: new Date(suggestedList.createdAt),
+            updatedAt: new Date(suggestedList.updatedAt),
+          },
+        });
+      } catch (error) {
+        console.warn('⚠️  Could not seed suggested_lists:', error);
+      }
+    }
+    console.log('✅ Suggested lists seeded');
+  }
+
+  // Seed Suggested Items
+  if (exportedData?.suggestedItems && exportedData.suggestedItems.length > 0) {
+    console.log(`📦 Seeding ${exportedData.suggestedItems.length} suggested items...`);
+    for (const suggestedItem of exportedData.suggestedItems) {
+      try {
+        await prisma.suggested_items.upsert({
+          where: { id: suggestedItem.id },
+          update: {
+            userId: suggestedItem.userId,
+            listId: suggestedItem.listId,
+            title: suggestedItem.title,
+            description: suggestedItem.description,
+            imageUrl: suggestedItem.imageUrl,
+            externalUrl: suggestedItem.externalUrl,
+            metadata: suggestedItem.metadata,
+            status: suggestedItem.status,
+            adminNotes: suggestedItem.adminNotes,
+            updatedAt: new Date(suggestedItem.updatedAt),
+          },
+          create: {
+            id: suggestedItem.id,
+            userId: suggestedItem.userId,
+            listId: suggestedItem.listId,
+            title: suggestedItem.title,
+            description: suggestedItem.description,
+            imageUrl: suggestedItem.imageUrl,
+            externalUrl: suggestedItem.externalUrl,
+            metadata: suggestedItem.metadata,
+            status: suggestedItem.status,
+            adminNotes: suggestedItem.adminNotes,
+            createdAt: new Date(suggestedItem.createdAt),
+            updatedAt: new Date(suggestedItem.updatedAt),
+          },
+        });
+      } catch (error) {
+        console.warn('⚠️  Could not seed suggested_items:', error);
+      }
+    }
+    console.log('✅ Suggested items seeded');
+  }
+
+  // Seed Notifications
+  if (exportedData?.notifications && exportedData.notifications.length > 0) {
+    console.log(`📦 Seeding ${exportedData.notifications.length} notifications...`);
+    for (const notification of exportedData.notifications) {
+      try {
+        await prisma.notifications.upsert({
+          where: { id: notification.id },
+          update: {
+            userId: notification.userId,
+            type: notification.type,
+            title: notification.title,
+            message: notification.message,
+            link: notification.link,
+            isRead: notification.isRead,
+            updatedAt: new Date(notification.updatedAt),
+          },
+          create: {
+            id: notification.id,
+            userId: notification.userId,
+            type: notification.type,
+            title: notification.title,
+            message: notification.message,
+            link: notification.link,
+            isRead: notification.isRead,
+            createdAt: new Date(notification.createdAt),
+            updatedAt: new Date(notification.updatedAt),
+          },
+        });
+      } catch (error) {
+        console.warn('⚠️  Could not seed notifications:', error);
+      }
+    }
+    console.log('✅ Notifications seeded');
+  }
+
+  // Seed List Comments
+  if (exportedData?.listComments && exportedData.listComments.length > 0) {
+    console.log(`📦 Seeding ${exportedData.listComments.length} list comments...`);
+    for (const comment of exportedData.listComments) {
+      try {
+        await prisma.list_comments.upsert({
+          where: { id: comment.id },
+          update: {
+            listId: comment.listId,
+            userId: comment.userId,
+            content: comment.content,
+            isFiltered: comment.isFiltered,
+            isApproved: comment.isApproved,
+            likeCount: comment.likeCount,
+            deletedAt: comment.deletedAt ? new Date(comment.deletedAt) : null,
+            updatedAt: new Date(comment.updatedAt),
+          },
+          create: {
+            id: comment.id,
+            listId: comment.listId,
+            userId: comment.userId,
+            content: comment.content,
+            isFiltered: comment.isFiltered,
+            isApproved: comment.isApproved,
+            likeCount: comment.likeCount,
+            deletedAt: comment.deletedAt ? new Date(comment.deletedAt) : null,
+            createdAt: new Date(comment.createdAt),
+            updatedAt: new Date(comment.updatedAt),
+          },
+        });
+      } catch (error) {
+        console.warn('⚠️  Could not seed list_comments:', error);
+      }
+    }
+    console.log('✅ List comments seeded');
+  }
+
+  // Seed List Comment Likes
+  if (exportedData?.listCommentLikes && exportedData.listCommentLikes.length > 0) {
+    console.log(`📦 Seeding ${exportedData.listCommentLikes.length} list comment likes...`);
+    for (const like of exportedData.listCommentLikes) {
+      try {
+        await prisma.list_comment_likes.upsert({
+          where: { id: like.id },
+          update: {},
+          create: {
+            id: like.id,
+            commentId: like.commentId,
+            userId: like.userId,
+            createdAt: new Date(like.createdAt),
+          },
+        });
+      } catch (error) {
+        console.warn('⚠️  Could not seed list_comment_likes:', error);
+      }
+    }
+    console.log('✅ List comment likes seeded');
+  }
+
+  // Seed List Comment Reports
+  if (exportedData?.listCommentReports && exportedData.listCommentReports.length > 0) {
+    console.log(`📦 Seeding ${exportedData.listCommentReports.length} list comment reports...`);
+    for (const report of exportedData.listCommentReports) {
+      try {
+        await prisma.list_comment_reports.upsert({
+          where: { id: report.id },
+          update: {
+            commentId: report.commentId,
+            userId: report.userId,
+            reason: report.reason,
+            resolved: report.resolved,
+            penaltyScore: report.penaltyScore,
+            updatedAt: new Date(report.updatedAt),
+          },
+          create: {
+            id: report.id,
+            commentId: report.commentId,
+            userId: report.userId,
+            reason: report.reason,
+            resolved: report.resolved,
+            penaltyScore: report.penaltyScore,
+            createdAt: new Date(report.createdAt),
+            updatedAt: new Date(report.updatedAt),
+          },
+        });
+      } catch (error) {
+        console.warn('⚠️  Could not seed list_comment_reports:', error);
+      }
+    }
+    console.log('✅ List comment reports seeded');
   }
 
   console.log('✅ Database seeding completed!');

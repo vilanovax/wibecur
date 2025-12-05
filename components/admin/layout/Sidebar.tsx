@@ -43,6 +43,10 @@ const menuItems = [
     icon: List,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
+    submenu: [
+      { href: '/admin/lists', label: 'همه لیست‌ها', icon: List },
+      { href: '/admin/lists/user-created', label: 'لیست‌های کاربران', icon: Users },
+    ],
   },
   {
     href: '/admin/items',
@@ -101,12 +105,15 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  // Auto-expand comments menu if on any comments page
+  // Auto-expand menus if on any subpage
   const shouldExpandComments = pathname?.startsWith('/admin/comments');
-  // Auto-expand suggestions menu if on any suggestions page
   const shouldExpandSuggestions = pathname?.startsWith('/admin/suggestions');
+  const shouldExpandLists = pathname?.startsWith('/admin/lists');
   const [expandedMenu, setExpandedMenu] = useState<string | null>(
-    shouldExpandComments ? '/admin/comments' : shouldExpandSuggestions ? '/admin/suggestions' : null
+    shouldExpandComments ? '/admin/comments' 
+    : shouldExpandSuggestions ? '/admin/suggestions'
+    : shouldExpandLists ? '/admin/lists'
+    : null
   );
 
   // Update expanded state when pathname changes
@@ -115,11 +122,14 @@ export default function Sidebar() {
       setExpandedMenu('/admin/comments');
     } else if (shouldExpandSuggestions && expandedMenu !== '/admin/suggestions') {
       setExpandedMenu('/admin/suggestions');
+    } else if (shouldExpandLists && expandedMenu !== '/admin/lists') {
+      setExpandedMenu('/admin/lists');
     }
-  }, [pathname, shouldExpandComments, shouldExpandSuggestions]);
+  }, [pathname, shouldExpandComments, shouldExpandSuggestions, shouldExpandLists]);
 
   const isCommentsPage = pathname?.startsWith('/admin/comments');
   const isSuggestionsPage = pathname?.startsWith('/admin/suggestions');
+  const isListsPage = pathname?.startsWith('/admin/lists');
 
   return (
     <aside className="w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl min-h-screen border-l border-gray-200">
@@ -151,7 +161,8 @@ export default function Sidebar() {
                       href={item.href}
                       className={`group w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
                         (isCommentsPage && item.href === '/admin/comments') ||
-                        (isSuggestionsPage && item.href === '/admin/suggestions')
+                        (isSuggestionsPage && item.href === '/admin/suggestions') ||
+                        (isListsPage && item.href === '/admin/lists')
                           ? 'bg-primary text-white shadow-md shadow-primary/20'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
