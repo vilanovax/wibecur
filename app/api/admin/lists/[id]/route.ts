@@ -31,8 +31,6 @@ export async function PUT(
       );
     }
 
-    const { id } = await params;
-
     // Check if list exists
     const existingList = await prisma.lists.findUnique({
       where: { id },

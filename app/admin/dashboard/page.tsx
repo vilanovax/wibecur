@@ -61,12 +61,12 @@ export default async function AdminDashboard() {
   await requireAdmin();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">داشبورد</h1>
-        <p className="text-gray-600">
-          خوش آمدید! اینجا می‌توانید تمام فعالیت‌های سیستم را مشاهده کنید.
+      <div className="bg-gradient-to-l from-indigo-600 via-purple-600 to-pink-500 rounded-2xl p-8 text-white shadow-xl">
+        <h1 className="text-3xl font-bold mb-2">داشبورد مدیریت</h1>
+        <p className="text-white/80">
+          خوش آمدید! نمای کلی از وضعیت سیستم را مشاهده کنید.
         </p>
       </div>
 
@@ -105,32 +105,28 @@ async function StatsContent() {
         value={userCount}
         iconName="Users"
         trend={{ value: 12, isPositive: true }}
-        iconColor="text-blue-600"
-        bgGradient="bg-blue-50"
+        gradient="bg-gradient-to-br from-blue-500 to-blue-600"
       />
       <StatCard
         title="لیست‌ها"
         value={listCount}
         iconName="List"
         trend={{ value: 8, isPositive: true }}
-        iconColor="text-purple-600"
-        bgGradient="bg-purple-50"
+        gradient="bg-gradient-to-br from-purple-500 to-purple-600"
       />
       <StatCard
         title="آیتم‌ها"
         value={itemCount}
         iconName="Package"
         trend={{ value: 5, isPositive: true }}
-        iconColor="text-green-600"
-        bgGradient="bg-green-50"
+        gradient="bg-gradient-to-br from-emerald-500 to-emerald-600"
       />
       <StatCard
         title="دسته‌بندی‌ها"
         value={categoryCount}
         iconName="Eye"
         trend={{ value: 0, isPositive: true }}
-        iconColor="text-orange-600"
-        bgGradient="bg-orange-50"
+        gradient="bg-gradient-to-br from-amber-500 to-orange-500"
       />
     </div>
   );

@@ -62,7 +62,7 @@ export async function PUT(
       if (description !== undefined) updateData.description = description;
       if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
       if (externalUrl !== undefined) updateData.externalUrl = externalUrl;
-      if (metadata !== undefined) {
+      if (metadata !== undefined && suggestedItem.lists.categories) {
         // Validate metadata if provided
         const metadataValidation = validateMetadata(
           suggestedItem.lists.categories.slug,
@@ -91,7 +91,7 @@ export async function PUT(
           'suggestion_updated',
           'پیشنهاد آیتم شما ویرایش شد',
           adminNotes.trim(),
-          null
+          undefined
         );
       }
 
@@ -102,7 +102,7 @@ export async function PUT(
     } else if (action === 'approve') {
       // Validate metadata if provided
       let validatedMetadata = suggestedItem.metadata as any;
-      if (metadata) {
+      if (metadata && suggestedItem.lists.categories) {
         const metadataValidation = validateMetadata(
           suggestedItem.lists.categories.slug,
           metadata
@@ -207,7 +207,7 @@ export async function PUT(
         'suggestion_rejected',
         'پیشنهاد آیتم شما رد شد',
         `متأسفانه پیشنهاد آیتم "${suggestedItem.title}" رد شد. دلیل: ${adminNotes.trim()}`,
-        null
+        undefined
       );
 
       return NextResponse.json({
@@ -266,7 +266,7 @@ export async function DELETE(
         'suggestion_deleted',
         'پیشنهاد آیتم شما حذف شد',
         message.trim(),
-        null
+        undefined
       );
     }
 

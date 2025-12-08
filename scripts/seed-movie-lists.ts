@@ -1,10 +1,11 @@
 import { PrismaClient } from '@prisma/client';
+import { nanoid } from 'nanoid';
 
 const prisma = new PrismaClient();
 
 async function main() {
   // First, find or create the Movie category
-  let movieCategory = await prisma.category.findFirst({
+  let movieCategory = await prisma.categories.findFirst({
     where: {
       OR: [
         { slug: 'movie' },
@@ -15,8 +16,9 @@ async function main() {
   });
 
   if (!movieCategory) {
-    movieCategory = await prisma.category.create({
+    movieCategory = await prisma.categories.create({
       data: {
+        id: nanoid(),
         name: 'فیلم و سریال',
         slug: 'movie',
         icon: '🎬',
@@ -24,6 +26,7 @@ async function main() {
         description: 'بهترین فیلم‌ها و سریال‌ها',
         order: 0,
         isActive: true,
+        updatedAt: new Date(),
       },
     });
     console.log('✅ دسته‌بندی فیلم و سریال ایجاد شد');
@@ -32,7 +35,7 @@ async function main() {
   }
 
   // Find admin user
-  const adminUser = await prisma.user.findFirst({
+  const adminUser = await prisma.users.findFirst({
     where: { role: 'ADMIN' }
   });
 
@@ -122,7 +125,7 @@ async function main() {
   for (const listData of movieLists) {
     try {
       // Check if list already exists
-      const existingList = await prisma.list.findUnique({
+      const existingList = await prisma.lists.findUnique({
         where: { slug: listData.slug }
       });
 
@@ -131,8 +134,9 @@ async function main() {
         continue;
       }
 
-      const list = await prisma.list.create({
+      const list = await prisma.lists.create({
         data: {
+          id: nanoid(),
           title: listData.title,
           slug: listData.slug,
           description: listData.description,
@@ -142,6 +146,7 @@ async function main() {
           isPublic: true,
           isFeatured: listData.isFeatured,
           isActive: true,
+          updatedAt: new Date(),
         },
       });
 

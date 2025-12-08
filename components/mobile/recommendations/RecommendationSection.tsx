@@ -44,9 +44,9 @@ export default function RecommendationSection() {
     <section className="mb-8">
       <SectionHeader title="برای شما" href="/lists" />
       {hasRecommendations ? (
-        <div className="flex gap-4 px-4 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-4 px-4 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
           {mockRecommendations.map((item) => (
-            <div key={item.id} className="flex-shrink-0 w-72">
+            <div key={item.id} className="flex-shrink-0 w-72 snap-start">
               <ListCard {...item} />
             </div>
           ))}

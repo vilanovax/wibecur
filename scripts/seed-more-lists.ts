@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { nanoid } from 'nanoid';
 
 const prisma = new PrismaClient();
 
@@ -6,16 +7,16 @@ async function main() {
   console.log('📚☕ در حال ایجاد 10 لیست جدید برای کتاب و کافه/رستوران...\n');
 
   // Find categories
-  const bookCategory = await prisma.category.findFirst({
+  const bookCategory = await prisma.categories.findFirst({
     where: { slug: 'book' }
   });
 
-  const cafeCategory = await prisma.category.findFirst({
+  const cafeCategory = await prisma.categories.findFirst({
     where: { slug: 'cafe' }
   });
 
   // Find admin user
-  const adminUser = await prisma.user.findFirst({
+  const adminUser = await prisma.users.findFirst({
     where: { role: 'ADMIN' }
   });
 
@@ -123,7 +124,7 @@ async function main() {
 
   for (const listData of allLists) {
     try {
-      const existingList = await prisma.list.findUnique({
+      const existingList = await prisma.lists.findUnique({
         where: { slug: listData.slug }
       });
 
@@ -133,8 +134,9 @@ async function main() {
         continue;
       }
 
-      const list = await prisma.list.create({
+      const list = await prisma.lists.create({
         data: {
+          id: nanoid(),
           title: listData.title,
           slug: listData.slug,
           description: listData.description,
@@ -144,6 +146,7 @@ async function main() {
           isPublic: true,
           isFeatured: listData.isFeatured,
           isActive: true,
+          updatedAt: new Date(),
         },
       });
 
@@ -160,11 +163,11 @@ async function main() {
   }
 
   // Show final statistics
-  const bookStats = await prisma.list.count({
+  const bookStats = await prisma.lists.count({
     where: { categoryId: bookCategory.id, isActive: true }
   });
 
-  const cafeStats = await prisma.list.count({
+  const cafeStats = await prisma.lists.count({
     where: { categoryId: cafeCategory.id, isActive: true }
   });
 

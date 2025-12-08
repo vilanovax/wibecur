@@ -60,7 +60,7 @@ export default async function UserListsPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header />
-      <UserListsPageClient initialLists={serializedLists} categories={categories} />
+      <UserListsPageClient initialLists={serializedLists as any} categories={categories as any} />
       <BottomNav />
     </div>
   );

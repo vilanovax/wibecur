@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { requireAdmin } from '@/lib/auth';
+import { nanoid } from 'nanoid';
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
     // Create list
     const list = await prisma.lists.create({
       data: {
+        id: nanoid(),
         title,
         slug,
         description,
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
         isPublic: isPublic !== undefined ? isPublic : true,
         isFeatured: isFeatured !== undefined ? isFeatured : false,
         isActive: isActive !== undefined ? isActive : true,
+        updatedAt: new Date(),
       },
     });
 

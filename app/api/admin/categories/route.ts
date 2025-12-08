@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { nanoid } from 'nanoid';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
     // Create category
     const category = await prisma.categories.create({
       data: {
+        id: nanoid(),
         name,
         slug,
         icon,
@@ -39,6 +41,7 @@ export async function POST(request: NextRequest) {
         description,
         order: order || 0,
         isActive: isActive !== undefined ? isActive : true,
+        updatedAt: new Date(),
       },
     });
 

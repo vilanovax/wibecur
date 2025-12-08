@@ -209,7 +209,7 @@ export default function ListsPageClient({ lists, categories }: ListsPageClientPr
                   <div className="absolute top-3 right-3 z-20">
                     <BookmarkButton
                       listId={list.id}
-                      initialBookmarkCount={list.saveCount ?? list._count?.bookmarks ?? 0}
+                      initialBookmarkCount={list.saveCount ?? 0}
                       variant="icon"
                       size="md"
                     />
@@ -234,7 +234,7 @@ export default function ListsPageClient({ lists, categories }: ListsPageClientPr
                   <div className="absolute top-3 right-3 z-20">
                     <BookmarkButton
                       listId={list.id}
-                      initialBookmarkCount={list.saveCount ?? list._count?.bookmarks ?? 0}
+                      initialBookmarkCount={list.saveCount ?? 0}
                       variant="icon"
                       size="md"
                     />

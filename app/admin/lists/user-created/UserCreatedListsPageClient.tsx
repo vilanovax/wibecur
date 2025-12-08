@@ -461,8 +461,8 @@ export default function UserCreatedListsPageClient({
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              baseUrl="/admin/lists/user-created"
-              queryParams={{ filter, search }}
+              basePath="/admin/lists/user-created"
+              searchParams={{ filter, search }}
             />
           </div>
         )}

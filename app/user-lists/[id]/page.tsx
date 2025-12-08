@@ -50,9 +50,10 @@ export default async function UserListDetailPage({
 
     // If we have a session but no ID, try to get user ID from email
     if (!currentUserId && session?.user?.email) {
+      const userEmail = session.user.email;
       const userFromEmail = await dbQuery(() =>
         prisma.users.findUnique({
-          where: { email: session.user.email! },
+          where: { email: userEmail },
           select: { id: true },
         })
       );

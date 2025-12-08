@@ -348,6 +348,7 @@ export async function POST(
                 commentId: newComment.id,
                 violationType: 'bad_word',
                 violationCount: 1,
+                updatedAt: new Date(),
               },
             });
           }

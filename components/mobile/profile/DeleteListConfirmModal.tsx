@@ -75,7 +75,7 @@ export default function DeleteListConfirmModal({
               آیا مطمئن هستید؟
             </h3>
             <p className="text-gray-600">
-              لیست <span className="font-semibold">"{listTitle}"</span> به همراه تمام آیتم‌های آن حذف خواهد شد و این عمل قابل بازگشت نیست.
+              لیست <span className="font-semibold">&quot;{listTitle}&quot;</span> به همراه تمام آیتم‌های آن حذف خواهد شد و این عمل قابل بازگشت نیست.
             </p>
           </div>
 

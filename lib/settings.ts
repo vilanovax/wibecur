@@ -11,7 +11,10 @@ export async function getSettings() {
 
   if (!settings) {
     settings = await prisma.settings.create({
-      data: { id: 'settings' },
+      data: { 
+        id: 'settings',
+        updatedAt: new Date(),
+      },
     });
   }
 

@@ -9,11 +9,11 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24" dir="rtl">
       <Header />
       <HeroGreeting />
       <EnhancedSearch />
-      <main className="space-y-6">
+      <main className="space-y-6 px-0">
         <FeaturedCard />
         <RecommendationSection />
         <CategoryScroll />

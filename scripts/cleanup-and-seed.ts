@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { nanoid } from 'nanoid';
 
 const prisma = new PrismaClient();
 
@@ -21,7 +22,7 @@ async function main() {
 
   for (const slug of categoriesToDelete) {
     try {
-      const category = await prisma.category.findUnique({
+      const category = await prisma.categories.findUnique({
         where: { slug },
         include: { _count: { select: { lists: true } } }
       });
@@ -30,7 +31,7 @@ async function main() {
         if (category._count.lists > 0) {
           console.log(`⚠️  دسته‌بندی "${category.name}" دارای ${category._count.lists} لیست است، حذف نمی‌شود`);
         } else {
-          await prisma.category.delete({ where: { slug } });
+          await prisma.categories.delete({ where: { slug } });
           console.log(`✅ دسته‌بندی حذف شد: ${category.icon} ${category.name}`);
         }
       }
@@ -42,17 +43,17 @@ async function main() {
   console.log('\n📚 در حال ایجاد لیست‌های کتاب...\n');
 
   // Find book category
-  const bookCategory = await prisma.category.findFirst({
+  const bookCategory = await prisma.categories.findFirst({
     where: { slug: 'book' }
   });
 
   // Find cafe category
-  const cafeCategory = await prisma.category.findFirst({
+  const cafeCategory = await prisma.categories.findFirst({
     where: { slug: 'cafe' }
   });
 
   // Find admin user
-  const adminUser = await prisma.user.findFirst({
+  const adminUser = await prisma.users.findFirst({
     where: { role: 'ADMIN' }
   });
 
@@ -163,7 +164,7 @@ async function main() {
 
   for (const listData of allLists) {
     try {
-      const existingList = await prisma.list.findUnique({
+      const existingList = await prisma.lists.findUnique({
         where: { slug: listData.slug }
       });
 
@@ -172,8 +173,9 @@ async function main() {
         continue;
       }
 
-      const list = await prisma.list.create({
+      const list = await prisma.lists.create({
         data: {
+          id: nanoid(),
           title: listData.title,
           slug: listData.slug,
           description: listData.description,
@@ -183,6 +185,7 @@ async function main() {
           isPublic: true,
           isFeatured: listData.isFeatured,
           isActive: true,
+          updatedAt: new Date(),
         },
       });
 
@@ -195,7 +198,7 @@ async function main() {
   console.log('\n✨ عملیات با موفقیت انجام شد!\n');
 
   // Show final statistics
-  const stats = await prisma.category.findMany({
+  const stats = await prisma.categories.findMany({
     include: {
       _count: { select: { lists: true } }
     },

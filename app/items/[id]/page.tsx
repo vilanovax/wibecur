@@ -65,9 +65,10 @@ export default async function ItemDetailPage({
   let isLiked = false;
   const session = await getServerSession(authOptions);
   if (session?.user?.email) {
+    const userEmail = session.user.email;
     const user = await dbQuery(() =>
       prisma.users.findUnique({
-        where: { email: session.user.email! },
+        where: { email: userEmail },
         select: { id: true },
       })
     );

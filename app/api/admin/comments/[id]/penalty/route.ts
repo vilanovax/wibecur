@@ -94,6 +94,7 @@ export async function POST(
             violationCount: 1,
             totalPenaltyScore: penaltyScore,
             lastViolationDate: new Date(),
+            updatedAt: new Date(),
           },
         })
       );

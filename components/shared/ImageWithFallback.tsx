@@ -14,16 +14,28 @@ export default function ImageWithFallback({
   src,
   alt,
   className = '',
-  fallbackIcon,
+  fallbackIcon = '📋',
   fallbackClassName = '',
 }: ImageWithFallbackProps) {
   const [hasError, setHasError] = useState(false);
   const [imageSrc, setImageSrc] = useState(src);
 
+  // Check if URL is from via.placeholder.com and skip loading it
+  const isPlaceholderUrl = src?.includes('via.placeholder.com');
+  
+  // If it's a placeholder URL, use fallback immediately
+  if (isPlaceholderUrl) {
+    return (
+      <div className={`flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${className} ${fallbackClassName}`}>
+        <span className="text-6xl opacity-50">{fallbackIcon}</span>
+      </div>
+    );
+  }
+
   const handleError = () => {
     setHasError(true);
     // Try to remove query parameters if it's an Unsplash URL
-    if (imageSrc.includes('unsplash.com') && imageSrc.includes('?')) {
+    if (imageSrc?.includes('unsplash.com') && imageSrc.includes('?')) {
       const baseUrl = imageSrc.split('?')[0];
       if (baseUrl !== imageSrc) {
         setImageSrc(baseUrl);
@@ -33,10 +45,10 @@ export default function ImageWithFallback({
     }
   };
 
-  if (hasError && fallbackIcon) {
+  if (hasError || !src) {
     return (
-      <div className={`flex items-center justify-center ${className} ${fallbackClassName}`}>
-        <span className="text-6xl">{fallbackIcon}</span>
+      <div className={`flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${className} ${fallbackClassName}`}>
+        <span className="text-6xl opacity-50">{fallbackIcon}</span>
       </div>
     );
   }
@@ -47,6 +59,7 @@ export default function ImageWithFallback({
       alt={alt}
       className={className}
       onError={handleError}
+      loading="lazy"
     />
   );
 }

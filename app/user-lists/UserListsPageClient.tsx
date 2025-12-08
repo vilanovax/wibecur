@@ -7,8 +7,10 @@ import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import FloatingActionButton from '@/components/mobile/lists/FloatingActionButton';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 
-type ListWithRelations = lists & {
-  categories: categories;
+type ListWithRelations = Omit<lists, 'createdAt' | 'updatedAt'> & {
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  categories: categories | null;
   users: {
     id: string;
     name: string | null;
@@ -354,7 +356,7 @@ export default function UserListsPageClient({
                         if (parent && !parent.querySelector('.fallback-icon')) {
                           const fallback = document.createElement('div');
                           fallback.className = 'h-full w-full flex items-center justify-center fallback-icon';
-                          fallback.innerHTML = `<span class="text-6xl">${list.categories.icon}</span>`;
+                          fallback.innerHTML = `<span class="text-6xl">${list.categories?.icon || '📋'}</span>`;
                           parent.appendChild(fallback);
                         }
                       }}
@@ -371,7 +373,7 @@ export default function UserListsPageClient({
                   </div>
                 ) : (
                   <div className="relative w-full h-48 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex items-center justify-center">
-                    <span className="text-6xl">{list.categories.icon}</span>
+                    <span className="text-6xl">{list.categories?.icon || '📋'}</span>
                     {/* Bookmark Button */}
                     <div className="absolute top-3 right-3 z-20">
                       <BookmarkButton
@@ -388,10 +390,14 @@ export default function UserListsPageClient({
                 <div className="p-4 space-y-3">
                   {/* Category Badge */}
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{list.categories.icon}</span>
-                    <span className="text-xs text-gray-500 font-medium">
-                      {list.categories.name}
-                    </span>
+                    {list.categories && (
+                      <>
+                        <span className="text-lg">{list.categories.icon}</span>
+                        <span className="text-xs text-gray-500 font-medium">
+                          {list.categories.name}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   {/* Title */}

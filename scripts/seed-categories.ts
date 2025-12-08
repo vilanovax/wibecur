@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { nanoid } from 'nanoid';
 
 const prisma = new PrismaClient();
 
@@ -91,7 +92,7 @@ async function main() {
   for (const categoryData of categories) {
     try {
       // Check if category already exists
-      const existingCategory = await prisma.category.findUnique({
+      const existingCategory = await prisma.categories.findUnique({
         where: { slug: categoryData.slug }
       });
 
@@ -100,10 +101,12 @@ async function main() {
         continue;
       }
 
-      const category = await prisma.category.create({
+      const category = await prisma.categories.create({
         data: {
+          id: nanoid(),
           ...categoryData,
           isActive: true,
+          updatedAt: new Date(),
         },
       });
 
@@ -116,7 +119,7 @@ async function main() {
   console.log('\n✨ تمام دسته‌بندی‌ها با موفقیت ایجاد شدند!\n');
 
   // Show all categories
-  const allCategories = await prisma.category.findMany({
+  const allCategories = await prisma.categories.findMany({
     orderBy: { order: 'asc' },
     select: {
       name: true,

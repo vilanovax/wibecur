@@ -369,7 +369,7 @@ export default function UsersPageClient({
               currentPage={currentPage}
               totalPages={totalPages}
               basePath="/admin/users"
-              queryParams={search ? { search } : {}}
+              searchParams={search ? { search } : {}}
             />
           </div>
         )}

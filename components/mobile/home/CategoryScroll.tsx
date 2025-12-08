@@ -50,20 +50,20 @@ const categories = [
 export default function CategoryScroll() {
   return (
     <section className="mb-8">
-      <h2 className="text-lg font-bold px-4 mb-4">دسته‌بندی‌ها</h2>
-      <div className="flex gap-4 px-4 overflow-x-auto pb-2 scrollbar-hide">
+      <h2 className="text-lg font-bold px-4 mb-4 text-gray-900">دسته‌بندی‌ها</h2>
+      <div className="flex gap-4 px-4 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
         {categories.map((category) => (
           <Link
             key={category.id}
             href={`/categories/${category.slug}`}
-            className="flex-shrink-0 w-28 group"
+            className="flex-shrink-0 w-28 group snap-start"
           >
             <div
-              className={`${category.color} rounded-2xl p-4 aspect-square flex flex-col items-center justify-center group-hover:scale-105 transition-transform duration-200`}
+              className={`${category.color} rounded-2xl p-4 aspect-square flex flex-col items-center justify-center group-hover:scale-105 transition-transform duration-200 shadow-sm border border-white/50`}
             >
-              <span className="text-4xl mb-2">{category.icon}</span>
+              <span className="text-4xl mb-1">{category.icon}</span>
             </div>
-            <p className="text-center text-sm font-medium mt-2 text-gray-700">
+            <p className="text-center text-sm font-medium mt-2 text-gray-700 line-clamp-2">
               {category.name}
             </p>
           </Link>

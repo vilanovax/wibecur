@@ -155,52 +155,64 @@ export default function NotificationIcon() {
             ) : (
               <div className="divide-y divide-gray-100">
                 {notifications.map((notification) => {
-                  const NotificationContent = notification.link ? Link : 'div';
-                  const notificationProps = notification.link
-                    ? { href: notification.link, onClick: () => setIsOpen(false) }
-                    : {};
-
-                  return (
-                    <NotificationContent
-                      key={notification.id}
-                      {...notificationProps}
-                      className={`block p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors ${
-                        !notification.read ? 'bg-blue-50/50' : 'bg-white'
-                      }`}
-                      onClick={(e) => {
-                        if (!notification.read) {
-                          e.preventDefault();
-                          markAsRead(notification.id);
-                          if (notification.link) {
-                            setTimeout(() => {
-                              window.location.href = notification.link!;
-                            }, 200);
-                          }
-                        }
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                            !notification.read ? 'bg-primary' : 'bg-transparent'
-                          }`}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-900 text-base mb-1">
-                            {notification.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-2 leading-relaxed">
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {formatDistanceToNow(new Date(notification.createdAt), {
-                              addSuffix: true,
-                              locale: faIR,
-                            })}
-                          </p>
-                        </div>
+                  const contentClassName = `block p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors ${
+                    !notification.read ? 'bg-blue-50/50' : 'bg-white'
+                  }`;
+                  
+                  const content = (
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                          !notification.read ? 'bg-primary' : 'bg-transparent'
+                        }`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-base mb-1">
+                          {notification.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-2 leading-relaxed">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {formatDistanceToNow(new Date(notification.createdAt), {
+                            addSuffix: true,
+                            locale: faIR,
+                          })}
+                        </p>
                       </div>
-                    </NotificationContent>
+                    </div>
+                  );
+
+                  const handleClick = (e: React.MouseEvent) => {
+                    if (!notification.read) {
+                      e.preventDefault();
+                      markAsRead(notification.id);
+                      if (notification.link) {
+                        setTimeout(() => {
+                          window.location.href = notification.link!;
+                        }, 200);
+                      }
+                    }
+                    setIsOpen(false);
+                  };
+
+                  return notification.link ? (
+                    <Link
+                      key={notification.id}
+                      href={notification.link}
+                      className={contentClassName}
+                      onClick={handleClick}
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div
+                      key={notification.id}
+                      className={contentClassName}
+                      onClick={handleClick}
+                    >
+                      {content}
+                    </div>
                   );
                 })}
               </div>

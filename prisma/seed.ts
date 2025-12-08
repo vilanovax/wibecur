@@ -621,8 +621,7 @@ async function main() {
             title: notification.title,
             message: notification.message,
             link: notification.link,
-            isRead: notification.isRead,
-            updatedAt: new Date(notification.updatedAt),
+            read: notification.isRead,
           },
           create: {
             id: notification.id,
@@ -631,9 +630,8 @@ async function main() {
             title: notification.title,
             message: notification.message,
             link: notification.link,
-            isRead: notification.isRead,
+            read: notification.isRead,
             createdAt: new Date(notification.createdAt),
-            updatedAt: new Date(notification.updatedAt),
           },
         });
       } catch (error) {
@@ -715,7 +713,6 @@ async function main() {
             reason: report.reason,
             resolved: report.resolved,
             penaltyScore: report.penaltyScore,
-            updatedAt: new Date(report.updatedAt),
           },
           create: {
             id: report.id,
@@ -725,7 +722,6 @@ async function main() {
             resolved: report.resolved,
             penaltyScore: report.penaltyScore,
             createdAt: new Date(report.createdAt),
-            updatedAt: new Date(report.updatedAt),
           },
         });
       } catch (error) {

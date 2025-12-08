@@ -42,7 +42,9 @@ export default function TrendingLists() {
       <SectionHeader title="لیست‌های ترند" href="/lists" />
       <div className="px-4 space-y-4">
         {mockLists.map((list) => (
-          <ListCard key={list.id} {...list} />
+          <div key={list.id}>
+            <ListCard {...list} />
+          </div>
         ))}
       </div>
     </section>

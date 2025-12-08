@@ -23,10 +23,17 @@ export async function PUT(
     const body = await request.json();
     const { title, description, coverImage, categoryId, isPublic, commentsEnabled } = body;
 
-    // Get user
+    // Get user (session.user is guaranteed to exist after the check above)
+    const userEmail = session.user.email;
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: 'احراز هویت نشده است' },
+        { status: 401 }
+      );
+    }
     const user = await dbQuery(() =>
       prisma.users.findUnique({
-        where: { email: session.user.email! },
+        where: { email: userEmail },
       })
     );
 
@@ -248,10 +255,17 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Get user
+    // Get user (session.user is guaranteed to exist after the check above)
+    const userEmail = session.user.email;
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: 'احراز هویت نشده است' },
+        { status: 401 }
+      );
+    }
     const user = await dbQuery(() =>
       prisma.users.findUnique({
-        where: { email: session.user.email! },
+        where: { email: userEmail },
       })
     );
 

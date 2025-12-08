@@ -21,9 +21,17 @@ export async function DELETE(
     const { id: listId, itemId } = await params;
 
     // Get user
+    // Get user (session.user is guaranteed to exist after the check above)
+    const userEmail = session.user.email;
+    if (!userEmail) {
+      return NextResponse.json(
+        { success: false, error: 'احراز هویت نشده است' },
+        { status: 401 }
+      );
+    }
     const user = await dbQuery(() =>
       prisma.users.findUnique({
-        where: { email: session.user.email! },
+        where: { email: userEmail },
       })
     );
 

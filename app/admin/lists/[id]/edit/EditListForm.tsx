@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Category, List, Item } from '@prisma/client';
+import { categories, lists, items } from '@prisma/client';
 import ImageUpload from '@/components/admin/upload/ImageUpload';
 
 interface EditListFormProps {
-  list: List & {
-    category: Category;
-    items: Item[];
+  list: lists & {
+    categories: categories | null;
+    items: items[];
   };
-  categories: Category[];
+  categories: categories[];
 }
 
 export default function EditListForm({ list, categories }: EditListFormProps) {
@@ -178,7 +178,7 @@ export default function EditListForm({ list, categories }: EditListFormProps) {
                 <select
                   id="categoryId"
                   name="categoryId"
-                  value={formData.categoryId}
+                   value={formData.categoryId || ''}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"

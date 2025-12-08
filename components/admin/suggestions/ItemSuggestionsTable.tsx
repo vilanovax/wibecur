@@ -31,6 +31,7 @@ interface ItemSuggestion {
       id: string;
       name: string;
       icon: string;
+      slug: string;
     };
   };
   users: {

@@ -90,17 +90,23 @@ export default function ItemLikeButton({
     <button
       onClick={handleToggle}
       disabled={isLoading}
-      className="flex items-center gap-1 text-sm text-gray-600 hover:text-primary transition-colors disabled:opacity-50"
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 ${
+        isLiked
+          ? 'bg-red-50 text-red-600 hover:bg-red-100'
+          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+      }`}
       aria-label={isLiked ? 'حذف لایک' : 'لایک'}
     >
       <Heart
-        className={`w-5 h-5 transition-all ${
+        className={`w-4 h-4 transition-all ${
           isLiked
             ? 'fill-red-500 text-red-500'
-            : 'text-gray-400 hover:text-red-500'
+            : 'text-gray-400'
         }`}
       />
-      <span className={isLiked ? 'text-red-500 font-medium' : ''}>
+      <span className={`text-sm font-medium ${
+        isLiked ? 'text-red-600' : 'text-gray-700'
+      }`}>
         {likeCount}
       </span>
     </button>

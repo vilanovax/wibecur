@@ -43,13 +43,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user
-    console.log('Fetching user with email:', session.user.email);
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: session.user.email! },
-      })
-    );
+        // Get user (session.user is guaranteed to exist after the check above)
+        const userEmail = session.user.email;
+        if (!userEmail) {
+          return NextResponse.json(
+            { error: 'احراز هویت نشده است' },
+            { status: 401 }
+          );
+        }
+        console.log('Fetching user with email:', userEmail);
+        const user = await dbQuery(() =>
+          prisma.users.findUnique({
+            where: { email: userEmail },
+          })
+        );
     console.log('User found:', user ? `ID: ${user.id}` : 'not found');
 
     if (!user) {
@@ -229,18 +236,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: session.user.email! },
-      })
-    );
+        const userEmail = session.user.email;
+        if (!userEmail) {
+          return NextResponse.json(
+            { error: 'احراز هویت نشده است' },
+            { status: 401 }
+          );
+        }
+        const user = await dbQuery(() =>
+          prisma.users.findUnique({
+            where: { email: userEmail },
+          })
+        );
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'کاربر یافت نشد' },
-        { status: 404 }
-      );
-    }
+        if (!user) {
+          return NextResponse.json(
+            { error: 'کاربر یافت نشد' },
+            { status: 404 }
+          );
+        }
 
     const lists = await dbQuery(() =>
       prisma.lists.findMany({

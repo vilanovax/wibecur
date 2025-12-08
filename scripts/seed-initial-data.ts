@@ -21,6 +21,7 @@ async function main() {
       password: hashedPassword,
       role: 'ADMIN',
       emailVerified: new Date(),
+      updatedAt: new Date(),
     },
   });
   console.log('✅ Admin user created:', adminUser.email);
@@ -95,7 +96,10 @@ async function main() {
       prisma.categories.upsert({
         where: { slug: cat.slug },
         update: {},
-        create: cat,
+        create: {
+          ...cat,
+          updatedAt: new Date(),
+        },
       })
     )
   );
@@ -392,12 +396,14 @@ async function main() {
       data: {
         id: nanoid(),
         ...listData,
+        badge: listData.badge ? (listData.badge as any) : null,
         userId: adminUser.id,
         isPublic: true,
         isActive: true,
         viewCount: Math.floor(Math.random() * 500) + 50,
         likeCount: Math.floor(Math.random() * 200) + 20,
         saveCount: Math.floor(Math.random() * 100) + 10,
+        updatedAt: new Date(),
         itemCount: Math.floor(Math.random() * 15) + 5,
       },
     });
@@ -412,6 +418,7 @@ async function main() {
     update: {},
     create: {
       id: 'settings',
+      updatedAt: new Date(),
     },
   });
   console.log('✅ Settings entry created');

@@ -75,7 +75,7 @@ export async function PUT(
           'suggestion_updated',
           'پیشنهاد لیست شما ویرایش شد',
           adminNotes.trim(),
-          null
+          undefined
         );
       }
 
@@ -193,7 +193,7 @@ export async function PUT(
         'suggestion_rejected',
         'پیشنهاد لیست شما رد شد',
         `متأسفانه پیشنهاد لیست "${suggestedList.title}" رد شد. دلیل: ${adminNotes.trim()}`,
-        null
+        undefined
       );
 
       return NextResponse.json({
@@ -252,7 +252,7 @@ export async function DELETE(
         'suggestion_deleted',
         'پیشنهاد لیست شما حذف شد',
         message.trim(),
-        null
+        undefined
       );
     }
 

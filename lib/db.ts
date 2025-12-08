@@ -7,29 +7,50 @@ export async function dbQuery<T>(
   retries = 2,
   delay = 1000
 ): Promise<T> {
+  // Ensure Prisma client is connected before executing queries
+  try {
+    await prisma.$connect();
+  } catch (error) {
+    // Connection might already be established, continue
+    console.warn('Prisma connection check:', error);
+  }
+
   for (let i = 0; i < retries; i++) {
     try {
       return await queryFn();
     } catch (error: any) {
       const isLastAttempt = i === retries - 1;
       
-      // Check for connection pool timeout errors
+      // Check for connection pool timeout errors and "not connected" errors
       const isConnectionPoolError = 
         error?.code === 'P1001' || // Can't reach database
         error?.code === 'P1008' || // Operations timed out
         error?.message?.includes("Can't reach database") ||
         error?.message?.includes("connection pool") ||
         error?.message?.includes("Timed out fetching") ||
+        error?.message?.includes("Engine is not yet connected") ||
+        error?.message?.includes("not yet connected") ||
         error?.kind === 'Closed';
       
       // Only retry connection errors
       if (isConnectionPoolError) {
+        // Try to reconnect
+        try {
+          await prisma.$disconnect().catch(() => {}); // Ignore disconnect errors
+          await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
+          await prisma.$connect();
+        } catch (connectError) {
+          if (isLastAttempt) {
+            throw new Error(
+              'خطا در اتصال به دیتابیس. ممکن است connection pool اشباع شده باشد. لطفاً لحظه‌ای صبر کنید و دوباره تلاش کنید.'
+            );
+          }
+          continue;
+        }
+        
         if (isLastAttempt) {
-          // Try to reconnect once more with a delay
+          // Final attempt after reconnection
           try {
-            await new Promise((resolve) => setTimeout(resolve, delay * 2));
-            await prisma.$disconnect();
-            await prisma.$connect();
             return await queryFn();
           } catch {
             throw new Error(
@@ -37,8 +58,8 @@ export async function dbQuery<T>(
             );
           }
         }
-        // Wait before retrying with exponential backoff
-        await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
+        
+        // Continue to retry
         continue;
       }
       

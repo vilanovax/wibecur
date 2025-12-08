@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Heart, Star, FileText } from 'lucide-react';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 interface FeaturedList {
   id: string;
@@ -34,17 +35,14 @@ const badgeLabels = {
 export default function FeaturedCard() {
   return (
     <div className="px-4 mb-6">
-      <Link href={`/lists/${featuredList.id}`}>
-        <div className="relative h-48 rounded-2xl overflow-hidden group cursor-pointer">
-          <img
+      <Link href={`/lists/${featuredList.id}`} className="block">
+        <div className="relative h-56 rounded-2xl overflow-hidden group cursor-pointer bg-gradient-to-br from-gray-200 to-gray-300 shadow-md">
+          <ImageWithFallback
             src={featuredList.coverImage}
             alt={featuredList.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                'https://via.placeholder.com/800x400/6366F1/ffffff?text=' +
-                encodeURIComponent(featuredList.title);
-            }}
+            fallbackIcon="🎬"
+            fallbackClassName="w-full h-full"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
 

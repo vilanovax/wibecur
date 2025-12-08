@@ -29,7 +29,7 @@ interface ItemDetailClientProps {
         slug: string;
         icon: string;
         color: string;
-      };
+      } | null;
     };
     users: {
       name: string | null;
@@ -41,38 +41,44 @@ interface ItemDetailClientProps {
 export default function ItemDetailClient({ item }: ItemDetailClientProps) {
   return (
     <>
-      <main className="space-y-6">
+      <main className="space-y-6 pt-4">
         {/* Item Image */}
-        {item.imageUrl && (
-          <div className="relative h-64 bg-gradient-to-br from-purple-100 to-blue-100">
+        <div className="relative h-72 w-full bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 overflow-hidden">
+          {item.imageUrl ? (
             <ImageWithFallback
               src={item.imageUrl}
               alt={item.title}
               className="w-full h-full object-cover"
-              fallbackIcon={item.lists.categories.icon}
+              fallbackIcon={item.lists.categories?.icon || '📋'}
               fallbackClassName="h-full w-full"
             />
-          </div>
-        )}
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-8xl opacity-30">
+                {item.lists.categories?.icon || '📋'}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Item Content */}
-        <div className="px-4 space-y-4">
+        <div className="px-4 space-y-5">
           {/* Back to List Link */}
           <Link
             href={`/lists/${item.lists.slug}`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:border-primary transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium bg-white border border-gray-200 hover:border-primary hover:bg-gray-50 transition-all shadow-sm"
           >
-            <span className="text-lg">{item.lists.categories.icon}</span>
-            <span>بازگشت به: {item.lists.title}</span>
+            <span className="text-lg">{item.lists.categories?.icon || '📋'}</span>
+            <span className="text-gray-700">بازگشت به: {item.lists.title}</span>
           </Link>
 
-          {/* Title */}
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          {/* Title Section */}
+          <div className="space-y-3">
+            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
               {item.title}
             </h1>
             {item.description && (
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed text-base">
                 {item.description}
               </p>
             )}
@@ -92,12 +98,14 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           )}
 
           {/* Stats and Actions */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-6 text-sm text-gray-600">
-              <span className="flex items-center gap-1">
-                <span>⭐</span>
-                <span>{item.rating || 0}</span>
-              </span>
+          <div className="flex items-center justify-between gap-3 pt-2 pb-2 border-t border-gray-100">
+            <div className="flex items-center gap-5">
+              {item.rating && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-lg">
+                  <span className="text-yellow-500 text-lg">⭐</span>
+                  <span className="text-sm font-semibold text-gray-900">{item.rating}</span>
+                </div>
+              )}
               <ItemLikeButton
                 itemId={item.id}
                 initialLikeCount={item.voteCount || 0}
@@ -116,11 +124,12 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           typeof item.metadata === 'object' &&
           Object.keys(item.metadata).length > 0 && (
             <div className="px-4">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <h2 className="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
+                  <span className="w-1 h-6 bg-primary rounded-full"></span>
                   اطلاعات تکمیلی
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {Object.entries(
                     item.metadata as Record<string, any>
                   ).map(([key, value]) => {
@@ -136,6 +145,18 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                       priceRange: 'بازه قیمت',
                       cuisine: 'نوع غذا',
                       phone: 'تلفن',
+                    };
+
+                    const icons: Record<string, string> = {
+                      year: '📅',
+                      genre: '🎭',
+                      director: '🎬',
+                      imdbRating: '⭐',
+                      author: '✍️',
+                      address: '📍',
+                      priceRange: '💰',
+                      cuisine: '🍽️',
+                      phone: '📞',
                     };
 
                     const displayValue =
@@ -154,11 +175,14 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                         : value;
 
                     return (
-                      <div key={key} className="flex flex-col">
-                        <span className="text-xs text-gray-500 mb-1">
-                          {labels[key] || key}
-                        </span>
-                        <span className="text-sm font-medium text-gray-900">
+                      <div key={key} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-base">{icons[key] || '📋'}</span>
+                          <span className="text-xs text-gray-500 font-medium">
+                            {labels[key] || key}
+                          </span>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900 block">
                           {displayValue}
                         </span>
                       </div>
@@ -175,19 +199,26 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
         </div>
 
         {/* List Info */}
-        <div className="px-4 py-6 bg-white mx-4 rounded-2xl">
-          <div className="flex items-center gap-3">
-            <span className="text-lg">{item.lists.categories.icon}</span>
-            <div>
-              <p className="text-sm text-gray-500">از لیست</p>
-              <Link
-                href={`/lists/${item.lists.slug}`}
-                className="font-medium text-gray-900 hover:text-primary transition-colors"
-              >
-                {item.lists.title}
-              </Link>
+        <div className="px-4 pb-6">
+          <Link
+            href={`/lists/${item.lists.slug}`}
+            className="block bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl">{item.lists.categories?.icon || '📋'}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 mb-0.5">از لیست</p>
+                <p className="font-semibold text-gray-900 truncate">
+                  {item.lists.title}
+                </p>
+              </div>
+              <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </div>
-          </div>
+          </Link>
         </div>
       </main>
     </>

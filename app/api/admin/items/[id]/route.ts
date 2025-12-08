@@ -79,6 +79,12 @@ export async function PUT(
     const previousListId = existingItem.listId;
 
     // Validate metadata based on category
+    if (!existingItem.lists.categories) {
+      return NextResponse.json(
+        { error: 'دسته‌بندی یافت نشد' },
+        { status: 404 }
+      );
+    }
     const metadataValidation = validateMetadata(
       existingItem.lists.categories.slug,
       metadata || {}

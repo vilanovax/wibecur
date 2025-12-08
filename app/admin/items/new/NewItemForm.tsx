@@ -3,13 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { List, Category } from '@prisma/client';
+import { lists, categories } from '@prisma/client';
 import ImageUpload from '@/components/admin/shared/ImageUpload';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
 
-type ListWithCategory = List & {
-  categories: Category;
+type ListWithCategory = lists & {
+  categories: categories | null;
 };
 
 interface NewItemFormProps {
@@ -158,11 +158,11 @@ export default function NewItemForm({
       description: movie.plot || prev.description,
       imageUrl: finalPosterUrl || prev.imageUrl,
       metadata: {
-        ...prev.metadata,
-        year: movie.year || prev.metadata.year,
-        genre: movie.genre || prev.metadata.genre,
-        director: movie.director || prev.metadata.director,
-        imdbRating: movie.rating ? String(movie.rating) : prev.metadata.imdbRating,
+        ...(prev.metadata as any),
+        year: movie.year || (prev.metadata as any)?.year,
+        genre: movie.genre || (prev.metadata as any)?.genre,
+        director: movie.director || (prev.metadata as any)?.director,
+        imdbRating: movie.rating ? String(movie.rating) : (prev.metadata as any)?.imdbRating,
       },
     }));
   };
@@ -182,7 +182,7 @@ export default function NewItemForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
-          categorySlug: selectedList?.categories.slug,
+          categorySlug: selectedList?.categories?.slug,
           metadata: formData.metadata,
           plot: moviePlot || undefined, // Send plot if available
         }),
@@ -264,7 +264,7 @@ export default function NewItemForm({
           <p className="text-sm text-gray-500 mt-1">
             {selectedList && (
               <>
-                به لیست: {selectedList.categories.icon} {selectedList.title}
+                به لیست: {selectedList.categories?.icon || '📋'} {selectedList.title}
               </>
             )}
           </p>
@@ -313,7 +313,7 @@ export default function NewItemForm({
           >
             {lists.map((list) => (
               <option key={list.id} value={list.id}>
-                {list.categories.icon} {list.title}
+                 {list.categories?.icon || '📋'} {list.title}
               </option>
             ))}
           </select>
@@ -325,7 +325,7 @@ export default function NewItemForm({
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
               عنوان <span className="text-red-500">*</span>
             </label>
-            {(selectedList?.categories.slug === 'movie' || selectedList?.categories.slug === 'film' || selectedList?.categories.slug === 'movies') && (
+             {(selectedList?.categories?.slug === 'movie' || selectedList?.categories?.slug === 'film' || selectedList?.categories?.slug === 'movies') && (
               <button
                 type="button"
                 onClick={handleFetchFromImdb}
@@ -406,7 +406,7 @@ export default function NewItemForm({
           onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
           label="تصویر آیتم (اختیاری)"
           title={formData.title}
-          categoryName={selectedList?.categories.name}
+           categoryName={selectedList?.categories?.name}
           onModalOpenChange={setImageSearchModalOpen}
         />
 
@@ -430,7 +430,7 @@ export default function NewItemForm({
         </div>
 
         {/* Dynamic Metadata Fields */}
-        {selectedList && (
+        {selectedList && selectedList.categories?.slug && (
           <div className="border-t border-gray-200 pt-6">
             <DynamicMetadataFields
               categorySlug={selectedList.categories.slug}

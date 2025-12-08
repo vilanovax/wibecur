@@ -9,14 +9,19 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
     remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
       {
         protocol: 'https',
         hostname: '**',
       },
     ],
   },
+  // Turbopack configuration for Next.js 16
+  turbopack: {},
 };
 
 module.exports = withPWA(nextConfig);

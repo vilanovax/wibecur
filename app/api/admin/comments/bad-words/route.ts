@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { nanoid } from 'nanoid';
 
 // GET /api/admin/comments/bad-words - لیست کلمات بد
 export async function GET(request: NextRequest) {
@@ -80,7 +81,9 @@ export async function POST(request: NextRequest) {
 
     const badWord = await prisma.bad_words.create({
       data: {
+        id: nanoid(),
         word: word.trim().toLowerCase(),
+        updatedAt: new Date(),
       },
     });
 

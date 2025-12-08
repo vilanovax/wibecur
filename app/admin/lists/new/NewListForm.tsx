@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Category } from '@prisma/client';
+import { categories } from '@prisma/client';
 import ImageUpload from '@/components/admin/upload/ImageUpload';
 
 interface NewListFormProps {
-  categories: Category[];
+  categories: categories[];
 }
 
 export default function NewListForm({ categories }: NewListFormProps) {

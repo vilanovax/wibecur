@@ -30,24 +30,17 @@ export default async function UserCreatedListsPage({
     console.warn('Could not fetch bad words:', err);
   }
 
-  // Build where clause
+  // Build where clause - always filter by user role first
   const where: any = {
     users: {
       role: 'USER', // Only user-created lists
     },
   };
 
+  // Apply filter conditions
   if (filter === 'bad_words') {
     // Lists with bad words in title
-    if (badWordsList.length > 0) {
-      where.OR = badWordsList.map((word) => ({
-        title: {
-          contains: word,
-          mode: 'insensitive',
-        },
-      }));
-    } else {
-      // No bad words defined, return empty
+    if (badWordsList.length === 0) {
       return (
         <UserCreatedListsPageClient
           lists={[]}
@@ -60,22 +53,66 @@ export default async function UserCreatedListsPage({
         />
       );
     }
-  } else if (filter === 'public') {
-    where.isPublic = true;
-    where.isActive = true;
-  } else if (filter === 'private') {
-    where.isPublic = false;
-    where.isActive = true;
-  } else if (filter === 'inactive') {
-    where.isActive = false;
-  }
-  // For 'all' filter, show all lists (no additional filter conditions)
 
-  if (search) {
-    where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
+    const badWordConditions = badWordsList.map((word) => ({
+      title: {
+        contains: word,
+        mode: 'insensitive',
+      },
+    }));
+
+    where.AND = [
+      { users: { role: 'USER' } },
+      { OR: badWordConditions },
     ];
+
+    if (search) {
+      where.AND.push({
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+    delete where.users;
+  } else {
+    // For other filters (public, private, inactive, all)
+    if (filter === 'public') {
+      where.isPublic = true;
+      where.isActive = true;
+    } else if (filter === 'private') {
+      where.isPublic = false;
+      where.isActive = true;
+    } else if (filter === 'inactive') {
+      where.isActive = false;
+    }
+    // For 'all' filter, show all lists (no additional filter conditions)
+
+    // Add search condition if exists
+    if (search) {
+      const conditions: any[] = [
+        { users: { role: 'USER' } },
+        {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+          ],
+        },
+      ];
+
+      // Add filter conditions if they exist
+      if (where.isPublic !== undefined) {
+        conditions.push({ isPublic: where.isPublic });
+      }
+      if (where.isActive !== undefined) {
+        conditions.push({ isActive: where.isActive });
+      }
+
+      where.AND = conditions;
+      delete where.users;
+      delete where.isPublic;
+      delete where.isActive;
+    }
   }
 
   const [totalCount, lists] = await Promise.all([
@@ -130,6 +167,7 @@ export default async function UserCreatedListsPage({
       })
     ),
   ]);
+
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 

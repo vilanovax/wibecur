@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Determine sort order
-    const orderBy = sort === 'oldest' 
+    const orderBy: { createdAt: 'asc' | 'desc' } = sort === 'oldest' 
       ? { createdAt: 'asc' } 
       : { createdAt: 'desc' };
 

@@ -213,7 +213,7 @@ export default function SaveToPersonalListModal({
                 </p>
                 {canCreateNewList && (
                   <p className="text-sm text-gray-500">
-                    روی دکمه "ایجاد لیست جدید" کلیک کنید
+                    روی دکمه &quot;ایجاد لیست جدید&quot; کلیک کنید
                   </p>
                 )}
               </div>

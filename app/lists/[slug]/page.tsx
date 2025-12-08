@@ -98,7 +98,7 @@ export default async function ListDetailPage({
               src={list.coverImage}
               alt={list.title}
               className="w-full h-full object-cover"
-              fallbackIcon={list.categories.icon}
+              fallbackIcon={list.categories?.icon || '📋'}
               fallbackClassName="h-full w-full"
             />
             {list.isFeatured && (
@@ -119,13 +119,15 @@ export default async function ListDetailPage({
         {/* Info Section */}
         <div className="px-4 space-y-4">
           {/* Category */}
-          <Link
-            href={`/categories/${list.categories.slug}`}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:border-primary transition-colors"
-          >
-            <span className="text-lg">{list.categories.icon}</span>
-            <span>{list.categories.name}</span>
-          </Link>
+          {list.categories && (
+            <Link
+              href={`/categories/${list.categories.slug}`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:border-primary transition-colors"
+            >
+              <span className="text-lg">{list.categories.icon}</span>
+              <span>{list.categories.name}</span>
+            </Link>
+          )}
 
           {/* Title & Description */}
           <div>
@@ -199,17 +201,15 @@ export default async function ListDetailPage({
                     </div>
 
                     {/* Image */}
-                    {item.imageUrl && (
-                      <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.title}
-                          fill
-                          className="object-cover"
-                          unoptimized={true}
-                        />
-                      </div>
-                    )}
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                      <ImageWithFallback
+                        src={item.imageUrl || ''}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        fallbackIcon="📋"
+                        fallbackClassName="w-full h-full"
+                      />
+                    </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">

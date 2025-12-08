@@ -77,6 +77,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate metadata based on category
+    if (!list.categories) {
+      return NextResponse.json(
+        { error: 'دسته‌بندی یافت نشد' },
+        { status: 404 }
+      );
+    }
     const metadataValidation = validateMetadata(
       list.categories.slug,
       metadata || {}

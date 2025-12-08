@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Heart, Star } from 'lucide-react';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 interface ListCardProps {
   id: string;
@@ -31,19 +32,16 @@ export default function ListCard({
   itemCount,
 }: ListCardProps) {
   return (
-    <Link href={`/lists/${id}`}>
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group">
+    <Link href={`/lists/${id}`} className="block">
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group border border-gray-100">
         {/* Image with gradient overlay */}
-        <div className="relative h-40">
-          <img
+        <div className="relative h-44 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
+          <ImageWithFallback
             src={coverImage}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                'https://via.placeholder.com/400x200/6366F1/ffffff?text=' +
-                encodeURIComponent(title);
-            }}
+            fallbackIcon="📋"
+            fallbackClassName="w-full h-full"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 

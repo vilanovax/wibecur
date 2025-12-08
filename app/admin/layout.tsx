@@ -7,12 +7,14 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 admin-panel font-vazir">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 admin-panel font-vazir" dir="rtl">
       <TopBar />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-6 transition-all duration-300">
-          {children}
+        <main className="flex-1 p-6 transition-all duration-300 bg-transparent">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

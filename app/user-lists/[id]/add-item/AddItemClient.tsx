@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Search, X, Grid, List as ListIcon, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Toast from '@/components/shared/Toast';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 interface Category {
   id: string;
@@ -312,25 +313,19 @@ export default function AddItemClient({
                   viewMode === 'list' ? 'flex gap-4' : ''
                 }`}
               >
-                {item.imageUrl && (
-                  <div
-                    className={`relative ${
-                      viewMode === 'grid' ? 'h-40' : 'w-24 h-24 flex-shrink-0'
-                    }`}
-                  >
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                      unoptimized={true}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
+                <div
+                  className={`relative bg-gray-100 ${
+                    viewMode === 'grid' ? 'h-40' : 'w-24 h-24 flex-shrink-0'
+                  }`}
+                >
+                  <ImageWithFallback
+                    src={item.imageUrl || ''}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                    fallbackIcon="📋"
+                    fallbackClassName="w-full h-full"
+                  />
+                </div>
                 <div className={`p-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1 min-w-0">
