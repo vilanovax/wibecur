@@ -13,7 +13,7 @@ interface Activity {
   description: string;
   image: string | null;
   slug?: string;
-  category: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'>;
+  category: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'> | null;
   createdAt: string;
 }
 
@@ -116,10 +116,14 @@ export default function RecentActivityTab({ userId }: RecentActivityTabProps) {
           )}
           <div className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">{activity.category.icon}</span>
-              <span className="text-xs text-gray-500">
-                {activity.category.name}
-              </span>
+              {activity.category && (
+                <>
+                  <span className="text-xl">{activity.category.icon}</span>
+                  <span className="text-xs text-gray-500">
+                    {activity.category.name}
+                  </span>
+                </>
+              )}
               <span className="ml-auto text-xs text-gray-400 flex items-center gap-1">
                 {getActivityIcon(activity.type)}
                 {getActivityLabel(activity.type)}
