@@ -1,20 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
-@import "tailwindcss";
-
-@theme {
-  --font-sans: 'Vazirmatn', 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  --font-vazir: 'Vazirmatn', 'Vazir', sans-serif;
-
-  /* Primary colors - Tailwind v4 syntax */
-  --color-primary: #6366F1;
-  --color-primary-dark: #4F46E5;
-  --color-primary-light: #818CF8;
-  
-  /* Secondary and accent */
-  --color-secondary: #8B5CF6;
-  --color-accent: #EC4899;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --primary: #6366F1;
@@ -24,48 +12,31 @@
   --accent: #EC4899;
 }
 
-/* Ensure primary colors work in Tailwind v4 */
+/* Custom primary colors for Tailwind v3 */
 @layer utilities {
   .bg-primary {
-    background-color: var(--color-primary, #6366F1);
+    background-color: #6366F1;
   }
   .bg-primary-dark {
-    background-color: var(--color-primary-dark, #4F46E5);
+    background-color: #4F46E5;
   }
   .bg-primary-light {
-    background-color: var(--color-primary-light, #818CF8);
+    background-color: #818CF8;
   }
   .text-primary {
-    color: var(--color-primary, #6366F1);
+    color: #6366F1;
   }
   .text-primary-dark {
-    color: var(--color-primary-dark, #4F46E5);
+    color: #4F46E5;
   }
   .text-primary-light {
-    color: var(--color-primary-light, #818CF8);
+    color: #818CF8;
   }
   .border-primary {
-    border-color: var(--color-primary, #6366F1);
+    border-color: #6366F1;
   }
   .border-primary-dark {
-    border-color: var(--color-primary-dark, #4F46E5);
-  }
-  /* Gradient utilities for Tailwind v4 */
-  .from-primary {
-    --tw-gradient-from: var(--color-primary, #6366F1) var(--tw-gradient-from-position);
-    --tw-gradient-to: rgb(99 102 241 / 0) var(--tw-gradient-to-position);
-    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-  }
-  .to-primary-dark {
-    --tw-gradient-to: var(--color-primary-dark, #4F46E5) var(--tw-gradient-to-position);
-  }
-  .to-primary-light {
-    --tw-gradient-to: var(--color-primary-light, #818CF8) var(--tw-gradient-to-position);
-  }
-  /* Shadow with primary color - using opacity modifier */
-  .shadow-primary\/20 {
-    --tw-shadow-color: rgba(99, 102, 241, 0.2);
-    --tw-shadow: var(--tw-shadow-colored);
+    border-color: #4F46E5;
   }
 }
 

@@ -48,9 +48,10 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // Only store essential data to keep JWT small
         token.id = (user as any).id;
         token.role = (user as any).role;
-        token.image = (user as any).image;
+        // Don't store image in token to reduce size - fetch from DB if needed
       }
       return token;
     },
@@ -58,7 +59,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).id = (token as any).id || token.sub;
         (session.user as any).role = token.role;
-        (session.user as any).image = token.image;
+        // Image will be fetched from database if needed
       }
       return session;
     },

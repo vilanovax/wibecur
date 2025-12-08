@@ -1,10 +1,17 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development'
-});
+let withPWA = (config) => config;
+
+try {
+  const pwaConfig = require('next-pwa')({
+    dest: 'public',
+    register: true,
+    skipWaiting: true,
+    disable: process.env.NODE_ENV === 'development'
+  });
+  withPWA = pwaConfig;
+} catch (error) {
+  console.warn('next-pwa not found, PWA features disabled');
+}
 
 const nextConfig = {
   reactStrictMode: true,
@@ -22,6 +29,12 @@ const nextConfig = {
   },
   // Turbopack configuration for Next.js 16
   turbopack: {},
+  // Increase header size limit to handle large cookies
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
 };
 
 module.exports = withPWA(nextConfig);
