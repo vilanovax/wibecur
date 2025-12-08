@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
+
 
 // PUT /api/admin/users/[id]/toggle-active - فعال/غیرفعال کردن کاربر
 export async function PUT(
@@ -39,7 +39,7 @@ export async function PUT(
     }
 
     // Prevent deactivating yourself
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (session?.user?.email === existingUser.email && !isActive) {
       return NextResponse.json(
         { error: 'شما نمی‌توانید خود را غیرفعال کنید' },

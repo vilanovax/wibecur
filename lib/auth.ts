@@ -1,11 +1,15 @@
-import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
 
 // Cache session check to avoid redundant calls
 const getCachedSession = cache(async () => {
-  return getServerSession(authOptions);
+  try {
+    return await auth();
+  } catch (error) {
+    console.error('Error getting server session:', error);
+    return null;
+  }
 });
 
 export async function getCurrentUser() {
@@ -40,3 +44,6 @@ export async function checkAdminAuth() {
   }
   return session;
 }
+
+// Re-export auth for middleware usage
+export { auth };

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
+
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { slugify } from '@/lib/utils/slug';
@@ -10,7 +10,7 @@ import { nanoid } from 'nanoid';
 export async function POST(request: NextRequest) {
   try {
     console.log('POST /api/user/lists - Request received');
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     console.log('Session:', session ? 'exists' : 'missing', session?.user?.email);
     
     if (!session?.user?.email) {
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
 // GET /api/user/lists - دریافت لیست‌های کاربر
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'احراز هویت نشده است' },

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth-config';
 import { requireAdmin } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
-    const session = await getServerSession();
+    const session = await auth();
 
     if (!session?.user?.email) {
       return NextResponse.json(

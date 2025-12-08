@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
+
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
@@ -11,7 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json(
         { success: false, error: 'احراز هویت نشده است' },
@@ -165,7 +165,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json(
         { success: false, error: 'احراز هویت نشده است' },

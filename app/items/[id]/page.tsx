@@ -2,8 +2,8 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
+
 import { dbQuery } from '@/lib/db';
 import ItemDetailClient from './ItemDetailClient';
 
@@ -63,7 +63,7 @@ export default async function ItemDetailPage({
 
   // Check if user has liked this item
   let isLiked = false;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (session?.user?.email) {
     const userEmail = session.user.email;
     const user = await dbQuery(() =>

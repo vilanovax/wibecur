@@ -6,8 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import ListCommentSection from '@/components/mobile/lists/ListCommentSection';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
+
 import { dbQuery } from '@/lib/db';
 import UserListDetailClient from './UserListDetailClient';
 
@@ -45,7 +45,7 @@ export default async function UserListDetailPage({
 }) {
   try {
     const { id } = await params;
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     let currentUserId = session?.user ? ((session.user as any).id || null) : null;
 
     // If we have a session but no ID, try to get user ID from email

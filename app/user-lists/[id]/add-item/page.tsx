@@ -3,8 +3,8 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCategories } from '@/lib/db';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
+
 import { notFound } from 'next/navigation';
 import AddItemClient from './AddItemClient';
 
@@ -14,7 +14,7 @@ export default async function AddItemPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   let currentUserId = session?.user ? ((session.user as any).id || null) : null;
 
   // If we have a session but no ID, try to get user ID from email

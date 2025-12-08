@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
+
 import { getDecryptedSettings } from '@/lib/settings';
 import OpenAI from 'openai';
 
@@ -8,7 +8,7 @@ import OpenAI from 'openai';
 export async function POST(request: NextRequest) {
   try {
     // Check authentication (user must be logged in, but not necessarily admin)
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json(

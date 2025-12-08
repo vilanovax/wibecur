@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
+import { auth } from '@/lib/auth-config';
+
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
 // GET /api/notifications - دریافت پیام‌های کاربر
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json(
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
 // PUT /api/notifications - علامت‌گذاری پیام‌ها به عنوان خوانده شده
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json(
