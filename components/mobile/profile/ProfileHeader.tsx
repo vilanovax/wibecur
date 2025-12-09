@@ -37,79 +37,97 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
 
   return (
     <>
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl p-6 mb-6">
-        <div className="flex items-center gap-4 mb-6">
-          {/* Avatar */}
-          <div className="relative group">
-            <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden ring-4 ring-white shadow-lg">
-              {user.image ? (
-                <Image
-                  src={user.image}
-                  alt={user.name || user.email}
-                  width={96}
-                  height={96}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-white text-2xl font-bold">
-                  {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
-                </div>
-              )}
+      <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-8 -mx-4 -mt-5">
+        {/* Decorative background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-200 rounded-full opacity-20 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-200 rounded-full opacity-20 blur-3xl" />
+        </div>
+
+        <div className="relative z-10 px-4 pt-8">
+          {/* Avatar with animated ring */}
+          <div className="flex justify-center mb-6">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full blur-sm animate-pulse" />
+              <div className="relative w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden">
+                {user.image ? (
+                  <Image
+                    src={user.image}
+                    alt={user.name || user.email}
+                    width={96}
+                    height={96}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-600 text-white text-2xl font-bold">
+                    {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setShowAvatarForm(true)}
+                className="absolute bottom-1 right-1 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="تغییر آواتار"
+              >
+                <Camera className="w-4 h-4 text-indigo-600" />
+              </button>
             </div>
+          </div>
+
+          {/* Name & email */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold mb-1 text-gray-900">
+              {user.name || 'کاربر بدون نام'}
+            </h1>
+            <p className="text-gray-500 text-sm">{user.email}</p>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex justify-center gap-3 mb-8">
             <button
-              onClick={() => setShowAvatarForm(true)}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="تغییر آواتار"
+              onClick={() => setShowEditForm(true)}
+              className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-xl shadow-sm hover:shadow-md transition-all"
             >
-              <Camera className="w-4 h-4" />
+              <Edit2 className="w-4 h-4" />
+              <span className="text-sm font-medium">ویرایش پروفایل</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="p-2.5 text-red-500 bg-white rounded-xl shadow-sm hover:shadow-md hover:bg-red-50 transition-all disabled:opacity-50"
+            >
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
 
-          {/* User Info */}
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              {user.name || 'کاربر بدون نام'}
-            </h1>
-            <p className="text-gray-600 text-sm mb-3">{user.email}</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowEditForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white text-primary rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium shadow-sm"
-              >
-                <Edit2 className="w-4 h-4" />
-                ویرایش پروفایل
-              </button>
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium shadow-sm disabled:opacity-50"
-              >
-                <LogOut className="w-4 h-4" />
-                {isLoggingOut ? 'در حال خروج...' : 'خروج'}
-              </button>
+          {/* Stats cards */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-cyan-100 mb-2">
+                <span className="text-2xl font-bold bg-gradient-to-br from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                  {user.stats.listsCreated}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">لیست</p>
             </div>
-          </div>
-        </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              {user.stats.listsCreated}
+            <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 mb-2">
+                <span className="text-2xl font-bold bg-gradient-to-br from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  {user.stats.bookmarks}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">ذخیره</p>
             </div>
-            <div className="text-xs text-gray-600 mt-1">لیست</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              {user.stats.bookmarks}
+
+            <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-red-100 mb-2">
+                <span className="text-2xl font-bold bg-gradient-to-br from-orange-600 to-red-600 bg-clip-text text-transparent">
+                  {user.stats.itemLikes ?? 0}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">لایک</p>
             </div>
-            <div className="text-xs text-gray-600 mt-1">ذخیره</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              {user.stats.itemLikes ?? 0}
-            </div>
-            <div className="text-xs text-gray-600 mt-1">لایک</div>
           </div>
         </div>
       </div>

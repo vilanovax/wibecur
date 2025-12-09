@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { categories, lists } from '@prisma/client';
 
 type ListWithCategory = lists & {
@@ -56,15 +55,18 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
     }
   };
 
-  const displayedBookmarks = showAll ? bookmarks : bookmarks.slice(0, 4);
+  const displayedBookmarks = showAll ? bookmarks : bookmarks.slice(0, 8);
 
   if (isLoading && bookmarks.length === 0) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white rounded-xl p-4 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-            <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="grid grid-cols-2 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="bg-white rounded-xl overflow-hidden animate-pulse">
+            <div className="h-40 bg-gray-200" />
+            <div className="p-3">
+              <div className="h-3 bg-gray-200 rounded w-3/4 mb-2" />
+              <div className="h-3 bg-gray-200 rounded w-1/2" />
+            </div>
           </div>
         ))}
       </div>
@@ -80,62 +82,54 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {displayedBookmarks.map((bookmark) => (
-        <Link
-          key={bookmark.id}
-          href={`/lists/${bookmark.list.slug}`}
-          className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
-        >
-          {bookmark.list.coverImage && (
-            <div className="relative h-48">
-              <Image
-                src={bookmark.list.coverImage}
-                alt={bookmark.list.title}
-                fill
-                className="object-cover"
-                unoptimized={true}
-              />
-            </div>
-          )}
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">{bookmark.list.categories.icon}</span>
-              <span className="text-xs text-gray-500">
-                {bookmark.list.categories.name}
-              </span>
-            </div>
-            <h3 className="font-bold text-lg mb-2">{bookmark.list.title}</h3>
-            {bookmark.list.description && (
-              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                {bookmark.list.description}
-              </p>
+    <div>
+      <div className="grid grid-cols-2 gap-4">
+        {displayedBookmarks.map((bookmark) => (
+          <Link
+            key={bookmark.id}
+            href={`/lists/${bookmark.list.slug}`}
+            className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
+          >
+            {bookmark.list.coverImage ? (
+              <div className="relative h-40 bg-gradient-to-br from-yellow-100 to-orange-100">
+                <img
+                  src={bookmark.list.coverImage}
+                  alt={bookmark.list.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="relative h-40 bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center">
+                <span className="text-4xl">{bookmark.list.categories.icon}</span>
+              </div>
             )}
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <span>📋 {bookmark.list._count.items} آیتم</span>
-              <span>❤️ {bookmark.list._count.list_likes} لایک</span>
-              <span>⭐ {bookmark.list._count.bookmarks} ذخیره</span>
+            <div className="p-3">
+              <div className="flex items-center gap-1 mb-2">
+                <span className="text-sm">{bookmark.list.categories.icon}</span>
+                <span className="text-xs text-gray-500 truncate">{bookmark.list.categories.name}</span>
+              </div>
+              <h3 className="font-bold text-sm line-clamp-2 leading-tight">{bookmark.list.title}</h3>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        ))}
+      </div>
 
-      {!showAll && bookmarks.length > 4 && (
+      {!showAll && bookmarks.length > 8 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
         >
-          مشاهده بیشتر ({bookmarks.length - 4} مورد دیگر)
+          مشاهده بیشتر ({bookmarks.length - 8} مورد دیگر)
         </button>
       )}
-      
+
       {showAll && hasMore && (
         <button
           onClick={() => setPage((p) => p + 1)}
           disabled={isLoading}
-          className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+          className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
         >
-          {isLoading ? 'در حال بارگذاری...' : 'مشاهده بیشتر'}
+          {isLoading ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
         </button>
       )}
     </div>

@@ -155,11 +155,11 @@ export default async function UserListDetailPage({
     isUser: listOwner?.role === 'USER',
   });
 
-  // For private lists, we should allow viewing even if role is not USER
-  // The main check is ownership, not role
-  // Only block if it's a public list and owner is admin/editor
-  if (list.isPublic && listOwner?.role && listOwner.role !== 'USER') {
-    console.log('UserListDetailPage - Public list owner is not a USER, denying access');
+  // Allow the list owner to view their own lists regardless of role
+  // Only block if it's a public list created by admin/editor AND the viewer is not the owner
+  const isOwner = currentUserId === list.userId;
+  if (list.isPublic && listOwner?.role && listOwner.role !== 'USER' && !isOwner) {
+    console.log('UserListDetailPage - Public list owner is not a USER and viewer is not owner, denying access');
     notFound();
   }
 

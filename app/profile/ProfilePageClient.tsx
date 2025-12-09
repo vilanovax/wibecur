@@ -51,19 +51,19 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl p-6 animate-pulse">
+      <div className="space-y-5">
+        <div className="bg-white rounded-2xl border border-gray-200/60 p-6 animate-pulse">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-24 h-24 rounded-full bg-gray-200" />
+            <div className="w-20 h-20 rounded-2xl bg-gray-200" />
             <div className="flex-1">
-              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-1/2" />
+              <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
+              <div className="h-3 bg-gray-200 rounded w-1/2" />
             </div>
           </div>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-xl p-4 animate-pulse">
+            <div key={i} className="bg-white rounded-2xl border border-gray-200/60 p-5 animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
               <div className="h-3 bg-gray-200 rounded w-1/2" />
             </div>
@@ -75,11 +75,11 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
 
   if (error) {
     return (
-      <div className="bg-red-50 text-red-600 p-6 rounded-xl text-center">
-        <p>{error}</p>
+      <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-2xl text-center">
+        <p className="text-sm">{error}</p>
         <button
           onClick={fetchProfile}
-          className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          className="mt-4 px-5 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm font-medium"
         >
           تلاش مجدد
         </button>
@@ -89,14 +89,14 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
 
   if (!user) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl">
-        <p className="text-gray-500">کاربر یافت نشد</p>
+      <div className="text-center py-12 bg-white rounded-2xl border border-gray-200/60">
+        <p className="text-gray-500 text-sm">کاربر یافت نشد</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <ProfileHeader user={user} onUpdate={fetchProfile} />
       <ProfileTabs userId={userId} />
     </div>

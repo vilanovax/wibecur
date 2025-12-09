@@ -8,9 +8,9 @@ export default async function ProfilePage() {
   const userId = (session.user as any).id;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50/50 pb-20">
       <Header title="پروفایل" />
-      <main className="px-4 py-6">
+      <main className="px-4 py-5">
         <ProfilePageClient userId={userId} />
       </main>
       <BottomNav />

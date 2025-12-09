@@ -99,12 +99,7 @@ export default function LikesTab({ userId }: LikesTabProps) {
                 <span className="text-sm">{like.category.icon}</span>
                 <span className="text-xs text-gray-500 truncate">{like.category.name}</span>
               </div>
-              <h3 className="font-bold text-sm mb-1 line-clamp-2 leading-tight">{like.title}</h3>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-red-500 flex items-center gap-1">
-                  <span>❤️</span>
-                </span>
-              </div>
+              <h3 className="font-bold text-sm line-clamp-2 leading-tight">{like.title}</h3>
             </div>
           </Link>
         ))}
