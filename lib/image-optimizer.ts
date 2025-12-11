@@ -1,28 +1,8 @@
 import sharp from 'sharp';
-
-/**
- * Image optimization configuration
- */
-export const IMAGE_CONFIG = {
-  // Maximum dimensions
-  maxWidth: 1200, // Good for Retina displays (600px * 2)
-  maxHeight: 1200,
-
-  // Quality settings
-  quality: {
-    webp: 80, // WebP quality (better compression)
-    jpeg: 85, // JPEG quality (fallback)
-  },
-
-  // Format preference
-  format: 'webp' as const, // WebP is 70% smaller than JPEG
-
-  // Optimization thresholds - skip optimization if already good
-  skipOptimizationIfSmallerThan: 300 * 1024, // 300KB - don't optimize if already small
-  skipOptimizationIfDimensionsUnder: 800, // Don't optimize if both width and height < 800px
-};
+import { ImageProfile, getImageProfile } from './image-config';
 
 export interface OptimizeImageOptions {
+  profile?: ImageProfile;
   maxWidth?: number;
   maxHeight?: number;
   quality?: number;
@@ -43,12 +23,17 @@ export async function optimizeImage(
   buffer: Buffer,
   options: OptimizeImageOptions = {}
 ): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
+  // Get profile configuration if specified
+  const profileConfig = options.profile ? getImageProfile(options.profile) : null;
+
   const {
-    maxWidth = IMAGE_CONFIG.maxWidth,
-    maxHeight = IMAGE_CONFIG.maxHeight,
-    quality = IMAGE_CONFIG.quality.webp,
-    format = IMAGE_CONFIG.format,
+    maxWidth = profileConfig?.maxWidth || 1200,
+    maxHeight = profileConfig?.maxHeight || 1200,
+    quality = profileConfig?.quality || 80,
+    format = profileConfig?.format || 'webp',
   } = options;
+
+  const skipThreshold = profileConfig?.skipOptimizationIfSmallerThan || 300 * 1024;
 
   try {
     // Get image metadata
@@ -58,13 +43,12 @@ export async function optimizeImage(
     const width = metadata.width || 0;
     const height = metadata.height || 0;
 
-    console.log(`Original image: ${width}x${height}, format: ${metadata.format}, size: ${(originalSize / 1024).toFixed(2)}KB`);
+    console.log(`[${options.profile || 'default'}] Original: ${width}x${height}, ${metadata.format}, ${(originalSize / 1024).toFixed(2)}KB`);
 
     // Skip optimization if image is already small and appropriately sized
-    const isAlreadySmall = originalSize < IMAGE_CONFIG.skipOptimizationIfSmallerThan;
+    const isAlreadySmall = originalSize < skipThreshold;
     const isAlreadyRightSize = width <= maxWidth && height <= maxHeight &&
-                               width < IMAGE_CONFIG.skipOptimizationIfDimensionsUnder &&
-                               height < IMAGE_CONFIG.skipOptimizationIfDimensionsUnder;
+                               width < 800 && height < 800;
 
     if (isAlreadySmall && isAlreadyRightSize) {
       console.log('✓ Image is already optimized, skipping');
@@ -124,7 +108,7 @@ export async function optimizeImage(
     }
 
     const compressionRatio = ((1 - optimizedBuffer.length / buffer.length) * 100).toFixed(1);
-    console.log(`Optimized image: size: ${(optimizedBuffer.length / 1024).toFixed(2)}KB (${compressionRatio}% smaller)`);
+    console.log(`✓ Optimized: ${(optimizedBuffer.length / 1024).toFixed(2)}KB (${compressionRatio}% smaller)`);
 
     return {
       buffer: optimizedBuffer,
@@ -132,13 +116,41 @@ export async function optimizeImage(
       ext,
     };
   } catch (error: any) {
-    console.error('Image optimization failed:', error.message);
-    // If optimization fails, return original buffer
-    return {
-      buffer,
-      contentType: 'image/jpeg',
-      ext: '.jpg',
-    };
+    console.error('⚠️ Optimization failed:', error.message);
+    console.log('→ Fallback: trying with lower quality...');
+
+    // Fallback: try with lower quality
+    try {
+      const fallbackQuality = Math.max(quality - 20, 50);
+      const image = sharp(buffer);
+      const fallbackBuffer = await image
+        .resize(maxWidth, maxHeight, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({ quality: fallbackQuality })
+        .toBuffer();
+
+      console.log(`✓ Fallback succeeded with quality ${fallbackQuality}`);
+      return {
+        buffer: fallbackBuffer,
+        contentType: 'image/webp',
+        ext: '.webp',
+      };
+    } catch (fallbackError) {
+      console.error('⚠️ Fallback also failed, returning original');
+      // Return original if all fails
+      const metadata = await sharp(buffer).metadata().catch(() => null);
+      const ext = metadata?.format === 'png' ? '.png' :
+                  metadata?.format === 'webp' ? '.webp' : '.jpg';
+      const contentType = metadata?.format === 'png' ? 'image/png' :
+                         metadata?.format === 'webp' ? 'image/webp' : 'image/jpeg';
+      return {
+        buffer,
+        contentType,
+        ext,
+      };
+    }
   }
 }
 

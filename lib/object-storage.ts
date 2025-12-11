@@ -58,9 +58,10 @@ export async function uploadImageFromUrl(
 
     const imageBuffer = Buffer.from(response.data);
 
-    // Optimize image before uploading
+    // Optimize image before uploading (use itemImage profile for items folder)
     console.log('Optimizing image...');
-    const optimized = await optimizeImage(imageBuffer);
+    const profile = folder === 'items' ? 'itemImage' : 'default';
+    const optimized = await optimizeImage(imageBuffer, { profile });
 
     // Generate unique filename with optimized extension
     const filename = `${crypto.randomBytes(16).toString('hex')}${optimized.ext}`;
@@ -129,9 +130,18 @@ export async function uploadImageBuffer(
       return null;
     }
 
-    // Optimize image before uploading
+    // Determine profile based on folder
+    const profile =
+      folder === 'items' ? 'itemImage' :
+      folder === 'avatars' ? 'avatar' :
+      folder === 'covers' ? 'coverProfile' :
+      folder === 'lists' ? 'coverList' :
+      folder === 'hubs' ? 'hubCover' :
+      'default';
+
+    // Optimize image before uploading with appropriate profile
     console.log('Optimizing image...');
-    const optimized = await optimizeImage(buffer);
+    const optimized = await optimizeImage(buffer, { profile });
 
     // Generate unique filename with optimized extension
     const filename = `${crypto.randomBytes(16).toString('hex')}${optimized.ext}`;
