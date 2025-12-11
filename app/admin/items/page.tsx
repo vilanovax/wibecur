@@ -9,21 +9,37 @@ export const metadata: Metadata = {
   description: 'مدیریت آیتم‌های لیست‌ها',
 };
 
-export default async function ItemsPage() {
+interface PageProps {
+  searchParams: Promise<{
+    page?: string;
+    perPage?: string;
+    listId?: string;
+  }>;
+}
+
+export default async function ItemsPage({ searchParams }: PageProps) {
   // Check admin access first (redirect will throw NEXT_REDIRECT which is expected)
   await requireAdmin();
+
+  const params = await searchParams;
+  const page = parseInt(params.page || '1');
+  const perPage = parseInt(params.perPage || '24');
+  const listId = params.listId;
   
   try {
 
     // Use a single transaction to reduce connection pool usage
-    // Always fetch all items - filtering will be done client-side
-    // This allows the dropdown to show all lists even when one is selected
+    // Fetch paginated items with total count
 
-    const { items, lists, itemCountsByList } = await dbQuery(() =>
+    const skip = (page - 1) * perPage;
+
+    const { items, lists, itemCountsByList, totalItems } = await dbQuery(() =>
       prisma.$transaction(
         async (tx) => {
-          const [itemsResult, listsResult, itemCountsResult] = await Promise.all([
+          const [itemsResult, listsResult, itemCountsResult, totalCount] = await Promise.all([
             tx.items.findMany({
+              skip,
+              take: perPage,
               orderBy: { createdAt: 'desc' },
               select: {
                 id: true,
@@ -86,12 +102,14 @@ export default async function ItemsPage() {
                 id: true,
               },
             }),
+            tx.items.count(),
           ]);
 
           return {
             items: itemsResult,
             lists: listsResult,
             itemCountsByList: itemCountsResult,
+            totalItems: totalCount,
           };
         },
         {
@@ -118,12 +136,18 @@ export default async function ItemsPage() {
       updatedAt: list.updatedAt?.toISOString() || new Date().toISOString(),
     }));
 
+    const totalPages = Math.ceil(totalItems / perPage);
+
     return (
-      <ItemsPageClient 
-        items={serializedItems as any} 
-        lists={serializedLists as any} 
-        initialListId={undefined}
+      <ItemsPageClient
+        items={serializedItems as any}
+        lists={serializedLists as any}
+        initialListId={listId}
         itemCountsByList={Object.fromEntries(itemCountMap)}
+        currentPage={page}
+        perPage={perPage}
+        totalItems={totalItems}
+        totalPages={totalPages}
       />
     );
   } catch (error: any) {

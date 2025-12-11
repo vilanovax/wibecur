@@ -26,6 +26,10 @@ interface ItemsPageClientProps {
   lists: ListWithCategory[];
   initialListId?: string;
   itemCountsByList?: Record<string, number>;
+  currentPage: number;
+  perPage: number;
+  totalItems: number;
+  totalPages: number;
 }
 
 export default function ItemsPageClient({
@@ -33,6 +37,10 @@ export default function ItemsPageClient({
   lists,
   initialListId,
   itemCountsByList = {},
+  currentPage,
+  perPage,
+  totalItems,
+  totalPages,
 }: ItemsPageClientProps) {
   const router = useRouter();
   const [selectedListId, setSelectedListId] = useState<string>(
@@ -40,6 +48,7 @@ export default function ItemsPageClient({
   );
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPerPage, setCurrentPerPage] = useState<number>(perPage);
 
   // Get unique categories from lists (filter out lists without categories)
   const categories = Array.from(
@@ -50,7 +59,7 @@ export default function ItemsPageClient({
     ).values()
   );
 
-  // Filter items by category first, then by list
+  // Filter items by category first, then by list (client-side filtering for current page only)
   const filteredItems = items.filter((item) => {
     // Skip items whose list doesn't have a category (personal lists)
     if (!item.lists.categories) {
@@ -63,6 +72,27 @@ export default function ItemsPageClient({
       selectedListId === 'all' || item.listId === selectedListId;
     return categoryMatch && listMatch;
   });
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams();
+    params.set('page', newPage.toString());
+    params.set('perPage', currentPerPage.toString());
+    if (selectedListId !== 'all') {
+      params.set('listId', selectedListId);
+    }
+    router.push(`/admin/items?${params.toString()}`);
+  };
+
+  const handlePerPageChange = (newPerPage: number) => {
+    setCurrentPerPage(newPerPage);
+    const params = new URLSearchParams();
+    params.set('page', '1'); // Reset to first page
+    params.set('perPage', newPerPage.toString());
+    if (selectedListId !== 'all') {
+      params.set('listId', selectedListId);
+    }
+    router.push(`/admin/items?${params.toString()}`);
+  };
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -111,8 +141,8 @@ export default function ItemsPageClient({
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">آیتم‌ها</h1>
           <p className="text-sm text-gray-500">
-            {filteredItems.length} آیتم
-            {selectedListId !== 'all' && ` از لیست "${selectedList?.title}"`}
+            نمایش {filteredItems.length} آیتم از {totalItems} آیتم کل
+            {selectedListId !== 'all' && ` (لیست "${selectedList?.title}")`}
           </p>
         </div>
         <div className="flex gap-3">
@@ -217,6 +247,118 @@ export default function ItemsPageClient({
             );
           })}
         </select>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* Per Page Selector */}
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-semibold text-gray-700">
+              تعداد در هر صفحه:
+            </label>
+            <div className="flex gap-2">
+              {[24, 48, 100].map((size) => (
+                <button
+                  key={size}
+                  onClick={() => handlePerPageChange(size)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    currentPerPage === size
+                      ? 'bg-primary text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Page Info & Navigation */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              صفحه {currentPage} از {totalPages} ({totalItems} آیتم)
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                قبلی
+              </button>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                بعدی
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Page Numbers (for desktop) */}
+        {totalPages > 1 && (
+          <div className="hidden md:flex items-center justify-center gap-2 mt-4 pt-4 border-t border-gray-100">
+            {(() => {
+              const pages = [];
+              const maxVisible = 7;
+
+              if (totalPages <= maxVisible) {
+                // Show all pages
+                for (let i = 1; i <= totalPages; i++) {
+                  pages.push(i);
+                }
+              } else {
+                // Always show first page
+                pages.push(1);
+
+                if (currentPage > 3) {
+                  pages.push('...');
+                }
+
+                // Show pages around current
+                const start = Math.max(2, currentPage - 1);
+                const end = Math.min(totalPages - 1, currentPage + 1);
+                for (let i = start; i <= end; i++) {
+                  pages.push(i);
+                }
+
+                if (currentPage < totalPages - 2) {
+                  pages.push('...');
+                }
+
+                // Always show last page
+                pages.push(totalPages);
+              }
+
+              return pages.map((page, index) => {
+                if (page === '...') {
+                  return (
+                    <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+                      ...
+                    </span>
+                  );
+                }
+
+                return (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page as number)}
+                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                      currentPage === page
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              });
+            })()}
+          </div>
+        )}
       </div>
 
       {/* Items Grid */}
