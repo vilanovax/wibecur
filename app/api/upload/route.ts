@@ -39,8 +39,12 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload to Liara Object Storage
-    const url = await uploadImageBuffer(buffer, file.type, 'user-uploads');
+    // Determine folder based on purpose (from form data or default to avatars for user uploads)
+    const purpose = formData.get('purpose') as string;
+    const folder = purpose === 'cover' ? 'covers' : 'avatars';
+
+    // Upload to Liara Object Storage with appropriate profile
+    const url = await uploadImageBuffer(buffer, file.type, folder);
 
     if (!url) {
       return NextResponse.json(

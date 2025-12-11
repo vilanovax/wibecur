@@ -37,8 +37,20 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload to Liara Object Storage
-    const url = await uploadImageBuffer(buffer, file.type, 'admin-uploads');
+    // Determine folder based on purpose (from form data or query params)
+    const purpose = formData.get('purpose') as string ||
+                   new URL(request.url).searchParams.get('purpose');
+
+    // Map purpose to appropriate folder
+    let folder = 'uploads'; // default
+    if (purpose === 'list-cover' || purpose === 'cover') {
+      folder = 'lists';
+    } else if (purpose === 'avatar') {
+      folder = 'avatars';
+    }
+
+    // Upload to Liara Object Storage with appropriate profile
+    const url = await uploadImageBuffer(buffer, file.type, folder);
 
     if (!url) {
       return NextResponse.json(
