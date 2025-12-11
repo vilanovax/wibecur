@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { uploadImageBuffer } from '@/lib/object-storage';
 
 export async function POST(request: NextRequest) {
   // Require authentication
@@ -42,23 +39,15 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Create unique filename
-    const timestamp = Date.now();
-    const originalName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-    const filename = `${timestamp}_${originalName}`;
+    // Upload to Liara Object Storage
+    const url = await uploadImageBuffer(buffer, file.type, 'user-uploads');
 
-    // Ensure upload directory exists
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    if (!url) {
+      return NextResponse.json(
+        { error: 'خطا در آپلود فایل به Object Storage' },
+        { status: 500 }
+      );
     }
-
-    // Save file
-    const filepath = join(uploadDir, filename);
-    await writeFile(filepath, buffer);
-
-    // Return public URL
-    const url = `/uploads/${filename}`;
 
     return NextResponse.json({ url }, { status: 200 });
   } catch (error: any) {

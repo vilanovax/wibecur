@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { uploadImageBuffer } from '@/lib/object-storage';
 
 // POST /api/admin/upload - Upload image file
 export async function POST(request: NextRequest) {
@@ -35,27 +33,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 8);
-    const fileExtension = file.name.split('.').pop();
-    const filename = `${timestamp}-${randomString}.${fileExtension}`;
-
-    // Convert file to buffer and save
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const filepath = join(uploadsDir, filename);
-    await writeFile(filepath, buffer);
+    // Upload to Liara Object Storage
+    const url = await uploadImageBuffer(buffer, file.type, 'admin-uploads');
 
-    // Return the URL
-    const url = `/uploads/${filename}`;
+    if (!url) {
+      return NextResponse.json(
+        { error: 'خطا در آپلود فایل به Object Storage' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ url }, { status: 201 });
   } catch (error: any) {

@@ -107,6 +107,58 @@ function getExtensionFromContentType(contentType: string): string {
 }
 
 /**
+ * Upload image buffer to Liara Object Storage
+ * @param buffer - Image buffer
+ * @param contentType - Content type (e.g., 'image/jpeg')
+ * @param folder - Folder path in bucket (e.g., 'avatars', 'lists', 'items')
+ * @returns URL of uploaded image or null if failed
+ */
+export async function uploadImageBuffer(
+  buffer: Buffer,
+  contentType: string = 'image/jpeg',
+  folder: string = 'images'
+): Promise<string | null> {
+  try {
+    const s3Client = await getS3Client();
+    const config = await getLiaraConfig();
+
+    if (!s3Client || !config) {
+      console.warn('Skipping image upload - Liara not configured');
+      return null;
+    }
+
+    // Generate unique filename
+    const extension = getExtensionFromContentType(contentType);
+    const filename = `${crypto.randomBytes(16).toString('hex')}${extension}`;
+    const key = `${folder}/${filename}`;
+
+    // Upload to Liara
+    console.log('Uploading to Liara:', key);
+    const upload = new Upload({
+      client: s3Client,
+      params: {
+        Bucket: config.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+        ACL: 'public-read', // Make publicly accessible
+      },
+    });
+
+    await upload.done();
+
+    // Construct public URL
+    const publicUrl = `${config.endpoint}/${config.bucketName}/${key}`;
+    console.log('Image uploaded successfully:', publicUrl);
+
+    return publicUrl;
+  } catch (error: any) {
+    console.error('Error uploading image:', error.message);
+    return null;
+  }
+}
+
+/**
  * Test Liara Object Storage connection
  */
 export async function testLiaraConnection(): Promise<boolean> {
