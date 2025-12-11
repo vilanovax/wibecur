@@ -17,8 +17,9 @@ export const IMAGE_CONFIG = {
   // Format preference
   format: 'webp' as const, // WebP is 70% smaller than JPEG
 
-  // Max file size target (not hard limit, but we optimize toward this)
-  targetMaxSize: 500 * 1024, // 500KB
+  // Optimization thresholds - skip optimization if already good
+  skipOptimizationIfSmallerThan: 300 * 1024, // 300KB - don't optimize if already small
+  skipOptimizationIfDimensionsUnder: 800, // Don't optimize if both width and height < 800px
 };
 
 export interface OptimizeImageOptions {
@@ -53,8 +54,33 @@ export async function optimizeImage(
     // Get image metadata
     const image = sharp(buffer);
     const metadata = await image.metadata();
+    const originalSize = buffer.length;
+    const width = metadata.width || 0;
+    const height = metadata.height || 0;
 
-    console.log(`Original image: ${metadata.width}x${metadata.height}, format: ${metadata.format}, size: ${(buffer.length / 1024).toFixed(2)}KB`);
+    console.log(`Original image: ${width}x${height}, format: ${metadata.format}, size: ${(originalSize / 1024).toFixed(2)}KB`);
+
+    // Skip optimization if image is already small and appropriately sized
+    const isAlreadySmall = originalSize < IMAGE_CONFIG.skipOptimizationIfSmallerThan;
+    const isAlreadyRightSize = width <= maxWidth && height <= maxHeight &&
+                               width < IMAGE_CONFIG.skipOptimizationIfDimensionsUnder &&
+                               height < IMAGE_CONFIG.skipOptimizationIfDimensionsUnder;
+
+    if (isAlreadySmall && isAlreadyRightSize) {
+      console.log('✓ Image is already optimized, skipping');
+      // Return original with proper format detection
+      const ext = metadata.format === 'png' ? '.png' :
+                  metadata.format === 'webp' ? '.webp' : '.jpg';
+      const contentType = metadata.format === 'png' ? 'image/png' :
+                         metadata.format === 'webp' ? 'image/webp' : 'image/jpeg';
+      return {
+        buffer,
+        contentType,
+        ext,
+      };
+    }
+
+    console.log('→ Optimizing image...');
 
     // Resize if needed (maintain aspect ratio)
     let processedImage = image.resize(maxWidth, maxHeight, {
