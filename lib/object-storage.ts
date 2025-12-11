@@ -3,6 +3,7 @@ import { Upload } from '@aws-sdk/lib-storage';
 import axios from 'axios';
 import { getLiaraConfig } from './settings';
 import crypto from 'crypto';
+import { optimizeImage } from './image-optimizer';
 
 /**
  * Get S3 client for Liara Object Storage
@@ -56,23 +57,24 @@ export async function uploadImageFromUrl(
     });
 
     const imageBuffer = Buffer.from(response.data);
-    const contentType =
-      response.headers['content-type'] || 'image/jpeg';
 
-    // Generate unique filename
-    const extension = getExtensionFromContentType(contentType);
-    const filename = `${crypto.randomBytes(16).toString('hex')}${extension}`;
+    // Optimize image before uploading
+    console.log('Optimizing image...');
+    const optimized = await optimizeImage(imageBuffer);
+
+    // Generate unique filename with optimized extension
+    const filename = `${crypto.randomBytes(16).toString('hex')}${optimized.ext}`;
     const key = `${folder}/${filename}`;
 
-    // Upload to Liara
+    // Upload optimized image to Liara
     console.log('Uploading to Liara:', key);
     const upload = new Upload({
       client: s3Client,
       params: {
         Bucket: config.bucketName,
         Key: key,
-        Body: imageBuffer,
-        ContentType: contentType,
+        Body: optimized.buffer,
+        ContentType: optimized.contentType,
         ACL: 'public-read', // Make publicly accessible
       },
     });
@@ -127,20 +129,23 @@ export async function uploadImageBuffer(
       return null;
     }
 
-    // Generate unique filename
-    const extension = getExtensionFromContentType(contentType);
-    const filename = `${crypto.randomBytes(16).toString('hex')}${extension}`;
+    // Optimize image before uploading
+    console.log('Optimizing image...');
+    const optimized = await optimizeImage(buffer);
+
+    // Generate unique filename with optimized extension
+    const filename = `${crypto.randomBytes(16).toString('hex')}${optimized.ext}`;
     const key = `${folder}/${filename}`;
 
-    // Upload to Liara
+    // Upload optimized image to Liara
     console.log('Uploading to Liara:', key);
     const upload = new Upload({
       client: s3Client,
       params: {
         Bucket: config.bucketName,
         Key: key,
-        Body: buffer,
-        ContentType: contentType,
+        Body: optimized.buffer,
+        ContentType: optimized.contentType,
         ACL: 'public-read', // Make publicly accessible
       },
     });

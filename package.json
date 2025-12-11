@@ -41,6 +41,7 @@
     "react-hook-form": "^7.68.0",
     "react-is": "^19.2.1",
     "recharts": "^3.5.1",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^2.6.0",
     "zod": "^3.25.76",
     "zustand": "^4.5.7"
