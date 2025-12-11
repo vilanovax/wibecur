@@ -308,7 +308,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           >
             {lists.map((list) => (
               <option key={list.id} value={list.id}>
-                {list.categories.icon} {list.title}
+                {list.categories?.icon || '📝'} {list.title}
               </option>
             ))}
           </select>

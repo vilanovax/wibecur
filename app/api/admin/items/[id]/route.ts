@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
+import { uploadImageFromUrl } from '@/lib/object-storage';
 
 // GET /api/admin/items/[id] - Get single item
 export async function GET(
@@ -97,13 +98,29 @@ export async function PUT(
       );
     }
 
+    // Upload image to Liara if imageUrl is an external URL
+    let finalImageUrl = imageUrl;
+    if (imageUrl && imageUrl !== existingItem.imageUrl) {
+      // Check if it's an external URL (not already in Liara)
+      if (imageUrl.startsWith('http') && !imageUrl.includes('storage.c2.liara.space')) {
+        console.log('Uploading external image to Liara:', imageUrl);
+        const uploadedUrl = await uploadImageFromUrl(imageUrl, 'items');
+        if (uploadedUrl) {
+          finalImageUrl = uploadedUrl;
+          console.log('Image uploaded to Liara:', uploadedUrl);
+        } else {
+          console.warn('Failed to upload to Liara, using original URL');
+        }
+      }
+    }
+
     // Update item
     const item = await prisma.items.update({
       where: { id },
       data: {
         title,
         description,
-        imageUrl,
+        imageUrl: finalImageUrl,
         externalUrl,
         order,
         metadata: metadataValidation.data || {},

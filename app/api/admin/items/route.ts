@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { nanoid } from 'nanoid';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
+import { uploadImageFromUrl } from '@/lib/object-storage';
 
 // GET /api/admin/items - Get items (optionally filtered by listId)
 export async function GET(request: NextRequest) {
@@ -95,13 +96,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Upload image to Liara if imageUrl is an external URL
+    let finalImageUrl = imageUrl;
+    if (imageUrl && imageUrl.startsWith('http') && !imageUrl.includes('storage.c2.liara.space')) {
+      console.log('Uploading external image to Liara:', imageUrl);
+      const uploadedUrl = await uploadImageFromUrl(imageUrl, 'items');
+      if (uploadedUrl) {
+        finalImageUrl = uploadedUrl;
+        console.log('Image uploaded to Liara:', uploadedUrl);
+      } else {
+        console.warn('Failed to upload to Liara, using original URL');
+      }
+    }
+
     // Create item
     const item = await prisma.items.create({
       data: {
         id: nanoid(),
         title,
         description,
-        imageUrl,
+        imageUrl: finalImageUrl,
         externalUrl,
         listId,
         order,
