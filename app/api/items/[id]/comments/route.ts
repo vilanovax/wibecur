@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { getClientErrorMessage, logServerError } from '@/lib/api-error';
 
 // GET /api/items/[id]/comments - دریافت کامنت‌های یک آیتم
 export async function GET(
@@ -15,14 +16,16 @@ export async function GET(
     const sort = searchParams.get('sort') || 'newest'; // newest, popular
 
     const session = await auth();
-    const userId = session?.user ? (session.user as any).id : null;
+    const userId = session?.user ? session.user.id : null;
 
     // Get all bad words for filtering (with try-catch in case table is empty)
     let badWordsList: string[] = [];
     try {
-      const badWords = await prisma.bad_words.findMany({
-        select: { word: true },
-      });
+      const badWords = await dbQuery(() =>
+        prisma.bad_words.findMany({
+          select: { word: true },
+        })
+      );
       badWordsList = badWords.map((bw) => bw.word.toLowerCase());
     } catch (err) {
       // Table might not exist yet or be empty, continue without filtering
@@ -31,54 +34,56 @@ export async function GET(
 
     // Fetch comments (include filtered comments too, but exclude rejected ones and deleted ones)
     // Show approved comments and filtered comments (which may or may not be approved yet)
-    const comments = await prisma.comments.findMany({
-      where: {
-        itemId,
-        deletedAt: null, // Exclude soft-deleted comments
-        OR: [
-          { isApproved: true }, // Show approved comments
-          { isFiltered: true }, // Show filtered comments (even if not approved yet)
-        ],
-      },
-      include: {
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
+    const comments = await dbQuery(() =>
+      prisma.comments.findMany({
+        where: {
+          itemId,
+          deletedAt: null, // Exclude soft-deleted comments
+          OR: [
+            { isApproved: true }, // Show approved comments
+            { isFiltered: true }, // Show filtered comments (even if not approved yet)
+          ],
+        },
+        include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+          _count: {
+            select: {
+              comment_likes: true,
+            },
           },
         },
-        _count: {
-          select: {
-            comment_likes: true,
-          },
-        },
-      },
-      orderBy:
-        sort === 'popular'
-          ? { likeCount: 'desc' }
-          : { createdAt: 'desc' },
-    });
+        orderBy:
+          sort === 'popular'
+            ? { likeCount: 'desc' }
+            : { createdAt: 'desc' },
+      })
+    );
 
     // Get item with its category to check comments enabled status
-    const item = await prisma.items.findUnique({
-      where: { id: itemId },
-      include: {
-        lists: {
-          include: {
-            categories: true,
+    const item = await dbQuery(() =>
+      prisma.items.findUnique({
+        where: { id: itemId },
+        include: {
+          lists: {
+            include: {
+              categories: true,
+            },
           },
         },
-      },
-    });
+      })
+    );
 
     // Get global comment settings
-    let globalSettings: any = null;
+    let globalSettings: Awaited<ReturnType<typeof prisma.comment_settings.findFirst>> = null;
     try {
-      if (prisma.comment_settings) {
-        globalSettings = await prisma.comment_settings.findFirst();
-      }
+      globalSettings = await dbQuery(() => prisma.comment_settings.findFirst());
     } catch (err) {
       console.warn('Could not fetch comment settings:', err);
     }
@@ -92,15 +97,17 @@ export async function GET(
     // Get user's likes for this item's comments (only if there are comments)
     const userLikes =
       userId && comments.length > 0
-        ? await prisma.comment_likes.findMany({
-            where: {
-              userId,
-              commentId: {
-                in: comments.map((c) => c.id),
+        ? await dbQuery(() =>
+            prisma.comment_likes.findMany({
+              where: {
+                userId,
+                commentId: {
+                  in: comments.map((c) => c.id),
+                },
               },
-            },
-            select: { commentId: true },
-          })
+              select: { commentId: true },
+            })
+          )
         : [];
     const likedCommentIds = new Set(userLikes.map((l) => l.commentId));
 
@@ -144,10 +151,10 @@ export async function GET(
         commentsEnabled,
       },
     });
-  } catch (error: any) {
-    console.error('Error fetching comments:', error);
+  } catch (error) {
+    logServerError('GET /api/items/[id]/comments', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت کامنت‌ها') },
       { status: 500 }
     );
   }
@@ -168,7 +175,7 @@ export async function POST(
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { id: itemId } = await params;
     const body = await request.json();
     const { content } = body;
@@ -181,11 +188,9 @@ export async function POST(
     }
 
     // Get global comment settings for max length check
-    let globalSettings: any = null;
+    let globalSettings: Awaited<ReturnType<typeof prisma.comment_settings.findFirst>> = null;
     try {
-      if (prisma.comment_settings) {
-        globalSettings = await prisma.comment_settings.findFirst();
-      }
+      globalSettings = await dbQuery(() => prisma.comment_settings.findFirst());
     } catch (err) {
       console.warn('Could not fetch comment settings:', err);
     }
@@ -206,16 +211,18 @@ export async function POST(
     }
 
     // Check if item exists with its list and category
-    const item = await prisma.items.findUnique({
-      where: { id: itemId },
-      include: {
-        lists: {
-          include: {
-            categories: true,
+    const item = await dbQuery(() =>
+      prisma.items.findUnique({
+        where: { id: itemId },
+        include: {
+          lists: {
+            include: {
+              categories: true,
+            },
           },
         },
-      },
-    });
+      })
+    );
 
     if (!item) {
       return NextResponse.json(
@@ -245,12 +252,14 @@ export async function POST(
     // Check max comments limit (priority: item > global settings)
     const maxComments = item.maxComments ?? globalSettings?.defaultMaxComments ?? null;
     if (maxComments !== null && maxComments !== undefined) {
-      const currentCommentCount = await prisma.comments.count({
-        where: {
-          itemId,
-          deletedAt: null, // Only count non-deleted comments
-        },
-      });
+      const currentCommentCount = await dbQuery(() =>
+        prisma.comments.count({
+          where: {
+            itemId,
+            deletedAt: null, // Only count non-deleted comments
+          },
+        })
+      );
 
       if (currentCommentCount >= maxComments) {
         return NextResponse.json(
@@ -275,15 +284,17 @@ export async function POST(
       const timeLimit = new Date(Date.now() - rateLimitMs);
 
       // Check if user has commented on this specific item recently
-      const recentItemComment = await prisma.comments.findFirst({
-        where: {
-          itemId,
-          userId,
-          createdAt: { gte: timeLimit },
-          deletedAt: null,
-        },
-        orderBy: { createdAt: 'desc' },
-      });
+      const recentItemComment = await dbQuery(() =>
+        prisma.comments.findFirst({
+          where: {
+            itemId,
+            userId,
+            createdAt: { gte: timeLimit },
+            deletedAt: null,
+          },
+          orderBy: { createdAt: 'desc' },
+        })
+      );
 
       if (recentItemComment) {
         return NextResponse.json(
@@ -300,14 +311,16 @@ export async function POST(
         const globalTimeLimit = new Date(
           Date.now() - globalSettings.globalRateLimitMinutes * 60 * 1000
         );
-        const recentGlobalComment = await prisma.comments.findFirst({
-          where: {
-            userId,
-            createdAt: { gte: globalTimeLimit },
-            deletedAt: null,
-          },
-          orderBy: { createdAt: 'desc' },
-        });
+        const recentGlobalComment = await dbQuery(() =>
+          prisma.comments.findFirst({
+            where: {
+              userId,
+              createdAt: { gte: globalTimeLimit },
+              deletedAt: null,
+            },
+            orderBy: { createdAt: 'desc' },
+          })
+        );
 
         if (recentGlobalComment) {
           return NextResponse.json(
@@ -324,9 +337,11 @@ export async function POST(
     // Get bad words (with try-catch)
     let badWordsList: string[] = [];
     try {
-      const badWords = await prisma.bad_words.findMany({
-        select: { word: true },
-      });
+      const badWords = await dbQuery(() =>
+        prisma.bad_words.findMany({
+          select: { word: true },
+        })
+      );
       badWordsList = badWords.map((bw) => bw.word.toLowerCase());
     } catch (err) {
       console.warn('Could not fetch bad words:', err);
@@ -372,9 +387,9 @@ export async function POST(
           },
         });
 
-        // Track user violation
+        // Track user violation (find by userId + violationType for correct record)
         const existingViolation = await tx.user_violations.findFirst({
-          where: { userId },
+          where: { userId, violationType: 'bad_word' },
         });
 
         if (existingViolation) {
@@ -427,15 +442,13 @@ export async function POST(
         },
       },
     });
-  } catch (error: any) {
-    console.error('Error creating comment:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Error details:', JSON.stringify(error, null, 2));
+  } catch (error) {
+    logServerError('POST /api/items/[id]/comments', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      {
+        success: false,
+        error: getClientErrorMessage(error, 'خطا در ثبت کامنت'),
+        ...(process.env.NODE_ENV === 'development' && error instanceof Error && { details: error.stack }),
       },
       { status: 500 }
     );

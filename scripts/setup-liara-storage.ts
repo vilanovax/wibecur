@@ -1,19 +1,5 @@
 import { prisma } from '../lib/prisma';
-import crypto from 'crypto';
-
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'wibecur-encryption-key-32chars';
-
-function encrypt(text: string): string {
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv(
-    'aes-256-cbc',
-    Buffer.from(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32)),
-    iv
-  );
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
+import { getSettings, updateSettings } from '../lib/settings';
 
 async function setupLiaraStorage() {
   try {
@@ -48,26 +34,12 @@ async function setupLiaraStorage() {
 
     console.log('\n📝 Saving configuration to database...');
 
-    // Save encrypted credentials to database
-    await prisma.settings.upsert({
-      where: { key: 'liara_object_storage' },
-      update: {
-        value: JSON.stringify({
-          endpoint: endpoint.trim(),
-          bucketName: bucketName.trim(),
-          accessKeyId: encrypt(accessKeyId.trim()),
-          secretAccessKey: encrypt(secretAccessKey.trim()),
-        }),
-      },
-      create: {
-        key: 'liara_object_storage',
-        value: JSON.stringify({
-          endpoint: endpoint.trim(),
-          bucketName: bucketName.trim(),
-          accessKeyId: encrypt(accessKeyId.trim()),
-          secretAccessKey: encrypt(secretAccessKey.trim()),
-        }),
-      },
+    await getSettings();
+    await updateSettings({
+      liaraEndpoint: endpoint.trim(),
+      liaraBucketName: bucketName.trim(),
+      liaraAccessKey: accessKeyId.trim(),
+      liaraSecretKey: secretAccessKey.trim(),
     });
 
     console.log('\n✅ Liara Object Storage configured successfully!');

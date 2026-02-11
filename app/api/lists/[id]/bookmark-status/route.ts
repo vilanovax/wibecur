@@ -19,7 +19,7 @@ export async function GET(
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { id: listId } = await params;
 
     // Check if bookmark exists

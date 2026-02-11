@@ -4,8 +4,8 @@ import { cache } from 'react';
 // Wrapper function with retry logic (optimized)
 export async function dbQuery<T>(
   queryFn: () => Promise<T>,
-  retries = 2,
-  delay = 1000
+  retries = 3,
+  delay = 1500
 ): Promise<T> {
   // Ensure Prisma client is connected before executing queries
   try {
@@ -20,16 +20,17 @@ export async function dbQuery<T>(
       return await queryFn();
     } catch (error: any) {
       const isLastAttempt = i === retries - 1;
+      const errMsg = String(error?.message ?? '');
       
       // Check for connection pool timeout errors and "not connected" errors
       const isConnectionPoolError = 
         error?.code === 'P1001' || // Can't reach database
         error?.code === 'P1008' || // Operations timed out
-        error?.message?.includes("Can't reach database") ||
-        error?.message?.includes("connection pool") ||
-        error?.message?.includes("Timed out fetching") ||
-        error?.message?.includes("Engine is not yet connected") ||
-        error?.message?.includes("not yet connected") ||
+        errMsg.includes("Can't reach database") ||
+        errMsg.includes("connection pool") ||
+        errMsg.includes("Timed out fetching") ||
+        errMsg.includes("Engine is not yet connected") ||
+        errMsg.includes("not yet connected") ||
         error?.kind === 'Closed';
       
       // Only retry connection errors

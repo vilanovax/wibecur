@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--max-http-header-size=16384 next dev",
+    "dev": "cross-env NODE_OPTIONS=--max-http-header-size=16384 next dev -p 3002",
     "dev:next": "next dev",
     "build": "next build",
     "start": "NODE_OPTIONS='--max-http-header-size=16384' next start",
@@ -12,7 +12,9 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "db:export": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/export-database.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:docker:up": "docker-compose up -d",
+    "db:docker:init": "prisma generate && prisma db push && npm run db:seed"
   },
   "prisma": {
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
@@ -31,6 +33,7 @@
     "dotenv": "^17.2.3",
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.556.0",
+    "nanoid": "^5.1.6",
     "next": "16.0.7",
     "next-auth": "^5.0.0-beta.30",
     "openai": "^6.10.0",
@@ -52,6 +55,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.17",
+    "baseline-browser-mapping": "^2.9.19",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.7",
@@ -59,5 +63,8 @@
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "baseline-browser-mapping": "^2.9.19"
   }
 }

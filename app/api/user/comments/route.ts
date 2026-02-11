@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
 
     const comments = await prisma.comments.findMany({
       where: {

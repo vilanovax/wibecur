@@ -146,10 +146,10 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
           {commentsEnabled ? (
             <button
               onClick={() => setIsFormOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm font-medium"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
+              aria-label="افزودن کامنت جدید"
             >
-              <Plus className="w-4 h-4" />
-              کامنت جدید
+              <Plus className="w-5 h-5" strokeWidth={2.5} />
             </button>
           ) : (
             <span className="text-sm text-gray-500">
@@ -158,31 +158,33 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
           )}
         </div>
 
-        {/* Sort Buttons */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setSortBy('newest')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              sortBy === 'newest'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            جدیدترین
-          </button>
-          <button
-            onClick={() => setSortBy('popular')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              sortBy === 'popular'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <TrendingUp className="w-4 h-4" />
-            محبوب‌ترین
-          </button>
-        </div>
+        {/* Sort Buttons - Only show if there are comments */}
+        {!isLoading && comments.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setSortBy('newest')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                sortBy === 'newest'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              جدیدترین
+            </button>
+            <button
+              onClick={() => setSortBy('popular')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                sortBy === 'popular'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              محبوب‌ترین
+            </button>
+          </div>
+        )}
 
         {/* Comments List */}
         {isLoading ? (

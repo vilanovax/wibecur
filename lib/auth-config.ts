@@ -1,6 +1,5 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import type { NextAuthConfig } from 'next-auth';
 
@@ -20,6 +19,8 @@ const config: NextAuthConfig = {
           throw new Error('لطفاً ایمیل و رمز عبور را وارد کنید');
         }
 
+        // Dynamic import so Prisma is not loaded in Edge (middleware); only used in API sign-in
+        const { prisma } = await import('@/lib/prisma');
         const user = await prisma.users.findUnique({
           where: { email },
         });
@@ -47,18 +48,28 @@ const config: NextAuthConfig = {
   callbacks: {
     jwt({ token, user }) {
       if (user) {
-        // Store only essential data in JWT to keep cookie size small
         token.id = user.id;
-        token.role = (user as any).role;
+        token.role = user.role;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id || token.sub;
-        (session.user as any).role = token.role;
+        session.user.id = (typeof token.id === 'string' ? token.id : token.sub) || '';
+        session.user.role = (token.role as 'USER' | 'ADMIN' | 'EDITOR') || 'USER';
       }
       return session;
+    },
+    authorized({ auth, request }) {
+      const { pathname } = request.nextUrl;
+      const isAdminRoute = pathname.startsWith('/admin');
+      const isProfileRoute = pathname.startsWith('/profile');
+      const isProtectedRoute = isAdminRoute || isProfileRoute;
+
+      if (!isProtectedRoute) return true;
+      if (!auth?.user) return false;
+      if (isAdminRoute && auth.user.role !== 'ADMIN') return false;
+      return true;
     },
   },
   pages: {
@@ -68,7 +79,13 @@ const config: NextAuthConfig = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET || 'wibecur-secret-key-change-in-production-2025',
+  secret:
+    process.env.NEXTAUTH_SECRET ||
+    (process.env.NODE_ENV === 'production'
+      ? (() => {
+          throw new Error('NEXTAUTH_SECRET must be set in production');
+        })()
+      : 'wibecur-dev-secret'),
   // Disable debug to reduce console noise - the chunking warning is not an error
   debug: false,
 };

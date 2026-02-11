@@ -17,7 +17,7 @@ export async function POST(
       );
     }
 
-    const adminId = (session.user as any).id;
+    const adminId = session.user.id;
     const { id: commentId } = await params;
     const body = await request.json();
     const { penaltyScore, action } = body;

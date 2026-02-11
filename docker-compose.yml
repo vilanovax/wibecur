@@ -1,0 +1,24 @@
+# PostgreSQL برای توسعه لوکال با داکر
+# استفاده: docker-compose up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wibecur-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wibecur
+      POSTGRES_PASSWORD: wibecur_local_secret
+      POSTGRES_DB: wibecur
+    ports:
+      - "5433:5432"   # پورت 5433 روی host تا با PostgreSQL محلی تداخل نداشته باشد
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wibecur -d wibecur"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -13,35 +13,21 @@ export async function GET(request: NextRequest) {
 
     // Get or create settings (singleton)
     const settings = await dbQuery(async () => {
-      try {
-        // Check if comment_settings model exists
-        if (!prisma.comment_settings) {
-          console.error('❌ prisma.comment_settings is undefined');
-          throw new Error('مدل comment_settings در Prisma Client موجود نیست. لطفاً Prisma Client را generate کنید.');
-        }
+      let existingSettings = await prisma.comment_settings.findFirst();
 
-        let existingSettings = await prisma.comment_settings.findFirst();
-        
-        if (!existingSettings) {
-          // Create default settings
-          console.log('📝 Creating default comment_settings...');
-          existingSettings = await prisma.comment_settings.create({
+      if (!existingSettings) {
+        existingSettings = await prisma.comment_settings.create({
             data: {
               defaultMaxComments: null,
               defaultCommentsEnabled: true,
               maxCommentLength: null,
               rateLimitMinutes: 5,
-              globalRateLimitMinutes: null,
-            },
-          });
-          console.log('✅ Default comment_settings created:', existingSettings.id);
-        }
-        
-        return existingSettings;
-      } catch (error: any) {
-        console.error('❌ Error in dbQuery for comment_settings:', error);
-        throw error;
+            globalRateLimitMinutes: null,
+          },
+        });
       }
+
+      return existingSettings;
     });
 
     return NextResponse.json({
@@ -105,17 +91,9 @@ export async function PUT(request: NextRequest) {
 
     // Update or create settings (singleton)
     const settings = await dbQuery(async () => {
-      try {
-        // Check if comment_settings model exists
-        if (!prisma.comment_settings) {
-          console.error('❌ prisma.comment_settings is undefined');
-          throw new Error('مدل comment_settings در Prisma Client موجود نیست. لطفاً Prisma Client را generate کنید.');
-        }
+      const existingSettings = await prisma.comment_settings.findFirst();
 
-        const existingSettings = await prisma.comment_settings.findFirst();
-      
       if (existingSettings) {
-        console.log('📝 Updating existing comment_settings:', existingSettings.id);
         return await prisma.comment_settings.update({
           where: { id: existingSettings.id },
           data: {
@@ -127,7 +105,6 @@ export async function PUT(request: NextRequest) {
           },
         });
       } else {
-        console.log('📝 Creating new comment_settings...');
         return await prisma.comment_settings.create({
           data: {
             defaultMaxComments: defaultMaxComments !== undefined ? defaultMaxComments : null,
@@ -137,10 +114,6 @@ export async function PUT(request: NextRequest) {
             globalRateLimitMinutes: globalRateLimitMinutes !== undefined ? globalRateLimitMinutes : null,
           },
         });
-      }
-      } catch (error: any) {
-        console.error('❌ Error in dbQuery for comment_settings PUT:', error);
-        throw error;
       }
     });
 

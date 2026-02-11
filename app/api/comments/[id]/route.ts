@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
+import { getClientErrorMessage, logServerError } from '@/lib/api-error';
 
 // DELETE /api/comments/[id] - حذف کامنت
 export async function DELETE(
@@ -18,13 +20,15 @@ export async function DELETE(
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { id: commentId } = await params;
 
     // Check if comment exists and belongs to user
-    const comment = await prisma.comments.findUnique({
-      where: { id: commentId },
-    });
+    const comment = await dbQuery(() =>
+      prisma.comments.findUnique({
+        where: { id: commentId },
+      })
+    );
 
     if (!comment) {
       return NextResponse.json(
@@ -42,18 +46,20 @@ export async function DELETE(
     }
 
     // Delete comment (cascade will handle related data)
-    await prisma.comments.delete({
-      where: { id: commentId },
-    });
+    await dbQuery(() =>
+      prisma.comments.delete({
+        where: { id: commentId },
+      })
+    );
 
     return NextResponse.json({
       success: true,
       message: 'کامنت با موفقیت حذف شد',
     });
-  } catch (error: any) {
-    console.error('Error deleting comment:', error);
+  } catch (error) {
+    logServerError('DELETE /api/comments/[id]', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در حذف کامنت') },
       { status: 500 }
     );
   }

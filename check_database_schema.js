@@ -1,6 +1,11 @@
 const { Client } = require('pg');
+require('dotenv').config();
 
-const DATABASE_URL = "postgresql://root:xWWrkR138pfK5pzhSDUbrOse@vinson.liara.cloud:30081/postgres";
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error('DATABASE_URL not set in .env');
+  process.exit(1);
+}
 
 async function checkDatabaseSchema() {
   const client = new Client({

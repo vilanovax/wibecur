@@ -27,7 +27,7 @@ export async function requireAuth() {
 
 export async function requireAdmin() {
   const session = await getCachedSession();
-  if (!session || (session.user as any)?.role !== 'ADMIN') {
+  if (!session || session.user?.role !== 'ADMIN') {
     redirect('/login');
   }
   return session;
@@ -39,7 +39,7 @@ export async function requireAdmin() {
  */
 export async function checkAdminAuth() {
   const session = await getCachedSession();
-  if (!session || (session.user as any)?.role !== 'ADMIN') {
+  if (!session || session.user?.role !== 'ADMIN') {
     return null;
   }
   return session;

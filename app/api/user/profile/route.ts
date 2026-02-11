@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let userId = (session.user as any).id;
+    let userId: string | undefined = session.user.id;
     
     // If userId is not available in session, try to get it from email
     if (!userId && session.user?.email) {
@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const body = await request.json();
     const { name, email } = body;
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { uploadImageBuffer } from '@/lib/object-storage';
+import { getClientErrorMessage, logServerError } from '@/lib/api-error';
 
 export async function POST(request: NextRequest) {
   // Require authentication
@@ -54,10 +55,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ url }, { status: 200 });
-  } catch (error: any) {
-    console.error('Upload error:', error);
+  } catch (error) {
+    logServerError('POST /api/upload', error);
     return NextResponse.json(
-      { error: 'خطا در آپلود فایل' },
+      { error: getClientErrorMessage(error, 'خطا در آپلود فایل') },
       { status: 500 }
     );
   }

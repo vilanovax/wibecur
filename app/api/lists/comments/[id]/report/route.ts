@@ -19,7 +19,7 @@ export async function POST(
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { id: commentId } = await params;
     const body = await request.json();
     const { reason } = body;

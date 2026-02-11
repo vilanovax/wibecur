@@ -5,6 +5,8 @@ import { dbQuery } from '@/lib/db';
 import UserListsPageClient from './UserListsPageClient';
 import { getCategories } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export default async function UserListsPage() {
   // Fetch user-created public lists
   const [initialLists, categories] = await Promise.all([

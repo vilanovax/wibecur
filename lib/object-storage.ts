@@ -5,6 +5,8 @@ import { getLiaraConfig } from './settings';
 import crypto from 'crypto';
 import { optimizeImage } from './image-optimizer';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 /**
  * Get S3 client for Liara Object Storage
  */
@@ -12,7 +14,7 @@ async function getS3Client(): Promise<S3Client | null> {
   const config = await getLiaraConfig();
 
   if (!config) {
-    console.warn('Liara Object Storage not configured');
+    if (isDev) console.warn('Liara Object Storage not configured');
     return null;
   }
 
@@ -42,12 +44,12 @@ export async function uploadImageFromUrl(
     const config = await getLiaraConfig();
 
     if (!s3Client || !config) {
-      console.warn('Skipping image upload - Liara not configured');
+      if (isDev) console.warn('Skipping image upload - Liara not configured');
       return null;
     }
 
     // Download image
-    console.log('Downloading image from:', imageUrl);
+    if (isDev) console.log('Downloading image from:', imageUrl);
     const response = await axios.get(imageUrl, {
       responseType: 'arraybuffer',
       timeout: 30000, // 30 seconds
@@ -59,7 +61,7 @@ export async function uploadImageFromUrl(
     const imageBuffer = Buffer.from(response.data);
 
     // Optimize image before uploading (use itemImage profile for items folder)
-    console.log('Optimizing image...');
+    if (isDev) console.log('Optimizing image...');
     const profile = folder === 'items' ? 'itemImage' : 'default';
     const optimized = await optimizeImage(imageBuffer, { profile });
 
@@ -68,7 +70,7 @@ export async function uploadImageFromUrl(
     const key = `${folder}/${filename}`;
 
     // Upload optimized image to Liara
-    console.log('Uploading to Liara:', key);
+    if (isDev) console.log('Uploading to Liara:', key);
     const upload = new Upload({
       client: s3Client,
       params: {
@@ -84,7 +86,7 @@ export async function uploadImageFromUrl(
 
     // Construct public URL
     const publicUrl = `${config.endpoint}/${config.bucketName}/${key}`;
-    console.log('Image uploaded successfully:', publicUrl);
+    if (isDev) console.log('Image uploaded successfully:', publicUrl);
 
     return publicUrl;
   } catch (error: any) {
@@ -126,7 +128,7 @@ export async function uploadImageBuffer(
     const config = await getLiaraConfig();
 
     if (!s3Client || !config) {
-      console.warn('Skipping image upload - Liara not configured');
+      if (isDev) console.warn('Skipping image upload - Liara not configured');
       return null;
     }
 
@@ -140,7 +142,7 @@ export async function uploadImageBuffer(
       'default';
 
     // Optimize image before uploading with appropriate profile
-    console.log('Optimizing image...');
+    if (isDev) console.log('Optimizing image...');
     const optimized = await optimizeImage(buffer, { profile });
 
     // Generate unique filename with optimized extension
@@ -148,7 +150,7 @@ export async function uploadImageBuffer(
     const key = `${folder}/${filename}`;
 
     // Upload optimized image to Liara
-    console.log('Uploading to Liara:', key);
+    if (isDev) console.log('Uploading to Liara:', key);
     const upload = new Upload({
       client: s3Client,
       params: {
@@ -164,7 +166,7 @@ export async function uploadImageBuffer(
 
     // Construct public URL
     const publicUrl = `${config.endpoint}/${config.bucketName}/${key}`;
-    console.log('Image uploaded successfully:', publicUrl);
+    if (isDev) console.log('Image uploaded successfully:', publicUrl);
 
     return publicUrl;
   } catch (error: any) {

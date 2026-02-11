@@ -3,6 +3,8 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import ListsPageClient from './ListsPageClient';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'لیست‌ها | WibeCur',
   description: 'مرور و کشف لیست‌های کیوریت شده',

@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// next-pwa با Turbopack (پیش‌فرض Next.js 16) سازگار نیست؛ در صورت نیاز به PWA از راهنمای Next.js استفاده کنید.
 let withPWA = (config) => config;
 
 try {
@@ -9,8 +10,8 @@ try {
     disable: process.env.NODE_ENV === 'development'
   });
   withPWA = pwaConfig;
-} catch (error) {
-  console.warn('next-pwa not found, PWA features disabled');
+} catch {
+  // PWA اختیاری؛ manifest و آیکون‌ها از public/ سرو می‌شوند
 }
 
 const nextConfig = {

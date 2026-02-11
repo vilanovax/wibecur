@@ -10,10 +10,16 @@ const ENCRYPTED_POSITION = TAG_POSITION + TAG_LENGTH;
 
 /**
  * Get encryption key from environment
- * Falls back to a default key for development (NOT FOR PRODUCTION!)
+ * In production, ENCRYPTION_KEY must be set. Falls back to dev key only in development.
  */
 function getEncryptionKey(): string {
-  const key = process.env.ENCRYPTION_KEY || 'dev-key-change-in-production-32b';
+  const key =
+    process.env.ENCRYPTION_KEY ||
+    (process.env.NODE_ENV === 'production'
+      ? (() => {
+          throw new Error('ENCRYPTION_KEY must be set in production');
+        })()
+      : 'dev-key-change-in-production-32b');
 
   // Ensure key is exactly 32 bytes
   return crypto.createHash('sha256').update(key).digest('hex').slice(0, 32);

@@ -20,7 +20,7 @@ export async function POST(
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { id: listId } = await params;
 
     // Check if list exists
@@ -47,69 +47,35 @@ export async function POST(
       })
     );
 
-    let isBookmarked: boolean;
-    let bookmarkCount: number;
-
-    if (existingBookmark) {
-      // Remove bookmark
-      await dbQuery(() =>
-        prisma.bookmarks.deleteMany({
-          where: {
-            userId,
-            listId,
-          },
-        })
-      );
-
-      // Decrement saveCount
-      await dbQuery(() =>
-        prisma.lists.update({
-          where: { id: listId },
-          data: {
-            saveCount: {
-              decrement: 1,
+    const { isBookmarked, bookmarkCount } = await dbQuery(() =>
+      prisma.$transaction(async (tx) => {
+        if (existingBookmark) {
+          await tx.bookmarks.deleteMany({
+            where: { userId, listId },
+          });
+          const updated = await tx.lists.update({
+            where: { id: listId },
+            data: { saveCount: { decrement: 1 } },
+            select: { saveCount: true },
+          });
+          return { isBookmarked: false as const, bookmarkCount: updated.saveCount };
+        } else {
+          await tx.bookmarks.create({
+            data: {
+              id: nanoid(),
+              userId,
+              listId,
             },
-          },
-        })
-      );
-
-      isBookmarked = false;
-    } else {
-      // Create bookmark
-      await dbQuery(() =>
-        prisma.bookmarks.create({
-          data: {
-            id: nanoid(),
-            userId,
-            listId,
-          },
-        })
-      );
-
-      // Increment saveCount
-      await dbQuery(() =>
-        prisma.lists.update({
-          where: { id: listId },
-          data: {
-            saveCount: {
-              increment: 1,
-            },
-          },
-        })
-      );
-
-      isBookmarked = true;
-    }
-
-    // Get updated bookmark count
-    const updatedList = await dbQuery(() =>
-      prisma.lists.findUnique({
-        where: { id: listId },
-        select: { saveCount: true },
+          });
+          const updated = await tx.lists.update({
+            where: { id: listId },
+            data: { saveCount: { increment: 1 } },
+            select: { saveCount: true },
+          });
+          return { isBookmarked: true as const, bookmarkCount: updated.saveCount };
+        }
       })
     );
-
-    bookmarkCount = updatedList?.saveCount || 0;
 
     return NextResponse.json({
       success: true,

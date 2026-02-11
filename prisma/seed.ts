@@ -317,10 +317,12 @@ async function main() {
     console.log('✅ Comments seeded');
   }
 
-  // Seed Comment Likes
-  if (exportedData?.commentLikes && exportedData.commentLikes.length > 0) {
-    console.log(`📦 Seeding ${exportedData.commentLikes.length} comment likes...`);
-    for (const like of exportedData.commentLikes) {
+  // Seed Comment Likes (فقط لایک‌هایی که کامنتشان در export هست)
+  const exportedCommentIds = new Set((exportedData?.comments || []).map((c: { id: string }) => c.id));
+  const commentLikesToSeed = (exportedData?.commentLikes || []).filter((like: { commentId: string }) => exportedCommentIds.has(like.commentId));
+  if (commentLikesToSeed.length > 0) {
+    console.log(`📦 Seeding ${commentLikesToSeed.length} comment likes...`);
+    for (const like of commentLikesToSeed) {
       await prisma.comment_likes.upsert({
         where: { id: like.id },
         update: {},
@@ -335,10 +337,11 @@ async function main() {
     console.log('✅ Comment likes seeded');
   }
 
-  // Seed Comment Reports
-  if (exportedData?.commentReports && exportedData.commentReports.length > 0) {
-    console.log(`📦 Seeding ${exportedData.commentReports.length} comment reports...`);
-    for (const report of exportedData.commentReports) {
+  // Seed Comment Reports (فقط گزارش‌هایی که کامنتشان در export هست)
+  const commentReportsToSeed = (exportedData?.commentReports || []).filter((r: { commentId: string }) => exportedCommentIds.has(r.commentId));
+  if (commentReportsToSeed.length > 0) {
+    console.log(`📦 Seeding ${commentReportsToSeed.length} comment reports...`);
+    for (const report of commentReportsToSeed) {
       await prisma.comment_reports.upsert({
         where: { id: report.id },
         update: {
@@ -362,10 +365,11 @@ async function main() {
     console.log('✅ Comment reports seeded');
   }
 
-  // Seed Comment Penalties
-  if (exportedData?.commentPenalties && exportedData.commentPenalties.length > 0) {
-    console.log(`📦 Seeding ${exportedData.commentPenalties.length} comment penalties...`);
-    for (const penalty of exportedData.commentPenalties) {
+  // Seed Comment Penalties (فقط پنالتی‌هایی که کامنتشان در export هست)
+  const commentPenaltiesToSeed = (exportedData?.commentPenalties || []).filter((p: { commentId: string }) => exportedCommentIds.has(p.commentId));
+  if (commentPenaltiesToSeed.length > 0) {
+    console.log(`📦 Seeding ${commentPenaltiesToSeed.length} comment penalties...`);
+    for (const penalty of commentPenaltiesToSeed) {
       await prisma.comment_penalties.upsert({
         where: { id: penalty.id },
         update: {

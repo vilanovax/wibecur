@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     
     if (!userId) {
       console.error('User ID not found in session:', session);
@@ -88,7 +88,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const body = await request.json();
     const { notificationIds, markAllAsRead } = body;
 

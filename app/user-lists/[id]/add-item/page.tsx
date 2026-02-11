@@ -15,7 +15,7 @@ export default async function AddItemPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  let currentUserId = session?.user ? ((session.user as any).id || null) : null;
+  let currentUserId = session?.user ? (session.user.id || null) : null;
 
   // If we have a session but no ID, try to get user ID from email
   if (!currentUserId && session?.user?.email) {

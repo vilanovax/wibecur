@@ -15,7 +15,7 @@ export async function GET(
     const sort = searchParams.get('sort') || 'newest'; // newest, popular
 
     const session = await auth();
-    const userId = session?.user ? (session.user as any).id : null;
+    const userId = session?.user ? session.user.id : null;
 
     // Get all bad words for filtering (with try-catch in case table is empty)
     let badWordsList: string[] = [];
@@ -150,7 +150,7 @@ export async function POST(
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { id: listId } = await params;
     const body = await request.json();
     const { content } = body;
@@ -188,13 +188,9 @@ export async function POST(
     }
 
     // Get global comment settings for max length check
-    let globalSettings: any = null;
+    let globalSettings: Awaited<ReturnType<typeof prisma.comment_settings.findFirst>> = null;
     try {
-      if (prisma.comment_settings) {
-        globalSettings = await dbQuery(() =>
-          prisma.comment_settings.findFirst()
-        );
-      }
+      globalSettings = await dbQuery(() => prisma.comment_settings.findFirst());
     } catch (err) {
       console.warn('Could not fetch comment settings:', err);
     }
