@@ -3,48 +3,10 @@
 import Link from 'next/link';
 
 const categories = [
-  {
-    id: 'movies',
-    name: 'فیلم و سریال',
-    icon: '🎬',
-    slug: 'movies',
-    color: 'bg-purple-100',
-  },
-  {
-    id: 'books',
-    name: 'کتاب',
-    icon: '📚',
-    slug: 'books',
-    color: 'bg-orange-100',
-  },
-  {
-    id: 'cafe',
-    name: 'کافه و رستوران',
-    icon: '☕',
-    slug: 'cafe',
-    color: 'bg-amber-100',
-  },
-  {
-    id: 'podcast',
-    name: 'پادکست',
-    icon: '🎧',
-    slug: 'podcast',
-    color: 'bg-pink-100',
-  },
-  {
-    id: 'lifestyle',
-    name: 'لایف‌استایل',
-    icon: '🌱',
-    slug: 'lifestyle',
-    color: 'bg-green-100',
-  },
-  {
-    id: 'car',
-    name: 'ماشین و تکنولوژی',
-    icon: '🚗',
-    slug: 'car',
-    color: 'bg-red-100',
-  },
+  { id: 'movies', name: '🎬 فیلم', icon: '🎬', slug: 'movies', color: 'bg-purple-100' },
+  { id: 'cafe', name: '☕ کافه', icon: '☕', slug: 'cafe', color: 'bg-amber-100' },
+  { id: 'books', name: '📚 کتاب', icon: '📚', slug: 'books', color: 'bg-orange-100' },
+  { id: 'podcast', name: '🎧 پادکست', icon: '🎧', slug: 'podcast', color: 'bg-pink-100' },
 ];
 
 export default function CategoryScroll() {
@@ -56,14 +18,14 @@ export default function CategoryScroll() {
           <Link
             key={category.id}
             href={`/categories/${category.slug}`}
-            className="flex-shrink-0 w-28 group snap-start"
+            className="flex-shrink-0 w-24 group snap-start"
           >
             <div
-              className={`${category.color} rounded-2xl p-4 aspect-square flex flex-col items-center justify-center group-hover:scale-105 transition-transform duration-200 shadow-sm border border-white/50`}
+              className={`${category.color} rounded-2xl p-5 aspect-square flex flex-col items-center justify-center group-hover:scale-105 transition-transform duration-200 shadow-sm border border-white/50`}
             >
-              <span className="text-4xl mb-1">{category.icon}</span>
+              <span className="text-4xl">{category.icon}</span>
             </div>
-            <p className="text-center text-sm font-medium mt-2 text-gray-700 line-clamp-2">
+            <p className="text-center text-sm font-medium mt-2 text-gray-700">
               {category.name}
             </p>
           </Link>

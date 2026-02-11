@@ -2,65 +2,47 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import CreateSheet from '@/components/mobile/home/CreateSheet';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const navItems = [
+  const navItems: { href?: string; label: string; icon: React.ReactNode; isButton?: boolean }[] = [
     {
       href: '/',
       label: 'خانه',
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-          />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       ),
     },
     {
       href: '/lists',
-      label: 'لیست‌ها',
+      label: 'جستجو',
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-          />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       ),
     },
     {
-      href: '/user-lists',
-      label: 'لیست‌های کاربران',
+      label: 'ساخت',
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-          />
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+        </svg>
+      ),
+      isButton: true,
+    },
+    {
+      href: '/user-lists',
+      label: 'ذخیره‌ها',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       ),
     },
@@ -68,43 +50,48 @@ export default function BottomNav() {
       href: '/profile',
       label: 'پروفایل',
       icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
     },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
-      <div className="flex items-center justify-around py-3 overflow-x-auto">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-col items-center justify-center px-3 py-2 flex-shrink-0 min-w-[70px] ${
-                isActive ? 'text-primary' : 'text-gray-500'
-              }`}
-            >
-              {item.icon}
-              <span className="text-xs mt-1 whitespace-nowrap">{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
+        <div className="flex items-center justify-around py-3 overflow-x-auto">
+          {navItems.map((item, idx) => {
+            const isCreate = item.isButton;
+            const isActive = !isCreate && item.href ? pathname === item.href : false;
+            const className = `flex flex-col items-center justify-center px-2 py-2 flex-shrink-0 min-w-[64px] ${isActive ? 'text-primary' : 'text-gray-500'}`;
+            if (isCreate) {
+              return (
+                <button
+                  key="create"
+                  type="button"
+                  onClick={() => setCreateOpen(true)}
+                  className={className}
+                  aria-label="ساخت"
+                >
+                  <span className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center -mt-4 shadow-md hover:bg-primary-dark transition-colors">
+                    {item.icon}
+                  </span>
+                  <span className="text-xs mt-1 whitespace-nowrap">{item.label}</span>
+                </button>
+              );
+            }
+            return (
+              <Link key={item.href} href={item.href!} className={className}>
+                {item.icon}
+                <span className="text-xs mt-1 whitespace-nowrap">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+      <CreateSheet isOpen={createOpen} onClose={() => setCreateOpen(false)} />
+    </>
   );
 }
 
