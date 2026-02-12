@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 export async function PUT(
   request: NextRequest,
@@ -57,6 +58,8 @@ export async function PUT(
       }
     }
 
+    const finalCoverImage = coverImage !== undefined ? await ensureImageInLiara(coverImage, 'lists') : undefined;
+
     // Update list
     const list = await prisma.lists.update({
       where: { id },
@@ -64,7 +67,7 @@ export async function PUT(
         title,
         slug,
         description,
-        coverImage,
+        ...(coverImage !== undefined && { coverImage: finalCoverImage }),
         categoryId,
         badge: badge || null,
         isPublic: isPublic !== undefined ? isPublic : true,

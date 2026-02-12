@@ -252,7 +252,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           </div>
         </section>
 
-        <div className="px-4 -mt-2 relative z-10 space-y-6">
+        <div className="px-4 mt-3 relative z-10 space-y-6">
           {/* ——— 2️⃣ SOCIAL PROOF ——— */}
           <section className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
             {item.listSaveCount > 0 && (

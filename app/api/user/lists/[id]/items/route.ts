@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // POST /api/user/lists/[id]/items - افزودن آیتم به لیست شخصی
 export async function POST(
@@ -169,6 +169,8 @@ export async function POST(
 
     const newOrder = order !== undefined ? order : (maxOrderItem?.order ?? -1) + 1;
 
+    const finalImageUrl = itemImageUrl ? await ensureImageInLiara(itemImageUrl, 'items') : null;
+
     // Create item
     const newItem = await dbQuery(() =>
       prisma.items.create({
@@ -176,7 +178,7 @@ export async function POST(
           id: nanoid(),
           title: itemTitle,
           description: itemDescription,
-          imageUrl: itemImageUrl,
+          imageUrl: finalImageUrl,
           externalUrl: itemExternalUrl,
           listId: listId,
           order: newOrder,

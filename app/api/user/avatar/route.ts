@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // POST /api/user/avatar - آپلود آواتار کاربر
 export async function POST(request: NextRequest) {
@@ -26,10 +26,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const finalImageUrl = await ensureImageInLiara(imageUrl, 'avatars');
+
     const updatedUser = await prisma.users.update({
       where: { id: userId },
       data: {
-        image: imageUrl,
+        image: finalImageUrl,
         updatedAt: new Date(),
       },
       select: {

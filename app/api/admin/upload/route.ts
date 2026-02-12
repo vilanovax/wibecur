@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { uploadImageBuffer } from '@/lib/object-storage';
+import { validateImage } from '@/lib/image-validator';
+import type { ImageProfile } from '@/lib/image-config';
+
+function profileForFolder(folder: string): ImageProfile {
+  return folder === 'avatars' ? 'avatar' : folder === 'lists' ? 'coverList' : 'default';
+}
 
 // POST /api/admin/upload - Upload image file
 export async function POST(request: NextRequest) {
@@ -33,20 +39,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Determine folder based on purpose (from form data or query params)
     const purpose = formData.get('purpose') as string ||
                    new URL(request.url).searchParams.get('purpose');
-
-    // Map purpose to appropriate folder
-    let folder = 'uploads'; // default
+    let folder = 'uploads';
     if (purpose === 'list-cover' || purpose === 'cover') {
       folder = 'lists';
     } else if (purpose === 'avatar') {
       folder = 'avatars';
+    }
+    const profile = profileForFolder(folder);
+
+    const validation = await validateImage(buffer, profile);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.error || 'تصویر نامعتبر است' },
+        { status: 400 }
+      );
     }
 
     // Upload to Liara Object Storage with appropriate profile

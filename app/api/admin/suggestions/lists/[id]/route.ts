@@ -5,6 +5,7 @@ import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
 import { slugify } from '@/lib/utils/slug';
 import { createNotification } from '@/lib/utils/notifications';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // PUT /api/admin/suggestions/lists/[id] - تایید یا رد پیشنهاد لیست
 export async function PUT(
@@ -58,7 +59,7 @@ export async function PUT(
         updateData.description = description?.trim() || null;
       }
       if (coverImage !== undefined) {
-        updateData.coverImage = coverImage?.trim() || null;
+        updateData.coverImage = coverImage ? await ensureImageInLiara(coverImage.trim(), 'covers') : null;
       }
 
       await dbQuery(() =>
@@ -122,6 +123,11 @@ export async function PUT(
         }
       }
 
+      const finalCoverImage = await ensureImageInLiara(
+        coverImage !== undefined ? coverImage : suggestedList.coverImage,
+        'covers'
+      );
+
       // Create actual list
       const newList = await dbQuery(() =>
         prisma.lists.create({
@@ -130,7 +136,7 @@ export async function PUT(
             title: title || suggestedList.title,
             slug,
             description: description !== undefined ? description : suggestedList.description,
-            coverImage: coverImage !== undefined ? coverImage : suggestedList.coverImage,
+            coverImage: finalCoverImage,
             categoryId: suggestedList.categoryId,
             userId: suggestedList.userId, // Keep original user who suggested
             isPublic: true,

@@ -14,7 +14,10 @@
     "db:export": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/export-database.ts",
     "db:studio": "prisma studio",
     "db:docker:up": "docker-compose up -d",
-    "db:docker:init": "prisma generate && prisma db push && npm run db:seed"
+    "db:docker:init": "prisma generate && prisma db push && npm run db:seed",
+    "migrate:images": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/migrate-all-images-to-liara.ts",
+    "migrate:images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/migrate-all-images-to-liara.ts --dry-run",
+    "migrate:images:batch": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/migrate-all-images-to-liara.ts --batch=10"
   },
   "prisma": {
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"

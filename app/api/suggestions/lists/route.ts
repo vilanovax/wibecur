@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // POST /api/suggestions/lists - ثبت پیشنهاد لیست
 export async function POST(request: NextRequest) {
@@ -56,13 +56,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const finalCoverImage = coverImage ? await ensureImageInLiara(coverImage.trim(), 'covers') : null;
+
     // Create suggested list
     const suggestedList = await dbQuery(() =>
       prisma.suggested_lists.create({
         data: {
           title: title.trim(),
           description: description?.trim() || null,
-          coverImage: coverImage?.trim() || null,
+          coverImage: finalCoverImage,
           categoryId,
           userId,
           status: 'pending',

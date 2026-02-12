@@ -1,7 +1,7 @@
 import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import axios from 'axios';
-import { getObjectStorageConfig } from './object-storage-config';
+import { getObjectStorageConfig, isOurStorageUrl } from './object-storage-config';
 import crypto from 'crypto';
 import { optimizeImage } from './image-optimizer';
 
@@ -64,7 +64,12 @@ export async function uploadImageFromUrl(
     });
 
     const imageBuffer = Buffer.from(response.data);
-    const profile = folder === 'items' ? 'itemImage' : 'default';
+    const profile =
+      folder === 'items' || folder === 'movies' ? 'itemImage' :
+      folder === 'avatars' ? 'avatar' :
+      folder === 'covers' ? 'coverList' :
+      folder === 'lists' ? 'coverList' :
+      'default';
     const optimized = await optimizeImage(imageBuffer, { profile });
 
     const filename = `${crypto.randomBytes(16).toString('hex')}${optimized.ext}`;
@@ -115,7 +120,7 @@ export async function uploadImageBuffer(
     const profile =
       folder === 'items' ? 'itemImage' :
       folder === 'avatars' ? 'avatar' :
-      folder === 'covers' ? 'coverProfile' :
+      folder === 'covers' ? 'coverList' :
       folder === 'lists' ? 'coverList' :
       folder === 'hubs' ? 'hubCover' :
       'default';
@@ -145,6 +150,27 @@ export async function uploadImageBuffer(
     console.error('Error uploading image:', (error as Error).message);
     return null;
   }
+}
+
+export type ImageFolder = 'items' | 'avatars' | 'covers' | 'lists';
+
+/**
+ * اگر URL خارجی باشد آن را به Liara آپلود می‌کند؛ وگرنه همان را برمی‌گرداند.
+ * در صورت خطای آپلود، URL قبلی برگردانده می‌شود تا داده از بین نرود.
+ */
+export async function ensureImageInLiara(
+  url: string | null | undefined,
+  folder: ImageFolder
+): Promise<string | null> {
+  if (!url || typeof url !== 'string' || !url.trim().startsWith('http')) {
+    return url?.trim() || null;
+  }
+  const trimmed = url.trim();
+  if (isOurStorageUrl(trimmed)) {
+    return trimmed;
+  }
+  const uploaded = await uploadImageFromUrl(trimmed, folder);
+  return uploaded ?? trimmed;
 }
 
 /**

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth-config';
 import { requireAdmin } from '@/lib/auth';
 import { nanoid } from 'nanoid';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,6 +62,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const finalCoverImage = coverImage ? await ensureImageInLiara(coverImage, 'lists') : null;
+
     // Create list
     const list = await prisma.lists.create({
       data: {
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest) {
         title,
         slug,
         description,
-        coverImage,
+        coverImage: finalCoverImage,
         categoryId,
         userId: user.id,
         badge: badge || null,

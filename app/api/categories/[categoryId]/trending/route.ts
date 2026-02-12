@@ -3,46 +3,55 @@ import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
-const RECENT_DAYS = 14;
-const RECENT_BOOST = 5;
-const CACHE_SECONDS = 600; // 10 min
+const RECENT_DAYS = 7;
+const RECENT_ACTIVITY_MULTIPLIER = 5;
+const CACHE_SECONDS = 600;
+const LIMIT = 6;
 
-function getTrendingForCategory(categoryId: string) {
+function isLikelyCuid(param: string): boolean {
+  return param.length >= 20 && param.length <= 30 && /^[a-z0-9]+$/i.test(param);
+}
+
+async function getTrendingForCategory(categoryId: string) {
   return dbQuery(async () => {
-    const items = await prisma.items.findMany({
-      where: {
-        lists: {
-          categoryId,
-          isActive: true,
-        },
-      },
-      select: {
-        id: true,
-        title: true,
-        imageUrl: true,
-        rating: true,
-        voteCount: true,
-        createdAt: true,
-        lists: {
-          select: { saveCount: true },
-        },
-        _count: {
-          select: { comments: true },
-        },
-      },
-      take: 50,
-    });
+    const cutoff = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000);
 
-    const now = new Date();
-    const cutoff = new Date(now.getTime() - RECENT_DAYS * 24 * 60 * 60 * 1000);
+    const [savesLast7Days, items] = await Promise.all([
+      prisma.bookmarks.groupBy({
+        by: ['listId'],
+        where: { createdAt: { gte: cutoff } },
+        _count: { listId: true },
+      }),
+      prisma.items.findMany({
+        where: {
+          lists: { categoryId, isActive: true },
+        },
+        select: {
+          id: true,
+          title: true,
+          imageUrl: true,
+          rating: true,
+          voteCount: true,
+          listId: true,
+          lists: { select: { saveCount: true } },
+          _count: { select: { comments: true } },
+        },
+        take: 80,
+      }),
+    ]);
+
+    const listIdToRecent: Record<string, number> = {};
+    savesLast7Days.forEach((r) => {
+      listIdToRecent[r.listId] = r._count.listId;
+    });
 
     const withScore = items.map((i) => {
       const saveCount = i.lists?.saveCount ?? 0;
       const commentCount = i._count.comments;
       const likeCount = i.voteCount ?? 0;
-      const recentBoost = i.createdAt >= cutoff ? RECENT_BOOST : 0;
+      const recentBoost = (listIdToRecent[i.listId] ?? 0) * RECENT_ACTIVITY_MULTIPLIER;
       const trendScore =
-        saveCount * 3 + commentCount * 2 + likeCount * 1 + recentBoost;
+        saveCount * 4 + commentCount * 3 + likeCount * 2 + recentBoost;
       return {
         id: i.id,
         title: i.title,
@@ -55,27 +64,32 @@ function getTrendingForCategory(categoryId: string) {
 
     return withScore
       .sort((a, b) => b.trendScore - a.trendScore)
-      .slice(0, 5);
+      .slice(0, LIMIT);
   });
 }
 
-// GET /api/categories/[categoryId]/trending — داغ‌های این دسته (کش ۱۰ دقیقه)
+// GET /api/categories/[categoryId]/trending — داغ‌های این دسته (param = id یا slug)
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
-    const { categoryId } = await params;
+    const { categoryId: param } = await params;
 
-    if (!categoryId) {
+    if (!param) {
       return NextResponse.json({ error: 'دسته نامعتبر است' }, { status: 400 });
     }
 
     const category = await dbQuery(() =>
-      prisma.categories.findUnique({
-        where: { id: categoryId },
-        select: { id: true },
-      })
+      isLikelyCuid(param)
+        ? prisma.categories.findUnique({
+            where: { id: param },
+            select: { id: true },
+          })
+        : prisma.categories.findUnique({
+            where: { slug: param, isActive: true },
+            select: { id: true },
+          })
     );
 
     if (!category) {
@@ -83,9 +97,9 @@ export async function GET(
     }
 
     const getCachedTrending = unstable_cache(
-      () => getTrendingForCategory(categoryId),
-      [`trending-category-${categoryId}`],
-      { revalidate: CACHE_SECONDS, tags: [`trending-${categoryId}`] }
+      () => getTrendingForCategory(category.id),
+      [`trending-category-${category.id}`],
+      { revalidate: CACHE_SECONDS, tags: [`trending-${category.id}`] }
     );
     const data = await getCachedTrending();
 

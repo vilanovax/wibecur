@@ -1,5 +1,7 @@
 /**
- * Image optimization profiles for different use cases
+ * استانداردهای تصویری اپ (موبایل‌اول).
+ * این پروفایل‌ها در زمان آپلود (کاربر، ادمین، یا جستجوی هوش مصنوعی) اعمال می‌شوند تا
+ * سایز و کیفیت برای نمایش در کامپوننت‌های مختلف اپ یکسان و بهینه باشد.
  */
 
 export type ImageProfile =
@@ -21,10 +23,11 @@ export interface ImageProfileConfig {
 }
 
 /**
- * Predefined image profiles for different use cases
+ * پروفایل‌های بهینه‌سازی بر اساس نوع استفاده در اپ موبایل.
+ * ابعاد برای نمایش در کارت‌ها و فید موبایل (با احتساب رتینا ۲x) تعیین شده‌اند.
  */
 export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
-  // User avatar
+  /** آواتار کاربر — نمایش در هدر، کامنت، پروفایل (معمولاً ۴۸–۹۶px در UI) */
   avatar: {
     maxWidth: 400,
     maxHeight: 400,
@@ -34,63 +37,63 @@ export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
     format: 'webp',
   },
 
-  // Profile cover image
+  /** کاور پروفایل (استفاده محدود) */
   coverProfile: {
-    maxWidth: 1200,
-    maxHeight: 500, // Changed from 400 for better mobile ratio
+    maxWidth: 1000,
+    maxHeight: 500,
     quality: 85,
     maxSize: 1024 * 1024, // 1MB
-    skipOptimizationIfSmallerThan: 300 * 1024, // 300KB
+    skipOptimizationIfSmallerThan: 300 * 1024,
     format: 'webp',
   },
 
-  // List cover image
+  /** کاور لیست — کارت لیست، جزئیات لیست (عرض معمول در موبایل ~۳۵۰px، رتینا ۲x) */
   coverList: {
-    maxWidth: 1200,
+    maxWidth: 1000,
     maxHeight: 800,
     quality: 85,
-    maxSize: 1.5 * 1024 * 1024, // 1.5MB
-    skipOptimizationIfSmallerThan: 400 * 1024, // 400KB
+    maxSize: 1024 * 1024, // 1MB
+    skipOptimizationIfSmallerThan: 400 * 1024,
     format: 'webp',
   },
 
-  // Main item image
+  /** تصویر آیتم — فید، جزئیات آیتم، جستجوی AI (عرض معمول ~۳۵۰–۴۰۰px در موبایل) */
   itemImage: {
-    maxWidth: 1200,
+    maxWidth: 1000,
     maxHeight: 900,
     quality: 85,
     maxSize: 1024 * 1024, // 1MB
-    skipOptimizationIfSmallerThan: 300 * 1024, // 300KB
+    skipOptimizationIfSmallerThan: 300 * 1024,
     format: 'webp',
   },
 
-  // Item thumbnail
+  /** تامبنیل آیتم — لیست‌های فشرده (رتینا ۲x) */
   itemThumbnail: {
-    maxWidth: 800, // Changed from 600 for Retina mobile
-    maxHeight: 600, // Changed from 450 for Retina mobile
+    maxWidth: 800,
+    maxHeight: 600,
     quality: 80,
     maxSize: 300 * 1024, // 300KB
-    skipOptimizationIfSmallerThan: 150 * 1024, // 150KB
+    skipOptimizationIfSmallerThan: 150 * 1024,
     format: 'webp',
   },
 
-  // Hub cover (admin only)
+  /** کاور هاب (ادمین) */
   hubCover: {
     maxWidth: 1920,
     maxHeight: 1080,
-    quality: 85, // Changed from 90 - sufficient quality with less size
+    quality: 85,
     maxSize: 2 * 1024 * 1024, // 2MB
-    skipOptimizationIfSmallerThan: 500 * 1024, // 500KB
+    skipOptimizationIfSmallerThan: 500 * 1024,
     format: 'webp',
   },
 
-  // Default profile (fallback)
+  /** پیش‌فرض (fallback) */
   default: {
-    maxWidth: 1200,
-    maxHeight: 1200,
+    maxWidth: 1000,
+    maxHeight: 1000,
     quality: 80,
     maxSize: 500 * 1024, // 500KB
-    skipOptimizationIfSmallerThan: 300 * 1024, // 300KB
+    skipOptimizationIfSmallerThan: 300 * 1024,
     format: 'webp',
   },
 };

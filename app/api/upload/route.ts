@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { uploadImageBuffer } from '@/lib/object-storage';
+import { validateImage } from '@/lib/image-validator';
+import type { ImageProfile } from '@/lib/image-config';
 import { getClientErrorMessage, logServerError } from '@/lib/api-error';
+
+function profileForFolder(folder: string): ImageProfile {
+  return folder === 'avatars' ? 'avatar' : folder === 'covers' ? 'coverList' : 'default';
+}
 
 export async function POST(request: NextRequest) {
   // Require authentication
@@ -40,9 +46,17 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Determine folder based on purpose (from form data or default to avatars for user uploads)
     const purpose = formData.get('purpose') as string;
     const folder = purpose === 'cover' ? 'covers' : 'avatars';
+    const profile = profileForFolder(folder);
+
+    const validation = await validateImage(buffer, profile);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.error || 'تصویر نامعتبر است' },
+        { status: 400 }
+      );
+    }
 
     // Upload to Liara Object Storage with appropriate profile
     const url = await uploadImageBuffer(buffer, file.type, folder);

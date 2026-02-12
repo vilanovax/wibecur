@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { slugify } from '@/lib/utils/slug';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // PUT /api/user/lists/[id] - ویرایش لیست شخصی
 export async function PUT(
@@ -188,7 +188,7 @@ export async function PUT(
       updateData.description = description?.trim() || null;
     }
     if (coverImage !== undefined) {
-      updateData.coverImage = coverImage?.trim() || null;
+      updateData.coverImage = coverImage ? await ensureImageInLiara(coverImage.trim(), 'covers') : null;
     }
     // Don't allow changing categoryId for personal lists (they should remain null)
     if (commentsEnabled !== undefined) updateData.commentsEnabled = commentsEnabled;

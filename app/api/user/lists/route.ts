@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { slugify } from '@/lib/utils/slug';
 import { nanoid } from 'nanoid';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // POST /api/user/lists - ایجاد لیست شخصی
 export async function POST(request: NextRequest) {
@@ -129,6 +129,8 @@ export async function POST(request: NextRequest) {
 
     const minItems = settings?.minItemsForPublicList || 5;
 
+    const finalCoverImage = coverImage ? await ensureImageInLiara(coverImage.trim(), 'covers') : null;
+
     // Create list (isPublic defaults to false for user-created lists, categoryId is null)
     // Note: updatedAt is managed by Prisma @updatedAt directive
     console.log('Creating list with data:', {
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
       categoryId: null,
       userId: user.id,
       hasDescription: !!description,
-      hasCoverImage: !!coverImage,
+      hasCoverImage: !!finalCoverImage,
       isPublic: false,
       isActive: true, // Private lists are always active
       commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
@@ -152,7 +154,7 @@ export async function POST(request: NextRequest) {
             title: title.trim(),
             slug,
             description: description ? description.trim() : null,
-            coverImage: coverImage ? coverImage.trim() : null,
+            coverImage: finalCoverImage,
             categoryId: null, // Personal lists don't have categories
             userId: user.id,
             isPublic: false, // User lists start as private

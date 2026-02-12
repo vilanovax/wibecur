@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { slugify } from '@/lib/utils/slug';
 import { createNotification } from '@/lib/utils/notifications';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // PUT /api/admin/lists/user-created/[id] - ویرایش/تایید/رد لیست کاربر
 export async function PUT(
@@ -97,7 +98,7 @@ export async function PUT(
       updateData.description = description?.trim() || null;
     }
     if (coverImage !== undefined) {
-      updateData.coverImage = coverImage?.trim() || null;
+      updateData.coverImage = coverImage ? await ensureImageInLiara(coverImage.trim(), 'covers') : null;
     }
     if (categoryId !== undefined) updateData.categoryId = categoryId;
     if (isPublic !== undefined) updateData.isPublic = isPublic;

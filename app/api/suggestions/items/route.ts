@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { checkDuplicateSuggestion } from '@/lib/suggestion-utils';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // POST /api/suggestions/items - ثبت پیشنهاد آیتم
 export async function POST(request: NextRequest) {
@@ -67,13 +68,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const finalImageUrl = imageUrl ? await ensureImageInLiara(imageUrl.trim(), 'items') : null;
+
     // Create suggested item
     const suggestedItem = await dbQuery(() =>
       prisma.suggested_items.create({
         data: {
           title: title.trim(),
           description: description?.trim() || null,
-          imageUrl: imageUrl?.trim() || null,
+          imageUrl: finalImageUrl,
           externalUrl: externalUrl?.trim() || null,
           listId,
           userId,

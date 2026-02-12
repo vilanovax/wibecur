@@ -5,6 +5,7 @@ import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { createNotification, notifyListBookmarkers } from '@/lib/utils/notifications';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // PUT /api/admin/suggestions/items/[id] - تایید یا رد پیشنهاد آیتم
 export async function PUT(
@@ -60,7 +61,7 @@ export async function PUT(
       const updateData: any = {};
       if (title !== undefined) updateData.title = title;
       if (description !== undefined) updateData.description = description;
-      if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+      if (imageUrl !== undefined) updateData.imageUrl = imageUrl ? await ensureImageInLiara(imageUrl, 'items') : null;
       if (externalUrl !== undefined) updateData.externalUrl = externalUrl;
       if (metadata !== undefined && suggestedItem.lists.categories) {
         // Validate metadata if provided
@@ -116,6 +117,11 @@ export async function PUT(
         validatedMetadata = metadataValidation.data || {};
       }
 
+      const finalImageUrl = await ensureImageInLiara(
+        imageUrl !== undefined ? imageUrl : suggestedItem.imageUrl,
+        'items'
+      );
+
       // Create actual item
       const newItem = await dbQuery(() =>
         prisma.items.create({
@@ -123,7 +129,7 @@ export async function PUT(
             id: nanoid(),
             title: title || suggestedItem.title,
             description: description !== undefined ? description : suggestedItem.description,
-            imageUrl: imageUrl !== undefined ? imageUrl : suggestedItem.imageUrl,
+            imageUrl: finalImageUrl,
             externalUrl: externalUrl !== undefined ? externalUrl : suggestedItem.externalUrl,
             listId: suggestedItem.listId,
             order: 0,

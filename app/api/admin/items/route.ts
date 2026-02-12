@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { nanoid } from 'nanoid';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
-import { uploadImageFromUrl } from '@/lib/object-storage';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // GET /api/admin/items - Get items (optionally filtered by listId)
 export async function GET(request: NextRequest) {
@@ -96,19 +96,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Object Storage if imageUrl is an external URL (not already in our storage)
-    let finalImageUrl = imageUrl;
-    const { isOurStorageUrl } = await import('@/lib/object-storage-config');
-    if (imageUrl && imageUrl.startsWith('http') && !isOurStorageUrl(imageUrl)) {
-      console.log('Uploading external image to Object Storage:', imageUrl);
-      const uploadedUrl = await uploadImageFromUrl(imageUrl, 'items');
-      if (uploadedUrl) {
-        finalImageUrl = uploadedUrl;
-        console.log('Image uploaded to Object Storage:', uploadedUrl);
-      } else {
-        console.warn('Failed to upload to Liara, using original URL');
-      }
-    }
+    const finalImageUrl = imageUrl ? await ensureImageInLiara(imageUrl, 'items') : null;
 
     // Create item
     const item = await prisma.items.create({
