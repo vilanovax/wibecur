@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronLeft,
   Lightbulb,
+  Activity,
 } from 'lucide-react';
 
 const menuItems = [
@@ -29,6 +30,13 @@ const menuItems = [
     icon: LayoutDashboard,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
+  },
+  {
+    href: '/admin/pulse',
+    label: 'پالس وایب',
+    icon: Activity,
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
   },
   {
     href: '/admin/categories',
