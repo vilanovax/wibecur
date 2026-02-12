@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { checkDuplicateSuggestion } from '@/lib/suggestion-utils';
 
 // POST /api/suggestions/items - ثبت پیشنهاد آیتم
 export async function POST(request: NextRequest) {
@@ -55,6 +55,16 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'این لیست غیرفعال است' },
         { status: 400 }
       );
+    }
+
+    const dup = await checkDuplicateSuggestion(listId, title.trim());
+    if (dup.exists) {
+      return NextResponse.json({
+        success: false,
+        alreadySuggested: true,
+        suggestionCommentId: dup.suggestionCommentId,
+        error: 'این مورد قبلاً پیشنهاد شده 👌',
+      });
     }
 
     // Create suggested item

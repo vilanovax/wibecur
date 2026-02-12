@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { lists, categories } from '@prisma/client';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import FloatingActionButton from '@/components/mobile/lists/FloatingActionButton';
@@ -39,6 +40,7 @@ export default function UserListsPageClient({
   initialLists,
   categories,
 }: UserListsPageClientProps) {
+  const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,6 +54,17 @@ export default function UserListsPageClient({
   const [hasMore, setHasMore] = useState(initialLists.length >= 20); // Assume more if we got 20 items
   const [currentPage, setCurrentPage] = useState(1);
   const isLoadingRef = useRef(false);
+
+  // Open create form when coming from Create Sheet with ?openCreate=1
+  useEffect(() => {
+    if (searchParams.get('openCreate') === '1') {
+      setIsCreateFormOpen(true);
+      // Clear query from URL so refresh doesn't reopen
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', '/user-lists');
+      }
+    }
+  }, [searchParams]);
 
   // Filter lists
   const filteredLists = lists.filter((list) => {

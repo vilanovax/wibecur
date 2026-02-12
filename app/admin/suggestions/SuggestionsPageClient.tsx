@@ -52,12 +52,19 @@ export default function SuggestionsPageClient({
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     setPage('1');
+    if (tabId === 'items' && status === 'all') setStatus('pending');
   };
 
   const handleStatusChange = (statusId: string) => {
     setStatus(statusId);
     setPage('1');
   };
+
+  const itemStatusTabs = [
+    { id: 'pending', label: 'در انتظار' },
+    { id: 'approved', label: 'تأیید شده' },
+    { id: 'rejected', label: 'رد شده' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -90,36 +97,54 @@ export default function SuggestionsPageClient({
           })}
         </div>
 
-        {/* Status Filters */}
+        {/* Status: تب برای آیتم‌ها، چیپ برای لیست‌ها */}
         <div className="p-4 bg-gray-50/50 border-b border-gray-100">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-gray-500 ml-2">فیلتر وضعیت:</span>
-            {statusFilters.map((filter) => {
-              const Icon = filter.icon;
-              const isActive = status === filter.id;
-              const colorClasses = {
-                yellow: isActive ? 'bg-yellow-100 text-yellow-800 border-yellow-200 shadow-yellow-100' : '',
-                green: isActive ? 'bg-emerald-100 text-emerald-800 border-emerald-200 shadow-emerald-100' : '',
-                red: isActive ? 'bg-red-100 text-red-800 border-red-200 shadow-red-100' : '',
-                blue: isActive ? 'bg-blue-100 text-blue-800 border-blue-200 shadow-blue-100' : '',
-              };
-
-              return (
-                <button
-                  key={filter.id}
-                  onClick={() => handleStatusChange(filter.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border ${
-                    isActive
-                      ? `${colorClasses[filter.color as keyof typeof colorClasses]} shadow-sm`
-                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {filter.label}
-                </button>
-              );
-            })}
-          </div>
+          {activeTab === 'items' ? (
+            <div className="flex rounded-xl bg-gray-100 p-1">
+              {itemStatusTabs.map((tab) => {
+                const isActive = status === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleStatusChange(tab.id)}
+                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+                      isActive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-500 ml-2">فیلتر وضعیت:</span>
+              {statusFilters.map((filter) => {
+                const Icon = filter.icon;
+                const isActive = status === filter.id;
+                const colorClasses = {
+                  yellow: isActive ? 'bg-yellow-100 text-yellow-800 border-yellow-200 shadow-yellow-100' : '',
+                  green: isActive ? 'bg-emerald-100 text-emerald-800 border-emerald-200 shadow-emerald-100' : '',
+                  red: isActive ? 'bg-red-100 text-red-800 border-red-200 shadow-red-100' : '',
+                  blue: isActive ? 'bg-blue-100 text-blue-800 border-blue-200 shadow-blue-100' : '',
+                };
+                return (
+                  <button
+                    key={filter.id}
+                    onClick={() => handleStatusChange(filter.id)}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                      isActive
+                        ? `${colorClasses[filter.color as keyof typeof colorClasses]} shadow-sm`
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -132,7 +157,7 @@ export default function SuggestionsPageClient({
             />
           ) : (
             <ItemSuggestionsTable
-              status={status === 'all' ? undefined : status}
+              status={status === 'all' ? 'pending' : status}
               currentPage={parseInt(page, 10) || 1}
               onPageChange={(newPage) => setPage(newPage.toString())}
             />

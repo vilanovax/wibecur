@@ -4,6 +4,7 @@ import EnhancedSearch from '@/components/mobile/home/EnhancedSearch';
 import FeaturedCard from '@/components/mobile/home/FeaturedCard';
 import RecommendationSection from '@/components/mobile/recommendations/RecommendationSection';
 import CategoryScroll from '@/components/mobile/home/CategoryScroll';
+import GlobalTrendingSection from '@/components/mobile/home/GlobalTrendingSection';
 import TrendingLists from '@/components/mobile/home/TrendingLists';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 
@@ -15,6 +16,7 @@ export default function Home() {
       <EnhancedSearch />
       <main className="space-y-6 px-0">
         <FeaturedCard />
+        <GlobalTrendingSection />
         <RecommendationSection />
         <CategoryScroll />
         <TrendingLists />

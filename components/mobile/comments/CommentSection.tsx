@@ -24,9 +24,10 @@ interface Comment {
 
 interface CommentSectionProps {
   itemId: string;
+  onCommentAdded?: () => void;
 }
 
-export default function CommentSection({ itemId }: CommentSectionProps) {
+export default function CommentSection({ itemId, onCommentAdded }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
@@ -146,32 +147,43 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
   return (
     <>
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        {/* Header */}
+        {/* Header — Vibe 2.0: نظرها (count) */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
+            <span className="text-lg">💬</span>
             <h3 className="font-bold text-gray-900">
-              کامنت‌ها ({comments.length})
+              نظرها ({comments.length})
             </h3>
           </div>
           {commentsEnabled ? (
             <button
               onClick={() => setIsFormOpen(true)}
               className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
-              aria-label="افزودن کامنت جدید"
+              aria-label="نوشتن نظر"
             >
               <Plus className="w-5 h-5" strokeWidth={2.5} />
             </button>
           ) : (
             <span className="text-sm text-gray-500">
-              کامنت‌ها برای این آیتم غیرفعال است
+              نظرها برای این آیتم غیرفعال است
             </span>
           )}
         </div>
 
-        {/* Sort Buttons - Only show if there are comments */}
+        {/* Sort: مفیدترین | جدیدترین */}
         {!isLoading && comments.length > 0 && (
           <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setSortBy('popular')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                sortBy === 'popular'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              مفیدترین
+            </button>
             <button
               onClick={() => setSortBy('newest')}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -183,17 +195,6 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
               <Clock className="w-4 h-4" />
               جدیدترین
             </button>
-            <button
-              onClick={() => setSortBy('popular')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                sortBy === 'popular'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              محبوب‌ترین
-            </button>
           </div>
         )}
 
@@ -204,11 +205,19 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-500">هنوز کامنتی ثبت نشده است</p>
+            <span className="text-4xl block mb-2">👀</span>
+            <p className="text-gray-600 font-medium">هنوز کسی نظر نداده</p>
             <p className="text-sm text-gray-400 mt-1">
-              اولین کسی باشید که کامنت می‌گذارد
+              اولین نفری باش که تجربه‌تو می‌نویسه ✨
             </p>
+            {commentsEnabled && (
+              <button
+                onClick={() => setIsFormOpen(true)}
+                className="mt-4 px-5 py-2.5 rounded-full bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                نوشتن نظر
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
@@ -231,7 +240,10 @@ export default function CommentSection({ itemId }: CommentSectionProps) {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         itemId={itemId}
-        onSubmit={fetchComments}
+        onSubmit={() => {
+          fetchComments();
+          onCommentAdded?.();
+        }}
       />
 
       {/* Toast Notification */}

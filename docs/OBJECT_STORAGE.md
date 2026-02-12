@@ -1,82 +1,27 @@
-# Object Storage — MinIO (لوکال) / Liara (پروداکشن)
+# Object Storage — Liara
 
-تمام تصاویر اپ در object storage ذخیره می‌شوند، نه به صورت URL خارجی.
+همه تصاویر اپ روی **Liara Object Storage** ذخیره می‌شوند.
 
-## لوکال (توسعه)
+## تنظیم
 
-استفاده از **MinIO** در Docker.
-
-### ۱. اجرای سرویس‌ها
-
-```bash
-docker-compose up -d
-```
-
-MinIO روی `http://localhost:9000` (API) و `http://localhost:9001` (Console) در دسترس است.
-
-### ۲. متغیرهای محیطی (.env)
-
-```env
-OBJECT_STORAGE_PROVIDER=minio
-MINIO_ENDPOINT=http://localhost:9000
-MINIO_PUBLIC_URL=http://localhost:9000
-MINIO_BUCKET=wibecur
-MINIO_ACCESS_KEY=wibecur
-MINIO_SECRET_KEY=wibecur_minio_secret
-```
-
-مقادیر بالا با `docker-compose.yml` هماهنگ هستند.
-
-### ۳. Bucket و دسترسی
-
-- Bucket با اولین آپلود خودکار ایجاد می‌شود
-- دسترسی public read روی bucket خودکار تنظیم می‌شود
-
-### ۴. MinIO Console
-
-برای مدیریت فایل‌ها: [http://localhost:9001](http://localhost:9001)
-
-- User: `wibecur`
-- Password: `wibecur_minio_secret`
-
----
-
-## پروداکشن (استقرار آنلاین)
-
-استفاده از **Liara Object Storage** یا **Amazon S3**.
-
-### ۱. تنظیم Liara از پنل ادمین
+۱. در لیارا یک Object Storage بساز و باکت ایجاد کن.  
+۲. در اپ: پنل ادمین → تنظیمات → Liara Object Storage را پر کن، یا:
 
 ```bash
 npx ts-node scripts/setup-liara-storage.ts
 ```
 
-اطلاعات Object Storage را از [console.liara.ir](https://console.liara.ir) وارد کنید.
+(Endpoint، Bucket Name، Access Key، Secret Key)
 
-### ۲. یا تنظیم با متغیر محیطی
+## پوشه‌ها در باکت
 
-```env
-OBJECT_STORAGE_PROVIDER=liara
-```
+| پوشه    | استفاده              |
+|---------|----------------------|
+| `avatars` | آواتار کاربران       |
+| `covers`  | کاور لیست (آپلود کاربر) |
+| `lists`   | کاور لیست (ادمین)    |
+| `items`   | تصاویر آیتم‌ها       |
 
-و تنظیم Liara در پنل ادمین → تنظیمات.
+## مستندات بیشتر
 
----
-
-## ساختار پوشه‌ها در Storage
-
-| پوشه    | استفاده                        |
-|---------|---------------------------------|
-| `avatars` | آواتار کاربران                 |
-| `covers`  | کاور لیست‌ها (user upload)     |
-| `lists`   | تصاویر کاور لیست (ادمین)      |
-| `items`   | تصاویر آیتم‌ها                 |
-| `images`  | پیش‌فرض                        |
-
----
-
-## مهاجرت به Liara هنگام دیپلوی
-
-۱. `OBJECT_STORAGE_PROVIDER=liara` قرار بده
-۲. Liara را از پنل ادمین تنظیم کن
-۳. تصاویر موجود در MinIO: با اسکریپت migrate یا دستی به Liara منتقل کن
+راهنمای قدم‌به‌قدم: [LIARA_STORAGE_SETUP.md](../LIARA_STORAGE_SETUP.md)

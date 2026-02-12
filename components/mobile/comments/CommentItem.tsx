@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Heart, Flag, Trash2 } from 'lucide-react';
+import { ThumbsUp, Flag, Trash2, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import Image from 'next/image';
@@ -91,27 +91,35 @@ export default function CommentItem({
           {comment.content}
         </p>
 
-        {/* Actions */}
-        <div className="flex items-center gap-4">
+        {/* Actions — Vibe 2.0: مفید بود + پاسخ */}
+        <div className="flex items-center gap-4 flex-wrap">
           <button
             onClick={handleLike}
             disabled={isLoading}
             className={`flex items-center gap-1 text-xs transition-colors ${
               localIsLiked
-                ? 'text-red-500'
-                : 'text-gray-500 hover:text-red-500'
+                ? 'text-primary'
+                : 'text-gray-500 hover:text-primary'
             }`}
           >
-            <Heart
+            <ThumbsUp
               className={`w-4 h-4 ${localIsLiked ? 'fill-current' : ''}`}
             />
-            <span>{localLikeCount}</span>
+            <span>{localLikeCount} مفید بود</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>پاسخ</span>
           </button>
 
           <button
             onClick={() => onReport(comment.id)}
             disabled={isLoading}
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-500 transition-colors"
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors mr-auto"
           >
             <Flag className="w-4 h-4" />
             <span>گزارش</span>
@@ -125,7 +133,7 @@ export default function CommentItem({
                 }
               }}
               disabled={isLoading}
-              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors mr-auto"
+              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
               <span>حذف</span>

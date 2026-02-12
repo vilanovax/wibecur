@@ -1,6 +1,8 @@
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { notFound } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
+import CategoryPageClient from './CategoryPageClient';
 
 export default async function CategoryPage({
   params,
@@ -8,29 +10,20 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const categories = ['movies', 'books', 'cafe', 'car', 'podcast', 'lifestyle'];
-  
-  if (!categories.includes(slug)) {
+
+  const category = await prisma.categories.findUnique({
+    where: { slug, isActive: true },
+    select: { id: true, name: true, slug: true },
+  });
+
+  if (!category) {
     notFound();
   }
 
-  const categoryNames: Record<string, string> = {
-    movies: 'فیلم و سریال',
-    books: 'کتاب',
-    cafe: 'کافه و رستوران',
-    car: 'ماشین و تکنولوژی',
-    podcast: 'پادکست',
-    lifestyle: 'لایف‌استایل',
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Header title={categoryNames[slug]} />
-      <main className="px-4 py-6">
-        <p className="text-gray-600">
-          لیست‌های دسته‌بندی {categoryNames[slug]} - در حال توسعه
-        </p>
-      </main>
+      <Header title={category.name} showBack />
+      <CategoryPageClient slug={category.slug} categoryName={category.name} />
       <BottomNav />
     </div>
   );

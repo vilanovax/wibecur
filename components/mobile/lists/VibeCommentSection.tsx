@@ -60,6 +60,8 @@ interface VibeCommentSectionProps {
   isOwner: boolean;
   listUserId: string;
   categorySlug?: string | null;
+  /** وقتی کاربر روی «پیشنهاد» کلیک می‌کند، این فراخوانی می‌شود (مثلاً برای باز کردن مودال جستجو-محور) */
+  onOpenSuggestItem?: () => void;
 }
 
 function ReactionChips({
@@ -172,6 +174,7 @@ function VibeCommentItem({
 
   return (
     <div
+      id={`comment-${comment.id}`}
       className={`flex gap-3 py-5 transition-all ${
         isFirst
           ? 'pt-5 bg-amber-50/40 rounded-xl px-4 -mx-1 border border-amber-100/60'
@@ -370,7 +373,7 @@ function VibeCommentInput({
   );
 }
 
-export default function VibeCommentSection({ listId, isOwner, listUserId, categorySlug }: VibeCommentSectionProps) {
+export default function VibeCommentSection({ listId, isOwner, listUserId, categorySlug, onOpenSuggestItem }: VibeCommentSectionProps) {
   const { data: session, status } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({
@@ -447,8 +450,12 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
   };
 
   const handleSuggestionClick = () => {
-    setIsSuggestionMode(true);
-    setIsFormExpanded(true);
+    if (onOpenSuggestItem) {
+      onOpenSuggestItem();
+    } else {
+      setIsSuggestionMode(true);
+      setIsFormExpanded(true);
+    }
   };
 
   const handleSubmit = async (content: string, type: 'comment' | 'suggestion') => {

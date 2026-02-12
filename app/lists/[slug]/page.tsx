@@ -17,8 +17,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function ListDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ListDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ suggest?: string }>;
+}) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const openSuggest = resolvedSearchParams?.suggest === '1';
 
   const list = await prisma.lists.findUnique({
     where: { slug },
@@ -61,7 +69,11 @@ export default async function ListDetailPage({ params }: { params: Promise<{ slu
 
   return (
     <>
-      <ListDetailClient list={JSON.parse(JSON.stringify(list))} relatedLists={JSON.parse(JSON.stringify(relatedLists))} />
+      <ListDetailClient
+        list={JSON.parse(JSON.stringify(list))}
+        relatedLists={JSON.parse(JSON.stringify(relatedLists))}
+        openSuggestFromQuery={openSuggest}
+      />
       <BottomNav />
     </>
   );

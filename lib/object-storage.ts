@@ -1,9 +1,4 @@
-import {
-  S3Client,
-  CreateBucketCommand,
-  HeadBucketCommand,
-  PutBucketPolicyCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import axios from 'axios';
 import { getObjectStorageConfig } from './object-storage-config';
@@ -13,79 +8,40 @@ import { optimizeImage } from './image-optimizer';
 const isDev = process.env.NODE_ENV === 'development';
 
 /**
- * Get S3-compatible client (MinIO or Liara)
+ * S3 client برای Liara Object Storage
  */
 async function getS3Client() {
   const config = await getObjectStorageConfig();
 
   if (!config) {
-    if (isDev) console.warn('Object Storage not configured (MinIO or Liara)');
+    if (isDev) console.warn('Liara Object Storage not configured');
     return null;
   }
 
   return new S3Client({
-    region: 'us-east-1',
+    region: 'default',
     endpoint: config.endpoint,
     credentials: {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
     },
-    forcePathStyle: true, // لازم برای MinIO و Liara
+    forcePathStyle: true,
   });
 }
 
 /**
- * اطمینان از وجود bucket و دسترسی عمومی (برای MinIO)
- */
-async function ensureBucket(
-  client: S3Client,
-  bucketName: string,
-  provider: string
-) {
-  try {
-    await client.send(new HeadBucketCommand({ Bucket: bucketName }));
-  } catch (err: unknown) {
-    const code = (err as { name?: string }).name;
-    if (code === 'NotFound' || code === 'NoSuchBucket') {
-      await client.send(new CreateBucketCommand({ Bucket: bucketName }));
-      if (isDev) console.log('Bucket created:', bucketName);
-
-      // MinIO: دسترسی عمومی برای خواندن تصاویر
-      if (provider === 'minio') {
-        const policy = JSON.stringify({
-          Version: '2012-10-17',
-          Statement: [
-            {
-              Effect: 'Allow',
-              Principal: { AWS: ['*'] },
-              Action: ['s3:GetObject'],
-              Resource: [`arn:aws:s3:::${bucketName}/*`],
-            },
-          ],
-        });
-        await client.send(
-          new PutBucketPolicyCommand({ Bucket: bucketName, Policy: policy })
-        );
-        if (isDev) console.log('Bucket policy set: public read');
-      }
-    } else throw err;
-  }
-}
-
-/**
- * ساخت URL عمومی برای دسترسی مرورگر
+ * ساخت URL عمومی تصویر در Liara
  */
 function buildPublicUrl(
   config: Awaited<ReturnType<typeof getObjectStorageConfig>>,
   key: string
 ): string {
   if (!config) return '';
-  const base = config.publicUrlBase || config.endpoint;
-  return `${base.replace(/\/$/, '')}/${config.bucketName}/${key}`;
+  return `${config.endpoint.replace(/\/$/, '')}/${config.bucketName}/${key}`;
 }
 
 /**
- * Upload image from URL to Object Storage (MinIO یا Liara)
+ * آپلود تصویر از URL به Liara Object Storage
  */
 export async function uploadImageFromUrl(
   imageUrl: string,
@@ -96,11 +52,9 @@ export async function uploadImageFromUrl(
     const config = await getObjectStorageConfig();
 
     if (!client || !config) {
-      if (isDev) console.warn('Skipping image upload - Object Storage not configured');
+      if (isDev) console.warn('Skipping image upload - Liara not configured');
       return null;
     }
-
-    await ensureBucket(client, config.bucketName, config.provider);
 
     if (isDev) console.log('Downloading image from:', imageUrl);
     const response = await axios.get(imageUrl, {
@@ -116,19 +70,17 @@ export async function uploadImageFromUrl(
     const filename = `${crypto.randomBytes(16).toString('hex')}${optimized.ext}`;
     const key = `${folder}/${filename}`;
 
-    if (isDev) console.log('Uploading to', config.provider, ':', key);
-
-    const uploadParams = {
-      Bucket: config.bucketName,
-      Key: key,
-      Body: optimized.buffer,
-      ContentType: optimized.contentType,
-      ...(config.provider === 'liara' && { ACL: 'public-read' as const }),
-    };
+    if (isDev) console.log('Uploading to Liara:', key);
 
     const upload = new Upload({
       client,
-      params: uploadParams,
+      params: {
+        Bucket: config.bucketName,
+        Key: key,
+        Body: optimized.buffer,
+        ContentType: optimized.contentType,
+        ACL: 'public-read',
+      },
     });
 
     await upload.done();
@@ -144,7 +96,7 @@ export async function uploadImageFromUrl(
 }
 
 /**
- * Upload image buffer to Object Storage (MinIO یا Liara)
+ * آپلود بافر تصویر به Liara Object Storage
  */
 export async function uploadImageBuffer(
   buffer: Buffer,
@@ -156,11 +108,9 @@ export async function uploadImageBuffer(
     const config = await getObjectStorageConfig();
 
     if (!client || !config) {
-      if (isDev) console.warn('Skipping image upload - Object Storage not configured');
+      if (isDev) console.warn('Skipping image upload - Liara not configured');
       return null;
     }
-
-    await ensureBucket(client, config.bucketName, config.provider);
 
     const profile =
       folder === 'items' ? 'itemImage' :
@@ -175,19 +125,17 @@ export async function uploadImageBuffer(
     const filename = `${crypto.randomBytes(16).toString('hex')}${optimized.ext}`;
     const key = `${folder}/${filename}`;
 
-    if (isDev) console.log('Uploading to', config.provider, ':', key);
-
-    const uploadParams = {
-      Bucket: config.bucketName,
-      Key: key,
-      Body: optimized.buffer,
-      ContentType: optimized.contentType,
-      ...(config.provider === 'liara' && { ACL: 'public-read' as const }),
-    };
+    if (isDev) console.log('Uploading to Liara:', key);
 
     const upload = new Upload({
       client,
-      params: uploadParams,
+      params: {
+        Bucket: config.bucketName,
+        Key: key,
+        Body: optimized.buffer,
+        ContentType: optimized.contentType,
+        ACL: 'public-read',
+      },
     });
 
     await upload.done();
@@ -200,14 +148,14 @@ export async function uploadImageBuffer(
 }
 
 /**
- * تست اتصال به Object Storage
+ * تست اتصال به Liara Object Storage
  */
 export async function testObjectStorageConnection(): Promise<boolean> {
   try {
     const client = await getS3Client();
     return !!client;
   } catch (error) {
-    console.error('Object Storage connection test failed:', error);
+    console.error('Liara connection test failed:', error);
     return false;
   }
 }

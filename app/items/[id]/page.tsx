@@ -36,8 +36,15 @@ export default async function ItemDetailPage({
   const item = await prisma.items.findUnique({
     where: { id },
     include: {
+      _count: {
+        select: { comments: true },
+      },
       lists: {
-        include: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          saveCount: true,
           categories: {
             select: {
               id: true,
@@ -98,10 +105,13 @@ export default async function ItemDetailPage({
     rating: item.rating,
     voteCount: item.voteCount,
     metadata: item.metadata,
+    commentCount: item._count.comments,
+    listSaveCount: item.lists.saveCount ?? 0,
     lists: {
       id: item.lists.id,
       title: item.lists.title,
       slug: item.lists.slug,
+      saveCount: item.lists.saveCount ?? 0,
       categories: item.lists.categories,
     },
     users: item.lists.users ? {

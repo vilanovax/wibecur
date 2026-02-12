@@ -7,6 +7,7 @@ interface BottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: string;
   children: React.ReactNode;
   maxHeight?: string;
 }
@@ -15,6 +16,7 @@ export default function BottomSheet({
   isOpen,
   onClose,
   title,
+  subtitle,
   children,
   maxHeight = '90vh',
 }: BottomSheetProps) {
@@ -64,7 +66,7 @@ export default function BottomSheet({
       onClick={handleBackdropClick}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in" />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-200" />
 
       {/* Sheet */}
       <div
@@ -73,18 +75,25 @@ export default function BottomSheet({
         style={{ maxHeight }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Drag Handle */}
+        {/* Drag Handle — subtle */}
         <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+          <div className="w-8 h-1 bg-gray-200 rounded-full" />
         </div>
 
         {/* Header */}
-        {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
-            <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+        {(title || subtitle) && (
+          <div className="flex items-start justify-between gap-3 px-6 pt-2 pb-4 flex-shrink-0">
+            <div className="flex-1 min-w-0">
+              {title && (
+                <h2 className="text-xl font-bold text-gray-900 leading-tight">{title}</h2>
+              )}
+              {subtitle && (
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{subtitle}</p>
+              )}
+            </div>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+              className="w-10 h-10 rounded-full hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="بستن"
             >
               <X className="w-5 h-5 text-gray-600" />

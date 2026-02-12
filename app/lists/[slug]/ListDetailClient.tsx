@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import VibeCommentSection from '@/components/mobile/lists/VibeCommentSection';
+import SuggestItemSearch from '@/components/mobile/lists/SuggestItemSearch';
+import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import Toast from '@/components/shared/Toast';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 type Item = {
@@ -57,6 +60,7 @@ type RelatedList = {
 interface ListDetailClientProps {
   list: ListDetail;
   relatedLists: RelatedList[];
+  openSuggestFromQuery?: boolean;
 }
 
 const DESCRIPTION_PLACEHOLDER = 'توضیحی برای این لیست نوشته نشده';
@@ -154,7 +158,7 @@ function GridItemCard({
   );
 }
 
-export default function ListDetailClient({ list, relatedLists }: ListDetailClientProps) {
+export default function ListDetailClient({ list, relatedLists, openSuggestFromQuery }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [stickyVisible, setStickyVisible] = useState(false);
@@ -172,6 +176,22 @@ export default function ListDetailClient({ list, relatedLists }: ListDetailClien
   });
   const [showGridHint, setShowGridHint] = useState(false);
   const [gridHintVisible, setGridHintVisible] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const handleScrollToComment = useCallback((commentId: string) => {
+    setSuggestOpen(false);
+    setTimeout(() => {
+      document.getElementById(`comment-${commentId}`)?.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    if (openSuggestFromQuery) {
+      setSuggestOpen(true);
+      router.replace(`/lists/${list.slug}`, { scroll: false });
+    }
+  }, [openSuggestFromQuery, list.slug, router]);
 
   const fetchBookmarkStatus = () => {
     if (!session?.user) return;
@@ -520,18 +540,57 @@ export default function ListDetailClient({ list, relatedLists }: ListDetailClien
             </section>
           )}
 
+          {/* پیشنهاد آیتم — دکمه جدا از کامنت */}
+          {session?.user && (
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={() => setSuggestOpen(true)}
+                className="w-full py-3 px-4 rounded-xl bg-amber-50 text-amber-700 border border-amber-200/60 font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-2"
+              >
+                + پیشنهاد آیتم به این لیست
+              </button>
+            </div>
+          )}
+
           {/* نظرات و پیشنهادها — Vibe Comment System */}
           <VibeCommentSection
             listId={list.id}
             isOwner={isOwner}
             listUserId={list.userId}
             categorySlug={list.categories?.slug}
+            onOpenSuggestItem={() => setSuggestOpen(true)}
           />
 
           {/* End spacing before bottom nav */}
           <div className="h-10" />
         </div>
       </main>
+
+      {/* مودال پیشنهاد آیتم */}
+      <BottomSheet
+        isOpen={suggestOpen}
+        onClose={() => setSuggestOpen(false)}
+        title="پیشنهاد آیتم"
+        maxHeight="85vh"
+      >
+        <SuggestItemSearch
+          listId={list.id}
+          categorySlug={list.categories?.slug}
+          onSuccess={() => setSuggestOpen(false)}
+          onScrollToComment={handleScrollToComment}
+          showToast={(message, type) => setToast({ message, type })}
+        />
+      </BottomSheet>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={3000}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       {/* Sticky save bar */}
       {showStickyBar && session?.user && (

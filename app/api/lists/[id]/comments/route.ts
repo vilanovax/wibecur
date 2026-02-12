@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { normalizeCommentText, hashCommentContent, validateCommentContent } from '@/lib/comment-utils';
 import { checkCommentRateLimit, checkDuplicateComment, shouldShadowBan } from '@/lib/comment-antispan';
+import { checkDuplicateSuggestion } from '@/lib/suggestion-utils';
 
 // GET /api/lists/[id]/comments - دریافت کامنت‌های یک لیست
 export async function GET(
@@ -212,13 +213,23 @@ export async function POST(
 
     const commentType = ['comment', 'suggestion', 'opinion'].includes(type) ? type : 'comment';
 
-    // Content validation heuristics
-    const validation = validateCommentContent(content.trim());
-    if (!validation.valid) {
-      return NextResponse.json(
-        { success: false, error: validation.error },
-        { status: 400 }
-      );
+    // Content validation: suggestion = فقط عنوان (حداقل ۲ حرف)، بقیه = heuristics کامل
+    let validation: { valid: boolean; error?: string; shouldReview?: boolean } = { valid: true };
+    if (commentType === 'suggestion') {
+      if (content.trim().length < 2) {
+        return NextResponse.json(
+          { success: false, error: 'عنوان پیشنهاد خیلی کوتاهه ✨' },
+          { status: 400 }
+        );
+      }
+    } else {
+      validation = validateCommentContent(content.trim());
+      if (!validation.valid) {
+        return NextResponse.json(
+          { success: false, error: validation.error },
+          { status: 400 }
+        );
+      }
     }
 
     // Check if list exists and comments are enabled
@@ -244,6 +255,19 @@ export async function POST(
         { success: false, error: 'کامنت‌ها برای این لیست غیرفعال است' },
         { status: 403 }
       );
+    }
+
+    // For suggestions: check duplicate by normalized title across list (any user)
+    if (commentType === 'suggestion') {
+      const dup = await checkDuplicateSuggestion(listId, content.trim());
+      if (dup.exists) {
+        return NextResponse.json({
+          success: true,
+          alreadySuggested: true,
+          suggestionCommentId: dup.suggestionCommentId ?? undefined,
+          message: 'این مورد قبلاً پیشنهاد شده 👌',
+        });
+      }
     }
 
     // Get global comment settings for max length check

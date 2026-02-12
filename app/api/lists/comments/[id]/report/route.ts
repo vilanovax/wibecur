@@ -49,10 +49,11 @@ export async function POST(
     );
 
     if (existingReport) {
-      return NextResponse.json(
-        { success: false, error: 'شما قبلاً این کامنت را گزارش کرده‌اید' },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: true,
+        message: 'شما قبلاً این کامنت را گزارش کرده‌اید',
+        alreadyReported: true,
+      });
     }
 
     await dbQuery(async () => {

@@ -1,45 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Edit, CheckCircle, XCircle, Trash2, Loader2, ArrowUpDown, User, Calendar, ListIcon, ExternalLink, Package } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { ArrowUpDown, Package } from 'lucide-react';
+import AdminSuggestedItemCard, { type AdminSuggestedItemSuggestion } from './AdminSuggestedItemCard';
+import BulkActionBar from './BulkActionBar';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import EditItemSuggestionModal from './EditItemSuggestionModal';
 import DeleteSuggestionModal from './DeleteSuggestionModal';
 import ApproveRejectModal from './ApproveRejectModal';
 import Pagination from '@/components/admin/shared/Pagination';
-import Image from 'next/image';
 
-interface ItemSuggestion {
-  id: string;
-  title: string;
-  description: string | null;
-  imageUrl: string | null;
-  externalUrl: string | null;
-  listId: string;
-  userId: string;
-  status: string;
-  adminNotes: string | null;
+interface ItemSuggestion extends AdminSuggestedItemSuggestion {
   metadata: any;
-  createdAt: string;
   updatedAt: string;
-  lists: {
-    id: string;
-    title: string;
-    slug: string;
-    categories: {
-      id: string;
-      name: string;
-      icon: string;
-      slug: string;
-    };
-  };
-  users: {
-    id: string;
-    name: string | null;
-    email: string;
-  };
 }
 
 interface ItemSuggestionsTableProps {
@@ -54,13 +28,13 @@ function SuggestionSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="bg-gray-50 rounded-xl p-5 animate-pulse">
-          <div className="flex gap-4">
-            <div className="w-20 h-20 bg-gray-200 rounded-xl"></div>
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-5 animate-pulse">
+          <div className="flex gap-3">
+            <div className="w-14 h-14 bg-gray-200 rounded-xl" />
             <div className="flex-1">
-              <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-              <div className="h-3 bg-gray-200 rounded w-full"></div>
+              <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
+              <div className="h-3 bg-gray-200 rounded w-full" />
             </div>
           </div>
         </div>
@@ -86,10 +60,116 @@ export default function ItemSuggestionsTable({
   const [isApproveRejectModalOpen, setIsApproveRejectModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<'approve' | 'reject' | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchSuggestions();
   }, [status, currentPage, sortOrder]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!selectAllRef.current) return;
+    const n = suggestions.length;
+    const s = selectedIds.size;
+    selectAllRef.current.checked = n > 0 && s === n;
+    selectAllRef.current.indeterminate = s > 0 && s < n;
+  }, [suggestions.length, selectedIds.size]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    const allSelected = selectedIds.size === suggestions.length;
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(suggestions.map((s) => s.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkApproveClick = () => {
+    setConfirmAction('approve');
+    setConfirmOpen(true);
+  };
+
+  const handleBulkRejectClick = () => {
+    setConfirmAction('reject');
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmBulkAction = async () => {
+    if (!confirmAction || selectedIds.size === 0) return;
+    const pendingSuggestions = suggestions.filter(
+      (s) => selectedIds.has(s.id) && s.status === 'pending'
+    );
+    if (pendingSuggestions.length === 0) {
+      setToast('هیچ پیشنهاد در انتظاری انتخاب نشده');
+      setConfirmOpen(false);
+      setConfirmAction(null);
+      return;
+    }
+    setBulkLoading(true);
+    try {
+      if (confirmAction === 'approve') {
+        await Promise.all(
+          pendingSuggestions.map((s) =>
+            fetch(`/api/admin/suggestions/items/${s.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'approve',
+                adminNotes: `با تشکر از پیشنهاد شما! آیتم "${s.title}" با موفقیت به لیست اضافه شد.`,
+              }),
+            })
+          )
+        );
+        setToast(`${pendingSuggestions.length} پیشنهاد تأیید شدند ✅`);
+      } else {
+        await Promise.all(
+          pendingSuggestions.map((s) =>
+            fetch(`/api/admin/suggestions/items/${s.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'reject',
+                adminNotes: 'رد دسته‌جمعی توسط ادمین',
+              }),
+            })
+          )
+        );
+        setToast(`${pendingSuggestions.length} پیشنهاد رد شدند ❌`);
+      }
+      setSelectedIds(new Set());
+      setConfirmOpen(false);
+      setConfirmAction(null);
+      await fetchSuggestions();
+    } catch {
+      setToast('خطا در انجام عملیات');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
 
   const fetchSuggestions = async () => {
     setLoading(true);
@@ -99,9 +179,7 @@ export default function ItemSuggestionsTable({
         limit: '20',
         sort: sortOrder,
       });
-      if (status) {
-        params.set('status', status);
-      }
+      if (status) params.set('status', status);
 
       const res = await fetch(`/api/admin/suggestions/items?${params.toString()}`);
       const data = await res.json();
@@ -118,6 +196,37 @@ export default function ItemSuggestionsTable({
     }
   };
 
+  const handleApproveDirect = async (suggestion: ItemSuggestion) => {
+    setProcessing(suggestion.id);
+    try {
+      const res = await fetch(`/api/admin/suggestions/items/${suggestion.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve',
+          adminNotes: `با تشکر از پیشنهاد شما! آیتم "${suggestion.title}" با موفقیت به لیست اضافه شد.`,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setToast('تأیید شد ✅');
+        await fetchSuggestions();
+      } else {
+        setToast(data.error || 'خطا در تأیید');
+      }
+    } catch {
+      setToast('خطا در تأیید');
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleReject = (suggestion: ItemSuggestion) => {
+    setSelectedSuggestion(suggestion);
+    setModalAction('reject');
+    setIsApproveRejectModalOpen(true);
+  };
+
   const handleEdit = (suggestion: ItemSuggestion) => {
     setSelectedSuggestion(suggestion);
     setIsEditModalOpen(true);
@@ -128,16 +237,10 @@ export default function ItemSuggestionsTable({
     setIsDeleteModalOpen(true);
   };
 
-  const handleApprove = (suggestion: ItemSuggestion) => {
-    setSelectedSuggestion(suggestion);
-    setModalAction('approve');
-    setIsApproveRejectModalOpen(true);
-  };
-
-  const handleReject = (suggestion: ItemSuggestion) => {
-    setSelectedSuggestion(suggestion);
-    setModalAction('reject');
-    setIsApproveRejectModalOpen(true);
+  const handleViewList = (suggestion: ItemSuggestion) => {
+    if (suggestion.lists?.slug) {
+      router.push(`/lists/${suggestion.lists.slug}`);
+    }
   };
 
   const handleModalClose = () => {
@@ -148,33 +251,14 @@ export default function ItemSuggestionsTable({
     setModalAction(null);
   };
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      pending: (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
-          <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse"></span>
-          در انتظار
-        </span>
-      ),
-      approved: (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-          تایید شده
-        </span>
-      ),
-      rejected: (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-          <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-          رد شده
-        </span>
-      ),
-    };
-    return badges[status as keyof typeof badges] || badges.pending;
-  };
-
   if (loading) {
     return <SuggestionSkeleton />;
   }
+
+  const isPending = status === 'pending' || !status;
+  const emptyMessage = isPending
+    ? { title: '🎉 همه پیشنهادها بررسی شدند', subtitle: 'وایب تحت کنترله!' }
+    : { title: 'پیشنهادی یافت نشد', subtitle: 'هیچ پیشنهاد آیتمی با این فیلتر وجود ندارد' };
 
   if (suggestions.length === 0) {
     return (
@@ -182,182 +266,122 @@ export default function ItemSuggestionsTable({
         <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Package className="w-10 h-10 text-gray-400" />
         </div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">پیشنهادی یافت نشد</h3>
-        <p className="text-gray-500">هیچ پیشنهاد آیتمی با این فیلتر وجود ندارد</p>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">{emptyMessage.title}</h3>
+        <p className="text-gray-500">{emptyMessage.subtitle}</p>
       </div>
     );
   }
 
   return (
     <>
-      {/* Header with Count and Sort */}
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-medium shadow-lg animate-in fade-in duration-200">
+          {toast}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <p className="text-sm text-gray-500">
           <span className="font-medium text-gray-900">{total}</span> پیشنهاد یافت شد
         </p>
-
-        {/* Sort Controls */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">مرتب‌سازی:</span>
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setSortOrder('newest')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                sortOrder === 'newest'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <ArrowUpDown className="w-3.5 h-3.5" />
-              جدیدترین
-            </button>
-            <button
-              onClick={() => setSortOrder('oldest')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                sortOrder === 'oldest'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <ArrowUpDown className="w-3.5 h-3.5 rotate-180" />
-              قدیمی‌ترین
-            </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={bulkMode}
+              onChange={(e) => {
+                setBulkMode(e.target.checked);
+                if (!e.target.checked) setSelectedIds(new Set());
+              }}
+              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <span className="text-sm text-gray-600">انتخاب چندتایی</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">مرتب‌سازی:</span>
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setSortOrder('newest')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  sortOrder === 'newest' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                جدیدترین
+              </button>
+              <button
+                onClick={() => setSortOrder('oldest')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                  sortOrder === 'oldest' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <ArrowUpDown className="w-3.5 h-3.5 rotate-180" />
+                قدیمی‌ترین
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Cards Grid */}
+      {bulkMode && suggestions.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <input
+            ref={selectAllRef}
+            type="checkbox"
+            onChange={selectAll}
+            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+            aria-label="انتخاب همه"
+          />
+          <span className="text-sm text-gray-600">انتخاب همه</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {suggestions.map((suggestion) => (
-          <div
+          <AdminSuggestedItemCard
             key={suggestion.id}
-            className="group bg-gray-50 hover:bg-white rounded-xl p-5 border border-transparent hover:border-gray-200 hover:shadow-lg transition-all duration-300"
-          >
-            <div className="flex gap-4">
-              {/* Image */}
-              <div className="flex-shrink-0">
-                {suggestion.imageUrl ? (
-                  <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-gray-100 shadow-sm group-hover:shadow-md transition-shadow">
-                    <Image
-                      src={suggestion.imageUrl}
-                      alt={suggestion.title}
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                    <Package className="w-8 h-8 text-gray-400" />
-                  </div>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-bold text-gray-900 truncate group-hover:text-primary transition-colors">
-                    {suggestion.title}
-                  </h3>
-                  {getStatusBadge(suggestion.status)}
-                </div>
-
-                {suggestion.description && (
-                  <p className="text-sm text-gray-500 line-clamp-2 mb-3 leading-relaxed">
-                    {suggestion.description}
-                  </p>
-                )}
-
-                {/* Meta Info */}
-                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
-                  <div className="flex items-center gap-1">
-                    <span className="text-base">{suggestion.lists.categories.icon}</span>
-                    <ListIcon className="w-3.5 h-3.5" />
-                    <span className="truncate max-w-[120px]">{suggestion.lists.title}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <User className="w-3.5 h-3.5" />
-                    <span>{suggestion.users.name || suggestion.users.email}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>
-                      {formatDistanceToNow(new Date(suggestion.createdAt), {
-                        addSuffix: true,
-                        locale: faIR,
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                {/* External URL */}
-                {suggestion.externalUrl && (
-                  <a
-                    href={suggestion.externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 mt-2 text-xs text-blue-500 hover:text-blue-600 transition-colors"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    مشاهده لینک
-                  </a>
-                )}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
-              <button
-                onClick={() => handleEdit(suggestion)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                ویرایش
-              </button>
-              {suggestion.status === 'pending' && (
-                <>
-                  <button
-                    onClick={() => handleApprove(suggestion)}
-                    disabled={processing === suggestion.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {processing === suggestion.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4" />
-                    )}
-                    تایید
-                  </button>
-                  <button
-                    onClick={() => handleReject(suggestion)}
-                    disabled={processing === suggestion.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {processing === suggestion.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <XCircle className="w-4 h-4" />
-                    )}
-                    رد
-                  </button>
-                  <button
-                    onClick={() => handleDelete(suggestion)}
-                    disabled={processing === suggestion.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {processing === suggestion.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                    حذف
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+            suggestion={suggestion}
+            processing={processing === suggestion.id}
+            onApprove={handleApproveDirect}
+            onReject={handleReject}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onViewList={handleViewList}
+            isRemoving={processing === suggestion.id}
+            isBulkMode={bulkMode}
+            isSelected={selectedIds.has(suggestion.id)}
+            onToggleSelect={toggleSelect}
+          />
         ))}
       </div>
+
+      {bulkMode && selectedIds.size > 0 && (
+        <BulkActionBar
+          selectedCount={selectedIds.size}
+          loading={bulkLoading}
+          onApprove={handleBulkApproveClick}
+          onReject={handleBulkRejectClick}
+          onClear={clearSelection}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title={confirmAction === 'approve' ? 'تأیید دسته‌جمعی' : 'رد دسته‌جمعی'}
+        message={
+          confirmAction === 'approve'
+            ? `از تأیید ${selectedIds.size} پیشنهاد مطمئن هستی؟`
+            : `از رد ${selectedIds.size} پیشنهاد مطمئن هستی؟`
+        }
+        confirmLabel={confirmAction === 'approve' ? 'تأیید همه' : 'رد همه'}
+        variant={confirmAction === 'reject' ? 'danger' : 'primary'}
+        loading={bulkLoading}
+        onConfirm={handleConfirmBulkAction}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmAction(null);
+        }}
+      />
 
       {totalPages > 1 && (
         <div className="mt-6">
@@ -402,6 +426,7 @@ export default function ItemSuggestionsTable({
               type="item"
               onSuccess={() => {
                 handleModalClose();
+                setToast('رد شد ❌');
                 fetchSuggestions();
               }}
             />
