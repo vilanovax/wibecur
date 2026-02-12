@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { normalizeCommentText, hashCommentContent, validateCommentContent } from '@/lib/comment-utils';
+import { checkCommentRateLimit, checkDuplicateComment, shouldShadowBan } from '@/lib/comment-antispan';
 
 // GET /api/lists/[id]/comments - دریافت کامنت‌های یک لیست
 export async function GET(
@@ -15,7 +16,7 @@ export async function GET(
     const sort = searchParams.get('sort') || 'newest'; // newest, popular
 
     const session = await auth();
-    const userId = session?.user ? session.user.id : null;
+    const userId = session?.user ? (session.user as { id: string }).id : null;
 
     // Get all bad words for filtering (with try-catch in case table is empty)
     let badWordsList: string[] = [];
@@ -49,17 +50,22 @@ export async function GET(
       );
     }
 
-    // Fetch comments (include filtered comments too, but exclude rejected ones and deleted ones)
+    // Fetch comments: status=active, or hidden+author (show own hidden to author)
+    const whereClause = {
+      listId,
+      parentId: null,
+      deletedAt: null,
+      OR: [
+        { status: 'active' },
+        { status: 'review' },
+        ...(userId ? [{ status: 'hidden', userId }] : []),
+      ],
+      NOT: { type: 'suggestion', suggestionStatus: 'rejected' },
+    };
+
     const comments = await dbQuery(() =>
       prisma.list_comments.findMany({
-        where: {
-          listId,
-          deletedAt: null, // Exclude soft-deleted comments
-          OR: [
-            { isApproved: true }, // Show approved comments
-            { isFiltered: true }, // Show filtered comments (even if not approved yet)
-          ],
-        },
+        where: whereClause,
         include: {
           users: {
             select: {
@@ -69,57 +75,95 @@ export async function GET(
               image: true,
             },
           },
+          replies: {
+            where: { deletedAt: null },
+            include: {
+              users: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  image: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'asc' },
+          },
         },
         orderBy:
-          sort === 'popular'
-            ? { likeCount: 'desc' }
+          sort === 'popular' || sort === 'helpful'
+            ? [{ weightedScore: 'desc' }, { createdAt: 'desc' }]
             : { createdAt: 'desc' },
       })
     );
 
-    // Get user's likes for this list's comments (only if there are comments)
-    const userLikes =
-      userId && comments.length > 0
-        ? await dbQuery(() =>
+    const allCommentIds = [
+      ...comments.map((c) => c.id),
+      ...comments.flatMap((c) => c.replies.map((r) => r.id)),
+    ];
+    const [userLikes, userVotes] = await Promise.all([
+      userId && allCommentIds.length > 0
+        ? dbQuery(() =>
             prisma.list_comment_likes.findMany({
-              where: {
-                userId,
-                commentId: {
-                  in: comments.map((c) => c.id),
-                },
-              },
+              where: { userId, commentId: { in: allCommentIds } },
               select: { commentId: true },
             })
           )
-        : [];
+        : [],
+      userId && allCommentIds.length > 0
+        ? dbQuery(() =>
+            prisma.list_comment_votes.findMany({
+              where: { userId, commentId: { in: allCommentIds } },
+              select: { commentId: true, value: true },
+            })
+          )
+        : [],
+    ]);
     const likedCommentIds = new Set(userLikes.map((l) => l.commentId));
+    const userVoteMap = new Map(userVotes.map((v) => [v.commentId, v.value]));
 
-    // Filter bad words and mark filtered comments
-    const processedComments = comments.map((comment) => {
-      let processedContent = comment.content;
-      
-      if (comment.isFiltered && badWordsList.length > 0) {
+    const processOne = (c: (typeof comments)[0]) => {
+      let processedContent = c.content;
+      if (c.isFiltered && badWordsList.length > 0) {
         badWordsList.forEach((badWord) => {
           const regex = new RegExp(badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
           processedContent = processedContent.replace(regex, '*'.repeat(badWord.length));
         });
       }
-
-      // Check if current user has liked this comment
-      const userLiked = userId ? likedCommentIds.has(comment.id) : false;
-
       return {
-        id: comment.id,
+        id: c.id,
         content: processedContent,
-        isFiltered: comment.isFiltered,
-        likeCount: comment.likeCount || 0,
-        createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString(),
-        deletedAt: comment.deletedAt?.toISOString() || null,
-        users: comment.users,
-        userLiked,
+        type: c.type ?? 'comment',
+        suggestionStatus: c.suggestionStatus ?? null,
+        approvedItemId: c.approvedItemId ?? null,
+        status: c.status ?? 'active',
+        helpfulUp: c.helpfulUp ?? 0,
+        helpfulDown: c.helpfulDown ?? 0,
+        weightedScore: c.weightedScore ?? 0,
+        isFiltered: c.isFiltered,
+        likeCount: c.likeCount || 0,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+        deletedAt: c.deletedAt?.toISOString() || null,
+        users: c.users,
+        userLiked: userId ? likedCommentIds.has(c.id) : false,
+        userVote: userId ? userVoteMap.get(c.id) ?? null : null,
+        replies: (c as { replies: (typeof c.replies) & { helpfulUp?: number; helpfulDown?: number; weightedScore?: number }[] }).replies?.map((r) => ({
+          id: r.id,
+          content: r.content,
+          type: r.type ?? 'comment',
+          createdAt: r.createdAt.toISOString(),
+          users: r.users,
+          userLiked: userId ? likedCommentIds.has(r.id) : false,
+          likeCount: r.likeCount || 0,
+          helpfulUp: r.helpfulUp ?? 0,
+          helpfulDown: r.helpfulDown ?? 0,
+          userVote: userId ? userVoteMap.get(r.id) ?? null : null,
+        })) ?? [],
       };
-    });
+    };
+
+    const processedComments = comments.map(processOne);
 
     return NextResponse.json({
       success: true,
@@ -150,14 +194,29 @@ export async function POST(
       );
     }
 
-    const userId = session.user.id;
+    const userId = (session.user as { id: string }).id;
     const { id: listId } = await params;
     const body = await request.json();
-    const { content } = body;
+    const { content, type = 'comment', parentId } = body as {
+      content?: string;
+      type?: 'comment' | 'suggestion' | 'opinion';
+      parentId?: string;
+    };
 
     if (!content || !content.trim()) {
       return NextResponse.json(
-        { success: false, error: 'متن کامنت الزامی است' },
+        { success: false, error: 'یه توضیح کوتاه هم بنویس 🙂' },
+        { status: 400 }
+      );
+    }
+
+    const commentType = ['comment', 'suggestion', 'opinion'].includes(type) ? type : 'comment';
+
+    // Content validation heuristics
+    const validation = validateCommentContent(content.trim());
+    if (!validation.valid) {
+      return NextResponse.json(
+        { success: false, error: validation.error },
         { status: 400 }
       );
     }
@@ -203,14 +262,38 @@ export async function POST(
         return NextResponse.json(
           {
             success: false,
-            error: `طول کامنت نباید بیشتر از ${maxCommentLength} کاراکتر باشد. (فعلی: ${contentLength})`,
+            error: 'این متن کمی بلنده، کوتاه‌تر بنویس ✨',
           },
           { status: 400 }
         );
       }
     }
 
-    // Check rate limit
+    // Rate limit: 3/min, 20/day
+    const rateResult = await checkCommentRateLimit(userId);
+    if (!rateResult.ok) {
+      return NextResponse.json(
+        { success: false, error: rateResult.message },
+        { status: 429 }
+      );
+    }
+
+    // Duplicate detection (same content within 24h)
+    const normalized = normalizeCommentText(content.trim());
+    const contentHash = hashCommentContent(normalized);
+    const isDuplicate = await checkDuplicateComment(listId, userId, contentHash);
+    if (isDuplicate) {
+      return NextResponse.json(
+        { success: false, error: 'همین نظر رو قبلاً نوشتی ✨' },
+        { status: 400 }
+      );
+    }
+
+    // Shadow ban: store as hidden for suspicious users
+    const shadowBanned = await shouldShadowBan(userId);
+    const initialStatus = shadowBanned ? 'hidden' : validation.shouldReview ? 'review' : 'active';
+
+    // Check rate limit (global) - legacy
     const rateLimitMinutes =
       globalSettings?.globalRateLimitMinutes ??
       globalSettings?.rateLimitMinutes ??
@@ -237,7 +320,7 @@ export async function POST(
         return NextResponse.json(
           {
             success: false,
-            error: `لطفاً ${rateLimitMinutes} دقیقه صبر کنید قبل از ارسال کامنت بعدی`,
+            error: 'چند لحظه بعد دوباره امتحان کن ✨',
           },
           { status: 429 }
         );
@@ -263,7 +346,7 @@ export async function POST(
           return NextResponse.json(
             {
               success: false,
-              error: `لطفاً ${globalSettings.globalRateLimitMinutes} دقیقه صبر کنید قبل از ارسال کامنت بعدی`,
+              error: 'چند لحظه بعد دوباره امتحان کن ✨',
             },
             { status: 429 }
           );
@@ -297,9 +380,17 @@ export async function POST(
           data: {
             listId,
             userId,
+            parentId: parentId || null,
+            type: commentType,
             content: content.trim(),
+            contentHash,
+            suggestionStatus: commentType === 'suggestion' ? 'pending' : null,
+            status: initialStatus,
             isFiltered: hasBadWord,
-            isApproved: !hasBadWord, // Auto-approve if no bad words
+            isApproved: !hasBadWord,
+            helpfulUp: 0,
+            helpfulDown: 0,
+            weightedScore: 0.5,
           },
           include: {
             users: {
@@ -354,14 +445,29 @@ export async function POST(
       });
     });
 
+    const successMessage =
+      commentType === 'suggestion'
+        ? 'پیشنهادت ثبت شد 👌 منتظر تایید صاحب لیست هستیم'
+        : initialStatus === 'review'
+          ? 'نظرت ثبت شد و در حال بررسیه ✨'
+          : 'نظرت به لیست اضافه شد ✨';
+
     return NextResponse.json({
       success: true,
+      message: successMessage,
       data: {
-        ...comment,
-        createdAt: comment.createdAt.toISOString(),
-        updatedAt: comment.updatedAt.toISOString(),
+        id: comment.id,
+        content: comment.content,
+        type: commentType,
+        suggestionStatus: commentType === 'suggestion' ? 'pending' : null,
+        approvedItemId: null,
+        status: initialStatus,
         likeCount: 0,
         userLiked: false,
+        createdAt: comment.createdAt.toISOString(),
+        updatedAt: comment.updatedAt.toISOString(),
+        users: comment.users,
+        replies: [],
       },
     });
   } catch (error: any) {

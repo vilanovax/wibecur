@@ -93,7 +93,7 @@ export default function ListsPageClient({ lists: initialLists, categories }: Lis
           const ids = new Set<string>(
             data.data.bookmarks
               .map((b: { list?: { id: string } }) => b.list?.id)
-              .filter((id): id is string => Boolean(id))
+              .filter((id: string | undefined): id is string => Boolean(id))
           );
           setBookmarkedIds(ids);
         }

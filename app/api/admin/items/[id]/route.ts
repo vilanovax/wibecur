@@ -98,16 +98,16 @@ export async function PUT(
       );
     }
 
-    // Upload image to Liara if imageUrl is an external URL
+    // Upload to Object Storage if imageUrl is external (not already in our storage)
     let finalImageUrl = imageUrl;
     if (imageUrl && imageUrl !== existingItem.imageUrl) {
-      // Check if it's an external URL (not already in Liara)
-      if (imageUrl.startsWith('http') && !imageUrl.includes('storage.c2.liara.space')) {
-        console.log('Uploading external image to Liara:', imageUrl);
+      const { isOurStorageUrl } = await import('@/lib/object-storage-config');
+      if (imageUrl.startsWith('http') && !isOurStorageUrl(imageUrl)) {
+        console.log('Uploading external image to Object Storage:', imageUrl);
         const uploadedUrl = await uploadImageFromUrl(imageUrl, 'items');
         if (uploadedUrl) {
           finalImageUrl = uploadedUrl;
-          console.log('Image uploaded to Liara:', uploadedUrl);
+          console.log('Image uploaded to Object Storage:', uploadedUrl);
         } else {
           console.warn('Failed to upload to Liara, using original URL');
         }

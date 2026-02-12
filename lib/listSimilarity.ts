@@ -183,8 +183,7 @@ export async function fetchCandidates(
   const hasTags = currentList.tags.length > 0;
   const hasCategory = !!currentList.categoryId;
 
-  const orConditions: { categoryId: string } | { tags: { hasSome: string[] } }[] =
-    [];
+  const orConditions: ({ categoryId: string } | { tags: { hasSome: string[] } })[] = [];
   if (hasCategory) orConditions.push({ categoryId: currentList.categoryId! });
   if (hasTags) orConditions.push({ tags: { hasSome: currentList.tags } });
 

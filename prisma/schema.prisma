@@ -182,6 +182,21 @@ model list_likes {
   @@index([userId])
 }
 
+// Quick reactions: one per user per list (💕 عاشقش شدم | 😭 اشکم دراومد | 🌙 مناسب شب بود | 😐 معمولی بود | ➕ یه پیشنهاد دارم)
+model list_reactions {
+  id           String   @id @default(cuid())
+  listId       String
+  userId       String
+  reactionType String   // love | cry | night | meh | suggestion
+  createdAt    DateTime @default(now())
+  lists        lists    @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listId])
+  @@index([listId])
+  @@index([userId])
+}
+
 model lists {
   id               String            @id
   title            String
@@ -205,6 +220,7 @@ model lists {
   bookmarks        bookmarks[]
   items            items[]
   list_likes       list_likes[]
+  list_reactions   list_reactions[]
   suggested_items  suggested_items[]
   list_comments    list_comments[]
   categories       categories?       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -258,6 +274,7 @@ model users {
   password          String?
   role              UserRole            @default(USER)
   isActive          Boolean             @default(true)
+  reputationScore   Int                 @default(0)  // +1 comment, +2 suggestion, -3 removed
   createdAt         DateTime            @default(now())
   updatedAt         DateTime
   bookmarks         bookmarks[]
@@ -268,6 +285,7 @@ model users {
   item_votes        item_votes[]
   item_reports      item_reports[]
   list_likes        list_likes[]
+  list_reactions    list_reactions[]
   lists             lists[]
   user_violations   user_violations[]
   suggested_items   suggested_items[]
@@ -275,6 +293,7 @@ model users {
   notifications     notifications[]
   list_comment_likes list_comment_likes[]
   list_comment_reports list_comment_reports[]
+  list_comment_votes list_comment_votes[]
   list_comments     list_comments[]
 }
 
@@ -358,20 +377,32 @@ model notifications {
 }
 
 model list_comments {
-  id                String              @id @default(cuid())
-  listId            String
-  userId            String
-  content           String
-  isFiltered        Boolean             @default(false)
-  isApproved        Boolean             @default(true)
-  likeCount         Int                 @default(0)
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id                 String                @id @default(cuid())
+  listId             String
+  userId             String
+  parentId           String?               // یک سطح پاسخ
+  type               String                @default("comment")  // comment | suggestion | opinion
+  content            String
+  contentHash        String?               // برای تشخیص تکرار
+  suggestionStatus   String?               // pending | approved | rejected
+  approvedItemId     String?
+  status             String                @default("active")   // active | review | hidden | rejected
+  isFiltered         Boolean               @default(false)
+  isApproved         Boolean               @default(true)
+  likeCount          Int                   @default(0)
+  helpfulUp          Int                   @default(0)
+  helpfulDown        Int                   @default(0)
+  weightedScore      Float                 @default(0)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
   deletedAt         DateTime?
   list_comment_likes list_comment_likes[]
   list_comment_reports list_comment_reports[]
-  lists             lists               @relation(fields: [listId], references: [id], onDelete: Cascade)
-  users             users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  list_comment_votes list_comment_votes[]
+  lists              lists                 @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users              users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent             list_comments?        @relation("ListCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies            list_comments[]       @relation("ListCommentReplies")
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -379,6 +410,10 @@ model list_comments {
   @@index([isFiltered])
   @@index([listId])
   @@index([userId])
+  @@index([parentId])
+  @@index([type])
+  @@index([status])
+  @@index([weightedScore])
 }
 
 model list_comment_likes {
@@ -407,5 +442,19 @@ model list_comment_reports {
 
   @@index([commentId])
   @@index([resolved])
+  @@index([userId])
+}
+
+model list_comment_votes {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  value     Int      // 1 = helpful, -1 = not helpful
+  createdAt DateTime @default(now())
+  list_comments list_comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId])
   @@index([userId])
 }

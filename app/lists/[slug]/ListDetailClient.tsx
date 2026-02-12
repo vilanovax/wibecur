@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
+import VibeCommentSection from '@/components/mobile/lists/VibeCommentSection';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 type Item = {
@@ -518,6 +519,14 @@ export default function ListDetailClient({ list, relatedLists }: ListDetailClien
               </div>
             </section>
           )}
+
+          {/* نظرات و پیشنهادها — Vibe Comment System */}
+          <VibeCommentSection
+            listId={list.id}
+            isOwner={isOwner}
+            listUserId={list.userId}
+            categorySlug={list.categories?.slug}
+          />
 
           {/* End spacing before bottom nav */}
           <div className="h-10" />

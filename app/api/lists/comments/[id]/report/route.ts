@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
@@ -56,20 +55,34 @@ export async function POST(
       );
     }
 
-    // Create report
-    await dbQuery(() =>
-      prisma.list_comment_reports.create({
+    await dbQuery(async () => {
+      const existing = await prisma.list_comment_reports.findFirst({
+        where: { commentId, userId },
+      });
+      if (existing) {
+        return;
+      }
+      await prisma.list_comment_reports.create({
         data: {
           commentId,
           userId,
           reason: reason || 'بدون دلیل',
         },
-      })
-    );
+      });
+      const reportCount = await prisma.list_comment_reports.count({
+        where: { commentId },
+      });
+      if (reportCount >= 3) {
+        await prisma.list_comments.update({
+          where: { id: commentId },
+          data: { status: 'review', updatedAt: new Date() },
+        });
+      }
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'کامنت با موفقیت گزارش شد',
+      message: 'ممنون که اطلاع دادی 🙏 بررسیش می‌کنیم',
     });
   } catch (error: any) {
     console.error('Error reporting list comment:', error);
