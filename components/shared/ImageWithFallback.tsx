@@ -20,11 +20,12 @@ export default function ImageWithFallback({
   const [hasError, setHasError] = useState(false);
   const [imageSrc, setImageSrc] = useState(src);
 
-  // Check if URL is from via.placeholder.com and skip loading it
+  // Skip loading when URL is placeholder or when external images are disabled (e.g. Unsplash blocked)
   const isPlaceholderUrl = src?.includes('via.placeholder.com');
-  
-  // If it's a placeholder URL, use fallback immediately
-  if (isPlaceholderUrl) {
+  const isUnsplash = src?.includes('images.unsplash.com');
+  const skipExternalImages =
+    typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SKIP_EXTERNAL_IMAGES === 'true';
+  if (isPlaceholderUrl || (isUnsplash && skipExternalImages)) {
     return (
       <div className={`flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${className} ${fallbackClassName}`}>
         <span className="text-6xl opacity-50">{fallbackIcon}</span>
@@ -34,15 +35,6 @@ export default function ImageWithFallback({
 
   const handleError = () => {
     setHasError(true);
-    // Try to remove query parameters if it's an Unsplash URL
-    if (imageSrc?.includes('unsplash.com') && imageSrc.includes('?')) {
-      const baseUrl = imageSrc.split('?')[0];
-      if (baseUrl !== imageSrc) {
-        setImageSrc(baseUrl);
-        setHasError(false);
-        return;
-      }
-    }
   };
 
   if (hasError || !src) {

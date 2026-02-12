@@ -10,6 +10,8 @@ interface BookmarkButtonProps {
   initialBookmarkCount?: number;
   variant?: 'icon' | 'button';
   size?: 'sm' | 'md' | 'lg';
+  labelSave?: string;
+  labelSaved?: string;
 }
 
 export default function BookmarkButton({
@@ -18,6 +20,8 @@ export default function BookmarkButton({
   initialBookmarkCount = 0,
   variant = 'icon',
   size = 'md',
+  labelSave = 'ذخیره',
+  labelSaved = 'ذخیره شده',
 }: BookmarkButtonProps) {
   const { data: session } = useSession();
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
@@ -98,7 +102,7 @@ export default function BookmarkButton({
         className={`${sizeClasses[size]} flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 ${
           isBookmarked ? 'text-yellow-500' : 'text-gray-400'
         }`}
-        aria-label={isBookmarked ? 'حذف از بوک‌مارک' : 'افزودن به بوک‌مارک'}
+        aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
       >
         <Star
           className={`w-full h-full ${
@@ -118,14 +122,14 @@ export default function BookmarkButton({
           ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-300'
           : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-primary'
       }`}
-      aria-label={isBookmarked ? 'حذف از بوک‌مارک' : 'افزودن به بوک‌مارک'}
+      aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
     >
       <Star
         className={`${sizeClasses[size === 'lg' ? 'md' : 'sm']} ${
           isBookmarked ? 'fill-current text-yellow-600' : ''
         }`}
       />
-      <span>{isBookmarked ? 'ذخیره شده' : 'ذخیره'}</span>
+      <span>{isBookmarked ? labelSaved : labelSave}</span>
       {bookmarkCount > 0 && (
         <span className="text-xs opacity-70">({bookmarkCount})</span>
       )}

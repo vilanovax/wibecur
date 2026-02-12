@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { lists, categories } from '@prisma/client';
-import FloatingActionButton from '@/components/mobile/lists/FloatingActionButton';
-import SuggestModal from '@/components/mobile/lists/SuggestModal';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import BottomSheet from '@/components/mobile/shared/BottomSheet';
 
 type ListWithCategory = lists & {
   categories: categories;
@@ -25,282 +24,303 @@ interface ListsPageClientProps {
   categories: categories[];
 }
 
-type SortOption = 'newest' | 'popular' | 'mostViewed' | 'alphabetical';
+type SortOption = 'trending' | 'newest' | 'popular';
+type VibeFilter = 'all' | 'trending' | 'saved' | 'sleep' | 'calm_movie' | 'cafe';
 
-export default function ListsPageClient({ lists, categories }: ListsPageClientProps) {
+const SORT_LABELS: Record<SortOption, string> = {
+  trending: 'ترند',
+  newest: 'جدید',
+  popular: 'محبوب',
+};
+
+const VIBE_CHIPS: { value: VibeFilter; label: string }[] = [
+  { value: 'trending', label: '🔥 ترند' },
+  { value: 'saved', label: '⭐ ذخیره‌شده' },
+  { value: 'sleep', label: '😴 قبل خواب' },
+  { value: 'calm_movie', label: '🎬 فیلم آرامش‌بخش' },
+  { value: 'cafe', label: '☕ کافه دنج' },
+];
+
+function matchVibe(list: ListWithCategory, vibe: VibeFilter, bookmarkedIds: Set<string>): boolean {
+  if (vibe === 'all') return true;
+  const title = (list.title || '').toLowerCase();
+  const desc = (list.description || '').toLowerCase();
+  const text = `${title} ${desc}`;
+  switch (vibe) {
+    case 'trending':
+      return list.badge === 'TRENDING';
+    case 'saved':
+      return bookmarkedIds.has(list.id);
+    case 'sleep':
+      return /خواب|آرامش/.test(text);
+    case 'calm_movie':
+      return /فیلم/.test(text) && /آرامش|دنج/.test(text);
+    case 'cafe':
+      return /کافه|قهوه/.test(text);
+    default:
+      return true;
+  }
+}
+
+export default function ListsPageClient({ lists: initialLists, categories }: ListsPageClientProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedVibe, setSelectedVibe] = useState<VibeFilter>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
+  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
 
-  // Load saved preferences from localStorage
+  const publicLists = initialLists.filter((l) => l.isActive && l.isPublic);
+
   useEffect(() => {
     const savedCategory = localStorage.getItem('listsPage_category');
     const savedSort = localStorage.getItem('listsPage_sort');
-    
     if (savedCategory) setSelectedCategory(savedCategory);
-    if (savedSort) setSortBy(savedSort as SortOption);
+    if (savedSort && (savedSort === 'trending' || savedSort === 'newest' || savedSort === 'popular'))
+      setSortBy(savedSort as SortOption);
   }, []);
 
-  // Save preferences to localStorage
   useEffect(() => {
     localStorage.setItem('listsPage_category', selectedCategory);
     localStorage.setItem('listsPage_sort', sortBy);
   }, [selectedCategory, sortBy]);
 
-  // Filter lists
-  const filteredLists = lists.filter((list) => {
-    const categoryMatch = selectedCategory === 'all' || list.categoryId === selectedCategory;
-    const searchMatch = searchQuery === '' || 
+  useEffect(() => {
+    fetch('/api/user/bookmarks?limit=500')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.data?.bookmarks)) {
+          const ids = new Set<string>(
+            data.data.bookmarks
+              .map((b: { list?: { id: string } }) => b.list?.id)
+              .filter((id): id is string => Boolean(id))
+          );
+          setBookmarkedIds(ids);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const filteredLists = publicLists.filter((list) => {
+    const categoryMatch =
+      selectedCategory === 'all' || list.categoryId === selectedCategory;
+    const searchMatch =
+      searchQuery === '' ||
       list.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      list.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return categoryMatch && searchMatch && list.isActive && list.isPublic;
+      (list.description?.toLowerCase() ?? '').includes(searchQuery.toLowerCase());
+    const vibeMatch = matchVibe(list, selectedVibe, bookmarkedIds);
+    return categoryMatch && searchMatch && vibeMatch;
   });
 
-  // Sort lists
   const sortedLists = [...filteredLists].sort((a, b) => {
     switch (sortBy) {
+      case 'trending':
+        return (b.saveCount ?? 0) - (a.saveCount ?? 0);
       case 'newest':
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       case 'popular':
-        return b.likeCount - a.likeCount;
-      case 'mostViewed':
-        return b.viewCount - a.viewCount;
-      case 'alphabetical':
-        return a.title.localeCompare(b.title, 'fa');
+        return (b.likeCount ?? b._count?.list_likes ?? 0) - (a.likeCount ?? a._count?.list_likes ?? 0);
       default:
         return 0;
     }
   });
 
-  const sortOptions = [
-    { value: 'newest', label: '🆕 جدیدترین', icon: '🆕' },
-    { value: 'popular', label: '❤️ محبوب‌ترین', icon: '❤️' },
-    { value: 'mostViewed', label: '👁 پربازدیدترین', icon: '👁' },
-    { value: 'alphabetical', label: '🔤 الفبایی', icon: '🔤' },
-  ];
+  const totalCount = publicLists.length;
+  const hasFilters = searchQuery !== '' || selectedCategory !== 'all' || selectedVibe !== 'all';
+  const activeCategories = categories.filter((c) => c.isActive).sort((a, b) => a.order - b.order);
 
   return (
-    <div className="space-y-6">
-      {/* Search Bar */}
-      <div className="sticky top-0 z-10 bg-gray-50 pt-4 pb-2 px-4 -mx-4">
+    <div className="space-y-5">
+      {/* Search */}
+      <div className="px-4 space-y-1">
         <div className="relative">
           <input
             type="text"
             placeholder="جستجو در لیست‌ها..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-3 pr-12 bg-white rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 pr-11 bg-white rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
           />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
-            🔍
-          </span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">🔍</span>
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               ✕
             </button>
           )}
         </div>
+        <p className="text-gray-400 text-xs">می‌تونی بین همه لیست‌ها بگردی</p>
       </div>
 
-      {/* Category Chips */}
-      <div className="px-4 -mx-4">
+      {/* Category chips */}
+      <div className="px-4">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button
+            type="button"
             onClick={() => setSelectedCategory('all')}
             className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
               selectedCategory === 'all'
-                ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                : 'bg-white text-gray-700 border border-gray-200 hover:border-primary'
+                ? 'bg-primary text-white'
+                : 'bg-white text-gray-700 border border-gray-200'
             }`}
           >
-            همه ({lists.filter(l => l.isActive && l.isPublic).length})
+            همه ({totalCount})
           </button>
-          {categories
-            .filter(cat => cat.isActive)
-            .sort((a, b) => a.order - b.order)
-            .map((category) => {
-              const count = lists.filter(
-                (list) => list.categoryId === category.id && list.isActive && list.isPublic
-              ).length;
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedCategory === category.id
-                      ? 'text-white shadow-lg'
-                      : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300'
-                  }`}
-                  style={
-                    selectedCategory === category.id
-                      ? { backgroundColor: category.color }
-                      : {}
-                  }
-                >
-                  <span>{category.icon}</span>
-                  <span>{category.name}</span>
-                  <span className="text-xs opacity-75">({count})</span>
-                </button>
-              );
-            })}
+          {activeCategories.map((cat) => {
+            const count = publicLists.filter((l) => l.categoryId === cat.id).length;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === cat.id ? 'bg-primary text-white' : 'bg-white text-gray-700 border border-gray-200'
+                }`}
+              >
+                {cat.name} ({count})
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Sort Options */}
-      <div className="flex items-center justify-between px-4">
-        <span className="text-sm text-gray-600 font-medium">
-          {sortedLists.length} لیست
-        </span>
-        <div className="flex gap-2">
-          {sortOptions.map((option) => (
+      {/* Vibe chips */}
+      <div className="px-4">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {VIBE_CHIPS.map(({ value, label }) => (
             <button
-              key={option.value}
-              onClick={() => setSortBy(option.value as SortOption)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                sortBy === option.value
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-primary'
+              key={value}
+              type="button"
+              onClick={() => setSelectedVibe(selectedVibe === value ? 'all' : value)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                selectedVibe === value ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600'
               }`}
             >
-              <span>{option.icon}</span>
-              <span className="hidden sm:inline">{option.label.split(' ')[1]}</span>
+              {label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Lists Grid */}
-      {sortedLists.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-6xl mb-4">📋</div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
-            لیستی یافت نشد
-          </h3>
-          <p className="text-gray-600">
-            {searchQuery
-              ? 'جستجوی دیگری امتحان کنید'
-              : 'هنوز لیستی در این دسته‌بندی وجود ندارد'}
+      {/* Sort + CTA */}
+      <div className="flex items-center justify-between px-4">
+        <button
+          type="button"
+          onClick={() => setSortSheetOpen(true)}
+          className="text-sm text-gray-600 font-medium"
+        >
+          مرتب‌سازی: {SORT_LABELS[sortBy]}
+        </button>
+        <Link
+          href="/user-lists"
+          className="text-sm text-primary font-medium hover:underline"
+        >
+          ساخت لیست جدید
+        </Link>
+      </div>
+
+      {/* List cards */}
+      {publicLists.length === 0 ? (
+        <div className="text-center py-16 px-4">
+          <div className="text-5xl mb-4">📋</div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">هنوز لیستی اینجا نیست</h3>
+          <p className="text-gray-600 text-sm mb-6 max-w-sm mx-auto">
+            می‌تونی از صفحه خانه چند وایب ذخیره کنی یا اولین لیستت رو خودت بسازی.
           </p>
+          <Link
+            href="/user-lists"
+            className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors"
+          >
+            ساخت لیست جدید
+          </Link>
+        </div>
+      ) : sortedLists.length === 0 ? (
+        <div className="text-center py-16 px-4">
+          <div className="text-5xl mb-4">🔍</div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">چیزی با این فیلتر پیدا نشد</h3>
+          <p className="text-gray-600 text-sm mb-6 max-w-sm mx-auto">
+            می‌تونی فیلتر رو عوض کنی، یا همین موضوع رو خودت به یک لیست تبدیل کنی 😉
+          </p>
+          <Link
+            href="/user-lists"
+            className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors"
+          >
+            ساخت لیست با همین موضوع
+          </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
-          {sortedLists.map((list) => (
-            <Link
-              key={list.id}
-              href={`/lists/${list.slug}`}
-              className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            >
-              {/* Cover Image */}
-              {list.coverImage ? (
-                <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100 overflow-hidden">
+        <div className="px-4 space-y-4 pb-8">
+          {sortedLists.map((list) => {
+            const itemCount = list.itemCount ?? list._count?.items ?? 0;
+            const saveCount = list.saveCount ?? 0;
+            return (
+              <Link
+                key={list.id}
+                href={`/lists/${list.slug}`}
+                className="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
+              >
+                <div className="relative h-44 bg-gray-200 overflow-hidden rounded-t-2xl">
                   <ImageWithFallback
-                    src={list.coverImage}
+                    src={list.coverImage ?? ''}
                     alt={list.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    fallbackIcon={list.categories.icon}
-                    fallbackClassName="h-full w-full"
+                    className="w-full h-full object-cover"
+                    fallbackIcon={list.categories?.icon ?? '📋'}
+                    fallbackClassName="w-full h-full flex items-center justify-center text-5xl"
                   />
-                  {/* Bookmark Button */}
-                  <div className="absolute top-3 right-3 z-20">
+                  <div className="absolute top-3 right-3 z-10" onClick={(e) => e.preventDefault()}>
                     <BookmarkButton
                       listId={list.id}
-                      initialBookmarkCount={list.saveCount ?? 0}
-                      variant="icon"
-                      size="md"
-                    />
-                  </div>
-                  {list.isFeatured && (
-                    <div className="absolute top-3 right-12 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
-                      ⭐ ویژه
-                    </div>
-                  )}
-                  {list.badge && (
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold z-10">
-                      {list.badge === 'TRENDING' && '🔥 ترند'}
-                      {list.badge === 'NEW' && '🆕 جدید'}
-                      {list.badge === 'FEATURED' && '⭐ برگزیده'}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="relative h-48 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex items-center justify-center">
-                  <span className="text-6xl">{list.categories.icon}</span>
-                  {/* Bookmark Button */}
-                  <div className="absolute top-3 right-3 z-20">
-                    <BookmarkButton
-                      listId={list.id}
-                      initialBookmarkCount={list.saveCount ?? 0}
+                      initialBookmarkCount={saveCount}
                       variant="icon"
                       size="md"
                     />
                   </div>
                 </div>
-              )}
-
-              {/* Content */}
-              <div className="p-4 space-y-3">
-                {/* Category Badge */}
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{list.categories.icon}</span>
-                  <span className="text-xs text-gray-500 font-medium">
-                    {list.categories.name}
-                  </span>
-                </div>
-
-                {/* Title */}
-                <h3 className="font-bold text-lg text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
-                  {list.title}
-                </h3>
-
-                {/* Description */}
-                {list.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {list.description}
+                <div className="p-4">
+                  <p className="text-xs text-gray-500 font-medium mb-1">
+                    {list.categories?.icon} {list.categories?.name}
                   </p>
-                )}
-
-                {/* Stats */}
-                <div className="flex items-center gap-4 text-xs text-gray-500 pt-2 border-t border-gray-100">
-                  <span className="flex items-center gap-1">
-                    <span>📋</span>
-                    <span>{list._count.items}</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span>❤️</span>
-                    <span>{list._count.list_likes}</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span>⭐</span>
-                    <span>{list.saveCount ?? 0}</span>
-                  </span>
-                  <span className="flex items-center gap-1 mr-auto">
-                    <span>👁</span>
-                    <span>{list.viewCount}</span>
-                  </span>
+                  <h3 className="font-bold text-gray-900 line-clamp-2">{list.title}</h3>
+                  {list.description && (
+                    <p className="text-sm text-gray-600 line-clamp-2 mt-1">{list.description}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    ⭐ {saveCount} &nbsp; • &nbsp; {itemCount} آیتم
+                  </p>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
 
-      {/* Bottom Spacing for BottomNav */}
-      <div className="h-8"></div>
-
-      {/* Floating Action Button */}
-      <FloatingActionButton onClick={() => setIsSuggestModalOpen(true)} />
-
-      {/* Suggest Modal */}
-      <SuggestModal
-        isOpen={isSuggestModalOpen}
-        onClose={() => setIsSuggestModalOpen(false)}
-      />
+      <BottomSheet
+        isOpen={sortSheetOpen}
+        onClose={() => setSortSheetOpen(false)}
+        title="مرتب‌سازی"
+        maxHeight="40vh"
+      >
+        <div className="flex flex-col py-2">
+          {(['trending', 'newest', 'popular'] as const).map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => {
+                setSortBy(opt);
+                setSortSheetOpen(false);
+              }}
+              className={`text-right py-4 px-4 rounded-xl font-medium transition-colors ${
+                sortBy === opt ? 'bg-primary/10 text-primary' : 'hover:bg-gray-50'
+              }`}
+            >
+              {SORT_LABELS[opt]}
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
     </div>
   );
 }
-

@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 // next-pwa با Turbopack (پیش‌فرض Next.js 16) سازگار نیست؛ در صورت نیاز به PWA از راهنمای Next.js استفاده کنید.
 let withPWA = (config) => config;
 
@@ -28,8 +30,10 @@ const nextConfig = {
       },
     ],
   },
-  // Turbopack configuration for Next.js 16
-  turbopack: {},
+  // Turbopack: ریشه پروژه = همین پوشه (برای بارگذاری صحیح .env و جلوگیری از استفاده env والد)
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   // Increase header size limit to handle large cookies
   experimental: {
     serverActions: {

@@ -190,6 +190,7 @@ model lists {
   coverImage       String?
   categoryId       String?
   userId           String
+  tags             String[]          @default([])  // برای Similar Lists هوشمند
   badge            ListBadge?
   isPublic         Boolean           @default(true)
   isFeatured       Boolean           @default(false)
