@@ -18,6 +18,7 @@ interface CommentItemProps {
       name: string;
       email: string;
       image: string | null;
+      curatorLevel?: string;
     };
     isLiked: boolean;
     canDelete: boolean;
@@ -46,8 +47,8 @@ export default function CommentItem({
 
   return (
     <div className="flex gap-3 p-4 bg-white rounded-xl border border-gray-100">
-      {/* Avatar */}
-      <div className="flex-shrink-0">
+      {/* Avatar (+ Elite badge if level 5+) */}
+      <div className="flex-shrink-0 relative">
         {comment.user.image ? (
           <div className="relative w-10 h-10 rounded-full overflow-hidden">
             <Image
@@ -64,6 +65,9 @@ export default function CommentItem({
               {comment.user.name.charAt(0).toUpperCase()}
             </span>
           </div>
+        )}
+        {(comment.user.curatorLevel === 'ELITE_CURATOR' || comment.user.curatorLevel === 'VIBE_LEGEND') && (
+          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 flex items-center justify-center text-[10px]" title="Elite Curator">👑</span>
         )}
       </div>
 

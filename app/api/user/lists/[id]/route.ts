@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { slugify } from '@/lib/utils/slug';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import { checkAchievements } from '@/lib/achievements';
 
 // PUT /api/user/lists/[id] - ویرایش لیست شخصی
 export async function PUT(
@@ -224,6 +225,10 @@ export async function PUT(
         },
       })
     );
+
+    if (updatedList.userId) {
+      checkAchievements(prisma, updatedList.userId).catch((e) => console.warn('Achievement check failed:', e));
+    }
 
     return NextResponse.json({
       success: true,

@@ -266,18 +266,30 @@ model user_violations {
 }
 
 model users {
-  id                String              @id
-  name              String?
-  email             String              @unique
-  emailVerified     DateTime?
-  image             String?
-  password          String?
-  role              UserRole            @default(USER)
-  isActive          Boolean             @default(true)
-  reputationScore   Int                 @default(0)  // +1 comment, +2 suggestion, -3 removed
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime
-  bookmarks         bookmarks[]
+  id                   String              @id
+  name                 String?
+  email                String              @unique
+  emailVerified        DateTime?
+  image                String?
+  password             String?
+  role                 UserRole            @default(USER)
+  isActive             Boolean             @default(true)
+  reputationScore      Int                 @default(0)  // +1 comment, +2 suggestion, -3 removed
+  curatorScore         Int                 @default(0)
+  curatorLevel         CuratorLevel        @default(EXPLORER)
+  viralListsCount      Int                 @default(0)
+  totalLikesReceived   Int                 @default(0)
+  approvedItemsCount   Int                 @default(0)
+  bio                  String?
+  username             String?             @unique
+  avatarType           AvatarType          @default(DEFAULT)
+  avatarId             String?
+  avatarStatus         AvatarStatus?       // برای آپلود شخصی
+  showBadge            Boolean             @default(true)
+  allowCommentNotifications Boolean        @default(true)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime
+  bookmarks            bookmarks[]
   comment_likes     comment_likes[]
   comment_penalties comment_penalties[]
   comment_reports   comment_reports[]
@@ -295,6 +307,112 @@ model users {
   list_comment_reports list_comment_reports[]
   list_comment_votes list_comment_votes[]
   list_comments     list_comments[]
+  followRelationsAsFollower   follows[] @relation("FollowsAsFollower")
+  followRelationsAsFollowing  follows[] @relation("FollowsAsFollowing")
+  user_achievements           user_achievements[]
+  creator_ranking             creator_rankings?
+  user_category_affinity     user_category_affinity[]
+  discovery_spotlight_cache  discovery_spotlight_cache?
+  creator_spotlights         creator_spotlights[]
+}
+
+model creator_spotlights {
+  id           String    @id @default(cuid())
+  userId       String
+  type         String    // weekly | rising | category | editor
+  categorySlug String?
+  startDate    DateTime
+  endDate      DateTime
+  createdBy    String?   // admin userId if editor pick
+  users        users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([startDate, endDate])
+  @@index([userId])
+}
+
+model discovery_spotlight_cache {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  creatorId  String
+  explanation String?
+  updatedAt  DateTime @updatedAt
+  users      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([updatedAt])
+}
+
+model user_category_affinity {
+  id           String   @id @default(cuid())
+  userId       String
+  categorySlug String
+  weight       Float    @default(0)
+  updatedAt   DateTime @updatedAt
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categorySlug])
+  @@index([userId])
+}
+
+model creator_rankings {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  curatorScore       Int      @default(0)
+  influenceScore     Int      @default(0)
+  momentumScore      Int      @default(0)
+  rankingScore       Float    @default(0)
+  globalRank         Int      @default(0)
+  previousGlobalRank Int?     // for rank change indicator
+  monthlyRank        Int?     // current month rank (reset monthly)
+  monthYear          String?  // e.g. "2025-02"
+  categoryRank       Json?    // { "film": 1, "book": 3 } slug -> rank
+  lastUpdated        DateTime @updatedAt
+  lastActivityAt     DateTime? // for decay: last list/bookmark/comment activity
+  users              users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([rankingScore])
+  @@index([globalRank])
+  @@index([momentumScore])
+  @@index([monthlyRank])
+}
+
+model achievements {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  title       String
+  description String
+  category    String   // creation | impact | community | consistency
+  tier        String   @default("bronze") // bronze | silver | gold | elite
+  icon        String   // emoji or icon key
+  isSecret    Boolean  @default(false)
+  user_achievements user_achievements[]
+
+  @@index([category])
+}
+
+model user_achievements {
+  id            String       @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime     @default(now())
+  users         users        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievements  achievements @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+}
+
+model follows {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    users    @relation("FollowsAsFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   users    @relation("FollowsAsFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@index([followerId])
 }
 
 enum ListBadge {
@@ -307,6 +425,27 @@ enum UserRole {
   USER
   EDITOR
   ADMIN
+}
+
+enum CuratorLevel {
+  EXPLORER           // 0–49
+  NEW_CURATOR        // 50–149
+  ACTIVE_CURATOR     // 150–299
+  TRUSTED_CURATOR    // 300–499
+  INFLUENTIAL_CURATOR // 500–799
+  ELITE_CURATOR      // 800–1199
+  VIBE_LEGEND        // 1200+
+}
+
+enum AvatarType {
+  DEFAULT   // آواتار وایب
+  UPLOADED  // آپلود شخصی
+}
+
+enum AvatarStatus {
+  APPROVED
+  PENDING
+  REJECTED
 }
 
 model comment_settings {

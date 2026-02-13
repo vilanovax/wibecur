@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
+import { checkAchievements } from '@/lib/achievements';
 
 // POST /api/lists/[id]/bookmark - بوک‌مارک یا آنبوک‌مارک کردن لیست
 export async function POST(
@@ -76,6 +77,10 @@ export async function POST(
         }
       })
     );
+
+    if (isBookmarked && list.userId) {
+      checkAchievements(prisma, list.userId).catch((e) => console.warn('Achievement check failed:', e));
+    }
 
     return NextResponse.json({
       success: true,

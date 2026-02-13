@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { categories, lists } from '@prisma/client';
 
 type ListWithCategory = lists & {
@@ -90,19 +91,15 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
             href={`/lists/${bookmark.list.slug}`}
             className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
           >
-            {bookmark.list.coverImage ? (
-              <div className="relative h-40 bg-gradient-to-br from-yellow-100 to-orange-100">
-                <img
-                  src={bookmark.list.coverImage}
-                  alt={bookmark.list.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="relative h-40 bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center">
-                <span className="text-4xl">{bookmark.list.categories.icon}</span>
-              </div>
-            )}
+            <div className="relative h-40 bg-gradient-to-br from-yellow-100 to-orange-100">
+              <ImageWithFallback
+                src={bookmark.list.coverImage ?? ''}
+                alt={bookmark.list.title}
+                className="w-full h-40 object-cover"
+                fallbackIcon={bookmark.list.categories.icon}
+                fallbackClassName="w-full h-full"
+              />
+            </div>
             <div className="p-3">
               <div className="flex items-center gap-1 mb-2">
                 <span className="text-sm">{bookmark.list.categories.icon}</span>

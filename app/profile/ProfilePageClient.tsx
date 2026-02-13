@@ -1,28 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import ProfileHeader from '@/components/mobile/profile/ProfileHeader';
-import ProfileTabs from '@/components/mobile/profile/ProfileTabs';
-
-interface UserProfile {
-  id: string;
-  name: string | null;
-  email: string;
-  image: string | null;
-  stats: {
-    listsCreated: number;
-    bookmarks: number;
-    likes: number;
-    itemLikes: number;
-  };
-}
+import Link from 'next/link';
+import { Trophy } from 'lucide-react';
+import ProfileHero2, { type ProfileUser } from '@/components/mobile/profile/ProfileHero2';
+import ProfileTabs2 from '@/components/mobile/profile/ProfileTabs2';
+import ProfileAchievementsSection from '@/components/mobile/profile/ProfileAchievementsSection';
 
 interface ProfilePageClientProps {
   userId: string;
 }
 
 export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<ProfileUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -34,7 +24,7 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
       const data = await response.json();
 
       if (data.success) {
-        setUser(data.data.user);
+        setUser(data.data.user as ProfileUser);
       } else {
         setError(data.error || 'خطا در دریافت اطلاعات پروفایل');
       }
@@ -96,9 +86,17 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
   }
 
   return (
-    <div className="space-y-5">
-      <ProfileHeader user={user} onUpdate={fetchProfile} />
-      <ProfileTabs userId={userId} />
+    <div className="space-y-0">
+      <ProfileHero2 user={user} onUpdate={fetchProfile} />
+      <ProfileAchievementsSection />
+      <Link
+        href="/leaderboard"
+        className="mx-4 mt-4 flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-amber-200 bg-amber-50/80 text-amber-800 font-medium text-sm"
+      >
+        <Trophy className="w-5 h-5 text-amber-500" />
+        رتبه‌بندی کریتورها
+      </Link>
+      <ProfileTabs2 userId={userId} />
     </div>
   );
 }

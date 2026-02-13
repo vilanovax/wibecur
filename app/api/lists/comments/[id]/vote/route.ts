@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
 import { computeWeightedScore } from '@/lib/comment-utils';
+import { checkAchievements } from '@/lib/achievements';
 
 // POST /api/lists/comments/[id]/vote - رای مفید بود / مفید نبود
 export async function POST(
@@ -36,6 +37,7 @@ export async function POST(
         where: { id: commentId },
         select: {
           id: true,
+          userId: true,
           helpfulUp: true,
           helpfulDown: true,
           weightedScore: true,
@@ -107,6 +109,10 @@ export async function POST(
         });
       });
     });
+
+    if (value === 1 && comment.userId) {
+      checkAchievements(prisma, comment.userId).catch((e) => console.warn('Achievement check failed:', e));
+    }
 
     return NextResponse.json({
       success: true,

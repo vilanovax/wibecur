@@ -6,6 +6,7 @@ import { nanoid } from 'nanoid';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { createNotification, notifyListBookmarkers } from '@/lib/utils/notifications';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import { checkAchievements } from '@/lib/achievements';
 
 // PUT /api/admin/suggestions/items/[id] - تایید یا رد پیشنهاد آیتم
 export async function PUT(
@@ -182,6 +183,8 @@ export async function PUT(
         newItem.title,
         suggestedItem.lists.title || 'لیست'
       ).catch(console.error);
+
+      checkAchievements(prisma, suggestedItem.userId).catch((e) => console.warn('Achievement check failed:', e));
 
       return NextResponse.json({
         success: true,

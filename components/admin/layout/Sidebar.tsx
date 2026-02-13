@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   Lightbulb,
   Activity,
+  TrendingUp,
 } from 'lucide-react';
 
 const menuItems = [
@@ -37,6 +38,13 @@ const menuItems = [
     icon: Activity,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
+  },
+  {
+    href: '/admin/kpi',
+    label: 'داشبورد رشد (KPI)',
+    icon: TrendingUp,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50',
   },
   {
     href: '/admin/categories',

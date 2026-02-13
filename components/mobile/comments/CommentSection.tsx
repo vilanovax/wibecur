@@ -205,10 +205,10 @@ export default function CommentSection({ itemId, onCommentAdded }: CommentSectio
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-8">
-            <span className="text-4xl block mb-2">👀</span>
+            <span className="text-4xl block mb-2">💬</span>
             <p className="text-gray-600 font-medium">هنوز کسی نظر نداده</p>
             <p className="text-sm text-gray-400 mt-1">
-              اولین نفری باش که تجربه‌تو می‌نویسه ✨
+              اولین نظر را تو بنویس ✨
             </p>
             {commentsEnabled && (
               <button

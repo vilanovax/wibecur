@@ -12,6 +12,8 @@ import ApproveRejectModal from './ApproveRejectModal';
 import Pagination from '@/components/admin/shared/Pagination';
 
 interface ItemSuggestion extends AdminSuggestedItemSuggestion {
+  userId: string;
+  adminNotes: string | null;
   metadata: any;
   updatedAt: string;
 }
@@ -196,7 +198,7 @@ export default function ItemSuggestionsTable({
     }
   };
 
-  const handleApproveDirect = async (suggestion: ItemSuggestion) => {
+  const handleApproveDirect = async (suggestion: AdminSuggestedItemSuggestion) => {
     setProcessing(suggestion.id);
     try {
       const res = await fetch(`/api/admin/suggestions/items/${suggestion.id}`, {
@@ -221,23 +223,26 @@ export default function ItemSuggestionsTable({
     }
   };
 
-  const handleReject = (suggestion: ItemSuggestion) => {
-    setSelectedSuggestion(suggestion);
+  const handleReject = (suggestion: AdminSuggestedItemSuggestion) => {
+    const full = suggestions.find((s) => s.id === suggestion.id);
+    if (full) setSelectedSuggestion(full);
     setModalAction('reject');
     setIsApproveRejectModalOpen(true);
   };
 
-  const handleEdit = (suggestion: ItemSuggestion) => {
-    setSelectedSuggestion(suggestion);
+  const handleEdit = (suggestion: AdminSuggestedItemSuggestion) => {
+    const full = suggestions.find((s) => s.id === suggestion.id);
+    if (full) setSelectedSuggestion(full);
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (suggestion: ItemSuggestion) => {
-    setSelectedSuggestion(suggestion);
+  const handleDelete = (suggestion: AdminSuggestedItemSuggestion) => {
+    const full = suggestions.find((s) => s.id === suggestion.id);
+    if (full) setSelectedSuggestion(full);
     setIsDeleteModalOpen(true);
   };
 
-  const handleViewList = (suggestion: ItemSuggestion) => {
+  const handleViewList = (suggestion: AdminSuggestedItemSuggestion) => {
     if (suggestion.lists?.slug) {
       router.push(`/lists/${suggestion.lists.slug}`);
     }

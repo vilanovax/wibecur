@@ -95,7 +95,14 @@ export default async function ItemDetailPage({
     }
   }
 
-  // Serialize the item data for client component
+  // Serialize the item data for client component (metadata: Prisma JsonValue → Record | null)
+  const metadata =
+    item.metadata != null &&
+    typeof item.metadata === 'object' &&
+    !Array.isArray(item.metadata)
+      ? (item.metadata as Record<string, unknown>)
+      : null;
+
   const serializedItem = {
     id: item.id,
     title: item.title,
@@ -104,7 +111,7 @@ export default async function ItemDetailPage({
     externalUrl: item.externalUrl,
     rating: item.rating,
     voteCount: item.voteCount,
-    metadata: item.metadata,
+    metadata,
     commentCount: item._count.comments,
     listSaveCount: item.lists.saveCount ?? 0,
     lists: {

@@ -14,6 +14,8 @@ interface ListCardProps {
   saves: number;
   itemCount: number;
   variant?: 'default' | 'compact';
+  /** برای لینک به صفحه لیست (مسیر با slug است) */
+  slug?: string;
 }
 
 const badgeLabels = {
@@ -32,11 +34,13 @@ export default function ListCard({
   saves,
   itemCount,
   variant = 'default',
+  slug,
 }: ListCardProps) {
+  const listHref = `/lists/${slug ?? id}`;
   const isCompact = variant === 'compact';
   if (isCompact) {
     return (
-      <Link href={`/lists/${id}`} className="block">
+      <Link href={listHref} className="block">
         <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-row-reverse gap-0">
           <div className="relative w-24 h-24 flex-shrink-0 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
             <ImageWithFallback src={coverImage} alt={title} className="w-full h-full object-cover" fallbackIcon="📋" fallbackClassName="w-full h-full" />
@@ -52,7 +56,7 @@ export default function ListCard({
     );
   }
   return (
-    <Link href={`/lists/${id}`} className="block">
+    <Link href={listHref} className="block">
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
         <div className="relative h-40 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
           <ImageWithFallback src={coverImage} alt={title} className="w-full h-full object-cover" fallbackIcon="📋" fallbackClassName="w-full h-full" />

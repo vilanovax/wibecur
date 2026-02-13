@@ -10,6 +10,7 @@ import SuggestItemSearch from '@/components/mobile/lists/SuggestItemSearch';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import CuratorBadge from '@/components/shared/CuratorBadge';
 
 type Item = {
   id: string;
@@ -29,6 +30,7 @@ type Category = {
 
 type User = {
   name: string | null;
+  curatorLevel?: string | null;
 } | null;
 
 type ListDetail = {
@@ -318,6 +320,11 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           <span>⭐ {saveCount} &nbsp; • &nbsp; {itemCount} آیتم</span>
           <span className="text-gray-400 mr-2">•</span>
           <span className="text-gray-400">ساخته‌شده توسط {creatorName}</span>
+          {list.users?.curatorLevel && (
+            <span className="mr-2 inline-flex align-middle">
+              <CuratorBadge level={list.users.curatorLevel} size="small" glow={false} />
+            </span>
+          )}
           {list.categories && (
             <>
               <span className="text-gray-400 mx-1">•</span>

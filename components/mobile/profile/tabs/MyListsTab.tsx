@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, Eye, EyeOff } from 'lucide-react';
+import { Settings, Eye, EyeOff, Package, Heart, Flame, Eye as EyeIcon } from 'lucide-react';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { categories, lists } from '@prisma/client';
 import PersonalListSettingsModal from '../PersonalListSettingsModal';
 
@@ -17,9 +18,13 @@ type ListWithCategory = lists & {
 
 interface MyListsTabProps {
   userId: string;
+  /** وقتی از تب جدا استفاده می‌شود: فقط عمومی، فقط خصوصی، یا هر دو */
+  variant?: 'all' | 'public' | 'private';
 }
 
-export default function MyListsTab({ userId }: MyListsTabProps) {
+const VIRAL_LIKE_THRESHOLD = 50;
+
+export default function MyListsTab({ userId, variant = 'all' }: MyListsTabProps) {
   const [lists, setLists] = useState<ListWithCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -70,105 +75,102 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
     fetchLists(); // Refresh lists after deletion
   };
 
-  // Separate public and private lists
-  const publicLists = lists.filter(list => list.isPublic);
-  const privateLists = lists.filter(list => !list.isPublic);
-
-  // For display, show max 4 of each type initially
+  const publicLists = lists.filter((list) => list.isPublic);
+  const privateLists = lists.filter((list) => !list.isPublic);
+  const displayedLists =
+    variant === 'public'
+      ? publicLists
+      : variant === 'private'
+        ? privateLists
+        : [...publicLists, ...privateLists];
   const displayedPublicLists = showAll ? publicLists : publicLists.slice(0, 4);
   const displayedPrivateLists = showAll ? privateLists : privateLists.slice(0, 4);
 
-  const renderListCard = (list: ListWithCategory) => (
-    <div key={list.id} className="group">
-      <Link href={`/user-lists/${list.id}`} className="block">
-        <div className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden">
-          {/* Image header */}
-          <div className="relative h-40 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-            {list.coverImage ? (
-              <img
-                src={list.coverImage}
+  const renderListCard = (list: ListWithCategory) => {
+    const likes = list.likeCount ?? list._count?.list_likes ?? 0;
+    const items = list.itemCount ?? list._count?.items ?? 0;
+    const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
+    const views = list.viewCount ?? 0;
+    const isViral = likes >= VIRAL_LIKE_THRESHOLD;
+    return (
+      <div key={list.id} className="group">
+        <Link href={`/user-lists/${list.id}`} className="block">
+          <div className="bg-white rounded-[20px] shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 overflow-hidden border border-gray-100">
+            <div className="relative h-44 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+              <ImageWithFallback
+                src={list.coverImage ?? ''}
                 alt={list.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fallbackIcon={list.categories?.icon}
+                fallbackClassName="w-full h-full"
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                {list.categories && (
-                  <span className="text-6xl opacity-30">{list.categories.icon}</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              <div className="absolute top-3 right-3 flex gap-2">
+                {list.isPublic ? (
+                  <span className="flex items-center gap-1 px-2.5 py-1 bg-green-500/90 backdrop-blur-sm text-white text-xs rounded-full font-medium">
+                    <Eye className="w-3 h-3" />
+                    عمومی
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 px-2.5 py-1 bg-gray-700/90 backdrop-blur-sm text-white text-xs rounded-full font-medium">
+                    <EyeOff className="w-3 h-3" />
+                    خصوصی
+                  </span>
                 )}
               </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-            {/* Badges */}
-            <div className="absolute top-3 right-3 flex gap-2">
-              {list.isPublic ? (
-                <span className="flex items-center gap-1 px-3 py-1 bg-green-500/90 backdrop-blur-sm text-white text-xs rounded-full font-medium">
-                  <Eye className="w-3 h-3" />
-                  عمومی
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 px-3 py-1 bg-gray-700/90 backdrop-blur-sm text-white text-xs rounded-full font-medium">
-                  <EyeOff className="w-3 h-3" />
-                  خصوصی
-                </span>
+              <button
+                onClick={(e) => handleSettingsClick(e, list)}
+                className="absolute top-3 left-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                aria-label="تنظیمات لیست"
+              >
+                <Settings className="w-4 h-4 text-gray-700" />
+              </button>
+              <div className="absolute bottom-3 right-3 left-3">
+                <h3 className="text-white font-bold text-lg line-clamp-2 drop-shadow-lg">
+                  {list.title}
+                </h3>
+              </div>
+            </div>
+            <div className="p-4">
+              {list.categories && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{list.categories.icon}</span>
+                  <span className="text-sm text-gray-600">{list.categories.name}</span>
+                </div>
               )}
-            </div>
-
-            {/* Settings Button */}
-            <button
-              onClick={(e) => handleSettingsClick(e, list)}
-              className="absolute top-3 left-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-              aria-label="تنظیمات لیست"
-            >
-              <Settings className="w-4 h-4 text-gray-700" />
-            </button>
-
-            {/* Title overlay */}
-            <div className="absolute bottom-3 right-3 left-3">
-              <h3 className="text-white font-bold text-lg line-clamp-2 drop-shadow-lg">
-                {list.title}
-              </h3>
+              {list.description && (
+                <p className="text-sm text-gray-600 line-clamp-2 mb-3 leading-relaxed">
+                  {list.description}
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5" />
+                  {items} آیتم
+                </span>
+                <span className="flex items-center gap-1 text-red-500">
+                  <Heart className="w-3.5 h-3.5" />
+                  {likes}
+                </span>
+                {isViral && (
+                  <span className="flex items-center gap-1 text-orange-500">
+                    <Flame className="w-3.5 h-3.5" />
+                    وایرال
+                  </span>
+                )}
+                {views > 0 && (
+                  <span className="flex items-center gap-1">
+                    <EyeIcon className="w-3.5 h-3.5" />
+                    {views >= 1000 ? (views / 1000).toFixed(1) + 'k' : views}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Content */}
-          <div className="p-4">
-            {/* Category */}
-            {list.categories && (
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl">{list.categories.icon}</span>
-                <span className="text-sm text-gray-600">{list.categories.name}</span>
-              </div>
-            )}
-
-            {/* Description */}
-            {list.description && (
-              <p className="text-sm text-gray-600 line-clamp-2 mb-4 leading-relaxed">
-                {list.description}
-              </p>
-            )}
-
-            {/* Stats */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-              <div className="flex gap-4">
-                <span className="flex items-center gap-1.5 text-sm">
-                  <span className="text-red-500">❤️</span>
-                  <span className="text-red-500 font-medium">{list._count.list_likes}</span>
-                </span>
-                <span className="flex items-center gap-1.5 text-sm">
-                  <span className="text-yellow-500">⭐</span>
-                  <span className="text-yellow-500 font-medium">{list._count.bookmarks}</span>
-                </span>
-              </div>
-              <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full font-medium">
-                {list._count.items} آیتم
-              </span>
-            </div>
-          </div>
-        </div>
-      </Link>
-    </div>
-  );
+        </Link>
+      </div>
+    );
+  };
 
   if (isLoading && lists.length === 0) {
     return (
@@ -183,77 +185,83 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
     );
   }
 
-  if (lists.length === 0) {
+  const emptyMessage =
+    variant === 'private'
+      ? 'لیست خصوصی ندارید'
+      : variant === 'public'
+        ? 'لیست عمومی ندارید'
+        : 'هنوز لیستی ایجاد نکرده‌اید';
+
+  if (displayedLists.length === 0 && !isLoading) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl">
-        <p className="text-gray-500">هنوز لیستی ایجاد نکرده‌اید</p>
-        <Link
-          href="/lists/new"
-          className="mt-4 inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-        >
-          ایجاد لیست جدید
-        </Link>
+      <div className="text-center py-12 px-4">
+        <p className="text-gray-500">{emptyMessage}</p>
+        {variant !== 'private' && (
+          <Link
+            href="/lists/new"
+            className="mt-4 inline-block px-6 py-2.5 bg-[#7C3AED] text-white rounded-[20px] hover:bg-[#6D28D9] transition-colors font-medium text-sm"
+          >
+            ایجاد لیست جدید
+          </Link>
+        )}
       </div>
     );
   }
 
+  const listToShow =
+    variant === 'public'
+      ? displayedPublicLists
+      : variant === 'private'
+        ? displayedPrivateLists
+        : [...displayedPublicLists, ...displayedPrivateLists];
+  const hasMorePublic = !showAll && publicLists.length > 4;
+  const hasMorePrivate = !showAll && privateLists.length > 4;
+
   return (
     <>
-      <div className="space-y-8">
-        {/* Public Lists Section */}
-        {publicLists.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-green-600" />
-                <h2 className="font-semibold text-sm text-gray-700">
-                  لیست‌های عمومی
-                </h2>
-                <span className="text-xs text-gray-400">({publicLists.length})</span>
+      <div className="space-y-6 px-4">
+        {variant === 'all' && (publicLists.length > 0 || privateLists.length > 0) && (
+          <>
+            {publicLists.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-green-600" />
+                  <h2 className="font-semibold text-sm text-gray-700">لیست‌های عمومی</h2>
+                  <span className="text-xs text-gray-400">({publicLists.length})</span>
+                </div>
+                <div className="space-y-4">{displayedPublicLists.map(renderListCard)}</div>
+                {hasMorePublic && (
+                  <button
+                    onClick={() => setShowAll(true)}
+                    className="w-full py-2.5 bg-gray-50 text-gray-700 rounded-[20px] hover:bg-gray-100 transition-colors text-sm font-medium"
+                  >
+                    مشاهده همه ({publicLists.length - 4} مورد دیگر)
+                  </button>
+                )}
               </div>
-            </div>
-
-            <div className="space-y-4">
-              {displayedPublicLists.map(renderListCard)}
-            </div>
-
-            {!showAll && publicLists.length > 4 && (
-              <button
-                onClick={() => setShowAll(true)}
-                className="w-full py-2.5 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors text-sm font-medium"
-              >
-                مشاهده همه ({publicLists.length - 4} مورد دیگر)
-              </button>
             )}
-          </div>
+            {privateLists.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <EyeOff className="w-4 h-4 text-gray-600" />
+                  <h2 className="font-semibold text-sm text-gray-700">لیست‌های خصوصی</h2>
+                  <span className="text-xs text-gray-400">({privateLists.length})</span>
+                </div>
+                <div className="space-y-4">{displayedPrivateLists.map(renderListCard)}</div>
+                {hasMorePrivate && (
+                  <button
+                    onClick={() => setShowAll(true)}
+                    className="w-full py-2.5 bg-gray-50 text-gray-700 rounded-[20px] hover:bg-gray-100 transition-colors text-sm font-medium"
+                  >
+                    مشاهده همه ({privateLists.length - 4} مورد دیگر)
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
-
-        {/* Private Lists Section */}
-        {privateLists.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex items-center gap-2">
-                <EyeOff className="w-4 h-4 text-gray-600" />
-                <h2 className="font-semibold text-sm text-gray-700">
-                  لیست‌های خصوصی
-                </h2>
-                <span className="text-xs text-gray-400">({privateLists.length})</span>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {displayedPrivateLists.map(renderListCard)}
-            </div>
-
-            {!showAll && privateLists.length > 4 && (
-              <button
-                onClick={() => setShowAll(true)}
-                className="w-full py-2.5 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors text-sm font-medium"
-              >
-                مشاهده همه ({privateLists.length - 4} مورد دیگر)
-              </button>
-            )}
-          </div>
+        {variant !== 'all' && (
+          <div className="space-y-4">{listToShow.map(renderListCard)}</div>
         )}
       </div>
 

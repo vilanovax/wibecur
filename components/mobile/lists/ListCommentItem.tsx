@@ -5,6 +5,7 @@ import { Heart, Flag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import Image from 'next/image';
+import CuratorBadge from '@/components/shared/CuratorBadge';
 
 interface ListCommentItemProps {
   comment: {
@@ -18,6 +19,7 @@ interface ListCommentItemProps {
       name: string | null;
       email: string;
       image: string | null;
+      curatorLevel?: string | null;
     };
     userLiked: boolean;
   };
@@ -67,10 +69,13 @@ export default function ListCommentItem({
       {/* Content */}
       <div className="flex-1 min-w-0">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex flex-wrap items-center gap-2 mb-1">
           <span className="font-medium text-gray-900 text-sm">
             {comment.users.name || comment.users.email.split('@')[0]}
           </span>
+          {comment.users.curatorLevel && (
+            <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
+          )}
           <span className="text-xs text-gray-400">
             {formatDistanceToNow(new Date(comment.createdAt), {
               addSuffix: true,

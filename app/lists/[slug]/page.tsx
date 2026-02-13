@@ -45,7 +45,7 @@ export default async function ListDetailPage({
       isPublic: true,
       isActive: true,
       categories: true,
-      users: { select: { name: true, role: true } },
+      users: { select: { name: true, role: true, curatorLevel: true } },
       items: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, imageUrl: true, rating: true, metadata: true } },
       _count: { select: { items: true } },
     },

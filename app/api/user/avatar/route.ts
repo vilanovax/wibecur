@@ -32,6 +32,9 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
       data: {
         image: finalImageUrl,
+        avatarType: 'UPLOADED',
+        avatarStatus: 'PENDING',
+        avatarId: null,
         updatedAt: new Date(),
       },
       select: {
@@ -40,6 +43,8 @@ export async function POST(request: NextRequest) {
         email: true,
         image: true,
         role: true,
+        avatarType: true,
+        avatarStatus: true,
       },
     });
 

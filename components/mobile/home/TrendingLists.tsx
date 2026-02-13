@@ -1,31 +1,66 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ListCard from '@/components/mobile/home/ListCard';
+import { PLACEHOLDER_COVER_SMALL } from '@/lib/placeholder-images';
 
-const mockLists = [
-  {
-    id: '1',
-    title: 'بهترین کافه‌های دنج تهران',
-    description: 'کافه‌هایی برای خلوت کردن',
-    coverImage: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&h=200&fit=crop',
-    itemCount: 15,
-    saves: 421,
-    likes: 120,
-  },
-  {
-    id: '2',
-    title: 'کتاب‌های ۵ سال اخیر که باید بخونی',
-    description: 'منتخب خواننده‌ها',
-    coverImage: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=200&fit=crop',
-    itemCount: 20,
-    saves: 567,
-    likes: 200,
-  },
-];
+interface HomeList {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  coverImage: string;
+  saveCount: number;
+  itemCount: number;
+  likes: number;
+  badge?: 'trending' | 'new' | 'featured';
+}
 
 export default function TrendingLists() {
-  if (mockLists.length === 0) {
+  const [lists, setLists] = useState<HomeList[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/lists/home')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data?.trending)) {
+          setLists(
+            json.data.trending.map((l: any) => ({
+              id: l.id,
+              title: l.title,
+              slug: l.slug,
+              description: l.description || '',
+              coverImage: l.coverImage || PLACEHOLDER_COVER_SMALL,
+              saveCount: l.saveCount ?? 0,
+              itemCount: l.itemCount ?? 0,
+              likes: l.likes ?? 0,
+              badge: l.badge,
+            }))
+          );
+        }
+      })
+      .catch(() => setLists([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading && lists.length === 0) {
+    return (
+      <section className="mb-8">
+        <div className="px-4 mb-3">
+          <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 px-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-2xl h-40 bg-gray-100 animate-pulse" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (lists.length === 0) {
     return (
       <section className="mb-8">
         <h2 className="text-lg font-bold px-4 mb-2 text-gray-900">لیست‌های ترند 🔥</h2>
@@ -36,6 +71,7 @@ export default function TrendingLists() {
       </section>
     );
   }
+
   return (
     <section className="mb-8">
       <div className="px-4 mb-3">
@@ -49,11 +85,20 @@ export default function TrendingLists() {
           </Link>
         </div>
       </div>
-      <div className="px-4 space-y-3">
-        {mockLists.map((list) => (
-          <div key={list.id}>
-            <ListCard {...list} variant="compact" />
-          </div>
+      <div className="grid grid-cols-2 gap-3 px-4">
+        {lists.map((list) => (
+          <ListCard
+            key={list.id}
+            id={list.id}
+            title={list.title}
+            description={list.description}
+            coverImage={list.coverImage}
+            slug={list.slug}
+            likes={list.likes}
+            saves={list.saveCount}
+            itemCount={list.itemCount}
+            badge={list.badge}
+          />
         ))}
       </div>
     </section>

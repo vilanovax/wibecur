@@ -51,6 +51,7 @@ export async function GET(
               name: true,
               email: true,
               image: true,
+              curatorLevel: true,
             },
           },
           _count: {

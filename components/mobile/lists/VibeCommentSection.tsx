@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import Image from 'next/image';
 import Toast from '@/components/shared/Toast';
+import CuratorBadge from '@/components/shared/CuratorBadge';
 
 const REACTIONS = [
   { type: 'love', label: 'عاشقانه', emoji: '💕' },
@@ -23,6 +24,7 @@ interface CommentUser {
   name: string | null;
   email: string;
   image: string | null;
+  curatorLevel?: string | null;
 }
 
 interface Reply {
@@ -205,6 +207,9 @@ function VibeCommentItem({
           <span className={`font-medium text-gray-900 text-sm ${isFirst ? 'font-semibold' : ''}`}>
             {comment.users.name || comment.users.email?.split('@')[0] || 'کاربر'}
           </span>
+          {comment.users.curatorLevel && (
+            <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
+          )}
           {isListOwner && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800">
               👑 صاحب لیست
@@ -283,6 +288,11 @@ function VibeCommentItem({
                   <span className="font-medium text-gray-800 text-xs">
                     {reply.users.name || reply.users.email?.split('@')[0]}
                   </span>
+                  {reply.users.curatorLevel && (
+                    <span className="mr-1.5 inline-flex align-middle">
+                      <CuratorBadge level={reply.users.curatorLevel} size="small" glow={false} />
+                    </span>
+                  )}
                   <span className="text-gray-600 text-xs mr-1">—</span>
                   <span className="text-gray-600 text-xs">{reply.content}</span>
                 </div>
