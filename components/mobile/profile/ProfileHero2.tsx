@@ -65,11 +65,13 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
   };
   const curatorScore = user.curatorScore ?? 0;
   const expertise = user.expertise ?? [];
+  const avatarTypeNorm = String(user.avatarType ?? '').toUpperCase();
+  const hasVibeId = user.avatarId && String(user.avatarId).trim();
   const vibeAvatar =
-    user.avatarType === 'DEFAULT' && user.avatarId
-      ? VIBE_AVATARS.find((a) => a.id === user.avatarId)
+    avatarTypeNorm === 'DEFAULT' && hasVibeId
+      ? VIBE_AVATARS.find((a) => a.id === String(user.avatarId).trim())
       : null;
-  const showVibeAvatar = vibeAvatar && (!user.avatarType || user.avatarType === 'DEFAULT');
+  const showVibeAvatar = Boolean(vibeAvatar);
   const showUploadedAvatar =
     user.avatarType === 'UPLOADED' && user.avatarStatus === 'APPROVED' && user.image;
   const isElite = isUserEliteLevel(levelKey);

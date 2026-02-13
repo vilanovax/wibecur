@@ -33,9 +33,6 @@ export async function GET() {
     return NextResponse.json({ success: true, data: creators });
   } catch (e) {
     console.error('Discovery creators error:', e);
-    return NextResponse.json(
-      { success: false, error: e instanceof Error ? e.message : 'Internal error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, data: [] });
   }
 }

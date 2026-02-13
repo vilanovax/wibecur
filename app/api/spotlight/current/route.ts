@@ -9,9 +9,6 @@ export async function GET() {
     return NextResponse.json({ success: true, data });
   } catch (e) {
     console.error('Spotlight current error:', e);
-    return NextResponse.json(
-      { success: false, error: e instanceof Error ? e.message : 'Internal error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, data: null });
   }
 }

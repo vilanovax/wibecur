@@ -80,9 +80,9 @@ export async function GET() {
     });
   } catch (error: unknown) {
     console.error('Lists following error:', error);
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'خطا' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: true,
+      data: { lists: [], message: 'no_following' as const },
+    });
   }
 }

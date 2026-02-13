@@ -39,6 +39,14 @@ export async function GET(request: NextRequest) {
                   color: true,
                 },
               },
+              users: {
+                select: {
+                  id: true,
+                  name: true,
+                  username: true,
+                  image: true,
+                },
+              },
               _count: {
                 select: {
                   items: true,

@@ -1,23 +1,68 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import NotificationIcon from './NotificationIcon';
+import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 
 interface HeaderProps {
   title?: string;
   showBack?: boolean;
 }
 
+type ProfileAvatar = {
+  image: string | null;
+  avatarType?: string | null;
+  avatarId?: string | null;
+  avatarStatus?: string | null;
+};
+
 export default function Header({ title, showBack = false }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
-  const userImage = session?.user?.image;
   const userName = session?.user?.name || session?.user?.email || 'کاربر';
   const isHome = pathname === '/';
+
+  const [profile, setProfile] = useState<ProfileAvatar | null>(null);
+
+  const fetchProfile = useCallback(async () => {
+    if (!session?.user?.id) return;
+    try {
+      const res = await fetch('/api/user/profile');
+      const data = await res.json();
+      if (data?.success && data?.data?.user) {
+        const u = data.data.user;
+        setProfile({
+          image: u.image ?? null,
+          avatarType: u.avatarType ?? null,
+          avatarId: u.avatarId ?? null,
+          avatarStatus: u.avatarStatus ?? null,
+        });
+      }
+    } catch {
+      setProfile(null);
+    }
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (session?.user) fetchProfile();
+    else setProfile(null);
+  }, [session?.user, fetchProfile]);
+
+  useEffect(() => {
+    const onProfileUpdated = () => fetchProfile();
+    window.addEventListener('profile-updated', onProfileUpdated);
+    return () => window.removeEventListener('profile-updated', onProfileUpdated);
+  }, [fetchProfile]);
+
+  const showVibeAvatar = profile?.avatarType === 'DEFAULT' && profile?.avatarId;
+  const vibeAvatar = showVibeAvatar ? VIBE_AVATARS.find((a) => a.id === profile!.avatarId!) : null;
+  const showUploadedImage = profile?.avatarType === 'UPLOADED' && profile?.avatarStatus === 'APPROVED' && profile?.image;
+  const headerAvatarUrl = showUploadedImage ? profile!.image! : null;
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -76,9 +121,16 @@ export default function Header({ title, showBack = false }: HeaderProps) {
             href="/profile"
             className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-gray-200 hover:bg-gray-300 transition-colors"
           >
-            {userImage ? (
+            {vibeAvatar ? (
+              <div
+                className={`w-full h-full flex items-center justify-center text-xl ${vibeAvatar.bgClass}`}
+                title={userName}
+              >
+                {vibeAvatar.emoji}
+              </div>
+            ) : headerAvatarUrl ? (
               <Image
-                src={userImage}
+                src={headerAvatarUrl}
                 alt={userName}
                 width={40}
                 height={40}

@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { List, Lock, Bookmark, Clock } from 'lucide-react';
+import { List, Bookmark, Clock } from 'lucide-react';
 import MyListsTab from './tabs/MyListsTab';
 import BookmarksTab from './tabs/BookmarksTab';
-import LikesTab from './tabs/LikesTab';
 import RecentActivityTab from './tabs/RecentActivityTab';
 
-type TabType = 'my-lists' | 'private-lists' | 'bookmarks' | 'activity';
+type TabType = 'my-lists' | 'bookmarks' | 'activity';
 
 interface ProfileTabs2Props {
   userId: string;
@@ -15,7 +14,6 @@ interface ProfileTabs2Props {
 
 const TABS: { id: TabType; label: string; icon: typeof List }[] = [
   { id: 'my-lists', label: 'لیست‌های من', icon: List },
-  { id: 'private-lists', label: 'لیست‌های خصوصی', icon: Lock },
   { id: 'bookmarks', label: 'ذخیره‌ها', icon: Bookmark },
   { id: 'activity', label: 'فعالیت‌ها', icon: Clock },
 ];
@@ -68,8 +66,7 @@ export default function ProfileTabs2({ userId }: ProfileTabs2Props) {
       </div>
 
       <div className="min-h-[400px] -mx-4">
-        {activeTab === 'my-lists' && <MyListsTab userId={userId} variant="public" />}
-        {activeTab === 'private-lists' && <MyListsTab userId={userId} variant="private" />}
+        {activeTab === 'my-lists' && <MyListsTab userId={userId} />}
         {activeTab === 'bookmarks' && <BookmarksTab userId={userId} />}
         {activeTab === 'activity' && <RecentActivityTab userId={userId} />}
       </div>

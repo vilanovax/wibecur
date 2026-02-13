@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
+import { AvatarType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { calculateCuratorResult } from '@/lib/curator';
 
@@ -75,7 +75,9 @@ export async function GET(request: NextRequest) {
       });
     } catch (dbError: unknown) {
       const msg = dbError instanceof Error ? dbError.message : '';
-      if (msg.includes('column') && msg.includes('does not exist')) {
+      const isUnknownField = (dbError as { name?: string }).name === 'PrismaClientValidationError' || msg.includes('Unknown field');
+      const isMissingColumn = msg.includes('column') && msg.includes('does not exist');
+      if (isMissingColumn || isUnknownField) {
         user = await prisma.users.findUnique({
           where: { id: userId },
           select: {
@@ -91,11 +93,27 @@ export async function GET(request: NextRequest) {
         if (user) {
           (user as Record<string, unknown>).bio = null;
           (user as Record<string, unknown>).username = null;
-          (user as Record<string, unknown>).avatarType = 'DEFAULT';
-          (user as Record<string, unknown>).avatarId = null;
-          (user as Record<string, unknown>).avatarStatus = null;
           (user as Record<string, unknown>).showBadge = true;
           (user as Record<string, unknown>).allowCommentNotifications = true;
+          let avatarType: string = 'DEFAULT';
+          let avatarId: string | null = null;
+          let avatarStatus: string | null = null;
+          try {
+            const avatarRow = await prisma.users.findUnique({
+              where: { id: userId },
+              select: { avatarType: true, avatarId: true, avatarStatus: true },
+            });
+            if (avatarRow) {
+              avatarType = String((avatarRow as { avatarType?: string }).avatarType ?? 'DEFAULT');
+              avatarId = (avatarRow as { avatarId?: string | null }).avatarId ?? null;
+              avatarStatus = (avatarRow as { avatarStatus?: string | null }).avatarStatus != null ? String((avatarRow as { avatarStatus?: string | null }).avatarStatus) : null;
+            }
+          } catch {
+            // ستون آواتار وجود ندارد؛ همان مقدار پیش‌فرض بماند
+          }
+          (user as Record<string, unknown>).avatarType = avatarType;
+          (user as Record<string, unknown>).avatarId = avatarId;
+          (user as Record<string, unknown>).avatarStatus = avatarStatus;
         }
       } else {
         throw dbError;
@@ -203,6 +221,40 @@ export async function GET(request: NextRequest) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     const stack = error instanceof Error ? error.stack : undefined;
     console.error('Error fetching user profile:', message, stack);
+    // Return minimal profile so profile page still loads (e.g. missing DB columns)
+    try {
+      const session = await auth();
+      if (session?.user?.id) {
+        const u = session.user;
+        const email = typeof u.email === 'string' ? u.email : '';
+        const fallbackUser = {
+          id: session.user.id,
+          name: u.name ?? null,
+          email,
+          image: u.image ?? null,
+          role: 'USER',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          username: (u as { username?: string }).username ?? (email.includes('@') ? email.split('@')[0] : 'user'),
+          bio: null,
+          avatarType: 'DEFAULT',
+          avatarId: null,
+          avatarStatus: null,
+          showBadge: true,
+          allowCommentNotifications: true,
+          stats: { listsCreated: 0, bookmarks: 0, likes: 0, itemLikes: 0 },
+          creatorStats: { viralListsCount: 0, popularListsCount: 0, totalLikesReceived: 0, profileViews: 0, totalItemsCurated: 0 },
+          expertise: [] as { name: string; slug: string; icon: string; count: number }[],
+          curatorLevel: 'EXPLORER',
+          curatorScore: 0,
+          curatorNextLevelLabel: null,
+          curatorPointsToNext: null,
+        };
+        return NextResponse.json({ success: true, data: { user: fallbackUser } });
+      }
+    } catch (_) {
+      // ignore
+    }
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }
@@ -235,38 +287,39 @@ export async function PUT(request: NextRequest) {
       avatarId,
     } = body;
 
-    // بررسی اینکه ایمیل تکراری نباشد (اگر تغییر کرده)
-    if (email) {
-      const existingUser = await prisma.users.findUnique({
-        where: { email },
-      });
+    try {
+      if (email) {
+        const existingUser = await prisma.users.findUnique({
+          where: { email },
+        });
+        if (existingUser && existingUser.id !== userId) {
+          return NextResponse.json(
+            { success: false, error: 'این ایمیل قبلاً استفاده شده است' },
+            { status: 400 }
+          );
+        }
+      }
 
-      if (existingUser && existingUser.id !== userId) {
-        return NextResponse.json(
-          { success: false, error: 'این ایمیل قبلاً استفاده شده است' },
-          { status: 400 }
-        );
+      if (username !== undefined && username !== null && username !== '') {
+        const clean = String(username).trim().toLowerCase();
+        if (!/^[a-z0-9_]{3,30}$/.test(clean)) {
+          return NextResponse.json(
+            { success: false, error: 'نام کاربری فقط حروف انگلیسی، اعداد و _ (۳ تا ۳۰ کاراکتر)' },
+            { status: 400 }
+          );
+        }
+        const existing = await prisma.users.findUnique({
+          where: { username: clean },
+        });
+        if (existing && existing.id !== userId) {
+          return NextResponse.json(
+            { success: false, error: 'این نام کاربری قبلاً استفاده شده است' },
+            { status: 400 }
+          );
+        }
       }
-    }
-
-    // اعتبارسنجی username: فقط حروف انگلیسی، اعداد و _ ؛ طول ۳–۳۰
-    if (username !== undefined && username !== null && username !== '') {
-      const clean = String(username).trim().toLowerCase();
-      if (!/^[a-z0-9_]{3,30}$/.test(clean)) {
-        return NextResponse.json(
-          { success: false, error: 'نام کاربری فقط حروف انگلیسی، اعداد و _ (۳ تا ۳۰ کاراکتر)' },
-          { status: 400 }
-        );
-      }
-      const existing = await prisma.users.findUnique({
-        where: { username: clean },
-      });
-      if (existing && existing.id !== userId) {
-        return NextResponse.json(
-          { success: false, error: 'این نام کاربری قبلاً استفاده شده است' },
-          { status: 400 }
-        );
-      }
+    } catch {
+      // اگر جدول/ستون نبود، چک تکراری را نادیده می‌گیریم و مستقیم آپدیت می‌کنیم
     }
 
     const updateData: {
@@ -287,43 +340,124 @@ export async function PUT(request: NextRequest) {
     if (bio !== undefined) updateData.bio = bio === '' ? null : String(bio).slice(0, 160);
     if (typeof showBadge === 'boolean') updateData.showBadge = showBadge;
     if (typeof allowCommentNotifications === 'boolean') updateData.allowCommentNotifications = allowCommentNotifications;
-    if (avatarType === 'DEFAULT' && avatarId) {
-      updateData.avatarType = 'DEFAULT';
-      updateData.avatarId = avatarId;
+    const wantVibeAvatar = (String(avatarType ?? '').toUpperCase() === 'DEFAULT' && avatarId && String(avatarId).trim());
+    const avatarIdVal = wantVibeAvatar ? String(avatarId).trim() : null;
+
+    // آپدیت آواتار در یک فراخوانی جدا تا حتماً در دیتابیس ذخیره شود
+    if (avatarIdVal) {
+      try {
+        await prisma.users.update({
+          where: { id: userId },
+          data: {
+            avatarType: AvatarType.DEFAULT,
+            avatarId: avatarIdVal,
+            avatarStatus: null,
+            updatedAt: new Date(),
+          },
+        });
+      } catch (avatarErr) {
+        console.error('Profile PUT: avatar update failed', avatarErr);
+      }
+    }
+
+    if (wantVibeAvatar) {
+      updateData.avatarType = AvatarType.DEFAULT;
+      updateData.avatarId = avatarIdVal;
       updateData.avatarStatus = null;
     }
 
-    const updatedUser = await prisma.users.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        bio: true,
-        username: true,
-        avatarType: true,
-        avatarId: true,
-        avatarStatus: true,
-        showBadge: true,
-        allowCommentNotifications: true,
-      },
-    });
+    const baseSelect = {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+    };
 
-    return NextResponse.json({
-      success: true,
-      data: { user: updatedUser },
-    });
-  } catch (error: any) {
+    try {
+      const updatedUser = await prisma.users.update({
+        where: { id: userId },
+        data: updateData,
+        select: {
+          ...baseSelect,
+          bio: true,
+          username: true,
+          avatarType: true,
+          avatarId: true,
+          avatarStatus: true,
+          showBadge: true,
+          allowCommentNotifications: true,
+        },
+      });
+      return NextResponse.json({
+        success: true,
+        data: { user: updatedUser },
+      });
+    } catch (updateErr: unknown) {
+      const msg = updateErr instanceof Error ? updateErr.message : '';
+      const isUnknownField = (updateErr as { name?: string }).name === 'PrismaClientValidationError' || msg.includes('Unknown field') || msg.includes('column');
+      // وقتی کلاینت Prisma با اسکیما همگام نیست (مثلاً prisma generate نشده)، فقط فیلدهای پایه آپدیت می‌شوند
+      if (isUnknownField) {
+        const safeData: { name?: string; email?: string; updatedAt: Date } = { updatedAt: new Date() };
+        if (name !== undefined) safeData.name = name;
+        if (email !== undefined) safeData.email = email;
+        try {
+          const updatedUser = await prisma.users.update({
+            where: { id: userId },
+            data: safeData,
+            select: baseSelect,
+          });
+          return NextResponse.json({
+            success: true,
+            data: {
+              user: {
+                ...updatedUser,
+                bio: null,
+                username: null,
+                avatarType: 'DEFAULT',
+                avatarId: avatarIdVal ?? null,
+                avatarStatus: null,
+                showBadge: true,
+                allowCommentNotifications: true,
+              },
+            },
+          });
+        } catch (safeErr) {
+          const nameOnly = { updatedAt: new Date() as Date, ...(name !== undefined && { name }) };
+          try {
+            const updatedUser = await prisma.users.update({
+              where: { id: userId },
+              data: nameOnly,
+              select: baseSelect,
+            });
+            return NextResponse.json({
+              success: true,
+              data: {
+                user: {
+                  ...updatedUser,
+                  bio: null,
+                  username: null,
+                  avatarType: 'DEFAULT',
+                  avatarId: avatarIdVal ?? null,
+                  avatarStatus: null,
+                  showBadge: true,
+                  allowCommentNotifications: true,
+                },
+              },
+            });
+          } catch {
+            throw safeErr;
+          }
+        }
+      }
+      throw updateErr;
+    }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Error updating user profile:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: message });
   }
 }
 

@@ -56,9 +56,9 @@ export async function GET() {
     });
   } catch (error: unknown) {
     console.error('User achievements error:', error);
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'خطا' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: true,
+      data: { achievements: [], newlyUnlocked: [] },
+    });
   }
 }

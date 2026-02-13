@@ -39,7 +39,7 @@ export default function ProfileAchievementsSection() {
           setList(json.data.achievements);
         }
         const newly = json.data?.newlyUnlocked as { code: string; title: string; icon: string }[] | undefined;
-        if (newly?.length > 0 && !hasShownUnlock.current) {
+        if (Array.isArray(newly) && newly.length > 0 && !hasShownUnlock.current) {
           hasShownUnlock.current = true;
           const first = newly[0];
           setToast({ message: `دستاورد جدید! ${first.title} فعال شد ${first.icon}`, type: 'success' });

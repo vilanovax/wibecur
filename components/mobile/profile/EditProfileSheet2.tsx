@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
 import AvatarSelectionSheet from './AvatarSelectionSheet';
@@ -61,9 +61,13 @@ export default function EditProfileSheet2({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const prevOpenRef = useRef(false);
 
+  // فقط موقع باز شدن شیت از user پر کنیم تا انتخاب آواتار با رندر والد پاک نشود
   useEffect(() => {
-    if (isOpen) {
+    const justOpened = isOpen && !prevOpenRef.current;
+    prevOpenRef.current = isOpen;
+    if (justOpened) {
       setDisplayName(user.name ?? '');
       setUsername(user.username ?? '');
       setBio((user.bio ?? '').slice(0, BIO_MAX));
@@ -91,19 +95,28 @@ export default function EditProfileSheet2({
         body: JSON.stringify({
           name: displayName.trim(),
           username: username.trim() || undefined,
-          bio: bio.slice(0, BIO_MAX) || null,
+          bio: (bio || '').slice(0, BIO_MAX) || null,
           showBadge,
           allowCommentNotifications,
-          ...(avatarType === 'DEFAULT' && avatarId ? { avatarType: 'DEFAULT', avatarId } : {}),
+          avatarType: avatarType || 'DEFAULT',
+          avatarId: (avatarType === 'DEFAULT' && avatarId) ? String(avatarId) : null,
         }),
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'خطا در ذخیره');
+      let data: { success?: boolean; error?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        setError('پاسخ سرور نامعتبر بود. دوباره تلاش کنید.');
+        return;
+      }
+      if (!data.success) {
+        setError(data.error || 'خطا در ذخیره');
+        return;
+      }
+      onClose();
       onUpdate();
-      setToast({ message: 'پروفایل با موفقیت به‌روزرسانی شد 🎉', type: 'success' });
-      setTimeout(() => {
-        onClose();
-      }, 800);
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('profile-updated'));
+      setToast({ message: 'تغییرات با موفقیت ذخیره شد', type: 'success' });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'خطا در ذخیره');
     } finally {
@@ -137,6 +150,7 @@ export default function EditProfileSheet2({
       setAvatarStatus('PENDING');
       setImageUrl(data.data?.user?.image ?? null);
       onUpdate();
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('profile-updated'));
       return { success: true };
     } catch {
       return { success: false, message: 'خطا در آپلود' };

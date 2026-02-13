@@ -2,11 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Bookmark, Eye, Heart, Package } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { categories, lists } from '@prisma/client';
 
-type ListWithCategory = lists & {
-  categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'>;
+type ListWithCategoryAndCreator = lists & {
+  categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'> | null;
+  users?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    image: string | null;
+  } | null;
   _count: {
     items: number;
     list_likes: number;
@@ -16,7 +24,7 @@ type ListWithCategory = lists & {
 
 interface BookmarkItem {
   id: string;
-  list: ListWithCategory;
+  list: ListWithCategoryAndCreator;
   createdAt: string;
 }
 
@@ -30,10 +38,6 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showAll, setShowAll] = useState(false);
-
-  useEffect(() => {
-    fetchBookmarks();
-  }, [userId, page]);
 
   const fetchBookmarks = async () => {
     setIsLoading(true);
@@ -56,65 +60,151 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
     }
   };
 
+  useEffect(() => {
+    fetchBookmarks();
+  }, [userId, page]);
+
+  const handleBookmarkToggle = (isBookmarked: boolean) => {
+    if (!isBookmarked) fetchBookmarks();
+  };
+
   const displayedBookmarks = showAll ? bookmarks : bookmarks.slice(0, 8);
 
   if (isLoading && bookmarks.length === 0) {
     return (
-      <div className="grid grid-cols-2 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white rounded-xl overflow-hidden animate-pulse">
-            <div className="h-40 bg-gray-200" />
-            <div className="p-3">
-              <div className="h-3 bg-gray-200 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="px-4 space-y-4">
+        <div className="h-5 w-64 bg-gray-200 rounded animate-pulse" />
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="rounded-2xl overflow-hidden animate-pulse bg-gray-100">
+              <div className="h-40 bg-gray-200" />
+              <div className="p-3 space-y-2">
+                <div className="flex gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gray-200" />
+                  <div className="h-4 bg-gray-200 rounded w-24" />
+                </div>
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
 
   if (bookmarks.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl">
-        <p className="text-gray-500">هنوز لیستی ذخیره نکرده‌اید</p>
+      <div className="px-4">
+        <p className="text-gray-500 text-sm mb-2">لیست‌هایی که دنبال می‌کنید اینجا نمایش داده می‌شوند.</p>
+        <div className="text-center py-12 bg-gray-50/80 rounded-2xl border border-gray-100">
+          <Bookmark className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500">هنوز لیستی ذخیره نکرده‌اید</p>
+          <p className="text-gray-400 text-sm mt-1">با ذخیره لیست‌ها، آن‌ها اینجا ظاهر می‌شوند</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-2 gap-4">
-        {displayedBookmarks.map((bookmark) => (
-          <Link
-            key={bookmark.id}
-            href={`/lists/${bookmark.list.slug}`}
-            className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
-          >
-            <div className="relative h-40 bg-gradient-to-br from-yellow-100 to-orange-100">
-              <ImageWithFallback
-                src={bookmark.list.coverImage ?? ''}
-                alt={bookmark.list.title}
-                className="w-full h-40 object-cover"
-                fallbackIcon={bookmark.list.categories.icon}
-                fallbackClassName="w-full h-full"
-              />
-            </div>
-            <div className="p-3">
-              <div className="flex items-center gap-1 mb-2">
-                <span className="text-sm">{bookmark.list.categories.icon}</span>
-                <span className="text-xs text-gray-500 truncate">{bookmark.list.categories.name}</span>
+    <div className="px-4 space-y-4">
+      <div>
+        <h2 className="text-sm font-medium text-gray-700 mb-0.5">لیست‌هایی که دنبال می‌کنم</h2>
+        <p className="text-xs text-gray-500">لیست‌های ذخیره‌شده از سایر کیوریتورها</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {displayedBookmarks.map((bookmark) => {
+          const list = bookmark.list;
+          const creator = list.users;
+          const likes = list.likeCount ?? list._count?.list_likes ?? 0;
+          const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
+          const items = list.itemCount ?? list._count?.items ?? 0;
+          const views = list.viewCount ?? 0;
+
+          return (
+            <div
+              key={bookmark.id}
+              className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all"
+            >
+              <Link href={`/lists/${list.slug}`} className="block">
+                <div className="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200">
+                  <ImageWithFallback
+                    src={list.coverImage ?? ''}
+                    alt={list.title}
+                    className="w-full h-40 object-cover"
+                    fallbackIcon={list.categories?.icon}
+                    fallbackClassName="w-full h-full"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-2 left-2 right-2">
+                    <h3 className="text-white font-bold text-sm line-clamp-2 drop-shadow-md">{list.title}</h3>
+                  </div>
+                </div>
+              </Link>
+              <div className="p-3">
+                {creator && (
+                  <Link
+                    href={creator.username ? `/u/${creator.username}` : '#'}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-2 mb-2"
+                  >
+                    <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                      {creator.image ? (
+                        <img src={creator.image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="w-full h-full flex items-center justify-center text-xs font-medium text-gray-500 bg-gray-200">
+                          {(creator.name ?? creator.username ?? '?').charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-600 truncate">
+                      {creator.name || creator.username || 'کیوریتور'}
+                    </span>
+                  </Link>
+                )}
+                <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                  <span className="flex items-center gap-0.5">
+                    <Eye className="w-3 h-3" />
+                    {views >= 1000 ? (views / 1000).toFixed(1) + 'k' : views}
+                  </span>
+                  <span className="flex items-center gap-0.5 text-red-500">
+                    <Heart className="w-3 h-3" />
+                    {likes}
+                  </span>
+                  <span className="flex items-center gap-0.5 text-gray-400">
+                    <Package className="w-3 h-3" />
+                    {items}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Link
+                    href={`/lists/${list.slug}`}
+                    className="text-xs text-[#7C3AED] font-medium hover:underline"
+                  >
+                    مشاهده لیست
+                  </Link>
+                  <div className="flex items-center gap-1 text-gray-500 text-xs" aria-label="حذف از ذخیره‌ها">
+                    <BookmarkButton
+                      listId={list.id}
+                      initialIsBookmarked={true}
+                      initialBookmarkCount={saves}
+                      variant="icon"
+                      size="sm"
+                      onToggle={handleBookmarkToggle}
+                    />
+                    <span>حذف از ذخیره‌ها</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="font-bold text-sm line-clamp-2 leading-tight">{bookmark.list.title}</h3>
             </div>
-          </Link>
-        ))}
+          );
+        })}
       </div>
 
       {!showAll && bookmarks.length > 8 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          className="w-full py-3 bg-gray-50 text-gray-700 rounded-2xl hover:bg-gray-100 transition-colors text-sm font-medium border border-gray-100"
         >
           مشاهده بیشتر ({bookmarks.length - 8} مورد دیگر)
         </button>
@@ -124,7 +214,7 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
         <button
           onClick={() => setPage((p) => p + 1)}
           disabled={isLoading}
-          className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+          className="w-full py-3 bg-gray-50 text-gray-700 rounded-2xl hover:bg-gray-100 transition-colors text-sm font-medium disabled:opacity-50"
         >
           {isLoading ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
         </button>
@@ -132,4 +222,3 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
     </div>
   );
 }
-

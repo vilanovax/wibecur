@@ -12,6 +12,8 @@ interface BookmarkButtonProps {
   size?: 'sm' | 'md' | 'lg';
   labelSave?: string;
   labelSaved?: string;
+  /** بعد از تغییر وضعیت ذخیره/حذف فراخوانی می‌شود */
+  onToggle?: (isBookmarked: boolean) => void;
 }
 
 export default function BookmarkButton({
@@ -22,6 +24,7 @@ export default function BookmarkButton({
   size = 'md',
   labelSave = 'ذخیره',
   labelSaved = 'ذخیره شده',
+  onToggle,
 }: BookmarkButtonProps) {
   const { data: session } = useSession();
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
@@ -69,6 +72,7 @@ export default function BookmarkButton({
       if (data.success) {
         setIsBookmarked(data.data.isBookmarked);
         setBookmarkCount(data.data.bookmarkCount);
+        onToggle?.(data.data.isBookmarked);
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
