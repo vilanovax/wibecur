@@ -21,7 +21,13 @@ async function getGlobalTrending() {
         _count: { listId: true },
       }),
       prisma.items.findMany({
-        where: { lists: { isActive: true } },
+        where: {
+          lists: { isActive: true },
+          OR: [
+            { item_moderation: null },
+            { item_moderation: { status: { notIn: ['HIDDEN', 'UNDER_REVIEW'] } } },
+          ],
+        },
         select: {
           id: true,
           title: true,
@@ -78,7 +84,9 @@ export async function GET() {
     );
     const data = await getCached();
 
-    return NextResponse.json({ data }, { status: 200 });
+    const response = NextResponse.json({ data }, { status: 200 });
+    response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+    return response;
   } catch (err) {
     console.error('Global trending error:', err);
     return NextResponse.json(

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ThumbsUp, Flag, Trash2, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
-import Image from 'next/image';
+import CommentAvatar from '@/components/shared/CommentAvatar';
 
 interface CommentItemProps {
   comment: {
@@ -17,8 +18,12 @@ interface CommentItemProps {
       id: string;
       name: string;
       email: string;
+      username?: string | null;
       image: string | null;
       curatorLevel?: string;
+      avatarType?: string;
+      avatarId?: string | null;
+      avatarStatus?: string | null;
     };
     isLiked: boolean;
     canDelete: boolean;
@@ -45,26 +50,34 @@ export default function CommentItem({
     onLike(comment.id);
   };
 
+  const profileUrl = comment.user.username ? `/u/${encodeURIComponent(comment.user.username)}` : null;
+
   return (
     <div className="flex gap-3 p-4 bg-white rounded-xl border border-gray-100">
-      {/* Avatar (+ Elite badge if level 5+) */}
+      {/* Avatar (+ Elite badge if level 5+) — کلیک → پروفایل */}
       <div className="flex-shrink-0 relative">
-        {comment.user.image ? (
-          <div className="relative w-10 h-10 rounded-full overflow-hidden">
-            <Image
+        {profileUrl ? (
+          <Link href={profileUrl} className="block">
+            <CommentAvatar
               src={comment.user.image}
-              alt={comment.user.name}
-              fill
-              className="object-cover"
-              unoptimized={true}
+              name={comment.user.name}
+              email={comment.user.email}
+              size={40}
+              avatarType={comment.user.avatarType}
+              avatarId={comment.user.avatarId}
+              avatarStatus={comment.user.avatarStatus}
             />
-          </div>
+          </Link>
         ) : (
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-medium text-sm">
-              {comment.user.name.charAt(0).toUpperCase()}
-            </span>
-          </div>
+          <CommentAvatar
+            src={comment.user.image}
+            name={comment.user.name}
+            email={comment.user.email}
+            size={40}
+            avatarType={comment.user.avatarType}
+            avatarId={comment.user.avatarId}
+            avatarStatus={comment.user.avatarStatus}
+          />
         )}
         {(comment.user.curatorLevel === 'ELITE_CURATOR' || comment.user.curatorLevel === 'VIBE_LEGEND') && (
           <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 flex items-center justify-center text-[10px]" title="Elite Curator">👑</span>
@@ -75,9 +88,15 @@ export default function CommentItem({
       <div className="flex-1 min-w-0">
         {/* Header */}
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium text-gray-900 text-sm">
-            {comment.user.name}
-          </span>
+          {profileUrl ? (
+            <Link href={profileUrl} className="font-medium text-gray-900 text-sm hover:text-primary transition-colors">
+              {comment.user.name}
+            </Link>
+          ) : (
+            <span className="font-medium text-gray-900 text-sm">
+              {comment.user.name}
+            </span>
+          )}
           <span className="text-xs text-gray-400">
             {formatDistanceToNow(new Date(comment.createdAt), {
               addSuffix: true,

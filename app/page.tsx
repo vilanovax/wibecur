@@ -7,10 +7,9 @@ import RecommendationSection from '@/components/mobile/recommendations/Recommend
 import CategoryScroll from '@/components/mobile/home/CategoryScroll';
 import GlobalTrendingSection from '@/components/mobile/home/GlobalTrendingSection';
 import CreatorSpotlightSection from '@/components/mobile/home/CreatorSpotlightSection';
-import PersonalizedSpotlightSection from '@/components/mobile/home/PersonalizedSpotlightSection';
-import SuggestedCreatorsSection from '@/components/mobile/home/SuggestedCreatorsSection';
 import TrendingLists from '@/components/mobile/home/TrendingLists';
 import BottomNav from '@/components/mobile/layout/BottomNav';
+import { HomeDataProvider } from '@/contexts/HomeDataContext';
 
 export default function Home() {
   return (
@@ -19,18 +18,18 @@ export default function Home() {
       <HeroGreeting />
       <EnhancedSearch />
       <main className="space-y-0 px-0">
+        <HomeDataProvider>
         <HomeFeedTabs>
           <>
             <FeaturedCard />
             <GlobalTrendingSection />
             <CreatorSpotlightSection />
-            <PersonalizedSpotlightSection />
-            <SuggestedCreatorsSection />
             <RecommendationSection />
             <CategoryScroll />
             <TrendingLists />
           </>
         </HomeFeedTabs>
+        </HomeDataProvider>
       </main>
       <BottomNav />
     </div>

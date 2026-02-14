@@ -1,53 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import ListCard from '@/components/mobile/home/ListCard';
 import EmptyState from '@/components/mobile/home/EmptyState';
+import { useHomeData } from '@/contexts/HomeDataContext';
 import { PLACEHOLDER_COVER_SMALL } from '@/lib/placeholder-images';
 
-interface HomeList {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  coverImage: string;
-  saveCount: number;
-  itemCount: number;
-  likes: number;
-  badge?: 'trending' | 'new' | 'featured';
-}
-
 export default function RecommendationSection() {
-  const [lists, setLists] = useState<HomeList[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/lists/home')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data?.recommendations)) {
-          setLists(
-            json.data.recommendations.map((l: any) => ({
-              id: l.id,
-              title: l.title,
-              slug: l.slug,
-              description: l.description || '',
-              coverImage: l.coverImage || PLACEHOLDER_COVER_SMALL,
-              saveCount: l.saveCount ?? 0,
-              itemCount: l.itemCount ?? 0,
-              likes: l.likes ?? 0,
-              badge: l.badge,
-            }))
-          );
-        }
-      })
-      .catch(() => setLists([]))
-      .finally(() => setLoading(false));
-  }, []);
-
+  const { data, isLoading } = useHomeData();
+  const lists = (data?.recommendations ?? []).map((l) => ({
+    ...l,
+    coverImage: l.coverImage || PLACEHOLDER_COVER_SMALL,
+  }));
   const hasRecommendations = lists.length > 0;
 
-  if (loading && !hasRecommendations) {
+  if (isLoading && !hasRecommendations) {
     return (
       <section className="mb-8">
         <div className="px-4 mb-3">

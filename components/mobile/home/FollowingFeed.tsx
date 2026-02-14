@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { Loader2, UserPlus } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
@@ -19,23 +19,27 @@ interface FollowingList {
   categories: { name: string; icon: string; slug: string } | null;
 }
 
-export default function FollowingFeed() {
-  const [lists, setLists] = useState<FollowingList[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<'ok' | 'no_following' | 'login_required'>('ok');
+interface FollowingResponse {
+  lists: FollowingList[];
+  message: 'ok' | 'no_following' | 'login_required';
+}
 
-  useEffect(() => {
-    fetch('/api/lists/following')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data?.lists)) {
-          setLists(json.data.lists);
-          setMessage(json.data.message ?? 'ok');
-        }
-      })
-      .catch(() => setLists([]))
-      .finally(() => setLoading(false));
-  }, []);
+async function fetchFollowing(): Promise<FollowingResponse> {
+  const res = await fetch('/api/lists/following');
+  const json = await res.json();
+  if (json.success && Array.isArray(json.data?.lists))
+    return { lists: json.data.lists, message: json.data.message ?? 'ok' };
+  return { lists: [], message: 'ok' };
+}
+
+export default function FollowingFeed() {
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['lists', 'following'],
+    queryFn: fetchFollowing,
+    staleTime: 2 * 60 * 1000,
+  });
+  const lists = data?.lists ?? [];
+  const message = data?.message ?? 'ok';
 
   if (loading) {
     return (

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Check, User } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
@@ -42,22 +43,20 @@ interface SpotlightData {
   lists: SpotlightList[];
 }
 
+async function fetchSpotlightCurrent(): Promise<SpotlightData | null> {
+  const res = await fetch('/api/spotlight/current');
+  const json = await res.json();
+  return json.success && json.data ? json.data : null;
+}
+
 export default function CreatorSpotlightSection() {
   const { data: session } = useSession();
-  const [data, setData] = useState<SpotlightData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['spotlight', 'current'],
+    queryFn: fetchSpotlightCurrent,
+    staleTime: 10 * 60 * 1000,
+  });
   const [following, setFollowing] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/spotlight/current')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) setData(json.data);
-        else setData(null);
-      })
-      .catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }, []);
 
   const handleFollow = async () => {
     if (!data?.creator?.userId || following) return;

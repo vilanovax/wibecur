@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Check } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
@@ -24,28 +25,21 @@ interface SuggestedCreator {
   isFollowing?: boolean;
 }
 
-export default function SuggestedCreatorsSection() {
-  const { data: session, status } = useSession();
-  const [creators, setCreators] = useState<SuggestedCreator[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+async function fetchDiscoveryCreators(): Promise<SuggestedCreator[]> {
+  const res = await fetch('/api/discovery/creators');
+  const json = await res.json();
+  return json.success && Array.isArray(json.data) ? json.data : [];
+}
 
-  useEffect(() => {
-    if (status !== 'authenticated') {
-      setLoading(false);
-      setCreators([]);
-      return;
-    }
-    setLoading(true);
-    fetch('/api/discovery/creators')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data)) setCreators(json.data);
-        else setCreators([]);
-      })
-      .catch(() => setCreators([]))
-      .finally(() => setLoading(false));
-  }, [status]);
+export default function SuggestedCreatorsSection() {
+  const { status } = useSession();
+  const { data: creators = [], isLoading: loading } = useQuery({
+    queryKey: ['discovery', 'creators'],
+    queryFn: fetchDiscoveryCreators,
+    enabled: status === 'authenticated',
+    staleTime: 10 * 60 * 1000,
+  });
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
   const handleFollow = async (creatorId: string) => {
     if (followingIds.has(creatorId)) return;

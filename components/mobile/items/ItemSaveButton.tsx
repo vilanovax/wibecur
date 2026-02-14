@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Bookmark } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import SaveToPersonalListModal from './SaveToPersonalListModal';
+
+const SaveToPersonalListModal = dynamic(() => import('./SaveToPersonalListModal'), { ssr: false });
 
 interface ItemSaveButtonProps {
   itemId: string;
@@ -100,11 +102,13 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
         )}
       </button>
 
-      <SaveToPersonalListModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        itemId={itemId}
-      />
+      {isModalOpen && (
+        <SaveToPersonalListModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          itemId={itemId}
+        />
+      )}
     </>
   );
 }

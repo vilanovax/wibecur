@@ -1,4 +1,4 @@
-import { S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import axios from 'axios';
 import { getObjectStorageConfig, isOurStorageUrl } from './object-storage-config';
@@ -60,7 +60,10 @@ export async function uploadImageFromUrl(
     const response = await axios.get(imageUrl, {
       responseType: 'arraybuffer',
       timeout: 30000,
-      headers: { 'User-Agent': 'WibeCur/1.0' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'image/webp,image/apng,image/*,*/*;q=0.8',
+      },
     });
 
     const imageBuffer = Buffer.from(response.data);
@@ -153,6 +156,44 @@ export async function uploadImageBuffer(
 }
 
 export type ImageFolder = 'items' | 'avatars' | 'covers' | 'lists';
+
+/**
+ * دریافت محتوای فایل از Liara با URL عمومی (برای پراکسی وقتی باکت خصوصی است)
+ * فقط برای URLهای استوریج خودمان کار می‌کند.
+ */
+export async function getObjectByPublicUrl(
+  publicUrl: string
+): Promise<{ buffer: Buffer; contentType?: string } | null> {
+  if (!isOurStorageUrl(publicUrl)) return null;
+  try {
+    const config = await getObjectStorageConfig();
+    const client = await getS3Client();
+    if (!config || !client) return null;
+
+    const u = new URL(publicUrl);
+    const pathname = decodeURIComponent(u.pathname);
+    const pathParts = pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    if (pathParts.length < 2 || pathParts[0] !== config.bucketName) return null;
+    const key = pathParts.slice(1).join('/');
+    if (!key) return null;
+
+    const cmd = new GetObjectCommand({ Bucket: config.bucketName, Key: key });
+    const res = await client.send(cmd);
+    const body = res.Body;
+    if (!body) return null;
+
+    const bytes = await body.transformToByteArray();
+    const buffer = Buffer.from(bytes);
+
+    return {
+      buffer,
+      contentType: res.ContentType ?? undefined,
+    };
+  } catch (e) {
+    console.error('getObjectByPublicUrl error:', (e as Error).message);
+    return null;
+  }
+}
 
 /**
  * اگر URL خارجی باشد آن را به Liara آپلود می‌کند؛ وگرنه همان را برمی‌گرداند.

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CommentSection from '@/components/mobile/comments/CommentSection';
@@ -8,31 +9,7 @@ import CommentForm from '@/components/mobile/comments/CommentForm';
 import ItemReportButton from '@/components/mobile/items/ItemReportButton';
 import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
 import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
-
-interface SimilarItem {
-  id: string;
-  title: string;
-  image: string | null;
-  rating: number | null;
-  category: { name: string; icon: string | null } | null;
-}
-
-interface TrendingItem {
-  id: string;
-  title: string;
-  image: string | null;
-  rating: number | null;
-  saveCount: number;
-  trendScore: number;
-}
-
-interface AlsoLikedItem {
-  id: string;
-  title: string;
-  image: string | null;
-  rating: number | null;
-  commonUsersCount: number;
-}
+import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
 
 const DESCRIPTION_TRUNCATE = 160;
 
@@ -95,52 +72,43 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [commentFormOpen, setCommentFormOpen] = useState(false);
   const [commentCount, setCommentCount] = useState(item.commentCount);
-  const [similarItems, setSimilarItems] = useState<SimilarItem[]>([]);
-  const [similarLoading, setSimilarLoading] = useState(false);
-  const [trendingItems, setTrendingItems] = useState<TrendingItem[]>([]);
-  const [trendingLoading, setTrendingLoading] = useState(false);
-  const [alsoLikedItems, setAlsoLikedItems] = useState<AlsoLikedItem[]>([]);
-  const [alsoLikedLoading, setAlsoLikedLoading] = useState(false);
+  const [commentRefreshTrigger, setCommentRefreshTrigger] = useState(0);
   const onCommentsUpdate = () => setCommentCount((c) => c + 1);
 
   const categoryId = item.lists.categories?.id ?? null;
 
-  useEffect(() => {
-    setSimilarLoading(true);
-    fetch(`/api/items/${item.id}/similar`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.data && Array.isArray(json.data)) setSimilarItems(json.data);
-      })
-      .catch(() => setSimilarItems([]))
-      .finally(() => setSimilarLoading(false));
-  }, [item.id]);
+  const { data: similarItems = [], isLoading: similarLoading } = useQuery({
+    queryKey: ['items', item.id, 'similar'],
+    queryFn: async (): Promise<SimilarItem[]> => {
+      const res = await fetch(`/api/items/${item.id}/similar`);
+      const json = await res.json();
+      return json.data && Array.isArray(json.data) ? json.data : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    if (!categoryId) return;
-    setTrendingLoading(true);
-    fetch(`/api/categories/${categoryId}/trending`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.data && Array.isArray(json.data)) {
-          const list = json.data as TrendingItem[];
-          setTrendingItems(list.filter((t) => t.id !== item.id));
-        }
-      })
-      .catch(() => setTrendingItems([]))
-      .finally(() => setTrendingLoading(false));
-  }, [categoryId, item.id]);
+  const { data: trendingRaw = [], isLoading: trendingLoading } = useQuery({
+    queryKey: ['categories', categoryId, 'trending'],
+    queryFn: async (): Promise<TrendingItem[]> => {
+      const res = await fetch(`/api/categories/${categoryId}/trending`);
+      const json = await res.json();
+      const list = json.data && Array.isArray(json.data) ? (json.data as TrendingItem[]) : [];
+      return list.filter((t) => t.id !== item.id);
+    },
+    enabled: !!categoryId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const trendingItems = trendingRaw;
 
-  useEffect(() => {
-    setAlsoLikedLoading(true);
-    fetch(`/api/items/${item.id}/also-liked`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.data && Array.isArray(json.data)) setAlsoLikedItems(json.data);
-      })
-      .catch(() => setAlsoLikedItems([]))
-      .finally(() => setAlsoLikedLoading(false));
-  }, [item.id]);
+  const { data: alsoLikedItems = [], isLoading: alsoLikedLoading } = useQuery({
+    queryKey: ['items', item.id, 'also-liked'],
+    queryFn: async (): Promise<AlsoLikedItem[]> => {
+      const res = await fetch(`/api/items/${item.id}/also-liked`);
+      const json = await res.json();
+      return json.data && Array.isArray(json.data) ? json.data : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const categoryName = item.lists.categories?.name ?? null;
   const meta = (item.metadata || {}) as Record<string, string | number>;
@@ -602,6 +570,8 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             <CommentSection
               itemId={item.id}
               onCommentAdded={onCommentsUpdate}
+              onOpenCommentForm={() => setCommentFormOpen(true)}
+              refreshTrigger={commentRefreshTrigger}
             />
           </section>
 
@@ -611,8 +581,8 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           </div>
         </div>
 
-        {/* ——— Quick Action Bar (وقتی اسکرول شده) ——— */}
-        {heroCollapsed && (
+        {/* ——— Quick Action Bar (وقتی اسکرول شده) ——— وقتی شیت کامنت باز است مخفی تا تداخل نداشته باشد */}
+        {heroCollapsed && !commentFormOpen && (
           <div className="fixed bottom-20 left-4 right-4 z-30 flex items-center gap-2 p-2 rounded-2xl bg-white/95 backdrop-blur shadow-lg border border-gray-200">
             <div className="flex-shrink-0">
               <ItemSaveButton itemId={item.id} />
@@ -642,8 +612,8 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           </div>
         )}
 
-        {/* ——— Sticky CTA نظر (همیشه وقتی اسکرول نشده یا بار پایین نیست) ——— */}
-        {!heroCollapsed && (
+        {/* ——— Sticky CTA نظر ——— وقتی شیت کامنت باز است مخفی تا تداخل نداشته باشد */}
+        {!heroCollapsed && !commentFormOpen && (
           <button
             type="button"
             onClick={() => setCommentFormOpen(true)}
@@ -661,6 +631,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
         itemId={item.id}
         onSubmit={() => {
           onCommentsUpdate();
+          setCommentRefreshTrigger((t) => t + 1);
           setCommentFormOpen(false);
         }}
       />

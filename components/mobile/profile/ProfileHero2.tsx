@@ -3,11 +3,9 @@
 import { useState } from 'react';
 import { Edit2, Camera, LogOut } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import CuratorBadge from '@/components/shared/CuratorBadge';
-import CuratorScoreBar from '@/components/shared/CuratorScoreBar';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
+import { getLevelByScore, getNextLevelByScore, pointsToNextLevel } from '@/lib/curator';
 import { VIBE_AVATARS, isUserEliteLevel } from '@/lib/vibe-avatars';
-import EliteAvatarFrame from '@/components/shared/EliteAvatarFrame';
 import EditProfileSheet2 from './EditProfileSheet2';
 
 export interface CreatorStats {
@@ -44,6 +42,11 @@ interface ProfileHero2Props {
   onUpdate: () => void;
 }
 
+function formatStat(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+
 export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -76,66 +79,36 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
     user.avatarType === 'UPLOADED' && user.avatarStatus === 'APPROVED' && user.image;
   const isElite = isUserEliteLevel(levelKey);
 
+  const displayUsername = (user.username && user.username !== 'null') ? user.username : (user.email?.includes('@') ? user.email.split('@')[0] : 'user');
+
+  const currentTier = getLevelByScore(curatorScore);
+  const nextTier = getNextLevelByScore(curatorScore);
+  const toNext = user.curatorPointsToNext ?? pointsToNextLevel(curatorScore);
+  const nextLabel = user.curatorNextLevelLabel ?? nextTier?.short ?? null;
+  const rangeMin = currentTier.min;
+  const rangeMax = nextTier?.min ?? rangeMin + 100;
+  const progressPercent = nextTier
+    ? Math.min(100, ((curatorScore - rangeMin) / (rangeMax - rangeMin)) * 100)
+    : 100;
+
   return (
     <>
-      <div className="relative rounded-[20px] overflow-hidden bg-gradient-to-b from-[#7C3AED] via-[#8B5CF6] to-[#9333EA] pb-8 -mx-4">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(255,255,255,0.15),transparent)]" />
-        <div className="relative z-10 px-4 pt-8">
-          {/* Avatar 110px + glow (+ Elite frame if level 5+) */}
-          <div className="flex flex-col items-center justify-center mb-4">
-            {isElite ? (
-              <EliteAvatarFrame size={110} className="mb-1">
-                <div className="relative group">
-                  <div
-                    className={`absolute -inset-1.5 rounded-full bg-white/30 blur-md ${levelConfig.glowClass} transition-shadow`}
-                  />
-                  <div className="relative w-[110px] h-[110px] rounded-full border-4 border-white/90 overflow-hidden bg-white shadow-xl">
-                    {showVibeAvatar ? (
-                      <div
-                        className={`w-full h-full flex items-center justify-center text-5xl ${vibeAvatar!.bgClass}`}
-                      >
-                        {vibeAvatar!.emoji}
-                      </div>
-                    ) : showUploadedAvatar ? (
-                      <ImageWithFallback
-                        src={user.image!}
-                        alt={user.name || user.email || 'Avatar'}
-                        className="object-cover w-full h-full min-w-[110px] min-h-[110px]"
-                        fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                        fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-3xl font-bold flex items-center justify-center"
-                      />
-                    ) : user.image ? (
-                      <ImageWithFallback
-                        src={user.image}
-                        alt={user.name || user.email || 'Avatar'}
-                        className="object-cover w-full h-full min-w-[110px] min-h-[110px]"
-                        fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                        fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-3xl font-bold flex items-center justify-center"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-3xl font-bold">
-                        {(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setShowEditSheet(true)}
-                    className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity border-2 border-[#7C3AED]"
-                    aria-label="تغییر آواتار"
-                  >
-                    <Camera className="w-4 h-4 text-[#7C3AED]" />
-                  </button>
-                </div>
-              </EliteAvatarFrame>
-            ) : (
+      {/* Hero: gradient only top 260px, then white */}
+      <div className="relative -mx-4">
+        <div
+          className="h-[260px] w-full rounded-b-2xl"
+          style={{
+            background: 'linear-gradient(135deg, #7C5CFF 0%, #8B5CF6 50%, #9333EA 100%)',
+          }}
+        />
+        <div className="absolute inset-x-0 top-0 z-10 px-4 pt-6 pb-8">
+          {/* Avatar: 96px, simple ring */}
+          <div className="flex flex-col items-center">
             <div className="relative group">
-              <div
-                className={`absolute -inset-1.5 rounded-full bg-white/30 blur-md ${levelConfig.glowClass} transition-shadow`}
-              />
-              <div className="relative w-[110px] h-[110px] rounded-full border-4 border-white/90 overflow-hidden bg-white shadow-xl">
+              <div className="w-[96px] h-[96px] rounded-full border-2 border-white/90 overflow-hidden bg-white shadow-sm">
                 {showVibeAvatar ? (
                   <div
-                    className={`w-full h-full flex items-center justify-center text-5xl ${vibeAvatar!.bgClass}`}
+                    className={`w-full h-full flex items-center justify-center text-4xl ${vibeAvatar!.bgClass}`}
                   >
                     {vibeAvatar!.emoji}
                   </div>
@@ -143,121 +116,51 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                   <ImageWithFallback
                     src={user.image!}
                     alt={user.name || user.email || 'Avatar'}
-                    className="object-cover w-full h-full min-w-[110px] min-h-[110px]"
+                    className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-3xl font-bold flex items-center justify-center"
+                    fallbackClassName="w-full h-full bg-gray-100 text-gray-500 text-2xl font-semibold flex items-center justify-center"
                   />
                 ) : user.image ? (
                   <ImageWithFallback
                     src={user.image}
                     alt={user.name || user.email || 'Avatar'}
-                    className="object-cover w-full h-full min-w-[110px] min-h-[110px]"
+                    className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-3xl font-bold flex items-center justify-center"
+                    fallbackClassName="w-full h-full bg-gray-100 text-gray-500 text-2xl font-semibold flex items-center justify-center"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-3xl font-bold">
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 text-2xl font-semibold">
                     {(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                   </div>
                 )}
               </div>
               <button
                 onClick={() => setShowEditSheet(true)}
-                className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity border-2 border-[#7C3AED]"
+                className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200"
                 aria-label="تغییر آواتار"
               >
-                <Camera className="w-4 h-4 text-[#7C3AED]" />
+                <Camera className="w-3.5 h-3.5 text-gray-600" />
               </button>
             </div>
-            )}
             {isElite && user.showBadge !== false && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-200 text-xs font-medium border border-amber-400/40">
-                Elite Curator
-              </span>
+              <span className="mt-1.5 text-[10px] font-medium text-white/90">Elite Curator</span>
             )}
+            <h1 className="mt-2 text-lg font-bold text-white">
+              {user.name || 'کاربر بدون نام'}
+            </h1>
+            <p className="text-white/80 text-sm">@{displayUsername}</p>
           </div>
+        </div>
+      </div>
 
-          <h1 className="text-xl font-bold text-white text-center mb-0.5">
-            {user.name || 'کاربر بدون نام'}
-          </h1>
-          <p className="text-white/80 text-sm text-center mb-1">@{user.username || 'user'}</p>
-          {user.bio && (
-            <p className="text-white/90 text-sm text-center max-w-md mx-auto mb-3 line-clamp-2">
-              {user.bio}
-            </p>
-          )}
-
-          {/* Curator Badge */}
-          <div className="flex justify-center mb-3">
-            <CuratorBadge
-              level={levelKey}
-              size="large"
-              showIcon
-              showLabel
-              glow
-              className="bg-white/20 backdrop-blur-sm text-white border border-white/30"
-            />
-          </div>
-
-          {/* Expertise chips */}
-          {expertise.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2 mb-4">
-              {expertise.slice(0, 4).map((e) => (
-                <span
-                  key={e.slug}
-                  className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white/95 text-xs"
-                >
-                  {e.icon} {e.name}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Creator Stats - horizontal scroll */}
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1">
-            <div className="flex-shrink-0 w-[100px] rounded-2xl bg-white/15 backdrop-blur-sm p-3 text-center">
-              <p className="text-white text-lg font-bold">{creatorStats.viralListsCount}</p>
-              <p className="text-white/80 text-xs">لیست وایرال</p>
-            </div>
-            <div className="flex-shrink-0 w-[100px] rounded-2xl bg-white/15 backdrop-blur-sm p-3 text-center">
-              <p className="text-white text-lg font-bold">
-                {creatorStats.totalLikesReceived >= 1000
-                  ? (creatorStats.totalLikesReceived / 1000).toFixed(1) + 'k'
-                  : creatorStats.totalLikesReceived}
-              </p>
-              <p className="text-white/80 text-xs">لایک دریافت‌شده</p>
-            </div>
-            <div className="flex-shrink-0 w-[100px] rounded-2xl bg-white/15 backdrop-blur-sm p-3 text-center">
-              <p className="text-white text-lg font-bold">
-                {creatorStats.profileViews >= 1000
-                  ? (creatorStats.profileViews / 1000).toFixed(1) + 'k'
-                  : creatorStats.profileViews}
-              </p>
-              <p className="text-white/80 text-xs">بازدید</p>
-            </div>
-            <div className="flex-shrink-0 w-[100px] rounded-2xl bg-white/15 backdrop-blur-sm p-3 text-center">
-              <p className="text-white text-lg font-bold">{creatorStats.popularListsCount}</p>
-              <p className="text-white/80 text-xs">لیست محبوب</p>
-            </div>
-          </div>
-
-          {/* Curator Score bar */}
-          <div className="mb-4">
-            <CuratorScoreBar
-              score={curatorScore}
-              level={levelKey}
-              nextLevelLabel={user.curatorNextLevelLabel}
-              pointsToNext={user.curatorPointsToNext}
-              animated
-              className="!bg-white/15 !rounded-2xl"
-            />
-          </div>
-
+      {/* Content on white: spacing 8/16/24 */}
+      <div className="px-4 -mt-2 relative z-20">
+        <div className="bg-white rounded-t-2xl shadow-sm border border-gray-100/80 border-b-0 pt-6 pb-4 px-4">
           {/* Actions */}
-          <div className="flex justify-center gap-3">
+          <div className="flex justify-center gap-2 mb-6">
             <button
               onClick={() => setShowEditSheet(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white rounded-[20px] shadow-md hover:shadow-lg transition-all text-[#7C3AED] font-medium text-sm"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-medium text-sm hover:opacity-90 transition-opacity"
             >
               <Edit2 className="w-4 h-4" />
               ویرایش پروفایل
@@ -265,10 +168,69 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2.5 text-red-400 bg-white/20 rounded-[20px] hover:bg-white/30 transition-all disabled:opacity-50"
+              className="p-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              aria-label="خروج"
             >
               <LogOut className="w-5 h-5" />
             </button>
+          </div>
+
+          {/* Expertise chips: minimal */}
+          {expertise.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1.5 mb-4">
+              {expertise.slice(0, 4).map((e) => (
+                <span
+                  key={e.slug}
+                  className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 text-xs"
+                >
+                  {e.icon} {e.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Stats: single horizontal row, no cards */}
+          <div className="grid grid-cols-4 gap-2 mb-5">
+            <div className="text-center py-2">
+              <p className="text-base font-bold text-gray-900">{creatorStats.popularListsCount}</p>
+              <p className="text-xs text-gray-500">لیست محبوب</p>
+            </div>
+            <div className="text-center py-2">
+              <p className="text-base font-bold text-gray-900">{formatStat(creatorStats.profileViews)}</p>
+              <p className="text-xs text-gray-500">بازدید</p>
+            </div>
+            <div className="text-center py-2">
+              <p className="text-base font-bold text-gray-900">{formatStat(creatorStats.totalLikesReceived)}</p>
+              <p className="text-xs text-gray-500">لایک</p>
+            </div>
+            <div className="text-center py-2">
+              <p className="text-base font-bold text-gray-900">{creatorStats.viralListsCount}</p>
+              <p className="text-xs text-gray-500">وایرال</p>
+            </div>
+          </div>
+
+          {/* Level: compact progress */}
+          <div className="rounded-xl bg-gray-50 border border-gray-100 p-3">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-xs font-medium text-gray-600">
+                سطح {currentTier.short}
+              </span>
+              <span className="text-xs font-bold text-gray-800">{curatorScore}</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            {nextLabel != null && toNext != null && toNext > 0 && (
+              <p className="text-[11px] text-gray-500 mt-1.5">
+                {toNext} امتیاز تا {nextLabel}
+              </p>
+            )}
+            {nextTier === null && (
+              <p className="text-[11px] text-gray-500 mt-1.5">بالاترین سطح</p>
+            )}
           </div>
         </div>
       </div>

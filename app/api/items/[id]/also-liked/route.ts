@@ -56,6 +56,10 @@ async function getAlsoLikedForItem(currentItemId: string) {
         listId: { in: listIdsWithOverlap },
         id: { not: currentItemId },
         lists: { isActive: true },
+        OR: [
+          { item_moderation: null },
+          { item_moderation: { status: { notIn: ['HIDDEN', 'UNDER_REVIEW'] } } },
+        ],
       },
       select: {
         id: true,

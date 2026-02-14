@@ -43,8 +43,12 @@ export default function BaseCommentForm({
         body: JSON.stringify({ content: content.trim() }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
+      if (!response.ok) {
+        const message = data?.error || (response.status === 429 ? 'لطفاً چند دقیقه صبر کنید و دوباره امتحان کنید.' : 'خطا در ثبت کامنت');
+        throw new Error(message);
+      }
       if (!data.success) {
         throw new Error(data.error || 'خطا در ثبت کامنت');
       }
@@ -59,10 +63,11 @@ export default function BaseCommentForm({
     }
   };
 
+  // شیت حداکثر تا ۱۰۰px بالای پایین صفحه — تا دکمه ارسال و ناو همیشه دیده شوند
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title={title} maxHeight="80vh">
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={title} maxHeight="calc(100vh - 100px)">
       <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4">
               {error}
@@ -99,7 +104,8 @@ export default function BaseCommentForm({
           </div>
         </div>
 
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4 sticky bottom-0">
+        {/* نوار دکمه‌ها — شیت با maxHeight calc(100vh - 100px) تمام می‌شود پس دکمه‌ها بالای ناو می‌مانند */}
+        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
           <div className="flex gap-3">
             <button
               type="button"

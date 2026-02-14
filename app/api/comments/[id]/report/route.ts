@@ -20,8 +20,13 @@ export async function POST(
 
     const userId = session.user.id;
     const { id: commentId } = await params;
-    const body = await request.json();
-    const { reason } = body;
+    let body: { reason?: unknown } = {};
+    try {
+      body = await request.json();
+    } catch {
+      // بدنه خالی یا نامعتبر؛ دلیل اختیاری است
+    }
+    const reason = typeof body.reason === 'string' ? body.reason.trim() || undefined : undefined;
 
     // Check if comment exists
     const comment = await prisma.comments.findUnique({
@@ -56,7 +61,7 @@ export async function POST(
       data: {
         commentId,
         userId,
-        reason: reason || 'بدون دلیل',
+        reason: reason ?? 'محتوا نامناسب',
       },
     });
 
@@ -64,10 +69,10 @@ export async function POST(
       success: true,
       message: 'کامنت با موفقیت گزارش شد',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error reporting comment:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }

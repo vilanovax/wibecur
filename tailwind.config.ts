@@ -9,6 +9,16 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      keyframes: {
+        savedPulse: {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.02)' },
+          '100%': { transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'saved-pulse': 'savedPulse 0.4s ease-out',
+      },
       fontFamily: {
         sans: ['Vazirmatn', 'Vazir', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         vazir: ['Vazirmatn', 'Vazir', 'sans-serif'],

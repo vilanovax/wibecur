@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
                   name: true,
                   username: true,
                   image: true,
+                  curatorLevel: true,
                 },
               },
               _count: {

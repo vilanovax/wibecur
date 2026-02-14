@@ -7,3 +7,25 @@ const PLACEHOLDER_SVG =
 
 export const PLACEHOLDER_COVER = PLACEHOLDER_SVG;
 export const PLACEHOLDER_COVER_SMALL = PLACEHOLDER_SVG;
+
+/** عدد صحیح از رشته (برای seed ثابت و متنوع) */
+function hashSeed(str: string): string {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  return String(Math.abs(h) || 1);
+}
+
+/**
+ * URL تصویر رندوم (Picsum) با seed ثابت — هر کارت یک تصویر متفاوت ولی همیشه همان.
+ * در صورت مسدود بودن Picsum، از fallback خاکستری استفاده کن.
+ */
+export function getRandomPlaceholderUrl(
+  seed: string,
+  size: 'cover' | 'square' = 'cover'
+): string {
+  const s = hashSeed(seed || 'default');
+  const [w, h] = size === 'square' ? [400, 400] : [400, 200];
+  return `https://picsum.photos/seed/${s}/${w}/${h}`;
+}

@@ -39,12 +39,14 @@ export default async function ItemDetailPage({
       _count: {
         select: { comments: true },
       },
+      item_moderation: { select: { status: true } },
       lists: {
         select: {
           id: true,
           title: true,
           slug: true,
           saveCount: true,
+          userId: true,
           categories: {
             select: {
               id: true,
@@ -68,9 +70,28 @@ export default async function ItemDetailPage({
     notFound();
   }
 
+  // HIDDEN: فقط ادمین یا سازنده لیست ببینند
+  const session = await auth();
+  const viewerId = session?.user?.email
+    ? (await dbQuery(() =>
+        prisma.users.findUnique({
+          where: { email: session.user.email! },
+          select: { id: true },
+        })
+      ))?.id ?? null
+    : null;
+  const isAdmin = session?.user?.role === 'ADMIN';
+  const isCreator = item.lists?.userId && viewerId === item.lists.userId;
+  if (
+    item.item_moderation?.status === 'HIDDEN' &&
+    !isAdmin &&
+    !isCreator
+  ) {
+    notFound();
+  }
+
   // Check if user has liked this item
   let isLiked = false;
-  const session = await auth();
   if (session?.user?.email) {
     const userEmail = session.user.email;
     const user = await dbQuery(() =>

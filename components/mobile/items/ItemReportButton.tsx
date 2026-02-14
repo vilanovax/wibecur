@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Flag } from 'lucide-react';
-import ItemReportModal from './ItemReportModal';
 import { useSession } from 'next-auth/react';
+
+const ItemReportModal = dynamic(() => import('./ItemReportModal'), { ssr: false });
 
 interface ItemReportButtonProps {
   itemId: string;
@@ -33,12 +35,14 @@ export default function ItemReportButton({ itemId }: ItemReportButtonProps) {
         <Flag className="w-4 h-4 text-gray-600 hover:text-red-600" />
       </button>
 
-      <ItemReportModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        itemId={itemId}
-        onReportSuccess={handleReportSuccess}
-      />
+      {isModalOpen && (
+        <ItemReportModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          itemId={itemId}
+          onReportSuccess={handleReportSuccess}
+        />
+      )}
     </>
   );
 }

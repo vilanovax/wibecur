@@ -19,6 +19,7 @@
     "migrate:images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/migrate-all-images-to-liara.ts --dry-run",
     "migrate:images:batch": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/migrate-all-images-to-liara.ts --batch=10",
     "replace:unsplash": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-unsplash-with-picsum-and-upload.ts",
+    "replace:unsplash:all": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-unsplash-with-picsum-and-upload.ts --all",
     "replace:unsplash:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-unsplash-with-picsum-and-upload.ts --dry-run",
     "set-liara-config": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/set-liara-config.ts"
   },

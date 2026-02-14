@@ -88,7 +88,7 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
   return (
     <div className="space-y-0">
       <ProfileHero2 user={user} onUpdate={fetchProfile} />
-      <ProfileAchievementsSection />
+      <ProfileAchievementsSection creatorStats={user.creatorStats} />
       <Link
         href="/leaderboard"
         className="mx-4 mt-4 flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-amber-200 bg-amber-50/80 text-amber-800 font-medium text-sm"

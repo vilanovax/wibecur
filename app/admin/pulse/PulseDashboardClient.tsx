@@ -15,6 +15,7 @@ import {
   Clock,
 } from 'lucide-react';
 import AdminLiveFeed from '@/components/admin/pulse/AdminLiveFeed';
+import type { TrendingItem } from '@/types/items';
 
 interface OverviewData {
   todaySaves: number;
@@ -23,15 +24,6 @@ interface OverviewData {
   newUsersToday: number;
   todayInteractions: number;
   dailyStats: { date: string; saves: number; comments: number; newUsers: number }[];
-}
-
-interface TrendingItem {
-  id: string;
-  title: string;
-  image: string | null;
-  rating: number | null;
-  saveCount: number;
-  trendScore: number;
 }
 
 interface CategoryGrowth {

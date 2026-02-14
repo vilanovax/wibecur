@@ -18,75 +18,50 @@ export async function GET(
     const session = await auth();
     const userId = session?.user ? session.user.id : null;
 
-    // Get all bad words for filtering (with try-catch in case table is empty)
-    let badWordsList: string[] = [];
-    try {
-      const badWords = await dbQuery(() =>
-        prisma.bad_words.findMany({
-          select: { word: true },
+    // موازی‌سازی کوئری‌های مستقل
+    const [badWordsResult, comments, item, globalSettings] = await Promise.all([
+      dbQuery(() =>
+        prisma.bad_words.findMany({ select: { word: true } })
+      ).then((badWords) => badWords.map((bw) => bw.word.toLowerCase())).catch(() => [] as string[]),
+      dbQuery(() =>
+        prisma.comments.findMany({
+          where: {
+            itemId,
+            deletedAt: null,
+            OR: [
+              { isApproved: true },
+              { isFiltered: true },
+            ],
+          },
+          include: {
+            users: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                username: true,
+                image: true,
+                avatarType: true,
+                avatarId: true,
+                avatarStatus: true,
+              },
+            },
+            _count: { select: { comment_likes: true } },
+          },
+          orderBy: sort === 'popular' ? { likeCount: 'desc' } : { createdAt: 'desc' },
         })
-      );
-      badWordsList = badWords.map((bw) => bw.word.toLowerCase());
-    } catch (err) {
-      // Table might not exist yet or be empty, continue without filtering
-      console.warn('Could not fetch bad words:', err);
-    }
-
-    // Fetch comments (include filtered comments too, but exclude rejected ones and deleted ones)
-    // Show approved comments and filtered comments (which may or may not be approved yet)
-    const comments = await dbQuery(() =>
-      prisma.comments.findMany({
-        where: {
-          itemId,
-          deletedAt: null, // Exclude soft-deleted comments
-          OR: [
-            { isApproved: true }, // Show approved comments
-            { isFiltered: true }, // Show filtered comments (even if not approved yet)
-          ],
-        },
-        include: {
-          users: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
+      ),
+      dbQuery(() =>
+        prisma.items.findUnique({
+          where: { id: itemId },
+          include: {
+            lists: { include: { categories: true } },
           },
-          _count: {
-            select: {
-              comment_likes: true,
-            },
-          },
-        },
-        orderBy:
-          sort === 'popular'
-            ? { likeCount: 'desc' }
-            : { createdAt: 'desc' },
-      })
-    );
-
-    // Get item with its category to check comments enabled status
-    const item = await dbQuery(() =>
-      prisma.items.findUnique({
-        where: { id: itemId },
-        include: {
-          lists: {
-            include: {
-              categories: true,
-            },
-          },
-        },
-      })
-    );
-
-    // Get global comment settings
-    let globalSettings: Awaited<ReturnType<typeof prisma.comment_settings.findFirst>> = null;
-    try {
-      globalSettings = await dbQuery(() => prisma.comment_settings.findFirst());
-    } catch (err) {
-      console.warn('Could not fetch comment settings:', err);
-    }
+        })
+      ),
+      dbQuery(() => prisma.comment_settings.findFirst()).catch(() => null),
+    ]);
+    const badWordsList = badWordsResult;
 
     // Check if comments are enabled
     const category = item?.lists?.categories;
@@ -137,7 +112,11 @@ export async function GET(
           id: comment.users.id,
           name: comment.users.name || 'کاربر ناشناس',
           email: comment.users.email,
+          username: comment.users.username ?? null,
           image: comment.users.image,
+          avatarType: comment.users.avatarType ?? 'DEFAULT',
+          avatarId: comment.users.avatarId ?? null,
+          avatarStatus: comment.users.avatarStatus ?? null,
         },
         isLiked: likedCommentIds.has(comment.id),
         canDelete: userId === comment.userId, // User can delete their own comments

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Check } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
@@ -23,37 +24,30 @@ interface SpotlightCreator {
   viralCount: number;
 }
 
+interface PersonalizedSpotlightResponse {
+  creator: SpotlightCreator | null;
+  explanation: string | null;
+}
+
+async function fetchPersonalizedSpotlight(): Promise<PersonalizedSpotlightResponse> {
+  const res = await fetch('/api/spotlight/personalized');
+  const json = await res.json();
+  if (json.success && json.data?.creator)
+    return { creator: json.data.creator, explanation: json.data.explanation ?? null };
+  return { creator: null, explanation: null };
+}
+
 export default function PersonalizedSpotlightSection() {
   const { data: session, status } = useSession();
-  const [creator, setCreator] = useState<SpotlightCreator | null>(null);
-  const [explanation, setExplanation] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['spotlight', 'personalized'],
+    queryFn: fetchPersonalizedSpotlight,
+    enabled: status === 'authenticated',
+    staleTime: 10 * 60 * 1000,
+  });
+  const creator = data?.creator ?? null;
+  const explanation = data?.explanation ?? null;
   const [following, setFollowing] = useState(false);
-
-  useEffect(() => {
-    if (status !== 'authenticated') {
-      setLoading(false);
-      setCreator(null);
-      return;
-    }
-    setLoading(true);
-    fetch('/api/spotlight/personalized')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data?.creator) {
-          setCreator(json.data.creator);
-          setExplanation(json.data.explanation ?? null);
-        } else {
-          setCreator(null);
-          setExplanation(null);
-        }
-      })
-      .catch(() => {
-        setCreator(null);
-        setExplanation(null);
-      })
-      .finally(() => setLoading(false));
-  }, [status]);
 
   const handleFollow = async () => {
     if (!creator || following) return;

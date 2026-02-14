@@ -51,6 +51,9 @@ export async function GET(request: NextRequest) {
           slug: list.slug,
           category: list.categories,
           createdAt: list.createdAt,
+          likeCount: list.likeCount ?? 0,
+          viewCount: list.viewCount ?? 0,
+          saveCount: list.saveCount ?? 0,
         });
       });
     }
@@ -79,15 +82,19 @@ export async function GET(request: NextRequest) {
       });
 
       bookmarks.forEach((bookmark) => {
+        const list = bookmark.lists;
         activities.push({
           id: `bookmark-${bookmark.id}`,
           type: 'bookmark',
-          title: bookmark.lists.title,
-          description: bookmark.lists.description || '',
-          image: bookmark.lists.coverImage,
-          slug: bookmark.lists.slug,
-          category: bookmark.lists.categories,
+          title: list.title,
+          description: list.description || '',
+          image: list.coverImage,
+          slug: list.slug,
+          category: list.categories,
           createdAt: bookmark.createdAt,
+          likeCount: list.likeCount ?? 0,
+          viewCount: list.viewCount ?? 0,
+          saveCount: list.saveCount ?? 0,
         });
       });
     }
@@ -120,6 +127,7 @@ export async function GET(request: NextRequest) {
       });
 
       itemLikes.forEach((like) => {
+        const list = like.items.lists;
         activities.push({
           id: `item-like-${like.id}`,
           type: 'item_like',
@@ -127,9 +135,12 @@ export async function GET(request: NextRequest) {
           description: like.items.description || '',
           image: like.items.imageUrl,
           itemId: like.items.id,
-          slug: like.items.lists.slug, // لیست مربوطه
-          category: like.items.lists.categories,
+          slug: list.slug,
+          category: list.categories,
           createdAt: like.createdAt,
+          likeCount: list.likeCount ?? 0,
+          viewCount: list.viewCount ?? 0,
+          saveCount: list.saveCount ?? 0,
         });
       });
     }

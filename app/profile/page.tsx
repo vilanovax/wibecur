@@ -10,7 +10,7 @@ export default async function ProfilePage() {
   const userId = session.user.id;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f5f3ff] to-gray-50/80 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <Header title="پروفایل" />
       <main className="px-4 py-5">
         <ProfilePageClient userId={userId} />

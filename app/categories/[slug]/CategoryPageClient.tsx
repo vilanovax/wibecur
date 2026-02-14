@@ -3,15 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-
-interface TrendingItem {
-  id: string;
-  title: string;
-  image: string | null;
-  rating: number | null;
-  saveCount: number;
-  trendScore: number;
-}
+import type { TrendingItem } from '@/types/items';
 
 interface CategoryPageClientProps {
   slug: string;

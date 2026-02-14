@@ -3,8 +3,15 @@ import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import {
+  VALID_REPORT_REASONS,
+  getUserTrustWeight,
+  calcReportWeight,
+  applyReportWeight,
+} from '@/lib/moderation';
+import { createNotification } from '@/lib/utils/notifications';
 
-// POST /api/items/[id]/report - ریپورت کردن یک آیتم
+// POST /api/items/[id]/report - ریپورت کردن یک آیتم + Auto Flagging (Moderation Engine v1)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -12,7 +19,7 @@ export async function POST(
   try {
     const session = await auth();
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
@@ -21,29 +28,36 @@ export async function POST(
 
     const userId = session.user.id;
     const { id: itemId } = await params;
-    const body = await request.json();
-    const { reason, description } = body;
+    let body: { reason?: unknown; description?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'بدنه درخواست نامعتبر است' },
+        { status: 400 }
+      );
+    }
 
-    // Validate reason
-    const validReasons = ['spelling_error', 'incorrect_info', 'offensive', 'other'];
-    if (!reason || !validReasons.includes(reason)) {
+    const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+    const description = typeof body.description === 'string' ? body.description.trim() : undefined;
+
+    if (!reason || !VALID_REPORT_REASONS.includes(reason as (typeof VALID_REPORT_REASONS)[number])) {
       return NextResponse.json(
         { success: false, error: 'دلیل ریپورت نامعتبر است' },
         { status: 400 }
       );
     }
 
-    // Validate description for 'other' reason
-    if (reason === 'other' && (!description || !description.trim())) {
+    if (reason === 'other' && !description) {
       return NextResponse.json(
         { success: false, error: 'لطفاً توضیحات را وارد کنید' },
         { status: 400 }
       );
     }
 
-    // Check if item exists
     const item = await prisma.items.findUnique({
       where: { id: itemId },
+      include: { lists: { select: { userId: true } } },
     });
 
     if (!item) {
@@ -53,8 +67,6 @@ export async function POST(
       );
     }
 
-    // Check if user has already reported this item
-    // Check if model exists first
     if (!prisma.item_reports) {
       console.error('prisma.item_reports is undefined. Prisma Client may need regeneration.');
       return NextResponse.json(
@@ -65,11 +77,7 @@ export async function POST(
 
     const existingReport = await dbQuery(() =>
       prisma.item_reports.findFirst({
-        where: {
-          itemId,
-          userId,
-          resolved: false,
-        },
+        where: { itemId, userId, resolved: false },
       })
     );
 
@@ -80,26 +88,55 @@ export async function POST(
       );
     }
 
-    // Create report
+    // وزن گزارش = اعتماد کاربر × نوع گزارش
+    const reporter = await dbQuery(() =>
+      prisma.users.findUnique({
+        where: { id: userId },
+        select: { curatorLevel: true },
+      })
+    );
+    const userTrust = getUserTrustWeight(reporter?.curatorLevel ?? null);
+    const weight = calcReportWeight(reason, userTrust);
+
+    // ثبت گزارش با وزن لحظه ثبت
     await dbQuery(() =>
       prisma.item_reports.create({
         data: {
           itemId,
           userId,
           reason,
-          description: reason === 'other' ? description.trim() : null,
+          description: reason === 'other' ? (description ?? '').trim() || null : null,
+          weightSnapshot: weight,
         },
       })
     );
+
+    // به‌روزرسانی Flag Score و وضعیت (Soft Flag / Under Review / Hidden)
+    const newStatus = await applyReportWeight(itemId, weight);
+
+    // اگر آیتم مخفی شد، به سازنده نوتیفیکیشن بفرست
+    if (newStatus === 'HIDDEN' && item.lists?.userId) {
+      try {
+        await createNotification(
+          item.lists.userId,
+          'item_under_review',
+          'نیاز به بررسی',
+          'یکی از آیتم‌های شما نیاز به بررسی دارد.',
+          `/items/${itemId}`
+        );
+      } catch (e) {
+        console.error('Failed to send moderation notification:', e);
+      }
+    }
 
     return NextResponse.json({
       success: true,
       message: 'ریپورت با موفقیت ثبت شد',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error reporting item:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }

@@ -1,20 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-
-interface FeaturedList {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  coverImage: string;
-  badge?: 'trending' | 'new' | 'featured';
-  likes: number;
-  saves: number;
-  itemCount: number;
-}
+import { useHomeData } from '@/contexts/HomeDataContext';
 
 const badgeLabels: Record<string, string> = {
   trending: '🔥 ترند هفته',
@@ -23,34 +11,11 @@ const badgeLabels: Record<string, string> = {
 };
 
 export default function FeaturedCard() {
-  const [list, setList] = useState<FeaturedList | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useHomeData();
+  const list = data?.featured ?? null;
 
-  useEffect(() => {
-    fetch('/api/lists/home')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data?.featured) {
-          const f = json.data.featured;
-          setList({
-            id: f.id,
-            title: f.title,
-            slug: f.slug,
-            description: f.description || '',
-            coverImage: f.coverImage ?? '',
-            badge: f.badge || 'featured',
-            likes: f.likes ?? 0,
-            saves: f.saveCount ?? 0,
-            itemCount: f.itemCount ?? 0,
-          });
-        }
-      })
-      .catch(() => setList(null))
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading || !list) {
-    if (!loading && !list) return null;
+  if (isLoading || !list) {
+    if (!isLoading && !list) return null;
     return (
       <div className="px-4 mb-6">
         <div className="rounded-2xl h-48 bg-gray-200 animate-pulse" />
@@ -79,7 +44,7 @@ export default function FeaturedCard() {
             <h3 className="text-white text-lg font-bold drop-shadow-lg">{list.title}</h3>
             <p className="text-white/90 text-sm mt-0.5 drop-shadow line-clamp-1">{list.description}</p>
             <p className="text-white/90 text-xs mt-1">
-              ⭐ {list.saves} &nbsp; • &nbsp; {list.itemCount} آیتم
+              ⭐ {list.saveCount} &nbsp; • &nbsp; {list.itemCount} آیتم
             </p>
           </div>
         </div>

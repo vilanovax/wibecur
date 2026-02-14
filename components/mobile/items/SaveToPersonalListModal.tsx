@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Check, Globe, Lock } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 interface PersonalList {
   id: string;
@@ -12,6 +13,7 @@ interface PersonalList {
   description: string | null;
   coverImage: string | null;
   isPublic: boolean;
+  slug?: string;
   _count: {
     items: number;
   };
@@ -30,39 +32,24 @@ export default function SaveToPersonalListModal({
 }: SaveToPersonalListModalProps) {
   const [lists, setLists] = useState<PersonalList[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPublic, setShowPublic] = useState(true);
   const [maxPersonalLists, setMaxPersonalLists] = useState(3);
   const [privateListsCount, setPrivateListsCount] = useState(0);
   const [isAdding, setIsAdding] = useState<string | null>(null);
+  const [addedListIds, setAddedListIds] = useState<Set<string>>(new Set());
+  const [savedListIds, setSavedListIds] = useState<Set<string>>(new Set());
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
 
-  // Load showPublic state from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('saveToList_showPublic');
-      if (saved !== null) {
-        setShowPublic(saved === 'true');
-      }
-    }
-  }, []);
-
-  // Save showPublic state to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('saveToList_showPublic', String(showPublic));
-    }
-  }, [showPublic]);
-
-  // Fetch lists and settings when modal opens
+  // Fetch lists and saved status when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchLists();
       fetchSettings();
+      fetchSavedStatus();
     }
-  }, [isOpen]);
+  }, [isOpen, itemId]);
 
   const fetchSettings = async () => {
     try {
@@ -78,6 +65,19 @@ export default function SaveToPersonalListModal({
     }
   };
 
+  const fetchSavedStatus = async () => {
+    try {
+      const res = await fetch(`/api/items/${itemId}/saved-status`);
+      if (res.ok) {
+        const data = await res.json();
+        const ids = (data.lists || []).map((l: { id: string }) => l.id);
+        setSavedListIds(new Set(ids));
+      }
+    } catch (error) {
+      console.error('Error fetching saved status:', error);
+    }
+  };
+
   const fetchLists = async () => {
     setIsLoading(true);
     try {
@@ -86,7 +86,6 @@ export default function SaveToPersonalListModal({
         const data = await res.json();
         if (data.success) {
           setLists(data.data || []);
-          // Count private lists
           const privateCount = (data.data || []).filter(
             (list: PersonalList) => !list.isPublic
           ).length;
@@ -105,16 +104,14 @@ export default function SaveToPersonalListModal({
     }
   };
 
-  const handleAddToList = async (listId: string) => {
-    setIsAdding(listId);
+  const handleAddToList = async (list: PersonalList) => {
+    if (savedListIds.has(list.id) || addedListIds.has(list.id)) return;
+    setIsAdding(list.id);
     try {
-      const res = await fetch(`/api/user/lists/${listId}/items`, {
+      const res = await fetch(`/api/user/lists/${list.id}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          itemId,
-          order: 0,
-        }),
+        body: JSON.stringify({ itemId, order: 0 }),
       });
 
       const data = await res.json();
@@ -123,17 +120,12 @@ export default function SaveToPersonalListModal({
         throw new Error(data.error || 'خطا در افزودن آیتم');
       }
 
-      setToastMessage('آیتم با موفقیت به لیست اضافه شد');
+      setAddedListIds((prev) => new Set(prev).add(list.id));
+      setToastMessage(`به «${list.title}» اضافه شد ✨`);
       setToastType('success');
       setShowToast(true);
 
-      // Refresh lists to update item counts
       fetchLists();
-
-      // Close modal after a short delay
-      setTimeout(() => {
-        onClose();
-      }, 1500);
     } catch (error: any) {
       setToastMessage(error.message || 'خطا در افزودن آیتم');
       setToastType('error');
@@ -143,141 +135,159 @@ export default function SaveToPersonalListModal({
     }
   };
 
-  const handleToggleShowPublic = () => {
-    setShowPublic(!showPublic);
-  };
-
   const handleCreateListSuccess = () => {
-    // Refresh lists after creating new list
     fetchLists();
+    fetchSavedStatus();
     setIsCreateListOpen(false);
   };
 
-  // Filter lists based on showPublic toggle
-  const filteredLists = showPublic
-    ? lists
-    : lists.filter((list) => !list.isPublic);
-
   const canCreateNewList = privateListsCount < maxPersonalLists;
+  const isAlreadyInList = (listId: string) =>
+    savedListIds.has(listId) || addedListIds.has(listId);
 
   return (
     <>
-      <BottomSheet isOpen={isOpen} onClose={onClose} title="ذخیره در لیست شخصی">
+      <BottomSheet
+        isOpen={isOpen}
+        onClose={onClose}
+        title="افزودن به لیست"
+        subtitle="این آیتم رو کجا ذخیره کنیم؟"
+      >
         <div className="flex flex-col h-full">
-          {/* Toggle and Create Button */}
-          <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 space-y-3">
-            {/* Toggle for showing public lists */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showPublic}
-                  onChange={handleToggleShowPublic}
-                  className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
-                />
-                <span>نمایش لیست‌های عمومی</span>
-              </label>
-            </div>
-
-            {/* Create New List Button */}
-            {canCreateNewList && (
-              <button
-                onClick={() => setIsCreateListOpen(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium"
-              >
-                <Plus className="w-5 h-5" />
-                ایجاد لیست جدید
-              </button>
-            )}
-
-            {!canCreateNewList && (
-              <div className="text-sm text-gray-500 text-center py-2">
-                شما به حداکثر تعداد لیست‌های خصوصی ({maxPersonalLists}) رسیده‌اید
-              </div>
-            )}
-          </div>
-
-          {/* Lists List */}
+          {/* لیست‌های من */}
           <div className="flex-1 overflow-y-auto min-h-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : filteredLists.length === 0 ? (
+            ) : lists.length === 0 ? (
               <div className="text-center py-12 px-6">
                 <div className="text-5xl mb-3">📋</div>
-                <p className="text-gray-600 mb-2">
-                  {showPublic
-                    ? 'لیست شخصی وجود ندارد'
-                    : 'لیست خصوصی وجود ندارد'}
-                </p>
+                <p className="text-gray-600 mb-2">لیست شخصی وجود ندارد</p>
                 {canCreateNewList && (
-                  <p className="text-sm text-gray-500">
-                    روی دکمه &quot;ایجاد لیست جدید&quot; کلیک کنید
+                  <p className="text-sm text-gray-500 mb-4">
+                    با ساخت لیست جدید شروع کنید
                   </p>
                 )}
               </div>
             ) : (
-              <div className="p-4 space-y-2">
-                {filteredLists.map((list) => (
-                  <button
-                    key={list.id}
-                    onClick={() => handleAddToList(list.id)}
-                    disabled={isAdding === list.id}
-                    className="w-full p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-right disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-gray-900 truncate">
-                            {list.title}
-                          </h3>
-                          {list.isPublic && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              <div className="px-4 pb-4 space-y-2">
+                <p className="text-sm font-medium text-gray-500 px-1 pb-2">
+                  لیست‌های من
+                </p>
+                {lists.map((list) => {
+                  const already = isAlreadyInList(list.id);
+                  const justAdded = addedListIds.has(list.id);
+                  const adding = isAdding === list.id;
+
+                  return (
+                    <div
+                      key={list.id}
+                      className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 transition-colors"
+                    >
+                      {/* کاور کوچک */}
+                      <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                        <ImageWithFallback
+                          src={list.coverImage ?? ''}
+                          alt={list.title}
+                          className="w-full h-full object-cover"
+                          fallbackIcon="📋"
+                          fallbackClassName="w-full h-full flex items-center justify-center text-xl"
+                          placeholderSize="cover"
+                        />
+                      </div>
+
+                      {/* عنوان و آمار */}
+                      <div className="flex-1 min-w-0 text-right">
+                        <h3 className="font-bold text-gray-900 truncate">
+                          {list.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {list._count.items} آیتم
+                          <span className="mx-1">•</span>
+                          {list.isPublic ? (
+                            <span className="inline-flex items-center gap-0.5">
+                              <Globe className="w-3 h-3" />
                               عمومی
                             </span>
-                          )}
-                          {!list.isPublic && (
-                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5">
+                              <Lock className="w-3 h-3" />
                               خصوصی
                             </span>
                           )}
-                        </div>
-                        {list.description && (
-                          <p className="text-sm text-gray-600 line-clamp-1 mb-1">
-                            {list.description}
-                          </p>
-                        )}
-                        <p className="text-xs text-gray-500">
-                          {list._count.items} آیتم
                         </p>
                       </div>
-                      <div className="mr-3">
-                        {isAdding === list.id ? (
-                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Plus className="w-5 h-5 text-primary" />
+
+                      {/* دکمه افزودن / افزوده شد / قبلاً اضافه شده */}
+                      <div className="flex-shrink-0">
+                        {already ? (
+                          <div
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium ${
+                              justAdded
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            {justAdded ? (
+                              <>
+                                <Check className="w-4 h-4" />
+                                <span>افزوده شد</span>
+                              </>
+                            ) : (
+                              <>
+                                <Check className="w-4 h-4" />
+                                <span>قبلاً اضافه شده</span>
+                              </>
+                            )}
                           </div>
+                        ) : (
+                          <button
+                            onClick={() => handleAddToList(list)}
+                            disabled={adding}
+                            className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-dark active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+                            aria-label={`افزودن به ${list.title}`}
+                          >
+                            {adding ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <Plus className="w-5 h-5" />
+                            )}
+                          </button>
                         )}
                       </div>
                     </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
+            )}
+          </div>
+
+          {/* CTA ساخت لیست جدید — جدا و شفاف */}
+          <div className="flex-shrink-0 px-4 py-4 border-t border-gray-100">
+            {canCreateNewList ? (
+              <button
+                onClick={() => setIsCreateListOpen(true)}
+                className="w-full flex items-center justify-center gap-2 py-3 text-primary border-2 border-primary rounded-xl font-medium hover:bg-primary/5 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                ساخت لیست جدید
+              </button>
+            ) : (
+              <p className="text-center text-sm text-gray-500 py-2">
+                به حداکثر تعداد لیست‌های خصوصی ({maxPersonalLists}) رسیده‌اید
+              </p>
             )}
           </div>
         </div>
       </BottomSheet>
 
-      {/* Create List Form Modal */}
       <CreateListForm
         isOpen={isCreateListOpen}
         onClose={() => setIsCreateListOpen(false)}
         onSuccess={handleCreateListSuccess}
       />
 
-      {/* Toast Notification */}
       {showToast && (
         <Toast
           message={toastMessage}
@@ -289,4 +299,3 @@ export default function SaveToPersonalListModal({
     </>
   );
 }
-

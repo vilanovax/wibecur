@@ -1,20 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { MessageSquare, Loader2, ChevronDown, ThumbsUp, ThumbsDown, Flag } from 'lucide-react';
+import { MessageSquare, Loader2, ChevronDown, ThumbsUp, ThumbsDown, Flag, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
-import Image from 'next/image';
 import Toast from '@/components/shared/Toast';
 import CuratorBadge from '@/components/shared/CuratorBadge';
+import CommentAvatar from '@/components/shared/CommentAvatar';
 
-const REACTIONS = [
-  { type: 'love', label: 'عاشقانه', emoji: '💕' },
-  { type: 'cry', label: 'احساسی', emoji: '😭' },
+const REACTION_PILLS = [
+  { type: 'meh', label: 'معمولی', emoji: '😊' },
   { type: 'night', label: 'مناسب شب', emoji: '🌙' },
-  { type: 'meh', label: 'معمولی', emoji: '😐' },
-  { type: 'suggestion', label: 'پیشنهاد', emoji: '➕' },
+  { type: 'cry', label: 'احساسی', emoji: '😭' },
+  { type: 'love', label: 'عاشقانه', emoji: '💖' },
 ] as const;
 
 const INITIAL_VISIBLE = 5;
@@ -23,8 +23,12 @@ interface CommentUser {
   id: string;
   name: string | null;
   email: string;
+  username?: string | null;
   image: string | null;
   curatorLevel?: string | null;
+  avatarType?: string | null;
+  avatarId?: string | null;
+  avatarStatus?: string | null;
 }
 
 interface Reply {
@@ -66,57 +70,39 @@ interface VibeCommentSectionProps {
   onOpenSuggestItem?: () => void;
 }
 
-function ReactionChips({
+function ReactionPills({
   counts,
   userReaction,
   onSelect,
-  onSuggestionSelect,
   isLoading,
 }: {
   counts: Record<string, number>;
   userReaction: string | null;
   onSelect: (type: string) => void;
-  onSuggestionSelect: () => void;
   isLoading: boolean;
 }) {
-  const totalReactions = REACTIONS.filter((r) => r.type !== 'suggestion').reduce(
-    (sum, r) => sum + (counts[r.type] ?? 0),
-    0
-  );
-  const allZero = totalReactions === 0;
-
   return (
-    <div className="flex flex-wrap gap-3">
-      {REACTIONS.map((r) => {
+    <div className="flex flex-wrap gap-2">
+      {REACTION_PILLS.map((r) => {
         const count = counts[r.type] ?? 0;
         const isSelected = userReaction === r.type;
-        const isZero = count === 0 && r.type !== 'suggestion';
-        const handleClick = () => {
-          if (r.type === 'suggestion') onSuggestionSelect();
-          else onSelect(r.type);
-        };
         return (
           <button
             key={r.type}
             type="button"
-            onClick={handleClick}
+            onClick={() => onSelect(r.type)}
             disabled={isLoading}
             className={`
-              inline-flex flex-col items-center gap-1 px-4 py-3 rounded-xl text-sm font-medium
-              transition-all duration-200 min-w-[58px] active:scale-[0.98]
+              inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-sm font-medium
+              transition-all duration-200 active:scale-[0.97] hover:scale-105
               ${isSelected
-                ? 'bg-primary text-white shadow-lg ring-2 ring-primary/30'
-                : r.type === 'suggestion'
-                  ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60'
-                  : allZero && isZero
-                    ? 'bg-gray-50 text-gray-400 opacity-70 hover:opacity-100 hover:bg-gray-100'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
+                ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-gray-800'
               }
             `}
           >
-            <span className="text-lg">{r.emoji}</span>
-            <span className="text-[10px] text-current/90">{r.label}</span>
-            {r.type !== 'suggestion' && <span className="text-xs font-semibold">{count}</span>}
+            <span className="text-base">{r.emoji}</span>
+            <span className="tabular-nums">{count}</span>
           </button>
         );
       })}
@@ -173,6 +159,7 @@ function VibeCommentItem({
   const isApproved = comment.suggestionStatus === 'approved';
 
   const isListOwner = comment.users.id === listUserId;
+  const profileUrl = comment.users.username ? `/u/${encodeURIComponent(comment.users.username)}` : null;
 
   return (
     <div
@@ -184,29 +171,41 @@ function VibeCommentItem({
       }`}
     >
       <div className="flex-shrink-0">
-        {comment.users.image ? (
-          <div className="relative w-10 h-10 rounded-full overflow-hidden">
-            <Image
+        {profileUrl ? (
+          <Link href={profileUrl} className="block">
+            <CommentAvatar
               src={comment.users.image}
-              alt={comment.users.name || ''}
-              fill
-              className="object-cover"
-              unoptimized
+              name={comment.users.name}
+              email={comment.users.email}
+              size={40}
+              avatarType={comment.users.avatarType ?? undefined}
+              avatarId={comment.users.avatarId ?? null}
+              avatarStatus={comment.users.avatarStatus ?? null}
             />
-          </div>
+          </Link>
         ) : (
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-medium text-sm">
-              {(comment.users.name || comment.users.email || '?').charAt(0).toUpperCase()}
-            </span>
-          </div>
+          <CommentAvatar
+            src={comment.users.image}
+            name={comment.users.name}
+            email={comment.users.email}
+            size={40}
+            avatarType={comment.users.avatarType ?? undefined}
+            avatarId={comment.users.avatarId ?? null}
+            avatarStatus={comment.users.avatarStatus ?? null}
+          />
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <span className={`font-medium text-gray-900 text-sm ${isFirst ? 'font-semibold' : ''}`}>
-            {comment.users.name || comment.users.email?.split('@')[0] || 'کاربر'}
-          </span>
+          {profileUrl ? (
+            <Link href={profileUrl} className={`font-medium text-gray-900 text-sm hover:text-primary transition-colors ${isFirst ? 'font-semibold' : ''}`}>
+              {comment.users.name || comment.users.email?.split('@')[0] || 'کاربر'}
+            </Link>
+          ) : (
+            <span className={`font-medium text-gray-900 text-sm ${isFirst ? 'font-semibold' : ''}`}>
+              {comment.users.name || comment.users.email?.split('@')[0] || 'کاربر'}
+            </span>
+          )}
           {comment.users.curatorLevel && (
             <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
           )}
@@ -279,15 +278,43 @@ function VibeCommentItem({
         {/* Replies */}
         {comment.replies && comment.replies.length > 0 && (
           <div className="mt-3 pr-4 border-r-2 border-gray-100 space-y-2">
-            {comment.replies.map((reply) => (
+            {comment.replies.map((reply) => {
+              const replyProfileUrl = reply.users.username ? `/u/${encodeURIComponent(reply.users.username)}` : null;
+              return (
               <div key={reply.id} className="flex gap-2">
-                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium flex-shrink-0">
-                  {(reply.users.name || reply.users.email || '?').charAt(0).toUpperCase()}
-                </div>
+                {replyProfileUrl ? (
+                  <Link href={replyProfileUrl} className="block flex-shrink-0">
+                    <CommentAvatar
+                      src={reply.users.image}
+                      name={reply.users.name}
+                      email={reply.users.email}
+                      size={28}
+                      avatarType={reply.users.avatarType ?? undefined}
+                      avatarId={reply.users.avatarId ?? null}
+                      avatarStatus={reply.users.avatarStatus ?? null}
+                    />
+                  </Link>
+                ) : (
+                  <CommentAvatar
+                    src={reply.users.image}
+                    name={reply.users.name}
+                    email={reply.users.email}
+                    size={28}
+                    avatarType={reply.users.avatarType ?? undefined}
+                    avatarId={reply.users.avatarId ?? null}
+                    avatarStatus={reply.users.avatarStatus ?? null}
+                  />
+                )}
                 <div>
-                  <span className="font-medium text-gray-800 text-xs">
-                    {reply.users.name || reply.users.email?.split('@')[0]}
-                  </span>
+                  {replyProfileUrl ? (
+                    <Link href={replyProfileUrl} className="font-medium text-gray-800 text-xs hover:text-primary">
+                      {reply.users.name || reply.users.email?.split('@')[0]}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-gray-800 text-xs">
+                      {reply.users.name || reply.users.email?.split('@')[0]}
+                    </span>
+                  )}
                   {reply.users.curatorLevel && (
                     <span className="mr-1.5 inline-flex align-middle">
                       <CuratorBadge level={reply.users.curatorLevel} size="small" glow={false} />
@@ -297,7 +324,8 @@ function VibeCommentItem({
                   <span className="text-gray-600 text-xs">{reply.content}</span>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
@@ -306,12 +334,10 @@ function VibeCommentItem({
 }
 
 function getPlaceholders(categorySlug?: string | null) {
-  const itemLabel = getItemLabel(categorySlug);
-  const itemWithY = itemLabel.endsWith('ی') ? itemLabel : `${itemLabel}ی`;
   return {
-    collapsed: `نظرت درباره این لیست چیه؟ یا ${itemWithY} جا مونده؟`,
-    comment: 'نظرت درباره این لیست چیه؟',
-    suggestion: `اسم ${itemLabel} پیشنهادی‌تو بنویس...`,
+    collapsed: 'نظرت درباره این لیست چیه؟ پیشنهادی داری؟',
+    comment: 'نظرت درباره این لیست چیه؟ پیشنهادی داری؟',
+    suggestion: 'اسم آیتم پیشنهادی‌تو بنویس...',
   };
 }
 
@@ -322,6 +348,9 @@ function VibeCommentInput({
   isSuggestionMode,
   isLoading,
   categorySlug,
+  userImage,
+  userName,
+  userEmail,
 }: {
   isExpanded: boolean;
   onExpand: () => void;
@@ -329,6 +358,9 @@ function VibeCommentInput({
   isSuggestionMode: boolean;
   isLoading: boolean;
   categorySlug?: string | null;
+  userImage?: string | null;
+  userName?: string | null;
+  userEmail?: string | null;
 }) {
   const [content, setContent] = useState('');
   const placeholders = getPlaceholders(categorySlug);
@@ -346,37 +378,41 @@ function VibeCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full py-4 px-5 rounded-xl border-2 border-gray-200 bg-gray-50/80 text-gray-600 text-sm text-right hover:border-primary/50 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+        className="w-full h-[52px] flex items-center gap-3 px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
       >
-        {placeholders.collapsed}
+        <CommentAvatar src={userImage ?? null} name={userName ?? null} email={userEmail ?? null} size={36} />
+        <span className="flex-1 text-right">{placeholders.collapsed}</span>
       </button>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder={isSuggestionMode ? placeholders.suggestion : placeholders.comment}
-        className="w-full px-5 py-4 rounded-xl border-2 border-gray-200 bg-gray-50/50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-colors"
-        rows={3}
-        maxLength={500}
-      />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+      <div className="flex items-end gap-3 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <CommentAvatar src={userImage ?? null} name={userName ?? null} email={userEmail ?? null} size={36} />
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder={isSuggestionMode ? placeholders.suggestion : placeholders.comment}
+          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none"
+          rows={2}
+          maxLength={500}
+        />
+        <button
+          type="submit"
+          disabled={!content.trim() || isLoading}
+          className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7C3AED] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
       <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={() => setContent('')}
-          className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+          className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
         >
           انصراف
-        </button>
-        <button
-          type="submit"
-          disabled={!content.trim() || isLoading}
-          className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50"
-        >
-          {isLoading ? 'در حال ارسال...' : 'ارسال'}
         </button>
       </div>
     </form>
@@ -555,31 +591,38 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
 
   const displayedComments = comments.slice(0, visibleCount);
   const hasMore = comments.length > INITIAL_VISIBLE && visibleCount < comments.length;
+  const commentCount = comments.filter((c) => c.type === 'comment').length;
+  const suggestionCount = comments.filter((c) => c.type === 'suggestion').length;
+
+  const hasComments = comments.length > 0;
 
   return (
-    <section className="mt-16 pt-10 border-t border-gray-200">
-      <h2 className="text-[1.125rem] font-semibold text-gray-800 mb-1">
-        💬 نظرات و پیشنهادها ({comments.length})
+    <section className="mt-12 pt-6 border-t border-gray-200">
+      {/* Engagement Header */}
+      <h2 className="text-lg font-bold text-gray-900 mb-1">
+        💬 گفتگو درباره این لیست
       </h2>
-      <p className="text-sm text-gray-500 mb-6">این لیست حالتو عوض کرد؟</p>
+      <p className="text-sm text-gray-500 mb-3">
+        {commentCount} نظر · {suggestionCount} پیشنهاد
+      </p>
 
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        {/* Reaction Row — مرکز توجه اول */}
+      {/* Spacing: Header→Reaction 12, Reaction→Input 12, Input→Suggest 16, Suggest→Empty 20 */}
+      <div className="space-y-3">
+        {/* Inline Reaction Pills — compact */}
         {status === 'authenticated' && (
-          <div className="mb-5">
-            <ReactionChips
+          <div>
+            <ReactionPills
               counts={counts}
               userReaction={userReaction}
               onSelect={handleReaction}
-              onSuggestionSelect={handleSuggestionClick}
               isLoading={reactionsLoading}
             />
           </div>
         )}
 
-        {/* Input — وزن بصری بالا */}
+        {/* Comment Input — Primary */}
         {commentsEnabled && status === 'authenticated' && (
-          <div className="mb-8 mt-1">
+          <div>
             <VibeCommentInput
               isExpanded={isFormExpanded}
               onExpand={() => setIsFormExpanded(true)}
@@ -587,8 +630,25 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
               isSuggestionMode={isSuggestionMode}
               isLoading={submitLoading}
               categorySlug={categorySlug}
+              userImage={session?.user?.image}
+              userName={session?.user?.name}
+              userEmail={session?.user?.email}
             />
           </div>
+        )}
+
+        {/* Suggest Item — فقط بعد از اولین کامنت، Secondary CTA — Input→Suggest 16px */}
+        {status === 'authenticated' && onOpenSuggestItem && hasComments && (
+          <button
+            type="button"
+            onClick={handleSuggestionClick}
+            className="w-full flex items-center gap-3 py-2 px-3 mt-1 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 hover:bg-[#7C3AED]/8 transition-colors text-right"
+          >
+            <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#7C3AED]/15 flex items-center justify-center text-[#7C3AED] text-xs font-bold">
+              +
+            </span>
+            <span className="text-sm font-medium text-gray-700">پیشنهاد آیتم جدید</span>
+          </button>
         )}
 
         {!commentsEnabled && (
@@ -596,42 +656,54 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
         )}
 
         {status === 'unauthenticated' && (
-          <p className="text-sm text-gray-500 py-4">برای ثبت نظر وارد شو ✨</p>
+          <p className="text-sm text-gray-500 py-4">برای ثبت نظر وارد شو</p>
         )}
 
-        {/* Soft divider + Sort */}
+        {/* Sort + Comments */}
         {!isLoading && comments.length > 0 && (
-          <div className="border-t border-gray-100 pt-5 mt-2">
+          <div className="pt-4 border-t border-gray-100">
             <div className="flex gap-2 mb-4">
-            <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
-            <button
-              type="button"
-              onClick={() => setSortBy('helpful')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'helpful' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              مفیدترین
-            </button>
-            <button
-              type="button"
-              onClick={() => setSortBy('newest')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'newest' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              جدیدترین
-            </button>
+              <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
+              <button
+                type="button"
+                onClick={() => setSortBy('helpful')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'helpful' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                مفیدترین
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortBy('newest')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                جدیدترین
+              </button>
             </div>
           </div>
         )}
 
-        {/* Comments List */}
+        {/* Comments List / Empty State — Suggest→Empty 20px */}
+        <div className={hasComments ? 'mt-2' : 'mt-1'}>
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" />
           </div>
         ) : comments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 px-4">
-            <MessageSquare className="w-14 h-14 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-700 font-medium text-base">هنوز نظری ثبت نشده</p>
-            <p className="text-sm text-gray-500 mt-1.5">اولین نفری باش که چیزی می‌نویسه ✨</p>
+          <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-gray-50/80 border border-gray-100">
+            <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
+              <MessageSquare className="w-7 h-7 text-gray-400" />
+            </div>
+            <p className="text-gray-900 font-semibold">هنوز گفتگویی شروع نشده</p>
+            <p className="text-sm text-gray-500 mt-0.5">اولین نفری باش که نظر می‌ده</p>
+            {status === 'authenticated' && commentsEnabled && (
+              <button
+                type="button"
+                onClick={() => setIsFormExpanded(true)}
+                className="mt-4 h-[44px] px-6 rounded-lg bg-gradient-to-r from-[#7C3AED] to-[#8B5CF6]/90 text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
+              >
+                شروع گفتگو
+              </button>
+            )}
           </div>
         ) : (
           <>
@@ -662,6 +734,7 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
             )}
           </>
         )}
+        </div>
       </div>
 
       {toast && (

@@ -1,31 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import type { TrendingItem } from '@/types/items';
 
-interface TrendingItem {
-  id: string;
-  title: string;
-  image: string | null;
-  rating: number | null;
-  saveCount: number;
-  trendScore: number;
+async function fetchTrending(): Promise<TrendingItem[]> {
+  const res = await fetch('/api/items/trending');
+  const json = await res.json();
+  return json.data && Array.isArray(json.data) ? json.data : [];
 }
 
 export default function GlobalTrendingSection() {
-  const [items, setItems] = useState<TrendingItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/items/trending')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.data && Array.isArray(json.data)) setItems(json.data);
-      })
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: ['items', 'trending'],
+    queryFn: fetchTrending,
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (loading && items.length === 0) {
     return (
@@ -70,6 +61,7 @@ export default function GlobalTrendingSection() {
                   className="w-full h-full object-cover"
                   fallbackIcon="📋"
                   fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                  placeholderSize="square"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-200 text-3xl opacity-50">

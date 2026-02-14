@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Star } from 'lucide-react';
+import { Star, Check } from 'lucide-react';
 
 interface BookmarkButtonProps {
   listId: string;
@@ -95,7 +95,7 @@ export default function BookmarkButton({
   const buttonSizeClasses = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    lg: 'px-5 py-3 text-sm h-12',
   };
 
   if (variant === 'icon') {
@@ -121,21 +121,21 @@ export default function BookmarkButton({
     <button
       onClick={handleToggle}
       disabled={isLoading}
-      className={`${buttonSizeClasses[size]} flex items-center gap-2 rounded-xl font-medium transition-all disabled:opacity-50 ${
+      className={`${buttonSizeClasses[size]} flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 w-full ${
         isBookmarked
-          ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-300'
-          : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-primary'
+          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 animate-saved-pulse'
+          : 'bg-gradient-to-r from-violet-50 to-purple-50 text-violet-800 border border-violet-200/50 hover:from-violet-100 hover:to-purple-100 active:scale-[0.99] shadow-sm'
       }`}
       aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
     >
-      <Star
-        className={`${sizeClasses[size === 'lg' ? 'md' : 'sm']} ${
-          isBookmarked ? 'fill-current text-yellow-600' : ''
-        }`}
-      />
+      {isBookmarked ? (
+        <Check className={`${sizeClasses[size === 'lg' ? 'md' : 'sm']}`} />
+      ) : (
+        <Star className={sizeClasses[size === 'lg' ? 'md' : 'sm']} />
+      )}
       <span>{isBookmarked ? labelSaved : labelSave}</span>
       {bookmarkCount > 0 && (
-        <span className="text-xs opacity-70">({bookmarkCount})</span>
+        <span className="text-xs opacity-80">({bookmarkCount})</span>
       )}
     </button>
   );

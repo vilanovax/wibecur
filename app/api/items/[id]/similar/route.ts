@@ -45,6 +45,10 @@ export async function GET(
             categoryId,
             isActive: true,
           },
+          OR: [
+            { item_moderation: null },
+            { item_moderation: { status: { notIn: ['HIDDEN', 'UNDER_REVIEW'] } } },
+          ],
         },
         select: {
           id: true,

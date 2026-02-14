@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface BottomSheetProps {
@@ -59,7 +60,7 @@ export default function BottomSheet({
 
   if (!isOpen) return null;
 
-  return (
+  const sheet = (
     <div
       ref={backdropRef}
       className="fixed inset-0 z-[60] flex items-end justify-center"
@@ -68,7 +69,7 @@ export default function BottomSheet({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-200" />
 
-      {/* Sheet */}
+      {/* Sheet — تا پایین صفحه می‌آید و روی نوار دکمه‌ها و ناو باز می‌شود (z بالاتر) */}
       <div
         ref={sheetRef}
         className="relative bg-white rounded-t-3xl shadow-2xl w-full max-w-2xl animate-in slide-in-from-bottom duration-300 flex flex-col"
@@ -108,4 +109,10 @@ export default function BottomSheet({
       </div>
     </div>
   );
+
+  // رندر داخل body تا از stacking context والد (مثلاً z-10) خارج شود و روی نوار دکمه‌ها (z-30) قرار بگیرد
+  if (typeof document !== 'undefined') {
+    return createPortal(sheet, document.body);
+  }
+  return sheet;
 }

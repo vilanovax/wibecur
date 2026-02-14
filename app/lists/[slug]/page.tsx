@@ -42,16 +42,21 @@ export default async function ListDetailPage({
       viewCount: true,
       categoryId: true,
       tags: true,
+      badge: true,
       isPublic: true,
       isActive: true,
       categories: true,
-      users: { select: { name: true, role: true } },
+      users: { select: { id: true, name: true, image: true, username: true, curatorLevel: true, role: true, viralListsCount: true, totalLikesReceived: true } },
       items: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, imageUrl: true, rating: true, metadata: true } },
-      _count: { select: { items: true } },
+      _count: { select: { items: true, list_comments: true } },
     },
   });
 
   if (!list || !list.isActive || !list.isPublic) notFound();
+
+  const followersCount = list.userId
+    ? await prisma.follows.count({ where: { followingId: list.userId } })
+    : 0;
   if (list.users?.role === 'USER') notFound();
 
   prisma.lists
@@ -67,10 +72,15 @@ export default async function ListDetailPage({
   };
   const relatedLists = await getTopSimilarLists(prisma, currentForSimilarity);
 
+  const listWithCreator = {
+    ...list,
+    creatorFollowersCount: followersCount,
+  };
+
   return (
     <>
       <ListDetailClient
-        list={JSON.parse(JSON.stringify(list))}
+        list={JSON.parse(JSON.stringify(listWithCreator))}
         relatedLists={JSON.parse(JSON.stringify(relatedLists))}
         openSuggestFromQuery={openSuggest}
       />

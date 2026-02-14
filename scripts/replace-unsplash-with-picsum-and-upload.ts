@@ -6,7 +6,8 @@
  * - اگر Liara نباشد: مسیر placeholder محلی (/images/placeholder-cover.svg) در DB ذخیره می‌شود.
  *
  * استفاده:
- *   npm run replace:unsplash
+ *   npm run replace:unsplash          → فقط رکوردهای بدون تصویر یا با آدرس غیر Liara
+ *   npm run replace:unsplash -- --all → همه لیست‌ها و آیتم‌ها را با تصویر رندوم به‌روز کن
  *   npm run replace:unsplash:dry-run
  */
 
@@ -18,6 +19,8 @@ import { getObjectStorageConfig, isOurStorageUrl } from '../lib/object-storage-c
 const prisma = new PrismaClient();
 
 const DRY_RUN = process.argv.includes('--dry-run');
+/** با --all همه رکوردها (حتی با تصویر Liara) با تصویر رندوم جایگزین می‌شوند */
+const FORCE_ALL = process.argv.includes('--all');
 
 /** آیا این URL باید جایگزین شود؟ (هر چیزی غیر از آبجکت استوریج خودمان) */
 function shouldReplaceImageUrl(url: string | null): boolean {
@@ -45,14 +48,25 @@ function getPicsumUrl(recordId: string, folder: 'covers' | 'items' | 'avatars'):
   return `https://picsum.photos/seed/${seed}/400/200`;
 }
 
+/** جایگزین: placehold.co برای وقتی Picsum 403 می‌دهد (رنگ بر اساس id) */
+function getPlaceholdUrl(recordId: string, folder: 'covers' | 'items' | 'avatars'): string {
+  const hash = recordId.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
+  const hue = Math.abs(hash % 360);
+  const bg = encodeURIComponent(`hsl(${hue}, 45%, 75%)`);
+  if (folder === 'avatars') return `https://placehold.co/200x200/${bg}/png?text=+`;
+  if (folder === 'items') return `https://placehold.co/400x400/${bg}/png?text=+`;
+  return `https://placehold.co/400x200/${bg}/png?text=+`;
+}
 
-/** آپلود تصویر جایگزین: اول Picsum، در صورت خطا placeholder با sharp */
+/** آپلود تصویر جایگزین: اول Picsum، سپس placehold.co، در نهایت placeholder با sharp */
 async function uploadReplacementImage(
   recordId: string,
   folder: 'covers' | 'items' | 'avatars'
 ): Promise<string | null> {
-  const picsumUrl = getPicsumUrl(recordId, folder);
-  const uploaded = await uploadImageFromUrl(picsumUrl, folder === 'covers' ? 'covers' : folder === 'avatars' ? 'avatars' : 'items');
+  const folderName = folder === 'covers' ? 'covers' : folder === 'avatars' ? 'avatars' : 'items';
+  let uploaded = await uploadImageFromUrl(getPicsumUrl(recordId, folder), folderName);
+  if (uploaded) return uploaded;
+  uploaded = await uploadImageFromUrl(getPlaceholdUrl(recordId, folder), folderName);
   if (uploaded) return uploaded;
 
   const [w, h] = folder === 'avatars' ? [200, 200] : folder === 'items' ? [400, 400] : [400, 200];
@@ -61,7 +75,7 @@ async function uploadReplacementImage(
   })
     .png()
     .toBuffer();
-  return uploadImageBuffer(buffer, 'image/png', folder === 'covers' ? 'covers' : folder === 'avatars' ? 'avatars' : 'items');
+  return uploadImageBuffer(buffer, 'image/png', folderName);
 }
 
 /** وقتی Liara تنظیم نشده، از placeholder محلی استفاده می‌کنیم (بدون آپلود) */
@@ -70,8 +84,9 @@ const LOCAL_PLACEHOLDER_ITEM = '/images/placeholder-cover.svg';
 const LOCAL_PLACEHOLDER_AVATAR = '/images/placeholder-cover.svg';
 
 async function run() {
-  console.log('🔄 یکسان‌سازی تصاویر: فقط آبجکت استوریج (جایگزینی هر آدرس غیر از Liara)');
+  console.log(FORCE_ALL ? '🔄 به‌روزرسانی همه تصاویر با تصویر رندوم (لیست‌ها، آیتم‌ها، …)' : '🔄 یکسان‌سازی تصاویر: فقط آبجکت استوریج (جایگزینی هر آدرس غیر از Liara)');
   if (DRY_RUN) console.log('   [DRY-RUN] دیتابیس به‌روزرسانی نمی‌شود.\n');
+  if (FORCE_ALL) console.log('   [--all] همه رکوردها به‌روزرسانی می‌شوند.\n');
 
   const config = await getObjectStorageConfig();
   const useLocalPlaceholder = !config;
@@ -89,12 +104,12 @@ async function run() {
     return uploadReplacementImage(recordId, folder);
   }
 
-  // --- lists (coverImage): شامل لیست‌هایی که تصویر ندارند یا تصویرشان از استوریج نیست ---
+  // --- lists (coverImage) ---
   const lists = await prisma.lists.findMany({
     select: { id: true, title: true, coverImage: true },
   });
-  const listsToReplace = lists.filter((l) => needsDefaultOrReplace(l.coverImage));
-  console.log(`\n📋 lists: ${listsToReplace.length} از ${lists.length} بدون تصویر یا با آدرس غیر از استوریج`);
+  const listsToReplace = FORCE_ALL ? lists : lists.filter((l) => needsDefaultOrReplace(l.coverImage));
+  console.log(`\n📋 lists: ${listsToReplace.length} از ${lists.length}${FORCE_ALL ? ' (همه)' : ' بدون تصویر یا با آدرس غیر از استوریج'}`);
 
   for (const list of listsToReplace) {
     try {
@@ -122,12 +137,12 @@ async function run() {
     await new Promise((r) => setTimeout(r, 400));
   }
 
-  // --- items (imageUrl): شامل آیتم‌هایی که تصویر ندارند یا تصویرشان از استوریج نیست ---
+  // --- items (imageUrl) ---
   const items = await prisma.items.findMany({
     select: { id: true, title: true, imageUrl: true },
   });
-  const itemsToReplace = items.filter((i) => needsDefaultOrReplace(i.imageUrl));
-  console.log(`\n📦 items: ${itemsToReplace.length} از ${items.length} بدون تصویر یا با آدرس غیر از استوریج`);
+  const itemsToReplace = FORCE_ALL ? items : items.filter((i) => needsDefaultOrReplace(i.imageUrl));
+  console.log(`\n📦 items: ${itemsToReplace.length} از ${items.length}${FORCE_ALL ? ' (همه)' : ' بدون تصویر یا با آدرس غیر از استوریج'}`);
 
   for (const item of itemsToReplace) {
     try {
@@ -155,12 +170,12 @@ async function run() {
     await new Promise((r) => setTimeout(r, 400));
   }
 
-  // --- users (image): شامل کاربرانی که آواتار ندارند یا آدرس از استوریج نیست ---
+  // --- users (image) ---
   const users = await prisma.users.findMany({
     select: { id: true, name: true, image: true },
   });
-  const usersToReplace = users.filter((u) => needsDefaultOrReplace(u.image));
-  console.log(`\n👤 users: ${usersToReplace.length} از ${users.length} بدون تصویر یا با آدرس غیر از استوریج`);
+  const usersToReplace = FORCE_ALL ? users : users.filter((u) => needsDefaultOrReplace(u.image));
+  console.log(`\n👤 users: ${usersToReplace.length} از ${users.length}${FORCE_ALL ? ' (همه)' : ' بدون تصویر یا با آدرس غیر از استوریج'}`);
 
   for (const user of usersToReplace) {
     try {
@@ -192,8 +207,8 @@ async function run() {
   const suggestedItems = await prisma.suggested_items.findMany({
     select: { id: true, title: true, imageUrl: true },
   });
-  const suggestedItemsToReplace = suggestedItems.filter((i) => needsDefaultOrReplace(i.imageUrl));
-  console.log(`\n💡 suggested_items: ${suggestedItemsToReplace.length} از ${suggestedItems.length} بدون تصویر یا با آدرس غیر از استوریج`);
+  const suggestedItemsToReplace = FORCE_ALL ? suggestedItems : suggestedItems.filter((i) => needsDefaultOrReplace(i.imageUrl));
+  console.log(`\n💡 suggested_items: ${suggestedItemsToReplace.length} از ${suggestedItems.length}${FORCE_ALL ? ' (همه)' : ' بدون تصویر یا با آدرس غیر از استوریج'}`);
 
   for (const si of suggestedItemsToReplace) {
     try {
@@ -225,8 +240,8 @@ async function run() {
   const suggestedLists = await prisma.suggested_lists.findMany({
     select: { id: true, title: true, coverImage: true },
   });
-  const suggestedListsToReplace = suggestedLists.filter((l) => needsDefaultOrReplace(l.coverImage));
-  console.log(`\n💡 suggested_lists: ${suggestedListsToReplace.length} از ${suggestedLists.length} بدون تصویر یا با آدرس غیر از استوریج`);
+  const suggestedListsToReplace = FORCE_ALL ? suggestedLists : suggestedLists.filter((l) => needsDefaultOrReplace(l.coverImage));
+  console.log(`\n💡 suggested_lists: ${suggestedListsToReplace.length} از ${suggestedLists.length}${FORCE_ALL ? ' (همه)' : ' بدون تصویر یا با آدرس غیر از استوریج'}`);
 
   for (const sl of suggestedListsToReplace) {
     try {

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { UserPlus, Check, Share2, MoreVertical, Pencil, Flame } from 'lucide-react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import VibeCommentSection from '@/components/mobile/lists/VibeCommentSection';
 import SuggestItemSearch from '@/components/mobile/lists/SuggestItemSearch';
@@ -11,6 +12,7 @@ import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
+import type { CuratorLevelKey } from '@/lib/curator';
 
 type Item = {
   id: string;
@@ -29,8 +31,13 @@ type Category = {
 } | null;
 
 type User = {
+  id: string;
   name: string | null;
+  image: string | null;
+  username: string | null;
   curatorLevel?: string | null;
+  viralListsCount?: number;
+  totalLikesReceived?: number;
 } | null;
 
 type ListDetail = {
@@ -43,11 +50,19 @@ type ListDetail = {
   saveCount: number;
   itemCount: number;
   viewCount: number;
+  badge?: 'TRENDING' | 'NEW' | 'FEATURED' | null;
+  tags?: string[];
   categories: Category;
   items: Item[];
   users: User;
-  _count: { items: number };
+  creatorFollowersCount?: number;
+  _count: { items: number; list_comments?: number };
 };
+
+function formatCompact(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+  return n.toLocaleString('fa-IR');
+}
 
 type RelatedList = {
   id: string;
@@ -139,6 +154,7 @@ function GridItemCard({
           className="w-full h-full object-cover"
           fallbackIcon="📋"
           fallbackClassName="w-full h-full flex items-center justify-center text-3xl"
+          placeholderSize="square"
         />
         <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/30 text-white text-[10px] flex items-center justify-center font-medium">
           {index + 1}
@@ -239,9 +255,52 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
   }, [showGridHint]);
 
   const itemCount = list.itemCount ?? list._count?.items ?? list.items?.length ?? 0;
+  const commentCount = list._count?.list_comments ?? 0;
   const saveCount = list.saveCount ?? 0;
+  const viewCount = list.viewCount ?? 0;
+  const viralListsCount = list.users?.viralListsCount ?? 0;
+  const totalLikesReceived = list.users?.totalLikesReceived ?? 0;
+  const isViral = list.badge === 'TRENDING' || saveCount >= 100;
   const creatorName = list.users?.name || 'کاربر';
+  const creatorId = list.users?.id;
+  const creatorUsername = list.users?.username;
+  const creatorImage = list.users?.image;
+  const creatorLevel = (list.users?.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
+  const followersCount = list.creatorFollowersCount ?? 0;
   const isOwner = !!session?.user && list.userId === (session.user as { id?: string }).id;
+  const avgRating =
+    list.items?.length > 0
+      ? list.items.reduce((s, i) => s + (i.rating || 0), 0) / list.items.length
+      : 0;
+
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  useEffect(() => {
+    if (!creatorId || !session?.user?.id || creatorId === (session.user as { id?: string }).id) return;
+    fetch(`/api/follow/${creatorId}`)
+      .then((r) => r.json())
+      .then((d) => d?.data?.isFollowing && setIsFollowing(true))
+      .catch(() => {});
+  }, [creatorId, session?.user?.id]);
+
+  const handleFollowToggle = async () => {
+    if (!creatorId || !session?.user?.id) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        const res = await fetch(`/api/follow/${creatorId}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) setIsFollowing(false);
+      } else {
+        const res = await fetch(`/api/follow/${creatorId}`, { method: 'POST' });
+        const json = await res.json();
+        if (json.success) setIsFollowing(true);
+      }
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -270,10 +329,18 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
   const showLoginCTA = status === 'unauthenticated';
   const showStickyBar = stickyVisible && !isBookmarked;
 
+  const BADGE_LABELS: Record<string, string> = {
+    TRENDING: '🔥 ترند',
+    NEW: '✨ تازه',
+    FEATURED: '🏆 برگزیده',
+  };
+
+  const viralProgress = Math.min(100, (saveCount / 100) * 100);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24" dir="rtl">
-      {/* Hero: cover + back + star — reduced height, subtle bottom gradient */}
-      <div className="relative h-44 bg-gradient-to-br from-gray-200 to-gray-300 rounded-b-3xl overflow-hidden">
+      {/* Hero 3.0 — ارتفاع 220–240px */}
+      <div className="relative h-[230px] sm:h-[240px] bg-gradient-to-br from-gray-200 to-gray-300 rounded-b-3xl overflow-hidden">
         <ImageWithFallback
           src={list.coverImage ?? ''}
           alt={list.title}
@@ -281,8 +348,9 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           fallbackIcon={list.categories?.icon ?? '📋'}
           fallbackClassName="w-full h-full flex items-center justify-center text-6xl"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+        {/* بالا راست: Back, Share, More */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
           <button
             type="button"
             onClick={() => router.back()}
@@ -293,87 +361,236 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur">
-            <BookmarkButton
-              listId={list.id}
-              initialBookmarkCount={saveCount}
-              variant="icon"
-              size="md"
-            />
-          </div>
+          <button
+            type="button"
+            onClick={handleShare}
+            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-gray-700"
+            aria-label="اشتراک‌گذاری"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-gray-700"
+            aria-label="بیشتر"
+          >
+            <MoreVertical className="w-5 h-5" />
+          </button>
         </div>
-      </div>
-
-      <main className="px-4 -mt-2 relative z-10">
-        {/* Title block — strong hierarchy, clear vertical rhythm */}
-        <div ref={titleRef} className="pt-3">
-          <h1 className="text-[1.625rem] font-extrabold text-gray-900 mb-3 leading-tight">
+        {/* بالا چپ: Save + Viral Badge */}
+        <div className="absolute top-4 left-4 flex items-center gap-2">
+          {isViral && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-amber-500/90 text-white">
+              <Flame className="w-3.5 h-3.5" /> وایرال
+            </span>
+          )}
+          {session?.user && (
+            <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg">
+              <BookmarkButton listId={list.id} initialBookmarkCount={saveCount} variant="icon" size="md" />
+            </div>
+          )}
+        </div>
+        {/* Title Block */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-6">
+          <h1 ref={titleRef} className="text-[30px] font-bold text-white leading-tight drop-shadow-lg">
             {list.title}
           </h1>
-          <p className="text-gray-500 text-sm leading-relaxed line-clamp-2 mb-1">
+          <p className="text-white/80 mt-1.5 text-[14px] leading-relaxed line-clamp-2">
             {list.description?.trim() || DESCRIPTION_PLACEHOLDER}
           </p>
-        </div>
-
-        {/* Meta — single line, informational, low visual weight */}
-        <div className="text-xs text-gray-500 mb-4">
-          <span>⭐ {saveCount} &nbsp; • &nbsp; {itemCount} آیتم</span>
-          <span className="text-gray-400 mr-2">•</span>
-          <span className="text-gray-400">ساخته‌شده توسط {creatorName}</span>
-          {list.users?.curatorLevel && (
-            <span className="mr-2 inline-flex align-middle">
-              <CuratorBadge level={list.users.curatorLevel} size="small" glow={false} />
+          {list.badge && BADGE_LABELS[list.badge] && (
+            <span className="inline-flex mt-2 px-2.5 py-0.5 rounded-md text-xs font-medium bg-white/20 backdrop-blur text-white">
+              {BADGE_LABELS[list.badge]}
             </span>
           )}
           {list.categories && (
-            <>
-              <span className="text-gray-400 mx-1">•</span>
+            <Link
+              href={`/categories/${list.categories.slug}`}
+              className="inline-flex items-center gap-1 mt-2 mr-2 px-2.5 py-1 rounded-md text-xs font-medium bg-white/20 backdrop-blur text-white/95"
+            >
+              {list.categories.icon} {list.categories.name}
+            </Link>
+          )}
+        </div>
+      </div>
+
+      <main className="px-4 -mt-4 relative z-10">
+        {/* Creator Authority Block — کارت نیمه‌شفاف */}
+        <div className="flex items-center justify-between gap-4 p-4 -mt-2 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm">
+          <Link
+            href={creatorUsername ? `/u/${creatorUsername}` : '#'}
+            className="flex items-center gap-4 min-w-0 flex-1"
+          >
+            <div className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-100">
+              {creatorImage ? (
+                <ImageWithFallback
+                  src={creatorImage}
+                  alt={creatorName}
+                  className="w-full h-full object-cover"
+                  fallbackIcon={(creatorName?.[0] || '?').toUpperCase()}
+                  fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white font-bold flex items-center justify-center"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white font-bold flex items-center justify-center text-xl">
+                  {(creatorName?.[0] || '?').toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-gray-900 truncate text-base">{creatorName}</p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <CuratorBadge
+                  level={creatorLevel}
+                  size="small"
+                  glow={creatorLevel === 'ELITE_CURATOR' || creatorLevel === 'VIBE_LEGEND'}
+                />
+              </div>
+              <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                {followersCount > 0 && (
+                  <span className="tabular-nums">{formatCompact(followersCount)} فالوئر</span>
+                )}
+                {followersCount === 0 && (
+                  <span className="text-amber-600">تازه شروع کرده ✨</span>
+                )}
+                {viralListsCount > 0 && (
+                  <span>🔥 {viralListsCount} لیست وایرال</span>
+                )}
+                {totalLikesReceived >= 1000 && (
+                  <span>❤️ {formatCompact(totalLikesReceived)} لایک</span>
+                )}
+              </div>
+            </div>
+          </Link>
+          {session?.user && creatorId && (
+            isOwner ? (
               <Link
-                href={`/categories/${list.categories.slug}`}
-                className="text-gray-500 hover:text-primary transition-colors"
+                href={`/user-lists/${list.id}/add-item`}
+                className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-gray-200 font-medium text-sm text-gray-700 hover:bg-gray-50"
               >
-                {list.categories.icon} {list.categories.name}
+                <Pencil className="w-4 h-4" />
+                ویرایش
               </Link>
-            </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleFollowToggle}
+                disabled={followLoading}
+                className={`flex-shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 ${
+                  isFollowing
+                    ? 'bg-gray-100 text-gray-500'
+                    : 'bg-[#7C3AED] text-white shadow-md active:opacity-90'
+                }`}
+              >
+                {isFollowing ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    دنبال می‌کنی
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    Follow
+                  </>
+                )}
+              </button>
+            )
           )}
         </div>
 
-        {/* Primary actions — save-first, more space above, tighter below */}
-        <div className="flex gap-3 mt-6 mb-1">
+        {/* Social Momentum — 4 ستون، عدد 18px Bold */}
+        <div className="grid grid-cols-4 gap-2 py-6 border-b border-gray-100">
+          <div className="text-center">
+            <p className="text-[18px] font-bold text-gray-900 tabular-nums">{formatCompact(saveCount)}</p>
+            <p className="text-[12px] text-gray-500 mt-0.5">ذخیره</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[18px] font-bold text-gray-900 tabular-nums">{formatCompact(viewCount)}</p>
+            <p className="text-[12px] text-gray-500 mt-0.5">بازدید</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[18px] font-bold text-gray-900 tabular-nums">{commentCount}</p>
+            <p className="text-[12px] text-gray-500 mt-0.5">نظر</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[18px] font-bold text-gray-900 tabular-nums">{itemCount}</p>
+            <p className="text-[12px] text-gray-500 mt-0.5">آیتم</p>
+          </div>
+        </div>
+
+        {/* Momentum Indicator */}
+        {saveCount < 100 && (
+          <div className="pt-6 pb-2">
+            <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
+              <span>🚀 تا رسیدن به لیست وایرال</span>
+              <span className="font-semibold tabular-nums">{Math.round(viralProgress)}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+                style={{ width: `${viralProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+        {isViral && (
+          <div className="py-3 px-4 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-2">
+            <Flame className="w-5 h-5 text-amber-500" />
+            <span className="text-sm font-medium text-amber-800">🔥 این لیست وایرال است!</span>
+          </div>
+        )}
+
+        {/* CTA Zone — ذخیره اصلی، Follow + Share فرعی */}
+        <div className="flex flex-col gap-3 pt-6 pb-6">
           {showLoginCTA ? (
             <>
-              <p className="text-sm text-gray-500 flex-1 py-2">برای ذخیره یا استفاده از لیست وارد شو</p>
+              <p className="text-sm text-gray-500 py-2">برای ذخیره وارد شو</p>
               <Link
                 href="/login"
-                className="px-5 py-3 rounded-xl bg-primary text-white font-medium text-sm hover:bg-primary-dark transition-colors"
+                className="w-full py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-center text-sm hover:opacity-90 transition-opacity"
               >
                 ورود / ثبت‌نام
               </Link>
             </>
           ) : (
             <>
-              <div className="flex-1">
-                <BookmarkButton
-                  listId={list.id}
-                  initialBookmarkCount={saveCount}
-                  variant="button"
-                  size="lg"
-                  labelSave="ذخیره کن"
-                  labelSaved="ذخیره شده"
-                />
+              <BookmarkButton
+                listId={list.id}
+                initialBookmarkCount={saveCount}
+                variant="button"
+                size="lg"
+                labelSave="ذخیره در لیست‌های من"
+                labelSaved="ذخیره شد"
+                onToggle={() => {}}
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 font-medium text-sm text-gray-700 hover:border-gray-300 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                  اشتراک‌گذاری
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleShare}
-                className="px-5 py-3 rounded-xl border-2 border-gray-200 font-medium text-sm hover:border-primary hover:bg-gray-50 transition-colors flex items-center gap-2"
-              >
-                🔗 اشتراک‌گذاری
-              </button>
             </>
           )}
         </div>
 
-        {/* Items section — medium spacing from actions, scannable rows */}
+        {/* Tag Chips — فقط تگ‌ها (دسته در هیرو است) */}
+        {list.tags && list.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-6 pb-4">
+            {list.tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Items section */}
         <section className="mt-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold text-gray-800">آیتم‌های لیست</h2>
@@ -474,6 +691,7 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                         className="w-full h-full object-cover"
                         fallbackIcon="📋"
                         fallbackClassName="w-full h-full flex items-center justify-center text-xl"
+                        placeholderSize="square"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -547,20 +765,7 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
             </section>
           )}
 
-          {/* پیشنهاد آیتم — دکمه جدا از کامنت */}
-          {session?.user && (
-            <div className="mb-4">
-              <button
-                type="button"
-                onClick={() => setSuggestOpen(true)}
-                className="w-full py-3 px-4 rounded-xl bg-amber-50 text-amber-700 border border-amber-200/60 font-medium hover:bg-amber-100 transition-colors flex items-center justify-center gap-2"
-              >
-                + پیشنهاد آیتم به این لیست
-              </button>
-            </div>
-          )}
-
-          {/* نظرات و پیشنهادها — Vibe Comment System */}
+          {/* نظرات و پیشنهادها — Engagement Block */}
           <VibeCommentSection
             listId={list.id}
             isOwner={isOwner}
@@ -599,9 +804,9 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
         />
       )}
 
-      {/* Sticky save bar */}
+      {/* Sticky save bar — فاصله 24px از bottom nav */}
       {showStickyBar && session?.user && (
-        <div className="fixed bottom-20 left-4 right-4 z-30 flex justify-center">
+        <div className="fixed bottom-24 left-4 right-4 z-30 flex justify-center">
           <button
             type="button"
             disabled={stickySaving}

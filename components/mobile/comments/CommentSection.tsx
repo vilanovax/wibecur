@@ -16,6 +16,7 @@ interface Comment {
     id: string;
     name: string;
     email: string;
+    username?: string | null;
     image: string | null;
   };
   isLiked: boolean;
@@ -25,13 +26,18 @@ interface Comment {
 interface CommentSectionProps {
   itemId: string;
   onCommentAdded?: () => void;
+  /** اگر ست شود، دکمه‌های «نوشتن نظر» این را صدا می‌زنند و فرم در والد رندر می‌شود (تا نوار دکمه‌ها مخفی شود). */
+  onOpenCommentForm?: () => void;
+  /** وقتی والد فرم کامنت را submit می‌کند، این عدد را عوض کن تا کامنت‌ها refetch شوند */
+  refreshTrigger?: number;
 }
 
-export default function CommentSection({ itemId, onCommentAdded }: CommentSectionProps) {
+export default function CommentSection({ itemId, onCommentAdded, onOpenCommentForm, refreshTrigger }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const openForm = onOpenCommentForm ?? (() => setIsFormOpen(true));
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -41,6 +47,12 @@ export default function CommentSection({ itemId, onCommentAdded }: CommentSectio
   useEffect(() => {
     fetchComments();
   }, [itemId, sortBy]);
+
+  useEffect(() => {
+    if (typeof refreshTrigger === 'number' && refreshTrigger > 0) {
+      fetchComments();
+    }
+  }, [refreshTrigger]);
 
   const fetchComments = async () => {
     setIsLoading(true);
@@ -102,14 +114,14 @@ export default function CommentSection({ itemId, onCommentAdded }: CommentSectio
         },
         body: JSON.stringify({ reason: 'محتوا نامناسب' }),
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (data.success) {
+      if (response.ok && data.success) {
         setToastMessage('کامنت با موفقیت گزارش شد. از همکاری شما متشکریم!');
         setToastType('success');
         setShowToast(true);
       } else {
-        setToastMessage(data.error || 'خطا در گزارش کامنت');
+        setToastMessage(data.error || (response.status === 400 ? 'شما قبلاً این کامنت را گزارش کرده‌اید' : 'خطا در گزارش کامنت'));
         setToastType('error');
         setShowToast(true);
       }
@@ -157,7 +169,7 @@ export default function CommentSection({ itemId, onCommentAdded }: CommentSectio
           </div>
           {commentsEnabled ? (
             <button
-              onClick={() => setIsFormOpen(true)}
+              onClick={openForm}
               className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
               aria-label="نوشتن نظر"
             >
@@ -212,7 +224,7 @@ export default function CommentSection({ itemId, onCommentAdded }: CommentSectio
             </p>
             {commentsEnabled && (
               <button
-                onClick={() => setIsFormOpen(true)}
+                onClick={openForm}
                 className="mt-4 px-5 py-2.5 rounded-full bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 نوشتن نظر
@@ -235,16 +247,18 @@ export default function CommentSection({ itemId, onCommentAdded }: CommentSectio
         )}
       </div>
 
-      {/* Comment Form */}
-      <CommentForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        itemId={itemId}
-        onSubmit={() => {
-          fetchComments();
-          onCommentAdded?.();
-        }}
-      />
+      {/* Comment Form — وقتی والد فرم را رندر می‌کند (onOpenCommentForm) اینجا فرم نداریم تا نوار دکمه‌ها مخفی بماند */}
+      {!onOpenCommentForm && (
+        <CommentForm
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          itemId={itemId}
+          onSubmit={() => {
+            fetchComments();
+            onCommentAdded?.();
+          }}
+        />
+      )}
 
       {/* Toast Notification */}
       {showToast && (

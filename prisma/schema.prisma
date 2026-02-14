@@ -130,20 +130,34 @@ model item_votes {
 }
 
 model item_reports {
-  id           String   @id @default(cuid())
-  itemId       String
-  userId       String
-  reason       String   // spelling_error, incorrect_info, offensive, other
-  description  String?  // توضیحات اضافی برای reason: other
-  resolved     Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  penaltyScore Int?     @default(0)
-  items        items    @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  itemId         String
+  userId         String
+  reason         String   // incorrect_info, offensive, spam, wrong_category, duplicate, other
+  description    String?  // توضیحات اضافی برای reason: other
+  weightSnapshot Float?   // وزن لحظه ثبت (User Trust × Report Type) برای Auto Flagging
+  resolved       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  penaltyScore   Int?     @default(0)
+  items          items    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  users          users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([itemId])
   @@index([resolved])
   @@index([userId])
+}
+
+// Vibe Moderation Engine v1 – Weighted Flag Score و وضعیت نمایش
+model item_moderation {
+  id          String              @id @default(cuid())
+  itemId      String              @unique
+  flagScore   Float               @default(0)
+  status      ItemModerationStatus @default(NORMAL)
+  lastUpdated DateTime            @updatedAt
+  items       items               @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([flagScore])
 }
 
 model items {
@@ -164,6 +178,7 @@ model items {
   comments         comments[]
   item_votes       item_votes[]
   item_reports     item_reports[]
+  item_moderation  item_moderation?
   lists            lists          @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@index([listId])
@@ -413,6 +428,13 @@ model follows {
   @@unique([followerId, followingId])
   @@index([followingId])
   @@index([followerId])
+}
+
+enum ItemModerationStatus {
+  NORMAL       // فقط ثبت
+  SOFT_FLAG    // ادمین ببیند، نمایش عادی
+  UNDER_REVIEW // از ترند/اسپاتلایت حذف، اولویت پایین
+  HIDDEN       // مخفی برای کاربران عادی، فقط ادمین و سازنده
 }
 
 enum ListBadge {

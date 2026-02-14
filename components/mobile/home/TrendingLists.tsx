@@ -1,51 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ListCard from '@/components/mobile/home/ListCard';
+import { useHomeData } from '@/contexts/HomeDataContext';
 import { PLACEHOLDER_COVER_SMALL } from '@/lib/placeholder-images';
 
-interface HomeList {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  coverImage: string;
-  saveCount: number;
-  itemCount: number;
-  likes: number;
-  badge?: 'trending' | 'new' | 'featured';
-}
-
 export default function TrendingLists() {
-  const [lists, setLists] = useState<HomeList[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useHomeData();
+  const lists = (data?.trending ?? []).map((l) => ({
+    ...l,
+    coverImage: l.coverImage || PLACEHOLDER_COVER_SMALL,
+  }));
 
-  useEffect(() => {
-    fetch('/api/lists/home')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data?.trending)) {
-          setLists(
-            json.data.trending.map((l: any) => ({
-              id: l.id,
-              title: l.title,
-              slug: l.slug,
-              description: l.description || '',
-              coverImage: l.coverImage || PLACEHOLDER_COVER_SMALL,
-              saveCount: l.saveCount ?? 0,
-              itemCount: l.itemCount ?? 0,
-              likes: l.likes ?? 0,
-              badge: l.badge,
-            }))
-          );
-        }
-      })
-      .catch(() => setLists([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading && lists.length === 0) {
+  if (isLoading && lists.length === 0) {
     return (
       <section className="mb-8">
         <div className="px-4 mb-3">
