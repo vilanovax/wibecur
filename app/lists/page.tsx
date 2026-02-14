@@ -49,6 +49,10 @@ export default async function ListsPage({
         categories: true,
         users: {
           select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
             role: true,
           },
         },
@@ -76,7 +80,7 @@ export default async function ListsPage({
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header title="لیست‌ها" />
-      <main className="py-6">
+      <main className="pt-3">
         <ListsPageClient 
           lists={JSON.parse(JSON.stringify(lists))} 
           categories={JSON.parse(JSON.stringify(categories))} 
