@@ -47,7 +47,7 @@ export default function GlobalTrendingSection() {
       </h2>
       <p className="text-sm text-gray-500 mb-3">محبوب‌ترین‌های این روزها</p>
       <div className="grid grid-cols-2 gap-3">
-        {items.map((t) => (
+        {items.map((t, idx) => (
           <Link
             key={t.id}
             href={`/items/${t.id}`}
@@ -62,6 +62,7 @@ export default function GlobalTrendingSection() {
                   fallbackIcon="📋"
                   fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
                   placeholderSize="square"
+                  priority={idx < 2}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-200 text-3xl opacity-50">

@@ -347,6 +347,7 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           className="w-full h-full object-cover"
           fallbackIcon={list.categories?.icon ?? '📋'}
           fallbackClassName="w-full h-full flex items-center justify-center text-6xl"
+          priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         {/* بالا راست: Back, Share, More */}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MessageSquare, Plus, Loader2, TrendingUp, Clock } from 'lucide-react';
 import ListCommentItem from './ListCommentItem';
 import ListCommentForm from './ListCommentForm';
@@ -27,48 +28,43 @@ interface ListCommentSectionProps {
 
 const COMMENTS_PER_PAGE = 10;
 
+interface ListCommentsResponse {
+  comments: Comment[];
+  commentsEnabled: boolean;
+}
+
+async function fetchListComments(listId: string, sortBy: string): Promise<ListCommentsResponse> {
+  const res = await fetch(`/api/lists/${listId}/comments?sort=${sortBy}`);
+  const data = await res.json();
+  if (!data.success) return { comments: [], commentsEnabled: true };
+  return {
+    comments: data.data ?? [],
+    commentsEnabled: data.commentsEnabled ?? true,
+  };
+}
+
 export default function ListCommentSection({ listId }: ListCommentSectionProps) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [displayedComments, setDisplayedComments] = useState<Comment[]>([]);
+  const queryClient = useQueryClient();
   const [visibleCount, setVisibleCount] = useState(COMMENTS_PER_PAGE);
-  const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
-  const [commentsEnabled, setCommentsEnabled] = useState(true);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['lists', listId, 'comments', sortBy],
+    queryFn: () => fetchListComments(listId, sortBy),
+    enabled: !!listId,
+  });
+  const comments = data?.comments ?? [];
+  const commentsEnabled = data?.commentsEnabled ?? true;
+  const displayedComments = comments.slice(0, visibleCount);
 
   useEffect(() => {
-    fetchComments();
+    setVisibleCount(COMMENTS_PER_PAGE);
   }, [listId, sortBy]);
-
-  // Update displayed comments when comments or visibleCount changes
-  useEffect(() => {
-    setDisplayedComments(comments.slice(0, visibleCount));
-  }, [comments, visibleCount]);
-
-  const fetchComments = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `/api/lists/${listId}/comments?sort=${sortBy}`
-      );
-      const data = await response.json();
-
-      if (data.success) {
-        setComments(data.data);
-        setCommentsEnabled(data.commentsEnabled ?? true);
-        // Reset visible count when fetching new comments
-        setVisibleCount(COMMENTS_PER_PAGE);
-      }
-    } catch (error) {
-      console.error('Error fetching list comments:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLike = async (commentId: string) => {
     setIsActionLoading(true);
@@ -76,20 +72,22 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
       const response = await fetch(`/api/lists/comments/${commentId}/like`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const resData = await response.json();
 
-      if (data.success) {
-        // Update local state
-        setComments((prev) =>
-          prev.map((comment) =>
-            comment.id === commentId
+      if (resData.success) {
+        queryClient.setQueryData<ListCommentsResponse>(
+          ['lists', listId, 'comments', sortBy],
+          (prev) =>
+            prev
               ? {
-                  ...comment,
-                  userLiked: data.data.isLiked,
-                  likeCount: data.data.likeCount,
+                  ...prev,
+                  comments: prev.comments.map((c) =>
+                    c.id === commentId
+                      ? { ...c, userLiked: resData.data.isLiked, likeCount: resData.data.likeCount }
+                      : c
+                  ),
                 }
-              : comment
-          )
+              : prev
         );
       }
     } catch (error) {
@@ -234,7 +232,7 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         listId={listId}
-        onSubmit={fetchComments}
+        onSubmit={refetch}
       />
 
       {/* Toast Notification */}

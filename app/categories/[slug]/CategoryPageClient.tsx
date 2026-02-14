@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { TrendingItem } from '@/types/items';
 
@@ -10,23 +10,22 @@ interface CategoryPageClientProps {
   categoryName: string;
 }
 
+async function fetchCategoryTrending(slug: string): Promise<TrendingItem[]> {
+  const res = await fetch(`/api/categories/${slug}/trending`);
+  const json = await res.json();
+  return json.data && Array.isArray(json.data) ? json.data : [];
+}
+
 export default function CategoryPageClient({
   slug,
   categoryName,
 }: CategoryPageClientProps) {
-  const [trending, setTrending] = useState<TrendingItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch(`/api/categories/${slug}/trending`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.data && Array.isArray(json.data)) setTrending(json.data);
-      })
-      .catch(() => setTrending([]))
-      .finally(() => setLoading(false));
-  }, [slug]);
+  const { data: trending = [], isLoading: loading } = useQuery({
+    queryKey: ['categories', slug, 'trending'],
+    queryFn: () => fetchCategoryTrending(slug),
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <main className="px-4 py-6 space-y-6">

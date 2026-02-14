@@ -2,7 +2,20 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import CategoryPageClient from './CategoryPageClient';
+import CategoryPage2Client from '@/components/category/CategoryPage2Client';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const category = await prisma.categories.findUnique({
+    where: { slug, isActive: true },
+    select: { name: true },
+  });
+  if (!category) return { title: 'دسته‌بندی یافت نشد' };
+  return {
+    title: `لیست‌های ${category.name}`,
+    description: `کشف بهترین لیست‌های کیوریتد در دسته ${category.name}`,
+  };
+}
 
 export default async function CategoryPage({
   params,
@@ -23,7 +36,7 @@ export default async function CategoryPage({
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header title={category.name} showBack />
-      <CategoryPageClient slug={category.slug} categoryName={category.name} />
+      <CategoryPage2Client slug={category.slug} />
       <BottomNav />
     </div>
   );

@@ -33,6 +33,7 @@ export default function FeaturedCard() {
             className="w-full h-full object-cover"
             fallbackIcon="🎬"
             fallbackClassName="w-full h-full"
+            priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           <div className="absolute top-3 right-3">

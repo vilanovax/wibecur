@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
+const { withSentryConfig } = require('@sentry/nextjs');
 
 // next-pwa با Turbopack (پیش‌فرض Next.js 16) سازگار نیست؛ در صورت نیاز به PWA از راهنمای Next.js استفاده کنید.
 let withPWA = (config) => config;
@@ -18,6 +19,17 @@ try {
 
 const nextConfig = {
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
@@ -46,5 +58,16 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+const sentryConfig = {
+  org: process.env.SENTRY_ORG || 'wibecur',
+  project: process.env.SENTRY_PROJECT || 'wibecur',
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  hideSourceMaps: true,
+};
+if (process.env.SENTRY_AUTH_TOKEN) {
+  sentryConfig.authToken = process.env.SENTRY_AUTH_TOKEN;
+}
+
+module.exports = withSentryConfig(withPWA(nextConfig), sentryConfig);
 

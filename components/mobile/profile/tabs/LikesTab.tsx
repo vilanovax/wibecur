@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { categories } from '@prisma/client';
 
@@ -17,37 +18,25 @@ interface Activity {
   createdAt: string;
 }
 
+async function fetchLikes(): Promise<Activity[]> {
+  const res = await fetch('/api/user/activity?type=likes&limit=20');
+  const data = await res.json();
+  return data.success ? (data.data.activities ?? []) : [];
+}
+
 interface LikesTabProps {
   userId: string;
 }
 
 export default function LikesTab({ userId }: LikesTabProps) {
-  const [likes, setLikes] = useState<Activity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  const { data: likes = [], isLoading } = useQuery({
+    queryKey: ['user', userId, 'activity', 'likes'],
+    queryFn: fetchLikes,
+    staleTime: 2 * 60 * 1000,
+  });
   const [showAll, setShowAll] = useState(false);
 
-  useEffect(() => {
-    fetchLikes();
-  }, [userId, page]);
-
-  const fetchLikes = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/user/activity?type=likes&limit=20`);
-      const data = await response.json();
-
-      if (data.success) {
-        setLikes(data.data.activities);
-      }
-    } catch (error) {
-      console.error('Error fetching likes:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading && likes.length === 0) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (

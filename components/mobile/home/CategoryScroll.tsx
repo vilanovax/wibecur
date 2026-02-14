@@ -3,9 +3,9 @@
 import Link from 'next/link';
 
 const categories = [
-  { id: 'movies', name: '🎬 فیلم', icon: '🎬', slug: 'movies', color: 'bg-purple-100' },
+  { id: 'movie', name: '🎬 فیلم', icon: '🎬', slug: 'movie', color: 'bg-purple-100' },
   { id: 'cafe', name: '☕ کافه', icon: '☕', slug: 'cafe', color: 'bg-amber-100' },
-  { id: 'books', name: '📚 کتاب', icon: '📚', slug: 'books', color: 'bg-orange-100' },
+  { id: 'book', name: '📚 کتاب', icon: '📚', slug: 'book', color: 'bg-orange-100' },
   { id: 'podcast', name: '🎧 پادکست', icon: '🎧', slug: 'podcast', color: 'bg-pink-100' },
 ];
 

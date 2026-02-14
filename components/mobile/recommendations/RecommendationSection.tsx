@@ -36,7 +36,7 @@ export default function RecommendationSection() {
       </div>
       {hasRecommendations ? (
         <div className="grid grid-cols-2 gap-3 px-4">
-          {lists.map((list) => (
+          {lists.map((list, idx) => (
             <ListCard
               key={list.id}
               id={list.id}
@@ -48,6 +48,7 @@ export default function RecommendationSection() {
               saves={list.saveCount}
               itemCount={list.itemCount}
               badge={list.badge}
+              priority={idx < 2}
             />
           ))}
         </div>

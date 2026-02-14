@@ -3,17 +3,36 @@ import { getTopSimilarLists } from '@/lib/listSimilarity';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ListDetailClient from './ListDetailClient';
+import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const list = await prisma.lists.findUnique({
     where: { slug },
-    select: { title: true, description: true },
+    select: { title: true, description: true, coverImage: true },
   });
   if (!list) return { title: 'لیست یافت نشد' };
+
+  const ogImage = toAbsoluteImageUrl(list.coverImage);
+  const description = list.description || `مشاهده لیست ${list.title}`;
+
   return {
-    title: `${list.title} | WibeCur`,
-    description: list.description || `مشاهده لیست ${list.title}`,
+    title: list.title,
+    description,
+    openGraph: {
+      title: list.title,
+      description,
+      url: `${getBaseUrl()}/lists/${slug}`,
+      ...(ogImage && {
+        images: [{ url: ogImage, alt: list.title }],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: list.title,
+      description,
+      ...(ogImage && { images: [ogImage] }),
+    },
   };
 }
 

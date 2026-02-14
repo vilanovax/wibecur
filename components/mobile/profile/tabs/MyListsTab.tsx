@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Settings, Eye, EyeOff, Package, Heart, Bookmark, Flame, Eye as EyeIcon } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { categories, lists } from '@prisma/client';
@@ -25,45 +26,50 @@ interface MyListsTabProps {
 const VIRAL_LIKE_THRESHOLD = 50;
 const FEATURED_SAVE_THRESHOLD = 10;
 
+interface MyListsResponse {
+  lists: ListWithCategory[];
+  pagination: { page: number; totalPages: number };
+}
+
+async function fetchMyLists(
+  pageParam: number,
+  filter: FilterType
+): Promise<MyListsResponse> {
+  const params = new URLSearchParams({ page: String(pageParam), limit: '20' });
+  if (filter !== 'all') params.set('filter', filter);
+  const res = await fetch(`/api/user/my-lists?${params}`);
+  const data = await res.json();
+  if (!data.success) return { lists: [], pagination: { page: 1, totalPages: 1 } };
+  return {
+    lists: data.data.lists,
+    pagination: data.data.pagination,
+  };
+}
+
 export default function MyListsTab({ userId }: MyListsTabProps) {
-  const [lists, setLists] = useState<ListWithCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedList, setSelectedList] = useState<ListWithCategory | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filter]);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['user', userId, 'my-lists', filter],
+    queryFn: ({ pageParam }) => fetchMyLists(pageParam, filter),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.page < lastPage.pagination.totalPages
+        ? lastPage.pagination.page + 1
+        : undefined,
+  });
 
-  useEffect(() => {
-    fetchLists();
-  }, [userId, page, filter]);
-
-  const fetchLists = async () => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: '20' });
-      if (filter !== 'all') params.set('filter', filter);
-      const response = await fetch(`/api/user/my-lists?${params}`);
-      const data = await response.json();
-
-      if (data.success) {
-        if (page === 1) {
-          setLists(data.data.lists);
-        } else {
-          setLists((prev) => [...prev, ...data.data.lists]);
-        }
-        setHasMore(data.data.pagination.page < data.data.pagination.totalPages);
-      }
-    } catch (error) {
-      console.error('Error fetching lists:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const lists = data?.pages.flatMap((p) => p.lists) ?? [];
+  const hasMore = !!hasNextPage;
 
   const handleSettingsClick = (e: React.MouseEvent, list: ListWithCategory) => {
     e.preventDefault();
@@ -75,11 +81,11 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
   const handleSettingsClose = () => {
     setShowSettings(false);
     setSelectedList(null);
-    fetchLists();
+    refetch();
   };
 
   const handleListDelete = () => {
-    fetchLists();
+    refetch();
   };
 
   const FILTERS: { id: FilterType; label: string }[] = [
@@ -283,11 +289,11 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
 
       {hasMore && (
         <button
-          onClick={() => setPage((p) => p + 1)}
-          disabled={isLoading}
+          onClick={() => fetchNextPage()}
+          disabled={isFetchingNextPage}
           className="mx-4 mt-6 w-[calc(100%-2rem)] py-3 bg-gray-50 text-gray-700 rounded-2xl hover:bg-gray-100 transition-colors text-sm font-medium disabled:opacity-50"
         >
-          {isLoading ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
+          {isFetchingNextPage ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
         </button>
       )}
 

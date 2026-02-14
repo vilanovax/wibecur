@@ -10,6 +10,12 @@ import CreatorSpotlightSection from '@/components/mobile/home/CreatorSpotlightSe
 import TrendingLists from '@/components/mobile/home/TrendingLists';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
+import ErrorBoundary from '@/components/shared/ErrorBoundary';
+
+export const metadata = {
+  title: 'خانه',
+  description: 'کشف و اشتراک‌گذاری لیست‌های کیوریتد در حوزه لایف‌استایل - فیلم، کتاب، رستوران، سفر و بیشتر',
+};
 
 export default function Home() {
   return (
@@ -19,16 +25,18 @@ export default function Home() {
       <EnhancedSearch />
       <main className="space-y-0 px-0">
         <HomeDataProvider>
-        <HomeFeedTabs>
-          <>
-            <FeaturedCard />
-            <GlobalTrendingSection />
-            <CreatorSpotlightSection />
-            <RecommendationSection />
-            <CategoryScroll />
-            <TrendingLists />
-          </>
-        </HomeFeedTabs>
+          <ErrorBoundary>
+            <HomeFeedTabs>
+              <>
+                <FeaturedCard />
+                <GlobalTrendingSection />
+                <CreatorSpotlightSection />
+                <RecommendationSection />
+                <CategoryScroll />
+                <TrendingLists />
+              </>
+            </HomeFeedTabs>
+          </ErrorBoundary>
         </HomeDataProvider>
       </main>
       <BottomNav />

@@ -116,21 +116,25 @@ async function main() {
   } else {
     // Default categories
     const categories = [
-      { name: 'فیلم و سریال', slug: 'movie', icon: '🎬', color: '#8B5CF6', order: 1 },
-      { name: 'کتاب', slug: 'book', icon: '📚', color: '#F97316', order: 2 },
-      { name: 'کافه و رستوران', slug: 'cafe', icon: '☕', color: '#D97706', order: 3 },
-      { name: 'پادکست', slug: 'podcast', icon: '🎧', color: '#EC4899', order: 4 },
-      { name: 'لایف‌استایل', slug: 'lifestyle', icon: '🌱', color: '#10B981', order: 5 },
-      { name: 'ماشین و تکنولوژی', slug: 'tech', icon: '🚗', color: '#EF4444', order: 6 },
+      { name: 'فیلم و سریال', slug: 'movie', icon: '🎬', color: '#8B5CF6', order: 1, layoutType: 'cinematic', accentColor: '#A855F7', description: 'لیست‌های برتر سینمایی، سریال‌های محبوب و پیشنهادهای خاص' },
+      { name: 'کتاب', slug: 'book', icon: '📚', color: '#F97316', order: 2, layoutType: 'editorial', accentColor: '#F97316' },
+      { name: 'کافه و رستوران', slug: 'cafe', icon: '☕', color: '#D97706', order: 3, layoutType: 'locationBased', accentColor: '#EA580C', description: 'کافه‌ها و رستوران‌های برتر شهر شما' },
+      { name: 'پادکست', slug: 'podcast', icon: '🎧', color: '#EC4899', order: 4, layoutType: 'minimal' },
+      { name: 'لایف‌استایل', slug: 'lifestyle', icon: '🌱', color: '#10B981', order: 5, layoutType: 'minimal' },
+      { name: 'ماشین و تکنولوژی', slug: 'tech', icon: '🚗', color: '#EF4444', order: 6, layoutType: 'minimal' },
     ];
 
     for (const cat of categories) {
+      const { layoutType, accentColor, description, ...rest } = cat as typeof cat & { layoutType?: string; accentColor?: string; description?: string };
       await prisma.categories.upsert({
         where: { slug: cat.slug },
-        update: {},
+        update: { layoutType: layoutType ?? undefined, accentColor: accentColor ?? undefined, description: description ?? undefined },
         create: {
-          ...cat,
-          id: `cat-${cat.slug}`, // Prisma will generate if using @default(cuid())
+          ...rest,
+          layoutType,
+          accentColor,
+          description,
+          id: `cat-${cat.slug}`,
           commentsEnabled: true,
           isActive: true,
           createdAt: new Date(),

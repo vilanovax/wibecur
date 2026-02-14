@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MessageSquare, Plus, Loader2, TrendingUp, Clock } from 'lucide-react';
 import CommentItem from './CommentItem';
 import CommentForm from './CommentForm';
@@ -23,6 +24,11 @@ interface Comment {
   canDelete: boolean;
 }
 
+interface CommentsResponse {
+  comments: Comment[];
+  commentsEnabled: boolean;
+}
+
 interface CommentSectionProps {
   itemId: string;
   onCommentAdded?: () => void;
@@ -32,9 +38,18 @@ interface CommentSectionProps {
   refreshTrigger?: number;
 }
 
+async function fetchItemComments(itemId: string, sortBy: string): Promise<CommentsResponse> {
+  const res = await fetch(`/api/items/${itemId}/comments?sort=${sortBy}`);
+  const data = await res.json();
+  if (!data.success) return { comments: [], commentsEnabled: true };
+  return {
+    comments: data.data.comments ?? [],
+    commentsEnabled: data.data.commentsEnabled ?? true,
+  };
+}
+
 export default function CommentSection({ itemId, onCommentAdded, onOpenCommentForm, refreshTrigger }: CommentSectionProps) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const openForm = onOpenCommentForm ?? (() => setIsFormOpen(true));
@@ -42,36 +57,14 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
-  const [commentsEnabled, setCommentsEnabled] = useState(true);
 
-  useEffect(() => {
-    fetchComments();
-  }, [itemId, sortBy]);
-
-  useEffect(() => {
-    if (typeof refreshTrigger === 'number' && refreshTrigger > 0) {
-      fetchComments();
-    }
-  }, [refreshTrigger]);
-
-  const fetchComments = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `/api/items/${itemId}/comments?sort=${sortBy}`
-      );
-      const data = await response.json();
-
-      if (data.success) {
-        setComments(data.data.comments);
-        setCommentsEnabled(data.data.commentsEnabled ?? true);
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
+    queryFn: () => fetchItemComments(itemId, sortBy),
+    enabled: !!itemId,
+  });
+  const comments = data?.comments ?? [];
+  const commentsEnabled = data?.commentsEnabled ?? true;
 
   const handleLike = async (commentId: string) => {
     setIsActionLoading(true);
@@ -79,20 +72,22 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
       const response = await fetch(`/api/comments/${commentId}/like`, {
         method: 'POST',
       });
-      const data = await response.json();
+      const resData = await response.json();
 
-      if (data.success) {
-        // Update local state
-        setComments((prev) =>
-          prev.map((comment) =>
-            comment.id === commentId
+      if (resData.success) {
+        queryClient.setQueryData<CommentsResponse>(
+          ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
+          (prev) =>
+            prev
               ? {
-                  ...comment,
-                  isLiked: data.data.isLiked,
-                  likeCount: data.data.likeCount,
+                  ...prev,
+                  comments: prev.comments.map((c) =>
+                    c.id === commentId
+                      ? { ...c, isLiked: resData.data.isLiked, likeCount: resData.data.likeCount }
+                      : c
+                  ),
                 }
-              : comment
-          )
+              : prev
         );
       }
     } catch (error) {
@@ -141,12 +136,16 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
       const response = await fetch(`/api/comments/${commentId}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
+      const resData = await response.json();
 
-      if (data.success) {
-        setComments((prev) => prev.filter((c) => c.id !== commentId));
+      if (resData.success) {
+        queryClient.setQueryData<CommentsResponse>(
+          ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
+          (prev) =>
+            prev ? { ...prev, comments: prev.comments.filter((c) => c.id !== commentId) } : prev
+        );
       } else {
-        alert(data.error || 'خطا در حذف کامنت');
+        alert(resData.error || 'خطا در حذف کامنت');
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
@@ -254,7 +253,7 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
           onClose={() => setIsFormOpen(false)}
           itemId={itemId}
           onSubmit={() => {
-            fetchComments();
+            refetch();
             onCommentAdded?.();
           }}
         />

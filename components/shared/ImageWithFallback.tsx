@@ -11,6 +11,8 @@ interface ImageWithFallbackProps {
   fallbackClassName?: string;
   /** نسبت placeholder وقتی تصویر خطا داد: cover (۱۶:۸) یا square (۱:۱) */
   placeholderSize?: 'cover' | 'square';
+  /** برای تصاویر بالای صفحه (Hero و Featured): اولویت لود بالا */
+  priority?: boolean;
 }
 
 /** مسیرهای تصویر خالی/placeholder که باید با تصویر داخلی جایگزین شوند */
@@ -40,6 +42,7 @@ export default function ImageWithFallback({
   fallbackIcon = '📋',
   fallbackClassName = '',
   placeholderSize = 'cover',
+  priority = false,
 }: ImageWithFallbackProps) {
   const [hasError, setHasError] = useState(false);
   const [randomPlaceholderFailed, setRandomPlaceholderFailed] = useState(false);
@@ -80,7 +83,8 @@ export default function ImageWithFallback({
         src={fallbackSrc}
         alt={alt}
         className={className}
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : undefined}
         onError={showGray ? undefined : handleFallbackImageError}
       />
     );
@@ -92,7 +96,8 @@ export default function ImageWithFallback({
       alt={alt}
       className={className}
       onError={handleError}
-      loading="lazy"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : undefined}
     />
   );
 }

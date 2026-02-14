@@ -16,6 +16,8 @@ interface ListCardProps {
   variant?: 'default' | 'compact';
   /** برای لینک به صفحه لیست (مسیر با slug است) */
   slug?: string;
+  /** برای تصاویر بالای صفحه: اولویت لود بالا */
+  priority?: boolean;
 }
 
 const badgeLabels = {
@@ -35,6 +37,7 @@ export default function ListCard({
   itemCount,
   variant = 'default',
   slug,
+  priority,
 }: ListCardProps) {
   const listHref = `/lists/${slug ?? id}`;
   const isCompact = variant === 'compact';
@@ -43,7 +46,7 @@ export default function ListCard({
       <Link href={listHref} className="block">
         <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-row-reverse gap-0">
           <div className="relative w-24 h-24 flex-shrink-0 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
-            <ImageWithFallback src={coverImage} alt={title} className="w-full h-full object-cover" fallbackIcon="📋" fallbackClassName="w-full h-full" />
+            <ImageWithFallback src={coverImage} alt={title} className="w-full h-full object-cover" fallbackIcon="📋" fallbackClassName="w-full h-full" priority={priority} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           </div>
           <div className="flex-1 flex flex-col justify-center p-3 min-w-0">
@@ -59,7 +62,7 @@ export default function ListCard({
     <Link href={listHref} className="block">
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
         <div className="relative h-40 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden">
-          <ImageWithFallback src={coverImage} alt={title} className="w-full h-full object-cover" fallbackIcon="📋" fallbackClassName="w-full h-full" />
+          <ImageWithFallback src={coverImage} alt={title} className="w-full h-full object-cover" fallbackIcon="📋" fallbackClassName="w-full h-full" priority={priority} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           {badge && (
             <div className="absolute top-2 right-2">

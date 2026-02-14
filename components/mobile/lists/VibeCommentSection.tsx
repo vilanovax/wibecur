@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MessageSquare, Loader2, ChevronDown, ThumbsUp, ThumbsDown, Flag, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
@@ -68,6 +69,36 @@ interface VibeCommentSectionProps {
   categorySlug?: string | null;
   /** وقتی کاربر روی «پیشنهاد» کلیک می‌کند، این فراخوانی می‌شود (مثلاً برای باز کردن مودال جستجو-محور) */
   onOpenSuggestItem?: () => void;
+}
+
+interface VibeCommentsResponse {
+  comments: Comment[];
+  commentsEnabled: boolean;
+}
+
+interface ReactionsResponse {
+  counts: Record<string, number>;
+  userReaction: string | null;
+}
+
+async function fetchVibeComments(listId: string, sortParam: string): Promise<VibeCommentsResponse> {
+  const res = await fetch(`/api/lists/${listId}/comments?sort=${sortParam}`);
+  const data = await res.json();
+  if (!data.success) return { comments: [], commentsEnabled: true };
+  return {
+    comments: data.data ?? [],
+    commentsEnabled: data.commentsEnabled ?? true,
+  };
+}
+
+async function fetchReactions(listId: string): Promise<ReactionsResponse> {
+  const res = await fetch(`/api/lists/${listId}/reactions`);
+  const data = await res.json();
+  if (!data.success) return { counts: { love: 0, cry: 0, night: 0, meh: 0, suggestion: 0 }, userReaction: null };
+  return {
+    counts: data.data?.counts ?? { love: 0, cry: 0, night: 0, meh: 0, suggestion: 0 },
+    userReaction: data.data?.userReaction ?? null,
+  };
 }
 
 function ReactionPills({
@@ -421,59 +452,36 @@ function VibeCommentInput({
 
 export default function VibeCommentSection({ listId, isOwner, listUserId, categorySlug, onOpenSuggestItem }: VibeCommentSectionProps) {
   const { data: session, status } = useSession();
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [counts, setCounts] = useState<Record<string, number>>({
-    love: 0,
-    cry: 0,
-    night: 0,
-    meh: 0,
-    suggestion: 0,
-  });
-  const [userReaction, setUserReaction] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [reactionsLoading, setReactionsLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [isSuggestionMode, setIsSuggestionMode] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'helpful' | 'newest'>('helpful');
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [commentsEnabled, setCommentsEnabled] = useState(true);
 
-  const fetchComments = async () => {
-    setIsLoading(true);
-    try {
-      const sortParam = sortBy === 'helpful' ? 'popular' : 'newest';
-      const res = await fetch(`/api/lists/${listId}/comments?sort=${sortParam}`);
-      const data = await res.json();
-      if (data.success) {
-        setComments(data.data);
-        setCommentsEnabled(data.commentsEnabled ?? true);
-        setVisibleCount(INITIAL_VISIBLE);
-      }
-    } catch {
-      setToast({ message: 'مشکلی پیش اومد، دوباره امتحان کن ✨', type: 'error' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const sortParam = sortBy === 'helpful' ? 'popular' : 'newest';
 
-  const fetchReactions = async () => {
-    try {
-      const res = await fetch(`/api/lists/${listId}/reactions`);
-      const data = await res.json();
-      if (data.success) {
-        setCounts(data.data.counts);
-        setUserReaction(data.data.userReaction);
-      }
-    } catch {
-      // Silent
-    }
-  };
+  const { data: commentsData, isLoading, refetch: refetchComments } = useQuery({
+    queryKey: ['lists', listId, 'vibe-comments', sortParam],
+    queryFn: () => fetchVibeComments(listId, sortParam),
+    enabled: !!listId,
+  });
+  const comments = commentsData?.comments ?? [];
+  const commentsEnabled = commentsData?.commentsEnabled ?? true;
+
+  const { data: reactionsData } = useQuery({
+    queryKey: ['lists', listId, 'reactions'],
+    queryFn: () => fetchReactions(listId),
+    enabled: !!listId,
+  });
+  const counts = reactionsData?.counts ?? { love: 0, cry: 0, night: 0, meh: 0, suggestion: 0 };
+  const userReaction = reactionsData?.userReaction ?? null;
+
+  const [reactionsLoading, setReactionsLoading] = useState(false);
 
   useEffect(() => {
-    fetchComments();
-    fetchReactions();
+    setVisibleCount(INITIAL_VISIBLE);
   }, [listId, sortBy]);
 
   const handleReaction = async (type: string) => {
@@ -487,8 +495,10 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
       });
       const data = await res.json();
       if (data.success) {
-        setCounts(data.data.counts);
-        setUserReaction(data.data.userReaction);
+        queryClient.setQueryData<ReactionsResponse>(['lists', listId, 'reactions'], {
+          counts: data.data.counts,
+          userReaction: data.data.userReaction,
+        });
       }
     } finally {
       setReactionsLoading(false);
@@ -515,7 +525,7 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
       });
       const data = await res.json();
       if (data.success) {
-        fetchComments();
+        refetchComments();
         setIsFormExpanded(false);
         setIsSuggestionMode(false);
         setToast({ message: data.message || 'نظرت به لیست اضافه شد ✨', type: 'success' });
@@ -534,7 +544,7 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
       const res = await fetch(`/api/lists/comments/${commentId}/approve`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        fetchComments();
+        refetchComments();
         setToast({ message: 'پیشنهادت به لیست اضافه شد 🎉', type: 'success' });
       } else {
         setToast({ message: data.error || 'چند لحظه بعد دوباره امتحان کن ✨', type: 'error' });
@@ -549,7 +559,7 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
       const res = await fetch(`/api/lists/comments/${commentId}/reject`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        fetchComments();
+        refetchComments();
         setToast({ message: 'پیشنهاد رد شد', type: 'success' });
       }
     } catch {
@@ -564,9 +574,9 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value }),
       });
-      fetchComments();
+      refetchComments();
     } catch {
-      fetchComments();
+      refetchComments();
     }
   };
 

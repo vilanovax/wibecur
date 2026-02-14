@@ -35,7 +35,10 @@ model categories {
   slug             String            @unique
   icon             String
   color            String            @default("#6366F1")
+  accentColor      String?           // برای Category Page 2.0 - رنگ تاکید (مثلاً بنفش فیلم، نارنجی رستوران)
   description      String?
+  heroImage        String?           // تصویر هیرو صفحه دسته
+  layoutType       String?           // cinematic | locationBased | editorial | minimal
   order            Int               @default(0)
   isActive         Boolean           @default(true)
   commentsEnabled  Boolean           @default(true)  // فعال/غیرفعال کردن کامنت برای دسته

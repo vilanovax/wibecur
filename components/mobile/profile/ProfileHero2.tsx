@@ -119,6 +119,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                     className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                     fallbackClassName="w-full h-full bg-gray-100 text-gray-500 text-2xl font-semibold flex items-center justify-center"
+                    priority
                   />
                 ) : user.image ? (
                   <ImageWithFallback
@@ -127,6 +128,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                     className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                     fallbackClassName="w-full h-full bg-gray-100 text-gray-500 text-2xl font-semibold flex items-center justify-center"
+                    priority
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 text-2xl font-semibold">

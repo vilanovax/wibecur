@@ -6,12 +6,13 @@ import { auth } from '@/lib/auth-config';
 
 import { dbQuery } from '@/lib/db';
 import ItemDetailClient from './ItemDetailClient';
+import { toAbsoluteImageUrl } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const item = await prisma.items.findUnique({
     where: { id },
-    select: { title: true, description: true },
+    select: { title: true, description: true, imageUrl: true },
   });
 
   if (!item) {
@@ -20,9 +21,24 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
   }
 
+  const ogImage = toAbsoluteImageUrl(item.imageUrl);
+
   return {
-    title: `${item.title} | WibeCur`,
+    title: item.title,
     description: item.description || `مشاهده ${item.title}`,
+    openGraph: {
+      title: item.title,
+      description: item.description || `مشاهده ${item.title}`,
+      ...(ogImage && {
+        images: [{ url: ogImage, alt: item.title }],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: item.title,
+      description: item.description || `مشاهده ${item.title}`,
+      ...(ogImage && { images: [ogImage] }),
+    },
   };
 }
 

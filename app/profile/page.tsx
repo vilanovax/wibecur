@@ -5,6 +5,12 @@ import ProfilePageClient from './ProfilePageClient';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'پروفایل من',
+  description: 'مدیریت پروفایل، لیست‌ها و فعالیت‌های شما در وایب‌کر',
+  robots: { index: false, follow: false },
+};
+
 export default async function ProfilePage() {
   const session = await requireAuth();
   const userId = session.user.id;

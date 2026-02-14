@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import {
   Bookmark,
   MessageSquare,
@@ -42,37 +42,42 @@ interface SuggestionHealth {
   pendingLists: number;
 }
 
-export default function PulseDashboardClient() {
-  const [overview, setOverview] = useState<OverviewData | null>(null);
-  const [trending, setTrending] = useState<TrendingItem[]>([]);
-  const [categories, setCategories] = useState<CategoryGrowth[]>([]);
-  const [cities, setCities] = useState<unknown[]>([]);
-  const [suggestions, setSuggestions] = useState<SuggestionHealth | null>(null);
-  const [loading, setLoading] = useState(true);
+interface PulseData {
+  overview: OverviewData | null;
+  trending: TrendingItem[];
+  categories: CategoryGrowth[];
+  cities: unknown[];
+  suggestions: SuggestionHealth | null;
+}
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [o, t, c, cit, s] = await Promise.all([
-          fetch('/api/admin/pulse/overview').then((r) => r.json()),
-          fetch('/api/admin/pulse/trending').then((r) => r.json()),
-          fetch('/api/admin/pulse/categories').then((r) => r.json()),
-          fetch('/api/admin/pulse/cities').then((r) => r.json()),
-          fetch('/api/admin/pulse/suggestions').then((r) => r.json()),
-        ]);
-        if (o.data) setOverview(o.data);
-        if (t.data) setTrending(t.data);
-        if (c.data) setCategories(c.data);
-        if (cit.data) setCities(cit.data);
-        if (s.data) setSuggestions(s.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, []);
+async function fetchPulseData(): Promise<PulseData> {
+  const [o, t, c, cit, s] = await Promise.all([
+    fetch('/api/admin/pulse/overview').then((r) => r.json()),
+    fetch('/api/admin/pulse/trending').then((r) => r.json()),
+    fetch('/api/admin/pulse/categories').then((r) => r.json()),
+    fetch('/api/admin/pulse/cities').then((r) => r.json()),
+    fetch('/api/admin/pulse/suggestions').then((r) => r.json()),
+  ]);
+  return {
+    overview: o.data ?? null,
+    trending: t.data ?? [],
+    categories: c.data ?? [],
+    cities: cit.data ?? [],
+    suggestions: s.data ?? null,
+  };
+}
+
+export default function PulseDashboardClient() {
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['admin', 'pulse'],
+    queryFn: fetchPulseData,
+    staleTime: 60 * 1000,
+  });
+  const overview = data?.overview ?? null;
+  const trending = data?.trending ?? [];
+  const categories = data?.categories ?? [];
+  const cities = data?.cities ?? [];
+  const suggestions = data?.suggestions ?? null;
 
   if (loading) {
     return (
