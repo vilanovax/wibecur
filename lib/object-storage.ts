@@ -72,6 +72,7 @@ export async function uploadImageFromUrl(
       folder === 'avatars' ? 'avatar' :
       folder === 'covers' ? 'coverList' :
       folder === 'lists' ? 'coverList' :
+      folder === 'placeholders' || folder === 'hubs' ? 'coverList' :
       'default';
     const optimized = await optimizeImage(imageBuffer, { profile });
 

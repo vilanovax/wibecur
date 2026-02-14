@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/lists`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
   ];
 
+  try {
   const [lists, categories] = await Promise.all([
     prisma.lists.findMany({
       where: {
@@ -58,4 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   return [...staticPages, ...listUrls, ...categoryUrls, ...itemUrls];
+  } catch {
+    return staticPages;
+  }
 }

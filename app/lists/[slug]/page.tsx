@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation';
 import ListDetailClient from './ListDetailClient';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
 
+export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const list = await prisma.lists.findUnique({

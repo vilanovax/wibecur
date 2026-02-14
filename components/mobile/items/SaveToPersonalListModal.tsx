@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Loader2, Check, Globe, Lock } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { track } from '@/lib/analytics';
 import Toast from '@/components/shared/Toast';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
@@ -124,6 +125,7 @@ export default function SaveToPersonalListModal({
       setToastMessage(`به «${list.title}» اضافه شد ✨`);
       setToastType('success');
       setShowToast(true);
+      track('item_save', { itemId, listId: list.id });
 
       fetchLists();
     } catch (error: any) {

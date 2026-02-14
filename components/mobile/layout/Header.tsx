@@ -11,6 +11,8 @@ import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 interface HeaderProps {
   title?: string;
   showBack?: boolean;
+  /** تم تیره برای صفحات سینمایی (فیلم و سریال) */
+  variant?: 'default' | 'dark';
 }
 
 type ProfileAvatar = {
@@ -20,7 +22,7 @@ type ProfileAvatar = {
   avatarStatus?: string | null;
 };
 
-export default function Header({ title, showBack = false }: HeaderProps) {
+export default function Header({ title, showBack = false, variant = 'default' }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -64,17 +66,29 @@ export default function Header({ title, showBack = false }: HeaderProps) {
   const showUploadedImage = profile?.avatarType === 'UPLOADED' && profile?.avatarStatus === 'APPROVED' && profile?.image;
   const headerAvatarUrl = showUploadedImage ? profile!.image! : null;
 
+  const isDark = variant === 'dark';
+  const headerClass = isDark
+    ? 'bg-gray-950/95 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50'
+    : 'bg-white shadow-sm sticky top-0 z-50';
+  const textClass = isDark ? 'text-white' : 'text-gray-900';
+  const iconClass = isDark ? 'text-gray-300' : 'text-gray-600';
+  const buttonClass = isDark
+    ? 'bg-gray-800 hover:bg-gray-700'
+    : 'bg-gray-100 hover:bg-gray-200';
+
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
+    <header className={headerClass} role="banner">
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {showBack && (
             <button
+              type="button"
               onClick={() => router.back()}
-              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center flex-shrink-0 transition-colors"
+              className={`w-10 h-10 rounded-full ${buttonClass} flex items-center justify-center flex-shrink-0 transition-colors`}
+              aria-label="بازگشت"
             >
               <svg
-                className="w-6 h-6 text-gray-600"
+                className={`w-6 h-6 ${iconClass}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -89,9 +103,9 @@ export default function Header({ title, showBack = false }: HeaderProps) {
             </button>
           )}
           {title ? (
-            <h1 className="text-xl font-bold text-gray-900 truncate">{title}</h1>
+            <h1 className={`text-xl font-bold truncate ${textClass}`}>{title}</h1>
           ) : (
-            <h1 className="text-xl font-bold text-primary">WibeCur</h1>
+            <h1 className={`text-xl font-bold ${isDark ? 'text-violet-400' : 'text-primary'}`}>وایب</h1>
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -99,11 +113,12 @@ export default function Header({ title, showBack = false }: HeaderProps) {
           {!isHome && (
             <Link
               href="/user-lists"
-              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-100 hover:bg-gray-200 transition-colors"
+              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${buttonClass} transition-colors`}
               title="لیست‌های من"
+              aria-label="لیست‌های من"
             >
               <svg
-                className="w-5 h-5 text-gray-600"
+                className={`w-5 h-5 ${iconClass}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -119,7 +134,8 @@ export default function Header({ title, showBack = false }: HeaderProps) {
           )}
           <Link
             href="/profile"
-            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 bg-gray-200 hover:bg-gray-300 transition-colors"
+            className={`w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 transition-colors ${isDark ? 'bg-gray-800 hover:bg-gray-700 ring-1 ring-gray-700' : 'bg-gray-200 hover:bg-gray-300'}`}
+            aria-label={`پروفایل ${userName}`}
           >
             {vibeAvatar ? (
               <div

@@ -8,6 +8,14 @@ function isLikelyCuid(param: string): boolean {
   return param.length >= 20 && param.length <= 30 && /^[a-z0-9]+$/i.test(param);
 }
 
+const FILM_SLUG_ALIASES = ['movie', 'movies', 'film'];
+const BOOK_SLUG_ALIASES = ['book', 'books'];
+
+function resolveCategorySlug(slug: string): string[] {
+  if (FILM_SLUG_ALIASES.includes(slug)) return FILM_SLUG_ALIASES;
+  if (BOOK_SLUG_ALIASES.includes(slug)) return BOOK_SLUG_ALIASES;
+  return [];
+}
 const CACHE_SECONDS = 300; // 5 min
 
 export async function GET(
@@ -20,7 +28,7 @@ export async function GET(
       return NextResponse.json({ error: 'دسته نامعتبر است' }, { status: 400 });
     }
 
-    const category = await dbQuery(() =>
+    let category = await dbQuery(() =>
       isLikelyCuid(slug)
         ? prisma.categories.findUnique({
             where: { id: slug, isActive: true },
@@ -31,6 +39,16 @@ export async function GET(
             select: { id: true },
           })
     );
+
+    const aliases = resolveCategorySlug(slug);
+    if (!category && !isLikelyCuid(slug) && aliases.length > 0) {
+      category = await dbQuery(() =>
+        prisma.categories.findFirst({
+          where: { slug: { in: aliases }, isActive: true },
+          select: { id: true },
+        })
+      );
+    }
 
     if (!category) {
       return NextResponse.json({ error: 'دسته یافت نشد' }, { status: 404 });

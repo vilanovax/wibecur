@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Check } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { track } from '@/lib/analytics';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 import type { CuratorLevelKey } from '@/lib/curator';
@@ -54,7 +55,10 @@ export default function PersonalizedSpotlightSection() {
     try {
       const res = await fetch(`/api/follow/${creator.userId}`, { method: 'POST' });
       const json = await res.json();
-      if (json.success) setFollowing(true);
+      if (json.success) {
+        setFollowing(true);
+        track('follow', { targetUserId: creator.userId });
+      }
     } catch {
       // ignore
     }

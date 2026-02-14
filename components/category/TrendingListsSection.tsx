@@ -10,6 +10,8 @@ interface TrendingListsSectionProps {
   lists: CategoryListCard[];
   categoryName: string;
   accentColor?: string;
+  /** کارت بهبودیافته با آواتار و city badge */
+  improved?: boolean;
 }
 
 export default function TrendingListsSection({
@@ -17,12 +19,13 @@ export default function TrendingListsSection({
   subtitle,
   lists,
   accentColor = '#8B5CF6',
+  improved = false,
 }: TrendingListsSectionProps) {
   if (lists.length === 0) return null;
 
   return (
     <section className="px-4 py-6">
-      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
         <span>🔥</span>
         {title}
       </h2>
@@ -34,7 +37,7 @@ export default function TrendingListsSection({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-[72vw] max-w-[300px] snap-start"
+            className="flex-shrink-0 w-[75vw] max-w-[300px] snap-start"
           >
             <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm active:scale-[0.98] transition-transform">
               <div className="relative aspect-[4/3] bg-gray-100">
@@ -62,22 +65,40 @@ export default function TrendingListsSection({
                         : 'bg-orange-500/90'
                     }`}
                   >
-                    {list.badge === 'viral' ? '🔥🔥 Viral' : list.badge === 'hot' ? '🔥 Hot' : '🔥 Trending'}
+                    {list.badge === 'viral' ? '🔥 Viral' : list.badge === 'hot' ? '🔥 Hot' : '🔥 Trending'}
+                  </span>
+                )}
+                {improved && list.cityTag && (
+                  <span className="absolute bottom-2 right-2 text-white/95 text-xs px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm">
+                    📍 {list.cityTag}
                   </span>
                 )}
               </div>
               <div className="p-3">
+                {improved && list.creator && (
+                  <div className="flex items-center gap-2 mb-1.5">
+                    {list.creator.image ? (
+                      <ImageWithFallback
+                        src={list.creator.image}
+                        alt={list.creator.name || ''}
+                        className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs flex-shrink-0">
+                        {(list.creator.name || '?')[0]}
+                      </div>
+                    )}
+                    <span className="text-xs text-gray-500 truncate">
+                      {list.creator.name || 'کاربر'}
+                    </span>
+                  </div>
+                )}
                 <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
                   {list.title}
                 </h3>
-                {list.creator?.name && (
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {list.creator.name}
-                  </p>
-                )}
-                <div className="flex gap-3 mt-2 text-xs text-gray-500">
-                  <span>⭐ {list.saveCount}</span>
-                  <span>❤️ {list.likeCount}</span>
+                <div className="flex gap-3 mt-2">
+                  <span className="text-sm font-bold text-primary">⭐ {list.saveCount}</span>
+                  <span className="text-xs text-gray-500">❤️ {list.likeCount}</span>
                 </div>
               </div>
             </div>

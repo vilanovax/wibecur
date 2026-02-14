@@ -61,6 +61,41 @@ it('نمایش صحیح', () => {
 });
 ```
 
+## تست E2E (Playwright)
+
+برای تست سناریوهای کامل در مرورگر:
+
+```bash
+# اجرای تست‌های E2E (سرور dev به‌صورت خودکار بالا می‌آید)
+npm run test:e2e
+
+# رابط UI برای دیباگ
+npm run test:e2e:ui
+```
+
+### پیش‌نیاز
+
+- سرور دیتابیس (PostgreSQL) در حال اجرا
+- متغیر `DATABASE_URL` تنظیم شده
+- پورت ۳۰۰۲ آزاد (اگر dev سرور قبلاً اجرا شده، Playwright از آن استفاده می‌کند)
+
+### عیب‌یابی
+
+- اگر خطای `EADDRINUSE` دیدی، سرور dev را متوقف کن یا پورت دیگری استفاده کن.
+
+### فایل‌های تست
+
+تست‌های E2E در پوشهٔ `e2e/` قرار دارند:
+
+```
+e2e/
+  home.spec.ts      # صفحهٔ اصلی
+  navigation.spec.ts # ناوبری بین صفحات
+  lists.spec.ts     # صفحهٔ لیست‌ها
+```
+
+---
+
 ## محدودیت‌ها
 
-- **Server Components ناهمگام**: Vitest از async Server Components پشتیبانی نمی‌کند؛ برای آن‌ها از E2E (Playwright/Cypress) استفاده شود.
+- **Server Components ناهمگام**: Vitest از async Server Components پشتیبانی نمی‌کند؛ برای آن‌ها از E2E (Playwright) استفاده شود.

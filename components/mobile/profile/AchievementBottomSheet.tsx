@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { X, Share2, Eye, Star, Heart, TrendingUp } from 'lucide-react';
+import { track } from '@/lib/analytics';
 
 export interface AchievementMetrics {
   saves?: number;
@@ -107,6 +108,7 @@ export default function AchievementBottomSheet({
     } else {
       navigator.clipboard?.writeText(text).catch(() => {});
     }
+    track('share', { type: 'achievement', achievementCode: achievement.code });
     onClose();
   };
 

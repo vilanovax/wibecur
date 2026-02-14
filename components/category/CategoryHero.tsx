@@ -4,6 +4,7 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
 import { toAbsoluteImageUrl } from '@/lib/seo';
+import { getRandomPlaceholderUrl } from '@/lib/placeholder-images';
 
 interface CategoryHeroProps {
   category: CategoryInfo;
@@ -27,32 +28,23 @@ export default function CategoryHero({
           : 'aspect-[16/9] min-h-[140px]'
       }`}
     >
-      {category.heroImage ? (
-        <>
-          <ImageWithFallback
-            src={toAbsoluteImageUrl(category.heroImage) || category.heroImage!}
-            alt={category.name}
-            className="absolute inset-0 w-full h-full object-cover"
-            priority
-          />
-          <div
-            className={`absolute inset-0 ${
-              isCinematic
-                ? 'bg-gradient-to-t from-black/90 via-black/50 to-black/30'
-                : 'bg-gradient-to-t from-black/70 via-black/40 to-transparent'
-            }`}
-          />
-        </>
-      ) : (
-        <div
-          className="absolute inset-0"
-          style={{
-            background: isCinematic
-              ? `linear-gradient(135deg, ${accentColor}40 0%, #1f2937 100%)`
-              : `linear-gradient(135deg, ${accentColor}30 0%, #f3f4f6 100%)`,
-          }}
-        />
-      )}
+      <ImageWithFallback
+        src={
+          category.heroImage
+            ? (toAbsoluteImageUrl(category.heroImage) || category.heroImage!)
+            : getRandomPlaceholderUrl(`hero-${category.slug}`, 'cover')
+        }
+        alt={category.name}
+        className="absolute inset-0 w-full h-full object-cover"
+        priority
+      />
+      <div
+        className={`absolute inset-0 ${
+          isCinematic
+            ? 'bg-gradient-to-t from-black/90 via-black/50 to-black/30'
+            : 'bg-gradient-to-t from-black/70 via-black/40 to-transparent'
+        }`}
+      />
 
       <div className="absolute inset-0 flex flex-col justify-end p-4">
         <h1 className="text-2xl font-bold text-white drop-shadow-lg">

@@ -59,7 +59,7 @@ export default function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg" aria-label="ناوبری اصلی">
         <div className="flex items-center justify-around py-3 overflow-x-auto">
           {navItems.map((item, idx) => {
             const isCreate = item.isButton;
@@ -67,13 +67,13 @@ export default function BottomNav() {
             const className = `flex flex-col items-center justify-center px-2 py-2 flex-shrink-0 min-w-[64px] ${isActive ? 'text-primary' : 'text-gray-500'}`;
             if (isCreate) {
               return (
-                <button
-                  key="create"
-                  type="button"
-                  onClick={() => setCreateOpen(true)}
-                  className={className}
-                  aria-label="ساخت"
-                >
+<button
+                key="create"
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                className={className}
+                aria-label="ساخت لیست یا آیتم جدید"
+              >
                   <span className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center -mt-4 shadow-md hover:bg-primary-dark transition-colors">
                     {item.icon}
                   </span>
@@ -82,8 +82,14 @@ export default function BottomNav() {
               );
             }
             return (
-              <Link key={item.href} href={item.href!} className={className}>
-                {item.icon}
+              <Link
+                key={item.href}
+                href={item.href!}
+                className={className}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={item.label}
+              >
+                <span aria-hidden="true">{item.icon}</span>
                 <span className="text-xs mt-1 whitespace-nowrap">{item.label}</span>
               </Link>
             );

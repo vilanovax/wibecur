@@ -41,9 +41,7 @@ async function getTrendingForCategory(categoryId: string) {
     ]);
 
     const listIdToRecent: Record<string, number> = {};
-    savesLast7Days.forEach((r) => {
-      listIdToRecent[r.listId] = r._count.listId;
-    });
+    savesLast7Days.forEach((r) => (listIdToRecent[r.listId] = r._count.listId));
 
     const withScore = items.map((i) => {
       const saveCount = i.lists?.saveCount ?? 0;
@@ -68,13 +66,13 @@ async function getTrendingForCategory(categoryId: string) {
   });
 }
 
-// GET /api/categories/[categoryId]/trending — داغ‌های این دسته (param = id یا slug)
+// GET /api/categories/[slug]/trending — داغ‌های این دسته (param = id یا slug)
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ categoryId: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { categoryId: param } = await params;
+    const { slug: param } = await params;
 
     if (!param) {
       return NextResponse.json({ error: 'دسته نامعتبر است' }, { status: 400 });

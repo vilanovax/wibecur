@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/react';
 import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import PWAProvider from '@/components/providers/PWAProvider';
@@ -99,12 +100,19 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased font-sans bg-gray-200">
-        <div className="min-h-screen w-full max-w-[428px] mx-auto md:bg-white md:shadow-2xl">
+        <a
+          href="#main"
+          className="skip-link"
+        >
+          رفتن به محتوای اصلی
+        </a>
+        <div className="min-h-screen w-full max-w-[428px] mx-auto md:bg-white md:shadow-2xl" id="main" role="main">
           <PWAProvider>
             <QueryProvider>
               <SessionProvider>{children}</SessionProvider>
             </QueryProvider>
           </PWAProvider>
+        <Analytics />
         </div>
       </body>
     </html>

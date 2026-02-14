@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
+import { track } from '@/lib/analytics';
 
 interface CreateListFormProps {
   isOpen: boolean;
@@ -110,6 +111,7 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
       // Show success message
       setToastMessage(data.message || 'لیست با موفقیت ایجاد شد');
       setShowToast(true);
+      track('list_create');
 
       // Reset form
       setFormData({

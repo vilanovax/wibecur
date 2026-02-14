@@ -22,6 +22,8 @@ type ListWithCategory = lists & {
 interface ListsPageClientProps {
   lists: ListWithCategory[];
   categories: categories[];
+  initialCategory?: string;
+  initialSearch?: string;
 }
 
 type SortOption = 'trending' | 'newest' | 'popular';
@@ -62,11 +64,22 @@ function matchVibe(list: ListWithCategory, vibe: VibeFilter, bookmarkedIds: Set<
   }
 }
 
-export default function ListsPageClient({ lists: initialLists, categories }: ListsPageClientProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+export default function ListsPageClient({
+  lists: initialLists,
+  categories,
+  initialCategory,
+  initialSearch,
+}: ListsPageClientProps) {
+  const categoryById = categories.find((c) => c.id === initialCategory);
+  const categoryBySlug = categories.find(
+    (c) => 'slug' in c && (c as { slug: string }).slug === initialCategory
+  );
+  const resolvedCategoryId = categoryById?.id ?? categoryBySlug?.id ?? 'all';
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(resolvedCategoryId);
   const [selectedVibe, setSelectedVibe] = useState<VibeFilter>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch ?? '');
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
 

@@ -5,6 +5,8 @@
   "scripts": {
     "test": "vitest",
     "test:run": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "dev": "cross-env NODE_OPTIONS=--max-http-header-size=16384 next dev -p 3002",
     "dev:next": "next dev",
     "build": "next build",
@@ -23,7 +25,8 @@
     "replace:unsplash": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-unsplash-with-picsum-and-upload.ts",
     "replace:unsplash:all": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-unsplash-with-picsum-and-upload.ts --all",
     "replace:unsplash:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-unsplash-with-picsum-and-upload.ts --dry-run",
-    "set-liara-config": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/set-liara-config.ts"
+    "set-liara-config": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/set-liara-config.ts",
+    "set-cafe-hero": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/set-cafe-category-hero.ts"
   },
   "prisma": {
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
@@ -36,6 +39,9 @@
     "@prisma/client": "^6.19.0",
     "@sentry/nextjs": "^10.38.0",
     "@tanstack/react-query": "^5.90.12",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.2",
+    "@vercel/analytics": "^1.6.1",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.0",
@@ -60,6 +66,7 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

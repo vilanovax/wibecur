@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { track } from '@/lib/analytics';
 
 interface BaseCommentFormProps {
   isOpen: boolean;
@@ -54,6 +55,7 @@ export default function BaseCommentForm({
       }
 
       setContent('');
+      track('comment_submit');
       onClose();
       onSubmit();
     } catch (err: unknown) {
@@ -69,7 +71,7 @@ export default function BaseCommentForm({
       <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
         <div className="flex-1 min-h-0 overflow-y-auto p-6">
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4">
+            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4" role="alert">
               {error}
             </div>
           )}

@@ -3,14 +3,19 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import ListsPageClient from './ListsPageClient';
 import { prisma } from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60; // ISR: به‌روزرسانی هر ۶۰ ثانیه
 
 export const metadata = {
   title: 'لیست‌ها | WibeCur',
   description: 'مرور و کشف لیست‌های کیوریت شده',
 };
 
-export default async function ListsPage() {
+export default async function ListsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; tag?: string; q?: string }>;
+}) {
+  const params = await searchParams;
   // Fetch lists and categories from database
   // Only show lists created by admins, not users
   const [lists, categories] = await Promise.all([
@@ -75,6 +80,8 @@ export default async function ListsPage() {
         <ListsPageClient 
           lists={JSON.parse(JSON.stringify(lists))} 
           categories={JSON.parse(JSON.stringify(categories))} 
+          initialCategory={params.category}
+          initialSearch={params.tag || params.q}
         />
       </main>
       <BottomNav />

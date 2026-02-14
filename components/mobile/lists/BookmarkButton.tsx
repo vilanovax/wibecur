@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Star, Check } from 'lucide-react';
+import { track } from '@/lib/analytics';
 
 interface BookmarkButtonProps {
   listId: string;
@@ -73,6 +74,7 @@ export default function BookmarkButton({
         setIsBookmarked(data.data.isBookmarked);
         setBookmarkCount(data.data.bookmarkCount);
         onToggle?.(data.data.isBookmarked);
+        track(data.data.isBookmarked ? 'list_bookmark' : 'list_unbookmark', { listId });
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
