@@ -22,11 +22,17 @@ export interface HomeListData {
 
 export interface FeaturedListData extends HomeListData {
   badge?: 'trending' | 'new' | 'featured';
+  creator?: { name: string | null; username: string | null } | null;
+}
+
+export interface RisingListData extends HomeListData {
+  isFastRising?: boolean;
 }
 
 export interface HomeData {
   featured: FeaturedListData | null;
   trending: HomeListData[];
+  rising: RisingListData[];
   recommendations: HomeListData[];
 }
 
@@ -40,6 +46,7 @@ interface HomeDataContextValue {
 const initialState: HomeData = {
   featured: null,
   trending: [],
+  rising: [],
   recommendations: [],
 };
 
@@ -74,9 +81,20 @@ async function fetchHomeData(): Promise<HomeData> {
   const json = await res.json();
   if (!json.success || !json.data) return initialState;
   const d = json.data;
+  const featured = d.featured
+    ? { ...mapApiItem(d.featured), creator: d.featured.creator ?? null } as FeaturedListData
+    : null;
+  const rising = Array.isArray(d.rising)
+    ? d.rising.map((r: { isFastRising?: boolean } & typeof d.rising[0]) => ({
+        ...mapApiItem(r),
+        isFastRising: r.isFastRising,
+      }))
+    : [];
+
   return {
-    featured: d.featured ? mapApiItem({ ...d.featured }) as FeaturedListData : null,
+    featured,
     trending: Array.isArray(d.trending) ? d.trending.map(mapApiItem) : [],
+    rising,
     recommendations: Array.isArray(d.recommendations) ? d.recommendations.map(mapApiItem) : [],
   };
 }

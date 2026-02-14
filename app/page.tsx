@@ -1,13 +1,13 @@
 import Header from '@/components/mobile/layout/Header';
-import HeroGreeting from '@/components/mobile/home/HeroGreeting';
-import EnhancedSearch from '@/components/mobile/home/EnhancedSearch';
-import HomeFeedTabs from '@/components/mobile/home/HomeFeedTabs';
-import FeaturedCard from '@/components/mobile/home/FeaturedCard';
-import RecommendationSection from '@/components/mobile/recommendations/RecommendationSection';
-import CategoryScroll from '@/components/mobile/home/CategoryScroll';
-import GlobalTrendingSection from '@/components/mobile/home/GlobalTrendingSection';
+import HomeSearchBar from '@/components/mobile/home/HomeSearchBar';
+import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
+import HomeHeroSpotlight from '@/components/mobile/home/HomeHeroSpotlight';
+import TrendingThisWeekCarousel from '@/components/mobile/home/TrendingThisWeekCarousel';
+import CategoryGridHome from '@/components/mobile/home/CategoryGridHome';
+import ForYouSection from '@/components/mobile/home/ForYouSection';
+import NewAndRisingSection from '@/components/mobile/home/NewAndRisingSection';
 import CreatorSpotlightSection from '@/components/mobile/home/CreatorSpotlightSection';
-import TrendingLists from '@/components/mobile/home/TrendingLists';
+import BottomCTASection from '@/components/mobile/home/BottomCTASection';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
@@ -23,21 +23,20 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24" dir="rtl">
       <Header />
-      <HeroGreeting />
-      <EnhancedSearch />
-      <main className="space-y-0 px-0">
+      <main className="pt-2">
         <HomeDataProvider>
           <ErrorBoundary>
-            <HomeFeedTabs>
-              <>
-                <FeaturedCard />
-                <GlobalTrendingSection />
-                <CreatorSpotlightSection />
-                <RecommendationSection />
-                <CategoryScroll />
-                <TrendingLists />
-              </>
-            </HomeFeedTabs>
+            <HomeSearchBar />
+            <QuickCategoryChips />
+            <div className="space-y-0">
+              <HomeHeroSpotlight />
+              <TrendingThisWeekCarousel />
+              <ForYouSection />
+              <NewAndRisingSection />
+              <CategoryGridHome />
+              <CreatorSpotlightSection />
+              <BottomCTASection />
+            </div>
           </ErrorBoundary>
         </HomeDataProvider>
       </main>

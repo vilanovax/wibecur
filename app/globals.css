@@ -10,6 +10,9 @@
   --primary-light: #818CF8;
   --secondary: #8B5CF6;
   --accent: #EC4899;
+  /* Visual Hierarchy 2.0 */
+  --shadow-card: 0 6px 18px rgba(0, 0, 0, 0.06);
+  --shadow-hero: 0 12px 28px rgba(0, 0, 0, 0.12);
 }
 
 /* Custom primary colors for Tailwind v3 */
@@ -67,6 +70,12 @@
   }
   .border-primary-dark {
     border-color: #4F46E5;
+  }
+  .shadow-vibe-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-vibe-hero {
+    box-shadow: var(--shadow-hero);
   }
 }
 

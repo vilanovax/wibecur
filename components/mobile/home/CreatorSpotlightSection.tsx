@@ -75,7 +75,7 @@ export default function CreatorSpotlightSection() {
 
   if (loading) {
     return (
-      <section className="mb-8 px-4">
+      <section className="mb-6 px-4">
         <div className="h-6 w-52 bg-gray-200 rounded animate-pulse mb-3" />
         <div className="rounded-2xl border border-gray-100 bg-white p-5 h-56 animate-pulse" />
       </section>
@@ -91,14 +91,14 @@ export default function CreatorSpotlightSection() {
     c.avatarType === 'DEFAULT' && c.avatarId ? VIBE_AVATARS.find((a) => a.id === c.avatarId) : null;
 
   return (
-    <section className="mb-8 px-4">
-      <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
-        <span>🌟</span>
-        کیوریتور ویژه این هفته
+    <section className="mb-6 px-4">
+      <h2 className="text-[18px] font-semibold leading-[1.4] text-gray-900 mb-1 flex items-center gap-2">
+        <span>👑</span>
+        Creator Spotlight
       </h2>
-      <p className="text-sm text-gray-500 mb-3">انتخاب وایب از میان کریتورهای باکیفیت</p>
+      <p className="text-[13px] text-gray-500/80 leading-[1.6] mb-3">اقتصاد کیوریتورها</p>
 
-      <div className="rounded-2xl border-2 border-[#7C3AED]/20 bg-white shadow-md overflow-hidden">
+      <div className="rounded-[18px] border-2 border-[#7C3AED]/20 bg-white shadow-vibe-card overflow-hidden">
         <div className="p-5">
           <div className="flex flex-col items-center text-center">
             <div className="relative">
@@ -128,7 +128,7 @@ export default function CreatorSpotlightSection() {
                 )}
               </div>
             </div>
-            <p className="font-bold text-gray-900 mt-3 text-lg">{c.name || 'کاربر'}</p>
+            <p className="font-semibold text-[15px] leading-[1.4] text-gray-900 mt-3">{c.name || 'کاربر'}</p>
             <CuratorBadge
               level={levelKey}
               size="small"

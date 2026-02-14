@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { getGlobalTrending } from '@/lib/trending/service';
+import { getGlobalTrending, getFastRising } from '@/lib/trending/service';
 
 /**
  * GET /api/lists/home
- * لیست‌های عمومی برای صفحهٔ اول: featured (یک لیست) + trending (Trending Engine) + recommendations.
+ * لیست‌های عمومی برای صفحهٔ اول: featured + trending + rising + recommendations.
  */
 export async function GET() {
   try {
-    const [lists, trendingResults] = await Promise.all([
+    const [lists, trendingResults, risingResults] = await Promise.all([
       dbQuery(() =>
         prisma.lists.findMany({
           where: {
@@ -28,8 +28,12 @@ export async function GET() {
             likeCount: true,
             isFeatured: true,
             badge: true,
+            userId: true,
             categories: {
               select: { id: true, name: true, slug: true, icon: true },
+            },
+            users: {
+              select: { id: true, name: true, username: true },
             },
           },
           orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
@@ -37,6 +41,7 @@ export async function GET() {
         })
       ),
       getGlobalTrending(prisma, 6),
+      getFastRising(prisma, 6),
     ]);
 
     const featured = lists.length > 0 ? lists[0] : null;
@@ -67,12 +72,34 @@ export async function GET() {
       categories: undefined,
     });
 
+    const mapRising = (r: (typeof risingResults)[0]) => ({
+      id: r.listId,
+      title: r.title,
+      slug: r.slug,
+      description: '',
+      coverImage: r.coverImage ?? '',
+      saveCount: r.saveCount,
+      itemCount: r.itemCount,
+      likes: r.likeCount,
+      isFastRising: r.isFastRising ?? false,
+    });
+
+    const mapFeatured = featured
+      ? {
+          ...mapList(featured),
+          creator: featured.users
+            ? { name: featured.users.name, username: featured.users.username }
+            : null,
+        }
+      : null;
+
     const response = NextResponse.json({
       success: true,
       data: {
-        featured: featured ? mapList(featured) : null,
+        featured: mapFeatured,
         trending: trendingResults.map(mapTrending),
-        recommendations: lists.slice(0, 2).map(mapList),
+        rising: risingResults.map(mapRising),
+        recommendations: lists.slice(0, 4).map(mapList),
       },
     });
     response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
@@ -89,7 +116,7 @@ export async function GET() {
       console.warn('Database unavailable, returning empty home data:', msg);
       return NextResponse.json({
         success: true,
-        data: { featured: null, trending: [], recommendations: [] },
+        data: { featured: null, trending: [], rising: [], recommendations: [] },
       });
     }
     console.error('Error fetching home lists:', error);
