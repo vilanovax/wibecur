@@ -93,10 +93,10 @@ export default function CreatorSpotlightSection() {
   return (
     <section className="mb-6 px-4">
       <h2 className="text-[18px] font-semibold leading-[1.4] text-gray-900 mb-1 flex items-center gap-2">
-        <span>👑</span>
-        Creator Spotlight
+        <span>🏆</span>
+        کیوریتور منتخب امروز
       </h2>
-      <p className="text-[13px] text-gray-500/80 leading-[1.6] mb-3">اقتصاد کیوریتورها</p>
+      <p className="text-[13px] text-gray-500/80 leading-[1.6] mb-3">اقتصاد کیوریشن</p>
 
       <div className="rounded-[18px] border-2 border-[#7C3AED]/20 bg-white shadow-vibe-card overflow-hidden">
         <div className="p-5">

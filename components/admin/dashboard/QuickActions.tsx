@@ -46,7 +46,7 @@ export default function QuickActions() {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
       <h3 className="text-lg font-bold text-gray-900 mb-6">عملیات سریع</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {actions.map((action) => {
           const Icon = action.icon;
           return (

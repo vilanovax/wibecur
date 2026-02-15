@@ -45,11 +45,16 @@ export interface CuratedList {
   viewsLast7d?: number;
   savesLast7d?: number;
   likesLast7d?: number;
+  /** رشد درصدی ۲۴ ساعت اخیر (برای Trending badge) */
+  growthPercent24h?: number;
+  /** امتیاز کیوریتور (۱–۵) */
+  rating?: number;
 }
 
 /** Category for filter chips */
 export interface CuratedCategory {
   id: string;
+  slug?: string;
   title: string;
   icon: string;
 }

@@ -148,7 +148,7 @@ export default function Sidebar() {
   const isListsPage = pathname?.startsWith('/admin/lists');
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-white to-gray-50 shadow-xl min-h-screen border-l border-gray-200">
+    <aside className="w-72 flex-shrink-0 bg-gradient-to-b from-white to-gray-50 shadow-xl min-h-screen border-l border-gray-200">
       <div className="p-6">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 pb-6 border-b border-gray-200">

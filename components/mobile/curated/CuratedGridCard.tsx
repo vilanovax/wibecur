@@ -30,7 +30,7 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="block bg-white rounded-[20px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-md active:scale-[0.99] transition-all"
+      className="block bg-white rounded-[18px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-md active:scale-[0.99] transition-all"
     >
       <div className="relative aspect-[4/3] w-full bg-gray-200 overflow-hidden">
         <ImageWithFallback

@@ -117,7 +117,7 @@ export default function ChartsClient({
         </ResponsiveContainer>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-6">
         {/* Lists by Category - Modern Bar Chart */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-300">
           <div className="flex items-center gap-3 mb-6">

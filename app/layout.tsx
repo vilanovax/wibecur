@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import PWAProvider from '@/components/providers/PWAProvider';
+import MainContainer from '@/components/providers/MainContainer';
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from '@/lib/seo';
 
 const baseUrl = getBaseUrl();
@@ -106,14 +107,14 @@ export default function RootLayout({
         >
           رفتن به محتوای اصلی
         </a>
-        <div className="min-h-screen w-full max-w-[428px] mx-auto md:bg-white md:shadow-2xl" id="main" role="main">
+        <MainContainer>
           <PWAProvider>
             <QueryProvider>
               <SessionProvider>{children}</SessionProvider>
             </QueryProvider>
           </PWAProvider>
-        <Analytics />
-        </div>
+          <Analytics />
+        </MainContainer>
       </body>
     </html>
   );

@@ -34,10 +34,10 @@ export default function NewAndRisingSection() {
     <section className="mb-6">
       <div className="px-4 mb-3">
         <h2 className="text-[18px] font-semibold leading-[1.4] text-gray-900 flex items-center gap-2">
-          <span>🆕</span>
-          New & Rising
+          <span>🚀</span>
+          در حال اوج گرفتن
         </h2>
-        <p className="text-[13px] text-gray-500/80 leading-[1.6] mt-0.5">📈 لیست‌های در حال رشد</p>
+        <p className="text-[13px] text-gray-500/80 leading-[1.6] mt-0.5">لیست‌هایی با رشد سریع در ۲۴ ساعت اخیر</p>
       </div>
       <div className="px-4 space-y-3">
         {lists.map((list) => (

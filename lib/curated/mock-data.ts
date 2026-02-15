@@ -3,11 +3,11 @@ import type { CuratedList, Curator, CuratedCategory } from '@/types/curated';
 
 export const MOCK_CATEGORIES: CuratedCategory[] = [
   { id: 'all', title: 'همه', icon: '📋' },
-  { id: 'cat1', title: 'فیلم و سریال', icon: '🎬' },
-  { id: 'cat2', title: 'کافه و رستوران', icon: '☕' },
-  { id: 'cat3', title: 'کتاب', icon: '📚' },
-  { id: 'cat4', title: 'پادکست', icon: '🎧' },
-  { id: 'cat5', title: 'سفر', icon: '✈️' },
+  { id: 'cat1', slug: 'film', title: 'فیلم و سریال', icon: '🎬' },
+  { id: 'cat2', slug: 'cafe', title: 'کافه و رستوران', icon: '☕' },
+  { id: 'cat3', slug: 'book', title: 'کتاب', icon: '📚' },
+  { id: 'cat4', slug: 'podcast', title: 'پادکست', icon: '🎧' },
+  { id: 'cat5', slug: 'travel', title: 'سفر', icon: '✈️' },
 ];
 
 const avatarBase = 'https://i.pravatar.cc/150?u=';
@@ -143,6 +143,8 @@ function createList(
     weeklyVelocity?: number;
     daysAgo?: number;
     subtitle?: string;
+    growthPercent24h?: number;
+    rating?: number;
   } = {}
 ): CuratedList {
   const saves = opts.saves ?? 100 + id * 50;
@@ -179,6 +181,8 @@ function createList(
     viewsLast7d,
     savesLast7d,
     likesLast7d,
+    growthPercent24h: opts.growthPercent24h ?? Math.floor(5 + Math.random() * 35),
+    rating: opts.rating ?? 3.5 + Math.random() * 1.5,
   };
 
   raw.trendScore = computeTrendScore(raw);
@@ -194,6 +198,8 @@ export function getMockLists(): CuratedList[] {
       savesLast7d: 320,
       daysAgo: 2,
       subtitle: '۲۰ فیلم برتر امسال',
+      growthPercent24h: 34,
+      rating: 4.8,
     }),
     createList(2, 'کافه‌های دنج تهران', c4, 'cat2', {
       saves: 1200,
@@ -201,6 +207,8 @@ export function getMockLists(): CuratedList[] {
       savesLast7d: 180,
       daysAgo: 5,
       subtitle: 'از شمال تا جنوب شهر',
+      growthPercent24h: 22,
+      rating: 4.5,
     }),
     createList(3, 'کتاب‌هایی که زندگی‌ام را عوض کردند', c3, 'cat3', {
       saves: 5800,
@@ -220,12 +228,16 @@ export function getMockLists(): CuratedList[] {
       badges: ['trending', 'featured'],
       savesLast7d: 420,
       daysAgo: 3,
+      growthPercent24h: 48,
+      rating: 4.9,
     }),
     createList(6, 'رستوران‌های گردشگری تهران', c6, 'cat2', {
       saves: 2100,
       badges: ['trending'],
       savesLast7d: 280,
       daysAgo: 4,
+      growthPercent24h: 18,
+      rating: 4.6,
     }),
     createList(7, 'کتاب‌های توسعه فردی', c3, 'cat3', {
       saves: 4500,
@@ -252,6 +264,8 @@ export function getMockLists(): CuratedList[] {
       savesLast7d: 380,
       daysAgo: 2,
       subtitle: '۲۰ مقصد رویایی',
+      growthPercent24h: 55,
+      rating: 4.7,
     }),
     createList(11, 'کافه‌بوک‌های تهران', c4, 'cat2', {
       saves: 950,

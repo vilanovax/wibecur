@@ -36,7 +36,7 @@ export default function TopBar() {
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="px-6 py-4 flex items-center justify-between">
         {/* Left Section - Search */}
-        <div className="flex-1 max-w-xl">
+        <div className="flex-1 max-w-2xl">
           <div className="relative">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -99,7 +99,7 @@ export default function TopBar() {
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-semibold">
                 ا
               </div>
-              <div className="hidden md:block text-right">
+              <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">ادمین</p>
                 <p className="text-xs text-gray-500">admin@wibecur.com</p>
               </div>

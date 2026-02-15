@@ -22,6 +22,7 @@ export default function HomeHeroSpotlight() {
 
   return (
     <section className="px-4 mt-4 mb-6">
+      <p className="text-[12px] font-medium text-gray-500 mb-2">منتخب هفته</p>
       <div className="relative rounded-[20px] overflow-hidden h-[240px] bg-gray-200 shadow-vibe-hero">
         <ImageWithFallback
           src={list.coverImage}

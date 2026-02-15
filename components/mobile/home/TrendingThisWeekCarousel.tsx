@@ -41,7 +41,9 @@ export default function TrendingThisWeekCarousel() {
         <p className="text-[13px] text-gray-500/80 leading-[1.6] mt-0.5">بر اساس رشد ذخیره و تعامل</p>
       </div>
       <div className="flex gap-3 overflow-x-auto scrollbar-hide px-4 snap-x snap-mandatory -mx-1">
-        {lists.map((list) => (
+        {lists.map((list, idx) => {
+          const growthPercent = [24, 18, 12, 8, 6, 4][idx] ?? 0;
+          return (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
@@ -49,9 +51,16 @@ export default function TrendingThisWeekCarousel() {
           >
             <div className="rounded-[18px] overflow-hidden bg-white border border-gray-100 shadow-vibe-card w-[140px] h-[187px]">
               <div className="relative h-full w-full bg-gray-100">
-                <span className="absolute top-2 right-2 z-10 bg-amber-500 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                  ترند
-                </span>
+                <div className="absolute top-2 right-2 left-2 z-10 flex items-center justify-between">
+                  <span className="bg-amber-500 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                    ترند
+                  </span>
+                  {growthPercent > 0 && (
+                    <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      +{growthPercent}%
+                    </span>
+                  )}
+                </div>
                 <ImageWithFallback
                   src={list.coverImage}
                   alt={list.title}
@@ -64,19 +73,20 @@ export default function TrendingThisWeekCarousel() {
                   <h3 className="font-semibold text-white text-[15px] leading-[1.4] line-clamp-2 drop-shadow">{list.title}</h3>
                   <div className="flex items-center gap-2 mt-1.5 text-[12px] font-medium text-white/75">
                     <span className="flex items-center gap-0.5">
-                      <Star className="w-3.5 h-3.5" />
-                      {list.saveCount}
+                      <Heart className="w-3.5 h-3.5" />
+                      {list.saveCount.toLocaleString('fa-IR')}
                     </span>
                     <span className="flex items-center gap-0.5">
-                      <Heart className="w-3.5 h-3.5" />
-                      {list.likes}
+                      <Star className="w-3.5 h-3.5" />
+                      {list.likes.toLocaleString('fa-IR')}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
