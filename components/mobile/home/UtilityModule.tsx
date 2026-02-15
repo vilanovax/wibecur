@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 
@@ -37,7 +36,7 @@ export default function UtilityModule() {
           در کمتر از یک دقیقه، یک لیست جذاب بساز
         </p>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-3">
           {QUICK_ACTIONS.map((action) => (
             <button
               key={action.category}
@@ -59,19 +58,6 @@ export default function UtilityModule() {
             </button>
           ))}
         </div>
-
-        <Link
-          href="/user-lists?openCreate=1"
-          className="
-            flex items-center justify-center gap-2 w-full py-3.5 px-4
-            rounded-[18px] bg-primary text-white font-semibold text-[14px]
-            hover:bg-primary-dark active:scale-[0.99]
-            transition-all duration-200 shadow-md shadow-primary/20
-          "
-        >
-          <Sparkles className="w-4 h-4" />
-          ساخت لیست هوشمند
-        </Link>
       </div>
     </section>
   );
