@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { lists, categories } from '@prisma/client';
@@ -44,9 +44,13 @@ export default function UserListsPageClient({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
-  // Remove duplicates from initialLists by ID
-  const uniqueInitialLists = initialLists.filter(
-    (list, index, self) => index === self.findIndex((l) => l.id === list.id)
+  // Remove duplicates from initialLists by ID (memoized to prevent useEffect infinite loop)
+  const uniqueInitialLists = useMemo(
+    () =>
+      initialLists.filter(
+        (list, index, self) => index === self.findIndex((l) => l.id === list.id)
+      ),
+    [initialLists]
   );
   const [lists, setLists] = useState<ListWithRelations[]>(uniqueInitialLists);
   const [isLoading, setIsLoading] = useState(false);

@@ -4,15 +4,88 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design Tokens 2.0 – CSS Variables ───────────────────────────────── */
 :root {
+  /* Brand */
   --primary: #6366F1;
   --primary-dark: #4F46E5;
   --primary-light: #818CF8;
   --secondary: #8B5CF6;
   --accent: #EC4899;
-  /* Visual Hierarchy 2.0 */
+
+  /* Semantic: Light mode */
+  --color-bg: #F9FAFB;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-border-muted: #F3F4F6;
+  --color-text: #111827;
+  --color-text-muted: #4B5563;
+  --color-text-subtle: #6B7280;
+
+  /* Gray scale */
+  --gray-50: #F9FAFB;
+  --gray-100: #F3F4F6;
+  --gray-200: #E5E7EB;
+  --gray-300: #D1D5DB;
+  --gray-400: #9CA3AF;
+  --gray-500: #6B7280;
+  --gray-600: #4B5563;
+  --gray-700: #374151;
+  --gray-800: #1F2937;
+  --gray-900: #111827;
+
+  /* Semantic state */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Shadows */
   --shadow-card: 0 6px 18px rgba(0, 0, 0, 0.06);
   --shadow-hero: 0 12px 28px rgba(0, 0, 0, 0.12);
+  --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --shadow-focus: 0 0 0 2px rgba(99, 102, 241, 0.4);
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 40px;
+  --spacing-4xl: 48px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
+  --radius-pill: 9999px;
+
+  /* Motion */
+  --motion-fast: 150ms;
+  --motion-normal: 250ms;
+  --motion-slow: 350ms;
+  --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode tokens (when enabled via .dark on html) */
+.dark {
+  --color-bg: #111827;
+  --color-surface: #1F2937;
+  --color-surface-raised: #374151;
+  --color-border: #4B5563;
+  --color-border-muted: #374151;
+  --color-text: #F9FAFB;
+  --color-text-muted: #D1D5DB;
+  --color-text-subtle: #9CA3AF;
+
+  --shadow-card: 0 6px 18px rgba(0, 0, 0, 0.3);
+  --shadow-hero: 0 12px 28px rgba(0, 0, 0, 0.4);
+  --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* Custom primary colors for Tailwind v3 */
@@ -47,36 +120,28 @@
 }
 
 @layer utilities {
-  .bg-primary {
-    background-color: #6366F1;
-  }
-  .bg-primary-dark {
-    background-color: #4F46E5;
-  }
-  .bg-primary-light {
-    background-color: #818CF8;
-  }
-  .text-primary {
-    color: #6366F1;
-  }
-  .text-primary-dark {
-    color: #4F46E5;
-  }
-  .text-primary-light {
-    color: #818CF8;
-  }
-  .border-primary {
-    border-color: #6366F1;
-  }
-  .border-primary-dark {
-    border-color: #4F46E5;
-  }
-  .shadow-vibe-card {
-    box-shadow: var(--shadow-card);
-  }
-  .shadow-vibe-hero {
-    box-shadow: var(--shadow-hero);
-  }
+  .bg-primary { background-color: var(--primary); }
+  .bg-primary-dark { background-color: var(--primary-dark); }
+  .bg-primary-light { background-color: var(--primary-light); }
+  .text-primary { color: var(--primary); }
+  .text-primary-dark { color: var(--primary-dark); }
+  .text-primary-light { color: var(--primary-light); }
+  .border-primary { border-color: var(--primary); }
+  .border-primary-dark { border-color: var(--primary-dark); }
+  .shadow-vibe-card { box-shadow: var(--shadow-card); }
+  .shadow-vibe-hero { box-shadow: var(--shadow-hero); }
+  .shadow-vibe-floating { box-shadow: var(--shadow-floating); }
+  /* Semantic surface utilities */
+  .bg-surface { background-color: var(--color-surface); }
+  .bg-surface-raised { background-color: var(--color-surface-raised); }
+  .text-muted { color: var(--color-text-muted); }
+  .text-subtle { color: var(--color-text-subtle); }
+  .border-default { border-color: var(--color-border); }
+  .border-muted { border-color: var(--color-border-muted); }
+  .text-success { color: var(--color-success); }
+  .text-warning { color: var(--color-warning); }
+  .text-danger { color: var(--color-danger); }
+  .text-info { color: var(--color-info); }
 }
 
 * {
@@ -92,8 +157,8 @@ body {
 }
 
 body {
-  background-color: #f9fafb;
-  color: #111827;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 html {
@@ -208,16 +273,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--gray-100, #f1f1f1);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+  background: var(--gray-400, #888);
+  border-radius: var(--radius-sm, 4px);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--gray-600, #555);
 }
 
 @keyframes fadeIn {
