@@ -1,17 +1,8 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { isAdminRole } from '@/lib/auth/roles';
+import { isAdminRole, ROLE_LABELS } from '@/lib/auth/roles';
 import Badge from '@/components/admin/design-system/Badge';
-
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: 'مدیرکل',
-  ADMIN: 'مدیر',
-  MODERATOR: 'ناظر',
-  ANALYST: 'تحلیل‌گر',
-  EDITOR: 'ویرایشگر',
-  USER: 'کاربر',
-};
 
 interface RoleBadgeProps {
   /** اگر ندهی از session خوانده می‌شود */

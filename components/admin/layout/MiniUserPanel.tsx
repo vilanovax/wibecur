@@ -4,17 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { User, KeyRound, LogOut } from 'lucide-react';
+import { getRoleLabel } from '@/lib/auth/roles';
 import Tooltip from './Tooltip';
 import clsx from 'clsx';
-
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: 'مدیرکل',
-  ADMIN: 'مدیر',
-  MODERATOR: 'ناظر',
-  ANALYST: 'تحلیل‌گر',
-  EDITOR: 'ویرایشگر',
-  USER: 'کاربر',
-};
 
 export interface MiniUserPanelProps {
   collapsed: boolean;
@@ -31,7 +23,7 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const roleLabel = user.role ? ROLE_LABELS[user.role] ?? user.role : '—';
+  const roleLabel = getRoleLabel(user.role);
   const displayName = user.name || user.email || 'کاربر';
 
   useEffect(() => {

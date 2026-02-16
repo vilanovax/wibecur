@@ -6,15 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import { AdminCard, Badge, type BadgeVariant } from '@/components/admin/design-system';
 import { AUDIT_ACTIONS, ENTITY_TYPES } from '@/lib/audit/actions';
-
-const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: 'مدیرکل',
-  ADMIN: 'مدیر',
-  MODERATOR: 'ناظر',
-  ANALYST: 'تحلیل‌گر',
-  EDITOR: 'ویرایشگر',
-  USER: 'کاربر',
-};
+import { getRoleLabel } from '@/lib/auth/roles';
 
 const ACTION_BADGE: Record<string, BadgeVariant> = {
   LIST_DELETE: 'danger',
@@ -196,7 +188,7 @@ export default function AuditLogClient() {
                       <span className="font-medium">{row.users?.name ?? row.users?.email ?? row.actorId}</span>
                     </td>
                     <td className="py-3 px-4">
-                      <Badge variant="neutral">{ROLE_LABELS[row.actorRole] ?? row.actorRole}</Badge>
+                      <Badge variant="neutral">{getRoleLabel(row.actorRole)}</Badge>
                     </td>
                     <td className="py-3 px-4">
                       <Badge variant={ACTION_BADGE[row.action] ?? 'neutral'}>{row.action}</Badge>
