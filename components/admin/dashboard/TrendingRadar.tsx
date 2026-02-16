@@ -86,6 +86,9 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
               <th className="pr-4 py-3 text-right text-sm font-semibold text-[var(--color-text-muted)] w-16">
                 وضعیت
               </th>
+              <th className="pr-4 py-3 text-right text-sm font-semibold text-[var(--color-text-muted)]">
+                عملیات
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -173,6 +176,22 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                     {row.trend === 'down' && <ArrowDown className="w-4 h-4" />}
                     {row.trend === 'neutral' && <Minus className="w-4 h-4" />}
                   </span>
+                </td>
+                <td className="pr-4 py-3">
+                  <div className="flex items-center gap-2 justify-end">
+                    <Link
+                      href={`/admin/lists/${row.id}/edit`}
+                      className="text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)]"
+                    >
+                      ویرایش
+                    </Link>
+                    <Link
+                      href={`/admin/lists/${row.id}/debug`}
+                      className="text-xs text-[var(--primary)] hover:underline"
+                    >
+                      دیباگ
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}

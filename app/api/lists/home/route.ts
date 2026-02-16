@@ -2,13 +2,22 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getGlobalTrending, getFastRising } from '@/lib/trending/service';
+import { getCurrentFeaturedSlot } from '@/lib/home-featured';
 
 /**
  * GET /api/lists/home
  * لیست‌های عمومی برای صفحهٔ اول: featured + trending + rising + recommendations.
+ * featured از اسلات زمان‌بندی‌شده (در صورت وجود) وگرنه fallback به isFeatured + saveCount.
  */
 export async function GET() {
   try {
+    let slotResult: Awaited<ReturnType<typeof getCurrentFeaturedSlot>> = null;
+    try {
+      slotResult = await dbQuery(() => getCurrentFeaturedSlot(prisma));
+    } catch (slotErr) {
+      console.warn('getCurrentFeaturedSlot failed, using fallback:', slotErr);
+    }
+
     const [lists, trendingResults, risingResults] = await Promise.all([
       dbQuery(() =>
         prisma.lists.findMany({
@@ -44,7 +53,9 @@ export async function GET() {
       getFastRising(prisma, 6),
     ]);
 
-    const featured = lists.length > 0 ? lists[0] : null;
+    const featuredFromSlot = slotResult?.list ?? null;
+    const featured = featuredFromSlot ?? (lists.length > 0 ? lists[0] : null);
+    const featuredSlotId = slotResult?.slotId ?? null;
 
     const mapList = (l: (typeof lists)[0]) => ({
       id: l.id,
@@ -86,7 +97,7 @@ export async function GET() {
 
     const mapFeatured = featured
       ? {
-          ...mapList(featured),
+          ...mapList(featured as (typeof lists)[0]),
           creator: featured.users
             ? { name: featured.users.name, username: featured.users.username }
             : null,
@@ -97,6 +108,7 @@ export async function GET() {
       success: true,
       data: {
         featured: mapFeatured,
+        featuredSlotId,
         trending: trendingResults.map(mapTrending),
         rising: risingResults.map(mapRising),
         recommendations: lists.slice(0, 4).map(mapList),

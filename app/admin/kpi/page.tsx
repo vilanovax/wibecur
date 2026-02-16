@@ -8,9 +8,9 @@ export default async function AdminKPIPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">داشبورد رشد وایب</h1>
-        <p className="text-gray-500 mt-1">
-          KPIهای رشد حول Engagement Loop — آیا وایب زنده است؟
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">داشبورد رشد</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
+          وضعیت سیستم رشد — مانیتورینگ KPI و سلامت وایب
         </p>
       </div>
       <GrowthKPIDashboard />

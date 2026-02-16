@@ -295,12 +295,20 @@ export default function ListsPageClient({
                     <span>❤️ {list?.likeCount ?? 0}</span>
                     <span>⭐ {list?.saveCount ?? 0}</span>
                   </div>
-                  <Link
-                    href={`/admin/lists/${list.id}/edit`}
-                    className="block text-center bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                  >
-                    ویرایش
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link
+                      href={`/admin/lists/${list.id}/edit`}
+                      className="flex-1 text-center bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                    >
+                      ویرایش
+                    </Link>
+                    <Link
+                      href={`/admin/lists/${list.id}/debug`}
+                      className="flex-1 text-center bg-[var(--primary)]/10 text-[var(--primary)] py-2 rounded-lg hover:bg-[var(--primary)]/20 transition-colors font-medium"
+                    >
+                      دیباگ ترند
+                    </Link>
+                  </div>
                 </div>
               </div>
             );
@@ -353,12 +361,20 @@ export default function ListsPageClient({
                       <span>⭐ {list?.saveCount ?? 0} ذخیره</span>
                     </div>
                   </div>
-                  <Link
-                    href={`/admin/lists/${list.id}/edit`}
-                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
-                  >
-                    ویرایش
-                  </Link>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Link
+                      href={`/admin/lists/${list.id}/edit`}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
+                    >
+                      ویرایش
+                    </Link>
+                    <Link
+                      href={`/admin/lists/${list.id}/debug`}
+                      className="px-4 py-2 bg-[var(--primary)]/10 text-[var(--primary)] rounded-lg hover:bg-[var(--primary)]/20 transition-colors font-medium whitespace-nowrap"
+                    >
+                      دیباگ ترند
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

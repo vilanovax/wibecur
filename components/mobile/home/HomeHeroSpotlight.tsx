@@ -1,13 +1,45 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { Eye, Star } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { useHomeData } from '@/contexts/HomeDataContext';
 
+function trackFeaturedClick(slotId: string, listId: string, action: 'view_list' | 'quick_save') {
+  try {
+    fetch('/api/home-featured/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slotId, listId, action }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
+}
+
+function trackFeaturedImpressionOnce(slotId: string) {
+  try {
+    const key = `featured_impression_${slotId}`;
+    if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      fetch('/api/home-featured/impression', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slotId }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+  } catch {}
+}
+
 export default function HomeHeroSpotlight() {
   const { data, isLoading } = useHomeData();
   const list = data?.featured ?? null;
+  const featuredSlotId = data?.featuredSlotId ?? null;
+
+  useEffect(() => {
+    if (featuredSlotId) trackFeaturedImpressionOnce(featuredSlotId);
+  }, [featuredSlotId]);
 
   if (isLoading || !list) {
     if (!isLoading && !list) return null;
@@ -45,6 +77,9 @@ export default function HomeHeroSpotlight() {
             <Link
               href={`/lists/${list.slug}`}
               className="flex-1 py-3 rounded-xl bg-white text-gray-900 font-semibold text-[14px] text-center hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+              onClick={() => {
+                if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'view_list');
+              }}
             >
               <Eye className="w-4 h-4" />
               مشاهده لیست
@@ -53,6 +88,9 @@ export default function HomeHeroSpotlight() {
               href={`/lists/${list.slug}`}
               className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-primary text-white font-semibold text-[14px] hover:bg-primary-dark transition-colors"
               aria-label="ذخیره سریع لیست"
+              onClick={() => {
+                if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'quick_save');
+              }}
             >
               <Star className="w-4 h-4" />
               ذخیره سریع

@@ -53,22 +53,7 @@ export default async function EditCategoryPage({
   return (
     <div className="max-w-4xl">
       <CategoryEditForm
-        category={{
-          id: category.id,
-          name: category.name,
-          slug: category.slug,
-          icon: category.icon,
-          color: category.color,
-          accentColor: category.accentColor,
-          description: category.description,
-          heroImage: category.heroImage,
-          layoutType: category.layoutType,
-          order: category.order,
-          isActive: category.isActive,
-          commentsEnabled: category.commentsEnabled,
-          createdAt: category.createdAt,
-          updatedAt: category.updatedAt,
-        }}
+        category={category}
         analytics={analytics}
       />
     </div>

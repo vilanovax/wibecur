@@ -150,6 +150,40 @@ export async function PUT(
   }
 }
 
+// PATCH /api/admin/items/[id] - فقط به‌روزرسانی order (برای جابه‌جایی در لیست)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdmin();
+    const { id } = await params;
+    const body = await request.json();
+    const { order } = body;
+
+    const existing = await prisma.items.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: 'آیتم یافت نشد' }, { status: 404 });
+    }
+
+    if (typeof order !== 'number') {
+      return NextResponse.json({ error: 'order الزامی است' }, { status: 400 });
+    }
+
+    const item = await prisma.items.update({
+      where: { id },
+      data: { order },
+    });
+    return NextResponse.json(item);
+  } catch (error: any) {
+    console.error('Error PATCH item:', error);
+    return NextResponse.json(
+      { error: error.message || 'خطا در به‌روزرسانی' },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE /api/admin/items/[id] - Delete item
 export async function DELETE(
   request: NextRequest,

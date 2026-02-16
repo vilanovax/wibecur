@@ -44,8 +44,14 @@ model categories {
   commentsEnabled  Boolean           @default(true)  // فعال/غیرفعال کردن کامنت برای دسته
   createdAt        DateTime          @default(now())
   updatedAt        DateTime
+  deletedAt        DateTime?
+  deletedById      String?
+  deleteReason     String?
   lists            lists[]
   suggested_lists  suggested_lists[]
+  deletedBy        users?            @relation("CategoryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@index([deletedAt])
 }
 
 model comment_likes {
@@ -235,6 +241,9 @@ model lists {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   isActive         Boolean           @default(true)
+  deletedAt        DateTime?
+  deletedById      String?
+  deleteReason     String?
   bookmarks        bookmarks[]
   items            items[]
   list_likes       list_likes[]
@@ -243,10 +252,13 @@ model lists {
   list_comments    list_comments[]
   categories       categories?       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   users            users             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deletedBy        users?            @relation("ListDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  home_featured_slots home_featured_slot[]
 
   @@index([categoryId])
   @@index([createdAt])
   @@index([userId])
+  @@index([deletedAt])
 }
 
 model settings {
@@ -307,6 +319,9 @@ model users {
   allowCommentNotifications Boolean        @default(true)
   createdAt            DateTime            @default(now())
   updatedAt            DateTime
+  deletedAt            DateTime?
+  deletedById          String?
+  deleteReason         String?
   bookmarks            bookmarks[]
   comment_likes     comment_likes[]
   comment_penalties comment_penalties[]
@@ -332,6 +347,15 @@ model users {
   user_category_affinity     user_category_affinity[]
   discovery_spotlight_cache  discovery_spotlight_cache?
   creator_spotlights         creator_spotlights[]
+  audit_logs                 audit_log[]
+  moderation_cases_assigned  moderation_case[]
+  moderation_notes           moderation_note[]
+  listsDeletedBy             lists[]           @relation("ListDeletedBy")
+  categoriesDeletedBy        categories[]       @relation("CategoryDeletedBy")
+  usersDeletedBy             users[]            @relation("UserDeletedBy")
+  deletedBy                  users?             @relation("UserDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+
+  @@index([deletedAt])
 }
 
 model creator_spotlights {
@@ -450,6 +474,9 @@ enum UserRole {
   USER
   EDITOR
   ADMIN
+  SUPER_ADMIN
+  MODERATOR
+  ANALYST
 }
 
 enum CuratorLevel {
@@ -471,6 +498,88 @@ enum AvatarStatus {
   APPROVED
   PENDING
   REJECTED
+}
+
+model audit_log {
+  id         String    @id @default(cuid())
+  actorId    String
+  actorRole  UserRole
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+
+  users      users      @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+}
+
+enum ModerationStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  IGNORED
+}
+
+enum ModerationType {
+  REPORT
+  AUTO_FLAG
+  ANOMALY
+  PENDING
+}
+
+enum ModerationEntityType {
+  LIST
+  COMMENT
+  USER
+  CATEGORY
+}
+
+model moderation_case {
+  id           String                @id @default(cuid())
+  type         ModerationType
+  entityType   ModerationEntityType
+  entityId     String
+  reason       String
+  severity     Int                   @default(1)
+  status       ModerationStatus      @default(OPEN)
+  reportCount  Int                   @default(0)
+  metadata     Json?
+  assigneeId   String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  users        users?                @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  notes        moderation_note[]
+
+  @@index([status])
+  @@index([type])
+  @@index([entityType, entityId])
+  @@index([assigneeId])
+  @@index([createdAt])
+  @@index([status, severity, createdAt])
+  @@index([assigneeId, status])
+}
+
+model moderation_note {
+  id        String           @id @default(cuid())
+  caseId    String
+  authorId  String
+  body      String
+  createdAt DateTime         @default(now())
+
+  moderation_case moderation_case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  users            users           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
+  @@index([authorId])
 }
 
 model comment_settings {
@@ -621,4 +730,56 @@ model list_comment_votes {
   @@unique([userId, commentId])
   @@index([commentId])
   @@index([userId])
+}
+
+// --- هوم موبایل: منتخب هفته با زمان‌بندی ---
+enum HomeFeaturedAction {
+  VIEW_LIST
+  QUICK_SAVE
+}
+
+model home_featured_slot {
+  id         String    @id @default(cuid())
+  listId     String
+  startAt    DateTime
+  endAt      DateTime?  // null = تا شروع اسلات بعدی یا نامحدود
+  orderIndex Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  lists      lists     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  events     home_featured_event[]
+
+  // Featured Performance Analytics (MVP)
+  impressions    Int     @default(0)
+  clicks         Int     @default(0)
+  baselineSaves  Int?
+  savesDuring    Int     @default(0)
+  baselineScore  Float?
+  peakScore      Float?
+
+  @@index([startAt])
+  @@index([listId])
+}
+
+model home_featured_event {
+  id        String             @id @default(cuid())
+  slotId    String
+  listId    String             // برای کوئری راحت
+  action    HomeFeaturedAction
+  userId    String?            // null برای مهمان
+  createdAt DateTime           @default(now())
+  slot      home_featured_slot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@index([slotId])
+  @@index([listId])
+  @@index([createdAt])
+}
+
+// جلوگیری از اسپم: یک بار به ازای هر اسلات منقضی‌شده نوتیف می‌سازیم
+model admin_featured_notification_sent {
+  id        String   @id @default(cuid())
+  slotId    String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([slotId])
 }

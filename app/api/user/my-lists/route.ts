@@ -33,7 +33,26 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: [{ likeCount: 'desc' }, { viewCount: 'desc' }, { updatedAt: 'desc' }],
-        include: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          coverImage: true,
+          categoryId: true,
+          userId: true,
+          tags: true,
+          badge: true,
+          isPublic: true,
+          isFeatured: true,
+          isActive: true,
+          likeCount: true,
+          viewCount: true,
+          saveCount: true,
+          itemCount: true,
+          commentsEnabled: true,
+          createdAt: true,
+          updatedAt: true,
           categories: {
             select: {
               id: true,

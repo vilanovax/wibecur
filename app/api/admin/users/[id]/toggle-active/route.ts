@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { auth } from '@/lib/auth-config';
-
+import { logAudit } from '@/lib/audit/log';
+import { getRequestMeta } from '@/lib/audit/request-meta';
+import { minimalUser } from '@/lib/audit/snapshots';
+import type { UserRole } from '@prisma/client';
 
 // PUT /api/admin/users/[id]/toggle-active - فعال/غیرفعال کردن کاربر
 export async function PUT(
@@ -11,7 +14,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const userOrRes = await requirePermission('suspend_user');
+    if (userOrRes instanceof NextResponse) return userOrRes;
 
     const { id } = await params;
     const body = await request.json();
@@ -47,7 +51,6 @@ export async function PUT(
       );
     }
 
-    // Update user
     const updatedUser = await dbQuery(() =>
       prisma.users.update({
         where: { id },
@@ -59,9 +62,23 @@ export async function PUT(
           image: true,
           role: true,
           isActive: true,
+          updatedAt: true,
         },
       })
     );
+
+    const meta = getRequestMeta(request);
+    await logAudit({
+      actorId: userOrRes.id,
+      actorRole: userOrRes.role as UserRole,
+      action: 'USER_SUSPEND',
+      entityType: 'USER',
+      entityId: id,
+      before: minimalUser({ ...existingUser, updatedAt: existingUser.updatedAt }),
+      after: minimalUser(updatedUser),
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
 
     return NextResponse.json({
       success: true,

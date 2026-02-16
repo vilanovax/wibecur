@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
-import { toAbsoluteImageUrl } from '@/lib/seo';
+import { getDisplayImageUrl } from '@/lib/display-image';
 
 interface CategoryHeroUpgradedProps {
   category: CategoryInfo;
@@ -23,7 +23,7 @@ export default function CategoryHeroUpgraded({
         {category.heroImage ? (
           <>
             <ImageWithFallback
-              src={toAbsoluteImageUrl(category.heroImage) || category.heroImage!}
+              src={getDisplayImageUrl(category.heroImage, 'covers')}
               alt={category.name}
               className="absolute inset-0 w-full h-full object-cover"
               priority

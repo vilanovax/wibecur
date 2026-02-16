@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
-import { toAbsoluteImageUrl } from '@/lib/seo';
+import { getDisplayImageUrl } from '@/lib/display-image';
 import { getRandomPlaceholderUrl } from '@/lib/placeholder-images';
 
 interface CategoryHeroProps {
@@ -31,7 +31,7 @@ export default function CategoryHero({
       <ImageWithFallback
         src={
           category.heroImage
-            ? (toAbsoluteImageUrl(category.heroImage) || category.heroImage!)
+            ? getDisplayImageUrl(category.heroImage, 'covers')
             : getRandomPlaceholderUrl(`hero-${category.slug}`, 'cover')
         }
         alt={category.name}

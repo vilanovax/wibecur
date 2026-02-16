@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { PLACEHOLDER_COVER, getRandomPlaceholderUrl } from '@/lib/placeholder-images';
+import { getDisplayImageUrl } from '@/lib/display-image';
+import type { ImageFolder } from '@/lib/object-storage';
 
 interface ImageWithFallbackProps {
   src: string;
@@ -13,6 +15,8 @@ interface ImageWithFallbackProps {
   placeholderSize?: 'cover' | 'square';
   /** برای تصاویر بالای صفحه (Hero و Featured): اولویت لود بالا */
   priority?: boolean;
+  /** پوشهٔ Liara برای resolve کردن URLهای خارجی (پیش‌فرض: covers برای لیست/هدر، items برای آیتم) */
+  imageFolder?: ImageFolder;
 }
 
 /** مسیرهای تصویر خالی/placeholder که باید با تصویر داخلی جایگزین شوند */
@@ -43,6 +47,7 @@ export default function ImageWithFallback({
   fallbackClassName = '',
   placeholderSize = 'cover',
   priority = false,
+  imageFolder = 'covers',
 }: ImageWithFallbackProps) {
   const [hasError, setHasError] = useState(false);
   const [randomPlaceholderFailed, setRandomPlaceholderFailed] = useState(false);
@@ -52,11 +57,15 @@ export default function ImageWithFallback({
   const effectiveSrc =
     isEmptyOrPlaceholderPath(src) ? fallbackImageUrl : src;
 
-  // آدرس‌های Liara را همیشه از پراکسی سرور لود می‌کنیم تا بدون وابستگی به عمومی بودن باکت/CORS همیشه نمایش داده شوند
+  // همهٔ تصاویر از Liara: آدرس نسبی (مثل /api/placeholder) → همان (همان origin)؛ Liara → پراکسی؛ خارجی → API resolve
   const displaySrc =
-    isLiaraStorageUrl(src)
-      ? `/api/image-proxy?url=${encodeURIComponent(src)}`
-      : effectiveSrc;
+    isEmptyOrPlaceholderPath(src)
+      ? effectiveSrc
+      : effectiveSrc.startsWith('/')
+        ? effectiveSrc
+        : isLiaraStorageUrl(effectiveSrc)
+          ? `/api/image-proxy?url=${encodeURIComponent(effectiveSrc)}`
+          : getDisplayImageUrl(effectiveSrc, imageFolder);
 
   // Skip loading when URL is placeholder or when external images are disabled (e.g. Unsplash blocked)
   const isPlaceholderUrl = effectiveSrc?.includes('via.placeholder.com');

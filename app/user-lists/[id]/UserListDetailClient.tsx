@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { Settings, Trash2, X } from 'lucide-react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import ListCommentSection from '@/components/mobile/lists/ListCommentSection';
@@ -128,12 +128,11 @@ export default function UserListDetailClient({
           {/* Cover Image */}
           {list.coverImage && (
             <div className="relative h-64 bg-gradient-to-br from-purple-100 to-blue-100">
-              <Image
+              <ImageWithFallback
                 src={list.coverImage}
                 alt={list.title}
-                fill
-                className="object-cover"
-                unoptimized={true}
+                className="w-full h-full object-cover"
+                imageFolder="covers"
               />
             </div>
           )}
@@ -268,12 +267,11 @@ export default function UserListDetailClient({
                         {/* Image */}
                         {item.imageUrl && (
                           <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
-                            <Image
+                            <ImageWithFallback
                               src={item.imageUrl}
                               alt={item.title}
-                              fill
-                              className="object-cover"
-                              unoptimized={true}
+                              className="w-full h-full object-cover"
+                              imageFolder="items"
                             />
                           </div>
                         )}
@@ -309,13 +307,10 @@ export default function UserListDetailClient({
               <div className="flex items-center gap-3">
                 {list.users.image ? (
                   <div className="relative w-12 h-12 rounded-full overflow-hidden">
-                    <Image
+                    <ImageWithFallback
                       src={list.users.image}
                       alt={list.users.name || list.users.email}
-                      width={48}
-                      height={48}
-                      className="object-cover"
-                      unoptimized={true}
+                      className="object-cover w-full h-full"
                     />
                   </div>
                 ) : (

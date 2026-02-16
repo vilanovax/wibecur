@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
@@ -9,8 +9,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
-
+    const userOrRes = await requirePermission('manage_users');
+    if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
 
     const user = await dbQuery(() =>
@@ -20,6 +20,7 @@ export async function GET(
           id: true,
           name: true,
           email: true,
+          username: true,
           image: true,
           role: true,
           isActive: true,

@@ -144,6 +144,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               fallbackIcon={item.lists.categories?.icon || '📋'}
               fallbackClassName="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100"
               priority
+              imageFolder="items"
             />
           ) : (
             <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">

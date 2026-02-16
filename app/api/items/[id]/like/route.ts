@@ -32,6 +32,7 @@ export async function POST(
     const user = await dbQuery(() =>
       prisma.users.findUnique({
         where: { email: userEmail },
+        select: { id: true },
       })
     );
 
@@ -46,6 +47,7 @@ export async function POST(
     const item = await dbQuery(() =>
       prisma.items.findUnique({
         where: { id: itemId },
+        select: { id: true },
       })
     );
 
@@ -186,6 +188,7 @@ export async function GET(
     const user = await dbQuery(() =>
       prisma.users.findUnique({
         where: { email: userEmail },
+        select: { id: true },
       })
     );
 

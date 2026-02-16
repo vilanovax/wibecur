@@ -34,7 +34,7 @@ function ms(days: number): number {
   return days * 24 * 60 * 60 * 1000;
 }
 
-async function getListMetrics7d(
+export async function getListMetrics7d(
   prisma: PrismaClient,
   listIds: string[],
   days: number = TIME_WINDOWS.WEEKLY
@@ -111,6 +111,19 @@ async function getListMetrics7d(
     });
   }
   return result;
+}
+
+/**
+ * امتیاز ترند فعلی یک لیست (برای Featured baseline/peak).
+ */
+export async function getTrendingScoreForList(
+  prisma: PrismaClient,
+  listId: string
+): Promise<number> {
+  const map = await getListMetrics7d(prisma, [listId]);
+  const metrics = map.get(listId);
+  if (!metrics) return 0;
+  return calculateTrendingScore(metrics);
 }
 
 async function getListMetrics1d(
@@ -196,6 +209,29 @@ export async function getTrendingByCategory(
     return withScore
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
+  });
+}
+
+/**
+ * لیست کامل رتبه‌بندی شده برای Debug (موقعیت در آرایه)
+ * بدون محدودیت «حداکثر ۳ از هر دسته»؛ فقط ادغام و sort.
+ */
+export async function getFullGlobalTrendingSorted(
+  prisma: PrismaClient,
+  maxItems: number = 500
+): Promise<TrendingListResult[]> {
+  return dbQuery(async () => {
+    const categories = await prisma.categories.findMany({
+      where: { isActive: true },
+      select: { id: true },
+    });
+    const allResults: TrendingListResult[] = [];
+    for (const cat of categories) {
+      const top = await getTrendingByCategory(prisma, cat.id, 20);
+      allResults.push(...top);
+    }
+    allResults.sort((a, b) => b.score - a.score);
+    return allResults.slice(0, maxItems);
   });
 }
 

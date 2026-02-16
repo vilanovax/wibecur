@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
+import { logAudit } from '@/lib/audit/log';
+import { getRequestMeta } from '@/lib/audit/request-meta';
+import { minimalCategory } from '@/lib/audit/snapshots';
+import type { UserRole } from '@prisma/client';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const userOrRes = await requirePermission('manage_categories');
+    if (userOrRes instanceof NextResponse) return userOrRes;
 
     const { id } = await params;
     const body = await request.json();
@@ -47,7 +52,6 @@ export async function PUT(
       }
     }
 
-    // Update category
     const category = await prisma.categories.update({
       where: { id },
       data: {
@@ -62,6 +66,19 @@ export async function PUT(
       },
     });
 
+    const meta = getRequestMeta(request);
+    await logAudit({
+      actorId: userOrRes.id,
+      actorRole: userOrRes.role as UserRole,
+      action: 'CATEGORY_UPDATE',
+      entityType: 'CATEGORY',
+      entityId: id,
+      before: minimalCategory(existingCategory),
+      after: minimalCategory(category),
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
     return NextResponse.json(category);
   } catch (error: any) {
     console.error('Error updating category:', error);
@@ -72,51 +89,55 @@ export async function PUT(
   }
 }
 
+/** DELETE = انتقال به زباله‌دان (soft delete). در MVP حذف دائمی نداریم. */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
-
+    const userOrRes = await requirePermission('manage_categories');
+    if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
-    // Check if category exists
+
     const existingCategory = await prisma.categories.findUnique({
       where: { id },
-      include: {
-        _count: {
-          select: { lists: true },
-        },
+      include: { _count: { select: { lists: true } } },
+    });
+    if (!existingCategory) {
+      return NextResponse.json({ error: 'دسته‌بندی یافت نشد' }, { status: 404 });
+    }
+    if (existingCategory.deletedAt) {
+      return NextResponse.json({ error: 'این دسته قبلاً به زباله‌دان منتقل شده' }, { status: 400 });
+    }
+
+    const now = new Date();
+    const updated = await prisma.categories.update({
+      where: { id },
+      data: {
+        deletedAt: now,
+        deletedById: userOrRes.id,
+        deleteReason: null,
       },
     });
 
-    if (!existingCategory) {
-      return NextResponse.json(
-        { error: 'دسته‌بندی یافت نشد' },
-        { status: 404 }
-      );
-    }
-
-    // Check if category has lists
-    if (existingCategory._count.lists > 0) {
-      return NextResponse.json(
-        {
-          error: `این دسته‌بندی ${existingCategory._count.lists} لیست دارد و قابل حذف نیست`,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Delete category
-    await prisma.categories.delete({
-      where: { id },
+    const meta = getRequestMeta(request);
+    await logAudit({
+      actorId: userOrRes.id,
+      actorRole: userOrRes.role as UserRole,
+      action: 'CATEGORY_SOFT_DELETE',
+      entityType: 'CATEGORY',
+      entityId: id,
+      before: minimalCategory(existingCategory),
+      after: minimalCategory(updated),
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: 'به زباله‌دان منتقل شد' });
   } catch (error: any) {
-    console.error('Error deleting category:', error);
+    console.error('Error soft-deleting category:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در حذف دسته‌بندی' },
+      { error: error.message || 'خطا در انتقال به زباله‌دان' },
       { status: 500 }
     );
   }

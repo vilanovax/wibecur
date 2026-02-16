@@ -48,9 +48,9 @@ function EventCard({ item, isNew }: { item: ActivityItem; isNew: boolean }) {
             <span className="text-gray-200">{item.userName}</span>
             <span className="text-gray-400"> درباره «{item.itemTitle}» نظر نوشت</span>
             {item.contentSnippet && (
-              <p className="text-gray-500 text-xs mt-1 truncate max-w-full" title={item.contentSnippet}>
+              <span className="block text-gray-500 text-xs mt-1 truncate max-w-full" title={item.contentSnippet}>
                 «{item.contentSnippet}»
-              </p>
+              </span>
             )}
           </>
         );
@@ -72,34 +72,65 @@ function EventCard({ item, isNew }: { item: ActivityItem; isNew: boolean }) {
     }
   })();
 
+  const badge = (() => {
+    switch (item.type) {
+      case 'save':
+        return { label: 'ذخیره', className: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-300/50' };
+      case 'comment':
+        return { label: 'کامنت', className: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-300/50' };
+      case 'user':
+        return { label: 'کاربر', className: 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-300/50' };
+      case 'item':
+        return { label: 'لیست', className: 'bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-300/50' };
+    }
+  })();
+
   const icon = (() => {
     switch (item.type) {
       case 'save':
-        return <Bookmark className="w-4 h-4 text-amber-400 flex-shrink-0" />;
+        return <Bookmark className="w-4 h-4 text-emerald-500 flex-shrink-0" />;
       case 'comment':
-        return <MessageSquare className="w-4 h-4 text-cyan-400 flex-shrink-0" />;
+        return <MessageSquare className="w-4 h-4 text-amber-500 flex-shrink-0" />;
       case 'user':
-        return <UserPlus className="w-4 h-4 text-emerald-400 flex-shrink-0" />;
+        return <UserPlus className="w-4 h-4 text-blue-500 flex-shrink-0" />;
       case 'item':
-        return <Package className="w-4 h-4 text-violet-400 flex-shrink-0" />;
+        return <Package className="w-4 h-4 text-violet-500 flex-shrink-0" />;
     }
   })();
+
+  const userName = (() => {
+    switch (item.type) {
+      case 'save': return item.userName;
+      case 'comment': return item.userName;
+      case 'user': return item.userName;
+      case 'item': return '';
+    }
+  })();
+  const initial = userName ? userName.charAt(0).toUpperCase() : '?';
 
   const href =
     item.type === 'comment' || item.type === 'item'
       ? `/items/${(item as { itemId?: string }).itemId}`
       : undefined;
 
-  const className = `flex gap-3 p-3 rounded-lg border border-gray-700/50 bg-gray-800/30 transition-all ${
+  const className = `flex gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800/50 transition-all hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/40 ${
     isNew ? 'animate-fade-in' : ''
-  } ${href ? 'hover:bg-gray-700/40' : ''}`;
+  } ${href ? 'cursor-pointer' : ''}`;
 
   const inner = (
     <>
-      {icon}
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/30 text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+        {initial}
+      </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm leading-snug">{content}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{timeAgo}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium ${badge.className}`}>
+            {icon}
+            {badge.label}
+          </span>
+          <span className="text-xs text-gray-500">{timeAgo}</span>
+        </div>
+        <p className="text-sm leading-snug mt-1 text-gray-700 dark:text-gray-200">{content}</p>
       </div>
     </>
   );
@@ -148,24 +179,24 @@ export default function AdminLiveFeed() {
   }, []);
 
   return (
-    <section className="rounded-xl bg-gray-800/40 border border-gray-700/50 overflow-hidden">
-      <div className="flex items-center gap-2 p-4 border-b border-gray-700/50">
+    <section className="rounded-2xl border border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/40 shadow-sm overflow-hidden">
+      <div className="flex items-center gap-2 p-4 border-b border-gray-200 dark:border-gray-700/50">
         <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
         </span>
-        <h2 className="text-sm font-semibold text-gray-300">فعالیت زنده</h2>
-        <span className="text-xs text-gray-500">به‌روزرسانی هر ۱۵ ثانیه</span>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">فعالیت زنده</h2>
+        <span className="text-xs text-gray-500 dark:text-gray-400">به‌روزرسانی هر ۱۵ ثانیه</span>
       </div>
       <div className="max-h-[420px] overflow-y-auto p-3 space-y-2">
         {loading ? (
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-16 rounded-lg bg-gray-700/30 animate-pulse" />
+              <div key={i} className="h-16 rounded-xl bg-gray-200 dark:bg-gray-700/30 animate-pulse" />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <p className="text-gray-500 text-sm py-6 text-center">هنوز فعالیتی ثبت نشده</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm py-6 text-center">هنوز فعالیتی ثبت نشده</p>
         ) : (
           items.map((item) => (
             <EventCard

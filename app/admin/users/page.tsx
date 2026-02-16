@@ -31,16 +31,18 @@ function deriveRisk(
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; trash?: string }>;
 }) {
   await requireAdmin();
 
-  const { page = '1', search = '' } = await searchParams;
+  const { page = '1', search = '', trash: trashParam = '' } = await searchParams;
+  const trash = trashParam === 'true';
   const currentPage = parseInt(page, 10) || 1;
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
-  const where: Record<string, unknown> = {};
-  if (search) {
+  // Avoid deletedAt filter when column does not exist in DB
+  const where: Record<string, unknown> = trash ? { id: '' } : {};
+  if (search && !trash) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },
       { email: { contains: search, mode: 'insensitive' } },

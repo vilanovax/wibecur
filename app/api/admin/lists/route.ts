@@ -97,11 +97,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
     const includeInactive = searchParams.get('includeInactive') === 'true';
+    const trash = searchParams.get('trash') === 'true';
 
     const lists = await prisma.lists.findMany({
       where: {
         ...(categoryId && { categoryId }),
         ...(includeInactive ? {} : { isActive: true }),
+        deletedAt: trash ? { not: null } : null,
       },
       orderBy: { createdAt: 'desc' },
       include: {

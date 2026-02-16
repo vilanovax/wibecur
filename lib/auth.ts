@@ -25,9 +25,15 @@ export async function requireAuth() {
   return session;
 }
 
+const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'ANALYST', 'EDITOR'] as const;
+
+function isAdmin(session: { user?: { role?: string } } | null): boolean {
+  return !!session?.user?.role && ADMIN_ROLES.includes(session.user.role as (typeof ADMIN_ROLES)[number]);
+}
+
 export async function requireAdmin() {
   const session = await getCachedSession();
-  if (!session || session.user?.role !== 'ADMIN') {
+  if (!session || !isAdmin(session)) {
     redirect('/login');
   }
   return session;
@@ -35,11 +41,11 @@ export async function requireAdmin() {
 
 /**
  * Check admin authentication for API routes (doesn't throw redirect)
- * Returns null if not authenticated
+ * Returns null if not authenticated as any admin role
  */
 export async function checkAdminAuth() {
   const session = await getCachedSession();
-  if (!session || session.user?.role !== 'ADMIN') {
+  if (!session || !isAdmin(session)) {
     return null;
   }
   return session;

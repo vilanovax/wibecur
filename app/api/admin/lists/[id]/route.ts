@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import { logAudit } from '@/lib/audit/log';
+import { getRequestMeta } from '@/lib/audit/request-meta';
+import { minimalList } from '@/lib/audit/snapshots';
+import type { UserRole } from '@prisma/client';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const userOrRes = await requirePermission('manage_lists');
+    if (userOrRes instanceof NextResponse) return userOrRes;
 
     const { id } = await params;
     const body = await request.json();
@@ -60,7 +65,6 @@ export async function PUT(
 
     const finalCoverImage = coverImage !== undefined ? await ensureImageInLiara(coverImage, 'lists') : undefined;
 
-    // Update list
     const list = await prisma.lists.update({
       where: { id },
       data: {
@@ -76,6 +80,19 @@ export async function PUT(
       },
     });
 
+    const meta = getRequestMeta(request);
+    await logAudit({
+      actorId: userOrRes.id,
+      actorRole: userOrRes.role as UserRole,
+      action: 'LIST_UPDATE',
+      entityType: 'LIST',
+      entityId: id,
+      before: minimalList(existingList),
+      after: minimalList(list),
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
     return NextResponse.json(list);
   } catch (error: any) {
     console.error('Error updating list:', error);
@@ -86,36 +103,109 @@ export async function PUT(
   }
 }
 
+/** PATCH: فقط به‌روزرسانی isFeatured / isActive برای پنل ادمین */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const userOrRes = await requirePermission('manage_lists');
+    if (userOrRes instanceof NextResponse) return userOrRes;
+    const { id } = await params;
+    const body = await request.json();
+    const { isFeatured, isActive } = body;
+
+    const existing = await prisma.lists.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: 'لیست یافت نشد' }, { status: 404 });
+    }
+
+    const data: { isFeatured?: boolean; isActive?: boolean } = {};
+    if (typeof isFeatured === 'boolean') data.isFeatured = isFeatured;
+    if (typeof isActive === 'boolean') data.isActive = isActive;
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json(existing);
+    }
+
+    const list = await prisma.lists.update({
+      where: { id },
+      data,
+    });
+
+    const action = typeof isFeatured === 'boolean' && isFeatured !== existing.isFeatured ? 'LIST_BOOST' : 'LIST_UPDATE';
+    const meta = getRequestMeta(request);
+    await logAudit({
+      actorId: userOrRes.id,
+      actorRole: userOrRes.role as UserRole,
+      action,
+      entityType: 'LIST',
+      entityId: id,
+      before: minimalList(existing),
+      after: minimalList(list),
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
+    return NextResponse.json(list);
+  } catch (error: any) {
+    console.error('Error PATCH list:', error);
+    return NextResponse.json(
+      { error: error.message || 'خطا در به‌روزرسانی' },
+      { status: 500 }
+    );
+  }
+}
+
+/** DELETE = انتقال به زباله‌دان (soft delete). در MVP حذف دائمی نداریم. */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
-
+    const userOrRes = await requirePermission('soft_delete_list');
+    if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
-    // Check if list exists
     const existingList = await prisma.lists.findUnique({
       where: { id },
+      include: { _count: { select: { bookmarks: true } } },
     });
-
     if (!existingList) {
-      return NextResponse.json(
-        { error: 'لیست یافت نشد' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'لیست یافت نشد' }, { status: 404 });
+    }
+    if (existingList.deletedAt) {
+      return NextResponse.json({ error: 'این لیست قبلاً به زباله‌دان منتقل شده' }, { status: 400 });
     }
 
-    // Delete list (items will be deleted automatically due to cascade)
-    await prisma.lists.delete({
+    const now = new Date();
+    const updated = await prisma.lists.update({
       where: { id },
+      data: {
+        deletedAt: now,
+        deletedById: userOrRes.id,
+        deleteReason: null,
+        isActive: false,
+      },
     });
 
-    return NextResponse.json({ success: true });
+    const meta = getRequestMeta(request);
+    await logAudit({
+      actorId: userOrRes.id,
+      actorRole: userOrRes.role as UserRole,
+      action: 'LIST_SOFT_DELETE',
+      entityType: 'LIST',
+      entityId: id,
+      before: minimalList({ ...existingList, _count: existingList._count }),
+      after: minimalList(updated),
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
+    return NextResponse.json({ success: true, message: 'به زباله‌دان منتقل شد' });
   } catch (error: any) {
-    console.error('Error deleting list:', error);
+    console.error('Error soft-deleting list:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در حذف لیست' },
+      { error: error.message || 'خطا در انتقال به زباله‌دان' },
       { status: 500 }
     );
   }
@@ -126,6 +216,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userOrRes = await requirePermission('manage_lists');
+    if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
     const list = await prisma.lists.findUnique({
       where: { id },

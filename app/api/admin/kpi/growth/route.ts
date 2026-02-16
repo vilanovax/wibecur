@@ -105,12 +105,18 @@ export async function GET() {
       // ——— Pulse هفته قبل (برای تغییر هفتگی) ———
       const pulseScoreLastWeek = await getPulseScoreForPeriod(twoWeeksStart, weekStart);
       const pulseScoreWeeklyChange = pulseScore - pulseScoreLastWeek;
+      const pulseStatus: 'up' | 'down' | 'stable' =
+        pulseScoreWeeklyChange > 0 ? 'up' : pulseScoreWeeklyChange < 0 ? 'down' : 'stable';
+
+      // ——— کاربران فعال و لیست‌های جدید ۷ روز (برای KPI row) ———
+      const activeUsers7d = await getActiveUsersCount(weekStart);
 
       // ——— سری‌های چارت و KPI کارت‌ها ———
       const [
         activeUsersLast30Days,
         savesVsSuggestionsLast14,
         newListsPerWeek,
+        savesVsListsLast30Days,
         kpiCards,
         trendingItems,
         fastestGrowingCategories,
@@ -121,6 +127,7 @@ export async function GET() {
         getActiveUsersLast30Days(thirtyDaysStart, now),
         getSavesVsSuggestionsLast14(todayStart),
         getNewListsPerWeek(6),
+        getSavesVsListsLast30Days(thirtyDaysStart, now),
         getKpiCardsSeries(weekStart, twoWeeksStart, now, todayStart),
         getTrendingItems(weekStart, 5),
         getFastestGrowingCategories(weekStart, 5),
@@ -168,9 +175,30 @@ export async function GET() {
           ? Math.round((approvedSuggestions / totalSuggestions) * 100)
           : 0;
 
+      // ——— Pulse Breakdown (۰–۱۰) برای نمایش شفاف ———
+      const retentionAvg = (d1Retention + d7Retention + (d30Retention ?? 0)) / 3;
+      const contentGrowthRaw = Math.min(
+        100,
+        (listsCreatedWeek / 5) * 25 + (suggestionsWeek / 10) * 25
+      );
+      const creatorActivityRaw = creatorStats
+        ? Math.min(100, (creatorStats.listsWith50PlusSaves / 5) * 25 + creatorStats.pctUsersWith2PlusLists * 2.5)
+        : 0;
+      const pulseBreakdown = {
+        engagement: Math.round((engagementScore / 10) * 10) / 10,
+        retention: Math.round(Math.min(10, retentionAvg / 10) * 10) / 10,
+        contentGrowth: Math.round((contentGrowthRaw / 10) * 10) / 10,
+        creatorActivity: Math.round((creatorActivityRaw / 10) * 10) / 10,
+      };
+
       return {
         pulseScore,
         pulseScoreWeeklyChange,
+        pulseStatus,
+        pulseBreakdown,
+        activeUsers7d,
+        newLists7d: listsCreatedWeek,
+        suggestionApprovalRate: suggestionPanel?.approvalRate ?? suggestionQualityRate,
         overview: {
           activeUsersToday,
           savesToday,
@@ -208,6 +236,7 @@ export async function GET() {
           activeUsersLast30Days,
           savesVsSuggestionsLast14,
           newListsPerWeek,
+          savesVsListsLast30Days,
         },
         kpiCards,
         trendingItems,
@@ -383,6 +412,44 @@ async function getActiveUsersLast30Days(
   while (cur <= to) {
     const d = cur.toISOString().slice(0, 10);
     out.push({ date: d, count: byDay.get(d)?.size ?? 0 });
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+
+async function getSavesVsListsLast30Days(
+  from: Date,
+  to: Date
+): Promise<{ date: string; saves: number; lists: number }[]> {
+  const [bookmarks, listsCreated] = await Promise.all([
+    prisma.bookmarks.findMany({
+      where: { createdAt: { gte: from, lte: to } },
+      select: { createdAt: true },
+    }),
+    prisma.lists.findMany({
+      where: { createdAt: { gte: from, lte: to }, isPublic: true },
+      select: { createdAt: true },
+    }),
+  ]);
+  const savesByDay = new Map<string, number>();
+  const listsByDay = new Map<string, number>();
+  for (const b of bookmarks) {
+    const d = b.createdAt.toISOString().slice(0, 10);
+    savesByDay.set(d, (savesByDay.get(d) ?? 0) + 1);
+  }
+  for (const l of listsCreated) {
+    const d = l.createdAt.toISOString().slice(0, 10);
+    listsByDay.set(d, (listsByDay.get(d) ?? 0) + 1);
+  }
+  const out: { date: string; saves: number; lists: number }[] = [];
+  const cur = new Date(from);
+  while (cur <= to) {
+    const d = cur.toISOString().slice(0, 10);
+    out.push({
+      date: d,
+      saves: savesByDay.get(d) ?? 0,
+      lists: listsByDay.get(d) ?? 0,
+    });
     cur.setDate(cur.getDate() + 1);
   }
   return out;

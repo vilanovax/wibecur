@@ -31,6 +31,7 @@ export interface RisingListData extends HomeListData {
 
 export interface HomeData {
   featured: FeaturedListData | null;
+  featuredSlotId: string | null;
   trending: HomeListData[];
   rising: RisingListData[];
   recommendations: HomeListData[];
@@ -45,6 +46,7 @@ interface HomeDataContextValue {
 
 const initialState: HomeData = {
   featured: null,
+  featuredSlotId: null,
   trending: [],
   rising: [],
   recommendations: [],
@@ -93,6 +95,7 @@ async function fetchHomeData(): Promise<HomeData> {
 
   return {
     featured,
+    featuredSlotId: d.featuredSlotId ?? null,
     trending: Array.isArray(d.trending) ? d.trending.map(mapApiItem) : [],
     rising,
     recommendations: Array.isArray(d.recommendations) ? d.recommendations.map(mapApiItem) : [],

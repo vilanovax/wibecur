@@ -623,6 +623,7 @@ export default function SuggestItemSearch({
                         className="w-full h-full object-cover"
                         fallbackIcon="📋"
                         fallbackClassName="w-full h-full flex items-center justify-center text-xl"
+                        imageFolder="items"
                       />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -653,6 +654,7 @@ export default function SuggestItemSearch({
                         className="w-full h-full object-cover"
                         fallbackIcon="📋"
                         fallbackClassName="w-full h-full flex items-center justify-center text-xl"
+                        imageFolder="items"
                       />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -696,6 +698,7 @@ export default function SuggestItemSearch({
                         className="w-full h-full object-cover"
                         fallbackIcon="📋"
                         fallbackClassName="w-full h-full flex items-center justify-center text-xl"
+                        imageFolder="items"
                       />
                     </div>
                     <div className="min-w-0 flex-1">

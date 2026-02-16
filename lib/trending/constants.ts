@@ -30,3 +30,6 @@ export const TIME_WINDOWS = {
   DAILY: 1,
   MONTHLY: 30,
 } as const;
+
+/** سقف SaveVelocity برای جلوگیری از اسپایک با یک save تازه (anti-spike) */
+export const SAVE_VELOCITY_MAX = 100;

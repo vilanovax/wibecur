@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import type { NextAuthConfig } from 'next-auth';
+import type { AppRole } from '@/types/next-auth';
 
 const config: NextAuthConfig = {
   providers: [
@@ -56,7 +57,7 @@ const config: NextAuthConfig = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = (typeof token.id === 'string' ? token.id : token.sub) || '';
-        session.user.role = (token.role as 'USER' | 'ADMIN' | 'EDITOR') || 'USER';
+        session.user.role = ((token.role as string) || 'USER') as AppRole;
       }
       return session;
     },
@@ -65,10 +66,12 @@ const config: NextAuthConfig = {
       const isAdminRoute = pathname.startsWith('/admin');
       const isProfileRoute = pathname.startsWith('/profile');
       const isProtectedRoute = isAdminRoute || isProfileRoute;
+      const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'ANALYST', 'EDITOR'];
+      const isAdmin = auth?.user?.role && adminRoles.includes(auth.user.role);
 
       if (!isProtectedRoute) return true;
       if (!auth?.user) return false;
-      if (isAdminRoute && auth.user.role !== 'ADMIN') return false;
+      if (isAdminRoute && !isAdmin) return false;
       return true;
     },
   },

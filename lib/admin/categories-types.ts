@@ -2,9 +2,9 @@
 
 export type CategoryFilterKind =
   | 'all'
-  | 'growing'
-  | 'low_engagement'
-  | 'needs_review'
+  | 'healthy'
+  | 'needs_boost'
+  | 'declining'
   | 'inactive';
 
 export interface CategoryPulseSummary {

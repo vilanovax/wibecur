@@ -38,11 +38,11 @@ async function getPulseCategories() {
       }
     });
 
-    const result: { id: string; name: string; icon: string; slug: string; growthPercent: number }[] = [];
+    const result: { id: string; name: string; icon: string; slug: string; growthPercent: number; activeListsCount: number }[] = [];
     for (const cat of categories) {
       const listIds = listIdsByCategory.get(cat.id) ?? [];
       if (listIds.length === 0) {
-        result.push({ ...cat, growthPercent: 0 });
+        result.push({ ...cat, growthPercent: 0, activeListsCount: 0 });
         continue;
       }
       const [thisW, lastW] = await Promise.all([
@@ -60,7 +60,7 @@ async function getPulseCategories() {
         }),
       ]);
       const growthPercent = lastW === 0 ? (thisW > 0 ? 100 : 0) : Math.round(((thisW - lastW) / lastW) * 100);
-      result.push({ ...cat, growthPercent });
+      result.push({ ...cat, growthPercent, activeListsCount: listIds.length });
     }
 
     return result.sort((a, b) => b.growthPercent - a.growthPercent);

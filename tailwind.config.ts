@@ -8,6 +8,14 @@ import {
   shadows,
   motion,
   typography,
+  admin,
+  adminText,
+  adminStatus,
+  adminStatusBg,
+  intelligence,
+  adminRadius,
+  adminShadows,
+  adminTypography,
 } from './lib/design-tokens';
 
 const config: Config = {
@@ -39,6 +47,38 @@ const config: Config = {
           DEFAULT: 'var(--color-surface)',
           raised: 'var(--color-surface-raised)',
         },
+        // Admin 2.0 – separate from consumer UI
+        admin: {
+          bg: admin.bg,
+          card: admin.card,
+          muted: admin.muted,
+          border: admin.border,
+          hover: admin.hover,
+        },
+        'admin-text': {
+          primary: adminText.primary,
+          secondary: adminText.secondary,
+          tertiary: adminText.tertiary,
+          inverse: adminText.inverse,
+        },
+        'admin-status': {
+          success: adminStatus.success,
+          warning: adminStatus.warning,
+          danger: adminStatus.danger,
+          info: adminStatus.info,
+          disabled: adminStatus.disabled,
+        },
+        'admin-status-bg': {
+          success: adminStatusBg.success,
+          warning: adminStatusBg.warning,
+          danger: adminStatusBg.danger,
+          info: adminStatusBg.info,
+        },
+        intelligence: {
+          trending: intelligence.trending,
+          boost: intelligence.boost,
+          analytics: intelligence.analytics,
+        },
       },
       spacing: {
         xs: spacing.xs,
@@ -57,6 +97,10 @@ const config: Config = {
         xl: radius.xl,
         '2xl': radius['2xl'],
         pill: radius.pill,
+        'admin-sm': adminRadius.sm,
+        'admin-md': adminRadius.md,
+        'admin-lg': adminRadius.lg,
+        'admin-xl': adminRadius.xl,
       },
       boxShadow: {
         card: shadows.card,
@@ -64,6 +108,8 @@ const config: Config = {
         floating: shadows.floating,
         'vibe-card': shadows.card,
         'vibe-hero': shadows.hero,
+        admin: adminShadows.admin,
+        'admin-lg': adminShadows.adminLg,
       },
       transitionDuration: {
         fast: motion.fast,
@@ -85,6 +131,12 @@ const config: Config = {
         'vibe-h4': [typography.h4.size, { lineHeight: typography.h4.lineHeight }],
         'vibe-body': [typography.body.size, { lineHeight: typography.body.lineHeight }],
         'vibe-caption': [typography.caption.size, { lineHeight: typography.caption.lineHeight }],
+        'admin-xs': [adminTypography.xs.size, { lineHeight: adminTypography.xs.lineHeight }],
+        'admin-sm': [adminTypography.sm.size, { lineHeight: adminTypography.sm.lineHeight }],
+        'admin-base': [adminTypography.base.size, { lineHeight: adminTypography.base.lineHeight }],
+        'admin-lg': [adminTypography.lg.size, { lineHeight: adminTypography.lg.lineHeight }],
+        'admin-xl': [adminTypography.xl.size, { lineHeight: adminTypography.xl.lineHeight }],
+        'admin-2xl': [adminTypography['2xl'].size, { lineHeight: adminTypography['2xl'].lineHeight }],
       },
       fontWeight: {
         'vibe-h1': String(typography.h1.weight),

@@ -324,6 +324,7 @@ export default function AddItemClient({
                     className="w-full h-full object-cover"
                     fallbackIcon="📋"
                     fallbackClassName="w-full h-full"
+                    imageFolder="items"
                   />
                 </div>
                 <div className={`p-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>

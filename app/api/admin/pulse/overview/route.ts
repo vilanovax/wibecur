@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { checkAdminAuth } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 
 const CACHE_SECONDS = 120; // 2 min
 
@@ -16,12 +16,20 @@ async function getPulseOverview() {
   return dbQuery(async () => {
     const now = new Date();
     const todayStart = startOfDay(now);
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
     const [
       todaySaves,
       todayComments,
       newUsersToday,
       todayItemVotes,
+      yesterdaySaves,
+      yesterdayComments,
+      newUsersYesterday,
+      todayLists,
+      pendingItemReports,
+      pendingCommentReports,
       bookmarksByDay,
       commentsByDay,
       usersByDay,
@@ -32,6 +40,14 @@ async function getPulseOverview() {
       }),
       prisma.users.count({ where: { createdAt: { gte: todayStart } } }),
       prisma.item_votes.count({ where: { createdAt: { gte: todayStart } } }),
+      prisma.bookmarks.count({ where: { createdAt: { gte: yesterdayStart, lt: todayStart } } }),
+      prisma.comments.count({
+        where: { createdAt: { gte: yesterdayStart, lt: todayStart }, deletedAt: null },
+      }),
+      prisma.users.count({ where: { createdAt: { gte: yesterdayStart, lt: todayStart } } }),
+      prisma.lists.count({ where: { createdAt: { gte: todayStart } } }),
+      prisma.item_reports.count({ where: { resolved: false } }),
+      prisma.comment_reports.count({ where: { resolved: false } }),
       prisma.$queryRaw<
         { day: Date; count: bigint }[]
       >`
@@ -96,17 +112,25 @@ async function getPulseOverview() {
       activeUsersToday,
       newUsersToday,
       todayInteractions,
+      todayLists,
+      yesterdaySaves,
+      yesterdayComments,
+      newUsersYesterday,
       dailyStats: days,
+      risk: {
+        reportsPending: pendingItemReports + pendingCommentReports,
+        suspiciousLists: 0,
+        saveSpikes: 0,
+      },
+      lastSync: new Date().toISOString(),
     };
   });
 }
 
 export async function GET() {
   try {
-    const session = await checkAdminAuth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const userOrRes = await requirePermission('view_pulse');
+    if (userOrRes instanceof NextResponse) return userOrRes;
 
     const getCached = unstable_cache(
       getPulseOverview,

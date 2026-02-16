@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
 import { checkAchievements } from '@/lib/achievements';
+import { getTrendingScoreForList } from '@/lib/trending/service';
 
 // POST /api/lists/[id]/bookmark - بوک‌مارک یا آنبوک‌مارک کردن لیست
 export async function POST(
@@ -80,6 +81,32 @@ export async function POST(
 
     if (isBookmarked && list.userId) {
       checkAchievements(prisma, list.userId).catch((e) => console.warn('Achievement check failed:', e));
+    }
+
+    if (isBookmarked) {
+      const now = new Date();
+      const activeSlot = await prisma.home_featured_slot.findFirst({
+        where: {
+          listId,
+          startAt: { lte: now },
+          OR: [{ endAt: null }, { endAt: { gte: now } }],
+        },
+        select: { id: true, peakScore: true },
+      });
+      if (activeSlot) {
+        const currentScore = await getTrendingScoreForList(prisma, listId);
+        const newPeak =
+          activeSlot.peakScore != null && currentScore <= activeSlot.peakScore
+            ? undefined
+            : currentScore;
+        await prisma.home_featured_slot.update({
+          where: { id: activeSlot.id },
+          data: {
+            savesDuring: { increment: 1 },
+            ...(newPeak !== undefined ? { peakScore: newPeak } : {}),
+          },
+        });
+      }
     }
 
     return NextResponse.json({

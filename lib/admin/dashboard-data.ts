@@ -106,7 +106,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     dbQuery(() =>
       prisma.categories.findMany({
         where: { isActive: true },
-        include: { _count: { select: { lists: true } } },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          order: true,
+          _count: { select: { lists: true } },
+        },
         orderBy: { order: 'asc' },
       })
     ),

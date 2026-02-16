@@ -155,6 +155,7 @@ function GridItemCard({
           fallbackIcon="📋"
           fallbackClassName="w-full h-full flex items-center justify-center text-3xl"
           placeholderSize="square"
+          imageFolder="items"
         />
         <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/30 text-white text-[10px] flex items-center justify-center font-medium">
           {index + 1}
@@ -693,6 +694,7 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                         fallbackIcon="📋"
                         fallbackClassName="w-full h-full flex items-center justify-center text-xl"
                         placeholderSize="square"
+                        imageFolder="items"
                       />
                     </div>
                     <div className="flex-1 min-w-0">

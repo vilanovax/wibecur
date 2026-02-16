@@ -1,14 +1,80 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { Search, Bell, User, Settings, LogOut } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
+import RoleBadge from '@/components/auth/RoleBadge';
+import { formatDistanceToNow } from 'date-fns';
+import { faIR } from 'date-fns/locale';
+
+type NotificationItem = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  link: string | null;
+  read: boolean;
+  createdAt: string;
+};
 
 export default function TopBar() {
+  const { data: session } = useSession();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+
+  const fetchNotifications = useCallback(async () => {
+    setNotificationsLoading(true);
+    try {
+      const res = await fetch('/api/notifications?unreadOnly=false&limit=20');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setNotifications(json.data.notifications ?? []);
+        setUnreadCount(json.data.unreadCount ?? 0);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showNotifications) fetchNotifications();
+  }, [showNotifications, fetchNotifications]);
+
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationIds: [id] }),
+      });
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      setUnreadCount((c) => Math.max(0, c - 1));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAllAsRead: true }),
+      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -56,35 +122,64 @@ export default function TopBar() {
               className="relative w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors duration-200 group"
             >
               <Bell className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
-              <span className="absolute top-1 left-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {unreadCount > 0 && (
+                <span className="absolute top-1 left-1 min-w-[8px] h-2 px-1 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
             {showNotifications && (
-              <div className="absolute left-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
+              <div className="absolute left-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50 max-h-[400px] flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-900">نوتیفیکیشن‌ها</h3>
-                  <button className="text-xs text-primary hover:text-primary-dark">
-                    مشاهده همه
-                  </button>
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={markAllAsRead}
+                      className="text-xs text-primary hover:text-primary-dark"
+                    >
+                      همه را خواندم
+                    </button>
+                  )}
                 </div>
-                <div className="space-y-3">
-                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
-                    <p className="text-sm font-medium text-gray-900">
-                      لیست جدید ایجاد شد
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      کاربر جدیدی یک لیست ایجاد کرده است
-                    </p>
-                    <p className="text-xs text-gray-400 mt-2">۵ دقیقه پیش</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-gray-50">
-                    <p className="text-sm font-medium text-gray-900">
-                      آیتم جدید اضافه شد
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      یک آیتم جدید به لیست اضافه شده است
-                    </p>
-                    <p className="text-xs text-gray-400 mt-2">۱ ساعت پیش</p>
-                  </div>
+                <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
+                  {notificationsLoading ? (
+                    <p className="text-sm text-gray-500">در حال بارگذاری...</p>
+                  ) : notifications.length === 0 ? (
+                    <p className="text-sm text-gray-500">پیامی نیست.</p>
+                  ) : (
+                    notifications.map((n) => (
+                      <div key={n.id}>
+                        {n.link ? (
+                          <Link
+                            href={n.link}
+                            onClick={() => { setShowNotifications(false); if (!n.read) markAsRead(n.id); }}
+                            className={`block p-3 rounded-lg text-right ${n.read ? 'bg-gray-50' : 'bg-blue-50 border border-blue-100'}`}
+                          >
+                            <p className="text-sm font-medium text-gray-900">{n.title}</p>
+                            <p className="text-xs text-gray-600 mt-1">{n.message}</p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
+                            </p>
+                          </Link>
+                        ) : (
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => { if (!n.read) markAsRead(n.id); }}
+                            onKeyDown={(e) => e.key === 'Enter' && (n.read || markAsRead(n.id))}
+                            className={`p-3 rounded-lg text-right cursor-default ${n.read ? 'bg-gray-50' : 'bg-blue-50 border border-blue-100'}`}
+                          >
+                            <p className="text-sm font-medium text-gray-900">{n.title}</p>
+                            <p className="text-xs text-gray-600 mt-1">{n.message}</p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -99,9 +194,16 @@ export default function TopBar() {
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white font-semibold">
                 ا
               </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">ادمین</p>
-                <p className="text-xs text-gray-500">admin@wibecur.com</p>
+              <div className="text-right flex items-center gap-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {session?.user?.name || session?.user?.email || 'ادمین'}
+                  </p>
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <span>نقش:</span>
+                    <RoleBadge />
+                  </p>
+                </div>
               </div>
               <User className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
             </button>

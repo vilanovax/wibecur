@@ -46,6 +46,7 @@ export async function GET(
     const user = await dbQuery(() =>
       prisma.users.findUnique({
         where: { email: userEmail },
+        select: { id: true },
       })
     );
 
@@ -56,7 +57,7 @@ export async function GET(
       );
     }
 
-    // Find all items with the same title in user's lists
+    // Find all items with the same title in user's lists (select only needed fields to avoid missing DB columns)
     const savedItems = await dbQuery(() =>
       prisma.items.findMany({
         where: {
@@ -68,7 +69,9 @@ export async function GET(
             userId: user.id,
           },
         },
-        include: {
+        select: {
+          id: true,
+          title: true,
           lists: {
             select: {
               id: true,

@@ -1,0 +1,18 @@
+/**
+ * Admin roles — RBAC
+ * منبع حقیقت: role در دیتابیس و session
+ */
+
+export const ADMIN_ROLES = [
+  'SUPER_ADMIN',
+  'ADMIN',
+  'MODERATOR',
+  'ANALYST',
+] as const;
+
+export type AdminRole = (typeof ADMIN_ROLES)[number];
+
+/** هر رولی که بتواند به /admin وارد شود */
+export function isAdminRole(role: string | undefined): role is AdminRole {
+  return role != null && ADMIN_ROLES.includes(role as AdminRole);
+}

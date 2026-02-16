@@ -118,6 +118,80 @@ export const motion = {
   easeOut: 'cubic-bezier(0, 0, 0.2, 1)',
 } as const;
 
+// ─── 11. Admin 2.0 – Design Tokens (Scalable • Role-aware • RTL-ready) ───
+// Admin ≠ Consumer UI: Functional, Calm, Structured, Data-first.
+
+export const admin = {
+  /** Base surface colors */
+  bg: '#F8FAFC',
+  card: '#FFFFFF',
+  muted: '#F1F5F9',
+  border: '#E2E8F0',
+  hover: '#F8FAFC',
+} as const;
+
+export const adminText = {
+  primary: '#0F172A',
+  secondary: '#475569',
+  tertiary: '#94A3B8',
+  inverse: '#FFFFFF',
+} as const;
+
+/** Status colors – state-driven Admin UI (healthy / attention / declining) */
+export const adminStatus = {
+  success: '#16A34A',
+  warning: '#F59E0B',
+  danger: '#DC2626',
+  info: '#2563EB',
+  disabled: '#94A3B8',
+} as const;
+
+/** Soft backgrounds for status badges and alerts */
+export const adminStatusBg = {
+  success: '#DCFCE7',
+  warning: '#FEF3C7',
+  danger: '#FEE2E2',
+  info: '#DBEAFE',
+} as const;
+
+/** Intelligence layer – Trending, Boost, Analytics */
+export const intelligence = {
+  trending: '#7C3AED',
+  boost: '#F97316',
+  analytics: '#0EA5E9',
+} as const;
+
+/** Admin radius – not overly rounded */
+export const adminRadius = {
+  sm: '6px',
+  md: '10px',
+  lg: '14px',
+  xl: '18px',
+} as const;
+
+/** Admin shadows – stable, not floating */
+export const adminShadows = {
+  admin: '0 2px 6px rgba(15, 23, 42, 0.05)',
+  adminLg: '0 8px 24px rgba(15, 23, 42, 0.08)',
+} as const;
+
+/** Admin typography scale (clarity-first) */
+export const adminTypography = {
+  xs: { size: '12px', lineHeight: '16px' },
+  sm: { size: '14px', lineHeight: '20px' },
+  base: { size: '16px', lineHeight: '24px' },
+  lg: { size: '18px', lineHeight: '26px' },
+  xl: { size: '20px', lineHeight: '28px' },
+  '2xl': { size: '24px', lineHeight: '32px' },
+} as const;
+
+/** Dark mode – structure only (optional future) */
+export const adminDark = {
+  bg: '#0F172A',
+  card: '#1E293B',
+  text: '#F1F5F9',
+} as const;
+
 // ─── Tailwind Theme Helpers ────────────────────────────────────────────
 /** برای استفاده در tailwind.config */
 export const tailwindTheme = {
