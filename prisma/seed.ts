@@ -621,6 +621,7 @@ async function main() {
     console.log(`📦 Seeding ${exportedData.notifications.length} notifications...`);
     for (const notification of exportedData.notifications) {
       try {
+        const read = notification.read ?? (notification as { isRead?: boolean }).isRead ?? false;
         await prisma.notifications.upsert({
           where: { id: notification.id },
           update: {
@@ -629,7 +630,7 @@ async function main() {
             title: notification.title,
             message: notification.message,
             link: notification.link,
-            read: notification.isRead,
+            read,
           },
           create: {
             id: notification.id,
@@ -638,7 +639,7 @@ async function main() {
             title: notification.title,
             message: notification.message,
             link: notification.link,
-            read: notification.isRead,
+            read,
             createdAt: new Date(notification.createdAt),
           },
         });

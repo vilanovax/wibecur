@@ -3,12 +3,20 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 
+const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
+function normalizeTrendingWeight(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 1;
+  const found = ALLOWED_WEIGHTS.find((w) => Math.abs(w - n) < 0.01);
+  return found ?? 1;
+}
+
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
 
     const body = await request.json();
-    const { name, slug, icon, color, description, order, isActive } = body;
+    const { name, slug, icon, color, description, order, isActive, trendingWeight } = body;
 
     // Validate required fields
     if (!name || !slug || !icon) {
@@ -17,6 +25,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const weight = normalizeTrendingWeight(trendingWeight);
 
     // Check if slug already exists
     const existingCategory = await prisma.categories.findUnique({
@@ -41,6 +51,7 @@ export async function POST(request: NextRequest) {
         description,
         order: order || 0,
         isActive: isActive !== undefined ? isActive : true,
+        trendingWeight: weight,
         updatedAt: new Date(),
       },
     });

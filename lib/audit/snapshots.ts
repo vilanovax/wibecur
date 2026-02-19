@@ -33,6 +33,7 @@ export function minimalCategory(cat: {
   order: number;
   isActive: boolean;
   updatedAt: Date;
+  trendingWeight?: number;
 }): Record<string, unknown> {
   return {
     id: cat.id,
@@ -40,6 +41,7 @@ export function minimalCategory(cat: {
     slug: cat.slug,
     order: cat.order,
     isActive: cat.isActive,
+    trendingWeight: cat.trendingWeight,
     updatedAt: cat.updatedAt?.toISOString?.(),
   };
 }

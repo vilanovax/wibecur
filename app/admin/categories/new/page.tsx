@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import CategoryWeightCard, { type WeightValue } from '@/components/admin/categories/CategoryWeightCard';
 
 export default function NewCategoryPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function NewCategoryPage() {
     description: '',
     order: 0,
     isActive: true,
+    trendingWeight: 1.0 as WeightValue,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,6 +219,15 @@ export default function NewCategoryPage() {
             <p className="text-xs text-gray-500 mt-1">
               عدد کوچکتر در ابتدا نمایش داده می‌شود
             </p>
+          </div>
+
+          {/* Algorithm Weight */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-5">
+            <CategoryWeightCard
+              value={formData.trendingWeight}
+              onChange={(w) => setFormData((prev) => ({ ...prev, trendingWeight: w }))}
+              canEdit={true}
+            />
           </div>
 
           {/* Is Active */}

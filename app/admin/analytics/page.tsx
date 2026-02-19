@@ -1,11 +1,21 @@
-export default function AdminAnalyticsPage() {
+import { requireAdmin } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { getAnalyticsOverview } from '@/lib/admin/analytics-metrics';
+import AnalyticsDashboard from '@/components/admin/analytics/AnalyticsDashboard';
+
+export default async function AdminAnalyticsPage() {
+  await requireAdmin();
+
+  const overview = await getAnalyticsOverview(prisma);
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">آنالیتیکس</h1>
-      <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">صفحه آنالیتیکس - در حال توسعه</p>
-      </div>
+    <div className="max-w-5xl">
+      <AnalyticsDashboard
+        userGrowth={overview.userGrowth}
+        contentEngine={overview.contentEngine}
+        trending={overview.trending}
+        chart30d={overview.chart30d}
+      />
     </div>
   );
 }
-

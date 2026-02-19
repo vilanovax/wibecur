@@ -96,10 +96,10 @@ type SidebarContentProps = {
 function SidebarContent({ collapsed, onClose, showToggle = true, isMobileDrawer = false }: SidebarContentProps) {
   const { data: session } = useSession();
   const user = {
-    name: session?.user?.name ?? undefined,
-    email: session?.user?.email ?? undefined,
+    name: session?.user?.name ?? '',
+    email: session?.user?.email ?? null,
     role: session?.user?.role as string | undefined,
-    image: session?.user?.image ?? undefined,
+    image: session?.user?.image ?? null,
     online: true,
   };
 

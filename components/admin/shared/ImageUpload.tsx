@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { Upload, X, Link as LinkIcon, Search } from 'lucide-react';
 import ImageSearchModal from '@/components/admin/items/ImageSearchModal';
 
+export type ImageUploadDisplayMode = 'upload' | 'url' | 'search' | 'all';
+
 interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
@@ -12,6 +14,8 @@ interface ImageUploadProps {
   title?: string; // Title to pre-fill in Google Image Search
   categoryName?: string; // Category name to pre-fill in Google Image Search
   onModalOpenChange?: (isOpen: boolean) => void; // Callback when modal opens/closes
+  /** When set, only one method is shown (for tabbed UI). Default 'all' shows all options. */
+  displayMode?: ImageUploadDisplayMode;
 }
 
 export default function ImageUpload({
@@ -21,12 +25,17 @@ export default function ImageUpload({
   title = '',
   categoryName = '',
   onModalOpenChange,
+  displayMode = 'all',
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
-  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(displayMode === 'url');
   const [urlInput, setUrlInput] = useState('');
   const [showImageSearch, setShowImageSearch] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showUpload = displayMode === 'all' || displayMode === 'upload';
+  const showUrl = displayMode === 'all' || displayMode === 'url';
+  const showSearch = displayMode === 'all' || displayMode === 'search';
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -140,131 +149,91 @@ export default function ImageUpload({
           </button>
         </div>
       ) : (
-        // Show upload options
+        // Show upload options (filtered by displayMode)
         <div className="space-y-3">
-          {/* Upload from file */}
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className={`flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer ${
-                uploading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {uploading ? (
-                <>
-                  <svg
-                    className="animate-spin h-5 w-5 text-primary"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  <span className="text-gray-600">در حال آپلود...</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5 text-gray-600" />
-                  <span className="text-gray-600">آپلود از کامپیوتر</span>
-                </>
-              )}
-            </label>
-          </div>
-
-          {/* Or divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">یا</span>
-            </div>
-          </div>
-
-          {/* URL input */}
-          {showUrlInput ? (
-            <div className="flex gap-2">
+          {showUpload && (
+            <div>
               <input
-                type="url"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleUrlSubmit();
-                  }
-                }}
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                id="file-upload"
               />
-              <button
-                type="button"
-                onClick={handleUrlSubmit}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+              <label
+                htmlFor="file-upload"
+                className={`flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors cursor-pointer ${
+                  uploading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                تأیید
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUrlInput(false);
-                  setUrlInput('');
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                انصراف
-              </button>
+                {uploading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span className="text-gray-600">در حال آپلود...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 text-gray-600" />
+                    <span className="text-gray-600">آپلود از کامپیوتر</span>
+                  </>
+                )}
+              </label>
             </div>
-          ) : (
-            <>
+          )}
+
+          {showUpload && (showUrl || showSearch) && (
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300" /></div>
+              <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">یا</span></div>
+            </div>
+          )}
+
+          {showUrl && (
+            showUrlInput || displayMode === 'url' ? (
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUrlSubmit(); } }}
+                />
+                <button type="button" onClick={handleUrlSubmit} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">تأیید</button>
+                {displayMode === 'all' && (
+                  <button type="button" onClick={() => { setShowUrlInput(false); setUrlInput(''); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">انصراف</button>
+                )}
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowUrlInput(true);
-                }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowUrlInput(true); }}
                 className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <LinkIcon className="w-5 h-5 text-gray-600" />
                 <span className="text-gray-600">استفاده از لینک تصویر</span>
               </button>
+            )
+          )}
 
-              {/* Google Image Search */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowImageSearch(true);
-                  onModalOpenChange?.(true);
-                }}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <Search className="w-5 h-5 text-gray-600" />
-                <span className="text-gray-600">جستجوی تصویر در Google 🔍</span>
-              </button>
-            </>
+          {showSearch && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowImageSearch(true);
+                onModalOpenChange?.(true);
+              }}
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Search className="w-5 h-5 text-gray-600" />
+              <span className="text-gray-600">جستجوی تصویر در Google 🔍</span>
+            </button>
           )}
         </div>
       )}

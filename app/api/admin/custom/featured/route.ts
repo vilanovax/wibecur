@@ -180,7 +180,7 @@ export async function GET() {
       console.warn('currentPayload serialize failed:', e);
     }
 
-    let body: { current: typeof currentPayload; upcoming: unknown[]; past: unknown[]; lists: unknown[] };
+    let body: { current: typeof currentPayload; fallbackList: { id: string; title: string; slug: string } | null; upcoming: unknown[]; past: unknown[]; lists: unknown[] };
     try {
       const serializedLists = allLists.map((l) => ({
         id: l.id,

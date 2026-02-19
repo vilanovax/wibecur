@@ -16,8 +16,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = session.user.id;
-    
+    const rawUserId = session.user.id;
+    const userId = rawUserId != null ? String(rawUserId) : '';
+
     if (!userId) {
       console.error('User ID not found in session:', session);
       return NextResponse.json(
@@ -28,30 +29,45 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10) || 50, 100);
 
-    const where: any = { userId };
+    const where: { userId: string; read?: boolean } = { userId };
     if (unreadOnly) {
       where.read = false;
     }
 
-    const notifications = await dbQuery(() =>
-      prisma.notifications.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-      })
-    );
+    let notifications: Awaited<ReturnType<typeof prisma.notifications.findMany>>;
+    let unreadCount: number;
 
-    const unreadCount = await dbQuery(() =>
-      prisma.notifications.count({
-        where: { userId, read: false },
-      })
-    );
+    try {
+      notifications = await dbQuery(() =>
+        prisma.notifications.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+        })
+      );
+      unreadCount = await dbQuery(() =>
+        prisma.notifications.count({
+          where: { userId, read: false },
+        })
+      );
+    } catch (dbError: unknown) {
+      console.error('Notifications DB error:', dbError);
+      const msg = dbError instanceof Error ? dbError.message : String(dbError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'خطا در دریافت پیام‌ها',
+          details: process.env.NODE_ENV === 'development' ? msg : undefined,
+        },
+        { status: 500 }
+      );
+    }
 
     const serialized = notifications.map((n) => ({
       ...n,
-      createdAt: n.createdAt.toISOString(),
+      createdAt: n.createdAt instanceof Date ? n.createdAt.toISOString() : String(n.createdAt ?? ''),
     }));
 
     return NextResponse.json({
@@ -61,15 +77,14 @@ export async function GET(request: NextRequest) {
         unreadCount,
       },
     });
-  } catch (error: any) {
-    console.error('Error fetching notifications:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Error details:', JSON.stringify(error, null, 2));
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error('Error fetching notifications:', err.message, err.stack);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'خطا در دریافت پیام‌ها',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      {
+        success: false,
+        error: err.message || 'خطا در دریافت پیام‌ها',
+        details: process.env.NODE_ENV === 'development' ? err.stack : undefined,
       },
       { status: 500 }
     );

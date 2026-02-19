@@ -1,6 +1,6 @@
-# PostgreSQL برای توسعه لوکال با داکر
-# استفاده: docker-compose up -d
-# تصاویر: Liara Object Storage (از پنل ادمین)
+# PostgreSQL لوکال با داکر — اختیاری؛ اپ از این استفاده نمی‌کند.
+# همهٔ اتصال‌ها از .env به سرور pgsql.feedban.ir (دیتابیس wibe) هستند.
+# استفاده: فقط در صورت نیاز به پستگرس لوکال جداگانه → docker-compose up -d
 
 services:
   postgres:

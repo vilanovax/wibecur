@@ -182,8 +182,8 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
         </div>
       )}
 
-      {/* Grid */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Grid — immersive: edge-to-edge feel, larger image, gradient overlay */}
+      <div className="grid grid-cols-2 gap-2 -mx-1 sm:-mx-4 sm:px-0">
         {displayedBookmarks.map((bookmark) => {
           const list = bookmark.list;
           const creator = list.users;
@@ -197,7 +197,7 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
           return (
             <div
               key={bookmark.id}
-              className="relative rounded-[20px] overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+              className="relative rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
               onContextMenu={(e) => {
                 e.preventDefault();
                 setActionSheet(bookmark);
@@ -216,7 +216,7 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
                 <MoreVertical className="w-4 h-4" />
               </button>
               <Link href={`/lists/${list.slug}`} className="block">
-                <div className="relative aspect-[16/9] bg-gray-100">
+                <div className="relative aspect-[4/3] bg-gray-100">
                   <ImageWithFallback
                     src={list.coverImage ?? ''}
                     alt={list.title}
@@ -224,18 +224,19 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
                     fallbackIcon={list.categories?.icon}
                     fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
                   <div className="absolute bottom-2 left-2 right-2">
-                    <h3 className="text-white font-bold text-[15px] leading-tight line-clamp-2 drop-shadow-md">
+                    <h3 className="text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow-md">
                       {list.title}
                     </h3>
+                    <p className="text-white/90 text-[11px] mt-0.5">{items} آیتم · {formatStat(likes)} پسند</p>
                   </div>
                   {isRecentlyUpdated && (
                     <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-white" />
                   )}
                 </div>
               </Link>
-              <div className="p-3">
+              <div className="p-2">
                 {creator && (
                   <Link
                     href={creator.username ? `/u/${creator.username}` : '#'}
@@ -266,12 +267,9 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
                     </span>
                   </Link>
                 )}
-                <p className="text-[11px] text-gray-500">
-                  {items} آیتم • {formatStat(likes)} پسند • {formatStat(views)} بازدید
-                </p>
                 <Link
                   href={`/lists/${list.slug}`}
-                  className="mt-2 inline-block text-xs font-medium text-primary"
+                  className="mt-1 inline-block text-xs font-medium text-primary"
                 >
                   مشاهده لیست
                 </Link>

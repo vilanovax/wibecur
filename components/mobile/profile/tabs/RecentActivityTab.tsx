@@ -195,8 +195,8 @@ export default function RecentActivityTab({ userId }: RecentActivityTabProps) {
                     مشاهده لیست
                     <ChevronLeft className="w-4 h-4 rotate-180" />
                   </span>
-                  <span className="text-[11px] text-gray-400">
-                    ⏱ {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: faIR })}
+                  <span className="text-[10px] text-gray-400">
+                    {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: faIR })}
                   </span>
                 </div>
               </Link>

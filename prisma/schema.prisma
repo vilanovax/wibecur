@@ -42,6 +42,7 @@ model categories {
   order            Int               @default(0)
   isActive         Boolean           @default(true)
   commentsEnabled  Boolean           @default(true)  // فعال/غیرفعال کردن کامنت برای دسته
+  trendingWeight   Float             @default(1)     // ضریب وزن در الگوریتم ترندینگ (0.8 | 1.0 | 1.2 | 1.4)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime
   deletedAt        DateTime?

@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import type { categories } from '@prisma/client';
+import CategoryWeightCard, {
+  WEIGHT_LEVELS,
+  type WeightValue,
+} from '@/components/admin/categories/CategoryWeightCard';
+import CategoryImpactCard from '@/components/admin/categories/CategoryImpactCard';
 
 const SLUG_REGEX = /^[a-z0-9-]+$/;
 
@@ -15,12 +20,23 @@ interface CategoryAnalytics {
   trendingScoreAvg: number;
 }
 
+function toWeightValue(n: number | null | undefined): WeightValue {
+  if (n == null || !Number.isFinite(n)) return 1.0;
+  const found = WEIGHT_LEVELS.find((l) => Math.abs(l.value - n) < 0.01);
+  return found ? found.value : 1.0;
+}
+
 interface CategoryEditFormProps {
   category: categories;
   analytics: CategoryAnalytics;
+  canEditWeight?: boolean;
 }
 
-export default function CategoryEditForm({ category, analytics }: CategoryEditFormProps) {
+export default function CategoryEditForm({
+  category,
+  analytics,
+  canEditWeight = true,
+}: CategoryEditFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -37,7 +53,7 @@ export default function CategoryEditForm({ category, analytics }: CategoryEditFo
     order: category.order,
     isActive: category.isActive,
     commentsEnabled: (category as { commentsEnabled?: boolean }).commentsEnabled ?? true,
-    weightMultiplier: 1.0 as 0.8 | 1.0 | 1.2,
+    trendingWeight: toWeightValue((category as { trendingWeight?: number }).trendingWeight),
     boostEnabled: false,
     featured: false,
     showInHome: category.isActive,
@@ -68,6 +84,7 @@ export default function CategoryEditForm({ category, analytics }: CategoryEditFo
           order: formData.order,
           isActive: formData.isActive,
           commentsEnabled: formData.commentsEnabled,
+          trendingWeight: formData.trendingWeight,
         }),
       });
       if (!res.ok) {
@@ -303,27 +320,11 @@ export default function CategoryEditForm({ category, analytics }: CategoryEditFo
               />
               <p className="text-xs text-[var(--color-text-muted)] mt-1">عدد کوچکتر = نمایش زودتر</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
-                ضریب وزن
-              </label>
-              <div className="flex gap-2">
-                {([0.8, 1.0, 1.2] as const).map((w) => (
-                  <button
-                    key={w}
-                    type="button"
-                    onClick={() => setFormData((p) => ({ ...p, weightMultiplier: w }))}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      formData.weightMultiplier === w
-                        ? 'bg-[var(--primary)] text-white'
-                        : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:bg-[var(--color-border)]'
-                    }`}
-                  >
-                    {w}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <CategoryWeightCard
+              value={formData.trendingWeight}
+              onChange={(w) => setFormData((p) => ({ ...p, trendingWeight: w }))}
+              canEdit={canEditWeight}
+            />
             <div className="flex flex-wrap gap-6 pt-2">
               <ToggleRow
                 label="Boost موقت"
@@ -387,6 +388,9 @@ export default function CategoryEditForm({ category, analytics }: CategoryEditFo
             </div>
           </div>
         </section>
+
+        {/* Category Impact Snapshot — monitoring only */}
+        <CategoryImpactCard categoryId={category.id} className="mt-6" />
 
         {/* Section 4 — Analytics Snapshot */}
         <section className={sectionCard}>

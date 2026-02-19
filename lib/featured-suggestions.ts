@@ -150,7 +150,7 @@ export async function getFeaturedSuggestions(
   const scored: (FeaturedSuggestionItem & { _score: number })[] = [];
 
   for (const { list, trendingScore, metrics } of candidates) {
-    const categoryImpactScore = (list.categoryId && categoryImpactMap.get(list.categoryId)) ?? categoryImpactDefault;
+    const categoryImpactScore: number = (list.categoryId ? categoryImpactMap.get(list.categoryId) : undefined) ?? categoryImpactDefault;
     const categoryNorm = Math.min(categoryImpactScore, 100);
     const trendingNorm = normTrending(trendingScore);
     const saveVelNorm = Math.min(metrics.SaveVelocity, 100);
@@ -162,7 +162,7 @@ export async function getFeaturedSuggestions(
       categoryNorm * 0.2 +
       recentGrowthNorm * 0.2;
 
-    const rotationModifier = (list.categoryId && rotationModifiers[list.categoryId]) ?? 0;
+    const rotationModifier: number = (list.categoryId ? rotationModifiers[list.categoryId] : undefined) ?? 0;
     const suggestionScore = Math.max(0, baseSuggestionScore * (1 + rotationModifier));
 
     const reasons: string[] = [];

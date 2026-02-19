@@ -176,6 +176,14 @@ export default function GrowthKPIDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const categoriesWithBadge = useMemo(() => {
+    const list = data?.fastestGrowingCategories ?? [];
+    return list.map((cat) => ({
+      ...cat,
+      status: (cat.growth >= 30 ? 'fast' : cat.growth >= 10 ? 'stable' : 'low') as 'fast' | 'stable' | 'low',
+    }));
+  }, [data?.fastestGrowingCategories]);
+
   if (loading) {
     return (
       <div className="space-y-8 py-2 max-w-[1400px] mx-auto" dir="rtl">
@@ -220,14 +228,6 @@ export default function GrowthKPIDashboard() {
   const systemHealth = getSystemHealth(data);
   const pendingSuggestions = data.overview.suggestionsPending ?? data.suggestionPanel?.pendingCount ?? 0;
   const hasRisk = pendingSuggestions > 0;
-
-  const categoriesWithBadge = useMemo(() => {
-    const list = data.fastestGrowingCategories ?? [];
-    return list.map((cat) => ({
-      ...cat,
-      status: (cat.growth >= 30 ? 'fast' : cat.growth >= 10 ? 'stable' : 'low') as 'fast' | 'stable' | 'low',
-    }));
-  }, [data.fastestGrowingCategories]);
 
   const showRetention =
     data.retention.d1Retention > 0 || data.retention.d7Retention > 0 || (data.retention.d30Retention ?? 0) > 0;
@@ -443,7 +443,7 @@ export default function GrowthKPIDashboard() {
                 </ResponsiveContainer>
               </div>
             )}
-            {data.charts.savesVsListsLast30Days?.length > 0 && (
+            {(data.charts.savesVsListsLast30Days?.length ?? 0) > 0 && (
               <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-admin-border dark:border-gray-600 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">ذخیره vs لیست جدید (۳۰ روز)</h3>

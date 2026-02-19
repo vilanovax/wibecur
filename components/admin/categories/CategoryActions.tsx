@@ -47,7 +47,7 @@ export default function CategoryActions({ categoryId, categoryName }: CategoryAc
           <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
         {open && (
-          <div className="absolute top-full right-0 mt-1 w-44 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg py-1 z-10">
+          <div className="absolute top-full right-0 mt-1 w-44 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg py-1 z-50 min-w-[11rem]">
             <Link
               href={`/admin/categories/${categoryId}/edit`}
               className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50"

@@ -1,17 +1,8 @@
 'use client';
 
 import { Pencil, Trash2 } from 'lucide-react';
-
-export type SlotItem = {
-  id: string;
-  listId: string;
-  list: { title: string; slug?: string };
-  startAt: string;
-  endAt: string | null;
-  orderIndex: number;
-  viewListCount?: number;
-  quickSaveCount?: number;
-};
+import type { SlotItem } from '../FeaturedManagementClient';
+export type { SlotItem };
 
 type Props = {
   slots: SlotItem[];

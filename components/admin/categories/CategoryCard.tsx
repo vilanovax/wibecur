@@ -36,7 +36,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
 
   return (
     <div
-      className={`rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-hidden transition-shadow hover:shadow-md p-6 ${borderClass} ${
+      className={`rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm overflow-visible transition-shadow hover:shadow-md p-6 ${borderClass} ${
         !category.isActive ? 'opacity-60' : ''
       }`}
       dir="rtl"

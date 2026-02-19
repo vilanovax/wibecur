@@ -161,12 +161,14 @@ export type ImageFolder = 'items' | 'avatars' | 'covers' | 'lists';
 /**
  * دریافت محتوای فایل از Liara با URL عمومی (برای پراکسی وقتی باکت خصوصی است)
  * فقط برای URLهای استوریج خودمان کار می‌کند.
+ * اگر تنظیمات Liara در دسترس نباشد، برای URLهای Liara یک fetch مستقیم انجام می‌دهد (باکت عمومی).
  */
 export async function getObjectByPublicUrl(
   publicUrl: string
 ): Promise<{ buffer: Buffer; contentType?: string } | null> {
   if (!isOurStorageUrl(publicUrl)) return null;
-  try {
+
+  const tryS3 = async (): Promise<{ buffer: Buffer; contentType?: string } | null> => {
     const config = await getObjectStorageConfig();
     const client = await getS3Client();
     if (!config || !client) return null;
@@ -185,14 +187,35 @@ export async function getObjectByPublicUrl(
 
     const bytes = await body.transformToByteArray();
     const buffer = Buffer.from(bytes);
+    return { buffer, contentType: res.ContentType ?? undefined };
+  };
 
-    return {
-      buffer,
-      contentType: res.ContentType ?? undefined,
-    };
+  const tryDirectFetch = async (): Promise<{ buffer: Buffer; contentType?: string } | null> => {
+    try {
+      const res = await axios.get(publicUrl, {
+        responseType: 'arraybuffer',
+        timeout: 15000,
+        headers: { Accept: 'image/*' },
+        validateStatus: (s) => s === 200,
+      });
+      if (!res.data) return null;
+      const contentType = res.headers['content-type'];
+      return {
+        buffer: Buffer.from(res.data),
+        contentType: typeof contentType === 'string' ? contentType : undefined,
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  try {
+    const s3Result = await tryS3();
+    if (s3Result) return s3Result;
+    return await tryDirectFetch();
   } catch (e) {
     console.error('getObjectByPublicUrl error:', (e as Error).message);
-    return null;
+    return await tryDirectFetch();
   }
 }
 

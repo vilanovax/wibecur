@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader2, X, Calendar, BarChart3, Lightbulb } from 'lucide-react';
-import DatePicker, { type DateObject } from 'react-multi-date-picker';
+import DatePicker, { DateObject } from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import FeaturedHeroHeader from './components/FeaturedHeroHeader';

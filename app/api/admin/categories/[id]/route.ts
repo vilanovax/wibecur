@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/auth/require-permission';
+import { hasPermission } from '@/lib/auth/has-permission';
 import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalCategory } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
+
+const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
+function normalizeTrendingWeight(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 1;
+  const found = ALLOWED_WEIGHTS.find((w) => Math.abs(w - n) < 0.01);
+  return found ?? 1;
+}
 
 export async function PUT(
   request: NextRequest,
@@ -16,7 +25,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, slug, icon, color, description, order, isActive, commentsEnabled } = body;
+    const { name, slug, icon, color, description, order, isActive, commentsEnabled, trendingWeight } = body;
 
     // Validate required fields
     if (!name || !slug || !icon) {
@@ -35,6 +44,15 @@ export async function PUT(
       return NextResponse.json(
         { error: 'دسته‌بندی یافت نشد' },
         { status: 404 }
+      );
+    }
+
+    const existingWeight = existingCategory.trendingWeight ?? 1;
+    const wantsWeight = trendingWeight !== undefined ? normalizeTrendingWeight(trendingWeight) : existingWeight;
+    if (trendingWeight !== undefined && wantsWeight !== existingWeight && !hasPermission(userOrRes.role, 'set_category_weight')) {
+      return NextResponse.json(
+        { error: 'فقط نقش مدیر با دسترسی «تنظیم وزن دسته» می‌تواند وزن الگوریتم را تغییر دهد.' },
+        { status: 403 }
       );
     }
 
@@ -63,6 +81,7 @@ export async function PUT(
         order: order || 0,
         isActive: isActive !== undefined ? isActive : true,
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
+        trendingWeight: wantsWeight,
       },
     });
 

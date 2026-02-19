@@ -17,17 +17,29 @@ export default async function CommentsPage({
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
   // Build where clause
-  const where: any = {
-    deletedAt: null, // Always exclude soft-deleted comments
-  };
+  const where: any = {};
   if (filter === 'approved') {
+    where.deletedAt = null;
     where.isApproved = true;
+  } else if (filter === 'pending') {
+    where.deletedAt = null;
+    where.isApproved = false;
+  } else if (filter === 'rejected') {
+    where.deletedAt = { not: null };
+  } else if (filter === 'flagged') {
+    where.deletedAt = null;
+    where.OR = [
+      { isFiltered: true },
+      { comment_reports: { some: { resolved: false } } },
+    ];
   } else if (filter === 'filtered') {
-    // Only show comments with bad words (isFiltered = true)
+    where.deletedAt = null;
     where.isFiltered = true;
   } else if (filter === 'reported') {
-    // Only show comments that are reported (regardless of isFiltered)
+    where.deletedAt = null;
     where.comment_reports = { some: { resolved: false } };
+  } else {
+    where.deletedAt = null;
   }
 
   if (search) {
@@ -85,9 +97,12 @@ export default async function CommentsPage({
     <>
       <CommentsPageClient
         comments={serializedComments}
+        totalCount={totalCount}
         currentFilter={filter}
         currentSearch={search}
         badWords={badWordsList}
+        currentPage={currentPage}
+        totalPages={totalPages}
       />
       <Pagination
         currentPage={currentPage}

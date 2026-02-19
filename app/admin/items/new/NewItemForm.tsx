@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { lists, categories } from '@prisma/client';
-import ImageUpload from '@/components/admin/shared/ImageUpload';
+import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
+import { Upload, Link as LinkIcon, Search, ChevronDown, ChevronUp } from 'lucide-react';
 
 type ListWithCategory = lists & {
   categories: categories | null;
@@ -16,6 +17,12 @@ interface NewItemFormProps {
   lists: ListWithCategory[];
   initialListId?: string;
 }
+
+const MEDIA_TABS: { id: ImageUploadDisplayMode; label: string; icon: React.ElementType }[] = [
+  { id: 'upload', label: 'آپلود', icon: Upload },
+  { id: 'url', label: 'لینک', icon: LinkIcon },
+  { id: 'search', label: 'جستجو', icon: Search },
+];
 
 export default function NewItemForm({
   lists,
@@ -30,6 +37,8 @@ export default function NewItemForm({
   const [showMovieModal, setShowMovieModal] = useState(false);
   const [movieResults, setMovieResults] = useState<any[]>([]);
   const [imageSearchModalOpen, setImageSearchModalOpen] = useState(false);
+  const [mediaTab, setMediaTab] = useState<ImageUploadDisplayMode>('upload');
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -42,17 +51,18 @@ export default function NewItemForm({
     commentsEnabled: true,
     maxComments: null as number | null,
   });
-  const [moviePlot, setMoviePlot] = useState<string>(''); // Store plot for AI
+  const [moviePlot, setMoviePlot] = useState<string>('');
 
   const selectedList = lists.find((l) => l.id === formData.listId);
+  const isFilmCategory =
+    selectedList?.categories?.slug === 'movie' ||
+    selectedList?.categories?.slug === 'film' ||
+    selectedList?.categories?.slug === 'movies';
 
-  // Prevent form submission when modal is open
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
-
     const handleSubmit = (e: SubmitEvent) => {
-      // Check if image search modal is open (check DOM for modal existence)
       const modal = document.querySelector('[data-image-search-modal]');
       if (modal) {
         e.preventDefault();
@@ -61,18 +71,12 @@ export default function NewItemForm({
         return false;
       }
     };
-
     form.addEventListener('submit', handleSubmit as any, true);
-
-    return () => {
-      form.removeEventListener('submit', handleSubmit as any, true);
-    };
+    return () => form.removeEventListener('submit', handleSubmit as any, true);
   }, [imageSearchModalOpen]);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -86,19 +90,15 @@ export default function NewItemForm({
       setError('لطفاً ابتدا عنوان فیلم را وارد کنید');
       return;
     }
-
     setFetchingFromImdb(true);
     setError('');
-
     try {
       const res = await fetch('/api/admin/items/fetch-movie-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: formData.title }),
       });
-
       if (!res.ok) {
-        // Try to parse error response
         let errorMessage = 'خطا در دریافت اطلاعات';
         try {
           const errorData = await res.json();
@@ -108,14 +108,10 @@ export default function NewItemForm({
         }
         throw new Error(errorMessage);
       }
-
       const data = await res.json();
-
-      // Show modal with multiple results
       setMovieResults(data.results || []);
       setShowMovieModal(true);
     } catch (err: any) {
-      console.error('Error fetching movie data:', err);
       setError(err.message || 'خطای ناشناخته در دریافت اطلاعات');
     } finally {
       setFetchingFromImdb(false);
@@ -123,9 +119,7 @@ export default function NewItemForm({
   };
 
   const handleSelectMovie = async (movie: any) => {
-    // Upload poster to Liara if needed
     let finalPosterUrl = movie.posterUrl;
-
     if (movie.posterUrl) {
       try {
         const uploadRes = await fetch('/api/admin/items/upload-movie-poster', {
@@ -133,25 +127,15 @@ export default function NewItemForm({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ posterUrl: movie.posterUrl }),
         });
-
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
-          if (uploadData.uploadedUrl) {
-            finalPosterUrl = uploadData.uploadedUrl;
-            console.log('✅ تصویر با موفقیت در سرور ایرانی آپلود شد');
-          }
+          if (uploadData.uploadedUrl) finalPosterUrl = uploadData.uploadedUrl;
         }
-      } catch (error) {
-        console.warn('Failed to upload to Liara, using original URL');
+      } catch {
+        // keep original
       }
     }
-
-    // Store plot for AI generation
-    if (movie.plot) {
-      setMoviePlot(movie.plot);
-    }
-
-    // Fill form with selected movie data
+    if (movie.plot) setMoviePlot(movie.plot);
     setFormData((prev) => ({
       ...prev,
       title: movie.title,
@@ -172,10 +156,8 @@ export default function NewItemForm({
       setError('لطفاً ابتدا عنوان را وارد کنید');
       return;
     }
-
     setGeneratingDesc(true);
     setError('');
-
     try {
       const res = await fetch('/api/admin/items/generate-description', {
         method: 'POST',
@@ -184,26 +166,15 @@ export default function NewItemForm({
           title: formData.title,
           categorySlug: selectedList?.categories?.slug,
           metadata: formData.metadata,
-          plot: moviePlot || undefined, // Send plot if available
+          plot: moviePlot || undefined,
         }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'خطا در تولید توضیحات');
-      }
-
-      // Update description and metadata if AI provided them
+      if (!res.ok) throw new Error(data.error || 'خطا در تولید توضیحات');
       setFormData((prev) => ({
         ...prev,
         description: data.description,
-        metadata: data.metadata
-          ? {
-              ...prev.metadata,
-              ...data.metadata,
-            }
-          : prev.metadata,
+        metadata: data.metadata ? { ...prev.metadata, ...data.metadata } : prev.metadata,
       }));
     } catch (err: any) {
       setError(err.message);
@@ -215,30 +186,18 @@ export default function NewItemForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Double check - prevent submission if modal is open
     const modal = document.querySelector('[data-image-search-modal]');
-    if (modal) {
-      console.warn('Form submission prevented: Image search modal is open');
-      return;
-    }
-    
+    if (modal) return;
     setLoading(true);
     setError('');
-
     try {
       const res = await fetch('/api/admin/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to create item');
-      }
-
+      if (!res.ok) throw new Error(data.error || 'Failed to create item');
       router.push(`/admin/items?listId=${formData.listId}`);
       router.refresh();
     } catch (err: any) {
@@ -249,7 +208,6 @@ export default function NewItemForm({
 
   return (
     <>
-      {/* Movie Search Modal */}
       <MovieSearchModal
         isOpen={showMovieModal}
         onClose={() => setShowMovieModal(false)}
@@ -258,37 +216,36 @@ export default function NewItemForm({
         isLoading={fetchingFromImdb}
       />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8" dir="rtl">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">افزودن آیتم جدید</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-admin-text-primary dark:text-white">افزودن آیتم جدید</h1>
+          <p className="text-sm text-admin-text-tertiary dark:text-gray-400 mt-1">
             {selectedList && (
-              <>
-                به لیست: {selectedList.categories?.icon || '📋'} {selectedList.title}
-              </>
+              <>به لیست: {selectedList.categories?.icon || '📋'} {selectedList.title}</>
             )}
           </p>
         </div>
         <Link
           href={`/admin/items${initialListId ? `?listId=${initialListId}` : ''}`}
-          className="text-gray-600 hover:text-gray-900"
+          className="text-admin-text-secondary dark:text-gray-400 hover:text-admin-text-primary dark:hover:text-white"
         >
           ← بازگشت
         </Link>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-8" dir="rtl">
           {error}
         </div>
       )}
 
-      <form 
+      <form
+        id="new-item-form"
         ref={formRef}
-        onSubmit={handleSubmit} 
-        className="bg-white rounded-xl shadow-sm p-6 space-y-6"
+        onSubmit={handleSubmit}
+        className="space-y-8 pb-24"
+        dir="rtl"
         onKeyDown={(e) => {
-          // Prevent Enter key from submitting when modal might be open
           if (e.key === 'Enter') {
             const modal = document.querySelector('[data-image-search-modal]');
             if (modal) {
@@ -298,216 +255,233 @@ export default function NewItemForm({
           }
         }}
       >
-        {/* List Selection */}
-        <div>
-          <label htmlFor="listId" className="block text-sm font-medium text-gray-700 mb-2">
-            لیست <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="listId"
-            name="listId"
-            required
-            value={formData.listId}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            {lists.map((list) => (
-              <option key={list.id} value={list.id}>
-                 {list.categories?.icon || '📋'} {list.title}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* 1. Core Info (Hero Block) */}
+        <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-2">
+            اطلاعات اصلی
+          </h2>
 
-        {/* Title */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-              عنوان <span className="text-red-500">*</span>
+          <div>
+            <label htmlFor="listId" className="block text-sm font-medium text-admin-text-primary dark:text-white mb-2">
+              لیست <span className="text-red-500 text-xs">*</span>
             </label>
-             {(selectedList?.categories?.slug === 'movie' || selectedList?.categories?.slug === 'film' || selectedList?.categories?.slug === 'movies') && (
-              <button
-                type="button"
-                onClick={handleFetchFromImdb}
-                disabled={fetchingFromImdb || !formData.title.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                title={!formData.title.trim() ? 'ابتدا عنوان فیلم را وارد کنید' : 'دریافت اطلاعات از TMDb/IMDb و آپلود تصویر'}
-              >
-                {fetchingFromImdb ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    در حال دریافت...
-                  </>
-                ) : (
-                  <>
-                    ⭐ دریافت اطلاعات فیلم
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            required
-            value={formData.title}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="عنوان آیتم..."
-          />
-        </div>
-
-        {/* Description */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              توضیحات (اختیاری)
-            </label>
-            <button
-              type="button"
-              onClick={handleGenerateDescription}
-              disabled={generatingDesc || !formData.title.trim()}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              title={!formData.title.trim() ? 'ابتدا عنوان را وارد کنید' : 'تولید توضیحات با هوش مصنوعی'}
+            <select
+              id="listId"
+              name="listId"
+              required
+              value={formData.listId}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-admin-border dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800 text-admin-text-primary dark:text-white"
             >
-              {generatingDesc ? (
-                <>
-                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  در حال تولید...
-                </>
-              ) : (
-                <>
-                  ✨ تولید با هوش مصنوعی
-                </>
-              )}
-            </button>
+              {lists.map((list) => (
+                <option key={list.id} value={list.id}>
+                  {list.categories?.icon || '📋'} {list.title}
+                </option>
+              ))}
+            </select>
           </div>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="توضیحات آیتم... (یا از دکمه تولید خودکار استفاده کنید)"
-          />
-        </div>
 
-        {/* Image Upload */}
-        <ImageUpload
-          value={formData.imageUrl}
-          onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
-          label="تصویر آیتم (اختیاری)"
-          title={formData.title}
-           categoryName={selectedList?.categories?.name}
-          onModalOpenChange={setImageSearchModalOpen}
-        />
-
-        {/* External URL */}
-        <div>
-          <label htmlFor="externalUrl" className="block text-sm font-medium text-gray-700 mb-2">
-            لینک خارجی (اختیاری)
-            <span className="text-gray-500 text-xs mr-2">
-              برای اطلاعات بیشتر، خرید، دانلود و...
-            </span>
-          </label>
-          <input
-            type="url"
-            id="externalUrl"
-            name="externalUrl"
-            value={formData.externalUrl}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="https://example.com"
-          />
-        </div>
-
-        {/* Dynamic Metadata Fields */}
-        {selectedList && selectedList.categories?.slug && (
-          <div className="border-t border-gray-200 pt-6">
-            <DynamicMetadataFields
-              categorySlug={selectedList.categories.slug}
-              metadata={formData.metadata}
-              onChange={(metadata) =>
-                setFormData((prev) => ({ ...prev, metadata }))
-              }
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <label htmlFor="title" className="block text-sm font-medium text-admin-text-primary dark:text-white">
+                عنوان <span className="text-red-500 text-xs">*</span>
+              </label>
+              {isFilmCategory && (
+                <button
+                  type="button"
+                  onClick={handleFetchFromImdb}
+                  disabled={fetchingFromImdb || !formData.title.trim()}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {fetchingFromImdb ? (
+                    <span className="animate-pulse">در حال دریافت...</span>
+                  ) : (
+                    '⭐ دریافت از TMDb/IMDb'
+                  )}
+                </button>
+              )}
+            </div>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              required
+              value={formData.title}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-admin-border dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800 text-admin-text-primary dark:text-white placeholder:text-admin-text-tertiary"
+              placeholder="عنوان آیتم را وارد کنید..."
             />
           </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <label htmlFor="description" className="block text-sm font-medium text-admin-text-primary dark:text-white">
+                توضیحات
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateDescription}
+                disabled={generatingDesc || !formData.title.trim()}
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {generatingDesc ? <span className="animate-pulse">در حال تولید...</span> : '✨ تولید با هوش مصنوعی'}
+              </button>
+            </div>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={4}
+              className="w-full px-4 py-2.5 border border-admin-border dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800 text-admin-text-primary dark:text-white placeholder:text-admin-text-tertiary"
+              placeholder="توضیحات آیتم (اختیاری)..."
+            />
+          </div>
+        </section>
+
+        {/* 2. Media (Tabbed) */}
+        <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6">
+          <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-4">
+            تصویر آیتم
+          </h2>
+          <div className="flex gap-2 mb-4">
+            {MEDIA_TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setMediaTab(tab.id)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    mediaTab === tab.id
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-admin-muted dark:bg-gray-700 text-admin-text-secondary dark:text-gray-400 hover:bg-admin-hover dark:hover:bg-gray-600'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+          <ImageUpload
+            value={formData.imageUrl}
+            onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
+            label=""
+            title={formData.title}
+            categoryName={selectedList?.categories?.name}
+            onModalOpenChange={setImageSearchModalOpen}
+            displayMode={mediaTab}
+          />
+        </section>
+
+        {/* 3. Extended Metadata (Collapsible) */}
+        {selectedList?.categories?.slug && (
+          <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setMetadataOpen(!metadataOpen)}
+              className="w-full flex items-center justify-between px-6 py-4 text-right hover:bg-admin-muted/50 dark:hover:bg-gray-700/30 transition-colors"
+            >
+              <span className="text-sm font-semibold text-admin-text-primary dark:text-white">
+                اطلاعات تکمیلی {selectedList.categories.slug === 'movie' || selectedList.categories.slug === 'film' || selectedList.categories.slug === 'movies' ? 'فیلم/سریال' : 'آیتم'}
+              </span>
+              {metadataOpen ? <ChevronUp className="w-5 h-5 text-admin-text-tertiary" /> : <ChevronDown className="w-5 h-5 text-admin-text-tertiary" />}
+            </button>
+            <div
+              className={`transition-all duration-200 overflow-hidden ${metadataOpen ? 'max-h-[800px]' : 'max-h-0'}`}
+            >
+              <div className="px-6 pb-6 pt-2 border-t border-admin-border dark:border-gray-600">
+                <DynamicMetadataFields
+                  categorySlug={selectedList.categories.slug}
+                  metadata={formData.metadata}
+                  onChange={(metadata) => setFormData((prev) => ({ ...prev, metadata }))}
+                />
+              </div>
+            </div>
+          </section>
         )}
 
-        {/* Comment Settings */}
-        <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">تنظیمات کامنت</h3>
-          
-          {/* Comments Enabled */}
-          <div className="flex items-center mb-4">
+        {/* 4. Settings */}
+        <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-4">
+            تنظیمات و لینک
+          </h2>
+
+          <div>
+            <label htmlFor="externalUrl" className="block text-sm font-medium text-admin-text-primary dark:text-white mb-2">
+              لینک خارجی
+            </label>
+            <input
+              type="url"
+              id="externalUrl"
+              name="externalUrl"
+              value={formData.externalUrl}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 border border-admin-border dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800 text-admin-text-primary dark:text-white placeholder:text-admin-text-tertiary"
+              placeholder="https://example.com"
+            />
+            <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-1">برای اطلاعات بیشتر، خرید، دانلود و...</p>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
             <input
               type="checkbox"
               id="commentsEnabled"
               checked={formData.commentsEnabled}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, commentsEnabled: e.target.checked }))
-              }
-              className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+              onChange={(e) => setFormData((prev) => ({ ...prev, commentsEnabled: e.target.checked }))}
+              className="h-4 w-4 text-violet-600 border-admin-border rounded focus:ring-violet-500"
             />
-            <label htmlFor="commentsEnabled" className="mr-2 text-sm font-medium text-gray-700">
+            <label htmlFor="commentsEnabled" className="text-sm font-medium text-admin-text-primary dark:text-white">
               فعال بودن کامنت‌ها برای این آیتم
             </label>
           </div>
-          <p className="text-xs text-gray-500 mb-4 mr-6">
-            اگر غیرفعال باشد، کامنت‌ها برای این آیتم غیرفعال می‌شود (اولویت بالاتر از تنظیمات دسته‌بندی)
-          </p>
 
-          {/* Max Comments */}
           <div>
-            <label htmlFor="maxComments" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="maxComments" className="block text-sm font-medium text-admin-text-primary dark:text-white mb-2">
               حداکثر تعداد کامنت
             </label>
             <input
               type="number"
               id="maxComments"
               name="maxComments"
-              min="1"
+              min={1}
               value={formData.maxComments ?? ''}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  maxComments: e.target.value ? parseInt(e.target.value) : null,
+                  maxComments: e.target.value ? parseInt(e.target.value, 10) : null,
                 }))
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="بدون محدودیت (خالی بگذارید)"
+              className="w-full px-4 py-2.5 border border-admin-border dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800 text-admin-text-primary dark:text-white"
+              placeholder="بدون محدودیت (خالی)"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              حداکثر تعداد کامنتی که می‌توان برای این آیتم ثبت کرد. اگر خالی بگذارید، از تنظیمات پیش‌فرض استفاده می‌شود.
-            </p>
           </div>
-        </div>
+        </section>
+      </form>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-6 border-t border-gray-200">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 bg-primary text-white py-3 rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'در حال ایجاد...' : 'ایجاد آیتم'}
-          </button>
+      {/* Sticky Submit Bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-t border-admin-border dark:border-gray-600 shadow-lg px-6 py-4 flex items-center justify-between gap-4"
+        dir="rtl"
+      >
+        <div className="flex-1 max-w-[1400px] mx-auto flex items-center justify-between gap-4">
           <Link
             href={`/admin/items${initialListId ? `?listId=${initialListId}` : ''}`}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            className="px-6 py-2.5 border border-admin-border dark:border-gray-600 text-admin-text-primary dark:text-white rounded-xl hover:bg-admin-muted dark:hover:bg-gray-700 transition-colors font-medium"
           >
             انصراف
           </Link>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => formRef.current?.requestSubmit()}
+            className="px-6 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'در حال ایجاد...' : 'ایجاد آیتم'}
+          </button>
         </div>
-      </form>
+      </div>
     </>
   );
 }

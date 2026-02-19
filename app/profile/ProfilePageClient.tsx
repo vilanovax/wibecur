@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Trophy } from 'lucide-react';
-import ProfileHero2, { type ProfileUser } from '@/components/mobile/profile/ProfileHero2';
-import ProfileTabs2 from '@/components/mobile/profile/ProfileTabs2';
-import ProfileAchievementsSection from '@/components/mobile/profile/ProfileAchievementsSection';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileStats from '@/components/profile/ProfileStats';
+import ProfileRankCard from '@/components/profile/ProfileRankCard';
+import ProfileTopLists from '@/components/profile/ProfileTopLists';
+import ProfileLevel from '@/components/profile/ProfileLevel';
+import ProfileAchievements from '@/components/profile/ProfileAchievements';
+import ProfileTabs from '@/components/profile/ProfileTabs';
+import type { ProfileUser } from '@/components/profile/types';
 
 interface ProfilePageClientProps {
   userId: string;
@@ -28,8 +31,8 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
       } else {
         setError(data.error || 'خطا در دریافت اطلاعات پروفایل');
       }
-    } catch (err: any) {
-      setError(err.message || 'خطا در دریافت اطلاعات پروفایل');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'خطا در دریافت اطلاعات پروفایل');
     } finally {
       setIsLoading(false);
     }
@@ -85,19 +88,41 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
     );
   }
 
+  const creatorStats = user.creatorStats ?? {
+    viralListsCount: 0,
+    popularListsCount: 0,
+    totalLikesReceived: 0,
+    profileViews: 0,
+    totalItemsCurated: 0,
+  };
+
   return (
     <div className="space-y-0">
-      <ProfileHero2 user={user} onUpdate={fetchProfile} />
-      <ProfileAchievementsSection creatorStats={user.creatorStats} />
-      <Link
-        href="/leaderboard"
-        className="mx-4 mt-4 flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-amber-200 bg-amber-50/80 text-amber-800 font-medium text-sm"
-      >
-        <Trophy className="w-5 h-5 text-amber-500" />
-        رتبه‌بندی کریتورها
-      </Link>
-      <ProfileTabs2 userId={userId} />
+      <ProfileHeader user={user} isOwner onUpdate={fetchProfile} />
+
+      <div className="px-4 -mt-2 relative z-20">
+        <div className="bg-white rounded-t-2xl shadow-sm border border-gray-100/80 border-b-0 pt-5 pb-4 px-4">
+          <ProfileStats creatorStats={creatorStats} />
+
+          <div className="mt-4">
+            <ProfileRankCard userId={userId} />
+          </div>
+
+          <ProfileTopLists userId={userId} />
+
+          <div className="mt-6">
+            <ProfileLevel user={user} />
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4">
+        <ProfileAchievements creatorStats={creatorStats} />
+      </div>
+
+      <div className="px-4">
+        <ProfileTabs userId={userId} />
+      </div>
     </div>
   );
 }
-

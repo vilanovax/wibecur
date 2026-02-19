@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { hasPermission } from '@/lib/auth/has-permission';
+import { auth } from '@/lib/auth-config';
 import { notFound } from 'next/navigation';
 import { dbQuery } from '@/lib/db';
 import CategoryEditForm from './CategoryEditForm';
@@ -50,11 +52,16 @@ export default async function EditCategoryPage({
     trendingScoreAvg,
   };
 
+  const session = await auth();
+  const canEditWeight =
+    !!session?.user?.role && hasPermission(session.user.role, 'set_category_weight');
+
   return (
     <div className="max-w-4xl">
       <CategoryEditForm
         category={category}
         analytics={analytics}
+        canEditWeight={canEditWeight}
       />
     </div>
   );
