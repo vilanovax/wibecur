@@ -27,52 +27,68 @@ export async function GET(request: NextRequest) {
     else if (filter === 'private') where.isPublic = false;
     else if (filter === 'draft') where.isActive = false;
 
-    const [lists, total] = await Promise.all([
-      prisma.lists.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: [{ likeCount: 'desc' }, { viewCount: 'desc' }, { updatedAt: 'desc' }],
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          coverImage: true,
-          categoryId: true,
-          userId: true,
-          tags: true,
-          badge: true,
-          isPublic: true,
-          isFeatured: true,
-          isActive: true,
-          likeCount: true,
-          viewCount: true,
-          saveCount: true,
-          itemCount: true,
-          commentsEnabled: true,
-          createdAt: true,
-          updatedAt: true,
-          categories: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              icon: true,
-              color: true,
+    let lists: Array<Record<string, unknown>>;
+    let total: number;
+
+    try {
+      const [listsResult, totalResult] = await Promise.all([
+        prisma.lists.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: [{ likeCount: 'desc' }, { viewCount: 'desc' }, { updatedAt: 'desc' }],
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            coverImage: true,
+            categoryId: true,
+            userId: true,
+            tags: true,
+            badge: true,
+            isPublic: true,
+            isFeatured: true,
+            isActive: true,
+            likeCount: true,
+            viewCount: true,
+            saveCount: true,
+            itemCount: true,
+            commentsEnabled: true,
+            createdAt: true,
+            updatedAt: true,
+            categories: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                icon: true,
+                color: true,
+              },
+            },
+            _count: {
+              select: {
+                items: true,
+                list_likes: true,
+                bookmarks: true,
+              },
             },
           },
-          _count: {
-            select: {
-              items: true,
-              list_likes: true,
-              bookmarks: true,
-            },
-          },
+        }),
+        prisma.lists.count({ where }),
+      ]);
+      lists = listsResult;
+      total = totalResult;
+    } catch (dbError: unknown) {
+      console.error('Error fetching user lists (DB):', dbError);
+      return NextResponse.json({
+        success: true,
+        data: {
+          lists: [],
+          pagination: { page: 1, limit, total: 0, totalPages: 0 },
         },
-      }),
-      prisma.lists.count({ where }),
-    ]);
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -86,12 +102,16 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-  } catch (error: any) {
-    console.error('Error fetching user lists:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error('Error fetching user lists:', err.message);
+    return NextResponse.json({
+      success: true,
+      data: {
+        lists: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      },
+    });
   }
 }
 

@@ -54,15 +54,10 @@ export async function GET(request: NextRequest) {
       );
     } catch (dbError: unknown) {
       console.error('Notifications DB error:', dbError);
-      const msg = dbError instanceof Error ? dbError.message : String(dbError);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'خطا در دریافت پیام‌ها',
-          details: process.env.NODE_ENV === 'development' ? msg : undefined,
-        },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        success: true,
+        data: { notifications: [], unreadCount: 0 },
+      });
     }
 
     const serialized = notifications.map((n) => ({
@@ -79,15 +74,11 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    console.error('Error fetching notifications:', err.message, err.stack);
-    return NextResponse.json(
-      {
-        success: false,
-        error: err.message || 'خطا در دریافت پیام‌ها',
-        details: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-      },
-      { status: 500 }
-    );
+    console.error('Error fetching notifications:', err.message);
+    return NextResponse.json({
+      success: true,
+      data: { notifications: [], unreadCount: 0 },
+    });
   }
 }
 

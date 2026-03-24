@@ -1,5 +1,6 @@
 /**
- * Object Storage — فقط Liara (از پنل ادمین / دیتابیس)
+ * Object Storage — Liara (پروداکشن) یا MinIO (لوکال)
+ * تنظیمات از دیتابیس خوانده می‌شود (پنل ادمین / set-liara-config)
  */
 
 export interface ObjectStorageConfig {
@@ -18,14 +19,18 @@ export async function getObjectStorageConfig(): Promise<ObjectStorageConfig | nu
 }
 
 /**
- * بررسی اینکه آیا URL از Liara Object Storage خودمان است
+ * بررسی اینکه آیا URL از Object Storage خودمان است (Liara یا MinIO لوکال)
  */
 export function isOurStorageUrl(url: string): boolean {
   if (!url || !url.startsWith('http')) return false;
   try {
     const u = new URL(url);
     const host = u.hostname.toLowerCase();
-    return host.includes('storage.') && host.includes('liara');
+    // Liara remote
+    if (host.includes('storage.') && host.includes('liara')) return true;
+    // MinIO local (localhost:9000 or 127.0.0.1:9000)
+    if ((host === 'localhost' || host === '127.0.0.1') && u.port === '9000') return true;
+    return false;
   } catch {
     return false;
   }

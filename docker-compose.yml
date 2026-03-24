@@ -1,7 +1,4 @@
-# PostgreSQL لوکال با داکر — اختیاری؛ اپ از این استفاده نمی‌کند.
-# همهٔ اتصال‌ها از .env به سرور pgsql.feedban.ir (دیتابیس wibe) هستند.
-# استفاده: فقط در صورت نیاز به پستگرس لوکال جداگانه → docker-compose up -d
-
+# PostgreSQL + MinIO لوکال — docker-compose up -d
 services:
   postgres:
     image: postgres:16-alpine
@@ -21,5 +18,40 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: wibecur-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: wibecur
+      MINIO_ROOT_PASSWORD: wibecur_minio_secret
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # MinIO Console
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ساخت باکت اولیه — یک بار اجرا شده و exit می‌کند
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 wibecur wibecur_minio_secret &&
+      mc mb --ignore-existing local/wibe &&
+      mc anonymous set download local/wibe &&
+      echo 'Bucket wibe ready (public-read)'
+      "
+    restart: "no"
+
 volumes:
   postgres_data:
+  minio_data:
