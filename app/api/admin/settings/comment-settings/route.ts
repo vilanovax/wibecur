@@ -58,6 +58,8 @@ export async function PUT(request: NextRequest) {
       maxCommentLength,
       rateLimitMinutes,
       globalRateLimitMinutes,
+      initialDisplayCount,
+      loadMoreCount,
     } = body;
 
     // Validate
@@ -102,6 +104,8 @@ export async function PUT(request: NextRequest) {
             maxCommentLength: maxCommentLength !== undefined ? maxCommentLength : null,
             rateLimitMinutes: rateLimitMinutes !== undefined ? rateLimitMinutes : 5,
             globalRateLimitMinutes: globalRateLimitMinutes !== undefined ? globalRateLimitMinutes : null,
+            initialDisplayCount: initialDisplayCount !== undefined ? initialDisplayCount : 3,
+            loadMoreCount: loadMoreCount !== undefined ? loadMoreCount : 10,
           },
         });
       } else {
@@ -112,6 +116,8 @@ export async function PUT(request: NextRequest) {
             maxCommentLength: maxCommentLength !== undefined ? maxCommentLength : null,
             rateLimitMinutes: rateLimitMinutes !== undefined ? rateLimitMinutes : 5,
             globalRateLimitMinutes: globalRateLimitMinutes !== undefined ? globalRateLimitMinutes : null,
+            initialDisplayCount: initialDisplayCount !== undefined ? initialDisplayCount : 3,
+            loadMoreCount: loadMoreCount !== undefined ? loadMoreCount : 10,
           },
         });
       }

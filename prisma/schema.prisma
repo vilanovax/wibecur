@@ -591,6 +591,8 @@ model comment_settings {
   maxCommentLength        Int?     // حداکثر تعداد کاراکتر برای کامنت (null = بدون محدودیت)
   rateLimitMinutes        Int      @default(5)  // حداقل فاصله بین کامنت‌ها برای یک آیتم (دقیقه)
   globalRateLimitMinutes  Int?     // حداقل فاصله برای همه کامنت‌ها (null = غیرفعال)
+  initialDisplayCount     Int      @default(3)  // تعداد کامنت نمایش اولیه
+  loadMoreCount           Int      @default(10) // تعداد کامنت در هر بار «نمایش بیشتر»
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 }

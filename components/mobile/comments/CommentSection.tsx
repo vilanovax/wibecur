@@ -27,6 +27,8 @@ interface Comment {
 interface CommentsResponse {
   comments: Comment[];
   commentsEnabled: boolean;
+  initialDisplayCount?: number;
+  loadMoreCount?: number;
 }
 
 interface CommentSectionProps {
@@ -65,6 +67,13 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
   });
   const comments = data?.comments ?? [];
   const commentsEnabled = data?.commentsEnabled ?? true;
+  const initialDisplayCount = data?.initialDisplayCount ?? 3;
+  const loadMoreCount = data?.loadMoreCount ?? 10;
+
+  const [displayCount, setDisplayCount] = useState(3);
+  // Reset display count when data changes
+  const visibleComments = comments.slice(0, displayCount);
+  const hasMore = comments.length > displayCount;
 
   const handleLike = async (commentId: string) => {
     setIsActionLoading(true);
@@ -231,18 +240,29 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
             )}
           </div>
         ) : (
-          <div className="space-y-3">
-            {comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                onLike={handleLike}
-                onReport={handleReport}
-                onDelete={handleDelete}
-                isLoading={isActionLoading}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-3">
+              {visibleComments.map((comment) => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  onLike={handleLike}
+                  onReport={handleReport}
+                  onDelete={handleDelete}
+                  isLoading={isActionLoading}
+                />
+              ))}
+            </div>
+            {hasMore && (
+              <button
+                type="button"
+                onClick={() => setDisplayCount((prev) => prev + loadMoreCount)}
+                className="w-full mt-4 py-2.5 text-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-xl transition-colors"
+              >
+                نمایش بیشتر ({comments.length - displayCount} نظر دیگه)
+              </button>
+            )}
+          </>
         )}
       </div>
 

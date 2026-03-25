@@ -61,6 +61,8 @@ export default function SettingsPageClient() {
     maxCommentLength: null as number | null,
     rateLimitMinutes: 5,
     globalRateLimitMinutes: null as number | null,
+    initialDisplayCount: 3,
+    loadMoreCount: 10,
   });
   const [commentSettingsLoading, setCommentSettingsLoading] = useState(false);
 
@@ -89,6 +91,8 @@ export default function SettingsPageClient() {
           maxCommentLength: data.data.maxCommentLength ?? null,
           rateLimitMinutes: data.data.rateLimitMinutes ?? 5,
           globalRateLimitMinutes: data.data.globalRateLimitMinutes ?? null,
+          initialDisplayCount: data.data.initialDisplayCount ?? 3,
+          loadMoreCount: data.data.loadMoreCount ?? 10,
         });
       }
     } catch (error: any) {
@@ -656,6 +660,50 @@ export default function SettingsPageClient() {
               />
               <p className="text-xs text-gray-500 mt-1">
                 حداقل فاصله زمانی که کاربر باید بین تمام کامنت‌های خود در همه آیتم‌ها رعایت کند (اگر خالی بگذارید، غیرفعال است)
+              </p>
+            </div>
+
+            {/* نمایش اولیه کامنت‌ها */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                تعداد نمایش اولیه کامنت‌ها
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={commentSettings.initialDisplayCount}
+                onChange={(e) =>
+                  setCommentSettings({
+                    ...commentSettings,
+                    initialDisplayCount: parseInt(e.target.value) || 3,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                تعداد کامنت‌هایی که در ابتدا نمایش داده می‌شوند (بقیه با دکمه «نمایش بیشتر»)
+              </p>
+            </div>
+
+            {/* تعداد بارگذاری بیشتر */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                تعداد بارگذاری در هر بار «نمایش بیشتر»
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={commentSettings.loadMoreCount}
+                onChange={(e) =>
+                  setCommentSettings({
+                    ...commentSettings,
+                    loadMoreCount: parseInt(e.target.value) || 10,
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                تعداد کامنت‌هایی که با هر بار کلیک «نمایش بیشتر» اضافه می‌شوند
               </p>
             </div>
 

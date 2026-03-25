@@ -128,6 +128,8 @@ export async function GET(
       data: {
         comments: formattedComments,
         commentsEnabled,
+        initialDisplayCount: globalSettings?.initialDisplayCount ?? 3,
+        loadMoreCount: globalSettings?.loadMoreCount ?? 10,
       },
     });
   } catch (error) {
