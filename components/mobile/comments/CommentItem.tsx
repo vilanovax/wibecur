@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ThumbsUp, Flag, Trash2, MessageCircle } from 'lucide-react';
+import { ThumbsUp, Flag, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentAvatar from '@/components/shared/CommentAvatar';
@@ -129,14 +129,6 @@ export default function CommentItem({
               className={`w-4 h-4 ${localIsLiked ? 'fill-current' : ''}`}
             />
             <span>{localLikeCount} مفید بود</span>
-          </button>
-
-          <button
-            type="button"
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>پاسخ</span>
           </button>
 
           <button

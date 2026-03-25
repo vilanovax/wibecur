@@ -286,221 +286,11 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             )}
           </section>
 
-          {/* External link */}
-          {item.externalUrl && (
-            <a
-              href={item.externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-medium hover:opacity-90 transition-opacity text-sm"
-            >
-              <span>🔗</span>
-              <span>اطلاعات بیشتر</span>
-            </a>
-          )}
-
-          {/* ——— Similar Items (below description, above metadata) ——— */}
-          <section className="-mx-4 px-4">
-            <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
-              <span>✨</span>
-              شاید این‌ها هم به وایبت بخوره
-            </h2>
-            <p className="text-sm text-gray-500 mb-3">بر اساس ژانر و حال‌و‌هوا</p>
-
-            {similarLoading ? (
-              <div className="flex gap-4 overflow-hidden">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="min-w-[70%] w-[70%] flex-shrink-0 rounded-2xl h-44 bg-gray-100 animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : similarItems.length < 2 ? (
-              <div className="py-6 px-4 rounded-2xl bg-gray-50 border border-gray-100 text-center">
-                <p className="text-gray-500 text-sm">هنوز آیتم مشابه زیادی نداریم 😉</p>
-              </div>
-            ) : (
-              <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
-                {similarItems.map((s) => (
-                  <Link
-                    key={s.id}
-                    href={`/items/${s.id}`}
-                    className="flex-shrink-0 w-[70%] max-w-[280px] rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:opacity-95"
-                  >
-                    <div className="relative aspect-[3/4] w-full bg-gray-100">
-                      {s.image ? (
-                        <ImageWithFallback
-                          src={s.image}
-                          alt={s.title}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          fallbackIcon={s.category?.icon ?? '📋'}
-                          fallbackClassName="absolute inset-0 flex items-center justify-center bg-gray-200"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-                          <span className="text-4xl opacity-50">
-                            {s.category?.icon ?? '📋'}
-                          </span>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-                        <h3 className="font-semibold text-sm leading-snug line-clamp-2 drop-shadow">
-                          {s.title}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1.5 text-xs text-white/90">
-                          {s.rating != null && (
-                            <span className="flex items-center gap-0.5">
-                              <span>⭐</span>
-                              <span>{s.rating}</span>
-                            </span>
-                          )}
-                          {s.category?.name && (
-                            <span className="flex items-center gap-0.5">
-                              <span>🎭</span>
-                              <span>{s.category.name}</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* ——— 4️⃣ People also liked (behavior-based، قبل از Trending) ——— */}
-          <section className="-mx-4 px-4">
-            <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
-              <span>👥</span>
-              کسایی که اینو دوست داشتن، اینا رو هم دوست داشتن
-            </h2>
-            <p className="text-sm text-gray-500 mb-3">بر اساس رفتار کاربران</p>
-
-            {alsoLikedLoading ? (
-              <div className="flex gap-4 overflow-hidden">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="min-w-[45%] flex-shrink-0 rounded-2xl h-52 bg-gray-100 animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : alsoLikedItems.length === 0 ? (
-              <div className="py-6 px-4 rounded-2xl bg-gray-50/80 border border-gray-100 text-center">
-                <p className="text-gray-500 text-sm">هنوز داده‌ای برای پیشنهاد نداریم 😉</p>
-              </div>
-            ) : (
-              <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
-                {alsoLikedItems.map((a) => (
-                  <Link
-                    key={a.id}
-                    href={`/items/${a.id}`}
-                    className="flex-shrink-0 w-[45%] max-w-[200px] rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-100 hover:shadow-md active:opacity-95 transition-all"
-                  >
-                    <div className="relative aspect-[3/4] w-full bg-gray-100">
-                      {a.image ? (
-                        <ImageWithFallback
-                          src={a.image}
-                          alt={a.title}
-                          className="w-full h-full object-cover"
-                          fallbackIcon="📋"
-                          fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-2xl opacity-50">
-                          📋
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white">
-                        <h3 className="font-semibold text-sm leading-snug line-clamp-2 drop-shadow">
-                          {a.title}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-white/90">
-                          {a.rating != null && (
-                            <span className="flex items-center gap-0.5">
-                              <span>⭐</span>
-                              <span>{a.rating}</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="p-2.5 text-xs text-gray-600 leading-snug">
-                      {a.commonUsersCount} نفر اینو همراه این ذخیره کردن
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* ——— 5️⃣ Trending in category (mini horizontal) ——— */}
-          {categoryId && (
-            <section className="-mx-4 px-4">
-              <h2 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
-                <span>🔥</span>
-                داغ‌های {categoryName || 'این دسته'}
-              </h2>
-              {trendingLoading ? (
-                <div className="flex gap-3 overflow-hidden">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="min-w-[100px] flex-shrink-0 rounded-xl h-28 bg-gray-100 animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : trendingItems.length > 0 ? (
-                <div className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
-                  {trendingItems.slice(0, 8).map((t, index) => {
-                    const rank = index + 1;
-                    const isTop = rank <= 3;
-                    return (
-                      <Link
-                        key={t.id}
-                        href={`/items/${t.id}`}
-                        className="flex-shrink-0 w-[100px] rounded-xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md active:opacity-95 transition-all"
-                      >
-                        <div className="relative aspect-[3/4] w-full bg-gray-100">
-                          {t.image ? (
-                            <ImageWithFallback
-                              src={t.image}
-                              alt={t.title}
-                              className="w-full h-full object-cover"
-                              fallbackIcon="📋"
-                              fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-200 text-xl opacity-50">
-                              📋
-                            </div>
-                          )}
-                          {isTop && (
-                            <span className="absolute top-1 right-1 text-[10px] bg-orange-500/90 text-white px-1 py-0.5 rounded">
-                              #{rank}
-                            </span>
-                          )}
-                        </div>
-                        <p className="p-1.5 text-xs font-medium text-gray-900 line-clamp-2 leading-tight">
-                          {t.title}
-                        </p>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </section>
-          )}
-
-          {/* ——— اطلاعات تکمیلی (مینیمال) ——— */}
+          {/* ——— اطلاعات تکمیلی (بلافاصله بعد از درباره) ——— */}
           {item.metadata &&
             typeof item.metadata === 'object' &&
             Object.keys(item.metadata).length > 0 && (
-              <section>
+              <section className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
                 <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                   <span className="w-1 h-4 bg-primary rounded-full" />
                   اطلاعات تکمیلی
@@ -543,7 +333,20 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               </section>
             )}
 
-          {/* ——— 6️⃣ این آیتم در چه لیست‌هایی است (کارت برجسته) ——— */}
+          {/* External link */}
+          {item.externalUrl && (
+            <a
+              href={item.externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-medium hover:opacity-90 transition-opacity text-sm"
+            >
+              <span>🔗</span>
+              <span>اطلاعات بیشتر</span>
+            </a>
+          )}
+
+          {/* ——— این آیتم در چه لیست‌هایی است (کارت برجسته) ——— */}
           <section className="rounded-2xl bg-white p-4 shadow-md shadow-gray-200/60 border border-gray-100">
             <p className="text-gray-800 font-medium mb-3 flex items-center gap-2">
               <span className="text-lg">📂</span>
@@ -576,6 +379,134 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               refreshTrigger={commentRefreshTrigger}
             />
           </section>
+
+          {/* ——— پیشنهادات: شاید بخوره به وایبت ——— */}
+          {similarItems.length >= 2 && (
+            <section className="-mx-4 px-4">
+              <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
+                <span>✨</span>
+                شاید این‌ها هم به وایبت بخوره
+              </h2>
+              <p className="text-sm text-gray-500 mb-3">بر اساس ژانر و حال‌و‌هوا</p>
+              <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
+                {similarItems.map((s) => (
+                  <Link
+                    key={s.id}
+                    href={`/items/${s.id}`}
+                    className="flex-shrink-0 w-[70%] max-w-[280px] rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:opacity-95"
+                  >
+                    <div className="relative aspect-[3/4] w-full bg-gray-100">
+                      {s.image ? (
+                        <ImageWithFallback
+                          src={s.image}
+                          alt={s.title}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          fallbackIcon={s.category?.icon ?? '📋'}
+                          fallbackClassName="absolute inset-0 flex items-center justify-center bg-gray-200"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                          <span className="text-4xl opacity-50">{s.category?.icon ?? '📋'}</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                        <h3 className="font-semibold text-sm leading-snug line-clamp-2 drop-shadow">{s.title}</h3>
+                        <div className="flex items-center gap-2 mt-1.5 text-xs text-white/90">
+                          {s.rating != null && <span>⭐ {s.rating}</span>}
+                          {s.category?.name && <span>🎭 {s.category.name}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ——— کسایی که دوست داشتن ——— */}
+          {alsoLikedItems.length > 0 && (
+            <section className="-mx-4 px-4">
+              <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
+                <span>👥</span>
+                کسایی که اینو دوست داشتن، اینا رو هم دوست داشتن
+              </h2>
+              <p className="text-sm text-gray-500 mb-3">بر اساس رفتار کاربران</p>
+              <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
+                {alsoLikedItems.map((a) => (
+                  <Link
+                    key={a.id}
+                    href={`/items/${a.id}`}
+                    className="flex-shrink-0 w-[45%] max-w-[200px] rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-100 hover:shadow-md active:opacity-95 transition-all"
+                  >
+                    <div className="relative aspect-[3/4] w-full bg-gray-100">
+                      {a.image ? (
+                        <ImageWithFallback
+                          src={a.image}
+                          alt={a.title}
+                          className="w-full h-full object-cover"
+                          fallbackIcon="📋"
+                          fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-2xl opacity-50">📋</div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white">
+                        <h3 className="font-semibold text-sm leading-snug line-clamp-2 drop-shadow">{a.title}</h3>
+                        {a.rating != null && <span className="text-xs text-white/90">⭐ {a.rating}</span>}
+                      </div>
+                    </div>
+                    <p className="p-2.5 text-xs text-gray-600 leading-snug">
+                      {a.commonUsersCount} نفر اینو همراه این ذخیره کردن
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ——— داغ‌های دسته ——— */}
+          {categoryId && trendingItems.length > 0 && (
+            <section className="-mx-4 px-4">
+              <h2 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <span>🔥</span>
+                داغ‌های {categoryName || 'این دسته'}
+              </h2>
+              <div className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
+                {trendingItems.slice(0, 8).map((t, index) => {
+                  const rank = index + 1;
+                  return (
+                    <Link
+                      key={t.id}
+                      href={`/items/${t.id}`}
+                      className="flex-shrink-0 w-[100px] rounded-xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md active:opacity-95 transition-all"
+                    >
+                      <div className="relative aspect-[3/4] w-full bg-gray-100">
+                        {t.image ? (
+                          <ImageWithFallback
+                            src={t.image}
+                            alt={t.title}
+                            className="w-full h-full object-cover"
+                            fallbackIcon="📋"
+                            fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-xl opacity-50">📋</div>
+                        )}
+                        {rank <= 3 && (
+                          <span className="absolute top-1 right-1 text-[10px] bg-orange-500/90 text-white px-1 py-0.5 rounded">
+                            #{rank}
+                          </span>
+                        )}
+                      </div>
+                      <p className="p-1.5 text-xs font-medium text-gray-900 line-clamp-2 leading-tight">{t.title}</p>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           {/* گزارش آیتم (مینیمال) */}
           <div className="flex justify-center pt-2 pb-4">
