@@ -2,11 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
-import ProfileStats from '@/components/profile/ProfileStats';
-import ProfileRankCard from '@/components/profile/ProfileRankCard';
-import ProfileTopLists from '@/components/profile/ProfileTopLists';
-import ProfileLevel from '@/components/profile/ProfileLevel';
-import ProfileAchievements from '@/components/profile/ProfileAchievements';
 import ProfileTabs from '@/components/profile/ProfileTabs';
 import type { ProfileUser } from '@/components/profile/types';
 
@@ -88,39 +83,11 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
     );
   }
 
-  const creatorStats = user.creatorStats ?? {
-    viralListsCount: 0,
-    popularListsCount: 0,
-    totalLikesReceived: 0,
-    profileViews: 0,
-    totalItemsCurated: 0,
-  };
-
   return (
     <div className="space-y-0">
       <ProfileHeader user={user} isOwner onUpdate={fetchProfile} />
 
       <div className="px-4 -mt-2 relative z-20">
-        <div className="bg-white rounded-t-2xl shadow-sm border border-gray-100/80 border-b-0 pt-5 pb-4 px-4">
-          <ProfileStats creatorStats={creatorStats} />
-
-          <div className="mt-4">
-            <ProfileRankCard userId={userId} />
-          </div>
-
-          <ProfileTopLists userId={userId} />
-
-          <div className="mt-6">
-            <ProfileLevel user={user} />
-          </div>
-        </div>
-      </div>
-
-      <div className="px-4">
-        <ProfileAchievements creatorStats={creatorStats} />
-      </div>
-
-      <div className="px-4">
         <ProfileTabs userId={userId} />
       </div>
     </div>

@@ -32,9 +32,9 @@ export default function BookmarkButton({
   const [bookmarkCount, setBookmarkCount] = useState(initialBookmarkCount);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch bookmark status if user is logged in and initial values not provided
+  // Fetch bookmark status if user is logged in
   useEffect(() => {
-    if (session?.user && initialIsBookmarked === false && initialBookmarkCount === 0) {
+    if (session?.user) {
       fetchBookmarkStatus();
     }
   }, [session, listId]);

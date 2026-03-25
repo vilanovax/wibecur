@@ -301,6 +301,7 @@ model users {
   name                 String?
   email                String              @unique
   emailVerified        DateTime?
+  phone                String?             @unique
   image                String?
   password             String?
   role                 UserRole            @default(USER)

@@ -379,13 +379,8 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
             <MoreVertical className="w-5 h-5" />
           </button>
         </div>
-        {/* بالا چپ: Save + Viral Badge */}
+        {/* بالا چپ: Save */}
         <div className="absolute top-4 left-4 flex items-center gap-2">
-          {isViral && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-amber-500/90 text-white">
-              <Flame className="w-3.5 h-3.5" /> وایرال
-            </span>
-          )}
           {session?.user && (
             <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg">
               <BookmarkButton listId={list.id} initialBookmarkCount={saveCount} variant="icon" size="md" />
@@ -454,9 +449,6 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                 {followersCount === 0 && (
                   <span className="text-amber-600">تازه شروع کرده ✨</span>
                 )}
-                {viralListsCount > 0 && (
-                  <span>🔥 {viralListsCount} لیست وایرال</span>
-                )}
                 {totalLikesReceived >= 1000 && (
                   <span>❤️ {formatCompact(totalLikesReceived)} لایک</span>
                 )}
@@ -519,64 +511,18 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           </div>
         </div>
 
-        {/* Momentum Indicator */}
-        {saveCount < 100 && (
-          <div className="pt-6 pb-2">
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
-              <span>🚀 تا رسیدن به لیست وایرال</span>
-              <span className="font-semibold tabular-nums">{Math.round(viralProgress)}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
-                style={{ width: `${viralProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
-        {isViral && (
-          <div className="py-3 px-4 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-2">
-            <Flame className="w-5 h-5 text-amber-500" />
-            <span className="text-sm font-medium text-amber-800">🔥 این لیست وایرال است!</span>
-          </div>
-        )}
 
-        {/* CTA Zone — ذخیره اصلی، Follow + Share فرعی */}
-        <div className="flex flex-col gap-3 pt-6 pb-6">
-          {showLoginCTA ? (
-            <>
-              <p className="text-sm text-gray-500 py-2">برای ذخیره وارد شو</p>
-              <Link
-                href="/login"
-                className="w-full py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-center text-sm hover:opacity-90 transition-opacity"
-              >
-                ورود / ثبت‌نام
-              </Link>
-            </>
-          ) : (
-            <>
-              <BookmarkButton
-                listId={list.id}
-                initialBookmarkCount={saveCount}
-                variant="button"
-                size="lg"
-                labelSave="ذخیره در لیست‌های من"
-                labelSaved="ذخیره شد"
-                onToggle={() => {}}
-              />
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 font-medium text-sm text-gray-700 hover:border-gray-300 transition-colors"
-                >
-                  <Share2 className="w-4 h-4" />
-                  اشتراک‌گذاری
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        {/* CTA Zone — فقط برای کاربران لاگین نشده */}
+        {showLoginCTA && (
+          <div className="flex flex-col gap-3 pt-4 pb-4">
+            <Link
+              href="/login"
+              className="w-full py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-center text-sm hover:opacity-90 transition-opacity"
+            >
+              ورود / ثبت‌نام
+            </Link>
+          </div>
+        )}
 
         {/* Tag Chips — فقط تگ‌ها (دسته در هیرو است) */}
         {list.tags && list.tags.length > 0 && (
@@ -601,7 +547,7 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                 href={`/user-lists/${list.id}/add-item`}
                 className="text-sm text-primary font-medium"
               >
-                ➕ افزودن آیتم
+                ➕ پیشنهاد آیتم
               </Link>
             )}
           </div>

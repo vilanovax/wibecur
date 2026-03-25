@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { List, Bookmark, Clock } from 'lucide-react';
+import { List, Star, Clock } from 'lucide-react';
 import MyListsTab from '@/components/mobile/profile/tabs/MyListsTab';
 import BookmarksTab from '@/components/mobile/profile/tabs/BookmarksTab';
 import RecentActivityTab from '@/components/mobile/profile/tabs/RecentActivityTab';
@@ -10,7 +10,7 @@ export type ProfileTabId = 'activity' | 'bookmarks' | 'my-lists';
 
 const TABS: { id: ProfileTabId; label: string; icon: typeof List }[] = [
   { id: 'activity', label: 'فعالیت‌ها', icon: Clock },
-  { id: 'bookmarks', label: 'ذخیره‌ها', icon: Bookmark },
+  { id: 'bookmarks', label: 'ذخیره‌ها', icon: Star },
   { id: 'my-lists', label: 'لیست‌های من', icon: List },
 ];
 

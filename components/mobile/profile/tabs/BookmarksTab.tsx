@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Bookmark, User, List, MoreVertical } from 'lucide-react';
+import { Star, User, List, MoreVertical } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
@@ -120,7 +120,7 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
     return (
       <div className="px-4 py-8">
         <div className="text-center py-12 rounded-2xl border border-gray-100 bg-gray-50/50">
-          <Bookmark className="w-14 h-14 text-gray-300 mx-auto mb-4" />
+          <Star className="w-14 h-14 text-gray-300 mx-auto mb-4" />
           <h3 className="text-gray-800 font-bold text-lg mb-1">هنوز لیستی دنبال نکردی</h3>
           <p className="text-gray-500 text-sm max-w-xs mx-auto mb-6">
             کیوریتورها رو کشف کن و لیست‌های جذاب دنبال کن

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Edit2, Camera, UserPlus, Check, Loader2 } from 'lucide-react';
+import { Edit2, Camera, UserPlus, Check, Loader2, LogOut } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
 import { VIBE_AVATARS, isUserEliteLevel } from '@/lib/vibe-avatars';
@@ -102,13 +103,23 @@ export default function ProfileHeader({
             {/* CTA: secondary — edit (owner) or follow (public) */}
             <div className="mt-3 flex items-center gap-2">
               {isOwner ? (
-                <button
-                  onClick={() => setShowEditSheet(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/40 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  ویرایش پروفایل
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowEditSheet(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/40 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    ویرایش پروفایل
+                  </button>
+                  <button
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-300/40 bg-red-500/20 text-white text-sm font-medium hover:bg-red-500/40 transition-colors"
+                    aria-label="خروج از حساب"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    خروج
+                  </button>
+                </>
               ) : onFollowToggle ? (
                 <button
                   type="button"
