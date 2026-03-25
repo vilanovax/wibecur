@@ -114,7 +114,8 @@ export default function SaveToPersonalListModal({
       setShowToast(true);
       track('item_save', { itemId, listId: list.id });
 
-      fetchLists();
+      // بستن مودال بعد از اضافه شدن موفق
+      setTimeout(() => onClose(), 600);
     } catch (error: any) {
       setToastMessage(error.message || 'خطا در افزودن آیتم');
       setToastType('error');
