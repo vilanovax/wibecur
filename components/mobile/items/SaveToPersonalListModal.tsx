@@ -47,24 +47,11 @@ export default function SaveToPersonalListModal({
   useEffect(() => {
     if (isOpen) {
       fetchLists();
-      fetchSettings();
       fetchSavedStatus();
     }
   }, [isOpen, itemId]);
 
-  const fetchSettings = async () => {
-    try {
-      const res = await fetch('/api/admin/settings');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setMaxPersonalLists(data.data.maxPersonalLists || 3);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-    }
-  };
+  // maxPersonalLists uses default value; server-side enforcement in /api/user/lists
 
   const fetchSavedStatus = async () => {
     try {
