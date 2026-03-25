@@ -43,6 +43,20 @@ interface ItemDetailClientProps {
   };
 }
 
+/** نام فارسی دسته برای عنوان «درباره این ...» */
+const categorySlugToLabel: Record<string, string> = {
+  'film-serial': 'فیلم',
+  'film': 'فیلم',
+  'book': 'کتاب',
+  'music': 'موسیقی',
+  'podcast': 'پادکست',
+  'game': 'بازی',
+  'cafe-restaurant': 'مکان',
+  'travel': 'مقصد',
+  'food': 'غذا',
+  'product': 'محصول',
+};
+
 const metaLabels: Record<string, string> = {
   year: 'سال',
   genre: 'ژانر',
@@ -231,6 +245,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                 >
                   <span className="text-lg">↗</span>
                 </button>
+                <ItemReportButton itemId={item.id} variant="icon" />
               </div>
             </div>
           </div>
@@ -255,11 +270,11 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             </div>
           </section>
 
-          {/* ——— 3️⃣ درباره این آیتم ——— */}
+          {/* ——— 3️⃣ درباره + اطلاعات تکمیلی (یکپارچه) ——— */}
           <section className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
             <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
               <span>📖</span>
-              درباره این آیتم
+              درباره این {categorySlugToLabel[item.lists.categories?.slug ?? ''] || 'آیتم'}
             </h2>
             {item.description ? (
               <div>
@@ -279,59 +294,53 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             ) : (
               <div className="py-4 px-4 rounded-xl bg-gray-50/80 text-center">
                 <p className="text-gray-500 text-sm">هنوز توضیحی ثبت نشده</p>
-                <p className="text-gray-400 text-xs mt-1">
-                  اولین نفری باش که توضیح اضافه می‌کنه ✨
-                </p>
               </div>
             )}
-          </section>
 
-          {/* ——— اطلاعات تکمیلی (بلافاصله بعد از درباره) ——— */}
-          {item.metadata &&
-            typeof item.metadata === 'object' &&
-            Object.keys(item.metadata).length > 0 && (
-              <section className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
-                <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-1 h-4 bg-primary rounded-full" />
-                  اطلاعات تکمیلی
-                </h2>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                  {(Object.entries(item.metadata) as [string, unknown][]).map(
-                    ([key, value]) => {
-                      if (value == null || value === '') return null;
-                      const label = metaLabels[key] || key;
-                      const icon = metaIcons[key] || '📋';
-                      const displayValue =
-                        key === 'priceRange' && typeof value === 'string'
-                          ? value === '$'
-                            ? 'ارزان'
-                            : value === '$$'
-                              ? 'متوسط'
-                              : value === '$$$'
-                                ? 'گران'
-                                : 'لوکس'
-                          : String(value);
-                      return (
-                        <div
-                          key={key}
-                          className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0"
-                        >
-                          <span className="text-base">{icon}</span>
-                          <div className="min-w-0">
-                            <span className="text-xs text-gray-500 block">
-                              {label}
-                            </span>
-                            <span className="text-sm font-medium text-gray-900 truncate block">
-                              {displayValue}
-                            </span>
+            {/* جداکننده + اطلاعات تکمیلی */}
+            {item.metadata &&
+              typeof item.metadata === 'object' &&
+              Object.keys(item.metadata).length > 0 && (
+                <>
+                  <div className="my-4 h-px bg-gradient-to-l from-transparent via-gray-200 to-transparent" />
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                    {(Object.entries(item.metadata) as [string, unknown][]).map(
+                      ([key, value]) => {
+                        if (value == null || value === '') return null;
+                        const label = metaLabels[key] || key;
+                        const icon = metaIcons[key] || '📋';
+                        const displayValue =
+                          key === 'priceRange' && typeof value === 'string'
+                            ? value === '$'
+                              ? 'ارزان'
+                              : value === '$$'
+                                ? 'متوسط'
+                                : value === '$$$'
+                                  ? 'گران'
+                                  : 'لوکس'
+                            : String(value);
+                        return (
+                          <div
+                            key={key}
+                            className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0"
+                          >
+                            <span className="text-base">{icon}</span>
+                            <div className="min-w-0">
+                              <span className="text-xs text-gray-500 block">
+                                {label}
+                              </span>
+                              <span className="text-sm font-medium text-gray-900 truncate block">
+                                {displayValue}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-              </section>
-            )}
+                        );
+                      }
+                    )}
+                  </div>
+                </>
+              )}
+          </section>
 
           {/* External link */}
           {item.externalUrl && (
@@ -508,10 +517,6 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             </section>
           )}
 
-          {/* گزارش آیتم (مینیمال) */}
-          <div className="flex justify-center pt-2 pb-4">
-            <ItemReportButton itemId={item.id} />
-          </div>
         </div>
 
         {/* ——— Quick Action Bar (وقتی اسکرول شده) ——— وقتی شیت کامنت باز است مخفی تا تداخل نداشته باشد */}
