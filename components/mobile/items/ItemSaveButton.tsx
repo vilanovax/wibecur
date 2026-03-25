@@ -49,18 +49,34 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
     }
   };
 
+  const [isRemoving, setIsRemoving] = useState(false);
+
   const handleModalClose = () => {
     setIsModalOpen(false);
-    // Refresh saved status after closing modal
     fetchSavedStatus();
   };
 
-  // Don't render if user is not logged in
+  const handleRemoveFromAllLists = async () => {
+    if (isRemoving || savedStatus.lists.length === 0) return;
+    setIsRemoving(true);
+    try {
+      await Promise.all(
+        savedStatus.lists.map((list) =>
+          fetch(`/api/user/lists/${list.id}/items/${itemId}`, { method: 'DELETE' })
+        )
+      );
+      setSavedStatus({ savedInPrivateList: false, savedInPublicList: false, lists: [] });
+    } catch (error) {
+      console.error('Error removing item from lists:', error);
+    } finally {
+      setIsRemoving(false);
+    }
+  };
+
   if (!session?.user) {
     return null;
   }
 
-  // Determine icon style based on saved status
   const isSaved = savedStatus.savedInPrivateList || savedStatus.savedInPublicList;
   const isPrivate = savedStatus.savedInPrivateList;
   const savedCount = savedStatus.lists.length;
@@ -71,8 +87,13 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setIsModalOpen(true);
+          if (isSaved) {
+            handleRemoveFromAllLists();
+          } else {
+            setIsModalOpen(true);
+          }
         }}
+        disabled={isRemoving}
         className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-all ${
           isSaved
             ? isPrivate
