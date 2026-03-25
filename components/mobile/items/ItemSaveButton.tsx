@@ -18,6 +18,7 @@ interface SavedStatus {
     id: string;
     title: string;
     isPublic: boolean;
+    savedItemId?: string;
   }>;
 }
 
@@ -61,9 +62,11 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
     setIsRemoving(true);
     try {
       await Promise.all(
-        savedStatus.lists.map((list) =>
-          fetch(`/api/user/lists/${list.id}/items/${itemId}`, { method: 'DELETE' })
-        )
+        savedStatus.lists
+          .filter((list) => list.savedItemId)
+          .map((list) =>
+            fetch(`/api/user/lists/${list.id}/items/${list.savedItemId}`, { method: 'DELETE' })
+          )
       );
       setSavedStatus({ savedInPrivateList: false, savedInPublicList: false, lists: [] });
     } catch (error) {

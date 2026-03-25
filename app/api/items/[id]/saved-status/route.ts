@@ -91,10 +91,11 @@ export async function GET(
       (item) => item.lists.isPublic
     );
 
-    const lists = savedItems.map((item) => ({
-      id: item.lists.id,
-      title: item.lists.title,
-      isPublic: item.lists.isPublic,
+    const lists = savedItems.map((si) => ({
+      id: si.lists.id,
+      title: si.lists.title,
+      isPublic: si.lists.isPublic,
+      savedItemId: si.id, // ID آیتم کپی‌شده در لیست کاربر (برای حذف)
     }));
 
     return NextResponse.json({
