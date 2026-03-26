@@ -141,7 +141,12 @@ export default function AddItemClient({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'خطا در افزودن آیتم');
+        const errMsg = data.error || 'خطا در افزودن آیتم';
+        setToastMessage(errMsg);
+        setToastType('error');
+        setShowToast(true);
+        setIsAdding(null);
+        return;
       }
 
       setToastMessage('آیتم با موفقیت به لیست اضافه شد');
