@@ -44,28 +44,7 @@ export default function PersonalListSettingsModal({
     personalListPublicInstructions: null,
   });
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchSettings();
-    }
-  }, [isOpen]);
-
-  const fetchSettings = async () => {
-    try {
-      const res = await fetch('/api/admin/settings');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setSettings({
-            minItemsForPublicList: data.data.minItemsForPublicList || 5,
-            personalListPublicInstructions: data.data.personalListPublicInstructions || null,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-    }
-  };
+  // Settings use defaults; server-side enforcement in /api/user/lists
 
   const handleTogglePublic = async () => {
     if (isToggling) return;

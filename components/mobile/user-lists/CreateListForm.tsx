@@ -26,7 +26,6 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
 
   useEffect(() => {
     if (isOpen) {
-      fetchSettings();
       fetchUserListsCount();
       // Reset form when opening
       setFormData({
@@ -36,19 +35,7 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
     }
   }, [isOpen]);
 
-  const fetchSettings = async () => {
-    try {
-      const res = await fetch('/api/admin/settings');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setMaxPersonalLists(data.data.maxPersonalLists || 3);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-    }
-  };
+  // maxPersonalLists uses default; server enforces in /api/user/lists
 
   const fetchUserListsCount = async () => {
     try {
