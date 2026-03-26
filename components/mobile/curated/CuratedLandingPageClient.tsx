@@ -3,33 +3,25 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
-import FloatingActionButton from '@/components/mobile/lists/FloatingActionButton';
+
 import ExploreSmartHero from './ExploreSmartHero';
 import TrendingNowSection from './TrendingNowSection';
 import RisingListsSection from './RisingListsSection';
-import ForYouSection from './ForYouSection';
-import EliteCuratorsSection from './EliteCuratorsSection';
-import RisingCuratorsSection from './RisingCuratorsSection';
 import CategoryDiscoverySection from './CategoryDiscoverySection';
 import CuratedGrid from './CuratedGrid';
 import ExploreBottomCTA from './ExploreBottomCTA';
 import {
-  HeroSkeleton,
-  CuratorsRowSkeleton,
   GridCardSkeleton,
 } from './CuratedSkeletons';
 import {
   MOCK_CATEGORIES,
-  MOCK_CURATORS,
   getMockLists,
 } from '@/lib/curated/mock-data';
 import { filterAndSortLists } from '@/lib/curated/utils';
 
 const SECTION_IDS: Record<string, string> = {
   trending: 'trending',
-  foryou: 'foryou',
-  elite: 'elite',
-  rising: 'rising-curators',
+  rising: 'rising',
   categories: 'categories',
 };
 
@@ -40,8 +32,6 @@ export default function CuratedLandingPageClient() {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
 
   const lists = useMemo(() => getMockLists(), []);
-  const curators = MOCK_CURATORS;
-  const categories = MOCK_CATEGORIES.filter((c) => c.id !== 'all');
 
   const filteredLists = useMemo(
     () =>
@@ -77,7 +67,6 @@ export default function CuratedLandingPageClient() {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
         <div className="h-[160px] bg-white border-b animate-pulse" />
-        <CuratorsRowSkeleton />
         <div className="px-4 py-8">
           <div className="h-5 w-48 bg-gray-200 rounded mb-4 animate-pulse" />
           <div className="flex gap-4 overflow-hidden">
@@ -101,9 +90,6 @@ export default function CuratedLandingPageClient() {
       <main className="space-y-0">
         <TrendingNowSection lists={filteredLists} />
         <RisingListsSection lists={filteredLists} />
-        <ForYouSection lists={filteredLists} />
-        <EliteCuratorsSection curators={curators} />
-        <RisingCuratorsSection curators={curators} />
         <CategoryDiscoverySection categories={MOCK_CATEGORIES} />
 
         {filteredLists.length > 0 ? (
@@ -128,7 +114,6 @@ export default function CuratedLandingPageClient() {
         <ExploreBottomCTA onOpenCreate={() => setIsCreateFormOpen(true)} />
       </main>
 
-      <FloatingActionButton onClick={() => setIsCreateFormOpen(true)} />
       <CreateListForm
         isOpen={isCreateFormOpen}
         onClose={() => setIsCreateFormOpen(false)}

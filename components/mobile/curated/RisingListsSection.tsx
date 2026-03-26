@@ -20,7 +20,7 @@ export default function RisingListsSection({ lists }: RisingListsSectionProps) {
   return (
     <section
       id="rising"
-      className="px-4 py-8 bg-gradient-to-b from-purple-50/50 to-transparent rounded-t-[24px] -mt-4"
+      className="px-4 pt-2 pb-8 bg-gradient-to-b from-purple-50/50 to-transparent rounded-t-[24px]"
       aria-labelledby="rising-title"
     >
       <h2

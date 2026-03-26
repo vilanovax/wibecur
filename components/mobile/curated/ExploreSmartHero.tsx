@@ -4,9 +4,7 @@ import { useRef } from 'react';
 
 const EXPLORE_MODES = [
   { id: 'trending', label: 'ترند', icon: '🔥' },
-  { id: 'foryou', label: 'برای تو', icon: '🎯' },
-  { id: 'elite', label: 'الیت', icon: '🏆' },
-  { id: 'rising', label: 'در حال رشد', icon: '🌱' },
+  { id: 'rising', label: 'در حال رشد', icon: '🚀' },
   { id: 'categories', label: 'دسته‌ها', icon: '🗂' },
 ] as const;
 

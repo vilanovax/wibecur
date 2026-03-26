@@ -20,7 +20,7 @@ export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
   return (
     <section
       id="trending"
-      className="px-4 py-8"
+      className="px-4 pt-6 pb-1"
       aria-labelledby="trending-title"
     >
       <h2
