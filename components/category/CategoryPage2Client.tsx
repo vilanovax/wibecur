@@ -92,31 +92,6 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
       locationBasedSlugs.includes(category.slug) ? 'locationBased' : 'minimal');
   const accentColor = category.accentColor || category.color;
   const isLocationBased = layoutType === 'locationBased';
-  const isCinematic = layoutType === 'cinematic';
-
-  if (isCinematic) {
-    const featuredList = viralSpotlight ?? trendingLists[0];
-    const trendingForGrid = trendingNow24h.length >= 4 ? trendingNow24h : trendingLists;
-    const mostDebated = data.mostDebatedLists ?? [];
-
-    return (
-      <main className="min-h-screen pb-24 bg-gray-50">
-        <CinematicHero category={category} metrics={metrics} />
-        <GenreScrollBar categorySlug={category.slug} />
-        <TrendingPosterGrid
-          lists={trendingForGrid}
-          categoryName={category.name}
-        />
-        {mostDebated.length > 0 && (
-          <MostDebatedLists lists={mostDebated} />
-        )}
-        <NewListsCompact
-          lists={newLists}
-          categoryName={category.name}
-        />
-      </main>
-    );
-  }
 
   if (isLocationBased) {
     const cityCounts = Object.fromEntries(
@@ -184,6 +159,9 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
     );
   }
 
+  const genreBarSlugs = ['movie', 'movies', 'film', 'film-serial', 'book', 'books'];
+  const showGenreBar = genreBarSlugs.includes(category.slug);
+
   return (
     <main className="min-h-screen pb-24">
       <CategoryHero
@@ -191,6 +169,8 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
         metrics={metrics}
         layoutType={layoutType}
       />
+
+      {showGenreBar && <GenreScrollBar categorySlug={category.slug} />}
 
       <TrendingListsSection
         title={`داغ‌ترین لیست‌های هفته در ${category.name}`}
