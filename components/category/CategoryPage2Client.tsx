@@ -97,64 +97,34 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
     const cityCounts = Object.fromEntries(
       cityBreakdown.map((c) => [c.city, c.listCount])
     );
-    const mostSavedItems = data.mostSavedItems ?? [];
 
     return (
-      <main className="min-h-screen pb-24 bg-gray-50 scroll-smooth">
-        <HubHeroV2
+      <main className="min-h-screen pb-24">
+        <CategoryHero
           category={category}
           metrics={metrics}
+          layoutType={layoutType}
+        />
+
+        <ExploreByCityPills
+          categorySlug={category.slug}
+          cityCounts={cityCounts}
           accentColor={accentColor}
         />
 
-        <SectionReveal>
-          <CafeWeeklyTrending
-            lists={trendingLists}
-            categoryName={category.name}
-            accentColor={accentColor}
-          />
-        </SectionReveal>
+        <TrendingListsSection
+          title={`داغ‌ترین لیست‌های هفته در ${category.name}`}
+          subtitle="بر اساس ذخیره و engagement"
+          lists={trendingLists}
+          categoryName={category.name}
+          accentColor={accentColor}
+          improved={false}
+        />
 
-        <SectionReveal>
-          <ExploreByCityPills
-            categorySlug={category.slug}
-            cityCounts={cityCounts}
-            accentColor={accentColor}
-          />
-        </SectionReveal>
-
-        <SectionReveal>
-          <HubCurators
-            topCurator={topCuratorSpotlight ?? null}
-            curators={topCurators}
-            categoryName={category.name}
-            accentColor={accentColor}
-          />
-        </SectionReveal>
-
-        <SectionReveal>
-          <HubNewLists
-            lists={newLists}
-            categoryName={category.name}
-            accentColor={accentColor}
-          />
-        </SectionReveal>
-
-        {mostSavedItems.length > 0 && (
-          <SectionReveal>
-            <MostSavedItemsCafe
-              items={mostSavedItems}
-              accentColor={accentColor}
-            />
-          </SectionReveal>
-        )}
-
-        <SectionReveal>
-          <CafeCTABlock
-            categorySlug={category.slug}
-            accentColor={accentColor}
-          />
-        </SectionReveal>
+        <NewListsSection
+          lists={newLists}
+          categoryName={category.name}
+        />
       </main>
     );
   }
