@@ -1,14 +1,9 @@
 import Header from '@/components/mobile/layout/Header';
 import HomeSearchBar from '@/components/mobile/home/HomeSearchBar';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
-import HomeHeroSpotlight from '@/components/mobile/home/HomeHeroSpotlight';
 import TrendingThisWeekCarousel from '@/components/mobile/home/TrendingThisWeekCarousel';
-import UtilityModule from '@/components/mobile/home/UtilityModule';
-import CreatorSpotlightSection from '@/components/mobile/home/CreatorSpotlightSection';
 import NewAndRisingSection from '@/components/mobile/home/NewAndRisingSection';
-import ForYouSection from '@/components/mobile/home/ForYouSection';
 import CategoryGridHome from '@/components/mobile/home/CategoryGridHome';
-import BottomCTASection from '@/components/mobile/home/BottomCTASection';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
@@ -33,14 +28,9 @@ export default function Home() {
             </div>
 
             <div className="space-y-0">
-              <HomeHeroSpotlight />
               <TrendingThisWeekCarousel />
-              <UtilityModule />
-              <CreatorSpotlightSection />
-              <NewAndRisingSection />
-              <ForYouSection />
               <CategoryGridHome />
-              <BottomCTASection />
+              <NewAndRisingSection />
             </div>
           </ErrorBoundary>
         </HomeDataProvider>
