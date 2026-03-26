@@ -1,6 +1,7 @@
 import Header from '@/components/mobile/layout/Header';
 import HomeSearchBar from '@/components/mobile/home/HomeSearchBar';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
+import HomeHeroSpotlight from '@/components/mobile/home/HomeHeroSpotlight';
 import TrendingThisWeekCarousel from '@/components/mobile/home/TrendingThisWeekCarousel';
 import NewAndRisingSection from '@/components/mobile/home/NewAndRisingSection';
 import CategoryGridHome from '@/components/mobile/home/CategoryGridHome';
@@ -28,6 +29,7 @@ export default function Home() {
             </div>
 
             <div className="space-y-0">
+              <HomeHeroSpotlight />
               <TrendingThisWeekCarousel />
               <CategoryGridHome />
               <NewAndRisingSection />
