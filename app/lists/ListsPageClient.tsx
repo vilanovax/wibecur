@@ -378,28 +378,6 @@ export default function ListsPageClient({
           </div>
         </div>
 
-        {/* LAYER 4 — Discovery Mode Segmented Control (36px, radius 20) */}
-        <div className="mt-3 px-4">
-          <div className="inline-flex p-0.5 rounded-[20px] bg-gray-100 h-9">
-            {DISCOVERY_MODES.map(({ value, label }) => {
-              const isActive = (value === null && activeDiscovery === null) || (value !== null && activeDiscovery === value);
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setDiscoveryMode(value)}
-                  className={`flex-shrink-0 h-8 px-4 rounded-[18px] text-[14px] font-medium transition-all ${
-                    isActive
-                      ? 'bg-white shadow-sm text-primary font-semibold'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
         {/* LAYER 5 — Control Row (Grid | Sort | Filter, count right) */}
         <div className="mt-3 px-4 py-3 flex items-center justify-between gap-3">
