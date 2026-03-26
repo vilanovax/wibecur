@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Search, LayoutGrid, List, ChevronDown, Filter } from 'lucide-react';
 import { lists, categories } from '@prisma/client';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
 import FilterBottomSheetPro, {
   type FilterState,
@@ -141,6 +142,34 @@ export default function ListsPageClient({
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+
+  // Item search results
+  interface SearchItem {
+    id: string;
+    title: string;
+    description: string | null;
+    imageUrl: string | null;
+    categoryName: string | null;
+  }
+  const [itemResults, setItemResults] = useState<SearchItem[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
+
+  const fetchItems = useCallback(async (q: string) => {
+    if (q.length < 2) { setItemResults([]); return; }
+    setItemsLoading(true);
+    try {
+      const res = await fetch(`/api/items/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (data.success) setItemResults(data.data);
+      else setItemResults([]);
+    } catch { setItemResults([]); }
+    finally { setItemsLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchItems(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery, fetchItems]);
 
   const publicLists = initialLists.filter((l) => l.isActive && l.isPublic);
   const activeCategories = categories.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -467,8 +496,58 @@ export default function ListsPageClient({
         )}
       </div>
 
+      {/* Item results when searching */}
+      {searchQuery.length >= 2 && (
+        <div className="mt-4 px-4">
+          <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+            <span>📦</span>
+            آیتم‌ها
+            {itemsLoading && <span className="text-xs text-gray-400 font-normal">در حال جستجو...</span>}
+          </h3>
+          {!itemsLoading && itemResults.length === 0 && (
+            <p className="text-xs text-gray-400 mb-4">آیتمی پیدا نشد</p>
+          )}
+          {itemResults.length > 0 && (
+            <div className="flex gap-3 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide">
+              {itemResults.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/items/${item.id}`}
+                  className="flex-shrink-0 w-[140px] rounded-xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all active:opacity-95"
+                >
+                  <div className="relative aspect-[3/4] w-full bg-gray-100">
+                    {item.imageUrl ? (
+                      <ImageWithFallback
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        fallbackIcon="📋"
+                        fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200 text-2xl opacity-50">📋</div>
+                    )}
+                  </div>
+                  <div className="p-2">
+                    <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight">{item.title}</p>
+                    {item.categoryName && (
+                      <p className="text-[10px] text-gray-400 mt-1">{item.categoryName}</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+          <div className="h-px bg-gray-100 mt-1 mb-2" />
+          <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+            <span>📋</span>
+            لیست‌ها
+          </h3>
+        </div>
+      )}
+
       {/* Results - Cards (spacing 20px from controls) */}
-      <div className="mt-5 px-4">
+      <div className={searchQuery.length >= 2 ? 'px-4' : 'mt-5 px-4'}>
         {publicLists.length === 0 ? (
           <EmptyState
             icon="📋"

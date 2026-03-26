@@ -107,14 +107,6 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
           lists={trendingForGrid}
           categoryName={category.name}
         />
-        {featuredList && (
-          <FeaturedCinematicList list={featuredList} />
-        )}
-        <TopFilmCuratorsVIP
-          curator={topCuratorSpotlight ?? null}
-          curators={topCurators}
-          categoryName={category.name}
-        />
         {mostDebated.length > 0 && (
           <MostDebatedLists lists={mostDebated} />
         )}
@@ -122,7 +114,6 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
           lists={newLists}
           categoryName={category.name}
         />
-        <CuratorCTABlock categorySlug={category.slug} />
       </main>
     );
   }
@@ -208,18 +199,6 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
         categoryName={category.name}
         accentColor={accentColor}
         improved={false}
-      />
-
-      {viralSpotlight && (
-        <ViralSpotlightSection
-          list={viralSpotlight}
-          accentColor={accentColor}
-        />
-      )}
-
-      <TopCuratorsSection
-        curators={topCurators}
-        categoryName={category.name}
       />
 
       <NewListsSection

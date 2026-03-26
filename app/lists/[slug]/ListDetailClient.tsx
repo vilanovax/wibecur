@@ -665,45 +665,11 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           )}
         </section>
 
-        {/* Visual separation + Bottom section — large spacing, lighter weight */}
-        <div className="mt-16 pt-8">
-          {/* Reuse CTA card — soft, does not compete with items */}
-          <section className="rounded-2xl bg-gray-100/70 p-5 shadow-sm border border-gray-100/80">
-            {isOwner ? (
-              <>
-                <h2 className="text-base font-semibold text-gray-800 mb-2">این لیست مال توئه</h2>
-                <Link
-                  href={`/admin/lists/${list.id}/edit`}
-                  className="inline-flex items-center gap-2 py-2.5 px-4 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors"
-                >
-                  ✏️ ویرایش لیست
-                </Link>
-              </>
-            ) : (
-              <>
-                <h2 className="text-base font-semibold text-gray-800 mb-1">✨ این لیست رو مال خودت کن</h2>
-                <p className="text-sm text-gray-500 mb-4 leading-relaxed">
-                  می‌تونی ویرایشش کنی، آیتم اضافه کنی یا نسخه شخصی خودت رو بسازی
-                </p>
-                <Link
-                  href="/user-lists"
-                  className="block w-full py-3 px-4 rounded-xl bg-primary text-white font-medium text-center hover:bg-primary-dark transition-colors mb-3"
-                >
-                  🧩 ساخت نسخه خودم
-                </Link>
-                <Link
-                  href="/user-lists"
-                  className="text-sm text-gray-500 hover:text-primary transition-colors inline-block"
-                >
-                  + اضافه به لیست‌هام
-                </Link>
-              </>
-            )}
-          </section>
-
-          {/* Similar lists — lightest section, compact */}
+        {/* Bottom section */}
+        <div className="mt-8">
+          {/* Similar lists */}
           {relatedLists.length > 0 && (
-            <section className="mt-10">
+            <section>
               <h2 className="text-base font-semibold text-gray-800 mb-0.5">لیست‌های مشابه</h2>
               <p className="text-xs text-gray-400 mb-3">ممکنه این‌ها هم به کارت بیان</p>
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">

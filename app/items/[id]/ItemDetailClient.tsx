@@ -252,25 +252,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
         </section>
 
         <div className="px-4 mt-4 relative z-10 space-y-8">
-          {/* ——— 2️⃣ SOCIAL PROOF (کارت برجسته) ——— */}
-          <section className="rounded-2xl bg-white p-4 shadow-md shadow-gray-200/60 border border-gray-100">
-            <div className="flex flex-col gap-2">
-              {item.listSaveCount > 0 && (
-                <p className="flex items-center gap-2 text-gray-800 font-medium">
-                  <span className="text-lg">👥</span>
-                  <span>{item.listSaveCount} نفر این لیست را ذخیره کرده‌اند</span>
-                </p>
-              )}
-              {categoryName && (
-                <p className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>🔥</span>
-                  <span>جزو محبوب‌های دسته {categoryName}</span>
-                </p>
-              )}
-            </div>
-          </section>
-
-          {/* ——— 3️⃣ درباره + اطلاعات تکمیلی (یکپارچه) ——— */}
+          {/* ——— درباره + اطلاعات تکمیلی (یکپارچه) ——— */}
           <section className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
             <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
               <span>📖</span>
@@ -355,26 +337,35 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             </a>
           )}
 
-          {/* ——— این آیتم در چه لیست‌هایی است (کارت برجسته) ——— */}
-          <section className="rounded-2xl bg-white p-4 shadow-md shadow-gray-200/60 border border-gray-100">
-            <p className="text-gray-800 font-medium mb-3 flex items-center gap-2">
-              <span className="text-lg">📂</span>
-              در ۱ لیست محبوب حضور دارد
-            </p>
-            <Link
-              href={`/lists/${item.lists.slug}`}
-              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors text-sm"
-            >
-              <span>مشاهده لیست‌ها</span>
-              <span>←</span>
-            </Link>
-            <div className="mt-2">
+          {/* ——— اعتبار اجتماعی + لیست مرجع (ادغام‌شده) ——— */}
+          <section className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
+            <div className="flex flex-col gap-3">
+              {item.listSaveCount > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
+                    <span className="text-base">👥</span>
+                  </div>
+                  <span className="text-sm text-gray-700">
+                    <strong className="text-gray-900">{item.listSaveCount} نفر</strong> این لیست را ذخیره کرده‌اند
+                  </span>
+                </div>
+              )}
               <Link
                 href={`/lists/${item.lists.slug}`}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-sm text-gray-700"
+                className="flex items-center gap-3 group"
               >
-                <span>{item.lists.categories?.icon || '📋'}</span>
-                <span>{item.lists.title}</span>
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-base">{item.lists.categories?.icon || '📋'}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-700 truncate group-hover:text-primary transition-colors">
+                    {item.lists.title}
+                  </p>
+                  {categoryName && (
+                    <p className="text-xs text-gray-400">دسته {categoryName}</p>
+                  )}
+                </div>
+                <span className="text-gray-300 text-sm group-hover:text-primary transition-colors">←</span>
               </Link>
             </div>
           </section>

@@ -20,7 +20,7 @@ interface GenreScrollBarProps {
 /** اسکرول افقی ژانرها */
 export default function GenreScrollBar({ categorySlug }: GenreScrollBarProps) {
   return (
-    <section className="px-4 py-6">
+    <section className="px-4 py-3">
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 snap-x snap-mandatory">
         {FILM_GENRES.map((genre) => (
             <Link

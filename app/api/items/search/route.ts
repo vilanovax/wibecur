@@ -15,14 +15,17 @@ const MAX_RESULTS = 8;
  */
 export async function GET(request: NextRequest) {
   try {
+    // Auth optional — public search allowed, listId features need auth
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q')?.trim() ?? '';
     const listId = searchParams.get('listId')?.trim() || null;
+
+    // listId-based features require auth
+    if (listId && !session?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
 
     if (q.length < MIN_QUERY_LENGTH) {
       return NextResponse.json({ success: true, data: [] }, { status: 200 });

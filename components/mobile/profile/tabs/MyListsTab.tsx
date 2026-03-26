@@ -92,7 +92,6 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
     { id: 'all', label: 'همه' },
     { id: 'public', label: 'عمومی' },
     { id: 'private', label: 'خصوصی' },
-    { id: 'draft', label: 'پیش‌نویس' },
   ];
 
   const renderListCard = (list: ListWithCategory, size: 'normal' | 'featured') => {
