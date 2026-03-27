@@ -99,7 +99,11 @@ export default function RecentActivityTab({ userId }: RecentActivityTabProps) {
   if (activities.length === 0) {
     return (
       <div className="text-center py-12 px-4">
-        <p className="text-gray-500 text-sm">فعالیتی یافت نشد</p>
+        <div className="text-5xl mb-3">📊</div>
+        <h3 className="text-gray-800 font-bold text-lg mb-1">هنوز فعالیتی نداری</h3>
+        <p className="text-gray-500 text-sm max-w-xs mx-auto">
+          با لایک، کامنت و ذخیره لیست‌ها فعالیتت اینجا نشون داده میشه
+        </p>
       </div>
     );
   }

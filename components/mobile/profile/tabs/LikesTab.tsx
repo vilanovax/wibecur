@@ -52,7 +52,11 @@ export default function LikesTab({ userId }: LikesTabProps) {
   if (likes.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl">
-        <p className="text-gray-500">هنوز آیتمی لایک نکرده‌اید</p>
+        <div className="text-5xl mb-3">❤️</div>
+        <h3 className="text-gray-800 font-bold text-lg mb-1">هنوز آیتمی لایک نکرده‌اید</h3>
+        <p className="text-gray-500 text-sm max-w-xs mx-auto">
+          لیست‌ها رو مرور کن و آیتم‌هایی که دوست داری رو لایک کن
+        </p>
       </div>
     );
   }

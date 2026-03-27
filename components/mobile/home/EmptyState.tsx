@@ -8,14 +8,16 @@ interface EmptyStateProps {
   description: string;
   buttonText?: string;
   buttonHref?: string;
+  onAction?: () => void;
 }
 
 export default function EmptyState({
   icon = '🎯',
   title,
   description,
-  buttonText = 'کاوش کنید',
-  buttonHref = '/lists',
+  buttonText,
+  buttonHref,
+  onAction,
 }: EmptyStateProps) {
   return (
     <div className="text-center py-12 px-4">
@@ -27,8 +29,16 @@ export default function EmptyState({
           href={buttonHref}
           className="inline-block bg-primary text-white px-6 py-3 rounded-full font-medium hover:bg-primary-dark transition-colors"
         >
-          {buttonText}
+          {buttonText || 'کاوش کنید'}
         </Link>
+      )}
+      {!buttonHref && onAction && buttonText && (
+        <button
+          onClick={onAction}
+          className="bg-primary text-white px-6 py-3 rounded-full font-medium hover:bg-primary-dark transition-colors"
+        >
+          {buttonText}
+        </button>
       )}
     </div>
   );

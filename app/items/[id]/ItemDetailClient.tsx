@@ -10,6 +10,7 @@ import ItemReportButton from '@/components/mobile/items/ItemReportButton';
 import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
 import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
 import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
+import { shareOrCopy } from '@/lib/share';
 
 const DESCRIPTION_TRUNCATE = 160;
 
@@ -232,14 +233,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                 />
                 <button
                   type="button"
-                  onClick={() => {
-                    if (typeof navigator !== 'undefined' && navigator.share) {
-                      navigator.share({
-                        title: item.title,
-                        url: typeof window !== 'undefined' ? window.location.href : '',
-                      }).catch(() => {});
-                    }
-                  }}
+                  onClick={() => shareOrCopy({ title: item.title })}
                   className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center transition-colors"
                   aria-label="اشتراک‌گذاری"
                 >

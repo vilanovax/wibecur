@@ -11,8 +11,7 @@ interface TrendingNowSectionProps {
 
 export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
   const trending = lists
-    .filter((l) => (l.growthPercent24h ?? 0) > 10)
-    .sort((a, b) => (b.growthPercent24h ?? 0) - (a.growthPercent24h ?? 0))
+    .sort((a, b) => (b.trendScore ?? 0) - (a.trendScore ?? 0))
     .slice(0, 10);
 
   if (trending.length === 0) return null;
@@ -31,7 +30,7 @@ export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
         داغ‌ترین لیست‌های امروز
       </h2>
       <p className="text-[13px] text-gray-500 mb-4">
-        بر اساس رشد تعامل ۲۴ ساعت اخیر
+        بر اساس تعامل هفتگی
       </p>
       <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x snap-mandatory">
         {trending.map((list) => (
@@ -49,18 +48,13 @@ export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
                   fallbackIcon="📋"
                   fallbackClassName="w-full h-full flex items-center justify-center text-2xl"
                 />
-                <span
-                  className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[11px] font-bold bg-orange-500 text-white shadow-sm"
-                  aria-label={`رشد ${list.growthPercent24h} درصد`}
-                >
-                  +{list.growthPercent24h}%
-                </span>
-                <span
-                  className="absolute bottom-2 left-2 text-gray-100 text-[10px]"
-                  aria-hidden
-                >
-                  📈
-                </span>
+                {list.badges.includes('trending') && (
+                  <span
+                    className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[11px] font-bold bg-orange-500 text-white shadow-sm"
+                  >
+                    🔥 ترند
+                  </span>
+                )}
               </div>
               <div className="p-3">
                 <h3 className="font-semibold text-[16px] text-gray-900 line-clamp-2 leading-snug">
@@ -71,7 +65,7 @@ export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
                     ❤️ {formatNumber(list.savesCount)}
                   </span>
                   <span className="flex items-center gap-0.5">
-                    ⭐ {list.rating?.toFixed(1) ?? '۴.۰'}
+                    📦 {list.itemsCount} آیتم
                   </span>
                 </div>
               </div>

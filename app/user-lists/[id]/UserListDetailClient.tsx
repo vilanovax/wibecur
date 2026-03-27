@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { Settings, Trash2, X } from 'lucide-react';
+import { Settings, Trash2, Share2 } from 'lucide-react';
+import { shareOrCopy } from '@/lib/share';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import ListCommentSection from '@/components/mobile/lists/ListCommentSection';
 import PersonalListSettingsModal from '@/components/mobile/profile/PersonalListSettingsModal';
@@ -193,8 +194,22 @@ export default function UserListDetailClient({
                   variant="button"
                   size="md"
                 />
-                <button className="px-6 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium hover:border-primary transition-colors">
-                  📤
+                <button
+                  onClick={async () => {
+                    const copied = await shareOrCopy({
+                      title: list.title,
+                      text: list.description || list.title,
+                    });
+                    if (copied) {
+                      setToastMessage('لینک کپی شد');
+                      setToastType('success');
+                      setShowToast(true);
+                    }
+                  }}
+                  className="px-6 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium hover:border-primary transition-colors"
+                  aria-label="اشتراک‌گذاری"
+                >
+                  <Share2 className="w-5 h-5" />
                 </button>
               </div>
             )}

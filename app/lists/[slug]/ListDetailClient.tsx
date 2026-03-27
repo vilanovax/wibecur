@@ -13,6 +13,7 @@ import Toast from '@/components/shared/Toast';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import type { CuratorLevelKey } from '@/lib/curator';
+import { shareOrCopy } from '@/lib/share';
 
 type Item = {
   id: string;
@@ -313,17 +314,13 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
     return () => (el ? observer.unobserve(el) : undefined);
   }, []);
 
-  const handleShare = () => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      navigator
-        .share({
-          title: list.title,
-          text: list.description || list.title,
-          url: window.location.href,
-        })
-        .catch(() => {});
-    } else {
-      navigator.clipboard?.writeText(window.location.href);
+  const handleShare = async () => {
+    const copied = await shareOrCopy({
+      title: list.title,
+      text: list.description || list.title,
+    });
+    if (copied) {
+      setToast({ message: 'لینک کپی شد', type: 'success' });
     }
   };
 

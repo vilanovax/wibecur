@@ -1,23 +1,17 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
-
 import ExploreSmartHero from './ExploreSmartHero';
 import TrendingNowSection from './TrendingNowSection';
 import RisingListsSection from './RisingListsSection';
 import CategoryDiscoverySection from './CategoryDiscoverySection';
 import CuratedGrid from './CuratedGrid';
 import ExploreBottomCTA from './ExploreBottomCTA';
-import {
-  GridCardSkeleton,
-} from './CuratedSkeletons';
-import {
-  MOCK_CATEGORIES,
-  getMockLists,
-} from '@/lib/curated/mock-data';
-import { filterAndSortLists } from '@/lib/curated/utils';
+import { GridCardSkeleton } from './CuratedSkeletons';
+import { mapTrendingToList } from '@/lib/curated/utils';
+import type { CuratedList, CuratedCategory } from '@/types/curated';
 
 const SECTION_IDS: Record<string, string> = {
   trending: 'trending',
@@ -31,27 +25,54 @@ export default function CuratedLandingPageClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
 
-  const lists = useMemo(() => getMockLists(), []);
+  const [trendingLists, setTrendingLists] = useState<CuratedList[]>([]);
+  const [risingLists, setRisingLists] = useState<CuratedList[]>([]);
+  const [categories, setCategories] = useState<CuratedCategory[]>([]);
 
-  const filteredLists = useMemo(
-    () =>
-      filterAndSortLists(lists, {
-        mode: 'trending',
-        categoryId: 'all',
-        searchQuery,
-      }),
-    [lists, searchQuery]
-  );
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [trendingRes, risingRes, categoriesRes] = await Promise.all([
+          fetch('/api/trending/global'),
+          fetch('/api/trending/fast'),
+          fetch('/api/categories'),
+        ]);
+
+        const [trendingJson, risingJson, categoriesJson] = await Promise.all([
+          trendingRes.json(),
+          risingRes.json(),
+          categoriesRes.json(),
+        ]);
+
+        if (trendingJson.success) {
+          setTrendingLists(trendingJson.data.map(mapTrendingToList));
+        }
+        if (risingJson.success) {
+          setRisingLists(risingJson.data.map(mapTrendingToList));
+        }
+        if (categoriesJson.success) {
+          setCategories(
+            categoriesJson.data.map((c: { id: string; name: string; slug: string; icon: string | null }) => ({
+              id: c.id,
+              slug: c.slug,
+              title: c.name,
+              icon: c.icon ?? '📋',
+            }))
+          );
+        }
+      } catch (err) {
+        console.error('Explore fetch error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   const handleModeScroll = useCallback((id: string) => {
     const sectionId = SECTION_IDS[id] ?? id;
     const el = document.getElementById(sectionId);
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
-
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -62,6 +83,26 @@ export default function CuratedLandingPageClient() {
       }
     }
   }, [searchParams]);
+
+  // Client-side search filter
+  const filterBySearch = (lists: CuratedList[]) => {
+    if (!searchQuery.trim()) return lists;
+    const q = searchQuery.toLowerCase();
+    return lists.filter(
+      (l) =>
+        l.title.toLowerCase().includes(q) ||
+        l.creator.name.toLowerCase().includes(q) ||
+        (l.subtitle && l.subtitle.toLowerCase().includes(q))
+    );
+  };
+
+  const filteredTrending = filterBySearch(trendingLists);
+  const filteredRising = filterBySearch(risingLists);
+  const allFiltered = filterBySearch(
+    [...trendingLists, ...risingLists].filter(
+      (list, index, self) => self.findIndex((l) => l.id === list.id) === index
+    )
+  );
 
   if (isLoading) {
     return (
@@ -88,11 +129,11 @@ export default function CuratedLandingPageClient() {
       />
 
       <main className="space-y-0">
-        <TrendingNowSection lists={filteredLists} />
-        <RisingListsSection lists={filteredLists} />
-        <CategoryDiscoverySection categories={MOCK_CATEGORIES} />
+        <TrendingNowSection lists={filteredTrending} />
+        <RisingListsSection lists={filteredRising} />
+        <CategoryDiscoverySection categories={categories} />
 
-        {filteredLists.length > 0 ? (
+        {allFiltered.length > 0 ? (
           <section className="px-4 py-8" id="more">
             <h2 className="text-[18px] font-bold text-gray-900 mb-3">
               بیشتر ببین
@@ -100,7 +141,7 @@ export default function CuratedLandingPageClient() {
             <p className="text-[13px] text-gray-500 mb-4">
               لیست‌های کیوریت شده بر اساس ترند
             </p>
-            <CuratedGrid lists={filteredLists} showSponsoredAfter={8} />
+            <CuratedGrid lists={allFiltered} showSponsoredAfter={8} />
           </section>
         ) : (
           <div className="px-4 py-12 text-center">

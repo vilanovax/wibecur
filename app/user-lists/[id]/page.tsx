@@ -27,9 +27,22 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       };
     }
 
+    const title = `${list.title} | WibeCur`;
+    const description = list.description || `مشاهده لیست ${list.title}`;
     return {
-      title: `${list.title} | WibeCur`,
-      description: list.description || `مشاهده لیست ${list.title}`,
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'article',
+        siteName: 'WibeCur',
+      },
+      twitter: {
+        card: 'summary',
+        title,
+        description,
+      },
     };
   } catch (error) {
     return {

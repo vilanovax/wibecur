@@ -7,9 +7,22 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
+  const title = `@${username} | WibeCur`;
+  const description = `پروفایل عمومی @${username} در وایب‌کر — لیست‌ها و فعالیت‌ها`;
   return {
-    title: `@${username} | وایب`,
-    description: `پروفایل عمومی @${username} در وایب`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'profile',
+      siteName: 'WibeCur',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
   };
 }
 

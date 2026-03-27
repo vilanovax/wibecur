@@ -1,4 +1,5 @@
-import type { CuratedList, CuratedMode } from '@/types/curated';
+import type { CuratedList, CuratedMode, ListBadge } from '@/types/curated';
+import type { TrendingListResult } from '@/lib/trending/service';
 
 /** Format number to 1.2k style */
 export function formatNumber(n: number): string {
@@ -25,6 +26,36 @@ export function computeTrendScore(list: {
     (Date.now() - new Date(list.createdAt).getTime()) / (1000 * 60 * 60);
   const decayFactor = Math.exp(-hoursSinceCreated / 72);
   return (saves * 2 + likes + views * 0.2) * decayFactor;
+}
+
+/** Map API TrendingListResult to frontend CuratedList */
+export function mapTrendingToList(item: TrendingListResult): CuratedList {
+  const badges: ListBadge[] = [];
+  if (item.badge === 'hot' || item.badge === 'viral') badges.push('trending');
+  if (item.isFastRising) badges.push('rising');
+
+  return {
+    id: item.listId,
+    slug: item.slug,
+    title: item.title,
+    subtitle: item.description ?? null,
+    categoryId: item.categoryId ?? '',
+    coverUrl: item.coverImage ?? null,
+    itemsCount: item.itemCount,
+    savesCount: item.saveCount,
+    likesCount: item.likeCount,
+    badges,
+    creator: {
+      id: item.creator?.id ?? item.creatorId ?? '',
+      name: item.creator?.name ?? '',
+      username: item.creator?.username ?? '',
+      avatarUrl: item.creator?.image ?? null,
+      levelTitle: item.creator?.curatorLevel ?? '',
+      badges: [],
+    },
+    createdAt: new Date().toISOString(),
+    trendScore: item.score,
+  };
 }
 
 export type FilterAndSortOptions = {

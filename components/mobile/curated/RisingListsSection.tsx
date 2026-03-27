@@ -11,8 +11,7 @@ interface RisingListsSectionProps {
 
 export default function RisingListsSection({ lists }: RisingListsSectionProps) {
   const rising = lists
-    .filter((l) => l.badges.includes('rising') || (l.weeklyVelocity ?? 0) > 100)
-    .sort((a, b) => (b.weeklyVelocity ?? 0) - (a.weeklyVelocity ?? 0))
+    .sort((a, b) => (b.trendScore ?? 0) - (a.trendScore ?? 0))
     .slice(0, 6);
 
   if (rising.length === 0) return null;

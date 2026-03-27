@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Settings, Eye, EyeOff, Package, Heart, Bookmark, Flame, Eye as EyeIcon } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import EmptyState from '@/components/mobile/home/EmptyState';
 import { categories, lists } from '@prisma/client';
 import PersonalListSettingsModal from '../PersonalListSettingsModal';
 
@@ -245,17 +246,17 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
             </button>
           ))}
         </div>
-        <div className="text-center py-12">
-          <p className="text-gray-500">{emptyMessage}</p>
-          {filter !== 'draft' && (
-            <Link
-              href="/lists/new"
-              className="mt-4 inline-block px-6 py-2.5 bg-[#7C3AED] text-white rounded-2xl hover:bg-[#6D28D9] transition-colors font-medium text-sm"
-            >
-              ایجاد لیست جدید
-            </Link>
-          )}
-        </div>
+        <EmptyState
+          icon="📝"
+          title={emptyMessage}
+          description={
+            filter === 'all'
+              ? 'اولین لیستت رو بساز و چیزایی که دوست داری رو با بقیه به اشتراک بذار!'
+              : 'فیلتر رو عوض کن یا یه لیست جدید بساز'
+          }
+          buttonText={filter !== 'draft' ? 'ساخت لیست جدید' : undefined}
+          buttonHref={filter !== 'draft' ? '/user-lists?openCreate=1' : undefined}
+        />
       </div>
     );
   }

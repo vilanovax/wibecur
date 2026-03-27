@@ -29,9 +29,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     });
   }
   if (!category) return { title: 'دسته‌بندی یافت نشد' };
+  const title = `لیست‌های ${category.name} | WibeCur`;
+  const description = `کشف بهترین لیست‌های کیوریتد در دسته ${category.name}`;
   return {
-    title: `لیست‌های ${category.name}`,
-    description: `کشف بهترین لیست‌های کیوریتد در دسته ${category.name}`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      siteName: 'WibeCur',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
   };
 }
 
