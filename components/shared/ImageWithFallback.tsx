@@ -57,14 +57,17 @@ export default function ImageWithFallback({
   const effectiveSrc =
     isEmptyOrPlaceholderPath(src) ? fallbackImageUrl : src;
 
-  // همهٔ تصاویر از Liara: آدرس نسبی (مثل /api/placeholder) → همان (همان origin)؛ Liara → پراکسی؛ خارجی → API resolve
+  // همهٔ تصاویر از Liara: آدرس نسبی → همان origin؛ Liara → پراکسی (فقط prod)؛ خارجی → API resolve
+  const isDevEnv = process.env.NODE_ENV === 'development';
   const displaySrc =
     isEmptyOrPlaceholderPath(src)
       ? effectiveSrc
       : effectiveSrc.startsWith('/')
         ? effectiveSrc
         : isLiaraStorageUrl(effectiveSrc)
-          ? `/api/image-proxy?url=${encodeURIComponent(effectiveSrc)}`
+          ? isDevEnv
+            ? fallbackImageUrl // لوکال: Liara در دسترس نیست، fallback نشون بده
+            : `/api/image-proxy?url=${encodeURIComponent(effectiveSrc)}`
           : getDisplayImageUrl(effectiveSrc, imageFolder);
 
   // Skip loading when URL is placeholder or when external images are disabled (e.g. Unsplash blocked)
