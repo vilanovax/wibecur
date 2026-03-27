@@ -50,6 +50,8 @@ model categories {
   deleteReason     String?
   lists            lists[]
   suggested_lists  suggested_lists[]
+  category_tags    category_tags[]
+  user_interests   user_interests[]
   deletedBy        users?            @relation("CategoryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
@@ -319,6 +321,7 @@ model users {
   avatarStatus         AvatarStatus?       // برای آپلود شخصی
   showBadge            Boolean             @default(true)
   allowCommentNotifications Boolean        @default(true)
+  onboardingCompleted       Boolean        @default(false)
   createdAt            DateTime            @default(now())
   updatedAt            DateTime
   deletedAt            DateTime?
@@ -347,6 +350,7 @@ model users {
   user_achievements           user_achievements[]
   creator_ranking             creator_rankings?
   user_category_affinity     user_category_affinity[]
+  user_interests             user_interests[]
   discovery_spotlight_cache  discovery_spotlight_cache?
   creator_spotlights         creator_spotlights[]
   audit_logs                 audit_log[]
@@ -394,6 +398,37 @@ model user_category_affinity {
   users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, categorySlug])
+  @@index([userId])
+}
+
+model category_tags {
+  id           String   @id @default(cuid())
+  categoryId   String
+  name         String   // نام فارسی: درام، کمدی، رمان، ...
+  slug         String   // drama, comedy, novel, ...
+  icon         String?  // emoji
+  order        Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  categories   categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user_interests user_interests[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+}
+
+model user_interests {
+  id           String    @id @default(cuid())
+  userId       String
+  categoryId   String?
+  tagId        String?
+  source       String    @default("onboarding") // onboarding | manual | inferred
+  createdAt    DateTime  @default(now())
+  users        users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories   categories? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category_tags category_tags? @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, tagId])
   @@index([userId])
 }
 

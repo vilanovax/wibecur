@@ -62,7 +62,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push('/');
+      router.push('/onboarding');
     } catch {
       setError('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.');
     } finally {

@@ -145,6 +145,86 @@ async function main() {
     console.log('✅ Default categories created');
   }
 
+  // Seed Category Tags (genres/subcategories)
+  const categoryTags: { categorySlug: string; tags: { name: string; slug: string; icon: string }[] }[] = [
+    {
+      categorySlug: 'movies',
+      tags: [
+        { name: 'درام', slug: 'drama', icon: '🎭' },
+        { name: 'کمدی', slug: 'comedy', icon: '😂' },
+        { name: 'اکشن', slug: 'action', icon: '💥' },
+        { name: 'ترسناک', slug: 'horror', icon: '😱' },
+        { name: 'ذهنی', slug: 'mind', icon: '🧠' },
+        { name: 'عاشقانه', slug: 'romance', icon: '💕' },
+        { name: 'کلاسیک', slug: 'classic', icon: '🎬' },
+        { name: 'ایرانی', slug: 'irani', icon: '🇮🇷' },
+        { name: 'انیمیشن', slug: 'animation', icon: '🎨' },
+        { name: 'مستند', slug: 'documentary', icon: '📹' },
+      ],
+    },
+    {
+      categorySlug: 'books',
+      tags: [
+        { name: 'رمان', slug: 'novel', icon: '📖' },
+        { name: 'شعر', slug: 'poetry', icon: '🪶' },
+        { name: 'تاریخی', slug: 'history', icon: '📜' },
+        { name: 'فلسفی', slug: 'philosophy', icon: '🤔' },
+        { name: 'روانشناسی', slug: 'psychology', icon: '🧠' },
+        { name: 'علمی', slug: 'science', icon: '🔬' },
+        { name: 'خودیاری', slug: 'selfhelp', icon: '💡' },
+        { name: 'ایرانی', slug: 'irani', icon: '🇮🇷' },
+      ],
+    },
+    {
+      categorySlug: 'podcast',
+      tags: [
+        { name: 'گفتگو', slug: 'interview', icon: '🎙️' },
+        { name: 'آموزشی', slug: 'educational', icon: '🎓' },
+        { name: 'داستانی', slug: 'storytelling', icon: '📖' },
+        { name: 'تکنولوژی', slug: 'tech', icon: '💻' },
+        { name: 'روانشناسی', slug: 'psychology', icon: '🧠' },
+      ],
+    },
+    {
+      categorySlug: 'cafe',
+      tags: [
+        { name: 'کافه', slug: 'cafe', icon: '☕' },
+        { name: 'رستوران', slug: 'restaurant', icon: '🍽️' },
+        { name: 'فست‌فود', slug: 'fastfood', icon: '🍔' },
+        { name: 'سنتی', slug: 'traditional', icon: '🫖' },
+      ],
+    },
+    {
+      categorySlug: 'lifestyle',
+      tags: [
+        { name: 'سفر', slug: 'travel', icon: '✈️' },
+        { name: 'مد و پوشاک', slug: 'fashion', icon: '👗' },
+        { name: 'سلامت', slug: 'health', icon: '🏃' },
+        { name: 'آشپزی', slug: 'cooking', icon: '🍳' },
+      ],
+    },
+  ];
+
+  for (const { categorySlug, tags } of categoryTags) {
+    const category = await prisma.categories.findUnique({ where: { slug: categorySlug } });
+    if (!category) continue;
+    for (let i = 0; i < tags.length; i++) {
+      const tag = tags[i];
+      await prisma.category_tags.upsert({
+        where: { categoryId_slug: { categoryId: category.id, slug: tag.slug } },
+        update: { name: tag.name, icon: tag.icon, order: i },
+        create: {
+          categoryId: category.id,
+          name: tag.name,
+          slug: tag.slug,
+          icon: tag.icon,
+          order: i,
+        },
+      });
+    }
+  }
+  console.log('✅ Category tags seeded');
+
   // Seed Lists
   if (exportedData?.lists && exportedData.lists.length > 0) {
     console.log(`📦 Seeding ${exportedData.lists.length} lists...`);
