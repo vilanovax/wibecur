@@ -176,10 +176,26 @@ export async function GET(
 
     const processedComments = comments.map(processOne);
 
+    // Fetch display settings
+    let displaySettings = { initialDisplayCount: 3, loadMoreCount: 10 };
+    try {
+      const cs = await dbQuery(() => prisma.comment_settings.findFirst({
+        select: { initialDisplayCount: true, loadMoreCount: true },
+      }));
+      if (cs) {
+        displaySettings = {
+          initialDisplayCount: cs.initialDisplayCount ?? 3,
+          loadMoreCount: cs.loadMoreCount ?? 10,
+        };
+      }
+    } catch { /* use defaults */ }
+
     return NextResponse.json({
       success: true,
       data: processedComments,
       commentsEnabled: list.commentsEnabled,
+      initialDisplayCount: displaySettings.initialDisplayCount,
+      loadMoreCount: displaySettings.loadMoreCount,
     });
   } catch (error: any) {
     console.error('Error fetching list comments:', error);

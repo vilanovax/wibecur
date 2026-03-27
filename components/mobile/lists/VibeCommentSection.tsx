@@ -11,7 +11,8 @@ import Toast from '@/components/shared/Toast';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import CommentAvatar from '@/components/shared/CommentAvatar';
 
-const INITIAL_VISIBLE = 5;
+const DEFAULT_INITIAL = 3;
+const DEFAULT_LOAD_MORE = 10;
 
 interface CommentUser {
   id: string;
@@ -67,15 +68,19 @@ interface VibeCommentSectionProps {
 interface VibeCommentsResponse {
   comments: Comment[];
   commentsEnabled: boolean;
+  initialDisplayCount: number;
+  loadMoreCount: number;
 }
 
 async function fetchVibeComments(listId: string, sortParam: string): Promise<VibeCommentsResponse> {
   const res = await fetch(`/api/lists/${listId}/comments?sort=${sortParam}`);
   const data = await res.json();
-  if (!data.success) return { comments: [], commentsEnabled: true };
+  if (!data.success) return { comments: [], commentsEnabled: true, initialDisplayCount: 3, loadMoreCount: 10 };
   return {
     comments: data.data ?? [],
     commentsEnabled: data.commentsEnabled ?? true,
+    initialDisplayCount: data.initialDisplayCount ?? 3,
+    loadMoreCount: data.loadMoreCount ?? 10,
   };
 }
 
@@ -394,7 +399,7 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
   const [isSuggestionMode, setIsSuggestionMode] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'helpful' | 'newest'>('helpful');
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const [visibleCount, setVisibleCount] = useState(DEFAULT_INITIAL);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const sortParam = sortBy === 'helpful' ? 'popular' : 'newest';
@@ -406,10 +411,12 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
   });
   const comments = commentsData?.comments ?? [];
   const commentsEnabled = commentsData?.commentsEnabled ?? true;
+  const initialCount = commentsData?.initialDisplayCount ?? DEFAULT_INITIAL;
+  const loadMoreCount = commentsData?.loadMoreCount ?? DEFAULT_LOAD_MORE;
 
   useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE);
-  }, [listId, sortBy]);
+    setVisibleCount(initialCount);
+  }, [listId, sortBy, initialCount]);
 
   const handleSuggestionClick = () => {
     if (onOpenSuggestItem) {
@@ -506,7 +513,7 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
   };
 
   const displayedComments = comments.slice(0, visibleCount);
-  const hasMore = comments.length > INITIAL_VISIBLE && visibleCount < comments.length;
+  const hasMore = visibleCount < comments.length;
   const commentCount = comments.filter((c) => c.type === 'comment').length;
   const suggestionCount = comments.filter((c) => c.type === 'suggestion').length;
 
@@ -628,7 +635,7 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
             {hasMore && (
               <button
                 type="button"
-                onClick={() => setVisibleCount((v) => v + INITIAL_VISIBLE)}
+                onClick={() => setVisibleCount((v) => v + loadMoreCount)}
                 className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1"
               >
                 <ChevronDown className="w-4 h-4" />

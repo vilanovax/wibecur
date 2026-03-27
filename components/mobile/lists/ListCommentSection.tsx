@@ -26,26 +26,31 @@ interface ListCommentSectionProps {
   listId: string;
 }
 
-const COMMENTS_PER_PAGE = 10;
+const DEFAULT_INITIAL = 3;
+const DEFAULT_LOAD_MORE = 10;
 
 interface ListCommentsResponse {
   comments: Comment[];
   commentsEnabled: boolean;
+  initialDisplayCount: number;
+  loadMoreCount: number;
 }
 
 async function fetchListComments(listId: string, sortBy: string): Promise<ListCommentsResponse> {
   const res = await fetch(`/api/lists/${listId}/comments?sort=${sortBy}`);
   const data = await res.json();
-  if (!data.success) return { comments: [], commentsEnabled: true };
+  if (!data.success) return { comments: [], commentsEnabled: true, initialDisplayCount: DEFAULT_INITIAL, loadMoreCount: DEFAULT_LOAD_MORE };
   return {
     comments: data.data ?? [],
     commentsEnabled: data.commentsEnabled ?? true,
+    initialDisplayCount: data.initialDisplayCount ?? DEFAULT_INITIAL,
+    loadMoreCount: data.loadMoreCount ?? DEFAULT_LOAD_MORE,
   };
 }
 
 export default function ListCommentSection({ listId }: ListCommentSectionProps) {
   const queryClient = useQueryClient();
-  const [visibleCount, setVisibleCount] = useState(COMMENTS_PER_PAGE);
+  const [visibleCount, setVisibleCount] = useState(DEFAULT_INITIAL);
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -60,11 +65,13 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
   });
   const comments = data?.comments ?? [];
   const commentsEnabled = data?.commentsEnabled ?? true;
+  const initialCount = data?.initialDisplayCount ?? DEFAULT_INITIAL;
+  const loadMoreCount = data?.loadMoreCount ?? DEFAULT_LOAD_MORE;
   const displayedComments = comments.slice(0, visibleCount);
 
   useEffect(() => {
-    setVisibleCount(COMMENTS_PER_PAGE);
-  }, [listId, sortBy]);
+    setVisibleCount(initialCount);
+  }, [listId, sortBy, initialCount]);
 
   const handleLike = async (commentId: string) => {
     setIsActionLoading(true);
@@ -213,7 +220,7 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
             {comments.length > visibleCount && (
               <div className="flex justify-center mt-4">
                 <button
-                  onClick={() => setVisibleCount((prev) => prev + COMMENTS_PER_PAGE)}
+                  onClick={() => setVisibleCount((prev) => prev + loadMoreCount)}
                   className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center gap-2"
                 >
                   <span>نمایش بیشتر</span>
