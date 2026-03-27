@@ -514,6 +514,20 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
 
   return (
     <section className="mt-12 pt-6 border-t border-gray-200">
+      {/* Suggest Item — بالای بخش گفتگو */}
+      {status === 'authenticated' && onOpenSuggestItem && (
+        <button
+          type="button"
+          onClick={handleSuggestionClick}
+          className="w-full flex items-center gap-3 py-2 px-3 mb-6 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 hover:bg-[#7C3AED]/8 transition-colors text-right"
+        >
+          <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#7C3AED]/15 flex items-center justify-center text-[#7C3AED] text-xs font-bold">
+            +
+          </span>
+          <span className="text-sm font-medium text-gray-700">پیشنهاد آیتم جدید</span>
+        </button>
+      )}
+
       {/* Engagement Header */}
       <h2 className="text-lg font-bold text-gray-900 mb-1">
         💬 گفتگو درباره این لیست
@@ -538,20 +552,6 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
               userEmail={session?.user?.email}
             />
           </div>
-        )}
-
-        {/* Suggest Item — فقط بعد از اولین کامنت، Secondary CTA — Input→Suggest 16px */}
-        {status === 'authenticated' && onOpenSuggestItem && hasComments && (
-          <button
-            type="button"
-            onClick={handleSuggestionClick}
-            className="w-full flex items-center gap-3 py-2 px-3 mt-1 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 hover:bg-[#7C3AED]/8 transition-colors text-right"
-          >
-            <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#7C3AED]/15 flex items-center justify-center text-[#7C3AED] text-xs font-bold">
-              +
-            </span>
-            <span className="text-sm font-medium text-gray-700">پیشنهاد آیتم جدید</span>
-          </button>
         )}
 
         {!commentsEnabled && (
