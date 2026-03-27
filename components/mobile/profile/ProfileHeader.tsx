@@ -32,7 +32,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    await signOut({ callbackUrl: '/login' });
+    await signOut({ callbackUrl: '/' });
   };
 
   return (

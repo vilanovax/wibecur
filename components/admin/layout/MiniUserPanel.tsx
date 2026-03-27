@@ -111,7 +111,7 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
             <div className="my-2 border-t border-admin-border dark:border-gray-600" />
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={() => signOut({ callbackUrl: '/' })}
               className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-right"
             >
               <LogOut className="h-4 w-4" />
@@ -163,7 +163,7 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
           <div className="my-2 border-t border-admin-border dark:border-gray-600" />
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={() => signOut({ callbackUrl: '/' })}
             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-right"
           >
             <LogOut className="h-4 w-4" />

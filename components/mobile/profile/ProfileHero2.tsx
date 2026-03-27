@@ -54,7 +54,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     const { signOut } = await import('next-auth/react');
-    await signOut({ callbackUrl: '/login' });
+    await signOut({ callbackUrl: '/' });
   };
 
   const levelKey = (user.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
