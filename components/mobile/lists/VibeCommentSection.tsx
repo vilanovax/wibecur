@@ -3,20 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { MessageSquare, Loader2, ChevronDown, ThumbsUp, ThumbsDown, Flag, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import Toast from '@/components/shared/Toast';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import CommentAvatar from '@/components/shared/CommentAvatar';
-
-const REACTION_PILLS = [
-  { type: 'meh', label: 'معمولی', emoji: '😊' },
-  { type: 'night', label: 'مناسب شب', emoji: '🌙' },
-  { type: 'cry', label: 'احساسی', emoji: '😭' },
-  { type: 'love', label: 'عاشقانه', emoji: '💖' },
-] as const;
 
 const INITIAL_VISIBLE = 5;
 
@@ -76,11 +69,6 @@ interface VibeCommentsResponse {
   commentsEnabled: boolean;
 }
 
-interface ReactionsResponse {
-  counts: Record<string, number>;
-  userReaction: string | null;
-}
-
 async function fetchVibeComments(listId: string, sortParam: string): Promise<VibeCommentsResponse> {
   const res = await fetch(`/api/lists/${listId}/comments?sort=${sortParam}`);
   const data = await res.json();
@@ -89,56 +77,6 @@ async function fetchVibeComments(listId: string, sortParam: string): Promise<Vib
     comments: data.data ?? [],
     commentsEnabled: data.commentsEnabled ?? true,
   };
-}
-
-async function fetchReactions(listId: string): Promise<ReactionsResponse> {
-  const res = await fetch(`/api/lists/${listId}/reactions`);
-  const data = await res.json();
-  if (!data.success) return { counts: { love: 0, cry: 0, night: 0, meh: 0, suggestion: 0 }, userReaction: null };
-  return {
-    counts: data.data?.counts ?? { love: 0, cry: 0, night: 0, meh: 0, suggestion: 0 },
-    userReaction: data.data?.userReaction ?? null,
-  };
-}
-
-function ReactionPills({
-  counts,
-  userReaction,
-  onSelect,
-  isLoading,
-}: {
-  counts: Record<string, number>;
-  userReaction: string | null;
-  onSelect: (type: string) => void;
-  isLoading: boolean;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {REACTION_PILLS.map((r) => {
-        const count = counts[r.type] ?? 0;
-        const isSelected = userReaction === r.type;
-        return (
-          <button
-            key={r.type}
-            type="button"
-            onClick={() => onSelect(r.type)}
-            disabled={isLoading}
-            className={`
-              inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-sm font-medium
-              transition-all duration-200 active:scale-[0.97] hover:scale-105
-              ${isSelected
-                ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-gray-800'
-              }
-            `}
-          >
-            <span className="text-base">{r.emoji}</span>
-            <span className="tabular-nums">{count}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
 }
 
 function getItemLabel(categorySlug?: string | null): string {
@@ -452,7 +390,6 @@ function VibeCommentInput({
 
 export default function VibeCommentSection({ listId, isOwner, listUserId, categorySlug, onOpenSuggestItem }: VibeCommentSectionProps) {
   const { data: session, status } = useSession();
-  const queryClient = useQueryClient();
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [isSuggestionMode, setIsSuggestionMode] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -470,40 +407,9 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
   const comments = commentsData?.comments ?? [];
   const commentsEnabled = commentsData?.commentsEnabled ?? true;
 
-  const { data: reactionsData } = useQuery({
-    queryKey: ['lists', listId, 'reactions'],
-    queryFn: () => fetchReactions(listId),
-    enabled: !!listId,
-  });
-  const counts = reactionsData?.counts ?? { love: 0, cry: 0, night: 0, meh: 0, suggestion: 0 };
-  const userReaction = reactionsData?.userReaction ?? null;
-
-  const [reactionsLoading, setReactionsLoading] = useState(false);
-
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE);
   }, [listId, sortBy]);
-
-  const handleReaction = async (type: string) => {
-    if (status !== 'authenticated') return;
-    setReactionsLoading(true);
-    try {
-      const res = await fetch(`/api/lists/${listId}/reactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reactionType: type }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        queryClient.setQueryData<ReactionsResponse>(['lists', listId, 'reactions'], {
-          counts: data.data.counts,
-          userReaction: data.data.userReaction,
-        });
-      }
-    } finally {
-      setReactionsLoading(false);
-    }
-  };
 
   const handleSuggestionClick = () => {
     if (onOpenSuggestItem) {
@@ -616,21 +522,8 @@ export default function VibeCommentSection({ listId, isOwner, listUserId, catego
         {commentCount} نظر · {suggestionCount} پیشنهاد
       </p>
 
-      {/* Spacing: Header→Reaction 12, Reaction→Input 12, Input→Suggest 16, Suggest→Empty 20 */}
       <div className="space-y-3">
-        {/* Inline Reaction Pills — compact */}
-        {status === 'authenticated' && (
-          <div>
-            <ReactionPills
-              counts={counts}
-              userReaction={userReaction}
-              onSelect={handleReaction}
-              isLoading={reactionsLoading}
-            />
-          </div>
-        )}
-
-        {/* Comment Input — Primary */}
+        {/* Comment Input */}
         {commentsEnabled && status === 'authenticated' && (
           <div>
             <VibeCommentInput
