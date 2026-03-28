@@ -15,7 +15,7 @@ export default function NewAndRisingSection() {
 
   if (isLoading && lists.length === 0) {
     return (
-      <section className="mb-6">
+      <section>
         <div className="px-4 mb-3">
           <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
         </div>
@@ -40,11 +40,11 @@ export default function NewAndRisingSection() {
         <p className="text-[13px] text-gray-500/80 leading-[1.6] mt-0.5">لیست‌هایی با رشد سریع در ۲۴ ساعت اخیر</p>
       </div>
       <div className="px-4 space-y-3">
-        {lists.map((list) => (
+        {lists.map((list, idx) => (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex flex-row-reverse gap-4 rounded-[18px] overflow-hidden bg-white border border-gray-100 shadow-vibe-card hover:shadow-vibe-card active:scale-[0.99] transition-all p-4"
+            className="flex flex-row-reverse gap-3 rounded-[18px] overflow-hidden bg-white border border-gray-100 shadow-vibe-card hover:shadow-vibe-card active:scale-[0.99] transition-all p-4"
           >
             <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-200">
               <ImageWithFallback
@@ -54,20 +54,24 @@ export default function NewAndRisingSection() {
                 fallbackIcon="📋"
                 fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
               />
-              {(list as { isFastRising?: boolean }).isFastRising && (
-                <span className="absolute top-1 right-1 bg-emerald-500 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-0.5">
-                  <TrendingUp className="w-2.5 h-2.5" />
-                  در حال رشد
-                </span>
-              )}
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <h3 className="font-semibold text-[15px] leading-[1.4] text-gray-900 line-clamp-2">{list.title}</h3>
               <div className="flex items-center gap-2 mt-1 text-[12px] font-medium text-gray-500/75">
-                <span>⭐ {list.saveCount}</span>
-                <span>·</span>
                 <span>{list.itemCount} آیتم</span>
+                {(list as { isFastRising?: boolean }).isFastRising && (
+                  <>
+                    <span>·</span>
+                    <span className="flex items-center gap-0.5 text-emerald-600">
+                      <TrendingUp className="w-3 h-3" />
+                      رشد سریع
+                    </span>
+                  </>
+                )}
               </div>
+            </div>
+            <div className="flex-shrink-0 flex items-center justify-center w-8">
+              <span className="text-[20px] font-bold text-gray-200">{(idx + 1).toLocaleString('fa-IR')}</span>
             </div>
           </Link>
         ))}

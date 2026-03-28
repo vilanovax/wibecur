@@ -81,6 +81,7 @@ export async function GET() {
       likes: t.likeCount,
       badge: (t.badge === 'viral' ? 'trending' : t.badge === 'hot' ? 'trending' : undefined) as 'trending' | 'new' | 'featured' | undefined,
       categories: undefined,
+      categorySlug: t.categorySlug ?? null,
     });
 
     const mapRising = (r: (typeof risingResults)[0]) => ({
@@ -93,6 +94,7 @@ export async function GET() {
       itemCount: r.itemCount,
       likes: r.likeCount,
       isFastRising: r.isFastRising ?? false,
+      categorySlug: r.categorySlug ?? null,
     });
 
     const mapFeatured = featured

@@ -1,10 +1,13 @@
 import Header from '@/components/mobile/layout/Header';
 import HomeSearchBar from '@/components/mobile/home/HomeSearchBar';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
+import SocialProofTicker from '@/components/mobile/home/SocialProofTicker';
 import HomeHeroSpotlight from '@/components/mobile/home/HomeHeroSpotlight';
 import TrendingThisWeekCarousel from '@/components/mobile/home/TrendingThisWeekCarousel';
 import NewAndRisingSection from '@/components/mobile/home/NewAndRisingSection';
 import CategoryGridHome from '@/components/mobile/home/CategoryGridHome';
+import CreateListPrompt from '@/components/mobile/home/CreateListPrompt';
+import RecommendationsSection from '@/components/mobile/home/RecommendationsSection';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
@@ -28,10 +31,13 @@ export default function Home() {
               <QuickCategoryChips />
             </div>
 
-            <div className="space-y-0">
+            <SocialProofTicker />
+            <div className="space-y-6">
               <HomeHeroSpotlight />
               <TrendingThisWeekCarousel />
               <CategoryGridHome />
+              <RecommendationsSection />
+              <CreateListPrompt />
               <NewAndRisingSection />
             </div>
           </ErrorBoundary>

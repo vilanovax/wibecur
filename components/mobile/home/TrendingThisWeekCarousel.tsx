@@ -1,10 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart, Star } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { useHomeData } from '@/contexts/HomeDataContext';
 import { PLACEHOLDER_COVER_SMALL } from '@/lib/placeholder-images';
+
+const CARD_GRADIENTS = [
+  'from-violet-400 to-purple-600',
+  'from-amber-400 to-orange-600',
+  'from-emerald-400 to-teal-600',
+  'from-rose-400 to-pink-600',
+  'from-sky-400 to-blue-600',
+  'from-fuchsia-400 to-purple-600',
+];
 
 export default function TrendingThisWeekCarousel() {
   const { data, isLoading } = useHomeData();
@@ -15,7 +24,7 @@ export default function TrendingThisWeekCarousel() {
 
   if (isLoading && lists.length === 0) {
     return (
-      <section className="mb-6">
+      <section>
         <div className="px-4 mb-3">
           <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
           <div className="h-4 w-56 mt-1 bg-gray-100 rounded animate-pulse" />
@@ -32,7 +41,7 @@ export default function TrendingThisWeekCarousel() {
   if (lists.length === 0) return null;
 
   return (
-    <section className="mb-6">
+    <section>
       <div className="px-4 mb-3">
         <h2 className="text-[18px] font-semibold leading-[1.4] text-gray-900 flex items-center gap-2">
           <span>🔥</span>
@@ -51,35 +60,24 @@ export default function TrendingThisWeekCarousel() {
           >
             <div className="rounded-[18px] overflow-hidden bg-white border border-gray-100 shadow-vibe-card w-[140px] h-[187px]">
               <div className="relative h-full w-full bg-gray-100">
-                <div className="absolute top-2 right-2 left-2 z-10 flex items-center justify-between">
-                  <span className="bg-amber-500 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                    ترند
+                {growthPercent > 0 && (
+                  <span className="absolute top-2 left-2 z-10 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    +{growthPercent}%
                   </span>
-                  {growthPercent > 0 && (
-                    <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      +{growthPercent}%
-                    </span>
-                  )}
-                </div>
+                )}
                 <ImageWithFallback
                   src={list.coverImage}
                   alt={list.title}
                   className="w-full h-full object-cover"
                   fallbackIcon="📋"
-                  fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                  fallbackClassName={`w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br ${CARD_GRADIENTS[idx % CARD_GRADIENTS.length]}`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <h3 className="font-semibold text-white text-[15px] leading-[1.4] line-clamp-2 drop-shadow">{list.title}</h3>
-                  <div className="flex items-center gap-2 mt-1.5 text-[12px] font-medium text-white/75">
-                    <span className="flex items-center gap-0.5">
-                      <Heart className="w-3.5 h-3.5" />
-                      {list.saveCount.toLocaleString('fa-IR')}
-                    </span>
-                    <span className="flex items-center gap-0.5">
-                      <Star className="w-3.5 h-3.5" />
-                      {list.likes.toLocaleString('fa-IR')}
-                    </span>
+                  <div className="flex items-center gap-1 mt-1.5 text-[12px] font-medium text-white/75">
+                    <Heart className="w-3 h-3" />
+                    {list.likes.toLocaleString('fa-IR')}
                   </div>
                 </div>
               </div>

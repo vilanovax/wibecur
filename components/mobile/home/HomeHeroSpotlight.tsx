@@ -44,7 +44,7 @@ export default function HomeHeroSpotlight() {
   if (isLoading || !list) {
     if (!isLoading && !list) return null;
     return (
-      <section className="px-4 mt-4 mb-6">
+      <section className="px-4">
         <div className="rounded-[20px] h-[240px] bg-gray-200 animate-pulse shadow-vibe-hero" />
       </section>
     );
@@ -53,7 +53,7 @@ export default function HomeHeroSpotlight() {
   const creator = list.creator;
 
   return (
-    <section className="px-4 mt-4 mb-6">
+    <section className="px-4">
       <p className="text-[12px] font-medium text-gray-500 mb-2">منتخب هفته</p>
       <div className="relative rounded-[20px] overflow-hidden h-[240px] bg-gray-200 shadow-vibe-hero">
         <ImageWithFallback
@@ -73,10 +73,15 @@ export default function HomeHeroSpotlight() {
           {creator?.name && (
             <p className="text-white/70 text-[11px] mt-1.5 opacity-75">از {creator.name}</p>
           )}
-          <div className="flex gap-3 mt-4">
+          {list.likes > 0 && (
+            <p className="text-white/60 text-[12px] mt-2">
+              ❤️ {list.likes.toLocaleString('fa-IR')} نفر این لیست رو دوست داشتن
+            </p>
+          )}
+          <div className="flex gap-3 mt-3">
             <Link
               href={`/lists/${list.slug}`}
-              className="flex-1 py-3 rounded-xl bg-white text-gray-900 font-semibold text-[14px] text-center hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-xl bg-white text-gray-900 font-semibold text-[14px] text-center hover:bg-white/90 transition-colors flex items-center justify-center gap-2 shadow-sm"
               onClick={() => {
                 if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'view_list');
               }}
@@ -86,7 +91,7 @@ export default function HomeHeroSpotlight() {
             </Link>
             <Link
               href={`/lists/${list.slug}`}
-              className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-primary text-white font-semibold text-[14px] hover:bg-primary-dark transition-colors"
+              className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-white/20 text-white font-semibold text-[14px] backdrop-blur-sm hover:bg-white/30 transition-colors"
               aria-label="ذخیره سریع لیست"
               onClick={() => {
                 if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'quick_save');

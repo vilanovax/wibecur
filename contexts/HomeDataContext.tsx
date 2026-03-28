@@ -18,6 +18,7 @@ export interface HomeListData {
   likes: number;
   badge?: 'trending' | 'new' | 'featured';
   categories?: { id: string; name: string; slug: string; icon: string }[];
+  categorySlug?: string | null;
 }
 
 export interface FeaturedListData extends HomeListData {
@@ -27,6 +28,7 @@ export interface FeaturedListData extends HomeListData {
 
 export interface RisingListData extends HomeListData {
   isFastRising?: boolean;
+  categorySlug?: string | null;
 }
 
 export interface HomeData {
@@ -64,6 +66,7 @@ function mapApiItem(l: {
   itemCount?: number;
   likes?: number;
   badge?: string;
+  categorySlug?: string | null;
 }): HomeListData {
   return {
     id: l.id,
@@ -75,6 +78,7 @@ function mapApiItem(l: {
     itemCount: l.itemCount ?? 0,
     likes: l.likes ?? 0,
     badge: (l.badge?.toLowerCase() as 'trending' | 'new' | 'featured') ?? undefined,
+    categorySlug: l.categorySlug ?? null,
   };
 }
 

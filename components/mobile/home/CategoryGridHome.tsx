@@ -55,7 +55,7 @@ export default function CategoryGridHome() {
 
   if (isLoading && items.length === 0) {
     return (
-      <section className="mb-6 px-4">
+      <section className="px-4">
         <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-3" />
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
@@ -67,16 +67,9 @@ export default function CategoryGridHome() {
   }
 
   return (
-    <section className="mb-6">
-      <div className="px-4 pt-5 border-t border-gray-100">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="flex-1 h-px bg-gray-200" />
-          <Link href="/lists" className="text-gray-500 text-xs font-medium shrink-0">
-            همه دسته‌ها
-          </Link>
-          <div className="flex-1 h-px bg-gray-200" />
-        </div>
-        <h2 className="text-[18px] font-semibold leading-[1.4] text-gray-900 mt-3">دسته‌بندی‌ها</h2>
+    <section>
+      <div className="px-4">
+        <h2 className="text-[18px] font-semibold leading-[1.4] text-gray-900">دسته‌بندی‌ها</h2>
       </div>
       <div className="grid grid-cols-2 gap-3 px-4">
         {items.slice(0, 4).map((cat) => (
