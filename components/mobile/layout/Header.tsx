@@ -110,7 +110,8 @@ export default function Header({ title, showBack = false, variant = 'default' }:
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {session?.user && <NotificationIcon />}
-          {!isHome && (
+          {/* user-lists link removed — accessible via bottom nav */}
+          {false && !isHome && (
             <Link
               href="/user-lists"
               className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${buttonClass} transition-colors`}

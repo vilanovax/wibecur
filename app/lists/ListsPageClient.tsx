@@ -10,6 +10,7 @@ import FilterBottomSheetPro, {
   type FilterState,
   type VibeFilter,
 } from '@/components/mobile/lists/FilterBottomSheetPro';
+import CreateListPrompt from '@/components/mobile/home/CreateListPrompt';
 
 type ListWithCategory = lists & {
   categories: categories | null;
@@ -376,62 +377,56 @@ export default function ListsPageClient({
               );
             })}
           </div>
+          <span className="text-[12px] text-gray-400 mt-1.5 px-1">{sortedLists.length} نتیجه</span>
         </div>
 
 
-        {/* LAYER 5 — Control Row (Grid | Sort | Filter, count right) */}
-        <div className="mt-3 px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 ${viewMode === 'grid' ? 'bg-primary text-white' : 'bg-white text-gray-500'}`}
-                aria-label="نمایش گریدی"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('compact')}
-                className={`p-1.5 ${viewMode === 'compact' ? 'bg-primary text-white' : 'bg-white text-gray-500'}`}
-                aria-label="نمایش فشرده"
-              >
-                <List className="w-4 h-4" />
-              </button>
-            </div>
-            <span className="text-gray-300 text-sm">•</span>
-            <div className="relative">
-              <select
-                value={filterState.sortBy}
-                onChange={(e) =>
-                  setFilterState((s) => ({ ...s, sortBy: e.target.value as SortOption }))
-                }
-                className="text-[13px] font-medium text-gray-700 py-1.5 pr-7 pl-2 rounded-lg border border-gray-200 bg-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-[90px]"
-                aria-label="مرتب‌سازی"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
-            </div>
-            <span className="text-gray-300 text-sm">•</span>
+        {/* LAYER 5 — Control Row (Grid | Sort | Filter) */}
+        <div className="mt-2 px-4 py-2 flex items-center gap-2">
+          <div className="flex rounded-lg border border-gray-200 overflow-hidden">
             <button
               type="button"
-              onClick={() => setFilterSheetOpen(true)}
-              className="flex items-center gap-1 text-[13px] font-medium text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white"
-              aria-label="فیلتر"
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 ${viewMode === 'grid' ? 'bg-primary text-white' : 'bg-white text-gray-500'}`}
+              aria-label="نمایش گریدی"
             >
-              <Filter className="w-4 h-4" />
-              فیلتر
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('compact')}
+              className={`p-1.5 ${viewMode === 'compact' ? 'bg-primary text-white' : 'bg-white text-gray-500'}`}
+              aria-label="نمایش فشرده"
+            >
+              <List className="w-4 h-4" />
             </button>
           </div>
-          <span className="text-[12px] text-gray-500 flex-shrink-0">
-            {sortedLists.length} نتیجه
-          </span>
+          <div className="relative">
+            <select
+              value={filterState.sortBy}
+              onChange={(e) =>
+                setFilterState((s) => ({ ...s, sortBy: e.target.value as SortOption }))
+              }
+              className="text-[13px] font-medium text-gray-700 py-1.5 pr-8 pl-6 rounded-lg border border-gray-200 bg-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-[110px]"
+              aria-label="مرتب‌سازی"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  مرتب: {opt.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 pointer-events-none" />
+          </div>
+          <button
+            type="button"
+            onClick={() => setFilterSheetOpen(true)}
+            className="flex items-center gap-1 text-[13px] font-medium text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white"
+            aria-label="فیلتر"
+          >
+            <Filter className="w-4 h-4" />
+            فیلتر
+          </button>
         </div>
 
         {/* Smart Chips Summary - Filter sheet extras (not discovery mode) */}
@@ -544,9 +539,16 @@ export default function ListsPageClient({
           />
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-2 gap-4">
-            {sortedLists.map((list) => (
-              <ListCardCompact key={list.id} list={list} variant="grid" />
-            ))}
+            {sortedLists.map((list, idx) => {
+              const isFirst = idx === 0;
+              const remainingCount = sortedLists.length - 1; // items after featured
+              const isLastOdd = idx === sortedLists.length - 1 && remainingCount > 0 && remainingCount % 2 === 1;
+              return (
+                <div key={list.id} className={isFirst || isLastOdd ? 'col-span-2' : ''}>
+                  <ListCardCompact list={list} variant={isFirst ? 'featured' : 'grid'} />
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="space-y-3">
@@ -555,6 +557,9 @@ export default function ListsPageClient({
             ))}
           </div>
         )}
+        <div className="mt-8">
+          <CreateListPrompt />
+        </div>
       </div>
 
       <FilterBottomSheetPro
