@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Star, Check } from 'lucide-react';
 import { track } from '@/lib/analytics';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 interface BookmarkButtonProps {
   listId: string;
@@ -28,6 +29,7 @@ export default function BookmarkButton({
   onToggle,
 }: BookmarkButtonProps) {
   const { data: session } = useSession();
+  const { requireAuth, AuthSheet } = useRequireAuth();
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
   const [bookmarkCount, setBookmarkCount] = useState(initialBookmarkCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,15 +54,7 @@ export default function BookmarkButton({
     }
   };
 
-  const handleToggle = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!session?.user) {
-      // Redirect to login or show message
-      return;
-    }
-
+  const doToggle = async () => {
     setIsLoading(true);
 
     try {
@@ -83,10 +77,11 @@ export default function BookmarkButton({
     }
   };
 
-  // Don't render if user is not logged in
-  if (!session?.user) {
-    return null;
-  }
+  const handleToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    requireAuth(doToggle)();
+  };
 
   const sizeClasses = {
     sm: 'w-5 h-5',
@@ -102,44 +97,50 @@ export default function BookmarkButton({
 
   if (variant === 'icon') {
     return (
-      <button
-        onClick={handleToggle}
-        disabled={isLoading}
-        className={`${sizeClasses[size]} flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 ${
-          isBookmarked ? 'text-yellow-500' : 'text-gray-400'
-        }`}
-        aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
-      >
-        <Star
-          className={`w-full h-full ${
-            isBookmarked ? 'fill-current' : ''
+      <>
+        <button
+          onClick={handleToggle}
+          disabled={isLoading}
+          className={`${sizeClasses[size]} flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 ${
+            isBookmarked ? 'text-yellow-500' : 'text-gray-400'
           }`}
-        />
-      </button>
+          aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
+        >
+          <Star
+            className={`w-full h-full ${
+              isBookmarked ? 'fill-current' : ''
+            }`}
+          />
+        </button>
+        <AuthSheet />
+      </>
     );
   }
 
   return (
-    <button
-      onClick={handleToggle}
-      disabled={isLoading}
-      className={`${buttonSizeClasses[size]} flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 w-full ${
-        isBookmarked
-          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 animate-saved-pulse'
-          : 'bg-gradient-to-r from-violet-50 to-purple-50 text-violet-800 border border-violet-200/50 hover:from-violet-100 hover:to-purple-100 active:scale-[0.99] shadow-sm'
-      }`}
-      aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
-    >
-      {isBookmarked ? (
-        <Check className={`${sizeClasses[size === 'lg' ? 'md' : 'sm']}`} />
-      ) : (
-        <Star className={sizeClasses[size === 'lg' ? 'md' : 'sm']} />
-      )}
-      <span>{isBookmarked ? labelSaved : labelSave}</span>
-      {bookmarkCount > 0 && (
-        <span className="text-xs opacity-80">({bookmarkCount})</span>
-      )}
-    </button>
+    <>
+      <button
+        onClick={handleToggle}
+        disabled={isLoading}
+        className={`${buttonSizeClasses[size]} flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 w-full ${
+          isBookmarked
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 animate-saved-pulse'
+            : 'bg-gradient-to-r from-violet-50 to-purple-50 text-violet-800 border border-violet-200/50 hover:from-violet-100 hover:to-purple-100 active:scale-[0.99] shadow-sm'
+        }`}
+        aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
+      >
+        {isBookmarked ? (
+          <Check className={`${sizeClasses[size === 'lg' ? 'md' : 'sm']}`} />
+        ) : (
+          <Star className={sizeClasses[size === 'lg' ? 'md' : 'sm']} />
+        )}
+        <span>{isBookmarked ? labelSaved : labelSave}</span>
+        {bookmarkCount > 0 && (
+          <span className="text-xs opacity-80">({bookmarkCount})</span>
+        )}
+      </button>
+      <AuthSheet />
+    </>
   );
 }
 

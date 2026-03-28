@@ -4,6 +4,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Flag } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 const ItemReportModal = dynamic(() => import('./ItemReportModal'), { ssr: false });
 
@@ -15,11 +16,7 @@ interface ItemReportButtonProps {
 export default function ItemReportButton({ itemId, variant = 'default' }: ItemReportButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: session } = useSession();
-
-  // Only show report button if user is logged in
-  if (!session?.user) {
-    return null;
-  }
+  const { requireAuth, AuthSheet } = useRequireAuth();
 
   const handleReportSuccess = () => {
     // Optionally show a success message
@@ -29,7 +26,7 @@ export default function ItemReportButton({ itemId, variant = 'default' }: ItemRe
   return (
     <>
       <button
-        onClick={() => setIsModalOpen(true)}
+        onClick={requireAuth(() => setIsModalOpen(true))}
         className={
           variant === 'icon'
             ? 'w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center transition-colors'
@@ -48,6 +45,7 @@ export default function ItemReportButton({ itemId, variant = 'default' }: ItemRe
           onReportSuccess={handleReportSuccess}
         />
       )}
+      <AuthSheet />
     </>
   );
 }

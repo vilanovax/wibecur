@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Bookmark } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 const SaveToPersonalListModal = dynamic(() => import('./SaveToPersonalListModal'), { ssr: false });
 
@@ -24,6 +25,7 @@ interface SavedStatus {
 
 export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
   const { data: session } = useSession();
+  const { requireAuth, AuthSheet } = useRequireAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [savedStatus, setSavedStatus] = useState<SavedStatus>({
     savedInPrivateList: false,
@@ -76,10 +78,6 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
     }
   };
 
-  if (!session?.user) {
-    return null;
-  }
-
   const isSaved = savedStatus.savedInPrivateList || savedStatus.savedInPublicList;
   const isPrivate = savedStatus.savedInPrivateList;
   const savedCount = savedStatus.lists.length;
@@ -90,11 +88,13 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (isSaved) {
-            handleRemoveFromAllLists();
-          } else {
-            setIsModalOpen(true);
-          }
+          requireAuth(() => {
+            if (isSaved) {
+              handleRemoveFromAllLists();
+            } else {
+              setIsModalOpen(true);
+            }
+          })();
         }}
         disabled={isRemoving}
         className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-all ${
@@ -133,6 +133,7 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
           itemId={itemId}
         />
       )}
+      <AuthSheet />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Heart } from 'lucide-react';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 interface ItemLikeButtonProps {
   itemId: string;
@@ -16,6 +17,7 @@ export default function ItemLikeButton({
   initialIsLiked = false,
 }: ItemLikeButtonProps) {
   const { data: session } = useSession();
+  const { requireAuth, AuthSheet } = useRequireAuth();
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,15 +43,7 @@ export default function ItemLikeButton({
     }
   };
 
-  const handleToggle = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!session?.user) {
-      // Could redirect to login or show message
-      return;
-    }
-
+  const doToggle = async () => {
     setIsLoading(true);
 
     try {
@@ -76,17 +70,14 @@ export default function ItemLikeButton({
     }
   };
 
-  // Don't render if user is not logged in
-  if (!session?.user) {
-    return (
-      <div className="flex items-center gap-1 text-sm text-gray-600">
-        <Heart className="w-5 h-5 text-gray-400" />
-        <span>{likeCount}</span>
-      </div>
-    );
-  }
+  const handleToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    requireAuth(doToggle)();
+  };
 
   return (
+    <>
     <button
       onClick={handleToggle}
       disabled={isLoading}
@@ -110,6 +101,8 @@ export default function ItemLikeButton({
         {likeCount}
       </span>
     </button>
+    <AuthSheet />
+    </>
   );
 }
 

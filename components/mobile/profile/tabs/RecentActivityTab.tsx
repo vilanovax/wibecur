@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
-import { Bookmark, Heart, Flame, FileText, ChevronLeft } from 'lucide-react';
+import { Bookmark, Heart, Flame, FileText } from 'lucide-react';
 
 const VIRAL_LIKE_THRESHOLD = 50;
 
@@ -193,16 +191,6 @@ export default function RecentActivityTab({ userId }: RecentActivityTabProps) {
                   </div>
                 )}
 
-                {/* CTA + time */}
-                <div className="mt-4 flex items-center justify-between gap-2">
-                  <span className="text-primary font-medium text-sm inline-flex items-center gap-0.5">
-                    مشاهده لیست
-                    <ChevronLeft className="w-4 h-4 rotate-180" />
-                  </span>
-                  <span className="text-[10px] text-gray-400">
-                    {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: faIR })}
-                  </span>
-                </div>
               </Link>
             </div>
           );
