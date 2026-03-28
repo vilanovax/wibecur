@@ -119,17 +119,17 @@ export default function ItemReportModal({
     <BottomSheet isOpen={isOpen} onClose={handleClose}>
       <div className="flex flex-col min-h-0 p-6 pb-8 overflow-y-auto">
         {/* ——— 1️⃣ Header (امنیت + ناشناس) ——— */}
-        <div className="flex items-start justify-between gap-3 mb-6">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="p-2 rounded-xl bg-red-50 text-red-500 flex-shrink-0" aria-hidden>
-              <Shield className="w-6 h-6" strokeWidth={2} />
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="p-1.5 rounded-lg bg-red-50 text-red-500 flex-shrink-0" aria-hidden>
+              <Shield className="w-5 h-5" strokeWidth={2} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-gray-900 leading-snug">
-                کمک کن وایب سالم بماند 🛡
+              <h2 className="text-base font-bold text-gray-900 leading-snug">
+                گزارش محتوا
               </h2>
-              <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                گزارش شما به صورت ناشناس بررسی می‌شود.
+              <p className="text-xs text-gray-500 mt-0.5">
+                ناشناس بررسی می‌شود
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function ItemReportModal({
             type="button"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 flex-shrink-0"
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 flex-shrink-0"
             aria-label="بستن"
           >
             <X className="w-5 h-5 text-gray-500" />
@@ -147,7 +147,7 @@ export default function ItemReportModal({
         {!isSuccess ? (
           <>
             {/* ——— 2️⃣ گزینه‌های گزارش (کارت‌استایل) ——— */}
-            <div className="space-y-2.5 mb-5">
+            <div className="space-y-1.5 mb-4">
               {REPORT_REASONS.map((reason) => {
                 const Icon = reason.icon;
                 const isSelected = selectedReason === reason.id;
@@ -157,24 +157,26 @@ export default function ItemReportModal({
                     type="button"
                     onClick={() => setSelectedReason(reason.id)}
                     disabled={isSubmitting}
-                    className={`w-full text-right p-4 rounded-2xl border transition-all duration-200 flex items-center gap-3 disabled:opacity-50 ${
+                    className={`w-full text-right px-3 py-2.5 rounded-xl border transition-all duration-200 flex items-center gap-2.5 disabled:opacity-50 ${
                       isSelected
-                        ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-gray-100 bg-white hover:border-gray-200'
                     }`}
                   >
-                    <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600">
-                      <Icon className="w-5 h-5" strokeWidth={2} />
+                    <span className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isSelected ? 'bg-primary/10 text-primary' : 'bg-gray-50 text-gray-500'
+                    }`}>
+                      <Icon className="w-4 h-4" strokeWidth={2} />
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900">{reason.label}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{reason.description}</div>
+                      <div className="text-sm font-medium text-gray-900">{reason.label}</div>
+                      <div className="text-[11px] text-gray-400 leading-snug">{reason.description}</div>
                     </div>
-                    {isSelected && (
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                      </span>
-                    )}
+                    <span className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      isSelected ? 'border-primary bg-primary' : 'border-gray-200'
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                    </span>
                   </button>
                 );
               })}
@@ -216,7 +218,11 @@ export default function ItemReportModal({
                 !selectedReason ||
                 (selectedReason === 'other' && !description.trim())
               }
-              className="w-full py-4 rounded-2xl font-medium text-white bg-primary hover:bg-primary-dark focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+              className={`w-full py-3.5 rounded-2xl font-medium transition-all flex items-center justify-center gap-2 ${
+                !selectedReason || (selectedReason === 'other' && !description.trim())
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-primary text-white hover:bg-primary-dark shadow-lg shadow-primary/20 active:scale-[0.99]'
+              }`}
             >
               {isSubmitting ? (
                 <>

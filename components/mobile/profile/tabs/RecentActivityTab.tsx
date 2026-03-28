@@ -149,12 +149,10 @@ export default function RecentActivityTab({ userId }: RecentActivityTabProps) {
               <Link
                 href={listHref}
                 className={`
-                  block rounded-xl overflow-hidden transition-all duration-200
+                  block rounded-xl overflow-hidden transition-all duration-200 p-4
                   active:scale-[0.99] active:shadow
-                  ${isViral ? 'p-5' : 'p-4'}
-                  ${isViral
-                    ? 'border bg-white shadow-sm border-orange-200/80 bg-gradient-to-b from-white to-orange-50/30'
-                    : 'border border-gray-100 bg-white shadow-sm hover:shadow-md'}
+                  border bg-white shadow-sm hover:shadow-md
+                  ${isViral ? 'border-orange-200/60' : 'border-gray-100'}
                 `}
               >
                 {/* Tag pill */}

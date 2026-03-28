@@ -45,7 +45,7 @@ export default function EditProfileSheet2({
 }: EditProfileSheet2Props) {
   const [displayName, setDisplayName] = useState(user.name ?? '');
   const [username, setUsername] = useState(user.username ?? '');
-  const [bio, setBio] = useState(user.bio ?? '');
+  const [bio, setBio] = useState(user.bio && user.bio !== 'null' ? user.bio : '');
   const [showBadge, setShowBadge] = useState(user.showBadge ?? true);
   const [allowCommentNotifications, setAllowCommentNotifications] = useState(
     user.allowCommentNotifications ?? true
@@ -63,6 +63,16 @@ export default function EditProfileSheet2({
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const prevOpenRef = useRef(false);
 
+  const initialBio = user.bio && user.bio !== 'null' ? user.bio : '';
+  const hasChanges =
+    displayName !== (user.name ?? '') ||
+    username !== (user.username ?? '') ||
+    bio !== initialBio ||
+    showBadge !== (user.showBadge ?? true) ||
+    allowCommentNotifications !== (user.allowCommentNotifications ?? true) ||
+    avatarType !== (user.avatarType ?? 'DEFAULT') ||
+    avatarId !== (user.avatarId ?? null);
+
   // فقط موقع باز شدن شیت از user پر کنیم تا انتخاب آواتار با رندر والد پاک نشود
   useEffect(() => {
     const justOpened = isOpen && !prevOpenRef.current;
@@ -70,7 +80,7 @@ export default function EditProfileSheet2({
     if (justOpened) {
       setDisplayName(user.name ?? '');
       setUsername(user.username ?? '');
-      setBio((user.bio ?? '').slice(0, BIO_MAX));
+      setBio((user.bio && user.bio !== 'null' ? user.bio : '').slice(0, BIO_MAX));
       setShowBadge(user.showBadge ?? true);
       setAllowCommentNotifications(user.allowCommentNotifications ?? true);
       setAvatarType(user.avatarType ?? 'DEFAULT');
@@ -174,9 +184,9 @@ export default function EditProfileSheet2({
       >
         <div className="flex flex-col min-h-0 flex-1 bg-[#F8F7FC]">
           <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-4">
-            {/* 1. Avatar */}
-            <section className="pt-4 pb-6">
-              <div className="rounded-[20px] bg-white p-6 shadow-sm flex flex-col items-center">
+            {/* 1. Avatar + Basic Info */}
+            <section className="pt-4 pb-4">
+              <div className="rounded-[20px] bg-white p-5 shadow-sm flex flex-col items-center">
                 {isElite ? (
                   <EliteAvatarFrame size={96} className="mb-2">
                     <div className="relative">
@@ -247,85 +257,91 @@ export default function EditProfileSheet2({
                 <button
                   type="button"
                   onClick={() => setShowAvatarSheet(true)}
-                  className="mt-4 px-5 py-2.5 rounded-[20px] bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white text-sm font-medium shadow-md hover:shadow-lg transition-all"
+                  className="mt-3 px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
                 >
                   تغییر آواتار
                 </button>
+
+                {/* Basic Info inside same card */}
+                <div className="w-full mt-5 pt-4 border-t border-gray-100 space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">نام نمایشی</label>
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="نام شما"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">نام کاربری</label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                      placeholder="username"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition font-mono text-sm"
+                    />
+                    {username.startsWith('user_') && (
+                      <p className="text-[11px] text-amber-600 mt-1">
+                        یه نام کاربری شخصی انتخاب کن تا راحت‌تر پیدات کنن
+                      </p>
+                    )}
+                  </div>
+                  {isTrustedOrAbove && (
+                    <p className="flex items-center gap-2 text-sm text-[#7C3AED]">
+                      <Sparkles className="w-4 h-4" />
+                      Trusted Curator 🟣
+                    </p>
+                  )}
+                </div>
               </div>
             </section>
 
-            {/* 2. Basic Info */}
-            <section className="pb-6">
-              <div className="rounded-[20px] bg-white p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700">اطلاعات پایه</h3>
+            {/* 3. Bio + Settings */}
+            <section className="pb-4">
+              <div className="rounded-[20px] bg-white p-5 shadow-sm space-y-4">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">نام نمایشی (اجباری)</label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="نام شما"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition"
+                  <label className="block text-xs text-gray-500 mb-1">معرفی</label>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX))}
+                    placeholder="چند خط درباره vibe خودت بنویس…"
+                    rows={2}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition resize-none text-sm"
                   />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">نام کاربری (یونیک، انگلیسی)</label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                    placeholder="username"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition font-mono text-sm"
-                  />
-                </div>
-                {isTrustedOrAbove && (
-                  <p className="flex items-center gap-2 text-sm text-[#7C3AED]">
-                    <Sparkles className="w-4 h-4" />
-                    Trusted Curator 🟣
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    {bio.length}/{BIO_MAX} — در پروفایل عمومی نمایش داده می‌شود
                   </p>
-                )}
-              </div>
-            </section>
+                </div>
 
-            {/* 3. Bio */}
-            <section className="pb-6">
-              <div className="rounded-[20px] bg-white p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">بیو</h3>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX))}
-                  placeholder="چند خط درباره vibe خودت بنویس…"
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition resize-none"
-                />
-                <p className="text-xs text-gray-500 mt-1.5">
-                  {bio.length}/{BIO_MAX} — این متن در پروفایل عمومی شما نمایش داده می‌شود
-                </p>
-              </div>
-            </section>
-
-            {/* 4. Privacy */}
-            <section className="pb-6">
-              <div className="rounded-[20px] bg-white p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700">حریم خصوصی</h3>
-                <label className="flex items-center justify-between gap-3 cursor-pointer">
-                  <span className="text-sm text-gray-700">نمایش Badge</span>
-                  <input
-                    type="checkbox"
-                    checked={showBadge}
-                    onChange={(e) => setShowBadge(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-[#7C3AED] focus:ring-[#7C3AED]"
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-3 cursor-pointer">
-                  <span className="text-sm text-gray-700">دریافت اعلان کامنت</span>
-                  <input
-                    type="checkbox"
-                    checked={allowCommentNotifications}
-                    onChange={(e) => setAllowCommentNotifications(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-[#7C3AED] focus:ring-[#7C3AED]"
-                  />
-                </label>
+                <div className="pt-3 border-t border-gray-100 space-y-3">
+                  <label className="flex items-center justify-between gap-3 cursor-pointer">
+                    <div>
+                      <span className="text-sm text-gray-700 block">نمایش نشان کیوریتور</span>
+                      <span className="text-[11px] text-gray-400">نشان سطح شما کنار نامتون دیده بشه</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={showBadge}
+                      onChange={(e) => setShowBadge(e.target.checked)}
+                      className="w-5 h-5 rounded border-gray-300 text-[#7C3AED] focus:ring-[#7C3AED]"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-3 cursor-pointer">
+                    <div>
+                      <span className="text-sm text-gray-700 block">اعلان کامنت‌ها</span>
+                      <span className="text-[11px] text-gray-400">وقتی روی لیست‌هات نظر میذارن</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={allowCommentNotifications}
+                      onChange={(e) => setAllowCommentNotifications(e.target.checked)}
+                      className="w-5 h-5 rounded border-gray-300 text-[#7C3AED] focus:ring-[#7C3AED]"
+                    />
+                  </label>
+                </div>
               </div>
             </section>
 
@@ -339,8 +355,12 @@ export default function EditProfileSheet2({
             <button
               type="button"
               onClick={handleSave}
-              disabled={isSaving}
-              className="w-full py-3.5 rounded-[20px] bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white font-medium shadow-lg disabled:opacity-70 flex items-center justify-center gap-2"
+              disabled={isSaving || !hasChanges}
+              className={`w-full py-3.5 rounded-[20px] font-medium flex items-center justify-center gap-2 transition-all ${
+                hasChanges
+                  ? 'bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
             >
               {isSaving ? (
                 <>

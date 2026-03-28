@@ -105,8 +105,8 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
     const badge = list.badge?.toString().toLowerCase() ?? null;
     const isFeatured = list.isFeatured || badge === 'featured' || badge === 'trending';
 
-    const cardHeight = size === 'featured' ? 'h-56' : 'h-44';
-    const titleSize = size === 'featured' ? 'text-xl' : 'text-lg';
+    const cardHeight = size === 'featured' ? 'h-44' : 'h-36';
+    const titleSize = size === 'featured' ? 'text-lg' : 'text-base';
 
     return (
       <div key={list.id} className="group">
@@ -261,30 +261,45 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
     );
   }
 
+  const totalLists = lists.length;
+  const showFilters = totalLists > 2 || filter !== 'all';
+  const useFeaturedLayout = totalLists >= 3;
+
   return (
     <>
       <div className="px-4 space-y-4">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`shrink-0 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                filter === f.id ? 'bg-[#7C3AED] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        {showFilters && (
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`shrink-0 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  filter === f.id ? 'bg-[#7C3AED] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           {lists.map((list, index) => (
-            <div key={list.id} className={index % 4 === 0 ? 'col-span-2' : ''}>
-              {renderListCard(list, index % 4 === 0 ? 'featured' : 'normal')}
+            <div key={list.id} className={useFeaturedLayout && index % 4 === 0 ? 'col-span-2' : ''}>
+              {renderListCard(list, useFeaturedLayout && index % 4 === 0 ? 'featured' : 'normal')}
             </div>
           ))}
         </div>
+
+        {totalLists > 0 && totalLists <= 2 && filter === 'all' && (
+          <Link
+            href="/user-lists?openCreate=1"
+            className="block text-center py-4 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-[#7C3AED]/30 hover:text-[#7C3AED] transition-colors text-sm font-medium"
+          >
+            + ساخت لیست جدید
+          </Link>
+        )}
       </div>
 
       {hasMore && (

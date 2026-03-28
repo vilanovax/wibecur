@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { PLACEHOLDER_COVER, getRandomPlaceholderUrl } from '@/lib/placeholder-images';
 import { getDisplayImageUrl } from '@/lib/display-image';
 import type { ImageFolder } from '@/lib/object-storage';
 
@@ -17,6 +16,10 @@ interface ImageWithFallbackProps {
   priority?: boolean;
   /** پوشهٔ Liara برای resolve کردن URLهای خارجی (پیش‌فرض: covers برای لیست/هدر، items برای آیتم) */
   imageFolder?: ImageFolder;
+  /** حرف/آیکون نمایشی روی placeholder (پیش‌فرض: حرف اول alt) */
+  fallbackLabel?: string;
+  /** seed برای انتخاب رنگ گرادیان (مثلاً categoryId) */
+  fallbackColorSeed?: string;
 }
 
 /** مسیرهای تصویر خالی/placeholder که باید با تصویر داخلی جایگزین شوند */
@@ -39,6 +42,70 @@ function isLiaraStorageUrl(url: string | null | undefined): boolean {
   }
 }
 
+/** پالت گرادیان — بر اساس seed رنگ ثابتی انتخاب می‌شود */
+const GRADIENT_PALETTE = [
+  { from: '#6366F1', to: '#8B5CF6', angle: 135 },  // indigo → violet
+  { from: '#EC4899', to: '#F43F5E', angle: 150 },  // pink → rose
+  { from: '#F59E0B', to: '#EF4444', angle: 120 },  // amber → red
+  { from: '#10B981', to: '#3B82F6', angle: 135 },  // emerald → blue
+  { from: '#8B5CF6', to: '#EC4899', angle: 160 },  // violet → pink
+  { from: '#14B8A6', to: '#6366F1', angle: 145 },  // teal → indigo
+  { from: '#F97316', to: '#F59E0B', angle: 130 },  // orange → amber
+  { from: '#06B6D4', to: '#8B5CF6', angle: 140 },  // cyan → violet
+  { from: '#D946EF', to: '#6366F1', angle: 155 },  // fuchsia → indigo
+  { from: '#84CC16', to: '#10B981', angle: 125 },  // lime → emerald
+  { from: '#0EA5E9', to: '#6366F1', angle: 135 },  // sky → indigo
+  { from: '#F43F5E', to: '#FB923C', angle: 150 },  // rose → orange
+];
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+function getFirstChar(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return '?';
+  // Skip emojis and special chars, prefer Persian/Arabic/Latin letters
+  for (const ch of trimmed) {
+    if (/[\p{L}\p{N}]/u.test(ch)) return ch;
+  }
+  return trimmed[0];
+}
+
+/** Placeholder رنگی با حرف اول — بدون API call */
+function GradientPlaceholder({
+  label,
+  colorSeed,
+  className = '',
+}: {
+  label: string;
+  colorSeed: string;
+  className?: string;
+}) {
+  const idx = hashString(colorSeed) % GRADIENT_PALETTE.length;
+  const { from, to, angle } = GRADIENT_PALETTE[idx];
+
+  return (
+    <div
+      className={`flex items-center justify-center ${className}`}
+      style={{
+        background: `linear-gradient(${angle}deg, ${from}, ${to})`,
+      }}
+    >
+      <span
+        className="text-white/30 font-bold select-none"
+        style={{ fontSize: 'clamp(1.5rem, 4vw, 3.5rem)' }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export default function ImageWithFallback({
   src,
   alt,
@@ -48,57 +115,35 @@ export default function ImageWithFallback({
   placeholderSize = 'cover',
   priority = false,
   imageFolder = 'covers',
+  fallbackLabel,
+  fallbackColorSeed,
 }: ImageWithFallbackProps) {
   const [hasError, setHasError] = useState(false);
-  const [randomPlaceholderFailed, setRandomPlaceholderFailed] = useState(false);
 
-  // اتوماتیک: آدرس خالی یا مسیر placeholder → تصویر رندوم (با seed ثابت برای هر کارت)
-  const fallbackImageUrl = getRandomPlaceholderUrl(alt + (src || ''), placeholderSize);
-  const effectiveSrc =
-    isEmptyOrPlaceholderPath(src) ? fallbackImageUrl : src;
+  const label = fallbackLabel ?? getFirstChar(alt);
+  const colorSeed = fallbackColorSeed ?? alt;
 
-  // همهٔ تصاویر از Liara: آدرس نسبی → همان origin؛ Liara → پراکسی (فقط prod)؛ خارجی → API resolve
-  const isDevEnv = process.env.NODE_ENV === 'development';
-  const displaySrc =
-    isEmptyOrPlaceholderPath(src)
-      ? effectiveSrc
-      : effectiveSrc.startsWith('/')
-        ? effectiveSrc
-        : isLiaraStorageUrl(effectiveSrc)
-          ? isDevEnv
-            ? fallbackImageUrl // لوکال: Liara در دسترس نیست، fallback نشون بده
-            : `/api/image-proxy?url=${encodeURIComponent(effectiveSrc)}`
-          : getDisplayImageUrl(effectiveSrc, imageFolder);
-
-  // Skip loading when URL is placeholder or when external images are disabled (e.g. Unsplash blocked)
-  const isPlaceholderUrl = effectiveSrc?.includes('via.placeholder.com');
-  const isUnsplash = effectiveSrc?.includes('images.unsplash.com');
-  const skipExternalImages =
-    typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SKIP_EXTERNAL_IMAGES === 'true';
-  if (isPlaceholderUrl || (isUnsplash && skipExternalImages)) {
+  // وقتی آدرس خالی/placeholder — مستقیماً گرادیان CSS رندر کن (بدون API call)
+  if (isEmptyOrPlaceholderPath(src)) {
     return (
-      <div className={`flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${className} ${fallbackClassName}`}>
-        <span className="text-6xl opacity-50">{fallbackIcon}</span>
-      </div>
+      <GradientPlaceholder label={label} colorSeed={colorSeed} className={className} />
     );
   }
 
-  const handleError = () => setHasError(true);
-  const handleFallbackImageError = () => setRandomPlaceholderFailed(true);
+  // تبدیل آدرس واقعی به displaySrc
+  const isDevEnv = process.env.NODE_ENV === 'development';
+  const displaySrc = src.startsWith('/')
+    ? src
+    : isLiaraStorageUrl(src)
+      ? isDevEnv
+        ? null // لوکال: Liara در دسترس نیست
+        : `/api/image-proxy?url=${encodeURIComponent(src)}`
+      : getDisplayImageUrl(src, imageFolder);
 
-  // وقتی تصویر لود نشد (خطا یا خالی): اول تصویر رندوم، اگر آن هم خطا داد خاکستری
-  if (hasError || !effectiveSrc) {
-    const showGray = randomPlaceholderFailed;
-    const fallbackSrc = showGray ? PLACEHOLDER_COVER : getRandomPlaceholderUrl(alt + (src || ''), placeholderSize);
+  // وقتی تصویر لود نشد → گرادیان placeholder
+  if (hasError || !displaySrc) {
     return (
-      <img
-        src={fallbackSrc}
-        alt={alt}
-        className={className}
-        loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : undefined}
-        onError={showGray ? undefined : handleFallbackImageError}
-      />
+      <GradientPlaceholder label={label} colorSeed={colorSeed} className={className} />
     );
   }
 
@@ -107,7 +152,7 @@ export default function ImageWithFallback({
       src={displaySrc}
       alt={alt}
       className={className}
-      onError={handleError}
+      onError={() => setHasError(true)}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : undefined}
     />

@@ -43,8 +43,7 @@ export default function RisingListsSection({ lists }: RisingListsSectionProps) {
                 src={list.coverUrl ?? ''}
                 alt={list.title}
                 className="w-full h-full object-cover"
-                fallbackIcon="📋"
-                fallbackClassName="w-full h-full flex items-center justify-center text-lg"
+                fallbackColorSeed={list.id}
               />
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">

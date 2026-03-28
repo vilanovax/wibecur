@@ -10,44 +10,46 @@ interface CategoryDiscoverySectionProps {
 export default function CategoryDiscoverySection({
   categories,
 }: CategoryDiscoverySectionProps) {
-  const displayCats = categories.filter((c) => c.id !== 'all').slice(0, 6);
+  const displayCats = categories.filter((c) => c.id !== 'all');
 
   if (displayCats.length === 0) return null;
 
   return (
     <section
       id="categories"
-      className="px-4 py-8"
+      className="py-6"
       aria-labelledby="categories-title"
     >
-      <h2
-        id="categories-title"
-        className="text-[18px] font-bold text-gray-900 mb-4"
-      >
-        کشف دسته‌ها
-      </h2>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="flex items-center justify-between px-4 mb-4">
+        <h2
+          id="categories-title"
+          className="text-[18px] font-bold text-gray-900"
+        >
+          کشف دسته‌ها
+        </h2>
+        <Link
+          href="/lists"
+          className="text-[13px] font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          همه دسته‌ها
+        </Link>
+      </div>
+      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x">
         {displayCats.map((cat) => (
           <Link
             key={cat.id}
             href={`/categories/${cat.slug ?? cat.id}`}
-            className="flex flex-col items-center justify-center p-4 rounded-[18px] bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all aspect-square"
+            className="flex-shrink-0 flex flex-col items-center justify-center w-[100px] h-[100px] rounded-[18px] bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/20 active:scale-[0.97] transition-all snap-start"
           >
-            <span className="text-3xl mb-2" aria-hidden>
+            <span className="text-[28px] mb-1.5" aria-hidden>
               {cat.icon}
             </span>
-            <span className="text-[14px] font-medium text-gray-900 text-center line-clamp-1">
+            <span className="text-[13px] font-medium text-gray-900 text-center line-clamp-1 px-1">
               {cat.title}
             </span>
           </Link>
         ))}
       </div>
-      <Link
-        href="/lists"
-        className="block mt-4 text-center py-3 rounded-[18px] bg-gray-100 text-gray-700 font-medium text-[14px] hover:bg-gray-200 transition-colors"
-      >
-        مشاهده همه دسته‌ها
-      </Link>
     </section>
   );
 }

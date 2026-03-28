@@ -1,23 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 import ExploreSmartHero from './ExploreSmartHero';
-import TrendingNowSection from './TrendingNowSection';
-import RisingListsSection from './RisingListsSection';
+import TrendingRisingSection from './TrendingRisingSection';
 import CategoryDiscoverySection from './CategoryDiscoverySection';
 import CuratedGrid from './CuratedGrid';
 import ExploreBottomCTA from './ExploreBottomCTA';
 import { GridCardSkeleton } from './CuratedSkeletons';
 import { mapTrendingToList } from '@/lib/curated/utils';
 import type { CuratedList, CuratedCategory } from '@/types/curated';
-
-const SECTION_IDS: Record<string, string> = {
-  trending: 'trending',
-  rising: 'rising',
-  categories: 'categories',
-};
 
 export default function CuratedLandingPageClient() {
   const searchParams = useSearchParams();
@@ -27,29 +20,43 @@ export default function CuratedLandingPageClient() {
 
   const [trendingLists, setTrendingLists] = useState<CuratedList[]>([]);
   const [risingLists, setRisingLists] = useState<CuratedList[]>([]);
+  const [featuredLists, setFeaturedLists] = useState<CuratedList[]>([]);
   const [categories, setCategories] = useState<CuratedCategory[]>([]);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [trendingRes, risingRes, categoriesRes] = await Promise.all([
+        const [trendingRes, risingRes, popularRes, categoriesRes] = await Promise.all([
           fetch('/api/trending/global'),
           fetch('/api/trending/fast'),
+          fetch('/api/trending/popular'),
           fetch('/api/categories'),
         ]);
 
-        const [trendingJson, risingJson, categoriesJson] = await Promise.all([
+        const [trendingJson, risingJson, popularJson, categoriesJson] = await Promise.all([
           trendingRes.json(),
           risingRes.json(),
+          popularRes.json(),
           categoriesRes.json(),
         ]);
 
-        if (trendingJson.success) {
-          setTrendingLists(trendingJson.data.map(mapTrendingToList));
-        }
-        if (risingJson.success) {
-          setRisingLists(risingJson.data.map(mapTrendingToList));
-        }
+        const trendingMapped: CuratedList[] = trendingJson.success
+          ? trendingJson.data.map(mapTrendingToList)
+          : [];
+        const trendingIds = new Set(trendingMapped.map((l: CuratedList) => l.id));
+
+        const risingMapped: CuratedList[] = risingJson.success
+          ? risingJson.data.map(mapTrendingToList).filter((l: CuratedList) => !trendingIds.has(l.id))
+          : [];
+        const shownIds = new Set([...trendingIds, ...risingMapped.map((l: CuratedList) => l.id)]);
+
+        const featuredMapped: CuratedList[] = popularJson.success
+          ? popularJson.data.map(mapTrendingToList).filter((l: CuratedList) => !shownIds.has(l.id))
+          : [];
+
+        setTrendingLists(trendingMapped);
+        setRisingLists(risingMapped);
+        setFeaturedLists(featuredMapped);
         if (categoriesJson.success) {
           setCategories(
             categoriesJson.data.map((c: { id: string; name: string; slug: string; icon: string | null }) => ({
@@ -67,12 +74,6 @@ export default function CuratedLandingPageClient() {
       }
     }
     fetchData();
-  }, []);
-
-  const handleModeScroll = useCallback((id: string) => {
-    const sectionId = SECTION_IDS[id] ?? id;
-    const el = document.getElementById(sectionId);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
   useEffect(() => {
@@ -98,11 +99,7 @@ export default function CuratedLandingPageClient() {
 
   const filteredTrending = filterBySearch(trendingLists);
   const filteredRising = filterBySearch(risingLists);
-  const allFiltered = filterBySearch(
-    [...trendingLists, ...risingLists].filter(
-      (list, index, self) => self.findIndex((l) => l.id === list.id) === index
-    )
-  );
+  const filteredFeatured = filterBySearch(featuredLists);
 
   if (isLoading) {
     return (
@@ -125,15 +122,18 @@ export default function CuratedLandingPageClient() {
       <ExploreSmartHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onModeScroll={handleModeScroll}
       />
 
       <main className="space-y-0">
-        <TrendingNowSection lists={filteredTrending} />
-        <RisingListsSection lists={filteredRising} />
+        <TrendingRisingSection
+          trendingLists={filteredTrending}
+          risingLists={filteredRising}
+        />
         <CategoryDiscoverySection categories={categories} />
 
-        {allFiltered.length > 0 ? (
+        <ExploreBottomCTA onOpenCreate={() => setIsCreateFormOpen(true)} />
+
+        {filteredFeatured.length > 0 ? (
           <section className="px-4 py-8" id="more">
             <h2 className="text-[18px] font-bold text-gray-900 mb-1">
               لیست‌های منتخب
@@ -141,18 +141,16 @@ export default function CuratedLandingPageClient() {
             <p className="text-[13px] text-gray-500 mb-4">
               لیست‌های برگزیده توسط تیم وایب
             </p>
-            <CuratedGrid lists={allFiltered} showSponsoredAfter={8} />
+            <CuratedGrid lists={filteredFeatured} showSponsoredAfter={8} />
           </section>
-        ) : (
+        ) : searchQuery.trim() ? (
           <div className="px-4 py-12 text-center">
             <p className="text-gray-500">لیستی یافت نشد</p>
             <p className="text-sm text-gray-400 mt-1">
               فیلتر یا جستجو را تغییر دهید
             </p>
           </div>
-        )}
-
-        <ExploreBottomCTA onOpenCreate={() => setIsCreateFormOpen(true)} />
+        ) : null}
       </main>
 
       <CreateListForm

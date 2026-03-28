@@ -37,8 +37,7 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
           src={list.coverUrl ?? ''}
           alt={list.title}
           className="w-full h-full object-cover"
-          fallbackIcon="📋"
-          fallbackClassName="w-full h-full flex items-center justify-center text-3xl"
+          fallbackColorSeed={list.id}
         />
         {topBadge && (
           <span

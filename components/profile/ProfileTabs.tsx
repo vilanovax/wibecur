@@ -9,9 +9,9 @@ import RecentActivityTab from '@/components/mobile/profile/tabs/RecentActivityTa
 export type ProfileTabId = 'activity' | 'bookmarks' | 'my-lists';
 
 const TABS: { id: ProfileTabId; label: string; icon: typeof List }[] = [
-  { id: 'activity', label: 'فعالیت‌ها', icon: Clock },
-  { id: 'bookmarks', label: 'ذخیره‌ها', icon: Star },
   { id: 'my-lists', label: 'لیست‌های من', icon: List },
+  { id: 'bookmarks', label: 'ذخیره‌ها', icon: Star },
+  { id: 'activity', label: 'فعالیت‌ها', icon: Clock },
 ];
 
 interface ProfileTabsProps {

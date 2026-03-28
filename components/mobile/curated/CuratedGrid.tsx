@@ -13,8 +13,10 @@ export default function CuratedGrid({
   lists,
   showSponsoredAfter = 8,
 }: CuratedGridProps) {
+  // تعداد زوج برای grid دو‌ستونه — بدون کارت یتیم
+  const evenLists = lists.length % 2 === 1 ? lists.slice(0, -1) : lists;
   const items: (CuratedList | 'sponsored')[] = [];
-  lists.forEach((list, i) => {
+  evenLists.forEach((list, i) => {
     items.push(list);
     if ((i + 1) % showSponsoredAfter === 0 && i + 1 < lists.length) {
       items.push('sponsored');

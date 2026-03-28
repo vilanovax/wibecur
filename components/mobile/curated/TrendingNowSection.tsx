@@ -45,8 +45,7 @@ export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
                   src={list.coverUrl ?? ''}
                   alt={list.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  fallbackIcon="📋"
-                  fallbackClassName="w-full h-full flex items-center justify-center text-2xl"
+                  fallbackColorSeed={list.id}
                 />
                 {list.badges.includes('trending') && (
                   <span
