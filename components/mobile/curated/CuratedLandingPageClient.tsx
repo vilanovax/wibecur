@@ -135,11 +135,11 @@ export default function CuratedLandingPageClient() {
 
         {allFiltered.length > 0 ? (
           <section className="px-4 py-8" id="more">
-            <h2 className="text-[18px] font-bold text-gray-900 mb-3">
-              بیشتر ببین
+            <h2 className="text-[18px] font-bold text-gray-900 mb-1">
+              لیست‌های منتخب
             </h2>
             <p className="text-[13px] text-gray-500 mb-4">
-              لیست‌های کیوریت شده بر اساس ترند
+              لیست‌های برگزیده توسط تیم وایب
             </p>
             <CuratedGrid lists={allFiltered} showSponsoredAfter={8} />
           </section>

@@ -26,11 +26,11 @@ export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
         id="trending-title"
         className="text-[18px] font-bold text-gray-900 mb-3 flex items-center gap-2"
       >
-        <span aria-hidden>🔥</span>
-        داغ‌ترین لیست‌های امروز
+        <span aria-hidden>⭐</span>
+        پرطرفدارترین‌ها
       </h2>
       <p className="text-[13px] text-gray-500 mb-4">
-        بر اساس تعامل هفتگی
+        بیشترین تعامل در هفته اخیر
       </p>
       <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x snap-mandatory">
         {trending.map((list) => (
@@ -40,7 +40,7 @@ export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
             className="flex-shrink-0 w-[200px] snap-start group"
           >
             <div className="rounded-[18px] overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200">
-              <div className="relative aspect-[4/3] bg-gray-200">
+              <div className="relative aspect-[2/1] bg-gray-200">
                 <ImageWithFallback
                   src={list.coverUrl ?? ''}
                   alt={list.title}
