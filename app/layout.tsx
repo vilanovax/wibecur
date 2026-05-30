@@ -5,6 +5,7 @@ import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import PWAProvider from '@/components/providers/PWAProvider';
 import MainContainer from '@/components/providers/MainContainer';
+import { SearchProvider } from '@/contexts/SearchContext';
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from '@/lib/seo';
 
 const baseUrl = getBaseUrl();
@@ -110,7 +111,9 @@ export default function RootLayout({
         <MainContainer>
           <PWAProvider>
             <QueryProvider>
-              <SessionProvider>{children}</SessionProvider>
+              <SessionProvider>
+                <SearchProvider>{children}</SearchProvider>
+              </SessionProvider>
             </QueryProvider>
           </PWAProvider>
           <Analytics />

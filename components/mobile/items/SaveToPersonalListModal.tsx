@@ -54,7 +54,7 @@ export default function SaveToPersonalListModal({
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/admin/settings');
+      const res = await fetch('/api/settings/public');
       if (res.ok) {
         const data = await res.json();
         if (data.success) {

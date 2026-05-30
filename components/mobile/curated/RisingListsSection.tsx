@@ -11,45 +11,44 @@ interface RisingListsSectionProps {
 }
 
 export default function RisingListsSection({ lists }: RisingListsSectionProps) {
-  const rising = lists
-    .filter((l) => l.badges.includes('rising') || (l.weeklyVelocity ?? 0) > 100)
-    .sort((a, b) => (b.weeklyVelocity ?? 0) - (a.weeklyVelocity ?? 0))
-    .slice(0, 6);
-
-  if (rising.length === 0) return null;
+  if (lists.length === 0) return null;
 
   return (
-    <section id="rising" className="px-4 py-6" aria-labelledby="rising-title">
+    <section id="rising" className="border-t border-wibe/60 px-2.5 py-4" aria-labelledby="rising-title">
       <ExploreSectionTitle
         id="rising-title"
         title="در حال اوج گرفتن"
         subtitle="لیست‌های با مومنتوم بالا"
         icon="🚀"
       />
-      <div className="grid grid-cols-2 gap-3">
-        {rising.map((list) => (
+      <div className="grid grid-cols-2 gap-2">
+        {lists.map((list) => (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="block rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+            className="block overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
           >
             <div className="relative aspect-[4/3] bg-gray-200">
               <ImageWithFallback
                 src={list.coverUrl ?? ''}
                 alt={list.title}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
                 fallbackIcon="📋"
-                fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
               />
-              <span className="absolute top-2 right-2 px-2 py-0.5 rounded-pill wibe-caption font-semibold bg-primary text-white">
+              <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 wibe-caption font-semibold text-white">
                 در حال رشد
               </span>
-              <div className="absolute bottom-0 left-0 right-0 p-2">
-                <ListCardStats saves={list.savesCount} itemCount={list.itemsCount} variant="overlay" />
+              <div className="absolute inset-x-0 bottom-0 p-2">
+                <ListCardStats
+                  saves={list.savesCount}
+                  itemCount={list.itemsCount}
+                  variant="overlay"
+                />
               </div>
             </div>
-            <div className="p-2.5">
-              <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
+            <div className="p-2">
+              <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
             </div>
           </Link>
         ))}

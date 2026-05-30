@@ -1,85 +1,67 @@
-import { prisma } from './prisma';
+import { prisma, ensurePrismaConnection, resetPrismaConnection } from './prisma';
 import { cache } from 'react';
+import { isDbUnavailableError, isRetryableDbError } from './db-errors';
 
-// Wrapper function with retry logic (optimized)
+function isEngineDisconnected(error: unknown): boolean {
+  const msg = String((error as Error)?.message ?? '').toLowerCase();
+  return (
+    msg.includes('engine is not yet connected') ||
+    msg.includes('response from the engine was empty') ||
+    msg.includes('client has already been released')
+  );
+}
+
+function backoffMs(attempt: number, baseDelay: number): number {
+  const exp = baseDelay * (attempt + 1);
+  const jitter = Math.floor(Math.random() * 200);
+  return exp + jitter;
+}
+
+/** Wrapper with retry + reconnect for Prisma engine / pool issues */
 export async function dbQuery<T>(
   queryFn: () => Promise<T>,
-  retries = 3,
-  delay = 1500
+  retries = 4,
+  delay = 500
 ): Promise<T> {
-  // Ensure Prisma client is connected before executing queries
-  try {
-    await prisma.$connect();
-  } catch (error) {
-    // Connection might already be established, continue
-    console.warn('Prisma connection check:', error);
-  }
+  let lastError: unknown;
 
   for (let i = 0; i < retries; i++) {
     try {
+      await ensurePrismaConnection();
       return await queryFn();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      lastError = error;
       const isLastAttempt = i === retries - 1;
-      const errMsg = String(error?.message ?? '');
-      
-      // Check for connection pool timeout errors and "not connected" errors
-      const isConnectionPoolError = 
-        error?.code === 'P1001' || // Can't reach database
-        error?.code === 'P1008' || // Operations timed out
-        errMsg.includes("Can't reach database") ||
-        errMsg.includes("connection pool") ||
-        errMsg.includes("Timed out fetching") ||
-        errMsg.includes("Engine is not yet connected") ||
-        errMsg.includes("not yet connected") ||
-        error?.kind === 'Closed';
-      
-      // Only retry connection errors
-      if (isConnectionPoolError) {
-        // Try to reconnect
-        try {
-          await prisma.$disconnect().catch(() => {}); // Ignore disconnect errors
-          await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
-          await prisma.$connect();
-        } catch (connectError) {
-          if (isLastAttempt) {
-            throw new Error(
-              'خطا در اتصال به دیتابیس. ممکن است connection pool اشباع شده باشد. لطفاً لحظه‌ای صبر کنید و دوباره تلاش کنید.'
-            );
-          }
-          continue;
-        }
-        
-        if (isLastAttempt) {
-          // Final attempt after reconnection
-          try {
-            return await queryFn();
-          } catch {
-            throw new Error(
-              'خطا در اتصال به دیتابیس. ممکن است connection pool اشباع شده باشد. لطفاً لحظه‌ای صبر کنید و دوباره تلاش کنید.'
-            );
-          }
-        }
-        
-        // Continue to retry
+
+      if (isEngineDisconnected(error) && !isLastAttempt) {
+        console.warn('Prisma engine reconnect attempt', i + 1);
+        await resetPrismaConnection();
+        await new Promise((resolve) => setTimeout(resolve, backoffMs(i, delay)));
         continue;
       }
-      
-      // For other errors, throw immediately
-      throw error;
+
+      if (isRetryableDbError(error) && !isLastAttempt) {
+        await new Promise((resolve) => setTimeout(resolve, backoffMs(i, delay)));
+        continue;
+      }
+
+      if (!isDbUnavailableError(error) || isLastAttempt) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, backoffMs(i, delay)));
     }
   }
-  
-  throw new Error('خطا در اتصال به دیتابیس');
+
+  throw lastError ?? new Error('خطا در اتصال به دیتابیس');
 }
 
-// Cached wrapper for queries that can be cached
 export function cachedQuery<T>(queryFn: () => Promise<T>, options?: { revalidate?: number }) {
   return cache(async () => {
     return dbQuery(queryFn);
   });
 }
 
-// Helper functions for common queries with caching
 export const getCounts = cache(async () => {
   return dbQuery(() =>
     prisma.$transaction([
@@ -91,7 +73,6 @@ export const getCounts = cache(async () => {
   );
 });
 
-// Cached categories query (rarely changes)
 export const getCategories = cache(async () => {
   return dbQuery(() =>
     prisma.categories.findMany({
@@ -111,4 +92,3 @@ export const getCategories = cache(async () => {
     })
   );
 });
-

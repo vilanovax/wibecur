@@ -7,9 +7,10 @@
     "test:run": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "dev": "cross-env NODE_OPTIONS=--max-http-header-size=16384 next dev -p 3002",
+    "dev": "cross-env NODE_OPTIONS=--max-http-header-size=16384 next dev -p 3003",
     "dev:next": "next dev",
     "build": "next build",
+    "prebuild": "prisma generate",
     "start": "NODE_OPTIONS='--max-http-header-size=16384' next start",
     "lint": "next lint",
     "db:push": "prisma db push",
@@ -26,7 +27,13 @@
     "replace:unsplash:all": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-unsplash-with-picsum-and-upload.ts --all",
     "replace:unsplash:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-unsplash-with-picsum-and-upload.ts --dry-run",
     "set-liara-config": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/set-liara-config.ts",
-    "set-cafe-hero": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/set-cafe-category-hero.ts"
+    "download:banners": "node scripts/download-category-banners.mjs",
+    "set-cafe-hero": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/set-cafe-category-hero.ts",
+    "enrich:posters": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/enrich-seed-posters.ts",
+    "enrich:posters:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/enrich-seed-posters.ts --dry-run",
+    "enrich:posters:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/enrich-seed-posters.ts --update-seed-json",
+    "seed:item-images": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/assign-item-placeholder-images.ts",
+    "seed:item-images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/assign-item-placeholder-images.ts --dry-run"
   },
   "prisma": {
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"

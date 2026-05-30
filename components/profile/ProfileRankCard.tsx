@@ -1,57 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Trophy, TrendingUp, ChevronLeft } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Trophy, TrendingUp, ChevronLeft, Plus } from 'lucide-react';
 
 interface RankData {
-  rank: number;
+  rank: number | null;
   rankChange: number | null;
   monthlyRank: number | null;
+  totalCurators: number;
+}
+
+async function fetchMyRank(): Promise<RankData> {
+  const res = await fetch('/api/user/rank');
+  const json = await res.json();
+  if (!json.success || !json.data) {
+    return { rank: null, rankChange: null, monthlyRank: null, totalCurators: 0 };
+  }
+  return json.data as RankData;
 }
 
 interface ProfileRankCardProps {
   userId: string;
 }
 
-async function fetchMyRank(userId: string): Promise<RankData | null> {
-  try {
-    const [globalRes, monthlyRes] = await Promise.all([
-      fetch('/api/leaderboard?type=global'),
-      fetch('/api/leaderboard?type=monthly'),
-    ]);
-    const globalJson = await globalRes.json();
-    const monthlyJson = await monthlyRes.json();
-    const globalList = globalJson.success ? globalJson.data ?? [] : [];
-    const monthlyList = monthlyJson.success ? monthlyJson.data ?? [] : [];
-    const globalEntry = globalList.find((e: { userId: string }) => e.userId === userId);
-    const monthlyEntry = monthlyList.find((e: { userId: string }) => e.userId === userId);
-    if (!globalEntry && !monthlyEntry) return null;
-    const rank = globalEntry?.rank ?? monthlyEntry?.rank ?? 0;
-    const rankChange = globalEntry?.rankChange ?? null;
-    const monthlyRank = monthlyEntry?.monthlyRank ?? globalEntry?.monthlyRank ?? null;
-    return { rank, rankChange, monthlyRank };
-  } catch {
-    return null;
-  }
-}
-
 export default function ProfileRankCard({ userId }: ProfileRankCardProps) {
-  const [rankData, setRankData] = useState<RankData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: rankData, isLoading } = useQuery({
+    queryKey: ['user', userId, 'rank'],
+    queryFn: fetchMyRank,
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchMyRank(userId).then((data) => {
-      if (!cancelled) {
-        setRankData(data);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+  const hasRank = rankData?.rank != null && rankData.rank > 0;
 
   return (
     <Link
@@ -59,25 +39,46 @@ export default function ProfileRankCard({ userId }: ProfileRankCardProps) {
       className="block rounded-lg border border-wibe bg-wibe-card p-4 shadow-sm transition-transform active:scale-[0.99]"
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
-          <Trophy className="h-6 w-6" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+          <Trophy className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="wibe-caption text-wibe-secondary">رتبه‌بندی کریتورها</p>
-          {loading ? (
-            <p className="mt-0.5 wibe-h3 font-bold text-foreground">...</p>
-          ) : rankData ? (
-            <div className="mt-0.5 flex flex-wrap items-center gap-2">
-              <span className="wibe-h3 font-bold text-foreground">رتبه شما: #{rankData.rank}</span>
-              {rankData.rankChange != null && rankData.rankChange > 0 && (
-                <span className="inline-flex items-center gap-0.5 rounded-pill bg-success/10 px-1.5 py-0.5 wibe-caption font-medium text-success">
-                  <TrendingUp className="h-3 w-3" />
-                  {rankData.rankChange} این هفته
-                </span>
-              )}
+          <p className="wibe-caption text-wibe-secondary">رتبه‌بندی کیوریتورها</p>
+          {isLoading ? (
+            <p className="mt-0.5 h-5 w-32 bg-gray-200 rounded animate-pulse" />
+          ) : hasRank ? (
+            <div className="mt-0.5 space-y-1">
+              <p className="wibe-body font-bold text-foreground">
+                رتبه #{rankData!.rank!.toLocaleString('fa-IR')}
+                {rankData!.totalCurators > 0 && (
+                  <span className="wibe-caption font-normal text-wibe-secondary">
+                    {' '}
+                    از {rankData!.totalCurators.toLocaleString('fa-IR')} کیوریتور
+                  </span>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {rankData!.rankChange != null && rankData!.rankChange > 0 && (
+                  <span className="inline-flex items-center gap-0.5 rounded-pill bg-success/10 px-1.5 py-0.5 wibe-caption font-medium text-success">
+                    <TrendingUp className="h-3 w-3" />+{rankData!.rankChange.toLocaleString('fa-IR')} این
+                    هفته
+                  </span>
+                )}
+                {rankData!.monthlyRank != null && rankData!.monthlyRank > 0 && (
+                  <span className="wibe-caption text-wibe-secondary">
+                    ماهانه: #{rankData!.monthlyRank.toLocaleString('fa-IR')}
+                  </span>
+                )}
+              </div>
             </div>
           ) : (
-            <p className="mt-0.5 wibe-body font-bold text-primary">مشاهده جدول برترین‌ها</p>
+            <div className="mt-1">
+              <p className="wibe-small font-semibold text-primary">هنوز در جدول نیستی</p>
+              <p className="wibe-caption text-wibe-secondary mt-0.5 flex items-center gap-1">
+                <Plus className="w-3 h-3 shrink-0" />
+                اولین لیستت را بساز تا وارد رتبه‌بندی شوی
+              </p>
+            </div>
           )}
         </div>
         <ChevronLeft className="h-5 w-5 shrink-0 rotate-180 text-wibe-secondary" />

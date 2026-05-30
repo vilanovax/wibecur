@@ -26,6 +26,12 @@ export interface CuratedList {
   title: string;
   subtitle?: string | null;
   categoryId: string;
+  /** متادیتای دسته برای fallback زیرعنوان */
+  category?: {
+    name: string;
+    icon?: string | null;
+    slug?: string | null;
+  } | null;
   coverUrl: string | null;
   itemsCount: number;
   savesCount: number;

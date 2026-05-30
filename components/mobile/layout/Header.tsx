@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import NotificationIcon from './NotificationIcon';
+import HeaderSearchButton from './HeaderSearchButton';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 
 interface HeaderProps {
@@ -13,6 +14,10 @@ interface HeaderProps {
   showBack?: boolean;
   /** تم تیره برای صفحات سینمایی (فیلم و سریال) */
   variant?: 'default' | 'dark';
+  /** مخفی کردن آیکون اعلان */
+  hideNotifications?: boolean;
+  /** دکمه جستجو در هدر */
+  showSearch?: boolean;
 }
 
 type ProfileAvatar = {
@@ -22,7 +27,13 @@ type ProfileAvatar = {
   avatarStatus?: string | null;
 };
 
-export default function Header({ title, showBack = false, variant = 'default' }: HeaderProps) {
+export default function Header({
+  title,
+  showBack = false,
+  variant = 'default',
+  hideNotifications = false,
+  showSearch = false,
+}: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -109,8 +120,9 @@ export default function Header({ title, showBack = false, variant = 'default' }:
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {session?.user && <NotificationIcon />}
-          {!isHome && (
+          {(showSearch || isHome) && <HeaderSearchButton />}
+          {session?.user && !hideNotifications && <NotificationIcon />}
+          {!isHome && pathname !== '/user-lists' && (
             <Link
               href="/user-lists"
               className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${buttonClass} transition-colors`}

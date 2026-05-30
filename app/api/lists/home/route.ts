@@ -3,6 +3,16 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getGlobalTrending, getFastRising } from '@/lib/trending/service';
 import { getCurrentFeaturedSlot } from '@/lib/home-featured';
+import { resolveCoverImage } from '@/lib/resolve-cover-image';
+import { tryApiDbFallback } from '@/lib/api-db';
+
+const EMPTY_HOME = {
+  featured: null,
+  featuredSlotId: null,
+  trending: [] as unknown[],
+  rising: [] as unknown[],
+  recommendations: [] as unknown[],
+};
 
 /**
  * GET /api/lists/home
@@ -57,12 +67,30 @@ export async function GET() {
     const featured = featuredFromSlot ?? (lists.length > 0 ? lists[0] : null);
     const featuredSlotId = slotResult?.slotId ?? null;
 
+    const withCover = (input: {
+      coverImage?: string | null;
+      slug: string;
+      title: string;
+      categorySlug?: string | null;
+    }) =>
+      resolveCoverImage({
+        coverImage: input.coverImage,
+        categorySlug: input.categorySlug,
+        listSlug: input.slug,
+        listTitle: input.title,
+      });
+
     const mapList = (l: (typeof lists)[0]) => ({
       id: l.id,
       title: l.title,
       slug: l.slug,
       description: l.description ?? '',
-      coverImage: l.coverImage ?? '',
+      coverImage: withCover({
+        coverImage: l.coverImage,
+        slug: l.slug,
+        title: l.title,
+        categorySlug: l.categories?.slug,
+      }),
       saveCount: l.saveCount ?? 0,
       itemCount: l.itemCount ?? 0,
       likes: l.likeCount ?? 0,
@@ -75,12 +103,19 @@ export async function GET() {
       title: t.title,
       slug: t.slug,
       description: '',
-      coverImage: t.coverImage ?? '',
+      coverImage: withCover({
+        coverImage: t.coverImage,
+        slug: t.slug,
+        title: t.title,
+        categorySlug: t.categorySlug,
+      }),
       saveCount: t.saveCount,
       itemCount: t.itemCount,
       likes: t.likeCount,
       badge: (t.badge === 'viral' ? 'trending' : t.badge === 'hot' ? 'trending' : undefined) as 'trending' | 'new' | 'featured' | undefined,
-      categories: undefined,
+      categories: t.categorySlug
+        ? { slug: t.categorySlug, name: '', id: '', icon: '' }
+        : undefined,
     });
 
     const mapRising = (r: (typeof risingResults)[0]) => ({
@@ -88,11 +123,19 @@ export async function GET() {
       title: r.title,
       slug: r.slug,
       description: '',
-      coverImage: r.coverImage ?? '',
+      coverImage: withCover({
+        coverImage: r.coverImage,
+        slug: r.slug,
+        title: r.title,
+        categorySlug: r.categorySlug,
+      }),
       saveCount: r.saveCount,
       itemCount: r.itemCount,
       likes: r.likeCount,
       isFastRising: r.isFastRising ?? false,
+      categories: r.categorySlug
+        ? { slug: r.categorySlug, name: '', id: '', icon: '' }
+        : undefined,
     });
 
     const mapFeatured = featured
@@ -117,27 +160,14 @@ export async function GET() {
     response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     return response;
   } catch (error: unknown) {
-    const err = error as Error & { code?: string };
-    const msg = String(err?.message ?? '');
-    const isDbUnavailable =
-      err?.code === 'P1001' ||
-      msg.includes("Can't reach database") ||
-      msg.includes('connection refused') ||
-      msg.includes('ECONNREFUSED') ||
-      msg.includes('Invalid value undefined for datasource') ||
-      msg.includes('PrismaClient') ||
-      (process.env.NODE_ENV === 'development' && msg.toLowerCase().includes('connection'));
-
-    if (isDbUnavailable || process.env.NODE_ENV === 'development') {
-      console.warn('Home lists error (returning empty in dev or DB down):', msg);
-      return NextResponse.json({
-        success: true,
-        data: { featured: null, featuredSlotId: null, trending: [], rising: [], recommendations: [] },
-      });
+    const fb = tryApiDbFallback(error, EMPTY_HOME, 'Home lists');
+    if (fb) {
+      fb.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
+      return fb;
     }
     console.error('Error fetching home lists:', error);
     return NextResponse.json(
-      { success: false, error: err?.message ?? 'خطا در دریافت لیست‌ها' },
+      { success: false, error: (error as Error)?.message ?? 'خطا در دریافت لیست‌ها' },
       { status: 500 }
     );
   }

@@ -6,17 +6,16 @@ export default function SponsoredSlotCard() {
   return (
     <Link
       href="/sponsored/1"
-      className="block bg-white rounded-[20px] overflow-hidden shadow-sm border border-indigo-100 hover:shadow-md transition-all"
+      className="block overflow-hidden rounded-xl border border-primary/20 bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
     >
-      <div className="aspect-[4/3] w-full bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-        <span className="text-4xl">✨</span>
+      <div className="flex aspect-[4/3] w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+        <span className="text-3xl">✨</span>
       </div>
-      <div className="p-3">
-        <span className="text-[10px] text-indigo-600 font-medium">ویژه · اسپانسر</span>
-        <h3 className="font-semibold text-[14px] text-gray-900 mt-1">
-          Featured Curated Collection
+      <div className="p-2.5">
+        <span className="text-[10px] font-medium text-primary">ویژه · اسپانسر</span>
+        <h3 className="mt-0.5 line-clamp-2 wibe-small font-semibold text-foreground">
+          مجموعه کیوریت‌شده ویژه
         </h3>
-        <p className="text-[12px] text-gray-500 mt-0.5">Sponsored by …</p>
       </div>
     </Link>
   );

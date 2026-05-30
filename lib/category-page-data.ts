@@ -12,7 +12,38 @@ import type {
   CityBreakdown,
 } from '@/types/category-page';
 import { getTrendingByCategory } from '@/lib/trending/service';
+import { resolveListCover } from '@/lib/resolve-list-cover';
 import { LOCATION_CITIES } from '@/types/category-page';
+
+function mapListCover(
+  item: { coverImage?: string | null; slug: string; title: string },
+  categorySlug?: string | null
+): string {
+  return resolveListCover({
+    coverImage: item.coverImage,
+    slug: item.slug,
+    title: item.title,
+    categorySlug,
+  });
+}
+
+function applyListCovers<T extends { coverImage?: string | null; slug: string; title: string }>(
+  lists: T[],
+  categorySlug: string
+): T[] {
+  return lists.map((l) => ({
+    ...l,
+    coverImage: mapListCover(l, categorySlug),
+  }));
+}
+
+function applyListCover<T extends { coverImage?: string | null; slug: string; title: string }>(
+  list: T | null,
+  categorySlug: string
+): T | null {
+  if (!list) return null;
+  return { ...list, coverImage: mapListCover(list, categorySlug) };
+}
 
 const RECENT_DAYS = 7;
 const VIRAL_LIKE_THRESHOLD = 50;
@@ -672,16 +703,21 @@ export async function getCategoryPageData(
   return {
     category,
     metrics,
-    trendingLists: trending,
-    trendingNow24h: trending24h,
-    topSavedThisWeek,
-    viralSpotlight: viral,
+    trendingLists: applyListCovers(trending, category.slug),
+    trendingNow24h: applyListCovers(trending24h, category.slug),
+    topSavedThisWeek: applyListCovers(topSavedThisWeek, category.slug),
+    viralSpotlight: applyListCover(viral, category.slug),
     topCurators,
-    topCuratorSpotlight,
-    newLists,
-    popularAllTime,
+    topCuratorSpotlight: topCuratorSpotlight
+      ? {
+          ...topCuratorSpotlight,
+          topLists: applyListCovers(topCuratorSpotlight.topLists ?? [], category.slug),
+        }
+      : null,
+    newLists: applyListCovers(newLists, category.slug),
+    popularAllTime: applyListCovers(popularAllTime, category.slug),
     cityBreakdown,
-    mostDebatedLists,
+    mostDebatedLists: applyListCovers(mostDebatedLists, category.slug),
     mostSavedItems,
   };
 }

@@ -60,8 +60,11 @@ export default function HomeHeroSpotlight() {
           src={list.coverImage}
           alt={list.title}
           className="absolute inset-0 w-full h-full object-cover"
-          fallbackIcon="🎬"
+          fallbackIcon={list.categories?.icon ?? '📚'}
           fallbackClassName="w-full h-full flex items-center justify-center text-5xl bg-gray-200"
+          categorySlug={list.categories?.slug}
+          listSlug={list.slug}
+          listTitle={list.title}
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />

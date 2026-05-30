@@ -1,55 +1,89 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { Settings, Eye, EyeOff, Package, Bookmark, Flame, Eye as EyeIcon } from 'lucide-react';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { categories, lists } from '@prisma/client';
+import { useMemo, useState, useEffect } from 'react';
+import { Plus, RefreshCw } from 'lucide-react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import type { UserListRecord } from '@/lib/user-lists';
+import { LISTS_UPDATED_EVENT } from '@/lib/profile-events';
+import MyListCardCompact, { type MyListCardData } from '@/components/mobile/profile/MyListCardCompact';
+import MyListsTopCarousel from '@/components/mobile/profile/MyListsTopCarousel';
+import MyListsEmptyState from '@/components/mobile/profile/MyListsEmptyState';
+import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 import PersonalListSettingsModal from '../PersonalListSettingsModal';
 
-type ListWithCategory = lists & {
-  categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'> | null;
-  _count: {
-    items: number;
-    list_likes: number;
-    bookmarks: number;
-  };
-};
+export type ListWithCategory = UserListRecord;
 
 type FilterType = 'all' | 'public' | 'private' | 'draft';
 
 interface MyListsTabProps {
   userId: string;
+  initialLists?: UserListRecord[];
+  initialTotal?: number;
 }
-
-const VIRAL_LIKE_THRESHOLD = 50;
-const FEATURED_SAVE_THRESHOLD = 10;
 
 interface MyListsResponse {
   lists: ListWithCategory[];
-  pagination: { page: number; totalPages: number };
+  pagination: { page: number; totalPages: number; total: number };
 }
 
-async function fetchMyLists(
-  pageParam: number,
-  filter: FilterType
-): Promise<MyListsResponse> {
+const FILTERS: { id: FilterType; label: string }[] = [
+  { id: 'all', label: 'همه' },
+  { id: 'public', label: 'عمومی' },
+  { id: 'private', label: 'خصوصی' },
+  { id: 'draft', label: 'پیش‌نویس' },
+];
+
+async function fetchMyLists(pageParam: number, filter: FilterType): Promise<MyListsResponse> {
   const params = new URLSearchParams({ page: String(pageParam), limit: '20' });
   if (filter !== 'all') params.set('filter', filter);
   const res = await fetch(`/api/user/my-lists?${params}`);
   const data = await res.json();
-  if (!data.success) return { lists: [], pagination: { page: 1, totalPages: 1 } };
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || 'خطا در دریافت لیست‌ها');
+  }
   return {
     lists: data.data.lists,
     pagination: data.data.pagination,
   };
 }
 
-export default function MyListsTab({ userId }: MyListsTabProps) {
+function toCardData(list: ListWithCategory): MyListCardData {
+  return {
+    id: list.id,
+    title: list.title,
+    slug: list.slug,
+    coverImage: list.coverImage,
+    saveCount: list.saveCount ?? list._count?.bookmarks,
+    itemCount: list.itemCount ?? list._count?.items,
+    likeCount: list.likeCount ?? list._count?.list_likes,
+    isPublic: list.isPublic,
+    isFeatured: list.isFeatured,
+    badge: list.badge,
+    categories: list.categories,
+    _count: list._count,
+  };
+}
+
+function pickTopLists(all: ListWithCategory[], limit = 3): MyListCardData[] {
+  return [...all]
+    .sort((a, b) => {
+      const savesA = a.saveCount ?? a._count?.bookmarks ?? 0;
+      const savesB = b.saveCount ?? b._count?.bookmarks ?? 0;
+      if (savesB !== savesA) return savesB - savesA;
+      return (b.likeCount ?? b._count?.list_likes ?? 0) - (a.likeCount ?? a._count?.list_likes ?? 0);
+    })
+    .slice(0, limit)
+    .map(toCardData);
+}
+
+export default function MyListsTab({ userId, initialLists, initialTotal }: MyListsTabProps) {
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedList, setSelectedList] = useState<ListWithCategory | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const queryClient = useQueryClient();
+
+  const hasInitial = Boolean(initialLists?.length);
 
   const {
     data,
@@ -57,7 +91,10 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    isError,
+    error,
     refetch,
+    isFetching,
   } = useInfiniteQuery({
     queryKey: ['user', userId, 'my-lists', filter],
     queryFn: ({ pageParam }) => fetchMyLists(pageParam, filter),
@@ -66,10 +103,54 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
       lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
         : undefined,
+    initialData:
+      filter === 'all' && hasInitial
+        ? {
+            pages: [
+              {
+                lists: initialLists!,
+                pagination: {
+                  page: 1,
+                  totalPages: Math.ceil((initialTotal ?? initialLists!.length) / 20) || 1,
+                  total: initialTotal ?? initialLists!.length,
+                },
+              },
+            ],
+            pageParams: [1],
+          }
+        : undefined,
+    staleTime: 30_000,
   });
 
+  useEffect(() => {
+    const onListsUpdated = () => {
+      void queryClient.invalidateQueries({ queryKey: ['user', userId, 'my-lists'] });
+      void refetch();
+    };
+    window.addEventListener(LISTS_UPDATED_EVENT, onListsUpdated);
+    return () => window.removeEventListener(LISTS_UPDATED_EVENT, onListsUpdated);
+  }, [userId, queryClient, refetch]);
+
   const lists = data?.pages.flatMap((p) => p.lists) ?? [];
+  const totalCount = data?.pages[0]?.pagination.total ?? lists.length;
   const hasMore = !!hasNextPage;
+
+  const topLists = useMemo(() => {
+    if (filter !== 'all' || lists.length === 0) return [];
+    return pickTopLists(lists, 3);
+  }, [lists, filter]);
+
+  const topIds = useMemo(() => new Set(topLists.map((l) => l.id)), [topLists]);
+
+  const displayLists = useMemo(() => {
+    if (filter !== 'all' || topLists.length === 0) return lists;
+    return lists.filter((l) => !topIds.has(l.id));
+  }, [lists, filter, topLists.length, topIds]);
+
+  const publicCount = useMemo(
+    () => (filter === 'all' ? lists.filter((l) => l.isPublic).length : 0),
+    [lists, filter]
+  );
 
   const handleSettingsClick = (e: React.MouseEvent, list: ListWithCategory) => {
     e.preventDefault();
@@ -84,134 +165,74 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
     refetch();
   };
 
-  const handleListDelete = () => {
-    refetch();
-  };
+  const filterChips = (
+    <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+      {FILTERS.map((f) => (
+        <button
+          key={f.id}
+          type="button"
+          onClick={() => setFilter(f.id)}
+          className={`shrink-0 h-8 px-3 rounded-full wibe-small font-medium transition-all ${
+            filter === f.id
+              ? 'bg-primary text-white shadow-sm'
+              : 'bg-wibe-card border border-wibe text-wibe-secondary'
+          }`}
+        >
+          {f.label}
+        </button>
+      ))}
+    </div>
+  );
 
-  const FILTERS: { id: FilterType; label: string }[] = [
-    { id: 'all', label: 'همه' },
-    { id: 'public', label: 'عمومی' },
-    { id: 'private', label: 'خصوصی' },
-    { id: 'draft', label: 'پیش‌نویس' },
-  ];
+  const createButton = (
+    <button
+      type="button"
+      onClick={() => setShowCreate(true)}
+      className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-white wibe-caption font-semibold shrink-0 active:scale-[0.98] transition-transform"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      جدید
+    </button>
+  );
 
-  const renderListCard = (list: ListWithCategory, size: 'normal' | 'featured') => {
-    const likes = list.likeCount ?? list._count?.list_likes ?? 0;
-    const items = list.itemCount ?? list._count?.items ?? 0;
-    const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
-    const views = list.viewCount ?? 0;
-    const isViral = likes >= VIRAL_LIKE_THRESHOLD;
-    const isPopular = saves >= FEATURED_SAVE_THRESHOLD;
-    const badge = list.badge?.toString().toLowerCase() ?? null;
-    const isFeatured = list.isFeatured || badge === 'featured' || badge === 'trending';
-
-    const cardHeight = size === 'featured' ? 'h-56' : 'h-44';
-    const titleSize = size === 'featured' ? 'text-xl' : 'text-lg';
-
+  if (isLoading && lists.length === 0 && !hasInitial) {
     return (
-      <div key={list.id} className="group">
-        <Link href={`/user-lists/${list.id}`} className="block">
-          <div
-            className={`bg-wibe-card rounded-lg shadow-sm overflow-hidden border border-wibe active:scale-[0.99] transition-transform ${size === 'featured' ? 'ring-1 ring-primary/20' : ''}`}
-          >
-            <div className={`relative ${cardHeight} overflow-hidden bg-gray-200`}>
-              <ImageWithFallback
-                src={list.coverImage ?? ''}
-                alt={list.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                fallbackIcon={list.categories?.icon}
-                fallbackClassName="w-full h-full"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-              <div className="absolute top-3 right-3 flex flex-wrap gap-1.5 justify-end">
-                {list.categories && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-white/90 backdrop-blur-sm text-gray-800 text-xs rounded-lg font-medium">
-                    {list.categories.icon}
-                    <span className="hidden sm:inline">{list.categories.name}</span>
-                  </span>
-                )}
-                {list.isPublic ? (
-                  <span className="flex items-center gap-1 px-2.5 py-1 bg-green-500/90 backdrop-blur-sm text-white text-xs rounded-full font-medium">
-                    <Eye className="w-3 h-3" />
-                    عمومی
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 px-2.5 py-1 bg-gray-700/90 backdrop-blur-sm text-white text-xs rounded-full font-medium">
-                    <EyeOff className="w-3 h-3" />
-                    خصوصی
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={(e) => handleSettingsClick(e, list)}
-                className="absolute top-3 left-3 w-9 h-9 bg-wibe-card/95 backdrop-blur-sm rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow text-wibe-secondary hover:bg-primary hover:text-white"
-                aria-label="تنظیمات لیست"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-              <div className="absolute bottom-3 right-3 left-3">
-                <h3 className={`text-white font-bold ${titleSize} line-clamp-2 drop-shadow-lg`}>{list.title}</h3>
-              </div>
-              {isViral && (
-                <div className="absolute bottom-3 left-3">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-500/90 backdrop-blur-sm text-white text-xs rounded-lg font-medium animate-pulse">
-                    <Flame className="w-3.5 h-3.5" />
-                    وایرال
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="p-3.5">
-              <div className="flex items-center gap-3 wibe-caption text-wibe-secondary mb-2">
-                <span className="flex items-center gap-1 text-primary font-medium">
-                  <Bookmark className="w-3.5 h-3.5" />
-                  {saves}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Package className="w-3.5 h-3.5" />
-                  {items} آیتم
-                </span>
-                <span className="flex items-center gap-1">
-                  <EyeIcon className="w-3.5 h-3.5" />
-                  {views >= 1000 ? (views / 1000).toFixed(1) + 'k' : views}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {isViral && (
-                  <span className="px-2 py-0.5 bg-warning/10 text-warning rounded-md wibe-caption font-medium">وایرال</span>
-                )}
-                {isFeatured && (
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md wibe-caption font-medium">منتخب</span>
-                )}
-                {badge === 'trending' && (
-                  <span className="px-2 py-0.5 bg-success/10 text-success rounded-md wibe-caption font-medium">ترند</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </Link>
-      </div>
-    );
-  };
-
-  if (isLoading && lists.length === 0) {
-    return (
-      <div className="px-4 space-y-4">
-        <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="px-4 space-y-3">
+        <div className="flex gap-2 overflow-hidden">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-9 w-16 bg-gray-200 rounded-xl animate-pulse shrink-0" />
+            <div key={i} className="h-8 w-16 bg-gray-200 rounded-full animate-pulse shrink-0" />
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="rounded-2xl overflow-hidden animate-pulse">
-              <div className="h-44 bg-gray-200" />
-              <div className="p-3 space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-3/4" />
-                <div className="h-3 bg-gray-200 rounded w-1/2" />
-              </div>
-            </div>
+        <div className="flex gap-2.5 overflow-hidden">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 w-[140px] bg-gray-200 rounded-lg animate-pulse shrink-0" />
           ))}
+        </div>
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-[72px] bg-gray-200 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError && lists.length === 0) {
+    return (
+      <div className="px-4">
+        {filterChips}
+        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
+          <p className="wibe-small text-red-600">
+            {error instanceof Error ? error.message : 'خطا در بارگذاری لیست‌ها'}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 text-white wibe-small font-medium"
+          >
+            <RefreshCw className="w-4 h-4" />
+            تلاش مجدد
+          </button>
         </div>
       </div>
     );
@@ -228,66 +249,70 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
 
   if (lists.length === 0 && !isLoading) {
     return (
-      <div className="px-4">
-        <div className="flex gap-2 overflow-x-auto pb-3">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                filter === f.id ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+      <div className="px-4 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          {filterChips}
+          {filter !== 'draft' && createButton}
         </div>
-        <div className="text-center py-12">
-          <p className="text-gray-500">{emptyMessage}</p>
-          {filter !== 'draft' && (
-            <Link
-              href="/lists/new"
-              className="mt-4 inline-block px-6 py-2.5 bg-[#7C3AED] text-white rounded-2xl hover:bg-[#6D28D9] transition-colors font-medium text-sm"
-            >
-              ایجاد لیست جدید
-            </Link>
-          )}
-        </div>
+        <MyListsEmptyState
+          message={emptyMessage}
+          showCreate={filter !== 'draft'}
+          onCreate={() => setShowCreate(true)}
+        />
       </div>
     );
   }
 
   return (
     <>
-      <div className="px-4 space-y-4">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`shrink-0 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                filter === f.id ? 'bg-[#7C3AED] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+      <div className="px-4 space-y-3">
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">{filterChips}</div>
+          {createButton}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {lists.map((list, index) => (
-            <div key={list.id} className={index % 4 === 0 ? 'col-span-2' : ''}>
-              {renderListCard(list, index % 4 === 0 ? 'featured' : 'normal')}
+        {filter === 'all' && totalCount > 0 && (
+          <p className="wibe-caption text-wibe-secondary -mt-1">
+            {totalCount.toLocaleString('fa-IR')} لیست
+            {publicCount > 0 && ` · ${publicCount.toLocaleString('fa-IR')} عمومی`}
+            {isFetching && !isFetchingNextPage && (
+              <span className="text-primary mr-1"> · در حال بروزرسانی...</span>
+            )}
+          </p>
+        )}
+
+        {filter === 'all' && topLists.length > 0 && <MyListsTopCarousel lists={topLists} />}
+
+        {displayLists.length > 0 && (
+          <div>
+            {filter === 'all' && topLists.length > 0 && (
+              <h2 className="wibe-h3 mb-2.5">همه لیست‌ها</h2>
+            )}
+            <div className="space-y-2">
+              {displayLists.map((list) => (
+                <MyListCardCompact
+                  key={list.id}
+                  list={toCardData(list)}
+                  onSettingsClick={(e) => handleSettingsClick(e, list)}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {filter === 'all' && topLists.length > 0 && displayLists.length === 0 && (
+          <p className="wibe-caption text-wibe-secondary text-center py-2">
+            فقط {topLists.length.toLocaleString('fa-IR')} لیست برتر دارید
+          </p>
+        )}
       </div>
 
       {hasMore && (
         <button
+          type="button"
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          className="mx-4 mt-6 w-[calc(100%-2rem)] py-3 bg-gray-50 text-gray-700 rounded-2xl hover:bg-gray-100 transition-colors text-sm font-medium disabled:opacity-50"
+          className="mx-4 mt-4 w-[calc(100%-2rem)] py-3 rounded-lg border border-wibe bg-wibe-card wibe-small font-semibold text-primary disabled:opacity-50 active:scale-[0.99] transition-transform"
         >
           {isFetchingNextPage ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
         </button>
@@ -307,9 +332,17 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
             commentsEnabled: selectedList.commentsEnabled,
           }}
           onUpdate={handleSettingsClose}
-          onDelete={handleListDelete}
+          onDelete={() => refetch()}
         />
       )}
+
+      <CreateListForm
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSuccess={() => {
+          void refetch();
+        }}
+      />
     </>
   );
 }

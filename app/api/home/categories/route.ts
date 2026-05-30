@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { tryApiDbFallback } from '@/lib/api-db';
 
 /**
  * GET /api/home/categories
@@ -53,18 +54,11 @@ export async function GET() {
       data,
     });
   } catch (error: unknown) {
-    const err = error as Error & { code?: string };
-    console.warn('Home categories (DB unavailable?):', err?.message ?? error);
-    // وقتی دیتابیس در دسترس نیست (مثلاً dev بدون DB) با آرایهٔ خالی ۲۰۰ برگردان تا UI با fallback کار کند
-    const isDbUnavailable =
-      err?.code === 'P1001' ||
-      err?.message?.includes("Can't reach database") ||
-      err?.message?.includes('connection');
-    if (isDbUnavailable) {
-      return NextResponse.json({ success: true, data: [] });
-    }
+    const fb = tryApiDbFallback(error, [], 'Home categories');
+    if (fb) return fb;
+    console.error('Home categories error:', error);
     return NextResponse.json(
-      { success: false, error: err?.message ?? 'خطا' },
+      { success: false, error: (error as Error)?.message ?? 'خطا' },
       { status: 500 }
     );
   }

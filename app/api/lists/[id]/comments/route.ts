@@ -5,6 +5,11 @@ import { dbQuery } from '@/lib/db';
 import { normalizeCommentText, hashCommentContent, validateCommentContent } from '@/lib/comment-utils';
 import { checkCommentRateLimit, checkDuplicateComment, shouldShadowBan } from '@/lib/comment-antispan';
 import { checkDuplicateSuggestion } from '@/lib/suggestion-utils';
+import {
+  DEFAULT_LIST_COMMENT_MAX_LENGTH,
+  DEFAULT_SUGGESTION_MAX_LENGTH,
+  MIN_COMMENT_LENGTH,
+} from '@/lib/comment-limits';
 
 // GET /api/lists/[id]/comments - دریافت کامنت‌های یک لیست
 export async function GET(
@@ -176,10 +181,22 @@ export async function GET(
 
     const processedComments = comments.map(processOne);
 
+    let maxCommentLength = DEFAULT_LIST_COMMENT_MAX_LENGTH;
+    try {
+      const globalSettings = await dbQuery(() => prisma.comment_settings.findFirst());
+      if (globalSettings?.maxCommentLength != null) {
+        maxCommentLength = globalSettings.maxCommentLength;
+      }
+    } catch {
+      /* use default */
+    }
+
     return NextResponse.json({
       success: true,
       data: processedComments,
       commentsEnabled: list.commentsEnabled,
+      maxCommentLength,
+      suggestionMaxLength: DEFAULT_SUGGESTION_MAX_LENGTH,
     });
   } catch (error: any) {
     console.error('Error fetching list comments:', error);
@@ -289,18 +306,29 @@ export async function POST(
     }
 
     // Check max comment length
-    const maxCommentLength = globalSettings?.maxCommentLength ?? null;
-    if (maxCommentLength !== null && maxCommentLength !== undefined) {
-      const contentLength = content.trim().length;
-      if (contentLength > maxCommentLength) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'این متن کمی بلنده، کوتاه‌تر بنویس ✨',
-          },
-          { status: 400 }
-        );
-      }
+    const maxCommentLength = globalSettings?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
+    const maxLenForType =
+      commentType === 'suggestion' ? DEFAULT_SUGGESTION_MAX_LENGTH : maxCommentLength;
+
+    const contentLength = content.trim().length;
+    if (contentLength < MIN_COMMENT_LENGTH) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `حداقل ${MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر بنویس`,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (contentLength > maxLenForType) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'این متن کمی بلنده، کوتاه‌تر بنویس ✨',
+        },
+        { status: 400 }
+      );
     }
 
     // Rate limit: 3/min, 20/day
@@ -333,7 +361,7 @@ export async function POST(
       globalSettings?.rateLimitMinutes ??
       5;
 
-    if (rateLimitMinutes > 0) {
+    if (process.env.NODE_ENV !== 'development' && rateLimitMinutes > 0) {
       const rateLimitMs = rateLimitMinutes * 60 * 1000;
       const timeLimit = new Date(Date.now() - rateLimitMs);
 

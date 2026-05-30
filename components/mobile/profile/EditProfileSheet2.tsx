@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import ConfirmBottomSheet from '@/components/mobile/shared/ConfirmBottomSheet';
 import Toast from '@/components/shared/Toast';
 import AvatarSelectionSheet from './AvatarSelectionSheet';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Camera, Check, Loader2, XCircle } from 'lucide-react';
 import { VIBE_AVATARS, isUserEliteLevel } from '@/lib/vibe-avatars';
 import type { CuratorLevelKey } from '@/lib/curator';
 import { getLevelConfig } from '@/lib/curator';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import EliteAvatarFrame from '@/components/shared/EliteAvatarFrame';
+import { normalizeUsername, sanitizeUsernameInput, validateUsernameFormat } from '@/lib/username';
 
 export interface EditProfileUser {
   id: string;
@@ -35,6 +37,147 @@ interface EditProfileSheet2Props {
 }
 
 const BIO_MAX = 160;
+const USERNAME_CHECK_DEBOUNCE_MS = 450;
+
+type UsernameCheckStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
+const inputClass =
+  'w-full h-11 px-3 rounded-xl border border-wibe bg-white wibe-small text-foreground placeholder:text-wibe-secondary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors';
+
+function FieldLabel({
+  htmlFor,
+  children,
+  hint,
+  required,
+}: {
+  htmlFor?: string;
+  children: React.ReactNode;
+  hint?: string;
+  required?: boolean;
+}) {
+  return (
+    <label htmlFor={htmlFor} className="mb-1.5 block text-right">
+      <span className="wibe-caption font-medium text-foreground">
+        {children}
+        {required && <span className="text-red-500 ms-0.5">*</span>}
+      </span>
+      {hint && <span className="mt-0.5 block wibe-caption text-wibe-secondary">{hint}</span>}
+    </label>
+  );
+}
+
+function ToggleRow({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-3">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        dir="ltr"
+        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+          checked ? 'bg-primary' : 'bg-gray-200'
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 start-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+            checked ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
+      </button>
+      <div className="min-w-0 flex-1 text-right">
+        <span className="block wibe-small font-medium text-foreground">{label}</span>
+        {description && (
+          <span className="mt-0.5 block wibe-caption leading-relaxed text-wibe-secondary">
+            {description}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AvatarPreview({
+  size = 72,
+  avatarType,
+  currentVibeAvatar,
+  imageUrl,
+  displayName,
+  email,
+  avatarStatus,
+  isElite,
+}: {
+  size?: number;
+  avatarType: 'DEFAULT' | 'UPLOADED';
+  currentVibeAvatar?: (typeof VIBE_AVATARS)[number];
+  imageUrl: string | null;
+  displayName: string;
+  email: string;
+  avatarStatus: 'APPROVED' | 'PENDING' | 'REJECTED' | null;
+  isElite: boolean;
+}) {
+  const inner = (
+    <div className="relative">
+      <div
+        className="relative overflow-hidden rounded-full border-2 border-wibe bg-wibe-card shadow-sm"
+        style={{ width: size, height: size }}
+      >
+        {avatarType === 'DEFAULT' && currentVibeAvatar ? (
+          <div
+            className={`flex h-full w-full items-center justify-center text-3xl ${currentVibeAvatar.bgClass}`}
+          >
+            {currentVibeAvatar.emoji}
+          </div>
+        ) : imageUrl ? (
+          <ImageWithFallback
+            src={imageUrl}
+            alt="آواتار"
+            className="h-full w-full object-cover"
+            fallbackIcon={(displayName?.[0] || '?').toUpperCase()}
+            fallbackClassName="flex h-full w-full items-center justify-center bg-primary/10 text-lg font-bold text-primary"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-primary/10 text-xl font-bold text-primary">
+            {(displayName?.[0] || email?.[0] || '?').toUpperCase()}
+          </div>
+        )}
+      </div>
+      {avatarType === 'UPLOADED' && avatarStatus === 'PENDING' && (
+        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+          در انتظار تأیید
+        </span>
+      )}
+    </div>
+  );
+
+  if (isElite) {
+    return <EliteAvatarFrame size={size + 6}>{inner}</EliteAvatarFrame>;
+  }
+  return inner;
+}
+
+function buildSnapshot(user: EditProfileUser) {
+  return {
+    displayName: user.name ?? '',
+    username: user.username ?? '',
+    bio: (user.bio ?? '').slice(0, BIO_MAX),
+    showBadge: user.showBadge ?? true,
+    allowCommentNotifications: user.allowCommentNotifications ?? true,
+    avatarType: user.avatarType ?? 'DEFAULT',
+    avatarId: user.avatarId ?? null,
+  };
+}
 
 export default function EditProfileSheet2({
   isOpen,
@@ -43,6 +186,8 @@ export default function EditProfileSheet2({
   userLevel,
   onUpdate,
 }: EditProfileSheet2Props) {
+  const initialRef = useRef(buildSnapshot(user));
+
   const [displayName, setDisplayName] = useState(user.name ?? '');
   const [username, setUsername] = useState(user.username ?? '');
   const [bio, setBio] = useState(user.bio ?? '');
@@ -58,33 +203,148 @@ export default function EditProfileSheet2({
   const [imageUrl, setImageUrl] = useState<string | null>(user.image ?? null);
 
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [usernameStatus, setUsernameStatus] = useState<UsernameCheckStatus>('idle');
+  const [usernameHint, setUsernameHint] = useState('');
   const prevOpenRef = useRef(false);
+  const usernameCheckSeq = useRef(0);
 
-  // فقط موقع باز شدن شیت از user پر کنیم تا انتخاب آواتار با رندر والد پاک نشود
   useEffect(() => {
     const justOpened = isOpen && !prevOpenRef.current;
     prevOpenRef.current = isOpen;
     if (justOpened) {
-      setDisplayName(user.name ?? '');
-      setUsername(user.username ?? '');
-      setBio((user.bio ?? '').slice(0, BIO_MAX));
-      setShowBadge(user.showBadge ?? true);
-      setAllowCommentNotifications(user.allowCommentNotifications ?? true);
-      setAvatarType(user.avatarType ?? 'DEFAULT');
-      setAvatarId(user.avatarId ?? null);
+      const snapshot = buildSnapshot(user);
+      initialRef.current = snapshot;
+      setDisplayName(snapshot.displayName);
+      setUsername(snapshot.username);
+      setBio(snapshot.bio);
+      setShowBadge(snapshot.showBadge);
+      setAllowCommentNotifications(snapshot.allowCommentNotifications);
+      setAvatarType(snapshot.avatarType);
+      setAvatarId(snapshot.avatarId);
       setAvatarStatus(user.avatarStatus ?? null);
       setImageUrl(user.image ?? null);
       setError('');
+      setUsernameStatus('idle');
+      setUsernameHint('');
+      setShowDiscardConfirm(false);
     }
   }, [isOpen, user]);
+
+  useEffect(() => {
+    const trimmed = normalizeUsername(username);
+    const initial = normalizeUsername(initialRef.current.username);
+
+    if (!trimmed) {
+      setUsernameStatus('idle');
+      setUsernameHint('');
+      return;
+    }
+
+    if (trimmed === initial) {
+      setUsernameStatus('idle');
+      setUsernameHint('');
+      return;
+    }
+
+    const format = validateUsernameFormat(trimmed);
+    if (!format.valid) {
+      setUsernameStatus('invalid');
+      setUsernameHint(format.error ?? 'نام کاربری نامعتبر است');
+      return;
+    }
+
+    setUsernameStatus('checking');
+    setUsernameHint('در حال بررسی…');
+
+    const seq = ++usernameCheckSeq.current;
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/user/username/check?username=${encodeURIComponent(trimmed)}`
+        );
+        const data = await res.json();
+
+        if (seq !== usernameCheckSeq.current) return;
+
+        if (!data.success) {
+          setUsernameStatus('idle');
+          setUsernameHint('');
+          return;
+        }
+
+        if (data.data.available) {
+          setUsernameStatus('available');
+          setUsernameHint('این نام کاربری در دسترس است');
+        } else if (data.data.reason === 'taken') {
+          setUsernameStatus('taken');
+          setUsernameHint('این نام کاربری قبلاً استفاده شده');
+        } else if (data.data.reason === 'invalid') {
+          setUsernameStatus('invalid');
+          setUsernameHint(data.data.error ?? 'نام کاربری نامعتبر است');
+        } else {
+          setUsernameStatus('idle');
+          setUsernameHint('');
+        }
+      } catch {
+        if (seq !== usernameCheckSeq.current) return;
+        setUsernameStatus('idle');
+        setUsernameHint('');
+      }
+    }, USERNAME_CHECK_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [username]);
+
+  const isDirty = useMemo(() => {
+    const initial = initialRef.current;
+    return (
+      displayName.trim() !== initial.displayName.trim() ||
+      username.trim() !== initial.username.trim() ||
+      bio !== initial.bio ||
+      showBadge !== initial.showBadge ||
+      allowCommentNotifications !== initial.allowCommentNotifications ||
+      avatarType !== initial.avatarType ||
+      avatarId !== initial.avatarId
+    );
+  }, [
+    displayName,
+    username,
+    bio,
+    showBadge,
+    allowCommentNotifications,
+    avatarType,
+    avatarId,
+  ]);
+
+  const requestClose = useCallback(() => {
+    if (isDirty && !isSaving) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    onClose();
+  }, [isDirty, isSaving, onClose]);
+
+  const confirmDiscard = useCallback(() => {
+    setShowDiscardConfirm(false);
+    onClose();
+  }, [onClose]);
 
   const handleSave = async () => {
     setError('');
     if (!displayName.trim()) {
       setError('نام نمایشی الزامی است');
+      return;
+    }
+    if (usernameStatus === 'taken' || usernameStatus === 'invalid') {
+      setError(usernameHint || 'نام کاربری نامعتبر است');
+      return;
+    }
+    if (usernameStatus === 'checking') {
+      setError('لطفاً تا پایان بررسی نام کاربری صبر کنید');
       return;
     }
     setIsSaving(true);
@@ -99,7 +359,7 @@ export default function EditProfileSheet2({
           showBadge,
           allowCommentNotifications,
           avatarType: avatarType || 'DEFAULT',
-          avatarId: (avatarType === 'DEFAULT' && avatarId) ? String(avatarId) : null,
+          avatarId: avatarType === 'DEFAULT' && avatarId ? String(avatarId) : null,
         }),
       });
       let data: { success?: boolean; error?: string } = {};
@@ -113,6 +373,16 @@ export default function EditProfileSheet2({
         setError(data.error || 'خطا در ذخیره');
         return;
       }
+      initialRef.current = buildSnapshot({
+        ...user,
+        name: displayName.trim(),
+        username: username.trim() || null,
+        bio: bio || null,
+        showBadge,
+        allowCommentNotifications,
+        avatarType,
+        avatarId,
+      });
       onClose();
       onUpdate();
       if (typeof window !== 'undefined') window.dispatchEvent(new Event('profile-updated'));
@@ -164,196 +434,262 @@ export default function EditProfileSheet2({
   const isTrustedOrAbove =
     ['TRUSTED_CURATOR', 'INFLUENTIAL_CURATOR', 'ELITE_CURATOR', 'VIBE_LEGEND'].indexOf(levelKey) >= 0;
 
+  const bioRemaining = BIO_MAX - bio.length;
+  const usernameBlockingSave =
+    usernameStatus === 'taken' || usernameStatus === 'invalid' || usernameStatus === 'checking';
+  const canSave =
+    Boolean(displayName.trim()) && isDirty && !isSaving && !usernameBlockingSave;
+
+  const usernameInputBorder =
+    usernameStatus === 'taken' || usernameStatus === 'invalid'
+      ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+      : usernameStatus === 'available'
+        ? 'border-emerald-300 focus:border-emerald-400 focus:ring-emerald-200'
+        : 'border-wibe focus:border-primary focus:ring-primary/20';
+
   return (
     <>
       <BottomSheet
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={requestClose}
         title="ویرایش پروفایل"
-        maxHeight="90vh"
+        subtitle={isDirty ? 'تغییرات ذخیره نشده' : 'نام، آواتار و تنظیمات نمایش'}
+        maxHeight="92vh"
+        escapeToClose={!showDiscardConfirm}
+        closeOnBackdrop={!showDiscardConfirm}
       >
-        <div className="flex flex-col min-h-0 flex-1 bg-[#F8F7FC]">
-          <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-4">
-            {/* 1. Avatar */}
-            <section className="pt-4 pb-6">
-              <div className="rounded-[20px] bg-white p-6 shadow-sm flex flex-col items-center">
-                {isElite ? (
-                  <EliteAvatarFrame size={96} className="mb-2">
-                    <div className="relative">
-                      <div
-                        className={`absolute -inset-1.5 rounded-full blur-md ${levelConfig.glowClass} opacity-60`}
-                      />
-                      <div className="relative w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
-                        {avatarType === 'DEFAULT' && currentVibeAvatar ? (
-                          <div
-                            className={`w-full h-full flex items-center justify-center text-4xl ${currentVibeAvatar.bgClass}`}
-                          >
-                            {currentVibeAvatar.emoji}
-                          </div>
-                        ) : imageUrl ? (
-                          <ImageWithFallback
-                            src={imageUrl}
-                            alt="آواتار"
-                            className="w-full h-full object-cover"
-                            fallbackIcon={(displayName?.[0] || '?').toUpperCase()}
-                            fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-2xl font-bold flex items-center justify-center"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-2xl font-bold">
-                            {(displayName?.[0] || user.email?.[0] || '?').toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      {avatarType === 'UPLOADED' && avatarStatus === 'PENDING' && (
-                        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">
-                          در انتظار بررسی
-                        </span>
-                      )}
-                    </div>
-                  </EliteAvatarFrame>
-                ) : (
-                <div className="relative">
-                  <div
-                    className={`absolute -inset-1.5 rounded-full blur-md ${levelConfig.glowClass} opacity-60`}
-                  />
-                  <div className="relative w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
-                    {avatarType === 'DEFAULT' && currentVibeAvatar ? (
-                      <div
-                        className={`w-full h-full flex items-center justify-center text-4xl ${currentVibeAvatar.bgClass}`}
-                      >
-                        {currentVibeAvatar.emoji}
-                      </div>
-                    ) : imageUrl ? (
-                      <ImageWithFallback
-                        src={imageUrl}
-                        alt="آواتار"
-                        className="w-full h-full object-cover"
-                        fallbackIcon={(displayName?.[0] || '?').toUpperCase()}
-                        fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-2xl font-bold flex items-center justify-center"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-2xl font-bold">
-                        {(displayName?.[0] || user.email?.[0] || '?').toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  {avatarType === 'UPLOADED' && avatarStatus === 'PENDING' && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">
-                      در انتظار بررسی
-                    </span>
-                  )}
-                </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setShowAvatarSheet(true)}
-                  className="mt-4 px-5 py-2.5 rounded-[20px] bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white text-sm font-medium shadow-md hover:shadow-lg transition-all"
-                >
-                  تغییر آواتار
-                </button>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2.5 pb-4">
+            {error && (
+              <div className="mb-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 wibe-caption text-red-600">
+                {error}
               </div>
+            )}
+
+            {/* Avatar — compact hero */}
+            <section className="mb-4 flex flex-col items-center rounded-2xl bg-wibe-surface/70 px-3 py-4">
+              <button
+                type="button"
+                onClick={() => setShowAvatarSheet(true)}
+                className="group relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label="تغییر آواتار"
+              >
+                <AvatarPreview
+                  avatarType={avatarType}
+                  currentVibeAvatar={currentVibeAvatar}
+                  imageUrl={imageUrl}
+                  displayName={displayName}
+                  email={user.email}
+                  avatarStatus={avatarStatus}
+                  isElite={isElite}
+                />
+                <span className="absolute -bottom-0.5 -end-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-wibe-card bg-primary text-white shadow-md transition-transform group-active:scale-95">
+                  <Camera className="h-3.5 w-3.5" />
+                </span>
+              </button>
+
+              <p className="mt-3 wibe-small font-medium text-foreground">آواتار</p>
+              <p className="mt-0.5 wibe-caption text-wibe-secondary">
+                {avatarType === 'UPLOADED' && avatarStatus === 'PENDING'
+                  ? 'عکس در انتظار تأیید است'
+                  : 'از مجموعه vibe یا عکس شخصی'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowAvatarSheet(true)}
+                className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-xl border border-primary/25 bg-primary/5 px-4 wibe-caption font-semibold text-primary transition-transform active:scale-[0.98]"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                تغییر آواتار
+              </button>
             </section>
 
-            {/* 2. Basic Info */}
-            <section className="pb-6">
-              <div className="rounded-[20px] bg-white p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700">اطلاعات پایه</h3>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">نام نمایشی (اجباری)</label>
+            {/* Basic info */}
+            <section className="space-y-3.5">
+              <h3 className="wibe-caption font-semibold uppercase tracking-wide text-wibe-secondary">
+                اطلاعات پایه
+              </h3>
+
+              <div>
+                <FieldLabel htmlFor="edit-display-name" required>
+                  نام نمایشی
+                </FieldLabel>
+                <input
+                  id="edit-display-name"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="نام شما"
+                  autoComplete="name"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <FieldLabel htmlFor="edit-username" hint="فقط حروف انگلیسی، عدد و _">
+                  نام کاربری
+                </FieldLabel>
+                <div className="relative">
+                  <span
+                    className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 wibe-caption text-wibe-secondary"
+                    aria-hidden
+                  >
+                    @
+                  </span>
                   <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="نام شما"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">نام کاربری (یونیک، انگلیسی)</label>
-                  <input
+                    id="edit-username"
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                    onChange={(e) => setUsername(sanitizeUsernameInput(e.target.value))}
                     placeholder="username"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition font-mono text-sm"
+                    dir="ltr"
+                    autoComplete="username"
+                    aria-invalid={usernameStatus === 'taken' || usernameStatus === 'invalid'}
+                    aria-describedby={
+                      usernameHint ? 'edit-username-hint' : undefined
+                    }
+                    className={`${inputClass} ps-7 pe-9 font-mono text-left ${usernameInputBorder}`}
                   />
+                  {usernameStatus === 'checking' && (
+                    <Loader2
+                      className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-wibe-secondary"
+                      aria-hidden
+                    />
+                  )}
+                  {usernameStatus === 'available' && (
+                    <Check
+                      className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600"
+                      aria-hidden
+                    />
+                  )}
+                  {(usernameStatus === 'taken' || usernameStatus === 'invalid') && (
+                    <XCircle
+                      className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-500"
+                      aria-hidden
+                    />
+                  )}
                 </div>
-                {isTrustedOrAbove && (
-                  <p className="flex items-center gap-2 text-sm text-[#7C3AED]">
-                    <Sparkles className="w-4 h-4" />
-                    Trusted Curator 🟣
+                {usernameHint && (
+                  <p
+                    id="edit-username-hint"
+                    className={`mt-1.5 text-right wibe-caption ${
+                      usernameStatus === 'available'
+                        ? 'text-emerald-600'
+                        : usernameStatus === 'checking'
+                          ? 'text-wibe-secondary'
+                          : usernameStatus === 'taken' || usernameStatus === 'invalid'
+                            ? 'text-red-600'
+                            : 'text-wibe-secondary'
+                    }`}
+                  >
+                    {usernameHint}
                   </p>
                 )}
               </div>
+
+              {isTrustedOrAbove && (
+                <div className="flex justify-end">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 wibe-caption font-medium ${levelConfig.bgClass}`}
+                  >
+                    <span aria-hidden>{levelConfig.icon}</span>
+                    {levelConfig.short}
+                  </span>
+                </div>
+              )}
             </section>
 
-            {/* 3. Bio */}
-            <section className="pb-6">
-              <div className="rounded-[20px] bg-white p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">بیو</h3>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX))}
-                  placeholder="چند خط درباره vibe خودت بنویس…"
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#7C3AED]/30 focus:border-[#7C3AED] outline-none transition resize-none"
+            <div className="my-4 h-px bg-wibe" aria-hidden />
+
+            {/* Bio */}
+            <section>
+              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                <span
+                  className={`wibe-caption tabular-nums ${
+                    bioRemaining < 20 ? 'text-amber-600' : 'text-wibe-secondary'
+                  }`}
+                >
+                  {bio.length.toLocaleString('fa-IR')}/{BIO_MAX.toLocaleString('fa-IR')}
+                </span>
+                <h3 className="wibe-small font-semibold text-foreground">بیو</h3>
+              </div>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX))}
+                placeholder="چند خط درباره vibe خودت بنویس…"
+                rows={3}
+                className="w-full min-h-[88px] resize-none rounded-xl border border-wibe bg-white px-3 py-2.5 wibe-small text-foreground placeholder:text-wibe-secondary/60 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <p className="mt-1.5 text-right wibe-caption text-wibe-secondary">
+                در پروفایل عمومی نمایش داده می‌شود
+              </p>
+            </section>
+
+            <div className="my-4 h-px bg-wibe" aria-hidden />
+
+            {/* Settings */}
+            <section>
+              <h3 className="mb-1 wibe-caption font-semibold uppercase tracking-wide text-wibe-secondary">
+                تنظیمات
+              </h3>
+              <div className="divide-y divide-wibe rounded-2xl border border-wibe bg-wibe-card px-3">
+                <ToggleRow
+                  label="نمایش مدال"
+                  description="نشان سطح کیوریتور در پروفایل"
+                  checked={showBadge}
+                  onChange={setShowBadge}
                 />
-                <p className="text-xs text-gray-500 mt-1.5">
-                  {bio.length}/{BIO_MAX} — این متن در پروفایل عمومی شما نمایش داده می‌شود
-                </p>
+                <ToggleRow
+                  label="اعلان کامنت"
+                  description="وقتی روی لیستت کامنت می‌گذارند"
+                  checked={allowCommentNotifications}
+                  onChange={setAllowCommentNotifications}
+                />
               </div>
             </section>
-
-            {/* 4. Privacy */}
-            <section className="pb-6">
-              <div className="rounded-[20px] bg-white p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700">حریم خصوصی</h3>
-                <label className="flex items-center justify-between gap-3 cursor-pointer">
-                  <span className="text-sm text-gray-700">نمایش Badge</span>
-                  <input
-                    type="checkbox"
-                    checked={showBadge}
-                    onChange={(e) => setShowBadge(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-[#7C3AED] focus:ring-[#7C3AED]"
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-3 cursor-pointer">
-                  <span className="text-sm text-gray-700">دریافت اعلان کامنت</span>
-                  <input
-                    type="checkbox"
-                    checked={allowCommentNotifications}
-                    onChange={(e) => setAllowCommentNotifications(e.target.checked)}
-                    className="w-5 h-5 rounded border-gray-300 text-[#7C3AED] focus:ring-[#7C3AED]"
-                  />
-                </label>
-              </div>
-            </section>
-
-            {error && (
-              <div className="mb-4 p-4 rounded-xl bg-red-50 text-red-600 text-sm">{error}</div>
-            )}
           </div>
 
-          {/* 5. Fixed Save Button */}
-          <div className="flex-shrink-0 p-4 pt-3 bg-[#F8F7FC] border-t border-gray-200/80">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="w-full py-3.5 rounded-[20px] bg-gradient-to-r from-[#7C3AED] to-[#9333EA] text-white font-medium shadow-lg disabled:opacity-70 flex items-center justify-center gap-2"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  در حال ذخیره...
-                </>
-              ) : (
-                'ذخیره تغییرات'
-              )}
-            </button>
+          {/* Sticky footer */}
+          <div className="flex-shrink-0 border-t border-wibe bg-wibe-card px-2.5 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.04)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={requestClose}
+                disabled={isSaving}
+                className="h-11 flex-1 rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-gray-50 active:scale-[0.99] disabled:opacity-50"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!canSave}
+                className="flex h-11 flex-[1.4] items-center justify-center gap-2 rounded-xl bg-primary wibe-small font-semibold text-white transition-transform active:scale-[0.99] disabled:opacity-45"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    در حال ذخیره...
+                  </>
+                ) : (
+                  'ذخیره تغییرات'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </BottomSheet>
+
+      <ConfirmBottomSheet
+        isOpen={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        onConfirm={confirmDiscard}
+        title="تغییرات ذخیره نشده"
+        message="اگر الان ببندی، تغییراتی که دادی از بین می‌ره."
+        confirmLabel="بستن بدون ذخیره"
+        cancelLabel="ادامه ویرایش"
+        variant="danger"
+      />
 
       <AvatarSelectionSheet
         isOpen={showAvatarSheet}
@@ -368,11 +704,7 @@ export default function EditProfileSheet2({
       />
 
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
     </>
   );

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
 const CACHE_SECONDS = 900; // 15 min
 const LIMIT = 6;
@@ -10,10 +11,16 @@ async function getAlsoLikedForItem(currentItemId: string) {
   return dbQuery(async () => {
     const currentItem = await prisma.items.findUnique({
       where: { id: currentItemId },
-      select: { id: true, listId: true },
+      select: {
+        id: true,
+        listId: true,
+        lists: { select: { categoryId: true } },
+      },
     });
 
     if (!currentItem) return [];
+
+    const categoryId = currentItem.lists?.categoryId ?? null;
 
     const [userIdsLiked, userIdsSavedList] = await Promise.all([
       prisma.item_votes.findMany({
@@ -55,7 +62,10 @@ async function getAlsoLikedForItem(currentItemId: string) {
       where: {
         listId: { in: listIdsWithOverlap },
         id: { not: currentItemId },
-        lists: { isActive: true },
+        lists: {
+          isActive: true,
+          ...(categoryId ? { categoryId } : {}),
+        },
         OR: [
           { item_moderation: null },
           { item_moderation: { status: { notIn: ['HIDDEN', 'UNDER_REVIEW'] } } },
@@ -67,6 +77,7 @@ async function getAlsoLikedForItem(currentItemId: string) {
         imageUrl: true,
         rating: true,
         listId: true,
+        lists: { select: { categories: { select: { slug: true } } } },
       },
       take: 30,
     });
@@ -74,7 +85,12 @@ async function getAlsoLikedForItem(currentItemId: string) {
     const withCount = items.map((i) => ({
       id: i.id,
       title: i.title,
-      image: i.imageUrl,
+      image: resolveItemDisplayImage({
+        id: i.id,
+        imageUrl: i.imageUrl,
+        title: i.title,
+        categorySlug: i.lists?.categories?.slug ?? null,
+      }),
       rating: i.rating,
       commonUsersCount: listIdToCommonCount[i.listId] ?? 0,
     }));

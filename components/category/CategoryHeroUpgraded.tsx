@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
-import { getDisplayImageUrl } from '@/lib/display-image';
+import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
 
 interface CategoryHeroUpgradedProps {
   category: CategoryInfo;
@@ -20,12 +20,13 @@ export default function CategoryHeroUpgraded({
   return (
     <section className="relative -mx-4 -mt-4 mb-6">
       <div className="relative aspect-[4/3] min-h-[220px] overflow-hidden">
-        {category.heroImage ? (
+        {category.heroImage || category.slug ? (
           <>
             <ImageWithFallback
-              src={getDisplayImageUrl(category.heroImage)}
+              src={getCategoryHeroDisplayUrl(category.heroImage, category.slug)}
               alt={category.name}
               className="absolute inset-0 w-full h-full object-cover"
+              categorySlug={category.slug}
               priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />

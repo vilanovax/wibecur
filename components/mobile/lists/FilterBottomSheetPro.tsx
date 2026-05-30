@@ -130,7 +130,7 @@ export default function FilterBottomSheetPro({
     (localState.sortBy !== 'newest' ? 1 : 0) +
     localState.vibes.size +
     (localState.creatorType !== 'all' ? 1 : 0) +
-    (localState.minItemCount > 5 ? 1 : 0) +
+    (localState.minItemCount > 0 ? 1 : 0) +
     (localState.minRating > 0 ? 1 : 0);
 
   const hasChanges = JSON.stringify(localState) !== JSON.stringify(filterState);
@@ -164,7 +164,7 @@ export default function FilterBottomSheetPro({
       sortBy: 'newest',
       vibes: new Set(),
       creatorType: 'all',
-      minItemCount: 5,
+      minItemCount: 0,
       minRating: 0,
     });
   };
@@ -362,7 +362,7 @@ export default function FilterBottomSheetPro({
               </div>
               <input
                 type="range"
-                min={5}
+                min={0}
                 max={100}
                 value={localState.minItemCount}
                 onChange={(e) =>
@@ -371,8 +371,8 @@ export default function FilterBottomSheetPro({
                 className="w-full h-2 bg-gray-200 rounded-full accent-primary"
               />
               <div className="flex justify-between text-xs text-gray-400">
-                <span>5</span>
-                <span>100</span>
+                <span>۰</span>
+                <span>۱۰۰</span>
               </div>
             </div>
           </AccordionSection>

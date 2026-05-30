@@ -16,6 +16,9 @@ export interface ListCardProps {
   variant?: 'default' | 'compact';
   slug?: string;
   priority?: boolean;
+  categorySlug?: string | null;
+  listSlug?: string | null;
+  listTitle?: string | null;
 }
 
 const badgeStyles: Record<NonNullable<ListCardProps['badge']>, string> = {
@@ -41,8 +44,12 @@ export default function ListCard({
   variant = 'default',
   slug,
   priority,
+  categorySlug,
+  listSlug,
+  listTitle,
 }: ListCardProps) {
   const listHref = `/lists/${slug ?? id}`;
+  const resolvedListSlug = listSlug ?? slug;
 
   if (variant === 'compact') {
     return (
@@ -56,6 +63,9 @@ export default function ListCard({
               fallbackIcon="📋"
               fallbackClassName="w-full h-full bg-gray-200"
               priority={priority}
+              categorySlug={categorySlug}
+              listSlug={resolvedListSlug}
+              listTitle={listTitle ?? title}
             />
           </div>
           <div className="flex-1 flex flex-col justify-center p-3 min-w-0">
@@ -81,6 +91,9 @@ export default function ListCard({
             fallbackIcon="📋"
             fallbackClassName="w-full h-full bg-gray-200"
             priority={priority}
+            categorySlug={categorySlug}
+            listSlug={resolvedListSlug}
+            listTitle={listTitle ?? title}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           {badge && (

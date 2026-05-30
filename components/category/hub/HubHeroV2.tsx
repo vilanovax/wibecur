@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { getDisplayImageUrl } from '@/lib/display-image';
-import { getRandomPlaceholderUrl } from '@/lib/placeholder-images';
+import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
 
 interface HubHeroV2Props {
@@ -16,9 +15,7 @@ export default function HubHeroV2({
   category,
   metrics,
 }: HubHeroV2Props) {
-  const heroImage = category.heroImage
-    ? getDisplayImageUrl(category.heroImage)
-    : getRandomPlaceholderUrl(`hero-${category.slug}`, 'cover');
+  const heroImage = getCategoryHeroDisplayUrl(category.heroImage, category.slug);
 
   return (
     <section className="relative mx-4 mt-4 mb-2 overflow-hidden rounded-lg">

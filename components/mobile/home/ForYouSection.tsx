@@ -70,8 +70,11 @@ export default function ForYouSection() {
                     src={list.coverImage}
                     alt={list.title}
                     className="w-full h-full object-cover"
-                    fallbackIcon="📋"
+                    fallbackIcon={list.categories?.icon ?? '📋'}
                     fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                    categorySlug={list.categories?.slug}
+                    listSlug={list.slug}
+                    listTitle={list.title}
                   />
                 </div>
                 <div className="flex-1 py-3 pr-3 pl-2 min-w-0 flex flex-col justify-center">

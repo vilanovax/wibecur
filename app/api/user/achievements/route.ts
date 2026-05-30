@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
 import { ensureAchievements, checkAchievements } from '@/lib/achievements';
+import { tryApiDbFallback } from '@/lib/api-db';
 
-/** GET /api/user/achievements — لیست دستاوردها + اجرای چک (برگرداندن newlyUnlocked برای toast) */
+const EMPTY = { achievements: [], newlyUnlocked: [] };
+
+/** GET /api/user/achievements */
 export async function GET() {
   try {
     const session = await auth();
@@ -11,28 +15,32 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    await ensureAchievements(prisma);
-    const { newlyUnlocked } = await checkAchievements(prisma, session.user.id);
+    const userId = session.user.id;
 
-    const [achievements, unlocked] = await Promise.all([
-      prisma.achievements.findMany({
-        orderBy: [{ category: 'asc' }, { tier: 'asc' }],
-        select: {
-          id: true,
-          code: true,
-          title: true,
-          description: true,
-          category: true,
-          tier: true,
-          icon: true,
-          isSecret: true,
-        },
-      }),
-      prisma.user_achievements.findMany({
-        where: { userId: session.user.id },
-        select: { achievementId: true, unlockedAt: true },
-      }),
-    ]);
+    await dbQuery(() => ensureAchievements(prisma));
+    const { newlyUnlocked } = await dbQuery(() => checkAchievements(prisma, userId));
+
+    const [achievements, unlocked] = await dbQuery(() =>
+      Promise.all([
+        prisma.achievements.findMany({
+          orderBy: [{ category: 'asc' }, { tier: 'asc' }],
+          select: {
+            id: true,
+            code: true,
+            title: true,
+            description: true,
+            category: true,
+            tier: true,
+            icon: true,
+            isSecret: true,
+          },
+        }),
+        prisma.user_achievements.findMany({
+          where: { userId },
+          select: { achievementId: true, unlockedAt: true },
+        }),
+      ])
+    );
 
     const unlockedSet = new Set(unlocked.map((u) => u.achievementId));
     const unlockedAtMap = new Map(unlocked.map((u) => [u.achievementId, u.unlockedAt]));
@@ -55,10 +63,9 @@ export async function GET() {
       data: { achievements: list, newlyUnlocked },
     });
   } catch (error: unknown) {
+    const fb = tryApiDbFallback(error, EMPTY, 'User achievements');
+    if (fb) return fb;
     console.error('User achievements error:', error);
-    return NextResponse.json({
-      success: true,
-      data: { achievements: [], newlyUnlocked: [] },
-    });
+    return NextResponse.json({ success: true, data: EMPTY });
   }
 }

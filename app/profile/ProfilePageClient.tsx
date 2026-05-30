@@ -1,78 +1,122 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileStats from '@/components/profile/ProfileStats';
-import ProfileRankCard from '@/components/profile/ProfileRankCard';
-import ProfileTopLists from '@/components/profile/ProfileTopLists';
-import ProfileLevel from '@/components/profile/ProfileLevel';
-import ProfileAchievements from '@/components/profile/ProfileAchievements';
 import ProfileTabs from '@/components/profile/ProfileTabs';
 import type { ProfileUser } from '@/components/profile/types';
+import type { ListWithCategory } from '@/components/mobile/profile/tabs/MyListsTab';
+import { LISTS_UPDATED_EVENT, PROFILE_UPDATED_EVENT } from '@/lib/profile-events';
+import type { ProfileActivitySSR, ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
 
 interface ProfilePageClientProps {
   userId: string;
+  initialUser?: ProfileUser | null;
+  initialLists?: ListWithCategory[];
+  initialListsTotal?: number;
+  initialBookmarks?: ProfileBookmarkSSR[];
+  initialBookmarksTotal?: number;
+  initialActivities?: ProfileActivitySSR[];
 }
 
-export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
-  const [user, setUser] = useState<ProfileUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default function ProfilePageClient({
+  userId,
+  initialUser = null,
+  initialLists = [],
+  initialListsTotal = 0,
+  initialBookmarks = [],
+  initialBookmarksTotal = 0,
+  initialActivities = [],
+}: ProfilePageClientProps) {
+  const [user, setUser] = useState<ProfileUser | null>(initialUser);
+  const [isLoading, setIsLoading] = useState(!initialUser);
   const [error, setError] = useState('');
+  const [listsTotal, setListsTotal] = useState(
+    initialListsTotal || initialUser?.stats?.listsCreated || 0
+  );
 
-  const fetchProfile = async () => {
-    setIsLoading(true);
-    setError('');
+  const fetchProfile = useCallback(async (silent = false) => {
+    if (!silent) {
+      setIsLoading(true);
+      setError('');
+    }
     try {
       const response = await fetch('/api/user/profile');
       const data = await response.json();
 
       if (data.success) {
-        setUser(data.data.user as ProfileUser);
-      } else {
+        const nextUser = data.data.user as ProfileUser;
+        setUser(nextUser);
+        if (nextUser.stats?.listsCreated != null) {
+          setListsTotal(nextUser.stats.listsCreated);
+        }
+      } else if (!silent) {
         setError(data.error || 'خطا در دریافت اطلاعات پروفایل');
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'خطا در دریافت اطلاعات پروفایل');
+      if (!silent) {
+        setError(err instanceof Error ? err.message : 'خطا در دریافت اطلاعات پروفایل');
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProfile();
+    void fetchProfile(Boolean(initialUser));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only refetch when userId changes
   }, [userId]);
+
+  useEffect(() => {
+    const onListsUpdated = () => {
+      setListsTotal((t) => t + 1);
+      void fetchProfile(true);
+    };
+    const onProfileUpdated = () => {
+      void fetchProfile(true);
+    };
+
+    window.addEventListener(LISTS_UPDATED_EVENT, onListsUpdated);
+    window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    return () => {
+      window.removeEventListener(LISTS_UPDATED_EVENT, onListsUpdated);
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    };
+  }, [fetchProfile]);
 
   if (isLoading) {
     return (
-      <div className="space-y-5">
-        <div className="bg-wibe-card rounded-lg border border-wibe p-6 animate-pulse">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 rounded-2xl bg-gray-200" />
-            <div className="flex-1">
-              <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="space-y-4">
+        <div className="overflow-hidden rounded-xl border border-wibe">
+          <div className="h-14 animate-pulse bg-gray-200" />
+          <div className="flex items-start gap-3 px-2.5 pb-2.5 -mt-8">
+            <div className="flex-1 space-y-1.5 pt-1.5">
+              <div className="h-4 w-14 rounded-full bg-gray-200" />
+              <div className="h-5 w-28 rounded bg-gray-200" />
+              <div className="h-3 w-16 rounded bg-gray-100" />
             </div>
+            <div className="h-[68px] w-[68px] shrink-0 rounded-full border-[3px] border-white bg-gray-200" />
+          </div>
+          <div className="mx-2.5 mb-2.5 h-11 rounded-xl bg-gray-100" />
+          <div className="grid grid-cols-4 gap-1.5 border-t border-gray-100 bg-wibe-surface/30 px-2.5 py-2.5">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-[52px] animate-pulse rounded-lg bg-gray-200" />
+            ))}
           </div>
         </div>
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-wibe-card rounded-lg border border-wibe p-5 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-gray-200 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
+        <div className="h-10 animate-pulse rounded bg-gray-200" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-2xl text-center">
-        <p className="text-sm">{error}</p>
+      <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-lg text-center">
+        <p className="wibe-small">{error}</p>
         <button
-          onClick={fetchProfile}
-          className="mt-4 px-5 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm font-medium"
+          type="button"
+          onClick={() => fetchProfile(false)}
+          className="mt-4 px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors wibe-small font-medium"
         >
           تلاش مجدد
         </button>
@@ -97,32 +141,24 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
   };
 
   return (
-    <div className="space-y-0">
-      <ProfileHeader user={user} isOwner onUpdate={fetchProfile} />
-
-      <div className="px-4 -mt-2 relative z-20">
-        <div className="bg-wibe-card rounded-t-lg shadow-sm border border-wibe pt-5 pb-4 px-4">
-          <ProfileStats creatorStats={creatorStats} />
-
-          <div className="mt-4">
-            <ProfileRankCard userId={userId} />
-          </div>
-
-          <ProfileTopLists userId={userId} />
-
-          <div className="mt-6">
-            <ProfileLevel user={user} />
-          </div>
+    <div className="space-y-0 pb-4">
+      <div className="rounded-xl border border-wibe bg-wibe-card shadow-sm overflow-hidden mb-4">
+        <ProfileHeader user={user} isOwner onUpdate={() => fetchProfile(true)} />
+        <div className="border-t border-wibe/50 bg-wibe-surface/40 px-2.5 py-2.5">
+          <ProfileStats creatorStats={creatorStats} listsCreated={listsTotal} />
         </div>
       </div>
 
-      <div className="px-4">
-        <ProfileAchievements creatorStats={creatorStats} />
-      </div>
-
-      <div className="px-4">
-        <ProfileTabs userId={userId} />
-      </div>
+      <ProfileTabs
+        userId={userId}
+        user={user}
+        creatorStats={creatorStats}
+        initialLists={initialLists}
+        listsCount={listsTotal}
+        initialBookmarks={initialBookmarks}
+        initialBookmarksTotal={initialBookmarksTotal}
+        initialActivities={initialActivities}
+      />
     </div>
   );
 }

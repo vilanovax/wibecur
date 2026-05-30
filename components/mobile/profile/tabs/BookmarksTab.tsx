@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Bookmark, User, List, MoreVertical } from 'lucide-react';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { Bookmark, User, List, MoreVertical, RefreshCw } from 'lucide-react';
+import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
 
 const ELITE_LEVELS = ['ELITE_CURATOR', 'VIBE_LEGEND'];
 const RECENT_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -42,6 +43,8 @@ interface BookmarkItem {
 
 interface BookmarksTabProps {
   userId: string;
+  initialBookmarks?: ProfileBookmarkSSR[];
+  initialBookmarksTotal?: number;
 }
 
 interface BookmarksResponse {
@@ -52,18 +55,35 @@ interface BookmarksResponse {
 async function fetchBookmarks(): Promise<BookmarksResponse> {
   const res = await fetch('/api/user/bookmarks?page=1&limit=50');
   const data = await res.json();
-  if (data.success)
-    return {
-      bookmarks: data.data.bookmarks ?? [],
-      pagination: data.data.pagination,
-    };
-  return { bookmarks: [] };
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || 'خطا در دریافت ذخیره‌ها');
+  }
+  return {
+    bookmarks: data.data.bookmarks ?? [],
+    pagination: data.data.pagination,
+  };
 }
 
-export default function BookmarksTab({ userId }: BookmarksTabProps) {
-  const { data, isLoading, refetch } = useQuery({
+export default function BookmarksTab({
+  userId,
+  initialBookmarks,
+  initialBookmarksTotal = 0,
+}: BookmarksTabProps) {
+  const hasInitial = Boolean(initialBookmarks?.length);
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['user', userId, 'bookmarks'],
     queryFn: fetchBookmarks,
+    staleTime: 30_000,
+    initialData: hasInitial
+      ? {
+          bookmarks: initialBookmarks as BookmarkItem[],
+          pagination: {
+            page: 1,
+            totalPages: Math.ceil(initialBookmarksTotal / 50) || 1,
+          },
+        }
+      : undefined,
   });
   const bookmarks = data?.bookmarks ?? [];
   const hasMore = (data?.pagination?.page ?? 1) < (data?.pagination?.totalPages ?? 1);
@@ -88,7 +108,7 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
     ).values()
   ).slice(0, 10);
 
-  if (isLoading && bookmarks.length === 0) {
+  if (isLoading && bookmarks.length === 0 && !hasInitial) {
     return (
       <div className="px-4 space-y-5">
         <div className="h-5 w-48 bg-gray-100 rounded animate-pulse" />
@@ -112,7 +132,27 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
     );
   }
 
-  if (bookmarks.length === 0) {
+  if (isError && bookmarks.length === 0) {
+    return (
+      <div className="px-4 py-8">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
+          <p className="wibe-small text-red-600">
+            {error instanceof Error ? error.message : 'خطا در بارگذاری ذخیره‌ها'}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 text-white wibe-small font-medium"
+          >
+            <RefreshCw className="w-4 h-4" />
+            تلاش مجدد
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (bookmarks.length === 0 && !isLoading) {
     return (
       <div className="px-4 py-8">
         <div className="text-center py-12 rounded-lg border border-wibe bg-wibe-card">
@@ -211,9 +251,11 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
               </button>
               <Link href={`/lists/${list.slug}`} className="block">
                 <div className="relative aspect-[4/3] bg-gray-100">
-                  <ImageWithFallback
-                    src={list.coverImage ?? ''}
-                    alt={list.title}
+                  <ListCoverImage
+                    coverImage={list.coverImage}
+                    title={list.title}
+                    slug={list.slug}
+                    categorySlug={list.categories?.slug}
                     className="w-full h-full object-cover"
                     fallbackIcon={list.categories?.icon}
                     fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Bookmark } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
@@ -9,6 +11,8 @@ const SaveToPersonalListModal = dynamic(() => import('./SaveToPersonalListModal'
 
 interface ItemSaveButtonProps {
   itemId: string;
+  /** hero = روی پس‌زمینه تیره hero */
+  variant?: 'default' | 'hero';
 }
 
 interface SavedStatus {
@@ -21,8 +25,9 @@ interface SavedStatus {
   }>;
 }
 
-export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
-  const { data: session } = useSession();
+export default function ItemSaveButton({ itemId, variant = 'default' }: ItemSaveButtonProps) {
+  const { data: session, status } = useSession();
+  const pathname = usePathname();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [savedStatus, setSavedStatus] = useState<SavedStatus>({
     savedInPrivateList: false,
@@ -30,7 +35,6 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
     lists: [],
   });
 
-  // Fetch saved status when component mounts or modal closes
   useEffect(() => {
     if (session?.user) {
       fetchSavedStatus();
@@ -51,16 +55,38 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    // Refresh saved status after closing modal
     fetchSavedStatus();
   };
 
-  // Don't render if user is not logged in
-  if (!session?.user) {
-    return null;
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;
+  const isHero = variant === 'hero';
+
+  if (status === 'unauthenticated') {
+    return (
+      <Link
+        href={loginHref}
+        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-all ${
+          isHero
+            ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
+            : 'bg-white border-2 border-gray-300 hover:border-primary hover:bg-primary/5'
+        }`}
+        aria-label="ورود برای ذخیره"
+        title="ورود برای ذخیره"
+      >
+        <Bookmark className={`w-5 h-5 ${isHero ? 'text-white' : 'text-gray-600'}`} />
+      </Link>
+    );
   }
 
-  // Determine icon style based on saved status
+  if (status === 'loading') {
+    return (
+      <div
+        className={`w-10 h-10 rounded-full animate-pulse ${isHero ? 'bg-white/20' : 'bg-gray-200'}`}
+        aria-hidden
+      />
+    );
+  }
+
   const isSaved = savedStatus.savedInPrivateList || savedStatus.savedInPublicList;
   const isPrivate = savedStatus.savedInPrivateList;
   const savedCount = savedStatus.lists.length;
@@ -68,6 +94,7 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
   return (
     <>
       <button
+        type="button"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -78,7 +105,9 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
             ? isPrivate
               ? 'bg-gray-900 border-2 border-gray-900 hover:bg-black shadow-md'
               : 'bg-blue-600 border-2 border-blue-600 hover:bg-blue-700 shadow-md'
-            : 'bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+            : isHero
+              ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
+              : 'bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50'
         }`}
         aria-label={
           isSaved
@@ -90,9 +119,7 @@ export default function ItemSaveButton({ itemId }: ItemSaveButtonProps) {
       >
         <Bookmark
           className={`w-5 h-5 transition-all ${
-            isSaved
-              ? 'text-white fill-white'
-              : 'text-gray-600'
+            isSaved ? 'text-white fill-white' : isHero ? 'text-white' : 'text-gray-600'
           }`}
         />
         {savedCount > 0 && (

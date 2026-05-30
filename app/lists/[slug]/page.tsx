@@ -3,6 +3,7 @@ import { getTopSimilarLists } from '@/lib/listSimilarity';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ListDetailClient from './ListDetailClient';
+import { withResolvedItemImages } from '@/lib/resolve-item-image';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
@@ -85,7 +86,7 @@ export default async function ListDetailPage({
         },
       },
       users: { select: { id: true, name: true, image: true, username: true, curatorLevel: true, role: true, viralListsCount: true, totalLikesReceived: true } },
-      items: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, imageUrl: true, rating: true, metadata: true } },
+      items: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, imageUrl: true, externalUrl: true, rating: true, metadata: true } },
       _count: { select: { items: true, list_comments: true } },
     },
   });
@@ -113,6 +114,13 @@ export default async function ListDetailPage({
   const listWithCreator = {
     ...list,
     creatorFollowersCount: followersCount,
+    items: withResolvedItemImages(
+      list.items.map((item) => ({
+        ...item,
+        metadata: item.metadata as Record<string, unknown> | null,
+      })),
+      list.categories?.slug ?? null
+    ),
   };
 
   return (

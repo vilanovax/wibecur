@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ListPlus, Loader2, Globe } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
 import { track } from '@/lib/analytics';
+import { dispatchListsUpdated } from '@/lib/profile-events';
 
 interface CreateListFormProps {
   isOpen: boolean;
@@ -12,11 +13,8 @@ interface CreateListFormProps {
   onSuccess?: () => void;
 }
 
-
 export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateListFormProps) {
-  const [formData, setFormData] = useState({
-    title: '',
-  });
+  const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
@@ -24,112 +22,94 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
   const [maxPersonalLists, setMaxPersonalLists] = useState(3);
   const [currentListsCount, setCurrentListsCount] = useState(0);
 
+  const atLimit = currentListsCount >= maxPersonalLists;
+  const remaining = Math.max(0, maxPersonalLists - currentListsCount);
+
   useEffect(() => {
     if (isOpen) {
       fetchSettings();
       fetchUserListsCount();
-      // Reset form when opening
-      setFormData({
-        title: '',
-      });
+      setTitle('');
       setError('');
     }
   }, [isOpen]);
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/admin/settings');
+      const res = await fetch('/api/settings/public');
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
           setMaxPersonalLists(data.data.maxPersonalLists || 3);
         }
       }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
+    } catch (err) {
+      console.error('Error fetching settings:', err);
     }
   };
 
   const fetchUserListsCount = async () => {
     try {
-      const res = await fetch('/api/user/my-lists?page=1&limit=1000');
+      const res = await fetch('/api/user/my-lists?page=1&limit=100&filter=private');
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
-          const privateLists = data.data.lists.filter((list: any) => !list.isPublic);
-          setCurrentListsCount(privateLists.length);
+          setCurrentListsCount(data.data.pagination?.total ?? data.data.lists?.length ?? 0);
         }
       }
-    } catch (error) {
-      console.error('Error fetching user lists count:', error);
+    } catch (err) {
+      console.error('Error fetching user lists count:', err);
     }
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.title.trim()) {
+    const trimmed = title.trim();
+    if (!trimmed) {
       setError('عنوان الزامی است');
       return;
     }
 
-    // Check max personal lists limit
-    if (currentListsCount >= maxPersonalLists) {
-      setError(`شما نمی‌توانید بیشتر از ${maxPersonalLists} لیست خصوصی ایجاد کنید. لطفاً یکی از لیست‌های قبلی را حذف کنید یا آن را عمومی کنید.`);
+    if (atLimit) {
+      setError(
+        `حداکثر ${maxPersonalLists} لیست خصوصی مجاز است. یکی را حذف یا عمومی کنید.`
+      );
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log('Submitting form data:', formData);
       const res = await fetch('/api/user/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: formData.title,
-          // description and coverImage are not required for private lists
-        }),
+        body: JSON.stringify({ title: trimmed }),
       });
 
       const data = await res.json();
-      console.log('API response:', { status: res.status, data });
 
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'خطا در ایجاد لیست');
       }
 
-      // Show success message
       setToastMessage(data.message || 'لیست با موفقیت ایجاد شد');
       setShowToast(true);
       track('list_create');
-
-      // Reset form
-      setFormData({
-        title: '',
-      });
-      
-      // Refresh lists count
+      setTitle('');
       fetchUserListsCount();
+      dispatchListsUpdated({
+        listId: data.data?.id,
+        title: trimmed,
+      });
 
-      // Close after delay
       setTimeout(() => {
         onClose();
-        if (onSuccess) {
-          onSuccess();
-        }
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'خطا در ایجاد لیست');
+        onSuccess?.();
+      }, 900);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'خطا در ایجاد لیست');
     } finally {
       setIsLoading(false);
     }
@@ -137,75 +117,86 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
 
   return (
     <>
-      <BottomSheet isOpen={isOpen} onClose={onClose} title="ایجاد لیست شخصی">
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto p-6 min-h-0">
+      <BottomSheet
+        isOpen={isOpen}
+        onClose={onClose}
+        title="لیست جدید"
+        subtitle={`${currentListsCount.toLocaleString('fa-IR')} از ${maxPersonalLists.toLocaleString('fa-IR')} لیست خصوصی`}
+        maxHeight="auto"
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <div className="px-4 py-3 space-y-3">
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4">
+              <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5 wibe-caption text-red-600">
                 {error}
               </div>
             )}
 
-            {/* Info Messages */}
-            <div className="space-y-3 mb-6">
-              {currentListsCount >= maxPersonalLists && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800">
-                    شما به حداکثر تعداد لیست‌های خصوصی ({maxPersonalLists}) رسیده‌اید. لطفاً یکی از لیست‌های قبلی را حذف کنید یا آن را عمومی کنید.
-                  </p>
+            {atLimit ? (
+              <div className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2.5 wibe-caption text-amber-800 leading-relaxed">
+                به سقف لیست‌های خصوصی رسیدید. یکی را حذف یا از تنظیمات عمومی کنید.
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2 rounded-lg bg-wibe-surface px-3 py-2.5">
+                <span className="wibe-caption text-wibe-secondary">
+                  {remaining.toLocaleString('fa-IR')} جای خالی
+                </span>
+                <div className="flex gap-1">
+                  {Array.from({ length: maxPersonalLists }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 w-6 rounded-full transition-colors ${
+                        i < currentListsCount ? 'bg-primary' : 'bg-gray-200'
+                      }`}
+                    />
+                  ))}
                 </div>
-              )}
-              {currentListsCount < maxPersonalLists && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <p className="text-sm text-gray-700">
-                    شما {currentListsCount} از {maxPersonalLists} لیست خصوصی خود را ایجاد کرده‌اید.
-                  </p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Title */}
-            <div className="mb-4">
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+            <div>
+              <label htmlFor="list-title" className="block wibe-small font-medium text-foreground mb-1.5">
                 عنوان لیست <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                id="title"
+                id="list-title"
                 name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="عنوان لیست را وارد کنید..."
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setError('');
+                }}
+                className="w-full h-11 px-3 rounded-lg border border-wibe bg-white wibe-small text-foreground placeholder:text-wibe-secondary/70 focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+                placeholder="مثلاً: فیلم‌های آخر هفته"
                 required
-                disabled={isLoading}
+                disabled={isLoading || atLimit}
+                autoFocus
               />
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">نکته:</span> برای تبدیل این لیست به عمومی، می‌توانید از تنظیمات لیست، توضیحات و تصویر کاور را اضافه کنید.
-              </p>
-            </div>
+            <p className="flex items-start gap-1.5 wibe-caption text-wibe-secondary leading-relaxed">
+              <Globe className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary/70" />
+              <span>
+                لیست خصوصی ساخته می‌شود. برای عمومی کردن، بعداً توضیحات و کاور اضافه کنید.
+              </span>
+            </p>
           </div>
 
-          <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
-            <div className="flex gap-3">
+          <div className="flex-shrink-0 border-t border-wibe px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                className="flex-1 h-11 rounded-lg border border-wibe bg-wibe-surface wibe-small font-medium text-foreground active:scale-[0.98] transition-transform"
                 disabled={isLoading}
               >
                 انصراف
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                disabled={isLoading || !formData.title.trim() || currentListsCount >= maxPersonalLists}
+                className="flex-1 h-11 rounded-lg bg-primary text-white wibe-small font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
+                disabled={isLoading || !title.trim() || atLimit}
               >
                 {isLoading ? (
                   <>
@@ -214,8 +205,8 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
-                    ایجاد لیست
+                    <ListPlus className="w-4 h-4" />
+                    ایجاد
                   </>
                 )}
               </button>
@@ -224,16 +215,14 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
         </form>
       </BottomSheet>
 
-      {/* Toast Notification */}
       {showToast && (
         <Toast
           message={toastMessage}
           type="success"
-          duration={5000}
+          duration={3000}
           onClose={() => setShowToast(false)}
         />
       )}
     </>
   );
 }
-

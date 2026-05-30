@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Heart } from 'lucide-react';
 
@@ -8,30 +10,34 @@ interface ItemLikeButtonProps {
   itemId: string;
   initialLikeCount?: number;
   initialIsLiked?: boolean;
+  variant?: 'default' | 'hero';
 }
 
 export default function ItemLikeButton({
   itemId,
   initialLikeCount = 0,
   initialIsLiked = false,
+  variant = 'default',
 }: ItemLikeButtonProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const pathname = usePathname();
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch like status if user is logged in and initial values not provided
+  const isHero = variant === 'hero';
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;
+
   useEffect(() => {
     if (session?.user && initialIsLiked === false && initialLikeCount === 0) {
       fetchLikeStatus();
     }
-  }, [session, itemId]);
+  }, [session, itemId, initialIsLiked, initialLikeCount]);
 
   const fetchLikeStatus = async () => {
     try {
       const response = await fetch(`/api/items/${itemId}/like`);
       const data = await response.json();
-      
       if (data.success) {
         setIsLiked(data.data.isLiked);
         setLikeCount(data.data.likeCount);
@@ -44,30 +50,15 @@ export default function ItemLikeButton({
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!session?.user) {
-      // Could redirect to login or show message
-      return;
-    }
+    if (!session?.user) return;
 
     setIsLoading(true);
-
     try {
-      const response = await fetch(`/api/items/${itemId}/like`, {
-        method: 'POST',
-      });
-
+      const response = await fetch(`/api/items/${itemId}/like`, { method: 'POST' });
       const data = await response.json();
-
       if (data.success) {
         setIsLiked(data.data.isLiked);
         setLikeCount(data.data.likeCount);
-        console.log('Like toggled:', {
-          isLiked: data.data.isLiked,
-          likeCount: data.data.likeCount,
-        });
-      } else {
-        console.error('Error toggling like:', data.error);
       }
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -76,40 +67,66 @@ export default function ItemLikeButton({
     }
   };
 
-  // Don't render if user is not logged in
-  if (!session?.user) {
+  const countLabel = likeCount > 0 ? likeCount.toLocaleString('fa-IR') : null;
+
+  if (status === 'loading') {
     return (
-      <div className="flex items-center gap-1 text-sm text-gray-600">
-        <Heart className="w-5 h-5 text-gray-400" />
-        <span>{likeCount}</span>
-      </div>
+      <div
+        className={`h-10 rounded-lg animate-pulse ${isHero ? 'w-14 bg-white/20' : 'w-14 bg-gray-200'}`}
+        aria-hidden
+      />
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <Link
+        href={loginHref}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+          isHero
+            ? 'bg-white/15 text-white border border-white/20 hover:bg-white/25 backdrop-blur-sm'
+            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+        }`}
+        aria-label="ورود برای پسندیدن"
+      >
+        <Heart className={`w-4 h-4 ${isHero ? 'text-white/90' : 'text-gray-400'}`} />
+        {countLabel && <span className="text-sm font-medium">{countLabel}</span>}
+      </Link>
     );
   }
 
   return (
     <button
+      type="button"
       onClick={handleToggle}
       disabled={isLoading}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 ${
         isLiked
-          ? 'bg-red-50 text-red-600 hover:bg-red-100'
-          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+          ? isHero
+            ? 'bg-white/25 text-white border border-white/30'
+            : 'bg-red-50 text-red-600 hover:bg-red-100'
+          : isHero
+            ? 'bg-white/15 text-white border border-white/20 hover:bg-white/25 backdrop-blur-sm'
+            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
       }`}
       aria-label={isLiked ? 'حذف لایک' : 'لایک'}
     >
       <Heart
         className={`w-4 h-4 transition-all ${
           isLiked
-            ? 'fill-red-500 text-red-500'
-            : 'text-gray-400'
+            ? isHero
+              ? 'fill-white text-white'
+              : 'fill-red-500 text-red-500'
+            : isHero
+              ? 'text-white/90'
+              : 'text-gray-400'
         }`}
       />
-      <span className={`text-sm font-medium ${
-        isLiked ? 'text-red-600' : 'text-gray-700'
-      }`}>
-        {likeCount}
-      </span>
+      {countLabel && (
+        <span className={`text-sm font-medium ${isLiked && !isHero ? 'text-red-600' : ''}`}>
+          {countLabel}
+        </span>
+      )}
     </button>
   );
 }
-

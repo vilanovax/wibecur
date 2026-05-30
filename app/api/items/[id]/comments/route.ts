@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getClientErrorMessage, logServerError } from '@/lib/api-error';
+import { DEFAULT_LIST_COMMENT_MAX_LENGTH } from '@/lib/comment-limits';
 
 // GET /api/items/[id]/comments - دریافت کامنت‌های یک آیتم
 export async function GET(
@@ -44,6 +45,7 @@ export async function GET(
                 avatarType: true,
                 avatarId: true,
                 avatarStatus: true,
+                curatorLevel: true,
               },
             },
             _count: { select: { comment_likes: true } },
@@ -117,6 +119,7 @@ export async function GET(
           avatarType: comment.users.avatarType ?? 'DEFAULT',
           avatarId: comment.users.avatarId ?? null,
           avatarStatus: comment.users.avatarStatus ?? null,
+          curatorLevel: comment.users.curatorLevel ?? null,
         },
         isLiked: likedCommentIds.has(comment.id),
         canDelete: userId === comment.userId, // User can delete their own comments
@@ -128,6 +131,7 @@ export async function GET(
       data: {
         comments: formattedComments,
         commentsEnabled,
+        maxCommentLength: globalSettings?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH,
       },
     });
   } catch (error) {

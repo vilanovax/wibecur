@@ -784,3 +784,17 @@ model admin_featured_notification_sent {
 
   @@index([slotId])
 }
+
+/// آمار تجمیعی جستجو — برای «پرجستجو» در overlay
+model search_query_stats {
+  id              String   @id @default(cuid())
+  normalizedQuery String   @unique @map("normalized_query")
+  displayQuery    String   @map("display_query")
+  searchCount     Int      @default(1) @map("search_count")
+  lastSearchedAt  DateTime @default(now()) @map("last_searched_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([searchCount(sort: Desc)])
+  @@index([lastSearchedAt(sort: Desc)])
+  @@map("search_query_stats")
+}

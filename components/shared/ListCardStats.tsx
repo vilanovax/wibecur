@@ -4,7 +4,7 @@ interface ListCardStatsProps {
   saves: number;
   itemCount: number;
   /** compact = یک خط کوتاه | inline = داخل overlay سفید */
-  variant?: 'default' | 'compact' | 'overlay';
+  variant?: 'default' | 'compact' | 'overlay' | 'minimal';
   className?: string;
 }
 
@@ -19,9 +19,17 @@ export default function ListCardStats({
 
   if (variant === 'overlay') {
     return (
-      <p className={`flex items-center gap-1 wibe-caption text-white/90 ${className}`}>
-        <Bookmark className="w-3.5 h-3.5" />
-        {saveLabel} ذخیره
+      <p className={`flex items-center gap-1 wibe-caption text-white/90 tabular-nums ${className}`}>
+        <Bookmark className="w-3.5 h-3.5 shrink-0" />
+        {saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم
+      </p>
+    );
+  }
+
+  if (variant === 'minimal') {
+    return (
+      <p className={`wibe-caption text-wibe-secondary tabular-nums ${className}`}>
+        {saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم
       </p>
     );
   }

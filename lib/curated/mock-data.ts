@@ -1,4 +1,5 @@
 import { computeTrendScore } from './utils';
+import { getCuratedCategoryCoverUrl, getListTopicCoverUrl } from '@/lib/category-cover-images';
 import type { CuratedList, Curator, CuratedCategory } from '@/types/curated';
 
 export const MOCK_CATEGORIES: CuratedCategory[] = [
@@ -10,14 +11,10 @@ export const MOCK_CATEGORIES: CuratedCategory[] = [
   { id: 'cat5', slug: 'travel', title: 'سفر', icon: '✈️' },
 ];
 
-const avatarBase = 'https://i.pravatar.cc/150?u=';
-const coverBase = 'https://picsum.photos/seed/';
+const avatarBase = 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Circle-icons-profile.svg/240px-Circle-icons-profile.svg.png';
 
-function c(id: number, w = 400, h = 300) {
-  return `${coverBase}list${id}/${w}/${h}`;
-}
 function a(id: string) {
-  return `${avatarBase}${id}`;
+  return `${avatarBase}#${id}`;
 }
 
 export const MOCK_CURATORS: Curator[] = [
@@ -162,7 +159,9 @@ function createList(
     title,
     subtitle: opts.subtitle ?? null,
     categoryId,
-    coverUrl: c(id),
+    coverUrl:
+      getListTopicCoverUrl(`list-${id}`) ??
+      getCuratedCategoryCoverUrl(categoryId),
     itemsCount: items,
     savesCount: saves,
     likesCount: likes,

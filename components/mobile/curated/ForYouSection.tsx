@@ -4,51 +4,62 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import ExploreSectionTitle from './ExploreSectionTitle';
-import { formatNumber } from '@/lib/curated/utils';
+import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import type { CuratedList } from '@/types/curated';
 
 interface ForYouSectionProps {
   lists: CuratedList[];
+  personalized?: boolean;
 }
 
-export default function ForYouSection({ lists }: ForYouSectionProps) {
-  const forYou = lists
-    .filter((l) => l.badges.includes('featured') || l.creator.badges.includes('top'))
-    .slice(0, 6);
-
-  if (forYou.length === 0) return null;
+export default function ForYouSection({ lists, personalized = false }: ForYouSectionProps) {
+  if (lists.length === 0) return null;
 
   return (
-    <section id="foryou" className="px-4 py-6" aria-labelledby="foryou-title">
+    <section id="foryou" className="border-t border-wibe/60 px-2.5 py-4" aria-labelledby="foryou-title">
       <ExploreSectionTitle
         id="foryou-title"
-        title="برای تو"
-        subtitle="بر اساس ذخیره‌ها و سلیقه"
+        title="پیشنهاد وایب"
+        subtitle={personalized ? 'بر اساس علایق تو' : 'برترین لیست‌های منتخب'}
         icon="✨"
       />
-      <div className="space-y-3">
-        {forYou.map((list) => (
-          <Link
-            key={list.id}
-            href={`/lists/${list.slug}`}
-            className="flex gap-3 p-3 rounded-lg bg-wibe-card border border-primary/20 shadow-sm active:scale-[0.99] transition-transform"
-          >
-            <div className="w-20 h-20 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
-              <ImageWithFallback
-                src={list.coverUrl ?? ''}
-                alt={list.title}
-                className="w-full h-full object-cover"
-                fallbackIcon="📋"
-                fallbackClassName="w-full h-full flex items-center justify-center text-xl bg-gray-200"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
-              <p className="wibe-caption text-wibe-secondary mt-1">{list.creator.name}</p>
-              <ListCardStats saves={list.savesCount} itemCount={list.itemsCount} variant="compact" className="mt-1" />
-            </div>
-          </Link>
-        ))}
+      <div className="space-y-2">
+        {lists.map((list, index) => {
+          const subtitle = getListCardSubtitle(list);
+          return (
+            <Link
+              key={list.id}
+              href={`/lists/${list.slug}`}
+              className={`flex flex-row-reverse gap-2.5 rounded-xl border p-2.5 shadow-sm transition-transform active:scale-[0.99] ${
+                index === 0
+                  ? 'border-primary/25 bg-primary/[0.04]'
+                  : 'border-wibe bg-wibe-card'
+              }`}
+            >
+              <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-gray-200">
+                <ImageWithFallback
+                  src={list.coverUrl ?? ''}
+                  alt={list.title}
+                  className="h-full w-full object-cover"
+                  fallbackIcon="📋"
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
+                {subtitle && (
+                  <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
+                )}
+                <ListCardStats
+                  saves={list.savesCount}
+                  itemCount={list.itemsCount}
+                  variant="minimal"
+                  className="mt-1"
+                />
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

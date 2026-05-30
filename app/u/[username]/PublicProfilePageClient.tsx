@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { List, Users, UserPlus, Bookmark, Check, Loader2 } from 'lucide-react';
+import ListCoverImage from '@/components/shared/ListCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import CuratorBadge from '@/components/shared/CuratorBadge';
@@ -52,7 +53,7 @@ interface ProfileData {
     items: number;
     updatedAt: Date;
     isFeatured?: boolean;
-    categories?: { name: string; icon: string } | null;
+    categories?: { name: string; icon: string; slug?: string } | null;
   }[];
   likedLists: unknown[];
   recentActivity: unknown[];
@@ -335,11 +336,13 @@ export default function PublicProfilePageClient({
                 className="block rounded-lg bg-wibe-card overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
               >
                 <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
-                  <ImageWithFallback
-                    src={list.coverImage ?? ''}
-                    alt={list.title}
+                  <ListCoverImage
+                    coverImage={list.coverImage}
+                    title={list.title}
+                    slug={list.slug}
+                    categorySlug={list.categories?.slug}
                     className="w-full h-full object-cover"
-                    fallbackIcon="📋"
+                    fallbackIcon={list.categories?.icon ?? '📋'}
                     fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />

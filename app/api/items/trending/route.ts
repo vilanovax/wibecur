@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
 const RECENT_DAYS = 7;
 const RECENT_ACTIVITY_MULTIPLIER = 5;
@@ -35,7 +36,7 @@ async function getGlobalTrending() {
           rating: true,
           voteCount: true,
           listId: true,
-          lists: { select: { saveCount: true } },
+          lists: { select: { saveCount: true, categories: { select: { slug: true } } } },
           _count: { select: { comments: true } },
         },
         take: 100,
@@ -61,7 +62,12 @@ async function getGlobalTrending() {
       return {
         id: i.id,
         title: i.title,
-        image: i.imageUrl,
+        image: resolveItemDisplayImage({
+          id: i.id,
+          imageUrl: i.imageUrl,
+          title: i.title,
+          categorySlug: i.lists?.categories?.slug ?? null,
+        }),
         rating: i.rating,
         saveCount,
         trendScore,

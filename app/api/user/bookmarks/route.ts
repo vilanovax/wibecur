@@ -1,89 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
+import { dbQuery } from '@/lib/db';
+import { shouldGracefulDbFallback } from '@/lib/db-errors';
+import { fetchUserBookmarks } from '@/lib/user-bookmarks';
 
-import { prisma } from '@/lib/prisma';
+function emptyBookmarksResponse(page: number, limit: number) {
+  return NextResponse.json({
+    success: true,
+    data: {
+      bookmarks: [],
+      pagination: { page, limit, total: 0, totalPages: 0 },
+    },
+  });
+}
 
-// GET /api/user/bookmarks - دریافت بوکمارک‌های کاربر
+/** GET /api/user/bookmarks */
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 100);
+
   try {
     const session = await auth();
-    
+
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const userId = session.user.id;
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const skip = (page - 1) * limit;
-
-    const [bookmarks, total] = await Promise.all([
-      prisma.bookmarks.findMany({
-        where: { userId },
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          lists: {
-            include: {
-              categories: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  icon: true,
-                  color: true,
-                },
-              },
-              users: {
-                select: {
-                  id: true,
-                  name: true,
-                  username: true,
-                  image: true,
-                  curatorLevel: true,
-                },
-              },
-              _count: {
-                select: {
-                  items: true,
-                  list_likes: true,
-                  bookmarks: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.bookmarks.count({ where: { userId } }),
-    ]);
+    const result = await dbQuery(() => fetchUserBookmarks(userId, { page, limit }));
 
     return NextResponse.json({
       success: true,
-      data: {
-        bookmarks: bookmarks.map((b) => ({
-          id: b.id,
-          list: b.lists,
-          createdAt: b.createdAt,
-        })),
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      },
+      data: result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (shouldGracefulDbFallback(error)) {
+      console.warn('Bookmarks DB fallback:', (error as Error)?.message);
+      return emptyBookmarksResponse(page, limit);
+    }
     console.error('Error fetching bookmarks:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: 'خطا در دریافت ذخیره‌ها' },
       { status: 500 }
     );
   }
 }
-

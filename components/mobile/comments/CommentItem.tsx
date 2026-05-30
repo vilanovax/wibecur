@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ThumbsUp, Flag, Trash2, MessageCircle } from 'lucide-react';
+import { ThumbsUp, Flag, Trash2, MoreVertical } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentAvatar from '@/components/shared/CommentAvatar';
+import CuratorBadge from '@/components/shared/CuratorBadge';
+import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { COMMENT_CLAMP_CHAR_THRESHOLD } from '@/lib/comment-limits';
 
 interface CommentItemProps {
   comment: {
@@ -20,8 +23,8 @@ interface CommentItemProps {
       email: string;
       username?: string | null;
       image: string | null;
-      curatorLevel?: string;
-      avatarType?: string;
+      curatorLevel?: string | null;
+      avatarType?: string | null;
       avatarId?: string | null;
       avatarStatus?: string | null;
     };
@@ -34,6 +37,51 @@ interface CommentItemProps {
   isLoading?: boolean;
 }
 
+function CommentMoreMenu({ onReport, onDelete }: { onReport: () => void; onDelete?: () => void }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        aria-label="گزینه‌های بیشتر"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+      <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="گزینه‌های نظر">
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onReport();
+            }}
+            className="w-full flex items-center gap-3 rounded-xl px-3 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-right"
+          >
+            <Flag className="w-4 h-4 flex-shrink-0" />
+            گزارش نظر
+          </button>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onDelete();
+              }}
+              className="w-full flex items-center gap-3 rounded-xl px-3 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-right"
+            >
+              <Trash2 className="w-4 h-4 flex-shrink-0" />
+              حذف نظر
+            </button>
+          )}
+        </div>
+      </BottomSheet>
+    </>
+  );
+}
+
 export default function CommentItem({
   comment,
   onLike,
@@ -43,19 +91,26 @@ export default function CommentItem({
 }: CommentItemProps) {
   const [localIsLiked, setLocalIsLiked] = useState(comment.isLiked);
   const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount);
+  const [expanded, setExpanded] = useState(false);
 
-  const handleLike = async () => {
+  const showReadMore = comment.content.length > COMMENT_CLAMP_CHAR_THRESHOLD;
+  const profileUrl = comment.user.username ? `/u/${encodeURIComponent(comment.user.username)}` : null;
+
+  const handleLike = () => {
     setLocalIsLiked(!localIsLiked);
-    setLocalLikeCount((prev) => (localIsLiked ? prev - 1 : prev + 1));
+    setLocalLikeCount((prev) => (localIsLiked ? Math.max(0, prev - 1) : prev + 1));
     onLike(comment.id);
   };
 
-  const profileUrl = comment.user.username ? `/u/${encodeURIComponent(comment.user.username)}` : null;
+  const handleDelete = () => {
+    if (confirm('آیا از حذف این نظر اطمینان دارید؟')) {
+      onDelete(comment.id);
+    }
+  };
 
   return (
-    <div className="flex gap-3 p-4 bg-white rounded-xl border border-gray-100">
-      {/* Avatar (+ Elite badge if level 5+) — کلیک → پروفایل */}
-      <div className="flex-shrink-0 relative">
+    <div className="flex gap-3 rounded-xl border border-wibe bg-wibe-card px-3 py-3.5 shadow-sm">
+      <div className="flex-shrink-0">
         {profileUrl ? (
           <Link href={profileUrl} className="block">
             <CommentAvatar
@@ -63,9 +118,9 @@ export default function CommentItem({
               name={comment.user.name}
               email={comment.user.email}
               size={40}
-              avatarType={comment.user.avatarType}
-              avatarId={comment.user.avatarId}
-              avatarStatus={comment.user.avatarStatus}
+              avatarType={comment.user.avatarType ?? undefined}
+              avatarId={comment.user.avatarId ?? null}
+              avatarStatus={comment.user.avatarStatus ?? null}
             />
           </Link>
         ) : (
@@ -74,97 +129,78 @@ export default function CommentItem({
             name={comment.user.name}
             email={comment.user.email}
             size={40}
-            avatarType={comment.user.avatarType}
-            avatarId={comment.user.avatarId}
-            avatarStatus={comment.user.avatarStatus}
+            avatarType={comment.user.avatarType ?? undefined}
+            avatarId={comment.user.avatarId ?? null}
+            avatarStatus={comment.user.avatarStatus ?? null}
           />
-        )}
-        {(comment.user.curatorLevel === 'ELITE_CURATOR' || comment.user.curatorLevel === 'VIBE_LEGEND') && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-400 flex items-center justify-center text-[10px]" title="Elite Curator">👑</span>
         )}
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-1">
-          {profileUrl ? (
-            <Link href={profileUrl} className="font-medium text-gray-900 text-sm hover:text-primary transition-colors">
-              {comment.user.name}
-            </Link>
-          ) : (
-            <span className="font-medium text-gray-900 text-sm">
-              {comment.user.name}
+        <div className="flex items-start justify-between gap-1 mb-0.5">
+          <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+            {profileUrl ? (
+              <Link href={profileUrl} className="font-medium text-gray-900 text-sm hover:text-primary transition-colors">
+                {comment.user.name}
+              </Link>
+            ) : (
+              <span className="font-medium text-gray-900 text-sm">{comment.user.name}</span>
+            )}
+            <span className="text-xs text-gray-400">
+              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
             </span>
-          )}
-          <span className="text-xs text-gray-400">
-            {formatDistanceToNow(new Date(comment.createdAt), {
-              addSuffix: true,
-              locale: faIR,
-            })}
-          </span>
+            {comment.user.curatorLevel && (
+              <CuratorBadge level={comment.user.curatorLevel} size="small" glow={false} />
+            )}
+          </div>
+          <CommentMoreMenu
+            onReport={() => onReport(comment.id)}
+            onDelete={comment.canDelete ? handleDelete : undefined}
+          />
         </div>
 
-        {/* Comment Text */}
-        <p
-          className={`text-gray-700 text-sm mb-2 ${
-            comment.isFiltered ? 'text-gray-500 italic' : ''
-          }`}
-        >
-          {comment.content}
-        </p>
-
-        {/* Actions — Vibe 2.0: مفید بود + پاسخ */}
-        <div className="flex items-center gap-4 flex-wrap">
-          <button
-            onClick={handleLike}
-            disabled={isLoading}
-            className={`flex items-center gap-1 text-xs transition-colors ${
-              localIsLiked
-                ? 'text-primary'
-                : 'text-gray-500 hover:text-primary'
-            }`}
+        <div className="relative">
+          <p
+            className={`text-gray-700 text-sm leading-relaxed break-words whitespace-pre-wrap ${
+              comment.isFiltered ? 'text-gray-500 italic' : ''
+            } ${!expanded && showReadMore ? 'line-clamp-3' : ''}`}
           >
-            <ThumbsUp
-              className={`w-4 h-4 ${localIsLiked ? 'fill-current' : ''}`}
+            {comment.content}
+          </p>
+          {!expanded && showReadMore && (
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-wibe-card to-transparent"
+              aria-hidden
             />
-            <span>{localLikeCount} مفید بود</span>
-          </button>
-
+          )}
+        </div>
+        {showReadMore && (
           <button
             type="button"
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1.5 wibe-caption font-semibold text-primary hover:underline"
           >
-            <MessageCircle className="w-4 h-4" />
-            <span>پاسخ</span>
+            {expanded ? 'کمتر' : 'بیشتر بخوان'}
           </button>
+        )}
 
+        <div className="flex items-center gap-3 mt-2">
           <button
-            onClick={() => onReport(comment.id)}
+            type="button"
+            onClick={handleLike}
             disabled={isLoading}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors mr-auto"
+            aria-label={`مفید بود${localLikeCount > 0 ? `، ${localLikeCount} رأی` : ''}`}
+            className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
+              localIsLiked ? 'text-green-600 font-medium' : 'text-gray-500 hover:text-green-600'
+            }`}
           >
-            <Flag className="w-4 h-4" />
-            <span>گزارش</span>
+            <ThumbsUp className={`w-4 h-4 ${localIsLiked ? 'fill-current' : ''}`} />
+            {localLikeCount > 0 && (
+              <span className="tabular-nums">{localLikeCount.toLocaleString('fa-IR')}</span>
+            )}
           </button>
-
-          {comment.canDelete && (
-            <button
-              onClick={() => {
-                if (confirm('آیا از حذف این کامنت اطمینان دارید؟')) {
-                  onDelete(comment.id);
-                }
-              }}
-              disabled={isLoading}
-              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>حذف</span>
-            </button>
-          )}
         </div>
       </div>
     </div>
   );
 }
-

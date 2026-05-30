@@ -46,8 +46,11 @@ export default function NewAndRisingSection() {
                 src={list.coverImage}
                 alt={list.title}
                 className="w-full h-full object-cover"
-                fallbackIcon="📋"
+                fallbackIcon={list.categories?.icon ?? '📋'}
                 fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                categorySlug={list.categories?.slug}
+                listSlug={list.slug}
+                listTitle={list.title}
               />
               {(list as { isFastRising?: boolean }).isFastRising && (
                 <span className="absolute top-1 right-1 bg-success text-white wibe-caption font-semibold px-1.5 py-0.5 rounded-pill flex items-center gap-0.5">

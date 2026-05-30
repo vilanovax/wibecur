@@ -14,6 +14,10 @@ export type RateLimitResult = { ok: true } | { ok: false; message: string };
  * Uses DB (no Redis required)
  */
 export async function checkCommentRateLimit(userId: string): Promise<RateLimitResult> {
+  if (process.env.NODE_ENV === 'development') {
+    return { ok: true };
+  }
+
   const now = new Date();
   const window1m = new Date(now.getTime() - RATE_WINDOW_1M_MS);
   const window1d = new Date(now.getTime() - RATE_WINDOW_1D_MS);

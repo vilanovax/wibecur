@@ -1,168 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
+import { dbQuery } from '@/lib/db';
+import { shouldGracefulDbFallback } from '@/lib/db-errors';
+import { fetchUserActivities } from '@/lib/user-activity';
 
-import { prisma } from '@/lib/prisma';
+function emptyActivityResponse(limit: number) {
+  return NextResponse.json({
+    success: true,
+    data: { activities: [], total: 0, limit },
+  });
+}
 
-// GET /api/user/activity - دریافت فعالیت‌های کاربر
+/** GET /api/user/activity */
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get('type') || 'all';
+  const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
+
   try {
     const session = await auth();
-    
+
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user.id;
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type') || 'all';
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
-
-    const activities: any[] = [];
-
-    // دریافت لیست‌های کاربر
-    if (type === 'all' || type === 'lists') {
-      const userLists = await prisma.lists.findMany({
-        where: { userId },
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          categories: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              icon: true,
-              color: true,
-            },
-          },
-        },
-      });
-
-      userLists.forEach((list) => {
-        activities.push({
-          id: `list-${list.id}`,
-          type: 'list_created',
-          title: list.title,
-          description: list.description || '',
-          image: list.coverImage,
-          slug: list.slug,
-          category: list.categories,
-          createdAt: list.createdAt,
-          likeCount: list.likeCount ?? 0,
-          viewCount: list.viewCount ?? 0,
-          saveCount: list.saveCount ?? 0,
-        });
-      });
-    }
-
-    // دریافت بوکمارک‌ها
-    if (type === 'all' || type === 'bookmarks') {
-      const bookmarks = await prisma.bookmarks.findMany({
-        where: { userId },
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          lists: {
-            include: {
-              categories: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  icon: true,
-                  color: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      bookmarks.forEach((bookmark) => {
-        const list = bookmark.lists;
-        activities.push({
-          id: `bookmark-${bookmark.id}`,
-          type: 'bookmark',
-          title: list.title,
-          description: list.description || '',
-          image: list.coverImage,
-          slug: list.slug,
-          category: list.categories,
-          createdAt: bookmark.createdAt,
-          likeCount: list.likeCount ?? 0,
-          viewCount: list.viewCount ?? 0,
-          saveCount: list.saveCount ?? 0,
-        });
-      });
-    }
-
-    // دریافت لایک‌های آیتم‌ها (نه لیست‌ها)
-    if (type === 'all' || type === 'likes') {
-      const itemLikes = await prisma.item_votes.findMany({
-        where: { userId },
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          items: {
-            include: {
-              lists: {
-                include: {
-                  categories: {
-                    select: {
-                      id: true,
-                      name: true,
-                      slug: true,
-                      icon: true,
-                      color: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      itemLikes.forEach((like) => {
-        const list = like.items.lists;
-        activities.push({
-          id: `item-like-${like.id}`,
-          type: 'item_like',
-          title: like.items.title,
-          description: like.items.description || '',
-          image: like.items.imageUrl,
-          itemId: like.items.id,
-          slug: list.slug,
-          category: list.categories,
-          createdAt: like.createdAt,
-          likeCount: list.likeCount ?? 0,
-          viewCount: list.viewCount ?? 0,
-          saveCount: list.saveCount ?? 0,
-        });
-      });
-    }
-
-    // مرتب‌سازی بر اساس تاریخ
-    activities.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    const result = await dbQuery(() =>
+      fetchUserActivities(session.user!.id, { type, limit })
+    );
 
     return NextResponse.json({
       success: true,
-      data: {
-        activities: activities.slice(0, limit),
-        total: activities.length,
-      },
+      data: result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (shouldGracefulDbFallback(error)) {
+      console.warn('Activity DB fallback:', (error as Error)?.message);
+      return emptyActivityResponse(limit);
+    }
     console.error('Error fetching user activity:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: 'خطا در دریافت فعالیت‌ها' },
       { status: 500 }
     );
   }
 }
-

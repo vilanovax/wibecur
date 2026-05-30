@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import type { TopListItem } from './types';
 
@@ -65,9 +65,11 @@ export default function ProfileTopLists({ userId }: ProfileTopListsProps) {
               className="block w-[72%] max-w-[200px] shrink-0 rounded-lg overflow-hidden border border-wibe bg-wibe-card shadow-sm active:scale-[0.99] transition-transform"
             >
               <div className="aspect-[4/3] relative overflow-hidden bg-gray-200">
-                <ImageWithFallback
-                  src={list.coverImage ?? ''}
-                  alt={list.title}
+                <ListCoverImage
+                  coverImage={list.coverImage}
+                  title={list.title}
+                  slug={list.slug}
+                  categorySlug={list.categories?.slug}
                   className="w-full h-full object-cover"
                   fallbackIcon="📋"
                   fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"

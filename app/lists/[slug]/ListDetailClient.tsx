@@ -1,19 +1,26 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { UserPlus, Check, Share2, MoreVertical, Pencil, Flame, Bookmark } from 'lucide-react';
+import { UserPlus, Check, Share2, MoreVertical, Flame, Bookmark, LayoutGrid, List as ListIcon, Plus, Settings, Link2 } from 'lucide-react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import VibeCommentSection from '@/components/mobile/lists/VibeCommentSection';
 import SuggestItemSearch from '@/components/mobile/lists/SuggestItemSearch';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
+import ItemPreviewSheet, { type ItemPreviewData } from '@/components/mobile/lists/ItemPreviewSheet';
+import SearchInput from '@/components/mobile/search/SearchInput';
+import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/components/providers/MainContainer';
+import { getDisplayListTitle } from '@/lib/list-display-title';
+import { getItemCardSubtitle, filterItemsByQuery, LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
+import { normalizeSearchQuery } from '@/lib/list-search';
+import { isMovieLikeCategory } from '@/lib/resolve-item-image';
 import type { CuratorLevelKey } from '@/lib/curator';
 
 type Item = {
@@ -21,6 +28,8 @@ type Item = {
   title: string;
   description: string | null;
   imageUrl: string | null;
+  displayImageUrl?: string | null;
+  externalUrl?: string | null;
   rating: number;
   metadata?: Record<string, unknown> | null;
 };
@@ -82,9 +91,9 @@ interface ListDetailClientProps {
   openSuggestFromQuery?: boolean;
 }
 
-const DESCRIPTION_PLACEHOLDER = 'توضیحی برای این لیست نوشته نشده';
-
 const LIST_VIEW_PREFERENCE_KEY = 'wibe:listViewPreference';
+
+type ItemEntry = { item: Item; originalIndex: number };
 
 const GRID_DEFAULT_CATEGORY_SLUGS = [
   'movie',
@@ -112,7 +121,84 @@ function getDefaultView(
   return 'list';
 }
 
+function ListCompactStatsBar({
+  saveCount,
+  itemCount,
+  commentCount,
+  viewCount,
+  onItemsClick,
+  onCommentsClick,
+}: {
+  saveCount: number;
+  itemCount: number;
+  commentCount: number;
+  viewCount: number;
+  onItemsClick?: () => void;
+  onCommentsClick?: () => void;
+}) {
+  const cells: Array<{
+    key: string;
+    label: string;
+    value: string;
+    highlight?: boolean;
+    onClick?: () => void;
+  }> = [
+    { key: 'save', label: 'ذخیره', value: formatCompact(saveCount), highlight: true },
+    { key: 'items', label: 'آیتم', value: itemCount.toLocaleString('fa-IR'), onClick: onItemsClick },
+    {
+      key: 'comments',
+      label: 'نظر',
+      value: commentCount.toLocaleString('fa-IR'),
+      onClick: onCommentsClick,
+    },
+    { key: 'views', label: 'بازدید', value: formatCompact(viewCount) },
+  ];
+
+  return (
+    <div className="grid grid-cols-4 divide-x divide-x-reverse divide-wibe overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm">
+      {cells.map(({ key, label, value, highlight, onClick }) => {
+        const inner = (
+          <>
+            <p
+              className={`wibe-small font-bold tabular-nums leading-none ${
+                highlight ? 'text-primary' : 'text-foreground'
+              }`}
+            >
+              {value}
+            </p>
+            <p className="mt-0.5 wibe-caption text-wibe-secondary">{label}</p>
+          </>
+        );
+
+        if (onClick) {
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={onClick}
+              className="px-1 py-2.5 text-center transition-colors hover:bg-gray-50 active:bg-gray-100"
+            >
+              {inner}
+            </button>
+          );
+        }
+
+        return (
+          <div key={key} className="px-1 py-2.5 text-center">
+            {inner}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SimilarListCard({ rel }: { rel: RelatedList }) {
+  const title = getDisplayListTitle({
+    title: rel.title,
+    slug: rel.slug,
+    categorySlug: rel.categories?.slug,
+  });
   return (
     <Link
       href={`/lists/${rel.slug}`}
@@ -121,10 +207,13 @@ function SimilarListCard({ rel }: { rel: RelatedList }) {
       <div className="relative aspect-[4/3] bg-gray-200">
         <ImageWithFallback
           src={rel.coverImage ?? ''}
-          alt={rel.title}
+          alt={title}
           className="w-full h-full object-cover"
           fallbackIcon={rel.categories?.icon ?? '📋'}
           fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+          categorySlug={rel.categories?.slug}
+          listSlug={rel.slug}
+          listTitle={rel.title}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-2">
@@ -132,48 +221,147 @@ function SimilarListCard({ rel }: { rel: RelatedList }) {
         </div>
       </div>
       <div className="p-2.5 min-w-0">
-        <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{rel.title}</h3>
+        <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{title}</h3>
       </div>
     </Link>
+  );
+}
+
+function SimilarListsCarousel({ relatedLists }: { relatedLists: RelatedList[] }) {
+  if (relatedLists.length === 0) return null;
+  return (
+    <section className="pt-4 mt-1 border-t border-wibe">
+      <h3 className="wibe-small font-semibold text-foreground mb-0.5">لیست‌های مشابه</h3>
+      <p className="wibe-caption text-wibe-secondary mb-2.5">ممکنه این‌ها هم به کارت بیان</p>
+      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4">
+        {relatedLists.map((rel) => (
+          <SimilarListCard key={rel.id} rel={rel} />
+        ))}
+      </div>
+    </section>
   );
 }
 
 function GridItemCard({
   item,
   index,
+  categorySlug,
+  categoryIcon,
+  onOpen,
 }: {
   item: Item;
   index: number;
+  categorySlug?: string | null;
+  categoryIcon?: string | null;
+  onOpen: () => void;
 }) {
+  const subtitle = getItemCardSubtitle({
+    description: item.description,
+    rating: item.rating,
+    metadata: item.metadata,
+    categorySlug,
+  });
+  const isMovieGrid = isMovieLikeCategory(categorySlug);
+
   return (
-    <Link
-      href={`/items/${item.id}`}
-      className="block bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+    <button
+      type="button"
+      onClick={onOpen}
+      className="block w-full text-right bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
     >
-      <div className="relative aspect-[4/3] bg-gray-200 overflow-hidden">
-        <ImageWithFallback
-          src={item.imageUrl ?? ''}
-          alt={item.title}
-          className="w-full h-full object-cover"
-          fallbackIcon="📋"
-          fallbackClassName="w-full h-full flex items-center justify-center text-3xl bg-gray-200"
-          placeholderSize="square"
+      <div className={`relative overflow-hidden ${isMovieGrid ? 'aspect-[2/3]' : 'aspect-[4/3]'}`}>
+        <LazyItemCoverImage
+          itemId={item.id}
+          imageUrl={item.displayImageUrl ?? item.imageUrl}
+          title={item.title}
+          metadata={item.metadata}
+          categorySlug={categorySlug}
+          className="h-full w-full object-cover"
+          fallbackIcon={categoryIcon ?? '🎬'}
+          fallbackClassName="flex h-full w-full items-center justify-center text-2xl"
+          enrichWhenVisible={isMovieGrid}
+          coverLayout="grid"
         />
-        <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/40 text-white wibe-caption flex items-center justify-center font-medium">
-          {index + 1}
+        <span className="absolute top-1.5 right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-black/50 text-white wibe-caption flex items-center justify-center font-medium tabular-nums">
+          {(index + 1).toLocaleString('fa-IR')}
         </span>
       </div>
       <div className="p-2.5 min-h-0">
         <h3 className="wibe-small font-semibold text-foreground line-clamp-2 leading-tight">
           {item.title}
         </h3>
-        {(item.description || item.rating > 0) && (
-          <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">
-            {item.description || (item.rating > 0 ? `امتیاز ${item.rating}` : '')}
-          </p>
+        {subtitle && (
+          <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">{subtitle}</p>
         )}
       </div>
-    </Link>
+    </button>
+  );
+}
+
+function ListItemRow({
+  item,
+  index,
+  categorySlug,
+  categoryIcon,
+  isSimilar,
+  onOpen,
+}: {
+  item: Item;
+  index: number;
+  categorySlug?: string | null;
+  categoryIcon?: string | null;
+  isSimilar?: boolean;
+  onOpen: () => void;
+}) {
+  const subtitle = getItemCardSubtitle({
+    description: item.description,
+    rating: item.rating,
+    metadata: item.metadata,
+    categorySlug,
+  });
+  const isMovieRow = isMovieLikeCategory(categorySlug);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`flex w-full gap-3 items-center text-right bg-wibe-card rounded-lg p-2.5 border border-wibe shadow-sm active:scale-[0.99] transition-transform min-h-[68px] ${
+        isSimilar ? 'opacity-85' : ''
+      }`}
+    >
+      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-wibe-secondary flex items-center justify-center wibe-caption font-medium tabular-nums">
+        {(index + 1).toLocaleString('fa-IR')}
+      </div>
+      <div
+        className={`relative flex-shrink-0 rounded-md overflow-hidden ${
+          isMovieRow ? 'w-11 aspect-[2/3]' : 'w-12 h-12'
+        }`}
+      >
+        <LazyItemCoverImage
+          itemId={item.id}
+          imageUrl={item.displayImageUrl ?? item.imageUrl}
+          title={item.title}
+          metadata={item.metadata}
+          categorySlug={categorySlug}
+          className="h-full w-full object-cover"
+          fallbackIcon={categoryIcon ?? '🎬'}
+          fallbackClassName="flex h-full w-full items-center justify-center text-lg"
+          enrichWhenVisible={isMovieRow}
+          coverLayout="list"
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="wibe-small font-semibold text-foreground line-clamp-1">
+          {item.title}
+          {isSimilar && (
+            <span className="wibe-caption font-normal text-wibe-secondary mr-1">(مشابه)</span>
+          )}
+        </h3>
+        {subtitle && (
+          <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">{subtitle}</p>
+        )}
+      </div>
+    </button>
   );
 }
 
@@ -183,7 +371,9 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
   const [stickyVisible, setStickyVisible] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [stickySaving, setStickySaving] = useState(false);
-  const titleRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const itemsSectionRef = useRef<HTMLElement>(null);
+  const commentsSectionRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
     if (typeof window === 'undefined')
       return getDefaultView(list.categories?.slug, list.items);
@@ -196,6 +386,10 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
   const [showGridHint, setShowGridHint] = useState(false);
   const [gridHintVisible, setGridHintVisible] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [itemSearchQuery, setItemSearchQuery] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleScrollToComment = useCallback((commentId: string) => {
@@ -259,7 +453,6 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
   const commentCount = list._count?.list_comments ?? 0;
   const saveCount = list.saveCount ?? 0;
   const viewCount = list.viewCount ?? 0;
-  const viralListsCount = list.users?.viralListsCount ?? 0;
   const isViral = list.badge === 'TRENDING' || saveCount >= 100;
   const creatorName = list.users?.name || 'کاربر';
   const creatorId = list.users?.id;
@@ -308,22 +501,37 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
     return () => (el ? observer.unobserve(el) : undefined);
   }, []);
 
+  const displayTitle = getDisplayListTitle({
+    title: list.title,
+    slug: list.slug,
+    categorySlug: list.categories?.slug,
+  });
+  const categorySlug = list.categories?.slug ?? null;
+  const categoryIcon = list.categories?.icon ?? null;
+  const listDescription = list.description?.trim();
+
   const handleShare = () => {
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator
         .share({
-          title: list.title,
-          text: list.description || list.title,
+          title: displayTitle,
+          text: list.description || displayTitle,
           url: window.location.href,
         })
         .catch(() => {});
     } else {
       navigator.clipboard?.writeText(window.location.href);
+      setToast({ message: 'لینک کپی شد', type: 'success' });
     }
+    setMoreOpen(false);
+  };
+
+  const scrollToSection = (ref: React.RefObject<HTMLElement | null>) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const showLoginCTA = status === 'unauthenticated';
-  const showStickyBar = stickyVisible && !isBookmarked;
+  const showStickyBar = stickyVisible && !isBookmarked && !isOwner;
 
   const BADGE_LABELS: Record<string, string> = {
     TRENDING: 'ترند',
@@ -339,16 +547,180 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
 
   const viralProgress = Math.min(100, (saveCount / 100) * 100);
 
+  const allItemEntries = useMemo<ItemEntry[]>(
+    () => list.items.map((item, originalIndex) => ({ item, originalIndex })),
+    [list.items]
+  );
+
+  const normalizedItemSearch = normalizeSearchQuery(itemSearchQuery);
+  const isItemSearchActive = normalizedItemSearch.length > 0;
+
+  const filteredItemEntries = useMemo(() => {
+    if (!isItemSearchActive) return allItemEntries;
+    const filtered = filterItemsByQuery(
+      allItemEntries.map((e) => e.item),
+      normalizedItemSearch
+    );
+    const ids = new Set(filtered.map((i) => i.id));
+    return allItemEntries.filter((e) => ids.has(e.item.id));
+  }, [allItemEntries, isItemSearchActive, normalizedItemSearch]);
+
+  const showItemSearch = list.items.length >= LIST_INNER_SEARCH_MIN_ITEMS;
+  const showSimilarLists = !isItemSearchActive && relatedLists.length > 0;
+
+  const previewItem: ItemPreviewData | null =
+    previewIndex != null && list.items[previewIndex] ? list.items[previewIndex] : null;
+
+  const previewNavIndices = useMemo(() => {
+    if (!isItemSearchActive) return null;
+    return filteredItemEntries.map((e) => e.originalIndex);
+  }, [isItemSearchActive, filteredItemEntries]);
+
+  const previewDisplayIndex = useMemo(() => {
+    if (previewIndex == null) return undefined;
+    if (previewNavIndices) {
+      const pos = previewNavIndices.indexOf(previewIndex);
+      return pos >= 0 ? pos : undefined;
+    }
+    return previewIndex;
+  }, [previewIndex, previewNavIndices]);
+
+  const previewDisplayTotal = isItemSearchActive
+    ? filteredItemEntries.length
+    : list.items.length;
+
+  const goPreviewPrev = useCallback(() => {
+    setPreviewIndex((current) => {
+      if (current == null) return current;
+      if (previewNavIndices) {
+        const pos = previewNavIndices.indexOf(current);
+        return pos > 0 ? previewNavIndices[pos - 1] : current;
+      }
+      return current > 0 ? current - 1 : current;
+    });
+  }, [previewNavIndices]);
+
+  const goPreviewNext = useCallback(() => {
+    setPreviewIndex((current) => {
+      if (current == null) return current;
+      if (previewNavIndices) {
+        const pos = previewNavIndices.indexOf(current);
+        return pos >= 0 && pos < previewNavIndices.length - 1
+          ? previewNavIndices[pos + 1]
+          : current;
+      }
+      return current < list.items.length - 1 ? current + 1 : current;
+    });
+  }, [previewNavIndices, list.items.length]);
+
+  const canPreviewPrev =
+    previewIndex != null &&
+    (previewNavIndices
+      ? previewNavIndices.indexOf(previewIndex) > 0
+      : previewIndex > 0);
+
+  const canPreviewNext =
+    previewIndex != null &&
+    (previewNavIndices
+      ? previewNavIndices.indexOf(previewIndex) < previewNavIndices.length - 1
+      : previewIndex < list.items.length - 1);
+
+  useEffect(() => {
+    if (previewIndex == null || !isItemSearchActive) return;
+    if (!filteredItemEntries.some((e) => e.originalIndex === previewIndex)) {
+      setPreviewIndex(null);
+    }
+  }, [filteredItemEntries, isItemSearchActive, previewIndex]);
+
+  const openItemPreview = useCallback((index: number) => {
+    setPreviewIndex(index);
+  }, []);
+
+  const closeItemPreview = useCallback(() => {
+    setPreviewIndex(null);
+  }, []);
+
+  const renderItemEntries = (entries: ItemEntry[]) => {
+    if (viewMode === 'grid') {
+      return (
+        <div className="grid grid-cols-2 gap-3">
+          {entries.map(({ item, originalIndex }) => (
+            <GridItemCard
+              key={item.id}
+              item={item}
+              index={originalIndex}
+              categorySlug={categorySlug}
+              categoryIcon={categoryIcon}
+              onOpen={() => openItemPreview(originalIndex)}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2.5">
+        {entries.map(({ item, originalIndex }, i) => {
+          const prevEntry = i > 0 ? entries[i - 1] : null;
+          const isSimilar =
+            !!prevEntry &&
+            item.title.slice(0, 12) === prevEntry.item.title.slice(0, 12);
+          return (
+            <ListItemRow
+              key={item.id}
+              item={item}
+              index={originalIndex}
+              categorySlug={categorySlug}
+              categoryIcon={categoryIcon}
+              isSimilar={isSimilar}
+              onOpen={() => openItemPreview(originalIndex)}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-wibe-surface pb-24" dir="rtl">
+      {stickyVisible && (
+        <div className="fixed top-0 left-0 right-0 z-40 flex justify-center border-b border-wibe bg-wibe-surface/95 backdrop-blur-sm pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <div className={`flex w-full items-center gap-2 px-3 py-2 ${MOBILE_SHELL_MAX_WIDTH_CLASS}`}>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full hover:bg-gray-100"
+              aria-label="بازگشت"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <p className="min-w-0 flex-1 truncate wibe-small font-semibold text-foreground">{displayTitle}</p>
+            {session?.user && !isOwner && (
+              <BookmarkButton
+                listId={list.id}
+                initialBookmarkCount={saveCount}
+                variant="icon"
+                size="md"
+                onToggle={(saved) => setIsBookmarked(saved)}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
-      <div className="relative h-[230px] sm:h-[240px] bg-gray-200 rounded-b-lg overflow-hidden">
+      <div className="relative h-[210px] sm:h-[220px] bg-gray-200 rounded-b-lg overflow-hidden">
         <ImageWithFallback
           src={list.coverImage ?? ''}
-          alt={list.title}
+          alt={displayTitle}
           className="w-full h-full object-cover"
-          fallbackIcon={list.categories?.icon ?? '📋'}
+          fallbackIcon={categoryIcon ?? '📋'}
           fallbackClassName="w-full h-full flex items-center justify-center text-6xl bg-gray-200"
+          categorySlug={categorySlug}
+          listSlug={list.slug}
+          listTitle={list.title}
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
@@ -365,14 +737,7 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           </button>
           <button
             type="button"
-            onClick={handleShare}
-            className="w-10 h-10 rounded-full bg-wibe-card/95 backdrop-blur flex items-center justify-center text-foreground shadow-sm"
-            aria-label="اشتراک‌گذاری"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
+            onClick={() => setMoreOpen(true)}
             className="w-10 h-10 rounded-full bg-wibe-card/95 backdrop-blur flex items-center justify-center text-foreground shadow-sm"
             aria-label="بیشتر"
           >
@@ -385,195 +750,251 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
               <Flame className="w-3.5 h-3.5" /> وایرال
             </span>
           )}
-          {session?.user && (
+          {session?.user && !isOwner && (
             <div className="w-10 h-10 rounded-full bg-wibe-card/95 backdrop-blur flex items-center justify-center shadow-sm">
-              <BookmarkButton listId={list.id} initialBookmarkCount={saveCount} variant="icon" size="md" />
-            </div>
-          )}
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4 pb-5">
-          <h1 ref={titleRef} className="text-h1 font-bold text-white leading-tight">
-            {list.title}
-          </h1>
-          <p className="text-white/85 mt-1.5 wibe-small leading-relaxed line-clamp-2">
-            {list.description?.trim() || DESCRIPTION_PLACEHOLDER}
-          </p>
-          {list.badge && BADGE_LABELS[list.badge] && (
-            <span className={`inline-flex mt-2 px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-white/20 text-white'}`}>
-              {BADGE_LABELS[list.badge]}
-            </span>
-          )}
-          {list.categories && (
-            <Link
-              href={`/categories/${list.categories.slug}`}
-              className="inline-flex items-center gap-1 mt-2 mr-2 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
-            >
-              {list.categories.icon} {list.categories.name}
-            </Link>
-          )}
-        </div>
-      </div>
-
-      <main className="px-4 pt-4 relative z-10 space-y-4">
-        <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-wibe-card border border-wibe shadow-sm">
-          <Link
-            href={creatorUsername ? `/u/${creatorUsername}` : '#'}
-            className="flex items-center gap-4 min-w-0 flex-1"
-          >
-            <div className="flex-shrink-0 w-14 h-14 rounded-full overflow-hidden border-2 border-wibe bg-gray-200">
-              {creatorImage ? (
-                <ImageWithFallback
-                  src={creatorImage}
-                  alt={creatorName}
-                  className="w-full h-full object-cover"
-                  fallbackIcon={(creatorName?.[0] || '?').toUpperCase()}
-                  fallbackClassName="w-full h-full bg-primary text-white font-bold flex items-center justify-center"
-                />
-              ) : (
-                <div className="w-full h-full bg-primary text-white font-bold flex items-center justify-center text-lg">
-                  {(creatorName?.[0] || '?').toUpperCase()}
-                </div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="wibe-body font-semibold text-foreground truncate">{creatorName}</p>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <CuratorBadge
-                  level={creatorLevel}
-                  size="small"
-                  glow={creatorLevel === 'ELITE_CURATOR' || creatorLevel === 'VIBE_LEGEND'}
-                />
-              </div>
-              <div className="flex items-center gap-3 mt-1.5 wibe-caption text-wibe-secondary">
-                {followersCount > 0 && (
-                  <span className="tabular-nums">{formatCompact(followersCount)} دنبال‌کننده</span>
-                )}
-                {followersCount === 0 && (
-                  <span className="text-warning">تازه شروع کرده</span>
-                )}
-                {viralListsCount > 0 && (
-                  <span>{viralListsCount} لیست ترند</span>
-                )}
-              </div>
-            </div>
-          </Link>
-          {session?.user && creatorId && (
-            isOwner ? (
-              <Link
-                href={`/user-lists/${list.id}/add-item`}
-                className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-wibe wibe-small font-medium text-foreground hover:bg-gray-50"
-              >
-                <Pencil className="w-4 h-4" />
-                ویرایش
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={handleFollowToggle}
-                disabled={followLoading}
-                className={`flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md wibe-small font-semibold transition-all disabled:opacity-50 ${
-                  isFollowing
-                    ? 'bg-gray-100 text-wibe-secondary'
-                    : 'bg-primary text-white active:opacity-90'
-                }`}
-              >
-                {isFollowing ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    دنبال می‌کنی
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-4 h-4" />
-                    دنبال کردن
-                  </>
-                )}
-              </button>
-            )
-          )}
-        </div>
-
-        {/* آمار — ذخیره برجسته */}
-        <div className="grid grid-cols-4 gap-2 py-5 border-b border-wibe">
-          <div className="text-center">
-            <p className="text-h3 font-bold text-primary tabular-nums">{formatCompact(saveCount)}</p>
-            <p className="wibe-caption text-wibe-secondary mt-0.5">ذخیره</p>
-          </div>
-          <div className="text-center">
-            <p className="text-h3 font-bold text-foreground tabular-nums">{formatCompact(viewCount)}</p>
-            <p className="wibe-caption text-wibe-secondary mt-0.5">بازدید</p>
-          </div>
-          <div className="text-center">
-            <p className="text-h3 font-bold text-foreground tabular-nums">{commentCount.toLocaleString('fa-IR')}</p>
-            <p className="wibe-caption text-wibe-secondary mt-0.5">نظر</p>
-          </div>
-          <div className="text-center">
-            <p className="text-h3 font-bold text-foreground tabular-nums">{itemCount.toLocaleString('fa-IR')}</p>
-            <p className="wibe-caption text-wibe-secondary mt-0.5">آیتم</p>
-          </div>
-        </div>
-
-        {saveCount < 100 && (
-          <div className="pt-4 pb-2">
-            <div className="flex items-center justify-between wibe-caption text-wibe-secondary mb-1.5">
-              <span>تا رسیدن به لیست وایرال</span>
-              <span className="font-semibold tabular-nums">{Math.round(viralProgress)}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-warning transition-all duration-500"
-                style={{ width: `${viralProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
-        {isViral && (
-          <div className="py-3 px-4 rounded-lg bg-warning/10 border border-warning/20 flex items-center gap-2">
-            <Flame className="w-5 h-5 text-warning" />
-            <span className="wibe-small font-medium text-foreground">این لیست وایرال است</span>
-          </div>
-        )}
-
-        <div className="flex flex-col gap-3 pt-5 pb-5">
-          {showLoginCTA ? (
-            <>
-              <p className="wibe-small text-wibe-secondary py-1">برای ذخیره وارد شو</p>
-              <Link
-                href="/login"
-                className="w-full py-3 rounded-md bg-primary text-white font-semibold text-center wibe-small hover:bg-primary-dark transition-colors"
-              >
-                ورود / ثبت‌نام
-              </Link>
-            </>
-          ) : (
-            <>
               <BookmarkButton
                 listId={list.id}
                 initialBookmarkCount={saveCount}
-                variant="button"
-                size="lg"
-                labelSave="ذخیره در لیست‌های من"
-                labelSaved="ذخیره شد"
-                onToggle={() => {}}
+                variant="icon"
+                size="md"
+                onToggle={(saved) => setIsBookmarked(saved)}
               />
-              <button
-                type="button"
-                onClick={handleShare}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-md border border-wibe bg-wibe-card wibe-small font-medium text-foreground hover:bg-gray-50 transition-colors"
-              >
-                <Share2 className="w-4 h-4" />
-                اشتراک‌گذاری
-              </button>
-            </>
+            </div>
           )}
         </div>
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-4">
+          <h1 ref={titleRef} className="text-h1 font-bold text-white leading-tight line-clamp-2">
+            {displayTitle}
+          </h1>
+          {listDescription && (
+            <p className="text-white/85 mt-1 wibe-small leading-relaxed line-clamp-1">{listDescription}</p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {list.categories && (
+              <Link
+                href={`/categories/${list.categories.slug}`}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
+              >
+                {list.categories.icon} {list.categories.name}
+              </Link>
+            )}
+            {list.badge && BADGE_LABELS[list.badge] && (
+              <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-white/20 text-white'}`}>
+                {BADGE_LABELS[list.badge]}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="relative z-20 px-4 -mt-4">
+        <ListCompactStatsBar
+          saveCount={saveCount}
+          itemCount={itemCount}
+          commentCount={commentCount}
+          viewCount={viewCount}
+          onItemsClick={() => scrollToSection(itemsSectionRef)}
+          onCommentsClick={() => scrollToSection(commentsSectionRef)}
+        />
+      </div>
+
+      <main className="relative z-10 space-y-3 px-4 pt-3">
+        {isOwner ? (
+          <>
+            {saveCount < 100 && (
+              <div className="rounded-lg border border-warning/20 bg-warning/5 px-3 py-2">
+                <div className="mb-1 flex items-center justify-between wibe-caption text-wibe-secondary">
+                  <span>تا لیست وایرال</span>
+                  <span className="font-semibold tabular-nums">{Math.round(viralProgress)}%</span>
+                </div>
+                <div className="h-1 overflow-hidden rounded-full bg-gray-200">
+                  <div className="h-full rounded-full bg-warning" style={{ width: `${viralProgress}%` }} />
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setManageOpen(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 py-2.5 wibe-small font-semibold text-primary active:scale-[0.99]"
+            >
+              <Settings className="h-4 w-4" />
+              مدیریت لیست
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm">
+              <Link
+                href={creatorUsername ? `/u/${creatorUsername}` : '#'}
+                className="flex min-w-0 flex-1 items-center gap-3"
+              >
+                <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-full border border-wibe bg-gray-200">
+                  {creatorImage ? (
+                    <ImageWithFallback
+                      src={creatorImage}
+                      alt={creatorName}
+                      className="h-full w-full object-cover"
+                      fallbackIcon={(creatorName?.[0] || '?').toUpperCase()}
+                      fallbackClassName="flex h-full w-full items-center justify-center bg-primary font-bold text-white"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-primary text-base font-bold text-white">
+                      {(creatorName?.[0] || '?').toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate wibe-small font-semibold text-foreground">{creatorName}</p>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                    <CuratorBadge
+                      level={creatorLevel}
+                      size="small"
+                      glow={creatorLevel === 'ELITE_CURATOR' || creatorLevel === 'VIBE_LEGEND'}
+                    />
+                    {followersCount > 0 ? (
+                      <span className="wibe-caption tabular-nums text-wibe-secondary">
+                        {formatCompact(followersCount)} دنبال‌کننده
+                      </span>
+                    ) : (
+                      <span className="wibe-caption text-warning">تازه شروع کرده</span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+              {session?.user && creatorId && (
+                <button
+                  type="button"
+                  onClick={handleFollowToggle}
+                  disabled={followLoading}
+                  className={`flex flex-shrink-0 items-center justify-center gap-1.5 rounded-md px-3.5 py-2 wibe-caption font-semibold transition-all disabled:opacity-50 ${
+                    isFollowing ? 'bg-gray-100 text-wibe-secondary' : 'bg-primary text-white'
+                  }`}
+                >
+                  {isFollowing ? <Check className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  {isFollowing ? 'دنبال می‌کنی' : 'دنبال کردن'}
+                </button>
+              )}
+            </div>
+
+            <div>
+              {showLoginCTA ? (
+                <Link
+                  href="/login"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-white wibe-small"
+                >
+                  ورود برای ذخیره لیست
+                </Link>
+              ) : (
+                <BookmarkButton
+                  listId={list.id}
+                  initialBookmarkCount={saveCount}
+                  variant="button"
+                  size="lg"
+                  labelSave="ذخیره در لیست‌های من"
+                  labelSaved="ذخیره شد ✓"
+                  onToggle={(saved) => setIsBookmarked(saved)}
+                />
+              )}
+            </div>
+          </>
+        )}
+
+        {/* آیتم‌ها — اولویت اول */}
+        <section ref={itemsSectionRef} className="scroll-mt-16">
+          <div className="flex items-center justify-between mb-2.5">
+            <h2 className="wibe-h3">آیتم‌های لیست</h2>
+            {list.items?.length > 0 && (
+              <div className="flex rounded-lg border border-wibe p-0.5 bg-gray-100">
+                <button
+                  type="button"
+                  onClick={handleSetList}
+                  title="لیستی"
+                  aria-label="نمایش لیستی"
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md wibe-caption transition-colors ${
+                    viewMode === 'list' ? 'bg-wibe-card shadow-sm text-primary' : 'text-wibe-secondary'
+                  }`}
+                >
+                  <ListIcon className="w-3.5 h-3.5" />
+                  لیست
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSetGrid}
+                  title="شبکه‌ای"
+                  aria-label="نمایش شبکه‌ای"
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md wibe-caption transition-colors ${
+                    viewMode === 'grid' ? 'bg-wibe-card shadow-sm text-primary' : 'text-wibe-secondary'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  شبکه
+                </button>
+              </div>
+            )}
+          </div>
+
+          {showItemSearch && (
+            <div className="mb-3 space-y-1.5">
+              <SearchInput
+                value={itemSearchQuery}
+                onChange={setItemSearchQuery}
+                placeholder="جستجو در این لیست…"
+                aria-label="جستجو در آیتم‌های لیست"
+              />
+              {isItemSearchActive && (
+                <p className="px-0.5 wibe-caption text-wibe-secondary">
+                  {filteredItemEntries.length.toLocaleString('fa-IR')} نتیجه از{' '}
+                  {list.items.length.toLocaleString('fa-IR')} آیتم
+                </p>
+              )}
+            </div>
+          )}
+
+          {viewMode === 'grid' && gridHintVisible && !isItemSearchActive && (
+            <p className="wibe-caption text-wibe-secondary mb-2.5 text-center">مرور سریع‌تر با نمای شبکه‌ای</p>
+          )}
+
+          {!list.items?.length ? (
+            <div className="text-center py-10 bg-wibe-card rounded-lg border border-wibe">
+              <p className="wibe-body text-wibe-secondary">این لیست هنوز آیتمی ندارد</p>
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => setManageOpen(true)}
+                  className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-xl bg-primary text-white wibe-small font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  افزودن اولین آیتم
+                </button>
+              )}
+            </div>
+          ) : isItemSearchActive && filteredItemEntries.length === 0 ? (
+            <div className="py-10 text-center bg-wibe-card rounded-lg border border-wibe">
+              <p className="wibe-body font-medium text-foreground">آیتمی پیدا نشد</p>
+              <p className="mt-1 wibe-caption text-wibe-secondary">
+                عبارت دیگری برای «{normalizedItemSearch}» امتحان کن
+              </p>
+              <button
+                type="button"
+                onClick={() => setItemSearchQuery('')}
+                className="mt-4 wibe-caption font-medium text-primary"
+              >
+                پاک کردن جستجو
+              </button>
+            </div>
+          ) : isItemSearchActive ? (
+            renderItemEntries(filteredItemEntries)
+          ) : (
+            renderItemEntries(allItemEntries)
+          )}
+        </section>
 
         {list.tags && list.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2 pb-4">
+          <div className="flex flex-wrap gap-2">
             {list.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="inline-flex px-3 py-1.5 rounded-md wibe-caption font-medium bg-gray-100 text-wibe-secondary"
+                className="inline-flex px-3 py-1 rounded-md wibe-caption font-medium bg-gray-100 text-wibe-secondary"
               >
                 {tag}
               </span>
@@ -581,193 +1002,134 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           </div>
         )}
 
-        <section className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="wibe-h3">آیتم‌های لیست</h2>
-            {isOwner && (
-              <Link
-                href={`/user-lists/${list.id}/add-item`}
-                className="wibe-small text-primary font-medium"
-              >
-                افزودن آیتم
-              </Link>
-            )}
+        {isViral && !isOwner && (
+          <div className="py-2.5 px-3 rounded-lg bg-warning/10 border border-warning/20 flex items-center gap-2">
+            <Flame className="w-4 h-4 text-warning shrink-0" />
+            <span className="wibe-caption font-medium text-foreground">لیست وایرال — {formatCompact(saveCount)} ذخیره</span>
           </div>
-          {isOwner && list.items?.length > 0 && (
-            <p className="wibe-small text-wibe-secondary mb-3 -mt-1">می‌تونی آیتم‌های جدید به این لیست اضافه کنی</p>
-          )}
+        )}
 
-          {list.items?.length > 0 && (
-            <div className="flex items-center justify-end gap-2 mb-4">
-              <span className="wibe-small text-wibe-secondary">نمایش:</span>
-              <div className="flex rounded-md border border-wibe p-0.5 bg-gray-100">
-                <button
-                  type="button"
-                  onClick={handleSetList}
-                  title="نمایش لیستی"
-                  aria-label="نمایش لیستی"
-                  className={`p-2 rounded-sm text-lg leading-none transition-colors ${
-                    viewMode === 'list' ? 'bg-wibe-card shadow-sm text-primary' : 'text-wibe-secondary'
-                  }`}
-                >
-                  ≡
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSetGrid}
-                  title="نمایش گریدی"
-                  aria-label="نمایش گریدی"
-                  className={`p-2 rounded-sm text-lg leading-none transition-colors ${
-                    viewMode === 'grid' ? 'bg-wibe-card shadow-sm text-primary' : 'text-wibe-secondary'
-                  }`}
-                >
-                  <span className="inline-flex gap-0.5 text-base" style={{ letterSpacing: '-0.2em' }}>⬛⬛</span>
-                </button>
-              </div>
-            </div>
-          )}
+        {!isOwner && !showLoginCTA && (
+          <div className="flex items-center justify-between gap-3 py-1">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center gap-1.5 wibe-caption font-medium text-wibe-secondary hover:text-primary"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              اشتراک‌گذاری
+            </button>
+            <Link href="/user-lists" className="wibe-caption font-medium text-primary">
+              ساخت نسخه شخصی
+            </Link>
+          </div>
+        )}
 
-          {viewMode === 'grid' && gridHintVisible && (
-            <p className="wibe-caption text-wibe-secondary mb-3 text-center transition-opacity duration-500">
-              حالت گریدی برای مرور سریع‌تر آیتم‌ها
-            </p>
-          )}
+        {showSimilarLists && <SimilarListsCarousel relatedLists={relatedLists} />}
 
-          {!list.items?.length ? (
-            <div className="text-center py-12 bg-wibe-card rounded-lg border border-wibe">
-              <p className="wibe-body text-wibe-secondary">
-                {viewMode === 'grid' ? 'این لیست هنوز آیتمی ندارد' : 'این لیست هنوز کامل نیست'}
-              </p>
-              {viewMode === 'grid' && (
-                <p className="wibe-small text-wibe-secondary mt-1">با اضافه کردن آیتم‌ها، این لیست شکل می‌گیرد</p>
-              )}
-              {isOwner && (
-                <Link
-                  href={`/user-lists/${list.id}/add-item`}
-                  className="inline-block mt-4 px-5 py-2.5 rounded-md bg-primary text-white wibe-small font-medium hover:bg-primary-dark transition-colors"
-                >
-                  افزودن {viewMode === 'grid' ? 'اولین آیتم' : 'آیتم'}
-                </Link>
-              )}
-            </div>
-          ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 gap-3">
-              {list.items.map((item, index) => (
-                <GridItemCard key={item.id} item={item} index={index} />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {list.items.map((item, index) => {
-                const prevTitle = index > 0 ? list.items[index - 1].title : '';
-                const isSimilar = prevTitle && item.title.slice(0, 12) === prevTitle.slice(0, 12);
-                return (
-                  <Link
-                    key={item.id}
-                    href={`/items/${item.id}`}
-                    className={`flex gap-4 items-center bg-wibe-card rounded-lg p-3 border border-wibe shadow-sm active:scale-[0.99] transition-transform min-h-[72px] ${
-                      isSimilar ? 'opacity-85' : ''
-                    }`}
-                  >
-                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 text-wibe-secondary flex items-center justify-center wibe-caption font-medium">
-                      {index + 1}
-                    </div>
-                    <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-gray-200">
-                      <ImageWithFallback
-                        src={item.imageUrl ?? ''}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                        fallbackIcon="📋"
-                        fallbackClassName="w-full h-full flex items-center justify-center text-xl bg-gray-200"
-                        placeholderSize="square"
-            />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="wibe-small font-semibold text-foreground line-clamp-1">
-                        {item.title}
-                        {isSimilar && (
-                          <span className="wibe-caption font-normal text-wibe-secondary mr-1">(مشابه)</span>
-                        )}
-                      </h3>
-                      {(item.description || item.rating > 0) && (
-                        <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">
-                          {item.description || (item.rating > 0 ? `امتیاز ${item.rating}` : '')}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <div className="mt-12 pt-6">
-          <section className="rounded-lg bg-gray-100/80 p-5 border border-wibe">
-            {isOwner ? (
-              <>
-                <h2 className="wibe-h3 mb-2">این لیست مال توئه</h2>
-                <Link
-                  href={`/admin/lists/${list.id}/edit`}
-                  className="inline-flex items-center gap-2 py-2.5 px-4 rounded-md bg-primary text-white wibe-small font-medium hover:bg-primary-dark transition-colors"
-                >
-                  <Pencil className="w-4 h-4" />
-                  ویرایش لیست
-                </Link>
-              </>
-            ) : (
-              <>
-                <h2 className="wibe-h3 mb-1">این لیست رو مال خودت کن</h2>
-                <p className="wibe-small text-wibe-secondary mb-4">
-                  می‌تونی ویرایشش کنی، آیتم اضافه کنی یا نسخه شخصی خودت رو بسازی
-                </p>
-                <Link
-                  href="/user-lists"
-                  className="block w-full py-3 px-4 rounded-md bg-primary text-white font-medium text-center wibe-small hover:bg-primary-dark transition-colors mb-3"
-                >
-                  ساخت نسخه خودم
-                </Link>
-                <Link
-                  href="/user-lists"
-                  className="wibe-small text-wibe-secondary hover:text-primary transition-colors inline-block"
-                >
-                  اضافه به لیست‌هام
-                </Link>
-              </>
-            )}
-          </section>
-
-          {relatedLists.length > 0 && (
-            <section className="mt-8">
-              <h2 className="wibe-h3">لیست‌های مشابه</h2>
-              <p className="wibe-caption text-wibe-secondary mb-3 mt-0.5">ممکنه این‌ها هم به کارت بیان</p>
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-                {relatedLists.map((rel) => (
-                  <SimilarListCard key={rel.id} rel={rel} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* نظرات و پیشنهادها — Engagement Block */}
+        <div ref={commentsSectionRef} className="scroll-mt-16">
           <VibeCommentSection
             listId={list.id}
             isOwner={isOwner}
-            listUserId={list.userId}
-            categorySlug={list.categories?.slug}
+            categorySlug={categorySlug}
             onOpenSuggestItem={() => setSuggestOpen(true)}
           />
-
-          {/* End spacing before bottom nav */}
-          <div className="h-10" />
         </div>
+
+        <div className="h-6" />
       </main>
+
+      {/* پیش‌نمایش آیتم */}
+      <ItemPreviewSheet
+        isOpen={previewIndex != null}
+        onClose={closeItemPreview}
+        item={previewItem}
+        itemIndex={previewDisplayIndex}
+        totalItems={previewDisplayTotal}
+        categorySlug={categorySlug}
+        categoryIcon={categoryIcon}
+        categoryName={list.categories?.name}
+        listSlug={list.slug}
+        onPrev={canPreviewPrev ? goPreviewPrev : undefined}
+        onNext={canPreviewNext ? goPreviewNext : undefined}
+      />
+
+      {/* مدیریت لیست — owner */}
+      <BottomSheet
+        isOpen={manageOpen}
+        onClose={() => setManageOpen(false)}
+        title="مدیریت لیست"
+        maxHeight="50vh"
+      >
+        <div className="space-y-2 px-1 pb-2">
+          <Link
+            href={`/user-lists/${list.id}/add-item`}
+            onClick={() => setManageOpen(false)}
+            className="flex items-center gap-3 rounded-xl border border-wibe bg-wibe-card p-3.5 wibe-small font-medium text-foreground active:scale-[0.99]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Plus className="h-4 w-4" />
+            </span>
+            افزودن آیتم
+          </Link>
+          <Link
+            href={`/user-lists/${list.id}`}
+            onClick={() => setManageOpen(false)}
+            className="flex items-center gap-3 rounded-xl border border-wibe bg-wibe-card p-3.5 wibe-small font-medium text-foreground active:scale-[0.99]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-wibe-secondary">
+              <Settings className="h-4 w-4" />
+            </span>
+            تنظیمات و ویرایش لیست
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setManageOpen(false);
+              handleShare();
+            }}
+            className="flex w-full items-center gap-3 rounded-xl border border-wibe bg-wibe-card p-3.5 wibe-small font-medium text-foreground active:scale-[0.99]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-wibe-secondary">
+              <Share2 className="h-4 w-4" />
+            </span>
+            اشتراک‌گذاری لیست
+          </button>
+        </div>
+      </BottomSheet>
+
+      {/* منوی بیشتر */}
+      <BottomSheet isOpen={moreOpen} onClose={() => setMoreOpen(false)} title="گزینه‌ها" maxHeight="40vh">
+        <div className="space-y-1 px-1 pb-2">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-gray-50"
+          >
+            <Share2 className="h-4 w-4 text-wibe-secondary" />
+            اشتراک‌گذاری
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(window.location.href);
+              setToast({ message: 'لینک کپی شد', type: 'success' });
+              setMoreOpen(false);
+            }}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-gray-50"
+          >
+            <Link2 className="h-4 w-4 text-wibe-secondary" />
+            کپی لینک
+          </button>
+        </div>
+      </BottomSheet>
 
       {/* مودال پیشنهاد آیتم */}
       <BottomSheet
         isOpen={suggestOpen}
         onClose={() => setSuggestOpen(false)}
         title="پیشنهاد آیتم"
+        subtitle="جستجو کن یا از پیشنهادها انتخاب کن"
         maxHeight="85vh"
       >
         <SuggestItemSearch

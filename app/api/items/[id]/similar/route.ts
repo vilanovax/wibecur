@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
 // GET /api/items/[id]/similar — آیتم‌های مشابه (همان دسته، مرتب‌سازی با تگ و امتیاز)
 export async function GET(
@@ -62,6 +63,7 @@ export async function GET(
                 select: {
                   name: true,
                   icon: true,
+                  slug: true,
                 },
               },
             },
@@ -88,7 +90,12 @@ export async function GET(
     const data = sorted.map((i) => ({
       id: i.id,
       title: i.title,
-      image: i.imageUrl,
+      image: resolveItemDisplayImage({
+        id: i.id,
+        imageUrl: i.imageUrl,
+        title: i.title,
+        categorySlug: i.lists?.categories?.slug ?? null,
+      }),
       rating: i.rating,
       category: i.lists?.categories
         ? {

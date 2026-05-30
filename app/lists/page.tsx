@@ -3,6 +3,7 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import ListsPageClient from './ListsPageClient';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { withResolvedListCovers } from '@/lib/resolve-list-cover';
 
 export const revalidate = 60; // ISR: به‌روزرسانی هر ۶۰ ثانیه
 
@@ -70,7 +71,7 @@ const listsQuery = () =>
 export default async function ListsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; tag?: string; q?: string }>;
+  searchParams: Promise<{ category?: string; tag?: string; q?: string; mode?: string }>;
 }) {
   const params = await searchParams;
   let lists: Awaited<ReturnType<typeof listsQuery>> = [];
@@ -96,13 +97,14 @@ export default async function ListsPage({
 
   return (
     <div className="min-h-screen bg-wibe-surface pb-20">
-      <Header title="لیست‌ها" />
+      <Header title="لیست‌ها" showSearch />
       <main className="pt-3">
         <ListsPageClient 
-          lists={JSON.parse(JSON.stringify(lists))} 
+          lists={JSON.parse(JSON.stringify(withResolvedListCovers(lists)))} 
           categories={JSON.parse(JSON.stringify(categories))} 
           initialCategory={params.category}
-          initialSearch={params.tag || params.q}
+          initialSearch={params.q || params.tag}
+          initialMode={params.mode}
         />
       </main>
       <BottomNav />

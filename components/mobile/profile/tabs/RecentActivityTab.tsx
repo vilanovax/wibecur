@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
-import { Bookmark, Heart, Flame, FileText, ChevronLeft } from 'lucide-react';
+import { Bookmark, Heart, Flame, FileText, ChevronLeft, RefreshCw } from 'lucide-react';
 
 const VIRAL_LIKE_THRESHOLD = 50;
 
@@ -26,8 +26,13 @@ interface Activity {
   itemId?: string;
 }
 
+import type { ProfileActivitySSR } from '@/lib/profile-ssr-types';
+
 interface RecentActivityTabProps {
   userId: string;
+  /** داخل ProfileActivityPanel — بدون padding اضافه */
+  embedded?: boolean;
+  initialActivities?: ProfileActivitySSR[];
 }
 
 const TYPE_CONFIG: Record<
@@ -72,19 +77,30 @@ function formatStat(n: number): string {
 async function fetchActivities(): Promise<Activity[]> {
   const res = await fetch('/api/user/activity?type=all&limit=20');
   const data = await res.json();
-  return data.success ? (data.data.activities ?? []) : [];
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || 'خطا در دریافت فعالیت‌ها');
+  }
+  return data.data.activities ?? [];
 }
 
-export default function RecentActivityTab({ userId }: RecentActivityTabProps) {
-  const { data: activities = [], isLoading } = useQuery({
+export default function RecentActivityTab({
+  userId,
+  embedded = false,
+  initialActivities,
+}: RecentActivityTabProps) {
+  const hasInitial = Boolean(initialActivities?.length);
+
+  const { data: activities = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['user', userId, 'activity'],
     queryFn: fetchActivities,
+    staleTime: 30_000,
+    initialData: hasInitial ? (initialActivities as Activity[]) : undefined,
   });
   const [showAll, setShowAll] = useState(false);
 
-  if (isLoading) {
+  if (isLoading && !hasInitial) {
     return (
-      <div className="space-y-3 px-4">
+      <div className={`space-y-3 ${embedded ? '' : 'px-4'}`}>
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="bg-white rounded-xl p-4 animate-pulse border border-gray-100">
             <div className="h-4 bg-gray-100 rounded w-1/3 mb-2" />
@@ -96,10 +112,30 @@ export default function RecentActivityTab({ userId }: RecentActivityTabProps) {
     );
   }
 
+  if (isError && activities.length === 0) {
+    return (
+      <div className={`${embedded ? 'px-4' : 'px-4'} py-8`}>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
+          <p className="wibe-small text-red-600">
+            {error instanceof Error ? error.message : 'خطا در بارگذاری فعالیت‌ها'}
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 text-white wibe-small font-medium"
+          >
+            <RefreshCw className="w-4 h-4" />
+            تلاش مجدد
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (activities.length === 0) {
     return (
-      <div className="text-center py-12 px-4">
-        <p className="text-gray-500 text-sm">فعالیتی یافت نشد</p>
+      <div className={`text-center py-10 ${embedded ? 'px-4' : 'px-4'}`}>
+        <p className="wibe-small text-wibe-secondary">فعالیتی یافت نشد</p>
       </div>
     );
   }
@@ -107,7 +143,7 @@ export default function RecentActivityTab({ userId }: RecentActivityTabProps) {
   const displayedActivities = showAll ? activities : activities.slice(0, 8);
 
   return (
-    <div className="space-y-0 px-4 pb-4">
+    <div className={`space-y-0 pb-4 ${embedded ? 'px-4' : 'px-4'}`}>
       <div className="relative pr-5">
         <div className="absolute top-2 bottom-2 right-[9px] w-px bg-gray-200" />
         {displayedActivities.map((activity) => {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
+import { isDbUnavailableError } from '@/lib/db-errors';
 import { ensureImageInLiara } from '@/lib/object-storage';
 
 // POST /api/user/avatar - آپلود آواتار کاربر
@@ -28,36 +30,42 @@ export async function POST(request: NextRequest) {
 
     const finalImageUrl = await ensureImageInLiara(imageUrl, 'avatars');
 
-    const updatedUser = await prisma.users.update({
-      where: { id: userId },
-      data: {
-        image: finalImageUrl,
-        avatarType: 'UPLOADED',
-        avatarStatus: 'PENDING',
-        avatarId: null,
-        updatedAt: new Date(),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-        avatarType: true,
-        avatarStatus: true,
-      },
-    });
+    const updatedUser = await dbQuery(() =>
+      prisma.users.update({
+        where: { id: userId },
+        data: {
+          image: finalImageUrl,
+          avatarType: 'UPLOADED',
+          avatarStatus: 'PENDING',
+          avatarId: null,
+          updatedAt: new Date(),
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          avatarType: true,
+          avatarStatus: true,
+        },
+      })
+    );
 
     return NextResponse.json({
       success: true,
       data: { user: updatedUser },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating avatar:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+    if (isDbUnavailableError(error)) {
+      return NextResponse.json(
+        { success: false, error: 'اتصال به دیتابیس برقرار نیست. چند ثانیه بعد دوباره تلاش کنید.' },
+        { status: 503 }
+      );
+    }
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 

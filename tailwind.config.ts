@@ -187,9 +187,14 @@ const config: Config = {
           '50%': { transform: 'scale(1.02)' },
           '100%': { transform: 'scale(1)' },
         },
+        shimmer: {
+          '0%': { backgroundPosition: '220% 0' },
+          '100%': { backgroundPosition: '-220% 0' },
+        },
       },
       animation: {
         'saved-pulse': 'savedPulse 0.4s ease-out',
+        shimmer: 'shimmer 1.75s ease-in-out infinite',
       },
     },
   },

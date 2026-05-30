@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { Edit2, Camera, UserPlus, Check, Loader2 } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { CuratorLevelKey } from '@/lib/curator';
@@ -47,89 +46,139 @@ export default function ProfileHeader({
         ? user.email.split('@')[0]
         : 'user';
 
+  const openEdit = () => setShowEditSheet(true);
+
   return (
     <>
-      <div className="relative -mx-4">
-        <div className="h-[220px] w-full rounded-b-lg bg-primary" />
-        <div className="absolute inset-x-0 top-0 z-10 px-4 pt-5 pb-6">
-          <div className="flex flex-col items-center">
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-full border-2 border-wibe-card overflow-hidden bg-wibe-card shadow-sm">
+      <div className="relative">
+        {/* کاور — inset 10px از لبه باکس */}
+        <div className="relative h-[60px] w-full overflow-hidden bg-gradient-to-br from-primary via-primary to-primary-dark">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgba(255,255,255,0.14),transparent_55%)]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/10 to-transparent"
+            aria-hidden
+          />
+
+          {isOwner ? (
+            <button
+              type="button"
+              onClick={openEdit}
+              className="absolute start-2.5 top-2.5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 text-[11px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97]"
+              aria-label="ویرایش پروفایل"
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+              ویرایش
+            </button>
+          ) : onFollowToggle ? (
+            <button
+              type="button"
+              onClick={onFollowToggle}
+              disabled={followLoading}
+              className={`absolute start-2.5 top-2.5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold backdrop-blur-sm transition-all active:scale-[0.97] disabled:opacity-50 ${
+                isFollowing
+                  ? 'border border-white/30 bg-white/20 text-white'
+                  : 'border border-white/20 bg-white text-primary shadow-sm'
+              }`}
+            >
+              {followLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : isFollowing ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  دنبال می‌کنی
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-3.5 w-3.5" />
+                  دنبال کردن
+                </>
+              )}
+            </button>
+          ) : null}
+        </div>
+
+        <div className="px-2.5 pb-2.5 pt-0">
+          <div className="-mt-8 flex items-start gap-3">
+            <div className="min-w-0 flex-1 pt-1.5 text-right">
+              {isElite && user.showBadge !== false && (
+                <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 ring-1 ring-amber-200/80">
+                  <span aria-hidden>⭐</span>
+                  کیوریتور برتر
+                </span>
+              )}
+
+              <h1 className="truncate text-[17px] font-bold leading-snug tracking-tight text-foreground">
+                {user.name || 'کاربر بدون نام'}
+              </h1>
+
+              <p
+                className="mt-1 truncate font-mono text-[12px] font-medium text-wibe-secondary"
+                dir="ltr"
+              >
+                @{displayUsername}
+              </p>
+            </div>
+
+            <div className="relative shrink-0">
+              <div className="h-[68px] w-[68px] overflow-hidden rounded-full border-[3px] border-wibe-card bg-wibe-card shadow-md ring-1 ring-black/[0.06]">
                 {vibeAvatar ? (
-                  <div className={`w-full h-full flex items-center justify-center text-3xl ${vibeAvatar.bgClass}`}>
+                  <div
+                    className={`flex h-full w-full items-center justify-center text-2xl ${vibeAvatar.bgClass}`}
+                  >
                     {vibeAvatar.emoji}
                   </div>
                 ) : showUploadedAvatar || user.image ? (
                   <ImageWithFallback
                     src={user.image!}
                     alt={user.name || user.email || 'Avatar'}
-                    className="object-cover w-full h-full"
+                    className="h-full w-full object-cover"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gray-200 text-foreground text-xl font-semibold flex items-center justify-center"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-gray-100 text-lg font-semibold text-foreground"
                     priority
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200 text-foreground text-xl font-semibold">
+                  <div className="flex h-full w-full items-center justify-center bg-gray-100 text-lg font-semibold text-foreground">
                     {(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                   </div>
                 )}
               </div>
               {isOwner && (
                 <button
-                  onClick={() => setShowEditSheet(true)}
-                  className="absolute bottom-0 right-0 w-6 h-6 bg-wibe-card rounded-full flex items-center justify-center shadow border border-wibe opacity-0 group-hover:opacity-100 transition-opacity"
+                  type="button"
+                  onClick={openEdit}
+                  className="absolute -bottom-0.5 left-0 flex h-6 w-6 items-center justify-center rounded-full border border-wibe bg-wibe-card shadow-sm"
                   aria-label="تغییر آواتار"
                 >
-                  <Camera className="w-3 h-3 text-wibe-secondary" />
+                  <Camera className="h-3 w-3 text-wibe-secondary" />
                 </button>
-              )}
-            </div>
-            {isElite && user.showBadge !== false && (
-              <span className="mt-1.5 wibe-caption font-medium text-white/90">Elite Curator</span>
-            )}
-            <h1 className="mt-2 wibe-h3 text-white">{user.name || 'کاربر بدون نام'}</h1>
-            <p className="wibe-small text-white/85">@{displayUsername}</p>
-
-            <div className="mt-3 flex items-center gap-2">
-              {isOwner ? (
-                <button
-                  onClick={() => setShowEditSheet(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md border border-white/40 bg-white/10 text-white wibe-small font-medium hover:bg-white/20 transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  ویرایش پروفایل
-                </button>
-              ) : onFollowToggle ? (
-                <button
-                  type="button"
-                  onClick={onFollowToggle}
-                  disabled={followLoading}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-md wibe-small font-medium transition-all active:scale-[0.98] disabled:opacity-50 ${
-                    isFollowing
-                      ? 'bg-white/20 text-white border border-white/50'
-                      : 'bg-wibe-card text-primary shadow-sm'
-                  }`}
-                >
-                  {followLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : isFollowing ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      دنبال می‌کنی
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      دنبال کردن
-                    </>
-                  )}
-                </button>
-              ) : null}
-              {!isOwner && followersCount != null && (
-                <span className="text-white/75 wibe-caption">{followersCount} دنبال‌کننده</span>
               )}
             </div>
           </div>
+
+          {user.bio?.trim() ? (
+            <div className="mt-3.5 rounded-xl bg-wibe-surface/80 px-3.5 py-2.5 ring-1 ring-wibe/60">
+              <p className="text-[13px] leading-[1.6] text-wibe-secondary line-clamp-3">
+                {user.bio.trim()}
+              </p>
+            </div>
+          ) : isOwner ? (
+            <button
+              type="button"
+              onClick={openEdit}
+              className="mt-3.5 w-full rounded-xl border border-dashed border-wibe bg-wibe-surface/40 px-3.5 py-2.5 text-center text-[12px] font-medium text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              افزودن بیو کوتاه…
+            </button>
+          ) : null}
+
+          {!isOwner && followersCount != null && (
+            <p className="mt-2.5 px-0 text-[11px] text-wibe-secondary">
+              {followersCount.toLocaleString('fa-IR')} دنبال‌کننده
+            </p>
+          )}
         </div>
       </div>
 

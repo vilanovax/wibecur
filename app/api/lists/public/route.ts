@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { tryApiDbFallback } from '@/lib/api-db';
 
-// GET /api/lists/public - دریافت لیست‌های عمومی و فعال
+/** GET /api/lists/public — لیست‌های عمومی و فعال */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
 
-    const where: any = {
+    const where = {
       isActive: true,
       isPublic: true,
       users: {
         role: {
-          not: 'USER', // Only show lists created by admins (ADMIN or EDITOR)
+          not: 'USER' as const,
         },
       },
+      ...(categoryId ? { categoryId } : {}),
     };
-
-    if (categoryId) {
-      where.categoryId = categoryId;
-    }
 
     const lists = await dbQuery(() =>
       prisma.lists.findMany({
@@ -37,27 +35,23 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: {
-          title: 'asc',
-        },
+        orderBy: { title: 'asc' },
       })
     );
 
-    const response = NextResponse.json({
-      success: true,
-      data: lists,
-    });
-
-    // Add cache headers for client-side caching
+    const response = NextResponse.json({ success: true, data: lists });
     response.headers.set('Cache-Control', 'public, max-age=1800, stale-while-revalidate=3600');
-    
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const fb = tryApiDbFallback(error, [], 'Public lists');
+    if (fb) {
+      fb.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
+      return fb;
+    }
     console.error('Error fetching public lists:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در دریافت لیست‌ها' },
+      { success: false, error: (error as Error)?.message || 'خطا در دریافت لیست‌ها' },
       { status: 500 }
     );
   }
 }
-

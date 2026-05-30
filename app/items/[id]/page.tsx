@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth-config';
 import { dbQuery } from '@/lib/db';
 import ItemDetailClient from './ItemDetailClient';
 import { toAbsoluteImageUrl } from '@/lib/seo';
+import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -51,7 +52,17 @@ export default async function ItemDetailPage({
 
   const item = await prisma.items.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      imageUrl: true,
+      externalUrl: true,
+      rating: true,
+      voteCount: true,
+      metadata: true,
+      listId: true,
+      order: true,
       _count: {
         select: { comments: true },
       },
@@ -63,6 +74,7 @@ export default async function ItemDetailPage({
           slug: true,
           saveCount: true,
           userId: true,
+          itemCount: true,
           categories: {
             select: {
               id: true,
@@ -132,6 +144,26 @@ export default async function ItemDetailPage({
     }
   }
 
+  // رتبه در لیست مبدأ + تعداد ذخیره در لیست‌های شخصی
+  const [listRank, listItemCount, personalSaveCount] = await dbQuery(async () => {
+    const [orderedItems, saveCount] = await Promise.all([
+      prisma.items.findMany({
+        where: { listId: item.listId },
+        select: { id: true },
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      }),
+      prisma.items.count({
+        where: {
+          title: { equals: item.title, mode: 'insensitive' },
+          listId: { not: item.listId },
+          lists: { isActive: true },
+        },
+      }),
+    ]);
+    const rank = orderedItems.findIndex((i) => i.id === item.id) + 1;
+    return [rank > 0 ? rank : null, orderedItems.length, saveCount] as const;
+  });
+
   // Serialize the item data for client component (metadata: Prisma JsonValue → Record | null)
   const metadata =
     item.metadata != null &&
@@ -145,12 +177,21 @@ export default async function ItemDetailPage({
     title: item.title,
     description: item.description,
     imageUrl: item.imageUrl,
+    displayImageUrl: resolveItemDisplayImage({
+      id: item.id,
+      imageUrl: item.imageUrl,
+      title: item.title,
+      metadata,
+      categorySlug: item.lists.categories?.slug ?? null,
+    }),
     externalUrl: item.externalUrl,
     rating: item.rating,
     voteCount: item.voteCount,
     metadata,
     commentCount: item._count.comments,
-    listSaveCount: item.lists.saveCount ?? 0,
+    listRank,
+    listItemCount,
+    personalSaveCount,
     lists: {
       id: item.lists.id,
       title: item.lists.title,

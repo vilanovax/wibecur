@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { MessageSquare, Plus, Loader2, TrendingUp, Clock } from 'lucide-react';
+import { Loader2, ChevronDown, Send } from 'lucide-react';
 import CommentItem from './CommentItem';
-import CommentForm from './CommentForm';
 import Toast from '@/components/shared/Toast';
+import CommentAvatar from '@/components/shared/CommentAvatar';
+import {
+  COMMENTS_INITIAL_VISIBLE,
+  COMMENTS_LOAD_MORE_STEP,
+  DEFAULT_LIST_COMMENT_MAX_LENGTH,
+  MIN_COMMENT_LENGTH,
+} from '@/lib/comment-limits';
 
 interface Comment {
   id: string;
@@ -19,6 +26,10 @@ interface Comment {
     email: string;
     username?: string | null;
     image: string | null;
+    curatorLevel?: string | null;
+    avatarType?: string | null;
+    avatarId?: string | null;
+    avatarStatus?: string | null;
   };
   isLiked: boolean;
   canDelete: boolean;
@@ -27,36 +38,139 @@ interface Comment {
 interface CommentsResponse {
   comments: Comment[];
   commentsEnabled: boolean;
+  maxCommentLength: number;
 }
 
 interface CommentSectionProps {
   itemId: string;
   onCommentAdded?: () => void;
-  /** اگر ست شود، دکمه‌های «نوشتن نظر» این را صدا می‌زنند و فرم در والد رندر می‌شود (تا نوار دکمه‌ها مخفی شود). */
-  onOpenCommentForm?: () => void;
-  /** وقتی والد فرم کامنت را submit می‌کند، این عدد را عوض کن تا کامنت‌ها refetch شوند */
   refreshTrigger?: number;
+  /** وقتی والد می‌خواهد فرم اینلاین باز شود (مثلاً از نوار پایین) */
+  expandFormTrigger?: number;
 }
 
 async function fetchItemComments(itemId: string, sortBy: string): Promise<CommentsResponse> {
   const res = await fetch(`/api/items/${itemId}/comments?sort=${sortBy}`);
   const data = await res.json();
-  if (!data.success) return { comments: [], commentsEnabled: true };
+  if (!data.success) {
+    return { comments: [], commentsEnabled: true, maxCommentLength: DEFAULT_LIST_COMMENT_MAX_LENGTH };
+  }
   return {
     comments: data.data.comments ?? [],
     commentsEnabled: data.data.commentsEnabled ?? true,
+    maxCommentLength: data.data.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH,
   };
 }
 
-export default function CommentSection({ itemId, onCommentAdded, onOpenCommentForm, refreshTrigger }: CommentSectionProps) {
+function ItemCommentInput({
+  isExpanded,
+  onExpand,
+  onSubmit,
+  isLoading,
+  userImage,
+  userName,
+  userEmail,
+  maxCommentLength,
+}: {
+  isExpanded: boolean;
+  onExpand: () => void;
+  onSubmit: (content: string) => Promise<boolean>;
+  isLoading: boolean;
+  userImage?: string | null;
+  userName?: string | null;
+  userEmail?: string | null;
+  maxCommentLength: number;
+}) {
+  const [content, setContent] = useState('');
+  const trimmedLength = content.trim().length;
+  const warnThreshold = Math.floor(maxCommentLength * 0.8);
+  const isNearLimit = content.length >= warnThreshold;
+  const isOverLimit = content.length > maxCommentLength;
+  const isTooShort = trimmedLength > 0 && trimmedLength < MIN_COMMENT_LENGTH;
+  const canSubmit = trimmedLength >= MIN_COMMENT_LENGTH && !isOverLimit && !isLoading;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    const ok = await onSubmit(content.trim());
+    if (ok) setContent('');
+  };
+
+  if (!isExpanded) {
+    return (
+      <button
+        type="button"
+        onClick={onExpand}
+        className="w-full h-[52px] flex items-center gap-3 px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
+      >
+        <CommentAvatar src={userImage ?? null} name={userName ?? null} email={userEmail ?? null} size={36} />
+        <span className="flex-1 text-right">نظرت درباره این آیتم چیه؟</span>
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+      <div className="flex items-end gap-3 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <CommentAvatar src={userImage ?? null} name={userName ?? null} email={userEmail ?? null} size={36} />
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value.slice(0, maxCommentLength))}
+          placeholder="نظرت درباره این آیتم چیه؟"
+          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none"
+          rows={2}
+          maxLength={maxCommentLength}
+          aria-describedby="item-comment-char-count"
+          autoFocus
+        />
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7C3AED] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setContent('')}
+            className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+          >
+            انصراف
+          </button>
+          {isTooShort && (
+            <span className="text-xs text-amber-600">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
+          )}
+        </div>
+        <span
+          id="item-comment-char-count"
+          className={`text-xs tabular-nums ${
+            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-gray-400'
+          }`}
+        >
+          {content.length.toLocaleString('fa-IR')}/{maxCommentLength.toLocaleString('fa-IR')}
+        </span>
+      </div>
+    </form>
+  );
+}
+
+export default function CommentSection({
+  itemId,
+  onCommentAdded,
+  refreshTrigger,
+  expandFormTrigger,
+}: CommentSectionProps) {
+  const { data: session, status } = useSession();
   const queryClient = useQueryClient();
-  const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const openForm = onOpenCommentForm ?? (() => setIsFormOpen(true));
+  const [sortBy, setSortBy] = useState<'newest' | 'popular'>('popular');
+  const [isFormExpanded, setIsFormExpanded] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(COMMENTS_INITIAL_VISIBLE);
   const [isActionLoading, setIsActionLoading] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
@@ -65,6 +179,47 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
   });
   const comments = data?.comments ?? [];
   const commentsEnabled = data?.commentsEnabled ?? true;
+  const maxCommentLength = data?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
+
+  useEffect(() => {
+    setVisibleCount(COMMENTS_INITIAL_VISIBLE);
+  }, [itemId, sortBy]);
+
+  useEffect(() => {
+    if (expandFormTrigger && expandFormTrigger > 0) {
+      setIsFormExpanded(true);
+    }
+  }, [expandFormTrigger]);
+
+  const handleSubmit = async (content: string): Promise<boolean> => {
+    if (status !== 'authenticated') return false;
+    setSubmitLoading(true);
+    try {
+      const res = await fetch(`/api/items/${itemId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      const resData = await res.json();
+      if (resData.success) {
+        refetch();
+        onCommentAdded?.();
+        setIsFormExpanded(false);
+        setToast({ message: resData.message || 'نظرت ثبت شد ✨', type: 'success' });
+        return true;
+      }
+      setToast({
+        message: resData.error || (res.status === 429 ? 'کمی صبر کن و دوباره امتحان کن 🙂' : 'ارسال نشد'),
+        type: 'error',
+      });
+      return false;
+    } catch {
+      setToast({ message: 'چند لحظه بعد دوباره امتحان کن ✨', type: 'error' });
+      return false;
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
 
   const handleLike = async (commentId: string) => {
     setIsActionLoading(true);
@@ -98,33 +253,30 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
   };
 
   const handleReport = async (commentId: string) => {
-    if (!confirm('آیا می‌خواهید این کامنت را گزارش دهید؟')) return;
-
+    if (status !== 'authenticated') {
+      setToast({ message: 'برای گزارش نظر وارد شو', type: 'error' });
+      return;
+    }
     setIsActionLoading(true);
     try {
       const response = await fetch(`/api/comments/${commentId}/report`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: 'محتوا نامناسب' }),
       });
-      const data = await response.json().catch(() => ({}));
+      const resData = await response.json().catch(() => ({}));
 
-      if (response.ok && data.success) {
-        setToastMessage('کامنت با موفقیت گزارش شد. از همکاری شما متشکریم!');
-        setToastType('success');
-        setShowToast(true);
+      if (response.ok && resData.success) {
+        setToast({ message: resData.message || 'ممنون که اطلاع دادی 🙏 بررسیش می‌کنیم', type: 'success' });
       } else {
-        setToastMessage(data.error || (response.status === 400 ? 'شما قبلاً این کامنت را گزارش کرده‌اید' : 'خطا در گزارش کامنت'));
-        setToastType('error');
-        setShowToast(true);
+        setToast({
+          message: resData.error || (response.status === 400 ? 'شما قبلاً این نظر را گزارش کرده‌اید' : 'خطا در گزارش نظر'),
+          type: 'error',
+        });
       }
     } catch (error) {
       console.error('Error reporting comment:', error);
-      setToastMessage('خطا در گزارش کامنت');
-      setToastType('error');
-      setShowToast(true);
+      setToast({ message: 'خطا در گزارش نظر', type: 'error' });
     } finally {
       setIsActionLoading(false);
     }
@@ -144,131 +296,129 @@ export default function CommentSection({ itemId, onCommentAdded, onOpenCommentFo
           (prev) =>
             prev ? { ...prev, comments: prev.comments.filter((c) => c.id !== commentId) } : prev
         );
+        onCommentAdded?.();
       } else {
-        alert(resData.error || 'خطا در حذف کامنت');
+        setToast({ message: resData.error || 'خطا در حذف نظر', type: 'error' });
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
-      alert('خطا در حذف کامنت');
+      setToast({ message: 'خطا در حذف نظر', type: 'error' });
     } finally {
       setIsActionLoading(false);
     }
   };
 
+  const displayedComments = comments.slice(0, visibleCount);
+  const hasMore = visibleCount < comments.length;
+  const remainingCount = comments.length - visibleCount;
+  const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
+  const hasComments = comments.length > 0;
+
   return (
-    <>
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        {/* Header — Vibe 2.0: نظرها (count) */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">💬</span>
-            <h3 className="font-bold text-gray-900">
-              نظرها ({comments.length})
-            </h3>
+    <section id="comments" className="mt-8 pt-6 border-t border-wibe">
+      <h2 className="wibe-h3 text-foreground mb-0.5">گفتگو درباره این آیتم</h2>
+      <p className="wibe-caption text-wibe-secondary mb-3">
+        {comments.length.toLocaleString('fa-IR')} نظر
+        {!commentsEnabled && ' · نظرها غیرفعال است'}
+      </p>
+
+      <div className="space-y-3">
+        {commentsEnabled && status === 'authenticated' && (
+          <ItemCommentInput
+            isExpanded={isFormExpanded}
+            onExpand={() => setIsFormExpanded(true)}
+            onSubmit={handleSubmit}
+            isLoading={submitLoading}
+            userImage={session?.user?.image}
+            userName={session?.user?.name}
+            userEmail={session?.user?.email}
+            maxCommentLength={maxCommentLength}
+          />
+        )}
+
+        {!isLoading && comments.length > 0 && (
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex gap-2 mb-4">
+              <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
+              <button
+                type="button"
+                onClick={() => setSortBy('popular')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
+                  sortBy === 'popular' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                مفیدترین
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortBy('newest')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
+                  sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                جدیدترین
+              </button>
+            </div>
           </div>
-          {commentsEnabled ? (
-            <button
-              onClick={openForm}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
-              aria-label="نوشتن نظر"
-            >
-              <Plus className="w-5 h-5" strokeWidth={2.5} />
-            </button>
+        )}
+
+        <div className={hasComments ? 'mt-2' : 'mt-1'}>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" />
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="py-4 text-center wibe-caption text-wibe-secondary">
+              هنوز گفتگویی نیست —{' '}
+              {status === 'authenticated' && commentsEnabled ? (
+                <button
+                  type="button"
+                  onClick={() => setIsFormExpanded(true)}
+                  className="font-medium text-primary hover:underline"
+                >
+                  اولین نظر رو بذار
+                </button>
+              ) : (
+                'اولین نظر رو بذار'
+              )}
+            </p>
           ) : (
-            <span className="text-sm text-gray-500">
-              نظرها برای این آیتم غیرفعال است
-            </span>
+            <>
+              <div className="space-y-4">
+                {displayedComments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    onLike={handleLike}
+                    onReport={handleReport}
+                    onDelete={handleDelete}
+                    isLoading={isActionLoading}
+                  />
+                ))}
+              </div>
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((v) => v + COMMENTS_LOAD_MORE_STEP)}
+                  className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                  {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر ({remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
+                </button>
+              )}
+            </>
           )}
         </div>
-
-        {/* Sort: مفیدترین | جدیدترین */}
-        {!isLoading && comments.length > 0 && (
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setSortBy('popular')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                sortBy === 'popular'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              مفیدترین
-            </button>
-            <button
-              onClick={() => setSortBy('newest')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                sortBy === 'newest'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Clock className="w-4 h-4" />
-              جدیدترین
-            </button>
-          </div>
-        )}
-
-        {/* Comments List */}
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
-        ) : comments.length === 0 ? (
-          <div className="text-center py-8">
-            <span className="text-4xl block mb-2">💬</span>
-            <p className="text-gray-600 font-medium">هنوز کسی نظر نداده</p>
-            <p className="text-sm text-gray-400 mt-1">
-              اولین نظر را تو بنویس ✨
-            </p>
-            {commentsEnabled && (
-              <button
-                onClick={openForm}
-                className="mt-4 px-5 py-2.5 rounded-full bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity"
-              >
-                نوشتن نظر
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                onLike={handleLike}
-                onReport={handleReport}
-                onDelete={handleDelete}
-                isLoading={isActionLoading}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Comment Form — وقتی والد فرم را رندر می‌کند (onOpenCommentForm) اینجا فرم نداریم تا نوار دکمه‌ها مخفی بماند */}
-      {!onOpenCommentForm && (
-        <CommentForm
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          itemId={itemId}
-          onSubmit={() => {
-            refetch();
-            onCommentAdded?.();
-          }}
-        />
-      )}
-
-      {/* Toast Notification */}
-      {showToast && (
+      {toast && (
         <Toast
-          message={toastMessage}
-          type={toastType}
+          message={toast.message}
+          type={toast.type}
           duration={3000}
-          onClose={() => setShowToast(false)}
+          onClose={() => setToast(null)}
         />
       )}
-    </>
+    </section>
   );
 }
-

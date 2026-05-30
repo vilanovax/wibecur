@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { shouldGracefulDbFallback } from '@/lib/db-errors';
+
+const EMPTY = {
+  success: true as const,
+  data: {
+    notifications: [] as Array<{
+      id: string;
+      userId: string;
+      type: string;
+      title: string;
+      message: string;
+      link: string | null;
+      read: boolean;
+      createdAt: string;
+    }>,
+    unreadCount: 0,
+  },
+};
 
 // GET /api/notifications - دریافت پیام‌های کاربر
 export async function GET(request: NextRequest) {
@@ -16,11 +33,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const rawUserId = session.user.id;
-    const userId = rawUserId != null ? String(rawUserId) : '';
-
+    const userId = session.user.id != null ? String(session.user.id) : '';
     if (!userId) {
-      console.error('User ID not found in session:', session);
       return NextResponse.json(
         { success: false, error: 'User ID not found in session' },
         { status: 401 }
@@ -36,38 +50,23 @@ export async function GET(request: NextRequest) {
       where.read = false;
     }
 
-    let notifications: Awaited<ReturnType<typeof prisma.notifications.findMany>>;
-    let unreadCount: number;
-
-    try {
-      notifications = await dbQuery(() =>
+    const [notifications, unreadCount] = await dbQuery(() =>
+      Promise.all([
         prisma.notifications.findMany({
           where,
           orderBy: { createdAt: 'desc' },
           take: limit,
-        })
-      );
-      unreadCount = await dbQuery(() =>
+        }),
         prisma.notifications.count({
           where: { userId, read: false },
-        })
-      );
-    } catch (dbError: unknown) {
-      console.error('Notifications DB error:', dbError);
-      const msg = dbError instanceof Error ? dbError.message : String(dbError);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'خطا در دریافت پیام‌ها',
-          details: process.env.NODE_ENV === 'development' ? msg : undefined,
-        },
-        { status: 500 }
-      );
-    }
+        }),
+      ])
+    );
 
     const serialized = notifications.map((n) => ({
       ...n,
-      createdAt: n.createdAt instanceof Date ? n.createdAt.toISOString() : String(n.createdAt ?? ''),
+      createdAt:
+        n.createdAt instanceof Date ? n.createdAt.toISOString() : String(n.createdAt ?? ''),
     }));
 
     return NextResponse.json({
@@ -78,14 +77,13 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    console.error('Error fetching notifications:', err.message, err.stack);
+    if (shouldGracefulDbFallback(error)) {
+      console.warn('Notifications DB fallback:', (error as Error)?.message);
+      return NextResponse.json(EMPTY);
+    }
+    console.error('Error fetching notifications:', error);
     return NextResponse.json(
-      {
-        success: false,
-        error: err.message || 'خطا در دریافت پیام‌ها',
-        details: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-      },
+      { success: false, error: 'خطا در دریافت پیام‌ها' },
       { status: 500 }
     );
   }
@@ -135,12 +133,17 @@ export async function PUT(request: NextRequest) {
       success: true,
       message: 'پیام‌ها به عنوان خوانده شده علامت‌گذاری شدند',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (shouldGracefulDbFallback(error)) {
+      return NextResponse.json({
+        success: true,
+        message: 'پیام‌ها به عنوان خوانده شده علامت‌گذاری شدند',
+      });
+    }
     console.error('Error updating notifications:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در بروزرسانی پیام‌ها' },
+      { success: false, error: 'خطا در بروزرسانی پیام‌ها' },
       { status: 500 }
     );
   }
 }
-

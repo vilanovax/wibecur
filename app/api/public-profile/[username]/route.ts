@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { calculateCuratorResult } from '@/lib/curator';
 import { getActiveSpotlightForUser } from '@/lib/spotlight';
+import { withResolvedListCover, withResolvedListCovers } from '@/lib/resolve-list-cover';
 
 // GET /api/public-profile/[username] — پروفایل عمومی کریتور (بدون نیاز به لاگین)
 export async function GET(
@@ -153,7 +154,6 @@ export async function GET(
       percent: Math.round((e.count / totalTagCount) * 100),
     }));
 
-    const featuredLists = publicLists.filter((l) => l.isFeatured);
     const likedIds = likedListIds.map((x) => x.listId);
     const likedLists =
       likedIds.length > 0
@@ -173,19 +173,23 @@ export async function GET(
             },
           })
         : [];
-    const likedListsFormatted = likedLists.map((l) => ({
-      ...l,
-      likes: l.likeCount ?? l._count?.list_likes ?? 0,
-      saves: l.saveCount ?? l._count?.bookmarks ?? 0,
-      items: l.itemCount ?? l._count?.items ?? 0,
-    }));
+    const likedListsFormatted = likedLists.map((l) =>
+      withResolvedListCover({
+        ...l,
+        likes: l.likeCount ?? l._count?.list_likes ?? 0,
+        saves: l.saveCount ?? l._count?.bookmarks ?? 0,
+        items: l.itemCount ?? l._count?.items ?? 0,
+      })
+    );
 
-    const allPublicLists = publicLists.map((l) => ({
-      ...l,
-      likes: l.likeCount ?? l._count?.list_likes ?? 0,
-      saves: l.saveCount ?? l._count?.bookmarks ?? 0,
-      items: l.itemCount ?? l._count?.items ?? 0,
-    }));
+    const allPublicLists = withResolvedListCovers(
+      publicLists.map((l) => ({
+        ...l,
+        likes: l.likeCount ?? l._count?.list_likes ?? 0,
+        saves: l.saveCount ?? l._count?.bookmarks ?? 0,
+        items: l.itemCount ?? l._count?.items ?? 0,
+      }))
+    );
 
     type ActivityItem =
       | { type: 'comment'; id: string; content: string; createdAt: Date; listTitle: string; listSlug: string }
@@ -250,7 +254,7 @@ export async function GET(
         },
         isFollowing: !!isFollowing,
         topTags,
-        featuredLists,
+        featuredLists: allPublicLists.filter((l) => l.isFeatured),
         publicLists: allPublicLists,
         likedLists: likedListsFormatted,
         recentActivity,

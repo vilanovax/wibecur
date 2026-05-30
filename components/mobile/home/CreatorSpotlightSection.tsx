@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Check, User } from 'lucide-react';
+import ListCoverImage from '@/components/shared/ListCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { track } from '@/lib/analytics';
 import CuratorBadge from '@/components/shared/CuratorBadge';
@@ -169,11 +170,12 @@ export default function CreatorSpotlightSection() {
                   className="flex-shrink-0 w-28 rounded-md overflow-hidden border border-wibe bg-wibe-surface"
                 >
                   <div className="aspect-[3/4] w-full bg-gray-200 relative">
-                    <ImageWithFallback
-                      src={list.coverImage || ''}
-                      alt={list.title}
+                    <ListCoverImage
+                      coverImage={list.coverImage}
+                      title={list.title}
+                      slug={list.slug}
                       className="w-full h-full object-cover"
-                      fallbackIcon="📋"
+                      fallbackIcon={list.categoryIcon ?? '📋'}
                       fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200 text-2xl"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">

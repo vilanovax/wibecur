@@ -15,6 +15,16 @@ const AchievementBottomSheet = dynamic(
 
 const MAX_VISIBLE = 6;
 
+function pickVisibleAchievements(list: AchievementModel[]) {
+  const unlocked = list.filter((a) => a.unlocked);
+  const locked = list.filter((a) => !a.unlocked);
+  const picked = [...unlocked.slice(0, MAX_VISIBLE)];
+  if (picked.length < MAX_VISIBLE) {
+    picked.push(...locked.slice(0, MAX_VISIBLE - picked.length));
+  }
+  return picked;
+}
+
 interface AchievementsResponse {
   achievements: AchievementModel[];
   newlyUnlocked?: { code: string; title: string; icon: string }[];
@@ -56,17 +66,18 @@ function deriveRankingContext(achievement: AchievementModel, stats?: CreatorStat
 
 interface ProfileAchievementsProps {
   creatorStats?: CreatorStats | null;
+  className?: string;
 }
 
-export default function ProfileAchievements({ creatorStats }: ProfileAchievementsProps) {
+export default function ProfileAchievements({ creatorStats, className = 'mt-6' }: ProfileAchievementsProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['user', 'achievements'],
     queryFn: fetchAchievements,
   });
   const list = data?.achievements ?? [];
   const unlocked = list.filter((a) => a.unlocked);
-  const visible = unlocked.slice(0, MAX_VISIBLE);
-  const hasMore = unlocked.length > MAX_VISIBLE || list.some((a) => !a.unlocked);
+  const visible = pickVisibleAchievements(list);
+  const hasMore = list.length > MAX_VISIBLE;
 
   const [selected, setSelected] = useState<AchievementModel | null>(null);
   const [showAllSheet, setShowAllSheet] = useState(false);
@@ -84,35 +95,57 @@ export default function ProfileAchievements({ creatorStats }: ProfileAchievement
 
   if (isLoading && list.length === 0) {
     return (
-      <section className="mt-6">
+      <section className={className}>
         <div className="h-5 w-28 bg-gray-100 rounded mb-3" />
-        <div className="grid grid-cols-6 gap-2">
+        <div className="grid grid-cols-3 gap-2.5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-square rounded-xl bg-gray-100 animate-pulse" />
+            <div key={i} className="aspect-[4/5] rounded-lg bg-gray-100 animate-pulse" />
           ))}
         </div>
       </section>
     );
   }
 
+  if (list.length === 0) return null;
+
   return (
-    <section className="mt-6">
-      <h2 className="flex items-center gap-2 wibe-h3 mb-3">
-        <Trophy className="w-4 h-4 text-warning" />
-        دستاوردها
-      </h2>
-      <div className="grid grid-cols-6 gap-2">
+    <section className={className}>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h2 className="flex items-center gap-2 wibe-h3">
+          <Trophy className="w-4 h-4 text-warning" />
+          دستاوردها
+        </h2>
+        {unlocked.length > 0 && (
+          <span className="wibe-caption text-wibe-secondary shrink-0">
+            {unlocked.length.toLocaleString('fa-IR')} / {list.length.toLocaleString('fa-IR')}
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-3 gap-2.5">
         {visible.map((a) => (
           <button
             key={a.id}
             type="button"
             onClick={() => setSelected(a)}
-            title={a.title}
-            className="flex flex-col items-center justify-center p-2 rounded-lg border border-wibe bg-wibe-card hover:bg-gray-50 transition-all active:scale-95"
+            title={a.unlocked || !a.isSecret ? a.title : 'دستاورد مخفی'}
+            className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all active:scale-95 min-h-[88px] ${
+              a.unlocked
+                ? 'border-wibe bg-wibe-card hover:bg-gray-50'
+                : 'border-dashed border-wibe bg-gray-50/80'
+            }`}
           >
-            <span className="text-xl mb-0.5">{a.icon}</span>
-            <span className="wibe-caption font-medium text-center line-clamp-1 max-w-full text-wibe-secondary">
-              {a.title}
+            <span
+              className={`text-2xl mb-1 ${a.unlocked ? '' : 'grayscale opacity-45'}`}
+              aria-hidden
+            >
+              {a.unlocked ? a.icon : a.isSecret ? '❓' : '🔒'}
+            </span>
+            <span
+              className={`wibe-caption font-medium text-center line-clamp-2 leading-snug ${
+                a.unlocked ? 'text-foreground' : 'text-wibe-secondary'
+              }`}
+            >
+              {a.unlocked || !a.isSecret ? a.title : 'مخفی'}
             </span>
           </button>
         ))}
@@ -176,7 +209,7 @@ function AllAchievementsSheet({
         <h2 className="wibe-h3 text-foreground">همه دستاوردها</h2>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {achievements.map((a) => (
             <button
               key={a.id}

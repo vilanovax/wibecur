@@ -1,15 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
 import { Search } from 'lucide-react';
-
-const EXPLORE_MODES = [
-  { id: 'trending', label: 'ترند', icon: '🔥' },
-  { id: 'foryou', label: 'برای تو', icon: '🎯' },
-  { id: 'elite', label: 'الیت', icon: '🏆' },
-  { id: 'rising', label: 'در حال رشد', icon: '🌱' },
-  { id: 'categories', label: 'دسته‌ها', icon: '🗂' },
-] as const;
+import { useSearchOptional } from '@/contexts/SearchContext';
 
 interface ExploreSmartHeroProps {
   searchQuery: string;
@@ -17,49 +9,81 @@ interface ExploreSmartHeroProps {
   onModeScroll: (id: string) => void;
 }
 
+const EXPLORE_MODES = [
+  { id: 'trending', label: 'ترند', icon: '🔥' },
+  { id: 'foryou', label: 'برای تو', icon: '🎯' },
+  { id: 'rising', label: 'در حال رشد', icon: '🌱' },
+  { id: 'more', label: 'بیشتر', icon: '✨' },
+] as const;
+
 export default function ExploreSmartHero({
   searchQuery,
   onSearchChange,
   onModeScroll,
 }: ExploreSmartHeroProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const search = useSearchOptional();
+  const hasQuery = Boolean(searchQuery.trim());
+
+  const openSearch = () => {
+    search?.openSearch({
+      query: searchQuery,
+      applyLocally: onSearchChange,
+      localActionLabel: 'فیلتر در اکسپلور',
+    });
+  };
 
   return (
     <section
-      className="px-4 pt-2 pb-4 bg-wibe-surface border-b border-wibe"
-      style={{ maxHeight: 180 }}
+      className="border-b border-wibe bg-wibe-surface px-2.5 pb-3 pt-2"
       aria-label="اکسپلور هوشمند"
     >
-      <h2 className="wibe-h3 mb-2">امروز چی کشف می‌کنی؟</h2>
-      <div className="relative mb-3">
-        <input
-          ref={inputRef}
-          type="search"
-          placeholder="فیلم آرامش‌بخش؟ کافه دنج؟ سریال دهه ۹۰؟"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full px-4 py-2.5 pr-10 rounded-lg bg-wibe-card border border-wibe wibe-small placeholder:text-wibe-secondary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-          aria-label="جستجوی اکسپلور"
-        />
+      <h2 className="mb-2 wibe-h3">امروز چی کشف می‌کنی؟</h2>
+      <button
+        type="button"
+        onClick={openSearch}
+        className="relative mb-2.5 flex w-full items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 text-right transition-colors hover:border-primary/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99]"
+        aria-label="باز کردن جستجو"
+      >
         <Search
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wibe-secondary pointer-events-none"
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary"
           aria-hidden
         />
-      </div>
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
-        {EXPLORE_MODES.map((m) => (
+        <span className={`block w-full truncate pl-2 pr-8 text-right wibe-small ${hasQuery ? 'text-foreground' : 'text-wibe-secondary'}`}>
+          {hasQuery ? searchQuery : 'فیلم آرامش‌بخش، کافه دنج، سریال دهه ۹۰…'}
+        </span>
+      </button>
+
+      {hasQuery && (
+        <div className="mb-2 flex items-center justify-between gap-2">
           <button
-            key={m.id}
             type="button"
-            onClick={() => onModeScroll(m.id)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg wibe-small font-medium whitespace-nowrap bg-wibe-card text-wibe-secondary border border-wibe hover:border-primary/30 transition-colors flex-shrink-0"
-            aria-label={`اسکرول به ${m.label}`}
+            onClick={() => onSearchChange('')}
+            className="wibe-caption font-medium text-primary"
           >
-            <span aria-hidden>{m.icon}</span>
-            {m.label}
+            پاک کردن فیلتر
           </button>
-        ))}
-      </div>
+          <p className="truncate wibe-caption text-wibe-secondary">
+            فیلتر: «{searchQuery.trim()}»
+          </p>
+        </div>
+      )}
+
+      {!hasQuery && (
+        <div className="scrollbar-hide -mx-2.5 flex gap-1.5 overflow-x-auto px-2.5 pb-0.5">
+          {EXPLORE_MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => onModeScroll(m.id)}
+              className="flex shrink-0 items-center gap-1 rounded-full border border-wibe bg-wibe-card px-3 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/30"
+              aria-label={`رفتن به ${m.label}`}
+            >
+              <span aria-hidden>{m.icon}</span>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

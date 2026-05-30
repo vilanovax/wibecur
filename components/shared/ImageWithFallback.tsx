@@ -1,8 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc } from '@/lib/liara-image-url';
+import { resolveCoverImage } from '@/lib/resolve-cover-image';
+import { isAllowedExternalImageUrl, isDisplayableCoverPath, isGenericListCover } from '@/lib/image-url-policy';
+import {
+  inferCategorySlugFromTitle,
+  pickCategoryCoverGradient,
+} from '@/lib/category-cover-images';
 
 interface ImageWithFallbackProps {
   src: string;
@@ -12,14 +18,19 @@ interface ImageWithFallbackProps {
   fallbackClassName?: string;
   placeholderSize?: 'cover' | 'square';
   priority?: boolean;
+  /** slug دسته برای کاور متناسب (مثلاً books, movies) */
+  categorySlug?: string | null;
+  /** slug لیست برای کاور موضوعی (مثلاً personal-development-books) */
+  listSlug?: string | null;
+  listTitle?: string | null;
 }
 
-const PLACEHOLDER_PATHS = ['/images/placeholder-cover.svg', '/images/placeholder-item.svg'];
-
-function isEmptyOrPlaceholderPath(url: string | null | undefined): boolean {
-  if (!url || typeof url !== 'string') return true;
-  const t = url.trim();
-  return !t || PLACEHOLDER_PATHS.some((p) => t === p);
+function toDisplaySrc(resolved: string): string {
+  if (!isDisplayableCoverPath(resolved)) return '';
+  if (resolved.startsWith('/')) return resolved;
+  if (isOurStorageUrl(resolved)) return toLiaraImageSrc(resolved);
+  if (isAllowedExternalImageUrl(resolved)) return resolved;
+  return '';
 }
 
 export default function ImageWithFallback({
@@ -29,24 +40,45 @@ export default function ImageWithFallback({
   fallbackIcon = '📋',
   fallbackClassName = '',
   priority = false,
+  categorySlug,
+  listSlug,
+  listTitle,
 }: ImageWithFallbackProps) {
-  const [hasError, setHasError] = useState(false);
+  const [forceLocal, setForceLocal] = useState(false);
 
-  let displaySrc = '';
-  if (!isEmptyOrPlaceholderPath(src)) {
-    if (src.startsWith('/')) {
-      displaySrc = src;
-    } else if (isOurStorageUrl(src)) {
-      displaySrc = toLiaraImageSrc(src);
-    }
-  }
+  const resolvedSrc = useMemo(() => {
+    const shouldResolveCover =
+      forceLocal ||
+      Boolean(categorySlug || listSlug || listTitle) ||
+      isGenericListCover(src);
 
-  if (hasError || !displaySrc) {
+    if (!shouldResolveCover) return src;
+
+    return resolveCoverImage({
+      coverImage: forceLocal ? '' : src,
+      categorySlug,
+      listSlug,
+      listTitle,
+    });
+  }, [src, categorySlug, listSlug, listTitle, forceLocal]);
+
+  const displaySrc = toDisplaySrc(resolvedSrc);
+
+  const fallbackGradient = useMemo(() => {
+    const slug =
+      categorySlug ??
+      inferCategorySlugFromTitle(listTitle) ??
+      null;
+    const seed = listSlug ?? listTitle ?? slug ?? 'default';
+    return pickCategoryCoverGradient(slug, seed);
+  }, [categorySlug, listSlug, listTitle]);
+
+  if (!displaySrc) {
     return (
       <div
-        className={`flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${className} ${fallbackClassName}`}
+        className={`flex items-center justify-center bg-gradient-to-br ${fallbackGradient} ${className} ${fallbackClassName}`}
       >
-        <span className="text-6xl opacity-50">{fallbackIcon}</span>
+        <span className="text-2xl opacity-90 drop-shadow-sm sm:text-3xl">{fallbackIcon}</span>
       </div>
     );
   }
@@ -56,7 +88,12 @@ export default function ImageWithFallback({
       src={displaySrc}
       alt={alt}
       className={className}
-      onError={() => setHasError(true)}
+      onError={() => {
+        if (!forceLocal && (categorySlug || listSlug || listTitle)) {
+          setForceLocal(true);
+          return;
+        }
+      }}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : undefined}
       referrerPolicy="no-referrer"

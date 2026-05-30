@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
-import { formatNumber } from '@/lib/curated/utils';
+import { getListCardSubtitle } from '@/lib/lists-card-utils';
+import { CURATED_CATEGORY_SLUGS } from '@/lib/category-cover-images';
 import type { CuratedList } from '@/types/curated';
 
 const BADGE_STYLES: Record<string, string> = {
@@ -26,50 +27,40 @@ interface CuratedGridCardProps {
 
 export default function CuratedGridCard({ list }: CuratedGridCardProps) {
   const topBadge = list.badges[0];
+  const categorySlug = CURATED_CATEGORY_SLUGS[list.categoryId];
+  const subtitle = getListCardSubtitle(list);
 
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="block bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+      className="block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
     >
-      <div className="relative aspect-[4/3] w-full bg-gray-200 overflow-hidden">
-        <ImageWithFallback
-          src={list.coverUrl ?? ''}
-          alt={list.title}
-          className="w-full h-full object-cover"
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-200">
+        <ListCoverImage
+          coverImage={list.coverUrl}
+          title={list.title}
+          slug={list.slug}
+          categorySlug={categorySlug}
+          className="h-full w-full object-cover"
           fallbackIcon="📋"
-          fallbackClassName="w-full h-full flex items-center justify-center text-3xl bg-gray-200"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl"
         />
         {topBadge && (
           <span
-            className={`absolute top-2 right-2 px-2 py-0.5 rounded-pill wibe-caption font-semibold ${BADGE_STYLES[topBadge] ?? 'bg-gray-800 text-white'}`}
+            className={`absolute right-2 top-2 rounded-pill px-2 py-0.5 wibe-caption font-semibold ${BADGE_STYLES[topBadge] ?? 'bg-gray-800 text-white'}`}
           >
             {BADGE_LABELS[topBadge] ?? topBadge}
           </span>
         )}
-        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/55 to-transparent">
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-2">
           <ListCardStats saves={list.savesCount} itemCount={list.itemsCount} variant="overlay" />
         </div>
       </div>
-      <div className="p-3">
-        <p className="wibe-caption text-wibe-secondary mb-1">{list.creator.levelTitle}</p>
-        <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
-        {list.subtitle && (
-          <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">{list.subtitle}</p>
+      <div className="p-2.5">
+        <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
+        {subtitle && (
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
         )}
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-wibe">
-          <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-            <ImageWithFallback
-              src={list.creator.avatarUrl ?? ''}
-              alt={list.creator.name}
-              className="w-full h-full object-cover"
-              fallbackIcon="👤"
-              fallbackClassName="w-full h-full flex items-center justify-center text-xs bg-gray-200"
-            />
-          </div>
-          <span className="wibe-caption font-medium text-foreground truncate">{list.creator.name}</span>
-          <span className="wibe-caption text-wibe-secondary mr-auto">{formatNumber(list.savesCount)} ذخیره</span>
-        </div>
       </div>
     </Link>
   );

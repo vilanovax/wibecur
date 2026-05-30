@@ -1,56 +1,44 @@
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 
-function SkeletonCard() {
+function GridCardSkeleton() {
   return (
-    <div className="bg-white rounded-[20px] overflow-hidden shadow-vibe-card border border-gray-100">
-      <div className="aspect-[4/3] w-full bg-gray-200 animate-pulse" />
-      <div className="p-4">
-        <div className="h-5 w-3/4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-4 w-1/2 mt-2 bg-gray-100 rounded animate-pulse" />
-        <div className="flex gap-2 mt-3">
-          <div className="h-4 w-12 bg-gray-100 rounded animate-pulse" />
-          <div className="h-4 w-12 bg-gray-100 rounded animate-pulse" />
-          <div className="h-4 w-16 bg-gray-100 rounded animate-pulse" />
-        </div>
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-          <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse" />
-          <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
-        </div>
-      </div>
+    <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card">
+      <div className="h-28 w-full animate-pulse bg-gray-200" />
     </div>
   );
 }
 
 export default function ListsLoading() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20">
       <Header title="لیست‌ها" />
       <main className="pt-3">
         <div className="space-y-0 pb-8">
-          <div className="sticky top-14 z-10 bg-gray-50 pt-3 pb-2">
-            <div className="px-4">
-              <div className="h-12 bg-gray-200 rounded-[16px] animate-pulse" />
+          <div className="sticky top-14 z-10 border-b border-wibe bg-wibe-surface/95 pb-2 pt-1.5">
+            <div className="px-2.5">
+              <div className="h-10 animate-pulse rounded-lg bg-gray-200" />
             </div>
-            <div className="mt-3 px-4 flex gap-4">
+            <div className="mt-2 flex gap-2 px-2.5">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-8 w-16 bg-gray-200 rounded animate-pulse flex-shrink-0" />
+                <div key={i} className="h-8 w-14 shrink-0 animate-pulse rounded-md bg-gray-200" />
               ))}
-            </div>
-            <div className="mt-2 px-4 flex gap-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-8 w-20 bg-gray-100 rounded-[20px] animate-pulse flex-shrink-0" />
-              ))}
-            </div>
-            <div className="mt-3 px-4 flex justify-between">
-              <div className="h-4 w-24 bg-gray-100 rounded animate-pulse" />
-              <div className="h-4 w-16 bg-gray-100 rounded animate-pulse" />
             </div>
           </div>
-          <div className="mt-4 px-4 grid grid-cols-2 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
+
+          <div className="mt-3 space-y-5 px-2.5">
+            <div>
+              <div className="mb-2.5 h-6 w-24 animate-pulse rounded bg-gray-200" />
+              <div className="h-[148px] animate-pulse rounded-xl bg-gray-200" />
+            </div>
+            <div>
+              <div className="mb-2.5 h-6 w-32 animate-pulse rounded bg-gray-200" />
+              <div className="grid grid-cols-2 gap-2.5">
+                {[1, 2, 3, 4].map((i) => (
+                  <GridCardSkeleton key={i} />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </main>

@@ -1,68 +1,96 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft } from 'lucide-react';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
-import FloatingActionButton from '@/components/mobile/lists/FloatingActionButton';
 import ExploreSmartHero from './ExploreSmartHero';
 import TrendingNowSection from './TrendingNowSection';
 import RisingListsSection from './RisingListsSection';
 import ForYouSection from './ForYouSection';
-import EliteCuratorsSection from './EliteCuratorsSection';
-import RisingCuratorsSection from './RisingCuratorsSection';
 import CategoryDiscoverySection from './CategoryDiscoverySection';
 import CuratedGrid from './CuratedGrid';
 import ExploreBottomCTA from './ExploreBottomCTA';
-import {
-  HeroSkeleton,
-  CuratorsRowSkeleton,
-  GridCardSkeleton,
-} from './CuratedSkeletons';
-import {
-  MOCK_CATEGORIES,
-  MOCK_CURATORS,
-  getMockLists,
-} from '@/lib/curated/mock-data';
-import { filterAndSortLists } from '@/lib/curated/utils';
+import ExploreSearchResults from './ExploreSearchResults';
+import ExploreSectionTitle from './ExploreSectionTitle';
+import { ExplorePageSkeleton } from './ExplorePageSkeleton';
+import { MOCK_CATEGORIES, getMockLists } from '@/lib/curated/mock-data';
+import { buildExploreSections } from '@/lib/curated/explore-sections';
+import type { ExplorePayload } from '@/lib/curated/explore-data';
 
 const SECTION_IDS: Record<string, string> = {
   trending: 'trending',
   foryou: 'foryou',
-  elite: 'elite',
-  rising: 'rising-curators',
+  rising: 'rising',
   categories: 'categories',
+  more: 'more',
 };
+
+async function fetchExplore(): Promise<ExplorePayload> {
+  const res = await fetch('/api/explore');
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error ?? 'خطا در دریافت اکسپلور');
+  return json.data as ExplorePayload;
+}
 
 export default function CuratedLandingPageClient() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
 
-  const lists = useMemo(() => getMockLists(), []);
-  const curators = MOCK_CURATORS;
-  const categories = MOCK_CATEGORIES.filter((c) => c.id !== 'all');
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['explore'],
+    queryFn: fetchExplore,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
 
-  const filteredLists = useMemo(
+  const usingMockFallback = isError || (!isLoading && (data?.lists?.length ?? 0) === 0);
+
+  const allLists = useMemo(() => {
+    if (data?.lists?.length) return data.lists;
+    if (!isLoading) {
+      const mockCats = MOCK_CATEGORIES.filter((c) => c.id !== 'all');
+      return getMockLists().map((list) => {
+        const cat = mockCats.find((c) => c.id === list.categoryId);
+        if (!cat) return list;
+        return {
+          ...list,
+          category: { name: cat.title, icon: cat.icon, slug: cat.slug ?? null },
+        };
+      });
+    }
+    return [];
+  }, [data?.lists, isLoading]);
+
+  const categories = useMemo(() => {
+    if (data?.categories?.length) return data.categories;
+    return MOCK_CATEGORIES;
+  }, [data?.categories]);
+
+  const sections = useMemo(
     () =>
-      filterAndSortLists(lists, {
-        mode: 'trending',
-        categoryId: 'all',
-        searchQuery,
+      buildExploreSections(allLists, searchQuery, {
+        preferredCategoryIds: usingMockFallback ? undefined : data?.preferredCategoryIds,
+        excludeListIds: usingMockFallback ? undefined : data?.bookmarkedListIds,
       }),
-    [lists, searchQuery]
+    [allLists, searchQuery, data?.preferredCategoryIds, data?.bookmarkedListIds, usingMockFallback]
   );
 
   const handleModeScroll = useCallback((id: string) => {
     const sectionId = SECTION_IDS[id] ?? id;
     const el = document.getElementById(sectionId);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 120;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 400);
-    return () => clearTimeout(t);
-  }, []);
+    const q = searchParams.get('q');
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
 
   useEffect(() => {
     if (searchParams.get('openCreate') === '1') {
@@ -74,21 +102,10 @@ export default function CuratedLandingPageClient() {
   }, [searchParams]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-wibe-surface pb-20">
-        <div className="h-[160px] bg-gray-200 border-b border-wibe animate-pulse" />
-        <CuratorsRowSkeleton />
-        <div className="px-4 py-8">
-          <div className="h-5 w-48 bg-gray-200 rounded mb-4 animate-pulse" />
-          <div className="flex gap-4 overflow-hidden">
-            {[1, 2, 3].map((i) => (
-              <GridCardSkeleton key={i} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ExplorePageSkeleton />;
   }
+
+  const showDiscovery = !sections.isSearching;
 
   return (
     <div className="min-h-screen bg-wibe-surface pb-20">
@@ -99,30 +116,57 @@ export default function CuratedLandingPageClient() {
       />
 
       <main className="space-y-0">
-        <TrendingNowSection lists={filteredLists} />
-        <RisingListsSection lists={filteredLists} />
-        <ForYouSection lists={filteredLists} />
-        <EliteCuratorsSection curators={curators} />
-        <RisingCuratorsSection curators={curators} />
-        <CategoryDiscoverySection categories={MOCK_CATEGORIES} />
-
-        {filteredLists.length > 0 ? (
-          <section className="px-4 py-8" id="more">
-            <h2 className="wibe-h3 mb-3">بیشتر ببین</h2>
-            <p className="wibe-small text-wibe-secondary mb-4">لیست‌های کیوریت شده</p>
-            <CuratedGrid lists={filteredLists} showSponsoredAfter={8} />
-          </section>
+        {sections.isSearching ? (
+          <ExploreSearchResults lists={sections.filtered} query={searchQuery.trim()} />
         ) : (
-          <div className="px-4 py-12 text-center">
-            <p className="wibe-body text-wibe-secondary">لیستی یافت نشد</p>
-            <p className="wibe-small text-wibe-secondary mt-1">فیلتر یا جستجو را تغییر دهید</p>
-          </div>
+          <>
+            <CategoryDiscoverySection categories={categories} />
+            {sections.trending.length > 0 && <TrendingNowSection lists={sections.trending} />}
+            {sections.forYou.length > 0 && (
+              <ForYouSection lists={sections.forYou} personalized={sections.isPersonalized} />
+            )}
+            {sections.rising.length > 0 && <RisingListsSection lists={sections.rising} />}
+
+            {sections.more.length > 0 && (
+              <section className="px-2.5 py-4" id="more">
+                <ExploreSectionTitle
+                  title="بیشتر ببین"
+                  subtitle="لیست‌های کیوریت‌شده"
+                  icon="✨"
+                />
+                <CuratedGrid lists={sections.more} showSponsoredAfter={99} />
+                {sections.moreTotal > sections.more.length && (
+                  <Link
+                    href="/lists"
+                    className="mt-3 flex items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card py-2.5 wibe-small font-semibold text-primary transition-colors active:scale-[0.99]"
+                  >
+                    مشاهده همه ({sections.moreTotal.toLocaleString('fa-IR')} لیست)
+                    <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />
+                  </Link>
+                )}
+              </section>
+            )}
+
+            {sections.filtered.length === 0 && (
+              <div className="px-2.5 py-12 text-center">
+                <p className="wibe-body text-wibe-secondary">لیستی یافت نشد</p>
+                <p className="mt-2 wibe-caption text-wibe-secondary/80">
+                  اولین لیستت را بساز یا در صفحهٔ لیست‌ها جستجو کن
+                </p>
+                <Link
+                  href="/lists"
+                  className="mt-4 inline-block rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white"
+                >
+                  رفتن به لیست‌ها
+                </Link>
+              </div>
+            )}
+          </>
         )}
 
-        <ExploreBottomCTA onOpenCreate={() => setIsCreateFormOpen(true)} />
+        {showDiscovery && <ExploreBottomCTA onOpenCreate={() => setIsCreateFormOpen(true)} />}
       </main>
 
-      <FloatingActionButton onClick={() => setIsCreateFormOpen(true)} />
       <CreateListForm
         isOpen={isCreateFormOpen}
         onClose={() => setIsCreateFormOpen(false)}
