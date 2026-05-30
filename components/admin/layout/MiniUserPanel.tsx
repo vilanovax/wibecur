@@ -7,6 +7,7 @@ import { User, KeyRound, LogOut } from 'lucide-react';
 import { getRoleLabel } from '@/lib/auth/roles';
 import Tooltip from './Tooltip';
 import clsx from 'clsx';
+import UserAvatar from '@/components/shared/UserAvatar';
 
 export interface MiniUserPanelProps {
   collapsed: boolean;
@@ -40,17 +41,14 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
 
   const avatar = (
     <div className="relative shrink-0">
-      {user.image ? (
-        <img
-          src={user.image}
-          alt=""
-          className="h-10 w-10 rounded-xl object-cover ring-2 ring-white dark:ring-gray-700 shadow-sm"
-        />
-      ) : (
-        <div className="h-10 w-10 rounded-xl bg-violet-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-          {displayName.charAt(0)}
-        </div>
-      )}
+      <UserAvatar
+        src={user.image}
+        name={displayName}
+        email={user.email}
+        size={40}
+        rounded="xl"
+        className="ring-2 ring-white dark:ring-gray-700 shadow-sm"
+      />
       {user.online !== false && (
         <span
           className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-admin-card dark:border-gray-800"

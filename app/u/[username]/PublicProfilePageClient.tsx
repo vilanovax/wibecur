@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { List, Users, UserPlus, Bookmark, Check, Loader2 } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCardStats from '@/components/shared/ListCardStats';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
@@ -81,7 +82,7 @@ export default function PublicProfilePageClient({
       }
       setData(json.data);
       setIsFollowing(json.data.isFollowing ?? false);
-    } catch (e) {
+    } catch {
       setError('خطا در بارگذاری');
       setData(null);
     } finally {
@@ -102,15 +103,23 @@ export default function PublicProfilePageClient({
         const json = await res.json();
         if (json.success) {
           setIsFollowing(false);
-          if (data.stats) setData((d) => d ? { ...d, stats: { ...d.stats, followersCount: json.data.followersCount } } : d);
+          if (data.stats) {
+            setData((d) =>
+              d ? { ...d, stats: { ...d.stats, followersCount: json.data.followersCount } } : d
+            );
+          }
         }
       } else {
         const res = await fetch(`/api/follow/${data.user.id}`, { method: 'POST' });
         const json = await res.json();
         if (json.success) {
           setIsFollowing(true);
-          setToast({ message: 'از این به بعد لیست‌های جدیدش رو می‌بینی 🔥', type: 'success' });
-          if (data.stats) setData((d) => d ? { ...d, stats: { ...d.stats, followersCount: json.data.followersCount } } : d);
+          setToast({ message: 'از این به بعد لیست‌های جدیدش رو می‌بینی', type: 'success' });
+          if (data.stats) {
+            setData((d) =>
+              d ? { ...d, stats: { ...d.stats, followersCount: json.data.followersCount } } : d
+            );
+          }
         } else {
           setToast({ message: json.error || 'خطا', type: 'error' });
         }
@@ -125,8 +134,8 @@ export default function PublicProfilePageClient({
   if (loading && !data) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
-        <Loader2 className="w-10 h-10 text-[#7C3AED] animate-spin mb-4" />
-        <p className="text-gray-500 text-sm">در حال بارگذاری...</p>
+        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+        <p className="wibe-small text-wibe-secondary">در حال بارگذاری...</p>
       </div>
     );
   }
@@ -134,10 +143,10 @@ export default function PublicProfilePageClient({
   if (error && !data) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
-        <p className="text-gray-600 text-center mb-4">{error}</p>
+        <p className="wibe-body text-wibe-secondary text-center mb-4">{error}</p>
         <button
           onClick={fetchProfile}
-          className="px-5 py-2.5 rounded-xl bg-[#7C3AED] text-white text-sm font-medium"
+          className="px-5 py-2.5 rounded-md bg-primary text-white wibe-small font-medium hover:bg-primary-dark transition-colors"
         >
           تلاش مجدد
         </button>
@@ -150,20 +159,46 @@ export default function PublicProfilePageClient({
   const isOwnProfile = currentUserId === data.user.id;
   const levelKey = (data.user.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
   const levelConfig = getLevelConfig(levelKey);
-  const vibeAvatar = data.user.avatarType === 'DEFAULT' && data.user.avatarId
-    ? VIBE_AVATARS.find((a) => a.id === data.user.avatarId)
-    : null;
+  const vibeAvatar =
+    data.user.avatarType === 'DEFAULT' && data.user.avatarId
+      ? VIBE_AVATARS.find((a) => a.id === data.user.avatarId)
+      : null;
+
+  const statItems = [
+    {
+      icon: Bookmark,
+      value: data.stats.savedCount,
+      label: 'ذخیره',
+      highlight: true,
+    },
+    {
+      icon: List,
+      value: data.stats.listsCount,
+      label: 'لیست',
+      highlight: false,
+    },
+    {
+      icon: Users,
+      value: data.stats.followersCount,
+      label: 'دنبال‌کننده',
+      highlight: false,
+    },
+    {
+      icon: UserPlus,
+      value: data.stats.followingCount,
+      label: 'دنبال‌شونده',
+      highlight: false,
+    },
+  ];
 
   return (
     <>
-      <div className="min-h-screen bg-[#F8F7FC]">
-        {/* Hero */}
-        <div className="relative rounded-b-[24px] overflow-hidden bg-gradient-to-b from-[#7C3AED] via-[#8B5CF6] to-[#9333EA] pb-6 pt-8 px-4">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(255,255,255,0.12),transparent)]" />
+      <div className="min-h-screen bg-wibe-surface">
+        <div className="relative rounded-b-lg overflow-hidden bg-primary pb-6 pt-8 px-4">
           <div className="relative z-10 flex flex-col items-center">
             <div className="relative">
-              <div className={`absolute -inset-2 rounded-full blur-lg ${levelConfig.glowClass} opacity-50`} />
-              <div className="relative w-24 h-24 rounded-full border-4 border-white/90 overflow-hidden bg-white shadow-xl">
+              <div className={`absolute -inset-2 rounded-full blur-lg ${levelConfig.glowClass} opacity-40`} />
+              <div className="relative w-24 h-24 rounded-full border-4 border-wibe-card overflow-hidden bg-wibe-card shadow-sm">
                 {vibeAvatar ? (
                   <div className={`w-full h-full flex items-center justify-center text-4xl ${vibeAvatar.bgClass}`}>
                     {vibeAvatar.emoji}
@@ -174,23 +209,19 @@ export default function PublicProfilePageClient({
                     alt={data.user.name || ''}
                     className="w-full h-full object-cover"
                     fallbackIcon={(data.user.name?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-2xl font-bold flex items-center justify-center"
+                    fallbackClassName="w-full h-full bg-primary text-white text-2xl font-bold flex items-center justify-center"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white text-2xl font-bold">
+                  <div className="w-full h-full flex items-center justify-center bg-primary text-white text-2xl font-bold">
                     {(data.user.name?.[0] || '?').toUpperCase()}
                   </div>
                 )}
               </div>
             </div>
-            <h1 className="text-xl font-bold text-white mt-4 text-center">
-              {data.user.name || 'کاربر'}
-            </h1>
-            <p className="text-white/80 text-sm">@{data.user.username}</p>
+            <h1 className="wibe-h2 text-white mt-4 text-center">{data.user.name || 'کاربر'}</h1>
+            <p className="wibe-small text-white/85">@{data.user.username}</p>
             {data.user.bio && (
-              <p className="text-white/90 text-sm text-center mt-2 max-w-md line-clamp-2">
-                {data.user.bio}
-              </p>
+              <p className="wibe-small text-white/90 text-center mt-2 max-w-md line-clamp-2">{data.user.bio}</p>
             )}
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
               {data.user.showBadge !== false && (
@@ -199,34 +230,33 @@ export default function PublicProfilePageClient({
                   size="small"
                   showIcon
                   showLabel
-                  className="bg-white/20 text-white border border-white/30"
+                  className="bg-white/15 text-white border border-white/25"
                 />
               )}
               {data.user.globalRank != null && data.user.globalRank <= 50 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/90 text-amber-900 text-xs font-bold border border-amber-500/50">
-                  Top {data.user.globalRank <= 10 ? 10 : 50} Creator
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-warning text-white wibe-caption font-semibold">
+                  Top {data.user.globalRank <= 10 ? 10 : 50}
                 </span>
               )}
               {data.user.monthlyRank != null && data.user.monthlyRank <= 10 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-500/90 text-white text-xs font-bold border border-violet-600/50">
-                  Top Creator – Month
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-wibe-card/20 text-white wibe-caption font-semibold border border-white/30">
+                  برتر ماه
                 </span>
               )}
               {data.user.spotlightActive && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/90 text-amber-900 text-xs font-bold border border-amber-500/50">
-                  🌟 Spotlight
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-warning text-white wibe-caption font-semibold">
+                  Spotlight
                   {data.user.spotlightEndDate &&
-                    ` – ${new Date(data.user.spotlightEndDate).toLocaleDateString('fa-IR', { month: 'long', year: 'numeric' })}`}
+                    ` · ${new Date(data.user.spotlightEndDate).toLocaleDateString('fa-IR', { month: 'long', year: 'numeric' })}`}
                 </span>
               )}
             </div>
 
-            {/* Follow / Edit */}
             <div className="mt-4 flex gap-3">
               {isOwnProfile ? (
                 <Link
                   href="/profile"
-                  className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-[20px] shadow-md text-[#7C3AED] font-medium text-sm"
+                  className="flex items-center gap-2 px-6 py-2.5 bg-wibe-card rounded-md shadow-sm text-primary wibe-small font-semibold"
                 >
                   ویرایش پروفایل
                 </Link>
@@ -235,26 +265,23 @@ export default function PublicProfilePageClient({
                   type="button"
                   onClick={handleFollowToggle}
                   disabled={followLoading}
-                  className={`
-                    flex items-center gap-2 px-6 py-2.5 rounded-[20px] font-medium text-sm
-                    transition-all active:scale-[0.98]
-                    ${isFollowing
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-md wibe-small font-semibold transition-all active:scale-[0.98] disabled:opacity-50 ${
+                    isFollowing
                       ? 'bg-white/20 text-white border border-white/50'
-                      : 'bg-white text-[#7C3AED] shadow-md hover:shadow-lg'
-                    }
-                  `}
+                      : 'bg-wibe-card text-primary shadow-sm'
+                  }`}
                 >
                   {followLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : isFollowing ? (
                     <>
                       <Check className="w-4 h-4" />
-                      Following
+                      دنبال می‌کنی
                     </>
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4" />
-                      Follow
+                      دنبال کردن
                     </>
                   )}
                 </button>
@@ -263,98 +290,81 @@ export default function PublicProfilePageClient({
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="px-4 -mt-2 relative z-20">
-          <div className="rounded-2xl bg-white shadow-sm border border-gray-100 p-4 grid grid-cols-4 gap-2">
-            <div className="flex flex-col items-center">
-              <List className="w-5 h-5 text-[#7C3AED] mb-1" />
-              <span className="text-lg font-bold text-gray-900">{data.stats.listsCount}</span>
-              <span className="text-xs text-gray-500">لیست</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Users className="w-5 h-5 text-[#7C3AED] mb-1" />
-              <span className="text-lg font-bold text-gray-900">{data.stats.followersCount}</span>
-              <span className="text-xs text-gray-500">دنبال‌کننده</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <UserPlus className="w-5 h-5 text-gray-400 mb-1" />
-              <span className="text-lg font-bold text-gray-900">{data.stats.followingCount}</span>
-              <span className="text-xs text-gray-500">دنبال‌شونده</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <Bookmark className="w-5 h-5 text-amber-500 mb-1" />
-              <span className="text-lg font-bold text-gray-900">{data.stats.savedCount}</span>
-              <span className="text-xs text-gray-500">ذخیره</span>
-            </div>
+        <div className="px-4 pt-4">
+          <div className="rounded-lg bg-wibe-card shadow-sm border border-wibe p-4 grid grid-cols-4 gap-2">
+            {statItems.map(({ icon: Icon, value, label, highlight }) => (
+              <div key={label} className="flex flex-col items-center">
+                <Icon className={`w-5 h-5 mb-1 ${highlight ? 'text-primary' : 'text-wibe-secondary'}`} />
+                <span className={`text-h3 font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>
+                  {value.toLocaleString('fa-IR')}
+                </span>
+                <span className="wibe-caption text-wibe-secondary">{label}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Top Tags */}
         {data.topTags.length > 0 && (
           <section className="px-4 mt-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">سلیقه</h2>
-            <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100 space-y-2">
+            <h2 className="wibe-h3 mb-3">سلیقه</h2>
+            <div className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe space-y-2">
               {data.topTags.map((tag) => (
                 <div key={tag.slug} className="flex items-center gap-2">
                   <span className="text-lg">{tag.icon}</span>
-                  <span className="text-sm text-gray-700 flex-1">{tag.name}</span>
-                  <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <span className="wibe-small text-foreground flex-1">{tag.name}</span>
+                  <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#7C3AED] rounded-full"
+                      className="h-full bg-primary rounded-full"
                       style={{ width: `${tag.percent}%` }}
                     />
                   </div>
-                  <span className="text-xs text-gray-500 w-8">{tag.percent}%</span>
+                  <span className="wibe-caption text-wibe-secondary w-8">{tag.percent}%</span>
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        {/* Public Lists */}
         <section className="px-4 mt-6 pb-8">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">لیست‌های عمومی</h2>
+          <h2 className="wibe-h3 mb-3">لیست‌های عمومی</h2>
           <div className="grid grid-cols-2 gap-3">
             {data.publicLists.map((list) => (
               <Link
                 key={list.id}
                 href={`/lists/${list.slug}`}
-                className="block rounded-2xl bg-white overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                className="block rounded-lg bg-wibe-card overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
               >
-                <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
                   <ImageWithFallback
                     src={list.coverImage ?? ''}
                     alt={list.title}
                     className="w-full h-full object-cover"
                     fallbackIcon="📋"
-                    fallbackClassName="w-full h-full flex items-center justify-center text-2xl"
+                    fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
                   {list.isFeatured && (
-                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-400/90 text-amber-900 text-[10px] font-medium">
-                      Top
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-pill bg-warning text-white wibe-caption font-semibold">
+                      ویژه
                     </span>
                   )}
-                </div>
-                <div className="p-3">
-                  <h3 className="font-medium text-gray-900 text-sm line-clamp-2">{list.title}</h3>
-                  <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                    <span>{list.items} آیتم</span>
-                    <span>·</span>
-                    <span>{list.saves} ذخیره</span>
+                  <div className="absolute bottom-0 left-0 right-0 p-2">
+                    <ListCardStats saves={list.saves} itemCount={list.items} variant="overlay" />
                   </div>
+                </div>
+                <div className="p-2.5">
+                  <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
                 </div>
               </Link>
             ))}
           </div>
           {data.publicLists.length === 0 && (
-            <p className="text-center text-gray-500 text-sm py-8">هنوز لیست عمومی ندارد</p>
+            <p className="text-center wibe-small text-wibe-secondary py-8">هنوز لیست عمومی ندارد</p>
           )}
         </section>
       </div>
 
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </>
   );
 }

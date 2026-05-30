@@ -3,14 +3,10 @@
 import ListCard from '@/components/mobile/home/ListCard';
 import EmptyState from '@/components/mobile/home/EmptyState';
 import { useHomeData } from '@/contexts/HomeDataContext';
-import { PLACEHOLDER_COVER_SMALL } from '@/lib/placeholder-images';
 
 export default function RecommendationSection() {
   const { data, isLoading } = useHomeData();
-  const lists = (data?.recommendations ?? []).map((l) => ({
-    ...l,
-    coverImage: l.coverImage || PLACEHOLDER_COVER_SMALL,
-  }));
+  const lists = data?.recommendations ?? [];
   const hasRecommendations = lists.length > 0;
 
   if (isLoading && !hasRecommendations) {

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolvePlaceholderToLiara } from '@/lib/placeholder-liara';
+import { getLocalPlaceholderUrl } from '@/lib/placeholder-images';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 
 /**
  * GET /api/placeholder?seed=hero-film-movies&size=cover
- *
- * تصویر placeholder را از Picsum دانلود، در Liara آپلود می‌کند و به URL لیارا redirect می‌کند.
- * همه تصاویر در نهایت در Liara Object Storage ذخیره می‌شوند.
+ * تلاش برای آپلود SVG placeholder در Liara؛ در غیر این صورت SVG محلی.
  */
 export async function GET(request: NextRequest) {
   const seed = request.nextUrl.searchParams.get('seed') || 'default';
@@ -17,12 +16,13 @@ export async function GET(request: NextRequest) {
 
   try {
     const url = await resolvePlaceholderToLiara(seed, size);
-    if (isOurStorageUrl(url)) {
+    if (url && isOurStorageUrl(url)) {
       return NextResponse.redirect(url, 302);
     }
-    return NextResponse.redirect(url, 302);
   } catch (e) {
     console.error('Placeholder resolve error:', e);
-    return NextResponse.json({ error: 'Failed to resolve placeholder' }, { status: 500 });
   }
+
+  const local = getLocalPlaceholderUrl(size);
+  return NextResponse.redirect(new URL(local, request.url), 302);
 }

@@ -4,36 +4,39 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Design Tokens 2.0 – CSS Variables ───────────────────────────────── */
+/* ─── Wibe Design System — CSS Variables (sync with lib/design-tokens.ts) ─ */
 :root {
   /* Brand */
   --primary: #6366F1;
   --primary-dark: #4F46E5;
   --primary-light: #818CF8;
-  --secondary: #8B5CF6;
-  --accent: #EC4899;
+
+  /* Wibe consumer semantic */
+  --wibe-background: #FFFFFF;
+  --wibe-surface: #F8FAFC;
+  --wibe-card: #FFFFFF;
 
   /* Semantic: Light mode */
-  --color-bg: #F9FAFB;
-  --color-surface: #FFFFFF;
+  --color-bg: #FFFFFF;
+  --color-surface: #F8FAFC;
   --color-surface-raised: #FFFFFF;
-  --color-border: #E5E7EB;
-  --color-border-muted: #F3F4F6;
-  --color-text: #111827;
-  --color-text-muted: #4B5563;
-  --color-text-subtle: #6B7280;
+  --color-border: #E2E8F0;
+  --color-border-muted: #F1F5F9;
+  --color-text: #0F172A;
+  --color-text-muted: #64748B;
+  --color-text-subtle: #94A3B8;
 
-  /* Gray scale */
-  --gray-50: #F9FAFB;
-  --gray-100: #F3F4F6;
-  --gray-200: #E5E7EB;
-  --gray-300: #D1D5DB;
-  --gray-400: #9CA3AF;
-  --gray-500: #6B7280;
-  --gray-600: #4B5563;
-  --gray-700: #374151;
-  --gray-800: #1F2937;
-  --gray-900: #111827;
+  /* Gray scale (slate-aligned) */
+  --gray-50: #F8FAFC;
+  --gray-100: #F1F5F9;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-500: #64748B;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1E293B;
+  --gray-900: #0F172A;
 
   /* Semantic state */
   --color-success: #10B981;
@@ -41,28 +44,27 @@
   --color-danger: #EF4444;
   --color-info: #3B82F6;
 
-  /* Shadows */
-  --shadow-card: 0 6px 18px rgba(0, 0, 0, 0.06);
-  --shadow-hero: 0 12px 28px rgba(0, 0, 0, 0.12);
-  --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.15);
-  --shadow-focus: 0 0 0 2px rgba(99, 102, 241, 0.4);
+  /* Shadows — subtle only */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04);
+  --shadow-hero: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.10);
+  --shadow-focus: 0 0 0 2px rgba(99, 102, 241, 0.35);
 
-  /* Spacing */
+  /* Spacing: 4 / 8 / 12 / 16 / 24 / 32 / 48 */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
   --spacing-lg: 16px;
   --spacing-xl: 24px;
   --spacing-2xl: 32px;
-  --spacing-3xl: 40px;
-  --spacing-4xl: 48px;
+  --spacing-3xl: 48px;
 
-  /* Radius */
+  /* Radius: sm 8 | md 14 | lg 20 | xl 28 */
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 22px;
-  --radius-2xl: 28px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-pill: 9999px;
 
   /* Motion */
@@ -128,10 +130,17 @@
   .text-primary-light { color: var(--primary-light); }
   .border-primary { border-color: var(--primary); }
   .border-primary-dark { border-color: var(--primary-dark); }
+  .shadow-vibe-sm { box-shadow: var(--shadow-sm); }
   .shadow-vibe-card { box-shadow: var(--shadow-card); }
   .shadow-vibe-hero { box-shadow: var(--shadow-hero); }
   .shadow-vibe-floating { box-shadow: var(--shadow-floating); }
-  /* Semantic surface utilities */
+  /* Wibe semantic surfaces */
+  .bg-wibe-background { background-color: var(--wibe-background); }
+  .bg-wibe-surface { background-color: var(--wibe-surface); }
+  .bg-wibe-card { background-color: var(--wibe-card); }
+  .text-wibe-primary { color: var(--color-text); }
+  .text-wibe-secondary { color: var(--color-text-muted); }
+  .border-wibe { border-color: var(--color-border); }
   .bg-surface { background-color: var(--color-surface); }
   .bg-surface-raised { background-color: var(--color-surface-raised); }
   .text-muted { color: var(--color-text-muted); }
@@ -142,6 +151,20 @@
   .text-warning { color: var(--color-warning); }
   .text-danger { color: var(--color-danger); }
   .text-info { color: var(--color-info); }
+}
+
+@layer components {
+  /* Wibe typography presets — use with font-sans (Vazirmatn) */
+  .wibe-display { @apply text-display font-bold text-foreground; }
+  .wibe-h1 { @apply text-h1 font-bold text-foreground; }
+  .wibe-h2 { @apply text-h2 font-bold text-foreground; }
+  .wibe-h3 { @apply text-h3 font-semibold text-foreground; }
+  .wibe-body { @apply text-body font-normal text-foreground; }
+  .wibe-small { @apply text-small font-normal text-muted-foreground; }
+  .wibe-caption { @apply text-caption font-normal text-muted-foreground; }
+  .wibe-card-surface {
+    @apply bg-wibe-card border border-wibe rounded-lg shadow-card;
+  }
 }
 
 * {

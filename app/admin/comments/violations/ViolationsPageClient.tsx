@@ -3,7 +3,7 @@
 import { Ban, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
-import Image from 'next/image';
+import UserAvatar from '@/components/shared/UserAvatar';
 
 interface User {
   id: string;
@@ -77,23 +77,12 @@ export default function ViolationsPageClient({
                   <tr key={violation.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        {violation.user.image ? (
-                          <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                            <Image
-                              src={violation.user.image}
-                              alt={violation.user.name || 'User'}
-                              fill
-                              className="object-cover"
-                              unoptimized={true}
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-primary font-medium">
-                              {(violation.user.name || violation.user.email)[0].toUpperCase()}
-                            </span>
-                          </div>
-                        )}
+                        <UserAvatar
+                          src={violation.user.image}
+                          name={violation.user.name}
+                          email={violation.user.email}
+                          size={40}
+                        />
                         <div>
                           <p className="font-medium text-gray-900">
                             {violation.user.name || 'بدون نام'}

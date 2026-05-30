@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { Eye, Star } from 'lucide-react';
+import { Bookmark, Eye } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { useHomeData } from '@/contexts/HomeDataContext';
 
@@ -45,7 +45,7 @@ export default function HomeHeroSpotlight() {
     if (!isLoading && !list) return null;
     return (
       <section className="px-4 mt-4 mb-6">
-        <div className="rounded-[20px] h-[240px] bg-gray-200 animate-pulse shadow-vibe-hero" />
+        <div className="rounded-lg h-[240px] bg-gray-200 animate-pulse shadow-card" />
       </section>
     );
   }
@@ -54,46 +54,46 @@ export default function HomeHeroSpotlight() {
 
   return (
     <section className="px-4 mt-4 mb-6">
-      <p className="text-[12px] font-medium text-gray-500 mb-2">منتخب هفته</p>
-      <div className="relative rounded-[20px] overflow-hidden h-[240px] bg-gray-200 shadow-vibe-hero">
+      <p className="wibe-caption text-wibe-secondary mb-2">منتخب هفته</p>
+      <div className="relative rounded-lg overflow-hidden h-[240px] bg-gray-200 shadow-card">
         <ImageWithFallback
           src={list.coverImage}
           alt={list.title}
           className="absolute inset-0 w-full h-full object-cover"
           fallbackIcon="🎬"
-          fallbackClassName="w-full h-full flex items-center justify-center text-5xl bg-gradient-to-br from-gray-300 to-gray-400"
+          fallbackClassName="w-full h-full flex items-center justify-center text-5xl bg-gray-200"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-5">
-          <h1 className="text-[26px] font-bold text-white leading-[1.3] tracking-[-0.03em] drop-shadow-lg line-clamp-2">
-            {list.title}
-          </h1>
-          <p className="text-white/95 text-[14px] mt-2 leading-[1.6] line-clamp-2 opacity-90">{list.description}</p>
+          <h1 className="text-h2 font-bold text-white line-clamp-2">{list.title}</h1>
+          {list.description && (
+            <p className="wibe-small text-white/90 mt-2 line-clamp-2">{list.description}</p>
+          )}
           {creator?.name && (
-            <p className="text-white/70 text-[11px] mt-1.5 opacity-75">از {creator.name}</p>
+            <p className="wibe-caption text-white/70 mt-1.5">از {creator.name}</p>
           )}
           <div className="flex gap-3 mt-4">
             <Link
               href={`/lists/${list.slug}`}
-              className="flex-1 py-3 rounded-xl bg-white text-gray-900 font-semibold text-[14px] text-center hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-md bg-wibe-card text-foreground font-semibold wibe-small text-center flex items-center justify-center gap-2"
               onClick={() => {
                 if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'view_list');
               }}
             >
               <Eye className="w-4 h-4" />
-              مشاهده لیست
+              مشاهده
             </Link>
             <Link
               href={`/lists/${list.slug}`}
-              className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-primary text-white font-semibold text-[14px] hover:bg-primary-dark transition-colors"
-              aria-label="ذخیره سریع لیست"
+              className="flex items-center justify-center gap-2 flex-1 py-3 rounded-md bg-primary text-white font-semibold wibe-small"
+              aria-label="ذخیره لیست"
               onClick={() => {
                 if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'quick_save');
               }}
             >
-              <Star className="w-4 h-4" />
-              ذخیره سریع
+              <Bookmark className="w-4 h-4" />
+              ذخیره
             </Link>
           </div>
         </div>

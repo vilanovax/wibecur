@@ -23,7 +23,7 @@ export default function CategoryHeroUpgraded({
         {category.heroImage ? (
           <>
             <ImageWithFallback
-              src={getDisplayImageUrl(category.heroImage, 'covers')}
+              src={getDisplayImageUrl(category.heroImage)}
               alt={category.name}
               className="absolute inset-0 w-full h-full object-cover"
               priority

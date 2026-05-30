@@ -20,7 +20,7 @@ export default function HubHero({
 }: HubHeroProps) {
   const heroImage =
     category.heroImage
-      ? getDisplayImageUrl(category.heroImage, 'covers')
+      ? getDisplayImageUrl(category.heroImage)
       : getRandomPlaceholderUrl(`hero-${category.slug}`, 'cover');
 
   return (

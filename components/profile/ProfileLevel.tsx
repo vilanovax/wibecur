@@ -20,21 +20,21 @@ export default function ProfileLevel({ user }: ProfileLevelProps) {
     : 100;
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+    <div className="rounded-lg border border-wibe bg-wibe-card p-4 shadow-sm">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium text-gray-600">سطح {currentTier.short}</span>
-        <span className="text-lg font-bold text-gray-900">{score} XP</span>
+        <span className="wibe-small font-medium text-wibe-secondary">سطح {currentTier.short}</span>
+        <span className="wibe-h3 font-bold text-foreground">{score.toLocaleString('fa-IR')} XP</span>
       </div>
-      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+      <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
         <div
           className="h-full rounded-full bg-primary transition-all duration-500"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
       {nextLabel != null && toNext != null && toNext > 0 && (
-        <p className="text-xs text-gray-500 mt-2">تا سطح بعدی: {toNext} XP</p>
+        <p className="wibe-caption text-wibe-secondary mt-2">تا سطح بعدی: {toNext.toLocaleString('fa-IR')} XP</p>
       )}
-      {nextTier === null && <p className="text-xs text-gray-500 mt-2">بالاترین سطح</p>}
+      {nextTier === null && <p className="wibe-caption text-wibe-secondary mt-2">بالاترین سطح</p>}
     </div>
   );
 }

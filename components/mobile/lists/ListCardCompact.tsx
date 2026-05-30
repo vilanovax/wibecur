@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart, Star, Package } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCardStats from '@/components/shared/ListCardStats';
 
 type ListWithCreator = {
   id: string;
@@ -26,33 +26,32 @@ interface ListCardCompactProps {
 export default function ListCardCompact({ list, variant = 'grid' }: ListCardCompactProps) {
   const itemCount = list.itemCount ?? list._count?.items ?? 0;
   const saveCount = list.saveCount ?? 0;
-  const likeCount = list.likeCount ?? list._count?.list_likes ?? 0;
+  const creatorName = list.users?.name || list.users?.username;
 
   if (variant === 'compact') {
     return (
       <Link
         href={`/lists/${list.slug}`}
-        className="flex flex-row-reverse gap-3 p-3 bg-white rounded-[20px] border border-gray-100 shadow-vibe-card hover:shadow-vibe-card active:scale-[0.99] transition-all"
+        className="flex flex-row-reverse gap-3 p-3 bg-wibe-card rounded-lg border border-wibe shadow-sm active:scale-[0.99] transition-transform"
       >
-        <div className="relative w-24 flex-shrink-0 rounded-xl overflow-hidden bg-gray-200 aspect-[4/3]">
+        <div className="relative w-24 flex-shrink-0 rounded-md overflow-hidden bg-gray-200 aspect-[4/3]">
           <ImageWithFallback
             src={list.coverImage ?? ''}
             alt={list.title}
             className="w-full h-full object-cover"
             fallbackIcon={list.categories?.icon ?? '📋'}
-            fallbackClassName="w-full h-full flex items-center justify-center text-2xl"
+            fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
           />
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <h3 className="font-semibold text-[16px] leading-[1.4] text-gray-900 line-clamp-1">{list.title}</h3>
+          <h3 className="wibe-small font-semibold text-foreground line-clamp-1">{list.title}</h3>
           {list.description && (
-            <p className="text-[13px] text-gray-500/80 line-clamp-1 mt-0.5">{list.description}</p>
+            <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">{list.description}</p>
           )}
-          <div className="flex items-center gap-2 mt-1.5 text-[13px] font-medium text-gray-500/75">
-            <span className="flex items-center gap-0.5"><Star className="w-3.5 h-3.5" />{saveCount}</span>
-            <span className="flex items-center gap-0.5"><Heart className="w-3.5 h-3.5" />{likeCount}</span>
-            <span className="flex items-center gap-0.5"><Package className="w-3.5 h-3.5" />{itemCount} آیتم</span>
-          </div>
+          {creatorName && (
+            <p className="wibe-caption text-wibe-secondary/80 mt-0.5 line-clamp-1">{creatorName}</p>
+          )}
+          <ListCardStats saves={saveCount} itemCount={itemCount} variant="compact" className="mt-1.5" />
         </div>
       </Link>
     );
@@ -61,7 +60,7 @@ export default function ListCardCompact({ list, variant = 'grid' }: ListCardComp
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="block bg-white rounded-[20px] overflow-hidden shadow-vibe-card hover:shadow-vibe-card border border-gray-100 active:scale-[0.99] transition-all"
+      className="block bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-card active:scale-[0.99] transition-transform"
     >
       <div className="relative aspect-[4/3] w-full bg-gray-200 overflow-hidden">
         <ImageWithFallback
@@ -69,19 +68,18 @@ export default function ListCardCompact({ list, variant = 'grid' }: ListCardComp
           alt={list.title}
           className="w-full h-full object-cover"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="w-full h-full flex items-center justify-center text-4xl"
+          fallbackClassName="w-full h-full flex items-center justify-center text-4xl bg-gray-200"
         />
-      </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-[16px] leading-[1.4] text-gray-900 line-clamp-2">{list.title}</h3>
-        {list.description && (
-          <p className="text-[13px] text-gray-500/80 line-clamp-1 mt-1 leading-[1.6]">{list.description}</p>
-        )}
-        <div className="flex items-center gap-2 mt-2 text-[13px] font-medium text-gray-500/75">
-          <span className="flex items-center gap-0.5"><Star className="w-3.5 h-3.5" />{saveCount}</span>
-          <span className="flex items-center gap-0.5"><Heart className="w-3.5 h-3.5" />{likeCount}</span>
-          <span className="flex items-center gap-0.5"><Package className="w-3.5 h-3.5" />{itemCount} آیتم</span>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-2.5">
+          <ListCardStats saves={saveCount} itemCount={itemCount} variant="overlay" />
         </div>
+      </div>
+      <div className="p-3">
+        <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
+        {creatorName && (
+          <p className="wibe-caption text-wibe-secondary mt-1 line-clamp-1">{creatorName}</p>
+        )}
       </div>
     </Link>
   );

@@ -75,8 +75,8 @@ export default function CuratedLandingPageClient() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-        <div className="h-[160px] bg-white border-b animate-pulse" />
+      <div className="min-h-screen bg-wibe-surface pb-20">
+        <div className="h-[160px] bg-gray-200 border-b border-wibe animate-pulse" />
         <CuratorsRowSkeleton />
         <div className="px-4 py-8">
           <div className="h-5 w-48 bg-gray-200 rounded mb-4 animate-pulse" />
@@ -91,7 +91,7 @@ export default function CuratedLandingPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20">
       <ExploreSmartHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -108,20 +108,14 @@ export default function CuratedLandingPageClient() {
 
         {filteredLists.length > 0 ? (
           <section className="px-4 py-8" id="more">
-            <h2 className="text-[18px] font-bold text-gray-900 mb-3">
-              بیشتر ببین
-            </h2>
-            <p className="text-[13px] text-gray-500 mb-4">
-              لیست‌های کیوریت شده بر اساس ترند
-            </p>
+            <h2 className="wibe-h3 mb-3">بیشتر ببین</h2>
+            <p className="wibe-small text-wibe-secondary mb-4">لیست‌های کیوریت شده</p>
             <CuratedGrid lists={filteredLists} showSponsoredAfter={8} />
           </section>
         ) : (
           <div className="px-4 py-12 text-center">
-            <p className="text-gray-500">لیستی یافت نشد</p>
-            <p className="text-sm text-gray-400 mt-1">
-              فیلتر یا جستجو را تغییر دهید
-            </p>
+            <p className="wibe-body text-wibe-secondary">لیستی یافت نشد</p>
+            <p className="wibe-small text-wibe-secondary mt-1">فیلتر یا جستجو را تغییر دهید</p>
           </div>
         )}
 

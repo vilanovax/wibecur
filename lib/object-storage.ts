@@ -176,11 +176,12 @@ export async function getObjectByPublicUrl(
     const u = new URL(publicUrl);
     const pathname = decodeURIComponent(u.pathname);
     const pathParts = pathname.replace(/^\/+/, '').split('/').filter(Boolean);
-    if (pathParts.length < 2 || pathParts[0] !== config.bucketName) return null;
+    if (pathParts.length < 2) return null;
+    const bucketFromUrl = pathParts[0];
     const key = pathParts.slice(1).join('/');
     if (!key) return null;
 
-    const cmd = new GetObjectCommand({ Bucket: config.bucketName, Key: key });
+    const cmd = new GetObjectCommand({ Bucket: bucketFromUrl, Key: key });
     const res = await client.send(cmd);
     const body = res.Body;
     if (!body) return null;

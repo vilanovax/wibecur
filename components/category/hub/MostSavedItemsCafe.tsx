@@ -39,7 +39,6 @@ export default function MostSavedItemsCafe({
                   alt={item.title}
                   className="w-full h-full object-cover"
                   placeholderSize="square"
-                  imageFolder="items"
                 />
               ) : (
                 <div

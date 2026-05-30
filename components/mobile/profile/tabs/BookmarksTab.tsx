@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Bookmark, User, List, MoreVertical } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCardStats from '@/components/shared/ListCardStats';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 
@@ -41,11 +42,6 @@ interface BookmarkItem {
 
 interface BookmarksTabProps {
   userId: string;
-}
-
-function formatStat(n: number): string {
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-  return String(n);
 }
 
 interface BookmarksResponse {
@@ -119,15 +115,15 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
   if (bookmarks.length === 0) {
     return (
       <div className="px-4 py-8">
-        <div className="text-center py-12 rounded-2xl border border-gray-100 bg-gray-50/50">
-          <Bookmark className="w-14 h-14 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-gray-800 font-bold text-lg mb-1">هنوز لیستی دنبال نکردی</h3>
-          <p className="text-gray-500 text-sm max-w-xs mx-auto mb-6">
-            کیوریتورها رو کشف کن و لیست‌های جذاب دنبال کن
+        <div className="text-center py-12 rounded-lg border border-wibe bg-wibe-card">
+          <Bookmark className="w-14 h-14 text-wibe-secondary mx-auto mb-4" />
+          <h3 className="wibe-h3 text-foreground mb-1">هنوز لیستی ذخیره نکردی</h3>
+          <p className="wibe-small text-wibe-secondary max-w-xs mx-auto mb-6">
+            لیست‌های جذاب را کشف کن و ذخیره کن
           </p>
           <Link
             href="/lists"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-medium text-sm"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md bg-primary text-white wibe-small font-medium"
           >
             کشف لیست‌ها
           </Link>
@@ -140,8 +136,8 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
     <div className="px-4 space-y-5 pb-4">
       {/* Header */}
       <div>
-        <h2 className="text-base font-bold text-gray-900">لیست‌هایی که دنبال می‌کنم</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <h2 className="wibe-h3">لیست‌های ذخیره‌شده</h2>
+        <p className="wibe-small text-wibe-secondary mt-0.5">
           {bookmarks.length} لیست • {uniqueCreators.length} کیوریتور
         </p>
       </div>
@@ -187,8 +183,6 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
         {displayedBookmarks.map((bookmark) => {
           const list = bookmark.list;
           const creator = list.users;
-          const likes = list.likeCount ?? list._count?.list_likes ?? 0;
-          const views = list.viewCount ?? 0;
           const items = list.itemCount ?? list._count?.items ?? 0;
           const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
           const isRecentlyUpdated =
@@ -197,7 +191,7 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
           return (
             <div
               key={bookmark.id}
-              className="relative rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+              className="relative rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
               onContextMenu={(e) => {
                 e.preventDefault();
                 setActionSheet(bookmark);
@@ -226,10 +220,10 @@ export default function BookmarksTab({ userId }: BookmarksTabProps) {
                   />
                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
                   <div className="absolute bottom-2 left-2 right-2">
-                    <h3 className="text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow-md">
+                    <h3 className="wibe-small font-semibold text-white leading-tight line-clamp-2">
                       {list.title}
                     </h3>
-                    <p className="text-white/90 text-[11px] mt-0.5">{items} آیتم · {formatStat(likes)} پسند</p>
+                    <ListCardStats saves={saves} itemCount={items} variant="overlay" className="mt-0.5" />
                   </div>
                   {isRecentlyUpdated && (
                     <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-white" />

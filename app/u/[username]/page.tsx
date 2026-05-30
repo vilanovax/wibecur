@@ -23,7 +23,7 @@ export default async function PublicProfilePage({
   const currentUserId = session?.user?.id ?? null;
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20">
       <Header title="" />
       <main className="min-h-screen">
         <PublicProfilePageClient

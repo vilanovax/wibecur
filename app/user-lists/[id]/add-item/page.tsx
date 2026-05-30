@@ -138,7 +138,7 @@ export default async function AddItemPage({
     }));
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20">
       <Header />
       <AddItemClient
         listId={id}

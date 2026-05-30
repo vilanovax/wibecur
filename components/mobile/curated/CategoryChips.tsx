@@ -9,6 +9,15 @@ interface CategoryChipsProps {
   count?: number;
 }
 
+const CHIP_BASE =
+  'flex items-center gap-1.5 h-9 px-3.5 rounded-lg wibe-small font-medium whitespace-nowrap flex-shrink-0 transition-all active:scale-[0.98]';
+
+function chipClass(isSelected: boolean) {
+  return isSelected
+    ? `${CHIP_BASE} bg-primary text-white shadow-sm`
+    : `${CHIP_BASE} bg-wibe-card border border-wibe text-foreground shadow-sm hover:border-primary/30`;
+}
+
 export default function CategoryChips({
   categories,
   selectedId,
@@ -16,9 +25,9 @@ export default function CategoryChips({
   count,
 }: CategoryChipsProps) {
   return (
-    <div className="px-4 py-3">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide min-w-0">
+    <div className="px-4 py-3 bg-wibe-surface">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide min-w-0 -mx-1 px-1">
           {categories.map((cat) => {
             const isSelected = selectedId === cat.id;
             return (
@@ -26,11 +35,7 @@ export default function CategoryChips({
                 key={cat.id}
                 type="button"
                 onClick={() => onSelect(cat.id)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all flex-shrink-0 ${
-                  isSelected
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={chipClass(isSelected)}
                 aria-pressed={isSelected}
               >
                 <span aria-hidden="true">{cat.icon}</span>
@@ -40,7 +45,7 @@ export default function CategoryChips({
           })}
         </div>
         {count !== undefined && (
-          <span className="text-[12px] text-gray-500 flex-shrink-0">
+          <span className="wibe-caption text-wibe-secondary flex-shrink-0">
             {count.toLocaleString('fa-IR')} لیست
           </span>
         )}

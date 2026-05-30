@@ -3,6 +3,7 @@ import {
   brand,
   gray,
   semantic,
+  wibe,
   spacing,
   radius,
   shadows,
@@ -17,6 +18,16 @@ import {
   adminShadows,
   adminTypography,
 } from './lib/design-tokens';
+
+function typeScale(entry: { size: string; lineHeight: string; weight?: number }) {
+  return [
+    entry.size,
+    {
+      lineHeight: entry.lineHeight,
+      ...(entry.weight != null ? { fontWeight: String(entry.weight) } : {}),
+    },
+  ] as [string, { lineHeight: string; fontWeight?: string }];
+}
 
 const config: Config = {
   content: [
@@ -36,9 +47,25 @@ const config: Config = {
         },
         secondary: brand.secondary,
         accent: brand.accent,
-        gray: Object.fromEntries(
-          Object.entries(gray).map(([k, v]) => [k, v])
-        ) as Record<string, string>,
+        wibe: {
+          background: wibe.background,
+          surface: wibe.surface,
+          card: wibe.card,
+          'text-primary': wibe.textPrimary,
+          'text-secondary': wibe.textSecondary,
+          border: wibe.border,
+        },
+        background: wibe.background,
+        foreground: wibe.textPrimary,
+        muted: {
+          DEFAULT: gray[100],
+          foreground: wibe.textSecondary,
+        },
+        border: wibe.border,
+        gray: Object.fromEntries(Object.entries(gray).map(([k, v]) => [k, v])) as Record<
+          string,
+          string
+        >,
         success: semantic.success,
         warning: semantic.warning,
         danger: semantic.danger,
@@ -47,7 +74,6 @@ const config: Config = {
           DEFAULT: 'var(--color-surface)',
           raised: 'var(--color-surface-raised)',
         },
-        // Admin 2.0 – separate from consumer UI
         admin: {
           bg: admin.bg,
           card: admin.card,
@@ -88,14 +114,12 @@ const config: Config = {
         xl: spacing.xl,
         '2xl': spacing['2xl'],
         '3xl': spacing['3xl'],
-        '4xl': spacing['4xl'],
       },
       borderRadius: {
         sm: radius.sm,
         md: radius.md,
         lg: radius.lg,
         xl: radius.xl,
-        '2xl': radius['2xl'],
         pill: radius.pill,
         'admin-sm': adminRadius.sm,
         'admin-md': adminRadius.md,
@@ -103,9 +127,11 @@ const config: Config = {
         'admin-xl': adminRadius.xl,
       },
       boxShadow: {
+        sm: shadows.sm,
         card: shadows.card,
         hero: shadows.hero,
         floating: shadows.floating,
+        focus: shadows.focus,
         'vibe-card': shadows.card,
         'vibe-hero': shadows.hero,
         admin: adminShadows.admin,
@@ -121,28 +147,39 @@ const config: Config = {
         easeOut: motion.easeOut,
       },
       fontFamily: {
-        sans: ['Vazirmatn', 'Vazir', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: [
+          'Vazirmatn',
+          'Vazir',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'sans-serif',
+        ],
         vazir: ['Vazirmatn', 'Vazir', 'sans-serif'],
       },
       fontSize: {
-        'vibe-h1': [typography.h1.size, { lineHeight: typography.h1.lineHeight }],
-        'vibe-h2': [typography.h2.size, { lineHeight: typography.h2.lineHeight }],
-        'vibe-h3': [typography.h3.size, { lineHeight: typography.h3.lineHeight }],
-        'vibe-h4': [typography.h4.size, { lineHeight: typography.h4.lineHeight }],
-        'vibe-body': [typography.body.size, { lineHeight: typography.body.lineHeight }],
-        'vibe-caption': [typography.caption.size, { lineHeight: typography.caption.lineHeight }],
+        /* Wibe Design System scale */
+        display: typeScale(typography.display),
+        h1: typeScale(typography.h1),
+        h2: typeScale(typography.h2),
+        h3: typeScale(typography.h3),
+        body: typeScale(typography.body),
+        small: typeScale(typography.small),
+        caption: typeScale(typography.caption),
+        /* Legacy aliases */
+        'vibe-h1': typeScale(typography.h1),
+        'vibe-h2': typeScale(typography.h2),
+        'vibe-h3': typeScale(typography.h3),
+        'vibe-h4': typeScale(typography.small),
+        'vibe-body': typeScale(typography.body),
+        'vibe-caption': typeScale(typography.caption),
         'admin-xs': [adminTypography.xs.size, { lineHeight: adminTypography.xs.lineHeight }],
         'admin-sm': [adminTypography.sm.size, { lineHeight: adminTypography.sm.lineHeight }],
         'admin-base': [adminTypography.base.size, { lineHeight: adminTypography.base.lineHeight }],
         'admin-lg': [adminTypography.lg.size, { lineHeight: adminTypography.lg.lineHeight }],
         'admin-xl': [adminTypography.xl.size, { lineHeight: adminTypography.xl.lineHeight }],
         'admin-2xl': [adminTypography['2xl'].size, { lineHeight: adminTypography['2xl'].lineHeight }],
-      },
-      fontWeight: {
-        'vibe-h1': String(typography.h1.weight),
-        'vibe-h2': String(typography.h2.weight),
-        'vibe-h3': String(typography.h3.weight),
-        'vibe-h4': String(typography.h4.weight),
       },
       keyframes: {
         savedPulse: {
@@ -159,4 +196,3 @@ const config: Config = {
   plugins: [],
 };
 export default config;
-

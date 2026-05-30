@@ -165,7 +165,7 @@ export default async function ItemDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20">
       <Header title={item.title} showBack />
       <ItemDetailClient item={serializedItem} />
       <BottomNav />

@@ -53,9 +53,18 @@ export async function GET() {
       data,
     });
   } catch (error: unknown) {
-    console.error('Home categories error:', error);
+    const err = error as Error & { code?: string };
+    console.warn('Home categories (DB unavailable?):', err?.message ?? error);
+    // وقتی دیتابیس در دسترس نیست (مثلاً dev بدون DB) با آرایهٔ خالی ۲۰۰ برگردان تا UI با fallback کار کند
+    const isDbUnavailable =
+      err?.code === 'P1001' ||
+      err?.message?.includes("Can't reach database") ||
+      err?.message?.includes('connection');
+    if (isDbUnavailable) {
+      return NextResponse.json({ success: true, data: [] });
+    }
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message ?? 'خطا' },
+      { success: false, error: err?.message ?? 'خطا' },
       { status: 500 }
     );
   }

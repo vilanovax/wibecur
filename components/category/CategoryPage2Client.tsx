@@ -50,12 +50,12 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
 
   if (isLoading) {
     return (
-      <main className="min-h-[50vh] space-y-6 animate-pulse">
-        <div className="mx-4 mt-4 h-44 rounded-2xl bg-gray-200" />
+      <main className="min-h-[50vh] space-y-6 animate-pulse bg-wibe-surface">
+        <div className="mx-4 mt-4 h-44 rounded-lg bg-gray-200" />
         <div className="mx-4 h-6 w-48 rounded bg-gray-200" />
         <div className="mx-4 flex gap-4 overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-40 w-64 flex-shrink-0 rounded-2xl bg-gray-200" />
+            <div key={i} className="h-40 w-64 flex-shrink-0 rounded-lg bg-gray-200" />
           ))}
         </div>
       </main>
@@ -65,7 +65,7 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
   if (error || !data) {
     return (
       <main className="flex flex-col items-center justify-center min-h-[40vh] px-4">
-        <p className="text-gray-500">خطا در بارگذاری صفحه دسته</p>
+        <p className="wibe-body text-wibe-secondary">خطا در بارگذاری صفحه دسته</p>
       </main>
     );
   }
@@ -100,7 +100,7 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
     const mostDebated = data.mostDebatedLists ?? [];
 
     return (
-      <main className="min-h-screen pb-24 bg-gray-50">
+      <main className="min-h-screen pb-24 bg-wibe-surface">
         <CinematicHero category={category} metrics={metrics} />
         <GenreScrollBar categorySlug={category.slug} />
         <TrendingPosterGrid
@@ -134,7 +134,7 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
     const mostSavedItems = data.mostSavedItems ?? [];
 
     return (
-      <main className="min-h-screen pb-24 bg-gray-50 scroll-smooth">
+      <main className="min-h-screen pb-24 bg-wibe-surface scroll-smooth">
         <HubHeroV2
           category={category}
           metrics={metrics}
@@ -194,7 +194,7 @@ export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) 
   }
 
   return (
-    <main className="min-h-screen pb-24">
+    <main className="min-h-screen pb-24 bg-wibe-surface">
       <CategoryHero
         category={category}
         metrics={metrics}

@@ -24,7 +24,7 @@ export default function FilmCategoryHero({
         <ImageWithFallback
           src={
             category.heroImage
-              ? getDisplayImageUrl(category.heroImage, 'covers')
+              ? getDisplayImageUrl(category.heroImage)
               : getRandomPlaceholderUrl(`hero-film-${category.slug}`, 'cover')
           }
           alt={category.name}

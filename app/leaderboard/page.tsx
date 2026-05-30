@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function LeaderboardPage() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20">
       <Header title="رتبه‌بندی" showBack />
       <LeaderboardClient />
       <BottomNav />

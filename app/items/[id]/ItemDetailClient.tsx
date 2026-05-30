@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { Bookmark, Share2 } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/components/providers/MainContainer';
 import CommentSection from '@/components/mobile/comments/CommentSection';
 import CommentForm from '@/components/mobile/comments/CommentForm';
 import ItemReportButton from '@/components/mobile/items/ItemReportButton';
@@ -144,7 +146,6 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               fallbackIcon={item.lists.categories?.icon || '📋'}
               fallbackClassName="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100"
               priority
-              imageFolder="items"
             />
           ) : (
             <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
@@ -164,18 +165,15 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           <div className="absolute inset-0 flex flex-col justify-end p-4 pb-5 text-white">
             <Link
               href={`/lists/${item.lists.slug}`}
-              className="inline-flex items-center gap-2 self-start mb-3 px-3 py-1.5 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+              className="inline-flex items-center gap-2 self-start mb-3 px-3 py-1.5 rounded-pill wibe-caption font-medium bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-colors"
             >
               <span>{item.lists.categories?.icon || '📋'}</span>
               <span>بازگشت به: {item.lists.title}</span>
             </Link>
 
-            <h1 className="text-2xl font-bold leading-tight drop-shadow-md">
-              {item.title}
-            </h1>
+            <h1 className="wibe-h1 text-white leading-tight">{item.title}</h1>
 
-            {/* Meta: genre, year, rating */}
-            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-white/95">
+            <div className="flex flex-wrap items-center gap-3 mt-2 wibe-small text-white/95">
               {(genre || categoryName) && (
                 <span className="flex items-center gap-1">
                   <span>🎭</span>
@@ -204,10 +202,9 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                 </div>
                 <Link
                   href={`/lists/${item.lists.slug}`}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/25 backdrop-blur-sm hover:bg-white/35 transition-colors border border-white/30"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md wibe-small font-medium bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors border border-white/30"
                 >
-                  <span>📂</span>
-                  <span>افزودن به لیست</span>
+                  افزودن به لیست
                 </Link>
               </div>
               <div className="flex items-center gap-1.5">
@@ -226,99 +223,78 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                       }).catch(() => {});
                     }
                   }}
-                  className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center transition-colors"
+                  className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm hover:bg-white/25 flex items-center justify-center transition-colors"
                   aria-label="اشتراک‌گذاری"
                 >
-                  <span className="text-lg">↗</span>
+                  <Share2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
         </section>
 
-        <div className="px-4 mt-4 relative z-10 space-y-8">
-          {/* ——— 2️⃣ SOCIAL PROOF (کارت برجسته) ——— */}
-          <section className="rounded-2xl bg-white p-4 shadow-md shadow-gray-200/60 border border-gray-100">
+        <div className="px-4 mt-4 relative z-10 space-y-6">
+          <section className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe">
             <div className="flex flex-col gap-2">
               {item.listSaveCount > 0 && (
-                <p className="flex items-center gap-2 text-gray-800 font-medium">
-                  <span className="text-lg">👥</span>
-                  <span>{item.listSaveCount} نفر این لیست را ذخیره کرده‌اند</span>
+                <p className="flex items-center gap-2 wibe-small font-medium text-foreground">
+                  <Bookmark className="w-4 h-4 text-primary" />
+                  <span>{item.listSaveCount.toLocaleString('fa-IR')} نفر این لیست را ذخیره کرده‌اند</span>
                 </p>
               )}
               {categoryName && (
-                <p className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>🔥</span>
-                  <span>جزو محبوب‌های دسته {categoryName}</span>
-                </p>
+                <p className="wibe-caption text-wibe-secondary">جزو محبوب‌های دسته {categoryName}</p>
               )}
             </div>
           </section>
 
-          {/* ——— 3️⃣ درباره این آیتم ——— */}
-          <section className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <span>📖</span>
-              درباره این آیتم
-            </h2>
+          <section className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe">
+            <h2 className="wibe-h3 mb-3">درباره این آیتم</h2>
             {item.description ? (
               <div>
-                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
-                  {shortDescription}
-                </p>
+                <p className="wibe-small text-foreground leading-relaxed whitespace-pre-line">{shortDescription}</p>
                 {item.description.length > DESCRIPTION_TRUNCATE && !descriptionExpanded && (
                   <button
                     type="button"
                     onClick={() => setDescriptionExpanded(true)}
-                    className="text-primary text-sm font-medium mt-2 hover:underline"
+                    className="text-primary wibe-small font-medium mt-2 hover:underline"
                   >
                     نمایش بیشتر
                   </button>
                 )}
               </div>
             ) : (
-              <div className="py-4 px-4 rounded-xl bg-gray-50/80 text-center">
-                <p className="text-gray-500 text-sm">هنوز توضیحی ثبت نشده</p>
-                <p className="text-gray-400 text-xs mt-1">
-                  اولین نفری باش که توضیح اضافه می‌کنه ✨
-                </p>
+              <div className="py-4 px-4 rounded-md bg-gray-50 text-center">
+                <p className="wibe-small text-wibe-secondary">هنوز توضیحی ثبت نشده</p>
+                <p className="wibe-caption text-wibe-secondary mt-1">اولین نفری باش که توضیح اضافه می‌کنه</p>
               </div>
             )}
           </section>
 
-          {/* External link */}
           {item.externalUrl && (
             <a
               href={item.externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-medium hover:opacity-90 transition-opacity text-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-md wibe-small font-medium hover:bg-primary-dark transition-colors"
             >
-              <span>🔗</span>
-              <span>اطلاعات بیشتر</span>
+              اطلاعات بیشتر
             </a>
           )}
 
-          {/* ——— Similar Items (below description, above metadata) ——— */}
           <section className="-mx-4 px-4">
-            <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
-              <span>✨</span>
-              شاید این‌ها هم به وایبت بخوره
-            </h2>
-            <p className="text-sm text-gray-500 mb-3">بر اساس ژانر و حال‌و‌هوا</p>
+            <h2 className="wibe-h3 mb-0.5">شاید این‌ها هم به وایبت بخوره</h2>
+            <p className="wibe-small text-wibe-secondary mb-3">بر اساس ژانر و حال‌و‌هوا</p>
 
             {similarLoading ? (
               <div className="flex gap-4 overflow-hidden">
                 {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="min-w-[70%] w-[70%] flex-shrink-0 rounded-2xl h-44 bg-gray-100 animate-pulse"
-                  />
+                  <div key={i} className="min-w-[70%] w-[70%] flex-shrink-0 rounded-lg h-44 bg-gray-200 animate-pulse" />
                 ))}
               </div>
             ) : similarItems.length < 2 ? (
-              <div className="py-6 px-4 rounded-2xl bg-gray-50 border border-gray-100 text-center">
-                <p className="text-gray-500 text-sm">هنوز آیتم مشابه زیادی نداریم 😉</p>
+              <div className="py-6 px-4 rounded-lg bg-wibe-card border border-wibe text-center">
+                <p className="wibe-small text-wibe-secondary">هنوز آیتم مشابه زیادی نداریم</p>
               </div>
             ) : (
               <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
@@ -326,7 +302,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                   <Link
                     key={s.id}
                     href={`/items/${s.id}`}
-                    className="flex-shrink-0 w-[70%] max-w-[280px] rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:opacity-95"
+                    className="flex-shrink-0 w-[70%] max-w-[280px] rounded-lg overflow-hidden border border-wibe shadow-card active:scale-[0.99] transition-transform"
                   >
                     <div className="relative aspect-[3/4] w-full bg-gray-100">
                       {s.image ? (
@@ -371,26 +347,19 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             )}
           </section>
 
-          {/* ——— 4️⃣ People also liked (behavior-based، قبل از Trending) ——— */}
           <section className="-mx-4 px-4">
-            <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
-              <span>👥</span>
-              کسایی که اینو دوست داشتن، اینا رو هم دوست داشتن
-            </h2>
-            <p className="text-sm text-gray-500 mb-3">بر اساس رفتار کاربران</p>
+            <h2 className="wibe-h3 mb-0.5">پیشنهاد بر اساس ذخیره‌ها</h2>
+            <p className="wibe-small text-wibe-secondary mb-3">کاربرانی که این را ذخیره کردند</p>
 
             {alsoLikedLoading ? (
               <div className="flex gap-4 overflow-hidden">
                 {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="min-w-[45%] flex-shrink-0 rounded-2xl h-52 bg-gray-100 animate-pulse"
-                  />
+                  <div key={i} className="min-w-[45%] flex-shrink-0 rounded-lg h-52 bg-gray-200 animate-pulse" />
                 ))}
               </div>
             ) : alsoLikedItems.length === 0 ? (
-              <div className="py-6 px-4 rounded-2xl bg-gray-50/80 border border-gray-100 text-center">
-                <p className="text-gray-500 text-sm">هنوز داده‌ای برای پیشنهاد نداریم 😉</p>
+              <div className="py-6 px-4 rounded-lg bg-wibe-card border border-wibe text-center">
+                <p className="wibe-small text-wibe-secondary">هنوز داده‌ای برای پیشنهاد نداریم</p>
               </div>
             ) : (
               <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
@@ -398,7 +367,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                   <Link
                     key={a.id}
                     href={`/items/${a.id}`}
-                    className="flex-shrink-0 w-[45%] max-w-[200px] rounded-2xl overflow-hidden shadow-sm bg-white border border-gray-100 hover:shadow-md active:opacity-95 transition-all"
+                    className="flex-shrink-0 w-[45%] max-w-[200px] rounded-lg overflow-hidden border border-wibe bg-wibe-card shadow-sm active:scale-[0.99] transition-transform"
                   >
                     <div className="relative aspect-[3/4] w-full bg-gray-100">
                       {a.image ? (
@@ -429,8 +398,8 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                         </div>
                       </div>
                     </div>
-                    <p className="p-2.5 text-xs text-gray-600 leading-snug">
-                      {a.commonUsersCount} نفر اینو همراه این ذخیره کردن
+                    <p className="p-2.5 wibe-caption text-wibe-secondary leading-snug">
+                      {a.commonUsersCount} نفر این را همراه ذخیره کردند
                     </p>
                   </Link>
                 ))}
@@ -441,10 +410,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           {/* ——— 5️⃣ Trending in category (mini horizontal) ——— */}
           {categoryId && (
             <section className="-mx-4 px-4">
-              <h2 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
-                <span>🔥</span>
-                داغ‌های {categoryName || 'این دسته'}
-              </h2>
+              <h2 className="wibe-h3 mb-2">داغ‌های {categoryName || 'این دسته'}</h2>
               {trendingLoading ? (
                 <div className="flex gap-3 overflow-hidden">
                   {[1, 2, 3, 4].map((i) => (
@@ -463,7 +429,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                       <Link
                         key={t.id}
                         href={`/items/${t.id}`}
-                        className="flex-shrink-0 w-[100px] rounded-xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md active:opacity-95 transition-all"
+                        className="flex-shrink-0 w-[100px] rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
                       >
                         <div className="relative aspect-[3/4] w-full bg-gray-100">
                           {t.image ? (
@@ -480,12 +446,12 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                             </div>
                           )}
                           {isTop && (
-                            <span className="absolute top-1 right-1 text-[10px] bg-orange-500/90 text-white px-1 py-0.5 rounded">
+                            <span className="absolute top-1 right-1 wibe-caption bg-warning text-white px-1 py-0.5 rounded-pill">
                               #{rank}
                             </span>
                           )}
                         </div>
-                        <p className="p-1.5 text-xs font-medium text-gray-900 line-clamp-2 leading-tight">
+                        <p className="p-1.5 wibe-caption font-medium text-foreground line-clamp-2 leading-tight">
                           {t.title}
                         </p>
                       </Link>
@@ -501,7 +467,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             typeof item.metadata === 'object' &&
             Object.keys(item.metadata).length > 0 && (
               <section>
-                <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <h2 className="wibe-h3 mb-3 flex items-center gap-2">
                   <span className="w-1 h-4 bg-primary rounded-full" />
                   اطلاعات تکمیلی
                 </h2>
@@ -524,14 +490,12 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                       return (
                         <div
                           key={key}
-                          className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0"
+                          className="flex items-center gap-2 py-2 border-b border-wibe last:border-0"
                         >
                           <span className="text-base">{icon}</span>
                           <div className="min-w-0">
-                            <span className="text-xs text-gray-500 block">
-                              {label}
-                            </span>
-                            <span className="text-sm font-medium text-gray-900 truncate block">
+                            <span className="wibe-caption text-wibe-secondary block">{label}</span>
+                            <span className="wibe-small font-medium text-foreground truncate block">
                               {displayValue}
                             </span>
                           </div>
@@ -543,23 +507,21 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               </section>
             )}
 
-          {/* ——— 6️⃣ این آیتم در چه لیست‌هایی است (کارت برجسته) ——— */}
-          <section className="rounded-2xl bg-white p-4 shadow-md shadow-gray-200/60 border border-gray-100">
-            <p className="text-gray-800 font-medium mb-3 flex items-center gap-2">
-              <span className="text-lg">📂</span>
-              در ۱ لیست محبوب حضور دارد
+          <section className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe">
+            <p className="wibe-small font-medium text-foreground mb-3 flex items-center gap-2">
+              <Bookmark className="w-4 h-4 text-primary" />
+              در لیست «{item.lists.title}» حضور دارد
             </p>
             <Link
               href={`/lists/${item.lists.slug}`}
-              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors text-sm"
+              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-md bg-primary/10 text-primary wibe-small font-medium hover:bg-primary/15 transition-colors"
             >
-              <span>مشاهده لیست‌ها</span>
-              <span>←</span>
+              مشاهده لیست
             </Link>
             <div className="mt-2">
               <Link
                 href={`/lists/${item.lists.slug}`}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-sm text-gray-700"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-50 wibe-small text-foreground"
               >
                 <span>{item.lists.categories?.icon || '📋'}</span>
                 <span>{item.lists.title}</span>
@@ -567,8 +529,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             </div>
           </section>
 
-          {/* ——— 7️⃣ نظرات ——— */}
-          <section id="comments" className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
+          <section id="comments" className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe">
             <CommentSection
               itemId={item.id}
               onCommentAdded={onCommentsUpdate}
@@ -585,7 +546,8 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
 
         {/* ——— Quick Action Bar (وقتی اسکرول شده) ——— وقتی شیت کامنت باز است مخفی تا تداخل نداشته باشد */}
         {heroCollapsed && !commentFormOpen && (
-          <div className="fixed bottom-20 left-4 right-4 z-30 flex items-center gap-2 p-2 rounded-2xl bg-white/95 backdrop-blur shadow-lg border border-gray-200">
+          <div className="fixed bottom-20 left-0 right-0 z-30 flex justify-center px-4">
+            <div className={`w-full ${MOBILE_SHELL_MAX_WIDTH_CLASS} flex items-center gap-2 p-2 rounded-lg bg-wibe-card/95 backdrop-blur shadow-lg border border-wibe`}>
             <div className="flex-shrink-0">
               <ItemSaveButton itemId={item.id} />
             </div>
@@ -598,32 +560,31 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             </div>
             <Link
               href={`/lists/${item.lists.slug}`}
-              className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors"
+              className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md wibe-small font-medium bg-gray-100 text-foreground"
             >
-              <span>📂</span>
-              <span>افزودن به لیست</span>
+              افزودن به لیست
             </Link>
             <button
               type="button"
               onClick={() => setCommentFormOpen(true)}
-              className="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-white font-medium text-sm hover:opacity-95"
+              className="flex-shrink-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-primary text-white wibe-small font-medium"
             >
-              <span>💬</span>
-              <span>نظر</span>
+              نظر
             </button>
+            </div>
           </div>
         )}
 
-        {/* ——— Sticky CTA نظر ——— وقتی شیت کامنت باز است مخفی تا تداخل نداشته باشد */}
         {!heroCollapsed && !commentFormOpen && (
-          <button
-            type="button"
-            onClick={() => setCommentFormOpen(true)}
-            className="fixed bottom-20 left-4 right-4 z-30 flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-primary text-white font-medium shadow-lg shadow-primary/30 hover:opacity-95 transition-opacity"
-          >
-            <span className="text-lg">+</span>
-            <span>نظر بده</span>
-          </button>
+          <div className="fixed bottom-20 left-0 right-0 z-30 flex justify-center px-4">
+            <button
+              type="button"
+              onClick={() => setCommentFormOpen(true)}
+              className={`w-full ${MOBILE_SHELL_MAX_WIDTH_CLASS} flex items-center justify-center gap-2 py-3 px-4 rounded-md bg-primary text-white wibe-small font-semibold shadow-lg hover:bg-primary-dark transition-colors`}
+            >
+              نظر بده
+            </button>
+          </div>
         )}
       </main>
 

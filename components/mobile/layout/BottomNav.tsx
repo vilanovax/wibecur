@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import CreateSheet from '@/components/mobile/home/CreateSheet';
+import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/components/providers/MainContainer';
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -59,8 +60,13 @@ export default function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg" aria-label="ناوبری اصلی">
-        <div className="flex items-center justify-around py-3 overflow-x-auto">
+      {/* fixed نسبت به viewport است؛ wrapper برای هم‌عرض شدن با شِل موبایل (۴۲۸px) */}
+      <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none">
+        <nav
+          className={`w-full ${MOBILE_SHELL_MAX_WIDTH_CLASS} bg-white border-t border-gray-200 shadow-lg pointer-events-auto pb-[env(safe-area-inset-bottom,0px)]`}
+          aria-label="ناوبری اصلی"
+        >
+          <div className="flex items-center justify-around py-3 px-1">
           {navItems.map((item, idx) => {
             const isCreate = item.isButton;
             const isActive = !isCreate && item.href ? pathname === item.href : false;
@@ -94,8 +100,9 @@ export default function BottomNav() {
               </Link>
             );
           })}
-        </div>
-      </nav>
+          </div>
+        </nav>
+      </div>
       <CreateSheet isOpen={createOpen} onClose={() => setCreateOpen(false)} />
     </>
   );

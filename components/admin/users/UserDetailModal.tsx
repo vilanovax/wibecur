@@ -9,9 +9,9 @@ import {
   EyeOff,
   ExternalLink,
 } from 'lucide-react';
-import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
+import UserAvatar from '@/components/shared/UserAvatar';
 
 interface UserDetailModalProps {
   userId: string;
@@ -166,17 +166,12 @@ export default function UserDetailModal({
             <div className="space-y-5">
               {/* Header: Avatar + Name + Status + Last activity */}
               <div className="flex items-start gap-4 pb-5 border-b border-[var(--color-border)]">
-                {user.image ? (
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden shrink-0">
-                    <Image src={user.image} alt="" fill className="object-cover" unoptimized />
-                  </div>
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
-                    <span className="text-[var(--primary)] font-bold text-xl">
-                      {(user.name || user.email)[0].toUpperCase()}
-                    </span>
-                  </div>
-                )}
+                <UserAvatar
+                  src={user.image}
+                  name={user.name}
+                  email={user.email}
+                  size={64}
+                />
                 <div className="min-w-0 flex-1">
                   <h3 className="text-xl font-bold text-[var(--color-text)]">
                     {user.name || 'بدون نام'}

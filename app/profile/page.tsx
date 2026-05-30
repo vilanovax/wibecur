@@ -16,9 +16,9 @@ export default async function ProfilePage() {
   const userId = session.user.id;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20">
       <Header title="پروفایل" />
-      <main className="px-4 py-5">
+      <main className="px-4 py-4">
         <ProfilePageClient userId={userId} />
       </main>
       <BottomNav />

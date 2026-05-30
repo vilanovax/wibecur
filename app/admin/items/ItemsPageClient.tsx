@@ -393,7 +393,6 @@ export default function ItemsPageClient({
                   className="w-full h-full object-cover"
                   fallbackIcon={item.lists.categories?.icon || '📋'}
                   fallbackClassName="h-full w-full"
-                  imageFolder="items"
                 />
               </div>
               <div className="p-4 flex flex-col flex-1">

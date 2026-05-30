@@ -17,32 +17,41 @@ const config: NextAuthConfig = {
         const password = credentials?.password;
 
         if (typeof email !== 'string' || typeof password !== 'string') {
-          throw new Error('لطفاً ایمیل و رمز عبور را وارد کنید');
+          return null;
         }
 
-        // Dynamic import so Prisma is not loaded in Edge (middleware); only used in API sign-in
-        const { prisma } = await import('@/lib/prisma');
-        const user = await prisma.users.findUnique({
-          where: { email },
-        });
+        try {
+          const { prisma } = await import('@/lib/prisma');
+          const { dbQuery } = await import('@/lib/db');
+          const user = await dbQuery(() =>
+            prisma.users.findUnique({
+              where: { email },
+            })
+          );
 
-        if (!user || !user.password) {
-          throw new Error('کاربری با این ایمیل یافت نشد');
+          if (!user || !user.password) {
+            return null;
+          }
+
+          const isPasswordValid = bcrypt.compareSync(password, user.password);
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          };
+        } catch (err: unknown) {
+          const e = err as Error & { code?: string };
+          const msg = String(e?.message ?? '');
+          const code = e?.code;
+          console.error('[auth authorize]', code, msg);
+          return null;
         }
-
-        const isPasswordValid = bcrypt.compareSync(password, user.password);
-
-        if (!isPasswordValid) {
-          throw new Error('رمز عبور اشتباه است');
-        }
-
-        // Return minimal user data to keep JWT small
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
       },
     }),
   ],

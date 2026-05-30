@@ -45,7 +45,7 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
   if (isLoading) {
     return (
       <div className="space-y-5">
-        <div className="bg-white rounded-2xl border border-gray-200/60 p-6 animate-pulse">
+        <div className="bg-wibe-card rounded-lg border border-wibe p-6 animate-pulse">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-20 h-20 rounded-2xl bg-gray-200" />
             <div className="flex-1">
@@ -56,7 +56,7 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
         </div>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-200/60 p-5 animate-pulse">
+            <div key={i} className="bg-wibe-card rounded-lg border border-wibe p-5 animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
               <div className="h-3 bg-gray-200 rounded w-1/2" />
             </div>
@@ -82,8 +82,8 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
 
   if (!user) {
     return (
-      <div className="text-center py-12 bg-white rounded-2xl border border-gray-200/60">
-        <p className="text-gray-500 text-sm">کاربر یافت نشد</p>
+      <div className="text-center py-12 bg-wibe-card rounded-lg border border-wibe">
+        <p className="wibe-small text-wibe-secondary">کاربر یافت نشد</p>
       </div>
     );
   }
@@ -101,7 +101,7 @@ export default function ProfilePageClient({ userId }: ProfilePageClientProps) {
       <ProfileHeader user={user} isOwner onUpdate={fetchProfile} />
 
       <div className="px-4 -mt-2 relative z-20">
-        <div className="bg-white rounded-t-2xl shadow-sm border border-gray-100/80 border-b-0 pt-5 pb-4 px-4">
+        <div className="bg-wibe-card rounded-t-lg shadow-sm border border-wibe pt-5 pb-4 px-4">
           <ProfileStats creatorStats={creatorStats} />
 
           <div className="mt-4">

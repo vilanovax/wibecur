@@ -1,39 +1,45 @@
 /**
- * Design Tokens 2.0 – Structured System
- * پایه‌ی Design System وایب
+ * Wibe Design System — Design Tokens
+ * @see Product context: save-first discovery, mobile-first, RTL
  *
- * 5 لایه:
- * - Base Tokens (raw values)
- * - Semantic Tokens (brand-aware)
- * - Component Tokens (via Tailwind)
- * - Motion Tokens
- * - Dark Mode Tokens (via CSS vars)
+ * لایه‌ها: Brand → Semantic (surface/text) → Typography → Spacing → Radius → Shadow → Motion
  */
 
-// ─── 1. Base: Brand Colors ─────────────────────────────────────────────
+// ─── Brand ─────────────────────────────────────────────────────────────
 export const brand = {
   primary: '#6366F1',
   primaryDark: '#4F46E5',
   primaryLight: '#818CF8',
+  /** Legacy — use sparingly in consumer UI */
   secondary: '#8B5CF6',
   accent: '#EC4899',
 } as const;
 
-// ─── 2. Base: Gray Scale (consistent usage) ────────────────────────────
-export const gray = {
-  50: '#F9FAFB',
-  100: '#F3F4F6',
-  200: '#E5E7EB',
-  300: '#D1D5DB',
-  400: '#9CA3AF',
-  500: '#6B7280',
-  600: '#4B5563',
-  700: '#374151',
-  800: '#1F2937',
-  900: '#111827',
+// ─── Consumer semantic colors (Wibe mobile app) ───────────────────────
+export const wibe = {
+  background: '#FFFFFF',
+  surface: '#F8FAFC',
+  card: '#FFFFFF',
+  textPrimary: '#0F172A',
+  textSecondary: '#64748B',
+  border: '#E2E8F0',
 } as const;
 
-// ─── 3. Semantic: State Colors ─────────────────────────────────────────
+// ─── Gray scale (utilities only) ───────────────────────────────────────
+export const gray = {
+  50: '#F8FAFC',
+  100: '#F1F5F9',
+  200: '#E2E8F0',
+  300: '#CBD5E1',
+  400: '#94A3B8',
+  500: '#64748B',
+  600: '#475569',
+  700: '#334155',
+  800: '#1E293B',
+  900: '#0F172A',
+} as const;
+
+// ─── Semantic state ────────────────────────────────────────────────────
 export const semantic = {
   success: '#10B981',
   warning: '#F59E0B',
@@ -41,19 +47,18 @@ export const semantic = {
   info: '#3B82F6',
 } as const;
 
-// ─── 4. Semantic: Surface (light mode) ─────────────────────────────────
+// ─── Surface (CSS var source — light mode) ─────────────────────────────
 export const surfaceLight = {
-  bg: gray[50],
-  surface: '#FFFFFF',
-  surfaceRaised: '#FFFFFF',
-  border: gray[200],
+  bg: wibe.background,
+  surface: wibe.surface,
+  surfaceRaised: wibe.card,
+  border: wibe.border,
   borderMuted: gray[100],
-  text: gray[900],
-  textMuted: gray[600],
-  textSubtle: gray[500],
+  text: wibe.textPrimary,
+  textMuted: wibe.textSecondary,
+  textSubtle: gray[400],
 } as const;
 
-// ─── 5. Semantic: Surface (dark mode) ──────────────────────────────────
 export const surfaceDark = {
   bg: gray[900],
   surface: gray[800],
@@ -65,7 +70,7 @@ export const surfaceDark = {
   textSubtle: gray[400],
 } as const;
 
-// ─── 6. Spacing Scale (systematic) ─────────────────────────────────────
+/** فقط: 4 / 8 / 12 / 16 / 24 / 32 / 48 */
 export const spacing = {
   0: '0',
   xs: '4px',
@@ -74,42 +79,39 @@ export const spacing = {
   lg: '16px',
   xl: '24px',
   '2xl': '32px',
-  '3xl': '40px',
-  '4xl': '48px',
+  '3xl': '48px',
 } as const;
 
-// ─── 7. Radius Scale (consistent) ──────────────────────────────────────
+/** sm → 8 | md → 14 | lg → 20 | xl → 28 */
 export const radius = {
   none: '0',
   sm: '8px',
-  md: '12px',
-  lg: '18px',
-  xl: '22px',
-  '2xl': '28px',
+  md: '14px',
+  lg: '20px',
+  xl: '28px',
   pill: '9999px',
 } as const;
 
-// ─── 8. Typography Scale ───────────────────────────────────────────────
+/** Typography — Vazirmatn, airy line heights */
 export const typography = {
-  h1: { size: '24px', weight: 800, lineHeight: '32px' },
-  h2: { size: '20px', weight: 700, lineHeight: '28px' },
-  h3: { size: '18px', weight: 700, lineHeight: '24px' },
-  h4: { size: '16px', weight: 600, lineHeight: '24px' },
-  body: { size: '14px', weight: 400, lineHeight: '22px' },
-  bodySm: { size: '13px', weight: 400, lineHeight: '20px' },
+  display: { size: '32px', weight: 700, lineHeight: '44px' },
+  h1: { size: '28px', weight: 700, lineHeight: '40px' },
+  h2: { size: '24px', weight: 700, lineHeight: '34px' },
+  h3: { size: '20px', weight: 600, lineHeight: '28px' },
+  body: { size: '16px', weight: 400, lineHeight: '26px' },
+  small: { size: '14px', weight: 400, lineHeight: '22px' },
   caption: { size: '12px', weight: 400, lineHeight: '18px' },
-  overline: { size: '11px', weight: 500, lineHeight: '16px' },
 } as const;
 
-// ─── 9. Shadows ────────────────────────────────────────────────────────
+/** Subtle shadows only — no heavy glow */
 export const shadows = {
-  card: '0 6px 18px rgba(0, 0, 0, 0.06)',
-  hero: '0 12px 28px rgba(0, 0, 0, 0.12)',
-  floating: '0 20px 40px rgba(0, 0, 0, 0.15)',
-  focus: '0 0 0 2px rgba(99, 102, 241, 0.4)',
+  sm: '0 1px 2px rgba(15, 23, 42, 0.05)',
+  card: '0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04)',
+  hero: '0 4px 16px rgba(15, 23, 42, 0.08)',
+  floating: '0 8px 24px rgba(15, 23, 42, 0.10)',
+  focus: '0 0 0 2px rgba(99, 102, 241, 0.35)',
 } as const;
 
-// ─── 10. Motion ────────────────────────────────────────────────────────
 export const motion = {
   fast: '150ms',
   normal: '250ms',
@@ -118,11 +120,8 @@ export const motion = {
   easeOut: 'cubic-bezier(0, 0, 0.2, 1)',
 } as const;
 
-// ─── 11. Admin 2.0 – Design Tokens (Scalable • Role-aware • RTL-ready) ───
-// Admin ≠ Consumer UI: Functional, Calm, Structured, Data-first.
-
+// ─── Admin (unchanged scope — separate from consumer) ───────────────────
 export const admin = {
-  /** Base surface colors */
   bg: '#F8FAFC',
   card: '#FFFFFF',
   muted: '#F1F5F9',
@@ -137,7 +136,6 @@ export const adminText = {
   inverse: '#FFFFFF',
 } as const;
 
-/** Status colors – state-driven Admin UI (healthy / attention / declining) */
 export const adminStatus = {
   success: '#16A34A',
   warning: '#F59E0B',
@@ -146,7 +144,6 @@ export const adminStatus = {
   disabled: '#94A3B8',
 } as const;
 
-/** Soft backgrounds for status badges and alerts */
 export const adminStatusBg = {
   success: '#DCFCE7',
   warning: '#FEF3C7',
@@ -154,14 +151,12 @@ export const adminStatusBg = {
   info: '#DBEAFE',
 } as const;
 
-/** Intelligence layer – Trending, Boost, Analytics */
 export const intelligence = {
   trending: '#7C3AED',
   boost: '#F97316',
   analytics: '#0EA5E9',
 } as const;
 
-/** Admin radius – not overly rounded */
 export const adminRadius = {
   sm: '6px',
   md: '10px',
@@ -169,13 +164,11 @@ export const adminRadius = {
   xl: '18px',
 } as const;
 
-/** Admin shadows – stable, not floating */
 export const adminShadows = {
   admin: '0 2px 6px rgba(15, 23, 42, 0.05)',
   adminLg: '0 8px 24px rgba(15, 23, 42, 0.08)',
 } as const;
 
-/** Admin typography scale (clarity-first) */
 export const adminTypography = {
   xs: { size: '12px', lineHeight: '16px' },
   sm: { size: '14px', lineHeight: '20px' },
@@ -185,64 +178,74 @@ export const adminTypography = {
   '2xl': { size: '24px', lineHeight: '32px' },
 } as const;
 
-/** Dark mode – structure only (optional future) */
 export const adminDark = {
   bg: '#0F172A',
   card: '#1E293B',
   text: '#F1F5F9',
 } as const;
 
-// ─── Tailwind Theme Helpers ────────────────────────────────────────────
-/** برای استفاده در tailwind.config */
+/** CSS custom properties for :root — keep in sync with globals.css */
+export function getCssVariableDefinitions(): Record<string, string> {
+  return {
+    '--primary': brand.primary,
+    '--primary-dark': brand.primaryDark,
+    '--primary-light': brand.primaryLight,
+    '--wibe-background': wibe.background,
+    '--wibe-surface': wibe.surface,
+    '--wibe-card': wibe.card,
+    '--color-bg': surfaceLight.bg,
+    '--color-surface': surfaceLight.surface,
+    '--color-surface-raised': surfaceLight.surfaceRaised,
+    '--color-border': surfaceLight.border,
+    '--color-border-muted': surfaceLight.borderMuted,
+    '--color-text': surfaceLight.text,
+    '--color-text-muted': surfaceLight.textMuted,
+    '--color-text-subtle': surfaceLight.textSubtle,
+    '--color-success': semantic.success,
+    '--color-warning': semantic.warning,
+    '--color-danger': semantic.danger,
+    '--color-info': semantic.info,
+    '--shadow-sm': shadows.sm,
+    '--shadow-card': shadows.card,
+    '--shadow-hero': shadows.hero,
+    '--shadow-floating': shadows.floating,
+    '--shadow-focus': shadows.focus,
+    '--spacing-xs': spacing.xs,
+    '--spacing-sm': spacing.sm,
+    '--spacing-md': spacing.md,
+    '--spacing-lg': spacing.lg,
+    '--spacing-xl': spacing.xl,
+    '--spacing-2xl': spacing['2xl'],
+    '--spacing-3xl': spacing['3xl'],
+    '--radius-sm': radius.sm,
+    '--radius-md': radius.md,
+    '--radius-lg': radius.lg,
+    '--radius-xl': radius.xl,
+    '--radius-pill': radius.pill,
+    '--motion-fast': motion.fast,
+    '--motion-normal': motion.normal,
+    '--motion-slow': motion.slow,
+    '--motion-easing': motion.easing,
+  };
+}
+
+/** Tailwind theme extension snapshot */
 export const tailwindTheme = {
   colors: {
-    primary: {
-      DEFAULT: brand.primary,
-      dark: brand.primaryDark,
-      light: brand.primaryLight,
-    },
-    secondary: brand.secondary,
-    accent: brand.accent,
-    gray: Object.fromEntries(
-      Object.entries(gray).map(([k, v]) => [k, v])
-    ) as Record<keyof typeof gray, string>,
+    primary: { DEFAULT: brand.primary, dark: brand.primaryDark, light: brand.primaryLight },
+    wibe,
+    gray: Object.fromEntries(Object.entries(gray).map(([k, v]) => [k, v])) as Record<
+      keyof typeof gray,
+      string
+    >,
     success: semantic.success,
     warning: semantic.warning,
     danger: semantic.danger,
     info: semantic.info,
   },
-  spacing: {
-    xs: spacing.xs,
-    sm: spacing.sm,
-    md: spacing.md,
-    lg: spacing.lg,
-    xl: spacing.xl,
-    '2xl': spacing['2xl'],
-    '3xl': spacing['3xl'],
-    '4xl': spacing['4xl'],
-  },
-  borderRadius: {
-    sm: radius.sm,
-    md: radius.md,
-    lg: radius.lg,
-    xl: radius.xl,
-    '2xl': radius['2xl'],
-    pill: radius.pill,
-  },
-  boxShadow: {
-    card: shadows.card,
-    hero: shadows.hero,
-    floating: shadows.floating,
-    'vibe-card': shadows.card,
-    'vibe-hero': shadows.hero,
-  },
-  transitionDuration: {
-    fast: motion.fast,
-    normal: motion.normal,
-    slow: motion.slow,
-  },
-  transitionTimingFunction: {
-    vibe: motion.easing,
-    easeOut: motion.easeOut,
-  },
+  spacing,
+  borderRadius: radius,
+  boxShadow: shadows,
+  transitionDuration: { fast: motion.fast, normal: motion.normal, slow: motion.slow },
+  transitionTimingFunction: { vibe: motion.easing, easeOut: motion.easeOut },
 } as const;

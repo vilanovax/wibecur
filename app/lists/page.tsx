@@ -2,6 +2,7 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import ListsPageClient from './ListsPageClient';
 import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
 
 export const revalidate = 60; // ISR: به‌روزرسانی هر ۶۰ ثانیه
 
@@ -10,23 +11,25 @@ export const metadata = {
   description: 'مرور و کشف لیست‌های کیوریت شده',
 };
 
-export default async function ListsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string; tag?: string; q?: string }>;
-}) {
-  const params = await searchParams;
-  // Fetch lists and categories from database
-  // Only show lists created by admins, not users
-  const [lists, categories] = await Promise.all([
+function isDbError(e: unknown): boolean {
+  const err = e as Error & { code?: string };
+  const msg = String(err?.message ?? '');
+  return (
+    err?.code === 'P1001' ||
+    msg.includes("Can't reach database") ||
+    msg.includes('Invalid value undefined for datasource') ||
+    msg.includes('PrismaClient')
+  );
+}
+
+const listsQuery = () =>
+  dbQuery(() =>
     prisma.lists.findMany({
       where: {
         isActive: true,
         isPublic: true,
         users: {
-          role: {
-            not: 'USER', // Only show lists created by admins (ADMIN or EDITOR)
-          },
+          role: { not: 'USER' },
         },
       },
       select: {
@@ -57,28 +60,42 @@ export default async function ListsPage({
           },
         },
         _count: {
-          select: {
-            items: true,
-            list_likes: true,
-          },
+          select: { items: true, list_likes: true },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    }),
-    prisma.categories.findMany({
-      where: {
-        isActive: true,
-      },
-      orderBy: {
-        order: 'asc',
-      },
-    }),
-  ]);
+      orderBy: { createdAt: 'desc' },
+    })
+  );
+
+export default async function ListsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; tag?: string; q?: string }>;
+}) {
+  const params = await searchParams;
+  let lists: Awaited<ReturnType<typeof listsQuery>> = [];
+  let categories: Awaited<ReturnType<typeof prisma.categories.findMany>> = [];
+
+  try {
+    [lists, categories] = await Promise.all([
+      listsQuery(),
+      dbQuery(() =>
+        prisma.categories.findMany({
+          where: { isActive: true },
+          orderBy: { order: 'asc' },
+        })
+      ),
+    ]);
+  } catch (e) {
+    if (isDbError(e) || process.env.NODE_ENV === 'development') {
+      console.warn('Lists page: DB unavailable, showing empty:', (e as Error)?.message);
+    } else {
+      throw e;
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20">
       <Header title="لیست‌ها" />
       <main className="pt-3">
         <ListsPageClient 

@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCardStats from '@/components/shared/ListCardStats';
+import CategorySectionTitle from './CategorySectionTitle';
 import type { CategoryListCard } from '@/types/category-page';
 
 interface NewListsSectionProps {
@@ -17,47 +19,37 @@ export default function NewListsSection({
 
   return (
     <section className="px-4 py-6">
-      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-        <span>🆕</span>
-        لیست‌های جدید {categoryName}
-      </h2>
-      <p className="text-sm text-gray-500 mt-0.5">
-        تازه‌ترین لیست‌های ساخته شده
-      </p>
-      <div className="space-y-3 mt-4">
+      <CategorySectionTitle
+        title={`لیست‌های جدید ${categoryName}`}
+        subtitle="تازه‌ترین لیست‌های ساخته شده"
+        icon="🆕"
+      />
+      <div className="space-y-3">
         {lists.map((list) => (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex gap-3 p-3 rounded-xl bg-white border border-gray-100 hover:border-gray-200 transition-colors"
+            className="flex gap-3 p-3 rounded-lg bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
           >
-            <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
+            <div className="w-16 h-16 rounded-md bg-gray-200 flex-shrink-0 overflow-hidden">
               {list.coverImage ? (
                 <ImageWithFallback
-                    src={list.coverImage}
-                    alt={list.title}
-                    className="w-full h-full object-cover"
-                  />
+                  src={list.coverImage}
+                  alt={list.title}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl opacity-40">
+                <div className="w-full h-full flex items-center justify-center text-2xl opacity-40 bg-gray-200">
                   📋
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
-                {list.title}
-              </h3>
+              <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
               {list.creator?.name && (
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {list.creator.name}
-                </p>
+                <p className="wibe-caption text-wibe-secondary mt-0.5">{list.creator.name}</p>
               )}
-              <div className="flex gap-3 mt-1 text-xs text-gray-400">
-                <span>{list.itemCount} آیتم</span>
-                <span>•</span>
-                <span>{list.saveCount} ذخیره</span>
-              </div>
+              <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="compact" className="mt-1" />
             </div>
           </Link>
         ))}

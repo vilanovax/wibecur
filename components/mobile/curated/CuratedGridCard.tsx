@@ -2,15 +2,15 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCardStats from '@/components/shared/ListCardStats';
 import { formatNumber } from '@/lib/curated/utils';
 import type { CuratedList } from '@/types/curated';
-import { Star, Heart, Package } from 'lucide-react';
 
 const BADGE_STYLES: Record<string, string> = {
-  trending: 'bg-orange-100 text-orange-800',
-  rising: 'bg-purple-100 text-purple-800',
-  featured: 'bg-amber-100 text-amber-800',
-  ai: 'bg-blue-100 text-blue-800',
+  trending: 'bg-warning text-white',
+  rising: 'bg-primary text-white',
+  featured: 'bg-success text-white',
+  ai: 'bg-info text-white',
 };
 
 const BADGE_LABELS: Record<string, string> = {
@@ -30,7 +30,7 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="block bg-white rounded-[18px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-md active:scale-[0.99] transition-all"
+      className="block bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
     >
       <div className="relative aspect-[4/3] w-full bg-gray-200 overflow-hidden">
         <ImageWithFallback
@@ -38,61 +38,37 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
           alt={list.title}
           className="w-full h-full object-cover"
           fallbackIcon="📋"
-          fallbackClassName="w-full h-full flex items-center justify-center text-3xl"
+          fallbackClassName="w-full h-full flex items-center justify-center text-3xl bg-gray-200"
         />
         {topBadge && (
           <span
-            className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[11px] font-medium ${BADGE_STYLES[topBadge] ?? 'bg-gray-800 text-white'}`}
+            className={`absolute top-2 right-2 px-2 py-0.5 rounded-pill wibe-caption font-semibold ${BADGE_STYLES[topBadge] ?? 'bg-gray-800 text-white'}`}
           >
             {BADGE_LABELS[topBadge] ?? topBadge}
           </span>
         )}
+        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/55 to-transparent">
+          <ListCardStats saves={list.savesCount} itemCount={list.itemsCount} variant="overlay" />
+        </div>
       </div>
       <div className="p-3">
-        <p className="text-[11px] text-gray-500 mb-1">{list.creator.levelTitle}</p>
-        <h3 className="font-semibold text-[14px] leading-snug text-gray-900 line-clamp-2">
-          {list.title}
-        </h3>
+        <p className="wibe-caption text-wibe-secondary mb-1">{list.creator.levelTitle}</p>
+        <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
         {list.subtitle && (
-          <p className="text-[12px] text-gray-500 line-clamp-1 mt-0.5">
-            {list.subtitle}
-          </p>
+          <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">{list.subtitle}</p>
         )}
-        <div className="flex items-center gap-2 mt-2 text-[12px] text-gray-500">
-          <span className="flex items-center gap-0.5">
-            <Package className="w-3.5 h-3.5" />
-            {list.itemsCount}
-          </span>
-          <span className="flex items-center gap-0.5">
-            <Star className="w-3.5 h-3.5" />
-            {formatNumber(list.savesCount)}
-          </span>
-          <span className="flex items-center gap-0.5">
-            <Heart className="w-3.5 h-3.5" />
-            {formatNumber(list.likesCount)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-wibe">
           <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
             <ImageWithFallback
               src={list.creator.avatarUrl ?? ''}
               alt={list.creator.name}
               className="w-full h-full object-cover"
               fallbackIcon="👤"
-              fallbackClassName="w-full h-full flex items-center justify-center text-xs"
+              fallbackClassName="w-full h-full flex items-center justify-center text-xs bg-gray-200"
             />
           </div>
-          <span className="text-[12px] font-medium text-gray-700 truncate">
-            {list.creator.name}
-          </span>
-        </div>
-        <div className="flex gap-2 mt-2">
-          <span className="flex-1 inline-flex justify-center py-2 rounded-xl bg-primary text-white text-[12px] font-medium">
-            مشاهده
-          </span>
-          <span className="px-3 py-2 rounded-xl border border-gray-200 text-gray-600 text-[12px]">
-            ذخیره
-          </span>
+          <span className="wibe-caption font-medium text-foreground truncate">{list.creator.name}</span>
+          <span className="wibe-caption text-wibe-secondary mr-auto">{formatNumber(list.savesCount)} ذخیره</span>
         </div>
       </div>
     </Link>

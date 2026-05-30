@@ -151,18 +151,28 @@ export async function getLiaraConfig() {
   const settings = await getDecryptedSettings();
 
   if (
-    !settings.liaraBucketName ||
-    !settings.liaraEndpoint ||
-    !settings.liaraAccessKey ||
-    !settings.liaraSecretKey
+    settings.liaraBucketName &&
+    settings.liaraEndpoint &&
+    settings.liaraAccessKey &&
+    settings.liaraSecretKey
   ) {
-    return null;
+    return {
+      bucketName: settings.liaraBucketName,
+      endpoint: settings.liaraEndpoint,
+      accessKeyId: settings.liaraAccessKey,
+      secretAccessKey: settings.liaraSecretKey,
+    };
   }
 
-  return {
-    bucketName: settings.liaraBucketName,
-    endpoint: settings.liaraEndpoint,
-    accessKeyId: settings.liaraAccessKey,
-    secretAccessKey: settings.liaraSecretKey,
-  };
+  // fallback: متغیرهای محیطی برای dev / deploy بدون تنظیم در DB
+  const bucketName = process.env.LIARA_BUCKET_NAME?.trim();
+  const endpoint = process.env.LIARA_ENDPOINT?.trim();
+  const accessKeyId = process.env.LIARA_ACCESS_KEY?.trim();
+  const secretAccessKey = process.env.LIARA_SECRET_KEY?.trim();
+
+  if (bucketName && endpoint && accessKeyId && secretAccessKey) {
+    return { bucketName, endpoint, accessKeyId, secretAccessKey };
+  }
+
+  return null;
 }

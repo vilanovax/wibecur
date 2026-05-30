@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Heart, Eye, Star } from 'lucide-react';
+import { Bookmark, Flame, Eye } from 'lucide-react';
 import type { CreatorStats } from './types';
 
 interface ProfileStatsProps {
@@ -8,33 +8,36 @@ interface ProfileStatsProps {
 }
 
 function formatStat(n: number): string {
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-  return String(n);
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return n.toLocaleString('fa-IR');
 }
 
+/** Save-first — ذخیره و محبوبیت قبل از لایک */
 const STATS: {
   key: keyof CreatorStats;
   label: string;
-  icon: typeof Flame;
-  accentClass: string;
+  icon: typeof Bookmark;
+  highlight?: boolean;
 }[] = [
-  { key: 'viralListsCount', label: 'وایرال', icon: Flame, accentClass: 'text-orange-500' },
-  { key: 'totalLikesReceived', label: 'لایک', icon: Heart, accentClass: 'text-rose-500' },
-  { key: 'profileViews', label: 'بازدید', icon: Eye, accentClass: 'text-blue-500' },
-  { key: 'popularListsCount', label: 'لیست محبوب', icon: Star, accentClass: 'text-amber-500' },
+  { key: 'popularListsCount', label: 'لیست محبوب', icon: Bookmark, highlight: true },
+  { key: 'viralListsCount', label: 'ترند', icon: Flame },
+  { key: 'profileViews', label: 'بازدید', icon: Eye },
+  { key: 'totalItemsCurated', label: 'آیتم کیوریت', icon: Bookmark },
 ];
 
 export default function ProfileStats({ creatorStats }: ProfileStatsProps) {
   return (
     <div className="grid grid-cols-4 gap-2">
-      {STATS.map(({ key, label, icon: Icon, accentClass }) => (
+      {STATS.map(({ key, label, icon: Icon, highlight }) => (
         <div
           key={key}
-          className="flex flex-col items-center py-3 rounded-xl bg-white border border-gray-100/80 hover:border-gray-200/80 hover:shadow-sm transition-all duration-200"
+          className="flex flex-col items-center py-3 rounded-lg bg-wibe-card border border-wibe"
         >
-          <Icon className={`w-5 h-5 mb-1 ${accentClass}`} />
-          <span className="text-xl font-bold text-gray-900">{formatStat(Number(creatorStats[key] ?? 0))}</span>
-          <span className="text-xs text-gray-500">{label}</span>
+          <Icon className={`w-5 h-5 mb-1 ${highlight ? 'text-primary' : 'text-wibe-secondary'}`} />
+          <span className={`text-h3 font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>
+            {formatStat(Number(creatorStats[key] ?? 0))}
+          </span>
+          <span className="wibe-caption text-wibe-secondary">{label}</span>
         </div>
       ))}
     </div>

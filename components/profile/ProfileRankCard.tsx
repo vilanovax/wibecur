@@ -56,31 +56,31 @@ export default function ProfileRankCard({ userId }: ProfileRankCardProps) {
   return (
     <Link
       href="/leaderboard"
-      className="block rounded-2xl border-2 border-amber-200/80 bg-gradient-to-br from-amber-50/50 to-white p-4 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:border-amber-300 active:scale-[0.99]"
+      className="block rounded-lg border border-wibe bg-wibe-card p-4 shadow-sm transition-transform active:scale-[0.99]"
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
           <Trophy className="h-6 w-6" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-gray-500">رتبه‌بندی کریتورها</p>
+          <p className="wibe-caption text-wibe-secondary">رتبه‌بندی کریتورها</p>
           {loading ? (
-            <p className="mt-0.5 text-lg font-bold text-gray-800">...</p>
+            <p className="mt-0.5 wibe-h3 font-bold text-foreground">...</p>
           ) : rankData ? (
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
-              <span className="text-lg font-bold text-gray-900">رتبه شما: #{rankData.rank}</span>
+              <span className="wibe-h3 font-bold text-foreground">رتبه شما: #{rankData.rank}</span>
               {rankData.rankChange != null && rankData.rankChange > 0 && (
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700">
+                <span className="inline-flex items-center gap-0.5 rounded-pill bg-success/10 px-1.5 py-0.5 wibe-caption font-medium text-success">
                   <TrendingUp className="h-3 w-3" />
                   {rankData.rankChange} این هفته
                 </span>
               )}
             </div>
           ) : (
-            <p className="mt-0.5 text-base font-bold text-primary">مشاهده جدول برترین‌ها</p>
+            <p className="mt-0.5 wibe-body font-bold text-primary">مشاهده جدول برترین‌ها</p>
           )}
         </div>
-        <ChevronLeft className="h-5 w-5 shrink-0 rotate-180 text-gray-400" />
+        <ChevronLeft className="h-5 w-5 shrink-0 rotate-180 text-wibe-secondary" />
       </div>
     </Link>
   );

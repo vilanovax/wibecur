@@ -281,10 +281,10 @@ export default function ListsPageClient({
   return (
     <div className="space-y-0 pb-8">
       {/* LAYER 2 — Smart Search Bar (52px, radius 16, padding 16) */}
-      <div className="sticky top-14 z-10 bg-gray-50 pt-3 transition-all">
+      <div className="sticky top-14 z-10 bg-wibe-surface pt-3 border-b border-wibe/60 transition-all">
         <div className="px-4">
           <div
-            className={`relative flex items-center bg-white rounded-2xl border border-gray-200 transition-all ${
+            className={`relative flex items-center bg-wibe-card rounded-lg border border-wibe shadow-sm transition-all ${
               searchCollapsed ? 'h-12 px-4' : 'h-[52px] px-4'
             }`}
           >
@@ -294,7 +294,7 @@ export default function ListsPageClient({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-full pr-11 pl-1 bg-transparent text-[14px] focus:outline-none focus:ring-0 placeholder:text-gray-400"
+              className="w-full h-full pr-11 pl-1 bg-transparent wibe-small focus:outline-none focus:ring-0 placeholder:text-wibe-secondary"
             />
             {searchQuery && (
               <button
@@ -316,12 +316,12 @@ export default function ListsPageClient({
               onClick={() => setFilterState((s) => ({ ...s, categories: new Set() }))}
               className="flex-shrink-0 relative pb-2.5 text-[15px] font-medium transition-all whitespace-nowrap"
             >
-              <span className={filterState.categories.size === 0 ? 'font-bold text-gray-900' : 'text-gray-600'}>
+              <span className={filterState.categories.size === 0 ? 'font-bold text-foreground' : 'text-wibe-secondary'}>
                 همه
               </span>
-              <span className="text-[12px] text-gray-500 font-normal mr-0.5">({totalCount})</span>
+              <span className="wibe-caption text-wibe-secondary font-normal mr-0.5">({totalCount})</span>
               {filterState.categories.size === 0 && (
-                <span className="absolute bottom-0 right-0 left-0 h-0.5 rounded-full bg-gradient-to-l from-primary to-primary-dark" />
+                <span className="absolute bottom-0 right-0 left-0 h-0.5 rounded-full bg-primary" />
               )}
             </button>
             {activeCategories.map((cat) => {
@@ -336,12 +336,12 @@ export default function ListsPageClient({
                   }
                   className="flex-shrink-0 relative pb-2.5 text-[15px] font-medium transition-all whitespace-nowrap"
                 >
-                  <span className={isSelected ? 'font-bold text-gray-900' : 'text-gray-600'}>
+                  <span className={isSelected ? 'font-bold text-foreground' : 'text-wibe-secondary'}>
                     {cat.name}
                   </span>
-                  <span className="text-[12px] text-gray-500 font-normal mr-0.5">({count})</span>
+                  <span className="wibe-caption text-wibe-secondary font-normal mr-0.5">({count})</span>
                   {isSelected && (
-                    <span className="absolute bottom-0 right-0 left-0 h-0.5 rounded-full bg-gradient-to-l from-primary to-primary-dark" />
+                    <span className="absolute bottom-0 right-0 left-0 h-0.5 rounded-full bg-primary" />
                   )}
                 </button>
               );
@@ -351,7 +351,7 @@ export default function ListsPageClient({
 
         {/* LAYER 4 — Discovery Mode Segmented Control (36px, radius 20) */}
         <div className="mt-3 px-4">
-          <div className="inline-flex p-0.5 rounded-[20px] bg-gray-100 h-9">
+          <div className="inline-flex p-0.5 rounded-lg bg-gray-100 h-9">
             {DISCOVERY_MODES.map(({ value, label }) => {
               const isActive = (value === null && activeDiscovery === null) || (value !== null && activeDiscovery === value);
               return (
@@ -359,10 +359,10 @@ export default function ListsPageClient({
                   key={label}
                   type="button"
                   onClick={() => setDiscoveryMode(value)}
-                  className={`flex-shrink-0 h-8 px-4 rounded-[18px] text-[14px] font-medium transition-all ${
+                  className={`flex-shrink-0 h-8 px-4 rounded-md wibe-small font-medium transition-all ${
                     isActive
-                      ? 'bg-white shadow-sm text-primary font-semibold'
-                      : 'text-gray-500'
+                      ? 'bg-wibe-card shadow-sm text-primary font-semibold'
+                      : 'text-wibe-secondary'
                   }`}
                 >
                   {label}
@@ -375,11 +375,11 @@ export default function ListsPageClient({
         {/* LAYER 5 — Control Row (Grid | Sort | Filter, count right) */}
         <div className="mt-3 px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+            <div className="flex rounded-md border border-wibe overflow-hidden">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 ${viewMode === 'grid' ? 'bg-primary text-white' : 'bg-white text-gray-500'}`}
+                className={`p-1.5 ${viewMode === 'grid' ? 'bg-primary text-white' : 'bg-wibe-card text-wibe-secondary'}`}
                 aria-label="نمایش گریدی"
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -387,7 +387,7 @@ export default function ListsPageClient({
               <button
                 type="button"
                 onClick={() => setViewMode('compact')}
-                className={`p-1.5 ${viewMode === 'compact' ? 'bg-primary text-white' : 'bg-white text-gray-500'}`}
+                className={`p-1.5 ${viewMode === 'compact' ? 'bg-primary text-white' : 'bg-wibe-card text-wibe-secondary'}`}
                 aria-label="نمایش فشرده"
               >
                 <List className="w-4 h-4" />
@@ -400,7 +400,7 @@ export default function ListsPageClient({
                 onChange={(e) =>
                   setFilterState((s) => ({ ...s, sortBy: e.target.value as SortOption }))
                 }
-                className="text-[13px] font-medium text-gray-700 py-1.5 pr-7 pl-2 rounded-lg border border-gray-200 bg-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-[90px]"
+                className="wibe-small font-medium text-foreground py-1.5 pr-7 pl-2 rounded-md border border-wibe bg-wibe-card appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-[90px]"
                 aria-label="مرتب‌سازی"
               >
                 {SORT_OPTIONS.map((opt) => (
@@ -415,14 +415,14 @@ export default function ListsPageClient({
             <button
               type="button"
               onClick={() => setFilterSheetOpen(true)}
-              className="flex items-center gap-1 text-[13px] font-medium text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white"
+              className="flex items-center gap-1 wibe-small font-medium text-foreground px-2.5 py-1.5 rounded-md border border-wibe bg-wibe-card"
               aria-label="فیلتر"
             >
               <Filter className="w-4 h-4" />
               فیلتر
             </button>
           </div>
-          <span className="text-[12px] text-gray-500 flex-shrink-0">
+          <span className="wibe-caption text-wibe-secondary flex-shrink-0">
             {sortedLists.length} نتیجه
           </span>
         </div>
@@ -531,11 +531,11 @@ function EmptyState({
   return (
     <div className="text-center py-16 px-4">
       <div className="text-5xl mb-4">{icon}</div>
-      <h3 className="text-[18px] font-semibold text-gray-800 mb-2">{title}</h3>
-      <p className="text-[13px] text-gray-500 leading-[1.6] mb-6 max-w-sm mx-auto">{description}</p>
+      <h3 className="wibe-h3 text-foreground mb-2">{title}</h3>
+      <p className="wibe-small text-wibe-secondary mb-6 max-w-sm mx-auto">{description}</p>
       <Link
         href={buttonHref}
-        className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors"
+        className="inline-block bg-primary text-white px-6 py-3 rounded-md wibe-small font-semibold hover:bg-primary-dark transition-colors"
       >
         {buttonText}
       </Link>

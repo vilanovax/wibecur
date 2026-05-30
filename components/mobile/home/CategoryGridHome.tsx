@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import HomeSectionTitle from './HomeSectionTitle';
 
 interface CategoryItem {
   id: string;
@@ -19,26 +20,11 @@ async function fetchCategories(): Promise<CategoryItem[]> {
   return json.data;
 }
 
-const CATEGORY_TINTS: Record<string, string> = {
-  movie: 'bg-violet-50/90 border-violet-100',
-  film: 'bg-violet-50/90 border-violet-100',
-  book: 'bg-amber-50/90 border-amber-100',
-  books: 'bg-amber-50/90 border-amber-100',
-  cafe: 'bg-stone-50/90 border-stone-200',
-  restaurant: 'bg-stone-50/90 border-stone-200',
-  podcast: 'bg-pink-50/90 border-pink-100',
-  default: 'bg-gray-50/90 border-gray-100',
-};
-
-function getCategoryTint(slug: string): string {
-  return CATEGORY_TINTS[slug] ?? CATEGORY_TINTS.default;
-}
-
 const FALLBACK_CATEGORIES = [
-  { id: 'movie', slug: 'movie', name: 'فیلم', icon: '🎬', color: '#8B5CF6', listCount: 0 },
-  { id: 'book', slug: 'book', name: 'کتاب', icon: '📚', color: '#EA580C', listCount: 0 },
-  { id: 'cafe', slug: 'cafe', name: 'کافه', icon: '☕', color: '#D97706', listCount: 0 },
-  { id: 'restaurant', slug: 'cafe', name: 'رستوران', icon: '🍽', color: '#B45309', listCount: 0 },
+  { id: 'movie', slug: 'movie', name: 'فیلم', icon: '🎬', color: '#6366F1', listCount: 0 },
+  { id: 'book', slug: 'book', name: 'کتاب', icon: '📚', color: '#6366F1', listCount: 0 },
+  { id: 'cafe', slug: 'cafe', name: 'کافه', icon: '☕', color: '#6366F1', listCount: 0 },
+  { id: 'travel', slug: 'travel', name: 'سفر', icon: '🌍', color: '#6366F1', listCount: 0 },
 ];
 
 export default function CategoryGridHome() {
@@ -59,7 +45,7 @@ export default function CategoryGridHome() {
         <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-3" />
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl h-24 bg-gray-100 animate-pulse" />
+            <div key={i} className="rounded-lg h-24 bg-gray-100 animate-pulse" />
           ))}
         </div>
       </section>
@@ -67,29 +53,25 @@ export default function CategoryGridHome() {
   }
 
   return (
-    <section className="mb-6">
-      <div className="px-4 pt-5 border-t border-gray-100">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="flex-1 h-px bg-gray-200" />
-          <Link href="/lists" className="text-gray-500 text-xs font-medium shrink-0">
-            همه دسته‌ها
-          </Link>
-          <div className="flex-1 h-px bg-gray-200" />
-        </div>
-        <h2 className="text-[18px] font-semibold leading-[1.4] text-gray-900 mt-3">دسته‌بندی‌ها</h2>
+    <section className="mb-6 pb-4">
+      <div className="px-4 pt-4 border-t border-wibe flex items-start justify-between gap-2">
+        <HomeSectionTitle title="دسته‌بندی‌ها" />
+        <Link href="/lists" className="wibe-caption text-primary font-medium shrink-0 pt-1">
+          همه
+        </Link>
       </div>
-      <div className="grid grid-cols-2 gap-3 px-4">
+      <div className="grid grid-cols-2 gap-3 px-4 mt-1">
         {items.slice(0, 4).map((cat) => (
           <Link
             key={cat.id}
             href={`/categories/${cat.slug}`}
-            className={`rounded-[18px] overflow-hidden p-4 flex flex-col justify-between min-h-[88px] border shadow-vibe-card hover:shadow-vibe-card active:scale-[0.98] transition-all ${getCategoryTint(cat.slug)}`}
+            className="rounded-lg overflow-hidden p-4 flex flex-col justify-between min-h-[88px] border border-wibe bg-wibe-card shadow-sm active:scale-[0.98] transition-transform"
           >
-            <span className="text-xl opacity-90">{cat.icon}</span>
+            <span className="text-xl">{cat.icon}</span>
             <div>
-              <p className="font-semibold text-[15px] leading-[1.4] text-gray-900">{cat.name}</p>
+              <p className="wibe-small font-semibold text-foreground">{cat.name}</p>
               {cat.listCount > 0 && (
-                <p className="text-[12px] font-medium text-gray-500/75 mt-1">
+                <p className="wibe-caption text-wibe-secondary mt-1">
                   {cat.listCount.toLocaleString('fa-IR')} لیست
                 </p>
               )}

@@ -12,10 +12,10 @@ import {
   ArrowDown,
   Minus,
 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { UserIntelligenceRow as Row } from '@/lib/admin/users-types';
 import { USER_QUALITY_LABELS, USER_RISK_LABELS } from '@/lib/admin/users-types';
+import UserAvatar from '@/components/shared/UserAvatar';
 
 const qualityClass: Record<Row['quality'], string> = {
   high_impact: 'bg-emerald-100 text-emerald-700',
@@ -85,23 +85,12 @@ export default function UsersIntelligenceTable({
               >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    {user.image ? (
-                      <div className="relative w-11 h-11 rounded-full overflow-hidden shrink-0">
-                        <Image
-                          src={user.image}
-                          alt={user.name || ''}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-11 h-11 rounded-full bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
-                        <span className="text-[var(--primary)] font-semibold">
-                          {(user.name || user.email || 'U')[0].toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    <UserAvatar
+                      src={user.image}
+                      name={user.name}
+                      email={user.email}
+                      size={44}
+                    />
                     <div className="min-w-0">
                       <p className="font-medium text-[var(--color-text)] truncate">
                         {user.name || 'بدون نام'}

@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { isOurStorageUrl } from '@/lib/object-storage-config';
+import { toLiaraImageSrc } from '@/lib/liara-image-url';
 
-/** آواتار کامنت با fallback به حرف اول — پشتیبانی از Vibe Avatar، Liara storage و image-proxy */
+/** آواتار کامنت — Liara (same-origin یا مستقیم)، fallback به حرف اول */
 export default function CommentAvatar({
   src,
   name,
@@ -32,10 +34,12 @@ export default function CommentAvatar({
     String(avatarId).trim();
   const vibeAvatar = showVibeAvatar ? VIBE_AVATARS.find((a) => a.id === String(avatarId).trim()) : null;
 
-  const isLiaraStorage = src?.includes('storage.') && src?.includes('liara');
-  const displaySrc = isLiaraStorage && src
-    ? `/api/image-proxy?url=${encodeURIComponent(src)}`
-    : src;
+  const displaySrc =
+    src && isOurStorageUrl(src)
+      ? toLiaraImageSrc(src)
+      : src?.startsWith('/')
+        ? src
+        : null;
 
   if (vibeAvatar) {
     return (

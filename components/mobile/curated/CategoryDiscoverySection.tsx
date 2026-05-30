@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { CuratedCategory } from '@/types/curated';
+import ExploreSectionTitle from './ExploreSectionTitle';
 
 interface CategoryDiscoverySectionProps {
   categories: CuratedCategory[];
@@ -17,26 +18,25 @@ export default function CategoryDiscoverySection({
   return (
     <section
       id="categories"
-      className="px-4 py-8"
+      className="px-4 py-6 border-t border-wibe"
       aria-labelledby="categories-title"
     >
-      <h2
+      <ExploreSectionTitle
         id="categories-title"
-        className="text-[18px] font-bold text-gray-900 mb-4"
-      >
-        کشف دسته‌ها
-      </h2>
-      <div className="grid grid-cols-3 gap-3">
+        title="کشف دسته‌ها"
+        subtitle="لیست‌ها را بر اساس موضوع پیدا کن"
+      />
+      <div className="grid grid-cols-3 gap-2.5">
         {displayCats.map((cat) => (
           <Link
             key={cat.id}
             href={`/categories/${cat.slug ?? cat.id}`}
-            className="flex flex-col items-center justify-center p-4 rounded-[18px] bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all aspect-square"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-wibe bg-wibe-card shadow-sm active:scale-[0.98] transition-transform aspect-square"
           >
-            <span className="text-3xl mb-2" aria-hidden>
+            <span className="text-2xl leading-none" aria-hidden>
               {cat.icon}
             </span>
-            <span className="text-[14px] font-medium text-gray-900 text-center line-clamp-1">
+            <span className="wibe-caption font-medium text-foreground text-center line-clamp-2 px-0.5">
               {cat.title}
             </span>
           </Link>
@@ -44,7 +44,7 @@ export default function CategoryDiscoverySection({
       </div>
       <Link
         href="/lists"
-        className="block mt-4 text-center py-3 rounded-[18px] bg-gray-100 text-gray-700 font-medium text-[14px] hover:bg-gray-200 transition-colors"
+        className="mt-4 block w-full py-3 px-4 rounded-md border border-wibe bg-wibe-card wibe-small font-semibold text-primary text-center active:scale-[0.99] transition-transform"
       >
         مشاهده همه دسته‌ها
       </Link>

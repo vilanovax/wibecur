@@ -3,14 +3,10 @@
 import Link from 'next/link';
 import ListCard from '@/components/mobile/home/ListCard';
 import { useHomeData } from '@/contexts/HomeDataContext';
-import { PLACEHOLDER_COVER_SMALL } from '@/lib/placeholder-images';
 
 export default function TrendingLists() {
   const { data, isLoading } = useHomeData();
-  const lists = (data?.trending ?? []).map((l) => ({
-    ...l,
-    coverImage: l.coverImage || PLACEHOLDER_COVER_SMALL,
-  }));
+  const lists = data?.trending ?? [];
 
   if (isLoading && lists.length === 0) {
     return (

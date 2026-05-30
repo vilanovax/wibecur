@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Settings, Eye, EyeOff, Package, Heart, Bookmark, Flame, Eye as EyeIcon } from 'lucide-react';
+import { Settings, Eye, EyeOff, Package, Bookmark, Flame, Eye as EyeIcon } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { categories, lists } from '@prisma/client';
 import PersonalListSettingsModal from '../PersonalListSettingsModal';
@@ -112,9 +112,9 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
       <div key={list.id} className="group">
         <Link href={`/user-lists/${list.id}`} className="block">
           <div
-            className={`bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden border border-gray-100/80 ${size === 'featured' ? 'ring-1 ring-[#7C3AED]/20' : ''}`}
+            className={`bg-wibe-card rounded-lg shadow-sm overflow-hidden border border-wibe active:scale-[0.99] transition-transform ${size === 'featured' ? 'ring-1 ring-primary/20' : ''}`}
           >
-            <div className={`relative ${cardHeight} overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200`}>
+            <div className={`relative ${cardHeight} overflow-hidden bg-gray-200`}>
               <ImageWithFallback
                 src={list.coverImage ?? ''}
                 alt={list.title}
@@ -144,7 +144,7 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
               </div>
               <button
                 onClick={(e) => handleSettingsClick(e, list)}
-                className="absolute top-3 left-3 w-9 h-9 bg-white/95 backdrop-blur-sm rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg text-gray-700 hover:bg-[#7C3AED] hover:text-white"
+                className="absolute top-3 left-3 w-9 h-9 bg-wibe-card/95 backdrop-blur-sm rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow text-wibe-secondary hover:bg-primary hover:text-white"
                 aria-label="تنظیمات لیست"
               >
                 <Settings className="w-4 h-4" />
@@ -162,33 +162,29 @@ export default function MyListsTab({ userId }: MyListsTabProps) {
               )}
             </div>
             <div className="p-3.5">
-              <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+              <div className="flex items-center gap-3 wibe-caption text-wibe-secondary mb-2">
+                <span className="flex items-center gap-1 text-primary font-medium">
+                  <Bookmark className="w-3.5 h-3.5" />
+                  {saves}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5" />
+                  {items} آیتم
+                </span>
                 <span className="flex items-center gap-1">
                   <EyeIcon className="w-3.5 h-3.5" />
                   {views >= 1000 ? (views / 1000).toFixed(1) + 'k' : views}
                 </span>
-                <span className="flex items-center gap-1 text-red-500">
-                  <Heart className="w-3.5 h-3.5" />
-                  {likes}
-                </span>
-                <span className="flex items-center gap-1 text-[#7C3AED]">
-                  <Bookmark className="w-3.5 h-3.5" />
-                  {saves}
-                </span>
-                <span className="flex items-center gap-1 text-gray-400">
-                  <Package className="w-3.5 h-3.5" />
-                  {items} آیتم
-                </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {isViral && (
-                  <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-lg text-xs font-medium">🔥 وایرال</span>
+                  <span className="px-2 py-0.5 bg-warning/10 text-warning rounded-md wibe-caption font-medium">وایرال</span>
                 )}
                 {isFeatured && (
-                  <span className="px-2 py-0.5 bg-[#7C3AED]/15 text-[#7C3AED] rounded-lg text-xs font-medium">⭐ منتخب</span>
+                  <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md wibe-caption font-medium">منتخب</span>
                 )}
                 {badge === 'trending' && (
-                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-medium">📈 ترند</span>
+                  <span className="px-2 py-0.5 bg-success/10 text-success rounded-md wibe-caption font-medium">ترند</span>
                 )}
               </div>
             </div>

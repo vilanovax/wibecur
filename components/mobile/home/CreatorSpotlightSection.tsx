@@ -9,7 +9,8 @@ import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { track } from '@/lib/analytics';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
-import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
+import { type CuratorLevelKey } from '@/lib/curator';
+import HomeSectionTitle from './HomeSectionTitle';
 
 interface SpotlightList {
   id: string;
@@ -77,7 +78,7 @@ export default function CreatorSpotlightSection() {
     return (
       <section className="mb-6 px-4">
         <div className="h-6 w-52 bg-gray-200 rounded animate-pulse mb-3" />
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 h-56 animate-pulse" />
+        <div className="rounded-lg border border-wibe bg-wibe-card p-5 h-48 animate-pulse" />
       </section>
     );
   }
@@ -86,78 +87,59 @@ export default function CreatorSpotlightSection() {
 
   const c = data.creator;
   const levelKey = (c.curatorLevel || 'EXPLORER') as CuratorLevelKey;
-  const levelConfig = getLevelConfig(levelKey);
   const vibeAvatar =
     c.avatarType === 'DEFAULT' && c.avatarId ? VIBE_AVATARS.find((a) => a.id === c.avatarId) : null;
 
   return (
     <section className="mb-6 px-4">
-      <h2 className="text-[18px] font-semibold leading-[1.4] text-gray-900 mb-1 flex items-center gap-2">
-        <span>🏆</span>
-        کیوریتور منتخب امروز
-      </h2>
-      <p className="text-[13px] text-gray-500/80 leading-[1.6] mb-3">اقتصاد کیوریشن</p>
+      <HomeSectionTitle icon="🏆" title="کیوریتور منتخب" subtitle="لیست‌های برتر از یک سازنده" />
 
-      <div className="rounded-[18px] border-2 border-[#7C3AED]/20 bg-white shadow-vibe-card overflow-hidden">
+      <div className="rounded-lg border border-wibe bg-wibe-card shadow-card overflow-hidden">
         <div className="p-5">
           <div className="flex flex-col items-center text-center">
-            <div className="relative">
-              <div
-                className={`absolute -inset-2 rounded-full blur-lg opacity-60 ${levelConfig.glowClass}`}
-                aria-hidden
-              />
-              <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white bg-gray-100 shadow-lg">
-                {vibeAvatar ? (
-                  <div
-                    className={`w-full h-full flex items-center justify-center text-3xl ${vibeAvatar.bgClass}`}
-                  >
-                    {vibeAvatar.emoji}
-                  </div>
-                ) : c.image ? (
-                  <ImageWithFallback
-                    src={c.image}
-                    alt={c.name || ''}
-                    className="w-full h-full object-cover"
-                    fallbackIcon={(c.name?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white font-bold flex items-center justify-center text-2xl"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white font-bold text-2xl">
-                    {(c.name?.[0] || '?').toUpperCase()}
-                  </div>
-                )}
-              </div>
+            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-wibe bg-gray-100">
+              {vibeAvatar ? (
+                <div className={`w-full h-full flex items-center justify-center text-3xl ${vibeAvatar.bgClass}`}>
+                  {vibeAvatar.emoji}
+                </div>
+              ) : c.image ? (
+                <ImageWithFallback
+                  src={c.image}
+                  alt={c.name || ''}
+                  className="w-full h-full object-cover"
+                  fallbackIcon={(c.name?.[0] || '?').toUpperCase()}
+                  fallbackClassName="w-full h-full bg-primary/10 text-primary font-bold flex items-center justify-center text-2xl"
+                  placeholderSize="square"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold text-2xl">
+                  {(c.name?.[0] || '?').toUpperCase()}
+                </div>
+              )}
             </div>
-            <p className="font-semibold text-[15px] leading-[1.4] text-gray-900 mt-3">{c.name || 'کاربر'}</p>
-            <CuratorBadge
-              level={levelKey}
-              size="small"
-              glow={false}
-              className="mt-1"
-            />
-            {c.bio && (
-              <p className="text-sm text-gray-600 mt-2 line-clamp-2 max-w-md">{c.bio}</p>
-            )}
-            <p className="text-xs text-gray-500 mt-2">
-              🔥 {c.viralCount} وایرال · ❤️ {c.totalLikes.toLocaleString('fa-IR')} لایک
+            <p className="wibe-small font-semibold text-foreground mt-3">{c.name || 'کاربر'}</p>
+            <CuratorBadge level={levelKey} size="small" glow={false} className="mt-1" />
+            {c.bio && <p className="wibe-small text-wibe-secondary mt-2 line-clamp-2 max-w-md">{c.bio}</p>}
+            <p className="wibe-caption text-wibe-secondary mt-2">
+              {c.listCount} لیست · {c.totalLikes.toLocaleString('fa-IR')} لایک
             </p>
           </div>
 
           <div className="flex gap-3 mt-4">
             <Link
               href={c.username ? `/u/${encodeURIComponent(c.username)}` : '#'}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-[#7C3AED]/30 text-[#7C3AED] font-semibold text-sm"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-md border border-wibe text-primary font-semibold wibe-small"
             >
               <User className="w-5 h-5" />
-              مشاهده پروفایل
+              پروفایل
             </Link>
             {session?.user?.id && session.user.id !== c.userId && (
               <button
                 type="button"
                 onClick={handleFollow}
                 disabled={following}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-colors ${
-                  following ? 'bg-gray-100 text-gray-500' : 'bg-[#7C3AED] text-white active:opacity-90'
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md wibe-small font-semibold transition-colors ${
+                  following ? 'bg-gray-100 text-wibe-secondary' : 'bg-primary text-white'
                 }`}
               >
                 {following ? (
@@ -168,7 +150,7 @@ export default function CreatorSpotlightSection() {
                 ) : (
                   <>
                     <UserPlus className="w-5 h-5" />
-                    Follow
+                    دنبال کردن
                   </>
                 )}
               </button>
@@ -177,36 +159,25 @@ export default function CreatorSpotlightSection() {
         </div>
 
         {data.lists.length > 0 && (
-          <div className="border-t border-gray-100 px-4 py-3">
-            <p className="text-xs font-medium text-gray-500 mb-2">لیست‌های برتر</p>
+          <div className="border-t border-wibe px-4 py-3">
+            <p className="wibe-caption text-wibe-secondary mb-2">لیست‌های برتر</p>
             <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-1">
               {data.lists.map((list) => (
                 <Link
                   key={list.id}
                   href={`/lists/${list.slug}`}
-                  className="flex-shrink-0 w-28 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 active:opacity-95"
+                  className="flex-shrink-0 w-28 rounded-md overflow-hidden border border-wibe bg-wibe-surface"
                 >
                   <div className="aspect-[3/4] w-full bg-gray-200 relative">
-                    {list.coverImage ? (
-                      <ImageWithFallback
-                        src={list.coverImage}
-                        alt={list.title}
-                        className="w-full h-full object-cover"
-                        fallbackIcon="📋"
-                        fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200 text-2xl"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-3xl text-gray-300">
-                        📋
-                      </div>
-                    )}
+                    <ImageWithFallback
+                      src={list.coverImage || ''}
+                      alt={list.title}
+                      className="w-full h-full object-cover"
+                      fallbackIcon="📋"
+                      fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200 text-2xl"
+                    />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                      <p className="text-white text-xs font-medium line-clamp-2 drop-shadow">
-                        {list.title}
-                      </p>
-                      <p className="text-white/90 text-[10px] mt-0.5">
-                        ❤️ {list.likeCount.toLocaleString('fa-IR')}
-                      </p>
+                      <p className="text-white wibe-caption font-medium line-clamp-2">{list.title}</p>
                     </div>
                   </div>
                 </Link>

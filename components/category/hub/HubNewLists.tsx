@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCardStats from '@/components/shared/ListCardStats';
+import CategorySectionTitle from '../CategorySectionTitle';
 import type { CategoryListCard } from '@/types/category-page';
 
 interface HubNewListsProps {
@@ -10,43 +12,28 @@ interface HubNewListsProps {
   accentColor?: string;
 }
 
-/** لیست‌های جدید — چیدمان عمودی compact */
 export default function HubNewLists({
   lists,
   categoryName,
-  accentColor = '#EA580C',
 }: HubNewListsProps) {
   if (lists.length === 0) return null;
 
   return (
-    <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
-        🆕 لیست‌های جدید
-      </h2>
-      <p className="text-[11px] text-gray-500">
-        تازه‌ترین لیست‌های {categoryName}
-      </p>
+    <section className="px-4 py-6">
+      <CategorySectionTitle
+        title="لیست‌های جدید"
+        subtitle={`تازه‌ترین لیست‌های ${categoryName}`}
+        icon="🆕"
+      />
 
-      <div className="space-y-1 mt-2">
+      <div className="space-y-2">
         {lists.map((list) => (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex gap-2.5 p-2 rounded-xl bg-white border border-gray-100 shadow-md active:scale-[0.99] transition-transform"
+            className="flex flex-row-reverse gap-2.5 p-2.5 rounded-lg bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
           >
-            <div className="min-w-0 flex-1 text-start">
-              <h3 className="font-semibold text-gray-900 text-xs line-clamp-2">
-                {list.title}
-              </h3>
-              <div className="flex items-center gap-1.5 mt-0.5 text-[9px] text-gray-400">
-                <span>{list.creator?.name || 'کیوریتور'}</span>
-                <span>•</span>
-                <span>{list.itemCount} آیتم</span>
-                <span>•</span>
-                <span>⭐ {list.saveCount}</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden order-first">
+            <div className="w-12 h-12 rounded-md bg-gray-200 flex-shrink-0 overflow-hidden">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
@@ -55,13 +42,15 @@ export default function HubNewLists({
                   placeholderSize="square"
                 />
               ) : (
-                <div
-                  className="w-full h-full flex items-center justify-center text-base opacity-40"
-                  style={{ backgroundColor: `${accentColor}20` }}
-                >
+                <div className="w-full h-full flex items-center justify-center text-base opacity-40 bg-gray-200">
                   📋
                 </div>
               )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
+              <p className="wibe-caption text-wibe-secondary mt-0.5">{list.creator?.name || 'کیوریتور'}</p>
+              <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="compact" className="mt-0.5" />
             </div>
           </Link>
         ))}

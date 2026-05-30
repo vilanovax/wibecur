@@ -97,8 +97,8 @@ export default function ProfileAchievements({ creatorStats }: ProfileAchievement
 
   return (
     <section className="mt-6">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
-        <Trophy className="w-4 h-4 text-amber-500" />
+      <h2 className="flex items-center gap-2 wibe-h3 mb-3">
+        <Trophy className="w-4 h-4 text-warning" />
         دستاوردها
       </h2>
       <div className="grid grid-cols-6 gap-2">
@@ -108,10 +108,10 @@ export default function ProfileAchievements({ creatorStats }: ProfileAchievement
             type="button"
             onClick={() => setSelected(a)}
             title={a.title}
-            className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 transition-all active:scale-95"
+            className="flex flex-col items-center justify-center p-2 rounded-lg border border-wibe bg-wibe-card hover:bg-gray-50 transition-all active:scale-95"
           >
             <span className="text-xl mb-0.5">{a.icon}</span>
-            <span className="text-[9px] font-medium text-center line-clamp-1 max-w-full text-gray-600">
+            <span className="wibe-caption font-medium text-center line-clamp-1 max-w-full text-wibe-secondary">
               {a.title}
             </span>
           </button>
@@ -121,7 +121,7 @@ export default function ProfileAchievements({ creatorStats }: ProfileAchievement
         <button
           type="button"
           onClick={() => setShowAllSheet(true)}
-          className="mt-3 w-full py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+          className="mt-3 w-full py-2.5 rounded-md border border-wibe text-wibe-secondary wibe-small font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
         >
           مشاهده همه دستاوردها
           <ChevronLeft className="w-4 h-4 rotate-180" />
@@ -173,7 +173,7 @@ function AllAchievementsSheet({
         >
           <ChevronLeft className="w-5 h-5 rotate-180" />
         </button>
-        <h2 className="text-lg font-bold text-gray-900">همه دستاوردها</h2>
+        <h2 className="wibe-h3 text-foreground">همه دستاوردها</h2>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <div className="grid grid-cols-4 gap-3">

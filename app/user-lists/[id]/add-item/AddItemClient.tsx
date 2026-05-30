@@ -2,8 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { Search, X, Grid, List as ListIcon, ArrowLeft } from 'lucide-react';
+import { Search, X, Grid, List as ListIcon, ArrowLeft, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Toast from '@/components/shared/Toast';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
@@ -53,6 +52,18 @@ interface AddItemClientProps {
 
 type SortOption = 'newest' | 'oldest' | 'title-asc' | 'title-desc';
 
+const CHIP_BASE =
+  'flex items-center gap-1.5 h-9 px-3.5 rounded-lg wibe-small font-medium whitespace-nowrap flex-shrink-0 transition-all active:scale-[0.98]';
+
+function categoryChipClass(isSelected: boolean) {
+  return isSelected
+    ? `${CHIP_BASE} bg-primary text-white shadow-sm`
+    : `${CHIP_BASE} bg-wibe-card border border-wibe text-foreground shadow-sm hover:border-primary/30`;
+}
+
+const SELECT_CLASS =
+  'px-3 py-2 rounded-md border border-wibe bg-wibe-surface wibe-small text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none';
+
 export default function AddItemClient({
   listId,
   listTitle,
@@ -71,7 +82,6 @@ export default function AddItemClient({
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
-  // Filter lists based on selected category
   const filteredLists = useMemo(() => {
     if (selectedCategory === 'all') {
       return lists;
@@ -79,14 +89,12 @@ export default function AddItemClient({
     return lists.filter((list) => list.categoryId === selectedCategory);
   }, [lists, selectedCategory]);
 
-  // Reset selectedList if it's not in filtered lists when category changes
   useEffect(() => {
     if (selectedList !== 'all' && !filteredLists.find((l) => l.id === selectedList)) {
       setSelectedList('all');
     }
   }, [filteredLists, selectedList]);
 
-  // Filter items
   const filteredItems = useMemo(() => {
     return initialItems.filter((item) => {
       const categoryMatch =
@@ -104,7 +112,6 @@ export default function AddItemClient({
     });
   }, [initialItems, selectedCategory, selectedList, searchQuery]);
 
-  // Sort items
   const sortedItems = useMemo(() => {
     return [...filteredItems].sort((a, b) => {
       switch (sortBy) {
@@ -148,12 +155,12 @@ export default function AddItemClient({
       setToastType('success');
       setShowToast(true);
 
-      // Remove item from view after a short delay
       setTimeout(() => {
         router.refresh();
       }, 1000);
-    } catch (error: any) {
-      setToastMessage(error.message || 'خطا در افزودن آیتم');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'خطا در افزودن آیتم';
+      setToastMessage(message);
       setToastType('error');
       setShowToast(true);
     } finally {
@@ -162,55 +169,53 @@ export default function AddItemClient({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
+    <div className="min-h-screen bg-wibe-surface">
+      <div className="bg-wibe-card border-b border-wibe sticky top-16 z-40">
         <div className="px-4 py-3">
           <div className="flex items-center gap-3 mb-3">
             <Link
               href={`/user-lists/${listId}`}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+              aria-label="بازگشت به لیست"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-700" />
+              <ArrowLeft className="w-5 h-5 text-wibe-secondary" />
             </Link>
-            <div className="flex-1">
-              <h1 className="text-lg font-bold text-gray-900">
-                افزودن آیتم به {listTitle}
-              </h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="wibe-h3 truncate">افزودن آیتم به {listTitle}</h1>
+              <p className="wibe-caption text-wibe-secondary mt-0.5">
+                {initialItems.length.toLocaleString('fa-IR')} آیتم در دسترس
+              </p>
             </div>
           </div>
 
-          {/* Search Bar */}
           <div className="relative mb-3">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wibe-secondary pointer-events-none" />
             <input
               type="text"
               placeholder="جستجوی آیتم..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-10 pl-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full pr-10 pl-10 py-2.5 rounded-md border border-wibe bg-wibe-surface wibe-small focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="پاک کردن جستجو"
               >
-                <X className="w-4 h-4 text-gray-400" />
+                <X className="w-4 h-4 text-wibe-secondary" />
               </button>
             )}
           </div>
 
-          {/* Category Quick Filters */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-3">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-3 -mx-1 px-1">
             <button
+              type="button"
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === 'all'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={categoryChipClass(selectedCategory === 'all')}
             >
-              همه ({initialItems.length})
+              همه ({initialItems.length.toLocaleString('fa-IR')})
             </button>
             {categories.map((category) => {
               const count = initialItems.filter(
@@ -219,28 +224,24 @@ export default function AddItemClient({
               return (
                 <button
                   key={category.id}
+                  type="button"
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
-                    selectedCategory === category.id
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={categoryChipClass(selectedCategory === category.id)}
                 >
-                  <span>{category.icon}</span>
+                  <span aria-hidden>{category.icon}</span>
                   <span>
-                    {category.name} ({count})
+                    {category.name} ({count.toLocaleString('fa-IR')})
                   </span>
                 </button>
               );
             })}
           </div>
 
-          {/* List Dropdown and Sort */}
           <div className="flex gap-2">
             <select
               value={selectedList}
               onChange={(e) => setSelectedList(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+              className={`flex-1 min-w-0 ${SELECT_CLASS}`}
             >
               <option value="all">
                 {selectedCategory === 'all'
@@ -257,7 +258,7 @@ export default function AddItemClient({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
+              className={SELECT_CLASS}
             >
               <option value="newest">جدیدترین</option>
               <option value="oldest">قدیمی‌ترین</option>
@@ -265,24 +266,30 @@ export default function AddItemClient({
               <option value="title-desc">عنوان (نزولی)</option>
             </select>
 
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+            <div className="flex rounded-md border border-wibe p-0.5 bg-gray-100 shrink-0">
               <button
+                type="button"
                 onClick={() => setViewMode('grid')}
-                className={`p-2 ${
+                aria-label="نمایش گریدی"
+                aria-pressed={viewMode === 'grid'}
+                className={`p-2 rounded-sm transition-colors ${
                   viewMode === 'grid'
-                    ? 'bg-primary text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                } transition-colors`}
+                    ? 'bg-wibe-card shadow-sm text-primary'
+                    : 'text-wibe-secondary'
+                }`}
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('list')}
-                className={`p-2 border-r border-gray-300 ${
+                aria-label="نمایش لیستی"
+                aria-pressed={viewMode === 'list'}
+                className={`p-2 rounded-sm transition-colors ${
                   viewMode === 'list'
-                    ? 'bg-primary text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                } transition-colors`}
+                    ? 'bg-wibe-card shadow-sm text-primary'
+                    : 'text-wibe-secondary'
+                }`}
               >
                 <ListIcon className="w-4 h-4" />
               </button>
@@ -291,31 +298,35 @@ export default function AddItemClient({
         </div>
       </div>
 
-      {/* Items Grid/List */}
-      <div className="p-4">
+      <div className="p-4 pb-8">
         {sortedItems.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl">
-            <div className="text-5xl mb-3">🔍</div>
-            <p className="text-gray-600">آیتمی یافت نشد</p>
+          <div className="text-center py-12 bg-wibe-card rounded-lg border border-wibe">
+            <div className="text-5xl mb-3" aria-hidden>
+              🔍
+            </div>
+            <p className="wibe-body text-wibe-secondary">آیتمی یافت نشد</p>
+            <p className="wibe-caption text-wibe-secondary mt-1">
+              فیلتر یا عبارت جستجو را تغییر دهید
+            </p>
           </div>
         ) : (
           <div
             className={
               viewMode === 'grid'
-                ? 'grid grid-cols-2 gap-4'
+                ? 'grid grid-cols-2 gap-3'
                 : 'space-y-3'
             }
           >
             {sortedItems.map((item) => (
               <div
                 key={item.id}
-                className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all ${
-                  viewMode === 'list' ? 'flex gap-4' : ''
+                className={`bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform ${
+                  viewMode === 'list' ? 'flex gap-3' : ''
                 }`}
               >
                 <div
-                  className={`relative bg-gray-100 ${
-                    viewMode === 'grid' ? 'h-40' : 'w-24 h-24 flex-shrink-0'
+                  className={`relative bg-gray-200 ${
+                    viewMode === 'grid' ? 'h-36' : 'w-24 h-24 flex-shrink-0'
                   }`}
                 >
                   <ImageWithFallback
@@ -324,41 +335,46 @@ export default function AddItemClient({
                     className="w-full h-full object-cover"
                     fallbackIcon="📋"
                     fallbackClassName="w-full h-full"
-                    imageFolder="items"
                   />
                 </div>
-                <div className={`p-3 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-sm mb-1 line-clamp-2">
-                        {item.title}
-                      </h3>
-                      {item.lists.categories && (
-                        <div className="flex items-center gap-1 mb-1">
-                          <span className="text-xs">
-                            {item.lists.categories.icon}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {item.lists.categories.name}
-                          </span>
-                        </div>
-                      )}
-                      <p className="text-xs text-gray-500 line-clamp-1">
-                        از: {item.lists.title}
-                      </p>
-                    </div>
+                <div className={`p-3 ${viewMode === 'list' ? 'flex-1 min-w-0' : ''}`}>
+                  <div className="mb-2">
+                    <h3 className="wibe-small font-semibold line-clamp-2 text-foreground">
+                      {item.title}
+                    </h3>
+                    {item.lists.categories && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-sm" aria-hidden>
+                          {item.lists.categories.icon}
+                        </span>
+                        <span className="wibe-caption text-wibe-secondary">
+                          {item.lists.categories.name}
+                        </span>
+                      </div>
+                    )}
+                    <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">
+                      از: {item.lists.title}
+                    </p>
                   </div>
                   {item.description && viewMode === 'list' && (
-                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                    <p className="wibe-caption text-wibe-secondary mb-2 line-clamp-2">
                       {item.description}
                     </p>
                   )}
                   <button
+                    type="button"
                     onClick={() => handleAddItem(item.id)}
                     disabled={isAdding === item.id}
-                    className="w-full px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-primary text-white wibe-small font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isAdding === item.id ? 'در حال افزودن...' : '➕ افزودن'}
+                    {isAdding === item.id ? (
+                      'در حال افزودن...'
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" aria-hidden />
+                        افزودن
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -367,7 +383,6 @@ export default function AddItemClient({
         )}
       </div>
 
-      {/* Toast */}
       {showToast && (
         <Toast
           message={toastMessage}
@@ -379,4 +394,3 @@ export default function AddItemClient({
     </div>
   );
 }
-

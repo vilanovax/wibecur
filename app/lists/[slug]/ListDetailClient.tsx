@@ -4,14 +4,16 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { UserPlus, Check, Share2, MoreVertical, Pencil, Flame } from 'lucide-react';
+import { UserPlus, Check, Share2, MoreVertical, Pencil, Flame, Bookmark } from 'lucide-react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import VibeCommentSection from '@/components/mobile/lists/VibeCommentSection';
 import SuggestItemSearch from '@/components/mobile/lists/SuggestItemSearch';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCardStats from '@/components/shared/ListCardStats';
 import CuratorBadge from '@/components/shared/CuratorBadge';
+import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/components/providers/MainContainer';
 import type { CuratorLevelKey } from '@/lib/curator';
 
 type Item = {
@@ -114,22 +116,23 @@ function SimilarListCard({ rel }: { rel: RelatedList }) {
   return (
     <Link
       href={`/lists/${rel.slug}`}
-      className="flex-shrink-0 w-[calc(55vw)] max-w-[220px] bg-white/90 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100/80 active:bg-gray-50"
+      className="flex-shrink-0 w-[calc(55vw)] max-w-[220px] bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
     >
-      <div className="relative aspect-[4/3] bg-gray-100">
+      <div className="relative aspect-[4/3] bg-gray-200">
         <ImageWithFallback
           src={rel.coverImage ?? ''}
           alt={rel.title}
           className="w-full h-full object-cover"
           fallbackIcon={rel.categories?.icon ?? '📋'}
-          fallbackClassName="w-full h-full flex items-center justify-center text-2xl"
+          fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-2">
+          <ListCardStats saves={rel.saveCount} itemCount={rel.itemCount} variant="overlay" />
+        </div>
       </div>
       <div className="p-2.5 min-w-0">
-        <h3 className="font-semibold text-gray-800 text-sm line-clamp-1">{rel.title}</h3>
-        <p className="text-[11px] text-gray-400 mt-0.5">
-          ⭐ {rel.saveCount} &nbsp; • &nbsp; {rel.itemCount} آیتم
-        </p>
+        <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{rel.title}</h3>
       </div>
     </Link>
   );
@@ -145,33 +148,30 @@ function GridItemCard({
   return (
     <Link
       href={`/items/${item.id}`}
-      className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md active:bg-gray-50 transition-all border border-gray-100"
+      className="block bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
     >
-      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+      <div className="relative aspect-[4/3] bg-gray-200 overflow-hidden">
         <ImageWithFallback
           src={item.imageUrl ?? ''}
           alt={item.title}
           className="w-full h-full object-cover"
           fallbackIcon="📋"
-          fallbackClassName="w-full h-full flex items-center justify-center text-3xl"
+          fallbackClassName="w-full h-full flex items-center justify-center text-3xl bg-gray-200"
           placeholderSize="square"
-          imageFolder="items"
         />
-        <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/30 text-white text-[10px] flex items-center justify-center font-medium">
+        <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/40 text-white wibe-caption flex items-center justify-center font-medium">
           {index + 1}
         </span>
       </div>
       <div className="p-2.5 min-h-0">
-        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-tight">
+        <h3 className="wibe-small font-semibold text-foreground line-clamp-2 leading-tight">
           {item.title}
         </h3>
-        <p className="text-[11px] text-gray-400 line-clamp-1 mt-0.5">
-          {item.description
-            ? item.description
-            : item.rating > 0
-              ? `⭐ ${item.rating}`
-              : ''}
-        </p>
+        {(item.description || item.rating > 0) && (
+          <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">
+            {item.description || (item.rating > 0 ? `امتیاز ${item.rating}` : '')}
+          </p>
+        )}
       </div>
     </Link>
   );
@@ -260,7 +260,6 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
   const saveCount = list.saveCount ?? 0;
   const viewCount = list.viewCount ?? 0;
   const viralListsCount = list.users?.viralListsCount ?? 0;
-  const totalLikesReceived = list.users?.totalLikesReceived ?? 0;
   const isViral = list.badge === 'TRENDING' || saveCount >= 100;
   const creatorName = list.users?.name || 'کاربر';
   const creatorId = list.users?.id;
@@ -269,10 +268,6 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
   const creatorLevel = (list.users?.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
   const followersCount = list.creatorFollowersCount ?? 0;
   const isOwner = !!session?.user && list.userId === (session.user as { id?: string }).id;
-  const avgRating =
-    list.items?.length > 0
-      ? list.items.reduce((s, i) => s + (i.rating || 0), 0) / list.items.length
-      : 0;
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
@@ -331,32 +326,37 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
   const showStickyBar = stickyVisible && !isBookmarked;
 
   const BADGE_LABELS: Record<string, string> = {
-    TRENDING: '🔥 ترند',
-    NEW: '✨ تازه',
-    FEATURED: '🏆 برگزیده',
+    TRENDING: 'ترند',
+    NEW: 'جدید',
+    FEATURED: 'ویژه',
+  };
+
+  const badgeStyles: Record<string, string> = {
+    TRENDING: 'bg-warning/90 text-white',
+    NEW: 'bg-success/90 text-white',
+    FEATURED: 'bg-primary/90 text-white',
   };
 
   const viralProgress = Math.min(100, (saveCount / 100) * 100);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24" dir="rtl">
-      {/* Hero 3.0 — ارتفاع 220–240px */}
-      <div className="relative h-[230px] sm:h-[240px] bg-gradient-to-br from-gray-200 to-gray-300 rounded-b-3xl overflow-hidden">
+    <div className="min-h-screen bg-wibe-surface pb-24" dir="rtl">
+      {/* Hero */}
+      <div className="relative h-[230px] sm:h-[240px] bg-gray-200 rounded-b-lg overflow-hidden">
         <ImageWithFallback
           src={list.coverImage ?? ''}
           alt={list.title}
           className="w-full h-full object-cover"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="w-full h-full flex items-center justify-center text-6xl"
+          fallbackClassName="w-full h-full flex items-center justify-center text-6xl bg-gray-200"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-        {/* بالا راست: Back, Share, More */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
         <div className="absolute top-4 right-4 flex items-center gap-2">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-gray-700"
+            className="w-10 h-10 rounded-full bg-wibe-card/95 backdrop-blur flex items-center justify-center text-foreground shadow-sm"
             aria-label="بازگشت"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,49 +366,47 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           <button
             type="button"
             onClick={handleShare}
-            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-gray-700"
+            className="w-10 h-10 rounded-full bg-wibe-card/95 backdrop-blur flex items-center justify-center text-foreground shadow-sm"
             aria-label="اشتراک‌گذاری"
           >
             <Share2 className="w-5 h-5" />
           </button>
           <button
             type="button"
-            className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-gray-700"
+            className="w-10 h-10 rounded-full bg-wibe-card/95 backdrop-blur flex items-center justify-center text-foreground shadow-sm"
             aria-label="بیشتر"
           >
             <MoreVertical className="w-5 h-5" />
           </button>
         </div>
-        {/* بالا چپ: Save + Viral Badge */}
         <div className="absolute top-4 left-4 flex items-center gap-2">
           {isViral && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-bold bg-amber-500/90 text-white">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-white">
               <Flame className="w-3.5 h-3.5" /> وایرال
             </span>
           )}
           {session?.user && (
-            <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 rounded-full bg-wibe-card/95 backdrop-blur flex items-center justify-center shadow-sm">
               <BookmarkButton listId={list.id} initialBookmarkCount={saveCount} variant="icon" size="md" />
             </div>
           )}
         </div>
-        {/* Title Block */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 pb-6">
-          <h1 ref={titleRef} className="text-[30px] font-bold text-white leading-tight drop-shadow-lg">
+        <div className="absolute bottom-0 left-0 right-0 p-4 pb-5">
+          <h1 ref={titleRef} className="text-h1 font-bold text-white leading-tight">
             {list.title}
           </h1>
-          <p className="text-white/80 mt-1.5 text-[14px] leading-relaxed line-clamp-2">
+          <p className="text-white/85 mt-1.5 wibe-small leading-relaxed line-clamp-2">
             {list.description?.trim() || DESCRIPTION_PLACEHOLDER}
           </p>
           {list.badge && BADGE_LABELS[list.badge] && (
-            <span className="inline-flex mt-2 px-2.5 py-0.5 rounded-md text-xs font-medium bg-white/20 backdrop-blur text-white">
+            <span className={`inline-flex mt-2 px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-white/20 text-white'}`}>
               {BADGE_LABELS[list.badge]}
             </span>
           )}
           {list.categories && (
             <Link
               href={`/categories/${list.categories.slug}`}
-              className="inline-flex items-center gap-1 mt-2 mr-2 px-2.5 py-1 rounded-md text-xs font-medium bg-white/20 backdrop-blur text-white/95"
+              className="inline-flex items-center gap-1 mt-2 mr-2 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
             >
               {list.categories.icon} {list.categories.name}
             </Link>
@@ -416,30 +414,29 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
         </div>
       </div>
 
-      <main className="px-4 -mt-4 relative z-10">
-        {/* Creator Authority Block — کارت نیمه‌شفاف */}
-        <div className="flex items-center justify-between gap-4 p-4 -mt-2 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm">
+      <main className="px-4 pt-4 relative z-10 space-y-4">
+        <div className="flex items-center justify-between gap-4 p-4 rounded-lg bg-wibe-card border border-wibe shadow-sm">
           <Link
             href={creatorUsername ? `/u/${creatorUsername}` : '#'}
             className="flex items-center gap-4 min-w-0 flex-1"
           >
-            <div className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md bg-gray-100">
+            <div className="flex-shrink-0 w-14 h-14 rounded-full overflow-hidden border-2 border-wibe bg-gray-200">
               {creatorImage ? (
                 <ImageWithFallback
                   src={creatorImage}
                   alt={creatorName}
                   className="w-full h-full object-cover"
                   fallbackIcon={(creatorName?.[0] || '?').toUpperCase()}
-                  fallbackClassName="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white font-bold flex items-center justify-center"
+                  fallbackClassName="w-full h-full bg-primary text-white font-bold flex items-center justify-center"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#7C3AED] to-[#9333EA] text-white font-bold flex items-center justify-center text-xl">
+                <div className="w-full h-full bg-primary text-white font-bold flex items-center justify-center text-lg">
                   {(creatorName?.[0] || '?').toUpperCase()}
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-bold text-gray-900 truncate text-base">{creatorName}</p>
+              <p className="wibe-body font-semibold text-foreground truncate">{creatorName}</p>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <CuratorBadge
                   level={creatorLevel}
@@ -447,18 +444,15 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                   glow={creatorLevel === 'ELITE_CURATOR' || creatorLevel === 'VIBE_LEGEND'}
                 />
               </div>
-              <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+              <div className="flex items-center gap-3 mt-1.5 wibe-caption text-wibe-secondary">
                 {followersCount > 0 && (
-                  <span className="tabular-nums">{formatCompact(followersCount)} فالوئر</span>
+                  <span className="tabular-nums">{formatCompact(followersCount)} دنبال‌کننده</span>
                 )}
                 {followersCount === 0 && (
-                  <span className="text-amber-600">تازه شروع کرده ✨</span>
+                  <span className="text-warning">تازه شروع کرده</span>
                 )}
                 {viralListsCount > 0 && (
-                  <span>🔥 {viralListsCount} لیست وایرال</span>
-                )}
-                {totalLikesReceived >= 1000 && (
-                  <span>❤️ {formatCompact(totalLikesReceived)} لایک</span>
+                  <span>{viralListsCount} لیست ترند</span>
                 )}
               </div>
             </div>
@@ -467,7 +461,7 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
             isOwner ? (
               <Link
                 href={`/user-lists/${list.id}/add-item`}
-                className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-gray-200 font-medium text-sm text-gray-700 hover:bg-gray-50"
+                className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-wibe wibe-small font-medium text-foreground hover:bg-gray-50"
               >
                 <Pencil className="w-4 h-4" />
                 ویرایش
@@ -477,10 +471,10 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                 type="button"
                 onClick={handleFollowToggle}
                 disabled={followLoading}
-                className={`flex-shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 ${
+                className={`flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md wibe-small font-semibold transition-all disabled:opacity-50 ${
                   isFollowing
-                    ? 'bg-gray-100 text-gray-500'
-                    : 'bg-[#7C3AED] text-white shadow-md active:opacity-90'
+                    ? 'bg-gray-100 text-wibe-secondary'
+                    : 'bg-primary text-white active:opacity-90'
                 }`}
               >
                 {isFollowing ? (
@@ -491,7 +485,7 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                 ) : (
                   <>
                     <UserPlus className="w-4 h-4" />
-                    Follow
+                    دنبال کردن
                   </>
                 )}
               </button>
@@ -499,56 +493,54 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           )}
         </div>
 
-        {/* Social Momentum — 4 ستون، عدد 18px Bold */}
-        <div className="grid grid-cols-4 gap-2 py-6 border-b border-gray-100">
+        {/* آمار — ذخیره برجسته */}
+        <div className="grid grid-cols-4 gap-2 py-5 border-b border-wibe">
           <div className="text-center">
-            <p className="text-[18px] font-bold text-gray-900 tabular-nums">{formatCompact(saveCount)}</p>
-            <p className="text-[12px] text-gray-500 mt-0.5">ذخیره</p>
+            <p className="text-h3 font-bold text-primary tabular-nums">{formatCompact(saveCount)}</p>
+            <p className="wibe-caption text-wibe-secondary mt-0.5">ذخیره</p>
           </div>
           <div className="text-center">
-            <p className="text-[18px] font-bold text-gray-900 tabular-nums">{formatCompact(viewCount)}</p>
-            <p className="text-[12px] text-gray-500 mt-0.5">بازدید</p>
+            <p className="text-h3 font-bold text-foreground tabular-nums">{formatCompact(viewCount)}</p>
+            <p className="wibe-caption text-wibe-secondary mt-0.5">بازدید</p>
           </div>
           <div className="text-center">
-            <p className="text-[18px] font-bold text-gray-900 tabular-nums">{commentCount}</p>
-            <p className="text-[12px] text-gray-500 mt-0.5">نظر</p>
+            <p className="text-h3 font-bold text-foreground tabular-nums">{commentCount.toLocaleString('fa-IR')}</p>
+            <p className="wibe-caption text-wibe-secondary mt-0.5">نظر</p>
           </div>
           <div className="text-center">
-            <p className="text-[18px] font-bold text-gray-900 tabular-nums">{itemCount}</p>
-            <p className="text-[12px] text-gray-500 mt-0.5">آیتم</p>
+            <p className="text-h3 font-bold text-foreground tabular-nums">{itemCount.toLocaleString('fa-IR')}</p>
+            <p className="wibe-caption text-wibe-secondary mt-0.5">آیتم</p>
           </div>
         </div>
 
-        {/* Momentum Indicator */}
         {saveCount < 100 && (
-          <div className="pt-6 pb-2">
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
-              <span>🚀 تا رسیدن به لیست وایرال</span>
+          <div className="pt-4 pb-2">
+            <div className="flex items-center justify-between wibe-caption text-wibe-secondary mb-1.5">
+              <span>تا رسیدن به لیست وایرال</span>
               <span className="font-semibold tabular-nums">{Math.round(viralProgress)}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+                className="h-full rounded-full bg-warning transition-all duration-500"
                 style={{ width: `${viralProgress}%` }}
               />
             </div>
           </div>
         )}
         {isViral && (
-          <div className="py-3 px-4 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-2">
-            <Flame className="w-5 h-5 text-amber-500" />
-            <span className="text-sm font-medium text-amber-800">🔥 این لیست وایرال است!</span>
+          <div className="py-3 px-4 rounded-lg bg-warning/10 border border-warning/20 flex items-center gap-2">
+            <Flame className="w-5 h-5 text-warning" />
+            <span className="wibe-small font-medium text-foreground">این لیست وایرال است</span>
           </div>
         )}
 
-        {/* CTA Zone — ذخیره اصلی، Follow + Share فرعی */}
-        <div className="flex flex-col gap-3 pt-6 pb-6">
+        <div className="flex flex-col gap-3 pt-5 pb-5">
           {showLoginCTA ? (
             <>
-              <p className="text-sm text-gray-500 py-2">برای ذخیره وارد شو</p>
+              <p className="wibe-small text-wibe-secondary py-1">برای ذخیره وارد شو</p>
               <Link
                 href="/login"
-                className="w-full py-3 rounded-xl bg-[#7C3AED] text-white font-semibold text-center text-sm hover:opacity-90 transition-opacity"
+                className="w-full py-3 rounded-md bg-primary text-white font-semibold text-center wibe-small hover:bg-primary-dark transition-colors"
               >
                 ورود / ثبت‌نام
               </Link>
@@ -564,27 +556,24 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                 labelSaved="ذخیره شد"
                 onToggle={() => {}}
               />
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-gray-200 font-medium text-sm text-gray-700 hover:border-gray-300 transition-colors"
-                >
-                  <Share2 className="w-4 h-4" />
-                  اشتراک‌گذاری
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-md border border-wibe bg-wibe-card wibe-small font-medium text-foreground hover:bg-gray-50 transition-colors"
+              >
+                <Share2 className="w-4 h-4" />
+                اشتراک‌گذاری
+              </button>
             </>
           )}
         </div>
 
-        {/* Tag Chips — فقط تگ‌ها (دسته در هیرو است) */}
         {list.tags && list.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-6 pb-4">
+          <div className="flex flex-wrap gap-2 pt-2 pb-4">
             {list.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="inline-flex px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600"
+                className="inline-flex px-3 py-1.5 rounded-md wibe-caption font-medium bg-gray-100 text-wibe-secondary"
               >
                 {tag}
               </span>
@@ -592,35 +581,33 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           </div>
         )}
 
-        {/* Items section */}
-        <section className="mt-8">
+        <section className="mt-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-gray-800">آیتم‌های لیست</h2>
+            <h2 className="wibe-h3">آیتم‌های لیست</h2>
             {isOwner && (
               <Link
                 href={`/user-lists/${list.id}/add-item`}
-                className="text-sm text-primary font-medium"
+                className="wibe-small text-primary font-medium"
               >
-                ➕ افزودن آیتم
+                افزودن آیتم
               </Link>
             )}
           </div>
           {isOwner && list.items?.length > 0 && (
-            <p className="text-sm text-gray-500 mb-3 -mt-1">می‌تونی آیتم‌های جدید به این لیست اضافه کنی</p>
+            <p className="wibe-small text-wibe-secondary mb-3 -mt-1">می‌تونی آیتم‌های جدید به این لیست اضافه کنی</p>
           )}
 
-          {/* View toggle */}
           {list.items?.length > 0 && (
             <div className="flex items-center justify-end gap-2 mb-4">
-              <span className="text-sm text-gray-500">نمایش:</span>
-              <div className="flex rounded-lg border border-gray-200 p-0.5 bg-gray-50">
+              <span className="wibe-small text-wibe-secondary">نمایش:</span>
+              <div className="flex rounded-md border border-wibe p-0.5 bg-gray-100">
                 <button
                   type="button"
                   onClick={handleSetList}
                   title="نمایش لیستی"
                   aria-label="نمایش لیستی"
-                  className={`p-2 rounded-md text-lg leading-none transition-colors ${
-                    viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500'
+                  className={`p-2 rounded-sm text-lg leading-none transition-colors ${
+                    viewMode === 'list' ? 'bg-wibe-card shadow-sm text-primary' : 'text-wibe-secondary'
                   }`}
                 >
                   ≡
@@ -630,8 +617,8 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                   onClick={handleSetGrid}
                   title="نمایش گریدی"
                   aria-label="نمایش گریدی"
-                  className={`p-2 rounded-md text-lg leading-none transition-colors ${
-                    viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-500'
+                  className={`p-2 rounded-sm text-lg leading-none transition-colors ${
+                    viewMode === 'grid' ? 'bg-wibe-card shadow-sm text-primary' : 'text-wibe-secondary'
                   }`}
                 >
                   <span className="inline-flex gap-0.5 text-base" style={{ letterSpacing: '-0.2em' }}>⬛⬛</span>
@@ -640,27 +627,26 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
             </div>
           )}
 
-          {/* First-time grid hint */}
           {viewMode === 'grid' && gridHintVisible && (
-            <p className="text-xs text-gray-500 mb-3 text-center transition-opacity duration-500">
+            <p className="wibe-caption text-wibe-secondary mb-3 text-center transition-opacity duration-500">
               حالت گریدی برای مرور سریع‌تر آیتم‌ها
             </p>
           )}
 
           {!list.items?.length ? (
-            <div className="text-center py-12 bg-white rounded-2xl">
-              <p className="text-gray-600">
-                {viewMode === 'grid' ? 'این لیست هنوز آیتمی ندارد' : 'این لیست هنوز کامل نیست 🙂'}
+            <div className="text-center py-12 bg-wibe-card rounded-lg border border-wibe">
+              <p className="wibe-body text-wibe-secondary">
+                {viewMode === 'grid' ? 'این لیست هنوز آیتمی ندارد' : 'این لیست هنوز کامل نیست'}
               </p>
               {viewMode === 'grid' && (
-                <p className="text-sm text-gray-500 mt-1">با اضافه کردن آیتم‌ها، این لیست شکل می‌گیرد</p>
+                <p className="wibe-small text-wibe-secondary mt-1">با اضافه کردن آیتم‌ها، این لیست شکل می‌گیرد</p>
               )}
               {isOwner && (
                 <Link
                   href={`/user-lists/${list.id}/add-item`}
-                  className="inline-block mt-4 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors"
+                  className="inline-block mt-4 px-5 py-2.5 rounded-md bg-primary text-white wibe-small font-medium hover:bg-primary-dark transition-colors"
                 >
-                  {viewMode === 'grid' ? '➕ افزودن اولین آیتم' : '➕ افزودن آیتم'}
+                  افزودن {viewMode === 'grid' ? 'اولین آیتم' : 'آیتم'}
                 </Link>
               )}
             </div>
@@ -679,38 +665,35 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
                   <Link
                     key={item.id}
                     href={`/items/${item.id}`}
-                    className={`flex gap-4 items-center bg-white rounded-xl p-4 shadow-sm hover:shadow-md active:bg-gray-50 transition-all border border-gray-100 min-h-[72px] ${
+                    className={`flex gap-4 items-center bg-wibe-card rounded-lg p-3 border border-wibe shadow-sm active:scale-[0.99] transition-transform min-h-[72px] ${
                       isSimilar ? 'opacity-85' : ''
                     }`}
                   >
-                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-medium">
+                    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 text-wibe-secondary flex items-center justify-center wibe-caption font-medium">
                       {index + 1}
                     </div>
-                    <div className="relative w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                    <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-gray-200">
                       <ImageWithFallback
                         src={item.imageUrl ?? ''}
                         alt={item.title}
                         className="w-full h-full object-cover"
                         fallbackIcon="📋"
-                        fallbackClassName="w-full h-full flex items-center justify-center text-xl"
+                        fallbackClassName="w-full h-full flex items-center justify-center text-xl bg-gray-200"
                         placeholderSize="square"
-                        imageFolder="items"
-                      />
+            />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-[0.9375rem] line-clamp-1">
+                      <h3 className="wibe-small font-semibold text-foreground line-clamp-1">
                         {item.title}
                         {isSimilar && (
-                          <span className="text-xs font-normal text-gray-400 mr-1">(مشابه)</span>
+                          <span className="wibe-caption font-normal text-wibe-secondary mr-1">(مشابه)</span>
                         )}
                       </h3>
-                      <p className="text-sm text-gray-400 line-clamp-1 mt-0.5">
-                        {item.description
-                          ? item.description
-                          : item.rating > 0
-                            ? `⭐ ${item.rating}`
-                            : ''}
-                      </p>
+                      {(item.description || item.rating > 0) && (
+                        <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">
+                          {item.description || (item.rating > 0 ? `امتیاز ${item.rating}` : '')}
+                        </p>
+                      )}
                     </div>
                   </Link>
                 );
@@ -719,47 +702,45 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
           )}
         </section>
 
-        {/* Visual separation + Bottom section — large spacing, lighter weight */}
-        <div className="mt-16 pt-8">
-          {/* Reuse CTA card — soft, does not compete with items */}
-          <section className="rounded-2xl bg-gray-100/70 p-5 shadow-sm border border-gray-100/80">
+        <div className="mt-12 pt-6">
+          <section className="rounded-lg bg-gray-100/80 p-5 border border-wibe">
             {isOwner ? (
               <>
-                <h2 className="text-base font-semibold text-gray-800 mb-2">این لیست مال توئه</h2>
+                <h2 className="wibe-h3 mb-2">این لیست مال توئه</h2>
                 <Link
                   href={`/admin/lists/${list.id}/edit`}
-                  className="inline-flex items-center gap-2 py-2.5 px-4 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors"
+                  className="inline-flex items-center gap-2 py-2.5 px-4 rounded-md bg-primary text-white wibe-small font-medium hover:bg-primary-dark transition-colors"
                 >
-                  ✏️ ویرایش لیست
+                  <Pencil className="w-4 h-4" />
+                  ویرایش لیست
                 </Link>
               </>
             ) : (
               <>
-                <h2 className="text-base font-semibold text-gray-800 mb-1">✨ این لیست رو مال خودت کن</h2>
-                <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+                <h2 className="wibe-h3 mb-1">این لیست رو مال خودت کن</h2>
+                <p className="wibe-small text-wibe-secondary mb-4">
                   می‌تونی ویرایشش کنی، آیتم اضافه کنی یا نسخه شخصی خودت رو بسازی
                 </p>
                 <Link
                   href="/user-lists"
-                  className="block w-full py-3 px-4 rounded-xl bg-primary text-white font-medium text-center hover:bg-primary-dark transition-colors mb-3"
+                  className="block w-full py-3 px-4 rounded-md bg-primary text-white font-medium text-center wibe-small hover:bg-primary-dark transition-colors mb-3"
                 >
-                  🧩 ساخت نسخه خودم
+                  ساخت نسخه خودم
                 </Link>
                 <Link
                   href="/user-lists"
-                  className="text-sm text-gray-500 hover:text-primary transition-colors inline-block"
+                  className="wibe-small text-wibe-secondary hover:text-primary transition-colors inline-block"
                 >
-                  + اضافه به لیست‌هام
+                  اضافه به لیست‌هام
                 </Link>
               </>
             )}
           </section>
 
-          {/* Similar lists — lightest section, compact */}
           {relatedLists.length > 0 && (
-            <section className="mt-10">
-              <h2 className="text-base font-semibold text-gray-800 mb-0.5">لیست‌های مشابه</h2>
-              <p className="text-xs text-gray-400 mb-3">ممکنه این‌ها هم به کارت بیان</p>
+            <section className="mt-8">
+              <h2 className="wibe-h3">لیست‌های مشابه</h2>
+              <p className="wibe-caption text-wibe-secondary mb-3 mt-0.5">ممکنه این‌ها هم به کارت بیان</p>
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
                 {relatedLists.map((rel) => (
                   <SimilarListCard key={rel.id} rel={rel} />
@@ -807,26 +788,28 @@ export default function ListDetailClient({ list, relatedLists, openSuggestFromQu
         />
       )}
 
-      {/* Sticky save bar — فاصله 24px از bottom nav */}
       {showStickyBar && session?.user && (
-        <div className="fixed bottom-24 left-4 right-4 z-30 flex justify-center">
-          <button
-            type="button"
-            disabled={stickySaving}
-            onClick={async () => {
-              setStickySaving(true);
-              try {
-                const res = await fetch(`/api/lists/${list.id}/bookmark`, { method: 'POST' });
-                const data = await res.json();
-                if (data?.success && data.data?.isBookmarked) setIsBookmarked(true);
-              } finally {
-                setStickySaving(false);
-              }
-            }}
-            className="w-full max-w-sm py-3 px-6 rounded-xl bg-primary text-white font-medium shadow-lg hover:bg-primary-dark transition-colors disabled:opacity-70"
-          >
-            ⭐ ذخیره این لیست
-          </button>
+        <div className="fixed bottom-24 left-0 right-0 z-30 flex justify-center px-4">
+          <div className={`w-full ${MOBILE_SHELL_MAX_WIDTH_CLASS}`}>
+            <button
+              type="button"
+              disabled={stickySaving}
+              onClick={async () => {
+                setStickySaving(true);
+                try {
+                  const res = await fetch(`/api/lists/${list.id}/bookmark`, { method: 'POST' });
+                  const data = await res.json();
+                  if (data?.success && data.data?.isBookmarked) setIsBookmarked(true);
+                } finally {
+                  setStickySaving(false);
+                }
+              }}
+              className="w-full py-3 px-6 rounded-md bg-primary text-white font-semibold wibe-small shadow-lg hover:bg-primary-dark transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+            >
+              <Bookmark className="w-4 h-4" />
+              ذخیره این لیست
+            </button>
+          </div>
         </div>
       )}
 

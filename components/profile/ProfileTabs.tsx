@@ -36,7 +36,7 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
 
   return (
     <div className="mt-6">
-      <div className="sticky top-0 z-10 bg-[#fafafa]/95 backdrop-blur border-b border-gray-200/80 -mx-4 px-4 pb-0">
+      <div className="sticky top-0 z-10 bg-wibe-surface/95 backdrop-blur border-b border-wibe -mx-4 px-4 pb-0">
         <div className="flex gap-1 relative">
           {TABS.map((tab, index) => {
             const Icon = tab.icon;
@@ -48,10 +48,9 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
                   tabRefs.current[index] = r;
                 }}
                 onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center gap-2 px-4 py-3.5 rounded-t-xl whitespace-nowrap transition-all duration-200
-                  ${isActive ? 'text-primary font-bold text-base' : 'text-gray-500 font-medium text-sm hover:text-gray-700'}
-                `}
+                className={`flex items-center gap-2 px-4 py-3.5 rounded-t-md whitespace-nowrap transition-all duration-200 ${
+                  isActive ? 'text-primary font-bold wibe-body' : 'text-wibe-secondary font-medium wibe-small'
+                }`}
               >
                 <Icon className={isActive ? 'w-5 h-5' : 'w-4 h-4'} />
                 {tab.label}
@@ -59,7 +58,7 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
             );
           })}
           <div
-            className="absolute bottom-0 h-[3px] bg-gradient-to-r from-[#7C3AED] to-[#9333EA] rounded-full transition-all duration-300 ease-out"
+            className="absolute bottom-0 h-[3px] bg-primary rounded-full transition-all duration-300 ease-out"
             style={{
               left: indicatorStyle.left,
               width: indicatorStyle.width,

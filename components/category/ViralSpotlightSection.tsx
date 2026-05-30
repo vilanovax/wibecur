@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCardStats from '@/components/shared/ListCardStats';
+import CategorySectionTitle from './CategorySectionTitle';
 import type { CategoryListCard } from '@/types/category-page';
 
 interface ViralSpotlightSectionProps {
@@ -11,20 +13,13 @@ interface ViralSpotlightSectionProps {
 
 export default function ViralSpotlightSection({
   list,
-  accentColor = '#EF4444',
 }: ViralSpotlightSectionProps) {
   return (
     <section className="px-4 py-6">
-      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-        <span>⭐</span>
-        وایرال این هفته
-      </h2>
-      <Link href={`/lists/${list.slug}`} className="block">
-        <div
-          className="rounded-2xl overflow-hidden border-2 shadow-lg active:scale-[0.99] transition-transform"
-          style={{ borderColor: `${accentColor}40` }}
-        >
-          <div className="relative aspect-video bg-gray-100">
+      <CategorySectionTitle title="وایرال این هفته" icon="🔥" />
+      <Link href={`/lists/${list.slug}`} className="block active:scale-[0.99] transition-transform">
+        <div className="rounded-lg overflow-hidden border border-wibe shadow-card bg-wibe-card">
+          <div className="relative aspect-video bg-gray-200">
             {list.coverImage ? (
               <ImageWithFallback
                 src={list.coverImage}
@@ -32,34 +27,21 @@ export default function ViralSpotlightSection({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div
-                className="w-full h-full flex items-center justify-center text-5xl opacity-40"
-                style={{ backgroundColor: `${accentColor}20` }}
-              >
+              <div className="w-full h-full flex items-center justify-center text-5xl opacity-40 bg-gray-200">
                 📋
               </div>
             )}
-            <div
-              className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
-            />
-            <span
-              className="absolute top-3 right-3 bg-red-500/90 text-white text-xs px-2 py-1 rounded-lg font-bold"
-            >
-              🚀 Viral
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <span className="absolute top-3 right-3 bg-warning text-white wibe-caption px-2 py-1 rounded-pill font-semibold">
+              وایرال
             </span>
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="font-bold text-white text-lg drop-shadow-lg">
-                {list.title}
-              </h3>
-              <p className="text-sm text-white/90 mt-0.5">
-                {list.saveCount} ذخیره • {list.likeCount} لایک
-              </p>
+              <h3 className="wibe-h3 text-white line-clamp-2">{list.title}</h3>
+              <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="overlay" className="mt-1" />
             </div>
           </div>
-          <div className="p-3 bg-white">
-            <p className="text-xs text-gray-600 text-center">
-              ببین چرا وایرال شده →
-            </p>
+          <div className="p-3">
+            <p className="wibe-caption text-wibe-secondary text-center">ببین چرا وایرال شده</p>
           </div>
         </div>
       </Link>

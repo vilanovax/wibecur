@@ -116,24 +116,28 @@ export async function GET() {
     });
     response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     return response;
-  } catch (error: any) {
-    const msg = String(error?.message ?? '');
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+    const msg = String(err?.message ?? '');
     const isDbUnavailable =
-      error?.code === 'P1001' ||
+      err?.code === 'P1001' ||
       msg.includes("Can't reach database") ||
       msg.includes('connection refused') ||
-      msg.includes('ECONNREFUSED');
+      msg.includes('ECONNREFUSED') ||
+      msg.includes('Invalid value undefined for datasource') ||
+      msg.includes('PrismaClient') ||
+      (process.env.NODE_ENV === 'development' && msg.toLowerCase().includes('connection'));
 
-    if (isDbUnavailable) {
-      console.warn('Database unavailable, returning empty home data:', msg);
+    if (isDbUnavailable || process.env.NODE_ENV === 'development') {
+      console.warn('Home lists error (returning empty in dev or DB down):', msg);
       return NextResponse.json({
         success: true,
-        data: { featured: null, trending: [], rising: [], recommendations: [] },
+        data: { featured: null, featuredSlotId: null, trending: [], rising: [], recommendations: [] },
       });
     }
     console.error('Error fetching home lists:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در دریافت لیست‌ها' },
+      { success: false, error: err?.message ?? 'خطا در دریافت لیست‌ها' },
       { status: 500 }
     );
   }

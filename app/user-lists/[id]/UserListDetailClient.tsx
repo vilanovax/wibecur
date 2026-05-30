@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { Settings, Trash2, X } from 'lucide-react';
+import { Settings, Trash2, Share2 } from 'lucide-react';
+import { Bookmark, Package, Eye } from 'lucide-react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import ListCommentSection from '@/components/mobile/lists/ListCommentSection';
 import PersonalListSettingsModal from '@/components/mobile/profile/PersonalListSettingsModal';
@@ -103,129 +104,103 @@ export default function UserListDetailClient({
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Header with Settings Button */}
-        <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
+      <div className="min-h-screen bg-wibe-surface pb-20">
+        <div className="sticky top-0 z-40 bg-wibe-card border-b border-wibe">
           <div className="flex items-center justify-between px-4 py-3">
-            <Link href="/profile" className="text-gray-700">
-              ← بازگشت
+            <Link href="/profile" className="wibe-small text-wibe-secondary">
+              بازگشت
             </Link>
-            <h1 className="text-lg font-bold text-gray-900">{list.title}</h1>
-            {isOwner && (
+            <h1 className="wibe-h3 truncate max-w-[50%]">{list.title}</h1>
+            {isOwner ? (
               <button
                 onClick={() => setShowSettings(true)}
                 className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
                 aria-label="تنظیمات لیست"
               >
-                <Settings className="w-5 h-5 text-gray-700" />
+                <Settings className="w-5 h-5 text-wibe-secondary" />
               </button>
+            ) : (
+              <div className="w-10" />
             )}
-            {!isOwner && <div className="w-10" />}
           </div>
         </div>
 
         <main className="space-y-6">
-          {/* Cover Image */}
           {list.coverImage && (
-            <div className="relative h-64 bg-gradient-to-br from-purple-100 to-blue-100">
-              <ImageWithFallback
-                src={list.coverImage}
-                alt={list.title}
-                className="w-full h-full object-cover"
-                imageFolder="covers"
-              />
+            <div className="relative h-56 bg-gray-200">
+              <ImageWithFallback src={list.coverImage} alt={list.title} className="w-full h-full object-cover" />
             </div>
           )}
 
-          {/* Info Section */}
           <div className="px-4 space-y-4">
-            {/* Category */}
             {list.categories && (
               <Link
                 href={`/categories/${list.categories.slug}`}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-gray-200 hover:border-primary transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md wibe-small font-medium border border-wibe bg-wibe-card"
               >
-                <span className="text-lg">{list.categories.icon}</span>
+                <span>{list.categories.icon}</span>
                 <span>{list.categories.name}</span>
               </Link>
             )}
 
-            {/* Title & Description */}
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                {list.title}
-              </h1>
-              {list.description && (
-                <p className="text-gray-600 leading-relaxed">
-                  {list.description}
-                </p>
-              )}
+              <h1 className="wibe-h2 text-foreground mb-2">{list.title}</h1>
+              {list.description && <p className="wibe-body text-wibe-secondary leading-relaxed">{list.description}</p>}
             </div>
 
-            {/* Stats */}
-            <div className="flex items-center gap-6 text-sm text-gray-600">
-              <span className="flex items-center gap-1">
-                <span>📋</span>
-                <span>{items.length} آیتم</span>
+            <div className="flex items-center gap-4 wibe-small text-wibe-secondary">
+              <span className="inline-flex items-center gap-1">
+                <Package className="w-4 h-4" />
+                {items.length} آیتم
               </span>
-              <span className="flex items-center gap-1">
-                <span>❤️</span>
-                <span>{list.likeCount ?? 0}</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <span>⭐</span>
-                <span>{list.saveCount ?? 0}</span>
+              <span className="inline-flex items-center gap-1 text-primary font-medium">
+                <Bookmark className="w-4 h-4" />
+                {list.saveCount ?? 0} ذخیره
               </span>
               {list.isPublic && (
-                <span className="flex items-center gap-1">
-                  <span>👁</span>
-                  <span>{list.viewCount ?? 0}</span>
+                <span className="inline-flex items-center gap-1">
+                  <Eye className="w-4 h-4" />
+                  {list.viewCount ?? 0}
                 </span>
               )}
             </div>
 
-            {/* Action Buttons */}
             {list.isPublic && (
               <div className="flex gap-3">
-                <BookmarkButton
-                  listId={list.id}
-                  initialBookmarkCount={list.saveCount ?? 0}
-                  variant="button"
-                  size="md"
-                />
-                <button className="px-6 py-3 bg-white border-2 border-gray-200 rounded-xl font-medium hover:border-primary transition-colors">
-                  📤
+                <BookmarkButton listId={list.id} initialBookmarkCount={list.saveCount ?? 0} variant="button" size="md" />
+                <button
+                  type="button"
+                  className="px-4 py-3 bg-wibe-card border border-wibe rounded-md flex items-center justify-center"
+                  aria-label="اشتراک"
+                >
+                  <Share2 className="w-5 h-5 text-wibe-secondary" />
                 </button>
               </div>
             )}
           </div>
 
-          {/* Items List */}
           <div className="px-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">
-                آیتم‌های لیست ({items.length})
-              </h2>
+              <h2 className="wibe-h3">آیتم‌های لیست ({items.length})</h2>
               {isOwner && (
                 <Link
                   href={`/user-lists/${list.id}/add-item`}
-                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors"
+                  className="px-4 py-2 bg-primary text-white rounded-md wibe-small font-medium hover:bg-primary-dark transition-colors"
                 >
-                  ➕ افزودن آیتم
+                  افزودن آیتم
                 </Link>
               )}
             </div>
 
             {items.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-2xl">
-                <div className="text-5xl mb-3">📋</div>
-                <p className="text-gray-600">هنوز آیتمی اضافه نشده است</p>
+              <div className="text-center py-12 bg-wibe-card rounded-lg border border-wibe">
+                <p className="wibe-body text-wibe-secondary">هنوز آیتمی اضافه نشده است</p>
                 {isOwner && (
                   <Link
                     href={`/user-lists/${list.id}/add-item`}
-                    className="mt-4 inline-block px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors"
+                    className="mt-4 inline-block px-6 py-2 bg-primary text-white rounded-md wibe-small font-medium"
                   >
-                    ➕ افزودن اولین آیتم
+                    افزودن اولین آیتم
                   </Link>
                 )}
               </div>
@@ -234,63 +209,36 @@ export default function UserListDetailClient({
                 {items.map((item, index) => (
                   <div
                     key={item.id}
-                    className="relative bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all"
+                    className="relative bg-wibe-card rounded-lg p-3 border border-wibe shadow-sm"
                   >
                     {isOwner && (
                       <button
                         onClick={() => {
-                          if (
-                            confirm(
-                              'آیا مطمئن هستید که می‌خواهید این آیتم را حذف کنید؟'
-                            )
-                          ) {
+                          if (confirm('آیا مطمئن هستید که می‌خواهید این آیتم را حذف کنید؟')) {
                             handleDeleteItem(item.id);
                           }
                         }}
                         disabled={isDeleting}
-                        className="absolute top-2 left-2 z-10 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md disabled:opacity-50"
+                        className="absolute top-2 left-2 z-10 w-8 h-8 bg-danger text-white rounded-full flex items-center justify-center disabled:opacity-50"
                         aria-label="حذف آیتم"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     )}
-                    <Link
-                      href={`/items/${item.id}`}
-                      className="block"
-                    >
-                      <div className="flex gap-4">
-                        {/* Number */}
-                        <div className="flex-shrink-0 w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold">
+                    <Link href={`/items/${item.id}`} className="block">
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-9 h-9 bg-primary/10 text-primary rounded-full flex items-center justify-center wibe-small font-bold">
                           {index + 1}
                         </div>
-
-                        {/* Image */}
                         {item.imageUrl && (
-                          <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
-                            <ImageWithFallback
-                              src={item.imageUrl}
-                              alt={item.title}
-                              className="w-full h-full object-cover"
-                              imageFolder="items"
-                            />
+                          <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-gray-200">
+                            <ImageWithFallback src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                           </div>
                         )}
-
-                        {/* Content */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-gray-900 mb-1">
-                            {item.title}
-                          </h3>
+                          <h3 className="wibe-small font-semibold text-foreground mb-1">{item.title}</h3>
                           {item.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">
-                              {item.description}
-                            </p>
-                          )}
-                          {item.externalUrl && (
-                            <div className="inline-flex items-center gap-1 text-xs text-primary mt-1">
-                              <span>🔗</span>
-                              <span>اطلاعات بیشتر</span>
-                            </div>
+                            <p className="wibe-caption text-wibe-secondary line-clamp-2">{item.description}</p>
                           )}
                         </div>
                       </div>
@@ -301,26 +249,21 @@ export default function UserListDetailClient({
             )}
           </div>
 
-          {/* Creator Info */}
           {list.isPublic && (
-            <div className="px-4 py-6 bg-white mx-4 rounded-2xl">
+            <div className="px-4 py-4 bg-wibe-card mx-4 rounded-lg border border-wibe">
               <div className="flex items-center gap-3">
                 {list.users.image ? (
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden">
-                    <ImageWithFallback
-                      src={list.users.image}
-                      alt={list.users.name || list.users.email}
-                      className="object-cover w-full h-full"
-                    />
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                    <ImageWithFallback src={list.users.image} alt={list.users.name || list.users.email} className="object-cover w-full h-full" />
                   </div>
                 ) : (
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
                     {(list.users.name || list.users.email).charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-gray-500">ایجاد شده توسط</p>
-                  <p className="font-medium text-gray-900">
+                  <p className="wibe-caption text-wibe-secondary">ایجاد شده توسط</p>
+                  <p className="wibe-small font-medium text-foreground">
                     {list.users.name || list.users.email.split('@')[0]}
                   </p>
                 </div>
@@ -328,7 +271,6 @@ export default function UserListDetailClient({
             </div>
           )}
 
-          {/* Comments Section */}
           {list.isPublic && list.commentsEnabled && (
             <div className="px-4">
               <ListCommentSection listId={list.id} />
