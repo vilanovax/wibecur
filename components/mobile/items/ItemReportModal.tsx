@@ -1,7 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Shield, Lock, Check, CheckCircle2, FileWarning, AlertTriangle, Megaphone, FolderX, Copy, MessageCircle } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Shield,
+  Lock,
+  Check,
+  CheckCircle2,
+  FileWarning,
+  AlertTriangle,
+  Megaphone,
+  FolderX,
+  Copy,
+  MessageCircle,
+  Loader2,
+} from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 
 const REPORT_REASONS = [
@@ -14,31 +26,31 @@ const REPORT_REASONS = [
   {
     id: 'offensive',
     label: 'محتوای توهین‌آمیز',
-    description: 'شامل زبان نامناسب یا آزاردهنده است',
+    description: 'زبان نامناسب یا آزاردهنده',
     icon: AlertTriangle,
   },
   {
     id: 'spam',
-    label: 'اسپم یا تبلیغ ناخواسته',
+    label: 'اسپم یا تبلیغ',
     description: 'محتوای تبلیغاتی یا غیرمرتبط',
     icon: Megaphone,
   },
   {
     id: 'wrong_category',
     label: 'دسته‌بندی اشتباه',
-    description: 'آیتم در دسته اشتباه قرار دارد',
+    description: 'آیتم در دسته نادرست است',
     icon: FolderX,
   },
   {
     id: 'duplicate',
-    label: 'محتوای کپی یا تکراری',
+    label: 'محتوای تکراری',
     description: 'این آیتم قبلاً ثبت شده',
     icon: Copy,
   },
   {
     id: 'other',
     label: 'سایر',
-    description: 'دلیل دیگری دارید؟',
+    description: 'دلیل دیگری دارید',
     icon: MessageCircle,
   },
 ] as const;
@@ -63,6 +75,41 @@ export default function ItemReportModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  const resetForm = useCallback(() => {
+    setSelectedReason(null);
+    setDescription('');
+    setError(null);
+    setIsSuccess(false);
+    setIsSubmitting(false);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen, resetForm]);
+
+  useEffect(() => {
+    if (selectedReason === 'other') {
+      requestAnimationFrame(() => descriptionRef.current?.focus());
+    }
+  }, [selectedReason]);
+
+  const canSubmit =
+    !!selectedReason &&
+    !isSubmitting &&
+    (selectedReason !== 'other' || description.trim().length > 0);
+
+  const handleSelectReason = (reasonId: string) => {
+    if (isSubmitting) return;
+    setSelectedReason(reasonId);
+    setError(null);
+    if (reasonId !== 'other') {
+      setDescription('');
+    }
+  };
 
   const handleSubmit = async () => {
     if (!selectedReason) {
@@ -70,7 +117,7 @@ export default function ItemReportModal({
       return;
     }
     if (selectedReason === 'other' && !description.trim()) {
-      setError('لطفاً توضیحات را وارد کنید');
+      setError('لطفاً توضیح کوتاهی بنویسید');
       return;
     }
 
@@ -95,9 +142,9 @@ export default function ItemReportModal({
 
       setIsSuccess(true);
       onReportSuccess?.();
-      setTimeout(() => {
+      window.setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 1400);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'خطا در ثبت گزارش');
     } finally {
@@ -106,48 +153,44 @@ export default function ItemReportModal({
   };
 
   const handleClose = () => {
-    if (!isSubmitting) {
-      setSelectedReason(null);
-      setDescription('');
-      setError(null);
-      setIsSuccess(false);
-      onClose();
-    }
+    if (isSubmitting) return;
+    resetForm();
+    onClose();
   };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={handleClose}>
-      <div className="flex flex-col min-h-0 p-6 pb-8 overflow-y-auto">
-        {/* ——— 1️⃣ Header (امنیت + ناشناس) ——— */}
-        <div className="flex items-start justify-between gap-3 mb-6">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="p-2 rounded-xl bg-red-50 text-red-500 flex-shrink-0" aria-hidden>
-              <Shield className="w-6 h-6" strokeWidth={2} />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-lg font-bold text-gray-900 leading-snug">
-                کمک کن وایب سالم بماند 🛡
-              </h2>
-              <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                گزارش شما به صورت ناشناس بررسی می‌شود.
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="گزارش آیتم"
+      subtitle="گزارش شما ناشناس بررسی می‌شود."
+      maxHeight="88vh"
+    >
+      {isSuccess ? (
+        <div className="flex flex-col items-center justify-center px-6 py-10 animate-in fade-in zoom-in-95 duration-300">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <CheckCircle2 className="h-9 w-9 text-green-600" strokeWidth={2} />
+          </div>
+          <p className="text-center text-base font-medium leading-relaxed text-foreground">
+            گزارش ثبت شد
+          </p>
+          <p className="mt-1 text-center text-sm text-wibe-secondary">
+            از کمکت ممنونیم — تیم ما بررسی می‌کند.
+          </p>
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-1">
+            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50/70 px-3 py-2.5">
+              <Shield className="mt-0.5 h-4 w-4 shrink-0 text-red-500" aria-hidden />
+              <p className="text-xs leading-relaxed text-wibe-secondary">
+                اگر این آیتم مشکل دارد، به ما بگو تا وایب برای همه سالم بماند.
               </p>
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 flex-shrink-0"
-            aria-label="بستن"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
 
-        {!isSuccess ? (
-          <>
-            {/* ——— 2️⃣ گزینه‌های گزارش (کارت‌استایل) ——— */}
-            <div className="space-y-2.5 mb-5">
+            <p className="mb-2.5 text-sm font-medium text-foreground">دلیل گزارش</p>
+
+            <div className="space-y-2" role="radiogroup" aria-label="دلیل گزارش">
               {REPORT_REASONS.map((reason) => {
                 const Icon = reason.icon;
                 const isSelected = selectedReason === reason.id;
@@ -155,99 +198,97 @@ export default function ItemReportModal({
                   <button
                     key={reason.id}
                     type="button"
-                    onClick={() => setSelectedReason(reason.id)}
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => handleSelectReason(reason.id)}
                     disabled={isSubmitting}
-                    className={`w-full text-right p-4 rounded-2xl border transition-all duration-200 flex items-center gap-3 disabled:opacity-50 ${
+                    className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-right transition-all duration-150 disabled:opacity-50 ${
                       isSelected
                         ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm'
+                        : 'border-wibe bg-wibe-card hover:border-gray-300'
                     }`}
                   >
-                    <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600">
-                      <Icon className="w-5 h-5" strokeWidth={2} />
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                        isSelected ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" strokeWidth={2} />
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900">{reason.label}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{reason.description}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-foreground">{reason.label}</div>
+                      <div className="mt-0.5 text-xs text-wibe-secondary">{reason.description}</div>
                     </div>
-                    {isSelected && (
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                      </span>
-                    )}
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                        isSelected
+                          ? 'border-primary bg-primary'
+                          : 'border-gray-300 bg-white'
+                      }`}
+                      aria-hidden
+                    >
+                      {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            {/* ——— توضیحات «سایر» (با انیمیشن باز شدن) ——— */}
             {selectedReason === 'other' && (
-              <div className="mb-5 animate-in fade-in slide-in-from-top-2 duration-200">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  توضیح (اختیاری)
+              <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <label htmlFor="report-description" className="mb-1.5 block text-sm font-medium text-foreground">
+                  توضیح کوتاه <span className="text-red-500">*</span>
                 </label>
                 <textarea
+                  id="report-description"
+                  ref={descriptionRef}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX_LENGTH))}
+                  onChange={(e) => {
+                    setDescription(e.target.value.slice(0, DESCRIPTION_MAX_LENGTH));
+                    if (error) setError(null);
+                  }}
                   rows={3}
-                  placeholder="دلیل خود را در چند کلمه بنویسید..."
+                  placeholder="مثلاً: عنوان با محتوای واقعی مطابقت ندارد..."
                   disabled={isSubmitting}
-                  className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none text-sm transition-colors disabled:opacity-50"
+                  className="w-full resize-none rounded-xl border border-wibe bg-gray-50/50 px-3 py-2.5 text-sm transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                 />
-                <p className="text-xs text-gray-400 mt-1 text-left">
-                  {description.length}/{DESCRIPTION_MAX_LENGTH}
+                <p className="mt-1 text-left text-xs tabular-nums text-gray-400">
+                  {description.length.toLocaleString('fa-IR')}/
+                  {DESCRIPTION_MAX_LENGTH.toLocaleString('fa-IR')}
                 </p>
               </div>
             )}
 
-            {/* ——— خطا ——— */}
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100">
+              <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
+          </div>
 
-            {/* ——— 3️⃣ CTA ارسال گزارش ——— */}
+          <div className="shrink-0 border-t border-wibe bg-wibe-card px-4 pb-6 pt-3">
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={
-                isSubmitting ||
-                !selectedReason ||
-                (selectedReason === 'other' && !description.trim())
-              }
-              className="w-full py-4 rounded-2xl font-medium text-white bg-primary hover:bg-primary-dark focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+              disabled={!canSubmit}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   <span>در حال ارسال...</span>
                 </>
               ) : (
                 <span>ارسال گزارش</span>
               )}
             </button>
-          </>
-        ) : (
-          /* ——— Success State ——— */
-          <div className="flex flex-col items-center justify-center py-8 animate-in fade-in zoom-in-95 duration-300">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-9 h-9 text-green-600" strokeWidth={2} />
+            <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span>هویت شما برای سازنده آیتم نمایش داده نمی‌شود.</span>
             </div>
-            <p className="text-center text-gray-800 font-medium leading-relaxed">
-              گزارش شما ثبت شد. از کمک شما ممنونیم 🌱
-            </p>
           </div>
-        )}
-
-        {/* ——— 4️⃣ اطمینان حریم خصوصی (همیشه در پایین) ——— */}
-        {!isSuccess && (
-          <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-center gap-2 text-xs text-gray-400">
-            <Lock className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>هویت شما برای سازنده آیتم نمایش داده نمی‌شود.</span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </BottomSheet>
   );
 }

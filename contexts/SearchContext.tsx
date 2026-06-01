@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import SearchOverlay from '@/components/mobile/search/SearchOverlay';
 
 export type SearchOpenOptions = {
@@ -35,6 +35,26 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     () => ({ openSearch, closeSearch, isOpen }),
     [openSearch, closeSearch, isOpen]
   );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'k') return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.isContentEditable ||
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT')
+      ) {
+        return;
+      }
+      e.preventDefault();
+      openSearch();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [openSearch]);
 
   return (
     <SearchContext.Provider value={value}>

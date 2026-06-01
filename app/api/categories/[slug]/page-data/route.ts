@@ -1,22 +1,6 @@
 import { NextResponse } from 'next/server';
-import { unstable_cache } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-import { dbQuery } from '@/lib/db';
-import { getCategoryPageData } from '@/lib/category-page-data';
-
-function isLikelyCuid(param: string): boolean {
-  return param.length >= 20 && param.length <= 30 && /^[a-z0-9]+$/i.test(param);
-}
-
-const FILM_SLUG_ALIASES = ['movie', 'movies', 'film'];
-const BOOK_SLUG_ALIASES = ['book', 'books'];
-
-function resolveCategorySlug(slug: string): string[] {
-  if (FILM_SLUG_ALIASES.includes(slug)) return FILM_SLUG_ALIASES;
-  if (BOOK_SLUG_ALIASES.includes(slug)) return BOOK_SLUG_ALIASES;
-  return [];
-}
-const CACHE_SECONDS = 300; // 5 min
+import { resolveCategoryBySlug } from '@/lib/category-resolve';
+import { getCachedCategoryPageData } from '@/lib/category-page-cached';
 
 export async function GET(
   _request: Request,
@@ -28,39 +12,12 @@ export async function GET(
       return NextResponse.json({ error: 'دسته نامعتبر است' }, { status: 400 });
     }
 
-    let category = await dbQuery(() =>
-      isLikelyCuid(slug)
-        ? prisma.categories.findUnique({
-            where: { id: slug, isActive: true },
-            select: { id: true },
-          })
-        : prisma.categories.findUnique({
-            where: { slug, isActive: true },
-            select: { id: true },
-          })
-    );
-
-    const aliases = resolveCategorySlug(slug);
-    if (!category && !isLikelyCuid(slug) && aliases.length > 0) {
-      category = await dbQuery(() =>
-        prisma.categories.findFirst({
-          where: { slug: { in: aliases }, isActive: true },
-          select: { id: true },
-        })
-      );
-    }
-
+    const category = await resolveCategoryBySlug(slug);
     if (!category) {
       return NextResponse.json({ error: 'دسته یافت نشد' }, { status: 404 });
     }
 
-    const getCached = unstable_cache(
-      () => getCategoryPageData(prisma, category.id),
-      [`category-page-${category.id}`],
-      { revalidate: CACHE_SECONDS, tags: [`category-${category.id}`] }
-    );
-
-    const data = await getCached();
+    const data = await getCachedCategoryPageData(category.id);
 
     const res = NextResponse.json({ data });
     res.headers.set('Cache-Control', 'public, max-age=180, stale-while-revalidate=300');

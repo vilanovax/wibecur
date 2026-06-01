@@ -9,18 +9,22 @@ const config: NextAuthConfig = {
     Credentials({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        phone: { label: 'Phone', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const email = credentials?.email;
+        const identifier = credentials?.phone;
         const password = credentials?.password;
 
-        if (typeof email !== 'string' || typeof password !== 'string') {
+        if (typeof identifier !== 'string' || typeof password !== 'string') {
           return null;
         }
 
         try {
+          const { resolveLoginEmail } = await import('@/lib/phone-auth');
+          const email = resolveLoginEmail(identifier);
+          if (!email) return null;
+
           const { prisma } = await import('@/lib/prisma');
           const { dbQuery } = await import('@/lib/db');
           const user = await dbQuery(() =>

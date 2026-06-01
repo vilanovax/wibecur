@@ -17,7 +17,7 @@ import {
 } from '@/lib/list-search';
 import { trackSearch } from '@/lib/analytics';
 import { withResolvedListCover } from '@/lib/resolve-list-cover';
-import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/components/providers/MainContainer';
+import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
 import {
   SearchChipButton,
   SearchChipScroller,

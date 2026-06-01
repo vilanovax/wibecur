@@ -49,7 +49,7 @@ export default async function CategoriesIndexPage() {
 
   return (
     <div className="min-h-screen bg-wibe-surface pb-20">
-      <Header title="دسته‌ها" />
+      <Header title="دسته‌ها" showBack />
       <main className="px-2.5 pt-3">
         <p className="mb-4 wibe-small text-wibe-secondary">
           بر اساس موضوع، لیست‌های کیوریت‌شده را پیدا کن

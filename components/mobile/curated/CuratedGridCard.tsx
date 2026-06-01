@@ -33,15 +33,15 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
+      className="group block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-200">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-200 lg:aspect-[16/10] lg:max-h-[200px]">
         <ListCoverImage
           coverImage={list.coverUrl}
           title={list.title}
           slug={list.slug}
           categorySlug={categorySlug}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
           fallbackIcon="📋"
           fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl"
         />
@@ -52,16 +52,22 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
             {BADGE_LABELS[topBadge] ?? topBadge}
           </span>
         )}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-2">
-          <ListCardStats saves={list.savesCount} itemCount={list.itemsCount} variant="overlay" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
+          <h3 className="mb-1 line-clamp-2 wibe-small font-semibold text-white lg:text-base lg:font-bold">
+            {list.title}
+          </h3>
+          <ListCardStats
+            saves={list.savesCount}
+            itemCount={list.itemsCount}
+            variant="overlay"
+            className="lg:text-sm"
+          />
         </div>
       </div>
-      <div className="p-2.5">
-        <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
-        {subtitle && (
-          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
-        )}
-      </div>
+      {subtitle && (
+        <p className="line-clamp-1 px-2.5 py-2 wibe-caption text-wibe-secondary lg:hidden">{subtitle}</p>
+      )}
     </Link>
   );
 }

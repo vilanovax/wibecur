@@ -31,6 +31,7 @@ import {
 
 interface CategoryPage2ClientProps {
   slug: string;
+  initialData?: CategoryPageData | null;
 }
 
 async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
@@ -40,15 +41,16 @@ async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
   return json.data;
 }
 
-export default function CategoryPage2Client({ slug }: CategoryPage2ClientProps) {
+export default function CategoryPage2Client({ slug, initialData = null }: CategoryPage2ClientProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['category-page', slug],
     queryFn: () => fetchCategoryPageData(slug),
     enabled: !!slug,
+    initialData: initialData ?? undefined,
     staleTime: 3 * 60 * 1000,
   });
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <main className="min-h-[50vh] space-y-6 animate-pulse bg-wibe-surface">
         <div className="mx-4 mt-4 h-44 rounded-lg bg-gray-200" />

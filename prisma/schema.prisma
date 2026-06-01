@@ -27,6 +27,7 @@ model bookmarks {
   @@unique([userId, listId])
   @@index([listId])
   @@index([userId])
+  @@index([listId, createdAt])
 }
 
 model categories {
@@ -108,10 +109,14 @@ model comments {
   isFiltered        Boolean             @default(false)
   isApproved        Boolean             @default(true)
   likeCount         Int                 @default(0)
+  helpfulUp         Int                 @default(0)
+  helpfulDown       Int                 @default(0)
+  weightedScore     Float               @default(0)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   deletedAt         DateTime?
   comment_likes     comment_likes[]
+  comment_votes     comment_votes[]
   comment_penalties comment_penalties[]
   comment_reports   comment_reports[]
   items             items               @relation(fields: [itemId], references: [id], onDelete: Cascade)
@@ -122,6 +127,21 @@ model comments {
   @@index([isApproved])
   @@index([isFiltered])
   @@index([itemId])
+  @@index([userId])
+  @@index([weightedScore])
+}
+
+model comment_votes {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  value     Int
+  createdAt DateTime @default(now())
+  comments  comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId])
   @@index([userId])
 }
 
@@ -251,6 +271,7 @@ model lists {
   list_reactions   list_reactions[]
   suggested_items  suggested_items[]
   list_comments    list_comments[]
+  list_reports     list_reports[]
   categories       categories?       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   users            users             @relation(fields: [userId], references: [id], onDelete: Cascade)
   deletedBy        users?            @relation("ListDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
@@ -260,6 +281,22 @@ model lists {
   @@index([createdAt])
   @@index([userId])
   @@index([deletedAt])
+}
+
+model list_reports {
+  id          String   @id @default(cuid())
+  listId      String
+  userId      String
+  reason      String
+  description String?
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  lists       lists    @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([listId])
+  @@index([userId])
+  @@index([resolved])
 }
 
 model settings {
@@ -325,6 +362,7 @@ model users {
   deleteReason         String?
   bookmarks            bookmarks[]
   comment_likes     comment_likes[]
+  comment_votes     comment_votes[]
   comment_penalties comment_penalties[]
   comment_reports   comment_reports[]
   comments          comments[]
@@ -332,6 +370,7 @@ model users {
   item_reports      item_reports[]
   list_likes        list_likes[]
   list_reactions    list_reactions[]
+  list_reports      list_reports[]
   lists             lists[]
   user_violations   user_violations[]
   suggested_items   suggested_items[]

@@ -201,10 +201,11 @@ export default async function UserListDetailPage({
   }
 
     return (
-      <>
+      <div className="min-h-screen bg-wibe-surface pb-20">
+        <Header title={list.title} showBack />
         <UserListDetailClient list={list} currentUserId={currentUserId} />
         <BottomNav />
-      </>
+      </div>
     );
   } catch (error: any) {
     console.error('UserListDetailPage - Error:', error);

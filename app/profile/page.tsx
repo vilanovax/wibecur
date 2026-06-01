@@ -91,9 +91,9 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20">
-      <Header title="پروفایل" />
-      <main className="px-4 pt-2">
+    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-0">
+      <Header title="پروفایل" hideTitleOnDesktop showDesktopSearch={false} />
+      <main className="px-4 pt-2 lg:px-0 lg:pt-0">
         <ProfilePageClient
           userId={userId}
           initialUser={initialUser}

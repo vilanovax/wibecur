@@ -97,9 +97,9 @@ export default function ProfileAchievements({ creatorStats, className = 'mt-6' }
     return (
       <section className={className}>
         <div className="h-5 w-28 bg-gray-100 rounded mb-3" />
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-6 lg:gap-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-[4/5] rounded-lg bg-gray-100 animate-pulse" />
+            <div key={i} className="aspect-[4/5] rounded-lg bg-gray-100 animate-pulse lg:aspect-auto lg:min-h-[72px]" />
           ))}
         </div>
       </section>
@@ -121,14 +121,14 @@ export default function ProfileAchievements({ creatorStats, className = 'mt-6' }
           </span>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-6 lg:gap-3">
         {visible.map((a) => (
           <button
             key={a.id}
             type="button"
             onClick={() => setSelected(a)}
             title={a.unlocked || !a.isSecret ? a.title : 'دستاورد مخفی'}
-            className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all active:scale-95 min-h-[88px] ${
+            className={`flex min-h-[88px] flex-col items-center justify-center rounded-lg border p-3 transition-all active:scale-95 lg:min-h-[72px] lg:p-2.5 lg:hover:bg-gray-50 ${
               a.unlocked
                 ? 'border-wibe bg-wibe-card hover:bg-gray-50'
                 : 'border-dashed border-wibe bg-gray-50/80'

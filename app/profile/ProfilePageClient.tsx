@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { signOut } from 'next-auth/react';
+import { LogOut } from 'lucide-react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileStats from '@/components/profile/ProfileStats';
 import ProfileTabs from '@/components/profile/ProfileTabs';
@@ -141,10 +143,11 @@ export default function ProfilePageClient({
   };
 
   return (
-    <div className="space-y-0 pb-4">
-      <div className="rounded-xl border border-wibe bg-wibe-card shadow-sm overflow-hidden mb-4">
+    <div className="space-y-0 pb-4 lg:pb-2">
+      <h1 className="mb-3 hidden text-xl font-bold text-foreground lg:block">پروفایل</h1>
+      <div className="mb-4 overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:mb-5">
         <ProfileHeader user={user} isOwner onUpdate={() => fetchProfile(true)} />
-        <div className="border-t border-wibe/50 bg-wibe-surface/40 px-2.5 py-2.5">
+        <div className="border-t border-wibe/50 bg-wibe-surface/40 px-2.5 py-2.5 lg:px-4 lg:py-3">
           <ProfileStats creatorStats={creatorStats} listsCreated={listsTotal} />
         </div>
       </div>
@@ -159,6 +162,41 @@ export default function ProfilePageClient({
         initialBookmarksTotal={initialBookmarksTotal}
         initialActivities={initialActivities}
       />
+
+      <div className="mt-6 border-t border-wibe pt-4 lg:hidden">
+        <ProfileLogoutButton />
+      </div>
     </div>
+  );
+}
+
+function ProfileLogoutButton() {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut({ callbackUrl: '/login' });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleLogout}
+      disabled={isLoggingOut}
+      className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 py-3 wibe-small font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+    >
+      {isLoggingOut ? (
+        <span>در حال خروج…</span>
+      ) : (
+        <>
+          <LogOut className="h-4 w-4" />
+          خروج از حساب
+        </>
+      )}
+    </button>
   );
 }

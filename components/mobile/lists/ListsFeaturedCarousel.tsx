@@ -20,7 +20,8 @@ interface ListsFeaturedCarouselProps {
   lists: FeaturedListItem[];
 }
 
-const SLIDE_CLASS = 'w-[88%] max-w-[320px] shrink-0 snap-start';
+const SLIDE_CLASS =
+  'w-[88%] max-w-[320px] shrink-0 snap-start lg:w-full lg:max-w-none lg:shrink';
 
 export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -50,7 +51,7 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
   if (lists.length === 0) return null;
 
   return (
-    <section className="mb-5" aria-label="منتخب">
+    <section className="mb-4 lg:mb-5" aria-label="منتخب">
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <h2 className="wibe-h3 flex items-center gap-1.5">
           <span aria-hidden>⭐</span>
@@ -64,12 +65,12 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
       </div>
 
       {lists.length === 1 ? (
-        <FeaturedSlide list={lists[0]} priority className="w-full" />
+        <FeaturedSlide list={lists[0]} priority className="w-full max-w-2xl lg:max-w-none" />
       ) : (
         <>
           <div
             ref={scrollRef}
-            className="flex w-full snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 scrollbar-hide"
+            className="flex w-full snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:snap-none"
             role="list"
             aria-label="لیست‌های منتخب"
           >
@@ -85,7 +86,7 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
               </div>
             ))}
           </div>
-          <div className="mt-2 flex justify-center gap-1.5" aria-hidden>
+          <div className="mt-2 flex justify-center gap-1.5 lg:hidden" aria-hidden>
             {lists.map((list, i) => (
               <span
                 key={list.id}
@@ -118,14 +119,14 @@ function FeaturedSlide({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`relative block h-[148px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-transform active:scale-[0.99] ${className}`}
+      className={`group relative block aspect-[16/10] min-h-[148px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-all active:scale-[0.99] sm:aspect-[5/3] lg:aspect-[3/2] lg:min-h-[200px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[220px] ${className}`}
     >
       <ListCoverImage
         coverImage={list.coverImage}
         title={list.title}
         slug={list.slug}
         categorySlug={categorySlug}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
         fallbackIcon={list.categories?.icon ?? '📋'}
         fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-4xl"
         priority={priority}
@@ -136,13 +137,15 @@ function FeaturedSlide({
           {categoryLabel}
         </span>
       )}
-      <div className="absolute inset-0 flex flex-col justify-end p-3">
-        <h3 className="line-clamp-2 wibe-small font-bold text-white">{list.title}</h3>
+      <div className="absolute inset-0 flex flex-col justify-end p-3 text-right lg:p-4">
+        <h3 className="line-clamp-2 wibe-small font-bold text-white lg:text-lg">{list.title}</h3>
         {list.description?.trim() && isDisplayableDescription(list.description) && (
-          <p className="mt-0.5 line-clamp-1 wibe-caption text-white/85">{list.description.trim()}</p>
+          <p className="mt-0.5 line-clamp-2 wibe-caption text-white/85 lg:line-clamp-2 lg:text-sm">
+            {list.description.trim()}
+          </p>
         )}
-        <p className="mt-1 flex items-center gap-1 wibe-caption text-white/75">
-          <Bookmark className="h-3.5 w-3.5" />
+        <p className="mt-1 flex items-center justify-end gap-1 wibe-caption text-white/75 lg:text-sm">
+          <Bookmark className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
           {(list.saveCount ?? 0).toLocaleString('fa-IR')} ذخیره
         </p>
       </div>

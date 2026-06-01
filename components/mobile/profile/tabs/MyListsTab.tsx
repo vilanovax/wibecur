@@ -188,16 +188,16 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
     <button
       type="button"
       onClick={() => setShowCreate(true)}
-      className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-white wibe-caption font-semibold shrink-0 active:scale-[0.98] transition-transform"
+      className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-white wibe-caption font-semibold transition-transform active:scale-[0.98] lg:h-9 lg:px-4 lg:wibe-small"
     >
-      <Plus className="w-3.5 h-3.5" />
-      جدید
+      <Plus className="h-3.5 w-3.5" />
+      ایجاد لیست
     </button>
   );
 
   if (isLoading && lists.length === 0 && !hasInitial) {
     return (
-      <div className="px-4 space-y-3">
+      <div className="space-y-3 px-4 lg:px-0">
         <div className="flex gap-2 overflow-hidden">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-8 w-16 bg-gray-200 rounded-full animate-pulse shrink-0" />
@@ -249,10 +249,10 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
 
   if (lists.length === 0 && !isLoading) {
     return (
-      <div className="px-4 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          {filterChips}
-          {filter !== 'draft' && createButton}
+      <div className="space-y-3 px-4 lg:px-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:gap-3">
+          <div className="min-w-0 flex-1">{filterChips}</div>
+          {filter !== 'draft' && <div className="flex shrink-0 justify-end">{createButton}</div>}
         </div>
         <MyListsEmptyState
           message={emptyMessage}
@@ -265,9 +265,9 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
 
   return (
     <>
-      <div className="px-4 space-y-3">
-        <div className="flex items-start gap-2">
-          <div className="flex-1 min-w-0">{filterChips}</div>
+      <div className="space-y-3 px-4 lg:px-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:gap-3">
+          <div className="min-w-0 flex-1">{filterChips}</div>
           {createButton}
         </div>
 
@@ -288,7 +288,7 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
             {filter === 'all' && topLists.length > 0 && (
               <h2 className="wibe-h3 mb-2.5">همه لیست‌ها</h2>
             )}
-            <div className="space-y-2">
+            <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
               {displayLists.map((list) => (
                 <MyListCardCompact
                   key={list.id}

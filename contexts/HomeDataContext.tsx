@@ -6,51 +6,18 @@ import {
   type ReactNode,
 } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type { FeaturedListData, HomeData, HomeListData } from '@/types/home-data';
+import { EMPTY_HOME_DATA as emptyHomeData } from '@/types/home-data';
 
-export interface HomeListData {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  coverImage: string;
-  saveCount: number;
-  itemCount: number;
-  likes: number;
-  badge?: 'trending' | 'new' | 'featured';
-  categories?: { id: string; name: string; slug: string; icon: string } | null;
-}
-
-export interface FeaturedListData extends HomeListData {
-  badge?: 'trending' | 'new' | 'featured';
-  creator?: { name: string | null; username: string | null } | null;
-}
-
-export interface RisingListData extends HomeListData {
-  isFastRising?: boolean;
-}
-
-export interface HomeData {
-  featured: FeaturedListData | null;
-  featuredSlotId: string | null;
-  trending: HomeListData[];
-  rising: RisingListData[];
-  recommendations: HomeListData[];
-}
+export type { HomeListData, FeaturedListData, RisingListData, HomeData } from '@/types/home-data';
 
 interface HomeDataContextValue {
   data: HomeData | null;
   isLoading: boolean;
+  isRefetching: boolean;
   error: Error | null;
   refetch: () => void;
 }
-
-const initialState: HomeData = {
-  featured: null,
-  featuredSlotId: null,
-  trending: [],
-  rising: [],
-  recommendations: [],
-};
 
 const HomeDataContext = createContext<HomeDataContextValue | null>(null);
 
@@ -83,7 +50,7 @@ function mapApiItem(l: {
 async function fetchHomeData(): Promise<HomeData> {
   const res = await fetch('/api/lists/home');
   const json = await res.json();
-  if (!json.success || !json.data) return initialState;
+  if (!json.success || !json.data) return emptyHomeData;
   const d = json.data;
   const featured = d.featured
     ? { ...mapApiItem(d.featured), creator: d.featured.creator ?? null } as FeaturedListData
@@ -104,16 +71,24 @@ async function fetchHomeData(): Promise<HomeData> {
   };
 }
 
-export function HomeDataProvider({ children }: { children: ReactNode }) {
-  const { data, isLoading, error, refetch } = useQuery({
+export function HomeDataProvider({
+  children,
+  initialData,
+}: {
+  children: ReactNode;
+  initialData?: HomeData | null;
+}) {
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ['home', 'lists'],
     queryFn: fetchHomeData,
-    staleTime: 5 * 60 * 1000, // 5 min - API has Cache-Control 300
+    initialData: initialData ?? undefined,
+    staleTime: 5 * 60 * 1000,
   });
 
   const value: HomeDataContextValue = {
     data: data ?? null,
-    isLoading,
+    isLoading: initialData ? false : isLoading,
+    isRefetching: isFetching && !isLoading,
     error: error instanceof Error ? error : null,
     refetch,
   };

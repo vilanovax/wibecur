@@ -12,8 +12,8 @@ export default function ExploreSectionTitle({
   id,
 }: ExploreSectionTitleProps) {
   return (
-    <div className="mb-3" id={id}>
-      <h2 className="wibe-h3 flex items-center gap-2">
+    <div className="mb-3 lg:mb-4" id={id}>
+      <h2 className="flex items-center gap-2 wibe-h3 lg:text-xl">
         {icon ? <span aria-hidden>{icon}</span> : null}
         {title}
       </h2>

@@ -1,4 +1,4 @@
-import { isOurStorageUrl } from '@/lib/object-storage-config';
+import { isOurStorageUrl } from './object-storage-config';
 const ALLOWED_EXTERNAL_HOSTS = new Set([
   'upload.wikimedia.org',
   'commons.wikimedia.org',

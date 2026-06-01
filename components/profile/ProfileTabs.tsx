@@ -60,9 +60,9 @@ export default function ProfileTabs({
   const myListsBadgeCount = listsCount ?? user.stats?.listsCreated ?? 0;
 
   return (
-    <div className="mt-0 -mx-4">
-      <div className="sticky top-[57px] z-20 bg-wibe-surface/95 backdrop-blur-sm border-b border-wibe px-4 pb-0">
-        <div className="flex gap-1 relative">
+    <div className="mt-0 -mx-4 lg:mx-0">
+      <div className="sticky top-[57px] z-20 border-b border-wibe bg-wibe-surface/95 px-4 pb-0 backdrop-blur-sm lg:top-[3.25rem] lg:rounded-t-xl lg:border lg:border-b-0 lg:border-wibe lg:bg-wibe-card">
+        <div className="relative flex gap-1 lg:justify-start lg:gap-0">
           {TABS.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -80,7 +80,7 @@ export default function ProfileTabs({
                   tabRefs.current[index] = r;
                 }}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-1 items-center justify-center gap-1.5 px-2 py-3 rounded-t-md whitespace-nowrap transition-all duration-200 ${
+                className={`flex flex-1 items-center justify-center gap-1.5 px-2 py-3 rounded-t-md whitespace-nowrap transition-all duration-200 lg:flex-none lg:px-6 lg:py-2.5 ${
                   isActive
                     ? 'text-primary font-bold wibe-small'
                     : 'text-wibe-secondary font-medium wibe-caption'
@@ -110,7 +110,7 @@ export default function ProfileTabs({
         </div>
       </div>
 
-      <div className="min-h-[320px] pt-3">
+      <div className="min-h-[240px] bg-wibe-card px-0 pt-3 lg:min-h-0 lg:rounded-b-xl lg:border lg:border-t-0 lg:border-wibe lg:px-4 lg:pb-4">
         {activeTab === 'my-lists' && (
           <MyListsTab
             userId={userId}

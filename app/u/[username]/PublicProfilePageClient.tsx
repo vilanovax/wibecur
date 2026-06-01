@@ -14,6 +14,7 @@ import Toast from '@/components/shared/Toast';
 interface PublicProfilePageClientProps {
   username: string;
   currentUserId: string | null;
+  initialData?: ProfileData | null;
 }
 
 interface ProfileData {
@@ -62,11 +63,12 @@ interface ProfileData {
 export default function PublicProfilePageClient({
   username,
   currentUserId,
+  initialData = null,
 }: PublicProfilePageClientProps) {
-  const [data, setData] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<ProfileData | null>(initialData);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState('');
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(initialData?.isFollowing ?? false);
   const [followLoading, setFollowLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -92,8 +94,9 @@ export default function PublicProfilePageClient({
   };
 
   useEffect(() => {
+    if (initialData) return;
     fetchProfile();
-  }, [username]);
+  }, [username, initialData]);
 
   const handleFollowToggle = async () => {
     if (!data?.user?.id || !currentUserId) return;
@@ -195,8 +198,8 @@ export default function PublicProfilePageClient({
   return (
     <>
       <div className="min-h-screen bg-wibe-surface">
-        <div className="relative rounded-b-lg overflow-hidden bg-primary pb-6 pt-8 px-4">
-          <div className="relative z-10 flex flex-col items-center">
+        <div className="relative overflow-hidden rounded-b-lg bg-primary px-4 pb-6 pt-8 lg:rounded-xl lg:mx-0 lg:px-8 lg:pb-8 lg:pt-10">
+          <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center lg:max-w-none lg:flex-row lg:items-end lg:justify-center lg:gap-8">
             <div className="relative">
               <div className={`absolute -inset-2 rounded-full blur-lg ${levelConfig.glowClass} opacity-40`} />
               <div className="relative w-24 h-24 rounded-full border-4 border-wibe-card overflow-hidden bg-wibe-card shadow-sm">
@@ -219,12 +222,13 @@ export default function PublicProfilePageClient({
                 )}
               </div>
             </div>
-            <h1 className="wibe-h2 text-white mt-4 text-center">{data.user.name || 'کاربر'}</h1>
+            <div className="mt-4 flex flex-col items-center text-center lg:mt-0 lg:flex-1 lg:items-start lg:text-right">
+            <h1 className="wibe-h2 text-white lg:wibe-h1">{data.user.name || 'کاربر'}</h1>
             <p className="wibe-small text-white/85">@{data.user.username}</p>
             {data.user.bio && (
-              <p className="wibe-small text-white/90 text-center mt-2 max-w-md line-clamp-2">{data.user.bio}</p>
+              <p className="mt-2 line-clamp-3 max-w-md wibe-small text-white/90 lg:max-w-xl">{data.user.bio}</p>
             )}
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
               {data.user.showBadge !== false && (
                 <CuratorBadge
                   level={levelKey}
@@ -253,7 +257,7 @@ export default function PublicProfilePageClient({
               )}
             </div>
 
-            <div className="mt-4 flex gap-3">
+            <div className="mt-4 flex gap-3 lg:justify-start">
               {isOwnProfile ? (
                 <Link
                   href="/profile"
@@ -288,11 +292,12 @@ export default function PublicProfilePageClient({
                 </button>
               ) : null}
             </div>
+            </div>
           </div>
         </div>
 
-        <div className="px-4 pt-4">
-          <div className="rounded-lg bg-wibe-card shadow-sm border border-wibe p-4 grid grid-cols-4 gap-2">
+        <div className="px-4 pt-4 lg:px-0">
+          <div className="grid grid-cols-4 gap-2 rounded-lg border border-wibe bg-wibe-card p-4 shadow-sm lg:grid-cols-4 lg:gap-4">
             {statItems.map(({ icon: Icon, value, label, highlight }) => (
               <div key={label} className="flex flex-col items-center">
                 <Icon className={`w-5 h-5 mb-1 ${highlight ? 'text-primary' : 'text-wibe-secondary'}`} />
@@ -306,7 +311,7 @@ export default function PublicProfilePageClient({
         </div>
 
         {data.topTags.length > 0 && (
-          <section className="px-4 mt-6">
+          <section className="mt-6 px-4 lg:px-0">
             <h2 className="wibe-h3 mb-3">سلیقه</h2>
             <div className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe space-y-2">
               {data.topTags.map((tag) => (
@@ -326,9 +331,9 @@ export default function PublicProfilePageClient({
           </section>
         )}
 
-        <section className="px-4 mt-6 pb-8">
+        <section className="mt-6 px-4 pb-8 lg:px-0">
           <h2 className="wibe-h3 mb-3">لیست‌های عمومی</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
             {data.publicLists.map((list) => (
               <Link
                 key={list.id}

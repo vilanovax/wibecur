@@ -108,7 +108,7 @@ export default function CuratedLandingPageClient() {
   const showDiscovery = !sections.isSearching;
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-6">
       <ExploreSmartHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -128,7 +128,7 @@ export default function CuratedLandingPageClient() {
             {sections.rising.length > 0 && <RisingListsSection lists={sections.rising} />}
 
             {sections.more.length > 0 && (
-              <section className="px-2.5 py-4" id="more">
+              <section className="border-t border-wibe/60 px-2.5 py-4 lg:px-0 lg:py-5" id="more">
                 <ExploreSectionTitle
                   title="بیشتر ببین"
                   subtitle="لیست‌های کیوریت‌شده"
@@ -138,7 +138,7 @@ export default function CuratedLandingPageClient() {
                 {sections.moreTotal > sections.more.length && (
                   <Link
                     href="/lists"
-                    className="mt-3 flex items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card py-2.5 wibe-small font-semibold text-primary transition-colors active:scale-[0.99]"
+                    className="mt-3 flex items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card py-2.5 wibe-small font-semibold text-primary transition-colors active:scale-[0.99] lg:mx-auto lg:max-w-sm lg:hover:bg-primary/5"
                   >
                     مشاهده همه ({sections.moreTotal.toLocaleString('fa-IR')} لیست)
                     <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />

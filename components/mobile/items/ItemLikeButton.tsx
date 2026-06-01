@@ -10,7 +10,8 @@ interface ItemLikeButtonProps {
   itemId: string;
   initialLikeCount?: number;
   initialIsLiked?: boolean;
-  variant?: 'default' | 'hero';
+  /** hero = روی hero تیره · compact = آیکون گرد در نوار پایین */
+  variant?: 'default' | 'hero' | 'compact';
 }
 
 export default function ItemLikeButton({
@@ -26,13 +27,14 @@ export default function ItemLikeButton({
   const [isLoading, setIsLoading] = useState(false);
 
   const isHero = variant === 'hero';
+  const isCompact = variant === 'compact';
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;
 
   useEffect(() => {
-    if (session?.user && initialIsLiked === false && initialLikeCount === 0) {
+    if (session?.user) {
       fetchLikeStatus();
     }
-  }, [session, itemId, initialIsLiked, initialLikeCount]);
+  }, [session?.user, itemId]);
 
   const fetchLikeStatus = async () => {
     try {
@@ -72,13 +74,27 @@ export default function ItemLikeButton({
   if (status === 'loading') {
     return (
       <div
-        className={`h-10 rounded-lg animate-pulse ${isHero ? 'w-14 bg-white/20' : 'w-14 bg-gray-200'}`}
+        className={`h-10 animate-pulse ${
+          isHero ? 'w-14 rounded-lg bg-white/20' : 'w-10 rounded-full bg-gray-200'
+        }`}
         aria-hidden
       />
     );
   }
 
   if (status === 'unauthenticated') {
+    if (isCompact) {
+      return (
+        <Link
+          href={loginHref}
+          className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 transition-all"
+          aria-label="ورود برای پسندیدن"
+        >
+          <Heart className="w-5 h-5 text-gray-500" />
+        </Link>
+      );
+    }
+
     return (
       <Link
         href={loginHref}
@@ -90,8 +106,35 @@ export default function ItemLikeButton({
         aria-label="ورود برای پسندیدن"
       >
         <Heart className={`w-4 h-4 ${isHero ? 'text-white/90' : 'text-gray-400'}`} />
-        {countLabel && <span className="text-sm font-medium">{countLabel}</span>}
+        {countLabel && !isCompact && <span className="text-sm font-medium">{countLabel}</span>}
       </Link>
+    );
+  }
+
+  if (isCompact) {
+    return (
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={isLoading}
+        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-all disabled:opacity-50 ${
+          isLiked
+            ? 'bg-red-50 border-2 border-red-200 hover:bg-red-100'
+            : 'bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50'
+        }`}
+        aria-label={isLiked ? 'حذف لایک' : 'لایک'}
+      >
+        <Heart
+          className={`w-5 h-5 transition-all ${
+            isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'
+          }`}
+        />
+        {likeCount > 0 && (
+          <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+            {likeCount > 99 ? '۹۹+' : countLabel}
+          </span>
+        )}
+      </button>
     );
   }
 

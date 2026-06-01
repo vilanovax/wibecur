@@ -1,10 +1,10 @@
-import { isOurStorageUrl } from '@/lib/object-storage-config';
+import { isOurStorageUrl } from './object-storage-config';
 import {
   isAllowedExternalImageUrl,
   isAllowedItemImageUrl,
   isPlaceholderCoverPath,
-} from '@/lib/image-url-policy';
-import { getItemPlaceholderImageUrl } from '@/lib/item-placeholder-image';
+} from './image-url-policy';
+import { getItemPlaceholderImageUrl } from './item-placeholder-image';
 
 export type ItemImageSource = {
   id?: string;

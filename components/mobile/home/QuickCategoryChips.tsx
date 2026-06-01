@@ -8,13 +8,13 @@ const CHIPS: { slug: string; label: string; href?: string }[] = [
   { slug: 'cafe', label: '☕ کافه' },
   { slug: 'travel', label: '🌍 سفر' },
   { slug: 'podcast', label: '🌙 قبل خواب' },
-  { slug: 'trending', label: '🔥 ترند', href: '/lists?mode=trending' },
+  { slug: 'all-categories', label: '📂 همه دسته‌ها', href: '/categories' },
 ];
 
 export default function QuickCategoryChips() {
   return (
-    <section className="px-2.5 py-2 pb-3" aria-label="دسته‌های سریع">
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1">
+    <section className="px-4 py-2 pb-3 lg:px-0" aria-label="دسته‌های سریع">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 lg:mx-0 lg:flex-wrap lg:overflow-visible">
         {CHIPS.map((chip) => (
           <Link
             key={chip.slug}

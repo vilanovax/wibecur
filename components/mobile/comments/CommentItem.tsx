@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ThumbsUp, Flag, Trash2, MoreVertical } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Flag, Trash2, MoreVertical } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentAvatar from '@/components/shared/CommentAvatar';
@@ -15,7 +15,9 @@ interface CommentItemProps {
     id: string;
     content: string;
     isFiltered: boolean;
-    likeCount: number;
+    helpfulUp: number;
+    helpfulDown: number;
+    userVote: number | null;
     createdAt: string;
     user: {
       id: string;
@@ -28,10 +30,9 @@ interface CommentItemProps {
       avatarId?: string | null;
       avatarStatus?: string | null;
     };
-    isLiked: boolean;
     canDelete: boolean;
   };
-  onLike: (commentId: string) => void;
+  onVote: (commentId: string, value: 1 | -1) => void;
   onReport: (commentId: string) => void;
   onDelete: (commentId: string) => void;
   isLoading?: boolean;
@@ -84,22 +85,28 @@ function CommentMoreMenu({ onReport, onDelete }: { onReport: () => void; onDelet
 
 export default function CommentItem({
   comment,
-  onLike,
+  onVote,
   onReport,
   onDelete,
   isLoading = false,
 }: CommentItemProps) {
-  const [localIsLiked, setLocalIsLiked] = useState(comment.isLiked);
-  const [localLikeCount, setLocalLikeCount] = useState(comment.likeCount);
+  const [localUp, setLocalUp] = useState(comment.helpfulUp ?? 0);
+  const [localDown, setLocalDown] = useState(comment.helpfulDown ?? 0);
+  const [localVote, setLocalVote] = useState<number | null>(comment.userVote ?? null);
   const [expanded, setExpanded] = useState(false);
 
   const showReadMore = comment.content.length > COMMENT_CLAMP_CHAR_THRESHOLD;
   const profileUrl = comment.user.username ? `/u/${encodeURIComponent(comment.user.username)}` : null;
 
-  const handleLike = () => {
-    setLocalIsLiked(!localIsLiked);
-    setLocalLikeCount((prev) => (localIsLiked ? Math.max(0, prev - 1) : prev + 1));
-    onLike(comment.id);
+  const handleVote = (value: 1 | -1) => {
+    const prev = localVote;
+    if (prev === value) return;
+    setLocalVote(value);
+    if (prev === 1) setLocalUp((u) => Math.max(0, u - 1));
+    else if (prev === -1) setLocalDown((d) => Math.max(0, d - 1));
+    if (value === 1) setLocalUp((u) => u + 1);
+    else setLocalDown((d) => d + 1);
+    onVote(comment.id, value);
   };
 
   const handleDelete = () => {
@@ -187,17 +194,27 @@ export default function CommentItem({
         <div className="flex items-center gap-3 mt-2">
           <button
             type="button"
-            onClick={handleLike}
+            onClick={() => handleVote(1)}
             disabled={isLoading}
-            aria-label={`مفید بود${localLikeCount > 0 ? `، ${localLikeCount} رأی` : ''}`}
+            aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
             className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
-              localIsLiked ? 'text-green-600 font-medium' : 'text-gray-500 hover:text-green-600'
+              localVote === 1 ? 'text-green-600 font-medium' : 'text-gray-500 hover:text-green-600'
             }`}
           >
-            <ThumbsUp className={`w-4 h-4 ${localIsLiked ? 'fill-current' : ''}`} />
-            {localLikeCount > 0 && (
-              <span className="tabular-nums">{localLikeCount.toLocaleString('fa-IR')}</span>
-            )}
+            <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />
+            {localUp > 0 && <span className="tabular-nums">{localUp.toLocaleString('fa-IR')}</span>}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleVote(-1)}
+            disabled={isLoading}
+            aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
+            className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
+              localVote === -1 ? 'text-amber-600 font-medium' : 'text-gray-400 hover:text-amber-600'
+            }`}
+          >
+            <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />
+            {localDown > 0 && <span className="tabular-nums">{localDown.toLocaleString('fa-IR')}</span>}
           </button>
         </div>
       </div>

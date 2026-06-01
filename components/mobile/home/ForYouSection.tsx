@@ -2,100 +2,101 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useQuery } from '@tanstack/react-query';
 import { Bookmark } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { useHomeData } from '@/contexts/HomeDataContext';
 import HomeSectionTitle from './HomeSectionTitle';
+import {
+  useForYouRecommendations,
+  getForYouReasonLabel,
+} from '@/hooks/useForYouRecommendations';
 
-async function fetchInteractionCount(): Promise<{ total: number }> {
-  const res = await fetch('/api/user/interaction-count');
-  const json = await res.json();
-  return json?.data ?? { total: 0 };
-}
-
-export default function ForYouSection() {
+export default function ForYouSection({ embedded = false }: { embedded?: boolean }) {
   const { data: session } = useSession();
-  const { data: interactionData } = useQuery({
-    queryKey: ['user', 'interaction-count'],
-    queryFn: fetchInteractionCount,
-    staleTime: 2 * 60 * 1000,
-    enabled: !!session?.user,
-  });
-  const { data: homeData, isLoading } = useHomeData();
+  const { lists, isPersonalized, isLoading } = useForYouRecommendations();
+  const displayLists = lists.slice(0, 4);
 
-  const hasEnoughInteractions = (interactionData?.total ?? 0) >= 3;
-
-  if (isLoading && !homeData) {
+  if (isLoading && displayLists.length === 0) {
     return (
-      <section className="mb-6">
-        <div className="px-4 mb-3">
-          <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
-        </div>
-        <div className="mx-4 rounded-lg p-4 bg-primary/5 space-y-4">
+      <section className={embedded ? '' : 'mb-6'}>
+        {!embedded && (
+          <div className="mb-3 px-4">
+            <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
+          </div>
+        )}
+        <div className="space-y-3 px-4">
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-lg h-28 bg-gray-100 animate-pulse" />
+            <div key={i} className="h-[120px] animate-pulse rounded-lg bg-gray-100" />
           ))}
         </div>
       </section>
     );
   }
 
-  const lists = [...(homeData?.recommendations ?? []), ...(homeData?.trending ?? [])]
-    .filter((l, i, arr) => arr.findIndex((x) => x.id === l.id) === i)
-    .slice(0, 2);
-
-  const reasons = hasEnoughInteractions
-    ? ['چون فیلم ذخیره کردی…', 'چون به کافه علاقه داری…']
-    : ['پیشنهاد بر اساس علایقت', 'شاید دوست داشته باشی'];
-
   return (
-    <section className="mb-6">
-      <HomeSectionTitle
-        icon="✨"
-        title="برای تو"
-        subtitle="بر اساس علایق و ذخیره‌های قبلی"
-      />
-      <div className="mx-4 rounded-lg p-4 bg-wibe-card border border-wibe shadow-sm">
-        <div className="space-y-3">
-          {lists.length > 0 ? (
-            lists.map((list, idx) => (
+    <section className={embedded ? '' : 'mb-6'}>
+      {!embedded && (
+        <HomeSectionTitle
+          icon="✨"
+          title="برای تو"
+          subtitle={
+            isPersonalized
+              ? 'بر اساس ذخیره‌ها و علایق تو'
+              : 'لیست‌های پیشنهادی برای شروع'
+          }
+          actionHref="/lists"
+          actionLabel="همه"
+        />
+      )}
+      <div className="space-y-2 px-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-3">
+        {displayLists.length > 0 ? (
+          displayLists.map((list) => {
+            const reason = getForYouReasonLabel(list, isPersonalized);
+            return (
               <Link
                 key={list.id}
                 href={`/lists/${list.slug}`}
-                className="flex flex-row-reverse gap-4 rounded-lg overflow-hidden bg-wibe-surface border border-wibe active:scale-[0.99] transition-transform min-h-[120px]"
+                className="flex min-h-[120px] flex-row-reverse gap-4 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
               >
-                <div className="relative w-28 h-28 flex-shrink-0 overflow-hidden bg-gray-200">
+                <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-gray-200">
                   <ImageWithFallback
                     src={list.coverImage}
                     alt={list.title}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                     fallbackIcon={list.categories?.icon ?? '📋'}
-                    fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200"
                     categorySlug={list.categories?.slug}
                     listSlug={list.slug}
                     listTitle={list.title}
                   />
                 </div>
-                <div className="flex-1 py-3 pr-3 pl-2 min-w-0 flex flex-col justify-center">
-                  <p className="wibe-caption text-primary font-medium mb-1">{reasons[idx] ?? ''}</p>
-                  <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
-                  <p className="wibe-caption text-wibe-secondary mt-1.5 flex items-center gap-1">
-                    <Bookmark className="w-3.5 h-3.5 text-primary" />
+                <div className="flex min-w-0 flex-1 flex-col justify-center py-3 pl-2 pr-3">
+                  {reason ? (
+                    <p className="mb-1 wibe-caption font-medium text-primary">{reason}</p>
+                  ) : null}
+                  <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
+                  <p className="mt-1.5 flex items-center gap-1 wibe-caption text-wibe-secondary">
+                    <Bookmark className="h-3.5 w-3.5 text-primary" />
                     {list.saveCount.toLocaleString('fa-IR')} ذخیره · {list.itemCount} آیتم
                   </p>
                 </div>
               </Link>
-            ))
-          ) : (
-            <div className="py-8 text-center">
-              <p className="wibe-small text-wibe-secondary">چند لیست ذخیره کن تا پیشنهادات شخصی ببینی</p>
-              <Link href="/lists" className="text-primary wibe-small font-medium mt-2 inline-block">
-                دیدن لیست‌ها
-              </Link>
-            </div>
-          )}
-        </div>
+            );
+          })
+        ) : (
+          <div className="rounded-lg border border-wibe bg-wibe-card py-8 text-center">
+            <p className="wibe-small text-wibe-secondary">
+              {session?.user
+                ? 'چند لیست ذخیره کن تا پیشنهادات شخصی‌تر ببینی'
+                : 'وارد شو تا پیشنهادات شخصی ببینی'}
+            </p>
+            <Link
+              href={session?.user ? '/lists' : '/login?callbackUrl=/'}
+              className="mt-2 inline-block wibe-small font-medium text-primary"
+            >
+              {session?.user ? 'دیدن لیست‌ها' : 'ورود'}
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

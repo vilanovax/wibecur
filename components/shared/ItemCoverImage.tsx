@@ -12,6 +12,7 @@ import {
   inferCategorySlugFromTitle,
 } from '@/lib/category-cover-images';
 import { isMovieLikeCategory, resolveItemImage, resolveItemDisplayImage } from '@/lib/resolve-item-image';
+import { itemNeedsPosterEnrich } from '@/lib/item-poster-needs-enrich';
 import { fetchItemPosterUrl, runPosterEnrichTask } from '@/lib/poster-enrich-queue';
 import ItemCoverPlaceholder, {
   type ItemCoverLayout,
@@ -94,6 +95,22 @@ export default function ItemCoverImage({
     [categorySlug, title]
   );
 
+  const needsPosterEnrich = useMemo(
+    () =>
+      Boolean(
+        enrichPoster &&
+          isMovieItem &&
+          itemId &&
+          itemNeedsPosterEnrich({
+            title,
+            imageUrl,
+            metadata,
+            categorySlug,
+          })
+      ),
+    [enrichPoster, isMovieItem, itemId, title, imageUrl, metadata, categorySlug]
+  );
+
   const skippedStorageForEnrich = useMemo(
     () =>
       Boolean(
@@ -115,10 +132,7 @@ export default function ItemCoverImage({
   }, [itemId, baseResolved, enrichPoster]);
 
   const shouldEnrichPoster =
-    enrichPoster &&
-    !!itemId &&
-    isMovieItem &&
-    (!effectiveBaseResolved || loadFailed);
+    enrichPoster && !!itemId && isMovieItem && (needsPosterEnrich || loadFailed);
 
   useEffect(() => {
     if (!shouldEnrichPoster) return;
@@ -145,7 +159,13 @@ export default function ItemCoverImage({
     };
   }, [shouldEnrichPoster, itemId, loadFailed, skippedStorageForEnrich]);
 
-  const resolvedSrc = fetchedPoster || (loadFailed ? displayFallback : effectiveBaseResolved || displayFallback);
+  const resolvedSrc =
+    fetchedPoster ||
+    (loadFailed
+      ? displayFallback
+      : needsPosterEnrich && !fetchedPoster
+        ? displayFallback
+        : effectiveBaseResolved || displayFallback);
   const displaySrc = toItemDisplaySrc(resolvedSrc);
   const showFallback = !displaySrc;
 

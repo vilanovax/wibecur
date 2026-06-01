@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ChevronDown, Send } from 'lucide-react';
 import CommentItem from './CommentItem';
 import Toast from '@/components/shared/Toast';
-import CommentAvatar from '@/components/shared/CommentAvatar';
+import CommentReportModal from './CommentReportModal';
 import {
   COMMENTS_INITIAL_VISIBLE,
   COMMENTS_LOAD_MORE_STEP,
@@ -18,7 +18,9 @@ interface Comment {
   id: string;
   content: string;
   isFiltered: boolean;
-  likeCount: number;
+  helpfulUp: number;
+  helpfulDown: number;
+  userVote: number | null;
   createdAt: string;
   user: {
     id: string;
@@ -31,7 +33,6 @@ interface Comment {
     avatarId?: string | null;
     avatarStatus?: string | null;
   };
-  isLiked: boolean;
   canDelete: boolean;
 }
 
@@ -45,8 +46,6 @@ interface CommentSectionProps {
   itemId: string;
   onCommentAdded?: () => void;
   refreshTrigger?: number;
-  /** وقتی والد می‌خواهد فرم اینلاین باز شود (مثلاً از نوار پایین) */
-  expandFormTrigger?: number;
 }
 
 async function fetchItemComments(itemId: string, sortBy: string): Promise<CommentsResponse> {
@@ -67,18 +66,12 @@ function ItemCommentInput({
   onExpand,
   onSubmit,
   isLoading,
-  userImage,
-  userName,
-  userEmail,
   maxCommentLength,
 }: {
   isExpanded: boolean;
   onExpand: () => void;
   onSubmit: (content: string) => Promise<boolean>;
   isLoading: boolean;
-  userImage?: string | null;
-  userName?: string | null;
-  userEmail?: string | null;
   maxCommentLength: number;
 }) {
   const [content, setContent] = useState('');
@@ -101,18 +94,16 @@ function ItemCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center gap-3 px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary/20"
       >
-        <CommentAvatar src={userImage ?? null} name={userName ?? null} email={userEmail ?? null} size={36} />
-        <span className="flex-1 text-right">نظرت درباره این آیتم چیه؟</span>
+        نظرت درباره این آیتم چیه؟
       </button>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-3 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <CommentAvatar src={userImage ?? null} name={userName ?? null} email={userEmail ?? null} size={36} />
+      <div className="flex items-end gap-2 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxCommentLength))}
@@ -126,7 +117,7 @@ function ItemCommentInput({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7C3AED] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
           <Send className="w-4 h-4" />
         </button>
@@ -161,7 +152,6 @@ export default function CommentSection({
   itemId,
   onCommentAdded,
   refreshTrigger,
-  expandFormTrigger,
 }: CommentSectionProps) {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
@@ -171,6 +161,7 @@ export default function CommentSection({
   const [visibleCount, setVisibleCount] = useState(COMMENTS_INITIAL_VISIBLE);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [reportCommentId, setReportCommentId] = useState<string | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
@@ -184,12 +175,6 @@ export default function CommentSection({
   useEffect(() => {
     setVisibleCount(COMMENTS_INITIAL_VISIBLE);
   }, [itemId, sortBy]);
-
-  useEffect(() => {
-    if (expandFormTrigger && expandFormTrigger > 0) {
-      setIsFormExpanded(true);
-    }
-  }, [expandFormTrigger]);
 
   const handleSubmit = async (content: string): Promise<boolean> => {
     if (status !== 'authenticated') return false;
@@ -221,11 +206,17 @@ export default function CommentSection({
     }
   };
 
-  const handleLike = async (commentId: string) => {
+  const handleVote = async (commentId: string, value: 1 | -1) => {
+    if (status !== 'authenticated') {
+      setToast({ message: 'برای رای دادن وارد شو', type: 'error' });
+      return;
+    }
     setIsActionLoading(true);
     try {
-      const response = await fetch(`/api/comments/${commentId}/like`, {
+      const response = await fetch(`/api/comments/${commentId}/vote`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value }),
       });
       const resData = await response.json();
 
@@ -238,48 +229,38 @@ export default function CommentSection({
                   ...prev,
                   comments: prev.comments.map((c) =>
                     c.id === commentId
-                      ? { ...c, isLiked: resData.data.isLiked, likeCount: resData.data.likeCount }
+                      ? {
+                          ...c,
+                          helpfulUp: resData.data.helpfulUp,
+                          helpfulDown: resData.data.helpfulDown,
+                          userVote: resData.data.userVote,
+                        }
                       : c
                   ),
                 }
               : prev
         );
+      } else {
+        refetch();
       }
     } catch (error) {
-      console.error('Error liking comment:', error);
+      console.error('Error voting on comment:', error);
+      refetch();
     } finally {
       setIsActionLoading(false);
     }
   };
 
-  const handleReport = async (commentId: string) => {
+  const handleOpenReport = (commentId: string) => {
     if (status !== 'authenticated') {
       setToast({ message: 'برای گزارش نظر وارد شو', type: 'error' });
       return;
     }
-    setIsActionLoading(true);
-    try {
-      const response = await fetch(`/api/comments/${commentId}/report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'محتوا نامناسب' }),
-      });
-      const resData = await response.json().catch(() => ({}));
+    setReportCommentId(commentId);
+  };
 
-      if (response.ok && resData.success) {
-        setToast({ message: resData.message || 'ممنون که اطلاع دادی 🙏 بررسیش می‌کنیم', type: 'success' });
-      } else {
-        setToast({
-          message: resData.error || (response.status === 400 ? 'شما قبلاً این نظر را گزارش کرده‌اید' : 'خطا در گزارش نظر'),
-          type: 'error',
-        });
-      }
-    } catch (error) {
-      console.error('Error reporting comment:', error);
-      setToast({ message: 'خطا در گزارش نظر', type: 'error' });
-    } finally {
-      setIsActionLoading(false);
-    }
+  const handleReportSuccess = () => {
+    setToast({ message: 'ممنون که اطلاع دادی 🙏 بررسیش می‌کنیم', type: 'success' });
   };
 
   const handleDelete = async (commentId: string) => {
@@ -315,8 +296,8 @@ export default function CommentSection({
   const hasComments = comments.length > 0;
 
   return (
-    <section id="comments" className="mt-8 pt-6 border-t border-wibe">
-      <h2 className="wibe-h3 text-foreground mb-0.5">گفتگو درباره این آیتم</h2>
+    <section id="comments" className="mt-2 pt-5 border-t border-wibe scroll-mt-28">
+      <h2 className="wibe-h3 text-foreground mb-0.5">نظرات</h2>
       <p className="wibe-caption text-wibe-secondary mb-3">
         {comments.length.toLocaleString('fa-IR')} نظر
         {!commentsEnabled && ' · نظرها غیرفعال است'}
@@ -329,9 +310,6 @@ export default function CommentSection({
             onExpand={() => setIsFormExpanded(true)}
             onSubmit={handleSubmit}
             isLoading={submitLoading}
-            userImage={session?.user?.image}
-            userName={session?.user?.name}
-            userEmail={session?.user?.email}
             maxCommentLength={maxCommentLength}
           />
         )}
@@ -343,8 +321,8 @@ export default function CommentSection({
               <button
                 type="button"
                 onClick={() => setSortBy('popular')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                  sortBy === 'popular' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  sortBy === 'popular' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 مفیدترین
@@ -352,8 +330,8 @@ export default function CommentSection({
               <button
                 type="button"
                 onClick={() => setSortBy('newest')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                  sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  sortBy === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 جدیدترین
@@ -365,7 +343,7 @@ export default function CommentSection({
         <div className={hasComments ? 'mt-2' : 'mt-1'}>
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" />
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : comments.length === 0 ? (
             <p className="py-4 text-center wibe-caption text-wibe-secondary">
@@ -389,8 +367,8 @@ export default function CommentSection({
                   <CommentItem
                     key={comment.id}
                     comment={comment}
-                    onLike={handleLike}
-                    onReport={handleReport}
+                    onVote={handleVote}
+                    onReport={handleOpenReport}
                     onDelete={handleDelete}
                     isLoading={isActionLoading}
                   />
@@ -419,6 +397,13 @@ export default function CommentSection({
           onClose={() => setToast(null)}
         />
       )}
+
+      <CommentReportModal
+        isOpen={!!reportCommentId}
+        onClose={() => setReportCommentId(null)}
+        reportEndpoint={reportCommentId ? `/api/comments/${reportCommentId}/report` : ''}
+        onReportSuccess={handleReportSuccess}
+      />
     </section>
   );
 }

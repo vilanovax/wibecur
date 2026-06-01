@@ -31,6 +31,14 @@ const BROKEN_IMAGE_FRAGMENTS = [
   'placeholder-item',
 ] as const;
 
+/** آیا URL یک placeholder محلی (بنر دسته) است نه poster واقعی؟ */
+export function isItemCategoryPlaceholderImage(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string' || !url.trim()) return true;
+  const t = url.trim();
+  if (isPlaceholderCoverPath(t)) return true;
+  return t.startsWith('/images/banners/');
+}
+
 /** آیا imageUrl فعلی برای نمایش مناسب نیست و باید جایگزین شود؟ */
 export function itemNeedsPlaceholderImage(imageUrl: string | null | undefined): boolean {
   if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.trim()) return true;

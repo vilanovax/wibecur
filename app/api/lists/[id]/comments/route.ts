@@ -5,6 +5,7 @@ import { dbQuery } from '@/lib/db';
 import { normalizeCommentText, hashCommentContent, validateCommentContent } from '@/lib/comment-utils';
 import { checkCommentRateLimit, checkDuplicateComment, shouldShadowBan } from '@/lib/comment-antispan';
 import { checkDuplicateSuggestion } from '@/lib/suggestion-utils';
+import { getCachedBadWords } from '@/lib/bad-words';
 import {
   DEFAULT_LIST_COMMENT_MAX_LENGTH,
   DEFAULT_SUGGESTION_MAX_LENGTH,
@@ -24,19 +25,7 @@ export async function GET(
     const session = await auth();
     const userId = session?.user ? (session.user as { id: string }).id : null;
 
-    // Get all bad words for filtering (with try-catch in case table is empty)
-    let badWordsList: string[] = [];
-    try {
-      const badWords = await dbQuery(() =>
-        prisma.bad_words.findMany({
-          select: { word: true },
-        })
-      );
-      badWordsList = badWords.map((bw) => bw.word.toLowerCase());
-    } catch (err) {
-      // Table might not exist yet or be empty, continue without filtering
-      console.warn('Could not fetch bad words:', err);
-    }
+    const badWordsList = await getCachedBadWords();
 
     // Check if list exists and comments are enabled
     const list = await dbQuery(() =>
@@ -416,18 +405,7 @@ export async function POST(
       }
     }
 
-    // Get bad words (with try-catch)
-    let badWordsList: string[] = [];
-    try {
-      const badWords = await dbQuery(() =>
-        prisma.bad_words.findMany({
-          select: { word: true },
-        })
-      );
-      badWordsList = badWords.map((bw) => bw.word.toLowerCase());
-    } catch (err) {
-      console.warn('Could not fetch bad words:', err);
-    }
+    const badWordsList = await getCachedBadWords();
 
     // Check for bad words
     const contentLower = content.toLowerCase();

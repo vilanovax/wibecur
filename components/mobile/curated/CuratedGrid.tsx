@@ -19,7 +19,7 @@ export default function CuratedGrid({ lists, showSponsoredAfter = 8 }: CuratedGr
   });
 
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
       {items.map((item, idx) =>
         item === 'sponsored' ? (
           <SponsoredSlotCard key={`sponsored-${idx}`} />

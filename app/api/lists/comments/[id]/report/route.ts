@@ -13,15 +13,27 @@ export async function POST(
 
     if (!session?.user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: 'برای گزارش نظر وارد شو' },
         { status: 401 }
       );
     }
 
     const userId = session.user.id;
     const { id: commentId } = await params;
-    const body = await request.json();
-    const { reason } = body;
+    let body: { reason?: unknown; description?: unknown } = {};
+    try {
+      body = await request.json();
+    } catch {
+      // بدنه خالی یا نامعتبر
+    }
+    const reasonRaw = typeof body.reason === 'string' ? body.reason.trim() : '';
+    const description =
+      typeof body.description === 'string' ? body.description.trim() : '';
+    const reason = reasonRaw
+      ? description
+        ? `${reasonRaw}: ${description}`
+        : reasonRaw
+      : description || 'محتوا نامناسب';
 
     // Check if comment exists
     const comment = await dbQuery(() =>
@@ -49,11 +61,10 @@ export async function POST(
     );
 
     if (existingReport) {
-      return NextResponse.json({
-        success: true,
-        message: 'شما قبلاً این کامنت را گزارش کرده‌اید',
-        alreadyReported: true,
-      });
+      return NextResponse.json(
+        { success: false, error: 'شما قبلاً این نظر را گزارش کرده‌اید' },
+        { status: 400 }
+      );
     }
 
     await dbQuery(async () => {

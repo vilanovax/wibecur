@@ -110,14 +110,14 @@ export default function BookmarksTab({
 
   if (isLoading && bookmarks.length === 0 && !hasInitial) {
     return (
-      <div className="px-4 space-y-5">
+      <div className="space-y-5 px-4 lg:px-0">
         <div className="h-5 w-48 bg-gray-100 rounded animate-pulse" />
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="w-14 h-14 rounded-full bg-gray-100 animate-pulse shrink-0" />
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="rounded-[20px] overflow-hidden bg-gray-100 animate-pulse">
               <div className="aspect-[16/9] bg-gray-200" />
@@ -173,18 +173,21 @@ export default function BookmarksTab({
   }
 
   return (
-    <div className="px-4 space-y-5 pb-4">
+    <div className="space-y-5 px-4 pb-4 lg:px-0">
       {/* Header */}
-      <div>
-        <h2 className="wibe-h3">لیست‌های ذخیره‌شده</h2>
-        <p className="wibe-small text-wibe-secondary mt-0.5">
-          {bookmarks.length} لیست • {uniqueCreators.length} کیوریتور
-        </p>
+      <div className="lg:flex lg:items-end lg:justify-between lg:gap-4">
+        <div>
+          <h2 className="wibe-h3">لیست‌های ذخیره‌شده</h2>
+          <p className="mt-0.5 wibe-small text-wibe-secondary">
+            {bookmarks.length.toLocaleString('fa-IR')} لیست •{' '}
+            {uniqueCreators.length.toLocaleString('fa-IR')} کیوریتور
+          </p>
+        </div>
       </div>
 
       {/* Creator row */}
       {uniqueCreators.length > 0 && (
-        <div className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide -mx-1">
+        <div className="-mx-1 flex gap-4 overflow-x-auto pb-1 scrollbar-hide lg:mx-0 lg:flex-wrap lg:gap-3 lg:overflow-visible">
           {uniqueCreators.map((creator) => (
             <Link
               key={creator.id}
@@ -218,8 +221,8 @@ export default function BookmarksTab({
         </div>
       )}
 
-      {/* Grid — immersive: edge-to-edge feel, larger image, gradient overlay */}
-      <div className="grid grid-cols-2 gap-2 -mx-1 sm:-mx-4 sm:px-0">
+      {/* Grid */}
+      <div className="-mx-1 grid grid-cols-2 gap-2 sm:-mx-4 sm:px-0 lg:mx-0 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
         {displayedBookmarks.map((bookmark) => {
           const list = bookmark.list;
           const creator = list.users;
@@ -231,7 +234,7 @@ export default function BookmarksTab({
           return (
             <div
               key={bookmark.id}
-              className="relative rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+              className="relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99] lg:hover:border-primary/15 lg:hover:shadow-md"
               onContextMenu={(e) => {
                 e.preventDefault();
                 setActionSheet(bookmark);
@@ -239,7 +242,7 @@ export default function BookmarksTab({
             >
               <button
                 type="button"
-                className="absolute top-2 left-2 z-10 w-8 h-8 rounded-full bg-black/30 flex items-center justify-center text-white"
+                className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white lg:left-auto lg:right-2 lg:top-2 lg:bg-wibe-surface/90 lg:text-wibe-secondary lg:hover:bg-gray-100"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -250,7 +253,7 @@ export default function BookmarksTab({
                 <MoreVertical className="w-4 h-4" />
               </button>
               <Link href={`/lists/${list.slug}`} className="block">
-                <div className="relative aspect-[4/3] bg-gray-100">
+                <div className="relative aspect-[4/3] bg-gray-100 lg:aspect-[16/10] lg:max-h-[9.5rem]">
                   <ListCoverImage
                     coverImage={list.coverImage}
                     title={list.title}
@@ -260,9 +263,9 @@ export default function BookmarksTab({
                     fallbackIcon={list.categories?.icon}
                     fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
                   />
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
-                  <div className="absolute bottom-2 left-2 right-2">
-                    <h3 className="wibe-small font-semibold text-white leading-tight line-clamp-2">
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent lg:hidden" />
+                  <div className="absolute bottom-2 left-2 right-2 lg:hidden">
+                    <h3 className="line-clamp-2 wibe-small font-semibold leading-tight text-white">
                       {list.title}
                     </h3>
                     <ListCardStats saves={saves} itemCount={items} variant="overlay" className="mt-0.5" />
@@ -272,7 +275,16 @@ export default function BookmarksTab({
                   )}
                 </div>
               </Link>
-              <div className="p-2">
+              <div className="p-2 lg:p-2.5">
+                <h3 className="mb-1 hidden line-clamp-2 wibe-small font-semibold text-foreground lg:block">
+                  {list.title}
+                </h3>
+                <ListCardStats
+                  saves={saves}
+                  itemCount={items}
+                  variant="compact"
+                  className="mb-1.5 hidden lg:flex"
+                />
                 {creator && (
                   <Link
                     href={creator.username ? `/u/${creator.username}` : '#'}
@@ -305,7 +317,7 @@ export default function BookmarksTab({
                 )}
                 <Link
                   href={`/lists/${list.slug}`}
-                  className="mt-1 inline-block text-xs font-medium text-primary"
+                  className="mt-1 inline-block text-xs font-medium text-primary lg:mt-0 lg:wibe-caption"
                 >
                   مشاهده لیست
                 </Link>
@@ -318,7 +330,7 @@ export default function BookmarksTab({
       {!showAll && bookmarks.length > 12 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-sm transition-colors"
+          className="w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
         >
           مشاهده بیشتر ({bookmarks.length - 12} مورد دیگر)
         </button>

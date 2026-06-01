@@ -1,19 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import Link from 'next/link';
 import { Share2, Heart, Bookmark } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { usePathname, useRouter } from 'next/navigation';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/components/providers/MainContainer';
+import { usePathname } from 'next/navigation';
+import ItemCoverImage from '@/components/shared/ItemCoverImage';
 import CommentSection from '@/components/mobile/comments/CommentSection';
-import ItemReportButton from '@/components/mobile/items/ItemReportButton';
-import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
-import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
 import ItemDiscoverySection from '@/components/mobile/items/ItemDiscoverySection';
+import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
 import Toast from '@/components/shared/Toast';
+import { isMovieLikeCategory } from '@/lib/resolve-item-image';
 import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
 
 const HERO_COLLAPSE_SCROLL_Y = 100;
@@ -65,7 +64,6 @@ interface ItemDetailClientProps {
       } | null;
     };
     users: { name: string | null } | null;
-    isLiked?: boolean;
   };
 }
 
@@ -94,17 +92,15 @@ const metaIcons: Record<string, string> = {
 };
 
 export default function ItemDetailClient({ item }: ItemDetailClientProps) {
+  const isDesktop = useIsDesktop();
   const { status: authStatus } = useSession();
   const pathname = usePathname();
-  const router = useRouter();
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${item.id}`)}`;
   const [heroCollapsed, setHeroCollapsed] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  const [expandCommentFormTrigger, setExpandCommentFormTrigger] = useState(0);
-  const [commentCount, setCommentCount] = useState(item.commentCount);
   const [commentRefreshTrigger, setCommentRefreshTrigger] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const onCommentsUpdate = () => setCommentCount((c) => c + 1);
+  const onCommentsUpdate = () => setCommentRefreshTrigger((t) => t + 1);
 
   const categoryId = item.lists.categories?.id ?? null;
 
@@ -166,11 +162,15 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
     item.personalSaveCount > 0;
 
   useEffect(() => {
+    if (isDesktop) {
+      setHeroCollapsed(false);
+      return;
+    }
     const onScroll = () => setHeroCollapsed(window.scrollY > HERO_COLLAPSE_SCROLL_Y);
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [isDesktop]);
 
   const handleShare = async () => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -200,23 +200,27 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
 
   return (
     <>
-      <main className="pb-24">
+      <main className="pb-20 lg:pb-8">
         <section
-          className={`relative w-full overflow-hidden transition-[height] duration-500 ease-out ${
-            heroCollapsed ? 'h-[7.5rem]' : 'h-[20rem]'
+          className={`relative w-full overflow-hidden transition-[height] duration-500 ease-out lg:rounded-xl lg:mx-4 lg:w-[calc(100%-2rem)] lg:mt-4 ${
+            heroCollapsed ? 'h-[7.5rem]' : 'h-[18rem] sm:h-[20rem] lg:h-[26rem]'
           }`}
         >
-          <ImageWithFallback
-            src={item.displayImageUrl}
-            alt={item.title}
-            className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out ${
-              heroCollapsed ? 'scale-100' : 'scale-105'
-            }`}
-            fallbackIcon={item.lists.categories?.icon || '📋'}
-            fallbackClassName="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100"
-            categorySlug={item.lists.categories?.slug ?? null}
-            priority
-          />
+          <div className="absolute inset-0">
+            <ItemCoverImage
+              itemId={item.id}
+              imageUrl={item.imageUrl}
+              title={item.title}
+              metadata={item.metadata}
+              categorySlug={categorySlug}
+              enrichPoster={isMovieLikeCategory(categorySlug)}
+              priority
+              fallbackIcon={item.lists.categories?.icon || '📋'}
+              className={`h-full w-full transition-transform duration-500 ease-out ${
+                heroCollapsed ? 'scale-100' : 'scale-105'
+              }`}
+            />
+          </div>
 
           <div
             className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent transition-opacity duration-500 ${
@@ -268,12 +272,6 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                   </span>
                 </>
               )}
-              {item.listRank != null && item.listItemCount > 0 && (
-                <>
-                  <span className="text-white/50">·</span>
-                  <span>#{item.listRank.toLocaleString('fa-IR')} در لیست</span>
-                </>
-              )}
             </div>
 
             <div
@@ -281,21 +279,12 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                 heroCollapsed ? 'max-h-0 opacity-0 mt-0 pointer-events-none' : 'max-h-16 opacity-100 mt-4'
               }`}
             >
-              <div className="flex-shrink-0">
-                <ItemSaveButton itemId={item.id} variant="hero" />
-              </div>
               <Link
                 href={`/lists/${item.lists.slug}`}
-                className="inline-flex flex-1 min-w-0 items-center justify-center gap-2 px-4 py-2.5 rounded-md wibe-small font-medium bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors border border-white/30"
+                className="inline-flex flex-1 min-w-0 items-center justify-center gap-2 px-4 py-2.5 rounded-xl wibe-small font-medium bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors border border-white/30"
               >
                 مشاهده لیست
               </Link>
-              <ItemLikeButton
-                itemId={item.id}
-                initialLikeCount={likeCount}
-                initialIsLiked={item.isLiked || false}
-                variant="hero"
-              />
               <button
                 type="button"
                 onClick={handleShare}
@@ -308,7 +297,13 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           </div>
         </section>
 
-        <div className="px-4 mt-4 relative z-10 space-y-6">
+        <ItemDetailTopActions
+          itemId={item.id}
+          likeCount={likeCount}
+        />
+
+        <div className="relative z-10 px-4 lg:px-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-start lg:gap-8">
+          <div className="space-y-5 min-w-0">
           {authStatus === 'unauthenticated' && (
             <Link
               href={loginHref}
@@ -319,9 +314,9 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             </Link>
           )}
 
-          <section className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe">
+          <section className="rounded-xl bg-wibe-card p-4 shadow-sm border border-wibe">
             {hasSocialProof && (
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="flex flex-wrap gap-1.5 mb-3">
                 {item.listRank != null && item.listItemCount > 0 && (
                   <span className="inline-flex items-center gap-1.5 rounded-pill bg-primary/10 px-2.5 py-1 wibe-caption font-medium text-primary">
                     #{item.listRank.toLocaleString('fa-IR')} از {item.listItemCount.toLocaleString('fa-IR')} در «{item.lists.title}»
@@ -398,50 +393,14 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             trendingItems={trendingItems}
             trendingLoading={trendingLoading}
           />
-
-          <CommentSection
-            itemId={item.id}
-            onCommentAdded={onCommentsUpdate}
-            refreshTrigger={commentRefreshTrigger}
-            expandFormTrigger={expandCommentFormTrigger}
-          />
-
-          <div className="flex justify-center pb-2">
-            <ItemReportButton itemId={item.id} />
           </div>
-        </div>
 
-        <div className="fixed bottom-20 left-0 right-0 z-30 flex justify-center px-4">
-          <div
-            className={`w-full ${MOBILE_SHELL_MAX_WIDTH_CLASS} flex items-center gap-2 p-2 rounded-xl bg-wibe-card/95 backdrop-blur shadow-lg border border-wibe`}
-          >
-            <div className="flex-shrink-0">
-              <ItemSaveButton itemId={item.id} />
-            </div>
-            <div className="flex-shrink-0">
-              <ItemLikeButton
-                itemId={item.id}
-                initialLikeCount={likeCount}
-                initialIsLiked={item.isLiked || false}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (authStatus === 'unauthenticated') {
-                  router.push(loginHref);
-                  return;
-                }
-                document.getElementById('comments')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                setExpandCommentFormTrigger((t) => t + 1);
-              }}
-              className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary text-white wibe-small font-medium"
-            >
-              نظر
-              {commentCount > 0 && (
-                <span className="opacity-90">({commentCount.toLocaleString('fa-IR')})</span>
-              )}
-            </button>
+          <div className="mt-5 lg:mt-0 scroll-mt-16 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:self-start">
+            <CommentSection
+              itemId={item.id}
+              onCommentAdded={onCommentsUpdate}
+              refreshTrigger={commentRefreshTrigger}
+            />
           </div>
         </div>
       </main>

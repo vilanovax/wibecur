@@ -41,7 +41,7 @@ export default function ListsCategorySection({
   return (
     <section
       id={`lists-category-${categoryId}`}
-      className={`mb-5 ${SCROLL_MT}`}
+      className={`mb-4 lg:mb-5 ${SCROLL_MT}`}
     >
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <h2 className="flex min-w-0 items-center gap-1.5 wibe-h3">
@@ -56,7 +56,7 @@ export default function ListsCategorySection({
       </div>
 
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {preview.map((list) => (
             <ListCardCompact
               key={list.id}
@@ -69,7 +69,7 @@ export default function ListsCategorySection({
           ))}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
           {preview.map((list) => (
             <ListCardCompact
               key={list.id}

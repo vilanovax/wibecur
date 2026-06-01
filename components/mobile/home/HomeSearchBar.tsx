@@ -6,8 +6,7 @@ export default function HomeSearchBar() {
   const { openSearch } = useSearch();
 
   return (
-    <div className="px-2.5 pb-2 pt-1">
-      <p className="mb-1.5 wibe-small text-wibe-secondary">امروز دنبال چی هستی؟</p>
+    <div className="px-4 pb-2 pt-1 lg:hidden">
       <button
         type="button"
         onClick={() => openSearch()}
@@ -28,9 +27,7 @@ export default function HomeSearchBar() {
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
-        <span className="flex-1 wibe-small text-wibe-secondary">
-          فیلم، کتاب، کافه، لیست خاص…
-        </span>
+        <span className="flex-1 wibe-small text-wibe-secondary">فیلم، کتاب، کافه، لیست خاص…</span>
       </button>
     </div>
   );

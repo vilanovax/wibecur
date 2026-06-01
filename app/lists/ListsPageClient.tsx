@@ -19,6 +19,7 @@ import FilterBottomSheetPro, {
   type FilterState,
   type VibeFilter,
 } from '@/components/mobile/lists/FilterBottomSheetPro';
+import { DESKTOP_BREAKPOINT_PX } from '@/lib/hooks/useIsDesktop';
 
 type ListWithCategory = lists & {
   categories: categories | null;
@@ -161,7 +162,8 @@ const DEFAULT_FILTER: FilterState = {
 
 const VIEW_MODE_KEY = 'listsPage_viewMode';
 const PAGE_SIZE = 12;
-const SECTION_PREVIEW = 4;
+/** پیش‌نمایش هر دسته — ۲ ردیف در دسکتاپ (۳–۴ ستون) */
+const SECTION_PREVIEW = 6;
 const STICKY_OFFSET = 112;
 
 /** فقط نوار افقی چیپ‌ها را اسکرول می‌کند — بدون جابجایی صفحه */
@@ -206,6 +208,7 @@ export default function ListsPageClient({
   const [trendingLoaded, setTrendingLoaded] = useState(false);
   const categoryChipsRef = useRef<HTMLDivElement>(null);
   const isScrollingToCategory = useRef(false);
+  const viewModeInitialized = useRef(false);
 
   const publicLists = initialLists.filter((l) => l.isActive && l.isPublic);
   const activeCategories = categories.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -235,9 +238,15 @@ export default function ListsPageClient({
   };
 
   useEffect(() => {
+    if (viewModeInitialized.current) return;
+    viewModeInitialized.current = true;
     const savedView = localStorage.getItem(VIEW_MODE_KEY);
     if (savedView === 'grid' || savedView === 'compact') {
       setViewMode(savedView);
+      return;
+    }
+    if (window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT_PX}px)`).matches) {
+      setViewMode('compact');
     }
   }, []);
 
@@ -613,10 +622,11 @@ export default function ListsPageClient({
     (showCategoryChips && (!hideCategoryChipsByDefault || categoriesExpanded));
 
   return (
-    <div className="space-y-0 pb-8">
-      {/* Sticky: جستجو + مرور */}
-      <div className="sticky top-14 z-10 border-b border-wibe bg-wibe-surface/95 pb-2 pt-1.5 backdrop-blur-sm">
-        <div className="px-2.5">
+    <div className="space-y-0 pb-6 lg:pb-4">
+      <h1 className="mb-2 hidden wibe-h3 font-bold text-foreground lg:block">لیست‌ها</h1>
+      {/* جستجو در همین صفحه — هدر دسکتاپ جستجو ندارد تا تکراری نشود */}
+      <div className="pb-2 pt-1.5 lg:pb-2 lg:pt-0">
+        <div className="px-2.5 lg:px-0">
           <div className="flex items-center gap-1.5">
             <div className="min-w-0 flex-1">
               <SearchInput
@@ -635,10 +645,16 @@ export default function ListsPageClient({
             </div>
             <button
               type="button"
-              onClick={() => openSearch({ query: searchQuery })}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98]"
-              aria-label="جستجوی پیشرفته"
-              title="جستجوی پیشرفته"
+              onClick={() =>
+                openSearch({
+                  query: searchQuery,
+                  applyLocally: (q) => setSearchQuery(q),
+                  localActionLabel: 'فیلتر همین صفحه',
+                })
+              }
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 lg:w-9"
+              aria-label="جستجوی سراسری"
+              title="جستجو در کل وایب"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -646,8 +662,11 @@ export default function ListsPageClient({
             </button>
           </div>
         </div>
+      </div>
 
-        <div className="mt-2 flex items-center gap-1.5 px-2.5">
+      {/* Sticky: ترند / جدید / نمای / فیلتر */}
+      <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-surface/95 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-surface/90 lg:top-14">
+        <div className="flex items-center gap-1.5 px-2.5 lg:px-0">
           <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 scrollbar-hide">
             {BROWSE_MODES.map(({ value, label }) => (
               <button
@@ -836,7 +855,7 @@ export default function ListsPageClient({
         </div>
       )}
 
-      <div className="mt-3 px-2.5">
+      <div className="mt-3 px-2.5 lg:mt-4 lg:px-0">
         {browseMode === 'saved' && !bookmarksLoaded ? (
           <SavedBookmarksSkeleton />
         ) : savedBrowseEmpty ? (
@@ -945,7 +964,7 @@ function FlatListResults({
 }) {
   if (viewMode === 'grid') {
     return (
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
         {lists.map((list) => (
           <ListCardCompact
             key={list.id}
@@ -961,7 +980,7 @@ function FlatListResults({
     );
   }
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
       {lists.map((list) => (
         <ListCardCompact
           key={list.id}

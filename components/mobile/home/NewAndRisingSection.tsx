@@ -6,17 +6,19 @@ import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { useHomeData } from '@/contexts/HomeDataContext';
 import HomeSectionTitle from './HomeSectionTitle';
 
-export default function NewAndRisingSection() {
+export default function NewAndRisingSection({ embedded = false }: { embedded?: boolean }) {
   const { data, isLoading } = useHomeData();
   const lists = (data?.rising ?? []).slice(0, 4);
 
   if (isLoading && lists.length === 0) {
     return (
-      <section className="mb-6">
-        <div className="px-4 mb-3">
-          <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
-        </div>
-        <div className="px-4 space-y-3">
+      <section className={embedded ? '' : 'mb-6'}>
+        {!embedded && (
+          <div className="mb-3 px-4">
+            <div className="h-5 w-40 animate-pulse rounded bg-gray-200" />
+          </div>
+        )}
+        <div className="space-y-3 px-4">
           {[1, 2].map((i) => (
             <div key={i} className="rounded-lg h-20 bg-gray-100 animate-pulse" />
           ))}
@@ -25,21 +27,29 @@ export default function NewAndRisingSection() {
     );
   }
 
-  if (lists.length === 0) return null;
+  if (lists.length === 0) {
+    return embedded ? (
+      <p className="px-4 py-6 text-center wibe-small text-wibe-secondary">فعلاً لیست اوج‌گیری نیست</p>
+    ) : null;
+  }
 
   return (
-    <section className="mb-6">
-      <HomeSectionTitle
-        icon="🚀"
-        title="در حال اوج گرفتن"
-        subtitle="رشد سریع ذخیره در ۲۴ ساعت اخیر"
-      />
-      <div className="px-4 space-y-2">
+    <section className={embedded ? '' : 'mb-6'}>
+      {!embedded && (
+        <HomeSectionTitle
+          icon="🚀"
+          title="در حال اوج گرفتن"
+          subtitle="رشد سریع ذخیره در ۲۴ ساعت اخیر"
+          actionHref="/lists?mode=popular"
+          actionLabel="همه"
+        />
+      )}
+      <div className="space-y-2 px-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-3">
         {lists.map((list) => (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex flex-row-reverse gap-3 rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform p-3"
+            className="flex flex-row-reverse gap-3 rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform p-3 lg:min-h-[120px]"
           >
             <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-200">
               <ImageWithFallback

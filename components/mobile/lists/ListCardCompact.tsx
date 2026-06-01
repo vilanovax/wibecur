@@ -161,16 +161,16 @@ export default function ListCardCompact({
 
   if (variant === 'mini') {
     return (
-      <div className="relative min-h-[68px] rounded-lg border border-wibe bg-wibe-card p-2 shadow-sm">
+      <div className="group relative min-h-[68px] rounded-lg border border-wibe bg-wibe-card p-2 shadow-sm transition-shadow lg:hover:border-primary/25 lg:hover:shadow-md">
         <Link href={href} className="absolute inset-0 z-0 rounded-lg" aria-label={displayTitle} />
         <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-gray-200">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-gray-200 lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
               slug={list.slug}
               categorySlug={categorySlug}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
               fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-lg"
             />
@@ -198,21 +198,21 @@ export default function ListCardCompact({
 
   if (variant === 'compact') {
     return (
-      <div className="relative min-h-[76px] rounded-lg border border-wibe bg-wibe-card p-2.5 shadow-sm transition-transform active:scale-[0.99]">
+      <div className="group relative min-h-[76px] rounded-lg border border-wibe bg-wibe-card p-2.5 shadow-sm transition-all active:scale-[0.99] lg:hover:border-primary/30 lg:hover:shadow-md">
         <Link href={href} className="absolute inset-0 z-0 rounded-lg" aria-label={displayTitle} />
         <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2.5">
-          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-gray-200">
+          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-gray-200 lg:h-[72px] lg:w-[72px]">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
               slug={list.slug}
               categorySlug={categorySlug}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
               fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
             />
           </div>
-          <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5 pe-9">
+          <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5 pe-9 lg:pe-10">
             {badges.length > 0 && (
               <div className="mb-0.5 flex flex-wrap gap-1">
                 {badges.map((b) => (
@@ -227,11 +227,11 @@ export default function ListCardCompact({
                 ))}
               </div>
             )}
-            <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground">
+            <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground lg:text-base">
               {renderTitle('')}
             </h3>
             {subtitle && (
-              <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">
+              <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary lg:text-sm">
                 {highlightQuery ? (
                   <SearchHighlight text={subtitle} query={highlightQuery} />
                 ) : (
@@ -248,43 +248,57 @@ export default function ListCardCompact({
           saveCount={saveCount}
           isBookmarked={isBookmarked}
           onToggle={onBookmarkToggle}
-          className="pointer-events-auto absolute bottom-2.5 left-2.5 z-[2]"
+          className="pointer-events-auto absolute bottom-2.5 left-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
         />
       </div>
     );
   }
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]">
+    <div className="group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg">
       <Link href={href} className="absolute inset-0 z-0" aria-label={displayTitle} />
-      <div className="pointer-events-none relative z-[1] h-28 w-full overflow-hidden bg-gray-200">
+      {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
+      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-gray-200 sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
           slug={list.slug}
           categorySlug={categorySlug}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl lg:text-4xl"
         />
         {badges.length > 0 && (
-          <div className="absolute right-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-end gap-1">
+          <div className="absolute right-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-end gap-1 lg:right-2 lg:top-2">
             {badges.map((b) => (
               <span
                 key={b.label}
-                className={`rounded px-1.5 py-0.5 wibe-caption font-medium backdrop-blur-sm ${b.className}`}
+                className={`rounded px-1.5 py-0.5 wibe-caption font-medium backdrop-blur-sm lg:px-2 lg:py-1 lg:text-xs ${b.className}`}
               >
                 {b.label}
               </span>
             ))}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-2 pe-10">
-          <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-white">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent transition-opacity duration-300 lg:group-hover:from-black/90" />
+        <div
+          className="absolute inset-0 hidden items-center justify-center bg-black/25 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
+          aria-hidden
+        >
+          <span className="rounded-full bg-white/95 px-4 py-2 wibe-small font-semibold text-foreground shadow-md">
+            مشاهده لیست
+          </span>
+        </div>
+        <div className="absolute inset-x-0 bottom-0 p-2.5 pe-10 text-right lg:p-3 lg:pe-11">
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white lg:text-base lg:font-bold">
             {renderTitle('')}
           </h3>
-          <ListCardStats saves={saveCount} itemCount={itemCount} variant="overlay" className="mt-0.5" />
+          <ListCardStats
+            saves={saveCount}
+            itemCount={itemCount}
+            variant="overlay"
+            className="mt-1 lg:mt-1.5 lg:text-sm"
+          />
         </div>
       </div>
       <InlineBookmark
@@ -293,7 +307,7 @@ export default function ListCardCompact({
         isBookmarked={isBookmarked}
         onToggle={onBookmarkToggle}
         size="xs"
-        className="pointer-events-auto absolute bottom-2 left-2 z-[2]"
+        className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-all lg:group-hover:scale-110 lg:group-hover:opacity-100"
       />
     </div>
   );

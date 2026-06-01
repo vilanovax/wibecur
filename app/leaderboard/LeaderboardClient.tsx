@@ -7,34 +7,13 @@ import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import type { LeaderboardRow, LeaderboardCategoryOption } from '@/lib/leaderboard';
 
 type TabType = 'global' | 'rising' | 'category' | 'monthly';
 
-interface LeaderboardRow {
-  rank: number;
-  userId: string;
-  name: string | null;
-  username: string | null;
-  image: string | null;
-  avatarType: string | null;
-  avatarId: string | null;
-  curatorLevel: string;
-  viralCount: number;
-  totalLikes: number;
-  totalSaves: number;
-  listCount: number;
-  momentumScore: number;
-  rankingScore: number;
-  rankChange: number | null;
-  growthPercent: number | null;
-  monthlyRank: number | null;
-  monthYear: string | null;
-}
-
-interface CategoryOption {
-  slug: string;
-  name: string;
-  icon: string;
+interface LeaderboardClientProps {
+  initialList?: LeaderboardRow[];
+  initialCategories?: LeaderboardCategoryOption[];
 }
 
 const TOP3_STYLES: Record<number, { card: string; medal: string }> = {
@@ -121,32 +100,42 @@ function AvatarWithGlow({
   );
 }
 
-export default function LeaderboardClient() {
+export default function LeaderboardClient({
+  initialList = [],
+  initialCategories = [],
+}: LeaderboardClientProps) {
   const [tab, setTab] = useState<TabType>('global');
-  const [categorySlug, setCategorySlug] = useState<string | null>(null);
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [list, setList] = useState<LeaderboardRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categorySlug, setCategorySlug] = useState<string | null>(
+    initialCategories[0]?.slug ?? null
+  );
+  const [categories, setCategories] = useState<LeaderboardCategoryOption[]>(initialCategories);
+  const [list, setList] = useState<LeaderboardRow[]>(initialList);
+  const [loading, setLoading] = useState(initialList.length === 0);
 
   useEffect(() => {
+    if (initialCategories.length > 0) return;
     fetch('/api/categories')
       .then((r) => r.json())
       .then((j) => {
         if (j.success && Array.isArray(j.data)) {
-          setCategories(
-            j.data.slice(0, 10).map((c: { slug: string; name: string; icon: string }) => ({
-              slug: c.slug,
-              name: c.name,
-              icon: c.icon,
-            }))
-          );
-          if (!categorySlug && j.data[0]) setCategorySlug(j.data[0].slug);
+          const mapped = j.data.slice(0, 10).map((c: { slug: string; name: string; icon: string }) => ({
+            slug: c.slug,
+            name: c.name,
+            icon: c.icon,
+          }));
+          setCategories(mapped);
+          if (!categorySlug && mapped[0]) setCategorySlug(mapped[0].slug);
         }
       })
       .catch(() => {});
-  }, []);
+  }, [initialCategories.length, categorySlug]);
 
   useEffect(() => {
+    if (tab === 'global' && initialList.length > 0) {
+      setList(initialList);
+      setLoading(false);
+      return;
+    }
     if (tab === 'category' && !categorySlug) {
       setList([]);
       setLoading(false);
@@ -163,7 +152,7 @@ export default function LeaderboardClient() {
       })
       .catch(() => setList([]))
       .finally(() => setLoading(false));
-  }, [tab, categorySlug]);
+  }, [tab, categorySlug, initialList]);
 
   const top3 = list.slice(0, 3);
   const rest = list.slice(3);
@@ -176,7 +165,7 @@ export default function LeaderboardClient() {
   ];
 
   return (
-    <div className="px-4 py-4 pb-24 max-w-lg mx-auto">
+    <div className="px-4 py-4 lg:max-w-3xl lg:mx-auto">
       <div className="flex items-center gap-2 mb-4">
         <Trophy className="w-6 h-6 text-warning flex-shrink-0" />
         <h1 className="wibe-h2">رتبه‌بندی کریتورها</h1>

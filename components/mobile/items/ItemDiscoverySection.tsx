@@ -7,6 +7,17 @@ import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
 
 type DiscoveryTab = 'similar' | 'saves' | 'trending';
 
+const TAB_ACTIVE =
+  'bg-primary text-white shadow-sm ring-1 ring-primary/20';
+const TAB_INACTIVE =
+  'bg-gray-100 text-gray-600 hover:bg-gray-200/90 hover:text-gray-800';
+
+const DISCOVERY_ROW_CLASS =
+  'flex gap-3 overflow-x-auto overflow-y-hidden pb-1 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-4 lg:overflow-visible lg:snap-none xl:grid-cols-5';
+
+const DISCOVERY_TRENDING_ROW_CLASS =
+  'flex gap-2.5 overflow-x-auto overflow-y-hidden pb-1 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-6 lg:gap-3 lg:overflow-visible lg:snap-none';
+
 function displayRating(rating: number | null | undefined): string | null {
   if (rating == null || Number(rating) === 0) return null;
   return String(rating);
@@ -21,7 +32,7 @@ function DiscoveryCarouselCard({
   fallbackIcon,
   rating,
   subtitle,
-  className = 'flex-shrink-0 w-[calc(55vw)] max-w-[220px]',
+  className = 'flex-shrink-0 w-[calc(52vw)] max-w-[210px] lg:w-full lg:max-w-none lg:flex-shrink',
   rank,
 }: {
   href: string;
@@ -40,7 +51,7 @@ function DiscoveryCarouselCard({
   return (
     <Link
       href={href}
-      className={`${className} rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform bg-wibe-card`}
+      className={`${className} rounded-xl overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform bg-wibe-card`}
     >
       <div className="relative aspect-[2/3] w-full bg-gray-100">
         <LazyItemCoverImage
@@ -53,23 +64,23 @@ function DiscoveryCarouselCard({
           fallbackClassName="absolute inset-0 w-full h-full"
           coverLayout="grid"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
         {rank != null && rank <= 3 && (
-          <span className="absolute top-1.5 right-1.5 wibe-caption bg-warning text-white px-1.5 py-0.5 rounded-pill">
+          <span className="absolute top-2 right-2 wibe-caption bg-warning text-white px-1.5 py-0.5 rounded-pill font-medium shadow-sm">
             #{rank.toLocaleString('fa-IR')}
           </span>
         )}
         <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white">
-          <h3 className="wibe-small font-semibold leading-snug line-clamp-2 drop-shadow">{title}</h3>
+          <h3 className="wibe-small font-semibold leading-snug line-clamp-2 drop-shadow-sm">{title}</h3>
           {(ratingLabel || subtitle) && (
-            <div className="flex flex-wrap items-center gap-2 mt-1 wibe-caption text-white/90">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 wibe-caption text-white/90">
               {ratingLabel && (
                 <span className="flex items-center gap-0.5">
                   <span>⭐</span>
                   <span>{ratingLabel}</span>
                 </span>
               )}
-              {subtitle && <span className="line-clamp-1">{subtitle}</span>}
+              {subtitle && <span className="line-clamp-1 opacity-90">{subtitle}</span>}
             </div>
           )}
         </div>
@@ -78,11 +89,17 @@ function DiscoveryCarouselCard({
   );
 }
 
-function CarouselSkeleton({ count = 3, className = 'min-w-[calc(55vw)] w-[calc(55vw)] max-w-[220px] h-[calc(55vw*1.5)] max-h-[330px]' }) {
+function CarouselSkeleton({
+  count = 3,
+  className = 'min-w-[calc(52vw)] w-[calc(52vw)] max-w-[210px] aspect-[2/3] lg:w-full lg:min-w-0 lg:max-w-none',
+}: {
+  count?: number;
+  className?: string;
+}) {
   return (
-    <div className="flex gap-3 overflow-hidden -mx-4 px-4">
+    <div className="flex gap-3 overflow-hidden -mx-4 px-4 pb-1">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className={`${className} flex-shrink-0 rounded-lg bg-gray-200 animate-pulse`} />
+        <div key={i} className={`${className} flex-shrink-0 rounded-xl bg-gray-200 animate-pulse`} />
       ))}
     </div>
   );
@@ -114,10 +131,10 @@ export default function ItemDiscoverySection({
   const availableTabs = useMemo(() => {
     const tabs: { id: DiscoveryTab; label: string }[] = [];
     if (hasSimilar || similarLoading) tabs.push({ id: 'similar', label: 'مشابه' });
-    if (hasSaves || alsoLikedLoading) tabs.push({ id: 'saves', label: 'بر اساس ذخیره' });
+    if (hasSaves) tabs.push({ id: 'saves', label: 'بر اساس ذخیره' });
     if (hasTrending || trendingLoading) tabs.push({ id: 'trending', label: 'داغ' });
     return tabs;
-  }, [hasSimilar, hasSaves, hasTrending, similarLoading, alsoLikedLoading, trendingLoading]);
+  }, [hasSimilar, hasSaves, hasTrending, similarLoading, trendingLoading]);
 
   const [activeTab, setActiveTab] = useState<DiscoveryTab>('similar');
 
@@ -149,21 +166,27 @@ export default function ItemDiscoverySection({
   };
 
   return (
-    <section className="-mx-4 px-4">
-      <h2 className="wibe-h3 mb-0.5">پیشنهاد برای تو</h2>
-      <p className="wibe-caption text-wibe-secondary mb-3">{tabDescriptions[activeTab]}</p>
+    <section className="pt-5 border-t border-wibe">
+      <div className="mb-3">
+        <h2 className="wibe-h3 text-foreground">پیشنهاد برای تو</h2>
+        <p className="wibe-caption text-wibe-secondary mt-0.5">{tabDescriptions[activeTab]}</p>
+      </div>
 
       {availableTabs.length > 1 && (
-        <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide pb-0.5">
+        <div
+          className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-0.5"
+          role="tablist"
+          aria-label="نوع پیشنهاد"
+        >
           {availableTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg wibe-caption font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              className={`flex-shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-[0.98] ${
+                activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE
               }`}
             >
               {tab.label}
@@ -175,7 +198,7 @@ export default function ItemDiscoverySection({
       {isLoading ? (
         <CarouselSkeleton count={activeTab === 'trending' ? 4 : 3} />
       ) : activeTab === 'similar' && hasSimilar ? (
-        <div className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
+        <div className={DISCOVERY_ROW_CLASS}>
           {similarItems.map((s) => (
             <DiscoveryCarouselCard
               key={s.id}
@@ -187,11 +210,12 @@ export default function ItemDiscoverySection({
               fallbackIcon={s.category?.icon ?? undefined}
               rating={s.rating}
               subtitle={s.category?.name ?? undefined}
+              className="flex-shrink-0 w-[calc(52vw)] max-w-[210px] snap-start lg:w-full lg:max-w-none"
             />
           ))}
         </div>
       ) : activeTab === 'saves' && hasSaves ? (
-        <div className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
+        <div className={DISCOVERY_ROW_CLASS}>
           {alsoLikedItems.map((a) => (
             <DiscoveryCarouselCard
               key={a.id}
@@ -201,13 +225,13 @@ export default function ItemDiscoverySection({
               imageUrl={a.image}
               categorySlug={categorySlug}
               rating={a.rating}
-              subtitle={`${a.commonUsersCount.toLocaleString('fa-IR')} نفر همراه ذخیره کردند`}
-              className="flex-shrink-0 w-[calc(48vw)] max-w-[200px]"
+              subtitle={`${a.commonUsersCount.toLocaleString('fa-IR')} نفر همراه`}
+              className="flex-shrink-0 w-[calc(48vw)] max-w-[200px] snap-start lg:w-full lg:max-w-none"
             />
           ))}
         </div>
       ) : activeTab === 'trending' && hasTrending ? (
-        <div className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 scrollbar-hide">
+        <div className={DISCOVERY_TRENDING_ROW_CLASS}>
           {trendingItems.slice(0, 8).map((t, index) => (
             <DiscoveryCarouselCard
               key={t.id}
@@ -218,12 +242,12 @@ export default function ItemDiscoverySection({
               categorySlug={categorySlug}
               rating={t.rating}
               rank={index + 1}
-              className="flex-shrink-0 w-[100px] max-w-[100px]"
+              className="flex-shrink-0 w-[108px] max-w-[108px] snap-start lg:w-full lg:max-w-none"
             />
           ))}
         </div>
       ) : (
-        <div className="py-5 px-4 rounded-lg bg-wibe-card border border-wibe text-center">
+        <div className="py-6 px-4 rounded-xl bg-gray-50 border border-wibe/80 text-center">
           <p className="wibe-small text-wibe-secondary">فعلاً پیشنهادی برای این بخش نداریم</p>
         </div>
       )}

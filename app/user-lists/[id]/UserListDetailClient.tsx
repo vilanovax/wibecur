@@ -105,34 +105,36 @@ export default function UserListDetailClient({
   return (
     <>
       <div className="min-h-screen bg-wibe-surface pb-20">
-        <div className="sticky top-0 z-40 bg-wibe-card border-b border-wibe">
-          <div className="flex items-center justify-between px-4 py-3">
-            <Link href="/profile" className="wibe-small text-wibe-secondary">
-              بازگشت
-            </Link>
-            <h1 className="wibe-h3 truncate max-w-[50%]">{list.title}</h1>
-            {isOwner ? (
-              <button
-                onClick={() => setShowSettings(true)}
-                className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
-                aria-label="تنظیمات لیست"
-              >
-                <Settings className="w-5 h-5 text-wibe-secondary" />
-              </button>
-            ) : (
-              <div className="w-10" />
-            )}
-          </div>
-        </div>
-
         <main className="space-y-6">
           {list.coverImage && (
             <div className="relative h-56 bg-gray-200">
               <ImageWithFallback src={list.coverImage} alt={list.title} className="w-full h-full object-cover" />
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => setShowSettings(true)}
+                  className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/55"
+                  aria-label="تنظیمات لیست"
+                >
+                  <Settings className="h-5 w-5" />
+                </button>
+              )}
             </div>
           )}
 
-          <div className="px-4 space-y-4">
+          <div className="space-y-4 px-4">
+            {!list.coverImage && isOwner && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowSettings(true)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-wibe bg-wibe-card transition-colors hover:bg-gray-50"
+                  aria-label="تنظیمات لیست"
+                >
+                  <Settings className="h-5 w-5 text-wibe-secondary" />
+                </button>
+              </div>
+            )}
             {list.categories && (
               <Link
                 href={`/categories/${list.categories.slug}`}

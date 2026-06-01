@@ -29,20 +29,19 @@ export default function ItemReportButton({ itemId }: ItemReportButtonProps) {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="w-10 h-10 flex items-center justify-center rounded-full bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 transition-all shadow-sm"
-        aria-label="گزارش"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-all hover:border-red-300 hover:bg-red-50"
+        aria-label="گزارش آیتم"
+        title="گزارش آیتم"
       >
-        <Flag className="w-4 h-4 text-gray-600 hover:text-red-600" />
+        <Flag className="h-4 w-4 text-gray-500 transition-colors hover:text-red-600" />
       </button>
 
-      {isModalOpen && (
-        <ItemReportModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          itemId={itemId}
-          onReportSuccess={handleReportSuccess}
-        />
-      )}
+      <ItemReportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        itemId={itemId}
+        onReportSuccess={handleReportSuccess}
+      />
     </>
   );
 }

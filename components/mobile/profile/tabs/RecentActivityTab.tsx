@@ -100,7 +100,7 @@ export default function RecentActivityTab({
 
   if (isLoading && !hasInitial) {
     return (
-      <div className={`space-y-3 ${embedded ? '' : 'px-4'}`}>
+      <div className={`space-y-3 ${embedded ? 'px-4 lg:px-0' : 'px-4'}`}>
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="bg-white rounded-xl p-4 animate-pulse border border-gray-100">
             <div className="h-4 bg-gray-100 rounded w-1/3 mb-2" />
@@ -114,7 +114,7 @@ export default function RecentActivityTab({
 
   if (isError && activities.length === 0) {
     return (
-      <div className={`${embedded ? 'px-4' : 'px-4'} py-8`}>
+      <div className={`py-8 ${embedded ? 'px-4 lg:px-0' : 'px-4'}`}>
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
           <p className="wibe-small text-red-600">
             {error instanceof Error ? error.message : 'خطا در بارگذاری فعالیت‌ها'}
@@ -134,7 +134,7 @@ export default function RecentActivityTab({
 
   if (activities.length === 0) {
     return (
-      <div className={`text-center py-10 ${embedded ? 'px-4' : 'px-4'}`}>
+      <div className={`py-10 text-center ${embedded ? 'px-4 lg:px-0' : 'px-4'}`}>
         <p className="wibe-small text-wibe-secondary">فعالیتی یافت نشد</p>
       </div>
     );
@@ -143,9 +143,9 @@ export default function RecentActivityTab({
   const displayedActivities = showAll ? activities : activities.slice(0, 8);
 
   return (
-    <div className={`space-y-0 pb-4 ${embedded ? 'px-4' : 'px-4'}`}>
-      <div className="relative pr-5">
-        <div className="absolute top-2 bottom-2 right-[9px] w-px bg-gray-200" />
+    <div className={`space-y-0 pb-4 ${embedded ? 'px-4 lg:px-0' : 'px-4'}`}>
+      <div className="relative pr-5 lg:grid lg:grid-cols-2 lg:gap-4 lg:pr-0 xl:grid-cols-3">
+        <div className="absolute top-2 bottom-2 right-[9px] w-px bg-gray-200 lg:hidden" aria-hidden />
         {displayedActivities.map((activity) => {
           const config = TYPE_CONFIG[activity.type] ?? TYPE_CONFIG.list_created;
           const Icon = config.icon;
@@ -174,21 +174,21 @@ export default function RecentActivityTab({
               : null;
 
           return (
-            <div key={activity.id} className="relative pl-0 pb-4 last:pb-0">
+            <div key={activity.id} className="relative pb-4 pl-0 last:pb-0 lg:pb-0">
               <div
-                className={`absolute right-0 top-4 w-2 h-2 rounded-full border-2 border-white shadow-sm z-10 ${config.dotClass}`}
+                className={`absolute right-0 top-4 z-10 h-2 w-2 rounded-full border-2 border-white shadow-sm lg:hidden ${config.dotClass}`}
                 aria-hidden
               />
 
               <Link
                 href={listHref}
                 className={`
-                  block rounded-xl overflow-hidden transition-all duration-200
+                  block overflow-hidden rounded-xl transition-all duration-200
                   active:scale-[0.99] active:shadow
-                  ${isViral ? 'p-5' : 'p-4'}
+                  ${isViral ? 'p-5 lg:p-4' : 'p-4 lg:p-3'}
                   ${isViral
                     ? 'border bg-white shadow-sm border-orange-200/80 bg-gradient-to-b from-white to-orange-50/30'
-                    : 'border border-gray-100 bg-white shadow-sm hover:shadow-md'}
+                    : 'border border-gray-100 bg-white shadow-sm hover:shadow-md lg:hover:border-primary/15'}
                 `}
               >
                 {/* Tag pill */}
@@ -211,7 +211,7 @@ export default function RecentActivityTab({
                 </div>
 
                 {/* Title */}
-                <p className="text-gray-900 font-bold text-base leading-snug">
+                <p className="text-base font-bold leading-snug text-gray-900 lg:line-clamp-2 lg:text-sm">
                   «{activity.title}»
                 </p>
 
@@ -244,7 +244,7 @@ export default function RecentActivityTab({
       {!showAll && activities.length > 8 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full py-3 mt-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-sm transition-colors"
+          className="mt-2 w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
         >
           مشاهده بیشتر ({activities.length - 8} مورد دیگر)
         </button>

@@ -15,9 +15,9 @@ export default function MyListsEmptyState({
   onCreate,
 }: MyListsEmptyStateProps) {
   return (
-    <div className="rounded-xl border border-dashed border-wibe bg-wibe-card/60 px-4 py-10 text-center">
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <ListPlus className="h-8 w-8" strokeWidth={1.75} />
+    <div className="rounded-xl border border-dashed border-wibe bg-wibe-card/60 px-4 py-8 text-center lg:mx-auto lg:max-w-md lg:py-6">
+      <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary lg:h-12 lg:w-12">
+        <ListPlus className="h-7 w-7 lg:h-6 lg:w-6" strokeWidth={1.75} />
       </div>
       <h3 className="wibe-h3 text-foreground">{message}</h3>
       <p className="mt-2 wibe-small text-wibe-secondary leading-relaxed max-w-[260px] mx-auto">

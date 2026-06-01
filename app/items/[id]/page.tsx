@@ -2,12 +2,12 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import { auth } from '@/lib/auth-config';
-
 import { dbQuery } from '@/lib/db';
 import ItemDetailClient from './ItemDetailClient';
 import { toAbsoluteImageUrl } from '@/lib/seo';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
+
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -98,53 +98,10 @@ export default async function ItemDetailPage({
     notFound();
   }
 
-  // HIDDEN: فقط ادمین یا سازنده لیست ببینند
-  const session = await auth();
-  const viewerId = session?.user?.email
-    ? (await dbQuery(() =>
-        prisma.users.findUnique({
-          where: { email: session.user.email! },
-          select: { id: true },
-        })
-      ))?.id ?? null
-    : null;
-  const isAdmin = session?.user?.role === 'ADMIN';
-  const isCreator = item.lists?.userId && viewerId === item.lists.userId;
-  if (
-    item.item_moderation?.status === 'HIDDEN' &&
-    !isAdmin &&
-    !isCreator
-  ) {
+  if (item.item_moderation?.status === 'HIDDEN') {
     notFound();
   }
 
-  // Check if user has liked this item
-  let isLiked = false;
-  if (session?.user?.email) {
-    const userEmail = session.user.email;
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: userEmail },
-        select: { id: true },
-      })
-    );
-
-    if (user) {
-      const existingVote = await dbQuery(() =>
-        prisma.item_votes.findUnique({
-          where: {
-            userId_itemId: {
-              userId: user.id,
-              itemId: id,
-            },
-          },
-        })
-      );
-      isLiked = !!existingVote;
-    }
-  }
-
-  // رتبه در لیست مبدأ + تعداد ذخیره در لیست‌های شخصی
   const [listRank, listItemCount, personalSaveCount] = await dbQuery(async () => {
     const [orderedItems, saveCount] = await Promise.all([
       prisma.items.findMany({
@@ -164,7 +121,6 @@ export default async function ItemDetailPage({
     return [rank > 0 ? rank : null, orderedItems.length, saveCount] as const;
   });
 
-  // Serialize the item data for client component (metadata: Prisma JsonValue → Record | null)
   const metadata =
     item.metadata != null &&
     typeof item.metadata === 'object' &&
@@ -199,18 +155,18 @@ export default async function ItemDetailPage({
       saveCount: item.lists.saveCount ?? 0,
       categories: item.lists.categories,
     },
-    users: item.lists.users ? {
-      name: item.lists.users.name,
-    } : null,
-    isLiked,
+    users: item.lists.users
+      ? {
+          name: item.lists.users.name,
+        }
+      : null,
   };
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20">
+    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-8">
       <Header title={item.title} showBack />
       <ItemDetailClient item={serializedItem} />
       <BottomNav />
     </div>
   );
 }
-

@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getClientErrorMessage, logServerError } from '@/lib/api-error';
+import { getCachedBadWords } from '@/lib/bad-words';
 import { DEFAULT_LIST_COMMENT_MAX_LENGTH } from '@/lib/comment-limits';
 
 // GET /api/items/[id]/comments - دریافت کامنت‌های یک آیتم
@@ -20,10 +21,8 @@ export async function GET(
     const userId = session?.user ? session.user.id : null;
 
     // موازی‌سازی کوئری‌های مستقل
-    const [badWordsResult, comments, item, globalSettings] = await Promise.all([
-      dbQuery(() =>
-        prisma.bad_words.findMany({ select: { word: true } })
-      ).then((badWords) => badWords.map((bw) => bw.word.toLowerCase())).catch(() => [] as string[]),
+    const [badWordsList, comments, item, globalSettings] = await Promise.all([
+      getCachedBadWords(),
       dbQuery(() =>
         prisma.comments.findMany({
           where: {
@@ -50,7 +49,10 @@ export async function GET(
             },
             _count: { select: { comment_likes: true } },
           },
-          orderBy: sort === 'popular' ? { likeCount: 'desc' } : { createdAt: 'desc' },
+          orderBy:
+            sort === 'popular'
+              ? [{ weightedScore: 'desc' }, { helpfulUp: 'desc' }, { createdAt: 'desc' }]
+              : { createdAt: 'desc' },
         })
       ),
       dbQuery(() =>
@@ -63,7 +65,6 @@ export async function GET(
       ),
       dbQuery(() => prisma.comment_settings.findFirst()).catch(() => null),
     ]);
-    const badWordsList = badWordsResult;
 
     // Check if comments are enabled
     const category = item?.lists?.categories;
@@ -71,22 +72,32 @@ export async function GET(
     const itemCommentsEnabled = item?.commentsEnabled ?? globalSettings?.defaultCommentsEnabled ?? true;
     const commentsEnabled = categoryCommentsEnabled && itemCommentsEnabled;
 
-    // Get user's likes for this item's comments (only if there are comments)
-    const userLikes =
+    const [userLikes, userVotes] = await Promise.all([
       userId && comments.length > 0
-        ? await dbQuery(() =>
+        ? dbQuery(() =>
             prisma.comment_likes.findMany({
               where: {
                 userId,
-                commentId: {
-                  in: comments.map((c) => c.id),
-                },
+                commentId: { in: comments.map((c) => c.id) },
               },
               select: { commentId: true },
             })
           )
-        : [];
+        : Promise.resolve([]),
+      userId && comments.length > 0
+        ? dbQuery(() =>
+            prisma.comment_votes.findMany({
+              where: {
+                userId,
+                commentId: { in: comments.map((c) => c.id) },
+              },
+              select: { commentId: true, value: true },
+            })
+          )
+        : Promise.resolve([]),
+    ]);
     const likedCommentIds = new Set(userLikes.map((l) => l.commentId));
+    const userVoteByCommentId = new Map(userVotes.map((v) => [v.commentId, v.value]));
 
     // Format comments
     const formattedComments = comments.map((comment) => {
@@ -103,11 +114,21 @@ export async function GET(
         });
       }
 
+      const legacyUp = comment.likeCount > comment.helpfulUp ? comment.likeCount : 0;
+      const helpfulUp = comment.helpfulUp > 0 ? comment.helpfulUp : legacyUp;
+      let userVote: number | null = userVoteByCommentId.get(comment.id) ?? null;
+      if (userVote == null && likedCommentIds.has(comment.id)) {
+        userVote = 1;
+      }
+
       return {
         id: comment.id,
         content: displayContent,
         isFiltered: comment.isFiltered,
         likeCount: comment.likeCount,
+        helpfulUp,
+        helpfulDown: comment.helpfulDown,
+        userVote,
         createdAt: comment.createdAt.toISOString(),
         updatedAt: comment.updatedAt.toISOString(),
         user: {
@@ -256,14 +277,13 @@ export async function POST(
       }
     }
 
-    // Check rate limit
-    // Priority: global rate limit > item-specific rate limit > default (5 minutes)
+    // Check rate limit (غیرفعال در development — مثل کامنت لیست)
     const rateLimitMinutes =
       globalSettings?.globalRateLimitMinutes ??
       globalSettings?.rateLimitMinutes ??
       5;
 
-    if (rateLimitMinutes > 0) {
+    if (process.env.NODE_ENV !== 'development' && rateLimitMinutes > 0) {
       const rateLimitMs = rateLimitMinutes * 60 * 1000;
       const timeLimit = new Date(Date.now() - rateLimitMs);
 
@@ -281,10 +301,13 @@ export async function POST(
       );
 
       if (recentItemComment) {
+        const elapsedMs = Date.now() - recentItemComment.createdAt.getTime();
+        const retryAfterSeconds = Math.max(1, Math.ceil((rateLimitMs - elapsedMs) / 1000));
         return NextResponse.json(
           {
             success: false,
             error: `لطفاً ${rateLimitMinutes} دقیقه صبر کنید قبل از ارسال کامنت بعدی`,
+            retryAfterSeconds,
           },
           { status: 429 }
         );
@@ -307,10 +330,14 @@ export async function POST(
         );
 
         if (recentGlobalComment) {
+          const globalLimitMs = globalSettings.globalRateLimitMinutes * 60 * 1000;
+          const elapsedMs = Date.now() - recentGlobalComment.createdAt.getTime();
+          const retryAfterSeconds = Math.max(1, Math.ceil((globalLimitMs - elapsedMs) / 1000));
           return NextResponse.json(
             {
               success: false,
               error: `لطفاً ${globalSettings.globalRateLimitMinutes} دقیقه صبر کنید قبل از ارسال کامنت بعدی`,
+              retryAfterSeconds,
             },
             { status: 429 }
           );
@@ -318,18 +345,7 @@ export async function POST(
       }
     }
 
-    // Get bad words (with try-catch)
-    let badWordsList: string[] = [];
-    try {
-      const badWords = await dbQuery(() =>
-        prisma.bad_words.findMany({
-          select: { word: true },
-        })
-      );
-      badWordsList = badWords.map((bw) => bw.word.toLowerCase());
-    } catch (err) {
-      console.warn('Could not fetch bad words:', err);
-    }
+    const badWordsList = await getCachedBadWords();
 
     // Check for bad words
     const contentLower = content.toLowerCase();

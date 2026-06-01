@@ -1,3 +1,4 @@
+import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { getTopSimilarLists } from '@/lib/listSimilarity';
 import { prisma } from '@/lib/prisma';
@@ -124,13 +125,14 @@ export default async function ListDetailPage({
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-8 lg:pt-1">
+      <Header title={list.title} showBack hideTitleOnDesktop />
       <ListDetailClient
         list={JSON.parse(JSON.stringify(listWithCreator))}
         relatedLists={JSON.parse(JSON.stringify(relatedLists))}
         openSuggestFromQuery={openSuggest}
       />
       <BottomNav />
-    </>
+    </div>
   );
 }

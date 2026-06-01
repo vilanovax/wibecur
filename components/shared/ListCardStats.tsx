@@ -19,9 +19,11 @@ export default function ListCardStats({
 
   if (variant === 'overlay') {
     return (
-      <p className={`flex items-center gap-1 wibe-caption text-white/90 tabular-nums ${className}`}>
-        <Bookmark className="w-3.5 h-3.5 shrink-0" />
-        {saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم
+      <p
+        className={`flex flex-wrap items-center justify-end gap-x-1 gap-y-0.5 wibe-caption text-white/90 tabular-nums lg:gap-x-1.5 ${className}`}
+      >
+        <Bookmark className="h-3.5 w-3.5 shrink-0 lg:h-4 lg:w-4" />
+        <span>{saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم</span>
       </p>
     );
   }

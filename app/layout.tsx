@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Vazirmatn } from 'next/font/google';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import SessionProvider from '@/components/providers/SessionProvider';
@@ -7,6 +8,13 @@ import PWAProvider from '@/components/providers/PWAProvider';
 import MainContainer from '@/components/providers/MainContainer';
 import { SearchProvider } from '@/contexts/SearchContext';
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from '@/lib/seo';
+
+const vazirmatn = Vazirmatn({
+  subsets: ['arabic'],
+  weight: ['400', '600', '700'],
+  display: 'swap',
+  variable: '--font-vazirmatn',
+});
 
 const baseUrl = getBaseUrl();
 
@@ -88,20 +96,14 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="fa" dir="rtl">
+    <html lang="fa" dir="rtl" className={vazirmatn.variable}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="antialiased font-sans bg-gray-200">
+      <body className={`${vazirmatn.className} antialiased font-sans bg-gray-200`}>
         <a
           href="#main"
           className="skip-link"

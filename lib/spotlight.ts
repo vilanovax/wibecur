@@ -33,6 +33,7 @@ export interface CurrentSpotlightResult {
     curatorLevel: string;
     viralCount: number;
     totalLikes: number;
+    totalSaves: number;
     listCount: number;
   };
   lists: {
@@ -177,7 +178,7 @@ export async function getCurrentSpotlightWithDetails(
   }
   if (!row) return null;
 
-  const [user, lists, viralCount, listCount, totalLikesAgg] = await Promise.all([
+  const [user, lists, viralCount, listCount, listStatsAgg] = await Promise.all([
     prisma.users.findUnique({
       where: { id: row.userId },
       select: {
@@ -212,13 +213,14 @@ export async function getCurrentSpotlightWithDetails(
     prisma.lists.count({ where: { userId: row.userId, isPublic: true, isActive: true } }),
     prisma.lists.aggregate({
       where: { userId: row.userId, isPublic: true },
-      _sum: { likeCount: true },
+      _sum: { likeCount: true, saveCount: true },
     }),
   ]);
 
   if (!user) return null;
 
-  const totalLikes = totalLikesAgg._sum.likeCount ?? 0;
+  const totalLikes = listStatsAgg._sum.likeCount ?? 0;
+  const totalSaves = listStatsAgg._sum.saveCount ?? 0;
 
   return {
     id: row.id,
@@ -237,6 +239,7 @@ export async function getCurrentSpotlightWithDetails(
       curatorLevel: user.curatorLevel ?? 'EXPLORER',
       viralCount,
       totalLikes,
+      totalSaves,
       listCount: listCount ?? 0,
     },
     lists: lists.map((l) => ({

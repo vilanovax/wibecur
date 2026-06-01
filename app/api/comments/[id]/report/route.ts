@@ -20,13 +20,20 @@ export async function POST(
 
     const userId = session.user.id;
     const { id: commentId } = await params;
-    let body: { reason?: unknown } = {};
+    let body: { reason?: unknown; description?: unknown } = {};
     try {
       body = await request.json();
     } catch {
       // بدنه خالی یا نامعتبر؛ دلیل اختیاری است
     }
-    const reason = typeof body.reason === 'string' ? body.reason.trim() || undefined : undefined;
+    const reasonRaw = typeof body.reason === 'string' ? body.reason.trim() : '';
+    const description =
+      typeof body.description === 'string' ? body.description.trim() : '';
+    const reason = reasonRaw
+      ? description
+        ? `${reasonRaw}: ${description}`
+        : reasonRaw
+      : description || 'محتوا نامناسب';
 
     // Check if comment exists
     const comment = await prisma.comments.findUnique({
@@ -61,7 +68,7 @@ export async function POST(
       data: {
         commentId,
         userId,
-        reason: reason ?? 'محتوا نامناسب',
+        reason,
       },
     });
 

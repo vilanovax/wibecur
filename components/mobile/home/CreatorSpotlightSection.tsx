@@ -41,6 +41,7 @@ interface SpotlightData {
     curatorLevel: string;
     viralCount: number;
     totalLikes: number;
+    totalSaves: number;
     listCount: number;
   };
   lists: SpotlightList[];
@@ -122,7 +123,7 @@ export default function CreatorSpotlightSection() {
             <CuratorBadge level={levelKey} size="small" glow={false} className="mt-1" />
             {c.bio && <p className="wibe-small text-wibe-secondary mt-2 line-clamp-2 max-w-md">{c.bio}</p>}
             <p className="wibe-caption text-wibe-secondary mt-2">
-              {c.listCount} لیست · {c.totalLikes.toLocaleString('fa-IR')} لایک
+              {c.listCount} لیست · {c.totalSaves.toLocaleString('fa-IR')} ذخیره
             </p>
           </div>
 

@@ -1,6 +1,10 @@
-import { isOurStorageUrl } from '@/lib/object-storage-config';
-import { isAllowedItemImageUrl } from '@/lib/image-url-policy';
-import { isMovieLikeCategory, resolveItemImage } from '@/lib/resolve-item-image';
+import { isOurStorageUrl } from './object-storage-config';
+import { isAllowedItemImageUrl } from './image-url-policy';
+import { isMovieLikeCategory, resolveItemImage } from './resolve-item-image';
+
+function isLocalBannerPlaceholder(url: string): boolean {
+  return url.startsWith('/images/banners/');
+}
 
 export function itemNeedsPosterEnrich(input: {
   title: string;
@@ -21,6 +25,7 @@ export function itemNeedsPosterEnrich(input: {
 
   if (!resolved) return true;
   if (resolved.includes('image.tmdb.org')) return false;
+  if (isLocalBannerPlaceholder(resolved)) return true;
   if (isOurStorageUrl(resolved)) return true;
   if (isAllowedItemImageUrl(resolved)) return false;
 

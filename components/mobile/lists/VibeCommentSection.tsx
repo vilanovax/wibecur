@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import Toast from '@/components/shared/Toast';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import CommentReportModal from '@/components/mobile/comments/CommentReportModal';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import CommentAvatar from '@/components/shared/CommentAvatar';
 import {
@@ -440,9 +441,6 @@ function VibeCommentInput({
   isSuggestionMode,
   isLoading,
   categorySlug,
-  userImage,
-  userName,
-  userEmail,
   maxCommentLength,
   suggestionMaxLength,
 }: {
@@ -452,9 +450,6 @@ function VibeCommentInput({
   isSuggestionMode: boolean;
   isLoading: boolean;
   categorySlug?: string | null;
-  userImage?: string | null;
-  userName?: string | null;
-  userEmail?: string | null;
   maxCommentLength: number;
   suggestionMaxLength: number;
 }) {
@@ -481,18 +476,16 @@ function VibeCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center gap-3 px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
       >
-        <CommentAvatar src={userImage ?? null} name={userName ?? null} email={userEmail ?? null} size={36} />
-        <span className="flex-1 text-right">{placeholders.collapsed}</span>
+        {placeholders.collapsed}
       </button>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-3 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <CommentAvatar src={userImage ?? null} name={userName ?? null} email={userEmail ?? null} size={36} />
+      <div className="flex items-end gap-2 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxLength))}
@@ -545,6 +538,7 @@ export default function VibeCommentSection({ listId, isOwner, categorySlug, onOp
   const [sortBy, setSortBy] = useState<'helpful' | 'newest'>('helpful');
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [reportCommentId, setReportCommentId] = useState<string | null>(null);
 
   const sortParam = sortBy === 'helpful' ? 'popular' : 'newest';
 
@@ -673,34 +667,16 @@ export default function VibeCommentSection({ listId, isOwner, categorySlug, onOp
     }
   };
 
-  const handleReport = async (commentId: string) => {
+  const handleOpenReport = (commentId: string) => {
     if (status !== 'authenticated') {
       setToast({ message: 'برای گزارش نظر وارد شو', type: 'error' });
       return;
     }
-    try {
-      const res = await fetch(`/api/lists/comments/${commentId}/report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'محتوا نامناسب' }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        setToast({
-          message: data.message || 'ممنون که اطلاع دادی 🙏 بررسیش می‌کنیم',
-          type: 'success',
-        });
-      } else {
-        setToast({
-          message:
-            data.error ||
-            (res.status === 401 ? 'برای گزارش نظر وارد شو' : 'چند لحظه بعد دوباره امتحان کن ✨'),
-          type: 'error',
-        });
-      }
-    } catch {
-      setToast({ message: 'چند لحظه بعد دوباره امتحان کن ✨', type: 'error' });
-    }
+    setReportCommentId(commentId);
+  };
+
+  const handleReportSuccess = () => {
+    setToast({ message: 'ممنون که اطلاع دادی 🙏 بررسیش می‌کنیم', type: 'success' });
   };
 
   const displayedComments = comments.slice(0, visibleCount);
@@ -714,25 +690,13 @@ export default function VibeCommentSection({ listId, isOwner, categorySlug, onOp
 
   return (
     <section className="mt-8 pt-6 border-t border-wibe">
-      <h2 className="wibe-h3 text-foreground mb-0.5">گفتگو درباره این لیست</h2>
+      <h2 className="wibe-h3 text-foreground mb-0.5">نظرات</h2>
       <p className="wibe-caption text-wibe-secondary mb-3">
         {commentCount.toLocaleString('fa-IR')} نظر · {suggestionCount.toLocaleString('fa-IR')} پیشنهاد
       </p>
 
       {/* Spacing: Header→Reaction 12, Reaction→Input 12, Input→Suggest 16, Suggest→Empty 20 */}
       <div className="space-y-3">
-        {/* Inline Reaction Pills — فقط وقتی گفتگو شروع شده */}
-        {status === 'authenticated' && hasComments && (
-          <div>
-            <ReactionPills
-              counts={counts}
-              userReaction={userReaction}
-              onSelect={handleReaction}
-              isLoading={reactionsLoading}
-            />
-          </div>
-        )}
-
         {/* Comment Input — Primary */}
         {commentsEnabled && status === 'authenticated' && (
           <div>
@@ -743,9 +707,6 @@ export default function VibeCommentSection({ listId, isOwner, categorySlug, onOp
               isSuggestionMode={isSuggestionMode}
               isLoading={submitLoading}
               categorySlug={categorySlug}
-              userImage={session?.user?.image}
-              userName={session?.user?.name}
-              userEmail={session?.user?.email}
               maxCommentLength={maxCommentLength}
               suggestionMaxLength={suggestionMaxLength}
             />
@@ -829,7 +790,7 @@ export default function VibeCommentSection({ listId, isOwner, categorySlug, onOp
                   onApprove={handleApprove}
                   onReject={handleReject}
                   onVote={handleVote}
-                  onReport={handleReport}
+                  onReport={handleOpenReport}
                 />
               ))}
             </div>
@@ -856,6 +817,15 @@ export default function VibeCommentSection({ listId, isOwner, categorySlug, onOp
           onClose={() => setToast(null)}
         />
       )}
+
+      <CommentReportModal
+        isOpen={!!reportCommentId}
+        onClose={() => setReportCommentId(null)}
+        reportEndpoint={
+          reportCommentId ? `/api/lists/comments/${reportCommentId}/report` : ''
+        }
+        onReportSuccess={handleReportSuccess}
+      />
     </section>
   );
 }

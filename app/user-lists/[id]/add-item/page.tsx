@@ -139,7 +139,7 @@ export default async function AddItemPage({
 
   return (
     <div className="min-h-screen bg-wibe-surface pb-20">
-      <Header />
+      <Header title={`افزودن به ${list.title}`} showBack />
       <AddItemClient
         listId={id}
         listTitle={list.title}

@@ -36,7 +36,7 @@ export default function ProfileRankCard({ userId }: ProfileRankCardProps) {
   return (
     <Link
       href="/leaderboard"
-      className="block rounded-lg border border-wibe bg-wibe-card p-4 shadow-sm transition-transform active:scale-[0.99]"
+      className="block rounded-lg border border-wibe bg-wibe-card p-4 shadow-sm transition-all active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md"
     >
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">

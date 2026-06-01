@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { Bookmark, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { useHomeData } from '@/contexts/HomeDataContext';
 
 function trackFeaturedClick(slotId: string, listId: string, action: 'view_list' | 'quick_save') {
@@ -44,8 +45,8 @@ export default function HomeHeroSpotlight() {
   if (isLoading || !list) {
     if (!isLoading && !list) return null;
     return (
-      <section className="px-4 mt-4 mb-6">
-        <div className="rounded-lg h-[240px] bg-gray-200 animate-pulse shadow-card" />
+      <section className="mb-6 mt-4 px-4 lg:px-0">
+        <div className="h-[240px] animate-pulse rounded-lg bg-gray-200 shadow-card lg:h-[300px]" />
       </section>
     );
   }
@@ -53,51 +54,55 @@ export default function HomeHeroSpotlight() {
   const creator = list.creator;
 
   return (
-    <section className="px-4 mt-4 mb-6">
-      <p className="wibe-caption text-wibe-secondary mb-2">منتخب هفته</p>
-      <div className="relative rounded-lg overflow-hidden h-[240px] bg-gray-200 shadow-card">
+    <section className="mb-6 mt-4 px-4 lg:px-0">
+      <p className="mb-2 wibe-caption text-wibe-secondary">منتخب هفته</p>
+      <div className="relative h-[240px] overflow-hidden rounded-lg bg-gray-200 shadow-card lg:h-[300px] xl:h-[320px]">
         <ImageWithFallback
           src={list.coverImage}
           alt={list.title}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
           fallbackIcon={list.categories?.icon ?? '📚'}
-          fallbackClassName="w-full h-full flex items-center justify-center text-5xl bg-gray-200"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-5xl"
           categorySlug={list.categories?.slug}
           listSlug={list.slug}
           listTitle={list.title}
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-5">
-          <h1 className="text-h2 font-bold text-white line-clamp-2">{list.title}</h1>
+        <div className="absolute bottom-0 inset-x-0 p-5 text-right">
+          <h1 className="line-clamp-2 text-h2 font-bold text-white">{list.title}</h1>
           {list.description && (
-            <p className="wibe-small text-white/90 mt-2 line-clamp-2">{list.description}</p>
+            <p className="mt-2 line-clamp-2 wibe-small text-white/90">{list.description}</p>
           )}
           {creator?.name && (
-            <p className="wibe-caption text-white/70 mt-1.5">از {creator.name}</p>
+            <p className="mt-1.5 wibe-caption text-white/70">از {creator.name}</p>
           )}
-          <div className="flex gap-3 mt-4">
+          <div className="mt-4 flex gap-3">
             <Link
               href={`/lists/${list.slug}`}
-              className="flex-1 py-3 rounded-md bg-wibe-card text-foreground font-semibold wibe-small text-center flex items-center justify-center gap-2"
+              className="flex flex-1 items-center justify-center gap-2 rounded-md bg-wibe-card py-3 text-center wibe-small font-semibold text-foreground"
               onClick={() => {
                 if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'view_list');
               }}
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="h-4 w-4" />
               مشاهده
             </Link>
-            <Link
-              href={`/lists/${list.slug}`}
-              className="flex items-center justify-center gap-2 flex-1 py-3 rounded-md bg-primary text-white font-semibold wibe-small"
-              aria-label="ذخیره لیست"
-              onClick={() => {
-                if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'quick_save');
-              }}
-            >
-              <Bookmark className="w-4 h-4" />
-              ذخیره
-            </Link>
+            <div className="flex-1 min-w-0">
+              <BookmarkButton
+                listId={list.id}
+                initialBookmarkCount={list.saveCount}
+                variant="button"
+                size="lg"
+                labelSave="ذخیره"
+                labelSaved="ذخیره شد ✓"
+                onToggle={(saved) => {
+                  if (saved && featuredSlotId && list.id) {
+                    trackFeaturedClick(featuredSlotId, list.id, 'quick_save');
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>

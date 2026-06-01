@@ -53,14 +53,9 @@ export default function CategoryGridHome() {
   }
 
   return (
-    <section className="mb-6 pb-4">
-      <div className="px-4 pt-4 border-t border-wibe flex items-start justify-between gap-2">
-        <HomeSectionTitle title="دسته‌بندی‌ها" />
-        <Link href="/lists" className="wibe-caption text-primary font-medium shrink-0 pt-1">
-          همه
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-3 px-4 mt-1">
+    <section className="mb-6 border-t border-wibe pb-4 pt-4">
+      <HomeSectionTitle title="دسته‌بندی‌ها" actionHref="/categories" actionLabel="همه" />
+      <div className="mt-1 grid grid-cols-2 gap-3 px-4">
         {items.slice(0, 4).map((cat) => (
           <Link
             key={cat.id}
