@@ -4,9 +4,22 @@ import { uploadImageBuffer } from '@/lib/object-storage';
 import { validateImage } from '@/lib/image-validator';
 import type { ImageProfile } from '@/lib/image-config';
 import { getClientErrorMessage, logServerError } from '@/lib/api-error';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
 
 function profileForFolder(folder: string): ImageProfile {
   return folder === 'avatars' ? 'avatar' : folder === 'covers' ? 'coverList' : 'default';
+}
+
+function extFromContentType(contentType: string): string {
+  const ct = contentType.toLowerCase();
+  if (ct.includes('png')) return 'png';
+  if (ct.includes('webp')) return 'webp';
+  if (ct.includes('gif')) return 'gif';
+  if (ct.includes('svg')) return 'svg';
+  if (ct.includes('jpg') || ct.includes('jpeg')) return 'jpg';
+  return 'jpg';
 }
 
 export async function POST(request: NextRequest) {
@@ -62,10 +75,22 @@ export async function POST(request: NextRequest) {
     const url = await uploadImageBuffer(buffer, file.type, folder);
 
     if (!url) {
-      return NextResponse.json(
-        { error: 'خطا در آپلود فایل به Object Storage' },
-        { status: 500 }
-      );
+      // Dev fallback: store locally so editors can work without Liara config.
+      if (process.env.NODE_ENV === 'development') {
+        const ext = extFromContentType(file.type);
+        const fileName = `${crypto.randomBytes(16).toString('hex')}.${ext}`;
+        const relDir = path.posix.join('uploads', folder);
+        const relPath = path.posix.join(relDir, fileName);
+        const absDir = path.join(process.cwd(), 'public', 'uploads', folder);
+        const absPath = path.join(absDir, fileName);
+
+        await mkdir(absDir, { recursive: true });
+        await writeFile(absPath, buffer);
+
+        return NextResponse.json({ url: `/${relPath}` }, { status: 200 });
+      }
+
+      return NextResponse.json({ error: 'خطا در آپلود فایل به Object Storage' }, { status: 500 });
     }
 
     return NextResponse.json({ url }, { status: 200 });

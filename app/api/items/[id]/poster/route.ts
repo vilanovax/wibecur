@@ -2,21 +2,18 @@ import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { getDecryptedSettings } from '@/lib/settings';
-import { fetchTmdbPosterUrl, extractPosterSearchTitles } from '@/lib/tmdb-poster';
-import { isMovieLikeCategory, resolveItemImage } from '@/lib/resolve-item-image';
+import { resolveItemDisplayImage, resolveItemImage } from '@/lib/resolve-item-image';
 
-/** GET /api/items/[id]/poster — poster از DB یا TMDB */
+/** GET /api/items/[id]/poster — فقط تصویر ذخیره‌شده در DB (بدون TMDB) */
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const forceEnrich = new URL(request.url).searchParams.get('enrich') === '1';
 
     const getCached = unstable_cache(
-      async (enrich: boolean) => {
+      async () => {
         const item = await dbQuery(() =>
           prisma.items.findUnique({
             where: { id },
@@ -34,60 +31,34 @@ export async function GET(
 
         const categorySlug = item.lists?.categories?.slug ?? null;
         const fromDb = resolveItemImage({
+          id: item.id,
           imageUrl: item.imageUrl,
           title: item.title,
           metadata: item.metadata as Record<string, unknown> | null,
           categorySlug,
         });
 
-        if (fromDb && !enrich) {
+        if (fromDb) {
           return { posterUrl: fromDb, source: 'db' as const };
         }
 
-        if (!isMovieLikeCategory(categorySlug)) {
-          return fromDb
-            ? { posterUrl: fromDb, source: 'db' as const }
-            : { posterUrl: null, source: 'none' as const };
-        }
-
-        const settings = await getDecryptedSettings();
-        if (!settings.tmdbApiKey) {
-          return fromDb && !enrich
-            ? { posterUrl: fromDb, source: 'db' as const }
-            : { posterUrl: null, source: 'none' as const };
-        }
-
-        const tmdbPoster = await fetchTmdbPosterUrl(settings.tmdbApiKey, {
+        const placeholder = resolveItemDisplayImage({
+          id: item.id,
+          imageUrl: item.imageUrl,
           title: item.title,
-          year: (item.metadata as Record<string, unknown> | null)?.year as
-            | string
-            | number
-            | undefined,
-          alternativeTitles: extractPosterSearchTitles(
-            item.title,
-            item.metadata as Record<string, unknown> | null
-          ),
+          metadata: item.metadata as Record<string, unknown> | null,
+          categorySlug,
         });
-        if (tmdbPoster) {
-          void dbQuery(() =>
-            prisma.items.update({
-              where: { id: item.id },
-              data: { imageUrl: tmdbPoster },
-            })
-          ).catch((err) => console.warn('Failed to persist item poster:', err));
 
-          return { posterUrl: tmdbPoster, source: 'tmdb' as const };
-        }
-
-        return fromDb && !enrich
-          ? { posterUrl: fromDb, source: 'db' as const }
+        return placeholder
+          ? { posterUrl: placeholder, source: 'placeholder' as const }
           : { posterUrl: null, source: 'none' as const };
       },
-      [`item-poster-${id}`, forceEnrich ? 'enrich' : 'default'],
+      [`item-poster-${id}`, 'no-tmdb'],
       { revalidate: 86400, tags: [`item-poster-${id}`] }
     );
 
-    const data = await getCached(forceEnrich);
+    const data = await getCached();
     const res = NextResponse.json({ success: true, data });
     res.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     return res;

@@ -3,6 +3,7 @@ import {
   isAllowedExternalImageUrl,
   isAllowedItemImageUrl,
   isPlaceholderCoverPath,
+  isTmdbImageUrl,
 } from './image-url-policy';
 import { getItemPlaceholderImageUrl } from './item-placeholder-image';
 
@@ -24,7 +25,7 @@ function metaImageUrl(metadata?: Record<string, unknown> | null): string | null 
 }
 
 function isUsableItemImage(url: string): boolean {
-  if (!url || isPlaceholderCoverPath(url)) return false;
+  if (!url || isPlaceholderCoverPath(url) || isTmdbImageUrl(url)) return false;
   if (url.startsWith('/')) return true;
   if (isOurStorageUrl(url)) return true;
   if (isAllowedItemImageUrl(url)) return true;

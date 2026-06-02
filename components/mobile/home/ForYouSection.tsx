@@ -13,7 +13,7 @@ import {
 export default function ForYouSection({ embedded = false }: { embedded?: boolean }) {
   const { data: session } = useSession();
   const { lists, isPersonalized, isLoading } = useForYouRecommendations();
-  const displayLists = lists.slice(0, 4);
+  const displayLists = lists.slice(0, 6);
 
   if (isLoading && displayLists.length === 0) {
     return (
@@ -47,7 +47,7 @@ export default function ForYouSection({ embedded = false }: { embedded?: boolean
           actionLabel="همه"
         />
       )}
-      <div className="space-y-2 px-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-3">
+      <div className="space-y-2 px-4 lg:grid lg:grid-cols-3 lg:gap-3 lg:space-y-0 lg:px-0">
         {displayLists.length > 0 ? (
           displayLists.map((list) => {
             const reason = getForYouReasonLabel(list, isPersonalized);
@@ -55,9 +55,9 @@ export default function ForYouSection({ embedded = false }: { embedded?: boolean
               <Link
                 key={list.id}
                 href={`/lists/${list.slug}`}
-                className="flex min-h-[120px] flex-row-reverse gap-4 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
+                className="flex min-h-[120px] flex-row-reverse gap-4 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99] lg:min-h-0 lg:gap-3 lg:hover:border-primary/20 lg:hover:shadow-md"
               >
-                <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-gray-200">
+                <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-gray-200 lg:h-auto lg:w-[5.5rem] lg:min-h-[5.25rem] lg:self-stretch">
                   <ImageWithFallback
                     src={list.coverImage}
                     alt={list.title}

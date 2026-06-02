@@ -81,6 +81,8 @@ export default function EditPersonalListForm({
       // Upload file to server
       const uploadFormData = new FormData();
       uploadFormData.append('file', file);
+      // Tell the server this is a list cover upload
+      uploadFormData.append('purpose', 'cover');
 
       const res = await fetch('/api/upload', {
         method: 'POST',

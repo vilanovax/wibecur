@@ -195,8 +195,10 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
     </button>
   );
 
+  let content: React.ReactNode = null;
+
   if (isLoading && lists.length === 0 && !hasInitial) {
-    return (
+    content = (
       <div className="space-y-3 px-4 lg:px-0">
         <div className="flex gap-2 overflow-hidden">
           {[1, 2, 3, 4].map((i) => (
@@ -215,10 +217,8 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
         </div>
       </div>
     );
-  }
-
-  if (isError && lists.length === 0) {
-    return (
+  } else if (isError && lists.length === 0) {
+    content = (
       <div className="px-4">
         {filterChips}
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
@@ -236,23 +236,21 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
         </div>
       </div>
     );
-  }
+  } else {
+    const emptyMessage =
+      filter === 'draft'
+        ? 'پیش‌نویسی ندارید'
+        : filter === 'private'
+          ? 'لیست خصوصی ندارید'
+          : filter === 'public'
+            ? 'لیست عمومی ندارید'
+            : 'هنوز لیستی ایجاد نکرده‌اید';
 
-  const emptyMessage =
-    filter === 'draft'
-      ? 'پیش‌نویسی ندارید'
-      : filter === 'private'
-        ? 'لیست خصوصی ندارید'
-        : filter === 'public'
-          ? 'لیست عمومی ندارید'
-          : 'هنوز لیستی ایجاد نکرده‌اید';
-
-  if (lists.length === 0 && !isLoading) {
-    return (
+    if (lists.length === 0 && !isLoading) {
+      content = (
       <div className="space-y-3 px-4 lg:px-0">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:gap-3">
           <div className="min-w-0 flex-1">{filterChips}</div>
-          {filter !== 'draft' && <div className="flex shrink-0 justify-end">{createButton}</div>}
         </div>
         <MyListsEmptyState
           message={emptyMessage}
@@ -261,62 +259,69 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
         />
       </div>
     );
+    } else {
+      content = (
+        <>
+          <div className="space-y-3 px-4 lg:px-0">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:gap-3">
+              <div className="min-w-0 flex-1">{filterChips}</div>
+              {createButton}
+            </div>
+
+            {filter === 'all' && totalCount > 0 && (
+              <p className="wibe-caption text-wibe-secondary -mt-1">
+                {totalCount.toLocaleString('fa-IR')} لیست
+                {publicCount > 0 && ` · ${publicCount.toLocaleString('fa-IR')} عمومی`}
+                {isFetching && !isFetchingNextPage && (
+                  <span className="text-primary mr-1"> · در حال بروزرسانی...</span>
+                )}
+              </p>
+            )}
+
+            {filter === 'all' && topLists.length > 0 && <MyListsTopCarousel lists={topLists} />}
+
+            {displayLists.length > 0 && (
+              <div>
+                {filter === 'all' && topLists.length > 0 && (
+                  <h2 className="wibe-h3 mb-2.5">همه لیست‌ها</h2>
+                )}
+                <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
+                  {displayLists.map((list) => (
+                    <MyListCardCompact
+                      key={list.id}
+                      list={toCardData(list)}
+                      onSettingsClick={(e) => handleSettingsClick(e, list)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {filter === 'all' && topLists.length > 0 && displayLists.length === 0 && (
+              <p className="wibe-caption text-wibe-secondary text-center py-2">
+                فقط {topLists.length.toLocaleString('fa-IR')} لیست برتر دارید
+              </p>
+            )}
+          </div>
+
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="mx-4 mt-4 w-[calc(100%-2rem)] py-3 rounded-lg border border-wibe bg-wibe-card wibe-small font-semibold text-primary disabled:opacity-50 active:scale-[0.99] transition-transform"
+            >
+              {isFetchingNextPage ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
+            </button>
+          )}
+        </>
+      );
+    }
   }
 
   return (
     <>
-      <div className="space-y-3 px-4 lg:px-0">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:gap-3">
-          <div className="min-w-0 flex-1">{filterChips}</div>
-          {createButton}
-        </div>
-
-        {filter === 'all' && totalCount > 0 && (
-          <p className="wibe-caption text-wibe-secondary -mt-1">
-            {totalCount.toLocaleString('fa-IR')} لیست
-            {publicCount > 0 && ` · ${publicCount.toLocaleString('fa-IR')} عمومی`}
-            {isFetching && !isFetchingNextPage && (
-              <span className="text-primary mr-1"> · در حال بروزرسانی...</span>
-            )}
-          </p>
-        )}
-
-        {filter === 'all' && topLists.length > 0 && <MyListsTopCarousel lists={topLists} />}
-
-        {displayLists.length > 0 && (
-          <div>
-            {filter === 'all' && topLists.length > 0 && (
-              <h2 className="wibe-h3 mb-2.5">همه لیست‌ها</h2>
-            )}
-            <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
-              {displayLists.map((list) => (
-                <MyListCardCompact
-                  key={list.id}
-                  list={toCardData(list)}
-                  onSettingsClick={(e) => handleSettingsClick(e, list)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {filter === 'all' && topLists.length > 0 && displayLists.length === 0 && (
-          <p className="wibe-caption text-wibe-secondary text-center py-2">
-            فقط {topLists.length.toLocaleString('fa-IR')} لیست برتر دارید
-          </p>
-        )}
-      </div>
-
-      {hasMore && (
-        <button
-          type="button"
-          onClick={() => fetchNextPage()}
-          disabled={isFetchingNextPage}
-          className="mx-4 mt-4 w-[calc(100%-2rem)] py-3 rounded-lg border border-wibe bg-wibe-card wibe-small font-semibold text-primary disabled:opacity-50 active:scale-[0.99] transition-transform"
-        >
-          {isFetchingNextPage ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
-        </button>
-      )}
+      {content}
 
       {selectedList && (
         <PersonalListSettingsModal

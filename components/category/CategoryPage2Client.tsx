@@ -102,7 +102,7 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
     const mostDebated = data.mostDebatedLists ?? [];
 
     return (
-      <main className="min-h-screen pb-24 bg-wibe-surface">
+      <main className="bg-wibe-surface">
         <CinematicHero category={category} metrics={metrics} />
         <GenreScrollBar categorySlug={category.slug} />
         <TrendingPosterGrid
@@ -136,7 +136,7 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
     const mostSavedItems = data.mostSavedItems ?? [];
 
     return (
-      <main className="min-h-screen pb-24 bg-wibe-surface scroll-smooth">
+      <main className="scroll-smooth bg-wibe-surface">
         <HubHeroV2
           category={category}
           metrics={metrics}
@@ -196,7 +196,7 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
   }
 
   return (
-    <main className="min-h-screen pb-24 bg-wibe-surface">
+    <main className="bg-wibe-surface">
       <CategoryHero
         category={category}
         metrics={metrics}

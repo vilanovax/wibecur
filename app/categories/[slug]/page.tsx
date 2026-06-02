@@ -62,7 +62,7 @@ export default async function CategoryPage({
   const initialData = JSON.parse(JSON.stringify(pageData));
 
   return (
-    <div className="min-h-screen pb-20 bg-wibe-surface">
+    <div className="bg-wibe-surface">
       <Header title={category.name} showBack />
       <CategoryPage2Client slug={category.slug} initialData={initialData} />
       <BottomNav />

@@ -96,9 +96,9 @@ export default async function ListsPage({
   }
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-0">
-      <Header title="لیست‌ها" hideTitleOnDesktop showDesktopSearch={false} />
-      <main className="pt-3 lg:pt-0">
+    <div className="flex flex-col lg:bg-transparent">
+      <Header title="لیست‌ها" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
+      <main className="min-w-0 flex-1 pt-2 lg:pt-0">
         <ListsPageClient 
           lists={JSON.parse(JSON.stringify(withResolvedListCovers(lists)))} 
           categories={JSON.parse(JSON.stringify(categories))} 

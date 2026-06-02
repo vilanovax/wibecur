@@ -21,7 +21,7 @@ interface ListsFeaturedCarouselProps {
 }
 
 const SLIDE_CLASS =
-  'w-[88%] max-w-[320px] shrink-0 snap-start lg:w-full lg:max-w-none lg:shrink';
+  'w-[min(92vw,340px)] shrink-0 snap-start max-lg:snap-center lg:w-full lg:max-w-none lg:shrink';
 
 export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);

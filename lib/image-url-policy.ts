@@ -1,16 +1,37 @@
 import { isOurStorageUrl } from './object-storage-config';
+
+const TMDB_IMAGE_HOSTS = new Set(['image.tmdb.org', 'www.themoviedb.org', 'themoviedb.org']);
+
 const ALLOWED_EXTERNAL_HOSTS = new Set([
   'upload.wikimedia.org',
   'commons.wikimedia.org',
-  'image.tmdb.org',
-  'www.themoviedb.org',
   'm.media-amazon.com',
   'ia.media-imdb.com',
 ]);
 
-/** تصاویر poster آیتم — TMDB / OMDb / Liara */
+/** URL تصویر TMDB — در ایران بدون VPN در دسترس نیست */
+export function isTmdbImageUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (trimmed.includes('image.tmdb.org')) return true;
+  try {
+    return TMDB_IMAGE_HOSTS.has(new URL(trimmed).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
+export function stripBlockedItemImageUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed || isTmdbImageUrl(trimmed)) return null;
+  return trimmed;
+}
+
+/** تصاویر poster آیتم — OMDb / Liara / ویکی‌مدیا (بدون TMDB) */
 export function isAllowedItemImageUrl(url: string): boolean {
-  if (!url || !url.startsWith('http')) return false;
+  if (!url || !url.startsWith('http') || isTmdbImageUrl(url)) return false;
   try {
     const host = new URL(url).hostname.toLowerCase();
     return ALLOWED_EXTERNAL_HOSTS.has(host);
@@ -20,7 +41,7 @@ export function isAllowedItemImageUrl(url: string): boolean {
 }
 
 export function isAllowedExternalImageUrl(url: string): boolean {
-  if (!url || !url.startsWith('http')) return false;
+  if (!url || !url.startsWith('http') || isTmdbImageUrl(url)) return false;
   try {
     const host = new URL(url).hostname.toLowerCase();
     return ALLOWED_EXTERNAL_HOSTS.has(host);

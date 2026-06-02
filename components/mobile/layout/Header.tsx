@@ -20,6 +20,8 @@ interface HeaderProps {
   showDesktopSearch?: boolean;
   /** مخفی عنوان در دسکتاپ (مثلاً وقتی در hero نمایش داده می‌شود) */
   hideTitleOnDesktop?: boolean;
+  /** کل هدر صفحه در دسکتاپ (وقتی نوار بالا کافی است) */
+  hideOnDesktop?: boolean;
 }
 
 /**
@@ -33,6 +35,7 @@ export default function Header({
   hideNotifications = false,
   showDesktopSearch = true,
   hideTitleOnDesktop = false,
+  hideOnDesktop = false,
 }: HeaderProps) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -80,9 +83,14 @@ export default function Header({
     : 'bg-gray-100 hover:bg-gray-200';
 
   return (
-    <header className={`${headerClass} lg:static lg:mb-0`} role="banner">
-      <div className="flex h-14 items-center justify-between gap-3 px-4 lg:grid lg:h-[3.25rem] lg:grid-cols-[minmax(0,1fr)_minmax(260px,480px)_auto] lg:items-center lg:gap-4 lg:px-0">
-        <div className="flex min-w-0 items-center gap-2 justify-self-start text-right">
+    <header
+      className={`${headerClass} lg:sticky lg:top-14 lg:z-40 lg:mb-0 lg:border-b lg:border-wibe/60 lg:bg-wibe-surface/95 lg:backdrop-blur-sm ${
+        hideOnDesktop ? 'lg:hidden' : ''
+      }`}
+      role="banner"
+    >
+      <div className="flex h-14 items-center justify-between gap-3 px-4 lg:h-12 lg:px-0">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-right">
           {showBack && (
             <button
               type="button"
@@ -110,11 +118,11 @@ export default function Header({
           )}
         </div>
         {showDesktopSearch && (
-          <div className="hidden min-w-0 justify-self-center lg:block lg:w-full">
+          <div className="hidden min-w-0 max-w-md flex-1 lg:block xl:max-w-lg">
             <HeaderDesktopSearch />
           </div>
         )}
-        <div className="justify-self-end">
+        <div className="shrink-0 lg:hidden">
           <HeaderActions
             profile={profile}
             hideNotifications={hideNotifications}

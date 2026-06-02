@@ -46,6 +46,8 @@ interface CommentSectionProps {
   itemId: string;
   onCommentAdded?: () => void;
   refreshTrigger?: number;
+  /** داخل کارت پایین صفحه (دسکتاپ) — بدون border بالای تکراری */
+  embeddedInPanel?: boolean;
 }
 
 async function fetchItemComments(itemId: string, sortBy: string): Promise<CommentsResponse> {
@@ -152,6 +154,7 @@ export default function CommentSection({
   itemId,
   onCommentAdded,
   refreshTrigger,
+  embeddedInPanel = false,
 }: CommentSectionProps) {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
@@ -296,7 +299,12 @@ export default function CommentSection({
   const hasComments = comments.length > 0;
 
   return (
-    <section id="comments" className="mt-2 pt-5 border-t border-wibe scroll-mt-28">
+    <section
+      id="comments"
+      className={`scroll-mt-28 ${
+        embeddedInPanel ? 'mt-0 border-t-0 pt-0' : 'mt-2 border-t border-wibe pt-5'
+      }`}
+    >
       <h2 className="wibe-h3 text-foreground mb-0.5">نظرات</h2>
       <p className="wibe-caption text-wibe-secondary mb-3">
         {comments.length.toLocaleString('fa-IR')} نظر
@@ -346,7 +354,7 @@ export default function CommentSection({
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : comments.length === 0 ? (
-            <p className="py-4 text-center wibe-caption text-wibe-secondary">
+            <p className="py-2 text-center wibe-caption text-wibe-secondary">
               هنوز گفتگویی نیست —{' '}
               {status === 'authenticated' && commentsEnabled ? (
                 <button

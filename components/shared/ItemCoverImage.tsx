@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc } from '@/lib/liara-image-url';
 import {
@@ -29,11 +29,10 @@ export interface ItemCoverImageProps {
   fallbackIcon?: string;
   fallbackClassName?: string;
   priority?: boolean;
-  /** واکشی poster از TMDB اگر خالی باشد */
+  /** @deprecated واکشی TMDB غیرفعال — فقط DB */
   enrichPoster?: boolean;
   /** grid = poster card در لیست */
   coverLayout?: ItemCoverLayout;
-  /** preview: Liara را رد کن و مستقیم TMDB */
   preferPosterEnrich?: boolean;
 }
 
@@ -111,19 +110,6 @@ export default function ItemCoverImage({
     [enrichPoster, isMovieItem, itemId, title, imageUrl, metadata, categorySlug]
   );
 
-  const skippedStorageForEnrich = useMemo(
-    () =>
-      Boolean(
-        enrichPoster &&
-          isMovieItem &&
-          baseResolved &&
-          isOurStorageUrl(baseResolved)
-      ),
-    [enrichPoster, isMovieItem, baseResolved]
-  );
-
-  const effectiveBaseResolved = skippedStorageForEnrich ? '' : baseResolved;
-
   useEffect(() => {
     setFetchedPoster(null);
     setLoadFailed(false);
@@ -142,7 +128,7 @@ export default function ItemCoverImage({
 
     void runPosterEnrichTask(() =>
       fetchItemPosterUrl(itemId, {
-        forceEnrich: loadFailed || skippedStorageForEnrich,
+        forceEnrich: loadFailed,
       })
     )
       .then((posterUrl) => {
@@ -157,7 +143,7 @@ export default function ItemCoverImage({
     return () => {
       cancelled = true;
     };
-  }, [shouldEnrichPoster, itemId, loadFailed, skippedStorageForEnrich]);
+  }, [shouldEnrichPoster, itemId, loadFailed]);
 
   const resolvedSrc =
     fetchedPoster ||
@@ -165,9 +151,18 @@ export default function ItemCoverImage({
       ? displayFallback
       : needsPosterEnrich && !fetchedPoster
         ? displayFallback
-        : effectiveBaseResolved || displayFallback);
+        : baseResolved || displayFallback);
   const displaySrc = toItemDisplaySrc(resolvedSrc);
   const showFallback = !displaySrc;
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (!displaySrc) return;
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      setImageLoaded(true);
+    }
+  }, [displaySrc, itemId]);
 
   const resolvedPlaceholderState: ItemCoverPlaceholderState = posterLoading ? 'loading' : 'empty';
 
@@ -199,6 +194,7 @@ export default function ItemCoverImage({
         />
       )}
       <img
+        ref={imgRef}
         src={displaySrc}
         alt={title}
         className={`h-full w-full object-cover transition-opacity duration-300 ease-out ${

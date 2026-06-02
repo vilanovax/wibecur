@@ -53,7 +53,7 @@ function DiscoveryCarouselCard({
       href={href}
       className={`${className} rounded-xl overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform bg-wibe-card`}
     >
-      <div className="relative aspect-[2/3] w-full bg-gray-100">
+      <div className="relative aspect-[2/3] w-full bg-gray-100 lg:aspect-[16/10] lg:max-h-[9.5rem]">
         <LazyItemCoverImage
           itemId={itemId}
           title={title}
@@ -166,7 +166,7 @@ export default function ItemDiscoverySection({
   };
 
   return (
-    <section className="pt-5 border-t border-wibe">
+    <section className="border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card lg:p-5 lg:pt-5 lg:shadow-sm">
       <div className="mb-3">
         <h2 className="wibe-h3 text-foreground">پیشنهاد برای تو</h2>
         <p className="wibe-caption text-wibe-secondary mt-0.5">{tabDescriptions[activeTab]}</p>

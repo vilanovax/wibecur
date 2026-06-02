@@ -3,7 +3,7 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 
 export default function CuratedGuidePage() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="bg-gray-50">
       <Header title="چگونه کیوریتور شویم؟" showBack />
       <div className="p-4 max-w-[428px] mx-auto">
         <h1 className="font-bold text-[18px] text-gray-900 mb-4">

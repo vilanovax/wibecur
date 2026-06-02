@@ -14,6 +14,7 @@ import {
   normalizeCategorySlug,
   pickCategoryCoverVariant,
 } from '../lib/category-cover-images';
+import { isTmdbImageUrl } from '../lib/image-url-policy';
 
 const prisma = new PrismaClient();
 
@@ -42,8 +43,8 @@ function itemNeedsPlaceholderImage(imageUrl: string | null | undefined): boolean
   if (BROKEN_IMAGE_FRAGMENTS.some((f) => lower.includes(f))) return true;
   if (url.startsWith('/images/banners/')) return false;
   if (url.startsWith('/')) return false;
+  if (isTmdbImageUrl(url)) return true;
   if (url.includes('upload.wikimedia.org')) return false;
-  if (url.includes('image.tmdb.org')) return false;
   return true;
 }
 

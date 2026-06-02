@@ -17,7 +17,7 @@ import {
 } from '@/lib/list-search';
 import { trackSearch } from '@/lib/analytics';
 import { withResolvedListCover } from '@/lib/resolve-list-cover';
-import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
+import { DESKTOP_PAGE_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
 import {
   SearchChipButton,
   SearchChipScroller,
@@ -348,7 +348,7 @@ export default function SearchOverlay({
       role="presentation"
     >
       <div
-        className={`flex h-[100dvh] w-full animate-in fade-in slide-in-from-top-2 flex-col bg-wibe-surface shadow-2xl duration-300 ${MOBILE_SHELL_MAX_WIDTH_CLASS}`}
+        className={`flex h-[100dvh] w-full max-w-none animate-in fade-in slide-in-from-top-2 flex-col bg-wibe-surface shadow-2xl duration-300 ${DESKTOP_PAGE_MAX_WIDTH_CLASS}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

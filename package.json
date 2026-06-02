@@ -33,7 +33,9 @@
     "enrich:posters:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/enrich-seed-posters.ts --dry-run",
     "enrich:posters:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/enrich-seed-posters.ts --update-seed-json",
     "seed:item-images": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/assign-item-placeholder-images.ts",
-    "seed:item-images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/assign-item-placeholder-images.ts --dry-run"
+    "seed:item-images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/assign-item-placeholder-images.ts --dry-run",
+    "fix:tmdb-images": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-tmdb-item-images.ts",
+    "fix:tmdb-images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-tmdb-item-images.ts --dry-run"
   },
   "prisma": {
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"

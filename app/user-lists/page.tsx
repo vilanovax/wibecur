@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic';
 
 export default function UserListsPage() {
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-0">
-      <Header title="اکسپلور" hideTitleOnDesktop showDesktopSearch={false} />
+    <div className="bg-wibe-surface">
+      <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
       <CuratedLandingPageClient />
       <BottomNav />
     </div>

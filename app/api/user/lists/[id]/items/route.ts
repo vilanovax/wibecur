@@ -89,6 +89,9 @@ export async function POST(
       const existingItem = await dbQuery(() =>
         prisma.items.findUnique({
           where: { id: itemId },
+          include: {
+            lists: { select: { categories: { select: { slug: true } } } },
+          },
         })
       );
 
@@ -103,7 +106,18 @@ export async function POST(
       itemDescription = existingItem.description;
       itemImageUrl = existingItem.imageUrl;
       itemExternalUrl = existingItem.externalUrl;
-      itemMetadata = existingItem.metadata || {};
+      const sourceCategorySlug = existingItem.lists?.categories?.slug ?? null;
+      const baseMeta =
+        existingItem.metadata != null &&
+        typeof existingItem.metadata === 'object' &&
+        !Array.isArray(existingItem.metadata)
+          ? (existingItem.metadata as Record<string, unknown>)
+          : {};
+      itemMetadata = {
+        ...baseMeta,
+        // For personal lists (categoryId null) we still want to allow UI filtering by item type.
+        sourceCategorySlug,
+      };
     } else if (title) {
       // Create new item from provided data
       itemTitle = title.trim();

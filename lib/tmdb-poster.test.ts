@@ -20,17 +20,17 @@ describe('tmdb-poster helpers', () => {
 });
 
 describe('itemNeedsPosterEnrich', () => {
-  it('needs enrich for broken Liara storage URL on movie lists', () => {
+  it('runtime TMDB enrich is disabled', () => {
     expect(
       itemNeedsPosterEnrich({
         title: 'ماتریکس',
         imageUrl: 'https://storage.c2.liara.space/wibe/items/fake.jpg',
         categorySlug: 'movies',
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
-  it('skips items that already have TMDB poster', () => {
+  it('does not enrich TMDB URLs', () => {
     expect(
       itemNeedsPosterEnrich({
         title: 'ماتریکس',

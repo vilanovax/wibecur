@@ -94,9 +94,6 @@ export default async function ListDetailPage({
 
   if (!list || !list.isActive || !list.isPublic) notFound();
 
-  const followersCount = list.userId
-    ? await prisma.follows.count({ where: { followingId: list.userId } })
-    : 0;
   if (list.users?.role === 'USER') notFound();
 
   prisma.lists
@@ -114,7 +111,6 @@ export default async function ListDetailPage({
 
   const listWithCreator = {
     ...list,
-    creatorFollowersCount: followersCount,
     items: withResolvedItemImages(
       list.items.map((item) => ({
         ...item,
@@ -125,8 +121,8 @@ export default async function ListDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-8 lg:pt-1">
-      <Header title={list.title} showBack hideTitleOnDesktop />
+    <div className="bg-wibe-surface lg:pt-1">
+      <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
       <ListDetailClient
         list={JSON.parse(JSON.stringify(listWithCreator))}
         relatedLists={JSON.parse(JSON.stringify(relatedLists))}

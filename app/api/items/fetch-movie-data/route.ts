@@ -86,12 +86,8 @@ async function searchMultipleMovies(title: string, settings: any) {
               director: director,
               rating: details.vote_average || null,
               plot: details.overview || null,
-              posterUrl: details.poster_path
-                ? `https://image.tmdb.org/t/p/w500${details.poster_path}`
-                : null,
-              backdropUrl: details.backdrop_path
-                ? `https://image.tmdb.org/t/p/w1280${details.backdrop_path}`
-                : null,
+              posterUrl: null,
+              backdropUrl: null,
               popularity: details.popularity || 0,
             });
           } catch (error) {

@@ -53,7 +53,12 @@ async function fetchSpotlightCurrent(): Promise<SpotlightData | null> {
   return json.success && json.data ? json.data : null;
 }
 
-export default function CreatorSpotlightSection() {
+interface CreatorSpotlightSectionProps {
+  /** دسکتاپ: ستون کناری کنار فید */
+  layout?: 'default' | 'sidebar';
+}
+
+export default function CreatorSpotlightSection({ layout = 'default' }: CreatorSpotlightSectionProps) {
   const { data: session } = useSession();
   const { data, isLoading: loading } = useQuery({
     queryKey: ['spotlight', 'current'],
@@ -76,11 +81,13 @@ export default function CreatorSpotlightSection() {
     }
   };
 
+  const isSidebar = layout === 'sidebar';
+
   if (loading) {
     return (
-      <section className="mb-6 px-4">
-        <div className="h-6 w-52 bg-gray-200 rounded animate-pulse mb-3" />
-        <div className="rounded-lg border border-wibe bg-wibe-card p-5 h-48 animate-pulse" />
+      <section className={`mb-4 px-4 ${isSidebar ? 'lg:mb-0 lg:px-0' : 'lg:px-0'}`}>
+        <div className="mb-3 h-6 w-52 animate-pulse rounded bg-gray-200" />
+        <div className={`animate-pulse rounded-lg border border-wibe bg-wibe-card p-5 ${isSidebar ? 'lg:h-64' : 'lg:h-40'}`} />
       </section>
     );
   }
@@ -93,12 +100,22 @@ export default function CreatorSpotlightSection() {
     c.avatarType === 'DEFAULT' && c.avatarId ? VIBE_AVATARS.find((a) => a.id === c.avatarId) : null;
 
   return (
-    <section className="mb-6 px-4">
-      <HomeSectionTitle icon="🏆" title="کیوریتور منتخب" subtitle="لیست‌های برتر از یک سازنده" />
+    <section className={`mb-4 px-4 pb-2 ${isSidebar ? 'lg:mb-0 lg:pb-0 lg:px-0' : 'lg:mb-0 lg:pb-0 lg:px-0'}`}>
+      <HomeSectionTitle
+        icon="🏆"
+        title="کیوریتور منتخب"
+        subtitle={isSidebar ? 'لیست‌های برتر' : 'لیست‌های برتر از یک سازنده'}
+      />
 
-      <div className="rounded-lg border border-wibe bg-wibe-card shadow-card overflow-hidden">
-        <div className="p-5">
-          <div className="flex flex-col items-center text-center">
+      <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card lg:rounded-xl">
+        <div
+          className={`p-5 lg:p-5 ${
+            isSidebar
+              ? 'lg:flex lg:flex-col'
+              : 'lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:items-start lg:gap-6 lg:p-6'
+          }`}
+        >
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-right">
             <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-wibe bg-gray-100">
               {vibeAvatar ? (
                 <div className={`w-full h-full flex items-center justify-center text-3xl ${vibeAvatar.bgClass}`}>
@@ -122,55 +139,64 @@ export default function CreatorSpotlightSection() {
             <p className="wibe-small font-semibold text-foreground mt-3">{c.name || 'کاربر'}</p>
             <CuratorBadge level={levelKey} size="small" glow={false} className="mt-1" />
             {c.bio && <p className="wibe-small text-wibe-secondary mt-2 line-clamp-2 max-w-md">{c.bio}</p>}
-            <p className="wibe-caption text-wibe-secondary mt-2">
+            <p className="mt-2 wibe-caption text-wibe-secondary">
               {c.listCount} لیست · {c.totalSaves.toLocaleString('fa-IR')} ذخیره
             </p>
-          </div>
 
-          <div className="flex gap-3 mt-4">
-            <Link
-              href={c.username ? `/u/${encodeURIComponent(c.username)}` : '#'}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-md border border-wibe text-primary font-semibold wibe-small"
-            >
-              <User className="w-5 h-5" />
-              پروفایل
-            </Link>
-            {session?.user?.id && session.user.id !== c.userId && (
-              <button
-                type="button"
-                onClick={handleFollow}
-                disabled={following}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md wibe-small font-semibold transition-colors ${
-                  following ? 'bg-gray-100 text-wibe-secondary' : 'bg-primary text-white'
-                }`}
+            <div className="mt-4 flex w-full gap-3 lg:mt-5">
+              <Link
+                href={c.username ? `/u/${encodeURIComponent(c.username)}` : '#'}
+                className="flex flex-1 items-center justify-center gap-2 rounded-md border border-wibe py-3 wibe-small font-semibold text-primary lg:py-2.5"
               >
-                {following ? (
-                  <>
-                    <Check className="w-5 h-5" />
-                    دنبال می‌کنی
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-5 h-5" />
-                    دنبال کردن
-                  </>
-                )}
-              </button>
-            )}
+                <User className="h-5 w-5" />
+                پروفایل
+              </Link>
+              {session?.user?.id && session.user.id !== c.userId && (
+                <button
+                  type="button"
+                  onClick={handleFollow}
+                  disabled={following}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-md py-3 wibe-small font-semibold transition-colors lg:py-2.5 ${
+                    following ? 'bg-gray-100 text-wibe-secondary' : 'bg-primary text-white'
+                  }`}
+                >
+                  {following ? (
+                    <>
+                      <Check className="h-5 w-5" />
+                      دنبال می‌کنی
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-5 w-5" />
+                      دنبال کردن
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
-        </div>
 
-        {data.lists.length > 0 && (
-          <div className="border-t border-wibe px-4 py-3">
-            <p className="wibe-caption text-wibe-secondary mb-2">لیست‌های برتر</p>
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-1">
+          {data.lists.length > 0 ? (
+            <div
+              className={`border-t border-wibe px-4 py-3 lg:border-wibe/80 lg:px-0 lg:py-0 ${
+                isSidebar ? 'lg:mt-4 lg:border-t lg:pt-4' : 'lg:border-s-0 lg:border-t-0'
+              }`}
+            >
+            <p className="mb-2 wibe-caption text-wibe-secondary lg:mb-3">لیست‌های برتر</p>
+            <div
+              className={`-mx-1 flex gap-3 overflow-x-auto scrollbar-hide lg:mx-0 lg:overflow-visible ${
+                isSidebar
+                  ? 'lg:grid lg:grid-cols-2 lg:gap-2.5'
+                  : 'lg:grid lg:grid-cols-3 lg:gap-3 xl:grid-cols-4'
+              }`}
+            >
               {data.lists.map((list) => (
                 <Link
                   key={list.id}
                   href={`/lists/${list.slug}`}
-                  className="flex-shrink-0 w-28 rounded-md overflow-hidden border border-wibe bg-wibe-surface"
+                  className="w-28 shrink-0 overflow-hidden rounded-md border border-wibe bg-wibe-surface lg:w-full lg:hover:border-primary/20 lg:hover:shadow-sm"
                 >
-                  <div className="aspect-[3/4] w-full bg-gray-200 relative">
+                  <div className="relative aspect-[3/4] w-full bg-gray-200 lg:aspect-[16/10] lg:max-h-[7rem]">
                     <ListCoverImage
                       coverImage={list.coverImage}
                       title={list.title}
@@ -187,7 +213,8 @@ export default function CreatorSpotlightSection() {
               ))}
             </div>
           </div>
-        )}
+          ) : null}
+        </div>
       </div>
     </section>
   );

@@ -19,7 +19,7 @@ import FilterBottomSheetPro, {
   type FilterState,
   type VibeFilter,
 } from '@/components/mobile/lists/FilterBottomSheetPro';
-import { DESKTOP_BREAKPOINT_PX } from '@/lib/hooks/useIsDesktop';
+import { DESKTOP_BREAKPOINT_PX, useIsDesktop } from '@/lib/hooks/useIsDesktop';
 
 type ListWithCategory = lists & {
   categories: categories | null;
@@ -162,8 +162,9 @@ const DEFAULT_FILTER: FilterState = {
 
 const VIEW_MODE_KEY = 'listsPage_viewMode';
 const PAGE_SIZE = 12;
-/** پیش‌نمایش هر دسته — ۲ ردیف در دسکتاپ (۳–۴ ستون) */
-const SECTION_PREVIEW = 6;
+/** پیش‌نمایش هر دسته — موبایل ۲×۲ | دسکتاپ تا ۶ */
+const SECTION_PREVIEW_MOBILE = 4;
+const SECTION_PREVIEW_DESKTOP = 6;
 const STICKY_OFFSET = 112;
 
 /** فقط نوار افقی چیپ‌ها را اسکرول می‌کند — بدون جابجایی صفحه */
@@ -209,6 +210,8 @@ export default function ListsPageClient({
   const categoryChipsRef = useRef<HTMLDivElement>(null);
   const isScrollingToCategory = useRef(false);
   const viewModeInitialized = useRef(false);
+  const isDesktop = useIsDesktop();
+  const sectionPreviewCount = isDesktop ? SECTION_PREVIEW_DESKTOP : SECTION_PREVIEW_MOBILE;
 
   const publicLists = initialLists.filter((l) => l.isActive && l.isPublic);
   const activeCategories = categories.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -493,11 +496,11 @@ export default function ListsPageClient({
     const excludeIds = new Set<string>([
       ...featuredLists.map((l) => l.id),
       ...categorySections.flatMap((s) =>
-        s.lists.slice(0, SECTION_PREVIEW).map((l) => l.id)
+        s.lists.slice(0, sectionPreviewCount).map((l) => l.id)
       ),
     ]);
     return pickSimilarLists(anchor, sortedLists, excludeIds, 4);
-  }, [useSectionLayout, sortedLists, featuredLists, categorySections]);
+  }, [useSectionLayout, sortedLists, featuredLists, categorySections, sectionPreviewCount]);
 
   useEffect(() => {
     if (!useSectionLayout || categorySections.length === 0) return;
@@ -625,8 +628,8 @@ export default function ListsPageClient({
     <div className="space-y-0 pb-6 lg:pb-4">
       <h1 className="mb-2 hidden wibe-h3 font-bold text-foreground lg:block">لیست‌ها</h1>
       {/* جستجو در همین صفحه — هدر دسکتاپ جستجو ندارد تا تکراری نشود */}
-      <div className="pb-2 pt-1.5 lg:pb-2 lg:pt-0">
-        <div className="px-2.5 lg:px-0">
+      <div className="pb-2 pt-1 max-lg:px-4 lg:pb-2 lg:pt-0 lg:px-0">
+        <div>
           <div className="flex items-center gap-1.5">
             <div className="min-w-0 flex-1">
               <SearchInput
@@ -666,7 +669,7 @@ export default function ListsPageClient({
 
       {/* Sticky: ترند / جدید / نمای / فیلتر */}
       <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-surface/95 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-surface/90 lg:top-14">
-        <div className="flex items-center gap-1.5 px-2.5 lg:px-0">
+        <div className="flex items-center gap-1.5 max-lg:px-4 lg:px-0">
           <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 scrollbar-hide">
             {BROWSE_MODES.map(({ value, label }) => (
               <button
@@ -726,7 +729,7 @@ export default function ListsPageClient({
 
       {/* غیر sticky: پرش به دسته + context */}
       {(showSecondaryToolbar) && (
-        <div className="space-y-2 border-b border-wibe/60 bg-wibe-surface px-2.5 py-2">
+        <div className="space-y-2 border-b border-wibe/60 bg-wibe-surface py-2 max-lg:px-4 lg:px-0">
           {hideCategoryChipsByDefault && (
             <div className="flex items-center gap-2">
               <button
@@ -855,7 +858,7 @@ export default function ListsPageClient({
         </div>
       )}
 
-      <div className="mt-3 px-2.5 lg:mt-4 lg:px-0">
+      <div className="mt-3 max-lg:px-4 lg:mt-4 lg:px-0">
         {browseMode === 'saved' && !bookmarksLoaded ? (
           <SavedBookmarksSkeleton />
         ) : savedBrowseEmpty ? (
@@ -900,7 +903,7 @@ export default function ListsPageClient({
                 categorySlug={category.slug}
                 lists={sectionLists}
                 viewMode={viewMode}
-                previewCount={SECTION_PREVIEW}
+                previewCount={sectionPreviewCount}
                 bookmarkedIds={bookmarkedIds}
                 onBookmarkToggle={handleBookmarkToggle}
               />
@@ -964,7 +967,7 @@ function FlatListResults({
 }) {
   if (viewMode === 'grid') {
     return (
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 max-lg:gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
         {lists.map((list) => (
           <ListCardCompact
             key={list.id}

@@ -61,7 +61,7 @@ export default function ProfileTabs({
 
   return (
     <div className="mt-0 -mx-4 lg:mx-0">
-      <div className="sticky top-[57px] z-20 border-b border-wibe bg-wibe-surface/95 px-4 pb-0 backdrop-blur-sm lg:top-[3.25rem] lg:rounded-t-xl lg:border lg:border-b-0 lg:border-wibe lg:bg-wibe-card">
+      <div className="sticky top-[57px] z-20 border-b border-wibe bg-wibe-surface/95 px-4 pb-0 backdrop-blur-sm lg:top-14 lg:rounded-t-xl lg:border lg:border-b-0 lg:border-wibe lg:bg-wibe-card">
         <div className="relative flex gap-1 lg:justify-start lg:gap-0">
           {TABS.map((tab, index) => {
             const Icon = tab.icon;

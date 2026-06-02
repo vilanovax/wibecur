@@ -258,7 +258,7 @@ export default function ListCardCompact({
     <div className="group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg">
       <Link href={href} className="absolute inset-0 z-0" aria-label={displayTitle} />
       {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
-      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-gray-200 sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
+      <div className="pointer-events-none relative z-[1] aspect-[4/5] w-full overflow-hidden bg-gray-200 max-lg:min-h-[148px] sm:aspect-[5/4] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -280,7 +280,7 @@ export default function ListCardCompact({
             ))}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent transition-opacity duration-300 lg:group-hover:from-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/10 transition-opacity duration-300 max-lg:via-black/60 lg:group-hover:from-black/90" />
         <div
           className="absolute inset-0 hidden items-center justify-center bg-black/25 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
           aria-hidden
@@ -289,15 +289,15 @@ export default function ListCardCompact({
             مشاهده لیست
           </span>
         </div>
-        <div className="absolute inset-x-0 bottom-0 p-2.5 pe-10 text-right lg:p-3 lg:pe-11">
-          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white lg:text-base lg:font-bold">
+        <div className="absolute inset-x-0 bottom-0 p-2.5 pe-11 text-right max-lg:pb-2 lg:p-3 lg:pe-12">
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] max-lg:text-[0.8125rem] lg:text-base lg:font-bold">
             {renderTitle('')}
           </h3>
           <ListCardStats
             saves={saveCount}
             itemCount={itemCount}
             variant="overlay"
-            className="mt-1 lg:mt-1.5 lg:text-sm"
+            className="mt-1 max-lg:text-[0.6875rem] lg:mt-1.5 lg:text-sm"
           />
         </div>
       </div>

@@ -73,6 +73,8 @@ interface Comment {
 }
 
 interface VibeCommentSectionProps {
+  /** داخل ستون sticky دسکتاپ — بدون border بالایی اضافه */
+  embeddedInSidebar?: boolean;
   listId: string;
   isOwner: boolean;
   categorySlug?: string | null;
@@ -529,7 +531,13 @@ function VibeCommentInput({
   );
 }
 
-export default function VibeCommentSection({ listId, isOwner, categorySlug, onOpenSuggestItem }: VibeCommentSectionProps) {
+export default function VibeCommentSection({
+  listId,
+  isOwner,
+  categorySlug,
+  onOpenSuggestItem,
+  embeddedInSidebar = false,
+}: VibeCommentSectionProps) {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
   const [isFormExpanded, setIsFormExpanded] = useState(false);
@@ -689,7 +697,11 @@ export default function VibeCommentSection({ listId, isOwner, categorySlug, onOp
   const hasComments = comments.length > 0;
 
   return (
-    <section className="mt-8 pt-6 border-t border-wibe">
+    <section
+      className={`border-wibe ${
+        embeddedInSidebar ? 'mt-0 border-t-0 pt-0' : 'mt-8 border-t pt-6'
+      }`}
+    >
       <h2 className="wibe-h3 text-foreground mb-0.5">نظرات</h2>
       <p className="wibe-caption text-wibe-secondary mb-3">
         {commentCount.toLocaleString('fa-IR')} نظر · {suggestionCount.toLocaleString('fa-IR')} پیشنهاد

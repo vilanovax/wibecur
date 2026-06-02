@@ -56,7 +56,7 @@ export default function ListsCategorySection({
       </div>
 
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 max-lg:gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {preview.map((list) => (
             <ListCardCompact
               key={list.id}

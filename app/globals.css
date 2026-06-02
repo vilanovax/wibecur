@@ -7,6 +7,12 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* وسط‌چین قطعی فریم ۱۰۲۴px در RTL (جلوگیری از چسبیدن به راست viewport) */
+  .wibe-desktop-shell {
+    width: min(100%, 1024px);
+    margin-inline: auto;
+  }
 }
 
 /* ─── Wibe Design System — CSS Variables (sync with lib/design-tokens.ts) ─ */

@@ -110,16 +110,16 @@ export default function RootLayout({
         >
           رفتن به محتوای اصلی
         </a>
-        <MainContainer>
-          <PWAProvider>
-            <QueryProvider>
-              <SessionProvider>
-                <SearchProvider>{children}</SearchProvider>
-              </SessionProvider>
-            </QueryProvider>
-          </PWAProvider>
-          <Analytics />
-        </MainContainer>
+        <SessionProvider>
+          <QueryProvider>
+            <SearchProvider>
+              <PWAProvider>
+                <MainContainer>{children}</MainContainer>
+              </PWAProvider>
+            </SearchProvider>
+          </QueryProvider>
+        </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );

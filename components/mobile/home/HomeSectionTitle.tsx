@@ -19,7 +19,7 @@ export default function HomeSectionTitle({
   actionLabel = 'همه',
 }: HomeSectionTitleProps) {
   return (
-    <div className="mb-3 flex items-start justify-between gap-2 px-4" id={id}>
+    <div className="mb-3 flex items-start justify-between gap-2 px-4 lg:px-0" id={id}>
       <div className="min-w-0">
         <h2 className="flex items-center gap-2 wibe-h3">
           {icon ? <span aria-hidden>{icon}</span> : null}

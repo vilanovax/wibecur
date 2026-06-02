@@ -30,7 +30,7 @@ export default async function PublicProfilePage({
   const initialData = JSON.parse(JSON.stringify(profileData));
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-8">
+    <div className="bg-wibe-surface">
       <Header title={`@${username}`} showBack />
       <main className="min-h-screen">
         <PublicProfilePageClient

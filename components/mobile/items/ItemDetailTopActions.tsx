@@ -7,22 +7,34 @@ import ItemReportButton from '@/components/mobile/items/ItemReportButton';
 interface ItemDetailTopActionsProps {
   itemId: string;
   likeCount: number;
+  /** sticky زیر هدر (موبایل) | داخل کارت جزئیات (دسکتاپ) */
+  variant?: 'bar' | 'inline';
 }
 
-/** ذخیره + پسند + گزارش — sticky زیر هدر */
 export default function ItemDetailTopActions({
   itemId,
   likeCount,
+  variant = 'bar',
 }: ItemDetailTopActionsProps) {
-  return (
-    <div className="sticky top-16 z-30 flex items-center justify-end gap-2 px-4 py-2.5 bg-wibe-surface/95 backdrop-blur-sm border-b border-wibe/80">
+  const actions = (
+    <>
       <ItemSaveButton itemId={itemId} />
-      <ItemLikeButton
-        itemId={itemId}
-        initialLikeCount={likeCount}
-        variant="compact"
-      />
+      <ItemLikeButton itemId={itemId} initialLikeCount={likeCount} variant="compact" />
       <ItemReportButton itemId={itemId} />
+    </>
+  );
+
+  if (variant === 'inline') {
+    return (
+      <div className="flex shrink-0 items-center justify-end gap-2" aria-label="ذخیره، پسند و گزارش">
+        {actions}
+      </div>
+    );
+  }
+
+  return (
+    <div className="sticky top-16 z-30 flex items-center justify-end gap-2 border-b border-wibe/80 bg-wibe-surface/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
+      {actions}
     </div>
   );
 }

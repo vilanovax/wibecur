@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { UserPlus, Check, Share2, MoreVertical, Flame, Bookmark, LayoutGrid, List as ListIcon, Plus, Settings, Link2, Flag, Lightbulb } from 'lucide-react';
+import { Share2, MoreVertical, Flame, Bookmark, LayoutGrid, List as ListIcon, Plus, Settings, Link2, Flag, Lightbulb } from 'lucide-react';
 import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
 import ListReportModal from '@/components/mobile/lists/ListReportModal';
 import VibeCommentSectionLazy from '@/components/mobile/lists/VibeCommentSectionLazy';
@@ -16,14 +16,11 @@ import SearchInput from '@/components/mobile/search/SearchInput';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
-import CuratorBadge from '@/components/shared/CuratorBadge';
 import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import { getItemCardSubtitle, filterItemsByQuery, LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
 import { normalizeSearchQuery } from '@/lib/list-search';
 import { isMovieLikeCategory } from '@/lib/resolve-item-image';
-import type { CuratorLevelKey } from '@/lib/curator';
-
 type Item = {
   id: string;
   title: string;
@@ -67,7 +64,6 @@ type ListDetail = {
   categories: Category;
   items: Item[];
   users: User;
-  creatorFollowersCount?: number;
   _count: { items: number; list_comments?: number };
 };
 
@@ -203,26 +199,27 @@ function SimilarListCard({ rel }: { rel: RelatedList }) {
   return (
     <Link
       href={`/lists/${rel.slug}`}
-      className="flex-shrink-0 w-[calc(55vw)] max-w-[220px] bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform lg:w-full lg:max-w-none"
+      className="w-[calc(55vw)] max-w-[220px] shrink-0 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all active:scale-[0.99] lg:w-full lg:max-w-none lg:hover:border-primary/20 lg:hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] bg-gray-200">
+      <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10] lg:max-h-[7.25rem]">
         <ImageWithFallback
           src={rel.coverImage ?? ''}
           alt={title}
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover"
           fallbackIcon={rel.categories?.icon ?? '📋'}
-          fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
           categorySlug={rel.categories?.slug}
           listSlug={rel.slug}
           listTitle={rel.title}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-2">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-2 text-right lg:p-2.5">
+          <h3 className="mb-0.5 line-clamp-2 wibe-small font-semibold text-white lg:hidden">{title}</h3>
           <ListCardStats saves={rel.saveCount} itemCount={rel.itemCount} variant="overlay" />
         </div>
       </div>
-      <div className="p-2.5 min-w-0">
-        <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{title}</h3>
+      <div className="hidden min-w-0 p-2 lg:block">
+        <h3 className="line-clamp-2 wibe-caption font-semibold text-foreground">{title}</h3>
       </div>
     </Link>
   );
@@ -231,10 +228,14 @@ function SimilarListCard({ rel }: { rel: RelatedList }) {
 function SimilarListsCarousel({ relatedLists }: { relatedLists: RelatedList[] }) {
   if (relatedLists.length === 0) return null;
   return (
-    <section className="mt-1 border-t border-wibe pt-4 lg:pt-6">
-      <h3 className="mb-0.5 wibe-h3 text-foreground">لیست‌های مشابه</h3>
-      <p className="mb-3 wibe-small text-wibe-secondary">ممکنه این‌ها هم به کارت بیان</p>
-      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible xl:grid-cols-4 2xl:grid-cols-5">
+    <section className="mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <h3 className="wibe-h3 text-foreground">لیست‌های مشابه</h3>
+          <p className="mt-0.5 wibe-caption text-wibe-secondary">ممکنه این‌ها هم به کارت بیان</p>
+        </div>
+      </div>
+      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:px-0 xl:grid-cols-5 2xl:grid-cols-6">
         {relatedLists.map((rel) => (
           <SimilarListCard key={rel.id} rel={rel} />
         ))}
@@ -268,9 +269,15 @@ function GridItemCard({
     <button
       type="button"
       onClick={onOpen}
-      className="block w-full text-right bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+      className="block w-full overflow-hidden rounded-lg border border-wibe bg-wibe-card text-right shadow-sm transition-all active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md"
     >
-      <div className={`relative overflow-hidden ${isMovieGrid ? 'aspect-[2/3]' : 'aspect-[4/3]'}`}>
+      <div
+        className={`relative overflow-hidden ${
+          isMovieGrid
+            ? 'aspect-[2/3] lg:mx-auto lg:max-h-[13.5rem] lg:w-full lg:max-w-[10.5rem]'
+            : 'aspect-[4/3] lg:max-h-[10.5rem]'
+        }`}
+      >
         <LazyItemCoverImage
           itemId={item.id}
           imageUrl={item.displayImageUrl ?? item.imageUrl}
@@ -283,12 +290,12 @@ function GridItemCard({
           enrichWhenVisible={isMovieGrid}
           coverLayout="grid"
         />
-        <span className="absolute top-1.5 right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-black/50 text-white wibe-caption flex items-center justify-center font-medium tabular-nums">
+        <span className="absolute right-1.5 top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-black/55 px-1 wibe-caption font-semibold text-white tabular-nums lg:h-6 lg:min-w-[1.5rem]">
           {(index + 1).toLocaleString('fa-IR')}
         </span>
       </div>
-      <div className="p-2.5 min-h-0">
-        <h3 className="wibe-small font-semibold text-foreground line-clamp-2 leading-tight">
+      <div className="min-h-0 p-2.5 lg:p-3">
+        <h3 className="line-clamp-2 wibe-small font-semibold leading-tight text-foreground lg:text-[0.9375rem]">
           {item.title}
         </h3>
         {subtitle && (
@@ -326,16 +333,16 @@ function ListItemRow({
     <button
       type="button"
       onClick={onOpen}
-      className={`flex w-full min-h-[68px] items-center gap-3 rounded-lg border border-wibe bg-wibe-card p-2.5 text-right shadow-sm transition-transform active:scale-[0.99] lg:min-h-[76px] lg:p-3 ${
+      className={`flex w-full min-h-[68px] items-center gap-3 rounded-lg border border-wibe bg-wibe-card p-2.5 text-right shadow-sm transition-all active:scale-[0.99] lg:min-h-[80px] lg:gap-4 lg:p-3.5 lg:hover:border-primary/15 lg:hover:shadow-sm ${
         isSimilar ? 'opacity-85' : ''
       }`}
     >
-      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-wibe-secondary flex items-center justify-center wibe-caption font-medium tabular-nums">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 wibe-caption font-semibold text-wibe-secondary tabular-nums lg:h-8 lg:w-8">
         {(index + 1).toLocaleString('fa-IR')}
       </div>
       <div
-        className={`relative flex-shrink-0 rounded-md overflow-hidden ${
-          isMovieRow ? 'w-11 aspect-[2/3]' : 'w-12 h-12'
+        className={`relative shrink-0 overflow-hidden rounded-md ${
+          isMovieRow ? 'aspect-[2/3] w-11 lg:w-14' : 'h-12 w-12 lg:h-14 lg:w-14'
         }`}
       >
         <LazyItemCoverImage
@@ -351,8 +358,8 @@ function ListItemRow({
           coverLayout="list"
         />
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="wibe-small font-semibold text-foreground line-clamp-1">
+      <div className="min-w-0 flex-1">
+        <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:text-[0.9375rem] lg:leading-snug">
           {item.title}
           {isSimilar && (
             <span className="wibe-caption font-normal text-wibe-secondary mr-1">(مشابه)</span>
@@ -372,7 +379,7 @@ export default function ListDetailClient({
   openSuggestFromQuery,
 }: ListDetailClientProps) {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [stickyVisible, setStickyVisible] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [stickySaving, setStickySaving] = useState(false);
@@ -419,7 +426,6 @@ export default function ListDetailClient({
       .then((data) => {
         if (data?.success && data.data) {
           setIsBookmarked(!!data.data.isBookmarked);
-          setIsFollowing(!!data.data.isFollowing);
         }
       })
       .catch(() => {});
@@ -465,34 +471,7 @@ export default function ListDetailClient({
   const saveCount = list.saveCount ?? 0;
   const viewCount = list.viewCount ?? 0;
   const isViral = list.badge === 'TRENDING' || saveCount >= 100;
-  const creatorName = list.users?.name || 'کاربر';
-  const creatorId = list.users?.id;
-  const creatorUsername = list.users?.username;
-  const creatorImage = list.users?.image;
-  const creatorLevel = (list.users?.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
-  const followersCount = list.creatorFollowersCount ?? 0;
   const isOwner = !!session?.user && list.userId === (session.user as { id?: string }).id;
-
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
-
-  const handleFollowToggle = async () => {
-    if (!creatorId || !session?.user?.id) return;
-    setFollowLoading(true);
-    try {
-      if (isFollowing) {
-        const res = await fetch(`/api/follow/${creatorId}`, { method: 'DELETE' });
-        const json = await res.json();
-        if (json.success) setIsFollowing(false);
-      } else {
-        const res = await fetch(`/api/follow/${creatorId}`, { method: 'POST' });
-        const json = await res.json();
-        if (json.success) setIsFollowing(true);
-      }
-    } finally {
-      setFollowLoading(false);
-    }
-  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -555,7 +534,6 @@ export default function ListDetailClient({
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const showLoginCTA = status === 'unauthenticated';
   const showStickyBar = stickyVisible && !isBookmarked && !isOwner;
 
   const BADGE_LABELS: Record<string, string> = {
@@ -668,7 +646,7 @@ export default function ListDetailClient({
   const renderItemEntries = (entries: ItemEntry[]) => {
     if (viewMode === 'grid') {
       return (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {entries.map(({ item, originalIndex }) => (
             <GridItemCard
               key={item.id}
@@ -684,7 +662,7 @@ export default function ListDetailClient({
     }
 
     return (
-      <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
+      <div className="space-y-2.5 lg:grid lg:grid-cols-1 lg:gap-2.5 lg:space-y-0 xl:grid-cols-2 xl:gap-3">
         {entries.map(({ item, originalIndex }, i) => {
           const prevEntry = i > 0 ? entries[i - 1] : null;
           const isSimilar =
@@ -707,9 +685,9 @@ export default function ListDetailClient({
   };
 
   return (
-    <div className="min-h-screen bg-wibe-surface lg:pb-0" dir="rtl">
+    <div className="bg-wibe-surface" dir="rtl">
       {/* Hero */}
-      <div className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-200 sm:h-[220px] lg:mx-0 lg:h-[300px] lg:rounded-2xl xl:h-[320px]">
+      <div className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-200 sm:h-[220px] lg:mx-0 lg:h-[240px] lg:rounded-2xl xl:h-[260px]">
         <ImageWithFallback
           src={list.coverImage ?? ''}
           alt={displayTitle}
@@ -789,7 +767,7 @@ export default function ListDetailClient({
       </div>
 
       <main className="relative z-10 px-4 pt-3 lg:px-0 lg:pt-5">
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-10">
+        <div className="flex flex-col gap-6 lg:gap-8">
           <div className="min-w-0 space-y-3 lg:space-y-4">
         {isOwner ? (
           <>
@@ -823,81 +801,38 @@ export default function ListDetailClient({
             />
           </>
         ) : (
-          <>
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm lg:gap-4 lg:p-4">
-              <Link
-                href={creatorUsername ? `/u/${creatorUsername}` : '#'}
-                className="flex min-w-0 flex-1 items-center gap-3 text-right"
-              >
-                <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-full border border-wibe bg-gray-200">
-                  {creatorImage ? (
-                    <ImageWithFallback
-                      src={creatorImage}
-                      alt={creatorName}
-                      className="h-full w-full object-cover"
-                      fallbackIcon={(creatorName?.[0] || '?').toUpperCase()}
-                      fallbackClassName="flex h-full w-full items-center justify-center bg-primary font-bold text-white"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-primary text-base font-bold text-white">
-                      {(creatorName?.[0] || '?').toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate wibe-small font-semibold text-foreground">{creatorName}</p>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                    <CuratorBadge
-                      level={creatorLevel}
-                      size="small"
-                      glow={creatorLevel === 'ELITE_CURATOR' || creatorLevel === 'VIBE_LEGEND'}
-                    />
-                    {followersCount > 0 ? (
-                      <span className="wibe-caption tabular-nums text-wibe-secondary">
-                        {formatCompact(followersCount)} دنبال‌کننده
-                      </span>
-                    ) : (
-                      <span className="wibe-caption text-warning">تازه شروع کرده</span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-              {session?.user && creatorId && (
-                <button
-                  type="button"
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
-                  className={`flex flex-shrink-0 items-center justify-center gap-1.5 rounded-md px-3.5 py-2 wibe-caption font-semibold transition-all disabled:opacity-50 ${
-                    isFollowing ? 'bg-gray-100 text-wibe-secondary' : 'bg-primary text-white'
-                  }`}
-                >
-                  {isFollowing ? <Check className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  {isFollowing ? 'دنبال می‌کنی' : 'دنبال کردن'}
-                </button>
-              )}
-            </div>
-
-            <div className="lg:flex lg:items-center lg:justify-between lg:gap-4 lg:rounded-xl lg:border lg:border-wibe/80 lg:bg-gray-50/80 lg:p-3">
-              <p className="hidden wibe-caption text-wibe-secondary lg:block lg:shrink-0">
-                ذخیره و اشتراک
-              </p>
-              <ListDetailActionRow
-                listId={list.id}
-                saveCount={saveCount}
-                isOwner={false}
-                onBookmarkToggle={(saved) => setIsBookmarked(saved)}
-                onShare={handleShare}
-              />
-            </div>
-          </>
+          <ListDetailActionRow
+            listId={list.id}
+            saveCount={saveCount}
+            isOwner={false}
+            onBookmarkToggle={(saved) => setIsBookmarked(saved)}
+            onShare={handleShare}
+          />
         )}
 
         {/* آیتم‌ها — اولویت اول */}
-        <section ref={itemsSectionRef} className="scroll-mt-16 lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card lg:p-4 lg:shadow-sm">
-          <div className="mb-2.5 flex items-center justify-between lg:mb-3">
-            <h2 className="wibe-h3">آیتم‌های لیست</h2>
+        <section ref={itemsSectionRef} className="scroll-mt-16 lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card lg:p-5 lg:shadow-sm">
+          <div className="mb-3 flex flex-col gap-3 lg:mb-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+            <h2 className="wibe-h3 shrink-0">آیتم‌های لیست</h2>
+            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 lg:gap-3">
+            {showItemSearch && (
+              <div className="order-3 w-full min-w-0 lg:order-1 lg:max-w-sm lg:flex-1">
+                <SearchInput
+                  value={itemSearchQuery}
+                  onChange={setItemSearchQuery}
+                  placeholder="جستجو در این لیست…"
+                  aria-label="جستجو در آیتم‌های لیست"
+                />
+                {isItemSearchActive && (
+                  <p className="mt-1 px-0.5 wibe-caption text-wibe-secondary">
+                    {filteredItemEntries.length.toLocaleString('fa-IR')} نتیجه از{' '}
+                    {list.items.length.toLocaleString('fa-IR')} آیتم
+                  </p>
+                )}
+              </div>
+            )}
             {list.items?.length > 0 && (
-              <div className="flex rounded-lg border border-wibe p-0.5 bg-gray-100">
+              <div className="order-1 flex shrink-0 rounded-lg border border-wibe bg-gray-100 p-0.5 lg:order-2">
                 <button
                   type="button"
                   onClick={handleSetList}
@@ -924,24 +859,8 @@ export default function ListDetailClient({
                 </button>
               </div>
             )}
-          </div>
-
-          {showItemSearch && (
-            <div className="mb-3 space-y-1.5">
-              <SearchInput
-                value={itemSearchQuery}
-                onChange={setItemSearchQuery}
-                placeholder="جستجو در این لیست…"
-                aria-label="جستجو در آیتم‌های لیست"
-              />
-              {isItemSearchActive && (
-                <p className="px-0.5 wibe-caption text-wibe-secondary">
-                  {filteredItemEntries.length.toLocaleString('fa-IR')} نتیجه از{' '}
-                  {list.items.length.toLocaleString('fa-IR')} آیتم
-                </p>
-              )}
             </div>
-          )}
+          </div>
 
           {viewMode === 'grid' && gridHintVisible && !isItemSearchActive && (
             <p className="wibe-caption text-wibe-secondary mb-2.5 text-center">مرور سریع‌تر با نمای شبکه‌ای</p>
@@ -1002,36 +921,27 @@ export default function ListDetailClient({
           </div>
         )}
 
-        {!isOwner && !showLoginCTA && (
-          <div className="flex justify-end py-1">
-            <Link href="/user-lists" className="wibe-caption font-medium text-primary hover:underline">
-              ساخت نسخه شخصی از این لیست
-            </Link>
           </div>
-        )}
-
-          </div>
-
-          <div
-            ref={commentsSectionRef}
-            className="scroll-mt-16 lg:sticky lg:top-[3.25rem] lg:max-h-[calc(100vh-4.5rem)] lg:overflow-y-auto lg:self-start lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card lg:p-4 lg:shadow-sm"
-          >
-            <VibeCommentSectionLazy
-              listId={list.id}
-              isOwner={isOwner}
-              categorySlug={categorySlug}
-              onOpenSuggestItem={() => setSuggestOpen(true)}
-            />
-          </div>
-        </div>
 
         {showSimilarLists && (
-          <div className="mt-6 lg:mt-8">
-            <SimilarListsCarousel relatedLists={relatedLists} />
-          </div>
+          <SimilarListsCarousel relatedLists={relatedLists} />
         )}
 
-        <div className="h-6 lg:h-4" />
+        <div
+          ref={commentsSectionRef}
+          className="scroll-mt-16 border-t border-wibe pt-6 lg:mt-2 lg:rounded-2xl lg:border lg:bg-wibe-card lg:p-5 lg:pt-5 lg:shadow-sm"
+        >
+          <VibeCommentSectionLazy
+            listId={list.id}
+            isOwner={isOwner}
+            categorySlug={categorySlug}
+            onOpenSuggestItem={() => setSuggestOpen(true)}
+            embeddedInSidebar
+          />
+        </div>
+
+        <div className="h-6 lg:h-2" />
+        </div>
       </main>
 
       {/* پیش‌نمایش آیتم */}

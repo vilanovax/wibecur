@@ -8,7 +8,7 @@ import HomeSectionTitle from './HomeSectionTitle';
 
 export default function NewAndRisingSection({ embedded = false }: { embedded?: boolean }) {
   const { data, isLoading } = useHomeData();
-  const lists = (data?.rising ?? []).slice(0, 4);
+  const lists = (data?.rising ?? []).slice(0, 6);
 
   if (isLoading && lists.length === 0) {
     return (
@@ -44,14 +44,14 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
           actionLabel="همه"
         />
       )}
-      <div className="space-y-2 px-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-3">
+      <div className="space-y-2 px-4 lg:grid lg:grid-cols-3 lg:gap-3 lg:space-y-0 lg:px-0">
         {lists.map((list) => (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex flex-row-reverse gap-3 rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform p-3 lg:min-h-[120px]"
+            className="flex flex-row-reverse gap-3 overflow-hidden rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm transition-transform active:scale-[0.99] lg:min-h-0 lg:p-2.5 lg:hover:border-primary/20 lg:hover:shadow-md"
           >
-            <div className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-gray-200">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-200 lg:h-[4.5rem] lg:w-[4.5rem]">
               <ImageWithFallback
                 src={list.coverImage}
                 alt={list.title}

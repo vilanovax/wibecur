@@ -48,7 +48,7 @@ export default async function CategoriesIndexPage() {
   }
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20">
+    <div className="bg-wibe-surface">
       <Header title="دسته‌ها" showBack />
       <main className="px-2.5 pt-3">
         <p className="mb-4 wibe-small text-wibe-secondary">

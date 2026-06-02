@@ -106,6 +106,7 @@ export default async function UserListDetailPage({
             description: true,
             imageUrl: true,
             externalUrl: true,
+            metadata: true,
           },
         },
         users: {
@@ -201,7 +202,7 @@ export default async function UserListDetailPage({
   }
 
     return (
-      <div className="min-h-screen bg-wibe-surface pb-20">
+      <div className="bg-wibe-surface">
         <Header title={list.title} showBack />
         <UserListDetailClient list={list} currentUserId={currentUserId} />
         <BottomNav />

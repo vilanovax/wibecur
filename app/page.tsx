@@ -19,10 +19,6 @@ export const metadata = {
     'کشف و اشتراک‌گذاری لیست‌های کیوریتد در حوزه لایف‌استایل - فیلم، کتاب، رستوران، سفر و بیشتر',
 };
 
-/**
- * Hero → Feed tabs (Trending | For You | Rising) → Curator
- * Categories: sticky chips only (+ «همه دسته‌ها»)
- */
 export default async function Home() {
   let initialHomeData = EMPTY_HOME_DATA;
   try {
@@ -32,18 +28,30 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-wibe-surface" dir="rtl">
-      <Header />
-      <main className="pt-2 lg:pt-0">
+    <div className="flex flex-col lg:bg-transparent" dir="rtl">
+      <Header hideTitleOnDesktop hideOnDesktop />
+      <main className="min-w-0 flex-1 pt-2 lg:pt-0">
         <HomeDataProvider initialData={initialHomeData}>
           <ErrorBoundary>
-            <div className="sticky top-14 z-10 -mt-2 border-b border-wibe/50 bg-wibe-surface pb-1 pt-2 lg:static lg:z-auto lg:border-b-0 lg:pb-2 lg:pt-0">
+            {/* موبایل: جستجو + دسته‌ها */}
+            <div className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 pb-2 pt-1 backdrop-blur-sm lg:hidden">
               <HomeSearchBar />
               <QuickCategoryChips />
             </div>
 
             <HomePullToRefresh>
-              <div className="space-y-0">
+              {/* دسکتاپ */}
+              <div className="hidden lg:flex lg:w-full lg:flex-col lg:gap-5">
+                <QuickCategoryChips />
+                <HomeHeroSpotlight />
+                <div className="w-full overflow-hidden rounded-2xl border border-wibe bg-wibe-card shadow-sm">
+                  <HomeFeedTabs />
+                </div>
+                <CreatorSpotlightSection />
+              </div>
+
+              {/* موبایل */}
+              <div className="flex flex-col lg:hidden">
                 <HomeHeroSpotlight />
                 <HomeFeedTabs />
                 <CreatorSpotlightSection />

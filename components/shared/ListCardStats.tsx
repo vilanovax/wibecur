@@ -20,10 +20,12 @@ export default function ListCardStats({
   if (variant === 'overlay') {
     return (
       <p
-        className={`flex flex-wrap items-center justify-end gap-x-1 gap-y-0.5 wibe-caption text-white/90 tabular-nums lg:gap-x-1.5 ${className}`}
+        className={`flex flex-wrap items-center justify-end gap-x-1 gap-y-0.5 leading-tight wibe-caption text-white/95 tabular-nums drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] lg:gap-x-1.5 ${className}`}
       >
-        <Bookmark className="h-3.5 w-3.5 shrink-0 lg:h-4 lg:w-4" />
-        <span>{saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم</span>
+        <Bookmark className="h-3 w-3 shrink-0 max-lg:opacity-90 lg:h-4 lg:w-4" />
+        <span className="line-clamp-1">
+          {saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم
+        </span>
       </p>
     );
   }

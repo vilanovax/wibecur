@@ -2,7 +2,7 @@
 
 export function ExplorePageSkeleton() {
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20">
+    <div className="bg-wibe-surface">
       {/* Hero */}
       <div className="border-b border-wibe px-2.5 pb-3 pt-2">
         <div className="mb-2 h-6 w-40 animate-pulse rounded bg-gray-200" />

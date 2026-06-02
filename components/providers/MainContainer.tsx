@@ -1,10 +1,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import SidebarNav from '@/components/mobile/layout/SidebarNav';
+import DesktopTopNav from '@/components/mobile/layout/DesktopTopNav';
+import DesktopSiteFooter from '@/components/mobile/layout/DesktopSiteFooter';
 import {
-  MOBILE_SHELL_MAX_WIDTH_CLASS,
-  DESKTOP_CONTENT_MAX_WIDTH_CLASS,
+  DESKTOP_SITE_SHELL_CLASS,
   DESKTOP_CONTENT_PADDING_CLASS,
   DESKTOP_CONTENT_PADDING_TOP_CLASS,
   CONSUMER_PAGE_PADDING_BOTTOM_CLASS,
@@ -14,15 +14,16 @@ export {
   MOBILE_SHELL_MAX_WIDTH,
   MOBILE_SHELL_MAX_WIDTH_CLASS,
   DESKTOP_SIDEBAR_WIDTH_CLASS,
-  DESKTOP_CONTENT_MAX_WIDTH_CLASS,
+  DESKTOP_PAGE_MAX_WIDTH_CLASS,
+  DESKTOP_PAGE_MAX_WIDTH_PX,
+  DESKTOP_SITE_SHELL_CLASS,
   DESKTOP_CONTENT_PADDING_CLASS,
   DESKTOP_CONTENT_PADDING_TOP_CLASS,
   CONSUMER_PAGE_PADDING_BOTTOM_CLASS,
 } from '@/lib/layout-tokens';
 
 /**
- * شِل adaptive: موبایل 428px | دسکتاپ sidebar + محتوای تا 7xl
- * ادمین: عرض کامل بدون sidebar
+ * شِل adaptive: موبایل 428px | دسکتاپ فریم واحد 1024px (منو + محتوا + فوتر)
  */
 export default function MainContainer({
   children,
@@ -50,21 +51,17 @@ export default function MainContainer({
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-200 lg:bg-wibe-surface">
-      {/* RTL: flex-row بدون reverse → آیتم اول DOM در سمت راست (سایدبار) */}
-      <div className="lg:flex lg:min-h-screen lg:gap-0">
+    <div className="w-full bg-wibe-surface lg:flex lg:min-h-screen lg:justify-center lg:bg-[#e8eaef]">
+      <div className={DESKTOP_SITE_SHELL_CLASS}>
+        <DesktopTopNav />
         <div
           id="main"
           role="main"
-          className={`order-1 flex min-h-screen w-full min-w-0 flex-1 flex-col lg:order-2 ${MOBILE_SHELL_MAX_WIDTH_CLASS} mx-auto lg:mx-0 lg:max-w-none`}
+          className={`flex min-w-0 flex-col max-lg:bg-wibe-surface lg:flex-1 lg:bg-white ${DESKTOP_CONTENT_PADDING_CLASS} ${DESKTOP_CONTENT_PADDING_TOP_CLASS} ${CONSUMER_PAGE_PADDING_BOTTOM_CLASS}`}
         >
-          <div
-            className={`mx-auto flex w-full min-w-0 flex-1 flex-col bg-white shadow-2xl lg:bg-wibe-surface lg:shadow-none ${DESKTOP_CONTENT_MAX_WIDTH_CLASS} ${DESKTOP_CONTENT_PADDING_CLASS} ${DESKTOP_CONTENT_PADDING_TOP_CLASS} ${CONSUMER_PAGE_PADDING_BOTTOM_CLASS}`}
-          >
-            {children}
-          </div>
+          {children}
+          <DesktopSiteFooter />
         </div>
-        <SidebarNav className="order-2 lg:order-1" />
       </div>
     </div>
   );

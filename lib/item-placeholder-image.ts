@@ -3,7 +3,7 @@ import {
   normalizeCategorySlug,
   pickCategoryCoverVariant,
 } from './category-cover-images';
-import { isAllowedItemImageUrl, isPlaceholderCoverPath } from './image-url-policy';
+import { isAllowedItemImageUrl, isPlaceholderCoverPath, isTmdbImageUrl } from './image-url-policy';
 import { isOurStorageUrl } from './object-storage-config';
 
 export type ItemPlaceholderInput = {
@@ -44,6 +44,7 @@ export function itemNeedsPlaceholderImage(imageUrl: string | null | undefined): 
   if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.trim()) return true;
   const url = imageUrl.trim();
   if (isPlaceholderCoverPath(url)) return true;
+  if (isTmdbImageUrl(url)) return true;
   const lower = url.toLowerCase();
   if (BROKEN_IMAGE_FRAGMENTS.some((f) => lower.includes(f))) return true;
   if (url.startsWith('/images/banners/')) return false;

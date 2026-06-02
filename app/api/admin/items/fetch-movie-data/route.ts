@@ -71,10 +71,6 @@ export async function POST(request: NextRequest) {
       if (!combinedData.plot && tmdbData.overview) {
         combinedData.plot = tmdbData.overview;
       }
-      // Use TMDb poster (better quality, no filter)
-      if (tmdbData.poster_path) {
-        combinedData.posterUrl = `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}`;
-      }
     }
 
     // Step 3: Upload poster to Liara Object Storage (if configured)
@@ -150,12 +146,8 @@ async function searchMultipleMovies(title: string, settings: any) {
               director: director,
               rating: details.vote_average || null,
               plot: details.overview || null,
-              posterUrl: details.poster_path
-                ? `https://image.tmdb.org/t/p/w500${details.poster_path}`
-                : null,
-              backdropUrl: details.backdrop_path
-                ? `https://image.tmdb.org/t/p/w1280${details.backdrop_path}`
-                : null,
+              posterUrl: null,
+              backdropUrl: null,
               popularity: details.popularity || 0,
             });
           } catch (error) {

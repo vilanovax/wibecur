@@ -108,7 +108,7 @@ export default function CuratedLandingPageClient() {
   const showDiscovery = !sections.isSearching;
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20 lg:pb-6">
+    <div className="bg-wibe-surface">
       <ExploreSmartHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

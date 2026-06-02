@@ -138,7 +138,7 @@ export default async function AddItemPage({
     }));
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-20">
+    <div className="bg-wibe-surface">
       <Header title={`افزودن به ${list.title}`} showBack />
       <AddItemClient
         listId={id}

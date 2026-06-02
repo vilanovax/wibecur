@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Home, LayoutList, Compass, User, Plus } from 'lucide-react';
 import CreateSheet from '@/components/mobile/home/CreateSheet';
-import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
+import { MOBILE_BOTTOM_NAV_SPACER_CLASS } from '@/lib/layout-tokens';
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -41,10 +41,11 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* fixed نسبت به viewport است؛ wrapper برای هم‌عرض شدن با شِل موبایل (۴۲۸px) */}
+      <div aria-hidden className={MOBILE_BOTTOM_NAV_SPACER_CLASS} />
+      {/* fixed نسبت به viewport — spacer بالا فقط به اندازه همین نوار */}
       <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none lg:hidden">
         <nav
-          className={`w-full ${MOBILE_SHELL_MAX_WIDTH_CLASS} bg-white border-t border-gray-200 shadow-lg pointer-events-auto pb-[env(safe-area-inset-bottom,0px)]`}
+          className="pointer-events-auto w-full border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-lg"
           aria-label="ناوبری اصلی"
         >
           <div className="flex items-center justify-around py-3 px-1">
@@ -54,17 +55,17 @@ export default function BottomNav() {
             const className = `flex flex-col items-center justify-center px-2 py-2 flex-shrink-0 min-w-[64px] ${isActive ? 'text-primary' : 'text-gray-500'}`;
             if (isCreate) {
               return (
-<button
-                key="create"
-                type="button"
-                onClick={() => setCreateOpen(true)}
-                className={className}
-                aria-label="ساخت لیست یا آیتم جدید"
-              >
-                  <span className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center -mt-4 shadow-md hover:bg-primary-dark transition-colors">
+                <button
+                  key="create"
+                  type="button"
+                  onClick={() => setCreateOpen(true)}
+                  className="flex flex-col items-center justify-center px-2 py-2 flex-shrink-0 min-w-[56px] text-primary"
+                  aria-label="ساخت لیست یا آیتم جدید"
+                  title="ساخت"
+                >
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white -mt-4 shadow-md transition-colors hover:bg-primary-dark active:scale-[0.98]">
                     {item.icon}
                   </span>
-                  <span className="text-xs mt-1 whitespace-nowrap">{item.label}</span>
                 </button>
               );
             }
