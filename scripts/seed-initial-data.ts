@@ -9,14 +9,14 @@ async function main() {
 
   // 1. Create Admin User
   console.log('Creating admin user...');
-  const hashedPassword = await bcrypt.hash('admin123', 10);
+  const hashedPassword = await bcrypt.hash('123456', 10);
 
   const adminUser = await prisma.users.upsert({
-    where: { email: 'admin@listhub.ir' },
-    update: {},
+    where: { email: '989121941532@phone.wibe' },
+    update: { password: hashedPassword, role: 'ADMIN', updatedAt: new Date() },
     create: {
       id: nanoid(),
-      email: 'admin@listhub.ir',
+      email: '989121941532@phone.wibe',
       name: 'رام',
       password: hashedPassword,
       role: 'ADMIN',
@@ -425,8 +425,8 @@ async function main() {
 
   console.log('\n🎉 Seed completed successfully!');
   console.log('\n📝 Admin Login:');
-  console.log('   Email: admin@listhub.ir');
-  console.log('   Password: admin123');
+  console.log('   Phone: 09121941532');
+  console.log('   Password: 123456');
 }
 
 main()

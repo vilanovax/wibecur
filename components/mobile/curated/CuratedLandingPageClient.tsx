@@ -47,7 +47,8 @@ export default function CuratedLandingPageClient() {
     retry: 1,
   });
 
-  const usingMockFallback = isError || (!isLoading && (data?.lists?.length ?? 0) === 0);
+  /** فقط در خطای API — خالی بودن دادهٔ واقعی نباید mock با دستهٔ کتاب نشان دهد */
+  const usingMockFallback = isError;
 
   const allLists = useMemo(() => {
     if (data?.lists?.length) return data.lists;
@@ -70,13 +71,26 @@ export default function CuratedLandingPageClient() {
     return MOCK_CATEGORIES;
   }, [data?.categories]);
 
+  const activeCategoryIds = useMemo(
+    () => categories.filter((c) => c.id !== 'all').map((c) => c.id),
+    [categories]
+  );
+
   const sections = useMemo(
     () =>
       buildExploreSections(allLists, searchQuery, {
         preferredCategoryIds: usingMockFallback ? undefined : data?.preferredCategoryIds,
+        activeCategoryIds,
         excludeListIds: usingMockFallback ? undefined : data?.bookmarkedListIds,
       }),
-    [allLists, searchQuery, data?.preferredCategoryIds, data?.bookmarkedListIds, usingMockFallback]
+    [
+      allLists,
+      searchQuery,
+      data?.preferredCategoryIds,
+      data?.bookmarkedListIds,
+      usingMockFallback,
+      activeCategoryIds,
+    ]
   );
 
   const handleModeScroll = useCallback((id: string) => {

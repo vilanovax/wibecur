@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { revalidateAdminCommentsCache } from '@/lib/admin/admin-cache';
 
 // POST /api/admin/comments/[id]/approve - تایید کامنت و حذف ریپورت‌ها
 export async function POST(
@@ -50,6 +51,8 @@ export async function POST(
         }),
       ])
     );
+
+    revalidateAdminCommentsCache();
 
     return NextResponse.json({
       success: true,

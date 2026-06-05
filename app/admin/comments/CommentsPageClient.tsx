@@ -2,43 +2,45 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import CommentsToolbar from '@/components/admin/comments/CommentsToolbar';
+import Toast, { type ToastType } from '@/components/shared/Toast';
+import CommentsPageHeader from '@/components/admin/comments/CommentsPageHeader';
+import CommentsSubNav, { type CommentsNavStats } from '@/components/admin/comments/CommentsSubNav';
+import CommentsFilterBar from '@/components/admin/comments/CommentsFilterBar';
+import CommentDetailPanel from '@/components/admin/comments/CommentDetailPanel';
 import BulkActionBar from '@/components/admin/comments/BulkActionBar';
+import { useCommentsKeyboardShortcuts } from '@/hooks/useCommentsKeyboardShortcuts';
+import BulkConfirmDialog from '@/components/admin/comments/BulkConfirmDialog';
+import RejectCommentDialog from '@/components/admin/comments/RejectCommentDialog';
 import CommentsTable from '@/components/admin/comments/CommentsTable';
 import CommentDetailsDrawer from '@/components/admin/comments/CommentDetailsDrawer';
+import CommentsMobileDetailBar from '@/components/admin/comments/CommentsMobileDetailBar';
 import PenaltyModal from '@/components/admin/comments/PenaltyModal';
 import CommentDetailModal from '@/components/admin/comments/CommentDetailModal';
 import type { CommentRowData } from '@/components/admin/comments/CommentRow';
+import type { CommentsIntelligenceData } from '@/lib/admin/comments-intelligence';
+import type { CommentSortKind } from '@/lib/admin/comments-intelligence';
+import type { CommentFilterKind } from '@/lib/admin/comments-filter-utils';
 
 interface Comment extends CommentRowData {
   updatedAt?: string;
 }
 
 interface CommentsPageClientProps {
-  comments: Comment[];
-  totalCount: number;
-  currentFilter: string;
-  currentSearch: string;
-  badWords?: string[];
-  currentPage?: number;
-  totalPages?: number;
+  data: CommentsIntelligenceData;
+  navStats?: CommentsNavStats;
 }
 
-export default function CommentsPageClient({
-  comments = [],
-  totalCount,
-  currentFilter,
-  currentSearch,
-  badWords = [],
-}: CommentsPageClientProps) {
+export default function CommentsPageClient({ data, navStats }: CommentsPageClientProps) {
   const router = useRouter();
-  const [localComments, setLocalComments] = useState<Comment[]>(comments);
-  const [filter, setFilter] = useState(currentFilter);
+  const [localComments, setLocalComments] = useState<Comment[]>(data.comments);
+  const [filter, setFilter] = useState<CommentFilterKind>(data.filter);
+  const [sort, setSort] = useState<CommentSortKind>(data.sort);
+  const [search, setSearch] = useState(data.search);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
-  const [drawerComment, setDrawerComment] = useState<CommentRowData | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [detailModalComment, setDetailModalComment] = useState<Comment | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -50,15 +52,53 @@ export default function CommentsPageClient({
   }>({ isOpen: false, commentId: null, commentContent: '', action: 'delete' });
   const [penaltyLoading, setPenaltyLoading] = useState(false);
   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<{
+    id: string;
+    preview: string;
+  } | null>(null);
+
+  const { pulse, badWords, totalCount } = data;
 
   useEffect(() => {
-    setLocalComments(comments);
-  }, [comments]);
+    setLocalComments(data.comments);
+    setFilter(data.filter);
+    setSort(data.sort);
+    setSearch(data.search);
+    setSelectedId((prev) => {
+      if (prev && data.comments.some((c) => c.id === prev)) return prev;
+      return data.comments[0]?.id ?? null;
+    });
+  }, [data]);
 
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
+  const { pageSize } = data;
+
+  const syncUrl = useCallback(
+    (opts: {
+      filter?: CommentFilterKind;
+      search?: string;
+      sort?: CommentSortKind;
+      page?: string;
+    }) => {
+      const params = new URLSearchParams();
+      const nextFilter = opts.filter ?? filter;
+      const nextSearch = opts.search ?? search;
+      const nextSort = opts.sort ?? sort;
+
+      if (nextFilter !== 'pending') params.set('filter', nextFilter);
+      if (nextSearch.trim()) params.set('search', nextSearch.trim());
+      if (nextSort !== 'created_desc') params.set('sort', nextSort);
+      if (opts.page && opts.page !== '1') params.set('page', opts.page);
+      if (pageSize !== 10) params.set('pageSize', String(pageSize));
+
+      const qs = params.toString();
+      router.push(qs ? `/admin/comments/all?${qs}` : '/admin/comments/all');
+    },
+    [filter, search, sort, pageSize, router]
+  );
+
+  const showToast = useCallback((message: string, type: ToastType = 'success') => {
+    setToast({ message, type });
   }, []);
 
   const filterBadWords = useCallback(
@@ -76,17 +116,26 @@ export default function CommentsPageClient({
 
   const refresh = useCallback(() => {
     router.refresh();
-    setLocalComments(comments);
-  }, [router, comments]);
+  }, [router]);
 
-  const handleFilterChange = (newFilter: string) => setFilter(newFilter);
-
-  const handleSearchSubmit = (search: string) => {
-    const params = new URLSearchParams();
-    if (filter !== 'all') params.set('filter', filter);
-    if (search) params.set('search', search);
-    router.push(`/admin/comments?${params.toString()}`);
+  const handleFilterChange = (newFilter: string) => {
+    const next = newFilter as CommentFilterKind;
+    setFilter(next);
+    syncUrl({ filter: next, page: '1' });
   };
+
+  const handleSortChange = (next: CommentSortKind) => {
+    setSort(next);
+    syncUrl({ sort: next, page: '1' });
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    syncUrl({ search: value, page: '1' });
+  };
+
+  const panelComment =
+    localComments.find((c) => c.id === selectedId) ?? null;
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -102,9 +151,15 @@ export default function CommentsPageClient({
     setSelectedIds(checked ? new Set(selectable.map((c) => c.id)) : new Set());
   };
 
+  const selectComment = useCallback((comment: CommentRowData) => {
+    setSelectedId(comment.id);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setDrawerOpen(true);
+    }
+  }, []);
+
   const handleView = (comment: CommentRowData) => {
-    setDrawerComment(comment);
-    setDrawerOpen(true);
+    selectComment(comment);
   };
 
   const handleOpenFullDetail = (comment: CommentRowData) => {
@@ -113,7 +168,6 @@ export default function CommentsPageClient({
       setDetailModalComment(full);
       setDetailModalOpen(true);
       setDrawerOpen(false);
-      setDrawerComment(null);
     }
   };
 
@@ -131,10 +185,10 @@ export default function CommentsPageClient({
             c.id === id ? { ...c, isApproved: true, isFiltered: false } : c
           )
         );
-        showToast('کامنت تایید شد');
+        showToast('کامنت تایید شد', 'success');
         router.refresh();
       } catch (e: unknown) {
-        showToast(e instanceof Error ? e.message : 'خطا در تایید');
+        showToast(e instanceof Error ? e.message : 'خطا در تایید', 'error');
       } finally {
         setApprovingId(null);
       }
@@ -154,10 +208,11 @@ export default function CommentsPageClient({
         setLocalComments((prev) =>
           prev.map((c) => (c.id === id ? { ...c, isApproved: false } : c))
         );
-        showToast('کامنت رد شد');
+        showToast('کامنت رد شد', 'success');
+        setRejectTarget(null);
         router.refresh();
       } catch (e: unknown) {
-        showToast(e instanceof Error ? e.message : 'خطا در رد');
+        showToast(e instanceof Error ? e.message : 'خطا در رد', 'error');
       } finally {
         setRejectingId(null);
       }
@@ -181,8 +236,30 @@ export default function CommentsPageClient({
   };
 
   const handleReject = (id: string) => {
-    if (!confirm('آیا از رد این کامنت اطمینان دارید؟')) return;
-    performReject(id);
+    const comment = localComments.find((c) => c.id === id);
+    setRejectTarget({
+      id,
+      preview: comment?.content?.slice(0, 120) ?? '',
+    });
+  };
+
+  useCommentsKeyboardShortcuts({
+    enabled: localComments.length > 0,
+    comments: localComments,
+    selectedId,
+    onSelectId: (id) => {
+      setSelectedId(id);
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setDrawerOpen(true);
+      }
+    },
+    onApprove: handleApprove,
+    onReject: handleReject,
+  });
+
+  const confirmReject = () => {
+    if (!rejectTarget) return;
+    performReject(rejectTarget.id);
   };
 
   const handleBulkApprove = () => setBulkConfirm('approve');
@@ -203,14 +280,14 @@ export default function CommentsPageClient({
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'خطا');
       showToast(
-        bulkConfirm === 'approve' ? 'کامنت‌ها تایید شدند' : 'کامنت‌ها رد شدند'
+        bulkConfirm === 'approve' ? 'کامنت‌ها تایید شدند' : 'کامنت‌ها رد شدند',
+        'success'
       );
       setSelectedIds(new Set());
       setBulkConfirm(null);
       router.refresh();
-      setLocalComments(comments);
     } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'خطا در عملیات گروهی');
+      showToast(e instanceof Error ? e.message : 'خطا در عملیات گروهی', 'error');
     } finally {
       setBulkLoading(false);
     }
@@ -244,7 +321,7 @@ export default function CommentsPageClient({
         setLocalComments((prev) =>
           prev.filter((c) => c.id !== penaltyModal.commentId)
         );
-        showToast('کامنت حذف شد');
+        showToast('کامنت حذف شد', 'success');
       } else if (penaltyModal.action === 'report') {
         await performApprove(penaltyModal.commentId);
       }
@@ -256,7 +333,7 @@ export default function CommentsPageClient({
       });
       router.refresh();
     } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'خطا در ثبت امتیاز');
+      showToast(e instanceof Error ? e.message : 'خطا در ثبت امتیاز', 'error');
     } finally {
       setPenaltyLoading(false);
     }
@@ -295,7 +372,7 @@ export default function CommentsPageClient({
     setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
     setDetailModalOpen(false);
     setDetailModalComment(null);
-    showToast('کامنت حذف شد');
+    showToast('کامنت حذف شد', 'success');
     router.refresh();
   };
 
@@ -328,31 +405,99 @@ export default function CommentsPageClient({
         router.refresh();
       }
     } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : 'خطا در ثبت امتیاز');
+      showToast(e instanceof Error ? e.message : 'خطا در ثبت امتیاز', 'error');
     } finally {
       setPenaltyLoading(false);
     }
   };
 
   return (
-    <div style={{ direction: 'rtl' }}>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">مدیریت کامنت‌ها</h1>
-      </div>
+    <div dir="rtl">
+      <CommentsPageHeader />
+      {navStats && <CommentsSubNav stats={navStats} />}
 
       {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-xl bg-slate-800 text-white text-sm shadow-lg">
-          {toast}
-        </div>
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={3000}
+          onClose={() => setToast(null)}
+        />
       )}
 
-      <CommentsToolbar
+      <CommentsFilterBar
         currentFilter={filter}
-        currentSearch={currentSearch}
+        currentSearch={search}
+        currentSort={sort}
         totalCount={totalCount}
+        pulse={pulse}
         onFilterChange={handleFilterChange}
-        onSearchSubmit={handleSearchSubmit}
+        onSortChange={handleSortChange}
+        onSearchChange={handleSearchChange}
         onRefresh={refresh}
+      />
+
+      <div
+        className={`flex flex-col lg:flex-row gap-4 ${
+          selectedIds.size > 0 ? 'pb-28' : panelComment ? 'pb-20 lg:pb-0' : ''
+        }`}
+      >
+        <div className="flex-1 min-w-0">
+      {localComments.length === 0 ? (
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm p-12 text-center">
+          <p className="text-[var(--color-text)] mb-2">کامنتی یافت نشد</p>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            فیلترها یا عبارت جستجو را تغییر دهید.
+          </p>
+          {(filter !== 'pending' || search || sort !== 'created_desc') && (
+            <button
+              type="button"
+              onClick={() => {
+                setFilter('pending');
+                setSort('created_desc');
+                setSearch('');
+                router.push('/admin/comments/all?filter=pending');
+              }}
+              className="mt-4 text-sm font-medium text-[var(--primary)] hover:underline"
+            >
+              پاک کردن فیلترها
+            </button>
+          )}
+        </div>
+      ) : (
+        <CommentsTable
+          comments={localComments}
+          selectedIds={selectedIds}
+          activeId={selectedId}
+          onToggleSelect={handleToggleSelect}
+          onSelectAll={handleSelectAll}
+          onView={handleView}
+          onRowClick={selectComment}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          approvingId={approvingId}
+          rejectingId={rejectingId}
+          filterBadWords={filterBadWords}
+        />
+      )}
+        </div>
+
+        <div className="hidden lg:block w-[min(380px,32%)] shrink-0">
+          <CommentDetailPanel
+            comment={panelComment}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onOpenFullDetail={handleOpenFullDetail}
+            approvingId={approvingId}
+            rejectingId={rejectingId}
+            filterBadWords={filterBadWords}
+          />
+        </div>
+      </div>
+
+      <CommentsMobileDetailBar
+        visible={!!panelComment && !drawerOpen && selectedIds.size === 0}
+        onOpen={() => setDrawerOpen(true)}
       />
 
       <BulkActionBar
@@ -363,74 +508,34 @@ export default function CommentsPageClient({
         isLoading={bulkLoading}
       />
 
-      {localComments.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-12 text-center">
-          <p className="text-slate-600 mb-2">کامنتی یافت نشد</p>
-          <p className="text-sm text-slate-500">
-            فیلترها یا عبارت جستجو را تغییر دهید.
-          </p>
-        </div>
-      ) : (
-        <CommentsTable
-          comments={localComments}
-          selectedIds={selectedIds}
-          onToggleSelect={handleToggleSelect}
-          onSelectAll={handleSelectAll}
-          onView={handleView}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          approvingId={approvingId}
-          rejectingId={rejectingId}
-          filterBadWords={filterBadWords}
-        />
-      )}
-
       <CommentDetailsDrawer
         isOpen={drawerOpen}
-        onClose={() => {
-          setDrawerOpen(false);
-          setDrawerComment(null);
-        }}
-        comment={drawerComment}
+        onClose={() => setDrawerOpen(false)}
+        comment={panelComment}
         onApprove={handleApprove}
         onReject={handleReject}
         onOpenFullDetail={handleOpenFullDetail}
         approvingId={approvingId}
         rejectingId={rejectingId}
+        filterBadWords={filterBadWords}
       />
 
-      {bulkConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
-            <p className="text-slate-800 font-medium mb-4">
-              {bulkConfirm === 'approve'
-                ? `تایید ${selectedIds.size} کامنت؟`
-                : `رد ${selectedIds.size} کامنت؟`}
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setBulkConfirm(null)}
-                className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-700"
-              >
-                انصراف
-              </button>
-              <button
-                type="button"
-                onClick={confirmBulkAction}
-                disabled={bulkLoading}
-                className={`flex-1 py-2 rounded-xl text-white ${
-                  bulkConfirm === 'approve'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-rose-600 hover:bg-rose-700'
-                } disabled:opacity-50`}
-              >
-                {bulkLoading ? 'در حال انجام...' : 'تایید'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <BulkConfirmDialog
+        isOpen={!!bulkConfirm}
+        action={bulkConfirm ?? 'approve'}
+        count={selectedIds.size}
+        isLoading={bulkLoading}
+        onCancel={() => setBulkConfirm(null)}
+        onConfirm={confirmBulkAction}
+      />
+
+      <RejectCommentDialog
+        isOpen={!!rejectTarget}
+        preview={rejectTarget?.preview}
+        isLoading={rejectingId === rejectTarget?.id}
+        onCancel={() => setRejectTarget(null)}
+        onConfirm={confirmReject}
+      />
 
       <PenaltyModal
         isOpen={penaltyModal.isOpen}

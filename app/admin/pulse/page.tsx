@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { requireAdmin } from '@/lib/auth';
 import PulseDashboardClient from './PulseDashboardClient';
 
@@ -7,8 +8,17 @@ export default async function PulseDashboardPage() {
   await requireAdmin();
 
   return (
-    <div className="space-y-6">
+    <Suspense
+      fallback={
+        <div
+          className="py-16 text-center text-sm text-admin-text-tertiary animate-pulse"
+          dir="rtl"
+        >
+          در حال بارگذاری پالس وایب…
+        </div>
+      }
+    >
       <PulseDashboardClient />
-    </div>
+    </Suspense>
   );
 }

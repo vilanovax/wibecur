@@ -51,5 +51,8 @@ next-env.d.ts
 /app/generated/prisma
 /public/uploads
 
+# local backup exports
+.data/
+
 # YoYo AI version control directory
 .yoyo/

@@ -190,6 +190,25 @@ model item_moderation {
   @@index([flagScore])
 }
 
+/// موجودیت مشترک آیتم — یک فیلم/کتاب/کافه در چند لیست با یک شناسهٔ کاتالوگ
+model catalog_items {
+  id            String   @id
+  title         String
+  description   String?
+  imageUrl      String?
+  externalUrl   String?
+  categorySlug  String?
+  metadata      Json?
+  /// کلید یکتا برای ادغام (مثلاً imdb:tt123 یا title:book:نام-نرمال)
+  externalKey   String?  @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  items         items[]
+
+  @@index([title])
+  @@index([categorySlug])
+}
+
 model items {
   id               String         @id
   title            String
@@ -197,6 +216,8 @@ model items {
   imageUrl         String?
   externalUrl      String?
   listId           String
+  catalogItemId    String?
+  listNote         String?
   order            Int            @default(0)
   metadata         Json?
   voteCount        Int            @default(0)
@@ -209,9 +230,12 @@ model items {
   item_votes       item_votes[]
   item_reports     item_reports[]
   item_moderation  item_moderation?
+  catalog_items    catalog_items? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
   lists            lists          @relation(fields: [listId], references: [id], onDelete: Cascade)
 
+  @@unique([listId, catalogItemId])
   @@index([listId])
+  @@index([catalogItemId])
 }
 
 model list_likes {
@@ -388,6 +412,7 @@ model users {
   discovery_spotlight_cache  discovery_spotlight_cache?
   creator_spotlights         creator_spotlights[]
   audit_logs                 audit_log[]
+  backup_jobs_created        backup_jobs[]       @relation("BackupJobsCreated")
   moderation_cases_assigned  moderation_case[]
   moderation_notes           moderation_note[]
   listsDeletedBy             lists[]           @relation("ListDeletedBy")
@@ -836,4 +861,34 @@ model search_query_stats {
   @@index([searchCount(sort: Desc)])
   @@index([lastSearchedAt(sort: Desc)])
   @@map("search_query_stats")
+}
+
+enum BackupJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model backup_jobs {
+  id            String          @id @default(cuid())
+  createdById   String
+  status        BackupJobStatus @default(PENDING)
+  scopes        Json
+  assetMode     String          @default("none")
+  includeTrash  Boolean         @default(false)
+  fileName      String?
+  filePath      String?
+  fileSizeBytes BigInt?
+  manifest      Json?
+  stats         Json?
+  errorMessage  String?
+  progress      Int             @default(0)
+  createdAt     DateTime        @default(now())
+  completedAt   DateTime?
+
+  createdBy users @relation("BackupJobsCreated", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById, createdAt])
+  @@index([status, createdAt])
 }

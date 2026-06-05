@@ -93,7 +93,7 @@ export default function CategoryIntelligenceCard({ category }: CategoryIntellige
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[var(--color-text-muted)]">میانگین امتیاز ترند</span>
-          <span className="font-medium tabular-nums">{category.trendingScoreAvg.toLocaleString('fa-IR')}</span>
+          <span className="font-medium tabular-nums">{category.avgSavesPerList.toLocaleString('fa-IR')}</span>
         </div>
       </div>
 

@@ -1,15 +1,19 @@
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getCachedCommentsHubStats } from '@/lib/admin/comments-hub-stats-cached';
 import BadWordsPageClient from './BadWordsPageClient';
 
 export default async function BadWordsPage() {
   await requireAdmin();
+  const hubStats = await getCachedCommentsHubStats();
 
-  const badWords = await prisma.bad_words.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
+  const [badWords, totalFiltered] = await Promise.all([
+    prisma.bad_words.findMany({
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.comments.count({ where: { isFiltered: true, deletedAt: null } }),
+  ]);
 
-  // Get count of filtered comments for each word
   const wordsWithCounts = await Promise.all(
     badWords.map(async (word) => {
       let filteredCount = 0;
@@ -17,14 +21,15 @@ export default async function BadWordsPage() {
         filteredCount = await prisma.comments.count({
           where: {
             isFiltered: true,
+            deletedAt: null,
             content: {
               contains: word.word,
               mode: 'insensitive',
             },
           },
         });
-      } catch (err) {
-        // Ignore errors
+      } catch {
+        /* ignore */
       }
       return {
         ...word,
@@ -35,6 +40,21 @@ export default async function BadWordsPage() {
     })
   );
 
-  return <BadWordsPageClient words={wordsWithCounts} />;
-}
+  const activeWords = wordsWithCounts.filter((w) => w.filteredCount > 0).length;
 
+  return (
+    <BadWordsPageClient
+      words={wordsWithCounts}
+      stats={{
+        totalWords: wordsWithCounts.length,
+        activeWords,
+        totalFiltered,
+      }}
+      navStats={{
+        pending: hubStats.comments.pending,
+        commentReportsOpen: hubStats.commentReports.open,
+        itemReportsOpen: hubStats.itemReportsOpen,
+      }}
+    />
+  );
+}

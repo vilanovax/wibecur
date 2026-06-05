@@ -88,6 +88,7 @@ export const getCategories = cache(async () => {
       },
       where: {
         isActive: true,
+        deletedAt: null,
       },
     })
   );

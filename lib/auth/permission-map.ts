@@ -26,6 +26,7 @@ const SUPER_ADMIN: Permission[] = [
   'view_audit',
   'view_moderation',
   'assign_moderation',
+  'manage_backup',
 ];
 
 const ADMIN: Permission[] = [
@@ -47,6 +48,7 @@ const ADMIN: Permission[] = [
   'view_audit',
   'view_moderation',
   'assign_moderation',
+  'manage_backup',
 ];
 
 const MODERATOR: Permission[] = [

@@ -1,0 +1,70 @@
+export type SettingsTab = 'integrations' | 'comments' | 'lists' | 'account';
+
+export const SETTINGS_TABS: {
+  id: SettingsTab;
+  label: string;
+  hash?: string;
+}[] = [
+  { id: 'integrations', label: 'یکپارچه‌سازی' },
+  { id: 'comments', label: 'کامنت‌ها' },
+  { id: 'lists', label: 'لیست‌ها' },
+  { id: 'account', label: 'حساب ادمین', hash: 'password' },
+];
+
+export function parseSettingsTab(
+  tab: string | null | undefined
+): SettingsTab {
+  if (tab === 'comments' || tab === 'lists' || tab === 'account') return tab;
+  if (tab === 'password') return 'account';
+  return 'integrations';
+}
+
+export type SettingsData = {
+  openaiApiKey: string | null;
+  tmdbApiKey: string | null;
+  omdbApiKey: string | null;
+  googleApiKey: string | null;
+  googleSearchEngineId: string | null;
+  liaraBucketName: string | null;
+  liaraEndpoint: string | null;
+  liaraAccessKey: string | null;
+  liaraSecretKey: string | null;
+  minItemsForPublicList: number;
+  maxPersonalLists: number;
+  personalListPublicInstructions: string | null;
+};
+
+export type CommentSettingsState = {
+  defaultMaxComments: number | null;
+  defaultCommentsEnabled: boolean;
+  maxCommentLength: number | null;
+  rateLimitMinutes: number;
+  globalRateLimitMinutes: number | null;
+};
+
+export function countConfiguredIntegrations(settings: SettingsData): {
+  configured: number;
+  total: number;
+  partialGoogle: boolean;
+} {
+  let configured = 0;
+  const googleComplete =
+    !!settings.googleApiKey && !!settings.googleSearchEngineId;
+  const partialGoogle =
+    (!!settings.googleSearchEngineId || !!settings.googleApiKey) && !googleComplete;
+
+  const checks = [
+    !!settings.openaiApiKey,
+    !!settings.tmdbApiKey,
+    !!settings.omdbApiKey,
+    googleComplete,
+    !!settings.liaraBucketName &&
+      !!settings.liaraEndpoint &&
+      !!settings.liaraAccessKey &&
+      !!settings.liaraSecretKey,
+  ];
+  checks.forEach((ok) => {
+    if (ok) configured += 1;
+  });
+  return { configured, total: checks.length, partialGoogle };
+}

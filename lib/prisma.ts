@@ -32,7 +32,28 @@ function createPrismaClient() {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+function getOrCreatePrisma(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+    return globalForPrisma.prisma;
+  }
+
+  // بعد از `prisma generate` / db push، کلاینت کش‌شده در dev ممکن است مدل جدید نداشته باشد
+  const stale =
+    process.env.NODE_ENV !== 'production' &&
+    (!('backup_jobs' in globalForPrisma.prisma) ||
+      !('catalog_items' in globalForPrisma.prisma));
+  if (stale) {
+    const old = globalForPrisma.prisma;
+    void old.$disconnect().catch(() => {});
+    globalForPrisma.prismaConnectPromise = undefined;
+    globalForPrisma.prisma = createPrismaClient();
+  }
+
+  return globalForPrisma.prisma;
+}
+
+export const prisma = getOrCreatePrisma();
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;

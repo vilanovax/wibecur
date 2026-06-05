@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, XCircle, Flag, Package } from 'lucide-react';
+import { CheckCircle, Package } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
+import Toast, { type ToastType } from '@/components/shared/Toast';
+import CommentsSubNav, { type CommentsNavStats } from '@/components/admin/comments/CommentsSubNav';
+import ItemReportsKpiStrip from '@/components/admin/comments/ItemReportsKpiStrip';
 
 interface ItemReport {
   id: string;
@@ -27,210 +30,200 @@ interface ItemReport {
   };
 }
 
-interface ItemReportsPageClientProps {
-  reports: ItemReport[];
-  currentResolved: string | undefined;
-}
-
-const REASON_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+const REASON_LABELS: Record<string, { label: string; className: string }> = {
   spelling_error: {
     label: 'غلط املایی',
-    icon: '✏️',
-    color: 'text-blue-600 bg-blue-50',
+    className: 'bg-blue-500/12 text-blue-800 border border-blue-200/60',
   },
   incorrect_info: {
     label: 'صحت اطلاعات',
-    icon: '📋',
-    color: 'text-orange-600 bg-orange-50',
+    className: 'bg-orange-500/12 text-orange-800 border border-orange-200/60',
   },
   offensive: {
     label: 'توهین آمیز',
-    icon: '🚫',
-    color: 'text-red-600 bg-red-50',
+    className: 'bg-red-500/12 text-red-800 border border-red-200/60',
   },
   other: {
     label: 'سایر',
-    icon: '💬',
-    color: 'text-gray-600 bg-gray-50',
+    className: 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border border-[var(--color-border)]',
   },
 };
 
+interface ItemReportsPageClientProps {
+  reports: ItemReport[];
+  counts: { open: number; resolved: number; total: number };
+  activeFilter: 'all' | 'open' | 'resolved';
+  navStats: CommentsNavStats;
+}
+
 export default function ItemReportsPageClient({
   reports = [],
-  currentResolved,
+  counts,
+  activeFilter,
+  navStats,
 }: ItemReportsPageClientProps) {
   const router = useRouter();
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
+  const handleFilterChange = (resolved: string | undefined) => {
+    const params = new URLSearchParams();
+    if (resolved) params.set('resolved', resolved);
+    const qs = params.toString();
+    router.push(qs ? `/admin/comments/item-reports?${qs}` : '/admin/comments/item-reports');
+  };
 
   const handleResolve = async (reportId: string) => {
-    if (!confirm('آیا می‌خواهید این گزارش را حل شده علامت بزنید؟')) return;
-
     setResolvingId(reportId);
     try {
       const res = await fetch(`/api/admin/items/reports/${reportId}/resolve`, {
         method: 'POST',
       });
-
       const data = await res.json();
-
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'خطا در حل کردن گزارش');
       }
-
+      setToast({ message: 'گزارش حل‌شده علامت خورد', type: 'success' });
       router.refresh();
-    } catch (error: any) {
-      console.error('Error resolving report:', error);
-      alert(error.message || 'خطا در حل کردن گزارش');
+    } catch (error: unknown) {
+      setToast({
+        message: error instanceof Error ? error.message : 'خطا در حل کردن گزارش',
+        type: 'error',
+      });
     } finally {
       setResolvingId(null);
     }
   };
 
-  const handleFilterChange = (resolved: string | undefined) => {
-    const params = new URLSearchParams();
-    if (resolved) params.set('resolved', resolved);
-    router.push(`/admin/comments/item-reports?${params.toString()}`);
-  };
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div dir="rtl">
+      <div className="mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-red-100 rounded-lg">
-            <Package className="w-6 h-6 text-red-600" />
-          </div>
+          <span className="p-2 rounded-xl bg-rose-500/10">
+            <Package className="w-6 h-6 text-rose-600" />
+          </span>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">گزارش‌های آیتم‌ها</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              مدیریت گزارش‌های ارسال شده برای آیتم‌ها
+            <h1 className="text-2xl font-bold text-[var(--color-text)]">
+              ریپورت آیتم‌ها
+            </h1>
+            <p className="text-sm text-[var(--color-text-muted)] mt-1">
+              مدیریت گزارش‌های ارسال‌شده برای آیتم‌ها
             </p>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => handleFilterChange(undefined)}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            currentResolved === undefined
-              ? 'bg-primary text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          همه
-        </button>
-        <button
-          onClick={() => handleFilterChange('false')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-            currentResolved === 'false'
-              ? 'bg-red-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          <Flag className="w-4 h-4" />
-          حل نشده
-        </button>
-        <button
-          onClick={() => handleFilterChange('true')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-            currentResolved === 'true'
-              ? 'bg-green-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          <CheckCircle className="w-4 h-4" />
-          Done
-        </button>
-      </div>
+      <CommentsSubNav stats={navStats} />
 
-      {/* Reports Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <ItemReportsKpiStrip
+        open={counts.open}
+        resolved={counts.resolved}
+        total={counts.total}
+        active={activeFilter}
+        onFilter={handleFilterChange}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={3000}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
         {reports.length === 0 ? (
-          <div className="text-center py-12">
-            <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">گزارشی یافت نشد</p>
+          <div className="text-center py-12 px-4">
+            <Package className="w-12 h-12 text-[var(--color-text-muted)] mx-auto mb-3 opacity-40" />
+            <p className="text-[var(--color-text-muted)]">گزارشی یافت نشد</p>
+            {activeFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => handleFilterChange(undefined)}
+                className="mt-3 text-sm font-medium text-[var(--primary)] hover:underline"
+              >
+                نمایش همه
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+            <table className="w-full min-w-[640px] text-sm text-right">
+              <thead className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
                 <tr>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
                     آیتم
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
                     دلیل
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-gray-700">
-                    توضیحات
+                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
+                    گزارش‌دهنده
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
                     تاریخ
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-medium text-gray-700">
+                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
                     عملیات
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-[var(--color-border-muted)]">
                 {reports.map((report) => {
                   const reasonInfo = REASON_LABELS[report.reason] || REASON_LABELS.other;
                   return (
-                    <tr key={report.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                    <tr
+                      key={report.id}
+                      className={`hover:bg-[var(--color-bg)] ${
+                        !report.resolved ? 'bg-rose-50/30' : ''
+                      }`}
+                    >
+                      <td className="px-4 py-3">
                         <Link
                           href={`/admin/items/${report.itemId}/edit`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
+                          className="font-medium text-[var(--color-text)] hover:text-[var(--primary)] line-clamp-1"
                         >
-                          <Package className="w-4 h-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 hover:text-primary">
-                              {report.items.title}
-                            </p>
-                            {report.items.description && (
-                              <p className="text-xs text-gray-500 line-clamp-1">
-                                {report.items.description}
-                              </p>
-                            )}
-                          </div>
+                          {report.items.title}
                         </Link>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${reasonInfo.color}`}
-                        >
-                          <span>{reasonInfo.icon}</span>
-                          <span>{reasonInfo.label}</span>
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {report.description ? (
-                          <p className="text-sm text-gray-700 max-w-xs line-clamp-2">
+                        {report.description && (
+                          <p className="text-xs text-[var(--color-text-muted)] line-clamp-1 mt-0.5">
                             {report.description}
                           </p>
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${reasonInfo.className}`}
+                        >
+                          {reasonInfo.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">
+                        {report.users.name ?? report.users.email}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--color-text-muted)] whitespace-nowrap">
                         {formatDistanceToNow(new Date(report.createdAt), {
                           addSuffix: true,
                           locale: faIR,
                         })}
                       </td>
-                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                        {!report.resolved && (
+                      <td className="px-4 py-3">
+                        {!report.resolved ? (
                           <button
+                            type="button"
                             onClick={() => handleResolve(report.id)}
                             disabled={resolvingId === report.id}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 disabled:opacity-50"
                           >
-                            <CheckCircle className="w-4 h-4" />
-                            {resolvingId === report.id ? 'در حال...' : 'Done'}
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            {resolvingId === report.id ? '…' : 'حل‌شده'}
                           </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            حل شده
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -244,4 +237,3 @@ export default function ItemReportsPageClient({
     </div>
   );
 }
-

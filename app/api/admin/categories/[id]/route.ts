@@ -6,6 +6,12 @@ import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalCategory } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
+import {
+  normalizeCategoryLayoutType,
+  normalizeOptionalHexColor,
+  normalizeOptionalUrl,
+} from '@/lib/admin/category-form-constants';
+import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
 function normalizeTrendingWeight(value: unknown): number {
@@ -25,7 +31,20 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, slug, icon, color, description, order, isActive, commentsEnabled, trendingWeight } = body;
+    const {
+      name,
+      slug,
+      icon,
+      color,
+      accentColor,
+      description,
+      order,
+      isActive,
+      commentsEnabled,
+      trendingWeight,
+      heroImage,
+      layoutType,
+    } = body;
 
     // Validate required fields
     if (!name || !slug || !icon) {
@@ -77,7 +96,10 @@ export async function PUT(
         slug,
         icon,
         color: color || '#6366F1',
+        accentColor: normalizeOptionalHexColor(accentColor),
         description,
+        heroImage: normalizeOptionalUrl(heroImage),
+        layoutType: normalizeCategoryLayoutType(layoutType),
         order: order || 0,
         isActive: isActive !== undefined ? isActive : true,
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
@@ -98,6 +120,7 @@ export async function PUT(
       userAgent: meta.userAgent,
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json(category);
   } catch (error: any) {
     console.error('Error updating category:', error);
@@ -105,6 +128,90 @@ export async function PUT(
       { error: error.message || 'خطا در ویرایش دسته‌بندی' },
       { status: 500 }
     );
+  }
+}
+
+/** PATCH — به‌روزرسانی جزئی (فعال/غیرفعال، وزن الگوریتمی) */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const userOrRes = await requirePermission('manage_categories');
+    if (userOrRes instanceof NextResponse) return userOrRes;
+
+    const { id } = await params;
+    const body = await request.json();
+    const { isActive, trendingWeight } = body as {
+      isActive?: boolean;
+      trendingWeight?: number;
+    };
+
+    if (isActive === undefined && trendingWeight === undefined) {
+      return NextResponse.json(
+        { error: 'حداقل یک فیلد برای به‌روزرسانی لازم است' },
+        { status: 400 }
+      );
+    }
+
+    const existingCategory = await prisma.categories.findUnique({ where: { id } });
+    if (!existingCategory) {
+      return NextResponse.json({ error: 'دسته‌بندی یافت نشد' }, { status: 404 });
+    }
+
+    const data: {
+      isActive?: boolean;
+      trendingWeight?: number;
+      updatedAt: Date;
+    } = { updatedAt: new Date() };
+
+    if (isActive !== undefined) {
+      data.isActive = isActive;
+    }
+
+    if (trendingWeight !== undefined) {
+      const wantsWeight = normalizeTrendingWeight(trendingWeight);
+      const existingWeight = existingCategory.trendingWeight ?? 1;
+      if (
+        wantsWeight !== existingWeight &&
+        !hasPermission(userOrRes.role, 'set_category_weight')
+      ) {
+        return NextResponse.json(
+          { error: 'فقط نقش مدیر با دسترسی «تنظیم وزن دسته» می‌تواند وزن الگوریتم را تغییر دهد.' },
+          { status: 403 }
+        );
+      }
+      data.trendingWeight = wantsWeight;
+    }
+
+    const category = await prisma.categories.update({
+      where: { id },
+      data,
+    });
+
+    const meta = getRequestMeta(request);
+    const weightChanged =
+      trendingWeight !== undefined &&
+      normalizeTrendingWeight(trendingWeight) !== (existingCategory.trendingWeight ?? 1);
+
+    await logAudit({
+      actorId: userOrRes.id,
+      actorRole: userOrRes.role as UserRole,
+      action: weightChanged ? 'CATEGORY_WEIGHT_CHANGE' : 'CATEGORY_UPDATE',
+      entityType: 'CATEGORY',
+      entityId: id,
+      before: minimalCategory(existingCategory),
+      after: minimalCategory(category),
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
+    revalidateAdminListsAndCategoriesCache();
+    return NextResponse.json(category);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'خطا در به‌روزرسانی';
+    console.error('Error patching category:', error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -152,6 +259,7 @@ export async function DELETE(
       userAgent: meta.userAgent,
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json({ success: true, message: 'به زباله‌دان منتقل شد' });
   } catch (error: any) {
     console.error('Error soft-deleting category:', error);

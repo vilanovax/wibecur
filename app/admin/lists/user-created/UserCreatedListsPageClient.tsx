@@ -67,16 +67,6 @@ export default function UserCreatedListsPageClient({
   const [search, setSearch] = useState(currentSearch || '');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [localLists, setLocalLists] = useState<List[]>(lists);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({
-    title: '',
-    description: '',
-    coverImage: '',
-    categoryId: '',
-    isPublic: false,
-    isActive: false,
-    commentsEnabled: true,
-  });
   const [viewingListId, setViewingListId] = useState<string | null>(null);
   const [viewingListTitle, setViewingListTitle] = useState<string>('');
 
@@ -191,52 +181,26 @@ export default function UserCreatedListsPageClient({
     }
   };
 
-  const handleEdit = (list: List) => {
-    setEditingId(list.id);
-    setEditForm({
-      title: list.title,
-      description: list.description || '',
-      coverImage: list.coverImage || '',
-      categoryId: list.categories?.id || '',
-      isPublic: list.isPublic,
-      isActive: list.isActive,
-      commentsEnabled: list.commentsEnabled ?? true,
-    });
-  };
-
-  const handleSaveEdit = async (id: string) => {
-    try {
-      const res = await fetch(`/api/admin/lists/user-created/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editForm),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to update');
-      }
-
-      setEditingId(null);
-      window.location.reload();
-    } catch (error: any) {
-      console.error('Error updating list:', error);
-      alert(error.message || 'خطا در به‌روزرسانی لیست');
-    }
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">لیست‌های کاربران</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--color-text)]">لیست‌های کاربران</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+            {totalCount.toLocaleString('fa-IR')} لیست · مدیریت و بررسی محتوای کاربران
+          </p>
+        </div>
+        <Link
+          href="/admin/lists"
+          className="px-4 py-2 rounded-xl text-sm font-medium border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+        >
+          هوش لیست‌ها
+        </Link>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
         <div className="flex flex-wrap gap-2 mb-4">
           <button
             onClick={() => handleFilterChange('all')}
@@ -310,7 +274,7 @@ export default function UserCreatedListsPageClient({
       </div>
 
       {/* Lists Grid */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
           {localLists.map((list) => (
             <div
@@ -397,52 +361,36 @@ export default function UserCreatedListsPageClient({
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-3 border-t border-gray-200">
-                  {editingId === list.id ? (
-                    <>
-                      <button
-                        onClick={() => handleSaveEdit(list.id)}
-                        className="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-                      >
-                        ذخیره
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
-                      >
-                        لغو
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setViewingListId(list.id);
-                          setViewingListTitle(list.title);
-                        }}
-                        className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm flex items-center justify-center gap-1"
-                        title="مشاهده آیتم‌ها"
-                      >
-                        <Eye className="w-4 h-4" />
-                        مشاهده
-                      </button>
-                      <button
-                        onClick={() => handleEdit(list)}
-                        className="px-3 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
-                        title="ویرایش"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(list.id)}
-                        disabled={deletingId === list.id}
-                        className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                        title="حذف"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
+                <div className="flex items-center gap-2 pt-3 border-t border-[var(--color-border-muted)]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewingListId(list.id);
+                      setViewingListTitle(list.title);
+                    }}
+                    className="flex-1 px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-muted)] transition-colors text-sm flex items-center justify-center gap-1"
+                    title="مشاهده آیتم‌ها"
+                  >
+                    <Eye className="w-4 h-4" />
+                    آیتم‌ها
+                  </button>
+                  <Link
+                    href={`/admin/lists/${list.id}/edit`}
+                    className="px-3 py-2 bg-[var(--primary)] text-white rounded-xl hover:opacity-90 transition-colors text-sm flex items-center gap-1"
+                    title="ویرایش کامل"
+                  >
+                    <Edit className="w-4 h-4" />
+                    ویرایش
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(list.id)}
+                    disabled={deletingId === list.id}
+                    className="px-3 py-2 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors disabled:opacity-50"
+                    title="حذف"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>

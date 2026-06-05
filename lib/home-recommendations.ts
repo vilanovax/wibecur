@@ -4,6 +4,7 @@
 
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
+import { publicCuratedListWhere } from '@/lib/public-content-filters';
 
 const DEFAULT_LIMIT = 6;
 const MIN_SEEDS = 1;
@@ -17,7 +18,7 @@ export type HomeRecommendationItem = {
   saveCount: number;
   itemCount: number;
   likes: number;
-  categories: { id: string; name: string; slug: string; icon: string } | null;
+  categories: { id: string; name: string; slug: string; icon: string; isActive?: boolean } | null;
   reasonType: 'similar' | 'category' | 'popular';
 };
 
@@ -36,7 +37,7 @@ const listSelect = {
   itemCount: true,
   likeCount: true,
   categoryId: true,
-  categories: { select: { id: true, name: true, slug: true, icon: true } },
+  categories: { select: { id: true, name: true, slug: true, icon: true, isActive: true } },
 } as const;
 
 function mapList(
@@ -52,7 +53,8 @@ function mapList(
     categories: HomeRecommendationItem['categories'];
   },
   reasonType: HomeRecommendationItem['reasonType']
-): HomeRecommendationItem {
+): HomeRecommendationItem | null {
+  if (l.categories?.isActive === false) return null;
   return {
     id: l.id,
     title: l.title,
@@ -79,16 +81,16 @@ async function fetchPopularLists(
 ): Promise<HomeRecommendationItem[]> {
   const rows = await prisma.lists.findMany({
     where: {
-      isActive: true,
-      isPublic: true,
-      users: { role: { not: 'USER' } },
+      ...publicCuratedListWhere,
       ...(excludeIds.size > 0 ? { id: { notIn: [...excludeIds] } } : {}),
     },
     select: listSelect,
     orderBy: [{ saveCount: 'desc' }, { likeCount: 'desc' }],
     take: limit,
   });
-  return rows.map((l) => mapList(l, 'popular'));
+  return rows
+    .map((l) => mapList(l, 'popular'))
+    .filter((x): x is HomeRecommendationItem => x !== null);
 }
 
 /**
@@ -112,10 +114,12 @@ async function fetchCollaborativeCandidates(
         ON b1."userId" = b2."userId"
         AND b2."listId" != b1."listId"
       INNER JOIN lists l ON l.id = b2."listId"
+      LEFT JOIN categories c ON c.id = l."categoryId"
       WHERE b1."userId" = ${userId}
         AND b1."listId" IN (${Prisma.join(seedListIds)})
         AND l."isActive" = true
         AND l."isPublic" = true
+        AND (l."categoryId" IS NULL OR (c."isActive" = true AND c."deletedAt" IS NULL))
         ${excludeArr.length > 0 ? Prisma.sql`AND b2."listId" NOT IN (${Prisma.join(excludeArr)})` : Prisma.empty}
       GROUP BY b2."listId"
       ORDER BY score DESC
@@ -134,8 +138,11 @@ async function fetchPreferredCategoryIds(
       SELECT l."categoryId", COUNT(*)::int AS cnt
       FROM bookmarks b
       INNER JOIN lists l ON l.id = b."listId"
+      INNER JOIN categories c ON c.id = l."categoryId"
       WHERE b."userId" = ${userId}
         AND l."categoryId" IS NOT NULL
+        AND c."isActive" = true
+        AND c."deletedAt" IS NULL
       GROUP BY l."categoryId"
       ORDER BY cnt DESC
       LIMIT 5
@@ -152,19 +159,26 @@ async function fetchCategoryLists(
 ): Promise<HomeRecommendationItem[]> {
   if (categoryIds.length === 0) return [];
 
+  const activeCats = await prisma.categories.findMany({
+    where: { id: { in: categoryIds }, isActive: true, deletedAt: null },
+    select: { id: true },
+  });
+  const activeCatIds = activeCats.map((c) => c.id);
+  if (activeCatIds.length === 0) return [];
+
   const rows = await prisma.lists.findMany({
     where: {
-      isActive: true,
-      isPublic: true,
-      users: { role: { not: 'USER' } },
-      categoryId: { in: categoryIds },
+      ...publicCuratedListWhere,
+      categoryId: { in: activeCatIds },
       ...(excludeIds.size > 0 ? { id: { notIn: [...excludeIds] } } : {}),
     },
     select: listSelect,
     orderBy: [{ saveCount: 'desc' }, { likeCount: 'desc' }],
     take: limit,
   });
-  return rows.map((l) => mapList(l, 'category'));
+  return rows
+    .map((l) => mapList(l, 'category'))
+    .filter((x): x is HomeRecommendationItem => x !== null);
 }
 
 export async function getHomeRecommendationsForUser(
@@ -234,10 +248,8 @@ export async function getHomeRecommendationsForUser(
   if (collabRows.length > 0) {
     const collabLists = await prisma.lists.findMany({
       where: {
+        ...publicCuratedListWhere,
         id: { in: collabRows.map((r) => r.listId) },
-        isActive: true,
-        isPublic: true,
-        users: { role: { not: 'USER' } },
       },
       select: listSelect,
     });
@@ -245,7 +257,11 @@ export async function getHomeRecommendationsForUser(
     const sorted = collabLists.sort(
       (a, b) => (scoreById.get(b.id) ?? 0) - (scoreById.get(a.id) ?? 0)
     );
-    addUnique(sorted.map((l) => mapList(l, 'similar')));
+    addUnique(
+      sorted
+        .map((l) => mapList(l, 'similar'))
+        .filter((x): x is HomeRecommendationItem => x !== null)
+    );
   }
 
   if (result.length < limit && preferredCategories.length > 0) {

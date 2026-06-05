@@ -5,6 +5,7 @@ import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalList } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
+import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 
 /** POST: بازگردانی از زباله‌دان */
 export async function POST(
@@ -47,6 +48,7 @@ export async function POST(
       userAgent: meta.userAgent,
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json({ success: true, message: 'بازگردانی انجام شد' });
   } catch (err: unknown) {
     console.error('List restore error:', err);

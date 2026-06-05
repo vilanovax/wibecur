@@ -1,426 +1,313 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ChevronRight, ChevronLeft, Save } from 'lucide-react';
 import { categories } from '@prisma/client';
 import ImageUpload from '@/components/admin/upload/ImageUpload';
+import ListFormIdentity from '@/components/admin/lists/ListFormIdentity';
+import ListFormStickyPreview from '@/components/admin/lists/ListFormStickyPreview';
+import ListEditStatusToggles from '@/components/admin/lists/ListEditStatusToggles';
+import ListNewFormStepper, { type ListNewFormStep } from '@/components/admin/lists/ListNewFormStepper';
+import { slugFromTitle, normalizeListSlug, isValidListSlug } from '@/lib/admin/list-slug';
+import { useListSlugCheck } from '@/hooks/useListSlugCheck';
+import Toast, { type ToastType } from '@/components/shared/Toast';
 
 interface NewListFormProps {
   categories: categories[];
 }
 
-function slugFromTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
+type FormState = {
+  title: string;
+  slug: string;
+  description: string;
+  coverImage: string;
+  categoryId: string;
+  badge: string;
+  isPublic: boolean;
+  isFeatured: boolean;
+  isActive: boolean;
+  commentsEnabled: boolean;
+};
 
-function normalizeSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
+const sectionCard =
+  'rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden';
 
-export default function NewListForm({ categories }: NewListFormProps) {
+export default function NewListForm({ categories: categoryList }: NewListFormProps) {
   const router = useRouter();
+  const [step, setStep] = useState<ListNewFormStep>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [slugTouched, setSlugTouched] = useState(false);
-  const [formData, setFormData] = useState({
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [slugAutoMode, setSlugAutoMode] = useState(true);
+  const [formData, setFormData] = useState<FormState>({
     title: '',
     slug: '',
     description: '',
     coverImage: '',
-    categoryId: categories[0]?.id || '',
+    categoryId: categoryList[0]?.id || '',
     badge: '',
     isPublic: true,
     isFeatured: false,
     isActive: true,
+    commentsEnabled: true,
   });
 
-  const selectedCategory = categories.find((c) => c.id === formData.categoryId);
+  const slugValid = useMemo(() => isValidListSlug(formData.slug), [formData.slug]);
+  const { state: slugCheck, isSlugBlocked } = useListSlugCheck(formData.slug, {
+    enabled: slugValid && formData.slug.length > 0,
+  });
+
+  const slugReady =
+    slugValid && formData.slug.length > 0 && slugCheck.status === 'available' && !isSlugBlocked;
+
+  const selectedCategory = categoryList.find((c) => c.id === formData.categoryId);
+
+  const previewValues = {
+    title: formData.title,
+    slug: formData.slug,
+    description: formData.description,
+    coverImage: formData.coverImage,
+    categoryName: selectedCategory?.name ?? '—',
+    categoryIcon: selectedCategory?.icon ?? '📋',
+    categoryColor: selectedCategory?.color ?? '#6366F1',
+    isPublic: formData.isPublic,
+    isFeatured: formData.isFeatured,
+    isActive: formData.isActive,
+    badge: formData.badge,
+  };
+
+  const step1Valid =
+    formData.title.trim().length > 0 &&
+    slugValid &&
+    !!formData.categoryId &&
+    slugCheck.status === 'available';
+
+  const completedThrough: ListNewFormStep = step1Valid ? 2 : 1;
+
+  const handleTitleChange = useCallback(
+    (title: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        title,
+        slug: slugAutoMode ? slugFromTitle(title) : prev.slug,
+      }));
+    },
+    [slugAutoMode]
+  );
+
+  const handleSlugChange = useCallback((slug: string) => {
+    setSlugAutoMode(false);
+    setFormData((prev) => ({ ...prev, slug: normalizeListSlug(slug) }));
+  }, []);
+
+  const handleApplySuggestion = useCallback((slug: string) => {
+    setSlugAutoMode(false);
+    setFormData((prev) => ({ ...prev, slug }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!slugReady || !formData.categoryId || isSlugBlocked) return;
     setLoading(true);
     setError('');
-
     try {
       const response = await fetch('/api/admin/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'خطا در ایجاد لیست');
       }
-
       const list = await response.json();
+      setToast({ message: 'لیست ساخته شد — اکنون آیتم اضافه کنید', type: 'success' });
       router.push(`/admin/lists/${list.id}/edit`);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'خطا در ایجاد لیست';
+      setError(msg);
+      setToast({ message: msg, type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === 'checkbox'
-          ? (e.target as HTMLInputElement).checked
-          : value,
-    }));
-  };
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const title = e.target.value;
-    setFormData((prev) => {
-      const nextSlug = slugTouched ? prev.slug : slugFromTitle(title);
-      return { ...prev, title, slug: nextSlug };
-    });
-  };
-
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSlugTouched(true);
-    setFormData((prev) => ({
-      ...prev,
-      slug: normalizeSlug(e.target.value),
-    }));
-  };
-
-  const toggle = useCallback(
-    (key: 'isPublic' | 'isFeatured' | 'isActive') => {
-      setFormData((prev) => ({ ...prev, [key]: !prev[key] }));
-    },
-    []
-  );
-
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">لیست جدید</h1>
-        <Link
-          href="/admin/lists"
-          className="text-gray-600 hover:text-gray-900"
-        >
-          بازگشت
-        </Link>
-      </div>
+    <div className="space-y-4 pb-4" dir="rtl">
+      <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <Link
+            href="/admin/lists"
+            className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)] mb-2"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+            بازگشت به لیست‌ها
+          </Link>
+          <h1 className="text-xl font-bold text-[var(--color-text)]">لیست جدید</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">ایجاد لیست جدید در پلتفرم</p>
+        </div>
+      </header>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6">
-          {error}
-        </div>
+        <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="pb-24">
-        <div className="flex flex-col gap-8">
-          {/* Block 1: Core Identity */}
-          <section
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-            aria-labelledby="core-identity-heading"
-          >
-            <h2
-              id="core-identity-heading"
-              className="text-lg font-semibold text-gray-900 mb-6"
-            >
-              هویت اصلی
-            </h2>
-            <div className="space-y-6">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  عنوان لیست *
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleTitleChange}
-                  required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="مثال: بهترین فیلم‌های 2024"
-                />
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">
+        <form id="list-new-form" onSubmit={handleSubmit} className="space-y-4 min-w-0">
+          <ListNewFormStepper
+            current={step}
+            completedThrough={completedThrough}
+            onStepClick={(s) => {
+              if (s === 1) setStep(1);
+              if (s === 2 && step1Valid) setStep(2);
+            }}
+          />
 
-              <div>
-                <label
-                  htmlFor="slug"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Slug (نامک) *
-                </label>
-                <input
-                  type="text"
-                  id="slug"
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleSlugChange}
-                  required
-                  dir="ltr"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
-                  placeholder="مثال: best-movies-2024"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  از حروف انگلیسی کوچک، اعداد و خط تیره استفاده کنید. در صورت خالی بودن از عنوان پر می‌شود.
-                </p>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="categoryId"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  دسته‌بندی *
-                </label>
-                <select
-                  id="categoryId"
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.icon} {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  توضیحات
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={4}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="توضیحات لیست..."
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Block 2: Visual Identity + Live Preview */}
-          <section
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-            aria-labelledby="visual-identity-heading"
-          >
-            <h2
-              id="visual-identity-heading"
-              className="text-lg font-semibold text-gray-900 mb-6"
-            >
-              هویت بصری
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <ImageUpload
-                  value={formData.coverImage}
-                  onChange={(url) =>
-                    setFormData((prev) => ({ ...prev, coverImage: url }))
-                  }
-                  label="تصویر کاور"
-                />
-                <div>
-                  <label
-                    htmlFor="badge"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    نشان
-                  </label>
-                  <select
-                    id="badge"
-                    name="badge"
-                    value={formData.badge}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="">بدون نشان</option>
-                    <option value="TRENDING">Trending (پرطرفدار)</option>
-                    <option value="NEW">New (جدید)</option>
-                    <option value="FEATURED">Featured (ویژه)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Live Preview Card */}
-              <div className="lg:sticky lg:top-24">
-                <p className="text-sm font-medium text-gray-600 mb-3">
-                  پیش‌نمایش
-                </p>
-                <div
-                  className="rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white"
-                  style={{ direction: 'rtl' }}
-                >
-                  <div className="aspect-[2/1] bg-gray-100 relative">
-                    {formData.coverImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={formData.coverImage}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center text-gray-400"
-                        style={{
-                          backgroundColor:
-                            selectedCategory?.color
-                              ? `${selectedCategory.color}20`
-                              : undefined,
-                        }}
-                      >
-                        تصویر کاور
-                      </div>
-                    )}
-                    {selectedCategory && (
-                      <div
-                        className="absolute bottom-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded-md text-white text-xs font-medium shadow"
-                        style={{
-                          backgroundColor:
-                            selectedCategory.color || '#6366F1',
-                        }}
-                      >
-                        <span>{selectedCategory.icon}</span>
-                        <span>{selectedCategory.name}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 truncate">
-                      {formData.title || 'عنوان لیست'}
-                    </h3>
-                    {formData.description && (
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                        {formData.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Block 3: System Behavior */}
-          <section
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-            aria-labelledby="system-behavior-heading"
-          >
-            <h2
-              id="system-behavior-heading"
-              className="text-lg font-semibold text-gray-900 mb-6"
-            >
-              رفتار سیستم
-            </h2>
-            {selectedCategory && (
-              <p className="text-sm text-gray-600 mb-4">
-                این لیست در دسته‌بندی «{selectedCategory.icon} {selectedCategory.name}» قرار می‌گیرد.
-              </p>
-            )}
-            <div className="space-y-4">
-              <ToggleRow
-                label="عمومی (قابل مشاهده برای همه)"
-                checked={formData.isPublic}
-                onToggle={() => toggle('isPublic')}
-              />
-              <ToggleRow
-                label="ویژه (نمایش در صفحه اصلی)"
-                checked={formData.isFeatured}
-                onToggle={() => toggle('isFeatured')}
-              />
-              <ToggleRow
-                label="فعال"
-                checked={formData.isActive}
-                onToggle={() => toggle('isActive')}
-              />
-            </div>
-          </section>
-        </div>
-
-        {/* Sticky bottom action bar */}
-        <div
-          className="fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] py-4 px-4 md:px-6"
-          style={{ direction: 'rtl' }}
-        >
-          <div className="max-w-3xl mx-auto flex gap-3 justify-start">
-            <button
-              type="submit"
-              disabled={loading || !formData.categoryId}
-              className="flex-1 max-w-xs bg-primary text-white px-6 py-3 rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-            >
-              {loading ? 'در حال ایجاد...' : 'ایجاد لیست'}
-            </button>
-            <Link
-              href="/admin/lists"
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-            >
-              انصراف
-            </Link>
+          <div className="lg:hidden">
+            <ListFormStickyPreview values={previewValues} step={step === 1 ? 1 : 2} />
           </div>
-        </div>
-      </form>
-    </>
-  );
-}
 
-function ToggleRow({
-  label,
-  checked,
-  onToggle,
-}: {
-  label: string;
-  checked: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-sm font-medium text-gray-700">{label}</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={onToggle}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none ${
-          checked
-            ? 'border-primary bg-primary'
-            : 'border-gray-300 bg-gray-200'
-        }`}
-      >
-        <span
-          className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-[margin] ${
-            checked ? 'ms-auto' : 'ms-0.5'
-          }`}
-        />
-      </button>
+          {step === 1 && (
+            <section className={sectionCard}>
+              <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
+                <h2 className="text-sm font-semibold text-[var(--color-text)]">اطلاعات پایه</h2>
+              </div>
+              <div className="p-4">
+                <ListFormIdentity
+                  values={{
+                    title: formData.title,
+                    slug: formData.slug,
+                    description: formData.description,
+                    categoryId: formData.categoryId,
+                  }}
+                  categories={categoryList}
+                  onChange={(patch) => setFormData((p) => ({ ...p, ...patch }))}
+                  onTitleChange={handleTitleChange}
+                  onSlugChange={handleSlugChange}
+                  slugAutoMode={slugAutoMode}
+                  onResetSlugAuto={() => setSlugAutoMode((m) => !m)}
+                  slugCheck={slugCheck}
+                  onApplySlugSuggestion={handleApplySuggestion}
+                />
+              </div>
+            </section>
+          )}
+
+          {step === 2 && (
+            <>
+              <section className={sectionCard}>
+                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
+                  <h2 className="text-sm font-semibold text-[var(--color-text)]">نمایش و وضعیت</h2>
+                  <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                    Featured = اسلات صفحه اصلی · نشان = برچسب روی کارت
+                  </p>
+                </div>
+                <div className="p-4">
+                  <ListEditStatusToggles
+                    values={{
+                      isPublic: formData.isPublic,
+                      isFeatured: formData.isFeatured,
+                      isActive: formData.isActive,
+                      commentsEnabled: formData.commentsEnabled,
+                    }}
+                    onChange={(key, value) => setFormData((p) => ({ ...p, [key]: value }))}
+                  />
+                </div>
+              </section>
+
+              <section className={sectionCard}>
+                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
+                  <h2 className="text-sm font-semibold text-[var(--color-text)]">ظاهر</h2>
+                </div>
+                <div className="p-4 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4 items-start">
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">
+                      نشان روی کارت
+                    </label>
+                    <select
+                      value={formData.badge}
+                      onChange={(e) => setFormData((p) => ({ ...p, badge: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm"
+                    >
+                      <option value="">بدون نشان</option>
+                      <option value="TRENDING">Trending</option>
+                      <option value="NEW">New</option>
+                      <option value="FEATURED">Featured badge</option>
+                    </select>
+                    <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+                      جدا از Featured صفحه اصلی
+                    </p>
+                  </div>
+                  <div>
+                    <ImageUpload
+                      value={formData.coverImage}
+                      onChange={(url) => setFormData((p) => ({ ...p, coverImage: url }))}
+                      label="تصویر کاور"
+                      compact
+                    />
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          <div className="sticky bottom-0 z-20 -mx-1 px-1 py-3 bg-[var(--color-bg)]/95 backdrop-blur-md border-t border-[var(--color-border)] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]">
+            <div className="flex flex-wrap items-center gap-2">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                  قبلی
+                </button>
+              )}
+
+              {step < 2 ? (
+                <button
+                  type="button"
+                  onClick={() => step1Valid && setStep(2)}
+                  disabled={!step1Valid}
+                  className="inline-flex items-center gap-1 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                >
+                  بعدی
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={loading || !slugReady || isSlugBlocked}
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  {loading ? 'در حال ایجاد...' : 'ایجاد لیست'}
+                </button>
+              )}
+
+              <Link
+                href="/admin/lists"
+                className="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+              >
+                انصراف
+              </Link>
+            </div>
+          </div>
+        </form>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-20">
+            <ListFormStickyPreview values={previewValues} step={step === 1 ? 1 : 2} />
+          </div>
+        </aside>
+      </div>
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} duration={3500} />
+      )}
     </div>
   );
 }

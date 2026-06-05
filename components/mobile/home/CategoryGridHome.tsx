@@ -20,13 +20,6 @@ async function fetchCategories(): Promise<CategoryItem[]> {
   return json.data;
 }
 
-const FALLBACK_CATEGORIES = [
-  { id: 'movie', slug: 'movie', name: 'فیلم', icon: '🎬', color: '#6366F1', listCount: 0 },
-  { id: 'book', slug: 'book', name: 'کتاب', icon: '📚', color: '#6366F1', listCount: 0 },
-  { id: 'cafe', slug: 'cafe', name: 'کافه', icon: '☕', color: '#6366F1', listCount: 0 },
-  { id: 'travel', slug: 'travel', name: 'سفر', icon: '🌍', color: '#6366F1', listCount: 0 },
-];
-
 export default function CategoryGridHome() {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['home', 'categories'],
@@ -34,10 +27,7 @@ export default function CategoryGridHome() {
     staleTime: 10 * 60 * 1000,
   });
 
-  const base = categories.length > 0 ? categories.slice(0, 4) : [];
-  const baseSlugs = new Set(base.map((c) => c.slug));
-  const pad = FALLBACK_CATEGORIES.filter((f) => !baseSlugs.has(f.slug));
-  const items = base.length >= 4 ? base : [...base, ...pad].slice(0, 4);
+  const items = categories.slice(0, 4);
 
   if (isLoading && items.length === 0) {
     return (

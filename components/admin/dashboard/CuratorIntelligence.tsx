@@ -34,7 +34,7 @@ export default function CuratorIntelligence({ curators }: CuratorIntelligencePro
     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden">
       <div className="px-4 sm:px-6 py-4 border-b border-[var(--color-border)]">
         <h2 className="text-base font-semibold text-[var(--color-text)]">
-          هوش کیوریتورها
+          برترین کیوریتورها
         </h2>
         <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
           برترین کیوریتورها بر اساس رشد و اعتماد
@@ -83,9 +83,15 @@ export default function CuratorIntelligence({ curators }: CuratorIntelligencePro
                     میانگین ذخیره هر لیست: {c.avgSavesPerList.toLocaleString('fa-IR')}
                   </p>
                 </div>
-                <span className="text-sm font-medium tabular-nums text-emerald-600 shrink-0">
-                  +{c.growthPercent}٪
-                </span>
+                {c.growthPercent > 0 ? (
+                  <span className="text-sm font-medium tabular-nums text-emerald-600 shrink-0">
+                    +{c.growthPercent.toLocaleString('fa-IR')}٪
+                  </span>
+                ) : (
+                  <span className="text-sm text-[var(--color-text-subtle)] shrink-0">
+                    —
+                  </span>
+                )}
                 <span
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium shrink-0 ${badge.className}`}
                 >

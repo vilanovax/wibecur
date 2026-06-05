@@ -33,8 +33,10 @@ export interface CommentRowData {
 interface CommentRowProps {
   comment: CommentRowData;
   isSelected: boolean;
+  isActive?: boolean;
   onToggleSelect: (id: string) => void;
   onView: (comment: CommentRowData) => void;
+  onRowClick?: (comment: CommentRowData) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   approvingId: string | null;
@@ -47,8 +49,10 @@ const TRUNCATE_LEN = 60;
 function CommentRow({
   comment,
   isSelected,
+  isActive = false,
   onToggleSelect,
   onView,
+  onRowClick,
   onApprove,
   onReject,
   approvingId,
@@ -62,6 +66,7 @@ function CommentRow({
 
   const rowClass = [
     'border-b border-slate-100 transition-colors',
+    isActive && 'bg-indigo-50/80 ring-1 ring-inset ring-indigo-200',
     riskReported && 'border-r-4 border-r-rose-500 bg-rose-50/60',
     riskBadWords && !riskReported && 'border-r-4 border-r-amber-500 bg-amber-50/60',
   ]
@@ -78,14 +83,23 @@ function CommentRow({
 
   const isPending = approvingId === comment.id || rejectingId === comment.id;
 
+  const handleRowClick = () => {
+    if (onRowClick) onRowClick(comment);
+  };
+
   return (
-    <tr className={`hover:bg-slate-50/80 ${rowClass}`} style={{ direction: 'rtl' }}>
+    <tr
+      className={`hover:bg-slate-50/80 ${rowClass} ${onRowClick ? 'cursor-pointer' : ''}`}
+      style={{ direction: 'rtl' }}
+      onClick={onRowClick ? handleRowClick : undefined}
+    >
       <td className="px-4 py-3 w-10">
         {!comment.deletedAt && (
           <input
             type="checkbox"
             checked={isSelected}
             onChange={() => onToggleSelect(comment.id)}
+            onClick={(e) => e.stopPropagation()}
             className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
           />
         )}
@@ -118,15 +132,11 @@ function CommentRow({
         >
           {truncated}
         </span>
-        {isReported && (
-          <span className="inline-block mt-1 text-xs text-rose-600">
-            ریپورت شده ({comment._count.comment_reports})
-          </span>
-        )}
       </td>
       <td className="px-4 py-3">
         <Link
           href={`/admin/items?id=${comment.items.id}`}
+          onClick={(e) => e.stopPropagation()}
           className="text-sm text-indigo-600 hover:underline truncate block max-w-[140px]"
         >
           {comment.items.title}
@@ -147,7 +157,7 @@ function CommentRow({
         />
       </td>
       <td className="px-4 py-3">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={() => onView(comment)}

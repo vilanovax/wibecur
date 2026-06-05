@@ -1,4 +1,9 @@
 import { prisma } from '@/lib/prisma';
+import {
+  activeCategoryWhere,
+  filterListsInActiveCategories,
+  publicCuratedListWhere,
+} from '@/lib/public-content-filters';
 import { dbQuery } from '@/lib/db';
 import { getGlobalTrending, getFastRising, type TrendingListResult } from '@/lib/trending/service';
 import { resolveListCover } from '@/lib/resolve-list-cover';
@@ -27,6 +32,7 @@ type DbListRow = {
     name: string;
     slug: string | null;
     icon: string | null;
+    isActive: boolean;
   } | null;
   users: {
     id: string;
@@ -204,6 +210,10 @@ async function fetchUserPreferences(userId: string) {
         lists: {
           deletedAt: null,
           isActive: true,
+          OR: [
+            { categoryId: null },
+            { categories: { isActive: true, deletedAt: null } },
+          ],
         },
       },
       select: {
@@ -226,8 +236,23 @@ async function fetchUserPreferences(userId: string) {
     }
   }
 
+  const candidateIds = [...categoryCount.keys()];
+  const activeIds = new Set(
+    candidateIds.length === 0
+      ? []
+      : (
+          await dbQuery(() =>
+            prisma.categories.findMany({
+              where: { id: { in: candidateIds }, ...activeCategoryWhere },
+              select: { id: true },
+            })
+          )
+        ).map((c) => c.id)
+  );
+
   const preferredCategoryIds = [...categoryCount.entries()]
     .sort((a, b) => b[1] - a[1])
+    .filter(([id]) => activeIds.has(id))
     .slice(0, 5)
     .map(([id]) => id);
 
@@ -241,8 +266,7 @@ async function fetchMissingLists(ids: string[]): Promise<DbListRow[]> {
     prisma.lists.findMany({
       where: {
         id: { in: ids },
-        isActive: true,
-        isPublic: true,
+        ...publicCuratedListWhere,
       },
       select: {
         id: true,
@@ -258,7 +282,7 @@ async function fetchMissingLists(ids: string[]): Promise<DbListRow[]> {
         itemCount: true,
         createdAt: true,
         categories: {
-          select: { id: true, name: true, slug: true, icon: true },
+          select: { id: true, name: true, slug: true, icon: true, isActive: true },
         },
         users: {
           select: {
@@ -280,18 +304,14 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
   const [categoriesRaw, listsRaw, trendingRaw, risingRaw, userPrefs] = await Promise.all([
     dbQuery(() =>
       prisma.categories.findMany({
-        where: { isActive: true },
+        where: activeCategoryWhere,
         select: { id: true, name: true, slug: true, icon: true },
         orderBy: { order: 'asc' },
       })
     ),
     dbQuery(() =>
       prisma.lists.findMany({
-        where: {
-          isActive: true,
-          isPublic: true,
-          users: { role: { not: 'USER' } },
-        },
+        where: publicCuratedListWhere,
         select: {
           id: true,
           title: true,
@@ -306,7 +326,7 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
           itemCount: true,
           createdAt: true,
           categories: {
-            select: { id: true, name: true, slug: true, icon: true },
+            select: { id: true, name: true, slug: true, icon: true, isActive: true },
           },
           users: {
             select: {
@@ -336,13 +356,15 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
     if (!scoreById.has(r.listId)) scoreById.set(r.listId, r.score);
   }
 
+  const activeCategoryIdSet = new Set(categoriesRaw.map((c) => c.id));
   const knownIds = new Set(listsRaw.map((l) => l.id));
   const extraIds = [...new Set([...trendingIds, ...risingIds])].filter((id) => !knownIds.has(id));
   const extraLists = await fetchMissingLists(extraIds);
+  const visibleListRows = filterListsInActiveCategories([...listsRaw, ...extraLists]);
 
   const byId = new Map<string, CuratedList>();
 
-  for (const row of [...listsRaw, ...extraLists]) {
+  for (const row of visibleListRows) {
     byId.set(
       row.id,
       mapDbListToCurated(row, {
@@ -355,12 +377,14 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
   }
 
   for (const t of trendingRaw) {
+    if (t.categoryId && !activeCategoryIdSet.has(t.categoryId)) continue;
     if (!byId.has(t.listId)) {
       byId.set(t.listId, mapTrendingToCurated(t, false));
     }
   }
 
   for (const r of risingRaw) {
+    if (r.categoryId && !activeCategoryIdSet.has(r.categoryId)) continue;
     const existing = byId.get(r.listId);
     if (existing) {
       if (!existing.badges.includes('rising')) existing.badges.push('rising');
@@ -370,8 +394,15 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
     }
   }
 
+  const lists = [...byId.values()]
+    .filter((list) => {
+      if (!list.categoryId || list.categoryId === 'unknown') return true;
+      return activeCategoryIdSet.has(list.categoryId);
+    })
+    .map((list) => enrichListCategory(list, categoriesRaw));
+
   return {
-    lists: [...byId.values()].map((list) => enrichListCategory(list, categoriesRaw)),
+    lists,
     categories: mapCategories(categoriesRaw),
     preferredCategoryIds: userPrefs.preferredCategoryIds,
     bookmarkedListIds: userPrefs.bookmarkedListIds,

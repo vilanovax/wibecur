@@ -13,16 +13,19 @@ const PATH_PERMISSION: Record<string, Permission> = {
   '/admin/lists': 'manage_lists',
   '/admin/lists/user-created': 'manage_lists',
   '/admin/items': 'manage_lists',
+  '/admin/catalog': 'manage_lists',
   '/admin/users': 'manage_users',
-  '/admin/comments': 'moderate_comments',
+  '/admin/comments/all': 'moderate_comments',
+  '/admin/comments': 'view_reports',
   '/admin/comments/reports': 'view_reports',
   '/admin/comments/item-reports': 'view_reports',
   '/admin/comments/bad-words': 'moderate_comments',
   '/admin/comments/violations': 'moderate_comments',
   '/admin/suggestions': 'manage_lists',
-  '/admin/settings': 'manage_roles',
+  '/admin/settings': 'view_dashboard',
   '/admin/audit': 'view_audit',
   '/admin/moderation': 'view_moderation',
+  '/admin/system/backup': 'manage_backup',
 };
 
 /**

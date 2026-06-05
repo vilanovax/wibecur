@@ -9,6 +9,11 @@ import type {
   HomeListData,
   RisingListData,
 } from '@/types/home-data';
+import {
+  filterListsInActiveCategories,
+  publicCuratedListWhere,
+  isListVisibleInPublicFeed,
+} from '@/lib/public-content-filters';
 
 export type HomeApiPayload = {
   featured: FeaturedListData | null;
@@ -29,11 +34,7 @@ export async function fetchHomePageData(): Promise<HomeData> {
   const [lists, trendingResults, risingResults] = await Promise.all([
     dbQuery(() =>
       prisma.lists.findMany({
-        where: {
-          isActive: true,
-          isPublic: true,
-          users: { role: { not: 'USER' } },
-        },
+        where: publicCuratedListWhere,
         select: {
           id: true,
           title: true,
@@ -47,7 +48,7 @@ export async function fetchHomePageData(): Promise<HomeData> {
           badge: true,
           userId: true,
           categories: {
-            select: { id: true, name: true, slug: true, icon: true },
+            select: { id: true, name: true, slug: true, icon: true, isActive: true },
           },
           users: {
             select: { id: true, name: true, username: true },
@@ -61,8 +62,13 @@ export async function fetchHomePageData(): Promise<HomeData> {
     getCachedFastRising(6),
   ]);
 
-  const featuredFromSlot = slotResult?.list ?? null;
-  const featured = featuredFromSlot ?? (lists.length > 0 ? lists[0] : null);
+  const visibleLists = filterListsInActiveCategories(lists);
+  const slotList =
+    slotResult?.list && isListVisibleInPublicFeed(slotResult.list)
+      ? slotResult.list
+      : null;
+  const featuredFromSlot = slotList;
+  const featured = featuredFromSlot ?? (visibleLists.length > 0 ? visibleLists[0] : null);
   const featuredSlotId = slotResult?.slotId ?? null;
 
   const withCover = (input: {
@@ -155,9 +161,9 @@ export async function fetchHomePageData(): Promise<HomeData> {
 
   return {
     featured: mapFeatured,
-    featuredSlotId,
+    featuredSlotId: slotList ? slotResult?.slotId ?? null : null,
     trending: trendingResults.map(mapTrending),
     rising: risingResults.map(mapRising),
-    recommendations: lists.slice(0, 4).map(mapList),
+    recommendations: visibleLists.slice(0, 4).map(mapList),
   };
 }

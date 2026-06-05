@@ -9,11 +9,13 @@ interface CommentsTableProps {
   onToggleSelect: (id: string) => void;
   onSelectAll: (checked: boolean) => void;
   onView: (comment: CommentRowData) => void;
+  onRowClick?: (comment: CommentRowData) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   approvingId: string | null;
   rejectingId: string | null;
   filterBadWords?: (text: string) => string;
+  activeId?: string | null;
 }
 
 export default function CommentsTable({
@@ -22,11 +24,13 @@ export default function CommentsTable({
   onToggleSelect,
   onSelectAll,
   onView,
+  onRowClick,
   onApprove,
   onReject,
   approvingId,
   rejectingId,
   filterBadWords,
+  activeId,
 }: CommentsTableProps) {
   const selectableComments = comments.filter((c) => !c.deletedAt);
   const allSelected =
@@ -71,9 +75,11 @@ export default function CommentsTable({
             <CommentRow
               key={comment.id}
               comment={comment}
-              isSelected={selectedIds.has(comment.id)}
-              onToggleSelect={onToggleSelect}
+            isSelected={selectedIds.has(comment.id)}
+            isActive={activeId === comment.id}
+            onToggleSelect={onToggleSelect}
               onView={onView}
+              onRowClick={onRowClick}
               onApprove={onApprove}
               onReject={onReject}
               approvingId={approvingId}

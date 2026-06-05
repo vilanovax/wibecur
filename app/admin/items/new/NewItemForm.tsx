@@ -7,7 +7,16 @@ import { lists, categories } from '@prisma/client';
 import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
-import { Upload, Link as LinkIcon, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Upload,
+  Link as LinkIcon,
+  Search,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  PlusCircle,
+} from 'lucide-react';
+import CatalogItemPicker from '@/components/admin/items/CatalogItemPicker';
 
 type ListWithCategory = lists & {
   categories: categories | null;
@@ -39,6 +48,7 @@ export default function NewItemForm({
   const [imageSearchModalOpen, setImageSearchModalOpen] = useState(false);
   const [mediaTab, setMediaTab] = useState<ImageUploadDisplayMode>('upload');
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [mode, setMode] = useState<'catalog' | 'new'>('catalog');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -216,21 +226,22 @@ export default function NewItemForm({
         isLoading={fetchingFromImdb}
       />
 
-      <div className="flex items-center justify-between mb-8" dir="rtl">
-        <div>
-          <h1 className="text-2xl font-bold text-admin-text-primary dark:text-white">افزودن آیتم جدید</h1>
-          <p className="text-sm text-admin-text-tertiary dark:text-gray-400 mt-1">
-            {selectedList && (
-              <>به لیست: {selectedList.categories?.icon || '📋'} {selectedList.title}</>
-            )}
-          </p>
-        </div>
+      <div className="mb-6" dir="rtl">
         <Link
           href={`/admin/items${initialListId ? `?listId=${initialListId}` : ''}`}
-          className="text-admin-text-secondary dark:text-gray-400 hover:text-admin-text-primary dark:hover:text-white"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-violet-700 mb-3"
         >
-          ← بازگشت
+          <ArrowRight className="w-4 h-4" />
+          بازگشت به آیتم‌ها
         </Link>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">افزودن آیتم</h1>
+        {selectedList && (
+          <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 px-2.5 py-1 font-medium text-gray-700 dark:text-gray-200">
+              {selectedList.categories?.icon || '📋'} {selectedList.title}
+            </span>
+          </p>
+        )}
       </div>
 
       {error && (
@@ -239,6 +250,63 @@ export default function NewItemForm({
         </div>
       )}
 
+      <div className="inline-flex p-1 rounded-xl bg-gray-100 dark:bg-gray-800 mb-6" dir="rtl">
+        <button
+          type="button"
+          onClick={() => setMode('catalog')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+            mode === 'catalog'
+              ? 'bg-white dark:bg-gray-700 text-violet-700 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <LinkIcon className="w-4 h-4" />
+          از کاتالوگ
+          <span className="hidden sm:inline text-xs font-normal text-gray-500">پیشنهادی</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('new')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+            mode === 'new'
+              ? 'bg-white dark:bg-gray-700 text-violet-700 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <PlusCircle className="w-4 h-4" />
+          آیتم جدید
+        </button>
+      </div>
+
+      {mode === 'catalog' && (
+        <div className="max-w-2xl">
+          <CatalogItemPicker
+            listId={formData.listId}
+            categorySlug={selectedList?.categories?.slug}
+            showListSelector
+            lists={lists.map((l) => ({
+              id: l.id,
+              title: l.title,
+              icon: l.categories?.icon,
+            }))}
+            onListChange={(id) => setFormData((p) => ({ ...p, listId: id }))}
+            onAdded={() => router.push(`/admin/items?listId=${formData.listId}`)}
+          />
+          <p className="text-center text-sm text-gray-500 mt-5">
+            موجودیت تازه؟{' '}
+            <button
+              type="button"
+              className="text-violet-600 font-bold hover:underline"
+              onClick={() => setMode('new')}
+            >
+              ساخت آیتم جدید در کاتالوگ
+            </button>
+          </p>
+        </div>
+      )}
+
+      {mode === 'new' && (
+      <>
       <form
         id="new-item-form"
         ref={formRef}
@@ -460,28 +528,30 @@ export default function NewItemForm({
         </section>
       </form>
 
-      {/* Sticky Submit Bar */}
+      {/* Sticky Submit Bar — فقط حالت «آیتم جدید» */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-gray-800 border-t border-admin-border dark:border-gray-600 shadow-lg px-6 py-4 flex items-center justify-between gap-4"
+        className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur border-t border-gray-200 dark:border-gray-600 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
         dir="rtl"
       >
-        <div className="flex-1 max-w-[1400px] mx-auto flex items-center justify-between gap-4">
-          <Link
-            href={`/admin/items${initialListId ? `?listId=${initialListId}` : ''}`}
-            className="px-6 py-2.5 border border-admin-border dark:border-gray-600 text-admin-text-primary dark:text-white rounded-xl hover:bg-admin-muted dark:hover:bg-gray-700 transition-colors font-medium"
-          >
-            انصراف
-          </Link>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <button
             type="button"
             disabled={loading}
             onClick={() => formRef.current?.requestSubmit()}
-            className="px-6 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 font-bold text-sm disabled:opacity-50 shadow-sm"
           >
-            {loading ? 'در حال ایجاد...' : 'ایجاد آیتم'}
+            {loading ? 'در حال ایجاد…' : 'ایجاد آیتم'}
           </button>
+          <Link
+            href={`/admin/items${initialListId ? `?listId=${initialListId}` : ''}`}
+            className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900"
+          >
+            انصراف
+          </Link>
         </div>
       </div>
+      </>
+      )}
     </>
   );
 }

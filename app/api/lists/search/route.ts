@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { tryApiDbFallback } from '@/lib/api-db';
 import { normalizeSearchQuery, SEARCH_MIN_LENGTH } from '@/lib/list-search';
 import { withResolvedListCovers } from '@/lib/resolve-list-cover';
+import { publicCuratedListWhere } from '@/lib/public-content-filters';
 
 /** GET /api/lists/search?q=...&limit=8 — جستجوی سریع لیست‌ها */
 export async function GET(request: NextRequest) {
@@ -19,18 +21,24 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const searchWhere: Prisma.listsWhereInput = {
+      ...publicCuratedListWhere,
+      OR: [
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+        {
+          categories: {
+            isActive: true,
+            deletedAt: null,
+            name: { contains: q, mode: 'insensitive' },
+          },
+        },
+      ],
+    };
+
     const lists = await dbQuery(() =>
       prisma.lists.findMany({
-        where: {
-          isActive: true,
-          isPublic: true,
-          users: { role: { not: 'USER' } },
-          OR: [
-            { title: { contains: q, mode: 'insensitive' } },
-            { description: { contains: q, mode: 'insensitive' } },
-            { categories: { name: { contains: q, mode: 'insensitive' } } },
-          ],
-        },
+        where: searchWhere,
         select: {
           id: true,
           title: true,
@@ -49,20 +57,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    const total = await dbQuery(() =>
-      prisma.lists.count({
-        where: {
-          isActive: true,
-          isPublic: true,
-          users: { role: { not: 'USER' } },
-          OR: [
-            { title: { contains: q, mode: 'insensitive' } },
-            { description: { contains: q, mode: 'insensitive' } },
-            { categories: { name: { contains: q, mode: 'insensitive' } } },
-          ],
-        },
-      })
-    );
+    const total = await dbQuery(() => prisma.lists.count({ where: searchWhere }));
 
     const resolved = withResolvedListCovers(lists);
 

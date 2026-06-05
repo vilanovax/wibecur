@@ -6,6 +6,7 @@
 
 import type { PrismaClient } from '@prisma/client';
 import { createNotification } from '@/lib/utils/notifications';
+import { isListVisibleInPublicFeed } from '@/lib/public-content-filters';
 
 export type FeaturedSlotResult = {
   slotId: string;
@@ -19,7 +20,7 @@ export type FeaturedSlotResult = {
     saveCount: number;
     itemCount: number;
     likeCount: number;
-    categories: { id: string; name: string; slug: string; icon: string } | null;
+    categories: { id: string; name: string; slug: string; icon: string; isActive: boolean } | null;
     users: { id: string; name: string | null; username: string | null } | null;
   };
   startAt: Date;
@@ -53,14 +54,14 @@ export async function getCurrentFeaturedSlot(
           saveCount: true,
           itemCount: true,
           likeCount: true,
-          categories: { select: { id: true, name: true, slug: true, icon: true } },
+          categories: { select: { id: true, name: true, slug: true, icon: true, isActive: true } },
           users: { select: { id: true, name: true, username: true } },
         },
       },
     },
   });
 
-  if (activeSlot?.lists) {
+  if (activeSlot?.lists && isListVisibleInPublicFeed(activeSlot.lists)) {
     return {
       slotId: activeSlot.id,
       listId: activeSlot.listId,
@@ -84,14 +85,14 @@ export async function getCurrentFeaturedSlot(
           saveCount: true,
           itemCount: true,
           likeCount: true,
-          categories: { select: { id: true, name: true, slug: true, icon: true } },
+          categories: { select: { id: true, name: true, slug: true, icon: true, isActive: true } },
           users: { select: { id: true, name: true, username: true } },
         },
       },
     },
   });
 
-  if (lastExpiredSlot?.lists) {
+  if (lastExpiredSlot?.lists && isListVisibleInPublicFeed(lastExpiredSlot.lists)) {
     try {
       await ensureAdminFeaturedNoNextNotification(prisma, lastExpiredSlot.id);
     } catch (err) {

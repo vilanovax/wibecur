@@ -1,18 +1,25 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Plus, Sparkles, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 import type { ListsIntelligenceData, ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import { LISTS_PULSE_SAMPLE } from '@/lib/admin/lists-intelligence';
 import ListPulseSummary from '@/components/admin/lists/ListPulseSummary';
 import ListSmartFilterBar, { type ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
 import ListIntelligenceCard from '@/components/admin/lists/ListIntelligenceCard';
 import ListIntelligenceTable from '@/components/admin/lists/ListIntelligenceTable';
 import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
+import Pagination from '@/components/admin/shared/Pagination';
+import { searchLists, countListsForFilter } from '@/lib/admin/list-list-utils';
+import Toast, { type ToastType } from '@/components/shared/Toast';
 
 type SortKey =
   | 'score_desc'
   | 'score_asc'
+  | 'items_desc'
+  | 'items_asc'
   | 'saves_desc'
   | 'saves_asc'
   | '24h_desc'
@@ -35,6 +42,8 @@ function filterLists(lists: ListIntelligenceRow[], filter: ListFilterKind): List
       return lists.filter((l) => l.needsReview);
     case 'zero_save':
       return lists.filter((l) => l.saveCount === 0);
+    case 'featured':
+      return lists.filter((l) => l.isFeatured);
     default:
       return lists;
   }
@@ -47,6 +56,10 @@ function sortLists(lists: ListIntelligenceRow[], sortBy: SortKey): ListIntellige
       return arr.sort((a, b) => b.trendingScore - a.trendingScore);
     case 'score_asc':
       return arr.sort((a, b) => a.trendingScore - b.trendingScore);
+    case 'items_desc':
+      return arr.sort((a, b) => b.itemCount - a.itemCount);
+    case 'items_asc':
+      return arr.sort((a, b) => a.itemCount - b.itemCount);
     case 'saves_desc':
       return arr.sort((a, b) => b.saveCount - a.saveCount);
     case 'saves_asc':
@@ -62,19 +75,104 @@ function sortLists(lists: ListIntelligenceRow[], sortBy: SortKey): ListIntellige
   }
 }
 
+const VIEW_MODE_KEY = 'admin-lists-view-mode';
+const KPI_COLLAPSED_KEY = 'admin-lists-kpi-collapsed';
+
+const EMPTY_COUNTS: Record<ListFilterKind, number> = {
+  all: 0,
+  rising: 0,
+  trending_top: 0,
+  low_engagement: 0,
+  suspicious: 0,
+  needs_review: 0,
+  zero_save: 0,
+  featured: 0,
+};
+
 export default function ListsIntelligenceClient({
   data,
   trash: isTrashView,
+  initialCategoryId = 'all',
 }: {
   data: ListsIntelligenceData;
   trash: boolean;
+  initialCategoryId?: string;
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<ListFilterKind>('all');
+  const [categoryId, setCategoryId] = useState(initialCategoryId);
+  const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('score_desc');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [kpiCollapsed, setKpiCollapsed] = useState(true);
   const [lists, setLists] = useState<ListIntelligenceRow[]>(data.lists);
   const [moveToTrashRow, setMoveToTrashRow] = useState<ListIntelligenceRow | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
+  useEffect(() => {
+    setLists(data.lists);
+    setCategoryId(initialCategoryId);
+  }, [data.lists, initialCategoryId]);
+
+  useEffect(() => {
+    const storedView = localStorage.getItem(VIEW_MODE_KEY);
+    if (storedView === 'grid' || storedView === 'table') setViewMode(storedView);
+    const storedKpi = localStorage.getItem(KPI_COLLAPSED_KEY);
+    if (storedKpi === '0') setKpiCollapsed(false);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_MODE_KEY, viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem(KPI_COLLAPSED_KEY, kpiCollapsed ? '1' : '0');
+  }, [kpiCollapsed]);
+
+  const filterCounts = useMemo(() => {
+    const keys: ListFilterKind[] = [
+      'all',
+      'rising',
+      'trending_top',
+      'low_engagement',
+      'suspicious',
+      'needs_review',
+      'zero_save',
+      'featured',
+    ];
+    const counts = { ...EMPTY_COUNTS };
+    for (const k of keys) {
+      counts[k] = countListsForFilter(lists, k);
+    }
+    return counts;
+  }, [lists]);
+
+  const filteredByTab = useMemo(() => filterLists(lists, filter), [lists, filter]);
+  const searched = useMemo(() => searchLists(filteredByTab, search), [filteredByTab, search]);
+  const sorted = useMemo(() => sortLists(searched, sortBy), [searched, sortBy]);
+
+  const handleCategoryChange = useCallback(
+    (nextCategoryId: string) => {
+      setCategoryId(nextCategoryId);
+      const params = new URLSearchParams(window.location.search);
+      if (nextCategoryId === 'all') {
+        params.delete('category');
+      } else {
+        const cat = data.categories.find((c) => c.id === nextCategoryId);
+        params.set('category', cat?.slug ?? nextCategoryId);
+      }
+      params.delete('page');
+      const qs = params.toString();
+      router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+    },
+    [data.categories, router]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setFilter('all');
+    setSearch('');
+    if (categoryId !== 'all') handleCategoryChange('all');
+  }, [categoryId, handleCategoryChange]);
 
   const handleMoveToTrash = async (id: string, reason?: string) => {
     const res = await fetch(`/api/admin/lists/${id}/trash`, {
@@ -87,8 +185,7 @@ export default function ListsIntelligenceClient({
     setLists((prev) => prev.filter((l) => l.id !== id));
     setMoveToTrashRow(null);
     router.refresh();
-    // می‌توان با toast جایگزین کرد
-    if (typeof window !== 'undefined') window.alert('به زباله‌دان منتقل شد.');
+    setToast({ message: 'لیست به زباله‌دان منتقل شد', type: 'success' });
   };
 
   const handleRestore = async (id: string) => {
@@ -97,120 +194,226 @@ export default function ListsIntelligenceClient({
     if (!res.ok) throw new Error(json.error || 'خطا');
     setLists((prev) => prev.filter((l) => l.id !== id));
     router.refresh();
+    setToast({ message: 'لیست بازگردانی شد', type: 'success' });
   };
 
-  const filtered = useMemo(
-    () => filterLists(lists, filter),
-    [lists, filter]
-  );
-  const sorted = useMemo(
-    () => sortLists(filtered, sortBy),
-    [filtered, sortBy]
-  );
-
   const handleFeatureToggle = (id: string, isFeatured: boolean) => {
-    setLists((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, isFeatured } : l))
-    );
+    setLists((prev) => prev.map((l) => (l.id === id ? { ...l, isFeatured } : l)));
+    setToast({
+      message: isFeatured ? 'لیست به Featured اضافه شد' : 'از Featured حذف شد',
+      type: 'success',
+    });
   };
 
   const handleDisableToggle = (id: string, isActive: boolean) => {
-    setLists((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, isActive } : l))
-    );
+    setLists((prev) => prev.map((l) => (l.id === id ? { ...l, isActive } : l)));
+    setToast({
+      message: isActive ? 'لیست فعال شد' : 'لیست غیرفعال شد',
+      type: 'success',
+    });
   };
 
+  const activeCategory = categoryId !== 'all' ? data.categories.find((c) => c.id === categoryId) : null;
+  const hasActiveFilters = filter !== 'all' || search.trim() !== '' || categoryId !== 'all';
+
+  const showEmpty =
+    sorted.length === 0 && (search.trim() !== '' || filter !== 'all' || categoryId !== 'all');
+
+  const filterBarProps = {
+    value: filter,
+    onChange: setFilter,
+    counts: filterCounts,
+    search,
+    onSearchChange: setSearch,
+    sortBy,
+    onSortChange: (v: string) => setSortBy(v as SortKey),
+    viewMode,
+    onViewModeChange: setViewMode,
+    resultCount: sorted.length,
+    totalCount: lists.length,
+    categories: data.categories,
+    categoryId,
+    onCategoryChange: handleCategoryChange,
+    onClearFilters: handleClearFilters,
+    hasActiveFilters,
+  };
+
+  const tabClass = (active: boolean) =>
+    `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+      active
+        ? 'bg-[var(--primary)] text-white shadow-sm'
+        : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)]'
+    }`;
+
   return (
-    <div className="space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">
-            هوش لیست‌ها
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
-            {sorted.length} لیست از {lists.length}
-          </p>
+    <div className="space-y-4" dir="rtl">
+      {/* هدر فشرده */}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها</h1>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--color-bg)] border border-[var(--color-border-muted)] text-[var(--color-text-muted)] tabular-nums">
+              {data.pulse.totalLists.toLocaleString('fa-IR')} کل
+            </span>
+            {activeCategory && (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+                {activeCategory.icon} {activeCategory.name}
+              </span>
+            )}
+          </div>
+          {data.pulseFromSample && !isTrashView && (
+            <p className="text-[11px] text-[var(--color-text-muted)]">
+              KPI از {LISTS_PULSE_SAMPLE.toLocaleString('fa-IR')} لیست برتر
+            </p>
+          )}
+          {!isTrashView && kpiCollapsed && data.pulse.insightLine && (
+            <p className="text-xs text-[var(--color-text-muted)] mt-1 truncate" title={data.pulse.insightLine}>
+              {data.pulse.insightLine}
+            </p>
+          )}
         </div>
-        {!isTrashView && (
-          <Link
-            href="/admin/lists/new"
-            className="px-5 py-2.5 rounded-2xl font-medium text-white transition-colors hover:opacity-90"
-            style={{ backgroundColor: 'var(--primary)' }}
-          >
-            + لیست جدید
-          </Link>
-        )}
-      </div>
 
-      <section className="flex gap-2 border-b border-[var(--color-border-muted)] pb-2">
-        <Link
-          href="/admin/lists"
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            !isTrashView
-              ? 'bg-[var(--primary)] text-white'
-              : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:bg-[var(--color-border)]'
-          }`}
-        >
-          فعال‌ها
-        </Link>
-        <Link
-          href="/admin/lists?trash=true"
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            isTrashView
-              ? 'bg-[var(--primary)] text-white'
-              : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:bg-[var(--color-border)]'
-          }`}
-        >
-          زباله‌دان
-        </Link>
-      </section>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* تب‌ها */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border-muted)]">
+            <Link
+              href={
+                categoryId !== 'all' && activeCategory
+                  ? `/admin/lists?category=${activeCategory.slug}`
+                  : '/admin/lists'
+              }
+              className={tabClass(!isTrashView)}
+            >
+              فعال‌ها
+            </Link>
+            <Link href="/admin/lists?trash=true" className={tabClass(isTrashView)}>
+              زباله‌دان
+            </Link>
+          </div>
 
+          {!isTrashView && (
+            <>
+              <Link
+                href="/admin/custom/featured"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-amber-200 text-amber-800 bg-amber-50/80 hover:bg-amber-100 transition-colors"
+                title="مدیریت اسلات Featured"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden md:inline">اسلات Featured</span>
+              </Link>
+              <Link
+                href="/admin/lists/new"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: 'var(--primary)' }}
+              >
+                <Plus className="w-4 h-4" />
+                جدید
+              </Link>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* KPI — قابل جمع‌شدن */}
       {!isTrashView && (
-        <section>
-          <ListPulseSummary pulse={data.pulse} />
+        <section className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setKpiCollapsed((c) => !c)}
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 hover:bg-[var(--color-bg)]/50 transition-colors"
+          >
+            <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text)]">
+              <BarChart3 className="w-4 h-4 text-[var(--primary)]" />
+              خلاصه KPI
+              {kpiCollapsed && (
+                <span className="text-xs font-normal text-[var(--color-text-muted)] tabular-nums">
+                  · {data.pulse.totalLists.toLocaleString('fa-IR')} کل
+                  {data.pulse.lowEngagementLists > 0 && ` · ${data.pulse.lowEngagementLists.toLocaleString('fa-IR')} کم‌تعامل`}
+                </span>
+              )}
+            </span>
+            {kpiCollapsed ? (
+              <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
+            ) : (
+              <ChevronUp className="w-4 h-4 text-[var(--color-text-muted)]" />
+            )}
+          </button>
+          {!kpiCollapsed && (
+            <div className="px-3 pb-3 border-t border-[var(--color-border-muted)] pt-2">
+              <ListPulseSummary
+                pulse={data.pulse}
+                activeFilter={filter}
+                onFilterClick={(f) => setFilter(f)}
+              />
+            </div>
+          )}
         </section>
       )}
-      {isTrashView && data.lists.length > 0 && (
-        <p className="text-sm text-[var(--color-text-muted)]">
-          {data.lists.length} لیست در زباله‌دان. می‌توانید بازگردانی کنید.
+
+      {isTrashView && lists.length > 0 && (
+        <p className="text-sm text-[var(--color-text-muted)] px-1">
+          {lists.length.toLocaleString('fa-IR')} لیست — قابل بازگردانی
         </p>
       )}
 
-      <section>
-        <ListSmartFilterBar
-          value={filter}
-          onChange={setFilter}
-          sortBy={sortBy}
-          onSortChange={(v) => setSortBy(v as SortKey)}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
-      </section>
+      {/* فیلتر sticky — هنگام اسکرول ثابت می‌ماند */}
+      <div className="sticky top-0 z-30 -mx-1 px-1 py-2 bg-[var(--color-bg)]/90 backdrop-blur-md border-b border-[var(--color-border-muted)] shadow-sm rounded-xl">
+        <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] px-3 py-2.5 shadow-sm">
+          <ListSmartFilterBar {...filterBarProps} />
+        </div>
+      </div>
 
-      {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {sorted.map((row) => (
-            <ListIntelligenceCard
-              key={row.id}
-              row={row}
+      {/* نتایج */}
+      <div className="space-y-3">
+      {sorted.length > 0 && (
+        <>
+          {data.pagination.totalPages > 1 && (
+            <p className="text-xs text-[var(--color-text-muted)] px-0.5 tabular-nums">
+              صفحه {data.pagination.currentPage.toLocaleString('fa-IR')} از{' '}
+              {data.pagination.totalPages.toLocaleString('fa-IR')}
+              {hasActiveFilters && ` · ${sorted.length.toLocaleString('fa-IR')} نتیجه در این صفحه`}
+            </p>
+          )}
+
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {sorted.map((row) => (
+                <ListIntelligenceCard
+                  key={row.id}
+                  row={row}
+                  isTrashView={isTrashView}
+                  onFeatureToggle={isTrashView ? undefined : handleFeatureToggle}
+                  onDisableToggle={isTrashView ? undefined : handleDisableToggle}
+                  onMoveToTrash={isTrashView ? undefined : () => setMoveToTrashRow(row)}
+                  onRestore={isTrashView ? handleRestore : undefined}
+                />
+              ))}
+            </div>
+          ) : (
+            <ListIntelligenceTable
+              rows={sorted}
               isTrashView={isTrashView}
               onFeatureToggle={isTrashView ? undefined : handleFeatureToggle}
               onDisableToggle={isTrashView ? undefined : handleDisableToggle}
-              onMoveToTrash={isTrashView ? undefined : () => setMoveToTrashRow(row)}
+              onMoveToTrash={isTrashView ? undefined : (row) => setMoveToTrashRow(row)}
               onRestore={isTrashView ? handleRestore : undefined}
             />
-          ))}
-        </div>
-      ) : (
-        <ListIntelligenceTable
-          rows={sorted}
-          isTrashView={isTrashView}
-          onFeatureToggle={isTrashView ? undefined : handleFeatureToggle}
-          onDisableToggle={isTrashView ? undefined : handleDisableToggle}
-          onMoveToTrash={isTrashView ? undefined : (row) => setMoveToTrashRow(row)}
-          onRestore={isTrashView ? handleRestore : undefined}
+          )}
+        </>
+      )}
+
+      {data.pagination.totalPages > 1 && sorted.length > 0 && (
+        <Pagination
+          currentPage={data.pagination.currentPage}
+          totalPages={data.pagination.totalPages}
+          basePath="/admin/lists"
+          searchParams={{
+            ...(isTrashView ? { trash: 'true' } : {}),
+            ...(categoryId !== 'all' && activeCategory ? { category: activeCategory.slug } : {}),
+          }}
         />
       )}
+      </div>
 
       <MoveToTrashModal
         row={moveToTrashRow}
@@ -219,12 +422,33 @@ export default function ListsIntelligenceClient({
         onConfirm={handleMoveToTrash}
       />
 
-      {sorted.length === 0 && (
-        <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border-muted)] py-12 text-center text-[var(--color-text-muted)]">
-          {filter === 'all'
-            ? 'لیستی یافت نشد.'
-            : 'با این فیلتر لیستی یافت نشد.'}
+      {showEmpty && (
+        <div className="rounded-xl border border-dashed border-[var(--color-border)] py-10 text-center">
+          <p className="text-[var(--color-text-muted)] text-sm mb-3">
+            {search.trim()
+              ? 'نتیجه‌ای یافت نشد.'
+              : categoryId !== 'all'
+                ? 'در این دسته لیستی با این فیلتر نیست.'
+                : 'با این فیلتر لیستی نیست.'}
+          </p>
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="text-sm text-[var(--primary)] hover:underline"
+          >
+            پاک کردن فیلترها
+          </button>
         </div>
+      )}
+
+      {sorted.length === 0 && !showEmpty && filter === 'all' && categoryId === 'all' && !search.trim() && (
+        <div className="rounded-xl border border-dashed border-[var(--color-border)] py-10 text-center text-sm text-[var(--color-text-muted)]">
+          لیستی یافت نشد.
+        </div>
+      )}
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} duration={3500} />
       )}
     </div>
   );

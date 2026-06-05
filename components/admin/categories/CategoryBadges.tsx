@@ -16,10 +16,26 @@ export default function CategoryBadges({
   isDeclining,
 }: CategoryBadgesProps) {
   const badges: { label: string; show: boolean; className: string }[] = [
-    { label: '🔥 Fast Rising', show: isFastRising, className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' },
-    { label: '⚠️ Low Engagement', show: isLowEngagement, className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200' },
-    { label: '💰 Monetizable', show: isMonetizable, className: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200' },
-    { label: '↓ Declining', show: isDeclining, className: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200' },
+    {
+      label: '🔥 رشد سریع',
+      show: isFastRising,
+      className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+    },
+    {
+      label: '⚠️ تعامل پایین',
+      show: isLowEngagement,
+      className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+    },
+    {
+      label: '💰 قابل درآمد',
+      show: isMonetizable,
+      className: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200',
+    },
+    {
+      label: '↓ در حال افت',
+      show: isDeclining,
+      className: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200',
+    },
   ];
 
   const visible = badges.filter((b) => b.show);

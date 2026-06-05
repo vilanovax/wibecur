@@ -1,12 +1,20 @@
 'use client';
 
-import { ArrowUp, ArrowDown, Minus, Flame, TrendingUp, Brain, AlertTriangle } from 'lucide-react';
+import {
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  Flame,
+  TrendingUp,
+  ListChecks,
+  AlertTriangle,
+} from 'lucide-react';
 import type { SystemPulseCard as SystemPulseCardType } from '@/lib/admin/types';
 
 const icons: Record<SystemPulseCardType['id'], typeof Flame> = {
   save_velocity: Flame,
   trending_momentum: TrendingUp,
-  active_lists_ratio: Brain,
+  active_lists_ratio: ListChecks,
   risk_alerts: AlertTriangle,
 };
 
@@ -59,11 +67,13 @@ export default function SystemPulseBar({ cards }: SystemPulseBarProps) {
                 {card.trend === 'up' && <ArrowUp className="w-3 h-3" />}
                 {card.trend === 'down' && <ArrowDown className="w-3 h-3" />}
                 {card.trend === 'neutral' && <Minus className="w-3 h-3" />}
-                {card.deltaPercent !== 0 && (
+                {card.deltaPercent !== 0 ? (
                   <span>
                     {card.deltaPercent > 0 ? '+' : ''}
                     {card.deltaPercent.toLocaleString('fa-IR')}٪
                   </span>
+                ) : card.trend === 'neutral' ? null : (
+                  <span>۰٪</span>
                 )}
               </span>
             </div>

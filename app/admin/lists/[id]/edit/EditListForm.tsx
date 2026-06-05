@@ -1,11 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronDown, ChevronUp, ExternalLink, Bug, Trash2 } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import ImageUpload from '@/components/admin/upload/ImageUpload';
 import type { ListTrendingDebugData } from '@/lib/admin/trending-debug';
+import ListFormIdentity from '@/components/admin/lists/ListFormIdentity';
+import ListFormStickyPreview from '@/components/admin/lists/ListFormStickyPreview';
+import ListEditFormBar from '@/components/admin/lists/ListEditFormBar';
+import ListEditHeaderActions from '@/components/admin/lists/ListEditHeaderActions';
+import ListEditIntelligenceBar from '@/components/admin/lists/ListEditIntelligenceBar';
+import ListEditItemsPanel from '@/components/admin/lists/ListEditItemsPanel';
+import ListEditStatusToggles from '@/components/admin/lists/ListEditStatusToggles';
+import ListEditFormStepper, { type ListEditFormStep } from '@/components/admin/lists/ListEditFormStepper';
+import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
+import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import { slugFromTitle, normalizeListSlug, isValidListSlug } from '@/lib/admin/list-slug';
+import { useListSlugCheck } from '@/hooks/useListSlugCheck';
+import Toast, { type ToastType } from '@/components/shared/Toast';
 
 type ListEdit = {
   id: string;
@@ -18,6 +31,7 @@ type ListEdit = {
   isPublic: boolean;
   isFeatured: boolean;
   isActive: boolean;
+  commentsEnabled: boolean;
   saveCount: number;
   viewCount: number;
   itemCount: number;
@@ -27,45 +41,176 @@ type ListEdit = {
 };
 type Category = { id: string; name: string; slug: string; icon: string; color: string };
 
+type FormState = {
+  title: string;
+  slug: string;
+  description: string;
+  coverImage: string;
+  categoryId: string;
+  badge: string;
+  isPublic: boolean;
+  isFeatured: boolean;
+  isActive: boolean;
+  commentsEnabled: boolean;
+};
+
+function buildInitialForm(list: ListEdit): FormState {
+  return {
+    title: list.title,
+    slug: list.slug,
+    description: list.description || '',
+    coverImage: list.coverImage || '',
+    categoryId: list.categoryId || '',
+    badge: list.badge || '',
+    isPublic: list.isPublic,
+    isFeatured: list.isFeatured,
+    isActive: list.isActive,
+    commentsEnabled: list.commentsEnabled ?? true,
+  };
+}
+
 interface EditListFormProps {
   list: ListEdit;
   categories: Category[];
   intelligence: (ListTrendingDebugData & { list?: { createdAt?: string } }) | null;
 }
 
-const STATUS_BADGE = {
-  rising: { label: 'صعودی', className: 'bg-emerald-100 text-emerald-800' },
-  stable: { label: 'ثابت', className: 'bg-amber-100 text-amber-800' },
-  declining: { label: 'نزولی', className: 'bg-red-100 text-red-800' },
-};
+const sectionCard =
+  'rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden';
 
 export default function EditListForm({ list, categories, intelligence }: EditListFormProps) {
   const router = useRouter();
+  const initialForm = useMemo(() => buildInitialForm(list), [list]);
+  const [formData, setFormData] = useState<FormState>(initialForm);
+  const [baseline, setBaseline] = useState<FormState>(initialForm);
+  const [slugAutoMode, setSlugAutoMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [dangerOpen, setDangerOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState('');
-  const [formData, setFormData] = useState({
-    title: list.title,
-    slug: list.slug,
-    description: list.description || '',
-    coverImage: list.coverImage || '',
-    categoryId: list.categoryId,
-    badge: list.badge || '',
-    isPublic: list.isPublic,
-    isFeatured: list.isFeatured,
-    isActive: list.isActive,
-  });
-  const [items, setItems] = useState(list.items.map((i) => ({ ...i })));
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [step, setStep] = useState<ListEditFormStep>(1);
 
-  const raw = intelligence?.rawMetrics;
-  const itemCount = items.length;
-  const avgSavesPerItem = itemCount > 0 ? (list.saveCount / itemCount).toFixed(1) : '۰';
+  const slugChanged = formData.slug !== list.slug;
+  const slugValid = useMemo(() => isValidListSlug(formData.slug), [formData.slug]);
+  const { state: slugCheck, isSlugBlocked } = useListSlugCheck(formData.slug, {
+    excludeId: list.id,
+    enabled: slugValid && slugChanged,
+  });
+
+  const slugReady =
+    slugValid &&
+    (!slugChanged || slugCheck.status === 'available') &&
+    !(slugChanged && slugCheck.status === 'checking');
+
+  const dirty = useMemo(
+    () => JSON.stringify(formData) !== JSON.stringify(baseline),
+    [formData, baseline]
+  );
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty]);
+
+  const selectedCategory = categories.find((c) => c.id === formData.categoryId) || list.categories;
   const owner = list.users;
   const ownerLink = owner?.username ? `/u/${owner.username}` : null;
+  const ownerName = owner?.name || owner?.email || '—';
+
+  const raw = intelligence?.rawMetrics;
+  const itemCount = list.items.length;
+  const avgSavesPerItem = itemCount > 0 ? (list.saveCount / itemCount).toFixed(1) : '۰';
+
+  const previewValues = {
+    title: formData.title,
+    slug: formData.slug,
+    description: formData.description,
+    coverImage: formData.coverImage,
+    categoryName: selectedCategory?.name ?? '—',
+    categoryIcon: selectedCategory?.icon ?? '📋',
+    categoryColor: selectedCategory?.color ?? '#6366F1',
+    isPublic: formData.isPublic,
+    isFeatured: formData.isFeatured,
+    isActive: formData.isActive,
+    badge: formData.badge,
+    itemCount,
+  };
+
+  const step1Valid =
+    formData.title.trim().length > 0 &&
+    slugValid &&
+    !!formData.categoryId &&
+    (!slugChanged || slugCheck.status === 'available');
+
+  const completedThrough: ListEditFormStep =
+    step >= 3 ? 3 : step >= 2 && step1Valid ? 2 : step1Valid ? 1 : 1;
+
+  const trashRow: ListIntelligenceRow = useMemo(
+    () => ({
+      id: list.id,
+      title: formData.title,
+      slug: formData.slug,
+      description: formData.description || null,
+      coverImage: formData.coverImage || null,
+      categoryId: formData.categoryId,
+      categoryName: selectedCategory?.name ?? '—',
+      categoryIcon: selectedCategory?.icon ?? '📋',
+      isFeatured: formData.isFeatured,
+      isActive: formData.isActive,
+      saveCount: list.saveCount,
+      viewCount: list.viewCount,
+      likeCount: 0,
+      itemCount,
+      createdAt: new Date().toISOString(),
+      rank: intelligence?.currentRank ?? 0,
+      trendingScore: intelligence?.scoreBreakdown?.finalScore ?? 0,
+      saves24h: raw?.saves24h ?? 0,
+      saves7d: 0,
+      growth7dRecent: 0,
+      growth7dPrevious: 0,
+      status: intelligence?.status ?? 'stable',
+      engagementRatio: raw?.engagementRatio ?? 0,
+      riskLevel: 'none',
+      growth7dPercent: 0,
+      needsReview: false,
+      lowEngagement: false,
+      ownerId: owner?.id ?? '',
+      ownerName,
+      ownerUsername: owner?.username ?? null,
+    }),
+    [formData, list, selectedCategory, intelligence, raw, itemCount, owner, ownerName]
+  );
+
+  const handleTitleChange = useCallback(
+    (title: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        title,
+        slug: slugAutoMode ? slugFromTitle(title) : prev.slug,
+      }));
+    },
+    [slugAutoMode]
+  );
+
+  const handleSlugChange = useCallback((slug: string) => {
+    setSlugAutoMode(false);
+    setFormData((prev) => ({ ...prev, slug: normalizeListSlug(slug) }));
+  }, []);
+
+  const handleApplySuggestion = useCallback((slug: string) => {
+    setSlugAutoMode(false);
+    setFormData((prev) => ({ ...prev, slug }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!slugReady || !formData.categoryId) return;
     setLoading(true);
     setError('');
     try {
@@ -78,403 +223,235 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
         const data = await res.json();
         throw new Error(data.error || 'خطا در ویرایش لیست');
       }
-      router.back();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (deleteConfirm !== 'حذف') return;
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`/api/admin/lists/${list.id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'خطا در حذف لیست');
-      }
-      router.push('/admin/lists');
+      setToast({ message: 'تغییرات ذخیره شد', type: 'success' });
+      setBaseline({ ...formData });
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'خطا در ذخیره';
+      setError(msg);
+      setToast({ message: msg, type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMoveItem = async (index: number, direction: 'up' | 'down') => {
-    const newItems = [...items];
-    const target = direction === 'up' ? index - 1 : index + 1;
-    if (target < 0 || target >= newItems.length) return;
-    [newItems[index], newItems[target]] = [newItems[target], newItems[index]];
-    setItems(newItems);
-    const updates = newItems.map((item, i) =>
-      fetch(`/api/admin/items/${item.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: i }),
-      })
-    );
-    await Promise.all(updates);
+  const handleMoveToTrash = async (id: string, reason?: string) => {
+    const res = await fetch(`/api/admin/lists/${id}/trash`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason || null }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'خطا');
+    setToast({ message: 'لیست به زباله‌دان منتقل شد', type: 'success' });
+    router.push('/admin/lists');
+    router.refresh();
   };
-
-  const handleRemoveItem = async (itemId: string) => {
-    if (!confirm('این آیتم حذف شود؟')) return;
-    try {
-      const res = await fetch(`/api/admin/items/${itemId}`, { method: 'DELETE' });
-      if (res.ok) setItems((prev) => prev.filter((i) => i.id !== itemId));
-    } catch (_) {}
-  };
-
-  const duplicateTitles = items
-    .map((i) => i.title?.trim().toLowerCase())
-    .filter((t, i, arr) => t && arr.indexOf(t) !== i);
-  const hasDuplicate = duplicateTitles.length > 0;
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
-        <Link href="/admin/lists" className="hover:text-[var(--primary)]">لیست‌ها</Link>
-        <span>/</span>
-        <span className="text-[var(--color-text)]">ویرایش</span>
-      </div>
-
-      {/* SECTION 1 — Intelligence Header Bar */}
-      <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
-        <div className="flex flex-wrap items-center gap-4 gap-y-3">
-          <span className="text-sm text-[var(--color-text-muted)]">
-            رتبه: <strong className="text-[var(--color-text)]">{intelligence?.currentRank != null ? `#${intelligence.currentRank}` : '—'}</strong>
-          </span>
-          <span className="text-sm text-[var(--color-text-muted)]">
-            امتیاز ترند: <strong className="text-[var(--primary)]">{intelligence?.scoreBreakdown?.finalScore ?? '—'}</strong>
-          </span>
-          <span className="text-sm text-[var(--color-text-muted)]">
-            ۲۴h: <strong className="text-emerald-600">+{raw?.saves24h ?? 0}</strong>
-          </span>
-          <span className="text-sm text-[var(--color-text-muted)]">
-            ذخیره کل: <strong className="text-[var(--color-text)]">{list.saveCount.toLocaleString('fa-IR')}</strong>
-          </span>
-          <span className="text-sm text-[var(--color-text-muted)]">
-            مالک:{' '}
-            {ownerLink ? (
-              <Link href={ownerLink} className="font-medium text-[var(--primary)] hover:underline">
-                {owner?.name || owner?.email || '—'}
-              </Link>
-            ) : (
-              <span className="text-[var(--color-text)]">{owner?.name || owner?.email || '—'}</span>
-            )}
-          </span>
-          {intelligence?.status && (
-            <span className={`text-xs px-2 py-1 rounded-lg font-medium ${STATUS_BADGE[intelligence.status]?.className ?? 'bg-gray-100'}`}>
-              {STATUS_BADGE[intelligence.status]?.label ?? intelligence.status}
-            </span>
-          )}
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+    <div className="space-y-4 pb-4" dir="rtl">
+      {/* هدر */}
+      <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
           <Link
-            href={`/admin/lists/${list.id}/debug`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20"
+            href="/admin/lists"
+            className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)] mb-2"
           >
-            <Bug className="w-4 h-4" />
-            دیباگ ترند
+            <ChevronRight className="w-3.5 h-3.5" />
+            بازگشت به لیست‌ها
           </Link>
-          <a
-            href={`/lists/${list.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-border)]"
-          >
-            <ExternalLink className="w-4 h-4" />
-            صفحه عمومی
-          </a>
+          <h1 className="text-xl font-bold text-[var(--color-text)]">ویرایش لیست</h1>
+          <p className="text-sm text-[var(--color-text-muted)] truncate mt-0.5">{list.title}</p>
         </div>
-      </div>
+        <ListEditHeaderActions
+          listId={list.id}
+          listSlug={formData.slug}
+          isFeatured={formData.isFeatured}
+          categoryId={formData.categoryId}
+          onFeaturedChange={(v) => setFormData((p) => ({ ...p, isFeatured: v }))}
+        />
+      </header>
+
+      <ListEditIntelligenceBar
+        intelligence={intelligence}
+        saveCount={list.saveCount}
+        itemCount={itemCount}
+        avgSavesPerItem={avgSavesPerItem}
+        ownerName={ownerName}
+        ownerLink={ownerLink}
+      />
 
       {error && (
-        <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
-          {error}
-        </div>
+        <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{error}</div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main column: Basic Info + Visibility + Image + Danger */}
-        <div className="lg:col-span-2 space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* SECTION 2 — Basic Info */}
-            <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
-              <h2 className="text-base font-semibold text-[var(--color-text)] mb-4">اطلاعات پایه</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1">عنوان لیست *</label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--primary)]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1">Slug *</label>
-                  <input
-                    type="text"
-                    name="slug"
-                    value={formData.slug}
-                    onChange={(e) => setFormData((p) => ({ ...p, slug: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--primary)]"
-                  />
-                  <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">حروف کوچک، اعداد و خط تیره</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1">دسته‌بندی *</label>
-                  <select
-                    name="categoryId"
-                    value={formData.categoryId || ''}
-                    onChange={(e) => setFormData((p) => ({ ...p, categoryId: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
-                  >
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1">توضیحات</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--primary)]"
-                    placeholder="توضیحات لیست..."
-                  />
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">
+        <form id="list-edit-form" onSubmit={handleSubmit} className="space-y-4 min-w-0">
+          <ListEditFormStepper
+            current={step}
+            completedThrough={completedThrough}
+            onStepClick={(s) => {
+              if (s === 1) setStep(1);
+              if (s === 2 && step1Valid) setStep(2);
+              if (s === 3 && step1Valid) setStep(3);
+            }}
+          />
+
+          {/* پیش‌نمایش موبایل */}
+          <div className="lg:hidden">
+            <ListFormStickyPreview values={previewValues} step={step} />
+          </div>
+
+          {slugChanged && step === 1 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-2 text-sm text-amber-900">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <p>
+                با تغییر slug، لینک{' '}
+                <span className="font-mono text-xs" dir="ltr">
+                  /lists/{list.slug}
+                </span>{' '}
+                دیگر کار نمی‌کند.
+              </p>
+            </div>
+          )}
+
+          {step === 1 && (
+            <section className={sectionCard}>
+              <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
+                <h2 className="text-sm font-semibold text-[var(--color-text)]">اطلاعات پایه</h2>
               </div>
-            </div>
-
-            {/* SECTION 3 — Visibility & Status */}
-            <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
-              <h2 className="text-base font-semibold text-[var(--color-text)] mb-4">نمایش و وضعیت</h2>
-              <div className="flex flex-wrap gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isPublic}
-                    onChange={(e) => setFormData((p) => ({ ...p, isPublic: e.target.checked }))}
-                    className="rounded border-[var(--color-border)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
-                  <span className="text-sm text-[var(--color-text)]">عمومی</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isFeatured}
-                    onChange={(e) => setFormData((p) => ({ ...p, isFeatured: e.target.checked }))}
-                    className="rounded border-[var(--color-border)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
-                  <span className="text-sm text-[var(--color-text)]">ویژه (صفحه اصلی)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData((p) => ({ ...p, isActive: e.target.checked }))}
-                    className="rounded border-[var(--color-border)] text-[var(--primary)] focus:ring-[var(--primary)]"
-                  />
-                  <span className="text-sm text-[var(--color-text)]">فعال</span>
-                </label>
+              <div className="p-4">
+                <ListFormIdentity
+                  values={{
+                    title: formData.title,
+                    slug: formData.slug,
+                    description: formData.description,
+                    categoryId: formData.categoryId,
+                  }}
+                  categories={categories}
+                  onChange={(patch) => setFormData((p) => ({ ...p, ...patch }))}
+                  onTitleChange={handleTitleChange}
+                  onSlugChange={handleSlugChange}
+                  slugAutoMode={slugAutoMode}
+                  onResetSlugAuto={() => setSlugAutoMode((m) => !m)}
+                  slugCheck={slugChanged ? slugCheck : { status: 'available', slug: formData.slug }}
+                  onApplySlugSuggestion={handleApplySuggestion}
+                />
               </div>
-            </div>
+            </section>
+          )}
 
-            {/* Badge + Cover (compact) */}
-            <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1">نشان</label>
-                  <select
-                    name="badge"
-                    value={formData.badge}
-                    onChange={(e) => setFormData((p) => ({ ...p, badge: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
-                  >
-                    <option value="">بدون نشان</option>
-                    <option value="TRENDING">Trending</option>
-                    <option value="NEW">New</option>
-                    <option value="FEATURED">Featured</option>
-                  </select>
+          {step === 2 && (
+            <>
+              <section className={sectionCard}>
+                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
+                  <h2 className="text-sm font-semibold text-[var(--color-text)]">نمایش و وضعیت</h2>
+                  <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">انتشار، Featured و تعامل</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-1">تصویر کاور</label>
-                  <ImageUpload
-                    value={formData.coverImage}
-                    onChange={(url) => setFormData((p) => ({ ...p, coverImage: url }))}
-                    label=""
+                <div className="p-4">
+                  <ListEditStatusToggles
+                    values={{
+                      isPublic: formData.isPublic,
+                      isFeatured: formData.isFeatured,
+                      isActive: formData.isActive,
+                      commentsEnabled: formData.commentsEnabled,
+                    }}
+                    onChange={(key, value) => setFormData((p) => ({ ...p, [key]: value }))}
                   />
                 </div>
-              </div>
-            </div>
+              </section>
 
-            {/* Submit */}
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2.5 rounded-2xl font-medium text-white disabled:opacity-50"
-                style={{ backgroundColor: 'var(--primary)' }}
-              >
-                {loading ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
-              </button>
-              <Link
-                href="/admin/lists"
-                className="px-6 py-2.5 rounded-2xl font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg)]"
-              >
-                انصراف
-              </Link>
-            </div>
-          </form>
+              <section className={sectionCard}>
+                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
+                  <h2 className="text-sm font-semibold text-[var(--color-text)]">ظاهر</h2>
+                </div>
+                <div className="p-4 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4 items-start">
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">نشان</label>
+                    <select
+                      value={formData.badge}
+                      onChange={(e) => setFormData((p) => ({ ...p, badge: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm"
+                    >
+                      <option value="">بدون نشان</option>
+                      <option value="TRENDING">Trending</option>
+                      <option value="NEW">New</option>
+                      <option value="FEATURED">Featured</option>
+                    </select>
+                  </div>
+                  <div>
+                    <ImageUpload
+                      value={formData.coverImage}
+                      onChange={(url) => setFormData((p) => ({ ...p, coverImage: url }))}
+                      label="تصویر کاور"
+                      compact
+                    />
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
 
-          {/* SECTION 6 — Danger Zone */}
-          <div className="rounded-2xl border border-red-200 bg-red-50/50 overflow-hidden">
+          {step === 3 && <ListEditItemsPanel listId={list.id} initialItems={list.items} />}
+
+          <ListEditFormBar
+            loading={loading}
+            canSave={slugReady && !isSlugBlocked}
+            listSlug={formData.slug}
+            dirty={dirty}
+            step={step}
+            canNextStep={step === 1 ? step1Valid : true}
+            onPrevStep={() => setStep((s) => (s > 1 ? ((s - 1) as ListEditFormStep) : s))}
+            onNextStep={() => {
+              if (step === 1 && !step1Valid) return;
+              if (step < 3) setStep((s) => (s + 1) as ListEditFormStep);
+            }}
+          />
+        </form>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-20">
+            <ListFormStickyPreview values={previewValues} step={step} />
+          </div>
+        </aside>
+      </div>
+
+      <div className="rounded-xl border border-red-200 bg-red-50/50 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setDangerOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-4 py-3 text-right text-red-800 font-medium text-sm"
+        >
+          <span>منطقه خطر</span>
+          {dangerOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        {dangerOpen && (
+          <div className="px-4 pb-4 pt-0 border-t border-red-200">
+            <p className="text-sm text-red-700 mb-3 mt-3">
+              انتقال به زباله‌دان — <strong>{list.saveCount.toLocaleString('fa-IR')} ذخیره</strong> و آیتم‌ها موقتاً
+              مخفی می‌شوند.
+            </p>
             <button
               type="button"
-              onClick={() => setDangerOpen((o) => !o)}
-              className="w-full flex items-center justify-between px-6 py-4 text-right text-red-800 font-medium"
+              onClick={() => setTrashOpen(true)}
+              className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700"
             >
-              <span>منطقه خطر</span>
-              {dangerOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              انتقال به زباله‌دان
             </button>
-            {dangerOpen && (
-              <div className="px-6 pb-6 pt-0 border-t border-red-200">
-                <p className="text-sm text-red-700 mb-2">
-                  با حذف این لیست، <strong>{list.saveCount.toLocaleString('fa-IR')} ذخیره</strong> و تمام آیتم‌ها حذف می‌شوند. این عمل قابل برگشت نیست.
-                </p>
-                <input
-                  type="text"
-                  value={deleteConfirm}
-                  onChange={(e) => setDeleteConfirm(e.target.value)}
-                  placeholder="برای تأیید بنویسید: حذف"
-                  className="w-full max-w-xs px-3 py-2 rounded-xl border border-red-300 mb-3"
-                />
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={loading || deleteConfirm !== 'حذف'}
-                  className="px-4 py-2 rounded-xl bg-red-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  حذف لیست
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-
-        {/* Sidebar: Performance Snapshot + Items Panel */}
-        <div className="space-y-6">
-          {/* SECTION 4 — Performance Snapshot */}
-          <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
-            <h2 className="text-sm font-semibold text-[var(--color-text)] mb-3">خلاصه عملکرد</h2>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-[var(--color-text-muted)]">تعداد آیتم</dt>
-                <dd className="font-medium tabular-nums">{itemCount}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-[var(--color-text-muted)]">میانگین ذخیره به آیتم</dt>
-                <dd className="font-medium tabular-nums">{avgSavesPerItem}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-[var(--color-text-muted)]">نسبت درگیری (٪)</dt>
-                <dd className="font-medium tabular-nums">{raw?.engagementRatio ?? '—'}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-[var(--color-text-muted)]">سن (روز)</dt>
-                <dd className="font-medium tabular-nums">{raw?.ageDays ?? '—'}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-[var(--color-text-muted)]">کاهش (Decay)</dt>
-                <dd className="font-medium tabular-nums text-red-600">-{intelligence?.scoreBreakdown?.decay ?? '—'}</dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* SECTION 5 — Items Panel */}
-          <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)]">
-            <div className="px-4 py-3 border-b border-[var(--color-border-muted)] flex items-center justify-between sticky top-0 bg-[var(--color-surface)] z-10">
-              <h2 className="text-base font-semibold text-[var(--color-text)]">
-                آیتم‌ها <span className="text-[var(--color-text-muted)] font-normal">({items.length})</span>
-              </h2>
-              <Link
-                href={`/admin/items?listId=${list.id}`}
-                className="text-sm font-medium text-[var(--primary)] hover:underline"
-              >
-                مدیریت آیتم‌ها
-              </Link>
-            </div>
-            {hasDuplicate && (
-              <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs">
-                عنوان تکراری وجود دارد؛ بررسی کنید.
-              </div>
-            )}
-            <div className="p-4 space-y-2 max-h-[400px] overflow-y-auto">
-              {items.length === 0 ? (
-                <p className="text-sm text-[var(--color-text-muted)]">هنوز آیتمی اضافه نشده است.</p>
-              ) : (
-                items.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-2 p-3 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border-muted)]"
-                  >
-                    <span className="text-xs text-[var(--color-text-muted)] w-6 tabular-nums">{index + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[var(--color-text)] truncate">{item.title}</p>
-                      {item.description && (
-                        <p className="text-xs text-[var(--color-text-muted)] line-clamp-1">{item.description}</p>
-                      )}
-                    </div>
-                    <span className="text-xs text-[var(--color-text-muted)]">
-                      ذخیره کل لیست: {list.saveCount.toLocaleString('fa-IR')}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleMoveItem(index, 'up')}
-                        disabled={index === 0}
-                        className="p-1.5 rounded-lg hover:bg-[var(--color-border)] disabled:opacity-40"
-                      >
-                        <ChevronUp className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMoveItem(index, 'down')}
-                        disabled={index === items.length - 1}
-                        className="p-1.5 rounded-lg hover:bg-[var(--color-border)] disabled:opacity-40"
-                      >
-                        <ChevronDown className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-100 text-red-600"
-                        title="حذف آیتم"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
+
+      <MoveToTrashModal
+        row={trashOpen ? trashRow : null}
+        open={trashOpen}
+        onClose={() => setTrashOpen(false)}
+        onConfirm={handleMoveToTrash}
+      />
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} duration={3500} />
+      )}
     </div>
   );
 }

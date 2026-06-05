@@ -19,11 +19,15 @@ export default function AdminPermissionGuard({
   const required = pathname ? getPageRequiredPermission(pathname) : null;
 
   useEffect(() => {
-    if (isLoading || !required) return;
+    if (isLoading || !required || pathname === '/admin/access-denied') return;
     if (!can(required)) {
-      router.replace('/admin/access-denied');
+      const qs = new URLSearchParams({
+        from: pathname ?? '',
+        perm: required,
+      });
+      router.replace(`/admin/access-denied?${qs.toString()}`);
     }
-  }, [required, can, isLoading, router]);
+  }, [required, can, isLoading, router, pathname]);
 
   if (isLoading) {
     return (

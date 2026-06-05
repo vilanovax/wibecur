@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { nanoid } from 'nanoid';
+import {
+  normalizeCategoryLayoutType,
+  normalizeOptionalHexColor,
+  normalizeOptionalUrl,
+} from '@/lib/admin/category-form-constants';
+import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
 function normalizeTrendingWeight(value: unknown): number {
@@ -16,7 +22,19 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json();
-    const { name, slug, icon, color, description, order, isActive, trendingWeight } = body;
+    const {
+      name,
+      slug,
+      icon,
+      color,
+      accentColor,
+      description,
+      order,
+      isActive,
+      trendingWeight,
+      heroImage,
+      layoutType,
+    } = body;
 
     // Validate required fields
     if (!name || !slug || !icon) {
@@ -48,14 +66,18 @@ export async function POST(request: NextRequest) {
         slug,
         icon,
         color: color || '#6366F1',
+        accentColor: normalizeOptionalHexColor(accentColor),
         description,
+        heroImage: normalizeOptionalUrl(heroImage),
+        layoutType: normalizeCategoryLayoutType(layoutType),
         order: order || 0,
-        isActive: isActive !== undefined ? isActive : true,
+        isActive: isActive !== undefined ? isActive : false,
         trendingWeight: weight,
         updatedAt: new Date(),
       },
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json(category, { status: 201 });
   } catch (error: any) {
     console.error('Error creating category:', error);
@@ -72,7 +94,7 @@ export async function GET(request: NextRequest) {
     const includeInactive = searchParams.get('includeInactive') === 'true';
     const trash = searchParams.get('trash') === 'true';
 
-    const baseWhere = includeInactive ? {} : { isActive: true };
+    const baseWhere = trash || includeInactive ? {} : { isActive: true };
     const categories = await prisma.categories.findMany({
       where: {
         ...baseWhere,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { revalidateAdminCommentsCache } from '@/lib/admin/admin-cache';
 
 // GET /api/admin/comments - لیست کامنت‌ها
 export async function GET(request: NextRequest) {
@@ -136,10 +137,7 @@ export async function DELETE(request: NextRequest) {
       })
     );
 
-    console.log('Comment soft deleted:', {
-      id: commentId,
-      deletedAt: deletedComment.deletedAt,
-    });
+    revalidateAdminCommentsCache();
 
     return NextResponse.json({
       success: true,

@@ -5,6 +5,10 @@ import { auth } from '@/lib/auth-config';
 import { notFound } from 'next/navigation';
 import { dbQuery } from '@/lib/db';
 import CategoryEditForm from './CategoryEditForm';
+import {
+  computeCategoryListMetrics,
+  getCategorySaveGrowthMap,
+} from '@/lib/admin/category-intelligence';
 
 export default async function EditCategoryPage({
   params,
@@ -20,6 +24,7 @@ export default async function EditCategoryPage({
       where: { id },
       include: {
         lists: {
+          where: { deletedAt: null },
           select: {
             saveCount: true,
             viewCount: true,
@@ -36,20 +41,17 @@ export default async function EditCategoryPage({
     notFound();
   }
 
-  const listCount = category._count.lists;
-  const lists = category.lists;
-  const totalSaves = lists.reduce((s, l) => s + l.saveCount, 0);
-  const totalViews = lists.reduce((s, l) => s + l.viewCount, 0);
-  const engagementRatio =
-    totalViews > 0 ? (totalSaves / totalViews) * 100 : 0;
-  const trendingScoreAvg =
-    listCount > 0 ? Math.round(totalSaves / listCount) : 0;
+  const metrics = computeCategoryListMetrics(category.lists);
+  const growthMap = await getCategorySaveGrowthMap(prisma, [id]);
+  const growth = growthMap.get(id) ?? { percent: 0, recent: 0, previous: 0 };
 
   const analytics = {
-    listCount,
-    saveGrowthPercent: 0,
-    engagementRatio,
-    trendingScoreAvg,
+    listCount: category._count.lists,
+    saveGrowthPercent: growth.percent,
+    saveGrowthRecent: growth.recent,
+    saveGrowthPrevious: growth.previous,
+    engagementRatio: metrics.engagementRatio,
+    avgSavesPerList: Math.round(metrics.avgSavesPerList * 10) / 10,
   };
 
   const session = await auth();
@@ -57,7 +59,7 @@ export default async function EditCategoryPage({
     !!session?.user?.role && hasPermission(session.user.role, 'set_category_weight');
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-5xl">
       <CategoryEditForm
         category={category}
         analytics={analytics}

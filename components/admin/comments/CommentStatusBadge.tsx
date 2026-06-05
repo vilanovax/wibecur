@@ -38,7 +38,7 @@ const STYLES: Record<
     className: 'bg-rose-100 text-rose-700',
   },
   FLAGGED: {
-    label: 'Flagged',
+    label: 'نیاز به بررسی',
     className: 'bg-orange-100 text-orange-700',
   },
 };

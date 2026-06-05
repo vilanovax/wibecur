@@ -1,134 +1,128 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useState, useEffect } from 'react';
+import { Search, RefreshCw } from 'lucide-react';
 import {
-  Filter,
-  CheckCircle,
-  AlertTriangle,
-  Flag,
-  Clock,
-  XCircle,
-  Search,
-  RefreshCw,
-} from 'lucide-react';
+  COMMENT_SORT_OPTIONS,
+  type CommentSortKind,
+} from '@/lib/admin/comments-intelligence';
+import type { CommentFilterKind } from '@/lib/admin/comments-filter-utils';
 
-const FILTERS = [
-  { id: 'all', label: 'همه', icon: Filter },
-  { id: 'pending', label: 'در انتظار بررسی', icon: Clock },
-  { id: 'approved', label: 'تایید شده', icon: CheckCircle },
-  { id: 'flagged', label: 'Flagged', icon: Flag },
-  { id: 'filtered', label: 'کلمات بد', icon: AlertTriangle },
-  { id: 'reported', label: 'ریپورت شده', icon: Flag },
-  { id: 'rejected', label: 'رد شده', icon: XCircle },
-] as const;
+const MORE_FILTERS: { id: CommentFilterKind; label: string }[] = [
+  { id: 'all', label: 'همه' },
+  { id: 'filtered', label: 'کلمات بد' },
+  { id: 'rejected', label: 'رد شده' },
+];
 
 interface CommentsToolbarProps {
   currentFilter: string;
   currentSearch: string;
+  currentSort: CommentSortKind;
   totalCount: number;
   onFilterChange: (filter: string) => void;
-  onSearchSubmit: (search: string) => void;
+  onSortChange: (sort: CommentSortKind) => void;
+  onSearchChange: (search: string) => void;
   onRefresh: () => void;
 }
 
 export default function CommentsToolbar({
   currentFilter,
   currentSearch,
+  currentSort,
   totalCount,
   onFilterChange,
-  onSearchSubmit,
+  onSortChange,
+  onSearchChange,
   onRefresh,
 }: CommentsToolbarProps) {
-  const router = useRouter();
   const [searchInput, setSearchInput] = useState(currentSearch);
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setSearchInput(currentSearch);
+  }, [currentSearch]);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setSearchInput(value);
       if (searchTimeout) clearTimeout(searchTimeout);
-      const t = setTimeout(() => {
-        const params = new URLSearchParams();
-        if (currentFilter !== 'all') params.set('filter', currentFilter);
-        if (value) params.set('search', value);
-        router.push(`/admin/comments?${params.toString()}`);
-      }, 300);
+      const t = setTimeout(() => onSearchChange(value), 400);
       setSearchTimeout(t);
     },
-    [currentFilter, router, searchTimeout]
+    [onSearchChange, searchTimeout]
   );
 
-  const handleFilterChange = (filter: string) => {
-    onFilterChange(filter);
-    const params = new URLSearchParams();
-    if (filter !== 'all') params.set('filter', filter);
-    if (currentSearch) params.set('search', currentSearch);
-    router.push(`/admin/comments?${params.toString()}`);
-  };
+  const isSecondaryFilter = ['all', 'filtered', 'rejected'].includes(currentFilter);
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-4"
-      style={{ direction: 'rtl' }}
+      className="bg-[var(--color-surface)] rounded-2xl shadow-sm border border-[var(--color-border)] p-4 mb-4"
+      dir="rtl"
     >
-      <div className="flex flex-col md:flex-row md:items-center gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
         <form
           className="flex-1 flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            const params = new URLSearchParams();
-            if (currentFilter !== 'all') params.set('filter', currentFilter);
-            if (searchInput) params.set('search', searchInput);
-            router.push(`/admin/comments?${params.toString()}`);
+            onSearchChange(searchInput);
           }}
         >
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
             <input
               type="text"
               value={searchInput}
               onChange={handleSearchChange}
-              placeholder="جستجو در کامنت‌ها..."
-              className="w-full pr-10 pl-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+              placeholder="جستجو در متن کامنت…"
+              className="w-full pr-10 pl-4 py-2 border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent text-sm bg-[var(--color-bg)]"
             />
           </div>
         </form>
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm text-slate-500 whitespace-nowrap">
-            نتیجه: {totalCount.toLocaleString('fa-IR')}
+          <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <span className="whitespace-nowrap">
+              {isSecondaryFilter ? 'فیلتر' : 'فیلتر دیگر'}
+            </span>
+            <select
+              value={isSecondaryFilter ? currentFilter : 'all'}
+              onChange={(e) => onFilterChange(e.target.value)}
+              className="py-2 px-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm"
+            >
+              {MORE_FILTERS.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <span className="whitespace-nowrap">مرتب‌سازی</span>
+            <select
+              value={currentSort}
+              onChange={(e) => onSortChange(e.target.value as CommentSortKind)}
+              className="py-2 px-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm"
+            >
+              {COMMENT_SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="text-sm text-[var(--color-text-muted)] tabular-nums whitespace-nowrap">
+            {totalCount.toLocaleString('fa-IR')} نتیجه
           </span>
           <button
             type="button"
             onClick={() => onRefresh()}
-            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
+            className="p-2 rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
             title="بروزرسانی"
+            aria-label="بروزرسانی"
           >
-            <RefreshCw className="w-4 h-4 text-slate-600" />
+            <RefreshCw className="w-4 h-4 text-[var(--color-text-muted)]" />
           </button>
         </div>
-      </div>
-      <div className="flex gap-2 flex-wrap mt-3">
-        {FILTERS.map((f) => {
-          const Icon = f.icon;
-          const active = currentFilter === f.id;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => handleFilterChange(f.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
-                active
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {f.label}
-            </button>
-          );
-        })}
       </div>
     </div>
   );

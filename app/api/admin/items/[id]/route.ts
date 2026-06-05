@@ -4,6 +4,12 @@ import { requireAdmin } from '@/lib/auth';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import {
+  backfillCatalogForItem,
+  buildCatalogExternalKey,
+  isCatalogInList,
+  syncPlacementsFromCatalog,
+} from '@/lib/catalog-items';
 
 // GET /api/admin/items/[id] - Get single item
 export async function GET(
@@ -99,28 +105,65 @@ export async function PUT(
     }
 
     const finalImageUrl = imageUrl !== undefined ? await ensureImageInLiara(imageUrl, 'items') : undefined;
+    const meta = metadataValidation.data || {};
+    const targetListId = listId !== undefined ? listId : existingItem.listId;
 
-    // Update item
+    let catalogItemId = existingItem.catalogItemId;
+    if (!catalogItemId) {
+      const catalog = await backfillCatalogForItem(prisma, id);
+      catalogItemId = catalog?.id ?? null;
+    }
+
+    if (
+      catalogItemId &&
+      targetListId !== existingItem.listId &&
+      (await isCatalogInList(prisma, catalogItemId, targetListId))
+    ) {
+      return NextResponse.json(
+        { error: 'این آیتم کاتالوگ در لیست مقصد از قبل وجود دارد' },
+        { status: 409 }
+      );
+    }
+
+    if (catalogItemId) {
+      const categorySlug = existingItem.lists.categories.slug;
+      await prisma.catalog_items.update({
+        where: { id: catalogItemId },
+        data: {
+          title: title ?? existingItem.title,
+          description: description !== undefined ? description : existingItem.description,
+          ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
+          externalUrl: externalUrl !== undefined ? externalUrl : existingItem.externalUrl,
+          categorySlug,
+          metadata: meta,
+          externalKey: buildCatalogExternalKey(categorySlug, title ?? existingItem.title, meta),
+          updatedAt: new Date(),
+        },
+      });
+      await syncPlacementsFromCatalog(prisma, catalogItemId);
+    }
+
     const item = await prisma.items.update({
       where: { id },
       data: {
-        title,
-        description,
-        ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
-        externalUrl,
+        ...(catalogItemId
+          ? {}
+          : {
+              title,
+              description,
+              ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
+              externalUrl,
+              metadata: meta,
+            }),
         order,
-        metadata: metadataValidation.data || {},
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
         maxComments: maxComments !== undefined ? maxComments : null,
-        listId: listId !== undefined ? listId : existingItem.listId,
+        listId: targetListId,
         updatedAt: new Date(),
       },
       include: {
-        lists: {
-          include: {
-            categories: true,
-          },
-        },
+        lists: { include: { categories: true } },
+        catalog_items: true,
       },
     });
 

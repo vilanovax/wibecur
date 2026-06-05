@@ -5,6 +5,13 @@ import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import {
+  addCatalogItemToList,
+  backfillCatalogForItem,
+  createCatalogItem,
+  denormalizedItemFieldsFromCatalog,
+  isCatalogInList,
+} from '@/lib/catalog-items';
 
 // POST /api/user/lists/[id]/items - افزودن آیتم به لیست شخصی
 export async function POST(
@@ -132,27 +139,51 @@ export async function POST(
       );
     }
 
-    // Check if item with same title already exists in this list
-    const duplicateItem = await dbQuery(() =>
-      prisma.items.findFirst({
-        where: {
-          listId: listId,
-          title: {
-            equals: itemTitle,
-            mode: 'insensitive', // Case-insensitive comparison
-          },
-        },
-      })
-    );
-
-    if (duplicateItem) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `آیتم با عنوان "${itemTitle}" قبلاً در این لیست وجود دارد`,
-        },
-        { status: 400 }
+    let sourceCatalogId: string | null = null;
+    if (itemId) {
+      const src = await dbQuery(() =>
+        prisma.items.findUnique({
+          where: { id: itemId },
+          select: { catalogItemId: true },
+        })
       );
+      if (src?.catalogItemId) {
+        sourceCatalogId = src.catalogItemId;
+      } else if (itemId) {
+        const catalog = await backfillCatalogForItem(prisma, itemId);
+        sourceCatalogId = catalog?.id ?? null;
+      }
+    }
+
+    if (sourceCatalogId) {
+      const inList = await isCatalogInList(prisma, sourceCatalogId, listId);
+      if (inList) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `«${itemTitle}» قبلاً در این لیست است`,
+          },
+          { status: 400 }
+        );
+      }
+    } else {
+      const duplicateItem = await dbQuery(() =>
+        prisma.items.findFirst({
+          where: {
+            listId: listId,
+            title: { equals: itemTitle, mode: 'insensitive' },
+          },
+        })
+      );
+      if (duplicateItem) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `آیتم با عنوان "${itemTitle}" قبلاً در این لیست وجود دارد`,
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate metadata based on category (only if category exists)
@@ -184,43 +215,59 @@ export async function POST(
     const newOrder = order !== undefined ? order : (maxOrderItem?.order ?? -1) + 1;
 
     const finalImageUrl = itemImageUrl ? await ensureImageInLiara(itemImageUrl, 'items') : null;
+    const categorySlug =
+      list.categories?.slug ??
+      (typeof itemMetadata === 'object' &&
+      itemMetadata &&
+      !Array.isArray(itemMetadata) &&
+      typeof (itemMetadata as Record<string, unknown>).sourceCategorySlug === 'string'
+        ? ((itemMetadata as Record<string, unknown>).sourceCategorySlug as string)
+        : null);
 
-    // Create item
-    const newItem = await dbQuery(() =>
-      prisma.items.create({
-        data: {
-          id: nanoid(),
+    let newItem;
+    if (sourceCatalogId) {
+      newItem = await dbQuery(() =>
+        addCatalogItemToList(prisma, {
+          catalogItemId: sourceCatalogId!,
+          listId,
+          order: newOrder,
+        })
+      );
+    } else {
+      const catalog = await dbQuery(() =>
+        createCatalogItem(prisma, {
           title: itemTitle,
           description: itemDescription,
           imageUrl: finalImageUrl,
           externalUrl: itemExternalUrl,
-          listId: listId,
-          order: newOrder,
+          categorySlug,
           metadata: itemMetadata || {},
-          commentsEnabled: true,
-          updatedAt: new Date(),
-        },
-        include: {
-          lists: {
-            include: {
-              categories: true,
-            },
+        })
+      );
+      const denorm = denormalizedItemFieldsFromCatalog(catalog);
+      newItem = await dbQuery(() =>
+        prisma.items.create({
+          data: {
+            id: nanoid(),
+            ...denorm,
+            listId,
+            catalogItemId: catalog.id,
+            order: newOrder,
+            commentsEnabled: true,
+            updatedAt: new Date(),
           },
-        },
-      })
-    );
-
-    // Update list itemCount
-    await dbQuery(() =>
-      prisma.lists.update({
-        where: { id: listId },
-        data: {
-          itemCount: {
-            increment: 1,
+          include: {
+            lists: { include: { categories: true } },
           },
-        },
-      })
-    );
+        })
+      );
+      await dbQuery(() =>
+        prisma.lists.update({
+          where: { id: listId },
+          data: { itemCount: { increment: 1 } },
+        })
+      );
+    }
 
     return NextResponse.json({
       success: true,

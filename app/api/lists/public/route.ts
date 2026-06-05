@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { tryApiDbFallback } from '@/lib/api-db';
+import { activeCategoryWhere, publicCuratedListWhere } from '@/lib/public-content-filters';
 
 /** GET /api/lists/public — لیست‌های عمومی و فعال */
 export async function GET(request: NextRequest) {
@@ -9,14 +10,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
 
+    if (categoryId) {
+      const cat = await dbQuery(() =>
+        prisma.categories.findFirst({
+          where: { id: categoryId, ...activeCategoryWhere },
+          select: { id: true },
+        })
+      );
+      if (!cat) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+    }
+
     const where = {
-      isActive: true,
-      isPublic: true,
-      users: {
-        role: {
-          not: 'USER' as const,
-        },
-      },
+      ...publicCuratedListWhere,
       ...(categoryId ? { categoryId } : {}),
     };
 

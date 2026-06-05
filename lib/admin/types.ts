@@ -118,6 +118,34 @@ export interface ActivityEvent {
   href?: string;
 }
 
+/** خلاصه آماری کامنت و ریپورت برای داشبورد اصلی */
+export type DashboardRange = 'today' | '7d' | '30d';
+
+export interface ActionQueueItem {
+  id: string;
+  label: string;
+  count: number;
+  href: string;
+  severity: 'high' | 'medium' | 'low';
+}
+
+export interface SuggestionPreview {
+  id: string;
+  title: string;
+  createdAt: Date;
+}
+
+export interface CommentsModerationSnapshot {
+  pending: number;
+  flagged: number;
+  reported: number;
+  filtered: number;
+  approved: number;
+  unresolvedCommentReports: number;
+  unresolvedItemReports: number;
+  totalCommentReports: number;
+}
+
 export interface DashboardData {
   /** Legacy / fallback */
   kpis: KpiItem[];
@@ -137,4 +165,9 @@ export interface DashboardData {
   categoryIntelligence: CategoryIntelligenceCard[];
   curatorIntelligence: CuratorIntelligenceRow[];
   riskAlerts: RiskItem[];
+  commentsModeration: CommentsModerationSnapshot;
+  range: DashboardRange;
+  periodLabel: string;
+  actionQueue: ActionQueueItem[];
+  suggestionPreviews: SuggestionPreview[];
 }

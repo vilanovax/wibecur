@@ -1,11 +1,14 @@
 'use client';
 
+import { Suspense } from 'react';
 import AdminTopBar from './AdminTopBar';
+import DashboardPeriodKpis from './DashboardPeriodKpis';
 import SystemPulseBar from './SystemPulseBar';
+import DashboardActionCenter from './DashboardActionCenter';
 import TrendingRadar from './TrendingRadar';
 import CategoryIntelligenceGrid from './CategoryIntelligenceGrid';
 import CuratorIntelligence from './CuratorIntelligence';
-import RiskModerationPanel from './RiskModerationPanel';
+import SuggestionsQueueWidget from './SuggestionsQueueWidget';
 import ActivityStream from './ActivityStream';
 import type { DashboardData } from '@/lib/admin/types';
 
@@ -15,13 +18,22 @@ interface DashboardContentProps {
 
 export default function DashboardContent({ data }: DashboardContentProps) {
   const {
+    kpis,
+    periodLabel,
+    range,
     systemPulse,
     trendingRadar,
     categoryIntelligence,
     curatorIntelligence,
     riskAlerts,
+    commentsModeration,
     activities,
+    actionQueue,
+    suggestionPreviews,
   } = data;
+
+  const pendingSuggestionCount =
+    actionQueue.find((a) => a.id === 'action-suggestions')?.count ?? 0;
 
   const normalizedActivities = activities.map((a) => ({
     ...a,
@@ -30,38 +42,48 @@ export default function DashboardContent({ data }: DashboardContentProps) {
 
   return (
     <div className="space-y-6">
-      <AdminTopBar />
+      <Suspense
+        fallback={
+          <div className="h-[72px] animate-pulse bg-[var(--color-border-muted)] rounded-2xl" />
+        }
+      >
+        <AdminTopBar initialRange={range} />
+      </Suspense>
 
-      {/* 1. System Pulse Bar */}
+      <DashboardPeriodKpis kpis={kpis} periodLabel={periodLabel} range={range} />
+
       <section>
         <SystemPulseBar cards={systemPulse} />
       </section>
 
-      {/* 2. Trending Radar (Hero – 2x visual weight) */}
+      <DashboardActionCenter
+        actionQueue={actionQueue}
+        comments={commentsModeration}
+        riskAlerts={riskAlerts}
+      />
+
+      {(pendingSuggestionCount > 0 || suggestionPreviews.length > 0) && (
+        <SuggestionsQueueWidget
+          count={pendingSuggestionCount}
+          previews={suggestionPreviews}
+        />
+      )}
+
       <section className="min-h-[320px]">
         <TrendingRadar rows={trendingRadar} />
       </section>
 
-      {/* 3. Category Intelligence – 2 columns desktop */}
       <section>
         <h2 className="text-base font-semibold text-[var(--color-text)] mb-4">
-          هوش دسته‌بندی
+          عملکرد دسته‌ها
         </h2>
         <CategoryIntelligenceGrid categories={categoryIntelligence} />
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 4. Curator Intelligence */}
-        <section className="lg:col-span-2">
-          <CuratorIntelligence curators={curatorIntelligence} />
-        </section>
-        {/* 5. Risk & Moderation */}
-        <section>
-          <RiskModerationPanel items={riskAlerts} />
-        </section>
-      </div>
+      <section>
+        <CuratorIntelligence curators={curatorIntelligence} />
+      </section>
 
-      {/* 6. Activity Stream */}
       <section>
         <ActivityStream events={normalizedActivities} />
       </section>

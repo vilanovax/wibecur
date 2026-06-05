@@ -1,0 +1,116 @@
+import { unstable_cache } from 'next/cache';
+import { prisma } from '@/lib/prisma';
+import { dbQuery } from '@/lib/db';
+import type { CategoryIntelligenceRow } from '@/lib/admin/categories-types';
+import {
+  buildCategoryPulse,
+  getCategorySaveGrowthMap,
+  toCategoryIntelligenceRowFromAggregate,
+  type CategoryAggregateMetrics,
+  type CategoryRowSource,
+} from '@/lib/admin/category-intelligence';
+import {
+  ADMIN_CACHE_TAGS,
+  ADMIN_CATEGORIES_CACHE_SECONDS,
+} from '@/lib/admin/admin-cache';
+
+export type CategoriesIntelligencePayload = {
+  pulse: ReturnType<typeof buildCategoryPulse>;
+  categories: CategoryIntelligenceRow[];
+};
+
+async function fetchCategoriesIntelligenceData(): Promise<CategoriesIntelligencePayload> {
+  const categories = await dbQuery(() =>
+    prisma.categories.findMany({
+      where: { deletedAt: null },
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        icon: true,
+        color: true,
+        description: true,
+        order: true,
+        isActive: true,
+        trendingWeight: true,
+        heroImage: true,
+        layoutType: true,
+        _count: { select: { lists: { where: { deletedAt: null } } } },
+      },
+    })
+  );
+
+  const categoryIds = categories.map((c) => c.id);
+
+  const [growthMap, sumAgg, activeAgg] = await Promise.all([
+    getCategorySaveGrowthMap(prisma, categoryIds),
+    dbQuery(() =>
+      prisma.lists.groupBy({
+        by: ['categoryId'],
+        where: { deletedAt: null, categoryId: { in: categoryIds } },
+        _sum: { saveCount: true, viewCount: true },
+        _count: { _all: true },
+      })
+    ),
+    dbQuery(() =>
+      prisma.lists.groupBy({
+        by: ['categoryId'],
+        where: {
+          deletedAt: null,
+          categoryId: { in: categoryIds },
+          saveCount: { gt: 0 },
+        },
+        _count: { _all: true },
+      })
+    ),
+  ]);
+
+  const sumByCat = new Map(
+    sumAgg.map((g) => [
+      g.categoryId!,
+      {
+        totalSaves: g._sum.saveCount ?? 0,
+        totalViews: g._sum.viewCount ?? 0,
+        listCount: g._count._all,
+      },
+    ])
+  );
+  const activeByCat = new Map(activeAgg.map((g) => [g.categoryId!, g._count._all]));
+
+  const rows: CategoryIntelligenceRow[] = categories.map((cat) => {
+    const sums = sumByCat.get(cat.id);
+    const agg: CategoryAggregateMetrics = {
+      listCount: cat._count.lists,
+      totalSaves: sums?.totalSaves ?? 0,
+      totalViews: sums?.totalViews ?? 0,
+      activeListCount: activeByCat.get(cat.id) ?? 0,
+    };
+    const source: CategoryRowSource = {
+      ...cat,
+      trendingWeight: cat.trendingWeight ?? 1,
+    };
+    return toCategoryIntelligenceRowFromAggregate(
+      source,
+      growthMap.get(cat.id) ?? { percent: 0, recent: 0, previous: 0 },
+      agg
+    );
+  });
+
+  const pulse = buildCategoryPulse(rows, rows.length);
+
+  return { pulse, categories: rows };
+}
+
+const getCachedCategoriesIntelligence = unstable_cache(
+  () => dbQuery(() => fetchCategoriesIntelligenceData()),
+  ['admin-categories-intelligence'],
+  {
+    revalidate: ADMIN_CATEGORIES_CACHE_SECONDS,
+    tags: [ADMIN_CACHE_TAGS.categories],
+  }
+);
+
+export function getCachedCategoriesIntelligenceData(): Promise<CategoriesIntelligencePayload> {
+  return getCachedCategoriesIntelligence();
+}

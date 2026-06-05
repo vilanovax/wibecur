@@ -203,10 +203,9 @@ export default function UserListDetailClient({
               </Link>
             )}
 
-            <div>
-              <h1 className="wibe-h2 text-foreground mb-2">{list.title}</h1>
-              {list.description && <p className="wibe-body text-wibe-secondary leading-relaxed">{list.description}</p>}
-            </div>
+            {list.description && (
+              <p className="wibe-body text-wibe-secondary leading-relaxed">{list.description}</p>
+            )}
 
             {/* intentionally hide counts row (items/saves/views) for cleaner UI */}
 

@@ -3,39 +3,70 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Bell, User, Settings, LogOut, ChevronLeft, Menu, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Search, Bell, User, Settings, LogOut, ChevronLeft, Menu, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { signOut, useSession } from 'next-auth/react';
 import RoleBadge from '@/components/auth/RoleBadge';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
+import { BREADCRUMB_MAP } from '@/lib/admin/breadcrumb-labels';
 
-const BREADCRUMB_MAP: Record<string, string> = {
-  '/admin/dashboard': 'داشبورد',
-  '/admin/pulse': 'پالس وایب',
-  '/admin/kpi': 'داشبورد رشد',
-  '/admin/categories': 'دسته‌بندی‌ها',
-  '/admin/lists': 'لیست‌ها',
-  '/admin/items': 'آیتم‌ها',
-  '/admin/users': 'کاربران',
-  '/admin/analytics': 'آنالیتیکس',
-  '/admin/suggestions': 'پیشنهادها',
-  '/admin/custom/featured': 'مدیریت Featured',
-  '/admin/comments': 'کامنت‌ها',
-  '/admin/moderation': 'صف بررسی',
-  '/admin/audit': 'لاگ تغییرات',
-  '/admin/settings': 'تنظیمات',
+/** سگمنت‌های مسیر که نباید به‌عنوان «جزئیات» (شناسه) نمایش داده شوند */
+const BREADCRUMB_SEGMENT_LABELS: Record<string, string> = {
+  'access-denied': 'عدم دسترسی',
+  'user-created': 'لیست‌های کاربران',
+  'bad-words': 'کلمات ممنوع',
+  'item-reports': 'ریپورت آیتم‌ها',
+  all: 'همه کامنت‌ها',
+  reports: 'ریپورت کامنت‌ها',
+  'new': 'جدید',
+  edit: 'ویرایش',
+  debug: 'دیباگ',
 };
 
 function getBreadcrumb(pathname: string | null): { href: string; label: string }[] {
   if (!pathname || !pathname.startsWith('/admin')) return [{ href: '/admin/dashboard', label: 'ادمین' }];
-  const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
+  const normalized = pathname.replace(/\/$/, '') || '/admin';
+  if (normalized === '/admin' || normalized === '/admin/dashboard') {
+    return [{ href: '/admin/dashboard', label: 'داشبورد' }];
+  }
+  const segments = normalized.split('/').filter(Boolean);
   const out: { href: string; label: string }[] = [{ href: '/admin/dashboard', label: 'داشبورد' }];
-  let acc = '';
+  let acc = '/admin';
   for (let i = 1; i < segments.length; i++) {
+    // شناسه دسته را در breadcrumb نشان نده — مستقیم «ویرایش دسته»
+    if (
+      segments[i - 1] === 'categories' &&
+      segments[i + 1] === 'edit' &&
+      /^[A-Za-z0-9_-]+$/.test(segments[i])
+    ) {
+      continue;
+    }
+    if (
+      segments[i - 1] === 'catalog' &&
+      segments[i + 1] === 'edit' &&
+      /^[A-Za-z0-9_-]+$/.test(segments[i])
+    ) {
+      continue;
+    }
     acc += '/' + segments[i];
-    const label = BREADCRUMB_MAP[acc] ?? segments[i];
-    out.push({ href: acc, label });
+    let label = BREADCRUMB_MAP[acc];
+    if (!label) {
+      if (/\/categories\/[^/]+\/edit$/.test(acc)) {
+        label = 'ویرایش دسته';
+      } else if (/\/catalog\/[^/]+\/edit$/.test(acc)) {
+        label = 'ویرایش آیتم';
+      } else if (BREADCRUMB_SEGMENT_LABELS[segments[i]]) {
+        label = BREADCRUMB_SEGMENT_LABELS[segments[i]];
+      } else if (/^[A-Za-z0-9_-]{10,}$/.test(segments[i])) {
+        label = 'جزئیات';
+      } else {
+        label = segments[i];
+      }
+    }
+    if (out[out.length - 1]?.href !== acc) {
+      out.push({ href: acc, label });
+    }
   }
   return out;
 }
@@ -141,11 +172,11 @@ export default function AdminHeader() {
           className="hidden lg:flex p-2 rounded-xl hover:bg-admin-muted dark:hover:bg-gray-700 text-admin-text-secondary dark:text-gray-400 transition-colors"
           aria-label={collapsed ? 'باز کردن منو' : 'جمع کردن منو'}
         >
-          {collapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          {collapsed ? <PanelRightOpen className="h-5 w-5" /> : <PanelRightClose className="h-5 w-5" />}
         </button>
         <div className="flex items-center gap-2 min-w-0">
         {breadcrumbs.map((b, i) => (
-          <span key={b.href} className="flex items-center gap-2 shrink-0">
+          <span key={`${b.href}-${i}`} className="flex items-center gap-2 shrink-0">
             {i > 0 && <ChevronLeft className="h-4 w-4 text-gray-400 rotate-180" />}
             <Link
               href={b.href}

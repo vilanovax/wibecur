@@ -1,124 +1,74 @@
+import { Suspense } from 'react';
 import { requireAdmin } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { dbQuery } from '@/lib/db';
-import Pagination from '@/components/admin/shared/Pagination';
+import { getCachedCommentsReportsIntelligenceData } from '@/lib/admin/comments-reports-intelligence-cached';
+import { getCachedCommentsHubStats } from '@/lib/admin/comments-hub-stats-cached';
+import { parseReportsResolved } from '@/lib/admin/comments-reports-intelligence';
+import { parseCommentsPageSize } from '@/lib/admin/comments-page-size';
+import CommentsPaginationBar from '@/components/admin/comments/CommentsPaginationBar';
 import ReportsPageClient from './ReportsPageClient';
-
-const ITEMS_PER_PAGE = 20;
 
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; resolved?: string }>;
+  searchParams: Promise<{ page?: string; resolved?: string; pageSize?: string }>;
 }) {
   await requireAdmin();
 
-  const { page = '1', resolved } = await searchParams;
-  const currentPage = parseInt(page, 10) || 1;
-  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+  const {
+    page = '1',
+    resolved: resolvedParam,
+    pageSize: pageSizeParam,
+  } = await searchParams;
 
-  // Get bad words for filtering
-  const badWords = await prisma.bad_words.findMany({
-    select: { word: true },
-  });
-  const badWordsList = badWords.map((bw) => bw.word.toLowerCase());
+  const resolved = resolvedParam
+    ? parseReportsResolved(resolvedParam)
+    : 'open';
+  const pageSize = parseCommentsPageSize(pageSizeParam);
 
-  const where: any = {};
-  if (resolved === 'false') {
-    where.resolved = false;
-  } else if (resolved === 'true') {
-    where.resolved = true;
-  }
-
-  // Only show reports for non-deleted comments (exclude soft-deleted comments)
-  // Filter out reports where the comment is soft-deleted
-  where.comments = {
-    deletedAt: null,
-  };
-
-  const [totalCount, reportsRaw] = await Promise.all([
-    dbQuery(() => prisma.comment_reports.count({ where })),
-    dbQuery(() =>
-      prisma.comment_reports.findMany({
-        where,
-        skip,
-        take: ITEMS_PER_PAGE,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          comments: {
-            include: {
-              users: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                },
-              },
-              items: {
-                select: {
-                  id: true,
-                  title: true,
-                },
-              },
-            },
-          },
-          users: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-      })
-    ),
+  const [data, hubStats] = await Promise.all([
+    getCachedCommentsReportsIntelligenceData({
+      page: Math.max(1, parseInt(page, 10) || 1),
+      pageSize,
+      resolved,
+    }),
+    getCachedCommentsHubStats(),
   ]);
 
-  // Group reports by commentId
-  const reportsByComment = new Map();
-  reportsRaw.forEach((report) => {
-    const commentId = report.commentId;
-    if (!reportsByComment.has(commentId)) {
-      reportsByComment.set(commentId, {
-        comment: report.comments,
-        reports: [],
-        reportCount: 0,
-      });
-    }
-    reportsByComment.get(commentId).reports.push(report);
-    reportsByComment.get(commentId).reportCount += 1;
-  });
+  const navStats = {
+    pending: hubStats.comments.pending,
+    commentReportsOpen: hubStats.commentReports.open,
+    itemReportsOpen: hubStats.itemReportsOpen,
+  };
 
-  const reports = Array.from(reportsByComment.values()).map((r) => ({
-    ...r,
-    comment: {
-      ...r.comment,
-      deletedAt: r.comment.deletedAt ? r.comment.deletedAt.toISOString() : null,
-      createdAt: r.comment.createdAt.toISOString(),
-      updatedAt: r.comment.updatedAt.toISOString(),
-    },
-    reports: r.reports.map((rep: any) => ({
-      ...rep,
-      createdAt: rep.createdAt.toISOString(),
-    })),
-  }));
-
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const paginationParams: Record<string, string> = {
+    resolved:
+      data.resolved === 'open'
+        ? 'false'
+        : data.resolved === 'resolved'
+          ? 'true'
+          : 'all',
+  };
+  if (data.pageSize !== 10) paginationParams.pageSize = String(data.pageSize);
 
   return (
     <>
-      <ReportsPageClient
-        reports={reports}
-        currentResolved={resolved}
-        badWords={badWordsList}
-      />
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
+      <Suspense
+        fallback={
+          <div className="py-12 text-center text-sm text-[var(--color-text-muted)] animate-pulse">
+            در حال بارگذاری ریپورت‌ها…
+          </div>
+        }
+      >
+        <ReportsPageClient data={data} navStats={navStats} />
+      </Suspense>
+      <CommentsPaginationBar
+        currentPage={data.currentPage}
+        totalPages={data.totalPages}
         basePath="/admin/comments/reports"
-        searchParams={resolved ? { resolved } : {}}
+        searchParams={paginationParams}
+        pageSize={data.pageSize}
+        totalCount={data.totalCount}
       />
     </>
   );
 }
-

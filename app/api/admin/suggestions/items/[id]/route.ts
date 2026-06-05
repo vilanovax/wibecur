@@ -7,6 +7,11 @@ import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { createNotification, notifyListBookmarkers } from '@/lib/utils/notifications';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { checkAchievements } from '@/lib/achievements';
+import {
+  createCatalogItem,
+  denormalizedItemFieldsFromCatalog,
+  isCatalogInList,
+} from '@/lib/catalog-items';
 
 // PUT /api/admin/suggestions/items/[id] - تایید یا رد پیشنهاد آیتم
 export async function PUT(
@@ -123,18 +128,44 @@ export async function PUT(
         'items'
       );
 
-      // Create actual item
+      const itemTitle = title || suggestedItem.title;
+      const listWithCat = await dbQuery(() =>
+        prisma.lists.findUnique({
+          where: { id: suggestedItem.listId },
+          include: { categories: true },
+        })
+      );
+      const categorySlug = listWithCat?.categories?.slug ?? null;
+
+      const catalog = await dbQuery(() =>
+        createCatalogItem(prisma, {
+          title: itemTitle,
+          description:
+            description !== undefined ? description : suggestedItem.description,
+          imageUrl: finalImageUrl,
+          externalUrl:
+            externalUrl !== undefined ? externalUrl : suggestedItem.externalUrl,
+          categorySlug,
+          metadata: validatedMetadata,
+        })
+      );
+
+      if (await isCatalogInList(prisma, catalog.id, suggestedItem.listId)) {
+        return NextResponse.json(
+          { success: false, error: 'این آیتم قبلاً در لیست وجود دارد' },
+          { status: 409 }
+        );
+      }
+
+      const denorm = denormalizedItemFieldsFromCatalog(catalog);
       const newItem = await dbQuery(() =>
         prisma.items.create({
           data: {
             id: nanoid(),
-            title: title || suggestedItem.title,
-            description: description !== undefined ? description : suggestedItem.description,
-            imageUrl: finalImageUrl,
-            externalUrl: externalUrl !== undefined ? externalUrl : suggestedItem.externalUrl,
+            ...denorm,
             listId: suggestedItem.listId,
+            catalogItemId: catalog.id,
             order: 0,
-            metadata: validatedMetadata,
             commentsEnabled: true,
             maxComments: null,
             updatedAt: new Date(),

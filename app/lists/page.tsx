@@ -4,6 +4,7 @@ import ListsPageClient from './ListsPageClient';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { withResolvedListCovers } from '@/lib/resolve-list-cover';
+import { activeCategoryWhere, publicCuratedListWhere } from '@/lib/public-content-filters';
 
 export const revalidate = 60; // ISR: به‌روزرسانی هر ۶۰ ثانیه
 
@@ -26,13 +27,7 @@ function isDbError(e: unknown): boolean {
 const listsQuery = () =>
   dbQuery(() =>
     prisma.lists.findMany({
-      where: {
-        isActive: true,
-        isPublic: true,
-        users: {
-          role: { not: 'USER' },
-        },
-      },
+      where: publicCuratedListWhere,
       select: {
         id: true,
         title: true,
@@ -82,7 +77,7 @@ export default async function ListsPage({
       listsQuery(),
       dbQuery(() =>
         prisma.categories.findMany({
-          where: { isActive: true },
+          where: activeCategoryWhere,
           orderBy: { order: 'asc' },
         })
       ),

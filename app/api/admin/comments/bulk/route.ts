@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { revalidateAdminCommentsCache } from '@/lib/admin/admin-cache';
 
 type BulkAction = 'approve' | 'reject';
 
@@ -55,6 +56,8 @@ export async function POST(request: NextRequest) {
         })
       );
     }
+
+    revalidateAdminCommentsCache();
 
     return NextResponse.json({
       success: true,

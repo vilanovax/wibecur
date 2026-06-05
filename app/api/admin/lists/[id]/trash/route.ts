@@ -5,6 +5,7 @@ import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalList } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
+import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 
 /** POST: انتقال به زباله‌دان (soft delete) */
 export async function POST(
@@ -53,6 +54,7 @@ export async function POST(
       userAgent: meta.userAgent,
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json({
       success: true,
       message: 'به زباله‌دان منتقل شد',

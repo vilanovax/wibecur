@@ -5,7 +5,8 @@
 
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { MOCK_MODERATION, MOCK_TOP_CURATORS } from './mock';
+import { getCommentsHubStats } from './comments-hub-stats';
+import { getDashboardPeriod, type DashboardRange } from './dashboard-range';
 import type {
   DashboardData,
   KpiItem,
@@ -14,6 +15,7 @@ import type {
   CategoryIntelligenceCard,
   CuratorIntelligenceRow,
   RiskItem,
+  ActionQueueItem,
 } from './types';
 
 const persianMonths = [
@@ -21,28 +23,34 @@ const persianMonths = [
   'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند',
 ];
 
-export async function getDashboardData(): Promise<DashboardData> {
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const yesterdayStart = new Date(todayStart);
-  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-  const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const last7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const prev7dStart = new Date(last7d);
-  prev7dStart.setDate(prev7dStart.getDate() - 7);
+export async function getDashboardData(
+  rangeInput: DashboardRange = 'today'
+): Promise<DashboardData> {
+  const {
+    periodStart,
+    prevPeriodStart,
+    prevPeriodEnd,
+    periodLabel,
+    bookmarkWindowStart,
+    last7d,
+    last24h,
+  } = getDashboardPeriod(rangeInput);
 
   const [
     userCount,
     listCount,
-    todayUsers,
-    yesterdayUsers,
-    todayLists,
-    yesterdayLists,
-    todayBookmarks,
-    yesterdayBookmarks,
-    pendingItemReports,
-    pendingCommentReports,
+    periodUsers,
+    prevPeriodUsers,
+    periodLists,
+    prevPeriodLists,
+    periodBookmarks,
+    prevPeriodBookmarks,
+    commentsHub,
     pendingSuggestedLists,
+    recentSuggestedPreviews,
+    recentCommentReports,
+    recentItemReports,
+    topCuratorsDb,
     topListsDb,
     categoriesWithCount,
     userGrowth,
@@ -52,41 +60,89 @@ export async function getDashboardData(): Promise<DashboardData> {
     bookmarks7d,
     bookmarks24hByList,
     bookmarks7dByList,
+    bookmarksPrev7dByList,
     trendingListsDb,
     activeLists7d,
   ] = await Promise.all([
     dbQuery(() => prisma.users.count()),
     dbQuery(() => prisma.lists.count({ where: { isActive: true } })),
-    dbQuery(() => prisma.users.count({ where: { createdAt: { gte: todayStart } } })),
+    dbQuery(() => prisma.users.count({ where: { createdAt: { gte: periodStart } } })),
     dbQuery(() =>
       prisma.users.count({
         where: {
-          createdAt: { gte: yesterdayStart, lt: todayStart },
+          createdAt: { gte: prevPeriodStart, lt: prevPeriodEnd },
         },
       })
     ),
-    dbQuery(() => prisma.lists.count({ where: { createdAt: { gte: todayStart } } })),
+    dbQuery(() => prisma.lists.count({ where: { createdAt: { gte: periodStart } } })),
     dbQuery(() =>
       prisma.lists.count({
         where: {
-          createdAt: { gte: yesterdayStart, lt: todayStart },
+          createdAt: { gte: prevPeriodStart, lt: prevPeriodEnd },
         },
       })
     ),
     dbQuery(() =>
-      prisma.bookmarks.count({ where: { createdAt: { gte: todayStart } } })
+      prisma.bookmarks.count({ where: { createdAt: { gte: periodStart } } })
     ),
     dbQuery(() =>
       prisma.bookmarks.count({
         where: {
-          createdAt: { gte: yesterdayStart, lt: todayStart },
+          createdAt: { gte: prevPeriodStart, lt: prevPeriodEnd },
         },
       })
     ),
-    dbQuery(() => prisma.item_reports.count({ where: { resolved: false } })),
-    dbQuery(() => prisma.comment_reports.count({ where: { resolved: false } })),
+    dbQuery(() => getCommentsHubStats()),
     dbQuery(() =>
       prisma.suggested_lists.count({ where: { status: 'pending' } }),
+    ),
+    dbQuery(() =>
+      prisma.suggested_lists.findMany({
+        where: { status: 'pending' },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, title: true, createdAt: true },
+      })
+    ),
+    dbQuery(() =>
+      prisma.comment_reports.findMany({
+        where: { resolved: false, comments: { deletedAt: null } },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          comments: { select: { content: true } },
+          users: { select: { name: true, email: true } },
+        },
+      })
+    ),
+    dbQuery(() =>
+      prisma.item_reports.findMany({
+        where: { resolved: false },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          items: { select: { title: true } },
+          users: { select: { name: true, email: true } },
+        },
+      })
+    ),
+    dbQuery(() =>
+      prisma.users.findMany({
+        where: {
+          lists: { some: { isActive: true } },
+          OR: [{ curatorScore: { gt: 0 } }, { lists: { some: {} } }],
+        },
+        orderBy: [{ curatorScore: 'desc' }, { createdAt: 'desc' }],
+        take: 5,
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          curatorScore: true,
+          _count: { select: { lists: true } },
+        },
+      })
     ),
     dbQuery(() =>
       prisma.lists.findMany({
@@ -155,16 +211,28 @@ export async function getDashboardData(): Promise<DashboardData> {
       })
     ),
     dbQuery(() => prisma.bookmarks.count({ where: { createdAt: { gte: last7d } } })),
-    dbQuery(() => prisma.bookmarks.groupBy({
-      by: ['listId'],
-      where: { createdAt: { gte: last24h } },
-      _count: true,
-    })),
-    dbQuery(() => prisma.bookmarks.groupBy({
-      by: ['listId'],
-      where: { createdAt: { gte: last7d } },
-      _count: true,
-    })),
+    dbQuery(() =>
+      prisma.bookmarks.groupBy({
+        by: ['listId'],
+        where: { createdAt: { gte: last24h } },
+        _count: true,
+      })
+    ),
+    dbQuery(() =>
+      prisma.bookmarks.groupBy({
+        by: ['listId'],
+        where: { createdAt: { gte: last7d } },
+        _count: true,
+      })
+    ),
+    dbQuery(() => {
+      const prev7dStart = new Date(last7d.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return prisma.bookmarks.groupBy({
+        by: ['listId'],
+        where: { createdAt: { gte: prev7dStart, lt: last7d } },
+        _count: true,
+      });
+    }),
     dbQuery(() =>
       prisma.lists.findMany({
         where: { isActive: true, isPublic: true },
@@ -196,35 +264,112 @@ export async function getDashboardData(): Promise<DashboardData> {
     prisma.lists.aggregate({ where: { isActive: true }, _sum: { saveCount: true } })
   ).then((r) => r._sum.saveCount ?? 0);
   const saveRate = totalViews > 0 ? ((totalSaves / totalViews) * 100).toFixed(1) : '۰';
-  const pendingReports = pendingItemReports + pendingCommentReports;
+  const pendingItemReports = commentsHub.itemReportsOpen;
+  const pendingCommentReports = commentsHub.commentReports.open;
+  const pendingReports =
+    pendingItemReports +
+    pendingCommentReports +
+    pendingSuggestedLists +
+    commentsHub.comments.pending;
+
+  const commentsModeration = {
+    pending: commentsHub.comments.pending,
+    flagged: commentsHub.comments.flagged,
+    reported: commentsHub.comments.reported,
+    filtered: commentsHub.filteredComments,
+    approved: commentsHub.comments.approved,
+    unresolvedCommentReports: commentsHub.commentReports.open,
+    unresolvedItemReports: commentsHub.itemReportsOpen,
+    totalCommentReports: commentsHub.commentReports.total,
+  };
 
   const delta = (curr: number, prev: number) =>
     prev > 0 ? Math.round(((curr - prev) / prev) * 100) : curr > 0 ? 100 : 0;
 
+  const velocityDelta =
+    prevPeriodBookmarks > 0
+      ? delta(periodBookmarks, prevPeriodBookmarks)
+      : periodBookmarks > 0
+        ? 100
+        : 0;
+
+  const actionQueue: ActionQueueItem[] = [
+    ...(commentsHub.comments.pending > 0
+      ? [
+          {
+            id: 'action-comments-pending',
+            label: 'کامنت در انتظار',
+            count: commentsHub.comments.pending,
+            href: '/admin/comments/all?filter=pending',
+            severity: (commentsHub.comments.pending > 3 ? 'high' : 'medium') as
+              | 'high'
+              | 'medium',
+          },
+        ]
+      : []),
+    ...(pendingCommentReports > 0
+      ? [
+          {
+            id: 'action-comment-reports',
+            label: 'ریپورت کامنت',
+            count: pendingCommentReports,
+            href: '/admin/comments/reports?resolved=false',
+            severity: (pendingCommentReports > 2 ? 'high' : 'medium') as
+              | 'high'
+              | 'medium',
+          },
+        ]
+      : []),
+    ...(pendingItemReports > 0
+      ? [
+          {
+            id: 'action-item-reports',
+            label: 'ریپورت آیتم',
+            count: pendingItemReports,
+            href: '/admin/comments/item-reports?resolved=false',
+            severity: (pendingItemReports > 2 ? 'high' : 'medium') as
+              | 'high'
+              | 'medium',
+          },
+        ]
+      : []),
+    ...(pendingSuggestedLists > 0
+      ? [
+          {
+            id: 'action-suggestions',
+            label: 'پیشنهاد لیست',
+            count: pendingSuggestedLists,
+            href: '/admin/suggestions',
+            severity: 'medium' as const,
+          },
+        ]
+      : []),
+  ];
+
+  const suggestionPreviews = recentSuggestedPreviews.map((s) => ({
+    id: s.id,
+    title: s.title,
+    createdAt: s.createdAt,
+  }));
+
   const kpis: KpiItem[] = [
     {
-      label: 'کاربران فعال امروز',
-      value: todayUsers,
-      delta: delta(todayUsers, yesterdayUsers),
-      trend: todayUsers >= yesterdayUsers ? 'up' : 'down',
+      label: `کاربران جدید (${periodLabel})`,
+      value: periodUsers,
+      delta: delta(periodUsers, prevPeriodUsers),
+      trend: periodUsers >= prevPeriodUsers ? 'up' : 'down',
     },
     {
-      label: 'کاربران جدید امروز',
-      value: todayUsers,
-      delta: delta(todayUsers, yesterdayUsers),
-      trend: todayUsers >= yesterdayUsers ? 'up' : 'down',
+      label: `لیست‌های جدید (${periodLabel})`,
+      value: periodLists,
+      delta: delta(periodLists, prevPeriodLists),
+      trend: periodLists >= prevPeriodLists ? 'up' : 'down',
     },
     {
-      label: 'لیست‌های جدید امروز',
-      value: todayLists,
-      delta: delta(todayLists, yesterdayLists),
-      trend: todayLists >= yesterdayLists ? 'up' : 'down',
-    },
-    {
-      label: 'ذخیره امروز',
-      value: todayBookmarks,
-      delta: delta(todayBookmarks, yesterdayBookmarks),
-      trend: todayBookmarks >= yesterdayBookmarks ? 'up' : 'down',
+      label: `ذخیره (${periodLabel})`,
+      value: periodBookmarks,
+      delta: delta(periodBookmarks, prevPeriodBookmarks),
+      trend: periodBookmarks >= prevPeriodBookmarks ? 'up' : 'down',
     },
     {
       label: 'نرخ ذخیره',
@@ -275,6 +420,26 @@ export async function getDashboardData(): Promise<DashboardData> {
   ];
 
   const activities = [
+    ...recentCommentReports.map((r) => ({
+      id: `cr-${r.id}`,
+      type: 'report_submitted' as const,
+      title: 'ریپورت کامنت جدید',
+      description:
+        r.comments.content.slice(0, 80) +
+        (r.comments.content.length > 80 ? '…' : ''),
+      actor: r.users.name ?? r.users.email,
+      timestamp: r.createdAt,
+      href: '/admin/comments/reports?resolved=false',
+    })),
+    ...recentItemReports.map((r) => ({
+      id: `ir-${r.id}`,
+      type: 'report_submitted' as const,
+      title: 'ریپورت آیتم جدید',
+      description: r.items.title,
+      actor: r.users.name ?? r.users.email,
+      timestamp: r.createdAt,
+      href: '/admin/comments/item-reports?resolved=false',
+    })),
     ...recentLists.map((l) => ({
       id: l.id,
       type: 'list_created' as const,
@@ -293,22 +458,31 @@ export async function getDashboardData(): Promise<DashboardData> {
     })),
   ]
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-    .slice(0, 10);
+    .slice(0, 12);
 
   const count24hByList = new Map(bookmarks24hByList.map((b) => [b.listId, b._count]));
   const count7dByList = new Map(bookmarks7dByList.map((b) => [b.listId, b._count]));
-  const velocityDelta = yesterdayBookmarks > 0 ? delta(todayBookmarks, yesterdayBookmarks) : 0;
+  const countPrev7dByList = new Map(
+    bookmarksPrev7dByList.map((b) => [b.listId, b._count])
+  );
 
   const systemPulse: SystemPulseCard[] = [
     {
       id: 'save_velocity',
       label: 'سرعت ذخیره',
-      value: todayBookmarks,
+      value: periodBookmarks,
       deltaPercent: velocityDelta,
-      trend: velocityDelta >= 0 ? 'up' : 'down',
-      sparkline: [yesterdayBookmarks, todayBookmarks, todayBookmarks, todayBookmarks, todayBookmarks].filter(Boolean).length ? [yesterdayBookmarks, todayBookmarks, todayBookmarks, todayBookmarks, todayBookmarks] : [2, 4, 3, 5, 4],
+      trend:
+        velocityDelta > 0 ? 'up' : velocityDelta < 0 ? 'down' : 'neutral',
+      sparkline: [
+        prevPeriodBookmarks,
+        periodBookmarks,
+        periodBookmarks,
+        periodBookmarks,
+        periodBookmarks,
+      ],
       semanticColor: velocityDelta >= 0 ? 'emerald' : 'red',
-      tooltip: 'ذخیره‌های ۲۴ ساعت گذشته در مقایسه با دیروز؛ هسته رشد پلتفرم.',
+      tooltip: `ذخیره‌های ${periodLabel} نسبت به دوره قبل.`,
     },
     {
       id: 'trending_momentum',
@@ -333,7 +507,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     {
       id: 'risk_alerts',
       label: 'هشدار ریسک',
-      value: pendingItemReports + pendingCommentReports + pendingSuggestedLists,
+      value: pendingReports,
       deltaPercent: 0,
       trend: pendingReports > 0 ? 'up' : 'neutral',
       sparkline: [0, pendingItemReports, pendingCommentReports, pendingSuggestedLists, pendingReports].filter((n) => n !== undefined) as number[],
@@ -345,10 +519,27 @@ export async function getDashboardData(): Promise<DashboardData> {
   const trendingRadar: TrendingRadarRow[] = trendingListsDb.map((l) => {
     const saves24h = count24hByList.get(l.id) ?? 0;
     const saves7d = count7dByList.get(l.id) ?? 0;
-    const prev7d = Math.max(0, l.saveCount - saves7d);
-    const growth7dPercent = prev7d > 0 ? Math.round(((saves7d - prev7d) / prev7d) * 100) : saves7d > 0 ? 100 : 0;
-    const trendingScore = Math.min(100, Math.round(l.saveCount / 10) + growth7dPercent);
-    const trend: 'up' | 'down' | 'neutral' = growth7dPercent > 0 ? 'up' : growth7dPercent < 0 ? 'down' : 'neutral';
+    const savesPrev7d = countPrev7dByList.get(l.id) ?? 0;
+    const growth7dPercent =
+      savesPrev7d > 0
+        ? Math.round(((saves7d - savesPrev7d) / savesPrev7d) * 100)
+        : saves7d > 0
+          ? 100
+          : 0;
+    const trendingScore = Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round(
+          saves24h * 4 +
+            saves7d * 1.5 +
+            Math.max(0, growth7dPercent) * 0.35 +
+            l.saveCount / 20
+        )
+      )
+    );
+    const trend: 'up' | 'down' | 'neutral' =
+      growth7dPercent > 2 ? 'up' : growth7dPercent < -2 ? 'down' : 'neutral';
     return {
       id: l.id,
       listName: l.title,
@@ -397,18 +588,46 @@ export async function getDashboardData(): Promise<DashboardData> {
     };
   });
 
-  const curatorIntelligence: CuratorIntelligenceRow[] = MOCK_TOP_CURATORS.slice(0, 5).map((c, i) => ({
-    id: c.id,
-    name: c.name,
-    username: c.username,
-    avatarUrl: null,
-    growthPercent: c.growthPercent ?? 0,
-    avgSavesPerList: c.saves > 0 ? Math.round(c.saves / 5) : 0,
-    trustBadge: c.reliability === 'high' ? 'high_growth' : c.reliability === 'medium' ? 'stable' : 'risky',
-    rank: i + 1,
-  }));
+  const curatorIntelligence: CuratorIntelligenceRow[] = topCuratorsDb.map((c, i) => {
+    const listsCount = c._count.lists;
+    const score = c.curatorScore ?? 0;
+    const growthPercent = Math.min(
+      99,
+      Math.round(score * 12 + listsCount * 4)
+    );
+    const trustBadge: CuratorIntelligenceRow['trustBadge'] =
+      score >= 5 || listsCount >= 5
+        ? 'high_growth'
+        : listsCount >= 1 || score >= 1
+          ? 'stable'
+          : 'risky';
+    return {
+      id: c.id,
+      name: c.name ?? 'بدون نام',
+      username: c.username,
+      avatarUrl: c.image,
+      growthPercent,
+      avgSavesPerList: listsCount > 0 ? Math.max(1, Math.round(score * 2)) : 0,
+      trustBadge,
+      rank: i + 1,
+    };
+  });
 
   const riskAlerts: RiskItem[] = [
+    ...(commentsHub.comments.pending > 0
+      ? [
+          {
+            id: 'comments-pending',
+            type: 'flagged_list' as const,
+            label: 'کامنت در انتظار تایید',
+            count: commentsHub.comments.pending,
+            severity: (commentsHub.comments.pending > 3 ? 'high' : 'medium') as
+              | 'high'
+              | 'medium',
+            href: '/admin/comments/all?filter=pending',
+          },
+        ]
+      : []),
     ...(pendingItemReports > 0
       ? [
           {
@@ -417,7 +636,7 @@ export async function getDashboardData(): Promise<DashboardData> {
             label: 'ریپورت آیتم‌ها',
             count: pendingItemReports,
             severity: (pendingItemReports > 2 ? 'high' : 'medium') as 'high' | 'medium',
-            href: '/admin/comments/item-reports',
+            href: '/admin/comments/item-reports?resolved=false',
           },
         ]
       : []),
@@ -428,8 +647,22 @@ export async function getDashboardData(): Promise<DashboardData> {
             type: 'flagged_list' as const,
             label: 'ریپورت کامنت‌ها',
             count: pendingCommentReports,
-            severity: 'medium' as const,
-            href: '/admin/comments/reports',
+            severity: (pendingCommentReports > 2 ? 'high' : 'medium') as
+              | 'high'
+              | 'medium',
+            href: '/admin/comments/reports?resolved=false',
+          },
+        ]
+      : []),
+    ...(commentsHub.filteredComments > 0
+      ? [
+          {
+            id: 'filtered-comments',
+            type: 'anomaly' as const,
+            label: 'کلمات فیلترشده',
+            count: commentsHub.filteredComments,
+            severity: 'low' as const,
+            href: '/admin/comments/all?filter=filtered',
           },
         ]
       : []),
@@ -456,14 +689,14 @@ export async function getDashboardData(): Promise<DashboardData> {
         label: 'ریپورت آیتم‌ها',
         count: pendingItemReports,
         severity: pendingItemReports > 2 ? 'high' : 'medium',
-        href: '/admin/comments/item-reports',
+        href: '/admin/comments/item-reports?resolved=false',
       },
       {
         id: 'comment-reports',
         type: 'pending_lists' as const,
         label: 'ریپورت کامنت‌ها',
         count: pendingCommentReports,
-        href: '/admin/comments/reports',
+        href: '/admin/comments/reports?resolved=false',
       },
       {
         id: 'pending-lists',
@@ -476,7 +709,20 @@ export async function getDashboardData(): Promise<DashboardData> {
     ],
     topLists,
     topCategories,
-    topCurators: MOCK_TOP_CURATORS, // TODO: replace with real curator aggregation
+    topCurators: curatorIntelligence.map((c) => ({
+      id: c.id,
+      name: c.name,
+      username: c.username,
+      followers: 0,
+      saves: c.avgSavesPerList * 5,
+      growthPercent: c.growthPercent,
+      reliability:
+        c.trustBadge === 'high_growth'
+          ? 'high'
+          : c.trustBadge === 'stable'
+            ? 'medium'
+            : 'low',
+    })),
     activities,
     userGrowthData: userGrowth,
     listsByCategory,
@@ -486,5 +732,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     categoryIntelligence,
     curatorIntelligence,
     riskAlerts,
+    commentsModeration,
+    range: rangeInput,
+    periodLabel,
+    actionQueue,
+    suggestionPreviews,
   };
 }

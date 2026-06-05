@@ -5,6 +5,11 @@ import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { nanoid } from 'nanoid';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import {
+  addCatalogItemToList,
+  createCatalogItem,
+  denormalizedItemFieldsFromCatalog,
+} from '@/lib/catalog-items';
 
 // GET /api/admin/items - Get items (optionally filtered by listId)
 export async function GET(request: NextRequest) {
@@ -45,6 +50,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
+      catalogItemId,
       title,
       description,
       imageUrl,
@@ -54,10 +60,30 @@ export async function POST(request: NextRequest) {
       metadata,
       commentsEnabled,
       maxComments,
+      listNote,
     } = body;
 
-    // Validation
-    if (!title || !listId) {
+    if (!listId) {
+      return NextResponse.json({ error: 'لیست الزامی است' }, { status: 400 });
+    }
+
+    if (catalogItemId) {
+      const item = await addCatalogItemToList(prisma, {
+        catalogItemId,
+        listId,
+        order,
+        listNote,
+        commentsEnabled,
+        maxComments,
+      });
+      const list = item.lists;
+      if (list) {
+        notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
+      }
+      return NextResponse.json(item, { status: 201 });
+    }
+
+    if (!title) {
       return NextResponse.json(
         { error: 'عنوان و لیست الزامی هستند' },
         { status: 400 }
@@ -97,28 +123,34 @@ export async function POST(request: NextRequest) {
     }
 
     const finalImageUrl = imageUrl ? await ensureImageInLiara(imageUrl, 'items') : null;
+    const meta = metadataValidation.data || {};
 
-    // Create item
+    const catalog = await createCatalogItem(prisma, {
+      title,
+      description,
+      imageUrl: finalImageUrl,
+      externalUrl,
+      categorySlug: list.categories.slug,
+      metadata: meta,
+    });
+
+    const denorm = denormalizedItemFieldsFromCatalog(catalog);
+
     const item = await prisma.items.create({
       data: {
         id: nanoid(),
-        title,
-        description,
-        imageUrl: finalImageUrl,
-        externalUrl,
+        ...denorm,
         listId,
+        catalogItemId: catalog.id,
+        listNote: listNote?.trim() || null,
         order,
-        metadata: metadataValidation.data || {},
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
         maxComments: maxComments !== undefined ? maxComments : null,
         updatedAt: new Date(),
       },
       include: {
-        lists: {
-          include: {
-            categories: true,
-          },
-        },
+        lists: { include: { categories: true } },
+        catalog_items: true,
       },
     });
 

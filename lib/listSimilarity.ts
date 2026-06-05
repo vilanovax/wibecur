@@ -4,6 +4,7 @@
  */
 
 import { Prisma, type PrismaClient } from '@prisma/client';
+import { publicCuratedListWhere } from '@/lib/public-content-filters';
 
 // --- انواع برای محاسبه امتیاز (حداقل فیلدهای لازم) ---
 export type ListForSimilarity = {
@@ -193,10 +194,8 @@ export async function fetchCandidates(
 
   const rows = await prisma.lists.findMany({
     where: {
+      ...publicCuratedListWhere,
       id: { not: currentList.id },
-      isActive: true,
-      isPublic: true,
-      users: { role: { not: 'USER' } },
       OR: orConditions,
     },
     select: {
@@ -250,11 +249,10 @@ async function fetchFallbackByCategory(
 ): Promise<SimilarListOutput[]> {
   const rows = await prisma.lists.findMany({
     where: {
+      ...publicCuratedListWhere,
       id: { not: currentListId },
       categoryId,
-      isActive: true,
-      isPublic: true,
-      users: { role: { not: 'USER' } },
+      categories: { isActive: true, deletedAt: null },
     },
     select: {
       id: true,
@@ -281,10 +279,8 @@ async function fetchFallbackGlobal(
 ): Promise<SimilarListOutput[]> {
   const rows = await prisma.lists.findMany({
     where: {
+      ...publicCuratedListWhere,
       id: { not: currentListId },
-      isActive: true,
-      isPublic: true,
-      users: { role: { not: 'USER' } },
     },
     select: {
       id: true,
@@ -332,10 +328,8 @@ export async function getTopSimilarLists(
 
     const candidateRows = await prisma.lists.findMany({
       where: {
+        ...publicCuratedListWhere,
         id: { in: listIds },
-        isActive: true,
-        isPublic: true,
-        users: { role: { not: 'USER' } },
       },
       select: {
         id: true,

@@ -1,5 +1,16 @@
 /** Category Intelligence Panel 3.0 – types */
 
+export type CategorySortKey =
+  | 'order'
+  | 'name'
+  | 'listCount'
+  | 'engagement'
+  | 'growth'
+  | 'avgSaves'
+  | 'weight';
+
+export type CategoryViewMode = 'grid' | 'table' | 'reorder';
+
 export type CategoryFilterKind =
   | 'all'
   | 'growing'
@@ -16,6 +27,8 @@ export interface CategoryPulseSummary {
   fastestGrowingPercent: number;
   avgSaveGrowthPercent: number;
   monetizableCount: number;
+  /** جمله یک‌خطی زیر KPI */
+  insightLine: string;
 }
 
 export interface CategoryIntelligenceRow {
@@ -29,9 +42,16 @@ export interface CategoryIntelligenceRow {
   isActive: boolean;
   listCount: number;
   saveGrowthPercent: number;
+  /** ذخیره‌های bookmark در ۷ روز اخیر */
+  saveGrowthRecent: number;
+  /** ذخیره‌های ۷ روز قبل از آن */
+  saveGrowthPrevious: number;
   engagementRatio: number;
   activeListsPercent: number;
-  trendingScoreAvg: number;
-  /** برای کنترل وزن در آینده */
-  weight?: number;
+  /** میانگین saveCount به ازای هر لیست */
+  avgSavesPerList: number;
+  /** ضریب وزن الگوریتمی (۰.۸ | ۱ | ۱.۲ | ۱.۴) */
+  trendingWeight: number;
+  heroImage: string | null;
+  layoutType: string | null;
 }

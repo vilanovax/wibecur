@@ -51,7 +51,7 @@ function getFabItems(pathname: string | null): FabItemConfig[] {
     { label: 'ایجاد لیست', href: '/admin/lists/new', icon: List, highlight: false },
     { label: 'افزودن آیتم', href: '/admin/items/new', icon: Package, highlight: false },
     { label: 'ایجاد دسته', href: '/admin/categories/new', icon: Tag, highlight: false },
-    { label: 'مدیریت Featured', href: '/admin/custom/featured', icon: Star, highlight: false },
+    { label: 'منتخب هوم', href: '/admin/custom/featured', icon: Star, highlight: false },
   ];
 
   if (!pathname) return base;
@@ -73,6 +73,14 @@ export default function QuickCreateFab() {
   const items = getFabItems(pathname);
 
   useOutsideClick(containerRef, () => setOpen(false), open);
+
+  if (
+    pathname?.startsWith('/admin/settings') ||
+    pathname?.startsWith('/admin/pulse') ||
+    pathname?.startsWith('/admin/system')
+  ) {
+    return null;
+  }
 
   return (
     <div

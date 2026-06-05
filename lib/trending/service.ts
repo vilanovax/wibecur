@@ -11,6 +11,7 @@ import {
   type ListMetrics7d,
 } from './score';
 import { TIME_WINDOWS } from './constants';
+import { publicCuratedListWhere } from '@/lib/public-content-filters';
 
 export interface TrendingListResult {
   listId: string;
@@ -144,11 +145,7 @@ async function getListMetrics1d(
   return map;
 }
 
-const LIST_WHERE = {
-  isActive: true,
-  isPublic: true,
-  users: { role: { not: 'USER' } },
-} as const;
+const LIST_WHERE = publicCuratedListWhere;
 
 /**
  * Trending per Category

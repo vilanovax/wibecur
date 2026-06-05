@@ -17,10 +17,12 @@ async function main() {
   console.log(`   Settings: ${settingsCount}`);
 
   if (userCount > 0) {
-    const adminUser = await prisma.users.findUnique({
-      where: { email: 'admin@listhub.ir' },
+    const adminUser = await prisma.users.findFirst({
+      where: { role: 'ADMIN' },
     });
-    console.log(`\n✅ Admin user found: ${adminUser.email} (${adminUser.role})`);
+    if (adminUser) {
+      console.log(`\n✅ Admin user found: ${adminUser.email} (${adminUser.role})`);
+    }
   }
 
   if (categoryCount > 0) {

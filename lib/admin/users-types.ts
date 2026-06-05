@@ -26,7 +26,10 @@ export interface UserIntelligenceRow {
   bookmarksCount: number;
   listLikesCount: number;
   quality: UserQualityBadge;
+  /** رشد فعالیت ۷ روزه (بوکمارک + لیست جدید) نسبت به ۷ روز قبل */
   growthPercent: number;
+  growth7dRecent?: number;
+  growth7dPrevious?: number;
   risk: UserRiskLevel;
   riskLabel?: string;
   /** برای hover / tooltip */
@@ -35,7 +38,11 @@ export interface UserIntelligenceRow {
   commentReportsCount: number;
   curatorScore: number;
   curatorLevel: string;
+  /** کاربر seed / بات */
+  isBot: boolean;
 }
+
+export const USER_GROWTH_7D_LABEL = 'رشد ۷ روزه';
 
 export const USER_QUALITY_LABELS: Record<UserQualityBadge, string> = {
   high_impact: 'اثر بالا',

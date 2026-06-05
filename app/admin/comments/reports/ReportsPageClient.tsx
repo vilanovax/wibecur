@@ -1,66 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle, XCircle, Trash2, Edit, Flag } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { Flag } from 'lucide-react';
+import Toast, { type ToastType } from '@/components/shared/Toast';
+import ReportsPageHeader from '@/components/admin/comments/ReportsPageHeader';
+import CommentsSubNav, { type CommentsNavStats } from '@/components/admin/comments/CommentsSubNav';
+import ReportsFilterBar from '@/components/admin/comments/ReportsFilterBar';
+import ReportsTable from '@/components/admin/comments/ReportsTable';
+import CommentDetailsDrawer from '@/components/admin/comments/CommentDetailsDrawer';
+import CommentsMobileDetailBar from '@/components/admin/comments/CommentsMobileDetailBar';
+import CommentDetailPanel, {
+  type ReportDetailRow,
+} from '@/components/admin/comments/CommentDetailPanel';
+import RejectCommentDialog from '@/components/admin/comments/RejectCommentDialog';
 import PenaltyModal from '@/components/admin/comments/PenaltyModal';
-
-interface Comment {
-  id: string;
-  content: string;
-  isFiltered: boolean;
-  isApproved: boolean;
-  likeCount: number;
-  deletedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  users: {
-    id: string;
-    name: string | null;
-    email: string;
-  };
-  items: {
-    id: string;
-    title: string;
-  };
-}
-
-interface Report {
-  id: string;
-  commentId: string;
-  userId: string;
-  reason: string | null;
-  resolved: boolean;
-  createdAt: string;
-  users: {
-    id: string;
-    name: string | null;
-    email: string;
-  };
-}
-
-interface ReportGroup {
-  comment: Comment;
-  reports: Report[];
-  reportCount: number;
-}
+import CommentDetailModal from '@/components/admin/comments/CommentDetailModal';
+import type { CommentsReportsIntelligenceData } from '@/lib/admin/comments-reports-intelligence';
+import type { ReportGroup } from '@/lib/admin/comments-reports-intelligence';
+import type { ReportsResolvedFilter } from '@/lib/admin/comments-reports-intelligence';
+import { reportGroupToCommentRow } from '@/lib/admin/report-group-to-row';
+import type { CommentRowData } from '@/components/admin/comments/CommentRow';
 
 interface ReportsPageClientProps {
-  reports: ReportGroup[];
-  currentResolved: string | undefined;
-  badWords?: string[];
+  data: CommentsReportsIntelligenceData;
+  navStats?: CommentsNavStats;
 }
 
-export default function ReportsPageClient({
-  reports = [],
-  currentResolved,
-  badWords = [],
-}: ReportsPageClientProps) {
+function resolvedToParam(filter: ReportsResolvedFilter): string {
+  if (filter === 'open') return 'false';
+  if (filter === 'resolved') return 'true';
+  return 'all';
+}
+
+export default function ReportsPageClient({ data, navStats }: ReportsPageClientProps) {
   const router = useRouter();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editedContent, setEditedContent] = useState('');
+  const { groups: reports, pulse, badWords } = data;
+
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [detailModalComment, setDetailModalComment] = useState<CommentRowData | null>(
+    null
+  );
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [penaltyModal, setPenaltyModal] = useState<{
     isOpen: boolean;
     commentId: string | null;
@@ -73,372 +54,329 @@ export default function ReportsPageClient({
     action: 'delete',
   });
   const [penaltyLoading, setPenaltyLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    preview: string;
+  } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleApprove = async (commentId: string, commentContent: string) => {
-    // Show penalty modal for reported comments
-    setPenaltyModal({
-      isOpen: true,
-      commentId,
-      commentContent,
-      action: 'report',
+  useEffect(() => {
+    setSelectedGroupId((prev) => {
+      if (prev && reports.some((g) => g.comment.id === prev)) return prev;
+      return reports[0]?.comment.id ?? null;
     });
+  }, [reports]);
+
+  const selectedGroup =
+    reports.find((g) => g.comment.id === selectedGroupId) ?? null;
+  const panelComment = selectedGroup
+    ? reportGroupToCommentRow(selectedGroup)
+    : null;
+  const panelReports: ReportDetailRow[] | undefined = selectedGroup?.reports.map(
+    (r) => ({
+      id: r.id,
+      reason: r.reason,
+      resolved: r.resolved,
+      createdAt: r.createdAt,
+      users: r.users,
+    })
+  );
+
+  const showToast = useCallback((message: string, type: ToastType = 'success') => {
+    setToast({ message, type });
+  }, []);
+
+  const applyResolvedFilter = (filter: ReportsResolvedFilter) => {
+    const params = new URLSearchParams();
+    params.set('resolved', resolvedToParam(filter));
+    if (data.pageSize !== 10) params.set('pageSize', String(data.pageSize));
+    router.push(`/admin/comments/reports?${params.toString()}`);
   };
 
   const performApprove = async (commentId: string) => {
+    setApprovingId(commentId);
     try {
       const res = await fetch(`/api/admin/comments/${commentId}/approve`, {
         method: 'POST',
       });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to approve');
-      }
-
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'خطا در تایید');
+      showToast('کامنت تایید شد', 'success');
       router.refresh();
-    } catch (error: any) {
-      console.error('Error approving comment:', error);
-      alert(error.message || 'خطا در تایید کامنت');
+    } finally {
+      setApprovingId(null);
     }
-  };
-
-  const handleDelete = async (commentId: string, commentContent: string) => {
-    if (!confirm('آیا از حذف این کامنت اطمینان دارید؟')) return;
-
-    // Show penalty modal for reported comments
-    setPenaltyModal({
-      isOpen: true,
-      commentId,
-      commentContent,
-      action: 'delete',
-    });
   };
 
   const performDelete = async (commentId: string) => {
-    try {
-      const res = await fetch(`/api/admin/comments?id=${commentId}`, {
-        method: 'DELETE',
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to delete');
-      }
-
-      router.refresh();
-    } catch (error: any) {
-      console.error('Error deleting comment:', error);
-      alert(error.message || 'خطا در حذف کامنت');
-    }
+    const res = await fetch(`/api/admin/comments?id=${commentId}`, {
+      method: 'DELETE',
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || 'خطا در حذف');
+    showToast('کامنت حذف شد', 'success');
+    setDeleteTarget(null);
+    router.refresh();
   };
 
-  const handleEdit = async (commentId: string) => {
-    if (!editedContent.trim()) {
-      alert('لطفاً متن کامنت را وارد کنید');
-      return;
-    }
-
-    // Get comment content before showing penalty modal
-    const reportGroup = reports.find((r) => r.comment.id === commentId);
-    if (!reportGroup) return;
-
-    // Show penalty modal for reported comments
+  const handleApprove = (commentId: string) => {
+    const group = reports.find((r) => r.comment.id === commentId);
+    if (!group) return;
     setPenaltyModal({
       isOpen: true,
       commentId,
-      commentContent: reportGroup.comment.content,
-      action: 'edit',
+      commentContent: group.comment.content,
+      action: 'report',
     });
   };
 
-  const performEdit = async (commentId: string) => {
-    if (!editedContent.trim()) {
-      alert('لطفاً متن کامنت را وارد کنید');
-      return;
-    }
+  const handleDelete = (commentId: string, preview: string) => {
+    setDeleteTarget({ id: commentId, preview: preview.slice(0, 120) });
+  };
 
-    try {
-      const res = await fetch(`/api/admin/comments/${commentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: editedContent }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to update');
-      }
-
-      setEditingId(null);
-      setEditedContent('');
-      router.refresh();
-    } catch (error: any) {
-      console.error('Error updating comment:', error);
-      alert(error.message || 'خطا در ویرایش کامنت');
-    }
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const group = reports.find((r) => r.comment.id === deleteTarget.id);
+    if (!group) return;
+    setPenaltyModal({
+      isOpen: true,
+      commentId: deleteTarget.id,
+      commentContent: group.comment.content,
+      action: 'delete',
+    });
+    setDeleteTarget(null);
   };
 
   const handlePenaltySubmit = async (score: number) => {
     if (!penaltyModal.commentId) return;
-
     setPenaltyLoading(true);
     try {
-      // Submit penalty
       const penaltyRes = await fetch(
         `/api/admin/comments/${penaltyModal.commentId}/penalty`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             penaltyScore: score,
             action: penaltyModal.action,
           }),
         }
       );
-
       const penaltyData = await penaltyRes.json();
+      if (!penaltyRes.ok || !penaltyData.success)
+        throw new Error(penaltyData.error || 'خطا');
 
-      if (!penaltyRes.ok || !penaltyData.success) {
-        throw new Error(penaltyData.error || 'Failed to submit penalty');
-      }
-
-      // Perform the action
       if (penaltyModal.action === 'delete') {
         await performDelete(penaltyModal.commentId);
-      } else if (penaltyModal.action === 'edit') {
-        await performEdit(penaltyModal.commentId);
       } else if (penaltyModal.action === 'report') {
         await performApprove(penaltyModal.commentId);
       }
 
-      // Close modal
       setPenaltyModal({
         isOpen: false,
         commentId: null,
         commentContent: '',
         action: 'delete',
       });
-    } catch (error: any) {
-      console.error('Error submitting penalty:', error);
-      alert(error.message || 'خطا در ثبت امتیاز');
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'خطا در عملیات', 'error');
     } finally {
       setPenaltyLoading(false);
     }
   };
 
-  const startEdit = (comment: Comment) => {
-    setEditingId(comment.id);
-    // Use original content (not filtered) for editing
-    setEditedContent(comment.content);
+  const handleOpenFullDetail = (comment: CommentRowData) => {
+    setDetailModalComment(comment);
+    setDetailModalOpen(true);
   };
 
-  // Helper function to replace bad words with asterisks
-  const filterBadWords = (text: string): string => {
-    if (!badWords || badWords.length === 0) return text;
-    
-    let filteredText = text;
-    badWords.forEach((badWord) => {
-      // Create regex that matches the bad word (case insensitive)
-      const regex = new RegExp(badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-      filteredText = filteredText.replace(regex, '*'.repeat(badWord.length));
+  const handleEditComment = async (commentId: string, newContent: string) => {
+    const res = await fetch(`/api/admin/comments/${commentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: newContent }),
     });
-    
-    return filteredText;
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || 'خطا');
+    showToast('کامنت ویرایش شد', 'success');
+    router.refresh();
   };
+
+  const handleDeleteFromModal = async (commentId: string) => {
+    await performDelete(commentId);
+    setDetailModalOpen(false);
+    setDetailModalComment(null);
+  };
+
+  const handleApproveFromModal = async (commentId: string) => {
+    const group = reports.find((r) => r.comment.id === commentId);
+    if (!group) return;
+    setPenaltyModal({
+      isOpen: true,
+      commentId,
+      commentContent: group.comment.content,
+      action: 'report',
+    });
+  };
+
+  const handlePenaltyFromModal = async (
+    commentId: string,
+    score: number,
+    action: string
+  ) => {
+    setPenaltyLoading(true);
+    try {
+      const penaltyRes = await fetch(`/api/admin/comments/${commentId}/penalty`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ penaltyScore: score, action }),
+      });
+      const penaltyData = await penaltyRes.json();
+      if (!penaltyRes.ok || !penaltyData.success)
+        throw new Error(penaltyData.error || 'خطا');
+      if (action === 'delete') await handleDeleteFromModal(commentId);
+      else if (action === 'report') await performApprove(commentId);
+      else {
+        setDetailModalOpen(false);
+        setDetailModalComment(null);
+        router.refresh();
+      }
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'خطا', 'error');
+    } finally {
+      setPenaltyLoading(false);
+    }
+  };
+
+  const filterBadWords = (text: string): string => {
+    if (!badWords?.length) return text;
+    let out = text;
+    badWords.forEach((w) => {
+      const re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      out = out.replace(re, '*'.repeat(w.length));
+    });
+    return out;
+  };
+
+  const handleSelectGroup = (group: ReportGroup) => {
+    setSelectedGroupId(group.comment.id);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setDrawerOpen(true);
+    }
+  };
+
+  const refresh = () => router.refresh();
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">ریپورت‌های کامنت‌ها</h1>
-        <div className="flex gap-2 flex-wrap">
-          <a
-            href="/admin/comments/reports?resolved=false"
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              currentResolved === 'false'
-                ? 'bg-red-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            حل نشده
-          </a>
-          <a
-            href="/admin/comments/reports?resolved=true"
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              currentResolved === 'true'
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            حل شده
-          </a>
-          <a
-            href="/admin/comments/reports"
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              !currentResolved
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            همه
-          </a>
-        </div>
-      </div>
+    <div dir="rtl">
+      <ReportsPageHeader />
+      {navStats && <CommentsSubNav stats={navStats} />}
+
+      <ReportsFilterBar
+        currentFilter={data.resolved}
+        pulse={pulse}
+        totalCount={data.totalCount}
+        onFilterChange={applyResolvedFilter}
+        onRefresh={refresh}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={3000}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       {reports.length === 0 ? (
-        <div className="bg-white rounded-xl p-12 text-center">
-          <Flag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">ریپورتی یافت نشد</p>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center">
+          <Flag className="w-12 h-12 mx-auto text-[var(--color-text-muted)] opacity-40 mb-3" />
+          <p className="text-[var(--color-text-muted)]">ریپورتی یافت نشد</p>
+          {data.resolved !== 'all' && (
+            <button
+              type="button"
+              onClick={() => applyResolvedFilter('all')}
+              className="mt-3 text-sm font-medium text-[var(--primary)] hover:underline"
+            >
+              نمایش همه
+            </button>
+          )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {reports.map((reportGroup) => (
-            <div
-              key={reportGroup.comment.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-            >
-              <div className="p-6">
-                {/* Comment Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                        🚩 {reportGroup.reportCount} ریپورت
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        در آیتم: {reportGroup.comment.items.title}
-                      </span>
-                    </div>
-                    {editingId === reportGroup.comment.id ? (
-                      <div className="space-y-2">
-                        <textarea
-                          value={editedContent}
-                          onChange={(e) => setEditedContent(e.target.value)}
-                          rows={4}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(reportGroup.comment.id)}
-                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-                          >
-                            ذخیره
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingId(null);
-                              setEditedContent('');
-                            }}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                          >
-                            انصراف
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p
-                        className={`text-gray-900 ${
-                          reportGroup.comment.isFiltered ? 'text-gray-500 italic' : ''
-                        }`}
-                      >
-                        {reportGroup.comment.isFiltered
-                          ? filterBadWords(reportGroup.comment.content)
-                          : reportGroup.comment.content}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                      <span>توسط: {reportGroup.comment.users.name || reportGroup.comment.users.email}</span>
-                      <span>❤️ {reportGroup.comment.likeCount}</span>
-                      <span>
-                        {formatDistanceToNow(new Date(reportGroup.comment.createdAt), {
-                          addSuffix: true,
-                          locale: faIR,
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mr-4">
-                    {!reportGroup.comment.isApproved && (
-                      <button
-                        onClick={() =>
-                          handleApprove(
-                            reportGroup.comment.id,
-                            reportGroup.comment.content
-                          )
-                        }
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        title="تایید و پاک کردن ریپورت‌ها"
-                      >
-                        <CheckCircle className="w-5 h-5" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => startEdit(reportGroup.comment)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="ویرایش"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleDelete(
-                          reportGroup.comment.id,
-                          reportGroup.comment.content
-                        )
-                      }
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="حذف"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Reports List */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    دلایل ریپورت:
-                  </h3>
-                  <div className="space-y-2">
-                    {reportGroup.reports.map((report) => (
-                      <div
-                        key={report.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div>
-                          <p className="text-sm text-gray-900">
-                            {report.reason || 'بدون دلیل'}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            توسط: {report.users.name || report.users.email} •{' '}
-                            {formatDistanceToNow(new Date(report.createdAt), {
-                              addSuffix: true,
-                              locale: faIR,
-                            })}
-                          </p>
-                        </div>
-                        {report.resolved && (
-                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                            حل شده
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div
+          className={`flex flex-col lg:flex-row gap-4 ${
+            panelComment ? 'pb-20 lg:pb-0' : ''
+          }`}
+        >
+          <div className="flex-1 min-w-0">
+            <ReportsTable
+              groups={reports}
+              activeCommentId={selectedGroupId}
+              onSelect={handleSelectGroup}
+              filterBadWords={filterBadWords}
+            />
+          </div>
+          <div className="w-full lg:w-[min(380px,32%)] shrink-0">
+            <CommentDetailPanel
+              comment={panelComment}
+              reports={panelReports}
+              reportCount={selectedGroup?.reportCount}
+              onApprove={handleApprove}
+              onReject={() => {}}
+              showReject={false}
+              onDelete={
+                panelComment
+                  ? (id, preview) => handleDelete(id, preview)
+                  : undefined
+              }
+              onOpenFullDetail={handleOpenFullDetail}
+              approvingId={approvingId}
+              rejectingId={null}
+              filterBadWords={filterBadWords}
+              emptyLabel="یک ردیف ریپورت انتخاب کنید"
+            />
+          </div>
         </div>
       )}
 
-      {/* Penalty Modal */}
+      <RejectCommentDialog
+        isOpen={!!deleteTarget}
+        preview={deleteTarget?.preview}
+        isLoading={penaltyLoading}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
+
+      <CommentsMobileDetailBar
+        visible={!!panelComment && !drawerOpen}
+        onOpen={() => setDrawerOpen(true)}
+        label="جزئیات ریپورت"
+      />
+
+      <CommentDetailsDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        comment={panelComment}
+        reports={panelReports}
+        reportCount={selectedGroup?.reportCount}
+        onApprove={handleApprove}
+        onReject={() => {}}
+        showReject={false}
+        onDelete={
+          panelComment
+            ? (id, preview) => handleDelete(id, preview)
+            : undefined
+        }
+        onOpenFullDetail={handleOpenFullDetail}
+        approvingId={approvingId}
+        rejectingId={null}
+        filterBadWords={filterBadWords}
+        title="جزئیات ریپورت"
+      />
+
       <PenaltyModal
         isOpen={penaltyModal.isOpen}
         onClose={() =>
@@ -454,7 +392,21 @@ export default function ReportsPageClient({
         action={penaltyModal.action}
         isLoading={penaltyLoading}
       />
+
+      <CommentDetailModal
+        isOpen={detailModalOpen}
+        onClose={() => {
+          setDetailModalOpen(false);
+          setDetailModalComment(null);
+        }}
+        comment={detailModalComment}
+        badWords={badWords}
+        onEdit={handleEditComment}
+        onDelete={handleDeleteFromModal}
+        onApprove={handleApproveFromModal}
+        onPenaltySubmit={handlePenaltyFromModal}
+        isLoading={penaltyLoading}
+      />
     </div>
   );
 }
-

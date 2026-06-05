@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -50,6 +50,14 @@ export default function ItemsPageClient({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPerPage, setCurrentPerPage] = useState<number>(perPage);
 
+  useEffect(() => {
+    setSelectedListId(initialListId || 'all');
+  }, [initialListId]);
+
+  useEffect(() => {
+    setCurrentPerPage(perPage);
+  }, [perPage]);
+
   // Get unique categories from lists (filter out lists without categories)
   const categories = Array.from(
     new Map(
@@ -96,14 +104,22 @@ export default function ItemsPageClient({
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    // Reset list filter when changing category
     setSelectedListId('all');
+    const params = new URLSearchParams();
+    params.set('page', '1');
+    params.set('perPage', currentPerPage.toString());
+    router.push(`/admin/items?${params.toString()}`);
   };
 
-  const handleListFilterChange = (listId: string) => {
-    setSelectedListId(listId);
-    // No need to push to router - we filter client-side
-    // This allows dropdown to always show all lists
+  const handleListFilterChange = (nextListId: string) => {
+    setSelectedListId(nextListId);
+    const params = new URLSearchParams();
+    params.set('page', '1');
+    params.set('perPage', currentPerPage.toString());
+    if (nextListId !== 'all') {
+      params.set('listId', nextListId);
+    }
+    router.push(`/admin/items?${params.toString()}`);
   };
 
   // Get lists filtered by selected category
@@ -141,11 +157,38 @@ export default function ItemsPageClient({
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">آیتم‌ها</h1>
           <p className="text-sm text-gray-500">
-            نمایش {filteredItems.length} آیتم از {totalItems} آیتم کل
-            {selectedListId !== 'all' && ` (لیست "${selectedList?.title}")`}
+            {selectedListId !== 'all' ? (
+              <>
+                لیست «{selectedList?.title}» · {totalItems.toLocaleString('fa-IR')} آیتم
+                {totalPages > 1 &&
+                  ` · صفحه ${currentPage.toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')}`}
+              </>
+            ) : (
+              <>
+                همه لیست‌ها · نمایش {filteredItems.length.toLocaleString('fa-IR')} از{' '}
+                {totalItems.toLocaleString('fa-IR')} جایگاه
+                {selectedCategory !== 'all' && ' (فیلتر دسته روی همین صفحه)'}
+              </>
+            )}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={
+              selectedListId !== 'all'
+                ? `/admin/items/import?listId=${selectedListId}`
+                : '/admin/items/import'
+            }
+            className="border border-violet-200 text-violet-700 px-5 py-2.5 rounded-lg hover:bg-violet-50 transition-colors font-medium whitespace-nowrap text-sm"
+          >
+            import گروهی JSON
+          </Link>
+          <Link
+            href="/admin/catalog"
+            className="border border-gray-200 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors font-medium whitespace-nowrap text-sm"
+          >
+            کاتالوگ
+          </Link>
           {selectedListId !== 'all' && (
             <Link
               href={`/admin/items/new?listId=${selectedListId}`}
@@ -277,7 +320,10 @@ export default function ItemsPageClient({
           {/* Page Info & Navigation */}
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
-              صفحه {currentPage} از {totalPages} ({totalItems} آیتم)
+              صفحه {currentPage.toLocaleString('fa-IR')} از{' '}
+              {Math.max(1, totalPages).toLocaleString('fa-IR')} (
+              {totalItems.toLocaleString('fa-IR')} آیتم
+              {selectedListId !== 'all' && selectedList ? ` · ${selectedList.title}` : ''})
             </span>
             <div className="flex gap-2">
               <button
@@ -299,7 +345,7 @@ export default function ItemsPageClient({
         </div>
 
         {/* Page Numbers (for desktop) */}
-        {totalPages > 1 && (
+        {totalPages > 1 && totalItems > 0 && (
           <div className="hidden md:flex items-center justify-center gap-2 mt-4 pt-4 border-t border-gray-100">
             {(() => {
               const pages = [];

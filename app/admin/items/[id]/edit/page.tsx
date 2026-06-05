@@ -20,9 +20,17 @@ export default async function EditItemPage({ params }: EditItemPageProps) {
   const item = await prisma.items.findUnique({
     where: { id },
     include: {
-      lists: {
+      lists: { include: { categories: true } },
+      catalog_items: {
         include: {
-          categories: true,
+          _count: { select: { items: true } },
+          items: {
+            select: {
+              id: true,
+              listId: true,
+              lists: { select: { id: true, title: true, slug: true } },
+            },
+          },
         },
       },
     },

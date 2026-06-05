@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth-config';
 import { requireAdmin } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
       isPublic,
       isFeatured,
       isActive,
+      commentsEnabled,
     } = body;
 
     // Validate required fields
@@ -78,10 +80,12 @@ export async function POST(request: NextRequest) {
         isPublic: isPublic !== undefined ? isPublic : true,
         isFeatured: isFeatured !== undefined ? isFeatured : false,
         isActive: isActive !== undefined ? isActive : true,
+        commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
         updatedAt: new Date(),
       },
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json(list, { status: 201 });
   } catch (error: any) {
     console.error('Error creating list:', error);

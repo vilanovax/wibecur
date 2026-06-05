@@ -17,11 +17,11 @@ export default function FeaturedFallbackMessage({ fallbackList }: Props) {
         <p className="text-sm text-amber-800 dark:text-amber-200 mt-2">
           الان این لیست به‌عنوان منتخب نمایش داده می‌شود: <strong>{fallbackList.title}</strong>
           {' — '}
-          <span className="text-xs">(از هوش لیست‌ها با دکمه «ویژه» تنظیم می‌شود)</span>
+          <span className="text-xs">(از صفحه لیست‌ها با دکمه «ویژه» تنظیم می‌شود)</span>
         </p>
       ) : (
         <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
-          هیچ لیست ویژه‌ای در هوش لیست‌ها تعریف نشده. در لیست‌ها یک لیست را «ویژه» کنید.
+          هیچ لیست ویژه‌ای تعریف نشده. در مدیریت لیست‌ها یکی را «ویژه» کنید.
         </p>
       )}
       <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">

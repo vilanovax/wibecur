@@ -6,6 +6,7 @@ import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalList } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
+import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 
 export async function PUT(
   request: NextRequest,
@@ -27,6 +28,7 @@ export async function PUT(
       isPublic,
       isFeatured,
       isActive,
+      commentsEnabled,
     } = body;
 
     // Validate required fields
@@ -77,6 +79,7 @@ export async function PUT(
         isPublic: isPublic !== undefined ? isPublic : true,
         isFeatured: isFeatured !== undefined ? isFeatured : false,
         isActive: isActive !== undefined ? isActive : true,
+        ...(commentsEnabled !== undefined && { commentsEnabled }),
       },
     });
 
@@ -93,6 +96,7 @@ export async function PUT(
       userAgent: meta.userAgent,
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json(list);
   } catch (error: any) {
     console.error('Error updating list:', error);
@@ -147,6 +151,7 @@ export async function PATCH(
       userAgent: meta.userAgent,
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json(list);
   } catch (error: any) {
     console.error('Error PATCH list:', error);
@@ -201,6 +206,7 @@ export async function DELETE(
       userAgent: meta.userAgent,
     });
 
+    revalidateAdminListsAndCategoriesCache();
     return NextResponse.json({ success: true, message: 'به زباله‌دان منتقل شد' });
   } catch (error: any) {
     console.error('Error soft-deleting list:', error);

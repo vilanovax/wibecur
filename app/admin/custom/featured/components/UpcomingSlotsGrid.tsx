@@ -39,22 +39,16 @@ export default function UpcomingSlotsGrid({
   onEdit,
   onDelete,
 }: Props) {
-  if (slots.length === 0) {
-    return (
-      <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-        اسلات آینده‌ای تعریف نشده.
-      </p>
-    );
-  }
+  if (slots.length === 0) return null;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" dir="rtl">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" dir="rtl">
       {slots.map((s) => {
         const status = getStatus(s, now);
         return (
           <div
             key={s.id}
-            className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm hover:shadow-md transition-shadow"
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 hover:shadow-sm transition-shadow"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">

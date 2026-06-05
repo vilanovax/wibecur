@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { revalidateAdminCommentsCache } from '@/lib/admin/admin-cache';
 
 // PUT /api/admin/comments/[id] - ویرایش کامنت
 export async function PUT(
@@ -65,6 +66,8 @@ export async function PUT(
       })
     );
 
+    revalidateAdminCommentsCache();
+
     return NextResponse.json({
       success: true,
       data: {
@@ -120,6 +123,8 @@ export async function DELETE(
         where: { id: commentId },
       })
     );
+
+    revalidateAdminCommentsCache();
 
     return NextResponse.json({
       success: true,

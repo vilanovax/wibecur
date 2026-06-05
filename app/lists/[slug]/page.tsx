@@ -94,6 +94,8 @@ export default async function ListDetailPage({
 
   if (!list || !list.isActive || !list.isPublic) notFound();
 
+  if (list.categories && !list.categories.isActive) notFound();
+
   if (list.users?.role === 'USER') notFound();
 
   prisma.lists

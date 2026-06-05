@@ -7,6 +7,7 @@ import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalUser } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
+import { revalidateAdminUsersCache } from '@/lib/admin/admin-cache';
 
 // PUT /api/admin/users/[id]/toggle-active - فعال/غیرفعال کردن کاربر
 export async function PUT(
@@ -80,6 +81,7 @@ export async function PUT(
       userAgent: meta.userAgent,
     });
 
+    revalidateAdminUsersCache();
     return NextResponse.json({
       success: true,
       data: updatedUser,

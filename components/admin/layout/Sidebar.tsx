@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import {
@@ -16,15 +17,19 @@ import {
   Activity,
   TrendingUp,
   ClipboardList,
+  Database,
   Star,
-  ChevronRight,
-  ChevronLeft,
+  Library,
+  PanelRightClose,
+  PanelRightOpen,
   Sparkles,
+  FileJson,
   X,
 } from 'lucide-react';
 import SidebarNavSection, { type NavItem } from './SidebarNavSection';
 import MiniUserPanel from './MiniUserPanel';
 import { useSidebar } from './SidebarContext';
+import { useSidebarBadges } from '@/hooks/useSidebarBadges';
 import clsx from 'clsx';
 
 const PRIMARY: NavItem[] = [
@@ -32,14 +37,17 @@ const PRIMARY: NavItem[] = [
   { href: '/admin/pulse', label: 'پالس وایب', icon: Activity, permission: 'view_pulse' },
   { href: '/admin/kpi', label: 'داشبورد رشد (KPI)', icon: TrendingUp, permission: 'view_analytics' },
   { href: '/admin/categories', label: 'دسته‌بندی‌ها', icon: Tag, permission: 'manage_categories' },
+  { href: '/admin/lists', label: 'لیست‌ها', icon: List, permission: 'manage_lists' },
   {
-    href: '/admin/lists',
-    label: 'لیست‌ها',
-    icon: List,
+    href: '/admin/catalog',
+    label: 'آیتم‌ها',
+    icon: Package,
     permission: 'manage_lists',
+    matchPrefixes: ['/admin/catalog', '/admin/items'],
     submenu: [
-      { href: '/admin/lists', label: 'همه لیست‌ها', icon: List },
-      { href: '/admin/lists/user-created', label: 'لیست‌های کاربران', icon: Users },
+      { href: '/admin/catalog', label: 'کاتالوگ', icon: Library },
+      { href: '/admin/items', label: 'بر اساس لیست', icon: List },
+      { href: '/admin/items/import', label: 'import گروهی', icon: FileJson },
     ],
   },
   { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
@@ -57,13 +65,7 @@ const INTELLIGENCE: NavItem[] = [
       { href: '/admin/suggestions?tab=items', label: 'پیشنهادات آیتم', icon: Package },
     ],
   },
-  {
-    href: '/admin/custom',
-    label: 'منتخب‌ها',
-    icon: Star,
-    permission: 'manage_lists',
-    submenu: [{ href: '/admin/custom/featured', label: 'مدیریت Featured', icon: Star }],
-  },
+  { href: '/admin/custom/featured', label: 'منتخب هوم', icon: Star, permission: 'manage_lists' },
 ];
 
 const MODERATION: NavItem[] = [
@@ -73,17 +75,14 @@ const MODERATION: NavItem[] = [
     label: 'کامنت‌ها',
     icon: MessageSquare,
     permission: 'view_reports',
-    submenu: [
-      { href: '/admin/comments', label: 'همه کامنت‌ها', icon: MessageSquare },
-      { href: '/admin/comments/reports', label: 'ریپورت کامنت‌ها', icon: AlertTriangle },
-      { href: '/admin/comments/item-reports', label: 'ریپورت آیتم‌ها', icon: Package },
-    ],
+    badgeKey: 'commentsAction',
   },
 ];
 
 const SYSTEM: NavItem[] = [
   { href: '/admin/audit', label: 'لاگ تغییرات', icon: ClipboardList, permission: 'view_audit' },
-  { href: '/admin/settings', label: 'تنظیمات', icon: Settings, permission: 'manage_roles' },
+  { href: '/admin/system/backup', label: 'پشتیبان‌گیری', icon: Database, permission: 'manage_backup' },
+  { href: '/admin/settings', label: 'تنظیمات', icon: Settings, permission: 'view_dashboard' },
 ];
 
 type SidebarContentProps = {
@@ -93,8 +92,74 @@ type SidebarContentProps = {
   isMobileDrawer?: boolean;
 };
 
-function SidebarContent({ collapsed, onClose, showToggle = true, isMobileDrawer = false }: SidebarContentProps) {
+function SidebarBrand({
+  collapsed,
+  isMobileDrawer,
+  onClose,
+}: {
+  collapsed: boolean;
+  isMobileDrawer?: boolean;
+  onClose?: () => void;
+}) {
+  const showText = !collapsed || isMobileDrawer;
+
+  return (
+    <Link
+      href="/admin/dashboard"
+      onClick={isMobileDrawer ? onClose : undefined}
+      className={clsx(
+        'flex items-center min-w-0 rounded-xl transition-opacity hover:opacity-90',
+        showText ? 'gap-2 flex-1' : 'justify-center'
+      )}
+    >
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white shadow-sm shadow-violet-600/20">
+        <Sparkles className="h-4 w-4" />
+      </div>
+      {showText && (
+        <div className="min-w-0 text-right leading-tight">
+          <h2 className="text-sm font-bold text-[var(--color-text)] dark:text-white truncate">
+            WibeCur
+          </h2>
+          <p className="text-[10px] text-[var(--color-text-muted)] dark:text-gray-400 truncate">
+            پنل مدیریت
+          </p>
+        </div>
+      )}
+    </Link>
+  );
+}
+
+function SidebarToggle({ className }: { className?: string }) {
+  const { collapsed, setCollapsed } = useSidebar();
+  return (
+    <button
+      type="button"
+      onClick={() => setCollapsed(!collapsed)}
+      className={clsx(
+        'p-1.5 rounded-lg border border-[var(--color-border)] dark:border-gray-600',
+        'hover:bg-[var(--color-bg)] dark:hover:bg-gray-700 text-[var(--color-text-muted)]',
+        'transition-colors shrink-0',
+        className
+      )}
+      aria-label={collapsed ? 'باز کردن منو' : 'جمع کردن منو'}
+    >
+      {collapsed ? (
+        <PanelRightOpen className="h-5 w-5" />
+      ) : (
+        <PanelRightClose className="h-5 w-5" />
+      )}
+    </button>
+  );
+}
+
+function SidebarContent({
+  collapsed,
+  onClose,
+  showToggle = true,
+  isMobileDrawer = false,
+}: SidebarContentProps) {
   const { data: session } = useSession();
+  const badges = useSidebarBadges(!!session);
   const user = {
     name: session?.user?.name ?? '',
     email: session?.user?.email ?? null,
@@ -103,80 +168,61 @@ function SidebarContent({ collapsed, onClose, showToggle = true, isMobileDrawer 
     online: true,
   };
 
+  const expanded = !collapsed || isMobileDrawer;
+
   return (
     <div className="flex flex-col h-full">
       <div
         className={clsx(
-          'flex items-center border-b border-admin-border dark:border-gray-600 flex-shrink-0',
-          collapsed && !isMobileDrawer ? 'grid grid-cols-[1fr_auto_1fr] gap-2 px-2 py-4' : 'justify-between p-4'
+          'flex-shrink-0 border-b border-[var(--color-border)] dark:border-gray-600',
+          expanded ? 'flex items-center gap-1.5 px-2 py-2' : 'flex flex-col items-center gap-1.5 px-1.5 py-2'
         )}
       >
-        <div className={clsx('flex items-center gap-1', collapsed && !isMobileDrawer && 'justify-start')}>
-          {isMobileDrawer && (
+        {isMobileDrawer && (
+          <div className="flex w-full items-center justify-between gap-2 mb-1">
+            <SidebarBrand collapsed={false} isMobileDrawer onClose={onClose} />
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-admin-muted dark:hover:bg-gray-700 text-admin-text-secondary dark:text-gray-400"
+              className="p-2 rounded-xl hover:bg-[var(--color-bg)] dark:hover:bg-gray-700 text-[var(--color-text-muted)]"
               aria-label="بستن منو"
             >
               <X className="h-5 w-5" />
             </button>
-          )}
-          {showToggle && !isMobileDrawer && <SidebarToggle />}
-        </div>
-        <Link
-          href="/admin/dashboard"
-          onClick={isMobileDrawer ? onClose : undefined}
-          className={clsx(
-            'flex items-center min-w-0',
-            collapsed && !isMobileDrawer && 'justify-center'
-          )}
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
-            <Sparkles className="h-5 w-5" />
           </div>
-          {(!collapsed || isMobileDrawer) && (
-            <div className="mr-3 min-w-0">
-              <h2 className="text-base font-bold text-admin-text-primary dark:text-white truncate">WibeCur</h2>
-              <p className="text-[11px] text-admin-text-tertiary dark:text-gray-400">پنل مدیریت</p>
-            </div>
-          )}
-        </Link>
-        <div className={collapsed && !isMobileDrawer ? 'block' : 'hidden'} aria-hidden />
+        )}
+
+        {!isMobileDrawer && (
+          <>
+            {expanded ? (
+              <>
+                <SidebarBrand collapsed={false} />
+                {showToggle && <SidebarToggle />}
+              </>
+            ) : (
+              <>
+                <SidebarBrand collapsed />
+                {showToggle && <SidebarToggle />}
+              </>
+            )}
+          </>
+        )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-3 space-y-4 min-h-0">
-        <SidebarNavSection title="اصلی" items={PRIMARY} collapsed={collapsed} />
-        <div className="border-t border-admin-border dark:border-gray-600" />
-        <SidebarNavSection title="هوش و داده" items={INTELLIGENCE} collapsed={collapsed} />
-        <div className="border-t border-admin-border dark:border-gray-600" />
-        <SidebarNavSection title="نظارت" items={MODERATION} collapsed={collapsed} />
-        <div className="border-t border-admin-border dark:border-gray-600" />
-        <SidebarNavSection title="سیستم" items={SYSTEM} collapsed={collapsed} />
+      <nav
+        className="flex-1 overflow-y-auto overflow-x-hidden px-1.5 py-1.5 space-y-2 min-h-0 scrollbar-thin"
+        aria-label="منوی اصلی"
+      >
+        <Suspense fallback={<div className="px-2 py-6 text-xs text-center text-[var(--color-text-muted)] animate-pulse">…</div>}>
+          <SidebarNavSection title="اصلی" items={PRIMARY} collapsed={collapsed && !isMobileDrawer} badges={badges} />
+          <SidebarNavSection title="هوش و داده" items={INTELLIGENCE} collapsed={collapsed && !isMobileDrawer} badges={badges} />
+          <SidebarNavSection title="نظارت" items={MODERATION} collapsed={collapsed && !isMobileDrawer} badges={badges} />
+          <SidebarNavSection title="سیستم" items={SYSTEM} collapsed={collapsed && !isMobileDrawer} badges={badges} />
+        </Suspense>
       </nav>
 
       <MiniUserPanel collapsed={collapsed && !isMobileDrawer} user={user} />
-
-      {(!collapsed || isMobileDrawer) && (
-        <div className="p-3 border-t border-admin-border dark:border-gray-600 flex-shrink-0">
-          <p className="text-[10px] text-admin-text-tertiary dark:text-gray-500 text-center">Admin 2.0</p>
-        </div>
-      )}
     </div>
-  );
-}
-
-function SidebarToggle() {
-  const { collapsed, setCollapsed } = useSidebar();
-  return (
-    <button
-      type="button"
-      onClick={() => setCollapsed(!collapsed)}
-      className="p-1.5 rounded-xl hover:bg-admin-muted dark:hover:bg-gray-700 text-admin-text-secondary dark:text-gray-400 transition-colors"
-      aria-label={collapsed ? 'باز کردن منو' : 'جمع کردن منو'}
-    >
-      {collapsed ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-    </button>
   );
 }
 
@@ -185,20 +231,19 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop sidebar */}
       <aside
         className={clsx(
-          'hidden lg:flex flex-col flex-shrink-0 border-l border-admin-border dark:border-gray-600',
-          'bg-admin-card dark:bg-gray-800 min-h-screen transition-[width] duration-300 ease-in-out',
-          'rounded-l-xl shadow-admin',
-          collapsed ? 'w-20' : 'w-72'
+          'hidden lg:flex flex-col flex-shrink-0',
+          'border-s border-[var(--color-border)] dark:border-gray-600',
+          'bg-[var(--color-surface)] dark:bg-gray-800 min-h-screen',
+          'transition-[width] duration-300 ease-in-out shadow-sm',
+          collapsed ? 'w-14' : 'w-[13.25rem]'
         )}
         dir="rtl"
       >
         <SidebarContent collapsed={collapsed} showToggle />
       </aside>
 
-      {/* Mobile overlay + drawer */}
       <div
         className={clsx(
           'lg:hidden fixed inset-0 z-40 transition-opacity duration-300',
@@ -208,14 +253,14 @@ export default function Sidebar() {
         <button
           type="button"
           aria-label="بستن"
-          className="absolute inset-0 bg-black/50"
+          className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
           onClick={() => setMobileOpen(false)}
         />
         <aside
           className={clsx(
-            'absolute top-0 right-0 h-full w-72 max-w-[85vw] flex flex-col',
-            'bg-admin-card dark:bg-gray-800 border-l border-admin-border dark:border-gray-600',
-            'rounded-l-xl shadow-xl transition-transform duration-300 ease-out',
+            'absolute top-0 inset-s-0 h-full w-[13.25rem] max-w-[85vw] flex flex-col',
+            'bg-[var(--color-surface)] dark:bg-gray-800 border-s border-[var(--color-border)]',
+            'shadow-2xl transition-transform duration-300 ease-out',
             mobileOpen ? 'translate-x-0' : 'translate-x-full'
           )}
           dir="rtl"

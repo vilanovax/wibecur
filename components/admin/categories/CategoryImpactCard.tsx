@@ -56,7 +56,7 @@ export default function CategoryImpactCard({
         <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
           <BarChart3 className="w-5 h-5" />
           <h2 className="font-semibold text-[var(--color-text)]">
-            Category Impact Snapshot
+            خلاصه تأثیر دسته
           </h2>
         </div>
         <div className="mt-4 h-24 flex items-center justify-center text-[var(--color-text-muted)] text-sm">
@@ -75,7 +75,7 @@ export default function CategoryImpactCard({
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-[var(--color-text-muted)]" />
           <h2 className="font-semibold text-[var(--color-text)]">
-            Category Impact Snapshot
+            خلاصه تأثیر دسته
           </h2>
         </div>
         <p className="mt-2 text-sm text-red-600">{error || 'داده‌ای یافت نشد'}</p>
@@ -123,7 +123,7 @@ export default function CategoryImpactCard({
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 className="w-5 h-5 text-[var(--color-text-muted)]" />
           <h2 className="font-semibold text-[var(--color-text)]">
-            Category Impact Snapshot
+            خلاصه تأثیر دسته
           </h2>
         </div>
         <p className="text-xs text-[var(--color-text-muted)] mb-4">

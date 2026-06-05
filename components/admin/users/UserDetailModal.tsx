@@ -17,7 +17,12 @@ interface UserDetailModalProps {
   userId: string;
   isOpen: boolean;
   onClose: () => void;
-  onToggleActive: (newStatus: boolean) => void;
+  onToggleActiveRequest: (user: {
+    id: string;
+    name: string | null;
+    email: string;
+    isActive: boolean;
+  }) => void;
 }
 
 interface UserDetails {
@@ -78,13 +83,10 @@ export default function UserDetailModal({
   userId,
   isOpen,
   onClose,
-  onToggleActive,
+  onToggleActiveRequest,
 }: UserDetailModalProps) {
   const [user, setUser] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isToggling, setIsToggling] = useState(false);
-  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
-  const [deactivateConfirmText, setDeactivateConfirmText] = useState('');
 
   useEffect(() => {
     if (isOpen && userId) fetchUserDetails();
@@ -99,31 +101,8 @@ export default function UserDetailModal({
       setUser(data.data);
     } catch (e) {
       console.error(e);
-      alert(e instanceof Error ? e.message : 'خطا در دریافت جزئیات کاربر');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleToggleActive = async () => {
-    if (!user || deactivateConfirmText !== 'غیرفعال') return;
-    setIsToggling(true);
-    try {
-      const res = await fetch(`/api/admin/users/${userId}/toggle-active`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !user.isActive }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'خطا در تغییر وضعیت');
-      setUser({ ...user, isActive: !user.isActive });
-      onToggleActive(!user.isActive);
-      setDeactivateModalOpen(false);
-      setDeactivateConfirmText('');
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'خطا در تغییر وضعیت');
-    } finally {
-      setIsToggling(false);
     }
   };
 
@@ -290,21 +269,32 @@ export default function UserDetailModal({
                       )}
                       <button
                         type="button"
-                        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg)] transition-colors"
+                        disabled
+                        title="به‌زودی"
+                        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-[var(--color-text-muted)] opacity-50 cursor-not-allowed"
                       >
                         <Star className="w-4 h-4" />
-                        ارتقا به کیوریتور
+                        ارتقا به کیوریتور (به‌زودی)
                       </button>
                       <button
                         type="button"
-                        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors"
+                        disabled
+                        title="به‌زودی"
+                        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-[var(--color-text-muted)] opacity-50 cursor-not-allowed"
                       >
                         <EyeOff className="w-4 h-4" />
-                        Shadow Ban
+                        Shadow Ban (به‌زودی)
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDeactivateModalOpen(true)}
+                        onClick={() =>
+                          onToggleActiveRequest({
+                            id: user.id,
+                            name: user.name,
+                            email: user.email,
+                            isActive: user.isActive,
+                          })
+                        }
                         className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors border border-red-200"
                       >
                         <PowerOff className="w-4 h-4" />
@@ -332,51 +322,6 @@ export default function UserDetailModal({
         </div>
       </div>
 
-      {/* Deactivate confirmation modal */}
-      {deactivateModalOpen && user && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-sm w-full p-5 border border-[var(--color-border)]">
-            <h3 className="font-semibold text-[var(--color-text)] mb-2">
-              {user.isActive ? 'غیرفعال کردن کاربر' : 'فعال کردن کاربر'}
-            </h3>
-            <p className="text-sm text-[var(--color-text-muted)] mb-4">
-              {user.isActive
-                ? 'کاربر پس از غیرفعال‌سازی نمی‌تواند وارد شود و محتوای او از اکسپلور مخفی می‌شود. برای تأیید عبارت «غیرفعال» را وارد کنید.'
-                : 'با فعال‌سازی، کاربر دوباره به حساب خود دسترسی خواهد داشت.'}
-            </p>
-            {user.isActive && (
-              <input
-                type="text"
-                value={deactivateConfirmText}
-                onChange={(e) => setDeactivateConfirmText(e.target.value)}
-                placeholder="غیرفعال"
-                className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] mb-4"
-                dir="rtl"
-              />
-            )}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDeactivateModalOpen(false);
-                  setDeactivateConfirmText('');
-                }}
-                className="flex-1 py-2 rounded-xl border border-[var(--color-border)] font-medium"
-              >
-                انصراف
-              </button>
-              <button
-                type="button"
-                onClick={handleToggleActive}
-                disabled={user.isActive && deactivateConfirmText !== 'غیرفعال'}
-                className="flex-1 py-2 rounded-xl bg-red-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isToggling ? '...' : user.isActive ? 'غیرفعال کن' : 'فعال کن'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

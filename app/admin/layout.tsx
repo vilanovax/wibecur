@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Layout ادمین 2.0: Sidebar + MainArea (Header + Content)
- * - Sidebar: w-72 / w-20 (collapsible), localStorage, mobile overlay drawer
+ * - Sidebar: ~212px / w-14 collapsed, localStorage, mobile overlay drawer
  * - Header: h-16، toggle + breadcrumb | search | profile+notifications+role
  * - Content: max-w-[1400px], gap-6
  */
@@ -21,7 +21,7 @@ export default function AdminLayout({
   return (
     <SidebarProvider>
       <div className="admin-panel min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir overflow-x-auto" dir="rtl">
-        <div className="min-w-0 lg:min-w-[1280px] flex min-h-screen">
+        <div className="min-w-0 lg:min-w-[1240px] flex min-h-screen">
           <Sidebar />
           <div className="flex-1 min-w-0 flex flex-col">
             <AdminHeader />

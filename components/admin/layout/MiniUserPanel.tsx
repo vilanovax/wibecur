@@ -45,7 +45,7 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
         src={user.image}
         name={displayName}
         email={user.email}
-        size={40}
+        size={32}
         rounded="xl"
         className="ring-2 ring-white dark:ring-gray-700 shadow-sm"
       />
@@ -70,7 +70,7 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
       </button>
     );
     return (
-      <div ref={panelRef} className="relative mt-auto p-3 border-t border-admin-border dark:border-gray-600">
+      <div ref={panelRef} className="relative mt-auto p-2 border-t border-admin-border dark:border-gray-600">
         {dropdownOpen ? (
           <div className="w-full flex justify-center">{trigger}</div>
         ) : (
@@ -122,22 +122,26 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
   }
 
   return (
-    <div ref={panelRef} className="relative mt-auto p-4 border-t border-admin-border dark:border-gray-600">
+    <div ref={panelRef} className="relative mt-auto px-2 py-2 border-t border-admin-border dark:border-gray-600">
       <button
         type="button"
         onClick={() => setDropdownOpen(!dropdownOpen)}
         className={clsx(
-          'w-full flex items-center gap-3 rounded-xl p-2 -m-2 transition-colors text-right',
+          'w-full flex items-center gap-2 rounded-lg px-1.5 py-1.5 transition-colors text-right',
           'hover:bg-admin-muted dark:hover:bg-gray-700/50'
         )}
       >
         {avatar}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-admin-text-primary dark:text-white truncate">{displayName}</p>
-          <p className="text-xs text-admin-text-tertiary dark:text-gray-400">{roleLabel}</p>
-          {user.online !== false && (
-            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">● آنلاین</p>
-          )}
+          <p className="text-[13px] font-semibold text-admin-text-primary dark:text-white truncate leading-tight">
+            {displayName}
+          </p>
+          <p className="text-[11px] text-admin-text-tertiary dark:text-gray-400 truncate">
+            {roleLabel}
+            {user.online !== false && (
+              <span className="text-emerald-600 dark:text-emerald-400"> · آنلاین</span>
+            )}
+          </p>
         </div>
       </button>
       {dropdownOpen && (

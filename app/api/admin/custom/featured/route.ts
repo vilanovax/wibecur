@@ -55,7 +55,21 @@ export async function GET() {
     const now = new Date();
 
     // همیشه اول لیست‌ها را جداگانه می‌گیریم تا حتی با خطای اسلات/رویداد، دراپ‌داون پر شود
-    let allLists: { id: string; title: string; slug: string; saveCount: number; isPublic?: boolean; isActive?: boolean; deletedAt?: Date | null; isFeatured?: boolean; categories: { name: string; slug: string } | null }[] = [];
+    let allLists: {
+      id: string;
+      title: string;
+      slug: string;
+      description: string | null;
+      coverImage: string | null;
+      saveCount: number;
+      itemCount: number;
+      badge: string | null;
+      isPublic?: boolean;
+      isActive?: boolean;
+      deletedAt?: Date | null;
+      isFeatured?: boolean;
+      categories: { name: string; slug: string } | null;
+    }[] = [];
     try {
       allLists = await prisma.lists.findMany({
         where: {},
@@ -63,7 +77,11 @@ export async function GET() {
           id: true,
           title: true,
           slug: true,
+          description: true,
+          coverImage: true,
           saveCount: true,
+          itemCount: true,
+          badge: true,
           isPublic: true,
           isActive: true,
           deletedAt: true,
@@ -99,7 +117,11 @@ export async function GET() {
                 id: true,
                 title: true,
                 slug: true,
+                description: true,
+                coverImage: true,
                 saveCount: true,
+                itemCount: true,
+                badge: true,
                 categories: { select: { name: true, slug: true } },
               },
             },
@@ -115,7 +137,11 @@ export async function GET() {
                 id: true,
                 title: true,
                 slug: true,
+                description: true,
+                coverImage: true,
                 saveCount: true,
+                itemCount: true,
+                badge: true,
                 categories: { select: { name: true, slug: true } },
               },
             },
@@ -186,7 +212,11 @@ export async function GET() {
         id: l.id,
         title: l.title,
         slug: l.slug,
+        description: l.description,
+        coverImage: l.coverImage,
         saveCount: l.saveCount,
+        itemCount: l.itemCount,
+        badge: l.badge,
         isPublic: l.isPublic,
         isActive: l.isActive,
         deletedAt: l.deletedAt instanceof Date ? l.deletedAt.toISOString() : l.deletedAt ?? null,

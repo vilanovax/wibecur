@@ -10,7 +10,15 @@ export const MovieMetadataSchema = z.object({
   }),
   genre: z.string().optional(),
   director: z.string().optional(),
-  imdbRating: z.string().optional(), // e.g., "8.5/10"
+  imdbRating: z.string().optional(), // e.g., "8.5"
+  imdbId: z.string().optional(),
+  imdbID: z.string().optional(),
+  tmdbId: z.union([z.number(), z.string()]).optional().transform((val) => {
+    if (val === undefined || val === null || val === '') return undefined;
+    const n = typeof val === 'number' ? val : parseInt(String(val), 10);
+    return Number.isNaN(n) ? undefined : n;
+  }),
+  tmdbID: z.union([z.number(), z.string()]).optional(),
 });
 
 export type MovieMetadata = z.infer<typeof MovieMetadataSchema>;

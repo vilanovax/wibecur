@@ -125,7 +125,7 @@ export default function SmartSuggestionsTab({ onScheduleList }: Props) {
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
         <Lightbulb className="w-5 h-5 text-amber-500" />
-        <h2 className="text-lg font-semibold">پیشنهاد هوشمند Featured</h2>
+        <h2 className="text-lg font-semibold">پیشنهاد منتخب</h2>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         بر اساس امتیاز ترندینگ، رشد ذخیره، عملکرد دسته و مدت Featured نشدن.

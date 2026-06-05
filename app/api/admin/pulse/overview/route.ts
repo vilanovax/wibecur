@@ -33,6 +33,8 @@ async function getPulseOverview() {
       bookmarksByDay,
       commentsByDay,
       usersByDay,
+      listsByDay,
+      yesterdayLists,
     ] = await Promise.all([
       prisma.bookmarks.count({ where: { createdAt: { gte: todayStart } } }),
       prisma.comments.count({
@@ -53,7 +55,7 @@ async function getPulseOverview() {
       >`
         SELECT (b."createdAt"::date) as day, COUNT(*)::bigint as count
         FROM bookmarks b
-        WHERE b."createdAt" >= NOW() - INTERVAL '7 days'
+        WHERE b."createdAt" >= NOW() - INTERVAL '14 days'
         GROUP BY (b."createdAt"::date)
         ORDER BY day ASC
       `.catch(() => []),
@@ -62,7 +64,7 @@ async function getPulseOverview() {
       >`
         SELECT (c."createdAt"::date) as day, COUNT(*)::bigint as count
         FROM comments c
-        WHERE c."createdAt" >= NOW() - INTERVAL '7 days' AND c."deletedAt" IS NULL
+        WHERE c."createdAt" >= NOW() - INTERVAL '14 days' AND c."deletedAt" IS NULL
         GROUP BY (c."createdAt"::date)
         ORDER BY day ASC
       `.catch(() => []),
@@ -71,10 +73,22 @@ async function getPulseOverview() {
       >`
         SELECT (u."createdAt"::date) as day, COUNT(*)::bigint as count
         FROM users u
-        WHERE u."createdAt" >= NOW() - INTERVAL '7 days'
+        WHERE u."createdAt" >= NOW() - INTERVAL '14 days'
         GROUP BY (u."createdAt"::date)
         ORDER BY day ASC
       `.catch(() => []),
+      prisma.$queryRaw<
+        { day: Date; count: bigint }[]
+      >`
+        SELECT (l."createdAt"::date) as day, COUNT(*)::bigint as count
+        FROM lists l
+        WHERE l."createdAt" >= NOW() - INTERVAL '14 days'
+        GROUP BY (l."createdAt"::date)
+        ORDER BY day ASC
+      `.catch(() => []),
+      prisma.lists.count({
+        where: { createdAt: { gte: yesterdayStart, lt: todayStart } },
+      }),
     ]);
 
     const [bookmarksToday, commentsToday, votesToday] = await Promise.all([
@@ -92,8 +106,9 @@ async function getPulseOverview() {
     const todayInteractions =
       todaySaves + todayComments + newUsersToday + todayItemVotes;
 
-    const days: { date: string; saves: number; comments: number; newUsers: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
+    const days: { date: string; saves: number; comments: number; newUsers: number; lists: number }[] =
+      [];
+    for (let i = 13; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().slice(0, 10);
@@ -103,8 +118,17 @@ async function getPulseOverview() {
         Number(commentsByDay.find((r) => String(r.day).slice(0, 10) === dateStr)?.count ?? 0);
       const newUsers =
         Number(usersByDay.find((r) => String(r.day).slice(0, 10) === dateStr)?.count ?? 0);
-      days.push({ date: dateStr, saves, comments, newUsers });
+      const lists =
+        Number(listsByDay.find((r) => String(r.day).slice(0, 10) === dateStr)?.count ?? 0);
+      days.push({ date: dateStr, saves, comments, newUsers, lists });
     }
+
+    const saveCounts = days.map((d) => d.saves);
+    const saveAvg = saveCounts.reduce((a, b) => a + b, 0) / (saveCounts.length || 1);
+    const saveSpikes =
+      saveAvg > 0
+        ? saveCounts.filter((s) => s >= Math.max(5, Math.ceil(saveAvg * 2))).length
+        : 0;
 
     return {
       todaySaves,
@@ -116,12 +140,16 @@ async function getPulseOverview() {
       yesterdaySaves,
       yesterdayComments,
       newUsersYesterday,
+      yesterdayLists,
       dailyStats: days,
       risk: {
         reportsPending: pendingItemReports + pendingCommentReports,
+        commentReportsPending: pendingCommentReports,
+        itemReportsPending: pendingItemReports,
         suspiciousLists: 0,
-        saveSpikes: 0,
+        saveSpikes,
       },
+      chartStats: days.slice(-7),
       lastSync: new Date().toISOString(),
     };
   });

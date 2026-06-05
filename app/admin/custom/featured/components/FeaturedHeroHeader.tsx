@@ -1,49 +1,67 @@
 'use client';
 
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Plus } from 'lucide-react';
 
 type Props = {
   hasActiveSlot: boolean;
+  upcomingCount: number;
   onRefresh: () => void;
   refreshing: boolean;
+  onAddSlot?: () => void;
 };
 
-export default function FeaturedHeroHeader({ hasActiveSlot, onRefresh, refreshing }: Props) {
+export default function FeaturedHeroHeader({
+  hasActiveSlot,
+  upcomingCount,
+  onRefresh,
+  refreshing,
+  onAddSlot,
+}: Props) {
   return (
-    <header
-      className="rounded-3xl p-8 shadow-lg border border-indigo-100 dark:border-indigo-900/40 bg-gradient-to-br from-indigo-50/80 to-white dark:from-indigo-950/40 dark:to-gray-900 transition-shadow"
-      dir="rtl"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            مدیریت لیست منتخب صفحه اصلی
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            کنترل برنامه‌ریزی نمایش Hero در اپ موبایل
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+    <header className="flex flex-wrap items-center justify-between gap-4" dir="rtl">
+      <div>
+        <h1 className="text-xl font-bold text-[var(--color-text)]">
+          منتخب هوم
+        </h1>
+        <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+          زمان‌بندی Hero اپ موبایل
+          {upcomingCount > 0
+            ? ` · ${upcomingCount.toLocaleString('fa-IR')} اسلات در صف`
+            : ''}
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <span
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+            hasActiveSlot
+              ? 'bg-emerald-100 text-emerald-800'
+              : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
+          }`}
+        >
           <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
-              hasActiveSlot
-                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
-                : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${hasActiveSlot ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-            {hasActiveSlot ? 'Active' : 'No active slot'}
-          </span>
+            className={`w-2 h-2 rounded-full ${hasActiveSlot ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}
+          />
+          {hasActiveSlot ? 'اسلات فعال' : 'بدون اسلات فعال'}
+        </span>
+        {onAddSlot && (
           <button
             type="button"
-            onClick={onRefresh}
-            disabled={refreshing}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-gray-800 text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 disabled:opacity-50 transition-colors"
+            onClick={onAddSlot}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            بروزرسانی
+            <Plus className="w-4 h-4" />
+            اسلات جدید
           </button>
-        </div>
+        )}
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={refreshing}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg)] disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          بروزرسانی
+        </button>
       </div>
     </header>
   );

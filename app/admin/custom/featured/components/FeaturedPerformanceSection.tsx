@@ -73,7 +73,7 @@ export default function FeaturedPerformanceSection({ slotId }: Props) {
   if (loading) {
     return (
       <section className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm" dir="rtl">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">عملکرد منتخب</h2>
+        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">عملکرد اسلات فعال</h2>
         <p className="text-sm text-gray-500">در حال بارگذاری…</p>
       </section>
     );
@@ -82,7 +82,7 @@ export default function FeaturedPerformanceSection({ slotId }: Props) {
   if (error || !performance) {
     return (
       <section className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm" dir="rtl">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">عملکرد منتخب</h2>
+        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">عملکرد اسلات فعال</h2>
         <p className="text-sm text-red-600 dark:text-red-400">{error || 'داده‌ای یافت نشد'}</p>
       </section>
     );

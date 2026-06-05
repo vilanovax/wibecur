@@ -50,6 +50,8 @@ export type ExploreSections = {
 export type ExploreSectionsOptions = {
   /** دسته‌های محبوب کاربر (از بوکمارک‌ها) */
   preferredCategoryIds?: string[];
+  /** فقط لیست‌های این دسته‌ها (دسته‌های فعال از API) */
+  activeCategoryIds?: string[];
   /** لیست‌های ذخیره‌شده — از پیشنهاد حذف می‌شوند */
   excludeListIds?: string[];
 };
@@ -62,7 +64,16 @@ export function buildExploreSections(
 ): ExploreSections {
   const exclude = new Set(options?.excludeListIds ?? []);
   const preferred = new Set(options?.preferredCategoryIds ?? []);
-  const pool = exclude.size > 0 ? allLists.filter((l) => !exclude.has(l.id)) : allLists;
+  const activeCategories = new Set(options?.activeCategoryIds ?? []);
+
+  const isInActiveCategory = (list: CuratedList) => {
+    if (activeCategories.size === 0) return true;
+    if (!list.categoryId || list.categoryId === 'unknown') return true;
+    return activeCategories.has(list.categoryId);
+  };
+
+  const basePool = allLists.filter(isInActiveCategory);
+  const pool = exclude.size > 0 ? basePool.filter((l) => !exclude.has(l.id)) : basePool;
 
   const filtered = filterAndSortLists(pool, {
     mode: 'trending',
@@ -86,7 +97,9 @@ export function buildExploreSections(
       filtered,
       used,
       FOR_YOU_LIMIT,
-      (l) => preferred.has(l.categoryId)
+      (l) =>
+        preferred.has(l.categoryId) &&
+        (activeCategories.size === 0 || activeCategories.has(l.categoryId))
     );
   }
   if (forYou.length < FOR_YOU_LIMIT) {

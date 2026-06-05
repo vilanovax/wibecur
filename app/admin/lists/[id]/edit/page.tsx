@@ -48,7 +48,7 @@ export default async function EditListPage({
     : null;
 
   return (
-    <div className="max-w-5xl mx-auto" dir="rtl">
+    <div className="max-w-6xl mx-auto px-4 py-6" dir="rtl">
       <EditListForm
         list={serializedList}
         categories={serializedCategories}

@@ -273,6 +273,16 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
         </Link>
       </div>
 
+      {item.catalogItemId && item.catalog_items && (
+        <div className="mb-6 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+          <p className="font-semibold">ویرایش کاتالوگ مشترک</p>
+          <p className="text-xs mt-1">
+            تغییر عنوان و تصویر در{' '}
+            <strong>{item.catalog_items._count?.items ?? 1}</strong> لیست اعمال می‌شود.
+          </p>
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
           {error}

@@ -1,30 +1,21 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Loader2, X, Calendar, BarChart3, Lightbulb } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { Loader2, X } from 'lucide-react';
+import Toast, { type ToastType } from '@/components/shared/Toast';
 import DatePicker, { DateObject } from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import FeaturedHeroHeader from './components/FeaturedHeroHeader';
-import CurrentActiveSlotCard from './components/CurrentActiveSlotCard';
-import FeaturedFallbackMessage from './components/FeaturedFallbackMessage';
-import AddSlotCard from './components/AddSlotCard';
-import type { ConflictResult } from './components/AddSlotCard';
-import UpcomingSlotsGrid from './components/UpcomingSlotsGrid';
-import FeaturedPerformanceSection from './components/FeaturedPerformanceSection';
-import WeeklyReportTab from './components/WeeklyReportTab';
-import SmartSuggestionsTab from './components/SmartSuggestionsTab';
+import FeaturedStatsBar from './components/FeaturedStatsBar';
+import FeaturedWeeklyDetails from './components/FeaturedWeeklyDetails';
+import AddSlotWizardModal from './components/AddSlotWizardModal';
+import DeleteSlotDialog from './components/DeleteSlotDialog';
+import type { ConflictResult, DurationPreset, ListOption } from './components/AddSlotCard';
+import type { PreviewList } from './components/FeaturedMobilePreview';
+import FeaturedSchedulerTab from './components/FeaturedSchedulerTab';
 
-export type ListOption = {
-  id: string;
-  title: string;
-  slug: string;
-  saveCount: number;
-  isFeatured?: boolean;
-  isActive?: boolean;
-  deletedAt?: string | null;
-  categories: { name: string; slug: string } | null;
-};
+export type { ListOption };
 
 export type SlotItem = {
   id: string;
@@ -59,12 +50,21 @@ function getRemainingText(slot: SlotItem): string | null {
   return hours > 0 ? `${hours} ساعت باقی‌مانده` : 'کمتر از یک ساعت';
 }
 
-type TabId = 'scheduler' | 'weekly-report' | 'suggestions';
+function listToPreview(l: ListOption): PreviewList {
+  return {
+    title: l.title,
+    description: l.description,
+    coverImage: l.coverImage,
+    saveCount: l.saveCount,
+    itemCount: l.itemCount,
+    badge: l.badge,
+  };
+}
 
-export default function FeaturedManagementClient() {
-  const [activeTab, setActiveTab] = useState<TabId>('scheduler');
+function FeaturedManagementInner() {
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [formCategorySlug, setFormCategorySlug] = useState('');
   const [formListId, setFormListId] = useState('');
@@ -83,6 +83,10 @@ export default function FeaturedManagementClient() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const conflictTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -97,7 +101,9 @@ export default function FeaturedManagementClient() {
           const listRes = await fetch(`/api/admin/custom/featured/lists?t=${Date.now()}`);
           const listJson = await listRes.json();
           if (listRes.ok && Array.isArray(listJson.lists)) lists = listJson.lists;
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
       setData({
         current: json.current ?? null,
@@ -106,6 +112,7 @@ export default function FeaturedManagementClient() {
         past: Array.isArray(json.past) ? json.past : [],
         lists,
       });
+      setStatsRefreshKey((k) => k + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'خطا');
     } finally {
@@ -203,6 +210,8 @@ export default function FeaturedManagementClient() {
       setFormEndDate(null);
       setFormEndTime('23:59');
       setConflictResult(null);
+      setAddModalOpen(false);
+      setToast({ message: 'اسلات با موفقیت ثبت شد', type: 'success' });
       await fetchData();
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : 'خطا');
@@ -211,17 +220,36 @@ export default function FeaturedManagementClient() {
     }
   };
 
-  const handleDelete = async (slotId: string) => {
-    if (!confirm('حذف این اسلات؟')) return;
+  const requestDelete = (slotId: string, title: string) => {
+    setDeleteTarget({ id: slotId, title });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      const res = await fetch(`/api/admin/custom/featured/${slotId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/custom/featured/${deleteTarget.id}`, {
+        method: 'DELETE',
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'خطا');
+      setDeleteTarget(null);
+      setToast({ message: 'اسلات حذف شد', type: 'success' });
       await fetchData();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'خطا');
+      setToast({
+        message: e instanceof Error ? e.message : 'خطا در حذف',
+        type: 'error',
+      });
+    } finally {
+      setDeleteLoading(false);
     }
   };
+
+  const openAddModal = useCallback((listId?: string) => {
+    if (listId) setFormListId(listId);
+    setAddModalOpen(true);
+  }, []);
 
   const openEditModal = (slot: SlotItem) => {
     setEditingSlot(slot);
@@ -270,6 +298,7 @@ export default function FeaturedManagementClient() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || json.details || 'خطا در ویرایش');
       setEditingSlot(null);
+      setToast({ message: 'زمان‌بندی به‌روز شد', type: 'success' });
       await fetchData();
     } catch (e) {
       setEditError(e instanceof Error ? e.message : 'خطا');
@@ -288,125 +317,131 @@ export default function FeaturedManagementClient() {
 
   const now = new Date();
 
-  const handlePreset = useCallback((preset: 'tomorrow' | 'nextWeek' | 'weekend') => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
+  const handlePreset = useCallback((preset: DurationPreset) => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
     if (preset === 'tomorrow') {
-      d.setDate(d.getDate() + 1);
-    } else if (preset === 'nextWeek') {
-      d.setDate(d.getDate() + 7);
-    } else {
-      const day = d.getDay();
-      const toSaturday = day === 5 ? 0 : day === 6 ? 6 : 5 - day;
-      d.setDate(d.getDate() + (toSaturday <= 0 ? toSaturday + 7 : toSaturday));
-    }
-    setFormStartDate(new DateObject({ date: d, calendar: persian, locale: persian_fa }));
-    setFormStartTime('00:00');
-    if (preset === 'weekend') {
-      const end = new Date(d);
-      end.setDate(end.getDate() + 2);
-      end.setHours(23, 59, 59, 999);
-      setFormEndDate(new DateObject({ date: end, calendar: persian, locale: persian_fa }));
-      setFormEndTime('23:59');
-    } else {
+      start.setDate(start.getDate() + 1);
+      setFormStartDate(new DateObject({ date: start, calendar: persian, locale: persian_fa }));
+      setFormStartTime('00:00');
       setFormEndDate(null);
       setFormEndTime('23:59');
+      return;
     }
+
+    if (preset === 'week7') {
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      end.setHours(23, 59, 59, 999);
+      setFormStartDate(new DateObject({ date: start, calendar: persian, locale: persian_fa }));
+      setFormStartTime('00:00');
+      setFormEndDate(new DateObject({ date: end, calendar: persian, locale: persian_fa }));
+      setFormEndTime('23:59');
+      return;
+    }
+
+    if (preset === 'weekend') {
+      const day = start.getDay();
+      const toSaturday = day === 5 ? 0 : day === 6 ? 6 : 5 - day;
+      start.setDate(start.getDate() + (toSaturday <= 0 ? toSaturday + 7 : toSaturday));
+      const end = new Date(start);
+      end.setDate(end.getDate() + 2);
+      end.setHours(23, 59, 59, 999);
+      setFormStartDate(new DateObject({ date: start, calendar: persian, locale: persian_fa }));
+      setFormStartTime('00:00');
+      setFormEndDate(new DateObject({ date: end, calendar: persian, locale: persian_fa }));
+      setFormEndTime('23:59');
+      return;
+    }
+
+    setFormStartDate(new DateObject({ date: start, calendar: persian, locale: persian_fa }));
+    setFormStartTime('00:00');
+    setFormEndDate(null);
+    setFormEndTime('23:59');
   }, []);
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="flex justify-center py-12" dir="rtl">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
   if (error) {
     return (
-      <div className="rounded-3xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-6 text-red-800 dark:text-red-200" dir="rtl">
+      <div
+        className="rounded-2xl bg-red-50 border border-red-200 p-6 text-red-800"
+        dir="rtl"
+      >
         {error}
       </div>
     );
   }
   if (!data) return null;
 
+  let previewList: PreviewList | null = null;
+  let previewMode: 'live' | 'fallback' | 'empty' = 'empty';
+  if (data.current?.list) {
+    previewList = listToPreview(data.current.list as ListOption);
+    previewMode = 'live';
+  } else if (data.fallbackList) {
+    const full = data.lists.find((l) => l.id === data.fallbackList!.id);
+    previewList = full
+      ? listToPreview(full)
+      : { title: data.fallbackList.title, saveCount: 0, itemCount: 0 };
+    previewMode = 'fallback';
+  }
+
   return (
-    <div className="space-y-8 pb-8" dir="rtl">
+    <div className="space-y-6 pb-8" dir="rtl">
       <FeaturedHeroHeader
         hasActiveSlot={!!data.current}
+        upcomingCount={data.upcoming.length}
         onRefresh={fetchData}
         refreshing={loading}
+        onAddSlot={() => openAddModal()}
       />
 
-      <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
-        <button
-          type="button"
-          onClick={() => setActiveTab('scheduler')}
-          className={`inline-flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-xl border-b-2 -mb-px transition-colors ${
-            activeTab === 'scheduler'
-              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          <Calendar className="w-4 h-4" />
-          برنامه‌ریزی
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('weekly-report')}
-          className={`inline-flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-xl border-b-2 -mb-px transition-colors ${
-            activeTab === 'weekly-report'
-              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          گزارش هفتگی
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('suggestions')}
-          className={`inline-flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-t-xl border-b-2 -mb-px transition-colors ${
-            activeTab === 'suggestions'
-              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          <Lightbulb className="w-4 h-4" />
-          پیشنهاد هوشمند
-        </button>
-      </div>
+      <FeaturedStatsBar
+        hasActiveSlot={!!data.current}
+        upcomingCount={data.upcoming.length}
+        pastCount={data.past.length}
+        refreshKey={statsRefreshKey}
+      />
 
-      {activeTab === 'weekly-report' ? (
-        <WeeklyReportTab />
-      ) : activeTab === 'suggestions' ? (
-        <SmartSuggestionsTab onScheduleList={(listId) => { setFormListId(listId); setActiveTab('scheduler'); }} />
-      ) : (
-        <>
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          منتخب فعلی
-        </h2>
-        {data.current ? (
-          <CurrentActiveSlotCard
-            slot={data.current}
-            formatDate={formatDate}
-            remainingText={getRemainingText(data.current)}
-            onEdit={() => openEditModal(data.current!)}
-            onRemove={() => handleDelete(data.current!.id)}
-          />
-        ) : (
-          <FeaturedFallbackMessage fallbackList={data.fallbackList} />
-        )}
-      </section>
+      <FeaturedSchedulerTab
+        current={data.current}
+        fallbackList={data.fallbackList}
+        upcoming={data.upcoming}
+        past={data.past}
+        previewList={previewList}
+        previewMode={previewMode}
+        formatDate={formatDate}
+        remainingText={data.current ? getRemainingText(data.current) : null}
+        now={now}
+        onEditCurrent={() => openEditModal(data.current!)}
+        onRemoveCurrent={() =>
+          requestDelete(data.current!.id, data.current!.list.title)
+        }
+        onAddSlot={() => openAddModal()}
+        onEditSlot={openEditModal}
+        onDeleteSlot={(id) => {
+          const slot =
+            data.upcoming.find((s) => s.id === id) ??
+            (data.current?.id === id ? data.current : null);
+          requestDelete(id, slot?.list.title ?? 'اسلات');
+        }}
+      />
 
-      {data.current && (
-        <section className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-          <FeaturedPerformanceSection slotId={data.current.id} />
-        </section>
-      )}
+      <FeaturedWeeklyDetails
+        onAddSlot={() => openAddModal()}
+        refreshKey={statsRefreshKey}
+      />
 
-      <AddSlotCard
+      <AddSlotWizardModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
         lists={data.lists}
         formCategorySlug={formCategorySlug}
         formListId={formListId}
@@ -428,62 +463,33 @@ export default function FeaturedManagementClient() {
         formatDate={formatDate}
       />
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          اسلات‌های بعدی
-        </h2>
-        <UpcomingSlotsGrid
-          slots={data.upcoming}
-          formatDate={formatDate}
-          now={now}
-          onEdit={openEditModal}
-          onDelete={handleDelete}
-        />
-      </section>
+      <DeleteSlotDialog
+        isOpen={!!deleteTarget}
+        listTitle={deleteTarget?.title ?? ''}
+        loading={deleteLoading}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+      />
 
-      {data.past.length > 0 && (
-        <section className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm overflow-x-auto">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-            تاریخچه
-          </h2>
-          <table className="w-full text-sm text-right">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-600">
-                <th className="p-2 font-medium">لیست</th>
-                <th className="p-2 font-medium">بازه</th>
-                <th className="p-2 font-medium">مشاهده</th>
-                <th className="p-2 font-medium">ذخیره سریع</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.past.map((s) => (
-                <tr key={s.id} className="border-b border-gray-100 dark:border-gray-700">
-                  <td className="p-2">{s.list.title}</td>
-                  <td className="p-2 text-gray-500">
-                    {formatDate(s.startAt)} – {s.endAt ? formatDate(s.endAt) : '—'}
-                  </td>
-                  <td className="p-2">{s.viewListCount}</td>
-                  <td className="p-2">{s.quickSaveCount}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-        </>
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
       {editingSlot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-md w-full p-6 border border-[var(--color-border)]">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-base font-semibold text-[var(--color-text)]">
                 ویرایش زمان‌بندی · {editingSlot.list.title}
               </h3>
               <button
                 type="button"
                 onClick={() => setEditingSlot(null)}
-                className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-2 rounded-xl text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
                 aria-label="بستن"
               >
                 <X className="w-5 h-5" />
@@ -491,7 +497,9 @@ export default function FeaturedManagementClient() {
             </div>
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">تاریخ شروع (شمسی)</label>
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
+                  تاریخ شروع (شمسی)
+                </label>
                 <div className="flex gap-2 flex-wrap">
                   <DatePicker
                     value={editStartDate}
@@ -499,18 +507,20 @@ export default function FeaturedManagementClient() {
                     calendar={persian}
                     locale={persian_fa}
                     calendarPosition="bottom-right"
-                    className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+                    className="rounded-xl border border-[var(--color-border)] text-sm"
                   />
                   <input
                     type="time"
                     value={editStartTime}
                     onChange={(e) => setEditStartTime(e.target.value)}
-                    className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 py-2"
+                    className="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">تاریخ پایان (اختیاری)</label>
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
+                  تاریخ پایان (اختیاری)
+                </label>
                 <div className="flex gap-2 flex-wrap">
                   <DatePicker
                     value={editEndDate}
@@ -518,13 +528,13 @@ export default function FeaturedManagementClient() {
                     calendar={persian}
                     locale={persian_fa}
                     calendarPosition="bottom-right"
-                    className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+                    className="rounded-xl border border-[var(--color-border)] text-sm"
                   />
                   <input
                     type="time"
                     value={editEndTime}
                     onChange={(e) => setEditEndTime(e.target.value)}
-                    className="rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 py-2"
+                    className="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2"
                   />
                 </div>
               </div>
@@ -533,14 +543,14 @@ export default function FeaturedManagementClient() {
                 <button
                   type="button"
                   onClick={() => setEditingSlot(null)}
-                  className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-sm"
+                  className="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm hover:opacity-90 disabled:opacity-50"
                 >
                   {editLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   ذخیره تغییرات
@@ -551,5 +561,19 @@ export default function FeaturedManagementClient() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function FeaturedManagementClient() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12" dir="rtl">
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+        </div>
+      }
+    >
+      <FeaturedManagementInner />
+    </Suspense>
   );
 }

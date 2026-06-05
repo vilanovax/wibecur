@@ -29,8 +29,13 @@ async function main() {
     console.log(`📦 Seeding ${exportedData.users.length} users...`);
     for (const user of exportedData.users) {
       // If it's admin user, set default password
-      const password = user.email === 'admin@wibecur.com' || user.email === 'admin@listhub.ir'
-        ? await bcrypt.hash('admin123', 10)
+      const isAdminSeedEmail =
+        user.email === 'admin@wibecur.com' ||
+        user.email === 'admin@listhub.ir' ||
+        user.email === '989121941532@phone.wibe' ||
+        user.role === 'ADMIN';
+      const password = isAdminSeedEmail
+        ? await bcrypt.hash('123456', 10)
         : user.password
         ? user.password
         : null;
@@ -42,6 +47,7 @@ async function main() {
           email: user.email,
           emailVerified: user.emailVerified ? new Date(user.emailVerified) : null,
           image: user.image,
+          password: isAdminSeedEmail ? password : undefined,
           role: user.role,
           isActive: user.isActive !== undefined ? user.isActive : true,
           updatedAt: new Date(user.updatedAt),
@@ -63,13 +69,13 @@ async function main() {
     console.log('✅ Users seeded');
   } else {
     // Default admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await bcrypt.hash('123456', 10);
     await prisma.users.upsert({
-      where: { email: 'admin@wibecur.com' },
-      update: {},
+      where: { email: '989121941532@phone.wibe' },
+      update: { password: hashedPassword, role: 'ADMIN', updatedAt: new Date() },
       create: {
         id: 'admin-user-id', // Prisma will generate if using @default(cuid())
-        email: 'admin@wibecur.com',
+        email: '989121941532@phone.wibe',
         name: 'Admin',
         password: hashedPassword,
         role: 'ADMIN',

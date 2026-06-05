@@ -32,15 +32,17 @@ export default async function ItemsPage({ searchParams }: PageProps) {
     // Fetch paginated items with total count
 
     const skip = (page - 1) * perPage;
+    const itemsWhere = listId ? { listId } : {};
 
     const { items, lists, itemCountsByList, totalItems } = await dbQuery(() =>
       prisma.$transaction(
         async (tx) => {
           const [itemsResult, listsResult, itemCountsResult, totalCount] = await Promise.all([
             tx.items.findMany({
+              where: itemsWhere,
               skip,
               take: perPage,
-              orderBy: { createdAt: 'desc' },
+              orderBy: listId ? { order: 'asc' } : { createdAt: 'desc' },
               select: {
                 id: true,
                 title: true,
@@ -102,7 +104,7 @@ export default async function ItemsPage({ searchParams }: PageProps) {
                 id: true,
               },
             }),
-            tx.items.count(),
+            tx.items.count({ where: itemsWhere }),
           ]);
 
           return {
