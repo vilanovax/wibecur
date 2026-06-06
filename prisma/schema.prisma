@@ -272,6 +272,7 @@ model lists {
   slug             String            @unique
   description      String?
   coverImage       String?
+  horizontalImage  String?  // بنر افقی — featured و جزئیات لیست
   categoryId       String?
   userId           String
   tags             String[]          @default([])  // برای Similar Lists هوشمند
@@ -326,6 +327,7 @@ model list_reports {
 model settings {
   id                           String   @id @default("settings")
   openaiApiKey                 String?
+  openaiModel                  String?  @default("gpt-4o-mini")
   tmdbApiKey                   String?
   liaraBucketName              String?
   liaraEndpoint                String?

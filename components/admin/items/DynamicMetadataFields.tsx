@@ -12,12 +12,17 @@ interface DynamicMetadataFieldsProps {
   categorySlug: string;
   metadata: any;
   onChange: (metadata: any) => void;
+  /** وقتی داخل سکشن تاشو استفاده می‌شود */
+  hideTitle?: boolean;
+  layout?: 'stack' | 'grid';
 }
 
 export default function DynamicMetadataFields({
   categorySlug,
   metadata,
   onChange,
+  hideTitle = false,
+  layout = 'stack',
 }: DynamicMetadataFieldsProps) {
   const handleChange = (field: string, value: any) => {
     onChange({ ...metadata, [field]: value });
@@ -36,41 +41,45 @@ export default function DynamicMetadataFields({
     handleChange('year', parsedYear || undefined);
   };
 
+  const fieldWrap = layout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'space-y-4';
+  const fieldFull = layout === 'grid' ? 'sm:col-span-2' : '';
+
   // Movie/Series metadata fields
   if (categorySlug === 'movie' || categorySlug === 'film' || categorySlug === 'movies') {
     return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
-          اطلاعات تکمیلی فیلم/سریال
-        </h3>
+      <div className={fieldWrap}>
+        {!hideTitle && (
+          <h3 className={`text-lg font-semibold text-gray-900 ${fieldFull}`}>
+            اطلاعات تکمیلی فیلم/سریال
+          </h3>
+        )}
 
         {/* Year */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            سال تولید (اختیاری)
-            <span className="text-xs text-gray-500 font-normal mr-2">
-              - اعداد فارسی و سال شمسی قابل قبول است
-            </span>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            سال تولید
+            <span className="text-xs text-gray-500 font-normal mr-2">(اختیاری)</span>
           </label>
           <input
             type="text"
             inputMode="numeric"
             value={metadata?.year || ''}
             onChange={handleYearChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800"
             placeholder="2024 یا ۱۴۰۳"
           />
+          <p className="text-[11px] text-gray-500 mt-1">اعداد فارسی و سال شمسی قابل قبول است</p>
         </div>
 
         {/* Genre */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            ژانر (اختیاری)
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            ژانر <span className="text-xs text-gray-500 font-normal">(اختیاری)</span>
           </label>
           <select
             value={metadata?.genre || ''}
             onChange={(e) => handleChange('genre', e.target.value || undefined)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800"
           >
             <option value="">انتخاب کنید...</option>
             {MOVIE_GENRES.map((genre) => (
@@ -83,31 +92,74 @@ export default function DynamicMetadataFields({
 
         {/* Director */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            کارگردان (اختیاری)
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            کارگردان <span className="text-xs text-gray-500 font-normal">(اختیاری)</span>
           </label>
           <input
             type="text"
             value={metadata?.director || ''}
             onChange={(e) => handleChange('director', e.target.value || undefined)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800"
             placeholder="نام کارگردان..."
+          />
+        </div>
+
+        {/* Country */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            کشور سازنده <span className="text-xs text-gray-500 font-normal">(اختیاری)</span>
+          </label>
+          <input
+            type="text"
+            value={metadata?.country || ''}
+            onChange={(e) => handleChange('country', e.target.value || undefined)}
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800"
+            placeholder="مثلاً ایالات متحده"
+          />
+        </div>
+
+        {/* Actors */}
+        <div className={fieldFull}>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            بازیگران مهم <span className="text-xs text-gray-500 font-normal">(حداکثر ۲)</span>
+          </label>
+          <input
+            type="text"
+            value={
+              Array.isArray(metadata?.actors)
+                ? metadata.actors.join('، ')
+                : metadata?.actors || ''
+            }
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              if (!raw) {
+                handleChange('actors', undefined);
+                return;
+              }
+              handleChange(
+                'actors',
+                raw
+                  .split(/[,،]/)
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+                  .slice(0, 2)
+              );
+            }}
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800"
+            placeholder="Edward Norton، Brad Pitt"
           />
         </div>
 
         {/* IMDb Rating */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            امتیاز IMDb (اختیاری)
-            <span className="text-gray-500 text-xs mr-2">
-              مثال: 8.5
-            </span>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            امتیاز IMDb <span className="text-xs text-gray-500 font-normal">(اختیاری)</span>
           </label>
           <input
             type="text"
             value={metadata?.imdbRating || ''}
             onChange={(e) => handleChange('imdbRating', e.target.value || undefined)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800"
             placeholder="8.5"
             pattern="[0-9]+\.?[0-9]*"
           />

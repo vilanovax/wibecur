@@ -12,12 +12,16 @@ export async function GET(request: NextRequest) {
     const perPage = parseInt(searchParams.get('perPage') || '24', 10);
     const q = searchParams.get('q') ?? undefined;
     const categorySlug = searchParams.get('categorySlug') ?? undefined;
+    const listId = searchParams.get('listId') ?? undefined;
+    const multiListOnly = searchParams.get('multiList') === '1';
 
     const { rows, total } = await listCatalogItems(prisma, {
       page,
       perPage,
       q,
       categorySlug,
+      listId,
+      multiListOnly,
     });
 
     return NextResponse.json({

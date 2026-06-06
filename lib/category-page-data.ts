@@ -13,6 +13,7 @@ import type {
 } from '@/types/category-page';
 import { getTrendingByCategory } from '@/lib/trending/service';
 import { resolveListCover } from '@/lib/resolve-list-cover';
+import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
 
 function mapListCover(
@@ -27,22 +28,41 @@ function mapListCover(
   });
 }
 
-function applyListCovers<T extends { coverImage?: string | null; slug: string; title: string }>(
+function applyListCovers<T extends {
+  coverImage?: string | null;
+  horizontalImage?: string | null;
+  slug: string;
+  title: string;
+}>(
   lists: T[],
   categorySlug: string
 ): T[] {
-  return lists.map((l) => ({
-    ...l,
-    coverImage: mapListCover(l, categorySlug),
-  }));
+  return lists.map((l) => {
+    const source = { ...l, categorySlug };
+    return {
+      ...l,
+      coverImage: mapListCover(l, categorySlug),
+      bannerImage: resolveListBannerImage(source),
+    };
+  });
 }
 
-function applyListCover<T extends { coverImage?: string | null; slug: string; title: string }>(
+function applyListCover<T extends {
+  coverImage?: string | null;
+  horizontalImage?: string | null;
+  slug: string;
+  title: string;
+}>(
   list: T | null,
   categorySlug: string
 ): T | null {
   if (!list) return null;
-  return { ...list, coverImage: mapListCover(list, categorySlug) };
+  const source = { ...list, categorySlug };
+  return {
+    ...list,
+    coverImage: mapListCover(list, categorySlug),
+    bannerImage: resolveListBannerImage(source),
+  };
 }
 
 const RECENT_DAYS = 7;
@@ -209,6 +229,7 @@ async function getTrendingAndViralLists(
       slug: r.slug,
       description: r.description ?? null,
       coverImage: r.coverImage ?? null,
+      horizontalImage: r.horizontalImage ?? null,
       saveCount: r.saveCount,
       likeCount: r.likeCount,
       itemCount: r.itemCount,
@@ -347,7 +368,7 @@ async function getTrending24h(
   const lists = await prisma.lists.findMany({
     where: { id: { in: listIds } },
     select: {
-      id: true, title: true, slug: true, description: true, coverImage: true,
+      id: true, title: true, slug: true, description: true, coverImage: true, horizontalImage: true,
       saveCount: true, likeCount: true, itemCount: true, badge: true, tags: true,
       users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
     },
@@ -362,6 +383,7 @@ async function getTrending24h(
       slug: l.slug,
       description: l.description,
       coverImage: l.coverImage,
+      horizontalImage: l.horizontalImage,
       saveCount: l.saveCount ?? 0,
       likeCount: l.likeCount ?? 0,
       itemCount: l.itemCount ?? 0,
@@ -389,7 +411,7 @@ async function getTopCuratorWithLists(
     orderBy: { saveCount: 'desc' },
     take: 3,
     select: {
-      id: true, title: true, slug: true, description: true, coverImage: true,
+      id: true, title: true, slug: true, description: true, coverImage: true, horizontalImage: true,
       saveCount: true, likeCount: true, itemCount: true, badge: true, tags: true,
       users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
     },
@@ -402,6 +424,7 @@ async function getTopCuratorWithLists(
       slug: l.slug,
       description: l.description,
       coverImage: l.coverImage,
+      horizontalImage: l.horizontalImage,
       saveCount: l.saveCount ?? 0,
       likeCount: l.likeCount ?? 0,
       itemCount: l.itemCount ?? 0,
@@ -434,7 +457,7 @@ async function getTopSavedThisWeek(
   const lists = await prisma.lists.findMany({
     where: { id: { in: listIds } },
     select: {
-      id: true, title: true, slug: true, description: true, coverImage: true,
+      id: true, title: true, slug: true, description: true, coverImage: true, horizontalImage: true,
       saveCount: true, likeCount: true, itemCount: true, badge: true, tags: true,
       users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
     },
@@ -444,7 +467,7 @@ async function getTopSavedThisWeek(
   return lists
     .sort((a, b) => (orderMap[a.id] ?? 99) - (orderMap[b.id] ?? 99))
     .map((l) => ({
-      id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage,
+      id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage, horizontalImage: l.horizontalImage,
       saveCount: l.saveCount ?? 0, likeCount: l.likeCount ?? 0, itemCount: l.itemCount ?? 0,
       badge: l.badge,
       creator: l.users
@@ -463,7 +486,7 @@ async function getCityBreakdown(
   const lists = await prisma.lists.findMany({
     where: { categoryId, isActive: true, isPublic: true, users: { role: { not: 'USER' } } },
     select: {
-      id: true, title: true, slug: true, description: true, coverImage: true,
+      id: true, title: true, slug: true, description: true, coverImage: true, horizontalImage: true,
       saveCount: true, likeCount: true, itemCount: true, badge: true, tags: true,
       users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
     },
@@ -484,7 +507,7 @@ async function getCityBreakdown(
       city,
       listCount: cityLists.length,
       sampleLists: sorted.slice(0, 3).map((l) => ({
-        id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage,
+        id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage, horizontalImage: l.horizontalImage,
         saveCount: l.saveCount ?? 0, likeCount: l.likeCount ?? 0, itemCount: l.itemCount ?? 0,
         badge: l.badge,
         creator: l.users
@@ -513,13 +536,13 @@ async function getPopularAllTime(
     orderBy: { saveCount: 'desc' },
     take: limit,
     select: {
-      id: true, title: true, slug: true, description: true, coverImage: true,
+      id: true, title: true, slug: true, description: true, coverImage: true, horizontalImage: true,
       saveCount: true, likeCount: true, itemCount: true, badge: true, tags: true,
       users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
     },
   });
   return lists.map((l) => ({
-    id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage,
+    id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage, horizontalImage: l.horizontalImage,
     saveCount: l.saveCount ?? 0, likeCount: l.likeCount ?? 0, itemCount: l.itemCount ?? 0,
     badge: l.badge,
     creator: l.users
@@ -549,7 +572,7 @@ async function getMostDebatedLists(
   const lists = await prisma.lists.findMany({
     where: { id: { in: listIds } },
     select: {
-      id: true, title: true, slug: true, description: true, coverImage: true,
+      id: true, title: true, slug: true, description: true, coverImage: true, horizontalImage: true,
       saveCount: true, likeCount: true, itemCount: true, badge: true, tags: true,
       users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
     },
@@ -559,7 +582,7 @@ async function getMostDebatedLists(
   return lists
     .sort((a, b) => (orderMap[a.id] ?? 99) - (orderMap[b.id] ?? 99))
     .map((l) => ({
-      id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage,
+      id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage, horizontalImage: l.horizontalImage,
       saveCount: l.saveCount ?? 0, likeCount: l.likeCount ?? 0, itemCount: l.itemCount ?? 0,
       badge: l.badge,
       creator: l.users
@@ -629,6 +652,7 @@ async function getNewLists(
       slug: true,
       description: true,
       coverImage: true,
+      horizontalImage: true,
       saveCount: true,
       likeCount: true,
       itemCount: true,
@@ -652,6 +676,7 @@ async function getNewLists(
     slug: l.slug,
     description: l.description,
     coverImage: l.coverImage,
+    horizontalImage: l.horizontalImage,
     saveCount: l.saveCount ?? 0,
     likeCount: l.likeCount ?? 0,
     itemCount: l.itemCount ?? 0,

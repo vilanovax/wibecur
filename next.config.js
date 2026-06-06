@@ -8,9 +8,9 @@ let withPWA = (config) => config;
 try {
   const pwaConfig = require('next-pwa')({
     dest: 'public',
-    register: true,
+    register: false, // ثبت SW فقط در PWAProvider و فقط اگر sw.js موجود باشد
     skipWaiting: true,
-    disable: process.env.NODE_ENV === 'development'
+    disable: process.env.NODE_ENV === 'development',
   });
   withPWA = pwaConfig;
 } catch {

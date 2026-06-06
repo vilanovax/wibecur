@@ -81,7 +81,7 @@ export default function CategoryPageAppearanceFields({
           label="تصویر هیرو صفحه دسته"
           value={values.heroImage}
           onChange={(url) => onChange({ heroImage: url })}
-          uploadPurpose="cover"
+          uploadPurpose="category-hero"
         />
         <p className="text-xs text-[var(--color-text-muted)] mt-1">
           اختیاری — اگر خالی باشد از بنر پیش‌فرض دسته استفاده می‌شود.

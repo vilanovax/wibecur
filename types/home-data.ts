@@ -4,6 +4,8 @@ export interface HomeListData {
   slug: string;
   description: string;
   coverImage: string;
+  /** URL نهایی برای بنر/هیرو افقی */
+  bannerImage?: string;
   saveCount: number;
   itemCount: number;
   likes: number;

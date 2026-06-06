@@ -21,6 +21,7 @@ export function parseSettingsTab(
 
 export type SettingsData = {
   openaiApiKey: string | null;
+  openaiModel: string | null;
   tmdbApiKey: string | null;
   omdbApiKey: string | null;
   googleApiKey: string | null;

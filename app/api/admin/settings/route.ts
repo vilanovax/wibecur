@@ -1,28 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAuth } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { getDecryptedSettings, updateSettings } from '@/lib/settings';
+import { resolveOpenAIModel } from '@/lib/openai-models';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/admin/settings
 export async function GET(request: NextRequest) {
-  console.log('=== GET /api/admin/settings called ===');
-
   try {
-    console.log('Checking admin auth...');
-    const session = await checkAdminAuth();
-    console.log('Session:', session ? 'authenticated' : 'null');
-
-    if (!session) {
-      console.log('No session, returning 401');
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    console.log('Fetching decrypted settings...');
+    const user = await requirePermission('manage_settings');
+    if (user instanceof NextResponse) return user;
     const settings = await getDecryptedSettings();
-    console.log('Settings fetched successfully:', Object.keys(settings));
 
     // Get raw settings for non-encrypted fields
     const rawSettings = await prisma.settings.findUnique({
@@ -34,6 +21,7 @@ export async function GET(request: NextRequest) {
       openaiApiKey: settings.openaiApiKey
         ? maskApiKey(settings.openaiApiKey)
         : null,
+      openaiModel: resolveOpenAIModel(rawSettings?.openaiModel),
       tmdbApiKey: settings.tmdbApiKey ? maskApiKey(settings.tmdbApiKey) : null,
       omdbApiKey: settings.omdbApiKey ? maskApiKey(settings.omdbApiKey) : null,
       googleApiKey: settings.googleApiKey ? maskApiKey(settings.googleApiKey) : null,
@@ -64,18 +52,13 @@ export async function GET(request: NextRequest) {
 // PUT /api/admin/settings
 export async function PUT(request: NextRequest) {
   try {
-    const session = await checkAdminAuth();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requirePermission('manage_settings');
+    if (user instanceof NextResponse) return user;
 
     const body = await request.json();
     const {
       openaiApiKey,
+      openaiModel,
       tmdbApiKey,
       omdbApiKey,
       googleApiKey,
@@ -91,6 +74,7 @@ export async function PUT(request: NextRequest) {
 
     await updateSettings({
       openaiApiKey,
+      openaiModel: openaiModel !== undefined ? resolveOpenAIModel(openaiModel) : undefined,
       tmdbApiKey,
       omdbApiKey,
       googleApiKey,

@@ -22,10 +22,34 @@ export type CategoryListMetrics = {
 
 export type CategoryAggregateMetrics = {
   listCount: number;
+  uniqueItemCount: number;
   totalSaves: number;
   totalViews: number;
   activeListCount: number;
 };
+
+/** تعداد آیتم غیرتکراری هر دسته — بر اساس catalogItemId یا id جایگاه */
+export async function getCategoryUniqueItemCountMap(
+  prisma: PrismaClient,
+  categoryIds: string[]
+): Promise<Map<string, number>> {
+  if (categoryIds.length === 0) return new Map();
+
+  const { Prisma } = await import('@prisma/client');
+  const rows = await prisma.$queryRaw<{ categoryId: string; count: number }[]>(
+    Prisma.sql`
+      SELECT l."categoryId" AS "categoryId",
+             COUNT(DISTINCT COALESCE(i."catalogItemId", i.id))::int AS count
+      FROM items i
+      INNER JOIN lists l ON i."listId" = l.id
+      WHERE l."deletedAt" IS NULL
+        AND l."categoryId" IN (${Prisma.join(categoryIds)})
+      GROUP BY l."categoryId"
+    `
+  );
+
+  return new Map(rows.map((r) => [r.categoryId, r.count]));
+}
 
 export function computeCategoryListMetricsFromAggregate(
   agg: CategoryAggregateMetrics
@@ -296,6 +320,7 @@ export function toCategoryIntelligenceRow(
     isActive: cat.isActive,
     trendingWeight: cat.trendingWeight,
     listCount: metrics.listCount,
+    uniqueItemCount: 0,
     saveGrowthPercent: growth.percent,
     saveGrowthRecent: growth.recent,
     saveGrowthPrevious: growth.previous,
@@ -324,6 +349,7 @@ export function toCategoryIntelligenceRowFromAggregate(
     isActive: cat.isActive,
     trendingWeight: cat.trendingWeight,
     listCount: metrics.listCount,
+    uniqueItemCount: agg.uniqueItemCount,
     saveGrowthPercent: growth.percent,
     saveGrowthRecent: growth.recent,
     saveGrowthPrevious: growth.previous,

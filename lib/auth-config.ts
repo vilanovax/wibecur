@@ -5,6 +5,7 @@ import type { NextAuthConfig } from 'next-auth';
 import type { AppRole } from '@/types/next-auth';
 
 const config: NextAuthConfig = {
+  trustHost: true,
   providers: [
     Credentials({
       name: 'Credentials',

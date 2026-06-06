@@ -20,9 +20,9 @@ export default function ViralSpotlightSection({
       <Link href={`/lists/${list.slug}`} className="block active:scale-[0.99] transition-transform">
         <div className="rounded-lg overflow-hidden border border-wibe shadow-card bg-wibe-card">
           <div className="relative aspect-video bg-gray-200">
-            {list.coverImage ? (
+            {(list.bannerImage ?? list.coverImage) ? (
               <ImageWithFallback
-                src={list.coverImage}
+                src={list.bannerImage ?? list.coverImage ?? ''}
                 alt={list.title}
                 className="w-full h-full object-cover"
               />

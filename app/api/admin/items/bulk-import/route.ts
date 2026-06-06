@@ -4,14 +4,14 @@ import { prisma } from '@/lib/prisma';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
-import { extractImdbIdFromUrl, isMovieLikeListCategory } from '@/lib/admin/bulk-movie-import';
+import { extractImdbIdFromUrl, normalizeBulkImportMetadata } from '@/lib/admin/bulk-import';
 import { resolveBulkImportMatch } from '@/lib/admin/bulk-import-resolve';
 import {
   addCatalogItemToList,
   createCatalogItem,
   updateCatalogItem,
 } from '@/lib/catalog-items';
-import type { BulkImportPayloadItem } from '@/lib/admin/bulk-movie-import';
+import type { BulkImportPayloadItem } from '@/lib/admin/bulk-import';
 
 type ImportResult = {
   index: number;
@@ -54,12 +54,6 @@ export async function POST(request: NextRequest) {
     if (!list.categories) {
       return NextResponse.json({ error: 'دستهٔ لیست یافت نشد' }, { status: 400 });
     }
-    if (!isMovieLikeListCategory(list.categories.slug)) {
-      return NextResponse.json(
-        { error: 'import گروهی فقط برای لیست‌های فیلم و سریال مجاز است' },
-        { status: 400 }
-      );
-    }
 
     const categorySlug = list.categories.slug;
     const results: ImportResult[] = [];
@@ -84,7 +78,11 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const metaInput = { ...(row.metadata ?? {}) } as Record<string, unknown>;
+        const metaInput = normalizeBulkImportMetadata(
+          categorySlug,
+          (row.metadata ?? {}) as Record<string, unknown>,
+          row.externalUrl
+        );
         const imdbFromUrl = extractImdbIdFromUrl(row.externalUrl);
         if (imdbFromUrl && !metaInput.imdbId) metaInput.imdbId = imdbFromUrl;
         const metadataValidation = validateMetadata(categorySlug, metaInput);

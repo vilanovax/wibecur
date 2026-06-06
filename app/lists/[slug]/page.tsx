@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ListDetailClient from './ListDetailClient';
 import { withResolvedItemImages } from '@/lib/resolve-item-image';
+import { withResolvedListDisplay } from '@/lib/list-display-images';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
@@ -13,11 +14,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const list = await prisma.lists.findUnique({
     where: { slug },
-    select: { title: true, description: true, coverImage: true },
+    select: { title: true, description: true, coverImage: true, horizontalImage: true },
   });
   if (!list) return { title: 'لیست یافت نشد' };
 
-  const ogImage = toAbsoluteImageUrl(list.coverImage);
+  const resolved = withResolvedListDisplay({
+    ...list,
+    slug,
+    title: list.title,
+    categorySlug: null,
+  });
+  const ogImage = toAbsoluteImageUrl(resolved.bannerImage);
   const description = list.description || `مشاهده لیست ${list.title}`;
 
   return {
@@ -60,6 +67,7 @@ export default async function ListDetailPage({
       slug: true,
       description: true,
       coverImage: true,
+      horizontalImage: true,
       saveCount: true,
       itemCount: true,
       viewCount: true,
@@ -111,8 +119,9 @@ export default async function ListDetailPage({
   };
   const relatedLists = await getTopSimilarLists(prisma, currentForSimilarity);
 
-  const listWithCreator = {
+  const listWithCreator = withResolvedListDisplay({
     ...list,
+    categorySlug: list.categories?.slug ?? null,
     items: withResolvedItemImages(
       list.items.map((item) => ({
         ...item,
@@ -120,7 +129,7 @@ export default async function ListDetailPage({
       })),
       list.categories?.slug ?? null
     ),
-  };
+  });
 
   return (
     <div className="bg-wibe-surface lg:pt-1">

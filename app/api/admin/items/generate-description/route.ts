@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
-import { getDecryptedSettings } from '@/lib/settings';
-import OpenAI from 'openai';
+import { createAdminOpenAIChatCompletion, formatOpenAIError } from '@/lib/openai-chat';
 
 // POST /api/admin/items/generate-description
 export async function POST(request: NextRequest) {
@@ -18,37 +17,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get OpenAI API key from database
-    console.log('=== Fetching OpenAI key from database ===');
-    const settings = await getDecryptedSettings();
-    const openaiApiKey = settings.openaiApiKey;
-
-    console.log('OpenAI key exists:', !!openaiApiKey);
-    if (openaiApiKey) {
-      console.log('Key starts with:', openaiApiKey.substring(0, 3));
-      console.log('Key length:', openaiApiKey.length);
-    }
-
-    if (!openaiApiKey) {
-      console.error('No OpenAI key found in settings');
-      return NextResponse.json(
-        { error: 'کلید OpenAI در تنظیمات وارد نشده است' },
-        { status: 500 }
-      );
-    }
-
-    // Initialize OpenAI with key from database
-    const openai = new OpenAI({
-      apiKey: openaiApiKey,
-    });
-
-    // Generate context-aware prompt based on category
     const prompt = generatePrompt(title, categorySlug, metadata, plot);
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
+    const completion = await createAdminOpenAIChatCompletion(
+      [
         {
           role: 'system',
           content:
@@ -59,10 +31,12 @@ export async function POST(request: NextRequest) {
           content: prompt,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 500,
-      response_format: { type: 'json_object' },
-    });
+      {
+        temperature: 0.7,
+        max_tokens: 500,
+        response_format: { type: 'json_object' },
+      }
+    );
 
     const content = completion.choices[0]?.message?.content || '';
 
@@ -111,10 +85,10 @@ export async function POST(request: NextRequest) {
       description,
       metadata: Object.keys(generatedMetadata).length > 0 ? generatedMetadata : undefined
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating description:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در تولید توضیحات' },
+      { error: formatOpenAIError(error) },
       { status: 500 }
     );
   }

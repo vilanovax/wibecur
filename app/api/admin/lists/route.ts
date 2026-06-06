@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       slug,
       description,
       coverImage,
+      horizontalImage,
       categoryId,
       badge,
       isPublic,
@@ -64,7 +65,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const finalCoverImage = coverImage ? await ensureImageInLiara(coverImage, 'lists') : null;
+    const finalCoverImage = coverImage ? await ensureImageInLiara(coverImage, 'lists', { profile: 'coverList' }) : null;
+    const finalHorizontalImage = horizontalImage
+      ? await ensureImageInLiara(horizontalImage, 'lists', { profile: 'coverListHorizontal' })
+      : null;
 
     // Create list
     const list = await prisma.lists.create({
@@ -74,6 +78,7 @@ export async function POST(request: NextRequest) {
         slug,
         description,
         coverImage: finalCoverImage,
+        horizontalImage: finalHorizontalImage,
         categoryId,
         userId: user.id,
         badge: badge || null,

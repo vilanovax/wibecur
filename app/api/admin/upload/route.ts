@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { uploadImageBuffer } from '@/lib/object-storage';
 import { validateImage } from '@/lib/image-validator';
-import type { ImageProfile } from '@/lib/image-config';
-
-function profileForFolder(folder: string): ImageProfile {
-  return folder === 'avatars' ? 'avatar' : folder === 'lists' ? 'coverList' : 'default';
-}
+import { MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
+import { resolveUploadTarget } from '@/lib/upload-profiles';
 
 // POST /api/admin/upload - Upload image file
 export async function POST(request: NextRequest) {
@@ -23,7 +20,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       return NextResponse.json(
         { error: 'فقط فایل‌های تصویری مجاز هستند' },
@@ -31,10 +27,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_RAW_UPLOAD_SIZE) {
       return NextResponse.json(
-        { error: 'حجم فایل نباید بیشتر از 5 مگابایت باشد' },
+        { error: `حجم فایل نباید بیشتر از ${MAX_RAW_UPLOAD_SIZE / (1024 * 1024)} مگابایت باشد` },
         { status: 400 }
       );
     }
@@ -42,15 +37,11 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const purpose = formData.get('purpose') as string ||
-                   new URL(request.url).searchParams.get('purpose');
-    let folder = 'uploads';
-    if (purpose === 'list-cover' || purpose === 'cover') {
-      folder = 'lists';
-    } else if (purpose === 'avatar') {
-      folder = 'avatars';
-    }
-    const profile = profileForFolder(folder);
+    const purpose =
+      (formData.get('purpose') as string | null) ??
+      new URL(request.url).searchParams.get('purpose');
+
+    const { folder, profile } = resolveUploadTarget(purpose);
 
     const validation = await validateImage(buffer, profile);
     if (!validation.isValid) {
@@ -60,8 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Liara Object Storage with appropriate profile
-    const url = await uploadImageBuffer(buffer, file.type, folder);
+    const url = await uploadImageBuffer(buffer, file.type, folder, profile);
 
     if (!url) {
       return NextResponse.json(
@@ -70,11 +60,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ url }, { status: 201 });
-  } catch (error: any) {
+    return NextResponse.json(
+      {
+        url,
+        profile,
+        folder,
+      },
+      { status: 201 }
+    );
+  } catch (error: unknown) {
     console.error('Error uploading file:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در آپلود فایل' },
+      { error: (error as Error).message || 'خطا در آپلود فایل' },
       { status: 500 }
     );
   }

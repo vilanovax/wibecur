@@ -39,6 +39,16 @@ export function getItemCardSubtitle(item: {
   const director = metaString(meta, 'director');
   if (director) parts.push(director);
 
+  const country = metaString(meta, 'country');
+  if (country) parts.push(country);
+
+  const actors = meta?.actors;
+  if (Array.isArray(actors) && actors.length > 0) {
+    parts.push(actors.slice(0, 2).map(String).join(' · '));
+  } else if (typeof actors === 'string' && actors.trim()) {
+    parts.push(actors.trim());
+  }
+
   const imdb = metaString(meta, 'imdbRating');
   if (imdb) parts.push(`IMDb ${imdb}`);
 
@@ -69,6 +79,8 @@ function itemSearchHaystack(item: {
     meta.genre,
     meta.director,
     meta.author,
+    meta.country,
+    meta.actors,
     meta.year,
     meta.imdbRating,
     meta.cuisine,

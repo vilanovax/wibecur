@@ -1,15 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { items, lists, categories } from '@prisma/client';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { FileJson, Link2 } from 'lucide-react';
+import AdminItemCardImage from '@/components/admin/items/AdminItemCardImage';
+import ExternalImageItemsModal from '@/components/admin/items/ExternalImageItemsModal';
 
 type ItemWithRelations = Omit<items, 'lists' | 'createdAt' | 'updatedAt'> & {
   createdAt: string;
   updatedAt: string;
+  displayImageUrl?: string;
+  catalogItemId?: string | null;
+  catalog_items?: { imageUrl: string | null } | null;
   lists: Pick<lists, 'id' | 'title' | 'slug' | 'categoryId'> & {
     categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'> | null;
   };
@@ -25,6 +30,7 @@ interface ItemsPageClientProps {
   items: ItemWithRelations[];
   lists: ListWithCategory[];
   initialListId?: string;
+  initialCategoryId?: string;
   itemCountsByList?: Record<string, number>;
   currentPage: number;
   perPage: number;
@@ -36,6 +42,7 @@ export default function ItemsPageClient({
   items,
   lists,
   initialListId,
+  initialCategoryId,
   itemCountsByList = {},
   currentPage,
   perPage,
@@ -46,80 +53,123 @@ export default function ItemsPageClient({
   const [selectedListId, setSelectedListId] = useState<string>(
     initialListId || 'all'
   );
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    initialCategoryId || 'all'
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPerPage, setCurrentPerPage] = useState<number>(perPage);
+  const [externalImagesOpen, setExternalImagesOpen] = useState(false);
 
   useEffect(() => {
     setSelectedListId(initialListId || 'all');
-  }, [initialListId]);
+    if (initialListId) {
+      const list = lists.find((l) => l.id === initialListId);
+      setSelectedCategory(list?.categories?.id ?? 'all');
+    } else {
+      setSelectedCategory(initialCategoryId || 'all');
+    }
+  }, [initialListId, initialCategoryId, lists]);
 
   useEffect(() => {
     setCurrentPerPage(perPage);
   }, [perPage]);
 
-  // Get unique categories from lists (filter out lists without categories)
-  const categories = Array.from(
-    new Map(
-      lists
-        .filter((list) => list.categories !== null)
-        .map((list) => [list.categories!.id, list.categories!])
-    ).values()
+  const categories = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          lists
+            .filter((list) => list.categories !== null)
+            .map((list) => [list.categories!.id, list.categories!])
+        ).values()
+      ),
+    [lists]
   );
 
-  // Filter items by category first, then by list (client-side filtering for current page only)
-  const filteredItems = items.filter((item) => {
-    // Skip items whose list doesn't have a category (personal lists)
-    if (!item.lists.categories) {
-      return false;
+  const totalItemCount = useMemo(
+    () => Object.values(itemCountsByList).reduce((sum, n) => sum + n, 0),
+    [itemCountsByList]
+  );
+
+  const categoryItemCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const list of lists) {
+      const catId = list.categories?.id;
+      if (!catId) continue;
+      map.set(catId, (map.get(catId) ?? 0) + (itemCountsByList[list.id] ?? 0));
     }
-    const categoryMatch =
-      selectedCategory === 'all' ||
-      item.lists.categories.id === selectedCategory;
-    const listMatch =
-      selectedListId === 'all' || item.listId === selectedListId;
-    return categoryMatch && listMatch;
-  });
+    return map;
+  }, [lists, itemCountsByList]);
+
+  /** وقتی listId در URL است، سرور فیلتر کرده — client دوباره فیلتر نمی‌کند */
+  const filteredItems = useMemo(() => {
+    if (selectedListId !== 'all') {
+      return items;
+    }
+    return items.filter((item) => {
+      if (!item.lists.categories) return false;
+      return (
+        selectedCategory === 'all' ||
+        item.lists.categories.id === selectedCategory
+      );
+    });
+  }, [items, selectedListId, selectedCategory]);
+
+  const pushItemsUrl = (overrides: {
+    page?: number;
+    perPage?: number;
+    listId?: string | null;
+    categoryId?: string | null;
+  }) => {
+    const params = new URLSearchParams();
+    params.set('page', String(overrides.page ?? currentPage));
+    params.set('perPage', String(overrides.perPage ?? currentPerPage));
+    const nextListId =
+      overrides.listId === null
+        ? undefined
+        : overrides.listId ?? (selectedListId !== 'all' ? selectedListId : undefined);
+    const nextCategoryId =
+      overrides.categoryId === null
+        ? undefined
+        : overrides.categoryId ??
+          (selectedCategory !== 'all' && !nextListId ? selectedCategory : undefined);
+    if (nextListId) params.set('listId', nextListId);
+    else if (nextCategoryId) params.set('categoryId', nextCategoryId);
+    router.push(`/admin/items?${params.toString()}`);
+  };
 
   const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams();
-    params.set('page', newPage.toString());
-    params.set('perPage', currentPerPage.toString());
-    if (selectedListId !== 'all') {
-      params.set('listId', selectedListId);
-    }
-    router.push(`/admin/items?${params.toString()}`);
+    pushItemsUrl({ page: newPage });
   };
 
   const handlePerPageChange = (newPerPage: number) => {
     setCurrentPerPage(newPerPage);
-    const params = new URLSearchParams();
-    params.set('page', '1'); // Reset to first page
-    params.set('perPage', newPerPage.toString());
-    if (selectedListId !== 'all') {
-      params.set('listId', selectedListId);
-    }
-    router.push(`/admin/items?${params.toString()}`);
+    pushItemsUrl({ page: 1, perPage: newPerPage });
   };
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setSelectedListId('all');
-    const params = new URLSearchParams();
-    params.set('page', '1');
-    params.set('perPage', currentPerPage.toString());
-    router.push(`/admin/items?${params.toString()}`);
+    pushItemsUrl({
+      page: 1,
+      listId: null,
+      categoryId: categoryId === 'all' ? null : categoryId,
+    });
   };
 
   const handleListFilterChange = (nextListId: string) => {
     setSelectedListId(nextListId);
-    const params = new URLSearchParams();
-    params.set('page', '1');
-    params.set('perPage', currentPerPage.toString());
     if (nextListId !== 'all') {
-      params.set('listId', nextListId);
+      const list = lists.find((l) => l.id === nextListId);
+      setSelectedCategory(list?.categories?.id ?? 'all');
+      pushItemsUrl({ page: 1, listId: nextListId, categoryId: null });
+    } else {
+      pushItemsUrl({
+        page: 1,
+        listId: null,
+        categoryId: selectedCategory !== 'all' ? selectedCategory : null,
+      });
     }
-    router.push(`/admin/items?${params.toString()}`);
   };
 
   // Get lists filtered by selected category
@@ -149,6 +199,16 @@ export default function ItemsPageClient({
   };
 
   const selectedList = lists.find((l) => l.id === selectedListId);
+  const selectedCategoryObj = categories.find((c) => c.id === selectedCategory);
+  const canShowExternalImages =
+    (selectedListId !== 'all' && Boolean(selectedList)) ||
+    (selectedListId === 'all' && selectedCategory !== 'all');
+  const externalImagesScopeTitle =
+    selectedListId !== 'all' && selectedList
+      ? selectedList.title
+      : selectedCategoryObj
+        ? `${selectedCategoryObj.name} — همه لیست‌های دسته`
+        : '';
 
   return (
     <div className="space-y-6">
@@ -163,11 +223,18 @@ export default function ItemsPageClient({
                 {totalPages > 1 &&
                   ` · صفحه ${currentPage.toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')}`}
               </>
+            ) : selectedCategory !== 'all' ? (
+              <>
+                {categories.find((c) => c.id === selectedCategory)?.name ?? 'دسته'} ·{' '}
+                {totalItems.toLocaleString('fa-IR')} آیتم
+                {totalPages > 1 &&
+                  ` · صفحه ${currentPage.toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')}`}
+              </>
             ) : (
               <>
-                همه لیست‌ها · نمایش {filteredItems.length.toLocaleString('fa-IR')} از{' '}
-                {totalItems.toLocaleString('fa-IR')} جایگاه
-                {selectedCategory !== 'all' && ' (فیلتر دسته روی همین صفحه)'}
+                همه لیست‌ها · {totalItems.toLocaleString('fa-IR')} آیتم
+                {totalPages > 1 &&
+                  ` · صفحه ${currentPage.toLocaleString('fa-IR')} از ${totalPages.toLocaleString('fa-IR')}`}
               </>
             )}
           </p>
@@ -179,8 +246,9 @@ export default function ItemsPageClient({
                 ? `/admin/items/import?listId=${selectedListId}`
                 : '/admin/items/import'
             }
-            className="border border-violet-200 text-violet-700 px-5 py-2.5 rounded-lg hover:bg-violet-50 transition-colors font-medium whitespace-nowrap text-sm"
+            className="inline-flex items-center gap-2 border border-violet-200 text-violet-700 px-5 py-2.5 rounded-lg hover:bg-violet-50 transition-colors font-medium whitespace-nowrap text-sm"
           >
+            <FileJson className="w-4 h-4" />
             import گروهی JSON
           </Link>
           <Link
@@ -222,13 +290,11 @@ export default function ItemsPageClient({
           >
             همه دسته‌ها
             <span className="text-xs opacity-75">
-              ({items.length})
+              ({totalItemCount.toLocaleString('fa-IR')})
             </span>
           </button>
           {categories.map((category) => {
-            const count = items.filter(
-              (item) => item.lists.categories?.id === category.id
-            ).length;
+            const count = categoryItemCounts.get(category.id) ?? 0;
             return (
               <button
                 key={category.id}
@@ -246,7 +312,7 @@ export default function ItemsPageClient({
               >
                 <span>{category.icon}</span>
                 <span>{category.name}</span>
-                <span className="text-xs opacity-75">({count})</span>
+                <span className="text-xs opacity-75">({count.toLocaleString('fa-IR')})</span>
               </button>
             );
           })}
@@ -255,42 +321,59 @@ export default function ItemsPageClient({
 
       {/* List Filter (Dropdown) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
-          فیلتر بر اساس لیست:
-        </label>
-        <select
-          value={selectedListId}
-          onChange={(e) => handleListFilterChange(e.target.value)}
-          className="w-full md:w-96 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 font-medium"
-        >
-          <option value="all">
-            {selectedCategory === 'all'
-              ? `همه لیست‌ها (${items.length})`
-              : `همه لیست‌های این دسته (${items.filter(item => 
-                  selectedCategory === 'all' || item.lists.categories?.id === selectedCategory
-                ).length})`}
-          </option>
-          {filteredLists.map((list) => {
-            // Use item count from server if available, otherwise count from current items
-            const totalCount = itemCountsByList[list.id] || 0;
-            // If category filter is active, we need to count from items (limited to current page)
-            // This is not perfect but better than showing wrong counts
-            const visibleCount = selectedCategory === 'all' 
-              ? totalCount
-              : items.filter((item) => {
-                  const categoryMatch = item.lists.categories?.id === selectedCategory;
-                  const listMatch = item.listId === list.id;
-                  return categoryMatch && listMatch;
-                }).length;
-            
-            return (
-              <option key={list.id} value={list.id}>
-                {list.categories?.icon || '📋'} {list.title} ({selectedCategory === 'all' ? totalCount : visibleCount})
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              فیلتر بر اساس لیست:
+            </label>
+            <select
+              value={selectedListId}
+              onChange={(e) => handleListFilterChange(e.target.value)}
+              className="w-full md:w-96 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 font-medium"
+            >
+              <option value="all">
+                {selectedCategory === 'all'
+                  ? `همه لیست‌ها (${totalItemCount.toLocaleString('fa-IR')})`
+                  : `همه لیست‌های این دسته (${(categoryItemCounts.get(selectedCategory) ?? 0).toLocaleString('fa-IR')})`}
               </option>
-            );
-          })}
-        </select>
+              {filteredLists.map((list) => {
+                const totalCount = itemCountsByList[list.id] ?? 0;
+                return (
+                  <option key={list.id} value={list.id}>
+                    {list.categories?.icon || '📋'} {list.title} ({totalCount.toLocaleString('fa-IR')})
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          {canShowExternalImages && (
+            <button
+              type="button"
+              onClick={() => setExternalImagesOpen(true)}
+              className="inline-flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm font-medium hover:bg-amber-100 transition-colors"
+              title="آیتم‌هایی که تصویرشان هنوز روی ParsPack نیست"
+            >
+              <Link2 className="w-4 h-4" />
+              تصاویر خارج از ParsPack
+            </button>
+          )}
+        </div>
       </div>
+
+      {canShowExternalImages && (
+        <ExternalImageItemsModal
+          isOpen={externalImagesOpen}
+          onClose={() => setExternalImagesOpen(false)}
+          scopeTitle={externalImagesScopeTitle}
+          listId={selectedListId !== 'all' ? selectedListId : undefined}
+          categoryId={
+            selectedListId === 'all' && selectedCategory !== 'all'
+              ? selectedCategory
+              : undefined
+          }
+          onMigrated={() => router.refresh()}
+        />
+      )}
 
       {/* Pagination Controls */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
@@ -433,12 +516,13 @@ export default function ItemsPageClient({
               className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col"
             >
               <div className="relative h-40 w-full bg-gray-100">
-                <ImageWithFallback
-                  src={item.imageUrl || ''}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
+                <AdminItemCardImage
+                  itemId={item.id}
+                  displaySrc={item.displayImageUrl || ''}
+                  title={item.title}
+                  categorySlug={item.lists.categories?.slug}
                   fallbackIcon={item.lists.categories?.icon || '📋'}
-                  fallbackClassName="h-full w-full"
+                  className="h-full w-full"
                 />
               </div>
               <div className="p-4 flex flex-col flex-1">

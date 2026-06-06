@@ -4,8 +4,10 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import {
   CatalogNotReadyError,
+  countMultiListCatalogItems,
   findDuplicateCatalogGroups,
   getCatalogCategoryFilters,
+  getCatalogListFilters,
   isCatalogClientReady,
   listCatalogItems,
 } from '@/lib/catalog-items';
@@ -20,7 +22,7 @@ export const metadata: Metadata = {
 export default async function AdminCatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; q?: string; tab?: string; category?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; tab?: string; category?: string; listId?: string; multiList?: string }>;
 }) {
   await requireAdmin();
 
@@ -29,6 +31,8 @@ export default async function AdminCatalogPage({
   const q = params.q?.trim() || '';
   const tab = params.tab === 'duplicates' ? 'duplicates' : 'browse';
   const category = params.category?.trim() || '';
+  const listId = params.listId?.trim() || '';
+  const multiListOnly = params.multiList === '1';
 
   if (!isCatalogClientReady(prisma)) {
     return (
@@ -47,7 +51,7 @@ export default async function AdminCatalogPage({
   }
 
   try {
-    const [{ rows, total, totalPages }, duplicateGroups, categoryFilters, lists] =
+    const [{ rows, total, totalPages }, duplicateGroups, categoryFilters, listFilters, multiListCount] =
       await dbQuery(() =>
         Promise.all([
           listCatalogItems(prisma, {
@@ -55,6 +59,8 @@ export default async function AdminCatalogPage({
             perPage: 24,
             q: q || undefined,
             categorySlug: category || undefined,
+            listId: listId || undefined,
+            multiListOnly,
           }).then((r) => ({
             ...r,
             totalPages: Math.ceil(r.total / 24) || 1,
@@ -63,17 +69,11 @@ export default async function AdminCatalogPage({
             ? findDuplicateCatalogGroups(prisma, { limit: 50 })
             : Promise.resolve([]),
           getCatalogCategoryFilters(prisma),
-          prisma.lists.findMany({
-            where: { isActive: true },
-            include: { categories: { select: { icon: true } } },
-            orderBy: { title: 'asc' },
-          }).then((rows) =>
-            rows.map((l) => ({
-              id: l.id,
-              title: l.title,
-              icon: l.categories?.icon ?? null,
-            }))
-          ),
+          getCatalogListFilters(prisma, { categorySlug: category || undefined }),
+          countMultiListCatalogItems(prisma, {
+            categorySlug: category || undefined,
+            listId: listId || undefined,
+          }),
         ])
       );
 
@@ -86,9 +86,13 @@ export default async function AdminCatalogPage({
       initialTotalPages={totalPages}
       initialQuery={q}
       initialCategory={category}
+      initialListId={listId}
+      initialMultiListOnly={multiListOnly}
+      initialMultiListCount={multiListCount}
       initialCategoryFilters={categoryFilters}
+      initialListFilters={listFilters}
       initialDuplicateGroups={duplicateGroups}
-      lists={lists}
+      lists={listFilters.map((l) => ({ id: l.id, title: l.title, icon: l.icon }))}
     />
     );
   } catch (error) {

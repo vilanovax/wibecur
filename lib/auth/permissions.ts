@@ -24,6 +24,7 @@ export const PERMISSIONS = [
   'assign_moderation',
   'soft_delete_list',
   'manage_backup',
+  'manage_settings',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -54,4 +55,5 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   view_moderation: 'صف بررسی',
   assign_moderation: 'تخصیص بررسی',
   manage_backup: 'پشتیبان‌گیری و بازیابی',
+  manage_settings: 'مدیریت تنظیمات',
 };

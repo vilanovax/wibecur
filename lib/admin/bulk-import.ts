@@ -1,0 +1,442 @@
+import { z } from 'zod';
+import { validateMetadata } from '@/lib/schemas/item-metadata';
+import type { BulkImportMatch } from '@/lib/admin/bulk-import-resolve';
+
+export function extractImdbIdFromUrl(url: string | null | undefined): string | undefined {
+  if (!url?.trim()) return undefined;
+  const m = url.match(/imdb\.com\/title\/(tt\d{7,8})/i);
+  return m?.[1];
+}
+
+export type BulkImportCategoryKind = 'movie' | 'book' | 'cafe' | 'general';
+
+const baseRawSchema = z.object({
+  title: z.string().min(1, 'عنوان الزامی است'),
+  description: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+  externalUrl: z.string().optional().nullable(),
+  order: z.number().int().optional(),
+  tip: z.string().optional().nullable(),
+  metadata: z.record(z.unknown()).optional().nullable(),
+});
+
+export type BulkImportRaw = z.infer<typeof baseRawSchema>;
+
+export type BulkImportRow = {
+  id: string;
+  selected: boolean;
+  valid: boolean;
+  errors: string[];
+  title: string;
+  description: string;
+  imageUrl: string;
+  externalUrl: string;
+  order?: number;
+  metadata: Record<string, unknown>;
+  match?: BulkImportMatch;
+};
+
+export type BulkImportPayloadItem = {
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  externalUrl?: string;
+  order?: number;
+  tip?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export function mergeItemTipIntoMetadata(
+  metadata: Record<string, unknown>,
+  topLevelTip?: string | null
+): Record<string, unknown> {
+  const out = { ...metadata };
+  const fromTop = typeof topLevelTip === 'string' ? topLevelTip.trim() : '';
+  const fromMeta = typeof out.tip === 'string' ? out.tip.trim() : '';
+  const tip = fromTop || fromMeta;
+  if (tip) out.tip = tip;
+  else delete out.tip;
+  return out;
+}
+
+export function getBulkImportCategoryKind(slug: string | null | undefined): BulkImportCategoryKind {
+  if (!slug) return 'general';
+  const s = slug.toLowerCase();
+  if (s.includes('movie') || s.includes('film') || s === 'series' || s.includes('cinema')) return 'movie';
+  if (s.includes('book') || s.includes('literature')) return 'book';
+  if (
+    s.includes('cafe') ||
+    s.includes('restaurant') ||
+    s.includes('food') ||
+    s.includes('رستوران') ||
+    s.includes('کافه')
+  ) {
+    return 'cafe';
+  }
+  return 'general';
+}
+
+export function getBulkImportCategoryLabel(kind: BulkImportCategoryKind): string {
+  switch (kind) {
+    case 'movie':
+      return 'فیلم/سریال';
+    case 'book':
+      return 'کتاب';
+    case 'cafe':
+      return 'کافه/رستوران';
+    default:
+      return 'عمومی';
+  }
+}
+
+function normalizeMovieImportMetadata(
+  meta: Record<string, unknown> | null | undefined,
+  externalUrl?: string | null
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (!meta || typeof meta !== 'object') meta = {};
+  if (meta.year != null && String(meta.year).trim()) {
+    const y = parseInt(String(meta.year).replace(/[^\d]/g, ''), 10);
+    if (!Number.isNaN(y) && y > 1880 && y < 2100) out.year = y;
+  }
+  if (typeof meta.genre === 'string' && meta.genre.trim()) out.genre = meta.genre.trim();
+  if (typeof meta.director === 'string' && meta.director.trim()) out.director = meta.director.trim();
+  if (typeof meta.country === 'string' && meta.country.trim()) out.country = meta.country.trim();
+  if (meta.actors != null) {
+    const actors = Array.isArray(meta.actors)
+      ? meta.actors.map((a) => String(a).trim()).filter(Boolean)
+      : String(meta.actors)
+          .split(/[,،]/)
+          .map((a) => a.trim())
+          .filter(Boolean);
+    if (actors.length > 0) out.actors = actors.slice(0, 2);
+  }
+  if (typeof meta.imdbRating === 'string' && meta.imdbRating.trim()) out.imdbRating = meta.imdbRating.trim();
+  if (typeof meta.tip === 'string' && meta.tip.trim()) out.tip = meta.tip.trim();
+  const imdb =
+    (typeof meta.imdbId === 'string' && meta.imdbId) ||
+    (typeof meta.imdbID === 'string' && meta.imdbID) ||
+    extractImdbIdFromUrl(externalUrl);
+  if (imdb?.trim()) out.imdbId = String(imdb).trim();
+  const tmdb = meta.tmdbId ?? meta.tmdbID;
+  if (tmdb != null && String(tmdb).trim()) {
+    const n = parseInt(String(tmdb), 10);
+    if (!Number.isNaN(n)) out.tmdbId = n;
+  }
+  return out;
+}
+
+function normalizeBookImportMetadata(meta: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (!meta || typeof meta !== 'object') return out;
+  if (typeof meta.author === 'string' && meta.author.trim()) out.author = meta.author.trim();
+  if (typeof meta.genre === 'string' && meta.genre.trim()) out.genre = meta.genre.trim();
+  if (typeof meta.tip === 'string' && meta.tip.trim()) out.tip = meta.tip.trim();
+  const isbn = meta.isbn ?? meta.ISBN;
+  if (isbn != null && String(isbn).trim()) out.isbn = String(isbn).trim();
+  return out;
+}
+
+function normalizeCafeImportMetadata(meta: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (!meta || typeof meta !== 'object') return out;
+  if (typeof meta.address === 'string' && meta.address.trim()) out.address = meta.address.trim();
+  if (typeof meta.priceRange === 'string' && meta.priceRange.trim()) out.priceRange = meta.priceRange.trim();
+  if (typeof meta.cuisine === 'string' && meta.cuisine.trim()) out.cuisine = meta.cuisine.trim();
+  if (typeof meta.tip === 'string' && meta.tip.trim()) out.tip = meta.tip.trim();
+  return out;
+}
+
+export function normalizeBulkImportMetadata(
+  categorySlug: string,
+  meta: Record<string, unknown> | null | undefined,
+  externalUrl?: string | null
+): Record<string, unknown> {
+  const kind = getBulkImportCategoryKind(categorySlug);
+  switch (kind) {
+    case 'movie':
+      return normalizeMovieImportMetadata(meta, externalUrl);
+    case 'book':
+      return normalizeBookImportMetadata(meta);
+    case 'cafe':
+      return normalizeCafeImportMetadata(meta);
+    default:
+      return meta && typeof meta === 'object' ? { ...meta } : {};
+  }
+}
+
+export function validateBulkImportRow(
+  raw: unknown,
+  index: number,
+  categorySlug: string
+): BulkImportRow {
+  const errors: string[] = [];
+  const parsed = baseRawSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      id: `row-${index}`,
+      selected: false,
+      valid: false,
+      errors: parsed.error.errors.map((e) => e.message),
+      title: String((raw as { title?: string })?.title ?? ''),
+      description: '',
+      imageUrl: '',
+      externalUrl: '',
+      metadata: {},
+    };
+  }
+
+  const data = parsed.data;
+  const title = data.title.trim();
+  if (!title) errors.push('عنوان خالی است');
+
+  let externalUrl = (data.externalUrl ?? '').trim();
+  if (externalUrl && !/^https?:\/\//i.test(externalUrl)) {
+    errors.push('externalUrl نامعتبر است');
+    externalUrl = '';
+  }
+
+  const metadata = normalizeBulkImportMetadata(
+    categorySlug,
+    mergeItemTipIntoMetadata(
+      (data.metadata as Record<string, unknown>) ?? {},
+      data.tip
+    ),
+    externalUrl
+  );
+
+  const metaValidation = validateMetadata(categorySlug, metadata);
+  if (!metaValidation.success) {
+    errors.push(metaValidation.error || 'متادیتا نامعتبر');
+  }
+
+  let imageUrl = (data.imageUrl ?? '').trim();
+  if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
+    errors.push('imageUrl باید لینک http/https باشد');
+    imageUrl = '';
+  }
+
+  return {
+    id: `row-${index}-${title.slice(0, 12)}`,
+    selected: errors.length === 0,
+    valid: errors.length === 0,
+    errors,
+    title,
+    description: (data.description ?? '').trim(),
+    imageUrl,
+    externalUrl,
+    order: data.order,
+    metadata: metaValidation.success ? (metaValidation.data as Record<string, unknown>) ?? metadata : metadata,
+  };
+}
+
+export function parseBulkImportJson(
+  text: string,
+  categorySlug: string
+): { rows: BulkImportRow[]; parseError?: string } {
+  const trimmed = text.trim();
+  if (!trimmed) return { rows: [], parseError: 'JSON خالی است' };
+
+  let data: unknown;
+  try {
+    data = JSON.parse(trimmed);
+  } catch {
+    return { rows: [], parseError: 'JSON نامعتبر است' };
+  }
+
+  let items: unknown[];
+  if (Array.isArray(data)) {
+    items = data;
+  } else if (data && typeof data === 'object' && Array.isArray((data as { items?: unknown[] }).items)) {
+    items = (data as { items: unknown[] }).items;
+  } else {
+    return { rows: [], parseError: 'فرمت باید آرایه یا { "items": [...] } باشد' };
+  }
+
+  if (items.length === 0) return { rows: [], parseError: 'هیچ آیتمی در JSON نیست' };
+
+  const rows = items.map((item, i) => validateBulkImportRow(item, i, categorySlug));
+  return { rows };
+}
+
+export function formatBulkImportRowSubtitle(row: BulkImportRow, categorySlug: string): string {
+  const kind = getBulkImportCategoryKind(categorySlug);
+  const m = row.metadata;
+  switch (kind) {
+    case 'movie': {
+      const parts: string[] = [];
+      if (m.year) parts.push(String(m.year));
+      if (m.genre) parts.push(String(m.genre));
+      if (m.director) parts.push(String(m.director));
+      if (m.imdbRating) parts.push(`⭐ ${m.imdbRating}`);
+      return parts.join(' · ') || '—';
+    }
+    case 'book': {
+      const parts: string[] = [];
+      if (m.author) parts.push(String(m.author));
+      if (m.genre) parts.push(String(m.genre));
+      if (m.isbn) parts.push(`ISBN ${m.isbn}`);
+      return parts.join(' · ') || '—';
+    }
+    case 'cafe': {
+      const parts: string[] = [];
+      if (m.cuisine) parts.push(String(m.cuisine));
+      if (m.priceRange) parts.push(String(m.priceRange));
+      if (m.address) parts.push(String(m.address).slice(0, 40));
+      return parts.join(' · ') || '—';
+    }
+    default:
+      return Object.keys(m).length > 0 ? JSON.stringify(m).slice(0, 80) : '—';
+  }
+}
+
+export type BulkImportListContext = {
+  title?: string;
+  slug?: string;
+  categoryName?: string;
+};
+
+export function getBulkImportJsonExample(
+  categorySlug: string,
+  list?: BulkImportListContext | null
+): string {
+  const kind = getBulkImportCategoryKind(categorySlug);
+  const listTitle = list?.title?.trim() || 'عنوان لیست';
+  const categoryName = list?.categoryName?.trim() || getBulkImportCategoryLabel(kind);
+
+  switch (kind) {
+    case 'book':
+      return personalizeImportExample(BOOK_JSON_EXAMPLE, listTitle, categoryName, kind);
+    case 'cafe':
+      return personalizeImportExample(CAFE_JSON_EXAMPLE, listTitle, categoryName, kind);
+    case 'movie':
+      return personalizeImportExample(MOVIE_JSON_EXAMPLE, listTitle, categoryName, kind);
+    default:
+      return personalizeImportExample(GENERAL_JSON_EXAMPLE, listTitle, categoryName, kind);
+  }
+}
+
+function personalizeImportExample(
+  template: string,
+  listTitle: string,
+  categoryName: string,
+  kind: BulkImportCategoryKind
+): string {
+  try {
+    const data = JSON.parse(template) as { items?: Array<Record<string, unknown>> };
+    if (!Array.isArray(data.items) || data.items.length === 0) return template;
+
+    const first = { ...data.items[0] };
+    const descPrefix =
+      kind === 'movie'
+        ? `پیشنهاد برای لیست «${listTitle}» (${categoryName}): `
+        : kind === 'book'
+          ? `برای لیست «${listTitle}»: `
+          : kind === 'cafe'
+            ? `مقصد لیست «${listTitle}»: `
+            : `آیتم برای لیست «${listTitle}» (${categoryName}): `;
+
+    if (typeof first.description === 'string' && first.description.trim()) {
+      first.description = `${descPrefix}${first.description}`;
+    } else {
+      first.description = `${descPrefix}توضیح کوتاه آیتم.`;
+    }
+
+    return JSON.stringify({ ...data, items: [first, ...data.items.slice(1)] }, null, 2);
+  } catch {
+    return template;
+  }
+}
+
+export function getBulkImportJsonHint(categorySlug: string, list?: BulkImportListContext | null): string {
+  const kind = getBulkImportCategoryKind(categorySlug);
+  const listPart = list?.title ? ` · لیست: «${list.title}»` : '';
+  switch (kind) {
+    case 'movie':
+      return `tip (اختیاری) · metadata: year, genre, director, country, actors, imdbRating (مثل "8.7")${listPart}`;
+    case 'book':
+      return `tip (اختیاری) · metadata: author, genre, isbn${listPart}`;
+    case 'cafe':
+      return `tip (اختیاری) · metadata: address (الزامی), priceRange, cuisine${listPart}`;
+    default:
+      return `tip, description, imageUrl, externalUrl, metadata (اختیاری)${listPart}`;
+  }
+}
+
+export function getBulkImportFormatTitle(categorySlug: string, list?: BulkImportListContext | null): string {
+  const kind = getBulkImportCategoryLabel(getBulkImportCategoryKind(categorySlug));
+  if (list?.title) return `${kind} — ${list.title}`;
+  return kind;
+}
+
+const MOVIE_JSON_EXAMPLE = `{
+  "items": [
+    {
+      "title": "ماتریکس",
+      "description": "نئو با کشف واقعیت شبیه‌سازی‌شده وارد مبارزه‌ای می‌شود.",
+      "tip": "اگر فقط یک بار دیده‌اید، یک بار دیگر با تمرکز روی جزئیات ببینید.",
+      "imageUrl": "https://image.tmdb.org/t/p/w500/poster.jpg",
+      "externalUrl": "https://www.imdb.com/title/tt0133093",
+      "metadata": {
+        "year": 1999,
+        "genre": "علمی-تخیلی",
+        "director": "Wachowski Brothers",
+        "country": "ایالات متحده",
+        "actors": ["Keanu Reeves", "Laurence Fishburne"],
+        "imdbRating": "8.7",
+        "imdbId": "tt0133093",
+        "tmdbId": 603
+      }
+    }
+  ]
+}`;
+
+const BOOK_JSON_EXAMPLE = `{
+  "items": [
+    {
+      "title": "شازده کوچولو",
+      "description": "داستان پسرکی که از سیاره‌اش سفر می‌کند و با بزرگسالان روبرو می‌شود.",
+      "tip": "بهتر است نسخهٔ ترجمهٔ احمد شاملو را بخوانید.",
+      "imageUrl": "https://example.com/cover.jpg",
+      "externalUrl": "https://example.com/book",
+      "metadata": {
+        "author": "آنتوان دو سنت‌اگزوپری",
+        "genre": "رمان",
+        "isbn": "9789643690012"
+      }
+    }
+  ]
+}`;
+
+const CAFE_JSON_EXAMPLE = `{
+  "items": [
+    {
+      "title": "کافه رستوران مولین",
+      "description": "فضای دنج با منوی ایرانی-فرانسوی در مرکز شهر.",
+      "tip": "برای صبحانه آخر هفته حتماً از قبل رزرو کنید.",
+      "imageUrl": "https://example.com/cafe.jpg",
+      "externalUrl": "https://example.com/cafe",
+      "metadata": {
+        "address": "تهران، خیابان ولیعصر",
+        "priceRange": "$$",
+        "cuisine": "ایرانی"
+      }
+    }
+  ]
+}`;
+
+const GENERAL_JSON_EXAMPLE = `{
+  "items": [
+    {
+      "title": "عنوان آیتم",
+      "description": "توضیح کوتاه",
+      "tip": "نکتهٔ ویژهٔ ادمین (اختیاری)",
+      "imageUrl": "https://example.com/image.jpg",
+      "externalUrl": "https://example.com",
+      "metadata": {}
+    }
+  ]
+}`;
+
+/** @deprecated use getBulkImportJsonExample */
+export const BULK_MOVIE_JSON_EXAMPLE = MOVIE_JSON_EXAMPLE;

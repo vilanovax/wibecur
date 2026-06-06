@@ -23,6 +23,7 @@ export async function PUT(
       slug,
       description,
       coverImage,
+      horizontalImage,
       categoryId,
       badge,
       isPublic,
@@ -65,7 +66,14 @@ export async function PUT(
       }
     }
 
-    const finalCoverImage = coverImage !== undefined ? await ensureImageInLiara(coverImage, 'lists') : undefined;
+    const finalCoverImage =
+      coverImage !== undefined
+        ? await ensureImageInLiara(coverImage, 'lists', { profile: 'coverList' })
+        : undefined;
+    const finalHorizontalImage =
+      horizontalImage !== undefined
+        ? await ensureImageInLiara(horizontalImage, 'lists', { profile: 'coverListHorizontal' })
+        : undefined;
 
     const list = await prisma.lists.update({
       where: { id },
@@ -74,6 +82,7 @@ export async function PUT(
         slug,
         description,
         ...(coverImage !== undefined && { coverImage: finalCoverImage }),
+        ...(horizontalImage !== undefined && { horizontalImage: finalHorizontalImage }),
         categoryId,
         badge: badge || null,
         isPublic: isPublic !== undefined ? isPublic : true,

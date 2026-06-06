@@ -1,20 +1,61 @@
 /**
- * Slug helpers for admin lists (same format rules as categories)
+ * Slug helpers for admin lists (transliteration فارسی + لاتین)
  */
 
-import { isValidCategorySlug, buildSlugCandidates } from '@/lib/admin/category-slug';
+import {
+  slugifyCategoryName,
+  buildSlugCandidates,
+  isValidCategorySlug,
+} from '@/lib/admin/category-slug';
 
 export const isValidListSlug = isValidCategorySlug;
 export { buildSlugCandidates };
 
+/** واژه‌های پرتکرار در عنوان لیست */
+const LIST_WORD_MAP: Record<string, string> = {
+  بهترین: 'best',
+  برتر: 'top',
+  'فیلم‌های': 'films',
+  فیلمهای: 'films',
+  فیلمها: 'films',
+  فیلم: 'film',
+  'سریال‌های': 'series',
+  سریالها: 'series',
+  سریال: 'series',
+  مستند: 'documentary',
+  'مستند‌های': 'documentaries',
+  انیمیشن: 'animation',
+  کمدی: 'comedy',
+  عاشقانه: 'romance',
+  ترسناک: 'horror',
+  اکشن: 'action',
+  قبل: 'before',
+  بعد: 'after',
+  شب: 'night',
+  خواب: 'sleep',
+  خانوادگی: 'family',
+  ایرانی: 'iranian',
+  کلاسیک: 'classic',
+  جدید: 'new',
+  قدیمی: 'classic',
+  که: 'that',
+  برای: 'for',
+  دیدن: 'watch',
+  تماشا: 'watch',
+  ساکت: 'silent',
+};
+
 export function slugFromTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+  let text = title.trim().normalize('NFKC');
+  if (!text) return '';
+
+  const sorted = Object.keys(LIST_WORD_MAP).sort((a, b) => b.length - a.length);
+  for (const word of sorted) {
+    text = text.split(word).join(` ${LIST_WORD_MAP[word]} `);
+  }
+
+  const slug = slugifyCategoryName(text);
+  return slug === 'category' && !/[a-z0-9]/.test(text) ? 'list' : slug;
 }
 
 export function normalizeListSlug(value: string): string {

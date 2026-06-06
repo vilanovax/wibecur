@@ -17,6 +17,7 @@ export type FeaturedSlotResult = {
     slug: string;
     description: string | null;
     coverImage: string | null;
+    horizontalImage: string | null;
     saveCount: number;
     itemCount: number;
     likeCount: number;
@@ -51,6 +52,7 @@ export async function getCurrentFeaturedSlot(
           slug: true,
           description: true,
           coverImage: true,
+          horizontalImage: true,
           saveCount: true,
           itemCount: true,
           likeCount: true,
@@ -82,6 +84,7 @@ export async function getCurrentFeaturedSlot(
           slug: true,
           description: true,
           coverImage: true,
+          horizontalImage: true,
           saveCount: true,
           itemCount: true,
           likeCount: true,

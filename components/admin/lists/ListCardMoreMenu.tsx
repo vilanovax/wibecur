@@ -8,6 +8,7 @@ import {
   Trash2,
   BarChart3,
   MoreHorizontal,
+  Pencil,
 } from 'lucide-react';
 import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
 
@@ -55,6 +56,14 @@ export default function ListCardMoreMenu({
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg py-1 z-50">
+          <Link
+            href={`/admin/lists/${row.id}/edit`}
+            className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)]"
+            onClick={() => setOpen(false)}
+          >
+            <Pencil className="w-4 h-4" />
+            ویرایش
+          </Link>
           <Link
             href={`/admin/lists/${row.id}/debug`}
             className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)]"

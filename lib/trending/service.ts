@@ -25,6 +25,7 @@ export interface TrendingListResult {
   creatorId?: string;
   creator?: { id: string; name: string | null; username: string | null; image: string | null; curatorLevel?: string };
   coverImage?: string | null;
+  horizontalImage?: string | null;
   description?: string | null;
   saveCount: number;
   likeCount: number;
@@ -164,6 +165,7 @@ export async function getTrendingByCategory(
         slug: true,
         description: true,
         coverImage: true,
+        horizontalImage: true,
         saveCount: true,
         likeCount: true,
         itemCount: true,
@@ -197,6 +199,7 @@ export async function getTrendingByCategory(
         creatorId: l.userId,
         creator: l.users ? { id: l.users.id, name: l.users.name, username: l.users.username, image: l.users.image, curatorLevel: l.users.curatorLevel } : undefined,
         coverImage: l.coverImage,
+        horizontalImage: l.horizontalImage,
         saveCount: l.saveCount ?? 0,
         likeCount: l.likeCount ?? 0,
         itemCount: l.itemCount ?? 0,
@@ -287,6 +290,7 @@ export async function getFastRising(
         title: true,
         slug: true,
         coverImage: true,
+        horizontalImage: true,
         saveCount: true,
         likeCount: true,
         itemCount: true,
@@ -322,6 +326,7 @@ export async function getFastRising(
         categorySlug: l.categories?.slug ?? null,
         creatorId: l.userId,
         coverImage: l.coverImage,
+        horizontalImage: l.horizontalImage,
         saveCount: l.saveCount ?? 0,
         likeCount: l.likeCount ?? 0,
         itemCount: l.itemCount ?? 0,
@@ -349,6 +354,7 @@ export async function getMonthlyPopular(
         title: true,
         slug: true,
         coverImage: true,
+        horizontalImage: true,
         saveCount: true,
         likeCount: true,
         itemCount: true,
@@ -383,6 +389,7 @@ export async function getMonthlyPopular(
         categorySlug: l.categories?.slug ?? null,
         creatorId: l.userId,
         coverImage: l.coverImage,
+        horizontalImage: l.horizontalImage,
         saveCount: l.saveCount ?? 0,
         likeCount: l.likeCount ?? 0,
         itemCount: l.itemCount ?? 0,

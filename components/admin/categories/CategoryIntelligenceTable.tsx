@@ -42,6 +42,9 @@ export default function CategoryIntelligenceTable({
                 لیست‌ها
               </th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+                آیتم یکتا
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
                 رشد ۷روز
               </th>
               <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
@@ -125,6 +128,9 @@ export default function CategoryIntelligenceTable({
                   </td>
                   <td className="px-4 py-3 text-sm tabular-nums text-[var(--color-text)]">
                     {cat.listCount.toLocaleString('fa-IR')}
+                  </td>
+                  <td className="px-4 py-3 text-sm tabular-nums text-[var(--color-text)]">
+                    {cat.uniqueItemCount.toLocaleString('fa-IR')}
                   </td>
                   <td className="px-4 py-3">
                     <span

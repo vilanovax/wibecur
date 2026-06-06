@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { dbQuery } from '@/lib/db';
+import { resolveAdminItemThumbnail } from '@/lib/resolve-admin-item-image';
 import ItemsPageClient from './ItemsPageClient';
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ interface PageProps {
     page?: string;
     perPage?: string;
     listId?: string;
+    categoryId?: string;
   }>;
 }
 
@@ -25,14 +27,16 @@ export default async function ItemsPage({ searchParams }: PageProps) {
   const page = parseInt(params.page || '1');
   const perPage = parseInt(params.perPage || '24');
   const listId = params.listId;
-  
+  const categoryId = params.categoryId;
+
   try {
 
-    // Use a single transaction to reduce connection pool usage
-    // Fetch paginated items with total count
-
     const skip = (page - 1) * perPage;
-    const itemsWhere = listId ? { listId } : {};
+    const itemsWhere = listId
+      ? { listId }
+      : categoryId
+        ? { lists: { categoryId } }
+        : {};
 
     const { items, lists, itemCountsByList, totalItems } = await dbQuery(() =>
       prisma.$transaction(
@@ -58,6 +62,10 @@ export default async function ItemsPage({ searchParams }: PageProps) {
                 updatedAt: true,
                 commentsEnabled: true,
                 maxComments: true,
+                catalogItemId: true,
+                catalog_items: {
+                  select: { imageUrl: true },
+                },
                 lists: {
                   select: {
                     id: true,
@@ -128,6 +136,11 @@ export default async function ItemsPage({ searchParams }: PageProps) {
     // Serialize dates for client component
     const serializedItems = items.map((item) => ({
       ...item,
+      displayImageUrl: resolveAdminItemThumbnail({
+        imageUrl: item.imageUrl,
+        catalogImageUrl: item.catalog_items?.imageUrl ?? null,
+        metadata: item.metadata as Record<string, unknown> | null,
+      }),
       createdAt: item.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: item.updatedAt?.toISOString() || new Date().toISOString(),
     }));
@@ -145,6 +158,7 @@ export default async function ItemsPage({ searchParams }: PageProps) {
         items={serializedItems as any}
         lists={serializedLists as any}
         initialListId={listId}
+        initialCategoryId={categoryId}
         itemCountsByList={Object.fromEntries(itemCountMap)}
         currentPage={page}
         perPage={perPage}

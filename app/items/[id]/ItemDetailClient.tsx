@@ -3,36 +3,27 @@
 import { useState, useEffect } from 'react';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import Link from 'next/link';
-import { Share2, Heart, Bookmark } from 'lucide-react';
+import { Share2, Heart, Bookmark, ChevronLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import ItemCoverImage from '@/components/shared/ItemCoverImage';
+import ItemMetadataFacts from '@/components/shared/ItemMetadataFacts';
+import ItemTipCard from '@/components/shared/ItemTipCard';
 import CommentSection from '@/components/mobile/comments/CommentSection';
 import ItemDiscoverySection from '@/components/mobile/items/ItemDiscoverySection';
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
 import Toast from '@/components/shared/Toast';
 import { isMovieLikeCategory } from '@/lib/resolve-item-image';
+import { buildItemMetadataFacts, extractItemTip } from '@/lib/item-metadata-display';
 import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
 
-const HERO_COLLAPSE_SCROLL_Y = 100;
-
-const HERO_META_KEYS = new Set(['year', 'genre', 'imdbRating']);
-const DESCRIPTION_TRUNCATE = 160;
+const HERO_COLLAPSE_SCROLL_Y = 120;
+const DESCRIPTION_TRUNCATE = 180;
 
 function displayRating(rating: number | null | undefined): string | null {
   if (rating == null || Number(rating) === 0) return null;
   return String(rating);
-}
-
-function formatMetaValue(key: string, value: unknown): string {
-  if (key === 'priceRange' && typeof value === 'string') {
-    if (value === '$') return 'ارزان';
-    if (value === '$$') return 'متوسط';
-    if (value === '$$$') return 'گران';
-    return 'لوکس';
-  }
-  return String(value);
 }
 
 interface ItemDetailClientProps {
@@ -66,30 +57,6 @@ interface ItemDetailClientProps {
     users: { name: string | null } | null;
   };
 }
-
-const metaLabels: Record<string, string> = {
-  year: 'سال',
-  genre: 'ژانر',
-  director: 'کارگردان',
-  imdbRating: 'امتیاز',
-  author: 'نویسنده',
-  address: 'آدرس',
-  priceRange: 'بازه قیمت',
-  cuisine: 'نوع غذا',
-  phone: 'تلفن',
-};
-
-const metaIcons: Record<string, string> = {
-  year: '📅',
-  genre: '🎭',
-  director: '🎬',
-  imdbRating: '⭐',
-  author: '✍️',
-  address: '📍',
-  priceRange: '💰',
-  cuisine: '🍽️',
-  phone: '📞',
-};
 
 export default function ItemDetailClient({ item }: ItemDetailClientProps) {
   const isDesktop = useIsDesktop();
@@ -144,16 +111,16 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
   const ratingLabel = displayRating(item.rating ?? (meta.imdbRating as number | undefined) ?? null);
   const genre = meta.genre ?? categoryName;
   const likeCount = item.voteCount ?? 0;
+  const metadataFacts = buildItemMetadataFacts(item.metadata, categorySlug, {
+    fallbackImdbRating: meta.imdbRating ?? item.rating,
+  });
+  const itemTip = extractItemTip(item.metadata);
 
-  const extraMetaEntries = item.metadata
-    ? (Object.entries(item.metadata) as [string, unknown][]).filter(
-        ([key, value]) => !HERO_META_KEYS.has(key) && value != null && value !== ''
-      )
-    : [];
-
+  const canTruncateDescription =
+    !!item.description && item.description.length > DESCRIPTION_TRUNCATE;
   const shortDescription =
-    item.description && item.description.length > DESCRIPTION_TRUNCATE && !descriptionExpanded
-      ? item.description.slice(0, DESCRIPTION_TRUNCATE) + '…'
+    canTruncateDescription && !descriptionExpanded
+      ? item.description!.slice(0, DESCRIPTION_TRUNCATE) + '…'
       : item.description;
 
   const hasSocialProof =
@@ -200,10 +167,11 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
 
   return (
     <>
-      <main>
+      <main className="pb-2" dir="rtl">
+        {/* Hero */}
         <section
-          className={`relative w-full overflow-hidden transition-[height] duration-500 ease-out lg:!h-[min(280px,34vh)] lg:rounded-2xl lg:transition-none ${
-            heroCollapsed ? 'h-[7.5rem]' : 'h-[18rem] sm:h-[20rem]'
+          className={`relative w-full overflow-hidden transition-[height] duration-500 ease-out lg:!h-[min(300px,36vh)] lg:rounded-2xl lg:transition-none ${
+            heroCollapsed ? 'h-[5.5rem]' : 'h-[19rem] sm:h-[21rem]'
           }`}
         >
           <div className="absolute inset-0">
@@ -216,191 +184,174 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               enrichPoster={isMovieLikeCategory(categorySlug)}
               priority
               fallbackIcon={item.lists.categories?.icon || '📋'}
-              className={`h-full w-full transition-transform duration-500 ease-out ${
+              className={`h-full w-full object-cover object-top transition-transform duration-500 ease-out ${
                 heroCollapsed ? 'scale-100' : 'scale-105'
               }`}
             />
           </div>
 
           <div
-            className={`absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent transition-opacity duration-500 lg:hidden ${
+            className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10 transition-opacity duration-500 lg:from-black/85 lg:via-black/45 lg:to-black/15 ${
               heroCollapsed ? 'opacity-95' : 'opacity-100'
             }`}
           />
-          <div
-            className="absolute inset-0 hidden bg-gradient-to-l from-black/90 via-black/50 to-black/10 lg:block"
-            aria-hidden
-          />
 
-          <div className="absolute inset-0 flex flex-col justify-end p-4 pb-4 text-white lg:p-6 lg:pb-6">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="absolute top-3 end-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-md transition-colors hover:bg-black/50 active:scale-95 lg:top-4 lg:h-10 lg:w-10"
+            aria-label="اشتراک‌گذاری"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+
+          <div className="absolute inset-0 flex flex-col justify-end p-4 pb-5 text-start text-white lg:p-6 lg:pb-6">
             <div
-              className={`lg:flex lg:flex-row lg:items-end lg:justify-between lg:gap-8 ${
-                heroCollapsed ? '' : ''
+              className={`overflow-hidden transition-all duration-500 ease-out ${
+                heroCollapsed ? 'max-h-0 opacity-0 pointer-events-none' : 'mb-2.5 max-h-12 opacity-100'
               }`}
             >
-              <div className="min-w-0 flex-1 text-right">
-                <div
-                  className={`transition-all duration-500 ease-out overflow-hidden lg:mb-2 ${
-                    heroCollapsed
-                      ? 'max-h-0 opacity-0 pointer-events-none mb-0'
-                      : 'mb-3 max-h-40 opacity-100'
-                  }`}
-                >
-                  <Link
-                    href={`/lists/${item.lists.slug}`}
-                    className="inline-flex max-w-full items-center gap-2 rounded-pill bg-white/15 px-3 py-1.5 wibe-caption font-medium backdrop-blur-sm transition-colors hover:bg-white/25"
-                  >
-                    <span>{item.lists.categories?.icon || '📋'}</span>
-                    <span className="truncate">از لیست: {item.lists.title}</span>
-                  </Link>
-                </div>
-
-                <h1
-                  className={`leading-tight text-white transition-all duration-500 ease-out ${
-                    heroCollapsed ? 'line-clamp-1 wibe-h3' : 'wibe-h1 lg:text-3xl lg:leading-snug'
-                  }`}
-                >
-                  {item.title}
-                </h1>
-
-                <div
-                  className={`mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 overflow-hidden wibe-small text-white/95 transition-all duration-500 ease-out ${
-                    heroCollapsed ? 'mt-0 max-h-0 opacity-0' : 'max-h-16 opacity-100 lg:mt-2.5'
-                  }`}
-                >
-                  {(genre || categoryName) && <span>{String(genre || categoryName)}</span>}
-                  {year != null && (
-                    <>
-                      {(genre || categoryName) && <span className="text-white/50">·</span>}
-                      <span>{String(year)}</span>
-                    </>
-                  )}
-                  {ratingLabel && (
-                    <>
-                      <span className="text-white/50">·</span>
-                      <span className="flex items-center gap-1">
-                        <span>⭐</span>
-                        <span>{ratingLabel}</span>
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div
-                className={`flex items-center gap-2 overflow-hidden transition-all duration-500 ease-out ${
-                  heroCollapsed
-                    ? 'pointer-events-none mt-0 max-h-0 opacity-0'
-                    : 'mt-4 max-h-16 opacity-100 lg:mt-0 lg:max-h-none lg:shrink-0'
-                }`}
+              <Link
+                href={`/lists/${item.lists.slug}`}
+                className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-white/12 px-2.5 py-1 wibe-caption font-medium backdrop-blur-sm transition-colors hover:bg-white/20"
               >
-                <Link
-                  href={`/lists/${item.lists.slug}`}
-                  className="inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/20 px-4 py-2.5 wibe-small font-medium backdrop-blur-sm transition-colors hover:bg-white/30 lg:flex-none lg:px-5"
-                >
-                  مشاهده لیست
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm transition-colors hover:bg-white/25"
-                  aria-label="اشتراک‌گذاری"
-                >
-                  <Share2 className="h-4 w-4" />
-                </button>
-              </div>
+                <span>{item.lists.categories?.icon || '📋'}</span>
+                <span className="truncate">از لیست: {item.lists.title}</span>
+              </Link>
+            </div>
+
+            <h1
+              className={`leading-tight text-white transition-all duration-500 ease-out ${
+                heroCollapsed ? 'line-clamp-1 text-base font-bold' : 'text-xl font-bold sm:text-2xl lg:text-3xl lg:leading-snug'
+              }`}
+            >
+              {item.title}
+            </h1>
+
+            <div
+              className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 overflow-hidden wibe-caption text-white/90 transition-all duration-500 ease-out ${
+                heroCollapsed ? 'mt-0 max-h-0 opacity-0' : 'mt-1.5 max-h-10 opacity-100 lg:mt-2'
+              }`}
+            >
+              {(genre || categoryName) && <span>{String(genre || categoryName)}</span>}
+              {year != null && (
+                <>
+                  {(genre || categoryName) && <span className="text-white/40">·</span>}
+                  <span>{String(year)}</span>
+                </>
+              )}
+              {ratingLabel && (
+                <>
+                  <span className="text-white/40">·</span>
+                  <span>⭐ {ratingLabel}</span>
+                </>
+              )}
+            </div>
+
+            <div
+              className={`overflow-hidden transition-all duration-500 ease-out ${
+                heroCollapsed ? 'max-h-0 opacity-0 pointer-events-none' : 'mt-3 max-h-12 opacity-100 lg:mt-4'
+              }`}
+            >
+              <Link
+                href={`/lists/${item.lists.slug}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white/15 px-4 py-2 wibe-caption font-semibold backdrop-blur-sm transition-colors hover:bg-white/25"
+              >
+                مشاهده لیست
+                <ChevronLeft className="h-3.5 w-3.5 opacity-80" aria-hidden />
+              </Link>
             </div>
           </div>
         </section>
 
-        <ItemDetailTopActions
-          itemId={item.id}
-          likeCount={likeCount}
-        />
+        {/* اکشن‌های شناور */}
+        <div className="relative z-20 -mt-5 px-4 lg:-mt-6 lg:px-0">
+          <div className="flex items-center justify-start gap-2 rounded-2xl border border-wibe/70 bg-wibe-card/95 px-3 py-2.5 shadow-md backdrop-blur-md lg:w-fit lg:px-4">
+            <ItemDetailTopActions itemId={item.id} likeCount={likeCount} variant="inline" />
+          </div>
+        </div>
 
-        <div className="relative z-10 flex flex-col gap-4 px-4 pb-1 lg:gap-8 lg:px-0 lg:pb-0">
-          <div className="min-w-0 space-y-4 lg:space-y-6">
+        <div className="relative z-10 mt-4 flex flex-col gap-5 px-4 lg:mt-6 lg:gap-7 lg:px-0">
           {authStatus === 'unauthenticated' && (
             <Link
               href={loginHref}
-              className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 wibe-small text-foreground hover:bg-primary/10 transition-colors"
+              className="flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 wibe-small text-foreground transition-colors hover:bg-primary/10"
             >
               <span>برای ذخیره، پسند و نظر وارد شو</span>
-              <span className="font-semibold text-primary shrink-0">ورود</span>
+              <span className="shrink-0 font-semibold text-primary">ورود</span>
             </Link>
           )}
 
-          <section className="rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm lg:p-5">
-            <div className="mb-3 hidden items-center justify-between gap-4 border-b border-wibe/80 pb-3 lg:flex">
-              <h2 className="wibe-h3 text-foreground">جزئیات</h2>
-              <ItemDetailTopActions itemId={item.id} likeCount={likeCount} variant="inline" />
-            </div>
+          {/* جزئیات */}
+          <section className="space-y-4">
             {hasSocialProof && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
+              <div className="flex flex-wrap justify-start gap-1.5">
                 {item.listRank != null && item.listItemCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-pill bg-primary/10 px-2.5 py-1 wibe-caption font-medium text-primary">
-                    #{item.listRank.toLocaleString('fa-IR')} از {item.listItemCount.toLocaleString('fa-IR')} در «{item.lists.title}»
-                  </span>
+                  <Link
+                    href={`/lists/${item.lists.slug}`}
+                    className="inline-flex max-w-full items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/15"
+                  >
+                    #{item.listRank.toLocaleString('fa-IR')} از {item.listItemCount.toLocaleString('fa-IR')}
+                    <span className="truncate font-normal opacity-80">· {item.lists.title}</span>
+                  </Link>
                 )}
                 {likeCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-pill bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-                    <Heart className="w-3.5 h-3.5 text-red-500" />
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
+                    <Heart className="h-3.5 w-3.5 text-red-500" aria-hidden />
                     {likeCount.toLocaleString('fa-IR')} پسند
                   </span>
                 )}
                 {item.personalSaveCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-pill bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-                    <Bookmark className="w-3.5 h-3.5 text-primary" />
-                    {item.personalSaveCount.toLocaleString('fa-IR')} ذخیره در لیست شخصی
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
+                    <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
+                    {item.personalSaveCount.toLocaleString('fa-IR')} ذخیره
                   </span>
                 )}
               </div>
             )}
 
-            {extraMetaEntries.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {extraMetaEntries.map(([key, value]) => (
-                  <span
-                    key={key}
-                    className="inline-flex items-center gap-1 rounded-pill bg-gray-100 px-2.5 py-1 wibe-caption text-foreground"
-                  >
-                    <span>{metaIcons[key] || '📋'}</span>
-                    <span className="text-wibe-secondary">{metaLabels[key] || key}:</span>
-                    <span className="font-medium">{formatMetaValue(key, value)}</span>
-                  </span>
-                ))}
-              </div>
+            {metadataFacts.length > 0 && (
+              <ItemMetadataFacts
+                facts={metadataFacts}
+                variant={isDesktop ? 'grid' : 'chips'}
+              />
             )}
 
+            {itemTip && <ItemTipCard tip={itemTip} />}
+
             {item.description ? (
-              <div>
-                <p className="wibe-small text-foreground leading-relaxed whitespace-pre-line">{shortDescription}</p>
-                {item.description.length > DESCRIPTION_TRUNCATE && !descriptionExpanded && (
-                  <button
-                    type="button"
-                    onClick={() => setDescriptionExpanded(true)}
-                    className="text-primary wibe-small font-medium mt-2 hover:underline"
-                  >
-                    بیشتر بخوان
-                  </button>
+              <div className="rounded-xl bg-gray-50/80 px-3.5 py-3.5 text-start lg:bg-transparent lg:p-0">
+                <p className="text-[0.9375rem] leading-[1.8] text-foreground/80 whitespace-pre-line">
+                  {shortDescription}
+                </p>
+                {(canTruncateDescription || item.externalUrl) && (
+                  <div className="mt-2 flex flex-wrap items-center justify-start gap-[5px]">
+                    {canTruncateDescription && (
+                      <button
+                        type="button"
+                        onClick={() => setDescriptionExpanded((v) => !v)}
+                        className="wibe-caption font-semibold text-primary transition-colors hover:text-primary-dark"
+                      >
+                        {descriptionExpanded ? 'کمتر' : 'بیشتر بخوان'}
+                      </button>
+                    )}
+                    {item.externalUrl && (
+                      <a
+                        href={item.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="wibe-caption font-medium text-primary/80 underline-offset-2 hover:text-primary hover:underline"
+                      >
+                        منبع خارجی
+                      </a>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
-              <div className="py-4 px-4 rounded-md bg-gray-50 text-center">
-                <p className="wibe-small text-wibe-secondary">هنوز توضیحی ثبت نشده</p>
-                <p className="wibe-caption text-wibe-secondary mt-1">اولین نفری باش که توضیح اضافه می‌کنه</p>
-              </div>
-            )}
-
-            {item.externalUrl && (
-              <a
-                href={item.externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-md bg-primary/10 text-primary wibe-small font-medium hover:bg-primary/15 transition-colors"
-              >
-                اطلاعات بیشتر
-              </a>
+              <p className="py-3 text-start wibe-caption text-wibe-secondary">
+                هنوز توضیحی ثبت نشده
+              </p>
             )}
           </section>
 
@@ -413,16 +364,15 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             trendingItems={trendingItems}
             trendingLoading={trendingLoading}
           />
-          </div>
 
-          <div className="scroll-mt-16 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card lg:p-5 lg:pt-5 lg:shadow-sm">
+          <section className="scroll-mt-16 border-t border-wibe/70 pt-5 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
             <CommentSection
               itemId={item.id}
               onCommentAdded={onCommentsUpdate}
               refreshTrigger={commentRefreshTrigger}
               embeddedInPanel
             />
-          </div>
+          </section>
         </div>
       </main>
 

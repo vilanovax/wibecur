@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth';
+import { hasPermission } from '@/lib/auth/has-permission';
 import SettingsPageClient from './SettingsPageClient';
 
 export const metadata: Metadata = {
@@ -9,7 +11,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminSettingsPage() {
-  await requireAdmin();
+  const session = await requireAdmin();
+  if (!hasPermission(session.user.role, 'manage_settings')) {
+    redirect('/admin/access-denied?from=/admin/settings&perm=manage_settings');
+  }
 
   return (
     <Suspense

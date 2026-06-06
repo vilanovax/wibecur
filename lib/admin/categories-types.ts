@@ -41,6 +41,8 @@ export interface CategoryIntelligenceRow {
   order: number;
   isActive: boolean;
   listCount: number;
+  /** تعداد موجودیت‌های یکتا (کاتالوگ) در لیست‌های این دسته */
+  uniqueItemCount: number;
   saveGrowthPercent: number;
   /** ذخیره‌های bookmark در ۷ روز اخیر */
   saveGrowthRecent: number;

@@ -1,10 +1,16 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
-import { toLiaraImageSrc } from '@/lib/liara-image-url';
+import { toLiaraImageSrc, getLiaraImageMode } from '@/lib/liara-image-url';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
-import { isAllowedExternalImageUrl, isDisplayableCoverPath, isGenericListCover } from '@/lib/image-url-policy';
+import {
+  isAllowedExternalImageUrl,
+  isAllowedItemImageUrl,
+  isDisplayableCoverPath,
+  isGenericListCover,
+} from '@/lib/image-url-policy';
+import { resolveItemImage, type ItemImageSource } from '@/lib/resolve-item-image';
 import {
   inferCategorySlugFromTitle,
   pickCategoryCoverGradient,
@@ -23,12 +29,17 @@ interface ImageWithFallbackProps {
   /** slug لیست برای کاور موضوعی (مثلاً personal-development-books) */
   listSlug?: string | null;
   listTitle?: string | null;
+  /** نمایش تصویر ذخیره‌شده (Liara/OMDb) — URL مستقیم بدون proxy */
+  preferStoredImage?: boolean;
+  /** برای poster آیتم — imageUrl + metadata.posterUrl و … */
+  itemImageSource?: Omit<ItemImageSource, 'id'>;
 }
 
 function toDisplaySrc(resolved: string): string {
   if (!isDisplayableCoverPath(resolved)) return '';
   if (resolved.startsWith('/')) return resolved;
   if (isOurStorageUrl(resolved)) return toLiaraImageSrc(resolved);
+  if (isAllowedItemImageUrl(resolved)) return resolved;
   if (isAllowedExternalImageUrl(resolved)) return resolved;
   return '';
 }
@@ -43,10 +54,28 @@ export default function ImageWithFallback({
   categorySlug,
   listSlug,
   listTitle,
+  preferStoredImage = false,
+  itemImageSource,
 }: ImageWithFallbackProps) {
   const [forceLocal, setForceLocal] = useState(false);
+  const [forceLiaraProxy, setForceLiaraProxy] = useState(false);
+
+  useEffect(() => {
+    setForceLocal(false);
+    setForceLiaraProxy(false);
+  }, [src, preferStoredImage, categorySlug, listSlug, listTitle, itemImageSource]);
 
   const resolvedSrc = useMemo(() => {
+    if (preferStoredImage) {
+      if (itemImageSource) {
+        return resolveItemImage({
+          ...itemImageSource,
+          imageUrl: itemImageSource.imageUrl ?? src,
+        });
+      }
+      return src;
+    }
+
     const shouldResolveCover =
       forceLocal ||
       Boolean(categorySlug || listSlug || listTitle) ||
@@ -60,9 +89,13 @@ export default function ImageWithFallback({
       listSlug,
       listTitle,
     });
-  }, [src, categorySlug, listSlug, listTitle, forceLocal]);
+  }, [src, categorySlug, listSlug, listTitle, forceLocal, preferStoredImage, itemImageSource]);
 
-  const displaySrc = toDisplaySrc(resolvedSrc);
+  const displaySrc = useMemo(() => {
+    const base = toDisplaySrc(resolvedSrc);
+    if (!base || !forceLiaraProxy || !isOurStorageUrl(resolvedSrc)) return base;
+    return toLiaraImageSrc(resolvedSrc, { forceProxy: true });
+  }, [resolvedSrc, forceLiaraProxy]);
 
   const fallbackGradient = useMemo(() => {
     const slug =
@@ -89,9 +122,17 @@ export default function ImageWithFallback({
       alt={alt}
       className={className}
       onError={() => {
-        if (!forceLocal && (categorySlug || listSlug || listTitle)) {
-          setForceLocal(true);
+        if (
+          preferStoredImage &&
+          !forceLiaraProxy &&
+          isOurStorageUrl(resolvedSrc) &&
+          getLiaraImageMode() === 'direct'
+        ) {
+          setForceLiaraProxy(true);
           return;
+        }
+        if (!forceLocal && (categorySlug || listSlug || listTitle) && !preferStoredImage) {
+          setForceLocal(true);
         }
       }}
       loading={priority ? 'eager' : 'lazy'}

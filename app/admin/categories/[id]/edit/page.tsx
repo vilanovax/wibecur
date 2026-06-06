@@ -8,6 +8,7 @@ import CategoryEditForm from './CategoryEditForm';
 import {
   computeCategoryListMetrics,
   getCategorySaveGrowthMap,
+  getCategoryUniqueItemCountMap,
 } from '@/lib/admin/category-intelligence';
 
 export default async function EditCategoryPage({
@@ -42,11 +43,15 @@ export default async function EditCategoryPage({
   }
 
   const metrics = computeCategoryListMetrics(category.lists);
-  const growthMap = await getCategorySaveGrowthMap(prisma, [id]);
+  const [growthMap, uniqueItemMap] = await Promise.all([
+    getCategorySaveGrowthMap(prisma, [id]),
+    getCategoryUniqueItemCountMap(prisma, [id]),
+  ]);
   const growth = growthMap.get(id) ?? { percent: 0, recent: 0, previous: 0 };
 
   const analytics = {
     listCount: category._count.lists,
+    uniqueItemCount: uniqueItemMap.get(id) ?? 0,
     saveGrowthPercent: growth.percent,
     saveGrowthRecent: growth.recent,
     saveGrowthPrevious: growth.previous,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { getDecryptedSettings } from '@/lib/settings';
 import { uploadImageFromUrl } from '@/lib/object-storage';
+import { tmdbPosterUrl } from '@/lib/movie-poster-search';
 import axios from 'axios';
 
 // POST /api/admin/items/fetch-movie-data
@@ -146,8 +147,10 @@ async function searchMultipleMovies(title: string, settings: any) {
               director: director,
               rating: details.vote_average || null,
               plot: details.overview || null,
-              posterUrl: null,
-              backdropUrl: null,
+              posterUrl: tmdbPosterUrl(details.poster_path || movie.poster_path),
+              backdropUrl: details.backdrop_path
+                ? tmdbPosterUrl(details.backdrop_path, 'w500')
+                : null,
               popularity: details.popularity || 0,
             });
           } catch (error) {

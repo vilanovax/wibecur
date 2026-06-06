@@ -22,10 +22,11 @@ export type AnalyticsEvent =
   | 'list_suggest';
 
 export function track(event: AnalyticsEvent, data?: Record<string, string | number | boolean>) {
+  if (process.env.NEXT_PUBLIC_VERCEL !== '1') return;
   try {
     vercelTrack(event, data);
   } catch {
-    // در محیط dev یا بدون Vercel، ignore
+    // ignore
   }
 }
 

@@ -5,12 +5,17 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft, Save } from 'lucide-react';
 import { categories } from '@prisma/client';
-import ImageUpload from '@/components/admin/upload/ImageUpload';
+import ListCoverImageFields from '@/components/admin/lists/ListCoverImageFields';
 import ListFormIdentity from '@/components/admin/lists/ListFormIdentity';
 import ListFormStickyPreview from '@/components/admin/lists/ListFormStickyPreview';
 import ListEditStatusToggles from '@/components/admin/lists/ListEditStatusToggles';
 import ListNewFormStepper, { type ListNewFormStep } from '@/components/admin/lists/ListNewFormStepper';
 import { slugFromTitle, normalizeListSlug, isValidListSlug } from '@/lib/admin/list-slug';
+import {
+  buildSlugFromListTitle,
+  generateListDescriptionWithAi,
+  resolveAvailableListSlug,
+} from '@/lib/admin/list-form-quick-actions';
 import { useListSlugCheck } from '@/hooks/useListSlugCheck';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 
@@ -23,6 +28,7 @@ type FormState = {
   slug: string;
   description: string;
   coverImage: string;
+  horizontalImage: string;
   categoryId: string;
   badge: string;
   isPublic: boolean;
@@ -38,6 +44,9 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
   const router = useRouter();
   const [step, setStep] = useState<ListNewFormStep>(1);
   const [loading, setLoading] = useState(false);
+  const [generatingSlug, setGeneratingSlug] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [quickFillLoading, setQuickFillLoading] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [slugAutoMode, setSlugAutoMode] = useState(true);
@@ -46,6 +55,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
     slug: '',
     description: '',
     coverImage: '',
+    horizontalImage: '',
     categoryId: categoryList[0]?.id || '',
     badge: '',
     isPublic: true,
@@ -69,6 +79,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
     slug: formData.slug,
     description: formData.description,
     coverImage: formData.coverImage,
+    horizontalImage: formData.horizontalImage,
     categoryName: selectedCategory?.name ?? '—',
     categoryIcon: selectedCategory?.icon ?? '📋',
     categoryColor: selectedCategory?.color ?? '#6366F1',
@@ -106,6 +117,79 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
     setSlugAutoMode(false);
     setFormData((prev) => ({ ...prev, slug }));
   }, []);
+
+  const applyGeneratedSlug = useCallback(async () => {
+    if (!formData.title.trim()) {
+      setToast({ message: 'ابتدا عنوان لیست را وارد کنید', type: 'error' });
+      return;
+    }
+    setGeneratingSlug(true);
+    try {
+      const base = buildSlugFromListTitle(formData.title);
+      const slug = await resolveAvailableListSlug(base);
+      setSlugAutoMode(true);
+      setFormData((prev) => ({ ...prev, slug }));
+    } catch (e: unknown) {
+      setToast({
+        message: e instanceof Error ? e.message : 'خطا در تولید slug',
+        type: 'error',
+      });
+    } finally {
+      setGeneratingSlug(false);
+    }
+  }, [formData.title]);
+
+  const applyGeneratedDescription = useCallback(async () => {
+    if (!formData.title.trim()) {
+      setToast({ message: 'ابتدا عنوان را وارد کنید', type: 'error' });
+      return;
+    }
+    if (!selectedCategory) {
+      setToast({ message: 'دسته را انتخاب کنید', type: 'error' });
+      return;
+    }
+    setGeneratingDescription(true);
+    try {
+      const description = await generateListDescriptionWithAi({
+        title: formData.title,
+        categorySlug: selectedCategory.slug,
+        categoryName: selectedCategory.name,
+      });
+      setFormData((prev) => ({ ...prev, description }));
+      setToast({ message: 'توضیحات با AI تولید شد', type: 'success' });
+    } catch (e: unknown) {
+      setToast({
+        message: e instanceof Error ? e.message : 'خطا در تولید توضیحات',
+        type: 'error',
+      });
+    } finally {
+      setGeneratingDescription(false);
+    }
+  }, [formData.title, selectedCategory]);
+
+  const handleQuickFill = useCallback(async () => {
+    if (!formData.title.trim() || !selectedCategory) return;
+    setQuickFillLoading(true);
+    try {
+      const base = buildSlugFromListTitle(formData.title);
+      const slug = await resolveAvailableListSlug(base);
+      const description = await generateListDescriptionWithAi({
+        title: formData.title,
+        categorySlug: selectedCategory.slug,
+        categoryName: selectedCategory.name,
+      });
+      setSlugAutoMode(true);
+      setFormData((prev) => ({ ...prev, slug, description }));
+      setToast({ message: 'Slug و توضیحات آماده شد', type: 'success' });
+    } catch (e: unknown) {
+      setToast({
+        message: e instanceof Error ? e.message : 'خطا در تکمیل سریع',
+        type: 'error',
+      });
+    } finally {
+      setQuickFillLoading(false);
+    }
+  }, [formData.title, selectedCategory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,6 +275,13 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
                   onResetSlugAuto={() => setSlugAutoMode((m) => !m)}
                   slugCheck={slugCheck}
                   onApplySlugSuggestion={handleApplySuggestion}
+                  showQuickActions
+                  onGenerateSlug={() => void applyGeneratedSlug()}
+                  generatingSlug={generatingSlug}
+                  onGenerateDescription={() => void applyGeneratedDescription()}
+                  generatingDescription={generatingDescription}
+                  onQuickFill={() => void handleQuickFill()}
+                  quickFillLoading={quickFillLoading}
                 />
               </div>
             </section>
@@ -241,14 +332,12 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
                       جدا از Featured صفحه اصلی
                     </p>
                   </div>
-                  <div>
-                    <ImageUpload
-                      value={formData.coverImage}
-                      onChange={(url) => setFormData((p) => ({ ...p, coverImage: url }))}
-                      label="تصویر کاور"
-                      compact
-                    />
-                  </div>
+                  <ListCoverImageFields
+                    coverImage={formData.coverImage}
+                    horizontalImage={formData.horizontalImage}
+                    onCoverChange={(url) => setFormData((p) => ({ ...p, coverImage: url }))}
+                    onHorizontalChange={(url) => setFormData((p) => ({ ...p, horizontalImage: url }))}
+                  />
                 </div>
               </section>
             </>

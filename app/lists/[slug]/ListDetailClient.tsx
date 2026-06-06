@@ -56,6 +56,8 @@ type ListDetail = {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  horizontalImage?: string | null;
+  bannerImage?: string | null;
   saveCount: number;
   itemCount: number;
   viewCount: number;
@@ -686,76 +688,78 @@ export default function ListDetailClient({
 
   return (
     <div className="bg-wibe-surface" dir="rtl">
-      {/* Hero */}
-      <div className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-200 sm:h-[220px] lg:mx-0 lg:h-[240px] lg:rounded-2xl xl:h-[260px]">
-        <ImageWithFallback
-          src={list.coverImage ?? ''}
-          alt={displayTitle}
-          className="w-full h-full object-cover"
-          fallbackIcon={categoryIcon ?? '📋'}
-          fallbackClassName="w-full h-full flex items-center justify-center text-6xl bg-gray-200"
-          categorySlug={categorySlug}
-          listSlug={list.slug}
-          listTitle={list.title}
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          <ListDetailActionRow
-            listId={list.id}
-            saveCount={saveCount}
-            isOwner={isOwner}
-            variant="icons"
-            onBookmarkToggle={(saved) => setIsBookmarked(saved)}
-            onShare={handleShare}
+      {/* Hero — تمام‌عرض در دسکتاپ */}
+      <section className="lg:-mx-4 xl:-mx-5">
+        <div className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-900 sm:h-[240px] lg:h-auto lg:min-h-[280px] lg:aspect-[16/9] lg:rounded-none lg:shadow-sm xl:min-h-[300px]">
+          <ImageWithFallback
+            src={list.bannerImage ?? list.horizontalImage ?? list.coverImage ?? ''}
+            alt={displayTitle}
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            fallbackIcon={categoryIcon ?? '📋'}
+            fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-gray-200 text-6xl"
+            categorySlug={categorySlug}
+            listSlug={list.slug}
+            listTitle={list.title}
+            priority
           />
-          <button
-            type="button"
-            onClick={() => setMoreOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform active:scale-95"
-            aria-label="بیشتر"
-          >
-            <MoreVertical className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="absolute top-4 left-4 flex items-center gap-2">
-          {isViral && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-white">
-              <Flame className="w-3.5 h-3.5" /> وایرال
-            </span>
-          )}
-        </div>
-        <div className="absolute inset-x-0 bottom-0 p-4 pb-4 text-right lg:p-6 lg:pb-6">
-          <h1
-            ref={titleRef}
-            className="text-h1 font-bold leading-tight text-white line-clamp-2 lg:text-[1.75rem] lg:leading-snug xl:text-3xl"
-          >
-            {displayTitle}
-          </h1>
-          {listDescription && (
-            <p className="mt-1 line-clamp-1 wibe-small leading-relaxed text-white/85 lg:line-clamp-2 lg:max-w-3xl">
-              {listDescription}
-            </p>
-          )}
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {list.categories && (
-              <Link
-                href={`/categories/${list.categories.slug}`}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
-              >
-                {list.categories.icon} {list.categories.name}
-              </Link>
-            )}
-            {list.badge && BADGE_LABELS[list.badge] && (
-              <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-white/20 text-white'}`}>
-                {BADGE_LABELS[list.badge]}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 lg:from-black/85 lg:via-black/40 lg:to-transparent" />
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-2 lg:top-5 lg:right-5">
+            <ListDetailActionRow
+              listId={list.id}
+              saveCount={saveCount}
+              isOwner={isOwner}
+              variant="icons"
+              onBookmarkToggle={(saved) => setIsBookmarked(saved)}
+              onShare={handleShare}
+            />
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform active:scale-95"
+              aria-label="بیشتر"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="absolute top-4 left-4 z-10 flex items-center gap-2 lg:top-5 lg:left-5">
+            {isViral && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-white">
+                <Flame className="w-3.5 h-3.5" /> وایرال
               </span>
             )}
           </div>
+          <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-right lg:p-6 lg:pb-7">
+            <h1
+              ref={titleRef}
+              className="text-h1 font-bold leading-tight text-white line-clamp-2 lg:text-[1.75rem] lg:leading-snug xl:text-3xl"
+            >
+              {displayTitle}
+            </h1>
+            {listDescription && (
+              <p className="mt-1 line-clamp-1 wibe-small leading-relaxed text-white/85 lg:line-clamp-2 lg:max-w-3xl">
+                {listDescription}
+              </p>
+            )}
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {list.categories && (
+                <Link
+                  href={`/categories/${list.categories.slug}`}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
+                >
+                  {list.categories.icon} {list.categories.name}
+                </Link>
+              )}
+              {list.badge && BADGE_LABELS[list.badge] && (
+                <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-white/20 text-white'}`}>
+                  {BADGE_LABELS[list.badge]}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="relative z-20 -mt-4 px-4 lg:px-0">
+      <div className="relative z-20 -mt-4 px-4 lg:mt-0 lg:px-0">
         <ListCompactStatsBar
           saveCount={saveCount}
           itemCount={itemCount}

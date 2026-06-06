@@ -22,7 +22,7 @@ const PATH_PERMISSION: Record<string, Permission> = {
   '/admin/comments/bad-words': 'moderate_comments',
   '/admin/comments/violations': 'moderate_comments',
   '/admin/suggestions': 'manage_lists',
-  '/admin/settings': 'view_dashboard',
+  '/admin/settings': 'manage_settings',
   '/admin/audit': 'view_audit',
   '/admin/moderation': 'view_moderation',
   '/admin/system/backup': 'manage_backup',
@@ -33,6 +33,8 @@ const PATH_PERMISSION: Record<string, Permission> = {
  * دقیق‌ترین match (طولانی‌ترین path) استفاده می‌شود.
  */
 export function getPageRequiredPermission(pathname: string): Permission | null {
+  if (pathname === '/admin/access-denied') return null;
+
   let best: Permission | null = null;
   let bestLen = 0;
   for (const [path, perm] of Object.entries(PATH_PERMISSION)) {

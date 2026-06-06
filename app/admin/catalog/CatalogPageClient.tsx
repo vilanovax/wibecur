@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,11 +12,18 @@ import {
   ExternalLink,
   Pencil,
   Plus,
+  FileJson,
   Info,
   X,
   ListPlus,
+  Layers,
+  Filter,
+  RotateCcw,
+  Link2,
 } from 'lucide-react';
 import AddToListModal from '@/components/admin/catalog/AddToListModal';
+import CatalogBulkToolbar from '@/components/admin/catalog/CatalogBulkToolbar';
+import ExternalImageItemsModal from '@/components/admin/items/ExternalImageItemsModal';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import {
   catalogCategoryLabel,
@@ -24,6 +31,7 @@ import {
 } from '@/lib/catalog-display';
 import type {
   CatalogCategoryFilter,
+  CatalogListFilter,
   CatalogListRow,
   DuplicateCatalogGroup,
 } from '@/lib/catalog-items';
@@ -40,7 +48,11 @@ interface CatalogPageClientProps {
   initialTotalPages: number;
   initialQuery: string;
   initialCategory: string;
+  initialListId: string;
+  initialMultiListOnly: boolean;
+  initialMultiListCount: number;
   initialCategoryFilters: { total: number; categories: CatalogCategoryFilter[] };
+  initialListFilters: CatalogListFilter[];
   initialDuplicateGroups: DuplicateCatalogGroup[];
   lists: ListOption[];
 }
@@ -53,7 +65,11 @@ export default function CatalogPageClient({
   initialTotalPages,
   initialQuery,
   initialCategory,
+  initialListId,
+  initialMultiListOnly,
+  initialMultiListCount,
   initialCategoryFilters,
+  initialListFilters,
   initialDuplicateGroups,
   lists,
 }: CatalogPageClientProps) {
@@ -65,6 +81,11 @@ export default function CatalogPageClient({
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
+  const [listId, setListId] = useState(initialListId);
+  const [multiListOnly, setMultiListOnly] = useState(initialMultiListOnly);
+  const [listFilters, setListFilters] = useState(initialListFilters);
+  const [multiListCount, setMultiListCount] = useState(initialMultiListCount);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [groups, setGroups] = useState(initialDuplicateGroups);
@@ -79,27 +100,62 @@ export default function CatalogPageClient({
     categorySlug: string | null;
     placements: { itemId: string; listId: string; listTitle: string; listSlug: string }[];
   } | null>(null);
+  const [externalImagesOpen, setExternalImagesOpen] = useState(false);
 
   const pushUrl = useCallback(
-    (next: { tab?: Tab; page?: number; q?: string; category?: string }) => {
+    (next: {
+      tab?: Tab;
+      page?: number;
+      q?: string;
+      category?: string;
+      listId?: string;
+      multiListOnly?: boolean;
+    }) => {
       const p = new URLSearchParams();
       const t = next.tab ?? tab;
       if (t === 'duplicates') p.set('tab', 'duplicates');
       if ((next.q ?? query).trim()) p.set('q', (next.q ?? query).trim());
       const cat = next.category !== undefined ? next.category : category;
       if (cat) p.set('category', cat);
+      const lid = next.listId !== undefined ? next.listId : listId;
+      if (lid) p.set('listId', lid);
+      const multi = next.multiListOnly !== undefined ? next.multiListOnly : multiListOnly;
+      if (multi) p.set('multiList', '1');
       if (t === 'browse') p.set('page', String(next.page ?? page));
       router.push(`/admin/catalog?${p.toString()}`);
     },
-    [router, tab, query, page, category]
+    [router, tab, query, page, category, listId, multiListOnly]
   );
 
-  const loadBrowse = async (nextPage: number, nextQ: string, nextCategory = category) => {
+  const refreshFilterMeta = useCallback(async (nextCategory: string, nextListId: string) => {
+    try {
+      const p = new URLSearchParams();
+      if (nextCategory) p.set('categorySlug', nextCategory);
+      if (nextListId) p.set('listId', nextListId);
+      const res = await fetch(`/api/admin/catalog-items/filters?${p}`);
+      const data = await res.json();
+      if (!res.ok) return;
+      setListFilters(data.listFilters ?? []);
+      setMultiListCount(data.multiListCount ?? 0);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const loadBrowse = async (
+    nextPage: number,
+    nextQ: string,
+    nextCategory = category,
+    nextListId = listId,
+    nextMultiListOnly = multiListOnly
+  ) => {
     setLoading(true);
     try {
       const p = new URLSearchParams({ page: String(nextPage), perPage: '24' });
       if (nextQ.trim()) p.set('q', nextQ.trim());
       if (nextCategory) p.set('categorySlug', nextCategory);
+      if (nextListId) p.set('listId', nextListId);
+      if (nextMultiListOnly) p.set('multiList', '1');
       const res = await fetch(`/api/admin/catalog-items?${p}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -107,6 +163,8 @@ export default function CatalogPageClient({
       setTotal(data.total);
       setPage(data.page);
       setTotalPages(data.totalPages);
+      setSelectedIds(new Set());
+      void refreshFilterMeta(nextCategory, nextListId);
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : 'خطا');
     } finally {
@@ -188,7 +246,7 @@ export default function CatalogPageClient({
       setMessage(data.message ?? 'ادغام انجام شد');
       setGroups((prev) => prev.filter((g) => g.groupKey !== group.groupKey));
       setDupCount((c) => Math.max(0, c - 1));
-      if (tab === 'browse') void loadBrowse(page, query);
+      if (tab === 'browse') void loadBrowse(page, query, category, listId, multiListOnly);
       router.refresh();
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : 'خطا در ادغام');
@@ -202,11 +260,87 @@ export default function CatalogPageClient({
   const setCategoryFilter = (slug: string) => {
     setCategory(slug);
     setPage(1);
-    pushUrl({ category: slug, page: 1 });
-    void loadBrowse(1, query, slug);
+    setListId('');
+    setSelectedIds(new Set());
+    pushUrl({ category: slug, listId: '', page: 1 });
+    void loadBrowse(1, query, slug, '', multiListOnly);
+    void refreshFilterMeta(slug, '');
   };
 
+  const setListFilter = (nextListId: string) => {
+    setListId(nextListId);
+    setPage(1);
+    setSelectedIds(new Set());
+    pushUrl({ listId: nextListId, page: 1 });
+    void loadBrowse(1, query, category, nextListId, multiListOnly);
+    void refreshFilterMeta(category, nextListId);
+  };
+
+  const toggleMultiListFilter = () => {
+    const next = !multiListOnly;
+    setMultiListOnly(next);
+    setPage(1);
+    setSelectedIds(new Set());
+    pushUrl({ multiListOnly: next, page: 1 });
+    void loadBrowse(1, query, category, listId, next);
+  };
+
+  const clearAdvancedFilters = () => {
+    setListId('');
+    setMultiListOnly(false);
+    setPage(1);
+    setSelectedIds(new Set());
+    pushUrl({ listId: '', multiListOnly: false, page: 1 });
+    void loadBrowse(1, query, category, '', false);
+    void refreshFilterMeta(category, '');
+  };
+
+  const hasAdvancedFilters = Boolean(listId || multiListOnly);
+  const activeCategoryLabel = category
+    ? catalogCategoryLabel(category === '__none__' ? null : category)
+    : null;
+  const listFilterOptions = category ? listFilters : listFilters.filter((l) => l.count > 0);
+
+  const externalImagesScopeTitle = useMemo(() => {
+    const parts: string[] = [];
+    if (category) parts.push(activeCategoryLabel ?? 'دسته');
+    if (listId) {
+      const list = listFilters.find((l) => l.id === listId);
+      if (list) parts.push(list.title);
+    }
+    if (multiListOnly) parts.push('فقط چندلیستی');
+    return parts.length ? parts.join(' · ') : 'همه کاتالوگ';
+  }, [category, listId, multiListOnly, activeCategoryLabel, listFilters]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllPage = () => {
+    const pageIds = rows.map((r) => r.id);
+    const allSelected = pageIds.every((id) => selectedIds.has(id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const selectedTitles = rows
+    .filter((r) => selectedIds.has(r.id))
+    .map((r) => r.title);
+
   const { total: catalogTotal, categories: categoryChips } = initialCategoryFilters;
+  const allPageSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id));
 
   return (
     <div className="pb-8" dir="rtl">
@@ -224,6 +358,13 @@ export default function CatalogPageClient({
           </div>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
+          <Link
+            href="/admin/items/import"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 px-4 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-50"
+          >
+            <FileJson className="w-4 h-4" />
+            import گروهی
+          </Link>
           <Link
             href="/admin/items"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
@@ -280,9 +421,11 @@ export default function CatalogPageClient({
         <p
           role="status"
           className={`text-sm rounded-xl px-4 py-3 mb-4 ${
-            message.includes('ادغام') || message.includes('منتقل')
-              ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
-              : 'bg-red-50 text-red-700 border border-red-100'
+            message.includes('خطا') ||
+            message.includes('ناموفق') ||
+            message.includes('Error')
+              ? 'bg-red-50 text-red-700 border border-red-100'
+              : 'bg-emerald-50 text-emerald-800 border border-emerald-100'
           }`}
         >
           {message}
@@ -327,12 +470,117 @@ export default function CatalogPageClient({
                 })}
               </div>
 
+              <div className="rounded-xl border border-gray-200 bg-white p-4 mb-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                    <Filter className="w-4 h-4 text-violet-600" />
+                    فیلتر پیشرفته
+                    {activeCategoryLabel && (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
+                        {activeCategoryLabel}
+                      </span>
+                    )}
+                  </div>
+                  {hasAdvancedFilters && (
+                    <button
+                      type="button"
+                      onClick={clearAdvancedFilters}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-violet-700"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      پاک کردن فیلترها
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col lg:flex-row gap-2">
+                  <label className="flex-1 min-w-[200px]">
+                    <span className="block text-[11px] font-semibold text-gray-500 mb-1">
+                      {category ? `لیست‌های دارای ${activeCategoryLabel}` : 'فیلتر بر اساس لیست'}
+                    </span>
+                    <select
+                      value={listId}
+                      onChange={(e) => setListFilter(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
+                    >
+                      <option value="">
+                        {category
+                          ? `همهٔ ${activeCategoryLabel ?? 'دسته'} (${total.toLocaleString('fa-IR')} نتیجه)`
+                          : `همه لیست‌ها (${catalogTotal.toLocaleString('fa-IR')})`}
+                      </option>
+                      {listFilterOptions.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.icon || '📋'} {l.title} ({l.count.toLocaleString('fa-IR')})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <div className="flex flex-wrap items-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setExternalImagesOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+                      title="موجودیت‌هایی که poster هنوز روی ParsPack نیست"
+                    >
+                      <Link2 className="w-4 h-4" />
+                      تصاویر خارج از ParsPack
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleMultiListFilter}
+                      disabled={multiListCount === 0 && !multiListOnly}
+                      className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        multiListOnly
+                          ? 'border-amber-400 bg-amber-50 text-amber-900'
+                          : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-amber-300 hover:bg-amber-50/60'
+                      } disabled:opacity-40 disabled:cursor-not-allowed`}
+                    >
+                      <Layers className="w-4 h-4" />
+                      فقط چندلیستی
+                      {multiListCount > 0 && (
+                        <span
+                          className={`rounded-full text-[10px] min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center ${
+                            multiListOnly ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-700'
+                          }`}
+                        >
+                          {multiListCount.toLocaleString('fa-IR')}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {!category && (
+                  <p className="text-[11px] text-gray-500">
+                    برای فیلتر دقیق‌تر، ابتدا یک دسته (مثل فیلم) انتخاب کنید — لیست‌ها و تعداد
+                    چندلیستی‌ها بر اساس همان دسته محاسبه می‌شود.
+                  </p>
+                )}
+              </div>
+
+              {selectedIds.size > 0 && (
+                <CatalogBulkToolbar
+                  selectedIds={[...selectedIds]}
+                  selectedTitles={selectedTitles}
+                  lists={listFilters.map((l) => ({ id: l.id, title: l.title, icon: l.icon }))}
+                  activeListId={listId}
+                  onClear={() => setSelectedIds(new Set())}
+                  onDone={(msg) => {
+                    setMessage(msg);
+                    void loadBrowse(page, query, category, listId, multiListOnly);
+                    router.refresh();
+                  }}
+                  onError={(msg) => setMessage(`خطا: ${msg}`)}
+                />
+              )}
+
               <form
                 className="flex flex-col sm:flex-row gap-2 mb-4"
                 onSubmit={(e) => {
                   e.preventDefault();
                   pushUrl({ page: 1, q: query });
-                  void loadBrowse(1, query, category);
+                  void loadBrowse(1, query, category, listId, multiListOnly);
                 }}
               >
                 <div className="relative flex-1">
@@ -352,6 +600,18 @@ export default function CatalogPageClient({
                   جستجو
                 </button>
               </form>
+
+              {rows.length > 0 && !loading && (
+                <label className="inline-flex items-center gap-2 mb-3 text-sm text-gray-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    onChange={toggleSelectAllPage}
+                    className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  />
+                  انتخاب همه در این صفحه
+                </label>
+              )}
 
               {loading ? (
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -374,49 +634,78 @@ export default function CatalogPageClient({
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {rows.map((row) => {
                     const extHint = formatExternalKeyHint(row.externalKey);
+                    const isSelected = selectedIds.has(row.id);
+                    const isMultiList = row.listCount > 1;
                     return (
-                      <button
+                      <div
                         key={row.id}
-                        type="button"
-                        onClick={() => openDetail(row.id)}
-                        className={`group text-right rounded-xl border p-3 transition-all hover:shadow-md ${
+                        className={`group relative text-right rounded-xl border p-3 transition-all hover:shadow-md ${
                           selectedDetail === row.id
                             ? 'border-violet-500 bg-violet-50/50 ring-2 ring-violet-200'
-                            : 'border-gray-200 bg-white hover:border-violet-200'
+                            : isSelected
+                              ? 'border-violet-400 bg-violet-50/40'
+                              : isMultiList
+                                ? 'border-amber-200 bg-amber-50/30 hover:border-amber-300'
+                                : 'border-gray-200 bg-white hover:border-violet-200'
                         }`}
                       >
-                        <div className="flex gap-3 items-center">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0 ring-1 ring-black/5">
-                            <ImageWithFallback
-                              src={row.imageUrl ?? ''}
-                              alt=""
-                              className="w-full h-full object-cover"
-                              fallbackIcon="📋"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-bold text-sm text-gray-900 line-clamp-2 leading-snug">
-                              {row.title}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                                {catalogCategoryLabel(row.categorySlug)}
-                              </span>
-                              <span className="text-[10px] text-gray-500">
-                                {row.listCount.toLocaleString('fa-IR')} لیست
-                              </span>
+                        <label className="absolute top-2 left-2 z-10 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelect(row.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="rounded border-gray-300 text-violet-600 focus:ring-violet-500 w-4 h-4"
+                            aria-label={`انتخاب ${row.title}`}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => openDetail(row.id)}
+                          className="w-full text-right"
+                        >
+                          <div className="flex gap-3 items-center pr-0 pl-6">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0 ring-1 ring-black/5">
+                              <ImageWithFallback
+                                src={row.imageUrl ?? ''}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                fallbackIcon="📋"
+                                preferStoredImage
+                                categorySlug={row.categorySlug}
+                              />
                             </div>
-                            {extHint && (
-                              <p
-                                className="text-[10px] text-violet-600/80 mt-1 truncate"
-                                title={row.externalKey ?? undefined}
-                              >
-                                {extHint}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-sm text-gray-900 line-clamp-2 leading-snug">
+                                {row.title}
                               </p>
-                            )}
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                  {catalogCategoryLabel(row.categorySlug)}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                    isMultiList
+                                      ? 'bg-amber-100 text-amber-800'
+                                      : 'bg-gray-100 text-gray-500'
+                                  }`}
+                                >
+                                  {isMultiList && <ListPlus className="w-3 h-3" />}
+                                  {row.listCount.toLocaleString('fa-IR')} لیست
+                                </span>
+                              </div>
+                              {extHint && (
+                                <p
+                                  className="text-[10px] text-violet-600/80 mt-1 truncate"
+                                  title={row.externalKey ?? undefined}
+                                >
+                                  {extHint}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </button>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -430,7 +719,7 @@ export default function CatalogPageClient({
                     onClick={() => {
                       const np = page - 1;
                       pushUrl({ page: np });
-                      void loadBrowse(np, query, category);
+                      void loadBrowse(np, query, category, listId, multiListOnly);
                     }}
                     className="p-2 rounded-lg border border-gray-200 bg-white disabled:opacity-40"
                     aria-label="صفحه قبل"
@@ -446,7 +735,7 @@ export default function CatalogPageClient({
                     onClick={() => {
                       const np = page + 1;
                       pushUrl({ page: np });
-                      void loadBrowse(np, query, category);
+                      void loadBrowse(np, query, category, listId, multiListOnly);
                     }}
                     className="p-2 rounded-lg border border-gray-200 bg-white disabled:opacity-40"
                     aria-label="صفحه بعد"
@@ -559,6 +848,8 @@ export default function CatalogPageClient({
                         alt=""
                         className="w-full h-full object-cover"
                         fallbackIcon="📋"
+                        preferStoredImage
+                        categorySlug={detail.categorySlug}
                       />
                     </div>
                   )}
@@ -643,7 +934,25 @@ export default function CatalogPageClient({
           onSuccess={(listTitle) => {
             setMessage(`به «${listTitle}» اضافه شد`);
             void openDetail(selectedDetail);
-            void loadBrowse(page, query, category);
+            void loadBrowse(page, query, category, listId);
+            router.refresh();
+          }}
+        />
+      )}
+
+      {tab === 'browse' && (
+        <ExternalImageItemsModal
+          isOpen={externalImagesOpen}
+          onClose={() => setExternalImagesOpen(false)}
+          mode="catalog"
+          scopeTitle={externalImagesScopeTitle}
+          catalogFilters={{
+            categorySlug: category || undefined,
+            listId: listId || undefined,
+            multiListOnly,
+          }}
+          onMigrated={() => {
+            void loadBrowse(page, query, category, listId, multiListOnly);
             router.refresh();
           }}
         />

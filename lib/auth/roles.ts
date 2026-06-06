@@ -8,6 +8,7 @@ export const ADMIN_ROLES = [
   'ADMIN',
   'MODERATOR',
   'ANALYST',
+  'EDITOR',
 ] as const;
 
 export type AdminRole = (typeof ADMIN_ROLES)[number];

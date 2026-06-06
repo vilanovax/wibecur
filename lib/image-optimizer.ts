@@ -9,147 +9,210 @@ export interface OptimizeImageOptions {
   format?: 'webp' | 'jpeg' | 'png';
 }
 
+export interface OptimizeImageResult {
+  buffer: Buffer;
+  contentType: string;
+  ext: string;
+  originalBytes: number;
+  optimizedBytes: number;
+  skipped: boolean;
+}
+
+function buildResult(
+  buffer: Buffer,
+  contentType: string,
+  ext: string,
+  originalBytes: number,
+  skipped = false
+): OptimizeImageResult {
+  return {
+    buffer,
+    contentType,
+    ext,
+    originalBytes,
+    optimizedBytes: buffer.length,
+    skipped,
+  };
+}
+
+function formatMeta(format: string | undefined): {
+  ext: string;
+  contentType: string;
+} {
+  if (format === 'png') return { ext: '.png', contentType: 'image/png' };
+  if (format === 'webp') return { ext: '.webp', contentType: 'image/webp' };
+  return { ext: '.jpg', contentType: 'image/jpeg' };
+}
+
+function shouldSkipOptimization(
+  metadata: sharp.Metadata,
+  originalSize: number,
+  profileConfig: ReturnType<typeof getImageProfile> | null,
+  maxWidth: number,
+  maxHeight: number
+): boolean {
+  if (!profileConfig) return false;
+
+  const width = metadata.width || 0;
+  const height = metadata.height || 0;
+  const format = metadata.format;
+
+  const withinDimensions = width > 0 && height > 0 && width <= maxWidth && height <= maxHeight;
+  const withinSkipSize = originalSize <= profileConfig.skipOptimizationIfSmallerThan;
+  const withinMaxSize = originalSize <= profileConfig.maxSize;
+  const matchingFormat = format === profileConfig.format;
+
+  return withinDimensions && withinSkipSize && withinMaxSize && matchingFormat;
+}
+
+async function encodeImage(
+  buffer: Buffer,
+  opts: {
+    maxWidth: number;
+    maxHeight: number;
+    quality: number;
+    format: 'webp' | 'jpeg' | 'png';
+  }
+): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
+  let pipeline = sharp(buffer).rotate().resize(opts.maxWidth, opts.maxHeight, {
+    fit: 'inside',
+    withoutEnlargement: true,
+  });
+
+  if (opts.format === 'webp') {
+    const optimizedBuffer = await pipeline
+      .webp({
+        quality: opts.quality,
+        effort: 6,
+        smartSubsample: true,
+      })
+      .toBuffer();
+    return { buffer: optimizedBuffer, contentType: 'image/webp', ext: '.webp' };
+  }
+
+  if (opts.format === 'jpeg') {
+    const optimizedBuffer = await pipeline
+      .jpeg({
+        quality: opts.quality,
+        mozjpeg: true,
+      })
+      .toBuffer();
+    return { buffer: optimizedBuffer, contentType: 'image/jpeg', ext: '.jpg' };
+  }
+
+  const optimizedBuffer = await pipeline
+    .png({
+      quality: opts.quality,
+      compressionLevel: 9,
+    })
+    .toBuffer();
+  return { buffer: optimizedBuffer, contentType: 'image/png', ext: '.png' };
+}
+
+async function compressToTargetSize(
+  buffer: Buffer,
+  opts: {
+    maxWidth: number;
+    maxHeight: number;
+    quality: number;
+    format: 'webp' | 'jpeg' | 'png';
+    maxSize: number;
+  }
+): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
+  let quality = opts.quality;
+  let width = opts.maxWidth;
+  let height = opts.maxHeight;
+  let lastResult = await encodeImage(buffer, { ...opts, maxWidth: width, maxHeight: height, quality });
+
+  for (let attempt = 0; attempt < 10 && lastResult.buffer.length > opts.maxSize; attempt++) {
+    if (quality > 52) {
+      quality -= 8;
+    } else {
+      width = Math.max(Math.round(width * 0.88), 480);
+      height = Math.max(Math.round(height * 0.88), 360);
+      quality = Math.max(opts.quality - 18, 58);
+    }
+
+    lastResult = await encodeImage(buffer, {
+      ...opts,
+      maxWidth: width,
+      maxHeight: height,
+      quality,
+    });
+  }
+
+  return lastResult;
+}
+
 /**
  * Optimize image buffer for web delivery
  * - Resize to max dimensions
  * - Convert to WebP for better compression
- * - Optimize quality
- *
- * @param buffer - Original image buffer
- * @param options - Optimization options
- * @returns Optimized image buffer and content type
+ * - Enforce profile maxSize with iterative quality/scale reduction
  */
 export async function optimizeImage(
   buffer: Buffer,
   options: OptimizeImageOptions = {}
 ): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
-  // Get profile configuration if specified
+  const result = await optimizeImageDetailed(buffer, options);
+  return {
+    buffer: result.buffer,
+    contentType: result.contentType,
+    ext: result.ext,
+  };
+}
+
+export async function optimizeImageDetailed(
+  buffer: Buffer,
+  options: OptimizeImageOptions = {}
+): Promise<OptimizeImageResult> {
   const profileConfig = options.profile ? getImageProfile(options.profile) : null;
 
-  const {
-    maxWidth = profileConfig?.maxWidth || 1200,
-    maxHeight = profileConfig?.maxHeight || 1200,
-    quality = profileConfig?.quality || 80,
-    format = profileConfig?.format || 'webp',
-  } = options;
-
-  const skipThreshold = profileConfig?.skipOptimizationIfSmallerThan || 300 * 1024;
+  const maxWidth = options.maxWidth ?? profileConfig?.maxWidth ?? 1200;
+  const maxHeight = options.maxHeight ?? profileConfig?.maxHeight ?? 1200;
+  const quality = options.quality ?? profileConfig?.quality ?? 80;
+  const format = options.format ?? profileConfig?.format ?? 'webp';
+  const maxSize = profileConfig?.maxSize;
+  const originalSize = buffer.length;
 
   try {
-    // Get image metadata
-    const image = sharp(buffer);
-    const metadata = await image.metadata();
-    const originalSize = buffer.length;
+    const metadata = await sharp(buffer).metadata();
     const width = metadata.width || 0;
     const height = metadata.height || 0;
 
-    console.log(`[${options.profile || 'default'}] Original: ${width}x${height}, ${metadata.format}, ${(originalSize / 1024).toFixed(2)}KB`);
-
-    // Skip optimization if image is already small and appropriately sized
-    const isAlreadySmall = originalSize < skipThreshold;
-    const isAlreadyRightSize = width <= maxWidth && height <= maxHeight &&
-                               width < 800 && height < 800;
-
-    if (isAlreadySmall && isAlreadyRightSize) {
-      console.log('✓ Image is already optimized, skipping');
-      // Return original with proper format detection
-      const ext = metadata.format === 'png' ? '.png' :
-                  metadata.format === 'webp' ? '.webp' : '.jpg';
-      const contentType = metadata.format === 'png' ? 'image/png' :
-                         metadata.format === 'webp' ? 'image/webp' : 'image/jpeg';
-      return {
-        buffer,
-        contentType,
-        ext,
-      };
+    if (shouldSkipOptimization(metadata, originalSize, profileConfig, maxWidth, maxHeight)) {
+      const { ext, contentType } = formatMeta(metadata.format);
+      return buildResult(buffer, contentType, ext, originalSize, true);
     }
 
-    console.log('→ Optimizing image...');
+    let encoded = await encodeImage(buffer, { maxWidth, maxHeight, quality, format });
 
-    // Resize if needed (maintain aspect ratio)
-    let processedImage = image.resize(maxWidth, maxHeight, {
-      fit: 'inside', // Don't crop, just fit inside dimensions
-      withoutEnlargement: true, // Don't upscale small images
-    });
-
-    // Convert to desired format with optimization
-    let optimizedBuffer: Buffer;
-    let contentType: string;
-    let ext: string;
-
-    if (format === 'webp') {
-      optimizedBuffer = await processedImage
-        .webp({
-          quality,
-          effort: 4, // 0-6, higher = better compression but slower (4 is balanced)
-        })
-        .toBuffer();
-      contentType = 'image/webp';
-      ext = '.webp';
-    } else if (format === 'jpeg') {
-      optimizedBuffer = await processedImage
-        .jpeg({
-          quality,
-          mozjpeg: true, // Use mozjpeg for better compression
-        })
-        .toBuffer();
-      contentType = 'image/jpeg';
-      ext = '.jpg';
-    } else {
-      // PNG (not recommended for photos, use for graphics/logos)
-      optimizedBuffer = await processedImage
-        .png({
-          quality,
-          compressionLevel: 9,
-        })
-        .toBuffer();
-      contentType = 'image/png';
-      ext = '.png';
+    if (maxSize && encoded.buffer.length > maxSize) {
+      encoded = await compressToTargetSize(buffer, {
+        maxWidth,
+        maxHeight,
+        quality,
+        format,
+        maxSize,
+      });
     }
 
-    const compressionRatio = ((1 - optimizedBuffer.length / buffer.length) * 100).toFixed(1);
-    console.log(`✓ Optimized: ${(optimizedBuffer.length / 1024).toFixed(2)}KB (${compressionRatio}% smaller)`);
+    return buildResult(encoded.buffer, encoded.contentType, encoded.ext, originalSize);
+  } catch (error: unknown) {
+    console.error('⚠️ Optimization failed:', (error as Error).message);
 
-    return {
-      buffer: optimizedBuffer,
-      contentType,
-      ext,
-    };
-  } catch (error: any) {
-    console.error('⚠️ Optimization failed:', error.message);
-    console.log('→ Fallback: trying with lower quality...');
-
-    // Fallback: try with lower quality
     try {
-      const fallbackQuality = Math.max(quality - 20, 50);
-      const image = sharp(buffer);
-      const fallbackBuffer = await image
-        .resize(maxWidth, maxHeight, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .webp({ quality: fallbackQuality })
-        .toBuffer();
-
-      console.log(`✓ Fallback succeeded with quality ${fallbackQuality}`);
-      return {
-        buffer: fallbackBuffer,
-        contentType: 'image/webp',
-        ext: '.webp',
-      };
-    } catch (fallbackError) {
-      console.error('⚠️ Fallback also failed, returning original');
-      // Return original if all fails
+      const fallback = await encodeImage(buffer, {
+        maxWidth,
+        maxHeight,
+        quality: Math.max(quality - 20, 50),
+        format: 'webp',
+      });
+      return buildResult(fallback.buffer, fallback.contentType, fallback.ext, originalSize);
+    } catch {
       const metadata = await sharp(buffer).metadata().catch(() => null);
-      const ext = metadata?.format === 'png' ? '.png' :
-                  metadata?.format === 'webp' ? '.webp' : '.jpg';
-      const contentType = metadata?.format === 'png' ? 'image/png' :
-                         metadata?.format === 'webp' ? 'image/webp' : 'image/jpeg';
-      return {
-        buffer,
-        contentType,
-        ext,
-      };
+      const { ext, contentType } = formatMeta(metadata?.format);
+      return buildResult(buffer, contentType, ext, originalSize, true);
     }
   }
 }

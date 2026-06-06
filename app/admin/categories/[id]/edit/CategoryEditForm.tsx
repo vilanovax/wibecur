@@ -28,6 +28,7 @@ function toWeightValue(n: number | null | undefined): WeightValue {
 
 interface CategoryAnalytics {
   listCount: number;
+  uniqueItemCount: number;
   saveGrowthPercent: number;
   saveGrowthRecent: number;
   saveGrowthPrevious: number;
@@ -437,8 +438,9 @@ export default function CategoryEditForm({
                 </Link>
               )}
             </div>
-            <div className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-5 grid grid-cols-2 sm:grid-cols-5 gap-4">
               <StatBox label="تعداد لیست‌ها" value={analytics.listCount.toLocaleString('fa-IR')} />
+              <StatBox label="آیتم‌های یکتا" value={analytics.uniqueItemCount.toLocaleString('fa-IR')} />
               <StatBox label="رشد ذخیره ۷ روز" value={growthDisplay.label} title={growthDisplay.title} />
               <StatBox label="میانگین تعامل" value={`${analytics.engagementRatio.toFixed(1)}٪`} />
               <StatBox

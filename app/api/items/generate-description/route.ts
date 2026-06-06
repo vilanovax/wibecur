@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
-
-import { getDecryptedSettings } from '@/lib/settings';
-import OpenAI from 'openai';
+import { createAdminOpenAIChatCompletion, formatOpenAIError } from '@/lib/openai-chat';
 
 // POST /api/items/generate-description - تولید توضیحات با AI (برای کاربران لاگین شده)
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication (user must be logged in, but not necessarily admin)
     const session = await auth();
 
     if (!session?.user) {
@@ -27,29 +24,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get OpenAI API key from database
-    const settings = await getDecryptedSettings();
-    const openaiApiKey = settings.openaiApiKey;
-
-    if (!openaiApiKey) {
-      return NextResponse.json(
-        { error: 'سرویس تولید محتوا با AI در حال حاضر در دسترس نیست' },
-        { status: 503 }
-      );
-    }
-
-    // Initialize OpenAI with key from database
-    const openai = new OpenAI({
-      apiKey: openaiApiKey,
-    });
-
-    // Generate context-aware prompt based on category
     const prompt = generatePrompt(title, categorySlug, metadata, plot);
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
+    const completion = await createAdminOpenAIChatCompletion(
+      [
         {
           role: 'system',
           content:
@@ -60,10 +38,12 @@ export async function POST(request: NextRequest) {
           content: prompt,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 500,
-      response_format: { type: 'json_object' },
-    });
+      {
+        temperature: 0.7,
+        max_tokens: 500,
+        response_format: { type: 'json_object' },
+      }
+    );
 
     const content = completion.choices[0]?.message?.content || '';
 
@@ -108,10 +88,10 @@ export async function POST(request: NextRequest) {
       description,
       metadata: Object.keys(generatedMetadata).length > 0 ? generatedMetadata : undefined
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating description:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در تولید توضیحات' },
+      { error: formatOpenAIError(error) },
       { status: 500 }
     );
   }

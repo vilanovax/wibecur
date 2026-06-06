@@ -61,9 +61,13 @@ export default async function CategoryPage({
 
   const initialData = JSON.parse(JSON.stringify(pageData));
 
+  const filmSlugs = ['movie', 'movies', 'film', 'film-serial'];
+  const isFilmCategory =
+    pageData.category.layoutType === 'cinematic' || filmSlugs.includes(category.slug);
+
   return (
     <div className="bg-wibe-surface">
-      <Header title={category.name} showBack />
+      <Header title={category.name} showBack hideTitleOnDesktop={isFilmCategory} />
       <CategoryPage2Client slug={category.slug} initialData={initialData} />
       <BottomNav />
     </div>

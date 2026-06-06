@@ -3,6 +3,7 @@ interface CategorySectionTitleProps {
   subtitle?: string;
   icon?: string;
   id?: string;
+  className?: string;
 }
 
 /** عنوان یکسان بخش‌های Category — Wibe Design System */
@@ -11,9 +12,10 @@ export default function CategorySectionTitle({
   subtitle,
   icon,
   id,
+  className = '',
 }: CategorySectionTitleProps) {
   return (
-    <div className="mb-3" id={id}>
+    <div className={`mb-3 ${className}`} id={id}>
       <h2 className="wibe-h3 flex items-center gap-2">
         {icon ? <span aria-hidden>{icon}</span> : null}
         {title}

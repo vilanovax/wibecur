@@ -23,7 +23,6 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
-  FileJson,
   X,
 } from 'lucide-react';
 import SidebarNavSection, { type NavItem } from './SidebarNavSection';
@@ -47,7 +46,6 @@ const PRIMARY: NavItem[] = [
     submenu: [
       { href: '/admin/catalog', label: 'کاتالوگ', icon: Library },
       { href: '/admin/items', label: 'بر اساس لیست', icon: List },
-      { href: '/admin/items/import', label: 'import گروهی', icon: FileJson },
     ],
   },
   { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
@@ -82,7 +80,7 @@ const MODERATION: NavItem[] = [
 const SYSTEM: NavItem[] = [
   { href: '/admin/audit', label: 'لاگ تغییرات', icon: ClipboardList, permission: 'view_audit' },
   { href: '/admin/system/backup', label: 'پشتیبان‌گیری', icon: Database, permission: 'manage_backup' },
-  { href: '/admin/settings', label: 'تنظیمات', icon: Settings, permission: 'view_dashboard' },
+  { href: '/admin/settings', label: 'تنظیمات', icon: Settings, permission: 'manage_settings' },
 ];
 
 type SidebarContentProps = {

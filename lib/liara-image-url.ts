@@ -1,26 +1,57 @@
-import { isOurStorageUrl } from '@/lib/object-storage-config';
+import { isOurStorageUrl, isParsPackStorageUrl } from '@/lib/object-storage-config';
 
 /**
- * نحوهٔ تحویل تصویر Liara به مرورگر:
- * - same-origin: از API خود اپ (سرور با S3 لیارا می‌خواند) — وقتی CDN لیارا از شبکهٔ کاربر block است
- * - direct: URL عمومی storage.*.liara.space
+ * نحوهٔ تحویل تصویر Object Storage به مرورگر:
+ * - same-origin: از API خود اپ (سرور با S3 می‌خواند) — برای ParsPack توصیه می‌شود
+ * - direct: URL عمومی parspack.net (فقط اگر از شبکه کاربر در دسترس باشد)
  */
-export type LiaraImageMode = 'same-origin' | 'direct';
+export type StorageImageMode = 'same-origin' | 'direct';
 
-export function getLiaraImageMode(): LiaraImageMode {
-  const mode = process.env.NEXT_PUBLIC_LIARA_IMAGE_MODE;
+/** @deprecated */
+export type LiaraImageMode = StorageImageMode;
+
+export function getStorageImageMode(): StorageImageMode {
+  const mode = process.env.NEXT_PUBLIC_LIARA_IMAGE_MODE?.trim();
   if (mode === 'direct') return 'direct';
+  // ParsPack از مرورگر مستقیم اغلب timeout می‌دهد — پیش‌فرض proxy
   return 'same-origin';
 }
 
-/** آدرس نهایی <img> — فقط برای URLهای Liara */
-export function toLiaraImageSrc(rawUrl: string | null | undefined): string {
+/** @deprecated */
+export const getLiaraImageMode = getStorageImageMode;
+
+export type ToStorageImageSrcOptions = {
+  /** حتی در حالت direct، از API same-origin استفاده کن */
+  forceProxy?: boolean;
+};
+
+/** @deprecated */
+export type ToLiaraImageSrcOptions = ToStorageImageSrcOptions;
+
+/** آدرس نهایی <img> — برای URLهای ParsPack / استوریج داخلی */
+export function toStorageImageSrc(
+  rawUrl: string | null | undefined,
+  options?: ToStorageImageSrcOptions
+): string {
   if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) return '';
   const url = rawUrl.trim();
   if (url.startsWith('/')) return url;
-  if (!isOurStorageUrl(url)) return '';
+  if (!isOurStorageUrl(url)) return url;
 
-  if (getLiaraImageMode() === 'direct') return url;
+  const useProxy =
+    options?.forceProxy ||
+    getStorageImageMode() === 'same-origin' ||
+    isParsPackStorageUrl(url);
+
+  if (!useProxy) return url;
 
   return `/api/liara-image?url=${encodeURIComponent(url)}`;
+}
+
+/** @deprecated */
+export const toLiaraImageSrc = toStorageImageSrc;
+
+/** thumbnail ادمین — همیشه از proxy برای ParsPack */
+export function toAdminStorageImageSrc(rawUrl: string | null | undefined): string {
+  return toStorageImageSrc(rawUrl, { forceProxy: true });
 }

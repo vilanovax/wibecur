@@ -344,6 +344,106 @@ export async function backfillCatalogForItem(
   return catalog;
 }
 
+export type CatalogListFilter = {
+  id: string;
+  title: string;
+  icon: string | null;
+  count: number;
+};
+
+function catalogCategoryWhere(categorySlug?: string): Prisma.catalog_itemsWhereInput | undefined {
+  if (!categorySlug) return undefined;
+  if (categorySlug === '__none__') return { categorySlug: null };
+  return { categorySlug };
+}
+
+function itemsCategoryWhere(categorySlug?: string): Prisma.itemsWhereInput | undefined {
+  const catalogWhere = catalogCategoryWhere(categorySlug);
+  if (!catalogWhere) return undefined;
+  return { catalog_items: { is: catalogWhere } };
+}
+
+export async function getCatalogListFilters(
+  prisma: PrismaClient,
+  options?: { categorySlug?: string }
+): Promise<CatalogListFilter[]> {
+  const itemWhere: Prisma.itemsWhereInput = {
+    catalogItemId: { not: null },
+    ...itemsCategoryWhere(options?.categorySlug),
+  };
+
+  const [lists, grouped] = await Promise.all([
+    prisma.lists.findMany({
+      where: { isActive: true, deletedAt: null },
+      include: { categories: { select: { icon: true } } },
+      orderBy: { title: 'asc' },
+    }),
+    prisma.items.groupBy({
+      by: ['listId'],
+      where: itemWhere,
+      _count: { _all: true },
+    }),
+  ]);
+
+  const countMap = new Map(grouped.map((g) => [g.listId, g._count._all]));
+
+  const mapped = lists.map((l) => ({
+    id: l.id,
+    title: l.title,
+    icon: l.categories?.icon ?? null,
+    count: countMap.get(l.id) ?? 0,
+  }));
+
+  if (options?.categorySlug) {
+    return mapped.filter((l) => l.count > 0);
+  }
+
+  return mapped;
+}
+
+/** تعداد موجودیت‌هایی که در بیش از یک لیست قرار دارند */
+export async function countMultiListCatalogItems(
+  prisma: PrismaClient,
+  options?: { categorySlug?: string; listId?: string }
+): Promise<number> {
+  const groups = await prisma.items.groupBy({
+    by: ['catalogItemId'],
+    where: {
+      catalogItemId: { not: null },
+      ...(options?.listId ? { listId: options.listId } : {}),
+      ...itemsCategoryWhere(options?.categorySlug),
+    },
+    having: {
+      catalogItemId: {
+        _count: { gt: 1 },
+      },
+    },
+  });
+
+  return groups.filter((g) => g.catalogItemId != null).length;
+}
+
+async function catalogIdsInMultipleLists(
+  prisma: PrismaClient,
+  options: { categorySlug?: string; listId?: string }
+): Promise<string[]> {
+  const groups = await prisma.items.groupBy({
+    by: ['catalogItemId'],
+    where: {
+      catalogItemId: { not: null },
+      ...(options.listId ? { listId: options.listId } : {}),
+      ...itemsCategoryWhere(options.categorySlug),
+    },
+    having: {
+      catalogItemId: {
+        _count: { gt: 1 },
+      },
+    },
+  });
+
+  return groups.map((g) => g.catalogItemId).filter((id): id is string => id != null);
+}
+
 export type CatalogListRow = {
   id: string;
   title: string;
@@ -380,6 +480,8 @@ export async function listCatalogItems(
   options: {
     q?: string;
     categorySlug?: string;
+    listId?: string;
+    multiListOnly?: boolean;
     page?: number;
     perPage?: number;
   }
@@ -397,12 +499,22 @@ export async function listCatalogItems(
           ],
         }
       : {}),
-    ...(options.categorySlug === '__none__'
-      ? { categorySlug: null }
-      : options.categorySlug
-        ? { categorySlug: options.categorySlug }
-        : {}),
+    ...(catalogCategoryWhere(options.categorySlug) ?? {}),
+    ...(options.listId
+      ? { items: { some: { listId: options.listId } } }
+      : {}),
   };
+
+  if (options.multiListOnly) {
+    const multiIds = await catalogIdsInMultipleLists(prisma, {
+      categorySlug: options.categorySlug,
+      listId: options.listId,
+    });
+    if (multiIds.length === 0) {
+      return { rows: [], total: 0 };
+    }
+    where.id = { in: multiIds };
+  }
 
   const [rows, total] = await Promise.all([
     catalogDb(prisma).findMany({
@@ -700,4 +812,54 @@ export async function mergeCatalogItems(
       deletedCatalogs: sources.length,
     };
   });
+}
+
+export type CatalogExternalImageRow = {
+  id: string;
+  title: string;
+  imageUrl: string;
+  listCount: number;
+  host: string;
+};
+
+/** موجودیت‌های کاتالوگ با تصویر خارج از ParsPack — همان فیلترهای صفحه مرور */
+export async function listCatalogExternalImageItems(
+  prisma: PrismaClient,
+  options: {
+    categorySlug?: string;
+    listId?: string;
+    multiListOnly?: boolean;
+  }
+): Promise<CatalogExternalImageRow[]> {
+  const { externalImageHost, isExternalDirectImageUrl } = await import('@/lib/item-image-storage');
+
+  const where: Prisma.catalog_itemsWhereInput = {
+    ...(catalogCategoryWhere(options.categorySlug) ?? {}),
+    ...(options.listId ? { items: { some: { listId: options.listId } } } : {}),
+  };
+
+  if (options.multiListOnly) {
+    const multiIds = await catalogIdsInMultipleLists(prisma, {
+      categorySlug: options.categorySlug,
+      listId: options.listId,
+    });
+    if (multiIds.length === 0) return [];
+    where.id = { in: multiIds };
+  }
+
+  const rows = await catalogDb(prisma).findMany({
+    where,
+    orderBy: { title: 'asc' },
+    include: { _count: { select: { items: true } } },
+  });
+
+  return rows
+    .map((r) => ({
+      id: r.id,
+      title: r.title,
+      imageUrl: r.imageUrl?.trim() || '',
+      listCount: r._count.items,
+      host: r.imageUrl ? externalImageHost(r.imageUrl) : '',
+    }))
+    .filter((r) => isExternalDirectImageUrl(r.imageUrl));
 }

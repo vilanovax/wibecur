@@ -1,9 +1,18 @@
 import { z } from 'zod';
 
+const tipField = {
+  tip: z
+    .string()
+    .max(500, 'نکته حداکثر ۵۰۰ کاراکتر')
+    .optional()
+    .transform((val) => (val?.trim() ? val.trim() : undefined)),
+};
+
 // ===================================
 // Movie/Series Metadata Schema
 // ===================================
 export const MovieMetadataSchema = z.object({
+  ...tipField,
   year: z.union([z.number(), z.string()]).optional().transform((val) => {
     if (typeof val === 'string') return parseInt(val) || undefined;
     return val;
@@ -11,6 +20,23 @@ export const MovieMetadataSchema = z.object({
   genre: z.string().optional(),
   director: z.string().optional(),
   imdbRating: z.string().optional(), // e.g., "8.5"
+  country: z.string().optional(),
+  actors: z
+    .union([z.array(z.string()), z.string()])
+    .optional()
+    .transform((val) => {
+      if (Array.isArray(val)) {
+        return val.map((s) => s.trim()).filter(Boolean).slice(0, 2);
+      }
+      if (typeof val === 'string' && val.trim()) {
+        return val
+          .split(/[,،]/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .slice(0, 2);
+      }
+      return undefined;
+    }),
   imdbId: z.string().optional(),
   imdbID: z.string().optional(),
   tmdbId: z.union([z.number(), z.string()]).optional().transform((val) => {
@@ -27,8 +53,11 @@ export type MovieMetadata = z.infer<typeof MovieMetadataSchema>;
 // Book Metadata Schema
 // ===================================
 export const BookMetadataSchema = z.object({
+  ...tipField,
   author: z.string().optional(),
   genre: z.string().optional(),
+  isbn: z.string().optional(),
+  ISBN: z.string().optional(),
 });
 
 export type BookMetadata = z.infer<typeof BookMetadataSchema>;
@@ -37,6 +66,7 @@ export type BookMetadata = z.infer<typeof BookMetadataSchema>;
 // Cafe/Restaurant Metadata Schema
 // ===================================
 export const CafeMetadataSchema = z.object({
+  ...tipField,
   address: z.string().min(1, 'آدرس الزامی است'),
   priceRange: z.enum(['$', '$$', '$$$', '$$$$'], {
     errorMap: () => ({ message: 'بازه قیمت الزامی است' }),
@@ -67,7 +97,7 @@ export function getMetadataSchema(categorySlug: string) {
     case 'restaurant':
       return CafeMetadataSchema;
     default:
-      return z.object({}).optional(); // Empty schema for other categories
+      return z.object({ ...tipField }).passthrough(); // Empty schema for other categories
   }
 }
 

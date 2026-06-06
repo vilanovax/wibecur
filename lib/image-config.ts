@@ -8,6 +8,7 @@ export type ImageProfile =
   | 'avatar'
   | 'coverProfile'
   | 'coverList'
+  | 'coverListHorizontal'
   | 'itemImage'
   | 'itemThumbnail'
   | 'hubCover'
@@ -47,13 +48,23 @@ export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
     format: 'webp',
   },
 
-  /** کاور لیست — کارت لیست، جزئیات لیست (عرض معمول در موبایل ~۳۵۰px، رتینا ۲x) */
+  /** کاور لیست — کارت، جزئیات، بنر featured (رتینا ۲x روی ~۶۴۰px) */
   coverList: {
-    maxWidth: 1000,
-    maxHeight: 800,
-    quality: 85,
-    maxSize: 1024 * 1024, // 1MB
-    skipOptimizationIfSmallerThan: 400 * 1024,
+    maxWidth: 1280,
+    maxHeight: 960,
+    quality: 78,
+    maxSize: 180 * 1024, // 180KB — هدف لود سریع موبایل
+    skipOptimizationIfSmallerThan: 80 * 1024, // 80KB
+    format: 'webp',
+  },
+
+  /** بنر افقی لیست — featured carousel، هدر جزئیات (۲۱:۹) */
+  coverListHorizontal: {
+    maxWidth: 1600,
+    maxHeight: 900,
+    quality: 78,
+    maxSize: 220 * 1024, // 220KB
+    skipOptimizationIfSmallerThan: 100 * 1024,
     format: 'webp',
   },
 
@@ -77,13 +88,13 @@ export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
     format: 'webp',
   },
 
-  /** کاور هاب (ادمین) */
+  /** کاور هاب / هیرو دسته (ادمین) */
   hubCover: {
-    maxWidth: 1920,
-    maxHeight: 1080,
-    quality: 85,
-    maxSize: 2 * 1024 * 1024, // 2MB
-    skipOptimizationIfSmallerThan: 500 * 1024,
+    maxWidth: 1600,
+    maxHeight: 900,
+    quality: 80,
+    maxSize: 320 * 1024, // 320KB
+    skipOptimizationIfSmallerThan: 150 * 1024,
     format: 'webp',
   },
 
@@ -114,3 +125,17 @@ export const ALLOWED_IMAGE_FORMATS = ['image/jpeg', 'image/jpg', 'image/png', 'i
  * Maximum upload size before optimization (10MB)
  */
 export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
+
+/** حداکثر حجم فایل خام قبل از بهینه‌سازی — UI/API */
+export const MAX_RAW_UPLOAD_SIZE = MAX_UPLOAD_SIZE;
+
+/** راهنمای نمایش در فرم‌های آپلود */
+export const IMAGE_UPLOAD_HINTS = {
+  listCover:
+    'JPG/PNG/WebP تا ۱۰MB — پس از آپلود به WebP (حداکثر ۱۲۸۰px، ~۱۸۰KB) تبدیل و در ParsPack ذخیره می‌شود',
+  listHorizontal:
+    'JPG/PNG/WebP تا ۱۰MB — بنر افقی ۲۱:۹ · WebP (حداکثر ۱۶۰۰×۹۰۰، ~۲۲۰KB)',
+  categoryHero:
+    'JPG/PNG/WebP تا ۱۰MB — به WebP (حداکثر ۱۶۰۰×۹۰۰، ~۳۲۰KB) بهینه می‌شود',
+  avatar: 'JPG/PNG/WebP تا ۱۰MB — به WebP ۴۰۰×۴۰۰ (~۵۰۰KB) بهینه می‌شود',
+} as const;

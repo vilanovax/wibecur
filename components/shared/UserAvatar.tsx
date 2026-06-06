@@ -12,6 +12,18 @@ interface UserAvatarProps {
   rounded?: 'full' | 'xl';
 }
 
+const SIZE_CLASSES: Record<number, string> = {
+  32: 'w-8 h-8 text-[13px]',
+  36: 'w-9 h-9 text-[14px]',
+  44: 'w-11 h-11 text-[18px]',
+  48: 'w-12 h-12 text-[19px]',
+  64: 'w-16 h-16 text-[26px]',
+};
+
+function getSizeClass(size: number): string {
+  return SIZE_CLASSES[size] ?? `w-[${size}px] h-[${size}px] text-[${Math.round(size * 0.4)}px]`;
+}
+
 /** آواتار کاربر — Liara مستقیم، fallback به حرف اول */
 export default function UserAvatar({
   src,
@@ -23,12 +35,12 @@ export default function UserAvatar({
 }: UserAvatarProps) {
   const initial = (name || email || '?').charAt(0).toUpperCase();
   const roundedClass = rounded === 'xl' ? 'rounded-xl' : 'rounded-full';
+  const sizeClass = getSizeClass(size);
 
   if (!src || !isOurStorageUrl(src)) {
     return (
       <div
-        className={`${roundedClass} bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-semibold shrink-0 ${className}`}
-        style={{ width: size, height: size, fontSize: Math.round(size * 0.4) }}
+        className={`${roundedClass} ${sizeClass} bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-semibold shrink-0 ${className}`}
       >
         {initial}
       </div>
@@ -36,10 +48,7 @@ export default function UserAvatar({
   }
 
   return (
-    <div
-      className={`${roundedClass} overflow-hidden shrink-0 ${className}`}
-      style={{ width: size, height: size }}
-    >
+    <div className={`${roundedClass} ${sizeClass} overflow-hidden shrink-0 ${className}`}>
       <ImageWithFallback
         src={src}
         alt={name || email || 'Avatar'}

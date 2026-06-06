@@ -29,19 +29,20 @@ export async function getDecryptedSettings() {
 
   return {
     openaiApiKey: settings.openaiApiKey
-      ? decrypt(settings.openaiApiKey)
+      ? decrypt(settings.openaiApiKey) || null
       : null,
-    tmdbApiKey: settings.tmdbApiKey ? decrypt(settings.tmdbApiKey) : null,
-    omdbApiKey: settings.omdbApiKey ? decrypt(settings.omdbApiKey) : null,
-    googleApiKey: settings.googleApiKey ? decrypt(settings.googleApiKey) : null,
+    openaiModel: settings.openaiModel ?? null,
+    tmdbApiKey: settings.tmdbApiKey ? decrypt(settings.tmdbApiKey) || null : null,
+    omdbApiKey: settings.omdbApiKey ? decrypt(settings.omdbApiKey) || null : null,
+    googleApiKey: settings.googleApiKey ? decrypt(settings.googleApiKey) || null : null,
     googleSearchEngineId: settings.googleSearchEngineId || null,
     liaraBucketName: settings.liaraBucketName || null,
     liaraEndpoint: settings.liaraEndpoint || null,
     liaraAccessKey: settings.liaraAccessKey
-      ? decrypt(settings.liaraAccessKey)
+      ? decrypt(settings.liaraAccessKey) || null
       : null,
     liaraSecretKey: settings.liaraSecretKey
-      ? decrypt(settings.liaraSecretKey)
+      ? decrypt(settings.liaraSecretKey) || null
       : null,
     minItemsForPublicList: settings.minItemsForPublicList ?? 5,
   };
@@ -52,6 +53,7 @@ export async function getDecryptedSettings() {
  */
 export async function updateSettings(data: {
   openaiApiKey?: string;
+  openaiModel?: string | null;
   tmdbApiKey?: string;
   omdbApiKey?: string;
   googleApiKey?: string;
@@ -70,6 +72,10 @@ export async function updateSettings(data: {
     updateData.openaiApiKey = data.openaiApiKey
       ? encrypt(data.openaiApiKey)
       : null;
+  }
+
+  if (data.openaiModel !== undefined) {
+    updateData.openaiModel = data.openaiModel?.trim() || null;
   }
 
   if (data.tmdbApiKey !== undefined) {
@@ -145,9 +151,10 @@ export async function getApiKey(
 }
 
 /**
- * Get Liara Object Storage config (decrypted)
+ * Get Object Storage config (ParsPack) — decrypted
+ * فیلدهای DB همان liara* هستند (سازگاری با schema)
  */
-export async function getLiaraConfig() {
+export async function getObjectStorageSettings() {
   const settings = await getDecryptedSettings();
 
   if (
@@ -156,23 +163,42 @@ export async function getLiaraConfig() {
     settings.liaraAccessKey &&
     settings.liaraSecretKey
   ) {
+    const { normalizeStorageEndpoint } = await import('./object-storage-config');
     return {
       bucketName: settings.liaraBucketName,
-      endpoint: settings.liaraEndpoint,
+      endpoint: normalizeStorageEndpoint(settings.liaraEndpoint),
       accessKeyId: settings.liaraAccessKey,
       secretAccessKey: settings.liaraSecretKey,
     };
   }
 
-  // fallback: متغیرهای محیطی برای dev / deploy بدون تنظیم در DB
-  const bucketName = process.env.LIARA_BUCKET_NAME?.trim();
-  const endpoint = process.env.LIARA_ENDPOINT?.trim();
-  const accessKeyId = process.env.LIARA_ACCESS_KEY?.trim();
-  const secretAccessKey = process.env.LIARA_SECRET_KEY?.trim();
+  const { normalizeStorageEndpoint } = await import('./object-storage-config');
+  const bucketName =
+    process.env.PARSPACK_BUCKET_NAME?.trim() ||
+    process.env.LIARA_BUCKET_NAME?.trim();
+  const endpointRaw =
+    process.env.PARSPACK_ENDPOINT?.trim() ||
+    process.env.LIARA_ENDPOINT?.trim();
+  const accessKeyId =
+    process.env.PARSPACK_ACCESS_KEY?.trim() ||
+    process.env.LIARA_ACCESS_KEY?.trim();
+  const secretAccessKey =
+    process.env.PARSPACK_SECRET_KEY?.trim() ||
+    process.env.LIARA_SECRET_KEY?.trim();
 
-  if (bucketName && endpoint && accessKeyId && secretAccessKey) {
-    return { bucketName, endpoint, accessKeyId, secretAccessKey };
+  if (bucketName && endpointRaw && accessKeyId && secretAccessKey) {
+    return {
+      bucketName,
+      endpoint: normalizeStorageEndpoint(endpointRaw),
+      accessKeyId,
+      secretAccessKey,
+    };
   }
 
   return null;
+}
+
+/** @deprecated */
+export async function getLiaraConfig() {
+  return getObjectStorageSettings();
 }

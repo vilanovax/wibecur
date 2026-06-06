@@ -1,6 +1,10 @@
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { auth } from '@/lib/auth-config';
+import { ADMIN_ROLES, isAdminRole } from '@/lib/auth/roles';
+
+// Re-export for callers that used lib/auth ADMIN_ROLES
+export { ADMIN_ROLES, isAdminRole };
 
 // Cache session check to avoid redundant calls
 const getCachedSession = cache(async () => {
@@ -25,10 +29,8 @@ export async function requireAuth() {
   return session;
 }
 
-const ADMIN_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'ANALYST', 'EDITOR'] as const;
-
 function isAdmin(session: { user?: { role?: string } } | null): boolean {
-  return !!session?.user?.role && ADMIN_ROLES.includes(session.user.role as (typeof ADMIN_ROLES)[number]);
+  return !!session?.user?.role && isAdminRole(session.user.role);
 }
 
 export async function requireAdmin() {

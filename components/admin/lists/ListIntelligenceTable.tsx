@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { ExternalLink, Pencil, Star, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
 import { formatSaveGrowthDisplay } from '@/lib/admin/category-intelligence';
@@ -37,6 +38,7 @@ export default function ListIntelligenceTable({
   onMoveToTrash,
   onRestore,
 }: ListIntelligenceTableProps) {
+  const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<{ id: string; kind: 'feature' | 'disable' } | null>(null);
 
@@ -135,15 +137,27 @@ export default function ListIntelligenceTable({
               return (
                 <tr
                   key={row.id}
+                  onClick={() => {
+                    if (!isTrashView) router.push(`/admin/items?listId=${row.id}`);
+                  }}
                   className={`border-b border-[var(--color-border-muted)] transition-colors hover:bg-[var(--color-bg)]/60 ${bg} ${
                     !row.isActive && !isTrashView ? 'opacity-65' : ''
-                  }`}
+                  } ${!isTrashView ? 'cursor-pointer' : ''}`}
                 >
                   <td className={`py-2 px-3 ${bg}`}>
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-[var(--color-border-muted)]">
                         {row.coverImage ? (
-                          <Image src={row.coverImage} alt="" fill className="object-cover" unoptimized sizes="36px" />
+                          <ImageWithFallback
+                            src={row.coverImage}
+                            alt=""
+                            className="object-cover w-full h-full"
+                            listSlug={row.slug}
+                            listTitle={row.title}
+                            categorySlug={row.categorySlug}
+                            fallbackIcon={row.categoryIcon}
+                            fallbackClassName="w-full h-full"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-base bg-[var(--color-bg)]">
                             {row.categoryIcon}
@@ -155,13 +169,12 @@ export default function ListIntelligenceTable({
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1 min-w-0">
-                          <Link
-                            href={`/admin/lists/${row.id}/edit`}
-                            className="font-medium text-[var(--color-text)] hover:text-[var(--primary)] truncate text-sm"
+                          <span
+                            className="font-medium text-[var(--color-text)] group-hover:text-[var(--primary)] truncate text-sm"
                             title={row.title}
                           >
                             {row.title}
-                          </Link>
+                          </span>
                           {row.isFeatured && !isTrashView && (
                             <Star className="w-3 h-3 shrink-0 text-amber-500 fill-amber-500" />
                           )}
@@ -233,7 +246,7 @@ export default function ListIntelligenceTable({
                     </>
                   )}
 
-                  <td className={`sticky left-0 z-10 py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`}>
+                  <td className={`sticky left-0 z-10 py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center gap-0.5">
                       {isTrashView ? (
                         onRestore && (

@@ -1,9 +1,14 @@
 'use client';
 
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { resolveListBannerImage } from '@/lib/list-display-images';
 
 export interface ListCoverImageProps {
   coverImage?: string | null;
+  /** بنر افقی — اگر bannerImage نباشد برای variant=banner استفاده می‌شود */
+  horizontalImage?: string | null;
+  /** URL از پیش resolve‌شده برای نمایش افقی */
+  bannerImage?: string | null;
   title: string;
   slug?: string | null;
   categorySlug?: string | null;
@@ -11,11 +16,15 @@ export interface ListCoverImageProps {
   fallbackIcon?: string;
   fallbackClassName?: string;
   priority?: boolean;
+  /** card = کاور عمودی | banner = بنر افقی */
+  variant?: 'card' | 'banner';
 }
 
-/** کاور لیست/بنر — تصویر متناسب با دسته و موضوع */
+/** کاور لیست — card عمودی یا banner افقی */
 export default function ListCoverImage({
   coverImage,
+  horizontalImage,
+  bannerImage,
   title,
   slug,
   categorySlug,
@@ -23,10 +32,23 @@ export default function ListCoverImage({
   fallbackIcon = '📋',
   fallbackClassName = '',
   priority = false,
+  variant = 'card',
 }: ListCoverImageProps) {
+  const src =
+    variant === 'banner'
+      ? bannerImage ??
+        resolveListBannerImage({
+          coverImage,
+          horizontalImage,
+          slug: slug ?? '',
+          title,
+          categorySlug,
+        })
+      : (coverImage ?? '');
+
   return (
     <ImageWithFallback
-      src={coverImage ?? ''}
+      src={src}
       alt={title}
       className={className}
       fallbackIcon={fallbackIcon}

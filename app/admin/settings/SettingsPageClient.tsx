@@ -17,6 +17,7 @@ import {
   type CommentSettingsState,
   type SettingsTab,
 } from '@/lib/admin/settings-types';
+import { DEFAULT_OPENAI_MODEL, resolveOpenAIModel } from '@/lib/openai-models';
 
 type SectionToast = {
   section: SettingsTab;
@@ -26,6 +27,7 @@ type SectionToast = {
 
 const emptyIntegrationForm = () => ({
   openaiApiKey: '',
+  openaiModel: DEFAULT_OPENAI_MODEL,
   tmdbApiKey: '',
   omdbApiKey: '',
   googleApiKey: '',
@@ -42,6 +44,7 @@ export default function SettingsPageClient() {
 
   const [settings, setSettings] = useState<SettingsData>({
     openaiApiKey: null,
+    openaiModel: DEFAULT_OPENAI_MODEL,
     tmdbApiKey: null,
     omdbApiKey: null,
     googleApiKey: null,
@@ -115,6 +118,7 @@ export default function SettingsPageClient() {
 
       setIntegrationForm({
         ...emptyIntegrationForm(),
+        openaiModel: resolveOpenAIModel(data.openaiModel),
         googleSearchEngineId: data.googleSearchEngineId || '',
         liaraBucketName: data.liaraBucketName || '',
         liaraEndpoint: data.liaraEndpoint || '',
@@ -145,7 +149,9 @@ export default function SettingsPageClient() {
       setSavingIntegrations(true);
       setSectionToast(null);
 
-      const dataToSend: Record<string, unknown> = {};
+      const dataToSend: Record<string, unknown> = {
+        openaiModel: resolveOpenAIModel(integrationForm.openaiModel),
+      };
       if (integrationForm.openaiApiKey?.trim())
         dataToSend.openaiApiKey = integrationForm.openaiApiKey;
       if (integrationForm.tmdbApiKey?.trim())
@@ -286,6 +292,7 @@ export default function SettingsPageClient() {
   const testOpenAI = () =>
     postIntegrationTest('/api/admin/settings/test-openai', 'openai', {
       openaiApiKey: integrationForm.openaiApiKey.trim() || undefined,
+      openaiModel: resolveOpenAIModel(integrationForm.openaiModel),
     });
 
   const testGoogle = () =>

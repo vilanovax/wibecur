@@ -11,6 +11,8 @@ interface ListsFeaturedBannerProps {
     slug: string;
     description?: string | null;
     coverImage?: string | null;
+    horizontalImage?: string | null;
+    bannerImage?: string | null;
     saveCount?: number;
     categories?: { slug?: string | null; icon?: string | null } | null;
   };
@@ -28,9 +30,12 @@ export default function ListsFeaturedBanner({ list }: ListsFeaturedBannerProps) 
       >
         <ListCoverImage
           coverImage={list.coverImage}
+          horizontalImage={list.horizontalImage}
+          bannerImage={list.bannerImage}
           title={list.title}
           slug={list.slug}
           categorySlug={categorySlug}
+          variant="banner"
           className="absolute inset-0 w-full h-full object-cover"
           fallbackIcon={list.categories?.icon ?? '📋'}
           fallbackClassName="w-full h-full flex items-center justify-center text-4xl bg-gray-200"

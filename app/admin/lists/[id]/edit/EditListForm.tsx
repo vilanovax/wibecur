@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AlertTriangle, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
-import ImageUpload from '@/components/admin/upload/ImageUpload';
+import ListCoverImageFields from '@/components/admin/lists/ListCoverImageFields';
 import type { ListTrendingDebugData } from '@/lib/admin/trending-debug';
 import ListFormIdentity from '@/components/admin/lists/ListFormIdentity';
 import ListFormStickyPreview from '@/components/admin/lists/ListFormStickyPreview';
@@ -17,6 +17,11 @@ import ListEditFormStepper, { type ListEditFormStep } from '@/components/admin/l
 import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
 import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
 import { slugFromTitle, normalizeListSlug, isValidListSlug } from '@/lib/admin/list-slug';
+import {
+  buildSlugFromListTitle,
+  generateListDescriptionWithAi,
+  resolveAvailableListSlug,
+} from '@/lib/admin/list-form-quick-actions';
 import { useListSlugCheck } from '@/hooks/useListSlugCheck';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 
@@ -26,6 +31,7 @@ type ListEdit = {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  horizontalImage: string | null;
   categoryId: string | null;
   badge: string | null;
   isPublic: boolean;
@@ -46,6 +52,7 @@ type FormState = {
   slug: string;
   description: string;
   coverImage: string;
+  horizontalImage: string;
   categoryId: string;
   badge: string;
   isPublic: boolean;
@@ -60,6 +67,7 @@ function buildInitialForm(list: ListEdit): FormState {
     slug: list.slug,
     description: list.description || '',
     coverImage: list.coverImage || '',
+    horizontalImage: list.horizontalImage || '',
     categoryId: list.categoryId || '',
     badge: list.badge || '',
     isPublic: list.isPublic,
@@ -85,6 +93,9 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
   const [baseline, setBaseline] = useState<FormState>(initialForm);
   const [slugAutoMode, setSlugAutoMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [generatingSlug, setGeneratingSlug] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [quickFillLoading, setQuickFillLoading] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [dangerOpen, setDangerOpen] = useState(false);
@@ -132,6 +143,7 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
     slug: formData.slug,
     description: formData.description,
     coverImage: formData.coverImage,
+    horizontalImage: formData.horizontalImage,
     categoryName: selectedCategory?.name ?? '—',
     categoryIcon: selectedCategory?.icon ?? '📋',
     categoryColor: selectedCategory?.color ?? '#6366F1',
@@ -158,8 +170,10 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
       slug: formData.slug,
       description: formData.description || null,
       coverImage: formData.coverImage || null,
+      horizontalImage: formData.horizontalImage || null,
       categoryId: formData.categoryId,
       categoryName: selectedCategory?.name ?? '—',
+      categorySlug: selectedCategory?.slug ?? null,
       categoryIcon: selectedCategory?.icon ?? '📋',
       isFeatured: formData.isFeatured,
       isActive: formData.isActive,
@@ -207,6 +221,75 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
     setSlugAutoMode(false);
     setFormData((prev) => ({ ...prev, slug }));
   }, []);
+
+  const applyGeneratedSlug = useCallback(async () => {
+    if (!formData.title.trim()) {
+      setToast({ message: 'ابتدا عنوان لیست را وارد کنید', type: 'error' });
+      return;
+    }
+    setGeneratingSlug(true);
+    try {
+      const base = buildSlugFromListTitle(formData.title);
+      const slug = await resolveAvailableListSlug(base, list.id);
+      setSlugAutoMode(true);
+      setFormData((prev) => ({ ...prev, slug }));
+    } catch (e: unknown) {
+      setToast({
+        message: e instanceof Error ? e.message : 'خطا در تولید slug',
+        type: 'error',
+      });
+    } finally {
+      setGeneratingSlug(false);
+    }
+  }, [formData.title, list.id]);
+
+  const applyGeneratedDescription = useCallback(async () => {
+    if (!formData.title.trim() || !selectedCategory) {
+      setToast({ message: 'عنوان و دسته الزامی است', type: 'error' });
+      return;
+    }
+    setGeneratingDescription(true);
+    try {
+      const description = await generateListDescriptionWithAi({
+        title: formData.title,
+        categorySlug: selectedCategory.slug,
+        categoryName: selectedCategory.name,
+      });
+      setFormData((prev) => ({ ...prev, description }));
+      setToast({ message: 'توضیحات با AI تولید شد', type: 'success' });
+    } catch (e: unknown) {
+      setToast({
+        message: e instanceof Error ? e.message : 'خطا در تولید توضیحات',
+        type: 'error',
+      });
+    } finally {
+      setGeneratingDescription(false);
+    }
+  }, [formData.title, selectedCategory]);
+
+  const handleQuickFill = useCallback(async () => {
+    if (!formData.title.trim() || !selectedCategory) return;
+    setQuickFillLoading(true);
+    try {
+      const base = buildSlugFromListTitle(formData.title);
+      const slug = await resolveAvailableListSlug(base, list.id);
+      const description = await generateListDescriptionWithAi({
+        title: formData.title,
+        categorySlug: selectedCategory.slug,
+        categoryName: selectedCategory.name,
+      });
+      setSlugAutoMode(true);
+      setFormData((prev) => ({ ...prev, slug, description }));
+      setToast({ message: 'Slug و توضیحات آماده شد', type: 'success' });
+    } catch (e: unknown) {
+      setToast({
+        message: e instanceof Error ? e.message : 'خطا در تکمیل سریع',
+        type: 'error',
+      });
+    } finally {
+      setQuickFillLoading(false);
+    }
+  }, [formData.title, selectedCategory, list.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -336,6 +419,13 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
                   onResetSlugAuto={() => setSlugAutoMode((m) => !m)}
                   slugCheck={slugChanged ? slugCheck : { status: 'available', slug: formData.slug }}
                   onApplySlugSuggestion={handleApplySuggestion}
+                  showQuickActions
+                  onGenerateSlug={() => void applyGeneratedSlug()}
+                  generatingSlug={generatingSlug}
+                  onGenerateDescription={() => void applyGeneratedDescription()}
+                  generatingDescription={generatingDescription}
+                  onQuickFill={() => void handleQuickFill()}
+                  quickFillLoading={quickFillLoading}
                 />
               </div>
             </section>
@@ -379,14 +469,12 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
                       <option value="FEATURED">Featured</option>
                     </select>
                   </div>
-                  <div>
-                    <ImageUpload
-                      value={formData.coverImage}
-                      onChange={(url) => setFormData((p) => ({ ...p, coverImage: url }))}
-                      label="تصویر کاور"
-                      compact
-                    />
-                  </div>
+                  <ListCoverImageFields
+                    coverImage={formData.coverImage}
+                    horizontalImage={formData.horizontalImage}
+                    onCoverChange={(url) => setFormData((p) => ({ ...p, coverImage: url }))}
+                    onHorizontalChange={(url) => setFormData((p) => ({ ...p, horizontalImage: url }))}
+                  />
                 </div>
               </section>
             </>

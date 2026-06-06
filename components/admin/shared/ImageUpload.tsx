@@ -4,6 +4,12 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Upload, X, Link as LinkIcon, Search } from 'lucide-react';
 import ImageSearchModal from '@/components/admin/items/ImageSearchModal';
+import MoviePosterSearchModal from '@/components/admin/items/MoviePosterSearchModal';
+import type { MoviePosterSearchSource } from '@/lib/movie-poster-search';
+import {
+  buildGoogleImageSearchQuery,
+  buildMoviePosterSearchQuery,
+} from '@/lib/item-image-search-query';
 
 export type ImageUploadDisplayMode = 'upload' | 'url' | 'search' | 'all';
 
@@ -16,6 +22,13 @@ interface ImageUploadProps {
   onModalOpenChange?: (isOpen: boolean) => void; // Callback when modal opens/closes
   /** When set, only one method is shown (for tabbed UI). Default 'all' shows all options. */
   displayMode?: ImageUploadDisplayMode;
+  /** poster = نسبت عمودی مناسب کاور فیلم */
+  previewVariant?: 'default' | 'poster';
+  /** دکمه‌های جستجو در IMDb و TMDb (برای آیتم فیلم) */
+  enableMoviePosterSources?: boolean;
+  metadata?: Record<string, unknown> | null;
+  /** slug دسته — برای ساخت عبارت Google */
+  categorySlug?: string | null;
 }
 
 export default function ImageUpload({
@@ -26,11 +39,16 @@ export default function ImageUpload({
   categoryName = '',
   onModalOpenChange,
   displayMode = 'all',
+  previewVariant = 'default',
+  enableMoviePosterSources = false,
+  metadata = null,
+  categorySlug = null,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(displayMode === 'url');
   const [urlInput, setUrlInput] = useState('');
   const [showImageSearch, setShowImageSearch] = useState(false);
+  const [moviePosterSource, setMoviePosterSource] = useState<MoviePosterSearchSource | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showUpload = displayMode === 'all' || displayMode === 'upload';
@@ -95,19 +113,46 @@ export default function ImageUpload({
   };
 
   const handleImageSelected = (imageUrl: string) => {
-    // Close modal first, then update value to prevent any form submission
     setShowImageSearch(false);
     onModalOpenChange?.(false);
-    // Use setTimeout to ensure modal closes before updating state
     setTimeout(() => {
       onChange(imageUrl);
     }, 100);
   };
 
-  // Combine category name and title for search query
-  const searchQuery = categoryName && title
-    ? `${categoryName} ${title}`
-    : title;
+  const handlePosterFromMovieSource = async (posterUrl: string) => {
+    setMoviePosterSource(null);
+    onModalOpenChange?.(false);
+
+    let finalUrl = posterUrl;
+    try {
+      const uploadRes = await fetch('/api/admin/items/upload-movie-poster', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ posterUrl }),
+      });
+      if (uploadRes.ok) {
+        const uploadData = await uploadRes.json();
+        if (uploadData.uploadedUrl) finalUrl = uploadData.uploadedUrl;
+      }
+    } catch {
+      // keep original poster URL
+    }
+
+    setTimeout(() => onChange(finalUrl), 100);
+  };
+
+  const openMoviePosterSearch = (source: MoviePosterSearchSource) => {
+    setMoviePosterSource(source);
+    onModalOpenChange?.(true);
+  };
+
+  const googleSearchQuery = buildGoogleImageSearchQuery({
+    title,
+    categoryName,
+    categorySlug,
+  });
+  const moviePosterSearchQuery = buildMoviePosterSearchQuery(title, metadata);
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
@@ -119,8 +164,22 @@ export default function ImageUpload({
           onModalOpenChange?.(false);
         }}
         onSelectImage={handleImageSelected}
-        initialQuery={searchQuery}
+        initialQuery={googleSearchQuery}
       />
+      {moviePosterSource && (
+        <MoviePosterSearchModal
+          isOpen={Boolean(moviePosterSource)}
+          source={moviePosterSource}
+          onClose={() => {
+            setMoviePosterSource(null);
+            onModalOpenChange?.(false);
+          }}
+          onSelectPoster={handlePosterFromMovieSource}
+          initialQuery={moviePosterSearchQuery}
+          metadata={metadata}
+          year={metadata?.year as number | string | null | undefined}
+        />
+      )}
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}
@@ -128,25 +187,31 @@ export default function ImageUpload({
       )}
 
       {value ? (
-        // Show uploaded image
         <div className="relative">
-          <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100">
+          <div
+            className={`relative w-full overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-900 ${
+              previewVariant === 'poster' ? 'aspect-[2/3] max-h-[420px] mx-auto' : 'h-64'
+            }`}
+          >
             <Image
               src={value}
               alt="Uploaded image"
               fill
-              className="object-contain"
+              className={previewVariant === 'poster' ? 'object-cover' : 'object-contain'}
               unoptimized={true}
             />
           </div>
           <button
             type="button"
             onClick={handleRemove}
-            className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+            className="absolute top-2 right-2 p-1.5 bg-red-500/90 text-white rounded-lg hover:bg-red-600 transition-colors shadow-lg backdrop-blur-sm"
             title="حذف تصویر"
           >
             <X className="w-4 h-4" />
           </button>
+          <p className="text-[11px] text-center text-gray-500 mt-2">
+            برای تغییر، تصویر را حذف کنید یا تب دیگری انتخاب کنید
+          </p>
         </div>
       ) : (
         // Show upload options (filtered by displayMode)
@@ -221,19 +286,49 @@ export default function ImageUpload({
           )}
 
           {showSearch && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowImageSearch(true);
-                onModalOpenChange?.(true);
-              }}
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <Search className="w-5 h-5 text-gray-600" />
-              <span className="text-gray-600">جستجوی تصویر در Google 🔍</span>
-            </button>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowImageSearch(true);
+                  onModalOpenChange?.(true);
+                }}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Search className="w-5 h-5 text-gray-600" />
+                <span className="text-gray-600 dark:text-gray-300">جستجو در Google</span>
+              </button>
+              {enableMoviePosterSources && (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openMoviePosterSearch('imdb');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors text-sm font-medium text-amber-900 dark:text-amber-200"
+                  >
+                    <span className="font-bold text-xs bg-amber-400 text-black px-1.5 py-0.5 rounded">IMDb</span>
+                    جستجوی poster
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openMoviePosterSearch('tmdb');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-sky-200 bg-sky-50 dark:bg-sky-950/30 dark:border-sky-800 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-950/50 transition-colors text-sm font-medium text-sky-900 dark:text-sky-200"
+                  >
+                    <span className="font-bold text-xs bg-sky-500 text-white px-1.5 py-0.5 rounded">TMDb</span>
+                    جستجوی poster
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}

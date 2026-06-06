@@ -84,7 +84,7 @@ export default function CategoryCard({
         <div className="px-4 pb-4 pt-0 border-t border-[var(--color-border)]/60">
           <p className="text-xs text-[var(--color-text-muted)] py-2">
             {category.listCount > 0
-              ? `${category.listCount.toLocaleString('fa-IR')} لیست · در اپ نمایش داده نمی‌شود`
+              ? `${category.listCount.toLocaleString('fa-IR')} لیست · ${category.uniqueItemCount.toLocaleString('fa-IR')} آیتم یکتا · در اپ نمایش داده نمی‌شود`
               : 'بدون لیست · برای انتشار فعال کنید'}
           </p>
           <CategoryActions
@@ -160,6 +160,8 @@ export default function CategoryCard({
           <p className="text-sm text-[var(--color-text)] mb-2 tabular-nums">
             <span className="font-semibold">{category.listCount.toLocaleString('fa-IR')}</span>
             <span className="text-[var(--color-text-muted)]"> لیست · </span>
+            <span className="font-semibold">{category.uniqueItemCount.toLocaleString('fa-IR')}</span>
+            <span className="text-[var(--color-text-muted)]"> آیتم یکتا · </span>
             <span className="font-semibold">{category.engagementRatio.toFixed(1)}٪</span>
             <span className="text-[var(--color-text-muted)]"> تعامل</span>
             {growth.label !== '—' && (

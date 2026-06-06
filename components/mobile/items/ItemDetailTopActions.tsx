@@ -26,14 +26,14 @@ export default function ItemDetailTopActions({
 
   if (variant === 'inline') {
     return (
-      <div className="flex shrink-0 items-center justify-end gap-2" aria-label="ذخیره، پسند و گزارش">
+      <div className="flex shrink-0 items-center justify-start gap-2" aria-label="ذخیره، پسند و گزارش">
         {actions}
       </div>
     );
   }
 
   return (
-    <div className="sticky top-16 z-30 flex items-center justify-end gap-2 border-b border-wibe/80 bg-wibe-surface/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
+    <div className="sticky top-16 z-30 flex items-center justify-start gap-2 border-b border-wibe/80 bg-wibe-surface/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
       {actions}
     </div>
   );

@@ -2,15 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { uploadImageBuffer } from '@/lib/object-storage';
 import { validateImage } from '@/lib/image-validator';
-import type { ImageProfile } from '@/lib/image-config';
+import { MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
+import { resolveUploadTarget } from '@/lib/upload-profiles';
 import { getClientErrorMessage, logServerError } from '@/lib/api-error';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
-
-function profileForFolder(folder: string): ImageProfile {
-  return folder === 'avatars' ? 'avatar' : folder === 'covers' ? 'coverList' : 'default';
-}
 
 function extFromContentType(contentType: string): string {
   const ct = contentType.toLowerCase();
@@ -48,10 +45,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_RAW_UPLOAD_SIZE) {
       return NextResponse.json(
-        { error: 'حجم فایل نباید بیشتر از 5 مگابایت باشد' },
+        { error: `حجم فایل نباید بیشتر از ${MAX_RAW_UPLOAD_SIZE / (1024 * 1024)} مگابایت باشد` },
         { status: 400 }
       );
     }
@@ -59,9 +55,8 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const purpose = formData.get('purpose') as string;
-    const folder = purpose === 'cover' ? 'covers' : 'avatars';
-    const profile = profileForFolder(folder);
+    const purpose = formData.get('purpose') as string | null;
+    const { folder, profile } = resolveUploadTarget(purpose, purpose === 'cover' ? 'covers' : 'avatars');
 
     const validation = await validateImage(buffer, profile);
     if (!validation.isValid) {

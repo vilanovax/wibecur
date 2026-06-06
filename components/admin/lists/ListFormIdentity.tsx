@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Sparkles, Wand2, Zap } from 'lucide-react';
 import { isValidListSlug } from '@/lib/admin/list-slug';
 import type { SlugCheckState } from '@/hooks/useListSlugCheck';
 
@@ -11,7 +11,7 @@ export type ListIdentityValues = {
   categoryId: string;
 };
 
-type CategoryOption = { id: string; name: string; icon: string };
+type CategoryOption = { id: string; name: string; icon: string; slug?: string };
 
 const inputClass =
   'w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--primary)]';
@@ -26,6 +26,14 @@ interface ListFormIdentityProps {
   onResetSlugAuto?: () => void;
   slugCheck?: SlugCheckState;
   onApplySlugSuggestion?: (slug: string) => void;
+  /** دکمه‌های تکمیل سریع (صفحه لیست جدید / ویرایش) */
+  showQuickActions?: boolean;
+  onGenerateSlug?: () => void;
+  generatingSlug?: boolean;
+  onGenerateDescription?: () => void;
+  generatingDescription?: boolean;
+  onQuickFill?: () => void;
+  quickFillLoading?: boolean;
 }
 
 export default function ListFormIdentity({
@@ -38,8 +46,17 @@ export default function ListFormIdentity({
   onResetSlugAuto,
   slugCheck,
   onApplySlugSuggestion,
+  showQuickActions = false,
+  onGenerateSlug,
+  generatingSlug = false,
+  onGenerateDescription,
+  generatingDescription = false,
+  onQuickFill,
+  quickFillLoading = false,
 }: ListFormIdentityProps) {
   const slugValid = values.slug.length > 0 && isValidListSlug(values.slug);
+  const canQuickFill = values.title.trim().length > 0 && !!values.categoryId;
+  const quickBusy = generatingSlug || generatingDescription || quickFillLoading;
 
   return (
     <div className="space-y-4" dir="rtl">
@@ -54,24 +71,119 @@ export default function ListFormIdentity({
           onChange={(e) => onTitleChange(e.target.value)}
           required
           className={inputClass}
+          placeholder="مثلاً: فیلم‌هایی که بعد از دیدنشان ساکت می‌مانی"
         />
       </div>
+
+      <div>
+        <label htmlFor="list-category" className="block text-sm font-medium text-[var(--color-text)] mb-1">
+          دسته‌بندی *
+        </label>
+        <select
+          id="list-category"
+          value={values.categoryId}
+          onChange={(e) => onChange({ categoryId: e.target.value })}
+          required
+          className={inputClass}
+        >
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.icon} {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {showQuickActions && (
+        <div className="rounded-xl border border-violet-200/80 bg-gradient-to-l from-violet-50/90 to-indigo-50/50 dark:from-violet-950/30 dark:to-indigo-950/20 px-3 py-3 space-y-2">
+          <p className="text-xs font-semibold text-violet-900 dark:text-violet-200">
+            تکمیل سریع
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {onQuickFill && (
+              <button
+                type="button"
+                disabled={!canQuickFill || quickBusy}
+                onClick={onQuickFill}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {quickFillLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Zap className="w-3.5 h-3.5" />
+                )}
+                Slug + توضیحات AI
+              </button>
+            )}
+            {onGenerateSlug && (
+              <button
+                type="button"
+                disabled={!values.title.trim() || generatingSlug || quickFillLoading}
+                onClick={onGenerateSlug}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-300 bg-white dark:bg-gray-900 text-violet-800 dark:text-violet-200 text-xs font-semibold hover:bg-violet-50 disabled:opacity-50"
+              >
+                {generatingSlug ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Wand2 className="w-3.5 h-3.5" />
+                )}
+                تولید Slug
+              </button>
+            )}
+            {onGenerateDescription && (
+              <button
+                type="button"
+                disabled={!canQuickFill || generatingDescription || quickFillLoading}
+                onClick={onGenerateDescription}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-300 bg-white dark:bg-gray-900 text-indigo-800 dark:text-indigo-200 text-xs font-semibold hover:bg-indigo-50 disabled:opacity-50"
+              >
+                {generatingDescription ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                توضیحات AI
+              </button>
+            )}
+          </div>
+          <p className="text-[10px] text-violet-700/80 dark:text-violet-300/70">
+            Slug از عنوان فارسی ساخته می‌شود · توضیحات با OpenAI (تنظیمات)
+          </p>
+        </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
           <label htmlFor="list-slug" className="block text-sm font-medium text-[var(--color-text)]">
             Slug *
           </label>
-          {onResetSlugAuto && (
-            <button
-              type="button"
-              onClick={onResetSlugAuto}
-              className="inline-flex items-center gap-1 text-xs text-[var(--primary)] hover:underline"
-            >
-              <RefreshCw className="w-3 h-3" />
-              {slugAutoMode ? 'ویرایش دستی' : 'تولید خودکار از عنوان'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {onGenerateSlug && !showQuickActions && (
+              <button
+                type="button"
+                disabled={!values.title.trim() || generatingSlug}
+                onClick={onGenerateSlug}
+                className="inline-flex items-center gap-1 text-xs text-[var(--primary)] hover:underline disabled:opacity-50"
+              >
+                {generatingSlug ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Wand2 className="w-3 h-3" />
+                )}
+                تولید از عنوان
+              </button>
+            )}
+            {onResetSlugAuto && (
+              <button
+                type="button"
+                onClick={onResetSlugAuto}
+                className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)]"
+              >
+                <RefreshCw className="w-3 h-3" />
+                {slugAutoMode ? 'ویرایش دستی' : 'همگام با عنوان'}
+              </button>
+            )}
+          </div>
         </div>
         <input
           id="list-slug"
@@ -81,6 +193,7 @@ export default function ListFormIdentity({
           required
           readOnly={slugAutoMode}
           dir="ltr"
+          placeholder="best-films-after-watch"
           className={`${inputClass} ${
             values.slug.length === 0
               ? ''
@@ -119,40 +232,42 @@ export default function ListFormIdentity({
           <p className="text-xs text-red-600 mt-1">فرمت slug نامعتبر — حروف کوچک، اعداد و خط تیره</p>
         )}
         {!slugCheck || slugCheck.status === 'idle' ? (
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">حروف کوچک انگلیسی، اعداد و خط تیره</p>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
+            {slugAutoMode
+              ? 'با تایپ عنوان، slug خودکار به‌روز می‌شود'
+              : 'حروف کوچک انگلیسی، اعداد و خط تیره'}
+          </p>
         ) : null}
       </div>
 
       <div>
-        <label htmlFor="list-category" className="block text-sm font-medium text-[var(--color-text)] mb-1">
-          دسته‌بندی *
-        </label>
-        <select
-          id="list-category"
-          value={values.categoryId}
-          onChange={(e) => onChange({ categoryId: e.target.value })}
-          required
-          className={inputClass}
-        >
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.icon} {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="list-description" className="block text-sm font-medium text-[var(--color-text)] mb-1">
-          توضیحات
-        </label>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <label htmlFor="list-description" className="block text-sm font-medium text-[var(--color-text)]">
+            توضیحات
+          </label>
+          {onGenerateDescription && !showQuickActions && (
+            <button
+              type="button"
+              disabled={!canQuickFill || generatingDescription}
+              onClick={onGenerateDescription}
+              className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline disabled:opacity-50"
+            >
+              {generatingDescription ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              تولید با AI
+            </button>
+          )}
+        </div>
         <textarea
           id="list-description"
           value={values.description}
           onChange={(e) => onChange({ description: e.target.value })}
           rows={3}
           className={inputClass}
-          placeholder="توضیحات لیست..."
+          placeholder="توضیح کوتاه برای کارت لیست در اپ…"
         />
       </div>
     </div>

@@ -9,7 +9,7 @@ export type MediaManifestEntry = {
 
 const IMAGE_FIELDS: Record<string, string[]> = {
   categories: ['heroImage', 'icon'],
-  lists: ['coverImage'],
+  lists: ['coverImage', 'horizontalImage'],
   catalog_items: ['imageUrl'],
   items: ['imageUrl'],
   users: ['image'],

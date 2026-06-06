@@ -23,7 +23,6 @@ import {
   GenreScrollBar,
   TrendingPosterGrid,
   FeaturedCinematicList,
-  TopFilmCuratorsVIP,
   MostDebatedLists,
   NewListsCompact,
   CuratorCTABlock,
@@ -102,21 +101,16 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
     const mostDebated = data.mostDebatedLists ?? [];
 
     return (
-      <main className="bg-wibe-surface">
+      <main className="bg-wibe-surface lg:pb-2">
         <CinematicHero category={category} metrics={metrics} />
         <GenreScrollBar categorySlug={category.slug} />
         <TrendingPosterGrid
           lists={trendingForGrid}
-          categoryName={category.name}
+          categorySlug={category.slug}
         />
         {featuredList && (
           <FeaturedCinematicList list={featuredList} />
         )}
-        <TopFilmCuratorsVIP
-          curator={topCuratorSpotlight ?? null}
-          curators={topCurators}
-          categoryName={category.name}
-        />
         {mostDebated.length > 0 && (
           <MostDebatedLists lists={mostDebated} />
         )}

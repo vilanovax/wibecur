@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Sparkles, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
+import { Plus, Sparkles, ChevronDown, ChevronUp, BarChart3, FileJson } from 'lucide-react';
 import type { ListsIntelligenceData, ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
 import { LISTS_PULSE_SAMPLE } from '@/lib/admin/lists-intelligence';
 import ListPulseSummary from '@/components/admin/lists/ListPulseSummary';
@@ -293,6 +293,14 @@ export default function ListsIntelligenceClient({
 
           {!isTrashView && (
             <>
+              <Link
+                href="/admin/items/import"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-violet-200 text-violet-700 bg-violet-50/80 hover:bg-violet-100 transition-colors"
+                title="import گروهی JSON — همه دسته‌ها"
+              >
+                <FileJson className="w-4 h-4" />
+                <span className="hidden md:inline">import گروهی</span>
+              </Link>
               <Link
                 href="/admin/custom/featured"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-amber-200 text-amber-800 bg-amber-50/80 hover:bg-amber-100 transition-colors"

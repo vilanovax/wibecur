@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import {
   Star,
   ExternalLink,
@@ -28,7 +28,16 @@ function CoverThumb({ row }: { row: ListIntelligenceRow }) {
   return (
     <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-[var(--color-border-muted)]">
       {row.coverImage ? (
-        <Image src={row.coverImage} alt="" fill className="object-cover" unoptimized sizes="48px" />
+        <ImageWithFallback
+          src={row.coverImage}
+          alt=""
+          className="object-cover w-full h-full"
+          listSlug={row.slug}
+          listTitle={row.title}
+          categorySlug={row.categorySlug}
+          fallbackIcon={row.categoryIcon}
+          fallbackClassName="w-full h-full"
+        />
       ) : (
         <div
           className="w-full h-full flex items-center justify-center text-xl"
@@ -92,6 +101,7 @@ export default function ListIntelligenceCard({
     }
   };
 
+  const itemsHref = `/admin/items?listId=${row.id}`;
   const editHref = `/admin/lists/${row.id}/edit`;
   const scoreNegative = row.trendingScore < 0;
 
@@ -103,7 +113,7 @@ export default function ListIntelligenceCard({
           : 'border-[var(--color-border-muted)] hover:border-[var(--color-border)]'
       } ${!row.isActive && !isTrashView ? 'opacity-70' : ''}`}
     >
-      <Link href={editHref} className="block p-3 hover:bg-[var(--color-bg)]/50 transition-colors">
+      <Link href={itemsHref} className="block p-3 hover:bg-[var(--color-bg)]/50 transition-colors">
         <div className="flex gap-3">
           <CoverThumb row={row} />
 

@@ -24,14 +24,21 @@ import {
 import type { BulkImportMatchKind } from '@/lib/admin/bulk-import-resolve';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import {
-  BULK_MOVIE_JSON_EXAMPLE,
-  isMovieLikeListCategory,
-  parseBulkMovieJson,
-  type BulkMovieImportRow,
-} from '@/lib/admin/bulk-movie-import';
-import { MOVIE_GENRES } from '@/lib/schemas/item-metadata';
+  parseBulkImportJson,
+  getBulkImportJsonExample,
+  getBulkImportJsonHint,
+  getBulkImportFormatTitle,
+  getBulkImportCategoryKind,
+  getBulkImportCategoryLabel,
+  formatBulkImportRowSubtitle,
+  type BulkImportRow,
+  type BulkImportListContext,
+} from '@/lib/admin/bulk-import';
+import BulkImportMetadataEditor, {
+  bulkImportFallbackIcon,
+} from '@/components/admin/items/BulkImportMetadataEditor';
 
-type CategoryOption = { id: string; name: string; slug: string; icon: string | null };
+type CategoryOption = { id: string; name: string; slug: string; icon: string | null; isActive?: boolean };
 type ListOption = {
   id: string;
   title: string;
@@ -49,7 +56,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-function rowToPayload(r: BulkMovieImportRow) {
+function rowToPayload(r: BulkImportRow) {
   return {
     title: r.title,
     description: r.description || undefined,
@@ -72,21 +79,16 @@ export default function BulkImportClient({
   initialCategoryId?: string;
 }) {
   const router = useRouter();
-  const movieCategories = useMemo(
-    () => categories.filter((c) => isMovieLikeListCategory(c.slug)),
-    [categories]
-  );
-
   const initialList = initialListId ? lists.find((l) => l.id === initialListId) : null;
   const [categoryId, setCategoryId] = useState(
     initialCategoryId ||
       initialList?.categoryId ||
-      movieCategories[0]?.id ||
+      categories[0]?.id ||
       ''
   );
   const [listId, setListId] = useState(initialListId || '');
   const [jsonText, setJsonText] = useState('');
-  const [rows, setRows] = useState<BulkMovieImportRow[]>([]);
+  const [rows, setRows] = useState<BulkImportRow[]>([]);
   const [parseError, setParseError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -116,15 +118,36 @@ export default function BulkImportClient({
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const selectedCategory = categories.find((c) => c.id === categoryId);
+  const categorySlug = selectedCategory?.slug ?? 'general';
+  const categoryKind = getBulkImportCategoryKind(categorySlug);
+
+  const listCountByCategory = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const l of lists) {
+      if (l.categoryId) m.set(l.categoryId, (m.get(l.categoryId) ?? 0) + 1);
+    }
+    return m;
+  }, [lists]);
+
   const filteredLists = useMemo(
-    () =>
-      lists.filter(
-        (l) => l.categoryId === categoryId && isMovieLikeListCategory(l.categories?.slug)
-      ),
+    () => lists.filter((l) => l.categoryId === categoryId),
     [lists, categoryId]
   );
 
   const selectedList = lists.find((l) => l.id === listId);
+
+  const listContext: BulkImportListContext | null = useMemo(
+    () =>
+      selectedList || selectedCategory
+        ? {
+            title: selectedList?.title,
+            slug: selectedList?.slug,
+            categoryName: selectedCategory?.name,
+          }
+        : null,
+    [selectedList, selectedCategory]
+  );
   const selectedCount = rows.filter((r) => r.selected && r.valid).length;
 
   const displayRows = useMemo(
@@ -136,7 +159,7 @@ export default function BulkImportClient({
   );
 
   const enrichWithPreview = useCallback(
-    async (parsed: BulkMovieImportRow[]) => {
+    async (parsed: BulkImportRow[]) => {
       if (!listId) {
         setRows(parsed);
         setSummary(null);
@@ -173,11 +196,11 @@ export default function BulkImportClient({
   );
 
   const applyParsedJson = useCallback(
-    async (text: string) => {
+    async (text: string, slug: string = categorySlug) => {
       setParseError('');
       setImportDone(null);
       setSummary(null);
-      const { rows: parsed, parseError: pe } = parseBulkMovieJson(text);
+      const { rows: parsed, parseError: pe } = parseBulkImportJson(text, slug);
       if (pe) {
         setParseError(pe);
         setRows([]);
@@ -188,18 +211,36 @@ export default function BulkImportClient({
       await enrichWithPreview(parsed);
       return true;
     },
-    [enrichWithPreview]
+    [enrichWithPreview, categorySlug]
   );
 
   const handleParse = useCallback(() => {
-    void applyParsedJson(jsonText);
-  }, [jsonText, applyParsedJson]);
+    void applyParsedJson(jsonText, categorySlug);
+  }, [jsonText, applyParsedJson, categorySlug]);
 
   useEffect(() => {
     if (rows.length > 0 && listId) {
       void enrichWithPreview(rows.map(({ match: _m, ...r }) => r));
     }
   }, [listId]); // eslint-disable-line react-hooks/exhaustive-deps -- فقط با تغییر لیست
+
+  useEffect(() => {
+    if (!listId) return;
+    const list = lists.find((l) => l.id === listId);
+    if (list?.categoryId && list.categoryId !== categoryId) {
+      setCategoryId(list.categoryId);
+    }
+  }, [listId, lists, categoryId]);
+
+  useEffect(() => {
+    if (jsonText.trim()) {
+      void applyParsedJson(jsonText, categorySlug);
+    } else {
+      setRows([]);
+      setSummary(null);
+      setParseError('');
+    }
+  }, [categorySlug]); // eslint-disable-line react-hooks/exhaustive-deps -- تغییر دسته → parse مجدد
 
   const loadJsonFromFile = useCallback(
     (file: File) => {
@@ -238,7 +279,7 @@ export default function BulkImportClient({
     [loadJsonFromFile]
   );
 
-  const updateRow = (id: string, patch: Partial<BulkMovieImportRow>) => {
+  const updateRow = (id: string, patch: Partial<BulkImportRow>) => {
     setRows((prev) =>
       prev.map((r) => (r.id === id ? { ...r, ...patch, valid: true, errors: [] } : r))
     );
@@ -363,10 +404,10 @@ export default function BulkImportClient({
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <FileJson className="w-7 h-7 text-violet-600" />
-            import گروهی فیلم/سریال
+            import گروهی آیتم
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            یک موجودیت کاتالوگ · چند لیست — بدون تکرار داده
+            هر دسته JSON اختصاصی · یک موجودیت کاتالوگ · چند لیست
           </p>
         </div>
       </div>
@@ -374,9 +415,9 @@ export default function BulkImportClient({
       <div className="mb-5 flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/90 px-4 py-3 text-sm text-blue-900">
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
         <p>
-          هر فیلم <strong>یک رکورد در کاتالوگ</strong> دارد (با imdbId یا عنوان). اگر «ماتریکس» در ۸
-          لیست باشد، همان یک داده به‌روز می‌شود و فقط <strong>جایگاه</strong> به لیست جدید اضافه
-          می‌شود.
+          هر آیتم <strong>یک رکورد در کاتالوگ</strong> دارد (با شناسهٔ یکتا مثل imdbId یا isbn).
+          اگر در چند لیست تکرار شود، همان داده به‌روز می‌شود و فقط <strong>جایگاه</strong> جدید
+          اضافه می‌شود.
         </p>
       </div>
 
@@ -385,25 +426,37 @@ export default function BulkImportClient({
         <h2 className="text-sm font-bold text-gray-800">۱. مقصد import</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">دسته (فیلم/سریال)</label>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">دسته</label>
             <select
               value={categoryId}
               onChange={(e) => {
                 setCategoryId(e.target.value);
                 setListId('');
+                setJsonText('');
+                setRows([]);
+                setSummary(null);
+                setParseError('');
               }}
               className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
             >
-              {movieCategories.length === 0 ? (
-                <option value="">دستهٔ فیلم فعالی نیست</option>
+              {categories.length === 0 ? (
+                <option value="">دسته‌ای یافت نشد</option>
               ) : (
-                movieCategories.map((c) => (
+                categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.icon} {c.name}
+                    {!c.isActive ? ' (غیرفعال)' : ''} —{' '}
+                    {(listCountByCategory.get(c.id) ?? 0).toLocaleString('fa-IR')} لیست
                   </option>
                 ))
               )}
             </select>
+            {selectedCategory && (
+              <p className="text-[10px] text-gray-500 mt-1">
+                فرمت: {getBulkImportFormatTitle(categorySlug, listContext)} ·{' '}
+                {getBulkImportJsonHint(categorySlug, listContext)}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">لیست</label>
@@ -411,15 +464,30 @@ export default function BulkImportClient({
               value={listId}
               onChange={(e) => setListId(e.target.value)}
               className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
-              disabled={filteredLists.length === 0}
+              disabled={!categoryId || filteredLists.length === 0}
             >
-              <option value="">انتخاب لیست…</option>
+              <option value="">
+                {!categoryId
+                  ? 'ابتدا دسته را انتخاب کنید…'
+                  : filteredLists.length === 0
+                    ? 'لیستی در این دسته نیست'
+                    : 'انتخاب لیست…'}
+              </option>
               {filteredLists.map((l) => (
                 <option key={l.id} value={l.id}>
-                  {l.categories?.icon || '📋'} {l.title} ({l.itemCount.toLocaleString('fa-IR')} آیتم)
+                  {l.title} ({l.itemCount.toLocaleString('fa-IR')} آیتم)
                 </option>
               ))}
             </select>
+            {categoryId && filteredLists.length === 0 && (
+              <p className="text-[10px] text-amber-700 mt-1">
+                ابتدا از{' '}
+                <Link href="/admin/lists/new" className="underline font-medium">
+                  لیست جدید
+                </Link>{' '}
+                برای این دسته بسازید.
+              </p>
+            )}
           </div>
         </div>
         {selectedList && (
@@ -437,7 +505,14 @@ export default function BulkImportClient({
           onClick={() => setJsonCollapsed((c) => !c)}
           className="w-full flex items-center justify-between gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100 text-right"
         >
-          <h2 className="text-sm font-bold text-gray-800">۲. JSON از AI</h2>
+          <h2 className="text-sm font-bold text-gray-800">
+            ۲. JSON از AI
+            {selectedCategory && (
+              <span className="text-xs font-normal text-gray-500 mr-2">
+                ({getBulkImportFormatTitle(categorySlug, listContext)})
+              </span>
+            )}
+          </h2>
           <span className="text-xs text-gray-500 flex items-center gap-1">
             {jsonCollapsed ? 'باز کردن' : 'جمع کردن'}
             {jsonCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
@@ -445,13 +520,22 @@ export default function BulkImportClient({
         </button>
         {!jsonCollapsed && (
         <div className="p-5 space-y-3">
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] text-gray-500">
+            {selectedList
+              ? `JSON برای لیست «${selectedList.title}» · دسته ${selectedCategory?.name ?? '—'}`
+              : selectedCategory
+                ? `ابتدا لیست مقصد را انتخاب کنید — فرمت ${getBulkImportCategoryLabel(categoryKind)}`
+                : 'دسته و لیست را انتخاب کنید'}
+          </p>
           <button
             type="button"
-            onClick={() => setJsonText(BULK_MOVIE_JSON_EXAMPLE)}
-            className="text-xs font-semibold text-violet-600 hover:underline"
+            onClick={() => setJsonText(getBulkImportJsonExample(categorySlug, listContext))}
+            disabled={!categoryId}
+            className="text-xs font-semibold text-violet-600 hover:underline disabled:opacity-50"
           >
-            نمونه JSON
+            نمونه JSON ({getBulkImportCategoryLabel(categoryKind)}
+            {selectedList ? ` · ${selectedList.title.slice(0, 24)}` : ''})
           </button>
         </div>
 
@@ -502,7 +586,7 @@ export default function BulkImportClient({
           rows={10}
           dir="ltr"
           className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-xs font-mono bg-gray-50 focus:ring-2 focus:ring-violet-500/20"
-          placeholder='{ "items": [ { "title": "...", "imageUrl": "https://..." } ] }'
+          placeholder={`{ "items": [ { "title": "...", "description": "...", "imageUrl": "https://..." } ] }`}
         />
         {parseError && (
           <p className="text-sm text-red-600 flex items-center gap-1.5">
@@ -623,7 +707,7 @@ export default function BulkImportClient({
                         src={row.imageUrl}
                         alt=""
                         className="w-full h-full object-cover"
-                        fallbackIcon="🎬"
+                        fallbackIcon={bulkImportFallbackIcon(categoryKind)}
                       />
                     </div>
 
@@ -648,12 +732,7 @@ export default function BulkImportClient({
                         {row.match && <MatchBadge match={row.match} />}
                       </div>
                       <p className="text-xs text-gray-500 truncate mt-1">
-                        {row.metadata.year && <span>{row.metadata.year} · </span>}
-                        {row.metadata.genre || '—'}
-                        {row.metadata.director && <span> · {row.metadata.director}</span>}
-                        {row.metadata.imdbRating && (
-                          <span> · ⭐ {row.metadata.imdbRating}</span>
-                        )}
+                        {formatBulkImportRowSubtitle(row, categorySlug)}
                       </p>
                       {row.match?.sampleListTitles?.[0] && row.match.kind !== 'new' && (
                         <p className="text-[10px] text-gray-400 truncate flex items-center gap-1">
@@ -706,67 +785,11 @@ export default function BulkImportClient({
                           />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <div>
-                          <label className="text-[10px] font-semibold text-gray-500">سال</label>
-                          <input
-                            type="number"
-                            value={row.metadata.year ?? ''}
-                            onChange={(e) =>
-                              updateRow(row.id, {
-                                metadata: {
-                                  ...row.metadata,
-                                  year: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                                },
-                              })
-                            }
-                            className="w-full mt-1 text-sm rounded-lg border border-gray-200 px-2 py-1"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-semibold text-gray-500">ژانر</label>
-                          <select
-                            value={row.metadata.genre ?? ''}
-                            onChange={(e) =>
-                              updateRow(row.id, {
-                                metadata: { ...row.metadata, genre: e.target.value || undefined },
-                              })
-                            }
-                            className="w-full mt-1 text-sm rounded-lg border border-gray-200 px-2 py-1"
-                          >
-                            <option value="">—</option>
-                            {MOVIE_GENRES.map((g) => (
-                              <option key={g} value={g}>
-                                {g}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-semibold text-gray-500">کارگردان</label>
-                          <input
-                            value={row.metadata.director ?? ''}
-                            onChange={(e) =>
-                              updateRow(row.id, {
-                                metadata: { ...row.metadata, director: e.target.value || undefined },
-                              })
-                            }
-                            className="w-full mt-1 text-sm rounded-lg border border-gray-200 px-2 py-1"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-semibold text-gray-500">IMDb</label>
-                          <input
-                            value={row.metadata.imdbRating ?? ''}
-                            onChange={(e) =>
-                              updateRow(row.id, {
-                                metadata: { ...row.metadata, imdbRating: e.target.value || undefined },
-                              })
-                            }
-                            className="w-full mt-1 text-sm rounded-lg border border-gray-200 px-2 py-1"
-                          />
-                        </div>
-                      </div>
+                      <BulkImportMetadataEditor
+                        kind={categoryKind}
+                        row={row}
+                        onUpdate={(metadata) => updateRow(row.id, { metadata, valid: true, errors: [] })}
+                      />
                     </div>
                   )}
                 </li>
@@ -866,7 +889,7 @@ export default function BulkImportClient({
   );
 }
 
-function MatchBadge({ match }: { match: NonNullable<BulkMovieImportRow['match']> }) {
+function MatchBadge({ match }: { match: NonNullable<BulkImportRow['match']> }) {
   if (match.kind === 'new') {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">

@@ -34,6 +34,7 @@ const listsQuery = () =>
         slug: true,
         description: true,
         coverImage: true,
+        horizontalImage: true,
         categoryId: true,
         badge: true,
         isPublic: true,

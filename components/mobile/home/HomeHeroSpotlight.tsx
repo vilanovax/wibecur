@@ -64,7 +64,7 @@ export default function HomeHeroSpotlight() {
         {/* تصویر — ستون راست در RTL */}
         <div className="absolute inset-0 lg:relative lg:min-h-[260px]">
           <ImageWithFallback
-            src={list.coverImage}
+            src={list.bannerImage ?? list.coverImage}
             alt={list.title}
             className="absolute inset-0 h-full w-full object-cover object-center lg:static lg:min-h-[260px]"
             fallbackIcon={list.categories?.icon ?? '📚'}

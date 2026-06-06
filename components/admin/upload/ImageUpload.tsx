@@ -3,32 +3,55 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+import { IMAGE_UPLOAD_HINTS, MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
+
+export type ListImageUploadPurpose = 'list-cover' | 'list-horizontal' | 'category-hero' | 'avatar';
 
 interface ImageUploadProps {
   value: string;
   onChange: (value: string) => void;
   label?: string;
-  /** cover → پوشه covers در آپلود */
-  uploadPurpose?: 'cover' | 'avatar';
+  /** نوع آپلود — تعیین پروفایل بهینه‌سازی در سرور */
+  uploadPurpose?: ListImageUploadPurpose;
+  /** نسبت پیش‌نمایش */
+  previewVariant?: 'cover' | 'horizontal' | 'default';
   /** نمای فشرده برای فرم ویرایش */
   compact?: boolean;
 }
+
+const PURPOSE_HINT: Record<ListImageUploadPurpose, string> = {
+  'list-cover': IMAGE_UPLOAD_HINTS.listCover,
+  'list-horizontal': IMAGE_UPLOAD_HINTS.listHorizontal,
+  'category-hero': IMAGE_UPLOAD_HINTS.categoryHero,
+  avatar: IMAGE_UPLOAD_HINTS.avatar,
+};
+
+const PREVIEW_CLASS: Record<'cover' | 'horizontal' | 'default', string> = {
+  cover: 'aspect-[4/3] max-h-44',
+  horizontal: 'aspect-[21/9] max-h-36',
+  default: 'h-64',
+};
 
 function CoverPreview({
   src,
   onRemove,
   compact,
+  previewVariant = 'default',
 }: {
   src: string;
   onRemove: () => void;
   compact?: boolean;
+  previewVariant?: 'cover' | 'horizontal' | 'default';
 }) {
   const [broken, setBroken] = useState(false);
+  const aspectClass = compact
+    ? PREVIEW_CLASS[previewVariant]
+    : PREVIEW_CLASS[previewVariant === 'default' ? 'default' : previewVariant];
 
   return (
     <div
       className={`relative w-full rounded-xl overflow-hidden border border-[var(--color-border-muted)] bg-[var(--color-bg)] ${
-        compact ? 'aspect-[16/10] max-h-40' : 'h-64'
+        compact ? aspectClass : aspectClass
       }`}
     >
       {!broken ? (
@@ -65,14 +88,21 @@ export default function ImageUpload({
   value,
   onChange,
   label = 'تصویر کاور',
-  uploadPurpose = 'cover',
+  uploadPurpose = 'list-cover',
+  previewVariant,
   compact = false,
 }: ImageUploadProps) {
+  const resolvedPreview =
+    previewVariant ??
+    (uploadPurpose === 'list-horizontal' ? 'horizontal' : uploadPurpose === 'list-cover' ? 'cover' : 'default');
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadMethod, setUploadMethod] = useState<'url' | 'upload'>('upload');
   const [urlInput, setUrlInput] = useState(value || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadHint = PURPOSE_HINT[uploadPurpose];
+  const maxMb = Math.round(MAX_RAW_UPLOAD_SIZE / (1024 * 1024));
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -97,8 +127,8 @@ export default function ImageUpload({
       alert('لطفاً یک فایل تصویری انتخاب کنید');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      alert('حجم تصویر نباید بیشتر از 5 مگابایت باشد');
+    if (file.size > MAX_RAW_UPLOAD_SIZE) {
+      alert(`حجم تصویر نباید بیشتر از ${maxMb} مگابایت باشد`);
       return;
     }
 
@@ -106,15 +136,17 @@ export default function ImageUpload({
     try {
       const formData = new FormData();
       formData.append('file', file);
-      if (uploadPurpose === 'cover') formData.append('purpose', 'cover');
+      formData.append('purpose', uploadPurpose);
 
-      const response = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (!response.ok) throw new Error('خطا در آپلود تصویر');
-      const data = await response.json();
+      const response = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'خطا در آپلود تصویر');
+      }
       onChange(data.url);
     } catch (error) {
       console.error('Upload error:', error);
-      alert('خطا در آپلود تصویر. لطفاً دوباره تلاش کنید.');
+      alert(error instanceof Error ? error.message : 'خطا در آپلود تصویر. لطفاً دوباره تلاش کنید.');
     } finally {
       setUploading(false);
     }
@@ -127,7 +159,7 @@ export default function ImageUpload({
   const handleRemove = () => {
     onChange('');
     setUrlInput('');
-    fileInputRef.current && (fileInputRef.current.value = '');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const tabClass = (active: boolean) =>
@@ -137,7 +169,14 @@ export default function ImageUpload({
         : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
     }`;
 
-  const dropHeight = compact ? 'h-36' : 'h-64';
+  const dropHeight =
+    compact && resolvedPreview === 'horizontal'
+      ? 'h-32'
+      : compact
+        ? 'h-36'
+        : resolvedPreview === 'horizontal'
+          ? 'h-40'
+          : 'h-64';
 
   return (
     <div className="space-y-3" dir="rtl">
@@ -161,15 +200,15 @@ export default function ImageUpload({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/jpg"
             onChange={handleFileInput}
             className="hidden"
-            id="file-upload"
+            id={`file-upload-${uploadPurpose}`}
           />
 
           {!value ? (
             <label
-              htmlFor="file-upload"
+              htmlFor={`file-upload-${uploadPurpose}`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
@@ -183,7 +222,7 @@ export default function ImageUpload({
               {uploading ? (
                 <>
                   <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-2" />
-                  <p className="text-xs text-[var(--color-text-muted)]">در حال آپلود...</p>
+                  <p className="text-xs text-[var(--color-text-muted)]">در حال بهینه‌سازی و آپلود...</p>
                 </>
               ) : (
                 <>
@@ -191,12 +230,19 @@ export default function ImageUpload({
                   <p className="text-xs text-[var(--color-text)]">
                     <span className="font-semibold">کلیک</span> یا کشیدن تصویر
                   </p>
-                  <p className="text-[10px] text-[var(--color-text-muted)] mt-1">PNG, JPG تا 5MB</p>
+                  <p className="text-[10px] text-[var(--color-text-muted)] mt-1.5 px-4 text-center leading-relaxed">
+                    {uploadHint}
+                  </p>
                 </>
               )}
             </label>
           ) : (
-            <CoverPreview src={value} onRemove={handleRemove} compact={compact} />
+            <CoverPreview
+              src={value}
+              onRemove={handleRemove}
+              compact={compact}
+              previewVariant={resolvedPreview}
+            />
           )}
         </div>
       )}
@@ -221,7 +267,17 @@ export default function ImageUpload({
               تایید
             </button>
           </div>
-          {value && <CoverPreview src={value} onRemove={handleRemove} compact={compact} />}
+          <p className="text-[10px] text-[var(--color-text-muted)] leading-relaxed">
+            با ذخیره لیست، تصویر از URL دانلود، بهینه و در ParsPack ذخیره می‌شود.
+          </p>
+          {value && (
+            <CoverPreview
+              src={value}
+              onRemove={handleRemove}
+              compact={compact}
+              previewVariant={resolvedPreview}
+            />
+          )}
         </div>
       )}
     </div>

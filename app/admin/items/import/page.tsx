@@ -4,8 +4,8 @@ import { prisma } from '@/lib/prisma';
 import BulkImportClient from './BulkImportClient';
 
 export const metadata: Metadata = {
-  title: 'import گروهی فیلم | پنل ادمین',
-  description: 'وارد کردن دسته‌ای آیتم فیلم/سریال از JSON',
+  title: 'import گروهی آیتم | پنل ادمین',
+  description: 'وارد کردن دسته‌ای آیتم از JSON',
 };
 
 export default async function BulkImportPage({
@@ -18,12 +18,12 @@ export default async function BulkImportPage({
 
   const [categories, lists] = await Promise.all([
     prisma.categories.findMany({
-      where: { isActive: true, deletedAt: null },
+      where: { deletedAt: null },
       orderBy: { order: 'asc' },
-      select: { id: true, name: true, slug: true, icon: true },
+      select: { id: true, name: true, slug: true, icon: true, isActive: true },
     }),
     prisma.lists.findMany({
-      where: { isActive: true, deletedAt: null },
+      where: { deletedAt: null },
       include: { categories: { select: { id: true, name: true, slug: true, icon: true } } },
       orderBy: { title: 'asc' },
     }),

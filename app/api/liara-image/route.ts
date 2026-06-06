@@ -19,15 +19,15 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isOurStorageUrl(url)) {
-    return NextResponse.json({ error: 'Only Liara storage URLs allowed' }, { status: 400 });
+    return NextResponse.json({ error: 'Only app storage URLs allowed' }, { status: 400 });
   }
 
   const result = await getObjectByPublicUrl(url);
   if (!result) {
     return NextResponse.json(
       {
-        error: 'Image not found in Liara',
-        hint: 'تنظیمات LIARA_* را در .env یا Admin → Settings بررسی کنید',
+        error: 'Image not found in storage',
+        hint: 'تنظیمات ParsPack را در Admin → Settings یا PARSPACK_* در .env بررسی کنید',
       },
       { status: 404 }
     );

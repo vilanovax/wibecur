@@ -78,6 +78,10 @@ export default function CategoryIntelligenceCard({ category }: CategoryIntellige
           <span className="font-medium tabular-nums">{category.listCount.toLocaleString('fa-IR')}</span>
         </div>
         <div className="flex items-center justify-between">
+          <span className="text-[var(--color-text-muted)]">آیتم‌های یکتا</span>
+          <span className="font-medium tabular-nums">{category.uniqueItemCount.toLocaleString('fa-IR')}</span>
+        </div>
+        <div className="flex items-center justify-between">
           <span className="text-[var(--color-text-muted)]">رشد ذخیره ۷ روز</span>
           <span className={`tabular-nums font-medium ${growthUp ? 'text-emerald-600' : growthDown ? 'text-red-600' : ''}`}>
             {category.saveGrowthPercent >= 0 ? '+' : ''}{category.saveGrowthPercent.toLocaleString('fa-IR')}٪

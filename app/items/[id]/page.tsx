@@ -102,24 +102,32 @@ export default async function ItemDetailPage({
     notFound();
   }
 
-  const [listRank, listItemCount, personalSaveCount] = await dbQuery(async () => {
-    const [orderedItems, saveCount] = await Promise.all([
-      prisma.items.findMany({
-        where: { listId: item.listId },
-        select: { id: true },
-        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
-      }),
-      prisma.items.count({
-        where: {
-          title: { equals: item.title, mode: 'insensitive' },
-          listId: { not: item.listId },
-          lists: { isActive: true },
-        },
-      }),
-    ]);
-    const rank = orderedItems.findIndex((i) => i.id === item.id) + 1;
-    return [rank > 0 ? rank : null, orderedItems.length, saveCount] as const;
-  });
+  let listRank: number | null = null;
+  let listItemCount = 0;
+  let personalSaveCount = 0;
+
+  try {
+    [listRank, listItemCount, personalSaveCount] = await dbQuery(async () => {
+      const [orderedItems, saveCount] = await Promise.all([
+        prisma.items.findMany({
+          where: { listId: item.listId },
+          select: { id: true },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+        }),
+        prisma.items.count({
+          where: {
+            title: { equals: item.title, mode: 'insensitive' },
+            listId: { not: item.listId },
+            lists: { isActive: true },
+          },
+        }),
+      ]);
+      const rank = orderedItems.findIndex((i) => i.id === item.id) + 1;
+      return [rank > 0 ? rank : null, orderedItems.length, saveCount] as const;
+    });
+  } catch (error) {
+    console.warn('[ItemDetailPage] secondary query failed:', error);
+  }
 
   const metadata =
     item.metadata != null &&

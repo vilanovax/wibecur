@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isMovieLikeListCategory } from '@/lib/admin/bulk-movie-import';
 import { resolveBulkImportMatch } from '@/lib/admin/bulk-import-resolve';
-import type { BulkImportPayloadItem } from '@/lib/admin/bulk-movie-import';
+import type { BulkImportPayloadItem } from '@/lib/admin/bulk-import';
 
 /** POST /api/admin/items/bulk-import/preview — تطبیق با کاتالوگ قبل از import */
 export async function POST(request: NextRequest) {
@@ -32,9 +31,6 @@ export async function POST(request: NextRequest) {
 
     if (!list?.categories) {
       return NextResponse.json({ error: 'لیست یافت نشد' }, { status: 404 });
-    }
-    if (!isMovieLikeListCategory(list.categories.slug)) {
-      return NextResponse.json({ error: 'فقط لیست فیلم/سریال' }, { status: 400 });
     }
 
     const categorySlug = list.categories.slug;

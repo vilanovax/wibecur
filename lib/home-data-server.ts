@@ -3,12 +3,14 @@ import { dbQuery } from '@/lib/db';
 import { getCachedGlobalTrending, getCachedFastRising } from '@/lib/trending/cached';
 import { getCurrentFeaturedSlot } from '@/lib/home-featured';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
+import { resolveListBannerImage } from '@/lib/list-display-images';
 import type {
   FeaturedListData,
   HomeData,
   HomeListData,
   RisingListData,
 } from '@/types/home-data';
+import { EMPTY_HOME_DATA } from '@/types/home-data';
 import {
   filterListsInActiveCategories,
   publicCuratedListWhere,
@@ -24,6 +26,7 @@ export type HomeApiPayload = {
 };
 
 export async function fetchHomePageData(): Promise<HomeData> {
+  try {
   let slotResult: Awaited<ReturnType<typeof getCurrentFeaturedSlot>> = null;
   try {
     slotResult = await dbQuery(() => getCurrentFeaturedSlot(prisma));
@@ -40,8 +43,9 @@ export async function fetchHomePageData(): Promise<HomeData> {
           title: true,
           slug: true,
           description: true,
-          coverImage: true,
-          saveCount: true,
+        coverImage: true,
+        horizontalImage: true,
+        saveCount: true,
           itemCount: true,
           likeCount: true,
           isFeatured: true,
@@ -73,28 +77,44 @@ export async function fetchHomePageData(): Promise<HomeData> {
 
   const withCover = (input: {
     coverImage?: string | null;
+    horizontalImage?: string | null;
     slug: string;
     title: string;
     categorySlug?: string | null;
-  }) =>
-    resolveCoverImage({
+  }) => {
+    const source = {
       coverImage: input.coverImage,
+      horizontalImage: input.horizontalImage,
+      slug: input.slug,
+      title: input.title,
       categorySlug: input.categorySlug,
-      listSlug: input.slug,
-      listTitle: input.title,
-    });
+    };
+    return {
+      coverImage: resolveCoverImage({
+        coverImage: input.coverImage,
+        categorySlug: input.categorySlug,
+        listSlug: input.slug,
+        listTitle: input.title,
+      }),
+      bannerImage: resolveListBannerImage(source),
+    };
+  };
 
-  const mapList = (l: (typeof lists)[0]): HomeListData => ({
+  const mapList = (l: (typeof lists)[0]): HomeListData => {
+    const images = withCover({
+      coverImage: l.coverImage,
+      horizontalImage: l.horizontalImage,
+      slug: l.slug,
+      title: l.title,
+      categorySlug: l.categories?.slug,
+    });
+    return {
     id: l.id,
     title: l.title,
     slug: l.slug,
     description: l.description ?? '',
-    coverImage: withCover({
-      coverImage: l.coverImage,
-      slug: l.slug,
-      title: l.title,
-      categorySlug: l.categories?.slug,
-    }),
+    coverImage: images.coverImage,
+    bannerImage: images.bannerImage,
     saveCount: l.saveCount ?? 0,
     itemCount: l.itemCount ?? 0,
     likes: l.likeCount ?? 0,
@@ -104,19 +124,24 @@ export async function fetchHomePageData(): Promise<HomeData> {
       | 'featured'
       | undefined,
     categories: l.categories,
-  });
+  };
+  };
 
-  const mapTrending = (t: (typeof trendingResults)[0]): HomeListData => ({
+  const mapTrending = (t: (typeof trendingResults)[0]): HomeListData => {
+    const images = withCover({
+      coverImage: t.coverImage,
+      horizontalImage: t.horizontalImage,
+      slug: t.slug,
+      title: t.title,
+      categorySlug: t.categorySlug,
+    });
+    return {
     id: t.listId,
     title: t.title,
     slug: t.slug,
     description: '',
-    coverImage: withCover({
-      coverImage: t.coverImage,
-      slug: t.slug,
-      title: t.title,
-      categorySlug: t.categorySlug,
-    }),
+    coverImage: images.coverImage,
+    bannerImage: images.bannerImage,
     saveCount: t.saveCount,
     itemCount: t.itemCount,
     likes: t.likeCount,
@@ -128,19 +153,24 @@ export async function fetchHomePageData(): Promise<HomeData> {
     categories: t.categorySlug
       ? { slug: t.categorySlug, name: '', id: '', icon: '' }
       : undefined,
-  });
+  };
+  };
 
-  const mapRising = (r: (typeof risingResults)[0]): RisingListData => ({
+  const mapRising = (r: (typeof risingResults)[0]): RisingListData => {
+    const images = withCover({
+      coverImage: r.coverImage,
+      horizontalImage: r.horizontalImage,
+      slug: r.slug,
+      title: r.title,
+      categorySlug: r.categorySlug,
+    });
+    return {
     id: r.listId,
     title: r.title,
     slug: r.slug,
     description: '',
-    coverImage: withCover({
-      coverImage: r.coverImage,
-      slug: r.slug,
-      title: r.title,
-      categorySlug: r.categorySlug,
-    }),
+    coverImage: images.coverImage,
+    bannerImage: images.bannerImage,
     saveCount: r.saveCount,
     itemCount: r.itemCount,
     likes: r.likeCount,
@@ -148,7 +178,8 @@ export async function fetchHomePageData(): Promise<HomeData> {
     categories: r.categorySlug
       ? { slug: r.categorySlug, name: '', id: '', icon: '' }
       : undefined,
-  });
+  };
+  };
 
   const mapFeatured: FeaturedListData | null = featured
     ? {
@@ -166,4 +197,8 @@ export async function fetchHomePageData(): Promise<HomeData> {
     rising: risingResults.map(mapRising),
     recommendations: visibleLists.slice(0, 4).map(mapList),
   };
+  } catch (err) {
+    console.warn('fetchHomePageData failed:', err);
+    return EMPTY_HOME_DATA;
+  }
 }

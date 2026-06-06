@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { lists, categories } from '@prisma/client';
 import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
+import ItemTipField from '@/components/admin/items/ItemTipField';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
 import {
   Upload,
@@ -439,8 +440,12 @@ export default function NewItemForm({
             title={formData.title}
             categoryName={selectedList?.categories?.name}
             onModalOpenChange={setImageSearchModalOpen}
-            displayMode={mediaTab}
-          />
+              displayMode={mediaTab}
+              previewVariant="poster"
+              enableMoviePosterSources={isFilmCategory}
+              metadata={(formData.metadata as Record<string, unknown>) ?? null}
+              categorySlug={selectedList?.categories?.slug}
+            />
         </section>
 
         {/* 3. Extended Metadata (Collapsible) */}
@@ -459,11 +464,23 @@ export default function NewItemForm({
             <div
               className={`transition-all duration-200 overflow-hidden ${metadataOpen ? 'max-h-[800px]' : 'max-h-0'}`}
             >
-              <div className="px-6 pb-6 pt-2 border-t border-admin-border dark:border-gray-600">
+              <div className="px-6 pb-6 pt-2 border-t border-admin-border dark:border-gray-600 space-y-4">
                 <DynamicMetadataFields
                   categorySlug={selectedList.categories.slug}
                   metadata={formData.metadata}
                   onChange={(metadata) => setFormData((prev) => ({ ...prev, metadata }))}
+                />
+                <ItemTipField
+                  value={String((formData.metadata as Record<string, unknown>)?.tip ?? '')}
+                  onChange={(tip) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      metadata: {
+                        ...(prev.metadata as Record<string, unknown>),
+                        tip: tip.trim() || undefined,
+                      },
+                    }))
+                  }
                 />
               </div>
             </div>

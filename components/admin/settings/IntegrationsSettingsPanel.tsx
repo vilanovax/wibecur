@@ -5,9 +5,12 @@ import type { SettingsData } from '@/lib/admin/settings-types';
 import SettingsSectionCard from './SettingsSectionCard';
 import SecretInput from './SecretInput';
 import SettingsSaveButton from './SettingsSaveButton';
+import OpenAIModelSelect from './OpenAIModelSelect';
+import { resolveOpenAIModel } from '@/lib/openai-models';
 
 export type IntegrationFormState = {
   openaiApiKey: string;
+  openaiModel: string;
   tmdbApiKey: string;
   omdbApiKey: string;
   googleApiKey: string;
@@ -110,6 +113,10 @@ export default function IntegrationsSettingsPanel({
             />
           }
         />
+        <OpenAIModelSelect
+          value={form.openaiModel || resolveOpenAIModel(settings.openaiModel)}
+          onChange={(openaiModel) => onFormChange({ openaiModel })}
+        />
         <SecretInput
           label="TMDb"
           value={form.tmdbApiKey || ''}
@@ -188,8 +195,8 @@ export default function IntegrationsSettingsPanel({
       </SettingsSectionCard>
 
       <SettingsSectionCard
-        title="Liara Object Storage"
-        description="آپلود تصاویر روی سرور ایرانی"
+        title="ParsPack Object Storage"
+        description="آپلود تصاویر روی Object Storage پارس‌پک"
         icon={<Database className="w-5 h-5 text-[var(--primary)]" />}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -202,7 +209,7 @@ export default function IntegrationsSettingsPanel({
               value={form.liaraBucketName || ''}
               onChange={(e) => onFormChange({ liaraBucketName: e.target.value })}
               className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]"
-              placeholder="my-bucket"
+              placeholder="c466145"
             />
           </div>
           <div>
@@ -214,7 +221,7 @@ export default function IntegrationsSettingsPanel({
               value={form.liaraEndpoint || ''}
               onChange={(e) => onFormChange({ liaraEndpoint: e.target.value })}
               className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]"
-              placeholder="https://storage.iran.liara.space"
+              placeholder="https://c466145.parspack.net"
             />
           </div>
         </div>

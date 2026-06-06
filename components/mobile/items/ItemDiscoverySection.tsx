@@ -166,15 +166,17 @@ export default function ItemDiscoverySection({
   };
 
   return (
-    <section className="border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card lg:p-5 lg:pt-5 lg:shadow-sm">
-      <div className="mb-3">
-        <h2 className="wibe-h3 text-foreground">پیشنهاد برای تو</h2>
-        <p className="wibe-caption text-wibe-secondary mt-0.5">{tabDescriptions[activeTab]}</p>
+    <section className="pt-1 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
+      <div className="mb-3 flex items-end justify-between gap-3 border-b border-wibe/60 pb-3">
+        <div className="min-w-0 text-right">
+          <h2 className="wibe-h3 text-foreground">پیشنهاد برای تو</h2>
+          <p className="mt-0.5 wibe-caption text-wibe-secondary">{tabDescriptions[activeTab]}</p>
+        </div>
       </div>
 
       {availableTabs.length > 1 && (
         <div
-          className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-0.5"
+          className="mb-4 flex gap-1.5 overflow-x-auto rounded-xl bg-gray-100/80 p-1 scrollbar-hide"
           role="tablist"
           aria-label="نوع پیشنهاد"
         >
@@ -185,7 +187,7 @@ export default function ItemDiscoverySection({
               role="tab"
               aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-[0.98] ${
+              className={`flex-shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-[0.98] ${
                 activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE
               }`}
             >

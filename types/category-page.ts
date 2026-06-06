@@ -35,6 +35,10 @@ export interface CategoryListCard {
   slug: string;
   description?: string | null;
   coverImage?: string | null;
+  /** بنر افقی (۱۶:۹) — آپلود اختیاری در ادمین */
+  horizontalImage?: string | null;
+  /** URL نهایی برای نمایش افقی (horizontalImage یا fallback کاور) */
+  bannerImage?: string;
   saveCount: number;
   likeCount: number;
   itemCount: number;

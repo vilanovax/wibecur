@@ -37,6 +37,7 @@ export interface ListIntelligenceRow {
   coverImage: string | null;
   categoryId: string | null;
   categoryName: string;
+  categorySlug: string | null;
   categoryIcon: string;
   isFeatured: boolean;
   isActive: boolean;
@@ -238,6 +239,7 @@ function buildIntelligenceRows(
       coverImage: l.coverImage ?? null,
       categoryId: l.categoryId,
       categoryName: l.categories?.name ?? '—',
+      categorySlug: l.categories?.slug ?? null,
       categoryIcon: l.categories?.icon ?? '📋',
       isFeatured: l.isFeatured ?? false,
       isActive: l.isActive ?? true,

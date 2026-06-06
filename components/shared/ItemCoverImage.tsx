@@ -12,6 +12,7 @@ import {
   inferCategorySlugFromTitle,
 } from '@/lib/category-cover-images';
 import { isMovieLikeCategory, resolveItemImage, resolveItemDisplayImage } from '@/lib/resolve-item-image';
+import { getItemPlaceholderImageUrl } from '@/lib/item-placeholder-image';
 import { itemNeedsPosterEnrich } from '@/lib/item-poster-needs-enrich';
 import { fetchItemPosterUrl, runPosterEnrichTask } from '@/lib/poster-enrich-queue';
 import ItemCoverPlaceholder, {
@@ -145,13 +146,25 @@ export default function ItemCoverImage({
     };
   }, [shouldEnrichPoster, itemId, loadFailed]);
 
+  const errorFallback = useMemo(
+    () =>
+      getItemPlaceholderImageUrl({
+        seed: itemId ?? title,
+        title,
+        categorySlug,
+      }),
+    [itemId, title, categorySlug]
+  );
+
   const resolvedSrc =
     fetchedPoster ||
-    (loadFailed
-      ? displayFallback
-      : needsPosterEnrich && !fetchedPoster
+    (loadFailed && baseResolved
+      ? errorFallback
+      : loadFailed
         ? displayFallback
-        : baseResolved || displayFallback);
+        : needsPosterEnrich && !fetchedPoster
+          ? displayFallback
+          : baseResolved || displayFallback);
   const displaySrc = toItemDisplaySrc(resolvedSrc);
   const showFallback = !displaySrc;
   const imgRef = useRef<HTMLImageElement>(null);

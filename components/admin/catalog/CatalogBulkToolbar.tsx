@@ -1,0 +1,297 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import {
+  Trash2,
+  MessageSquareOff,
+  MessageSquare,
+  EyeOff,
+  Eye,
+  ArrowRightLeft,
+  ListPlus,
+  X,
+  ChevronDown,
+} from 'lucide-react';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import {
+  CATALOG_BULK_ACTION_LABELS,
+  type CatalogBulkAction,
+} from '@/lib/admin/catalog-bulk-actions';
+
+type ListOption = { id: string; title: string; icon?: string | null };
+
+type Props = {
+  selectedIds: string[];
+  selectedTitles: string[];
+  lists: ListOption[];
+  activeListId: string;
+  onClear: () => void;
+  onDone: (message: string) => void;
+  onError: (message: string) => void;
+};
+
+type PendingAction = {
+  action: CatalogBulkAction;
+  needsSourceList: boolean;
+  needsTargetList: boolean;
+};
+
+const ACTION_ICONS: Partial<Record<CatalogBulkAction, React.ReactNode>> = {
+  'remove-from-list': <Trash2 className="w-4 h-4" />,
+  'delete-catalog': <Trash2 className="w-4 h-4" />,
+  'disable-comments': <MessageSquareOff className="w-4 h-4" />,
+  'enable-comments': <MessageSquare className="w-4 h-4" />,
+  hide: <EyeOff className="w-4 h-4" />,
+  show: <Eye className="w-4 h-4" />,
+  'move-to-list': <ArrowRightLeft className="w-4 h-4" />,
+  'add-to-list': <ListPlus className="w-4 h-4" />,
+};
+
+function actionNeeds(action: CatalogBulkAction, activeListId: string): PendingAction {
+  switch (action) {
+    case 'remove-from-list':
+      return { action, needsSourceList: !activeListId, needsTargetList: false };
+    case 'move-to-list':
+      return { action, needsSourceList: !activeListId, needsTargetList: true };
+    case 'add-to-list':
+      return { action, needsSourceList: false, needsTargetList: true };
+    default:
+      return { action, needsSourceList: false, needsTargetList: false };
+  }
+}
+
+export default function CatalogBulkToolbar({
+  selectedIds,
+  selectedTitles,
+  lists,
+  activeListId,
+  onClear,
+  onDone,
+  onError,
+}: Props) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pending, setPending] = useState<PendingAction | null>(null);
+  const [sourceListId, setSourceListId] = useState(activeListId);
+  const [targetListId, setTargetListId] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const count = selectedIds.length;
+  const previewTitle = useMemo(() => {
+    if (selectedTitles.length === 0) return '';
+    if (selectedTitles.length === 1) return selectedTitles[0];
+    return `${selectedTitles[0]} و ${(selectedTitles.length - 1).toLocaleString('fa-IR')} مورد دیگر`;
+  }, [selectedTitles]);
+
+  if (count === 0) return null;
+
+  const openAction = (action: CatalogBulkAction) => {
+    setMenuOpen(false);
+    const needs = actionNeeds(action, activeListId);
+    setPending(needs);
+    setSourceListId(activeListId || '');
+    setTargetListId('');
+    setConfirmOpen(true);
+  };
+
+  const handleConfirm = async () => {
+    if (!pending) return;
+
+    const listId = pending.needsSourceList ? sourceListId : activeListId || undefined;
+    const target = pending.needsTargetList ? targetListId : undefined;
+
+    if (pending.needsSourceList && !listId) {
+      onError('لیست مبدأ را انتخاب کنید');
+      return;
+    }
+    if (pending.needsTargetList && !target) {
+      onError('لیست مقصد را انتخاب کنید');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/catalog-items/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          catalogIds: selectedIds,
+          action: pending.action,
+          listId,
+          targetListId: target,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'عملیات ناموفق بود');
+      }
+      onDone(data.message || 'انجام شد');
+      setConfirmOpen(false);
+      setPending(null);
+      onClear();
+    } catch (e: unknown) {
+      onError(e instanceof Error ? e.message : 'خطا');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const meta = pending ? CATALOG_BULK_ACTION_LABELS[pending.action] : null;
+
+  const actions: CatalogBulkAction[] = [
+    'add-to-list',
+    'move-to-list',
+    'remove-from-list',
+    'disable-comments',
+    'enable-comments',
+    'hide',
+    'show',
+    'delete-catalog',
+  ];
+
+  return (
+    <>
+      <div className="sticky top-0 z-20 mb-4 rounded-2xl border border-violet-200 bg-violet-50/95 backdrop-blur px-4 py-3 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-bold text-violet-900 tabular-nums">
+            {count.toLocaleString('fa-IR')} انتخاب
+          </span>
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
+            >
+              عملیات گروهی
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            {menuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setMenuOpen(false)}
+                  aria-hidden
+                />
+                <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                  {actions.map((action) => {
+                    const item = CATALOG_BULK_ACTION_LABELS[action];
+                    return (
+                      <button
+                        key={action}
+                        type="button"
+                        onClick={() => openAction(action)}
+                        className={`flex w-full items-center gap-2 px-3 py-2.5 text-sm text-right hover:bg-gray-50 ${
+                          item.variant === 'danger' ? 'text-red-700' : 'text-gray-800'
+                        }`}
+                      >
+                        {ACTION_ICONS[action]}
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={onClear}
+            className="inline-flex items-center gap-1 text-sm font-medium text-violet-700 hover:underline mr-auto"
+          >
+            <X className="w-4 h-4" />
+            لغو انتخاب
+          </button>
+        </div>
+      </div>
+
+      {confirmOpen && pending && meta && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" aria-hidden onClick={() => !loading && setConfirmOpen(false)} />
+          <div
+            className="relative w-full max-w-md rounded-2xl border border-gray-100 bg-white shadow-xl p-5 text-right"
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">{meta.label}</h2>
+            <p className="text-sm text-gray-600 mb-2">{meta.description}</p>
+            <p className="text-sm font-semibold text-gray-900 mb-4 truncate">{previewTitle}</p>
+
+            {pending.needsSourceList && (
+              <label className="block mb-3">
+                <span className="text-xs font-medium text-gray-600 mb-1 block">لیست مبدأ</span>
+                <select
+                  value={sourceListId}
+                  onChange={(e) => setSourceListId(e.target.value)}
+                  disabled={loading}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                >
+                  <option value="">انتخاب لیست…</option>
+                  {lists.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.icon || '📋'} {l.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {pending.needsTargetList && (
+              <label className="block mb-3">
+                <span className="text-xs font-medium text-gray-600 mb-1 block">لیست مقصد</span>
+                <select
+                  value={targetListId}
+                  onChange={(e) => setTargetListId(e.target.value)}
+                  disabled={loading}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm"
+                >
+                  <option value="">انتخاب لیست…</option>
+                  {lists
+                    .filter((l) => l.id !== (sourceListId || activeListId))
+                    .map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.icon || '📋'} {l.title}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            )}
+
+            <p className="text-xs text-gray-500 mb-5">
+              {count.toLocaleString('fa-IR')} آیتم انتخاب شده
+            </p>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                disabled={loading}
+                className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleConfirm()}
+                disabled={loading}
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 flex items-center gap-2 ${
+                  meta.variant === 'danger'
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : meta.variant === 'primary'
+                      ? 'bg-violet-600 hover:bg-violet-700 text-white'
+                      : 'bg-gray-900 hover:bg-gray-800 text-white'
+                }`}
+              >
+                {loading && (
+                  <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                )}
+                {meta.label}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

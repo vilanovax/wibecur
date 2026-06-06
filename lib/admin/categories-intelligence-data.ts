@@ -5,6 +5,7 @@ import type { CategoryIntelligenceRow } from '@/lib/admin/categories-types';
 import {
   buildCategoryPulse,
   getCategorySaveGrowthMap,
+  getCategoryUniqueItemCountMap,
   toCategoryIntelligenceRowFromAggregate,
   type CategoryAggregateMetrics,
   type CategoryRowSource,
@@ -43,7 +44,7 @@ async function fetchCategoriesIntelligenceData(): Promise<CategoriesIntelligence
 
   const categoryIds = categories.map((c) => c.id);
 
-  const [growthMap, sumAgg, activeAgg] = await Promise.all([
+  const [growthMap, sumAgg, activeAgg, uniqueItemMap] = await Promise.all([
     getCategorySaveGrowthMap(prisma, categoryIds),
     dbQuery(() =>
       prisma.lists.groupBy({
@@ -64,6 +65,7 @@ async function fetchCategoriesIntelligenceData(): Promise<CategoriesIntelligence
         _count: { _all: true },
       })
     ),
+    dbQuery(() => getCategoryUniqueItemCountMap(prisma, categoryIds)),
   ]);
 
   const sumByCat = new Map(
@@ -82,6 +84,7 @@ async function fetchCategoriesIntelligenceData(): Promise<CategoriesIntelligence
     const sums = sumByCat.get(cat.id);
     const agg: CategoryAggregateMetrics = {
       listCount: cat._count.lists,
+      uniqueItemCount: uniqueItemMap.get(cat.id) ?? 0,
       totalSaves: sums?.totalSaves ?? 0,
       totalViews: sums?.totalViews ?? 0,
       activeListCount: activeByCat.get(cat.id) ?? 0,

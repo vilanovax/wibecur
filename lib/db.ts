@@ -20,8 +20,8 @@ function backoffMs(attempt: number, baseDelay: number): number {
 /** Wrapper with retry + reconnect for Prisma engine / pool issues */
 export async function dbQuery<T>(
   queryFn: () => Promise<T>,
-  retries = 4,
-  delay = 500
+  retries = process.env.NEXT_PHASE === 'phase-production-build' ? 1 : 4,
+  delay = process.env.NEXT_PHASE === 'phase-production-build' ? 100 : 500
 ): Promise<T> {
   let lastError: unknown;
 

@@ -114,7 +114,7 @@ export function isGenericListCover(url: string | null | undefined): boolean {
   if (t.includes('upload.wikimedia.org/wikipedia/commons/')) {
     return true;
   }
-  // کاورهای seed روی Liara — proxy اغلب 404 می‌دهد؛ بنر محلی جایگزین می‌شود
+  // کاورهای seed روی Liara — اغلب در bucket نیستند؛ بنر محلی جایگزین می‌شود
   if (isOurStorageUrl(t) && t.includes('/covers/')) {
     return true;
   }

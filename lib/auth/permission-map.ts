@@ -27,6 +27,7 @@ const SUPER_ADMIN: Permission[] = [
   'view_moderation',
   'assign_moderation',
   'manage_backup',
+  'manage_settings',
 ];
 
 const ADMIN: Permission[] = [
@@ -49,6 +50,7 @@ const ADMIN: Permission[] = [
   'view_moderation',
   'assign_moderation',
   'manage_backup',
+  'manage_settings',
 ];
 
 const MODERATOR: Permission[] = [
@@ -73,6 +75,13 @@ const ANALYST: Permission[] = [
   'view_moderation',
 ];
 
+const EDITOR: Permission[] = [
+  'view_dashboard',
+  'view_pulse',
+  'manage_lists',
+  'manage_categories',
+];
+
 /**
  * ماتریس نقش → دسترسی‌ها (ثابت در کد، منبع حقیقت)
  */
@@ -81,6 +90,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
   ADMIN,
   MODERATOR,
   ANALYST,
+  EDITOR,
 };
 
 const CACHE = new Map<string, Set<Permission>>();

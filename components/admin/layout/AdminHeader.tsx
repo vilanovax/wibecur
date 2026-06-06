@@ -33,6 +33,8 @@ function getBreadcrumb(pathname: string | null): { href: string; label: string }
   const segments = normalized.split('/').filter(Boolean);
   const out: { href: string; label: string }[] = [{ href: '/admin/dashboard', label: 'داشبورد' }];
   let acc = '/admin';
+  /** شناسه‌ای که در breadcrumb نمایش داده نمی‌شود ولی برای href لازم است */
+  let hiddenResourceId: string | null = null;
   for (let i = 1; i < segments.length; i++) {
     // شناسه دسته را در breadcrumb نشان نده — مستقیم «ویرایش دسته»
     if (
@@ -40,6 +42,7 @@ function getBreadcrumb(pathname: string | null): { href: string; label: string }
       segments[i + 1] === 'edit' &&
       /^[A-Za-z0-9_-]+$/.test(segments[i])
     ) {
+      hiddenResourceId = segments[i];
       continue;
     }
     if (
@@ -47,14 +50,43 @@ function getBreadcrumb(pathname: string | null): { href: string; label: string }
       segments[i + 1] === 'edit' &&
       /^[A-Za-z0-9_-]+$/.test(segments[i])
     ) {
+      hiddenResourceId = segments[i];
       continue;
     }
-    acc += '/' + segments[i];
+    // شناسه لیست را رد کن — مستقیم «ویرایش لیست» / «دیباگ»
+    if (
+      segments[i - 1] === 'lists' &&
+      (segments[i + 1] === 'edit' || segments[i + 1] === 'debug') &&
+      /^[A-Za-z0-9_-]+$/.test(segments[i])
+    ) {
+      hiddenResourceId = segments[i];
+      continue;
+    }
+    if (
+      segments[i - 1] === 'items' &&
+      segments[i + 1] === 'edit' &&
+      /^[A-Za-z0-9_-]+$/.test(segments[i])
+    ) {
+      hiddenResourceId = segments[i];
+      continue;
+    }
+    if (hiddenResourceId && (segments[i] === 'edit' || segments[i] === 'debug')) {
+      acc += `/${hiddenResourceId}/${segments[i]}`;
+      hiddenResourceId = null;
+    } else {
+      acc += '/' + segments[i];
+    }
     let label = BREADCRUMB_MAP[acc];
     if (!label) {
       if (/\/categories\/[^/]+\/edit$/.test(acc)) {
         label = 'ویرایش دسته';
       } else if (/\/catalog\/[^/]+\/edit$/.test(acc)) {
+        label = 'ویرایش آیتم';
+      } else if (/\/lists\/[^/]+\/edit$/.test(acc)) {
+        label = 'ویرایش لیست';
+      } else if (/\/lists\/[^/]+\/debug$/.test(acc)) {
+        label = 'دیباگ لیست';
+      } else if (/\/items\/[^/]+\/edit$/.test(acc)) {
         label = 'ویرایش آیتم';
       } else if (BREADCRUMB_SEGMENT_LABELS[segments[i]]) {
         label = BREADCRUMB_SEGMENT_LABELS[segments[i]];
@@ -175,21 +207,26 @@ export default function AdminHeader() {
           {collapsed ? <PanelRightOpen className="h-5 w-5" /> : <PanelRightClose className="h-5 w-5" />}
         </button>
         <div className="flex items-center gap-2 min-w-0">
-        {breadcrumbs.map((b, i) => (
-          <span key={`${b.href}-${i}`} className="flex items-center gap-2 shrink-0">
-            {i > 0 && <ChevronLeft className="h-4 w-4 text-gray-400 rotate-180" />}
-            <Link
-              href={b.href}
-              className={`text-sm truncate max-w-[120px] ${
-                i === breadcrumbs.length - 1
-                  ? 'font-semibold text-admin-text-primary dark:text-white'
-                  : 'text-admin-text-secondary dark:text-gray-400 hover:text-admin-text-primary dark:hover:text-white'
-              }`}
-            >
-              {b.label}
-            </Link>
-          </span>
-        ))}
+        {breadcrumbs.map((b, i) => {
+          const isLast = i === breadcrumbs.length - 1;
+          const className = `text-sm truncate max-w-[120px] ${
+            isLast
+              ? 'font-semibold text-admin-text-primary dark:text-white'
+              : 'text-admin-text-secondary dark:text-gray-400 hover:text-admin-text-primary dark:hover:text-white'
+          }`;
+          return (
+            <span key={`${b.href}-${i}`} className="flex items-center gap-2 shrink-0">
+              {i > 0 && <ChevronLeft className="h-4 w-4 text-gray-400 rotate-180" />}
+              {isLast ? (
+                <span className={className}>{b.label}</span>
+              ) : (
+                <Link href={b.href} className={className}>
+                  {b.label}
+                </Link>
+              )}
+            </span>
+          );
+        })}
         </div>
       </div>
 
