@@ -1,5 +1,11 @@
 import { z } from 'zod';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
+import { isTmdbImageUrl } from '@/lib/image-url-policy';
+import { isOurStorageUrl } from '@/lib/object-storage-config';
+import {
+  normalizeImageUrlForStorage,
+  sanitizeImportUrl,
+} from '@/lib/image-url-sanitize';
 import type { BulkImportMatch } from '@/lib/admin/bulk-import-resolve';
 
 export function extractImdbIdFromUrl(url: string | null | undefined): string | undefined {
@@ -27,6 +33,7 @@ export type BulkImportRow = {
   selected: boolean;
   valid: boolean;
   errors: string[];
+  warnings: string[];
   title: string;
   description: string;
   imageUrl: string;
@@ -74,6 +81,58 @@ export function getBulkImportCategoryKind(slug: string | null | undefined): Bulk
     return 'cafe';
   }
   return 'general';
+}
+
+/** @deprecated از lib/image-url-sanitize استفاده کنید */
+export {
+  sanitizeImportUrl,
+  normalizeImageUrlForStorage as resolveBulkImportImageUrl,
+} from '@/lib/image-url-sanitize';
+
+/** لینک خارجی — اختیاری؛ بدون خطا در preview */
+function normalizeBulkImportExternalUrl(raw: string | null | undefined): string {
+  return sanitizeImportUrl(raw);
+}
+
+function collectImportImageWarnings(
+  rawImageUrl: string | null | undefined,
+  resolvedImageUrl: string,
+  metadata: Record<string, unknown>,
+  externalUrl: string
+): string[] {
+  const warnings: string[] = [];
+  const raw = (rawImageUrl ?? '').trim();
+
+  if (raw && sanitizeImportUrl(raw) !== raw) {
+    warnings.push('لینک Markdown به URL تبدیل شد');
+  }
+
+  if (!resolvedImageUrl) {
+    if (raw) warnings.push('imageUrl قابل استفاده نیست');
+    return warnings;
+  }
+
+  if (!resolvedImageUrl.startsWith('http')) {
+    warnings.push('imageUrl باید لینک http/https باشد');
+    return warnings;
+  }
+
+  if (isOurStorageUrl(resolvedImageUrl)) {
+    return warnings;
+  }
+
+  if (isTmdbImageUrl(resolvedImageUrl)) {
+    const imdbId =
+      (typeof metadata.imdbId === 'string' && metadata.imdbId.trim()) ||
+      extractImdbIdFromUrl(externalUrl);
+    if (imdbId) {
+      warnings.push('تصویر TMDB — در import از OMDb poster استفاده می‌شود');
+    } else {
+      warnings.push('تصویر TMDB بدون imdbId — ممکن است آپلود نشود');
+    }
+  }
+
+  return warnings;
 }
 
 export function getBulkImportCategoryLabel(kind: BulkImportCategoryKind): string {
@@ -178,6 +237,7 @@ export function validateBulkImportRow(
       selected: false,
       valid: false,
       errors: parsed.error.errors.map((e) => e.message),
+      warnings: [],
       title: String((raw as { title?: string })?.title ?? ''),
       description: '',
       imageUrl: '',
@@ -190,11 +250,7 @@ export function validateBulkImportRow(
   const title = data.title.trim();
   if (!title) errors.push('عنوان خالی است');
 
-  let externalUrl = (data.externalUrl ?? '').trim();
-  if (externalUrl && !/^https?:\/\//i.test(externalUrl)) {
-    errors.push('externalUrl نامعتبر است');
-    externalUrl = '';
-  }
+  let externalUrl = normalizeBulkImportExternalUrl(data.externalUrl);
 
   const metadata = normalizeBulkImportMetadata(
     categorySlug,
@@ -210,17 +266,15 @@ export function validateBulkImportRow(
     errors.push(metaValidation.error || 'متادیتا نامعتبر');
   }
 
-  let imageUrl = (data.imageUrl ?? '').trim();
-  if (imageUrl && !/^https?:\/\//i.test(imageUrl)) {
-    errors.push('imageUrl باید لینک http/https باشد');
-    imageUrl = '';
-  }
+  const imageUrl = normalizeImageUrlForStorage(data.imageUrl);
+  const warnings = collectImportImageWarnings(data.imageUrl, imageUrl, metadata, externalUrl);
 
   return {
     id: `row-${index}-${title.slice(0, 12)}`,
     selected: errors.length === 0,
     valid: errors.length === 0,
     errors,
+    warnings,
     title,
     description: (data.description ?? '').trim(),
     imageUrl,
@@ -249,8 +303,18 @@ export function parseBulkImportJson(
     items = data;
   } else if (data && typeof data === 'object' && Array.isArray((data as { items?: unknown[] }).items)) {
     items = (data as { items: unknown[] }).items;
+  } else if (
+    data &&
+    typeof data === 'object' &&
+    typeof (data as { title?: unknown }).title === 'string' &&
+    (data as { title: string }).title.trim()
+  ) {
+    items = [data];
   } else {
-    return { rows: [], parseError: 'فرمت باید آرایه یا { "items": [...] } باشد' };
+    return {
+      rows: [],
+      parseError: 'فرمت باید آرایه، { "items": [...] } یا یک آبجکت آیتم با فیلد title باشد',
+    };
   }
 
   if (items.length === 0) return { rows: [], parseError: 'هیچ آیتمی در JSON نیست' };
@@ -353,7 +417,7 @@ export function getBulkImportJsonHint(categorySlug: string, list?: BulkImportLis
   const listPart = list?.title ? ` · لیست: «${list.title}»` : '';
   switch (kind) {
     case 'movie':
-      return `tip (اختیاری) · metadata: year, genre, director, country, actors, imdbRating (مثل "8.7")${listPart}`;
+      return `فرمت: { "items": [...] } یا یک آیتم با title · tip · metadata: year, genre, director, country, actors, imdbRating, imdbId, tmdbId · imageUrl: لینک مستقیم یا پروکسی${listPart}`;
     case 'book':
       return `tip (اختیاری) · metadata: author, genre, isbn${listPart}`;
     case 'cafe':

@@ -47,7 +47,7 @@ export default function CategoryFormStickyPreview({
       <div className="px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
         <p className="text-sm font-semibold text-[var(--color-text)]">پیش‌نمایش</p>
         <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
-          {step === 1 && 'کارت دسته در اپ'}
+          {step === 1 && 'کارت دسته + کاور'}
           {step === 2 && 'کارت + صفحه دسته'}
           {step === 3 && 'خلاصه قبل از انتشار'}
         </p>
@@ -80,8 +80,8 @@ export default function CategoryFormStickyPreview({
           </div>
         </div>
 
-        {/* هیرو — مرحله ۲ و ۳ */}
-        {(step >= 2 || values.heroImage || values.layoutType) && (
+        {/* هیرو — مرحله ۱ (با کاور) و ۲+ */}
+        {(step >= 1 && values.heroImage) || step >= 2 || values.layoutType ? (
           <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
             <p className="text-[10px] font-medium text-[var(--color-text-muted)] px-3 py-1.5 bg-[var(--color-bg)]">
               صفحه دسته
@@ -103,7 +103,7 @@ export default function CategoryFormStickyPreview({
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* خلاصه انتشار — مرحله ۳ */}
         {step >= 3 && (

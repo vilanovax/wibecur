@@ -94,7 +94,11 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const resolvedPreview =
     previewVariant ??
-    (uploadPurpose === 'list-horizontal' ? 'horizontal' : uploadPurpose === 'list-cover' ? 'cover' : 'default');
+    (uploadPurpose === 'list-horizontal' || uploadPurpose === 'category-hero'
+      ? 'horizontal'
+      : uploadPurpose === 'list-cover'
+        ? 'cover'
+        : 'default');
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadMethod, setUploadMethod] = useState<'url' | 'upload'>('upload');
@@ -268,7 +272,9 @@ export default function ImageUpload({
             </button>
           </div>
           <p className="text-[10px] text-[var(--color-text-muted)] leading-relaxed">
-            با ذخیره لیست، تصویر از URL دانلود، بهینه و در ParsPack ذخیره می‌شود.
+            {uploadPurpose === 'category-hero'
+              ? 'با ذخیره دسته، تصویر از URL دانلود، بهینه و در ParsPack ذخیره می‌شود.'
+              : 'با ذخیره لیست، تصویر از URL دانلود، بهینه و در ParsPack ذخیره می‌شود.'}
           </p>
           {value && (
             <CoverPreview

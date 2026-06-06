@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, ExternalLink, FileText, Flag } from 'lucide-react
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentStatusBadge from './CommentStatusBadge';
+import UserAvatar from '@/components/shared/UserAvatar';
 import type { CommentRowData } from './CommentRow';
 
 export type ReportDetailRow = {
@@ -83,17 +84,12 @@ export default function CommentDetailPanel({
         </p>
 
         <div className="flex items-center gap-2 text-sm">
-          {comment.users.image ? (
-            <img
-              src={comment.users.image}
-              alt=""
-              className="w-9 h-9 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-[var(--color-bg)] flex items-center justify-center text-xs font-medium">
-              {(comment.users.name || comment.users.email)[0].toUpperCase()}
-            </div>
-          )}
+          <UserAvatar
+            src={comment.users.image}
+            name={comment.users.name}
+            email={comment.users.email}
+            size={36}
+          />
           <div className="min-w-0 flex-1">
             <p className="font-medium truncate">{comment.users.name || 'بدون نام'}</p>
             <p className="text-xs text-[var(--color-text-muted)] truncate">

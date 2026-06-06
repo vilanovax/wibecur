@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
-import { ensureImageInLiara } from '@/lib/object-storage';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 import { extractImdbIdFromUrl, normalizeBulkImportMetadata } from '@/lib/admin/bulk-import';
-import { resolveBulkImportMatch } from '@/lib/admin/bulk-import-resolve';
+import {
+  createBulkImportImageContext,
+  resolveBulkImportImageForStorage,
+  type BulkImportImageContext,
+} from '@/lib/admin/bulk-import-image';
+import { resolveBulkImportMatchesBatch } from '@/lib/admin/bulk-import-resolve';
 import {
   addCatalogItemToList,
   createCatalogItem,
@@ -22,6 +26,152 @@ type ImportResult = {
   message?: string;
   listCount?: number;
 };
+
+const IMPORT_CONCURRENCY = 5;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+
+  async function worker() {
+    while (cursor < items.length) {
+      const index = cursor++;
+      results[index] = await fn(items[index], index);
+    }
+  }
+
+  const workers = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workers }, () => worker()));
+  return results;
+}
+
+async function importOneRow(
+  index: number,
+  row: BulkImportPayloadItem,
+  assignedOrder: number,
+  ctx: {
+    categorySlug: string;
+    listId: string;
+    imageCtx: BulkImportImageContext;
+    match: Awaited<ReturnType<typeof resolveBulkImportMatchesBatch>>[number];
+  }
+): Promise<ImportResult & { placementAdded?: boolean; created?: boolean; linked?: boolean; updated?: boolean }> {
+  const title = row.title?.trim();
+  if (!title) {
+    return { index, title: '—', status: 'error', message: 'عنوان خالی' };
+  }
+
+  try {
+    const metaInput = normalizeBulkImportMetadata(
+      ctx.categorySlug,
+      (row.metadata ?? {}) as Record<string, unknown>,
+      row.externalUrl
+    );
+    const imdbFromUrl = extractImdbIdFromUrl(row.externalUrl);
+    if (imdbFromUrl && !metaInput.imdbId) metaInput.imdbId = imdbFromUrl;
+
+    const metadataValidation = validateMetadata(ctx.categorySlug, metaInput);
+    if (!metadataValidation.success) {
+      return {
+        index,
+        title,
+        status: 'error',
+        message: metadataValidation.error,
+      };
+    }
+
+    const meta = metadataValidation.data || {};
+    const match = ctx.match;
+
+    let finalImage: string | undefined;
+    if (row.imageUrl?.trim()) {
+      finalImage = await resolveBulkImportImageForStorage(
+        row.imageUrl,
+        meta as Record<string, unknown>,
+        'items',
+        ctx.imageCtx
+      );
+    }
+
+    let catalogId = match.catalogId;
+
+    if (!catalogId) {
+      const catalog = await createCatalogItem(prisma, {
+        title,
+        description: row.description?.trim() || null,
+        imageUrl: finalImage ?? null,
+        externalUrl: row.externalUrl?.trim() || null,
+        categorySlug: ctx.categorySlug,
+        metadata: meta,
+      });
+      catalogId = catalog.id;
+    } else {
+      await updateCatalogItem(prisma, catalogId, {
+        title,
+        description: row.description?.trim() || null,
+        ...(finalImage !== undefined && { imageUrl: finalImage }),
+        externalUrl: row.externalUrl?.trim() || null,
+        categorySlug: ctx.categorySlug,
+        metadata: meta,
+      });
+    }
+
+    if (match.inTargetList) {
+      return {
+        index,
+        title,
+        status: 'updated',
+        catalogItemId: catalogId,
+        listCount: match.listCount,
+        updated: true,
+        message: `از قبل در این لیست بود — دادهٔ مشترک کاتالوگ به‌روز شد (${match.listCount.toLocaleString('fa-IR')} لیست)`,
+      };
+    }
+
+    const order = row.order ?? assignedOrder;
+    const item = await addCatalogItemToList(prisma, {
+      catalogItemId: catalogId,
+      listId: ctx.listId,
+      order,
+    });
+
+    if (match.kind === 'existing_catalog') {
+      return {
+        index,
+        title,
+        status: 'linked',
+        catalogItemId: catalogId,
+        itemId: item.id,
+        listCount: match.listCount,
+        placementAdded: true,
+        linked: true,
+        message: `موجود در ${match.listCount.toLocaleString('fa-IR')} لیست دیگر — فقط جایگاه جدید اضافه شد`,
+      };
+    }
+
+    return {
+      index,
+      title,
+      status: 'created',
+      catalogItemId: catalogId,
+      itemId: item.id,
+      placementAdded: true,
+      created: true,
+      message: 'موجودیت جدید در کاتالوگ و این لیست',
+    };
+  } catch (err: unknown) {
+    return {
+      index,
+      title,
+      status: 'error',
+      message: err instanceof Error ? err.message : 'خطای ناشناخته',
+    };
+  }
+}
 
 /** POST /api/admin/items/bulk-import — یک موجودیت کاتالوگ، چند جایگاه لیست */
 export async function POST(request: NextRequest) {
@@ -56,132 +206,47 @@ export async function POST(request: NextRequest) {
     }
 
     const categorySlug = list.categories.slug;
-    const results: ImportResult[] = [];
-    let created = 0;
-    let linked = 0;
-    let updated = 0;
-    let placementsAdded = 0;
-
     const maxOrderAgg = await prisma.items.aggregate({
       where: { listId },
       _max: { order: true },
     });
-    let nextOrder = (maxOrderAgg._max.order ?? -1) + 1;
+    let orderCursor = (maxOrderAgg._max.order ?? -1) + 1;
+    const assignedOrders = items.map((row) => row.order ?? orderCursor++);
+    const imageCtx = await createBulkImportImageContext();
+    const matches = await resolveBulkImportMatchesBatch(prisma, categorySlug, listId, items);
 
-    for (let index = 0; index < items.length; index++) {
-      const row = items[index];
-      const title = row.title?.trim();
-
-      if (!title) {
-        results.push({ index, title: '—', status: 'error', message: 'عنوان خالی' });
-        continue;
-      }
-
-      try {
-        const metaInput = normalizeBulkImportMetadata(
+    const rowResults = await mapWithConcurrency(
+      items,
+      IMPORT_CONCURRENCY,
+      (row, index) =>
+        importOneRow(index, row, assignedOrders[index], {
           categorySlug,
-          (row.metadata ?? {}) as Record<string, unknown>,
-          row.externalUrl
-        );
-        const imdbFromUrl = extractImdbIdFromUrl(row.externalUrl);
-        if (imdbFromUrl && !metaInput.imdbId) metaInput.imdbId = imdbFromUrl;
-        const metadataValidation = validateMetadata(categorySlug, metaInput);
-        if (!metadataValidation.success) {
-          results.push({
-            index,
-            title,
-            status: 'error',
-            message: metadataValidation.error,
-          });
-          continue;
-        }
-
-        const meta = metadataValidation.data || {};
-        const match = await resolveBulkImportMatch(prisma, categorySlug, listId, {
-          title,
-          metadata: meta,
-        });
-
-        const imageUrlRaw = row.imageUrl?.trim() || null;
-        let finalImage: string | undefined;
-        if (imageUrlRaw) {
-          finalImage = (await ensureImageInLiara(imageUrlRaw, 'items')) ?? undefined;
-        }
-
-        let catalogId = match.catalogId;
-
-        if (!catalogId) {
-          const catalog = await createCatalogItem(prisma, {
-            title,
-            description: row.description?.trim() || null,
-            imageUrl: finalImage ?? null,
-            externalUrl: row.externalUrl?.trim() || null,
-            categorySlug,
-            metadata: meta,
-          });
-          catalogId = catalog.id;
-          created++;
-        } else {
-          await updateCatalogItem(prisma, catalogId, {
-            title,
-            description: row.description?.trim() || null,
-            ...(finalImage !== undefined && { imageUrl: finalImage }),
-            externalUrl: row.externalUrl?.trim() || null,
-            categorySlug,
-            metadata: meta,
-          });
-        }
-
-        if (match.inTargetList) {
-          updated++;
-          results.push({
-            index,
-            title,
-            status: 'updated',
-            catalogItemId: catalogId,
-            listCount: match.listCount,
-            message: `از قبل در این لیست بود — دادهٔ مشترک کاتالوگ به‌روز شد (${match.listCount.toLocaleString('fa-IR')} لیست)`,
-          });
-          continue;
-        }
-
-        const order = row.order ?? nextOrder++;
-        const item = await addCatalogItemToList(prisma, {
-          catalogItemId: catalogId,
           listId,
-          order,
-        });
+          imageCtx,
+          match: matches[index],
+        })
+    );
 
-        placementsAdded++;
-        if (match.kind === 'existing_catalog') {
-          linked++;
-          results.push({
-            index,
-            title,
-            status: 'linked',
-            catalogItemId: catalogId,
-            itemId: item.id,
-            listCount: match.listCount,
-            message: `موجود در ${match.listCount.toLocaleString('fa-IR')} لیست دیگر — فقط جایگاه جدید اضافه شد`,
-          });
-        } else {
-          results.push({
-            index,
-            title,
-            status: 'created',
-            catalogItemId: catalogId,
-            itemId: item.id,
-            message: 'موجودیت جدید در کاتالوگ و این لیست',
-          });
-        }
-      } catch (err: unknown) {
-        results.push({
-          index,
-          title,
-          status: 'error',
-          message: err instanceof Error ? err.message : 'خطای ناشناخته',
-        });
-      }
+    let created = 0;
+    let linked = 0;
+    let updated = 0;
+    let placementsAdded = 0;
+    const results: ImportResult[] = [];
+
+    for (const r of rowResults) {
+      if (r.created) created++;
+      if (r.linked) linked++;
+      if (r.updated) updated++;
+      if (r.placementAdded) placementsAdded++;
+      results.push({
+        index: r.index,
+        title: r.title,
+        status: r.status,
+        catalogItemId: r.catalogItemId,
+        itemId: r.itemId,
+        message: r.message,
+        listCount: r.listCount,
+      });
     }
 
     if (placementsAdded > 0) {

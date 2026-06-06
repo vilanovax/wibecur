@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { resolveBulkImportMatch } from '@/lib/admin/bulk-import-resolve';
+import { resolveBulkImportMatchesBatch } from '@/lib/admin/bulk-import-resolve';
 import type { BulkImportPayloadItem } from '@/lib/admin/bulk-import';
 
 /** POST /api/admin/items/bulk-import/preview — تطبیق با کاتالوگ قبل از import */
@@ -34,9 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     const categorySlug = list.categories.slug;
-    const matches = await Promise.all(
-      items.map((row) => resolveBulkImportMatch(prisma, categorySlug, listId, row))
-    );
+    const matches = await resolveBulkImportMatchesBatch(prisma, categorySlug, listId, items);
 
     const summary = {
       new: matches.filter((m) => m.kind === 'new').length,

@@ -11,6 +11,11 @@ import crypto from 'crypto';
 import { optimizeImage } from './image-optimizer';
 import { profileForStorageFolder } from './upload-profiles';
 import type { ImageProfile } from './image-config';
+import {
+  isValidHttpImageUrl,
+  normalizeImageUrlForStorage,
+} from './image-url-sanitize';
+import { isTmdbImageUrl } from './image-url-policy';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -287,21 +292,54 @@ export async function getObjectByPublicUrl(
   }
 }
 
+/** خواندن فایل از ParsPack با کلید S3 — برای URLهای قدیمی Liara */
+export async function getObjectByStorageKey(
+  objectKey: string
+): Promise<{ buffer: Buffer; contentType?: string } | null> {
+  const key = objectKey.replace(/^\/+/, '');
+  if (!key.startsWith('wibe/')) return null;
+
+  try {
+    const config = await getObjectStorageConfig();
+    const client = await getS3Client();
+    if (!config || !client) return null;
+
+    const cmd = new GetObjectCommand({ Bucket: config.bucketName, Key: key });
+    const res = await client.send(cmd);
+    const body = res.Body;
+    if (!body) return null;
+
+    const bytes = await body.transformToByteArray();
+    return { buffer: Buffer.from(bytes), contentType: res.ContentType ?? undefined };
+  } catch (e) {
+    console.error('getObjectByStorageKey error:', (e as Error).message);
+    return null;
+  }
+}
+
 /** اگر URL خارج از ParsPack باشد، آپلود می‌کند */
 export async function ensureImageInLiara(
   url: string | null | undefined,
   folder: ImageFolder,
   options?: { profile?: ImageProfile }
 ): Promise<string | null> {
-  if (!url || typeof url !== 'string' || !url.trim().startsWith('http')) {
-    return url?.trim() || null;
+  if (!url || typeof url !== 'string') return null;
+
+  const normalized = normalizeImageUrlForStorage(url);
+  if (!normalized || !isValidHttpImageUrl(normalized)) {
+    return null;
   }
-  const trimmed = url.trim();
-  if (isOurStorageUrl(trimmed)) {
-    return trimmed;
+
+  if (isOurStorageUrl(normalized)) {
+    return normalized;
   }
-  const uploaded = await uploadImageFromUrl(trimmed, folder, options?.profile);
-  return uploaded ?? trimmed;
+
+  const uploaded = await uploadImageFromUrl(normalized, folder, options?.profile);
+  if (uploaded) return uploaded;
+
+  // TMDB و URLهای مسدود را ذخیره نکن
+  if (isTmdbImageUrl(normalized)) return null;
+  return normalized;
 }
 
 /** alias */

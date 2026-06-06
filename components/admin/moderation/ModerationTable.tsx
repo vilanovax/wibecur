@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import { UserPlus, Eye } from 'lucide-react';
 import type { ModerationCaseRow } from './types';
+import UserAvatar from '@/components/shared/UserAvatar';
 import { TYPE_LABELS, ENTITY_LABELS, STATUS_LABELS, SEVERITY_LABELS, TYPE_BADGE_CLASS, STATUS_BADGE_CLASS, SEVERITY_BADGE_CLASS } from './types';
 
 export interface ModerationTableProps {
@@ -99,7 +100,12 @@ function ModerationTableInner({
               <td className="p-3">
                 {row.users ? (
                   <span className="inline-flex items-center gap-1.5">
-                    {row.users.image ? <img src={row.users.image} alt="" className="w-6 h-6 rounded-full object-cover" /> : <span className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs">{row.users.name?.[0] ?? row.users.email?.[0] ?? '?'}</span>}
+                    <UserAvatar
+                      src={row.users.image}
+                      name={row.users.name}
+                      email={row.users.email}
+                      size={24}
+                    />
                     <span className="truncate max-w-[80px]">{row.users.name ?? row.users.email}</span>
                   </span>
                 ) : (

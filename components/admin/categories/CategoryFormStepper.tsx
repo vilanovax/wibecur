@@ -5,8 +5,8 @@ import { Check } from 'lucide-react';
 export type CategoryFormStep = 1 | 2 | 3;
 
 const STEPS: { step: CategoryFormStep; title: string; subtitle: string }[] = [
-  { step: 1, title: 'هویت', subtitle: 'نام، slug، آیکون' },
-  { step: 2, title: 'ظاهر اپ', subtitle: 'رنگ، layout، هیرو' },
+  { step: 1, title: 'هویت', subtitle: 'نام، آیکون، کاور' },
+  { step: 2, title: 'ظاهر اپ', subtitle: 'رنگ تاکید، layout' },
   { step: 3, title: 'انتشار', subtitle: 'ترتیب، وزن، وضعیت' },
 ];
 

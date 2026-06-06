@@ -89,6 +89,8 @@ export function getMetadataSchema(categorySlug: string) {
     case 'movie':
     case 'film':
     case 'movies':
+    case 'series':
+    case 'cinema':
       return MovieMetadataSchema;
     case 'book':
     case 'books':

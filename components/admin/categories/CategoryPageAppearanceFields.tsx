@@ -1,9 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import type { CategoryLayoutType } from '@/types/category-page';
 import { CATEGORY_LAYOUT_OPTIONS } from '@/lib/admin/category-form-constants';
-import ImageUpload from '@/components/admin/upload/ImageUpload';
+import { getDisplayImageUrl } from '@/lib/display-image';
+import Image from 'next/image';
 
 export type CategoryAppearanceValues = {
   accentColor: string;
@@ -76,25 +76,19 @@ export default function CategoryPageAppearanceFields({
         </select>
       </div>
 
-      <div>
-        <ImageUpload
-          label="تصویر هیرو صفحه دسته"
-          value={values.heroImage}
-          onChange={(url) => onChange({ heroImage: url })}
-          uploadPurpose="category-hero"
-        />
-        <p className="text-xs text-[var(--color-text-muted)] mt-1">
-          اختیاری — اگر خالی باشد از بنر پیش‌فرض دسته استفاده می‌شود.
+      {!values.heroImage && (
+        <p className="text-xs text-[var(--color-text-muted)] rounded-xl border border-dashed border-[var(--color-border)] px-3 py-2.5">
+          تصویر کاور را در مرحله «هویت» آپلود کنید. اگر خالی باشد از بنر پیش‌فرض دسته استفاده می‌شود.
         </p>
-      </div>
+      )}
 
       {(values.heroImage || values.layoutType) && (
         <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
           <p className="text-xs font-medium text-[var(--color-text-muted)] px-3 py-2 bg-[var(--color-bg)]">
-            پیش‌نمایش هیرو
+            پیش‌نمایش صفحه دسته
           </p>
           <div
-            className="relative h-28 flex items-end p-3"
+            className="relative aspect-[16/9] max-h-40 flex items-end p-3"
             style={{
               background: values.heroImage
                 ? undefined
@@ -103,7 +97,7 @@ export default function CategoryPageAppearanceFields({
           >
             {values.heroImage && (
               <Image
-                src={values.heroImage}
+                src={getDisplayImageUrl(values.heroImage)}
                 alt=""
                 fill
                 className="object-cover"

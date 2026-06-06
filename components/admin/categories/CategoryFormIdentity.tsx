@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { isValidCategorySlug } from '@/lib/admin/category-intelligence';
 import type { SlugCheckState } from '@/hooks/useCategorySlugCheck';
+import CategoryHeroImageField from '@/components/admin/categories/CategoryHeroImageField';
 
 export type CategoryIdentityValues = {
   name: string;
@@ -12,6 +13,7 @@ export type CategoryIdentityValues = {
   color: string;
   accentColor: string;
   description: string;
+  heroImage?: string;
 };
 
 interface CategoryFormIdentityProps {
@@ -224,6 +226,11 @@ export default function CategoryFormIdentity({
             placeholder="توضیحات دسته‌بندی..."
           />
         </div>
+
+        <CategoryHeroImageField
+          value={values.heroImage ?? ''}
+          onChange={(heroImage) => onChange({ heroImage })}
+        />
       </div>
 
       {showInlinePreview && (

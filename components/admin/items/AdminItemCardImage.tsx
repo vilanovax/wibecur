@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
-import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
+import { resolveAdminDisplayImageSrc } from '@/lib/resolve-admin-display-image';
 import ItemCoverPlaceholder from '@/components/shared/ItemCoverPlaceholder';
 
 type AdminItemCardImageProps = {
@@ -13,11 +13,9 @@ type AdminItemCardImageProps = {
   categorySlug?: string | null;
   fallbackIcon?: string;
   className?: string;
+  onLoaded?: () => void;
 };
 
-/**
- * Thumbnail کارت آیتم در ادمین — همان رندر ImageUpload (next/image + unoptimized)
- */
 export default function AdminItemCardImage({
   itemId,
   displaySrc,
@@ -25,17 +23,20 @@ export default function AdminItemCardImage({
   categorySlug,
   fallbackIcon = '📋',
   className = '',
+  onLoaded,
 }: AdminItemCardImageProps) {
   const [src, setSrc] = useState(() =>
-    displaySrc ? toAdminStorageImageSrc(displaySrc) : ''
+    displaySrc ? resolveAdminDisplayImageSrc(displaySrc) : ''
   );
   const [failed, setFailed] = useState(!displaySrc);
+  const [loading, setLoading] = useState(Boolean(displaySrc));
   const [posterFetched, setPosterFetched] = useState(false);
   const [proxyTried, setProxyTried] = useState(false);
 
   useEffect(() => {
-    setSrc(displaySrc ? toAdminStorageImageSrc(displaySrc) : '');
+    setSrc(displaySrc ? resolveAdminDisplayImageSrc(displaySrc) : '');
     setFailed(!displaySrc);
+    setLoading(Boolean(displaySrc));
     setPosterFetched(false);
     setProxyTried(false);
   }, [displaySrc, itemId]);
@@ -48,7 +49,7 @@ export default function AdminItemCardImage({
     }
 
     if (isOurStorageUrl(displaySrc) && !proxyTried) {
-      const proxy = toAdminStorageImageSrc(displaySrc);
+      const proxy = resolveAdminDisplayImageSrc(displaySrc);
       if (proxy && proxy !== src) {
         setProxyTried(true);
         setSrc(proxy);
@@ -64,16 +65,22 @@ export default function AdminItemCardImage({
           data?: { posterUrl?: string | null };
         };
         const posterUrl = json?.data?.posterUrl?.trim();
-        if (json?.success && posterUrl && posterUrl !== src) {
-          setPosterFetched(true);
-          setSrc(posterUrl);
-          return;
+        if (json?.success && posterUrl) {
+          const resolved = resolveAdminDisplayImageSrc(posterUrl);
+          if (resolved && resolved !== src) {
+            setPosterFetched(true);
+            setLoading(true);
+            setFailed(false);
+            setSrc(resolved);
+            return;
+          }
         }
       } catch {
         // ignore
       }
     }
 
+    setLoading(false);
     setFailed(true);
   }, [displaySrc, itemId, posterFetched, proxyTried, src]);
 
@@ -92,15 +99,33 @@ export default function AdminItemCardImage({
   }
 
   return (
-    <div className={`relative h-full w-full overflow-hidden ${className}`}>
+    <div className={`relative h-full w-full overflow-hidden bg-gray-200 ${className}`}>
+      {loading && (
+        <ItemCoverPlaceholder
+          title={title}
+          categorySlug={categorySlug}
+          fallbackIcon={fallbackIcon}
+          state="loading"
+          layout="grid"
+          className="absolute inset-0 z-0"
+          ariaLabel={title}
+        />
+      )}
       <Image
         src={src}
         alt={title}
         fill
         unoptimized
-        className="object-cover"
-        sizes="(max-width: 768px) 100vw, 280px"
+        className={`object-cover transition-opacity duration-300 ${
+          loading ? 'opacity-0' : 'opacity-100'
+        }`}
+        sizes="(max-width: 768px) 50vw, 280px"
         referrerPolicy="no-referrer"
+        onLoad={() => {
+          setLoading(false);
+          setFailed(false);
+          onLoaded?.();
+        }}
         onError={() => void handleError()}
       />
     </div>

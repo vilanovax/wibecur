@@ -66,6 +66,9 @@ export default async function ItemsPage({ searchParams }: PageProps) {
                 catalog_items: {
                   select: { imageUrl: true },
                 },
+                item_moderation: {
+                  select: { status: true },
+                },
                 lists: {
                   select: {
                     id: true,

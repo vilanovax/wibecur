@@ -18,6 +18,8 @@ import {
   Info,
   ExternalLink,
 } from 'lucide-react';
+import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
+import { resolveAdminItemThumbnail } from '@/lib/resolve-admin-item-image';
 
 interface EditItemFormProps {
   item: any;
@@ -51,7 +53,14 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
   const [formData, setFormData] = useState({
     title: item.title || '',
     description: item.description || '',
-    imageUrl: item.imageUrl || '',
+    imageUrl:
+      resolveAdminItemThumbnail({
+        imageUrl: item.imageUrl,
+        catalogImageUrl: item.catalog_items?.imageUrl ?? null,
+        metadata: item.metadata as Record<string, unknown> | null,
+      }) ||
+      normalizeImageUrlForStorage(item.imageUrl || item.catalog_items?.imageUrl || '') ||
+      '',
     externalUrl: item.externalUrl || '',
     listId: item.listId || '',
     order: item.order || 0,

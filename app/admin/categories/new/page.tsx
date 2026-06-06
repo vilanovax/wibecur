@@ -247,6 +247,7 @@ export default function NewCategoryPage() {
                     color: formData.color,
                     accentColor: formData.accentColor,
                     description: formData.description,
+                    heroImage: formData.heroImage,
                   }}
                   onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
                   onNameChange={handleNameChange}

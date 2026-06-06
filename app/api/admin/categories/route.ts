@@ -13,7 +13,7 @@ import { ensureImageInLiara } from '@/lib/object-storage';
 async function finalizeHeroImage(url: unknown): Promise<string | null> {
   const normalized = normalizeOptionalUrl(url);
   if (!normalized) return null;
-  return (await ensureImageInLiara(normalized, 'hubs')) ?? normalized;
+  return (await ensureImageInLiara(normalized, 'hubs', { profile: 'hubCover' })) ?? normalized;
 }
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;

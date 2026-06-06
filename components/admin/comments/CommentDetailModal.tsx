@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Edit2, Save, XCircle } from 'lucide-react';
-import Image from 'next/image';
+import UserAvatar from '@/components/shared/UserAvatar';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 
@@ -311,23 +311,12 @@ export default function CommentDetailModal({
         <div className="p-6 space-y-6">
           {/* User Info */}
           <div className="flex items-center gap-4">
-            {comment.users.image ? (
-              <div className="relative w-16 h-16 rounded-full overflow-hidden">
-                <Image
-                  src={comment.users.image}
-                  alt={comment.users.name || 'User'}
-                  fill
-                  className="object-cover"
-                  unoptimized={true}
-                />
-              </div>
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-bold text-xl">
-                  {(comment.users.name || comment.users.email)[0].toUpperCase()}
-                </span>
-              </div>
-            )}
+            <UserAvatar
+              src={comment.users.image}
+              name={comment.users.name}
+              email={comment.users.email}
+              size={64}
+            />
             <div>
               <p className="font-bold text-gray-900">
                 {comment.users.name || 'بدون نام'}

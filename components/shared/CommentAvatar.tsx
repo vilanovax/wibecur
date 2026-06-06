@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
-import { isOurStorageUrl } from '@/lib/object-storage-config';
-import { toLiaraImageSrc } from '@/lib/liara-image-url';
+import { resolveStorageImageDisplayUrl } from '@/lib/storage-image-url';
 
-/** آواتار کامنت — Liara (same-origin یا مستقیم)، fallback به حرف اول */
+/** آواتار کامنت — ParsPack proxy / legacy Liara via API / vibe pack */
 export default function CommentAvatar({
   src,
   name,
@@ -14,7 +13,7 @@ export default function CommentAvatar({
   className = '',
   avatarType,
   avatarId,
-  avatarStatus,
+  avatarStatus: _avatarStatus,
 }: {
   src?: string | null;
   name?: string | null;
@@ -34,12 +33,7 @@ export default function CommentAvatar({
     String(avatarId).trim();
   const vibeAvatar = showVibeAvatar ? VIBE_AVATARS.find((a) => a.id === String(avatarId).trim()) : null;
 
-  const displaySrc =
-    src && isOurStorageUrl(src)
-      ? toLiaraImageSrc(src)
-      : src?.startsWith('/')
-        ? src
-        : null;
+  const displaySrc = resolveStorageImageDisplayUrl(src);
 
   if (vibeAvatar) {
     return (

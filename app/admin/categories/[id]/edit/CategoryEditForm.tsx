@@ -283,6 +283,7 @@ export default function CategoryEditForm({
                   color: formData.color,
                   accentColor: formData.accentColor,
                   description: formData.description,
+                  heroImage: formData.heroImage,
                 }}
                 onChange={(patch) => setFormData((p) => ({ ...p, ...patch }))}
                 onSlugChange={handleSlugChange}

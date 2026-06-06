@@ -48,7 +48,7 @@ type ListOption = {
   categories: { id: string; name: string; slug: string; icon: string | null } | null;
 };
 
-const IMPORT_BATCH_SIZE = 3;
+const IMPORT_BATCH_SIZE = 25;
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -196,7 +196,7 @@ export default function BulkImportClient({
   );
 
   const applyParsedJson = useCallback(
-    async (text: string, slug: string = categorySlug) => {
+    async (text: string, slug: string = categorySlug, withCatalogMatch = true) => {
       setParseError('');
       setImportDone(null);
       setSummary(null);
@@ -208,10 +208,14 @@ export default function BulkImportClient({
       }
       if (parsed.length > 0) setExpandedId(parsed[0].id);
       setJsonCollapsed(true);
-      await enrichWithPreview(parsed);
+      if (withCatalogMatch && listId) {
+        await enrichWithPreview(parsed);
+      } else {
+        setRows(parsed);
+      }
       return true;
     },
-    [enrichWithPreview, categorySlug]
+    [enrichWithPreview, categorySlug, listId]
   );
 
   const handleParse = useCallback(() => {
@@ -233,14 +237,23 @@ export default function BulkImportClient({
   }, [listId, lists, categoryId]);
 
   useEffect(() => {
-    if (jsonText.trim()) {
-      void applyParsedJson(jsonText, categorySlug);
-    } else {
+    if (!jsonText.trim()) {
       setRows([]);
       setSummary(null);
       setParseError('');
+      return;
     }
-  }, [categorySlug]); // eslint-disable-line react-hooks/exhaustive-deps -- تغییر دسته → parse مجدد
+    const { rows: parsed, parseError: pe } = parseBulkImportJson(jsonText, categorySlug);
+    if (pe) {
+      setParseError(pe);
+      setRows([]);
+      setSummary(null);
+      return;
+    }
+    setParseError('');
+    setSummary(null);
+    setRows(parsed);
+  }, [categorySlug]); // eslint-disable-line react-hooks/exhaustive-deps -- اعتبارسنجی محلی سریع
 
   const loadJsonFromFile = useCallback(
     (file: File) => {
@@ -607,6 +620,9 @@ export default function BulkImportClient({
           )}
           {previewLoading ? 'در حال تطبیق با کاتالوگ…' : 'تجزیه و پیش‌نمایش'}
         </button>
+        <p className="text-[11px] text-gray-500">
+          اعتبارسنجی JSON، تصویر و متادیتا فوری است · تطبیق کاتالوگ پس از انتخاب لیست
+        </p>
         </div>
         )}
       </section>
@@ -743,6 +759,9 @@ export default function BulkImportClient({
                       {!row.valid && row.errors.length > 0 && (
                         <p className="text-xs text-red-600">{row.errors.join(' · ')}</p>
                       )}
+                      {row.warnings?.length > 0 && (
+                        <p className="text-xs text-amber-700">{row.warnings.join(' · ')}</p>
+                      )}
                     </div>
 
                     <button
@@ -820,7 +839,7 @@ export default function BulkImportClient({
           </div>
           <p className="text-[11px] text-violet-600/90 mt-2">
             دسته {importProgress.batch.toLocaleString('fa-IR')} از{' '}
-            {importProgress.batchCount.toLocaleString('fa-IR')} — آپلود تصاویر ممکن است چند ثانیه طول بکشد
+            {importProgress.batchCount.toLocaleString('fa-IR')} · آپلود تصاویر به‌صورت موازی (حداکثر ۵ همزمان)
           </p>
         </div>
       )}

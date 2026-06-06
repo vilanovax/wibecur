@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { items, lists, categories } from '@prisma/client';
-import { FileJson, Link2 } from 'lucide-react';
-import AdminItemCardImage from '@/components/admin/items/AdminItemCardImage';
+import { FileJson, CheckSquare, Square } from 'lucide-react';
+import AdminItemCard from '@/components/admin/items/AdminItemCard';
 import ExternalImageItemsModal from '@/components/admin/items/ExternalImageItemsModal';
+import ItemsBulkToolbar from '@/components/admin/items/ItemsBulkToolbar';
+import ItemsImageToolbar from '@/components/admin/items/ItemsImageToolbar';
+import { isMovieCategorySlug } from '@/lib/movie-category';
 
 type ItemWithRelations = Omit<items, 'lists' | 'createdAt' | 'updatedAt'> & {
   createdAt: string;
@@ -15,6 +17,7 @@ type ItemWithRelations = Omit<items, 'lists' | 'createdAt' | 'updatedAt'> & {
   displayImageUrl?: string;
   catalogItemId?: string | null;
   catalog_items?: { imageUrl: string | null } | null;
+  item_moderation?: { status: string } | null;
   lists: Pick<lists, 'id' | 'title' | 'slug' | 'categoryId'> & {
     categories: Pick<categories, 'id' | 'name' | 'slug' | 'icon' | 'color'> | null;
   };
@@ -59,6 +62,14 @@ export default function ItemsPageClient({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPerPage, setCurrentPerPage] = useState<number>(perPage);
   const [externalImagesOpen, setExternalImagesOpen] = useState(false);
+  const [wrappingProxy, setWrappingProxy] = useState(false);
+  const [proxyMessage, setProxyMessage] = useState<string | null>(null);
+  const [refreshingOmdb, setRefreshingOmdb] = useState(false);
+  const [omdbMessage, setOmdbMessage] = useState<string | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
 
   useEffect(() => {
     setSelectedListId(initialListId || 'all');
@@ -198,6 +209,51 @@ export default function ItemsPageClient({
     }
   };
 
+  const toggleSelectionMode = () => {
+    setSelectionMode((v) => {
+      if (v) setSelectedIds(new Set());
+      return !v;
+    });
+    setBulkMessage(null);
+    setBulkError(null);
+  };
+
+  const toggleItemSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllOnPage = () => {
+    const pageIds = filteredItems.map((item) => item.id);
+    const allSelected = pageIds.every((id) => selectedIds.has(id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        pageIds.forEach((id) => next.delete(id));
+      } else {
+        pageIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+  };
+
+  const selectedItems = useMemo(
+    () => filteredItems.filter((item) => selectedIds.has(item.id)),
+    [filteredItems, selectedIds]
+  );
+
+  const allOnPageSelected =
+    filteredItems.length > 0 && filteredItems.every((item) => selectedIds.has(item.id));
+
   const selectedList = lists.find((l) => l.id === selectedListId);
   const selectedCategoryObj = categories.find((c) => c.id === selectedCategory);
   const canShowExternalImages =
@@ -209,6 +265,160 @@ export default function ItemsPageClient({
       : selectedCategoryObj
         ? `${selectedCategoryObj.name} — همه لیست‌های دسته`
         : '';
+
+  const isMovieCategory = useMemo(() => {
+    if (selectedListId !== 'all' && selectedList?.categories?.slug) {
+      return isMovieCategorySlug(selectedList.categories.slug);
+    }
+    if (selectedCategory !== 'all') {
+      return isMovieCategorySlug(selectedCategoryObj?.slug);
+    }
+    return false;
+  }, [selectedListId, selectedList, selectedCategory, selectedCategoryObj]);
+
+  const handleWrapImageProxy = async () => {
+    if (!canShowExternalImages) return;
+    const scopeLabel =
+      selectedListId !== 'all' && selectedList
+        ? `لیست «${selectedList.title}»`
+        : selectedCategoryObj
+          ? `دسته «${selectedCategoryObj.name}»`
+          : '';
+
+    setWrappingProxy(true);
+    setProxyMessage(null);
+    try {
+      const params = new URLSearchParams();
+      if (selectedListId !== 'all') params.set('listId', selectedListId);
+      else if (selectedCategory !== 'all') params.set('categoryId', selectedCategory);
+
+      const previewRes = await fetch(`/api/admin/items/wrap-image-proxy?${params.toString()}`);
+      const preview = await previewRes.json();
+      if (!previewRes.ok || !preview.success) {
+        throw new Error(preview.error || 'خطا در شمارش');
+      }
+
+      if (preview.count === 0) {
+        setProxyMessage(
+          `همه ${preview.totalInScope.toLocaleString('fa-IR')} آیتم از قبل روی ParsPack یا پراکسی هستند — موردی برای تغییر نیست.`
+        );
+        return;
+      }
+
+      const sampleTitles = (preview.samples as { title: string }[])
+        .slice(0, 3)
+        .map((s) => s.title)
+        .join('، ');
+
+      const confirmMsg = [
+        `${preview.count.toLocaleString('fa-IR')} تصویر در ${scopeLabel} بدون پراکسی هستند (خارج از ParsPack).`,
+        preview.totalInScope > preview.count
+          ? `${(preview.totalInScope - preview.count).toLocaleString('fa-IR')} مورد دیگر بدون تغییر می‌ماند.`
+          : null,
+        sampleTitles ? `نمونه: ${sampleTitles}` : null,
+        '',
+        'آدرس castando proxy به imageUrl در DB اضافه و ذخیره شود؟',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      if (!confirm(confirmMsg)) return;
+
+      const res = await fetch('/api/admin/items/wrap-image-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listId: selectedListId !== 'all' ? selectedListId : undefined,
+          categoryId:
+            selectedListId === 'all' && selectedCategory !== 'all'
+              ? selectedCategory
+              : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'اعمال پراکسی ناموفق');
+      setProxyMessage(data.message || 'پراکسی در DB ذخیره شد');
+      router.refresh();
+    } catch (e: unknown) {
+      setProxyMessage(e instanceof Error ? e.message : 'خطا در اعمال پراکسی');
+    } finally {
+      setWrappingProxy(false);
+    }
+  };
+
+  const handleOmdbRefresh = async () => {
+    if (!canShowExternalImages || !isMovieCategory) return;
+    const scopeLabel =
+      selectedListId !== 'all' && selectedList
+        ? `لیست «${selectedList.title}»`
+        : selectedCategoryObj
+          ? `دسته «${selectedCategoryObj.name}»`
+          : '';
+
+    setRefreshingOmdb(true);
+    setOmdbMessage(null);
+    try {
+      const params = new URLSearchParams();
+      if (selectedListId !== 'all') params.set('listId', selectedListId);
+      else if (selectedCategory !== 'all') params.set('categoryId', selectedCategory);
+
+      const previewRes = await fetch(`/api/admin/items/refresh-omdb-images?${params.toString()}`);
+      const preview = await previewRes.json();
+      if (!previewRes.ok || !preview.success) {
+        throw new Error(preview.error || 'خطا در شمارش');
+      }
+
+      if (preview.count === 0) {
+        if (preview.totalProxy > 0) {
+          setOmdbMessage(
+            `${preview.totalProxy.toLocaleString('fa-IR')} آیتم پراکسی هستند اما imdbId ندارند — OMDb قابل استفاده نیست.`
+          );
+        } else {
+          setOmdbMessage('آیتمی با تصویر پراکسی در این محدوده نیست.');
+        }
+        return;
+      }
+
+      const sampleTitles = (preview.samples as { title: string; imdbId: string }[])
+        .slice(0, 3)
+        .map((s) => `${s.title} (${s.imdbId})`)
+        .join('، ');
+
+      const confirmMsg = [
+        `${preview.count.toLocaleString('fa-IR')} فیلم با تصویر پراکسی در ${scopeLabel}.`,
+        preview.noImdb > 0
+          ? `${preview.noImdb.toLocaleString('fa-IR')} مورد پراکسی بدون imdbId رد می‌شود.`
+          : null,
+        sampleTitles ? `نمونه: ${sampleTitles}` : null,
+        '',
+        'پوستر از OMDb دریافت و در ParsPack (imageUrl) ذخیره شود؟',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      if (!confirm(confirmMsg)) return;
+
+      const res = await fetch('/api/admin/items/refresh-omdb-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listId: selectedListId !== 'all' ? selectedListId : undefined,
+          categoryId:
+            selectedListId === 'all' && selectedCategory !== 'all'
+              ? selectedCategory
+              : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'به‌روزرسانی OMDb ناموفق');
+      setOmdbMessage(data.message || 'تصاویر از OMDb به‌روز شد');
+      router.refresh();
+    } catch (e: unknown) {
+      setOmdbMessage(e instanceof Error ? e.message : 'خطا در OMDb');
+    } finally {
+      setRefreshingOmdb(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -346,18 +556,44 @@ export default function ItemsPageClient({
               })}
             </select>
           </div>
-          {canShowExternalImages && (
+          <ItemsImageToolbar
+            showTools={canShowExternalImages}
+            showOmdb={canShowExternalImages && isMovieCategory}
+            wrappingProxy={wrappingProxy}
+            refreshingOmdb={refreshingOmdb}
+            onOpenS3={() => setExternalImagesOpen(true)}
+            onWrapProxy={() => void handleWrapImageProxy()}
+            onOmdbRefresh={() => void handleOmdbRefresh()}
+          />
+          {filteredItems.length > 0 && (
             <button
               type="button"
-              onClick={() => setExternalImagesOpen(true)}
-              className="inline-flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm font-medium hover:bg-amber-100 transition-colors"
-              title="آیتم‌هایی که تصویرشان هنوز روی ParsPack نیست"
+              onClick={toggleSelectionMode}
+              className={`inline-flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                selectionMode
+                  ? 'border-violet-300 bg-violet-100 text-violet-800'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <Link2 className="w-4 h-4" />
-              تصاویر خارج از ParsPack
+              {selectionMode ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+              {selectionMode ? 'خروج از انتخاب' : 'انتخاب گروهی'}
             </button>
           )}
         </div>
+        {(proxyMessage || omdbMessage) && (
+          <div className="space-y-2 mt-3">
+            {proxyMessage && (
+              <p className="text-xs text-sky-800 bg-sky-50 border border-sky-100 rounded-lg px-3 py-2">
+                {proxyMessage}
+              </p>
+            )}
+            {omdbMessage && (
+              <p className="text-xs text-violet-800 bg-violet-50 border border-violet-100 rounded-lg px-3 py-2">
+                {omdbMessage}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {canShowExternalImages && (
@@ -375,120 +611,60 @@ export default function ItemsPageClient({
         />
       )}
 
-      {/* Pagination Controls */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* Per Page Selector */}
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-semibold text-gray-700">
-              تعداد در هر صفحه:
-            </label>
-            <div className="flex gap-2">
-              {[24, 48, 100].map((size) => (
-                <button
-                  key={size}
-                  onClick={() => handlePerPageChange(size)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    currentPerPage === size
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Bulk feedback */}
+      {(bulkMessage || bulkError) && (
+        <div
+          className={`rounded-xl border px-4 py-3 text-sm font-medium ${
+            bulkError
+              ? 'border-red-200 bg-red-50 text-red-800'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          }`}
+        >
+          {bulkError || bulkMessage}
+        </div>
+      )}
 
-          {/* Page Info & Navigation */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
-              صفحه {currentPage.toLocaleString('fa-IR')} از{' '}
-              {Math.max(1, totalPages).toLocaleString('fa-IR')} (
-              {totalItems.toLocaleString('fa-IR')} آیتم
-              {selectedListId !== 'all' && selectedList ? ` · ${selectedList.title}` : ''})
-            </span>
-            <div className="flex gap-2">
+      {/* Results bar */}
+      {filteredItems.length > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 px-1">
+          <p className="text-sm text-gray-600">
+            <span className="font-bold text-gray-900 tabular-nums">
+              {totalItems.toLocaleString('fa-IR')}
+            </span>{' '}
+            آیتم
+            {selectedListId !== 'all' && selectedList ? ` · ${selectedList.title}` : ''}
+            {totalPages > 1 && (
+              <>
+                {' '}
+                · صفحه{' '}
+                <span className="font-semibold tabular-nums">
+                  {currentPage.toLocaleString('fa-IR')}
+                </span>{' '}
+                از{' '}
+                <span className="font-semibold tabular-nums">
+                  {totalPages.toLocaleString('fa-IR')}
+                </span>
+              </>
+            )}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">در هر صفحه:</span>
+            {[24, 48, 100].map((size) => (
               <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                key={size}
+                onClick={() => handlePerPageChange(size)}
+                className={`min-w-[2.5rem] rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
+                  currentPerPage === size
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50'
+                }`}
               >
-                قبلی
+                {size}
               </button>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                بعدی
-              </button>
-            </div>
+            ))}
           </div>
         </div>
-
-        {/* Page Numbers (for desktop) */}
-        {totalPages > 1 && totalItems > 0 && (
-          <div className="hidden md:flex items-center justify-center gap-2 mt-4 pt-4 border-t border-gray-100">
-            {(() => {
-              const pages = [];
-              const maxVisible = 7;
-
-              if (totalPages <= maxVisible) {
-                // Show all pages
-                for (let i = 1; i <= totalPages; i++) {
-                  pages.push(i);
-                }
-              } else {
-                // Always show first page
-                pages.push(1);
-
-                if (currentPage > 3) {
-                  pages.push('...');
-                }
-
-                // Show pages around current
-                const start = Math.max(2, currentPage - 1);
-                const end = Math.min(totalPages - 1, currentPage + 1);
-                for (let i = start; i <= end; i++) {
-                  pages.push(i);
-                }
-
-                if (currentPage < totalPages - 2) {
-                  pages.push('...');
-                }
-
-                // Always show last page
-                pages.push(totalPages);
-              }
-
-              return pages.map((page, index) => {
-                if (page === '...') {
-                  return (
-                    <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
-                      ...
-                    </span>
-                  );
-                }
-
-                return (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page as number)}
-                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
-                      currentPage === page
-                        ? 'bg-primary text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              });
-            })()}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Items Grid */}
       {filteredItems.length === 0 ? (
@@ -509,176 +685,127 @@ export default function ItemsPageClient({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredItems.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col"
-            >
-              <div className="relative h-40 w-full bg-gray-100">
-                <AdminItemCardImage
-                  itemId={item.id}
-                  displaySrc={item.displayImageUrl || ''}
-                  title={item.title}
-                  categorySlug={item.lists.categories?.slug}
-                  fallbackIcon={item.lists.categories?.icon || '📋'}
-                  className="h-full w-full"
+        <>
+          {selectionMode && selectedIds.size > 0 && (
+            <ItemsBulkToolbar
+              selectedIds={[...selectedIds]}
+              selectedTitles={selectedItems.map((i) => i.title)}
+              onClear={clearSelection}
+              onDone={(message) => {
+                setBulkMessage(message);
+                setBulkError(null);
+                setSelectedIds(new Set());
+                setSelectionMode(false);
+                router.refresh();
+              }}
+              onError={(message) => {
+                setBulkError(message);
+                setBulkMessage(null);
+              }}
+            />
+          )}
+
+          {selectionMode && (
+            <div className="flex items-center gap-3 mb-3 px-1">
+              <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={allOnPageSelected}
+                  onChange={toggleSelectAllOnPage}
+                  className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                 />
-              </div>
-              <div className="p-4 flex flex-col flex-1">
-                {/* List & Category Badge */}
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="text-base">{item.lists.categories?.icon || '📋'}</span>
-                  <span className="text-xs text-gray-600 font-medium truncate flex-1 min-w-0">
-                    {item.lists.title}
-                  </span>
-                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">#{item.order}</span>
+                انتخاب همه در این صفحه ({filteredItems.length.toLocaleString('fa-IR')})
+              </label>
+              {selectedIds.size > 0 && (
+                <span className="text-sm text-violet-700 font-semibold tabular-nums">
+                  {selectedIds.size.toLocaleString('fa-IR')} انتخاب
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+            {filteredItems.map((item) => (
+              <AdminItemCard
+                key={item.id}
+                item={item}
+                showListContext={selectedListId === 'all'}
+                selectionMode={selectionMode}
+                isSelected={selectedIds.has(item.id)}
+                isDeleting={deletingId === item.id}
+                onToggleSelect={() => toggleItemSelection(item.id)}
+                onDelete={() => void handleDelete(item.id)}
+              />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 ring-1 ring-gray-200 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  قبلی
+                </button>
+                <div className="hidden sm:flex items-center gap-1.5">
+                  {buildPageNumbers(currentPage, totalPages).map((page, index) =>
+                    page === '...' ? (
+                      <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page as number)}
+                        className={`min-w-[2.5rem] rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
+                          currentPage === page
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  )}
                 </div>
-
-                {/* Title */}
-                <h3 className="font-bold text-base mb-2 line-clamp-2 min-h-[2.5rem]">{item.title}</h3>
-
-                {/* Description */}
-                {item.description && (
-                  <p className="text-gray-600 text-xs mb-3 line-clamp-2 flex-1">
-                    {item.description}
-                  </p>
-                )}
-
-                {/* Metadata */}
-                {item.metadata && Object.keys(item.metadata).length > 0 && (
-                  <div className="bg-gray-50 rounded-lg p-2.5 mb-3 text-xs flex-1">
-                    {item.lists.categories && renderMetadata(item.metadata, item.lists.categories.slug)}
-                  </div>
-                )}
-
-                {/* External URL */}
-                {item.externalUrl && (
-                  <a
-                    href={item.externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary text-xs hover:underline mb-3 block"
-                  >
-                    🔗 اطلاعات بیشتر
-                  </a>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-2 mt-auto pt-2">
-                  <Link
-                    href={`/admin/items/${item.id}/edit`}
-                    className="flex-1 text-center bg-blue-50 text-blue-700 py-2 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm"
-                  >
-                    ویرایش
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    disabled={deletingId === item.id}
-                    className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50 text-sm whitespace-nowrap"
-                  >
-                    {deletingId === item.id ? '...' : 'حذف'}
-                  </button>
-                </div>
+                <span className="sm:hidden text-sm font-medium text-gray-600 tabular-nums">
+                  {currentPage.toLocaleString('fa-IR')} / {totalPages.toLocaleString('fa-IR')}
+                </span>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 ring-1 ring-gray-200 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  بعدی
+                </button>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-// Helper function to render metadata based on category
-function renderMetadata(metadata: any, categorySlug: string) {
-  if (categorySlug === 'movie' || categorySlug === 'film' || categorySlug === 'movies') {
-    return (
-      <div className="space-y-1.5">
-        {metadata.imdbRating && (
-          <div className="flex items-center gap-1.5 text-gray-700 mb-1.5">
-            <span className="text-xs text-yellow-500">⭐</span>
-            <span className="text-xs font-semibold">{metadata.imdbRating}</span>
-            <span className="text-xs text-gray-500">IMDb</span>
-          </div>
-        )}
-        {metadata.year && (
-          <div className="flex items-center gap-1.5 text-gray-700">
-            <span className="text-xs">📅</span>
-            <span className="text-xs">سال:</span>
-            <span className="text-xs font-medium">{metadata.year}</span>
-          </div>
-        )}
-        {metadata.genre && (
-          <div className="flex items-center gap-1.5 text-gray-700">
-            <span className="text-xs">🎭</span>
-            <span className="text-xs">ژانر:</span>
-            <span className="text-xs font-medium">{metadata.genre}</span>
-          </div>
-        )}
-        {metadata.director && (
-          <div className="flex items-center gap-1.5 text-gray-700">
-            <span className="text-xs">🎬</span>
-            <span className="text-xs">کارگردان:</span>
-            <span className="text-xs font-medium truncate">{metadata.director}</span>
-          </div>
-        )}
-      </div>
-    );
+function buildPageNumbers(currentPage: number, totalPages: number): (number | '...')[] {
+  const pages: (number | '...')[] = [];
+  const maxVisible = 7;
+
+  if (totalPages <= maxVisible) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+    return pages;
   }
 
-  if (categorySlug === 'book' || categorySlug === 'books') {
-    return (
-      <div className="space-y-1.5">
-        {metadata.author && (
-          <div className="flex items-center gap-1.5 text-gray-700">
-            <span className="text-xs">✍️</span>
-            <span className="text-xs">نویسنده:</span>
-            <span className="text-xs font-medium">{metadata.author}</span>
-          </div>
-        )}
-        {metadata.genre && (
-          <div className="flex items-center gap-1.5 text-gray-700">
-            <span className="text-xs">📚</span>
-            <span className="text-xs">ژانر:</span>
-            <span className="text-xs font-medium">{metadata.genre}</span>
-          </div>
-        )}
-      </div>
-    );
-  }
+  pages.push(1);
+  if (currentPage > 3) pages.push('...');
 
-  if (categorySlug === 'cafe' || categorySlug === 'restaurant') {
-    return (
-      <div className="space-y-1.5">
-        {metadata.address && (
-          <div className="flex items-center gap-1.5 text-gray-700">
-            <span className="text-xs">📍</span>
-            <span className="text-xs">آدرس:</span>
-            <span className="text-xs font-medium truncate">{metadata.address}</span>
-          </div>
-        )}
-        {metadata.priceRange && (
-          <div className="flex items-center gap-1.5 text-gray-700">
-            <span className="text-xs">💰</span>
-            <span className="text-xs">قیمت:</span>
-            <span className="text-xs font-medium">{metadata.priceRange}</span>
-          </div>
-        )}
-        {metadata.cuisine && (
-          <div className="flex items-center gap-1.5 text-gray-700">
-            <span className="text-xs">🍽️</span>
-            <span className="text-xs">نوع غذا:</span>
-            <span className="text-xs font-medium">{metadata.cuisine}</span>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  for (let i = start; i <= end; i++) pages.push(i);
 
-  // Default: show raw JSON
-  return (
-    <pre className="text-xs text-gray-600 overflow-auto">
-      {JSON.stringify(metadata, null, 2)}
-    </pre>
-  );
+  if (currentPage < totalPages - 2) pages.push('...');
+  pages.push(totalPages);
+  return pages;
 }

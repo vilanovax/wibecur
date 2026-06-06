@@ -6,6 +6,7 @@ import { Eye, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentStatusBadge from './CommentStatusBadge';
+import UserAvatar from '@/components/shared/UserAvatar';
 
 export interface CommentRowData {
   id: string;
@@ -106,17 +107,12 @@ function CommentRow({
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          {comment.users.image ? (
-            <img
-              src={comment.users.image}
-              alt=""
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-medium">
-              {(comment.users.name || comment.users.email)[0].toUpperCase()}
-            </div>
-          )}
+          <UserAvatar
+            src={comment.users.image}
+            name={comment.users.name}
+            email={comment.users.email}
+            size={32}
+          />
           <div className="min-w-0">
             <p className="text-sm font-medium text-slate-900 truncate">
               {comment.users.name || 'بدون نام'}

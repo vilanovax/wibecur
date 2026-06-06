@@ -470,7 +470,7 @@ export default function ExternalImageItemsModal({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 id="external-images-title" className="text-base sm:text-lg font-bold text-gray-900">
-                  تصاویر خارج از ParsPack
+                  S3
                 </h2>
                 {!loading && items.length > 0 && (
                   <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900">

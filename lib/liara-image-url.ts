@@ -1,4 +1,5 @@
 import { isOurStorageUrl, isParsPackStorageUrl } from '@/lib/object-storage-config';
+import { isValidHttpImageUrl, normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 
 /**
  * نحوهٔ تحویل تصویر Object Storage به مرورگر:
@@ -34,7 +35,8 @@ export function toStorageImageSrc(
   options?: ToStorageImageSrcOptions
 ): string {
   if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) return '';
-  const url = rawUrl.trim();
+  const url = normalizeImageUrlForStorage(rawUrl);
+  if (!url || (!url.startsWith('/') && !isValidHttpImageUrl(url))) return '';
   if (url.startsWith('/')) return url;
   if (!isOurStorageUrl(url)) return url;
 

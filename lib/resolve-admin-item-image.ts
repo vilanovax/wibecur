@@ -1,4 +1,9 @@
 import { isPlaceholderCoverPath, isTmdbImageUrl } from './image-url-policy';
+import {
+  isCorruptImageUrl,
+  isValidHttpImageUrl,
+  normalizeImageUrlForStorage,
+} from './image-url-sanitize';
 
 const META_IMAGE_KEYS = ['posterUrl', 'poster', 'imageUrl', 'coverUrl'] as const;
 
@@ -32,9 +37,15 @@ export function parseItemMetadata(
 
 /** نرمال‌سازی URL ذخیره‌شده — پوشش حالت‌های رایج DB */
 export function normalizeAdminImageUrl(raw: string): string | null {
+  if (isCorruptImageUrl(raw)) {
+    const fixed = normalizeImageUrlForStorage(raw);
+    if (isValidHttpImageUrl(fixed)) return fixed;
+    return null;
+  }
+
   const t = raw.trim();
   if (!t || isPlaceholderCoverPath(t)) return null;
-  if (t.startsWith('https://') || t.startsWith('http://')) return t;
+  if (isValidHttpImageUrl(t)) return t;
   if (t.startsWith('//')) return `https:${t}`;
   if (t.startsWith('/')) return t;
   if (/^storage\.[a-z0-9.-]+\.liara\.space\//i.test(t) || /^[a-z0-9.-]*\.liara\.space\//i.test(t)) {
