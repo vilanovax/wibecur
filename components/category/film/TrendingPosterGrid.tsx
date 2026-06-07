@@ -29,7 +29,7 @@ export default function TrendingPosterGrid({
         />
         <Link
           href={`/lists?category=${categorySlug}`}
-          className="hidden lg:inline-flex shrink-0 text-sm font-medium text-primary hover:text-primary-dark transition-colors pb-0.5"
+          className="inline-flex shrink-0 text-sm font-medium text-primary transition-colors hover:text-primary-dark pb-0.5"
         >
           مشاهده همه
         </Link>

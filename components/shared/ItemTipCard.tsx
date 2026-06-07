@@ -14,7 +14,7 @@ export default function ItemTipCard({ tip, className = '' }: Props) {
       role="note"
       aria-label="نکته"
     >
-      <div className="flex items-start gap-2.5 text-start">
+      <div className="flex items-start gap-2.5 text-right" dir="rtl">
         <span
           className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100/90 text-sm"
           aria-hidden

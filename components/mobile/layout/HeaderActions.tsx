@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import UserAvatar from '@/components/shared/UserAvatar';
 import NotificationIcon from './NotificationIcon';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 
@@ -68,13 +68,11 @@ export default function HeaderActions({
               {vibeAvatar.emoji}
             </div>
           ) : headerAvatarUrl ? (
-            <Image
+            <UserAvatar
               src={headerAvatarUrl}
-              alt={userName}
-              width={40}
-              height={40}
-              className="h-full w-full object-cover"
-              unoptimized
+              name={userName}
+              size={40}
+              className="h-full w-full"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-sm font-bold text-white">

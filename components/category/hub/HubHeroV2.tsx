@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import CategoryHeroMedia from '@/components/category/CategoryHeroMedia';
 import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
 
@@ -18,18 +18,12 @@ export default function HubHeroV2({
   const heroImage = getCategoryHeroDisplayUrl(category.heroImage, category.slug);
 
   return (
-    <section className="relative mx-4 mt-4 mb-2 overflow-hidden rounded-lg">
-      <div className="relative aspect-[4/3] min-h-[240px] overflow-hidden">
-        <ImageWithFallback
-          src={heroImage}
-          alt={category.name}
-          className="absolute inset-0 w-full h-full object-cover"
-          priority
-          placeholderSize="cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/25" />
+    <section className="relative mb-2 mt-3 overflow-hidden rounded-2xl">
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-950 min-h-[200px]">
+        <CategoryHeroMedia src={heroImage} alt={category.name} priority />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
 
-        <div className="absolute inset-0 flex flex-col justify-end p-4">
+        <div className="absolute inset-0 flex flex-col justify-end p-4 text-right pb-5">
           <h1 className="wibe-h1 text-white">
             {category.icon} {category.name}
           </h1>

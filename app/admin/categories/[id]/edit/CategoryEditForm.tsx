@@ -290,6 +290,7 @@ export default function CategoryEditForm({
                 slugCheck={slugChanged ? slugCheck : { status: 'available', slug: formData.slug }}
                 onApplySlugSuggestion={handleApplySuggestion}
                 showInlinePreview={false}
+                showHeroImage={false}
               />
               {slugChanged && (
                 <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/80 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">

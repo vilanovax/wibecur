@@ -11,6 +11,14 @@ import {
 
 type ItemMetadata = Record<string, unknown>;
 
+function asItemMetadata(value: unknown): ItemMetadata | null {
+  if (value == null) return null;
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return value as ItemMetadata;
+  }
+  return null;
+}
+
 type AdminItemCardProps = {
   item: {
     id: string;
@@ -18,7 +26,7 @@ type AdminItemCardProps = {
     description?: string | null;
     order: number;
     externalUrl?: string | null;
-    metadata?: ItemMetadata | null;
+    metadata?: unknown;
     displayImageUrl?: string;
     item_moderation?: { status: string } | null;
     lists: {
@@ -80,8 +88,7 @@ export default function AdminItemCard({
   const fallbackIcon = item.lists.categories?.icon || '📋';
   const rawImageUrl = item.displayImageUrl || '';
   const imageSource = classifyAdminImageSource(rawImageUrl);
-  const metadata =
-    item.metadata && typeof item.metadata === 'object' ? item.metadata : null;
+  const metadata = asItemMetadata(item.metadata);
 
   return (
     <article

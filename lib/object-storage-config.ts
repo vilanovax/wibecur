@@ -63,6 +63,17 @@ export function isOurStorageUrl(url: string): boolean {
   return isParsPackStorageUrl(url);
 }
 
+/** URL کاور دسته که قبلاً در ParsPack / wibe/hubs آپلود شده */
+export function isParsPackHubsUrl(url: string): boolean {
+  if (!isParsPackStorageUrl(url)) return false;
+  try {
+    const pathname = decodeURIComponent(new URL(url.trim()).pathname);
+    return pathname.includes(`/${STORAGE_OBJECT_PREFIX}/hubs/`);
+  } catch {
+    return false;
+  }
+}
+
 export function buildStorageObjectKey(folder: string, filename: string): string {
   const safeFolder = folder.replace(/^\/+|\/+$/g, '');
   return `${STORAGE_OBJECT_PREFIX}/${safeFolder}/${filename}`;

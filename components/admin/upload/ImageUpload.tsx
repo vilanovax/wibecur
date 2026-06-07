@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, X, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { IMAGE_UPLOAD_HINTS, MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
+import { getDisplayImageUrl } from '@/lib/display-image';
 
 export type ListImageUploadPurpose = 'list-cover' | 'list-horizontal' | 'category-hero' | 'avatar';
 
@@ -35,51 +36,82 @@ const PREVIEW_CLASS: Record<'cover' | 'horizontal' | 'default', string> = {
 function CoverPreview({
   src,
   onRemove,
+  onReplace,
+  replaceLoading,
   compact,
   previewVariant = 'default',
 }: {
   src: string;
   onRemove: () => void;
+  onReplace?: () => void;
+  replaceLoading?: boolean;
   compact?: boolean;
   previewVariant?: 'cover' | 'horizontal' | 'default';
 }) {
   const [broken, setBroken] = useState(false);
+  const displaySrc = getDisplayImageUrl(src) || src;
   const aspectClass = compact
     ? PREVIEW_CLASS[previewVariant]
     : PREVIEW_CLASS[previewVariant === 'default' ? 'default' : previewVariant];
 
+  useEffect(() => {
+    setBroken(false);
+  }, [displaySrc]);
+
   return (
-    <div
-      className={`relative w-full rounded-xl overflow-hidden border border-[var(--color-border-muted)] bg-[var(--color-bg)] ${
-        compact ? aspectClass : aspectClass
-      }`}
-    >
-      {!broken ? (
-        <Image
-          src={src}
-          alt="کاور"
-          fill
-          className="object-cover"
-          unoptimized
-          onError={() => setBroken(true)}
-        />
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[var(--color-text-muted)] p-4 text-center">
-          <ImageIcon className="w-8 h-8 opacity-40" />
-          <p className="text-xs">تصویر بارگذاری نشد</p>
-          <p className="text-[10px] font-mono truncate max-w-full opacity-60" dir="ltr">
-            {src}
-          </p>
-        </div>
-      )}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute top-2 left-2 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
-        aria-label="حذف تصویر"
+    <div className="space-y-2">
+      <div
+        className={`relative w-full rounded-xl overflow-hidden border border-[var(--color-border-muted)] bg-[var(--color-bg)] ${
+          compact ? aspectClass : aspectClass
+        }`}
       >
-        <X className="w-3.5 h-3.5" />
-      </button>
+        {!broken ? (
+          <Image
+            src={displaySrc}
+            alt="کاور"
+            fill
+            className="object-cover"
+            unoptimized
+            onError={() => setBroken(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[var(--color-text-muted)] p-4 text-center">
+            <ImageIcon className="w-8 h-8 opacity-40" />
+            <p className="text-xs">تصویر بارگذاری نشد</p>
+            <p className="text-[10px] font-mono truncate max-w-full opacity-60" dir="ltr">
+              {src}
+            </p>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={onRemove}
+          className="absolute top-2 left-2 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+          aria-label="حذف تصویر"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      {onReplace && (
+        <button
+          type="button"
+          onClick={onReplace}
+          disabled={replaceLoading}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-bg)] disabled:opacity-50"
+        >
+          {replaceLoading ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
+              در حال آپلود…
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4" />
+              تغییر تصویر
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 }
@@ -104,6 +136,10 @@ export default function ImageUpload({
   const [uploadMethod, setUploadMethod] = useState<'url' | 'upload'>('upload');
   const [urlInput, setUrlInput] = useState(value || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setUrlInput(value || '');
+  }, [value]);
 
   const uploadHint = PURPOSE_HINT[uploadPurpose];
   const maxMb = Math.round(MAX_RAW_UPLOAD_SIZE / (1024 * 1024));
@@ -199,17 +235,17 @@ export default function ImageUpload({
         </button>
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/jpg"
+        onChange={handleFileInput}
+        className="hidden"
+        id={`file-upload-${uploadPurpose}`}
+      />
+
       {uploadMethod === 'upload' && (
         <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/jpg"
-            onChange={handleFileInput}
-            className="hidden"
-            id={`file-upload-${uploadPurpose}`}
-          />
-
           {!value ? (
             <label
               htmlFor={`file-upload-${uploadPurpose}`}
@@ -244,6 +280,8 @@ export default function ImageUpload({
             <CoverPreview
               src={value}
               onRemove={handleRemove}
+              onReplace={() => fileInputRef.current?.click()}
+              replaceLoading={uploading}
               compact={compact}
               previewVariant={resolvedPreview}
             />
@@ -280,6 +318,8 @@ export default function ImageUpload({
             <CoverPreview
               src={value}
               onRemove={handleRemove}
+              onReplace={() => fileInputRef.current?.click()}
+              replaceLoading={uploading}
               compact={compact}
               previewVariant={resolvedPreview}
             />

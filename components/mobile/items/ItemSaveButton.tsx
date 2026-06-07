@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bookmark } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
@@ -25,37 +26,34 @@ interface SavedStatus {
   }>;
 }
 
+const EMPTY_SAVED_STATUS: SavedStatus = {
+  savedInPrivateList: false,
+  savedInPublicList: false,
+  lists: [],
+};
+
 export default function ItemSaveButton({ itemId, variant = 'default' }: ItemSaveButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [savedStatus, setSavedStatus] = useState<SavedStatus>({
-    savedInPrivateList: false,
-    savedInPublicList: false,
-    lists: [],
-  });
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchSavedStatus();
-    }
-  }, [session?.user, itemId]);
-
-  const fetchSavedStatus = async () => {
-    try {
+  // وضعیت ذخیره با react-query کش می‌شود تا ناوبری بین آیتم‌ها درخواست تکراری نزند.
+  const { data: savedStatus = EMPTY_SAVED_STATUS } = useQuery<SavedStatus>({
+    queryKey: ['item-saved-status', itemId],
+    queryFn: async () => {
       const res = await fetch(`/api/items/${itemId}/saved-status`);
-      if (res.ok) {
-        const data = await res.json();
-        setSavedStatus(data);
-      }
-    } catch (error) {
-      console.error('Error fetching saved status:', error);
-    }
-  };
+      if (!res.ok) throw new Error('saved-status fetch failed');
+      return (await res.json()) as SavedStatus;
+    },
+    enabled: !!session?.user,
+    staleTime: 60 * 1000,
+  });
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    fetchSavedStatus();
+    // پس از تغییرِ احتمالی در مودال، وضعیت تازه‌سازی شود.
+    queryClient.invalidateQueries({ queryKey: ['item-saved-status', itemId] });
   };
 
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;

@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import Link from 'next/link';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { useRefetchOnVisible } from '@/lib/hooks/useRefetchOnVisible';
 
 interface Notification {
   id: string;
@@ -91,6 +92,8 @@ export default function NotificationIcon() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [session?.user?.id, fetchFailed, fetchNotifications]);
+
+  useRefetchOnVisible(fetchNotifications, Boolean(session?.user));
 
   const markAsRead = async (notificationId: string) => {
     try {

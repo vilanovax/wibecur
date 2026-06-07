@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth-config';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { nanoid } from 'nanoid';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
-    const session = await auth();
-
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'احراز هویت نشده است' },
-        { status: 401 }
-      );
-    }
+    const adminUser = await requirePermission('manage_lists');
+    if (adminUser instanceof NextResponse) return adminUser;
 
     const body = await request.json();
     const {
@@ -53,15 +45,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user ID from email
     const user = await prisma.users.findUnique({
-      where: { email: session.user.email },
+      where: { id: adminUser.id },
+      select: { id: true },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: 'کاربر یافت نشد' },
-        { status: 404 }
+        { error: 'حساب کاربری یافت نشد — لطفاً دوباره وارد شوید', code: 'USER_NOT_FOUND' },
+        { status: 401 }
       );
     }
 
@@ -103,6 +95,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const adminUser = await requirePermission('manage_lists');
+    if (adminUser instanceof NextResponse) return adminUser;
+
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get('categoryId');
     const includeInactive = searchParams.get('includeInactive') === 'true';

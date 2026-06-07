@@ -33,7 +33,7 @@ async function main() {
   console.log(`📂 دسته: ${category.name} (${category.slug})`);
 
   console.log('📤 در حال آپلود تصویر به Liara...');
-  const uploadedUrl = await uploadImageFromUrl(CAFE_HERO_IMAGE_URL, 'covers');
+  const uploadedUrl = await uploadImageFromUrl(CAFE_HERO_IMAGE_URL, 'hubs', 'hubCover');
 
   if (!uploadedUrl) {
     console.error('❌ آپلود به Liara ناموفق بود. مطمئن شوید Liara Object Storage تنظیم شده است.');

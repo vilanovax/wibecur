@@ -10,6 +10,7 @@ import HeaderDesktopSearch from '@/components/mobile/layout/HeaderDesktopSearch'
 import HeaderActions, { type HeaderActionsProfile } from '@/components/mobile/layout/HeaderActions';
 import { CONSUMER_NAV_ITEMS, isNavItemActive } from '@/components/mobile/layout/consumer-nav-config';
 import { DESKTOP_CONTENT_PADDING_CLASS } from '@/lib/layout-tokens';
+import { useRefetchOnVisible } from '@/lib/hooks/useRefetchOnVisible';
 
 /**
  * ناوبری افقی دسکتاپ — حس وب‌سایت به‌جای اپ کناری
@@ -44,6 +45,8 @@ export default function DesktopTopNav() {
     if (session?.user) fetchProfile();
     else setProfile(null);
   }, [session?.user, fetchProfile]);
+
+  useRefetchOnVisible(fetchProfile, Boolean(session?.user?.id));
 
   useEffect(() => {
     const onProfileUpdated = () => fetchProfile();

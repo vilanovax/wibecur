@@ -75,6 +75,7 @@ export default function DesktopDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'desktop-dialog-title' : undefined}
+        dir="rtl"
         className={`relative flex w-full ${MAX_WIDTH_CLASS[maxWidth]} max-h-[90vh] flex-col rounded-2xl bg-wibe-card shadow-2xl animate-in zoom-in-95 duration-200`}
         onClick={(e) => e.stopPropagation()}
       >

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Star } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import ItemCoverPlaceholder from '@/components/shared/ItemCoverPlaceholder';
+import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
+import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
 import { resolveImageDisplaySrc } from '@/lib/image-url-policy';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 import { buildItemMetadataChips, extractItemTip } from '@/lib/item-metadata-display';
@@ -17,6 +19,7 @@ export type ItemPreviewData = {
   imageUrl?: string | null;
   displayImageUrl?: string | null;
   rating?: number;
+  voteCount?: number;
   metadata?: Record<string, unknown> | null;
   externalUrl?: string | null;
 };
@@ -123,7 +126,7 @@ function PreviewPoster({
 
 function MetadataChip({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug">
+    <span className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
       <span className="shrink-0 font-medium text-foreground/55">{label}</span>
       <span className="min-w-0 font-semibold text-foreground">{value}</span>
     </span>
@@ -134,20 +137,52 @@ function PreviewActions({
   item,
   onClose,
   className = '',
+  layout = 'stacked',
 }: {
   item: ItemPreviewData;
   onClose: () => void;
   className?: string;
+  /** stacked = دسکتاپ | inline = موبایل — آیکون‌ها کنار CTA */
+  layout?: 'stacked' | 'inline';
 }) {
+  const actionButtons = (
+    <>
+      <ItemSaveButton itemId={item.id} />
+      <ItemLikeButton
+        itemId={item.id}
+        initialLikeCount={item.voteCount ?? 0}
+        variant="compact"
+      />
+    </>
+  );
+
+  const fullPageLink = (
+    <Link
+      href={`/items/${item.id}`}
+      onClick={onClose}
+      className={`flex min-w-0 items-center justify-center rounded-xl bg-primary py-3 wibe-small font-semibold text-white shadow-sm transition-all hover:bg-primary-dark active:scale-[0.99] ${
+        layout === 'inline' ? 'flex-1' : 'w-full'
+      }`}
+    >
+      مشاهده صفحه کامل
+    </Link>
+  );
+
+  if (layout === 'inline') {
+    return (
+      <div className={`flex items-center gap-2 ${className}`} aria-label="عملیات آیتم">
+        {actionButtons}
+        {fullPageLink}
+      </div>
+    );
+  }
+
   return (
-    <div className={className}>
-      <Link
-        href={`/items/${item.id}`}
-        onClick={onClose}
-        className="flex w-full items-center justify-center rounded-xl bg-primary py-3 wibe-small font-semibold text-white shadow-sm transition-all hover:bg-primary-dark active:scale-[0.99]"
-      >
-        مشاهده صفحه کامل
-      </Link>
+    <div className={`flex flex-col gap-2.5 ${className}`}>
+      <div className="flex items-center justify-start gap-2.5" aria-label="ذخیره و پسندیدن">
+        {actionButtons}
+      </div>
+      {fullPageLink}
     </div>
   );
 }
@@ -202,8 +237,8 @@ export default function ItemPreviewSheet({
       maxHeight="92vh"
       desktopMaxWidth="lg"
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-2 lg:px-0 lg:pt-0 lg:pb-0">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden" dir="rtl">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-2 text-right lg:px-0 lg:pt-0 lg:pb-0">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-7">
             {/* پوستر */}
             <div className="relative mx-auto shrink-0 lg:mx-0">
@@ -221,21 +256,21 @@ export default function ItemPreviewSheet({
             </div>
 
             {/* جزئیات */}
-            <div className="flex min-w-0 flex-1 flex-col gap-3.5 text-right lg:gap-4 lg:pt-1">
+            <div className="flex min-w-0 flex-1 flex-col gap-3.5 lg:gap-4 lg:pt-1">
               {chips.length > 0 && (
-                <div className="flex flex-wrap justify-end gap-1.5 lg:justify-start">
+                <div className="flex flex-wrap justify-start gap-1.5">
                   {chips.map(({ key, label, value }) => (
                     <MetadataChip key={key} label={label} value={value} />
                   ))}
                 </div>
               )}
 
-              {itemTip && <ItemTipCard tip={itemTip} />}
+              {itemTip && <ItemTipCard tip={itemTip} className="text-right" />}
 
               {desc ? (
-                <p className="text-[0.9375rem] leading-[1.8] text-foreground/75">{desc}</p>
+                <p className="text-right text-[0.9375rem] leading-[1.8] text-foreground/75">{desc}</p>
               ) : (
-                <p className="wibe-caption text-wibe-secondary">توضیحی ثبت نشده</p>
+                <p className="wibe-caption text-wibe-secondary text-right">توضیحی ثبت نشده</p>
               )}
 
               <div className="mt-1 max-lg:hidden">
@@ -252,7 +287,7 @@ export default function ItemPreviewSheet({
             aria-hidden
           />
           <div className="border-t border-wibe/50 bg-wibe-card px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
-            <PreviewActions item={item} onClose={onClose} />
+            <PreviewActions item={item} onClose={onClose} layout="inline" />
           </div>
         </div>
       </div>

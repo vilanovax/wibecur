@@ -35,7 +35,11 @@ async function fetchExplore(): Promise<ExplorePayload> {
   return json.data as ExplorePayload;
 }
 
-export default function CuratedLandingPageClient() {
+export default function CuratedLandingPageClient({
+  initialData,
+}: {
+  initialData?: ExplorePayload;
+}) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
@@ -45,6 +49,8 @@ export default function CuratedLandingPageClient() {
     queryFn: fetchExplore,
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    // داده‌ی SSR — از first paint بدون skeleton و بدون round-trip اضافه استفاده می‌شود
+    initialData,
   });
 
   /** فقط در خطای API — خالی بودن دادهٔ واقعی نباید mock با دستهٔ کتاب نشان دهد */

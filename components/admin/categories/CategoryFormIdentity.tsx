@@ -28,6 +28,8 @@ interface CategoryFormIdentityProps {
   onResetSlugAuto?: () => void;
   slugCheck?: SlugCheckState;
   onApplySlugSuggestion?: (slug: string) => void;
+  /** در ویرایش، کاور در بخش «ظاهر صفحه» مدیریت می‌شود */
+  showHeroImage?: boolean;
 }
 
 const inputClass =
@@ -44,6 +46,7 @@ export default function CategoryFormIdentity({
   onResetSlugAuto,
   slugCheck,
   onApplySlugSuggestion,
+  showHeroImage = true,
 }: CategoryFormIdentityProps) {
   const slugValid = useMemo(() => isValidCategorySlug(values.slug), [values.slug]);
 
@@ -227,10 +230,12 @@ export default function CategoryFormIdentity({
           />
         </div>
 
-        <CategoryHeroImageField
-          value={values.heroImage ?? ''}
-          onChange={(heroImage) => onChange({ heroImage })}
-        />
+        {showHeroImage && (
+          <CategoryHeroImageField
+            value={values.heroImage ?? ''}
+            onChange={(heroImage) => onChange({ heroImage })}
+          />
+        )}
       </div>
 
       {showInlinePreview && (

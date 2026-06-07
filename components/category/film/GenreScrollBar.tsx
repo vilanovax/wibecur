@@ -18,16 +18,19 @@ interface GenreScrollBarProps {
   categorySlug: string;
 }
 
-/** ژانرها — موبایل اسکرول افقی | دسکتاپ wrap */
+/** ژانرها — موبایل اسکرول افقی RTL | دسکتاپ wrap */
 export default function GenreScrollBar({ categorySlug }: GenreScrollBarProps) {
   return (
     <section className={FILM_SECTION_COMPACT}>
-      <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 snap-x snap-mandatory lg:mx-0 lg:px-0 lg:flex-wrap lg:justify-center lg:overflow-visible lg:gap-2">
+      <div
+        dir="rtl"
+        className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory lg:flex-wrap lg:justify-start lg:overflow-visible lg:gap-2"
+      >
         {FILM_GENRES.map((genre) => (
           <Link
             key={genre.slug}
             href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(genre.label)}`}
-            className="flex-shrink-0 snap-start flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200 lg:px-3.5 lg:py-1.5 lg:hover:border-primary/30 lg:hover:bg-primary/5"
+            className="flex shrink-0 snap-start items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-3.5 py-2 text-sm font-medium text-gray-800 transition-all hover:bg-gray-200 lg:hover:border-primary/30 lg:hover:bg-primary/5"
           >
             <span>{genre.icon}</span>
             <span>{genre.label}</span>

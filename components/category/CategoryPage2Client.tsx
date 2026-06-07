@@ -27,6 +27,7 @@ import {
   NewListsCompact,
   CuratorCTABlock,
 } from './film';
+import { FILM_PAGE_SHELL } from './film/film-layout';
 
 interface CategoryPage2ClientProps {
   slug: string;
@@ -50,14 +51,25 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
   });
 
   if (isLoading && !data) {
+    const filmSlugs = ['movie', 'movies', 'film', 'film-serial'];
+    const isFilmSkeleton = filmSlugs.includes(slug);
+
     return (
-      <main className="min-h-[50vh] space-y-6 animate-pulse bg-wibe-surface">
-        <div className="mx-4 mt-4 h-44 rounded-lg bg-gray-200" />
-        <div className="mx-4 h-6 w-48 rounded bg-gray-200" />
-        <div className="mx-4 flex gap-4 overflow-hidden">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-40 w-64 flex-shrink-0 rounded-lg bg-gray-200" />
-          ))}
+      <main className="min-h-[50vh] animate-pulse bg-wibe-surface">
+        <div className={isFilmSkeleton ? FILM_PAGE_SHELL : 'px-4'}>
+          <div
+            className={
+              isFilmSkeleton
+                ? 'mt-3 aspect-[16/9] rounded-2xl bg-gray-200 lg:mt-5'
+                : 'mt-4 h-44 rounded-lg bg-gray-200'
+            }
+          />
+          <div className="mt-4 h-6 w-48 rounded bg-gray-200" />
+          <div className="mt-4 flex gap-4 overflow-hidden">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-40 w-64 shrink-0 rounded-lg bg-gray-200" />
+            ))}
+          </div>
         </div>
       </main>
     );
@@ -101,24 +113,19 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
     const mostDebated = data.mostDebatedLists ?? [];
 
     return (
-      <main className="bg-wibe-surface lg:pb-2">
-        <CinematicHero category={category} metrics={metrics} />
-        <GenreScrollBar categorySlug={category.slug} />
-        <TrendingPosterGrid
-          lists={trendingForGrid}
-          categorySlug={category.slug}
-        />
-        {featuredList && (
-          <FeaturedCinematicList list={featuredList} />
-        )}
-        {mostDebated.length > 0 && (
-          <MostDebatedLists lists={mostDebated} />
-        )}
-        <NewListsCompact
-          lists={newLists}
-          categoryName={category.name}
-        />
-        <CuratorCTABlock categorySlug={category.slug} />
+      <main className="bg-wibe-surface pb-2 lg:pb-4">
+        <div className={FILM_PAGE_SHELL}>
+          <CinematicHero category={category} metrics={metrics} />
+          <GenreScrollBar categorySlug={category.slug} />
+          <TrendingPosterGrid
+            lists={trendingForGrid}
+            categorySlug={category.slug}
+          />
+          {featuredList && <FeaturedCinematicList list={featuredList} />}
+          {mostDebated.length > 0 && <MostDebatedLists lists={mostDebated} />}
+          <NewListsCompact lists={newLists} categoryName={category.name} />
+          <CuratorCTABlock categorySlug={category.slug} />
+        </div>
       </main>
     );
   }

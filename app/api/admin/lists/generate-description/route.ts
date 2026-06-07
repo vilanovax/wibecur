@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { createAdminOpenAIChatCompletion, formatOpenAIError } from '@/lib/openai-chat';
 
 /** POST /api/admin/lists/generate-description — توضیحات لیست curated با AI */
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const adminUser = await requirePermission('manage_lists');
+    if (adminUser instanceof NextResponse) return adminUser;
 
     const body = await request.json();
     const { title, categorySlug, categoryName } = body as {

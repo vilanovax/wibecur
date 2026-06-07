@@ -67,7 +67,12 @@ export default async function CategoryPage({
 
   return (
     <div className="bg-wibe-surface">
-      <Header title={category.name} showBack hideTitleOnDesktop={isFilmCategory} />
+      <Header
+        title={category.name}
+        showBack
+        hideTitleOnDesktop={isFilmCategory}
+        showDesktopSearch={false}
+      />
       <CategoryPage2Client slug={category.slug} initialData={initialData} />
       <BottomNav />
     </div>

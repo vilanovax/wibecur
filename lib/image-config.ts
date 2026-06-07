@@ -136,6 +136,6 @@ export const IMAGE_UPLOAD_HINTS = {
   listHorizontal:
     'JPG/PNG/WebP تا ۱۰MB — بنر افقی ۲۱:۹ · WebP (حداکثر ۱۶۰۰×۹۰۰، ~۲۲۰KB)',
   categoryHero:
-    'JPG/PNG/WebP تا ۱۰MB — به WebP (حداکثر ۱۶۰۰×۹۰۰، ~۳۲۰KB) بهینه می‌شود',
+    'JPG/PNG/WebP تا ۱۰MB — در ParsPack (hubs) · WebP ۱۶۰۰×۹۰۰ (~۳۲۰KB)',
   avatar: 'JPG/PNG/WebP تا ۱۰MB — به WebP ۴۰۰×۴۰۰ (~۵۰۰KB) بهینه می‌شود',
 } as const;

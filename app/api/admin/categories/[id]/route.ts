@@ -12,13 +12,7 @@ import {
   normalizeOptionalUrl,
 } from '@/lib/admin/category-form-constants';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
-import { ensureImageInLiara } from '@/lib/object-storage';
-
-async function finalizeHeroImage(url: unknown): Promise<string | null> {
-  const normalized = normalizeOptionalUrl(url);
-  if (!normalized) return null;
-  return (await ensureImageInLiara(normalized, 'hubs', { profile: 'hubCover' })) ?? normalized;
-}
+import { finalizeCategoryHeroImage } from '@/lib/admin/finalize-category-hero-image';
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
 function normalizeTrendingWeight(value: unknown): number {
@@ -96,8 +90,14 @@ export async function PUT(
       }
     }
 
-    const finalHeroImage =
-      heroImage !== undefined ? await finalizeHeroImage(heroImage) : undefined;
+    let finalHeroImage: string | null | undefined = undefined;
+    if (heroImage !== undefined) {
+      const heroResult = await finalizeCategoryHeroImage(heroImage);
+      if (!heroResult.ok) {
+        return NextResponse.json({ error: heroResult.error }, { status: 400 });
+      }
+      finalHeroImage = heroResult.url;
+    }
 
     const category = await prisma.categories.update({
       where: { id },

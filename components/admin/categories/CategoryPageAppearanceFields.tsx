@@ -3,6 +3,7 @@
 import type { CategoryLayoutType } from '@/types/category-page';
 import { CATEGORY_LAYOUT_OPTIONS } from '@/lib/admin/category-form-constants';
 import { getDisplayImageUrl } from '@/lib/display-image';
+import CategoryHeroImageField from '@/components/admin/categories/CategoryHeroImageField';
 import Image from 'next/image';
 
 export type CategoryAppearanceValues = {
@@ -25,8 +26,6 @@ export default function CategoryPageAppearanceFields({
   onChange,
   primaryColor = '#6366F1',
 }: CategoryPageAppearanceFieldsProps) {
-  const accent = values.accentColor || primaryColor;
-
   return (
     <div className="space-y-5" dir="rtl">
       <div>
@@ -76,38 +75,42 @@ export default function CategoryPageAppearanceFields({
         </select>
       </div>
 
-      {!values.heroImage && (
-        <p className="text-xs text-[var(--color-text-muted)] rounded-xl border border-dashed border-[var(--color-border)] px-3 py-2.5">
-          تصویر کاور را در مرحله «هویت» آپلود کنید. اگر خالی باشد از بنر پیش‌فرض دسته استفاده می‌شود.
-        </p>
-      )}
+      <CategoryHeroImageField
+        value={values.heroImage}
+        onChange={(heroImage) => onChange({ heroImage })}
+      />
 
       {(values.heroImage || values.layoutType) && (
         <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
           <p className="text-xs font-medium text-[var(--color-text-muted)] px-3 py-2 bg-[var(--color-bg)]">
             پیش‌نمایش صفحه دسته
           </p>
-          <div
-            className="relative aspect-[16/9] max-h-40 flex items-end p-3"
-            style={{
-              background: values.heroImage
-                ? undefined
-                : `linear-gradient(135deg, ${accent}50 0%, #1f2937 100%)`,
-            }}
-          >
+          <div className="relative aspect-[16/9] max-h-44 overflow-hidden bg-neutral-950">
             {values.heroImage && (
-              <Image
-                src={getDisplayImageUrl(values.heroImage)}
-                alt=""
-                fill
-                className="object-cover"
-                unoptimized
-              />
+              <>
+                <Image
+                  src={getDisplayImageUrl(values.heroImage)}
+                  alt=""
+                  fill
+                  className="scale-110 object-cover blur-2xl opacity-55"
+                  unoptimized
+                />
+                <Image
+                  src={getDisplayImageUrl(values.heroImage)}
+                  alt=""
+                  fill
+                  className="object-contain object-center"
+                  unoptimized
+                />
+              </>
             )}
-            <div className="relative z-10 text-white text-sm font-semibold drop-shadow">
-              نمونه صفحه دسته
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-0 flex flex-col justify-end p-3 text-right">
+              <p className="text-sm font-semibold text-white drop-shadow">
+                نمونه صفحه دسته
+              </p>
               {values.layoutType && (
-                <span className="block text-xs font-normal opacity-90">
+                <span className="text-xs text-white/90">
                   {CATEGORY_LAYOUT_OPTIONS.find((o) => o.value === values.layoutType)?.label}
                 </span>
               )}

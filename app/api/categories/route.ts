@@ -8,7 +8,7 @@ export async function GET(_request: NextRequest) {
   try {
     const categories = await dbQuery(() =>
       prisma.categories.findMany({
-        where: { isActive: true },
+        where: { isActive: true, deletedAt: null },
         select: {
           id: true,
           name: true,

@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import {
   activeCategoryWhere,
@@ -6,6 +7,19 @@ import {
 } from '@/lib/public-content-filters';
 import { dbQuery } from '@/lib/db';
 import { getGlobalTrending, getFastRising, type TrendingListResult } from '@/lib/trending/service';
+
+// trending/rising سراسری‌اند (وابسته به کاربر نیستند) — هر ۵ دقیقه یک‌بار محاسبه
+// می‌شوند به‌جای هر بار لود اکسپلورِ هر کاربر.
+const getCachedGlobalTrending = unstable_cache(
+  () => getGlobalTrending(prisma, 10),
+  ['explore-global-trending-10'],
+  { revalidate: 300, tags: ['trending'] }
+);
+const getCachedFastRising = unstable_cache(
+  () => getFastRising(prisma, 10),
+  ['explore-fast-rising-10'],
+  { revalidate: 300, tags: ['trending'] }
+);
 import { resolveListCover } from '@/lib/resolve-list-cover';
 import { computeTrendScore } from './utils';
 import type { CuratedCategory, CuratedList, CuratorBadge, ListBadge } from '@/types/curated';
@@ -293,7 +307,7 @@ async function fetchMissingLists(ids: string[]): Promise<DbListRow[]> {
             curatorLevel: true,
           },
         },
-        _count: { select: { items: true, list_likes: true } },
+        // _count حذف شد: itemCount/likeCount از ستون‌های denormalized خوانده می‌شوند
       },
     })
   );
@@ -337,14 +351,14 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
               curatorLevel: true,
             },
           },
-          _count: { select: { items: true, list_likes: true } },
+          // _count حذف شد: itemCount/likeCount از ستون‌های denormalized خوانده می‌شوند
         },
         orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
         take: EXPLORE_LIST_LIMIT,
       })
     ),
-    getGlobalTrending(prisma, 10),
-    getFastRising(prisma, 10),
+    getCachedGlobalTrending(),
+    getCachedFastRising(),
     userId ? fetchUserPreferences(userId) : Promise.resolve({ preferredCategoryIds: [], bookmarkedListIds: [] }),
   ]);
 

@@ -37,9 +37,11 @@ export async function POST(
     );
 
     if (!user) {
+      // سشن معتبر است اما رکورد کاربر در دیتابیس وجود ندارد (سشن یتیم/منقضی).
+      // 401 برمی‌گردانیم تا کلاینت بتواند کاربر را خارج/هدایت کند، نه 404 گنگ.
       return NextResponse.json(
-        { success: false, error: 'کاربر یافت نشد' },
-        { status: 404 }
+        { success: false, error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید', code: 'SESSION_USER_NOT_FOUND' },
+        { status: 401 }
       );
     }
 
@@ -193,9 +195,11 @@ export async function GET(
     );
 
     if (!user) {
+      // سشن معتبر است اما رکورد کاربر در دیتابیس وجود ندارد (سشن یتیم/منقضی).
+      // 401 برمی‌گردانیم تا کلاینت بتواند کاربر را خارج/هدایت کند، نه 404 گنگ.
       return NextResponse.json(
-        { success: false, error: 'کاربر یافت نشد' },
-        { status: 404 }
+        { success: false, error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید', code: 'SESSION_USER_NOT_FOUND' },
+        { status: 401 }
       );
     }
 

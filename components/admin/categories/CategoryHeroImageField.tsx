@@ -25,8 +25,8 @@ export default function CategoryHeroImageField({
         compact={compact}
       />
       <p className="text-[10px] text-[var(--color-text-muted)] mt-1.5 leading-relaxed">
-        برای هیرو صفحه دسته در اپ — نسبت پیشنهادی ۱۶:۹ · JPG/PNG/WebP تا ۱۰MB · پس از آپلود به
-        WebP (حداکثر ۱۶۰۰×۹۰۰، ~۳۲۰KB) بهینه و در ParsPack ذخیره می‌شود
+        در ParsPack (پوشه hubs) ذخیره می‌شود — نسبت ۱۶:۹ · JPG/PNG/WebP تا ۱۰MB · تبدیل به WebP
+        (حداکثر ۱۶۰۰×۹۰۰، ~۳۲۰KB)
       </p>
     </div>
   );

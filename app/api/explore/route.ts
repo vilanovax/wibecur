@@ -29,7 +29,14 @@ export async function GET() {
     const data = await fetchExploreData(userId);
 
     const response = NextResponse.json({ success: true, data });
-    response.headers.set('Cache-Control', 'private, max-age=120, stale-while-revalidate=300');
+    // مهمان: payload یکسان و بدون personalization → قابل کش عمومی روی CDN.
+    // لاگین: private چون preferred/bookmarked مخصوص کاربر است.
+    response.headers.set(
+      'Cache-Control',
+      userId
+        ? 'private, max-age=120, stale-while-revalidate=300'
+        : 'public, s-maxage=120, stale-while-revalidate=300'
+    );
     return response;
   } catch (error: unknown) {
     const fb = tryApiDbFallback(error, EMPTY_EXPLORE, 'Explore');

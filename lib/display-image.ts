@@ -2,8 +2,8 @@
  * نمایش تصاویر: Liara، Wikimedia (ایران)، یا مسیر محلی.
  */
 import { toAbsoluteImageUrl } from '@/lib/seo';
-import { isOurStorageUrl } from '@/lib/object-storage-config';
-import { toLiaraImageSrc } from '@/lib/liara-image-url';
+import { isLegacyLiaraStorageUrl, isOurStorageUrl } from '@/lib/object-storage-config';
+import { resolveStorageImageDisplayUrl } from '@/lib/storage-image-url';
 import { getCategoryHeroImageUrl } from '@/lib/category-cover-images';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import { isAllowedExternalImageUrl, isAllowedItemImageUrl } from '@/lib/image-url-policy';
@@ -12,7 +12,9 @@ function finalizeDisplayUrl(url: string): string {
   if (!url) return '';
   if (url.startsWith('/')) return url;
   const absolute = toAbsoluteImageUrl(url) ?? url;
-  if (isOurStorageUrl(absolute)) return toLiaraImageSrc(absolute);
+  if (isOurStorageUrl(absolute) || isLegacyLiaraStorageUrl(absolute)) {
+    return resolveStorageImageDisplayUrl(absolute);
+  }
   if (isAllowedExternalImageUrl(absolute)) return absolute;
   return '';
 }
@@ -28,13 +30,13 @@ export function getDisplayImageUrl(
   if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) return '';
   const trimmed = rawUrl.trim();
   const absolute = toAbsoluteImageUrl(trimmed) ?? trimmed;
-  if (!isOurStorageUrl(absolute)) {
-    if (isAllowedExternalImageUrl(absolute)) return absolute;
-    if (isAllowedItemImageUrl(absolute)) return absolute;
-    if (absolute.startsWith('/')) return absolute;
-    return categorySlug ? finalizeDisplayUrl(getCategoryHeroImageUrl(categorySlug)) : '';
+  if (isOurStorageUrl(absolute) || isLegacyLiaraStorageUrl(absolute)) {
+    return resolveStorageImageDisplayUrl(absolute);
   }
-  return toLiaraImageSrc(absolute);
+  if (isAllowedExternalImageUrl(absolute)) return absolute;
+  if (isAllowedItemImageUrl(absolute)) return absolute;
+  if (absolute.startsWith('/')) return absolute;
+  return categorySlug ? finalizeDisplayUrl(getCategoryHeroImageUrl(categorySlug)) : '';
 }
 
 export function getListCoverDisplayUrl(input: {

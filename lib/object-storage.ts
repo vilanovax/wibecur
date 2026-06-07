@@ -81,7 +81,7 @@ async function uploadBufferToStorage(
   buffer: Buffer,
   contentType: string,
   folder: string,
-  profile: Parameters<typeof optimizeImage>[1]['profile']
+  profile: ImageProfile
 ): Promise<string | null> {
   const client = await getS3Client();
   const config = await getObjectStorageConfig();
@@ -313,6 +313,24 @@ export async function getObjectByStorageKey(
     return { buffer: Buffer.from(bytes), contentType: res.ContentType ?? undefined };
   } catch (e) {
     console.error('getObjectByStorageKey error:', (e as Error).message);
+  }
+
+  // فایل هنوز migrate نشده — تلاش از Liara قدیمی (سرور، نه مرورگر)
+  try {
+    const legacyUrl = `https://storage.c2.liara.space/${key}`;
+    const res = await axios.get(legacyUrl, {
+      responseType: 'arraybuffer',
+      timeout: 12000,
+      headers: { Accept: 'image/*' },
+      validateStatus: (s) => s === 200,
+    });
+    if (!res.data) return null;
+    const contentType = res.headers['content-type'];
+    return {
+      buffer: Buffer.from(res.data),
+      contentType: typeof contentType === 'string' ? contentType : undefined,
+    };
+  } catch {
     return null;
   }
 }

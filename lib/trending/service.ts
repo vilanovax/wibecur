@@ -248,11 +248,11 @@ export async function getGlobalTrending(
       select: { id: true },
     });
 
-    const allResults: TrendingListResult[] = [];
-    for (const cat of categories) {
-      const top10 = await getTrendingByCategory(prisma, cat.id, 10);
-      allResults.push(...top10);
-    }
+    // محاسبه‌ی هر دسته موازی (به‌جای ترتیبی) تا تأخیر کل کم شود
+    const perCategoryResults = await Promise.all(
+      categories.map((cat) => getTrendingByCategory(prisma, cat.id, 10))
+    );
+    const allResults: TrendingListResult[] = perCategoryResults.flat();
 
     allResults.sort((a, b) => b.score - a.score);
 

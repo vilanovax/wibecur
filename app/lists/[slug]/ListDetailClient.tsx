@@ -87,7 +87,6 @@ type RelatedList = {
 interface ListDetailClientProps {
   list: ListDetail;
   relatedLists: RelatedList[];
-  openSuggestFromQuery?: boolean;
 }
 
 const LIST_VIEW_PREFERENCE_KEY = 'wibe:listViewPreference';
@@ -378,7 +377,6 @@ function ListItemRow({
 export default function ListDetailClient({
   list,
   relatedLists,
-  openSuggestFromQuery,
 }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -414,12 +412,14 @@ export default function ListDetailClient({
     }, 300);
   }, []);
 
+  // پارامتر ?suggest=1 سمت کلاینت خوانده می‌شود تا صفحه‌ی سرور static/ISR بماند
   useEffect(() => {
-    if (openSuggestFromQuery) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('suggest') === '1') {
       setSuggestOpen(true);
       router.replace(`/lists/${list.slug}`, { scroll: false });
     }
-  }, [openSuggestFromQuery, list.slug, router]);
+  }, [list.slug, router]);
 
   const fetchViewerState = useCallback(() => {
     if (!session?.user) return;

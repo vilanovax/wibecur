@@ -134,8 +134,29 @@ async function fetchUsersWhoSavedCount(
  */
 async function fetchOverlapLists(
   prisma: PrismaClient,
-  currentListId: string
+  currentListId: string,
+  categoryId: string | null
 ): Promise<{ listId: string; overlapCount: number }[]> {
+  if (categoryId) {
+    const rows = await prisma.$queryRaw<{ listId: string; overlapCount: number }[]>(
+      Prisma.sql`
+        SELECT b."listId", COUNT(*)::int AS "overlapCount"
+        FROM bookmarks b
+        INNER JOIN lists l ON l.id = b."listId"
+        WHERE b."userId" IN (SELECT "userId" FROM bookmarks WHERE "listId" = ${currentListId})
+          AND b."listId" != ${currentListId}
+          AND l."categoryId" = ${categoryId}
+          AND l."isActive" = true
+          AND l."isPublic" = true
+          AND l."deletedAt" IS NULL
+        GROUP BY b."listId"
+        ORDER BY "overlapCount" DESC
+        LIMIT ${BEHAVIOR_OVERLAP_LIMIT}
+      `
+    );
+    return rows;
+  }
+
   const rows = await prisma.$queryRaw<{ listId: string; overlapCount: number }[]>(
     Prisma.sql`
       SELECT b."listId", COUNT(*)::int AS "overlapCount"
@@ -156,12 +177,13 @@ async function fetchOverlapLists(
  */
 export async function getBehaviorSimilarLists(
   prisma: PrismaClient,
-  currentListId: string
+  currentListId: string,
+  categoryId: string | null = null
 ): Promise<BehaviorOverlapResult | null> {
   const totalUsers = await fetchUsersWhoSavedCount(prisma, currentListId);
   if (totalUsers < MIN_SAVES_FOR_BEHAVIOR) return null;
 
-  const overlapRows = await fetchOverlapLists(prisma, currentListId);
+  const overlapRows = await fetchOverlapLists(prisma, currentListId, categoryId);
   if (overlapRows.length === 0) return null;
 
   const listScores = overlapRows.map((row) => ({
@@ -174,8 +196,7 @@ export async function getBehaviorSimilarLists(
 }
 
 /**
- * واکشی کاندیدها: هم‌دسته یا حداقل یک تگ مشترک
- * فقط فیلدهای لازم، حداکثر CANDIDATES_LIMIT
+ * واکشی کاندیدها: فقط همان دسته (یا در نبود دسته، تگ مشترک)
  */
 export async function fetchCandidates(
   prisma: PrismaClient,
@@ -184,11 +205,31 @@ export async function fetchCandidates(
   const hasTags = currentList.tags.length > 0;
   const hasCategory = !!currentList.categoryId;
 
-  const orConditions: ({ categoryId: string } | { tags: { hasSome: string[] } })[] = [];
-  if (hasCategory) orConditions.push({ categoryId: currentList.categoryId! });
-  if (hasTags) orConditions.push({ tags: { hasSome: currentList.tags } });
+  if (hasCategory) {
+    const rows = await prisma.lists.findMany({
+      where: {
+        ...publicCuratedListWhere,
+        id: { not: currentList.id },
+        categoryId: currentList.categoryId,
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        coverImage: true,
+        saveCount: true,
+        itemCount: true,
+        categoryId: true,
+        tags: true,
+        categories: { select: { id: true, name: true, slug: true, icon: true } },
+        items: { select: { title: true } },
+      },
+      take: CANDIDATES_LIMIT,
+    });
+    return rows as CandidateRow[];
+  }
 
-  if (orConditions.length === 0) {
+  if (!hasTags) {
     return [];
   }
 
@@ -196,7 +237,7 @@ export async function fetchCandidates(
     where: {
       ...publicCuratedListWhere,
       id: { not: currentList.id },
-      OR: orConditions,
+      tags: { hasSome: currentList.tags },
     },
     select: {
       id: true,
@@ -317,8 +358,12 @@ export async function getTopSimilarLists(
     categories: c.categories,
   });
 
-  // ۱) امتیاز رفتاری: «کاربرانی که این لیست را Save کردند، چه لیست‌های دیگری Save کردند؟»
-  const behaviorResult = await getBehaviorSimilarLists(prisma, currentList.id);
+  // ۱) امتیاز رفتاری — فقط لیست‌های همان دسته
+  const behaviorResult = await getBehaviorSimilarLists(
+    prisma,
+    currentList.id,
+    currentList.categoryId
+  );
 
   if (behaviorResult && behaviorResult.listScores.length > 0) {
     const listIds = behaviorResult.listScores.map((s) => s.listId);
@@ -330,6 +375,7 @@ export async function getTopSimilarLists(
       where: {
         ...publicCuratedListWhere,
         id: { in: listIds },
+        ...(currentList.categoryId ? { categoryId: currentList.categoryId } : {}),
       },
       select: {
         id: true,
@@ -404,13 +450,15 @@ export async function getTopSimilarLists(
 
   if (result.length >= TOP_N) return result.slice(0, TOP_N);
 
-  // ۴) Fallback نهایی: محبوب سراسری
-  const need = TOP_N - result.length;
-  const global = await fetchFallbackGlobal(prisma, currentList.id, need + 10);
-  for (const row of global) {
-    if (!pickedIds.has(row.id) && result.length < TOP_N) {
-      result.push(row);
-      pickedIds.add(row.id);
+  // ۴) Fallback نهایی: محبوب سراسری — فقط وقتی دسته مشخص نیست
+  if (!currentList.categoryId) {
+    const need = TOP_N - result.length;
+    const global = await fetchFallbackGlobal(prisma, currentList.id, need + 10);
+    for (const row of global) {
+      if (!pickedIds.has(row.id) && result.length < TOP_N) {
+        result.push(row);
+        pickedIds.add(row.id);
+      }
     }
   }
 

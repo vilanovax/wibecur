@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { buildSlugCandidates, isValidListSlug } from '@/lib/admin/list-slug';
 
 /**
@@ -8,7 +8,8 @@ import { buildSlugCandidates, isValidListSlug } from '@/lib/admin/list-slug';
  */
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const adminUser = await requirePermission('manage_lists');
+    if (adminUser instanceof NextResponse) return adminUser;
 
     const { searchParams } = new URL(request.url);
     const slug = (searchParams.get('slug') ?? '').trim().toLowerCase();

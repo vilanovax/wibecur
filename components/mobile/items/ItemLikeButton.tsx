@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
+
+type LikeState = { isLiked: boolean; likeCount: number };
 
 interface ItemLikeButtonProps {
   itemId: string;
@@ -22,51 +24,49 @@ export default function ItemLikeButton({
 }: ItemLikeButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const [isLiked, setIsLiked] = useState(initialIsLiked);
-  const [likeCount, setLikeCount] = useState(initialLikeCount);
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const isHero = variant === 'hero';
   const isCompact = variant === 'compact';
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchLikeStatus();
-    }
-  }, [session?.user, itemId]);
-
-  const fetchLikeStatus = async () => {
-    try {
+  // وضعیت لایک با react-query کش می‌شود تا ناوبری بین آیتم‌ها (مودال پیش‌نمایش)
+  // و بازدید مجدد همان آیتم، درخواست تکراری نزند.
+  const { data } = useQuery<LikeState>({
+    queryKey: ['item-like', itemId],
+    queryFn: async () => {
       const response = await fetch(`/api/items/${itemId}/like`);
-      const data = await response.json();
-      if (data.success) {
-        setIsLiked(data.data.isLiked);
-        setLikeCount(data.data.likeCount);
-      }
-    } catch (error) {
-      console.error('Error fetching like status:', error);
-    }
-  };
+      const json = await response.json();
+      if (!json.success) throw new Error(json.error || 'like fetch failed');
+      return json.data as LikeState;
+    },
+    enabled: !!session?.user,
+    staleTime: 60 * 1000,
+  });
 
-  const handleToggle = async (e: React.MouseEvent) => {
+  const isLiked = data?.isLiked ?? initialIsLiked;
+  const likeCount = data?.likeCount ?? initialLikeCount;
+
+  const { mutate: toggleLike, isPending: isLoading } = useMutation({
+    mutationFn: async (): Promise<LikeState> => {
+      const response = await fetch(`/api/items/${itemId}/like`, { method: 'POST' });
+      const json = await response.json();
+      if (!json.success) throw new Error(json.error || 'like toggle failed');
+      return json.data as LikeState;
+    },
+    onSuccess: (next) => {
+      queryClient.setQueryData(['item-like', itemId], next);
+    },
+    onError: (error) => {
+      console.error('Error toggling like:', error);
+    },
+  });
+
+  const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!session?.user) return;
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/items/${itemId}/like`, { method: 'POST' });
-      const data = await response.json();
-      if (data.success) {
-        setIsLiked(data.data.isLiked);
-        setLikeCount(data.data.likeCount);
-      }
-    } catch (error) {
-      console.error('Error toggling like:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    toggleLike();
   };
 
   const countLabel = likeCount > 0 ? likeCount.toLocaleString('fa-IR') : null;

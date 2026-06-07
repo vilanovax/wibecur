@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { prisma } from '@/lib/prisma';
@@ -9,12 +10,60 @@ import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
 export const revalidate = 60;
 
+/**
+ * واکشی آیتم — با React cache() تا generateMetadata و بدنه‌ی صفحه در یک request
+ * فقط یک‌بار کوئری بزنند (به‌جای دو کوئری جدا برای همان رکورد).
+ */
+const getItemById = cache((id: string) =>
+  prisma.items.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      imageUrl: true,
+      externalUrl: true,
+      rating: true,
+      voteCount: true,
+      metadata: true,
+      listId: true,
+      order: true,
+      createdAt: true,
+      _count: {
+        select: { comments: true },
+      },
+      item_moderation: { select: { status: true } },
+      lists: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          saveCount: true,
+          userId: true,
+          itemCount: true,
+          categories: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true,
+              color: true,
+            },
+          },
+          users: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  })
+);
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const item = await prisma.items.findUnique({
-    where: { id },
-    select: { title: true, description: true, imageUrl: true },
-  });
+  const item = await getItemById(id);
 
   if (!item) {
     return {
@@ -50,49 +99,7 @@ export default async function ItemDetailPage({
 }) {
   const { id } = await params;
 
-  const item = await prisma.items.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      imageUrl: true,
-      externalUrl: true,
-      rating: true,
-      voteCount: true,
-      metadata: true,
-      listId: true,
-      order: true,
-      _count: {
-        select: { comments: true },
-      },
-      item_moderation: { select: { status: true } },
-      lists: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          saveCount: true,
-          userId: true,
-          itemCount: true,
-          categories: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              icon: true,
-              color: true,
-            },
-          },
-          users: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-    },
-  });
+  const item = await getItemById(id);
 
   if (!item) {
     notFound();
@@ -108,12 +115,19 @@ export default async function ItemDetailPage({
 
   try {
     [listRank, listItemCount, personalSaveCount] = await dbQuery(async () => {
-      const [orderedItems, saveCount] = await Promise.all([
-        prisma.items.findMany({
-          where: { listId: item.listId },
-          select: { id: true },
-          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      // رتبه با count محاسبه می‌شود (index-only) به‌جای کشیدن همه‌ی آیتم‌های لیست.
+      // ترتیب معادلِ orderBy [order asc, createdAt asc] است.
+      const [priorCount, totalCount, saveCount] = await Promise.all([
+        prisma.items.count({
+          where: {
+            listId: item.listId,
+            OR: [
+              { order: { lt: item.order } },
+              { order: item.order, createdAt: { lt: item.createdAt } },
+            ],
+          },
         }),
+        prisma.items.count({ where: { listId: item.listId } }),
         prisma.items.count({
           where: {
             title: { equals: item.title, mode: 'insensitive' },
@@ -122,8 +136,7 @@ export default async function ItemDetailPage({
           },
         }),
       ]);
-      const rank = orderedItems.findIndex((i) => i.id === item.id) + 1;
-      return [rank > 0 ? rank : null, orderedItems.length, saveCount] as const;
+      return [totalCount > 0 ? priorCount + 1 : null, totalCount, saveCount] as const;
     });
   } catch (error) {
     console.warn('[ItemDetailPage] secondary query failed:', error);

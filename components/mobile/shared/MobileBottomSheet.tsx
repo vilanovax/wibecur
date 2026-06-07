@@ -75,6 +75,7 @@ export default function MobileBottomSheet({
 
       <div
         ref={sheetRef}
+        dir="rtl"
         className={`relative flex flex-col rounded-t-2xl bg-wibe-card shadow-2xl ${widthClass} animate-in slide-in-from-bottom duration-300`}
         style={{ maxHeight }}
         onClick={(e) => e.stopPropagation()}
