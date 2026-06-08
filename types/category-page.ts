@@ -86,6 +86,13 @@ export interface CityBreakdown {
   sampleLists: CategoryListCard[];
 }
 
+export interface FilmGenreChip {
+  slug: string;
+  label: string;
+  icon: string;
+  listCount: number;
+}
+
 export interface CategoryPageData {
   category: CategoryInfo;
   metrics: CategoryMetrics;
@@ -101,6 +108,8 @@ export interface CategoryPageData {
   suggestedLists?: CategoryListCard[];
   /** لیست‌های با بیشترین نظر (Most Debated) */
   mostDebatedLists?: CategoryListCard[];
+  /** ژانرها از تگ‌های لیست (صفحه فیلم) */
+  filmGenres?: FilmGenreChip[];
   /** آیتم‌های پربذخیره در دسته (برای Most Saved Items) */
   mostSavedItems?: CategoryItemCard[];
 }

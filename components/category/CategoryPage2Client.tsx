@@ -26,6 +26,7 @@ import {
   MostDebatedLists,
   NewListsCompact,
   CuratorCTABlock,
+  TopFilmCuratorsVIP,
 } from './film';
 import { FILM_PAGE_SHELL } from './film/film-layout';
 
@@ -114,18 +115,24 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
         ? trendingLists[1]
         : null);
     const mostDebated = data.mostDebatedLists ?? [];
+    const filmGenres = data.filmGenres ?? [];
 
     return (
       <main className="bg-wibe-surface pb-2 lg:pb-4">
         <div className={FILM_PAGE_SHELL}>
           <CinematicHero category={category} metrics={metrics} />
-          <GenreScrollBar categorySlug={category.slug} />
+          <GenreScrollBar categorySlug={category.slug} genres={filmGenres} />
           <TrendingPosterGrid
             lists={trendingForGrid}
             categorySlug={category.slug}
           />
           {featuredList && <FeaturedCinematicList list={featuredList} />}
           {mostDebated.length > 0 && <MostDebatedLists lists={mostDebated} />}
+          <TopFilmCuratorsVIP
+            curator={topCuratorSpotlight ?? null}
+            curators={topCurators}
+            categoryName={category.name}
+          />
           <NewListsCompact lists={newLists} categoryName={category.name} />
           <CuratorCTABlock categorySlug={category.slug} />
         </div>

@@ -15,6 +15,7 @@ import { getTrendingByCategory, getListMetrics7d } from '@/lib/trending/service'
 import { resolveListCover } from '@/lib/resolve-list-cover';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
+import { buildFilmGenreChips } from '@/lib/film-genres';
 
 function mapListCover(
   item: { coverImage?: string | null; slug: string; title: string },
@@ -570,7 +571,35 @@ async function getMostDebatedLists(
     _count: { listId: true },
   });
   const sorted = commented.sort((a, b) => b._count.listId - a._count.listId);
-  if (sorted.length === 0) return [];
+  if (sorted.length === 0) {
+    const fallback = await prisma.lists.findMany({
+      where: {
+        categoryId,
+        isActive: true,
+        isPublic: true,
+        users: { role: { not: 'USER' } },
+        likeCount: { gt: 0 },
+      },
+      orderBy: [{ likeCount: 'desc' }, { saveCount: 'desc' }],
+      take: MOST_DEBATED_LIMIT,
+      select: {
+        id: true, title: true, slug: true, description: true, coverImage: true, horizontalImage: true,
+        saveCount: true, likeCount: true, itemCount: true, badge: true, tags: true,
+        users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
+      },
+    });
+    return fallback.map((l) => ({
+      id: l.id, title: l.title, slug: l.slug, description: l.description, coverImage: l.coverImage, horizontalImage: l.horizontalImage,
+      saveCount: l.saveCount ?? 0, likeCount: l.likeCount ?? 0, itemCount: l.itemCount ?? 0,
+      badge: l.badge,
+      creator: l.users
+        ? { id: l.users.id, name: l.users.name, username: l.users.username, image: l.users.image, curatorLevel: l.users.curatorLevel ?? 'EXPLORER' }
+        : { id: '', name: null, username: null, image: null, curatorLevel: 'EXPLORER' },
+      tags: (l.tags ?? []).length > 0 ? l.tags ?? [] : undefined,
+      cityTag: extractCity(l.title, l.tags ?? []),
+      commentCount: 0,
+    }));
+  }
   const listIds = sorted.slice(0, MOST_DEBATED_LIMIT).map((c) => c.listId);
   const lists = await prisma.lists.findMany({
     where: { id: { in: listIds } },
@@ -634,6 +663,32 @@ async function getMostSavedItems(
     }
   }
   return result;
+}
+
+async function getFilmGenres(
+  prisma: PrismaClient,
+  categoryId: string
+) {
+  const lists = await prisma.lists.findMany({
+    where: {
+      categoryId,
+      isActive: true,
+      isPublic: true,
+      users: { role: { not: 'USER' } },
+    },
+    select: { tags: true },
+  });
+
+  const tagCounts = new Map<string, number>();
+  for (const list of lists) {
+    for (const raw of list.tags ?? []) {
+      const label = typeof raw === 'string' ? raw.trim() : '';
+      if (!label) continue;
+      tagCounts.set(label, (tagCounts.get(label) ?? 0) + 1);
+    }
+  }
+
+  return buildFilmGenreChips(tagCounts);
 }
 
 async function getNewLists(
@@ -714,6 +769,7 @@ export async function getCategoryPageData(
     cityBreakdown,
     mostDebatedLists,
     mostSavedItems,
+    filmGenres,
   ] = await Promise.all([
     getCategoryAndMetrics(prisma, categoryId),
     getTrendingAndViralLists(prisma, categoryId),
@@ -726,6 +782,7 @@ export async function getCategoryPageData(
     getCityBreakdown(prisma, categoryId),
     getMostDebatedLists(prisma, categoryId),
     getMostSavedItems(prisma, categoryId),
+    getFilmGenres(prisma, categoryId),
   ]);
 
   return {
@@ -747,5 +804,6 @@ export async function getCategoryPageData(
     cityBreakdown,
     mostDebatedLists: applyListCovers(mostDebatedLists, category.slug),
     mostSavedItems,
+    filmGenres,
   };
 }

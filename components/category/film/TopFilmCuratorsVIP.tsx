@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { CategoryCuratorCard } from '@/types/category-page';
+import { FILM_SECTION } from './film-layout';
 
 const LEVEL_LABELS: Record<string, string> = {
   EXPLORER: 'کاوشگر',
@@ -29,7 +30,7 @@ export default function TopFilmCuratorsVIP({
   const filmScore = Math.min(5, 3.5 + (topCurator.totalSaves + topCurator.totalLikes) / 500).toFixed(1);
 
   return (
-    <section className="px-4 py-8">
+    <section className={FILM_SECTION}>
       <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
         🏆 کیوریتورهای برتر فیلم
       </h2>
