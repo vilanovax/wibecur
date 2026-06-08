@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import Link from 'next/link';
-import { Share2, Heart, Bookmark, ChevronLeft } from 'lucide-react';
+import { Share2, Heart, Bookmark, ChevronLeft, ExternalLink } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
@@ -16,6 +16,15 @@ import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions
 import Toast from '@/components/shared/Toast';
 import { isMovieLikeCategory } from '@/lib/resolve-item-image';
 import { buildItemMetadataFacts, extractItemTip } from '@/lib/item-metadata-display';
+import {
+  entryKindBadgeLabel,
+  entryKindIcon,
+  FACT_TYPE_LABELS,
+  isLightweightListItem,
+  resolveEntryKind,
+  sourceCategorySlugFromItem,
+  type FactType,
+} from '@/lib/list-entry';
 import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
 
 const HERO_COLLAPSE_SCROLL_Y = 120;
@@ -34,6 +43,8 @@ interface ItemDetailClientProps {
     imageUrl: string | null;
     displayImageUrl: string;
     externalUrl: string | null;
+    catalogItemId?: string | null;
+    listNote?: string | null;
     rating: number | null;
     voteCount: number | null;
     metadata: Record<string, unknown> | null;
@@ -105,23 +116,42 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
   });
 
   const categoryName = item.lists.categories?.name ?? null;
-  const categorySlug = item.lists.categories?.slug ?? null;
+  const listCategorySlug = item.lists.categories?.slug ?? null;
+  const itemCategorySlug =
+    sourceCategorySlugFromItem({
+      metadata: item.metadata,
+      catalogItemId: item.catalogItemId,
+    }) ?? listCategorySlug;
+  const entryKind = resolveEntryKind(item);
+  const isLightweight = isLightweightListItem(item);
   const meta = (item.metadata || {}) as Record<string, string | number>;
   const year = meta.year ?? null;
   const ratingLabel = displayRating(item.rating ?? (meta.imdbRating as number | undefined) ?? null);
   const genre = meta.genre ?? categoryName;
   const likeCount = item.voteCount ?? 0;
-  const metadataFacts = buildItemMetadataFacts(item.metadata, categorySlug, {
-    fallbackImdbRating: meta.imdbRating ?? item.rating,
-  });
+  const metadataFacts = isLightweight
+    ? []
+    : buildItemMetadataFacts(item.metadata, itemCategorySlug, {
+        fallbackImdbRating: meta.imdbRating ?? item.rating,
+      });
   const itemTip = extractItemTip(item.metadata);
+  const listNote = item.listNote?.trim() || null;
+  const factTypeRaw = item.metadata?.factType;
+  const factLabel =
+    typeof factTypeRaw === 'string'
+      ? FACT_TYPE_LABELS[factTypeRaw as FactType] ?? factTypeRaw
+      : null;
+  const bodyText =
+    item.description?.trim() ||
+    (isLightweight ? itemTip : null) ||
+    null;
 
   const canTruncateDescription =
-    !!item.description && item.description.length > DESCRIPTION_TRUNCATE;
+    !!bodyText && bodyText.length > DESCRIPTION_TRUNCATE;
   const shortDescription =
     canTruncateDescription && !descriptionExpanded
-      ? item.description!.slice(0, DESCRIPTION_TRUNCATE) + '…'
-      : item.description;
+      ? bodyText!.slice(0, DESCRIPTION_TRUNCATE) + '…'
+      : bodyText;
 
   const hasSocialProof =
     (item.listRank != null && item.listItemCount > 0) ||
@@ -169,6 +199,49 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
     <>
       <main className="pb-2" dir="rtl">
         {/* Hero */}
+        {isLightweight ? (
+          <section className="relative overflow-hidden rounded-b-2xl bg-gradient-to-br from-amber-50 via-white to-violet-50 px-4 pb-5 pt-4 lg:rounded-2xl lg:px-6 lg:pb-6 lg:pt-5">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="absolute top-3 end-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-foreground shadow-sm transition-colors hover:bg-white active:scale-95"
+              aria-label="اشتراک‌گذاری"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+
+            <Link
+              href={`/lists/${item.lists.slug}`}
+              className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 wibe-caption font-medium text-wibe-secondary shadow-sm"
+            >
+              <span>{item.lists.categories?.icon || '📋'}</span>
+              <span className="truncate">از لیست: {item.lists.title}</span>
+            </Link>
+
+            <div className="flex items-start gap-3">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm ring-1 ring-amber-200/70">
+                {entryKindIcon(entryKind)}
+              </span>
+              <div className="min-w-0 flex-1 pt-1">
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  <span className="inline-flex rounded-md bg-white/90 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary shadow-sm">
+                    {entryKindBadgeLabel(entryKind)}
+                  </span>
+                  {factLabel && (
+                    <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
+                      {factLabel}
+                    </span>
+                  )}
+                </div>
+                {item.title?.trim() && (
+                  <h1 className="text-xl font-bold leading-snug text-foreground sm:text-2xl">
+                    {item.title}
+                  </h1>
+                )}
+              </div>
+            </div>
+          </section>
+        ) : (
         <section
           className={`relative w-full overflow-hidden transition-[height] duration-500 ease-out lg:!h-[min(300px,36vh)] lg:rounded-2xl lg:transition-none ${
             heroCollapsed ? 'h-[5.5rem]' : 'h-[19rem] sm:h-[21rem]'
@@ -180,8 +253,8 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               imageUrl={item.imageUrl}
               title={item.title}
               metadata={item.metadata}
-              categorySlug={categorySlug}
-              enrichPoster={isMovieLikeCategory(categorySlug)}
+              categorySlug={itemCategorySlug}
+              enrichPoster={isMovieLikeCategory(itemCategorySlug)}
               priority
               fallbackIcon={item.lists.categories?.icon || '📋'}
               className={`h-full w-full object-cover object-top transition-transform duration-500 ease-out ${
@@ -263,9 +336,10 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             </div>
           </div>
         </section>
+        )}
 
         {/* اکشن‌های شناور */}
-        <div className="relative z-20 -mt-5 px-4 lg:-mt-6 lg:px-0">
+        <div className={`relative z-20 px-4 lg:px-0 ${isLightweight ? 'mt-4' : '-mt-5 lg:-mt-6'}`}>
           <div className="flex items-center justify-start gap-2 rounded-2xl border border-wibe/70 bg-wibe-card/95 px-3 py-2.5 shadow-md backdrop-blur-md lg:w-fit lg:px-4">
             <ItemDetailTopActions itemId={item.id} likeCount={likeCount} variant="inline" />
           </div>
@@ -317,36 +391,42 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               />
             )}
 
-            {itemTip && <ItemTipCard tip={itemTip} />}
+            {itemTip && !isLightweight && <ItemTipCard tip={itemTip} />}
+            {listNote && listNote !== bodyText && <ItemTipCard tip={listNote} />}
 
-            {item.description ? (
+            {bodyText ? (
               <div className="rounded-xl bg-gray-50/80 px-3.5 py-3.5 text-start lg:bg-transparent lg:p-0">
                 <p className="text-[0.9375rem] leading-[1.8] text-foreground/80 whitespace-pre-line">
                   {shortDescription}
                 </p>
-                {(canTruncateDescription || item.externalUrl) && (
-                  <div className="mt-2 flex flex-wrap items-center justify-start gap-[5px]">
-                    {canTruncateDescription && (
-                      <button
-                        type="button"
-                        onClick={() => setDescriptionExpanded((v) => !v)}
-                        className="wibe-caption font-semibold text-primary transition-colors hover:text-primary-dark"
-                      >
-                        {descriptionExpanded ? 'کمتر' : 'بیشتر بخوان'}
-                      </button>
-                    )}
-                    {item.externalUrl && (
-                      <a
-                        href={item.externalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="wibe-caption font-medium text-primary/80 underline-offset-2 hover:text-primary hover:underline"
-                      >
-                        منبع خارجی
-                      </a>
-                    )}
-                  </div>
-                )}
+                <div className="mt-2 flex flex-wrap items-center justify-start gap-2">
+                  {canTruncateDescription && (
+                    <button
+                      type="button"
+                      onClick={() => setDescriptionExpanded((v) => !v)}
+                      className="wibe-caption font-semibold text-primary transition-colors hover:text-primary-dark"
+                    >
+                      {descriptionExpanded ? 'کمتر' : 'بیشتر بخوان'}
+                    </button>
+                  )}
+                  {item.externalUrl && (
+                    <a
+                      href={item.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={
+                        isLightweight && entryKind === 'link'
+                          ? 'inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark'
+                          : 'wibe-caption font-medium text-primary/80 underline-offset-2 hover:text-primary hover:underline'
+                      }
+                    >
+                      {isLightweight && entryKind === 'link' && (
+                        <ExternalLink className="h-4 w-4" aria-hidden />
+                      )}
+                      {isLightweight && entryKind === 'link' ? 'باز کردن لینک' : 'منبع خارجی'}
+                    </a>
+                  )}
+                </div>
               </div>
             ) : (
               <p className="py-3 text-start wibe-caption text-wibe-secondary">
@@ -356,7 +436,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           </section>
 
           <ItemDiscoverySection
-            categorySlug={categorySlug}
+            categorySlug={itemCategorySlug}
             similarItems={similarItems}
             similarLoading={similarLoading}
             alsoLikedItems={alsoLikedItems}

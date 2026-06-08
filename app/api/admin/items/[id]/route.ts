@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
@@ -10,6 +11,11 @@ import {
   isCatalogInList,
   syncPlacementsFromCatalog,
 } from '@/lib/catalog-items';
+import {
+  isLightweightEntryKind,
+  isMixedListCategory,
+  parseEntryKind,
+} from '@/lib/list-entry';
 
 // GET /api/admin/items/[id] - Get single item
 export async function GET(
@@ -65,6 +71,7 @@ export async function PUT(
       commentsEnabled,
       maxComments,
       listId,
+      listNote,
     } = body;
 
     // Check if item exists
@@ -106,10 +113,26 @@ export async function PUT(
 
     const finalImageUrl = imageUrl !== undefined ? await ensureImageInLiara(imageUrl, 'items') : undefined;
     const meta = metadataValidation.data || {};
+    const metaRecord = meta as Record<string, unknown>;
+    const categorySlug = existingItem.lists.categories.slug;
     const targetListId = listId !== undefined ? listId : existingItem.listId;
 
+    const entryKind =
+      parseEntryKind((metadata as Record<string, unknown> | undefined)?.entryKind) ??
+      parseEntryKind(metaRecord.entryKind) ??
+      (existingItem.catalogItemId ? 'catalog_ref' : 'tip');
+
+    const isLightweightPlacement =
+      !existingItem.catalogItemId &&
+      isMixedListCategory(categorySlug) &&
+      isLightweightEntryKind(entryKind);
+
+    if (isLightweightPlacement) {
+      metaRecord.entryKind = entryKind;
+    }
+
     let catalogItemId = existingItem.catalogItemId;
-    if (!catalogItemId) {
+    if (!catalogItemId && !isLightweightPlacement) {
       const catalog = await backfillCatalogForItem(prisma, id);
       catalogItemId = catalog?.id ?? null;
     }
@@ -125,8 +148,7 @@ export async function PUT(
       );
     }
 
-    if (catalogItemId) {
-      const categorySlug = existingItem.lists.categories.slug;
+    if (catalogItemId && !isLightweightPlacement) {
       await prisma.catalog_items.update({
         where: { id: catalogItemId },
         data: {
@@ -146,15 +168,16 @@ export async function PUT(
     const item = await prisma.items.update({
       where: { id },
       data: {
-        ...(catalogItemId
-          ? {}
-          : {
+        ...(isLightweightPlacement || !catalogItemId
+          ? {
               title,
               description,
               ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
               externalUrl,
-              metadata: meta,
-            }),
+              metadata: metaRecord as Prisma.InputJsonValue,
+            }
+          : {}),
+        ...(listNote !== undefined && { listNote: listNote?.trim() || null }),
         order,
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
         maxComments: maxComments !== undefined ? maxComments : null,

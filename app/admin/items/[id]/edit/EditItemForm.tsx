@@ -20,6 +20,14 @@ import {
 } from 'lucide-react';
 import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 import { resolveAdminItemThumbnail } from '@/lib/resolve-admin-item-image';
+import EntryKindSelector from '@/components/admin/items/EntryKindSelector';
+import {
+  entryKindBadgeLabel,
+  isLightweightEntryKind,
+  isMixedListCategory,
+  resolveEntryKind,
+  type EntryKind,
+} from '@/lib/list-entry';
 
 interface EditItemFormProps {
   item: any;
@@ -49,6 +57,14 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
   const [imageSearchModalOpen, setImageSearchModalOpen] = useState(false);
   const [mediaTab, setMediaTab] = useState<ImageUploadDisplayMode>('upload');
   const [metadataOpen, setMetadataOpen] = useState(true);
+  const [entryKind, setEntryKind] = useState<EntryKind>(() =>
+    resolveEntryKind({
+      catalogItemId: item.catalogItemId,
+      metadata: item.metadata,
+      externalUrl: item.externalUrl,
+      imageUrl: item.imageUrl,
+    })
+  );
 
   const [formData, setFormData] = useState({
     title: item.title || '',
@@ -64,6 +80,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
     externalUrl: item.externalUrl || '',
     listId: item.listId || '',
     order: item.order || 0,
+    listNote: item.listNote || '',
     metadata: item.metadata || {},
     commentsEnabled: item.commentsEnabled !== undefined ? item.commentsEnabled : true,
     maxComments: item.maxComments ?? null,
@@ -76,8 +93,23 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
 
   const categorySlug = selectedList?.categories?.slug;
   const isFilm = isFilmCategory(categorySlug);
+  const isMixedList = isMixedListCategory(categorySlug);
+  const hasCatalog = Boolean(item.catalogItemId);
+  const isLightweightMode =
+    isMixedList && !hasCatalog && isLightweightEntryKind(entryKind);
   const backHref = `/admin/lists/${formData.listId}`;
   const catalogUsageCount = item.catalog_items?._count?.items ?? 0;
+
+  useEffect(() => {
+    if (!isMixedList || hasCatalog) return;
+    setFormData((prev) => ({
+      ...prev,
+      metadata: {
+        ...(prev.metadata as Record<string, unknown>),
+        entryKind,
+      },
+    }));
+  }, [entryKind, isMixedList, hasCatalog]);
 
   useEffect(() => {
     const form = formRef.current;
@@ -235,10 +267,34 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
     setError('');
 
     try {
+      let title = formData.title.trim();
+      const description = formData.description.trim();
+      if (isLightweightMode && !title && description) {
+        title = description.slice(0, 80).trim();
+      }
+      if (!title) {
+        setError('عنوان الزامی است');
+        setLoading(false);
+        return;
+      }
+      if (isLightweightMode && entryKind === 'link' && !formData.externalUrl.trim()) {
+        setError('برای ورودی لینک، آدرس URL الزامی است');
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch(`/api/admin/items/${item.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          title,
+          description,
+          metadata: {
+            ...(formData.metadata as Record<string, unknown>),
+            ...(isMixedList && !hasCatalog ? { entryKind } : {}),
+          },
+        }),
       });
 
       const data = await res.json();
@@ -304,10 +360,25 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
         >
           <Info className="w-5 h-5 shrink-0 mt-0.5 text-violet-600" />
           <div>
-            <p className="font-semibold">کاتالوگ مشترک</p>
+            <p className="font-semibold">کاتالوگ مشترک · {entryKindBadgeLabel('catalog_ref')}</p>
             <p className="text-xs mt-0.5 text-violet-800/90 dark:text-violet-300/90">
               تغییر عنوان و تصویر در{' '}
               <strong>{catalogUsageCount || 1}</strong> لیست اعمال می‌شود.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isLightweightMode && (
+        <div
+          className="mb-6 flex items-start gap-3 rounded-xl border border-sky-200/80 bg-sky-50/80 dark:bg-sky-950/30 dark:border-sky-800 px-4 py-3 text-sm text-sky-900 dark:text-sky-200"
+          dir="rtl"
+        >
+          <Info className="w-5 h-5 shrink-0 mt-0.5 text-sky-600" />
+          <div>
+            <p className="font-semibold">ورودی سبک — فقط در همین لیست</p>
+            <p className="text-xs mt-0.5 opacity-90">
+              بدون موجودیت کاتالوگ؛ تغییرات فقط روی جایگاه این لیست است.
             </p>
           </div>
         </div>
@@ -368,7 +439,13 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start">
+        {isLightweightMode && (
+          <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6">
+            <EntryKindSelector value={entryKind} onChange={setEntryKind} />
+          </section>
+        )}
+
+        <div className={`grid grid-cols-1 gap-6 items-start ${isLightweightMode ? '' : 'xl:grid-cols-[1fr_320px]'}`}>
           {/* ستون اصلی */}
           <div className="space-y-6 min-w-0">
             {/* اطلاعات اصلی */}
@@ -405,7 +482,13 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                   value={formData.title}
                   onChange={handleChange}
                   className={inputClass}
-                  placeholder="عنوان آیتم..."
+                  placeholder={
+                    isLightweightMode && entryKind === 'link'
+                      ? 'عنوان لینک'
+                      : isLightweightMode
+                        ? 'عنوان کوتاه'
+                        : 'عنوان آیتم...'
+                  }
                 />
               </div>
 
@@ -436,13 +519,38 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                   value={formData.description}
                   onChange={handleChange}
                   className={inputClass}
-                  placeholder="توضیحات آیتم (اختیاری)..."
+                  placeholder={
+                    isLightweightMode
+                      ? entryKind === 'fact'
+                        ? 'متن فکت علمی...'
+                        : entryKind === 'link'
+                          ? 'توضیح کوتاه (اختیاری)'
+                          : 'متن نکته یا داده'
+                      : 'توضیحات آیتم (اختیاری)...'
+                  }
                 />
               </div>
+
+              {isLightweightMode && (
+                <div>
+                  <label htmlFor="listNote" className="block text-sm font-medium text-admin-text-primary dark:text-white mb-2">
+                    یادداشت لیست (اختیاری)
+                  </label>
+                  <textarea
+                    id="listNote"
+                    name="listNote"
+                    rows={2}
+                    value={formData.listNote}
+                    onChange={handleChange}
+                    className={inputClass}
+                    placeholder="نکتهٔ ویژه فقط برای این لیست"
+                  />
+                </div>
+              )}
             </section>
 
             {/* اطلاعات تکمیلی — تاشو */}
-            {categorySlug && (
+            {categorySlug && !isLightweightMode && (
               <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 overflow-hidden">
                 <button
                   type="button"
@@ -489,6 +597,35 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
               </section>
             )}
 
+            {isLightweightMode && entryKind === 'fact' && (
+              <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6 space-y-3">
+                <label htmlFor="factType" className="block text-sm font-medium text-admin-text-primary dark:text-white">
+                  دستهٔ فکت
+                </label>
+                <select
+                  id="factType"
+                  value={String((formData.metadata as Record<string, unknown>)?.factType ?? 'general')}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      metadata: {
+                        ...(prev.metadata as Record<string, unknown>),
+                        entryKind,
+                        factType: e.target.value,
+                      },
+                    }))
+                  }
+                  className={inputClass}
+                >
+                  <option value="science">علمی</option>
+                  <option value="health">سلامت</option>
+                  <option value="productivity">بهره‌وری</option>
+                  <option value="family">خانواده</option>
+                  <option value="general">عمومی</option>
+                </select>
+              </section>
+            )}
+
             {/* تنظیمات */}
             <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6 space-y-4">
               <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-2">
@@ -498,6 +635,9 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
               <div>
                 <label htmlFor="externalUrl" className="block text-sm font-medium text-admin-text-primary dark:text-white mb-2">
                   لینک خارجی
+                  {isLightweightMode && entryKind === 'link' && (
+                    <span className="text-red-500 text-xs"> *</span>
+                  )}
                 </label>
                 <input
                   type="url"
@@ -559,6 +699,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           </div>
 
           {/* ستون تصویر — sticky در دسکتاپ */}
+          {!isLightweightMode && (
           <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-5 xl:sticky xl:top-4">
             <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-4">
               تصویر آیتم
@@ -597,6 +738,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
               categorySlug={selectedList?.categories?.slug}
             />
           </section>
+          )}
         </div>
       </form>
 
