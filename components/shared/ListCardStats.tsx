@@ -3,6 +3,9 @@ import { Bookmark, Package } from 'lucide-react';
 interface ListCardStatsProps {
   saves: number;
   itemCount: number;
+  /** ذخیره در بازهٔ اخیر (مثلاً ۷ روز) — اولویت نمایش در overlay */
+  periodSaves?: number;
+  periodLabel?: string;
   /** compact = یک خط کوتاه | inline = داخل overlay سفید */
   variant?: 'default' | 'compact' | 'overlay' | 'minimal';
   className?: string;
@@ -12,10 +15,18 @@ interface ListCardStatsProps {
 export default function ListCardStats({
   saves,
   itemCount,
+  periodSaves,
+  periodLabel = 'این هفته',
   variant = 'default',
   className = '',
 }: ListCardStatsProps) {
   const saveLabel = saves.toLocaleString('fa-IR');
+  const periodLabelText =
+    periodSaves != null && periodSaves > 0
+      ? `+${periodSaves.toLocaleString('fa-IR')} ${periodLabel}`
+      : saves > 0
+        ? `${saveLabel} ذخیره`
+        : 'ترند';
 
   if (variant === 'overlay') {
     return (
@@ -24,7 +35,7 @@ export default function ListCardStats({
       >
         <Bookmark className="h-3 w-3 shrink-0 max-lg:opacity-90 lg:h-4 lg:w-4" />
         <span className="line-clamp-1">
-          {saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم
+          {periodLabelText} · {itemCount.toLocaleString('fa-IR')} آیتم
         </span>
       </p>
     );

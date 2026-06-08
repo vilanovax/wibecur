@@ -7,6 +7,7 @@ export type SidebarBadges = {
   commentReportsOpen: number;
   commentsAction: number;
   itemReportsOpen: number;
+  suggestionsPending: number;
 };
 
 const EMPTY: SidebarBadges = {
@@ -14,6 +15,7 @@ const EMPTY: SidebarBadges = {
   commentReportsOpen: 0,
   commentsAction: 0,
   itemReportsOpen: 0,
+  suggestionsPending: 0,
 };
 
 export function useSidebarBadges(enabled = true) {

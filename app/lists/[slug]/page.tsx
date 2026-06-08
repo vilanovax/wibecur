@@ -46,7 +46,20 @@ const getListBySlug = cache((slug: string) =>
         },
       },
       users: { select: { id: true, name: true, image: true, username: true, curatorLevel: true, role: true, viralListsCount: true, totalLikesReceived: true } },
-      items: { orderBy: { order: 'asc' }, select: { id: true, title: true, description: true, imageUrl: true, externalUrl: true, rating: true, metadata: true } },
+      items: {
+        orderBy: { order: 'asc' },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          imageUrl: true,
+          externalUrl: true,
+          catalogItemId: true,
+          listNote: true,
+          rating: true,
+          metadata: true,
+        },
+      },
       _count: { select: { items: true, list_comments: true } },
     },
   })

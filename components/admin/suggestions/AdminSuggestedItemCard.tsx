@@ -7,8 +7,6 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  User,
-  Calendar,
   Package,
   Edit,
   ExternalLink,
@@ -22,6 +20,7 @@ import Image from 'next/image';
 
 export interface AdminSuggestedItemSuggestion {
   id: string;
+  source?: 'form' | 'menu';
   title: string;
   description: string | null;
   imageUrl: string | null;
@@ -52,34 +51,11 @@ interface AdminSuggestedItemCardProps {
   onToggleSelect?: (id: string) => void;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const config = {
-    pending: {
-      label: 'در انتظار',
-      className: 'bg-amber-50 text-amber-700 border-amber-200',
-      dot: 'bg-amber-500',
-    },
-    approved: {
-      label: 'تأیید شده',
-      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      dot: 'bg-emerald-500',
-    },
-    rejected: {
-      label: 'رد شده',
-      className: 'bg-red-50 text-red-700 border-red-200',
-      dot: 'bg-red-500',
-    },
-  };
-  const c = config[status as keyof typeof config] || config.pending;
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${c.className}`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full ${c.dot} ${status === 'pending' ? 'animate-pulse' : ''}`} />
-      {c.label}
-    </span>
-  );
-}
+const STATUS_LABEL: Record<string, { label: string; className: string }> = {
+  pending: { label: 'در انتظار', className: 'bg-amber-50 text-amber-700' },
+  approved: { label: 'تأیید شده', className: 'bg-emerald-50 text-emerald-700' },
+  rejected: { label: 'رد شده', className: 'bg-red-50 text-red-700' },
+};
 
 export default function AdminSuggestedItemCard({
   suggestion,
@@ -95,220 +71,184 @@ export default function AdminSuggestedItemCard({
   onToggleSelect,
 }: AdminSuggestedItemCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [descExpanded, setDescExpanded] = useState(false);
 
-  const timeAgo = formatDistanceToNow(new Date(suggestion.createdAt), { addSuffix: true, locale: faIR });
-  const categoryName = suggestion.lists?.categories?.name ?? null;
-  const listSlug = suggestion.lists?.slug;
+  const timeAgo = formatDistanceToNow(new Date(suggestion.createdAt), {
+    addSuffix: true,
+    locale: faIR,
+  });
   const listTitle = suggestion.lists?.title ?? '';
-  const suggestedByName = suggestion.users?.name || suggestion.users?.email || '—';
-  const description = suggestion.description?.trim() || null;
-  const showExpand = description && description.length > 120;
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    if (!isBulkMode || !onToggleSelect) return;
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('a') || target.closest('[role="menu"]')) return;
-    onToggleSelect(suggestion.id);
-  };
+  const listSlug = suggestion.lists?.slug;
+  const suggestedBy = suggestion.users?.name || suggestion.users?.email || 'کاربر';
+  const category = suggestion.lists?.categories;
+  const description = suggestion.description?.trim();
+  const statusCfg = STATUS_LABEL[suggestion.status] ?? STATUS_LABEL.pending;
+  const isPending = suggestion.status === 'pending';
 
   return (
-    <div
-      role={isBulkMode ? 'button' : undefined}
-      tabIndex={isBulkMode ? 0 : undefined}
-      onClick={handleCardClick}
-      onKeyDown={(e) => {
-        if (isBulkMode && onToggleSelect && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          onToggleSelect(suggestion.id);
-        }
-      }}
-      className={`bg-white rounded-xl border shadow-sm transition-all duration-300 ${
+    <article
+      className={`group rounded-xl border transition-all ${
         isRemoving ? 'opacity-60 pointer-events-none' : ''
       } ${
-        isBulkMode ? 'cursor-pointer' : ''
-      } ${
         isSelected
-          ? 'border-primary ring-2 ring-primary/20 bg-primary/5'
-          : 'border-gray-100'
+          ? 'border-violet-300 bg-violet-50/40 ring-1 ring-violet-200'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
       }`}
     >
-      {/* Header Row — RTL */}
-      <div className="flex items-start justify-between gap-3 p-4 pb-2">
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {isBulkMode && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleSelect?.(suggestion.id);
-              }}
-              className={`flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
-                isSelected
-                  ? 'bg-primary border-primary text-white'
-                  : 'border-gray-300 bg-white hover:border-primary/50'
-              }`}
-              aria-label={isSelected ? 'لغو انتخاب' : 'انتخاب'}
-            >
-              {isSelected && <Check className="w-3.5 h-3.5" />}
-            </button>
-          )}
-          <StatusBadge status={suggestion.status} />
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setMenuOpen((o) => !o)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              aria-label="منو"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-            {menuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  aria-hidden
-                  onClick={() => setMenuOpen(false)}
-                />
-                <div className="absolute right-0 left-auto top-full mt-1 z-20 w-48 py-1 bg-white rounded-xl border border-gray-200 shadow-lg min-w-[11rem]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onEdit(suggestion);
-                      setMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-right"
-                  >
-                    <Edit className="w-4 h-4" />
-                    ویرایش
-                  </button>
-                  {suggestion.externalUrl && (
-                    <a
-                      href={suggestion.externalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-right"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      مشاهده آیتم
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onViewList(suggestion);
-                      setMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-right"
-                  >
-                    <ListIcon className="w-4 h-4" />
-                    مشاهده لیست
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onDelete(suggestion);
-                      setMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-right"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    حذف کامل
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-gray-900 text-base truncate">{suggestion.title}</h3>
-          <Link
-            href={listSlug ? `/lists/${listSlug}` : '#'}
-            className="text-sm text-primary hover:underline mt-0.5 block truncate"
-          >
-            برای لیست: {listTitle}
-          </Link>
-        </div>
-      </div>
-
-      {/* Body Row — Thumbnail + Description */}
-      <div className="flex gap-3 px-4 pb-3">
-        <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-gray-100">
+      <div className="flex gap-3 p-3 md:p-4">
+        {/* پوستر */}
+        <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded-lg bg-gray-100 md:h-16 md:w-12">
           {suggestion.imageUrl ? (
             <Image
               src={suggestion.imageUrl}
-              alt={suggestion.title}
-              width={56}
-              height={56}
-              className="w-full h-full object-cover"
+              alt=""
+              width={48}
+              height={64}
+              className="h-full w-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <Package className="w-7 h-7" />
+            <div className="flex h-full w-full items-center justify-center text-gray-300">
+              <Package className="h-5 w-5" />
             </div>
           )}
+          {isBulkMode && (
+            <button
+              type="button"
+              onClick={() => onToggleSelect?.(suggestion.id)}
+              className={`absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 text-[10px] ${
+                isSelected
+                  ? 'border-violet-600 bg-violet-600 text-white'
+                  : 'border-gray-300 bg-white text-transparent'
+              }`}
+              aria-label="انتخاب"
+            >
+              <Check className="h-3 w-3" />
+            </button>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          {description ? (
-            <div className="text-sm text-gray-600 leading-relaxed">
-              <p className={descExpanded ? '' : 'line-clamp-2'}>
-                {description}
+
+        {/* محتوا */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-bold text-gray-900">{suggestion.title}</h3>
+              <p className="mt-0.5 truncate text-sm text-gray-500">
+                {listSlug ? (
+                  <Link href={`/lists/${listSlug}`} className="hover:text-violet-600 hover:underline">
+                    {listTitle}
+                  </Link>
+                ) : (
+                  listTitle
+                )}
+                <span className="mx-1.5 text-gray-300">·</span>
+                {suggestedBy}
+                <span className="mx-1.5 text-gray-300">·</span>
+                {timeAgo}
               </p>
-              {showExpand && (
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1">
+              <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${statusCfg.className}`}>
+                {statusCfg.label}
+              </span>
+              {suggestion.source === 'menu' && (
+                <span className="rounded-md bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700">
+                  منو
+                </span>
+              )}
+              <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setDescExpanded((e) => !e)}
-                  className="text-xs text-primary hover:underline mt-0.5"
+                  onClick={() => setMenuOpen((o) => !o)}
+                  className="rounded-lg p-1.5 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100"
+                  aria-label="گزینه‌ها"
                 >
-                  {descExpanded ? 'نمایش کمتر' : 'نمایش بیشتر'}
+                  <MoreVertical className="h-4 w-4" />
                 </button>
-              )}
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} aria-hidden />
+                    <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                      {suggestion.source !== 'menu' && (
+                        <button
+                          type="button"
+                          onClick={() => { onEdit(suggestion); setMenuOpen(false); }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          <Edit className="h-4 w-4" /> ویرایش
+                        </button>
+                      )}
+                      {suggestion.externalUrl && (
+                        <a
+                          href={suggestion.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <ExternalLink className="h-4 w-4" /> لینک
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => { onViewList(suggestion); setMenuOpen(false); }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <ListIcon className="h-4 w-4" /> لیست
+                      </button>
+                      {isPending && (
+                        <button
+                          type="button"
+                          onClick={() => { onDelete(suggestion); setMenuOpen(false); }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" /> حذف
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-gray-400">بدون توضیح</p>
+          </div>
+
+          {description && (
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-gray-600">{description}</p>
+          )}
+
+          {category?.name && (
+            <span className="mt-2 inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+              {category.icon} {category.name}
+            </span>
+          )}
+
+          {isPending && (
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                disabled={processing}
+                onClick={() => onApprove(suggestion)}
+                className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 md:flex-none md:px-5"
+              >
+                {processing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-4 w-4" />
+                )}
+                تأیید
+              </button>
+              <button
+                type="button"
+                disabled={processing}
+                onClick={() => onReject(suggestion)}
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                <XCircle className="h-4 w-4" />
+                رد
+              </button>
+            </div>
           )}
         </div>
       </div>
-
-      {/* Meta Row */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pb-3 text-xs text-gray-500">
-        <span className="flex items-center gap-1">
-          <User className="w-3.5 h-3.5" />
-          {suggestedByName}
-        </span>
-        <span className="flex items-center gap-1">
-          <Calendar className="w-3.5 h-3.5" />
-          {timeAgo}
-        </span>
-        {categoryName && (
-          <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-600">{categoryName}</span>
-        )}
-      </div>
-
-      {/* Action Row — فقط برای pending */}
-      {suggestion.status === 'pending' && (
-        <div className="flex items-center gap-2 p-4 pt-0 border-t border-gray-100">
-          <button
-            type="button"
-            disabled={processing}
-            onClick={() => onApprove(suggestion)}
-            className="h-10 px-4 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2 flex-1"
-          >
-            {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-            تأیید
-          </button>
-          <button
-            type="button"
-            disabled={processing}
-            onClick={() => onReject(suggestion)}
-            className="h-10 px-4 rounded-xl border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <XCircle className="w-4 h-4" />
-            رد
-          </button>
-        </div>
-      )}
-    </div>
+    </article>
   );
 }

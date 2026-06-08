@@ -12,6 +12,24 @@ export function normalizeSuggestionTitle(text: string): string {
     .replace(/\s+/g, ' ');
 }
 
+/** بخش اصلی عنوان قبل از خط تیره (مثلاً «Fight Club» از «Fight Club - باشگاه مشت‌زنی») */
+export function primarySuggestionTitle(text: string): string {
+  const norm = normalizeSuggestionTitle(text);
+  const primary = norm.split(/[-–—|]/)[0]?.trim();
+  return primary && primary.length >= 2 ? primary : norm;
+}
+
+/** تطبیق عنوان پیشنهاد با آیتم/کاتالوگ موجود — حتی با زیرعنوان فارسی */
+export function catalogTitlesMatch(a: string, b: string): boolean {
+  const na = normalizeSuggestionTitle(a);
+  const nb = normalizeSuggestionTitle(b);
+  if (na === nb) return true;
+  const pa = primarySuggestionTitle(a);
+  const pb = primarySuggestionTitle(b);
+  if (pa === pb && pa.length >= 3) return true;
+  return false;
+}
+
 export type DuplicateSuggestionResult =
   | { exists: false }
   | { exists: true; suggestionCommentId?: string };

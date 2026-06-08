@@ -421,28 +421,6 @@ export default function UserListDetailClient({
             )}
           </div>
 
-          {list.isPublic && (
-            <div className="px-4 py-4 bg-wibe-card mx-4 rounded-lg border border-wibe">
-              <div className="flex items-center gap-3">
-                {list.users.image ? (
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                    <ImageWithFallback src={list.users.image} alt={list.users.name || list.users.email} className="object-cover w-full h-full" />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                    {(list.users.name || list.users.email).charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <p className="wibe-caption text-wibe-secondary">ایجاد شده توسط</p>
-                  <p className="wibe-small font-medium text-foreground">
-                    {list.users.name || list.users.email.split('@')[0]}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {list.isPublic && list.commentsEnabled && (
             <div className="px-4">
               <ListCommentSection listId={list.id} />

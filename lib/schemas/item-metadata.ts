@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ENTRY_KINDS, FACT_TYPES } from '@/lib/list-entry';
 
 const tipField = {
   tip: z
@@ -77,9 +78,42 @@ export const CafeMetadataSchema = z.object({
 export type CafeMetadata = z.infer<typeof CafeMetadataSchema>;
 
 // ===================================
+// Mixed / Lifestyle entry metadata
+// ===================================
+export const LifestyleEntrySchema = z.object({
+  ...tipField,
+  entryKind: z.enum(ENTRY_KINDS).default('tip'),
+  factType: z.enum(FACT_TYPES).optional(),
+  sourceCategorySlug: z.string().optional(),
+  tags: z.array(z.string().min(1)).max(8).optional(),
+  duration: z.string().max(40).optional(),
+});
+
+export type LifestyleEntryMetadata = z.infer<typeof LifestyleEntrySchema>;
+
+const MIXED_CATEGORY_SLUGS = new Set([
+  'lifestyle',
+  'family',
+  'productivity',
+  'health',
+  'travel',
+  'general',
+  'podcast',
+  'podcasts',
+]);
+
+function isMixedCategorySlug(slug: string): boolean {
+  const s = slug.toLowerCase();
+  if (MIXED_CATEGORY_SLUGS.has(s)) return true;
+  return !['movie', 'movies', 'film', 'series', 'cinema', 'book', 'books', 'cafe', 'restaurant'].some(
+    (key) => s === key || s.includes(key)
+  );
+}
+
+// ===================================
 // Union Type for all metadata
 // ===================================
-export type ItemMetadata = MovieMetadata | BookMetadata | CafeMetadata;
+export type ItemMetadata = MovieMetadata | BookMetadata | CafeMetadata | LifestyleEntryMetadata;
 
 // ===================================
 // Helper: Get metadata schema by category slug
@@ -99,7 +133,10 @@ export function getMetadataSchema(categorySlug: string) {
     case 'restaurant':
       return CafeMetadataSchema;
     default:
-      return z.object({ ...tipField }).passthrough(); // Empty schema for other categories
+      if (isMixedCategorySlug(categorySlug)) {
+        return LifestyleEntrySchema;
+      }
+      return z.object({ ...tipField, entryKind: z.enum(ENTRY_KINDS).optional() }).passthrough();
   }
 }
 

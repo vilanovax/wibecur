@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { lists, categories } from '@prisma/client';
 import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import ItemTipField from '@/components/admin/items/ItemTipField';
@@ -18,14 +17,26 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import CatalogItemPicker from '@/components/admin/items/CatalogItemPicker';
+import EntryKindSelector from '@/components/admin/items/EntryKindSelector';
+import {
+  isLightweightEntryKind,
+  isMixedListCategory,
+  type EntryKind,
+} from '@/lib/list-entry';
 
-type ListWithCategory = lists & {
-  categories: categories | null;
+export type NewItemFormList = {
+  id: string;
+  title: string;
+  categories: { id: string; name: string; slug: string; icon: string | null } | null;
 };
 
 interface NewItemFormProps {
-  lists: ListWithCategory[];
+  lists: NewItemFormList[];
   initialListId?: string;
+  /** داخل content hub — هدر ساده‌تر */
+  embedded?: boolean;
+  /** فقط فرم ساخت موجودیت (بدون تب کاتالوگ) */
+  formOnly?: boolean;
 }
 
 const MEDIA_TABS: { id: ImageUploadDisplayMode; label: string; icon: React.ElementType }[] = [
@@ -37,6 +48,8 @@ const MEDIA_TABS: { id: ImageUploadDisplayMode; label: string; icon: React.Eleme
 export default function NewItemForm({
   lists,
   initialListId,
+  embedded = false,
+  formOnly = false,
 }: NewItemFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -49,7 +62,8 @@ export default function NewItemForm({
   const [imageSearchModalOpen, setImageSearchModalOpen] = useState(false);
   const [mediaTab, setMediaTab] = useState<ImageUploadDisplayMode>('upload');
   const [metadataOpen, setMetadataOpen] = useState(false);
-  const [mode, setMode] = useState<'catalog' | 'new'>('catalog');
+  const [mode, setMode] = useState<'catalog' | 'new'>(formOnly ? 'new' : 'catalog');
+  const [entryKind, setEntryKind] = useState<EntryKind>('tip');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -69,6 +83,19 @@ export default function NewItemForm({
     selectedList?.categories?.slug === 'movie' ||
     selectedList?.categories?.slug === 'film' ||
     selectedList?.categories?.slug === 'movies';
+  const isMixedList = isMixedListCategory(selectedList?.categories?.slug);
+  const isLightweightMode = isMixedList && isLightweightEntryKind(entryKind);
+
+  useEffect(() => {
+    if (!isMixedList) return;
+    setFormData((prev) => ({
+      ...prev,
+      metadata: {
+        ...(prev.metadata as Record<string, unknown>),
+        entryKind,
+      },
+    }));
+  }, [entryKind, isMixedList]);
 
   useEffect(() => {
     const form = formRef.current;
@@ -202,14 +229,39 @@ export default function NewItemForm({
     setLoading(true);
     setError('');
     try {
+      let title = formData.title.trim();
+      const description = formData.description.trim();
+      if (isLightweightMode && !title && description) {
+        title = description.slice(0, 80).trim();
+      }
+      if (!title) {
+        setError('عنوان الزامی است');
+        setLoading(false);
+        return;
+      }
+      if (isLightweightMode && entryKind === 'link' && !formData.externalUrl.trim()) {
+        setError('برای ورودی لینک، آدرس URL الزامی است');
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
+        ...formData,
+        title,
+        description,
+        metadata: {
+          ...(formData.metadata as Record<string, unknown>),
+          ...(isMixedList ? { entryKind } : {}),
+        },
+      };
       const res = await fetch('/api/admin/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create item');
-      router.push(`/admin/items?listId=${formData.listId}`);
+      router.push(`/admin/lists/${formData.listId}`);
       router.refresh();
     } catch (err: any) {
       setError(err.message);
@@ -227,23 +279,29 @@ export default function NewItemForm({
         isLoading={fetchingFromImdb}
       />
 
-      <div className="mb-6" dir="rtl">
-        <Link
-          href={`/admin/items${initialListId ? `?listId=${initialListId}` : ''}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-violet-700 mb-3"
-        >
-          <ArrowRight className="w-4 h-4" />
-          بازگشت به آیتم‌ها
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">افزودن آیتم</h1>
-        {selectedList && (
-          <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
-            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 px-2.5 py-1 font-medium text-gray-700 dark:text-gray-200">
-              {selectedList.categories?.icon || '📋'} {selectedList.title}
-            </span>
-          </p>
-        )}
-      </div>
+      {!embedded && (
+        <div className="mb-6" dir="rtl">
+          <Link
+            href={
+              initialListId
+                ? `/admin/lists/${initialListId}`
+                : '/admin/lists?view=catalog&mode=place'
+            }
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-violet-700 mb-3"
+          >
+            <ArrowRight className="w-4 h-4" />
+            بازگشت
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">افزودن آیتم</h1>
+          {selectedList && (
+            <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 px-2.5 py-1 font-medium text-gray-700 dark:text-gray-200">
+                {selectedList.categories?.icon || '📋'} {selectedList.title}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-8" dir="rtl">
@@ -251,6 +309,7 @@ export default function NewItemForm({
         </div>
       )}
 
+      {!formOnly && (
       <div className="inline-flex p-1 rounded-xl bg-gray-100 dark:bg-gray-800 mb-6" dir="rtl">
         <button
           type="button"
@@ -278,8 +337,9 @@ export default function NewItemForm({
           آیتم جدید
         </button>
       </div>
+      )}
 
-      {mode === 'catalog' && (
+      {!formOnly && mode === 'catalog' && (
         <div className="max-w-2xl">
           <CatalogItemPicker
             listId={formData.listId}
@@ -291,7 +351,7 @@ export default function NewItemForm({
               icon: l.categories?.icon,
             }))}
             onListChange={(id) => setFormData((p) => ({ ...p, listId: id }))}
-            onAdded={() => router.push(`/admin/items?listId=${formData.listId}`)}
+            onAdded={() => router.push(`/admin/lists/${formData.listId}`)}
           />
           <p className="text-center text-sm text-gray-500 mt-5">
             موجودیت تازه؟{' '}
@@ -324,6 +384,22 @@ export default function NewItemForm({
           }
         }}
       >
+        {isMixedList && (
+          <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6">
+            <EntryKindSelector
+              value={entryKind}
+              onChange={setEntryKind}
+              lightweightOnly
+              includeCatalogEntity
+            />
+            <p className="mt-3 text-xs text-admin-text-tertiary dark:text-gray-500">
+              {isLightweightMode
+                ? 'نکته/فکت/لینک بدون ساخت موجودیت کاتالوگ — فقط در همین لیست ذخیره می‌شود.'
+                : 'ساخت موجودیت جدید در کاتالوگ و افزودن به لیست.'}
+            </p>
+          </section>
+        )}
+
         {/* 1. Core Info (Hero Block) */}
         <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6 space-y-4">
           <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-2">
@@ -378,7 +454,13 @@ export default function NewItemForm({
               value={formData.title}
               onChange={handleChange}
               className="w-full px-4 py-2.5 border border-admin-border dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800 text-admin-text-primary dark:text-white placeholder:text-admin-text-tertiary"
-              placeholder="عنوان آیتم را وارد کنید..."
+              placeholder={
+                isLightweightMode && entryKind === 'link'
+                  ? 'عنوان لینک (مثلاً: مقالهٔ ...'
+                  : isLightweightMode
+                    ? 'عنوان کوتاه (اختیاری برای نکته — می‌توانید فقط توضیحات بنویسید)'
+                    : 'عنوان آیتم را وارد کنید...'
+              }
             />
           </div>
 
@@ -403,12 +485,21 @@ export default function NewItemForm({
               onChange={handleChange}
               rows={4}
               className="w-full px-4 py-2.5 border border-admin-border dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800 text-admin-text-primary dark:text-white placeholder:text-admin-text-tertiary"
-              placeholder="توضیحات آیتم (اختیاری)..."
+              placeholder={
+                isLightweightMode
+                  ? entryKind === 'fact'
+                    ? 'متن فکت علمی...'
+                    : entryKind === 'link'
+                      ? 'توضیح کوتاه دربارهٔ لینک (اختیاری)'
+                      : 'متن نکته یا داده — محتوای اصلی اینجا'
+                  : 'توضیحات آیتم (اختیاری)...'
+              }
             />
           </div>
         </section>
 
-        {/* 2. Media (Tabbed) */}
+        {/* 2. Media (Tabbed) — فقط برای موجودیت کاتالوگ */}
+        {!isLightweightMode && (
         <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6">
           <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-4">
             تصویر آیتم
@@ -447,9 +538,10 @@ export default function NewItemForm({
               categorySlug={selectedList?.categories?.slug}
             />
         </section>
+        )}
 
         {/* 3. Extended Metadata (Collapsible) */}
-        {selectedList?.categories?.slug && (
+        {selectedList?.categories?.slug && !isLightweightMode && (
           <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 overflow-hidden">
             <button
               type="button"
@@ -487,6 +579,35 @@ export default function NewItemForm({
           </section>
         )}
 
+        {isLightweightMode && entryKind === 'fact' && (
+          <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6 space-y-3">
+            <label htmlFor="factType" className="block text-sm font-medium text-admin-text-primary dark:text-white">
+              دستهٔ فکت
+            </label>
+            <select
+              id="factType"
+              value={String((formData.metadata as Record<string, unknown>)?.factType ?? 'general')}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  metadata: {
+                    ...(prev.metadata as Record<string, unknown>),
+                    entryKind,
+                    factType: e.target.value,
+                  },
+                }))
+              }
+              className="w-full px-4 py-2.5 border border-admin-border dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-admin-text-primary dark:text-white"
+            >
+              <option value="science">علمی</option>
+              <option value="health">سلامت</option>
+              <option value="productivity">بهره‌وری</option>
+              <option value="family">خانواده</option>
+              <option value="general">عمومی</option>
+            </select>
+          </section>
+        )}
+
         {/* 4. Settings */}
         <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6 space-y-4">
           <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-4">
@@ -495,7 +616,7 @@ export default function NewItemForm({
 
           <div>
             <label htmlFor="externalUrl" className="block text-sm font-medium text-admin-text-primary dark:text-white mb-2">
-              لینک خارجی
+              لینک خارجی {isLightweightMode && entryKind === 'link' && <span className="text-red-500 text-xs">*</span>}
             </label>
             <input
               type="url"
@@ -560,7 +681,11 @@ export default function NewItemForm({
             {loading ? 'در حال ایجاد…' : 'ایجاد آیتم'}
           </button>
           <Link
-            href={`/admin/items${initialListId ? `?listId=${initialListId}` : ''}`}
+            href={
+              initialListId
+                ? `/admin/lists/${initialListId}`
+                : '/admin/lists?view=catalog&mode=place'
+            }
             className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900"
           >
             انصراف

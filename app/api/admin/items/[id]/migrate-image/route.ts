@@ -25,8 +25,7 @@ export async function POST(
       const status =
         result.error === 'آیتم یافت نشد'
           ? 404
-          : result.errorCode === 'storage_not_configured' ||
-              result.errorCode === 'liara_not_configured'
+          : result.errorCode === 'storage_not_configured'
             ? 503
             : isConnectionError
               ? 502

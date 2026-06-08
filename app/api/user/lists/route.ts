@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { resolveSessionUserId } from '@/lib/api-db';
 import { slugify } from '@/lib/utils/slug';
 import { nanoid } from 'nanoid';
 import { ensureImageInLiara } from '@/lib/object-storage';
@@ -13,9 +14,17 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     console.log('Session:', session ? 'exists' : 'missing', session?.user?.email);
     
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'احراز هویت نشده است' },
+        { status: 401 }
+      );
+    }
+
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید', code: 'SESSION_USER_NOT_FOUND' },
         { status: 401 }
       );
     }
@@ -43,29 +52,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-        // Get user (session.user is guaranteed to exist after the check above)
-        const userEmail = session.user.email;
-        if (!userEmail) {
-          return NextResponse.json(
-            { error: 'احراز هویت نشده است' },
-            { status: 401 }
-          );
-        }
-        console.log('Fetching user with email:', userEmail);
-        const user = await dbQuery(() =>
-          prisma.users.findUnique({
-            where: { email: userEmail },
-          })
-        );
-    console.log('User found:', user ? `ID: ${user.id}` : 'not found');
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'کاربر یافت نشد' },
-        { status: 404 }
-      );
-    }
-
     // Get settings for maxPersonalLists
     const settings = await dbQuery(() =>
       prisma.settings.findUnique({
@@ -78,7 +64,7 @@ export async function POST(request: NextRequest) {
     const privateListsCount = await dbQuery(() =>
       prisma.lists.count({
         where: {
-          userId: user.id,
+          userId,
           isPublic: false,
         },
       })
@@ -137,7 +123,7 @@ export async function POST(request: NextRequest) {
       title: title.trim(),
       slug,
       categoryId: null,
-      userId: user.id,
+      userId,
       hasDescription: !!description,
       hasCoverImage: !!finalCoverImage,
       isPublic: false,
@@ -156,7 +142,7 @@ export async function POST(request: NextRequest) {
             description: description ? description.trim() : null,
             coverImage: finalCoverImage,
             categoryId: null, // Personal lists don't have categories
-            userId: user.id,
+            userId,
             isPublic: false, // User lists start as private
             isActive: true, // Private lists are always active
             commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
@@ -231,37 +217,26 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'احراز هویت نشده است' },
         { status: 401 }
       );
     }
 
-        const userEmail = session.user.email;
-        if (!userEmail) {
-          return NextResponse.json(
-            { error: 'احراز هویت نشده است' },
-            { status: 401 }
-          );
-        }
-        const user = await dbQuery(() =>
-          prisma.users.findUnique({
-            where: { email: userEmail },
-          })
-        );
-
-        if (!user) {
-          return NextResponse.json(
-            { error: 'کاربر یافت نشد' },
-            { status: 404 }
-          );
-        }
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید', code: 'SESSION_USER_NOT_FOUND' },
+        { status: 401 }
+      );
+    }
 
     const lists = await dbQuery(() =>
       prisma.lists.findMany({
         where: {
-          userId: user.id,
+          userId,
+          deletedAt: null, // لیست‌های حذف‌شده نباید به‌عنوان مقصد ذخیره نشان داده شوند
         },
         orderBy: { createdAt: 'desc' },
         include: {

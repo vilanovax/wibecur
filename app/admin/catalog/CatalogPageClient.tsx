@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -20,8 +20,12 @@ import {
   Filter,
   RotateCcw,
   Link2,
+  Check,
+  Loader2,
 } from 'lucide-react';
+import NewItemForm, { type NewItemFormList } from '@/app/admin/items/new/NewItemForm';
 import AddToListModal from '@/components/admin/catalog/AddToListModal';
+import CatalogPlacementPanel from '@/components/admin/catalog/CatalogPlacementPanel';
 import CatalogBulkToolbar from '@/components/admin/catalog/CatalogBulkToolbar';
 import ExternalImageItemsModal from '@/components/admin/items/ExternalImageItemsModal';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
@@ -35,13 +39,15 @@ import type {
   CatalogListRow,
   DuplicateCatalogGroup,
 } from '@/lib/catalog-items';
+import type { CatalogPageMode, CatalogPlacementList } from '@/lib/admin/catalog-page-data';
 
 type Tab = 'browse' | 'duplicates';
 
 type ListOption = { id: string; title: string; icon?: string | null };
-
 interface CatalogPageClientProps {
   initialTab: Tab;
+  initialMode?: CatalogPageMode;
+  placementList?: CatalogPlacementList | null;
   initialRows: CatalogListRow[];
   initialTotal: number;
   initialPage: number;
@@ -55,10 +61,17 @@ interface CatalogPageClientProps {
   initialListFilters: CatalogListFilter[];
   initialDuplicateGroups: DuplicateCatalogGroup[];
   lists: ListOption[];
+  embedded?: boolean;
+  basePath?: string;
+  viewParam?: string;
+  createLists?: NewItemFormList[];
+  initialCreateListId?: string;
 }
 
 export default function CatalogPageClient({
   initialTab,
+  initialMode = 'browse',
+  placementList = null,
   initialRows,
   initialTotal,
   initialPage,
@@ -72,6 +85,11 @@ export default function CatalogPageClient({
   initialListFilters,
   initialDuplicateGroups,
   lists,
+  embedded = false,
+  basePath = '/admin/catalog',
+  viewParam,
+  createLists,
+  initialCreateListId,
 }: CatalogPageClientProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -102,6 +120,30 @@ export default function CatalogPageClient({
   } | null>(null);
   const [externalImagesOpen, setExternalImagesOpen] = useState(false);
   const [wrappingProxy, setWrappingProxy] = useState(false);
+  const placementMode = initialMode === 'place';
+  const createMode = initialMode === 'create';
+  const [activePlacementListId, setActivePlacementListId] = useState(
+    placementList?.id ?? initialCreateListId ?? ''
+  );
+  const [addingCatalogId, setAddingCatalogId] = useState<string | null>(null);
+  const [placedCatalogIds, setPlacedCatalogIds] = useState<Set<string>>(
+    () => new Set(initialRows.filter((r) => r.alreadyInList).map((r) => r.id))
+  );
+
+  useEffect(() => {
+    setPlacedCatalogIds(
+      new Set(rows.filter((r) => r.alreadyInList).map((r) => r.id))
+    );
+  }, [rows]);
+  const activePlacementMeta =
+    lists.find((l) => l.id === activePlacementListId) ??
+    (placementList
+      ? {
+          id: placementList.id,
+          title: placementList.title,
+          icon: placementList.icon,
+        }
+      : null);
 
   const pushUrl = useCallback(
     (next: {
@@ -111,6 +153,7 @@ export default function CatalogPageClient({
       category?: string;
       listId?: string;
       multiListOnly?: boolean;
+      placementListId?: string;
     }) => {
       const p = new URLSearchParams();
       const t = next.tab ?? tab;
@@ -118,15 +161,68 @@ export default function CatalogPageClient({
       if ((next.q ?? query).trim()) p.set('q', (next.q ?? query).trim());
       const cat = next.category !== undefined ? next.category : category;
       if (cat) p.set('category', cat);
-      const lid = next.listId !== undefined ? next.listId : listId;
-      if (lid) p.set('listId', lid);
+      if (createMode) {
+        p.set('mode', 'create');
+        const plid =
+          next.placementListId !== undefined ? next.placementListId : activePlacementListId;
+        if (plid) p.set('listId', plid);
+      } else if (placementMode) {
+        p.set('mode', 'place');
+        const plid =
+          next.placementListId !== undefined ? next.placementListId : activePlacementListId;
+        if (plid) p.set('listId', plid);
+      } else {
+        const lid = next.listId !== undefined ? next.listId : listId;
+        if (lid) p.set('listId', lid);
+      }
       const multi = next.multiListOnly !== undefined ? next.multiListOnly : multiListOnly;
       if (multi) p.set('multiList', '1');
       if (t === 'browse') p.set('page', String(next.page ?? page));
-      router.push(`/admin/catalog?${p.toString()}`);
+      if (viewParam) p.set('view', viewParam);
+      router.push(`${basePath}?${p.toString()}`);
     },
-    [router, tab, query, page, category, listId, multiListOnly]
+    [
+      router,
+      tab,
+      query,
+      page,
+      category,
+      listId,
+      multiListOnly,
+      basePath,
+      viewParam,
+      placementMode,
+      createMode,
+      activePlacementListId,
+    ]
   );
+
+  const handleQuickPlace = async (row: CatalogListRow) => {
+    if (!activePlacementListId || placedCatalogIds.has(row.id)) return;
+    setAddingCatalogId(row.id);
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/items/add-to-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ catalogItemId: row.id, listId: activePlacementListId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'خطا در افزودن');
+      setPlacedCatalogIds((prev) => new Set(prev).add(row.id));
+      setMessage(`«${row.title}» به لیست اضافه شد`);
+      router.refresh();
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : 'خطا در افزودن');
+    } finally {
+      setAddingCatalogId(null);
+    }
+  };
+
+  const handlePlacementListChange = (nextId: string) => {
+    setActivePlacementListId(nextId);
+    pushUrl({ placementListId: nextId });
+  };
 
   const refreshFilterMeta = useCallback(async (nextCategory: string, nextListId: string) => {
     try {
@@ -156,6 +252,9 @@ export default function CatalogPageClient({
       if (nextQ.trim()) p.set('q', nextQ.trim());
       if (nextCategory) p.set('categorySlug', nextCategory);
       if (nextListId) p.set('listId', nextListId);
+      if (placementMode && activePlacementListId) {
+        p.set('placementListId', activePlacementListId);
+      }
       if (nextMultiListOnly) p.set('multiList', '1');
       const res = await fetch(`/api/admin/catalog-items?${p}`);
       const data = await res.json();
@@ -411,9 +510,55 @@ export default function CatalogPageClient({
   const { total: catalogTotal, categories: categoryChips } = initialCategoryFilters;
   const allPageSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id));
 
+  if (createMode && createLists && createLists.length > 0) {
+    const targetListId = initialCreateListId ?? activePlacementListId;
+    const placeHref = targetListId
+      ? `/admin/lists?view=catalog&mode=place&listId=${targetListId}`
+      : '/admin/lists?view=catalog&mode=place';
+    const workspaceHref = targetListId ? `/admin/lists/${targetListId}` : undefined;
+    const targetMeta = createLists.find((l) => l.id === targetListId);
+
+    return (
+      <div className={embedded ? 'pb-4' : 'pb-8'} dir="rtl">
+        <div className="rounded-2xl border border-violet-200 bg-gradient-to-l from-violet-50/80 to-white px-4 py-3.5 mb-5">
+          <div className="flex flex-wrap items-center gap-3 justify-between">
+            <div>
+              {workspaceHref && (
+                <Link
+                  href={workspaceHref}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-violet-700 hover:text-violet-900 mb-1"
+                >
+                  بازگشت به workspace
+                </Link>
+              )}
+              <h2 className="text-base font-bold text-gray-900">ساخت موجودیت جدید</h2>
+              {targetMeta && (
+                <p className="text-xs text-gray-600 mt-0.5">
+                  مقصد: {targetMeta.categories?.icon || '📋'} {targetMeta.title}
+                </p>
+              )}
+            </div>
+            <Link
+              href={placeHref}
+              className="text-sm font-semibold text-violet-700 hover:text-violet-900 underline-offset-2 hover:underline"
+            >
+              از کاتالوگ انتخاب کنید
+            </Link>
+          </div>
+        </div>
+        <NewItemForm
+          lists={createLists}
+          initialListId={targetListId}
+          embedded
+          formOnly
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="pb-8" dir="rtl">
-      {/* هدر */}
+    <div className={embedded ? 'pb-4' : 'pb-8'} dir="rtl">
+      {!embedded && (
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div className="flex items-start gap-3">
           <div className="w-11 h-11 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
@@ -428,20 +573,20 @@ export default function CatalogPageClient({
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           <Link
-            href="/admin/items/import"
+            href="/admin/lists?view=import"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 px-4 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-50"
           >
             <FileJson className="w-4 h-4" />
             import گروهی
           </Link>
           <Link
-            href="/admin/items"
+            href="/admin/lists?view=catalog"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
           >
             بر اساس لیست
           </Link>
           <Link
-            href="/admin/items/new"
+            href="/admin/lists?view=catalog&mode=place"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-700 shadow-sm"
           >
             <Plus className="w-4 h-4" />
@@ -449,7 +594,39 @@ export default function CatalogPageClient({
           </Link>
         </div>
       </div>
+      )}
 
+      {embedded && !placementMode && (
+        <p className="text-sm text-gray-500 mb-4">
+          {total.toLocaleString('fa-IR')} موجودیت در کاتالوگ
+          {initialMultiListCount > 0 && (
+            <span className="text-violet-700 font-medium">
+              {' '}
+              · {initialMultiListCount.toLocaleString('fa-IR')} چندلیستی
+            </span>
+          )}
+        </p>
+      )}
+
+      {placementMode && (
+        <CatalogPlacementPanel
+          listId={activePlacementListId}
+          listTitle={activePlacementMeta?.title}
+          listIcon={activePlacementMeta?.icon}
+          categorySlug={placementList?.categorySlug ?? undefined}
+          lists={lists}
+          workspaceHref={
+            activePlacementListId ? `/admin/lists/${activePlacementListId}` : undefined
+          }
+          onListChange={handlePlacementListChange}
+        />
+      )}
+
+      {placementMode && (
+        <p className="text-xs font-semibold text-gray-500 mb-3 mt-2">یا از کاتالوگ مرور کنید</p>
+      )}
+
+      {!embedded && (
       <div className="mb-5 flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900">
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
         <p>
@@ -457,6 +634,7 @@ export default function CatalogPageClient({
           لیست‌ها است. ویرایش عنوان/تصویر از یک جایگاه، همهٔ لیست‌ها را به‌روز می‌کند.
         </p>
       </div>
+      )}
 
       {/* تب‌ها */}
       <div className="inline-flex p-1 rounded-xl bg-gray-100 mb-5">
@@ -563,6 +741,7 @@ export default function CatalogPageClient({
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-2">
+                  {!placementMode && (
                   <label className="flex-1 min-w-[200px]">
                     <span className="block text-[11px] font-semibold text-gray-500 mb-1">
                       {category ? `لیست‌های دارای ${activeCategoryLabel}` : 'فیلتر بر اساس لیست'}
@@ -584,6 +763,7 @@ export default function CatalogPageClient({
                       ))}
                     </select>
                   </label>
+                  )}
 
                   <div className="flex flex-wrap items-end gap-2">
                     <button
@@ -702,11 +882,11 @@ export default function CatalogPageClient({
                 <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50">
                   <p className="text-gray-600 mb-3">هنوز در کاتالوگ چیزی نیست یا نتیجه‌ای پیدا نشد.</p>
                   <Link
-                    href="/admin/items/new"
+                    href="/admin/lists?view=catalog&mode=place"
                     className="inline-flex items-center gap-2 text-sm font-bold text-violet-600 hover:underline"
                   >
                     <Plus className="w-4 h-4" />
-                    ساخت اولین آیتم
+                    افزودن از کاتالوگ
                   </Link>
                 </div>
               ) : (
@@ -738,6 +918,33 @@ export default function CatalogPageClient({
                             aria-label={`انتخاب ${row.title}`}
                           />
                         </label>
+                        {placementMode && activePlacementListId && (
+                          <div className="absolute bottom-2 left-2 z-10">
+                            {placedCatalogIds.has(row.id) ? (
+                              <span className="inline-flex items-center gap-0.5 rounded-lg bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-800">
+                                <Check className="w-3 h-3" />
+                                موجود
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                title={`افزودن «${row.title}» به لیست`}
+                                disabled={addingCatalogId === row.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleQuickPlace(row);
+                                }}
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600 text-white shadow-sm hover:bg-violet-700 disabled:opacity-50"
+                              >
+                                {addingCatalogId === row.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Plus className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={() => openDetail(row.id)}

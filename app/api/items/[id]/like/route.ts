@@ -163,47 +163,14 @@ export async function POST(
   }
 }
 
-// GET /api/items/[id]/like - دریافت وضعیت لایک کاربر
+// GET /api/items/[id]/like - تعداد لایک عمومی + وضعیت لایک کاربر (اگر لاگین باشد)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'احراز هویت نشده است' },
-        { status: 401 }
-      );
-    }
-
     const { id: itemId } = await params;
 
-    // Get user (session.user is guaranteed to exist after the check above)
-    const userEmail = session.user.email;
-    if (!userEmail) {
-      return NextResponse.json(
-        { success: false, error: 'احراز هویت نشده است' },
-        { status: 401 }
-      );
-    }
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: userEmail },
-        select: { id: true },
-      })
-    );
-
-    if (!user) {
-      // سشن معتبر است اما رکورد کاربر در دیتابیس وجود ندارد (سشن یتیم/منقضی).
-      // 401 برمی‌گردانیم تا کلاینت بتواند کاربر را خارج/هدایت کند، نه 404 گنگ.
-      return NextResponse.json(
-        { success: false, error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید', code: 'SESSION_USER_NOT_FOUND' },
-        { status: 401 }
-      );
-    }
-
-    // Get item with vote count
     const item = await dbQuery(() =>
       prisma.items.findUnique({
         where: { id: itemId },
@@ -220,22 +187,37 @@ export async function GET(
       );
     }
 
-    // Check if user has liked this item
-    const existingVote = await dbQuery(() =>
-      prisma.item_votes.findUnique({
-        where: {
-          userId_itemId: {
-            userId: user.id,
-            itemId: itemId,
-          },
-        },
-      })
-    );
+    let isLiked = false;
+    const session = await auth();
+    const userEmail = session?.user?.email;
+
+    if (userEmail) {
+      const user = await dbQuery(() =>
+        prisma.users.findUnique({
+          where: { email: userEmail },
+          select: { id: true },
+        })
+      );
+
+      if (user) {
+        const existingVote = await dbQuery(() =>
+          prisma.item_votes.findUnique({
+            where: {
+              userId_itemId: {
+                userId: user.id,
+                itemId: itemId,
+              },
+            },
+          })
+        );
+        isLiked = !!existingVote;
+      }
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        isLiked: !!existingVote,
+        isLiked,
         likeCount: item.voteCount || 0,
       },
     });

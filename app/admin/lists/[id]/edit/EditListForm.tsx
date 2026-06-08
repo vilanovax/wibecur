@@ -337,11 +337,11 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href="/admin/lists"
+            href={`/admin/lists/${list.id}`}
             className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)] mb-2"
           >
             <ChevronRight className="w-3.5 h-3.5" />
-            بازگشت به لیست‌ها
+            بازگشت به workspace
           </Link>
           <h1 className="text-xl font-bold text-[var(--color-text)]">ویرایش لیست</h1>
           <p className="text-sm text-[var(--color-text-muted)] truncate mt-0.5">{list.title}</p>

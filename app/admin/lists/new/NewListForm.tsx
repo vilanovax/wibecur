@@ -208,7 +208,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
       }
       const list = await response.json();
       setToast({ message: 'لیست ساخته شد — اکنون آیتم اضافه کنید', type: 'success' });
-      router.push(`/admin/lists/${list.id}/edit`);
+      router.push(`/admin/lists/${list.id}`);
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'خطا در ایجاد لیست';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowUpDown, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import AdminSuggestedItemCard, { type AdminSuggestedItemSuggestion } from './AdminSuggestedItemCard';
 import BulkActionBar from './BulkActionBar';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
@@ -12,6 +12,7 @@ import ApproveRejectModal from './ApproveRejectModal';
 import Pagination from '@/components/admin/shared/Pagination';
 
 interface ItemSuggestion extends AdminSuggestedItemSuggestion {
+  source?: 'form' | 'menu';
   userId: string;
   adminNotes: string | null;
   metadata: any;
@@ -20,23 +21,27 @@ interface ItemSuggestion extends AdminSuggestedItemSuggestion {
 
 interface ItemSuggestionsTableProps {
   status?: string;
+  source?: 'form' | 'menu';
   currentPage: number;
   onPageChange: (page: number) => void;
+}
+
+function suggestionApiBase(source?: 'form' | 'menu') {
+  return source === 'menu' ? '/api/admin/suggestions/menu-items' : '/api/admin/suggestions/items';
 }
 
 type SortOrder = 'newest' | 'oldest';
 
 function SuggestionSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="bg-white rounded-xl border border-gray-100 p-5 animate-pulse">
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="animate-pulse rounded-xl border border-gray-100 p-4">
           <div className="flex gap-3">
-            <div className="w-14 h-14 bg-gray-200 rounded-xl" />
-            <div className="flex-1">
-              <div className="h-5 bg-gray-200 rounded w-3/4 mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3" />
-              <div className="h-3 bg-gray-200 rounded w-full" />
+            <div className="h-14 w-11 rounded-lg bg-gray-200" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-2/3 rounded bg-gray-200" />
+              <div className="h-3 w-1/2 rounded bg-gray-100" />
             </div>
           </div>
         </div>
@@ -47,6 +52,7 @@ function SuggestionSkeleton() {
 
 export default function ItemSuggestionsTable({
   status,
+  source,
   currentPage,
   onPageChange,
 }: ItemSuggestionsTableProps) {
@@ -72,7 +78,7 @@ export default function ItemSuggestionsTable({
 
   useEffect(() => {
     fetchSuggestions();
-  }, [status, currentPage, sortOrder]);
+  }, [status, source, currentPage, sortOrder]);
 
   useEffect(() => {
     if (!toast) return;
@@ -136,7 +142,7 @@ export default function ItemSuggestionsTable({
       if (confirmAction === 'approve') {
         await Promise.all(
           pendingSuggestions.map((s) =>
-            fetch(`/api/admin/suggestions/items/${s.id}`, {
+            fetch(`${suggestionApiBase(s.source)}/${s.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -150,7 +156,7 @@ export default function ItemSuggestionsTable({
       } else {
         await Promise.all(
           pendingSuggestions.map((s) =>
-            fetch(`/api/admin/suggestions/items/${s.id}`, {
+            fetch(`${suggestionApiBase(s.source)}/${s.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -182,6 +188,7 @@ export default function ItemSuggestionsTable({
         sort: sortOrder,
       });
       if (status) params.set('status', status);
+      if (source) params.set('source', source);
 
       const res = await fetch(`/api/admin/suggestions/items?${params.toString()}`);
       const data = await res.json();
@@ -201,7 +208,7 @@ export default function ItemSuggestionsTable({
   const handleApproveDirect = async (suggestion: AdminSuggestedItemSuggestion) => {
     setProcessing(suggestion.id);
     try {
-      const res = await fetch(`/api/admin/suggestions/items/${suggestion.id}`, {
+      const res = await fetch(`${suggestionApiBase(suggestion.source)}/${suggestion.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -231,6 +238,7 @@ export default function ItemSuggestionsTable({
   };
 
   const handleEdit = (suggestion: AdminSuggestedItemSuggestion) => {
+    if (suggestion.source === 'menu') return;
     const full = suggestions.find((s) => s.id === suggestion.id);
     if (full) setSelectedSuggestion(full);
     setIsEditModalOpen(true);
@@ -262,17 +270,17 @@ export default function ItemSuggestionsTable({
 
   const isPending = status === 'pending' || !status;
   const emptyMessage = isPending
-    ? { title: '🎉 همه پیشنهادها بررسی شدند', subtitle: 'وایب تحت کنترله!' }
-    : { title: 'پیشنهادی یافت نشد', subtitle: 'هیچ پیشنهاد آیتمی با این فیلتر وجود ندارد' };
+    ? { title: 'همه پیشنهادها بررسی شد', subtitle: 'فعلاً پیشنهاد در انتظاری نیست' }
+    : { title: 'پیشنهادی یافت نشد', subtitle: 'فیلتر دیگری امتحان کنید' };
 
   if (suggestions.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Package className="w-10 h-10 text-gray-400" />
+      <div className="py-12 text-center">
+        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
+          <Package className="h-7 w-7 text-gray-400" />
         </div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">{emptyMessage.title}</h3>
-        <p className="text-gray-500">{emptyMessage.subtitle}</p>
+        <h3 className="font-semibold text-gray-900">{emptyMessage.title}</h3>
+        <p className="mt-1 text-sm text-gray-500">{emptyMessage.subtitle}</p>
       </div>
     );
   }
@@ -285,63 +293,51 @@ export default function ItemSuggestionsTable({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-gray-500">
-          <span className="font-medium text-gray-900">{total}</span> پیشنهاد یافت شد
+          <span className="font-semibold text-gray-800">{total.toLocaleString('fa-IR')}</span> پیشنهاد
         </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={bulkMode}
-              onChange={(e) => {
-                setBulkMode(e.target.checked);
-                if (!e.target.checked) setSelectedIds(new Set());
-              }}
-              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <span className="text-sm text-gray-600">انتخاب چندتایی</span>
-          </label>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">مرتب‌سازی:</span>
-            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setSortOrder('newest')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  sortOrder === 'newest' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <ArrowUpDown className="w-3.5 h-3.5" />
-                جدیدترین
-              </button>
-              <button
-                onClick={() => setSortOrder('oldest')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                  sortOrder === 'oldest' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <ArrowUpDown className="w-3.5 h-3.5 rotate-180" />
-                قدیمی‌ترین
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          {suggestions.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setSortOrder((s) => (s === 'newest' ? 'oldest' : 'newest'))}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            >
+              {sortOrder === 'newest' ? 'جدیدترین ↑' : 'قدیمی‌ترین ↓'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setBulkMode((b) => !b);
+              if (bulkMode) setSelectedIds(new Set());
+            }}
+            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+              bulkMode
+                ? 'border-violet-300 bg-violet-50 text-violet-700'
+                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {bulkMode ? 'لغو انتخاب' : 'انتخاب چندتایی'}
+          </button>
         </div>
       </div>
 
-      {bulkMode && suggestions.length > 0 && (
-        <div className="flex items-center gap-2 mb-3">
+      {bulkMode && selectedIds.size > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-800">
           <input
             ref={selectAllRef}
             type="checkbox"
             onChange={selectAll}
-            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+            className="rounded border-gray-300 text-violet-600"
             aria-label="انتخاب همه"
           />
-          <span className="text-sm text-gray-600">انتخاب همه</span>
+          <span>{selectedIds.size.toLocaleString('fa-IR')} انتخاب شده</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-3">
         {suggestions.map((suggestion) => (
           <AdminSuggestedItemCard
             key={suggestion.id}
@@ -394,7 +390,11 @@ export default function ItemSuggestionsTable({
             currentPage={currentPage}
             totalPages={totalPages}
             basePath="/admin/suggestions"
-            searchParams={{ tab: 'items', ...(status && { status }) }}
+            searchParams={{
+              tab: 'items',
+              ...(status && { status }),
+              ...(source && { source }),
+            }}
           />
         </div>
       )}
@@ -416,6 +416,7 @@ export default function ItemSuggestionsTable({
             suggestionId={selectedSuggestion.id}
             suggestionTitle={selectedSuggestion.title}
             type="item"
+            apiBase={suggestionApiBase(selectedSuggestion.source)}
             onSuccess={() => {
               handleModalClose();
               fetchSuggestions();
@@ -429,6 +430,11 @@ export default function ItemSuggestionsTable({
               suggestionTitle={selectedSuggestion.title}
               action={modalAction}
               type="item"
+              apiBase={
+                selectedSuggestion.source === 'menu'
+                  ? `/api/admin/suggestions/menu-items/${selectedSuggestion.id}`
+                  : undefined
+              }
               onSuccess={() => {
                 handleModalClose();
                 setToast('رد شد ❌');

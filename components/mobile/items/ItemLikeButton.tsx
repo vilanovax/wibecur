@@ -37,11 +37,13 @@ export default function ItemLikeButton({
     queryFn: async () => {
       const response = await fetch(`/api/items/${itemId}/like`);
       const json = await response.json();
-      if (!json.success) throw new Error(json.error || 'like fetch failed');
+      if (!response.ok || !json.success) {
+        return { isLiked: initialIsLiked, likeCount: initialLikeCount };
+      }
       return json.data as LikeState;
     },
-    enabled: !!session?.user,
     staleTime: 60 * 1000,
+    retry: false,
   });
 
   const isLiked = data?.isLiked ?? initialIsLiked;
@@ -91,6 +93,11 @@ export default function ItemLikeButton({
           aria-label="ورود برای پسندیدن"
         >
           <Heart className="w-5 h-5 text-gray-500" />
+          {likeCount > 0 && (
+            <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-gray-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+              {likeCount > 99 ? '۹۹+' : countLabel}
+            </span>
+          )}
         </Link>
       );
     }

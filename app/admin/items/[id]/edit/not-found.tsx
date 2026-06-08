@@ -12,7 +12,7 @@ export default function NotFound() {
           آیتم مورد نظر حذف شده یا وجود ندارد
         </p>
         <Link
-          href="/admin/items"
+          href="/admin/lists?view=catalog"
           className="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors"
         >
           بازگشت به لیست آیتم‌ها

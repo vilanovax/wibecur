@@ -46,8 +46,9 @@ export default function ItemSaveButton({ itemId, variant = 'default' }: ItemSave
       if (!res.ok) throw new Error('saved-status fetch failed');
       return (await res.json()) as SavedStatus;
     },
-    enabled: !!session?.user,
+    enabled: status === 'authenticated' && !!session?.user,
     staleTime: 60 * 1000,
+    retry: false,
   });
 
   const handleModalClose = () => {

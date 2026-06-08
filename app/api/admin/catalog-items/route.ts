@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get('q') ?? undefined;
     const categorySlug = searchParams.get('categorySlug') ?? undefined;
     const listId = searchParams.get('listId') ?? undefined;
+    const placementListId = searchParams.get('placementListId') ?? undefined;
     const multiListOnly = searchParams.get('multiList') === '1';
 
     const { rows, total } = await listCatalogItems(prisma, {
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
       q,
       categorySlug,
       listId,
+      placementListId,
       multiListOnly,
     });
 

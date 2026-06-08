@@ -101,7 +101,7 @@ export default function ListIntelligenceCard({
     }
   };
 
-  const itemsHref = `/admin/items?listId=${row.id}`;
+  const itemsHref = `/admin/lists/${row.id}`;
   const editHref = `/admin/lists/${row.id}/edit`;
   const scoreNegative = row.trendingScore < 0;
 

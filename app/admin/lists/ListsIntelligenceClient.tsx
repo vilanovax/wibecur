@@ -93,10 +93,12 @@ export default function ListsIntelligenceClient({
   data,
   trash: isTrashView,
   initialCategoryId = 'all',
+  embedded = false,
 }: {
   data: ListsIntelligenceData;
   trash: boolean;
   initialCategoryId?: string;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<ListFilterKind>('all');
@@ -247,6 +249,8 @@ export default function ListsIntelligenceClient({
 
   return (
     <div className="space-y-4" dir="rtl">
+      {!embedded && (
+      <>
       {/* هدر فشرده */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
@@ -294,7 +298,7 @@ export default function ListsIntelligenceClient({
           {!isTrashView && (
             <>
               <Link
-                href="/admin/items/import"
+                href="/admin/lists?view=import"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-violet-200 text-violet-700 bg-violet-50/80 hover:bg-violet-100 transition-colors"
                 title="import گروهی JSON — همه دسته‌ها"
               >
@@ -356,6 +360,26 @@ export default function ListsIntelligenceClient({
             </div>
           )}
         </section>
+      )}
+      </>
+      )}
+
+      {embedded && (
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border-muted)] w-fit">
+          <Link
+            href={
+              categoryId !== 'all' && activeCategory
+                ? `/admin/lists?category=${activeCategory.slug}`
+                : '/admin/lists'
+            }
+            className={tabClass(!isTrashView)}
+          >
+            فعال‌ها
+          </Link>
+          <Link href="/admin/lists?trash=true" className={tabClass(isTrashView)}>
+            زباله‌دان
+          </Link>
+        </div>
       )}
 
       {isTrashView && lists.length > 0 && (

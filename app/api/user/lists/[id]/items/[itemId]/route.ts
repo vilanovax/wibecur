@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { resolveSessionUserId } from '@/lib/api-db';
 
 // DELETE /api/user/lists/[id]/items/[itemId] - حذف آیتم از لیست شخصی
 export async function DELETE(
@@ -11,36 +12,22 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'احراز هویت نشده است' },
         { status: 401 }
       );
     }
 
-    const { id: listId, itemId } = await params;
-
-    // Get user
-    // Get user (session.user is guaranteed to exist after the check above)
-    const userEmail = session.user.email;
-    if (!userEmail) {
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'احراز هویت نشده است' },
+        { error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید' },
         { status: 401 }
       );
     }
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: userEmail },
-      })
-    );
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'کاربر یافت نشد' },
-        { status: 404 }
-      );
-    }
+    const { id: listId, itemId } = await params;
 
     // Check if list exists and belongs to user
     const list = await dbQuery(() =>
@@ -56,7 +43,7 @@ export async function DELETE(
       );
     }
 
-    if (list.userId !== user.id) {
+    if (list.userId !== userId) {
       return NextResponse.json(
         { error: 'شما اجازه حذف آیتم از این لیست را ندارید' },
         { status: 403 }

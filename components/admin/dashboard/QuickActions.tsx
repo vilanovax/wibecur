@@ -17,7 +17,7 @@ const actions = [
     title: 'افزودن آیتم',
     description: 'آیتم جدید به لیست اضافه کنید',
     icon: Package,
-    href: '/admin/items/new',
+    href: '/admin/lists?view=catalog&mode=place',
     gradient: 'from-purple-500 to-purple-600',
     iconBg: 'bg-purple-500/10',
     iconColor: 'text-purple-500',

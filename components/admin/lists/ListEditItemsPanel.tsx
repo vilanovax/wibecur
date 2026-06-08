@@ -116,19 +116,19 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
         </div>
         <div className="flex gap-1.5">
           <Link
-            href={`/admin/items/new?listId=${listId}`}
+            href={`/admin/lists?view=catalog&mode=place&listId=${listId}`}
             className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[var(--primary)] text-white hover:opacity-90"
           >
             + افزودن
           </Link>
           <Link
-            href={`/admin/items/import?listId=${listId}`}
+            href={`/admin/lists?view=import&listId=${listId}`}
             className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50"
           >
             import JSON
           </Link>
           <Link
-            href={`/admin/items?listId=${listId}`}
+            href={`/admin/lists?view=catalog&mode=place&listId=${listId}`}
             className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/15"
           >
             مدیریت

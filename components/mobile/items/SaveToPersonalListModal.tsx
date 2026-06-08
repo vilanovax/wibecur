@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import { Plus, Loader2, Check, Globe, Lock } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { track } from '@/lib/analytics';
@@ -31,7 +33,9 @@ export default function SaveToPersonalListModal({
   onClose,
   itemId,
 }: SaveToPersonalListModalProps) {
+  const { data: session, status } = useSession();
   const [lists, setLists] = useState<PersonalList[]>([]);
+  const [authRequired, setAuthRequired] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [maxPersonalLists, setMaxPersonalLists] = useState(3);
   const [privateListsCount, setPrivateListsCount] = useState(0);
@@ -43,14 +47,55 @@ export default function SaveToPersonalListModal({
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
 
-  // Fetch lists and saved status when modal opens
+  const fetchLists = useCallback(async () => {
+    if (status !== 'authenticated' || !session?.user?.id) {
+      setAuthRequired(true);
+      setLists([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setAuthRequired(false);
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/user/lists');
+      if (res.status === 401) {
+        setAuthRequired(true);
+        setLists([]);
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setLists(data.data || []);
+          const privateCount = (data.data || []).filter(
+            (list: PersonalList) => !list.isPublic
+          ).length;
+          setPrivateListsCount(privateCount);
+          return;
+        }
+      }
+      setToastMessage('خطا در دریافت لیست‌ها');
+      setToastType('error');
+      setShowToast(true);
+    } catch {
+      setToastMessage('خطا در دریافت لیست‌ها');
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [status]);
+
   useEffect(() => {
     if (isOpen) {
-      fetchLists();
-      fetchSettings();
-      fetchSavedStatus();
+      void fetchLists();
+      void fetchSettings();
+      if (status === 'authenticated') {
+        void fetchSavedStatus();
+      }
     }
-  }, [isOpen, itemId]);
+  }, [isOpen, itemId, status, fetchLists]);
 
   const fetchSettings = async () => {
     try {
@@ -79,32 +124,6 @@ export default function SaveToPersonalListModal({
     }
   };
 
-  const fetchLists = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/user/lists');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setLists(data.data || []);
-          const privateCount = (data.data || []).filter(
-            (list: PersonalList) => !list.isPublic
-          ).length;
-          setPrivateListsCount(privateCount);
-        }
-      } else {
-        throw new Error('خطا در دریافت لیست‌ها');
-      }
-    } catch (error: any) {
-      console.error('Error fetching lists:', error);
-      setToastMessage(error.message || 'خطا در دریافت لیست‌ها');
-      setToastType('error');
-      setShowToast(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleAddToList = async (list: PersonalList) => {
     if (savedListIds.has(list.id) || addedListIds.has(list.id)) return;
     setIsAdding(list.id);
@@ -127,7 +146,9 @@ export default function SaveToPersonalListModal({
       setShowToast(true);
       track('item_save', { itemId, listId: list.id });
 
-      fetchLists();
+      // پس از افزودن موفق، کوتاه «افزوده شد» نشان داده می‌شود و سپس مودال بسته
+      // می‌شود تا کاربر به صفحه/مودال قبلیِ آیتم بازگردد.
+      setTimeout(() => onClose(), 700);
     } catch (error: any) {
       setToastMessage(error.message || 'خطا در افزودن آیتم');
       setToastType('error');
@@ -158,7 +179,17 @@ export default function SaveToPersonalListModal({
         <div className="flex flex-col h-full">
           {/* لیست‌های من */}
           <div className="flex-1 overflow-y-auto min-h-0">
-            {isLoading ? (
+            {authRequired ? (
+              <div className="text-center py-12 px-6">
+                <p className="text-gray-600 mb-4">برای ذخیره در لیست شخصی وارد شوید</p>
+                <Link
+                  href={`/login?callbackUrl=${encodeURIComponent(`/items/${itemId}`)}`}
+                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary text-white font-semibold"
+                >
+                  ورود
+                </Link>
+              </div>
+            ) : isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>

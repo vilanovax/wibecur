@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
@@ -9,18 +10,30 @@ import {
   resolveBulkImportImageForStorage,
   type BulkImportImageContext,
 } from '@/lib/admin/bulk-import-image';
-import { resolveBulkImportMatchesBatch } from '@/lib/admin/bulk-import-resolve';
+import {
+  resolveBulkImportMatchesBatch,
+  resolveBulkImportCatalogId,
+} from '@/lib/admin/bulk-import-resolve';
 import {
   addCatalogItemToList,
   createCatalogItem,
-  updateCatalogItem,
+  createLightweightListItem,
+  isCatalogInList,
 } from '@/lib/catalog-items';
+import {
+  extractBulkImportEntryKind,
+  isBulkImportLightweightRow,
+} from '@/lib/admin/bulk-import';
+import {
+  isLightweightEntryKind,
+  isMixedListCategory,
+} from '@/lib/list-entry';
 import type { BulkImportPayloadItem } from '@/lib/admin/bulk-import';
 
 type ImportResult = {
   index: number;
   title: string;
-  status: 'created' | 'linked' | 'updated' | 'error';
+  status: 'created' | 'linked' | 'updated' | 'lightweight' | 'error';
   catalogItemId?: string;
   itemId?: string;
   message?: string;
@@ -59,8 +72,10 @@ async function importOneRow(
     imageCtx: BulkImportImageContext;
     match: Awaited<ReturnType<typeof resolveBulkImportMatchesBatch>>[number];
   }
-): Promise<ImportResult & { placementAdded?: boolean; created?: boolean; linked?: boolean; updated?: boolean }> {
-  const title = row.title?.trim();
+): Promise<ImportResult & { placementAdded?: boolean; created?: boolean; linked?: boolean; updated?: boolean; lightweight?: boolean }> {
+  const titleRaw = row.title?.trim();
+  const descRaw = row.description?.trim();
+  const title = titleRaw || (descRaw ? descRaw.slice(0, 80).trim() : '');
   if (!title) {
     return { index, title: '—', status: 'error', message: 'عنوان خالی' };
   }
@@ -71,6 +86,13 @@ async function importOneRow(
       (row.metadata ?? {}) as Record<string, unknown>,
       row.externalUrl
     );
+    const entryKind = extractBulkImportEntryKind(
+      ctx.categorySlug,
+      metaInput,
+      row.entryKind ?? metaInput.entryKind
+    );
+    if (entryKind) metaInput.entryKind = entryKind;
+
     const imdbFromUrl = extractImdbIdFromUrl(row.externalUrl);
     if (imdbFromUrl && !metaInput.imdbId) metaInput.imdbId = imdbFromUrl;
 
@@ -85,42 +107,77 @@ async function importOneRow(
     }
 
     const meta = metadataValidation.data || {};
-    const match = ctx.match;
+    const metaRecord = meta as Record<string, unknown>;
 
-    let finalImage: string | undefined;
-    if (row.imageUrl?.trim()) {
-      finalImage = await resolveBulkImportImageForStorage(
-        row.imageUrl,
-        meta as Record<string, unknown>,
-        'items',
-        ctx.imageCtx
-      );
+    if (
+      isMixedListCategory(ctx.categorySlug) &&
+      isBulkImportLightweightRow(ctx.categorySlug, {
+        metadata: metaRecord,
+        entryKind: entryKind ?? metaRecord.entryKind,
+      }) &&
+      entryKind &&
+      isLightweightEntryKind(entryKind)
+    ) {
+      if (entryKind === 'link' && !row.externalUrl?.trim()) {
+        return { index, title, status: 'error', message: 'برای link، externalUrl الزامی است' };
+      }
+
+      const order = row.order ?? assignedOrder;
+      const item = await createLightweightListItem(prisma, {
+        title,
+        description: row.description?.trim() || null,
+        imageUrl: row.imageUrl?.trim() || null,
+        externalUrl: row.externalUrl?.trim() || null,
+        listId: ctx.listId,
+        order,
+        metadata: metaRecord as Prisma.InputJsonValue,
+        entryKind,
+      });
+
+      return {
+        index,
+        title,
+        status: 'lightweight',
+        itemId: item.id,
+        placementAdded: true,
+        lightweight: true,
+        message: 'ورودی سبک (بدون کاتالوگ)',
+      };
     }
 
-    let catalogId = match.catalogId;
+    const match = ctx.match;
+
+    let catalogId =
+      match.catalogId ??
+      (await resolveBulkImportCatalogId(prisma, ctx.categorySlug, row));
+
+    const existingCatalog = !!catalogId;
 
     if (!catalogId) {
+      let finalImage: string | null = null;
+      if (row.imageUrl?.trim()) {
+        finalImage =
+          (await resolveBulkImportImageForStorage(
+            row.imageUrl,
+            meta as Record<string, unknown>,
+            'items',
+            ctx.imageCtx
+          )) ?? null;
+      }
+
       const catalog = await createCatalogItem(prisma, {
         title,
         description: row.description?.trim() || null,
-        imageUrl: finalImage ?? null,
+        imageUrl: finalImage,
         externalUrl: row.externalUrl?.trim() || null,
         categorySlug: ctx.categorySlug,
         metadata: meta,
       });
       catalogId = catalog.id;
-    } else {
-      await updateCatalogItem(prisma, catalogId, {
-        title,
-        description: row.description?.trim() || null,
-        ...(finalImage !== undefined && { imageUrl: finalImage }),
-        externalUrl: row.externalUrl?.trim() || null,
-        categorySlug: ctx.categorySlug,
-        metadata: meta,
-      });
     }
 
-    if (match.inTargetList) {
+    const inTargetList = await isCatalogInList(prisma, catalogId, ctx.listId);
+    if (inTargetList) {
       return {
         index,
         title,
@@ -128,7 +185,7 @@ async function importOneRow(
         catalogItemId: catalogId,
         listCount: match.listCount,
         updated: true,
-        message: `از قبل در این لیست بود — دادهٔ مشترک کاتالوگ به‌روز شد (${match.listCount.toLocaleString('fa-IR')} لیست)`,
+        message: `از قبل در این لیست است — دادهٔ اصلی کاتالوگ حفظ شد`,
       };
     }
 
@@ -139,17 +196,21 @@ async function importOneRow(
       order,
     });
 
-    if (match.kind === 'existing_catalog') {
+    if (existingCatalog) {
+      const listCount = match.listCount > 0 ? match.listCount : undefined;
       return {
         index,
         title,
         status: 'linked',
         catalogItemId: catalogId,
         itemId: item.id,
-        listCount: match.listCount,
+        listCount,
         placementAdded: true,
         linked: true,
-        message: `موجود در ${match.listCount.toLocaleString('fa-IR')} لیست دیگر — فقط جایگاه جدید اضافه شد`,
+        message:
+          listCount != null
+            ? `کاتالوگ موجود — با دادهٔ اصلی DB به این لیست اضافه شد (${listCount.toLocaleString('fa-IR')} لیست دیگر)`
+            : 'کاتالوگ موجود — با دادهٔ اصلی DB به این لیست اضافه شد',
       };
     }
 
@@ -230,6 +291,7 @@ export async function POST(request: NextRequest) {
     let created = 0;
     let linked = 0;
     let updated = 0;
+    let lightweight = 0;
     let placementsAdded = 0;
     const results: ImportResult[] = [];
 
@@ -237,6 +299,7 @@ export async function POST(request: NextRequest) {
       if (r.created) created++;
       if (r.linked) linked++;
       if (r.updated) updated++;
+      if (r.lightweight) lightweight++;
       if (r.placementAdded) placementsAdded++;
       results.push({
         index: r.index,
@@ -258,6 +321,7 @@ export async function POST(request: NextRequest) {
       created,
       linked,
       updated,
+      lightweight,
       total: items.length,
       results,
     });

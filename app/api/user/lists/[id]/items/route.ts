@@ -5,6 +5,7 @@ import { dbQuery } from '@/lib/db';
 import { nanoid } from 'nanoid';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import { resolveSessionUserId } from '@/lib/api-db';
 import {
   addCatalogItemToList,
   backfillCatalogForItem,
@@ -20,9 +21,17 @@ export async function POST(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'احراز هویت نشده است' },
+        { status: 401 }
+      );
+    }
+
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید', code: 'SESSION_USER_NOT_FOUND' },
         { status: 401 }
       );
     }
@@ -38,27 +47,6 @@ export async function POST(
       metadata,
       order,
     } = body;
-
-    // Get user (session.user is guaranteed to exist after the check above)
-    const userEmail = session.user.email;
-    if (!userEmail) {
-      return NextResponse.json(
-        { success: false, error: 'احراز هویت نشده است' },
-        { status: 401 }
-      );
-    }
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: userEmail },
-      })
-    );
-
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'کاربر یافت نشد' },
-        { status: 404 }
-      );
-    }
 
     // Check if list exists and belongs to user
     const list = await dbQuery(() =>
@@ -78,10 +66,18 @@ export async function POST(
     }
 
     // Check ownership
-    if (list.userId !== user.id) {
+    if (list.userId !== userId) {
       return NextResponse.json(
         { success: false, error: 'شما اجازه افزودن آیتم به این لیست را ندارید' },
         { status: 403 }
+      );
+    }
+
+    // لیست حذف‌شده نباید آیتم بپذیرد (هم‌راستا با مخفی‌بودنش در پروفایل/مودال)
+    if (list.deletedAt) {
+      return NextResponse.json(
+        { success: false, error: 'این لیست حذف شده است' },
+        { status: 404 }
       );
     }
 

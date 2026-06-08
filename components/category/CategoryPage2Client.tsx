@@ -87,7 +87,6 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
     category,
     metrics,
     trendingLists,
-    trendingNow24h = [],
     topSavedThisWeek = [],
     viralSpotlight,
     topCurators,
@@ -108,8 +107,12 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
   const isCinematic = layoutType === 'cinematic';
 
   if (isCinematic) {
-    const featuredList = viralSpotlight ?? trendingLists[0];
-    const trendingForGrid = trendingNow24h.length >= 4 ? trendingNow24h : trendingLists;
+    const trendingForGrid = trendingLists;
+    const featuredList =
+      viralSpotlight ??
+      (trendingLists[1] && trendingLists[1].id !== trendingLists[0]?.id
+        ? trendingLists[1]
+        : null);
     const mostDebated = data.mostDebatedLists ?? [];
 
     return (

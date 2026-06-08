@@ -49,7 +49,7 @@ function FabItem({
 function getFabItems(pathname: string | null): FabItemConfig[] {
   const base: FabItemConfig[] = [
     { label: 'ایجاد لیست', href: '/admin/lists/new', icon: List, highlight: false },
-    { label: 'افزودن آیتم', href: '/admin/items/new', icon: Package, highlight: false },
+    { label: 'افزودن آیتم', href: '/admin/lists?view=catalog&mode=place', icon: Package, highlight: false },
     { label: 'ایجاد دسته', href: '/admin/categories/new', icon: Tag, highlight: false },
     { label: 'منتخب هوم', href: '/admin/custom/featured', icon: Star, highlight: false },
   ];
@@ -60,7 +60,7 @@ function getFabItems(pathname: string | null): FabItemConfig[] {
     ...item,
     highlight:
       (pathname.startsWith('/admin/lists') && item.href === '/admin/lists/new') ||
-      (pathname.startsWith('/admin/items') && item.href === '/admin/items/new') ||
+      (pathname.includes('view=catalog') && item.href.includes('mode=place')) ||
       (pathname.startsWith('/admin/categories') && item.href === '/admin/categories/new') ||
       (pathname.startsWith('/admin/custom') && item.href === '/admin/custom/featured'),
   }));

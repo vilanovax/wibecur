@@ -7,6 +7,13 @@ import {
   sanitizeImportUrl,
 } from '@/lib/image-url-sanitize';
 import type { BulkImportMatch } from '@/lib/admin/bulk-import-resolve';
+import {
+  ENTRY_KINDS,
+  isLightweightEntryKind,
+  isMixedListCategory,
+  parseEntryKind,
+  type EntryKind,
+} from '@/lib/list-entry';
 
 export function extractImdbIdFromUrl(url: string | null | undefined): string | undefined {
   if (!url?.trim()) return undefined;
@@ -17,12 +24,13 @@ export function extractImdbIdFromUrl(url: string | null | undefined): string | u
 export type BulkImportCategoryKind = 'movie' | 'book' | 'cafe' | 'general';
 
 const baseRawSchema = z.object({
-  title: z.string().min(1, 'عنوان الزامی است'),
+  title: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   imageUrl: z.string().optional().nullable(),
   externalUrl: z.string().optional().nullable(),
   order: z.number().int().optional(),
   tip: z.string().optional().nullable(),
+  entryKind: z.enum(ENTRY_KINDS).optional().nullable(),
   metadata: z.record(z.unknown()).optional().nullable(),
 });
 
@@ -44,14 +52,40 @@ export type BulkImportRow = {
 };
 
 export type BulkImportPayloadItem = {
-  title: string;
+  title?: string;
   description?: string;
   imageUrl?: string;
   externalUrl?: string;
   order?: number;
   tip?: string;
+  entryKind?: EntryKind;
   metadata?: Record<string, unknown>;
 };
+
+export function extractBulkImportEntryKind(
+  categorySlug: string,
+  metadata: Record<string, unknown>,
+  topLevel?: unknown
+): EntryKind | null {
+  if (!isMixedListCategory(categorySlug)) return null;
+  const kind = parseEntryKind(topLevel) ?? parseEntryKind(metadata.entryKind);
+  if (kind && isLightweightEntryKind(kind)) return kind;
+  return null;
+}
+
+export function isBulkImportLightweightRow(
+  categorySlug: string,
+  row: {
+    metadata?: Record<string, unknown>;
+    entryKind?: unknown;
+  }
+): boolean {
+  return extractBulkImportEntryKind(
+    categorySlug,
+    row.metadata ?? {},
+    row.entryKind
+  ) != null;
+}
 
 export function mergeItemTipIntoMetadata(
   metadata: Record<string, unknown>,
@@ -219,8 +253,14 @@ export function normalizeBulkImportMetadata(
       return normalizeBookImportMetadata(meta);
     case 'cafe':
       return normalizeCafeImportMetadata(meta);
-    default:
-      return meta && typeof meta === 'object' ? { ...meta } : {};
+    default: {
+      const out: Record<string, unknown> =
+        meta && typeof meta === 'object' ? { ...meta } : {};
+      if (typeof out.tip === 'string' && out.tip.trim()) out.tip = out.tip.trim();
+      if (typeof out.entryKind === 'string') out.entryKind = out.entryKind.trim();
+      if (typeof out.factType === 'string') out.factType = out.factType.trim();
+      return out;
+    }
   }
 }
 
@@ -247,12 +287,10 @@ export function validateBulkImportRow(
   }
 
   const data = parsed.data;
-  const title = data.title.trim();
-  if (!title) errors.push('عنوان خالی است');
-
+  let title = (data.title ?? '').trim();
   let externalUrl = normalizeBulkImportExternalUrl(data.externalUrl);
 
-  const metadata = normalizeBulkImportMetadata(
+  let metadata = normalizeBulkImportMetadata(
     categorySlug,
     mergeItemTipIntoMetadata(
       (data.metadata as Record<string, unknown>) ?? {},
@@ -261,13 +299,37 @@ export function validateBulkImportRow(
     externalUrl
   );
 
+  const entryKind = extractBulkImportEntryKind(categorySlug, metadata, data.entryKind);
+  if (entryKind) {
+    metadata = { ...metadata, entryKind };
+  }
+
+  const isLightweight = entryKind != null;
+
+  if (!title) {
+    const desc = (data.description ?? '').trim();
+    if (isLightweight && desc) {
+      title = desc.slice(0, 80).trim();
+    } else if (!isLightweight) {
+      errors.push('عنوان خالی است');
+    } else {
+      errors.push('عنوان یا توضیحات الزامی است');
+    }
+  }
+
+  if (isLightweight && entryKind === 'link' && !externalUrl) {
+    errors.push('برای entryKind=link، externalUrl الزامی است');
+  }
+
   const metaValidation = validateMetadata(categorySlug, metadata);
   if (!metaValidation.success) {
     errors.push(metaValidation.error || 'متادیتا نامعتبر');
   }
 
   const imageUrl = normalizeImageUrlForStorage(data.imageUrl);
-  const warnings = collectImportImageWarnings(data.imageUrl, imageUrl, metadata, externalUrl);
+  const warnings = isLightweight
+    ? []
+    : collectImportImageWarnings(data.imageUrl, imageUrl, metadata, externalUrl);
 
   return {
     id: `row-${index}-${title.slice(0, 12)}`,
@@ -349,8 +411,15 @@ export function formatBulkImportRowSubtitle(row: BulkImportRow, categorySlug: st
       if (m.address) parts.push(String(m.address).slice(0, 40));
       return parts.join(' · ') || '—';
     }
-    default:
-      return Object.keys(m).length > 0 ? JSON.stringify(m).slice(0, 80) : '—';
+    default: {
+      if (m.entryKind) {
+        const parts: string[] = [String(m.entryKind)];
+        if (m.factType) parts.push(String(m.factType));
+        if (row.description) parts.push(row.description.slice(0, 48));
+        return parts.join(' · ');
+      }
+      return Object.keys(m).length > 0 ? JSON.stringify(m).slice(0, 80) : row.description?.slice(0, 60) || '—';
+    }
   }
 }
 
@@ -423,7 +492,7 @@ export function getBulkImportJsonHint(categorySlug: string, list?: BulkImportLis
     case 'cafe':
       return `tip (اختیاری) · metadata: address (الزامی), priceRange, cuisine${listPart}`;
     default:
-      return `tip, description, imageUrl, externalUrl, metadata (اختیاری)${listPart}`;
+      return `entryKind: tip | fact | link (لیست ترکیبی) · tip · description · externalUrl · metadata.factType${listPart}`;
   }
 }
 
@@ -492,7 +561,18 @@ const CAFE_JSON_EXAMPLE = `{
 const GENERAL_JSON_EXAMPLE = `{
   "items": [
     {
-      "title": "عنوان آیتم",
+      "entryKind": "tip",
+      "title": "قبل از خواب گوشی نگذارید",
+      "description": "نور آبی صفحه تولید ملاتونین را کم می‌کند — حداقل ۳۰ دقیقه قبل از خواب."
+    },
+    {
+      "entryKind": "link",
+      "title": "مقالهٔ علمی خواب",
+      "externalUrl": "https://example.com/sleep-science",
+      "description": "خلاصهٔ تحقیق دربارهٔ اثر نور آبی"
+    },
+    {
+      "title": "عنوان آیتم کاتالوگی",
       "description": "توضیح کوتاه",
       "tip": "نکتهٔ ویژهٔ ادمین (اختیاری)",
       "imageUrl": "https://example.com/image.jpg",

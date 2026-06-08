@@ -55,6 +55,8 @@ export interface CategoryListCard {
   tags?: string[];
   cityTag?: string | null;
   saves24h?: number;
+  /** ذخیره در ۷ روز گذشته (برای سکشن ترند هفتگی) */
+  saves7d?: number;
   /** رشد درصدی ۲۴ ساعته (برای badge Trending) */
   growthPercent?: number;
   /** تعداد نظرات لیست (برای Most Debated) */

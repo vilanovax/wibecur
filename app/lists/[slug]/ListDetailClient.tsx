@@ -21,6 +21,13 @@ import { getDisplayListTitle } from '@/lib/list-display-title';
 import { getItemCardSubtitle, filterItemsByQuery, LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
 import { normalizeSearchQuery } from '@/lib/list-search';
 import { isMovieLikeCategory } from '@/lib/resolve-item-image';
+import LightweightEntryRow from '@/components/shared/list-entries/LightweightEntryRow';
+import {
+  isLightweightListItem,
+  isMixedListCategory,
+  resolveEntryKind,
+  sourceCategorySlugFromItem,
+} from '@/lib/list-entry';
 type Item = {
   id: string;
   title: string;
@@ -28,6 +35,8 @@ type Item = {
   imageUrl: string | null;
   displayImageUrl?: string | null;
   externalUrl?: string | null;
+  catalogItemId?: string | null;
+  listNote?: string | null;
   rating: number;
   metadata?: Record<string, unknown> | null;
 };
@@ -106,8 +115,13 @@ const GRID_DEFAULT_CATEGORY_SLUGS = [
 
 function getDefaultView(
   categorySlug: string | undefined,
-  items?: { imageUrl: string | null }[]
+  items?: { imageUrl: string | null; catalogItemId?: string | null; metadata?: unknown }[]
 ): 'grid' | 'list' {
+  if (categorySlug && isMixedListCategory(categorySlug)) {
+    const lightweightCount =
+      items?.filter((i) => isLightweightListItem(i)).length ?? 0;
+    if (items?.length && lightweightCount / items.length >= 0.35) return 'list';
+  }
   if (categorySlug) {
     const slug = categorySlug.toLowerCase();
     if (GRID_DEFAULT_CATEGORY_SLUGS.some((s) => slug === s || slug.includes(s))) return 'grid';
@@ -242,6 +256,34 @@ function SimilarListsCarousel({ relatedLists }: { relatedLists: RelatedList[] })
         ))}
       </div>
     </section>
+  );
+}
+
+function itemDisplayCategorySlug(item: Item, listCategorySlug?: string | null): string | null {
+  return sourceCategorySlugFromItem(item) ?? listCategorySlug ?? null;
+}
+
+function LightweightGridCard({
+  item,
+  index,
+  entryKind,
+  onOpen,
+}: {
+  item: Item;
+  index: number;
+  entryKind: ReturnType<typeof resolveEntryKind>;
+  onOpen: () => void;
+}) {
+  return (
+    <div className="col-span-2 sm:col-span-1">
+      <LightweightEntryRow
+        item={item}
+        index={index}
+        entryKind={entryKind}
+        onOpen={onOpen}
+        compact
+      />
+    </div>
   );
 }
 
@@ -649,16 +691,31 @@ export default function ListDetailClient({
     if (viewMode === 'grid') {
       return (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
-          {entries.map(({ item, originalIndex }) => (
-            <GridItemCard
-              key={item.id}
-              item={item}
-              index={originalIndex}
-              categorySlug={categorySlug}
-              categoryIcon={categoryIcon}
-              onOpen={() => openItemPreview(originalIndex)}
-            />
-          ))}
+          {entries.map(({ item, originalIndex }) => {
+            const entryKind = resolveEntryKind(item);
+            if (isLightweightListItem(item)) {
+              return (
+                <LightweightGridCard
+                  key={item.id}
+                  item={item}
+                  index={originalIndex}
+                  entryKind={entryKind}
+                  onOpen={() => openItemPreview(originalIndex)}
+                />
+              );
+            }
+            const itemCategorySlug = itemDisplayCategorySlug(item, categorySlug);
+            return (
+              <GridItemCard
+                key={item.id}
+                item={item}
+                index={originalIndex}
+                categorySlug={itemCategorySlug}
+                categoryIcon={categoryIcon}
+                onOpen={() => openItemPreview(originalIndex)}
+              />
+            );
+          })}
         </div>
       );
     }
@@ -670,12 +727,27 @@ export default function ListDetailClient({
           const isSimilar =
             !!prevEntry &&
             item.title.slice(0, 12) === prevEntry.item.title.slice(0, 12);
+          const entryKind = resolveEntryKind(item);
+
+          if (isLightweightListItem(item)) {
+            return (
+              <LightweightEntryRow
+                key={item.id}
+                item={item}
+                index={originalIndex}
+                entryKind={entryKind}
+                onOpen={() => openItemPreview(originalIndex)}
+              />
+            );
+          }
+
+          const itemCategorySlug = itemDisplayCategorySlug(item, categorySlug);
           return (
             <ListItemRow
               key={item.id}
               item={item}
               index={originalIndex}
-              categorySlug={categorySlug}
+              categorySlug={itemCategorySlug}
               categoryIcon={categoryIcon}
               isSimilar={isSimilar}
               onOpen={() => openItemPreview(originalIndex)}

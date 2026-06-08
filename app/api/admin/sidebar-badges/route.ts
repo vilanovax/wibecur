@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { getCommentsHubStats } from '@/lib/admin/comments-hub-stats';
+import { getSuggestionsStats } from '@/lib/admin/suggestions-stats';
 
 export async function GET() {
   try {
@@ -10,6 +11,7 @@ export async function GET() {
     }
 
     const stats = await getCommentsHubStats();
+    const suggestionStats = await getSuggestionsStats();
     const commentsAction =
       stats.comments.pending +
       stats.commentReports.open +
@@ -22,6 +24,7 @@ export async function GET() {
         commentReportsOpen: stats.commentReports.open,
         commentsAction,
         itemReportsOpen: stats.itemReportsOpen,
+        suggestionsPending: suggestionStats.totalPending,
       },
     });
   } catch (error: unknown) {

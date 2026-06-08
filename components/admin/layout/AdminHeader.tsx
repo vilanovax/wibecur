@@ -53,6 +53,20 @@ function getBreadcrumb(pathname: string | null): { href: string; label: string }
       hiddenResourceId = segments[i];
       continue;
     }
+    // workspace لیست — شناسه را نشان نده
+    if (
+      segments[i - 1] === 'lists' &&
+      /^[A-Za-z0-9_-]+$/.test(segments[i]) &&
+      segments[i + 1] !== 'edit' &&
+      segments[i + 1] !== 'debug'
+    ) {
+      acc += `/${segments[i]}`;
+      const label = 'workspace لیست';
+      if (out[out.length - 1]?.href !== acc) {
+        out.push({ href: acc, label });
+      }
+      continue;
+    }
     // شناسه لیست را رد کن — مستقیم «ویرایش لیست» / «دیباگ»
     if (
       segments[i - 1] === 'lists' &&

@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       new: matches.filter((m) => m.kind === 'new').length,
       existing_catalog: matches.filter((m) => m.kind === 'existing_catalog').length,
       already_in_list: matches.filter((m) => m.kind === 'already_in_list').length,
+      lightweight: matches.filter((m) => m.kind === 'lightweight').length,
     };
 
     return NextResponse.json({ matches, summary });

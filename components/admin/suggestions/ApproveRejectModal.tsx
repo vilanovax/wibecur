@@ -10,6 +10,7 @@ interface ApproveRejectModalProps {
   suggestionTitle: string;
   action: 'approve' | 'reject';
   type: 'list' | 'item';
+  apiBase?: string;
   onSuccess: () => void;
 }
 
@@ -20,6 +21,7 @@ export default function ApproveRejectModal({
   suggestionTitle,
   action,
   type,
+  apiBase,
   onSuccess,
 }: ApproveRejectModalProps) {
   const [adminNotes, setAdminNotes] = useState('');
@@ -52,7 +54,8 @@ export default function ApproveRejectModal({
     setError('');
 
     try {
-      const res = await fetch(`/api/admin/suggestions/${type}s/${suggestionId}`, {
+      const endpoint = apiBase ?? `/api/admin/suggestions/${type}s/${suggestionId}`;
+      const res = await fetch(endpoint, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

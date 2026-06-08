@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Star } from 'lucide-react';
+import { ExternalLink, Star } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import ItemCoverPlaceholder from '@/components/shared/ItemCoverPlaceholder';
 import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
@@ -11,6 +11,15 @@ import { resolveImageDisplaySrc } from '@/lib/image-url-policy';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 import { buildItemMetadataChips, extractItemTip } from '@/lib/item-metadata-display';
 import ItemTipCard from '@/components/shared/ItemTipCard';
+import {
+  entryKindBadgeLabel,
+  entryKindIcon,
+  FACT_TYPE_LABELS,
+  isLightweightListItem,
+  resolveEntryKind,
+  sourceCategorySlugFromItem,
+  type FactType,
+} from '@/lib/list-entry';
 
 export type ItemPreviewData = {
   id: string;
@@ -18,6 +27,8 @@ export type ItemPreviewData = {
   description?: string | null;
   imageUrl?: string | null;
   displayImageUrl?: string | null;
+  catalogItemId?: string | null;
+  listNote?: string | null;
   rating?: number;
   voteCount?: number;
   metadata?: Record<string, unknown> | null;
@@ -138,12 +149,13 @@ function PreviewActions({
   onClose,
   className = '',
   layout = 'stacked',
+  externalUrl,
 }: {
   item: ItemPreviewData;
   onClose: () => void;
   className?: string;
-  /** stacked = دسکتاپ | inline = موبایل — آیکون‌ها کنار CTA */
   layout?: 'stacked' | 'inline';
+  externalUrl?: string | null;
 }) {
   const actionButtons = (
     <>
@@ -168,10 +180,26 @@ function PreviewActions({
     </Link>
   );
 
+  const externalLink =
+    externalUrl?.trim() ? (
+      <a
+        href={externalUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-all active:scale-[0.99] ${
+          layout === 'inline' ? 'flex-1' : 'w-full'
+        }`}
+      >
+        <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+        باز کردن لینک
+      </a>
+    ) : null;
+
   if (layout === 'inline') {
     return (
       <div className={`flex items-center gap-2 ${className}`} aria-label="عملیات آیتم">
         {actionButtons}
+        {externalLink}
         {fullPageLink}
       </div>
     );
@@ -182,6 +210,7 @@ function PreviewActions({
       <div className="flex items-center justify-start gap-2.5" aria-label="ذخیره و پسندیدن">
         {actionButtons}
       </div>
+      {externalLink}
       {fullPageLink}
     </div>
   );
@@ -208,12 +237,20 @@ export default function ItemPreviewSheet({
 
   if (!item) return null;
 
+  const entryKind = resolveEntryKind(item);
+  const isLightweight = isLightweightListItem(item);
+  const itemCategorySlug = sourceCategorySlugFromItem(item) ?? categorySlug;
+
   const meta = (item.metadata ?? {}) as Record<string, unknown>;
-  const chips = buildItemMetadataChips(meta, categorySlug, {
+  const chips = buildItemMetadataChips(meta, itemCategorySlug, {
     fallbackImdbRating: meta.imdbRating ?? item.rating,
   });
   const itemTip = extractItemTip(meta);
-  const desc = item.description?.trim();
+  const listNote = item.listNote?.trim() || null;
+  const desc =
+    item.description?.trim() ||
+    (isLightweight && !item.title?.trim() ? itemTip : null) ||
+    null;
   const imdbRating =
     meta.imdbRating != null && String(meta.imdbRating).trim()
       ? String(meta.imdbRating)
@@ -221,73 +258,137 @@ export default function ItemPreviewSheet({
         ? String(item.rating)
         : null;
 
+  const factTypeRaw = meta.factType;
+  const factLabel =
+    typeof factTypeRaw === 'string'
+      ? FACT_TYPE_LABELS[factTypeRaw as FactType] ?? factTypeRaw
+      : null;
+
   const rankLabel =
     itemIndex != null && totalItems != null
       ? `${(itemIndex + 1).toLocaleString('fa-IR')} از ${totalItems.toLocaleString('fa-IR')}`
       : null;
 
   const headerSubtitle = [rankLabel, categoryName].filter(Boolean).join(' · ');
+  const sheetTitle = item.title?.trim() || (isLightweight ? entryKindBadgeLabel(entryKind) : item.title);
 
   return (
     <BottomSheet
       isOpen={isOpen}
       onClose={onClose}
-      title={item.title}
+      title={sheetTitle}
       subtitle={headerSubtitle || undefined}
       maxHeight="92vh"
       desktopMaxWidth="lg"
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden" dir="rtl">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-2 text-right lg:px-0 lg:pt-0 lg:pb-0">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-7">
-            {/* پوستر */}
-            <div className="relative mx-auto shrink-0 lg:mx-0">
-              <div className="overflow-hidden rounded-2xl bg-gray-100 shadow-lg ring-1 ring-black/5">
-                <div className="aspect-[2/3] w-[min(72vw,220px)] lg:aspect-[3/4] lg:w-[11.5rem] xl:w-[12.5rem]">
-                  <PreviewPoster item={item} categorySlug={categorySlug} categoryIcon={categoryIcon} />
+          {isLightweight ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/50 p-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm ring-1 ring-amber-200/60">
+                  {entryKindIcon(entryKind)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    <span className="inline-flex rounded-md bg-white/80 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary ring-1 ring-amber-200/50">
+                      {entryKindBadgeLabel(entryKind)}
+                    </span>
+                    {factLabel && (
+                      <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
+                        {factLabel}
+                      </span>
+                    )}
+                  </div>
+                  {item.title?.trim() && (
+                    <h3 className="wibe-h3 font-bold text-foreground">{item.title}</h3>
+                  )}
                 </div>
               </div>
-              {imdbRating && (
-                <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-lg bg-black/70 px-2 py-1 wibe-caption font-bold text-white backdrop-blur-sm">
-                  <Star className="h-3 w-3 fill-warning text-warning" aria-hidden />
-                  {imdbRating}
-                </span>
-              )}
-            </div>
-
-            {/* جزئیات */}
-            <div className="flex min-w-0 flex-1 flex-col gap-3.5 lg:gap-4 lg:pt-1">
-              {chips.length > 0 && (
-                <div className="flex flex-wrap justify-start gap-1.5">
-                  {chips.map(({ key, label, value }) => (
-                    <MetadataChip key={key} label={label} value={value} />
-                  ))}
-                </div>
-              )}
-
-              {itemTip && <ItemTipCard tip={itemTip} className="text-right" />}
 
               {desc ? (
-                <p className="text-right text-[0.9375rem] leading-[1.8] text-foreground/75">{desc}</p>
+                <p className="text-right text-[0.9375rem] leading-[1.85] text-foreground/80 whitespace-pre-line">
+                  {desc}
+                </p>
               ) : (
-                <p className="wibe-caption text-wibe-secondary text-right">توضیحی ثبت نشده</p>
+                <p className="wibe-caption text-wibe-secondary text-right">متنی ثبت نشده</p>
               )}
 
-              <div className="mt-1 max-lg:hidden">
-                <PreviewActions item={item} onClose={onClose} />
+              {listNote && listNote !== desc && <ItemTipCard tip={listNote} className="text-right" />}
+              {itemTip && itemTip !== desc && itemTip !== listNote && (
+                <ItemTipCard tip={itemTip} className="text-right" />
+              )}
+
+              <div className="max-lg:hidden">
+                <PreviewActions
+                  item={item}
+                  onClose={onClose}
+                  externalUrl={item.externalUrl}
+                />
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-7">
+              <div className="relative mx-auto shrink-0 lg:mx-0">
+                <div className="overflow-hidden rounded-2xl bg-gray-100 shadow-lg ring-1 ring-black/5">
+                  <div className="aspect-[2/3] w-[min(72vw,220px)] lg:aspect-[3/4] lg:w-[11.5rem] xl:w-[12.5rem]">
+                    <PreviewPoster
+                      item={item}
+                      categorySlug={itemCategorySlug}
+                      categoryIcon={categoryIcon}
+                    />
+                  </div>
+                </div>
+                {imdbRating && (
+                  <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-lg bg-black/70 px-2 py-1 wibe-caption font-bold text-white backdrop-blur-sm">
+                    <Star className="h-3 w-3 fill-warning text-warning" aria-hidden />
+                    {imdbRating}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex min-w-0 flex-1 flex-col gap-3.5 lg:gap-4 lg:pt-1">
+                {chips.length > 0 && (
+                  <div className="flex flex-wrap justify-start gap-1.5">
+                    {chips.map(({ key, label, value }) => (
+                      <MetadataChip key={key} label={label} value={value} />
+                    ))}
+                  </div>
+                )}
+
+                {itemTip && <ItemTipCard tip={itemTip} className="text-right" />}
+                {listNote && <ItemTipCard tip={listNote} className="text-right" />}
+
+                {desc ? (
+                  <p className="text-right text-[0.9375rem] leading-[1.8] text-foreground/75">{desc}</p>
+                ) : (
+                  <p className="wibe-caption text-wibe-secondary text-right">توضیحی ثبت نشده</p>
+                )}
+
+                <div className="mt-1 max-lg:hidden">
+                  <PreviewActions
+                    item={item}
+                    onClose={onClose}
+                    externalUrl={item.externalUrl}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* فوتر چسبان — موبایل */}
         <div className="relative shrink-0 lg:hidden">
           <div
             className="pointer-events-none absolute -top-6 inset-x-0 h-6 bg-gradient-to-t from-wibe-card to-transparent"
             aria-hidden
           />
           <div className="border-t border-wibe/50 bg-wibe-card px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
-            <PreviewActions item={item} onClose={onClose} layout="inline" />
+            <PreviewActions
+              item={item}
+              onClose={onClose}
+              layout="inline"
+              externalUrl={item.externalUrl}
+            />
           </div>
         </div>
       </div>

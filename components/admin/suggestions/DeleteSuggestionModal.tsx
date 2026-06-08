@@ -9,6 +9,7 @@ interface DeleteSuggestionModalProps {
   suggestionId: string;
   suggestionTitle: string;
   type: 'list' | 'item';
+  apiBase?: string;
   onSuccess: () => void;
 }
 
@@ -18,6 +19,7 @@ export default function DeleteSuggestionModal({
   suggestionId,
   suggestionTitle,
   type,
+  apiBase,
   onSuccess,
 }: DeleteSuggestionModalProps) {
   const [message, setMessage] = useState('');
@@ -38,7 +40,11 @@ export default function DeleteSuggestionModal({
         params.set('message', message.trim());
       }
 
-      const res = await fetch(`/api/admin/suggestions/${type}s/${suggestionId}?${params.toString()}`, {
+      const endpoint = apiBase
+        ? `${apiBase}/${suggestionId}${params.toString() ? `?${params.toString()}` : ''}`
+        : `/api/admin/suggestions/${type}s/${suggestionId}?${params.toString()}`;
+
+      const res = await fetch(endpoint, {
         method: 'DELETE',
       });
 

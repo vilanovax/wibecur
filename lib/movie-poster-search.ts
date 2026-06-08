@@ -31,8 +31,9 @@ export function tmdbPosterUrl(
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
-function parseSearchYear(raw?: number | string | null): number | undefined {
+function parseSearchYear(raw?: number | string | unknown | null): number | undefined {
   if (raw == null || raw === '') return undefined;
+  if (typeof raw !== 'number' && typeof raw !== 'string') return undefined;
   const n = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
   return Number.isFinite(n) && n >= 1800 && n <= 2100 ? n : undefined;
 }

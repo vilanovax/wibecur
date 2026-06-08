@@ -104,7 +104,7 @@ export default function AdminTopBar({ initialRange = 'today' }: AdminTopBarProps
             <span className="hidden sm:inline">ایجاد لیست</span>
           </Link>
           <Link
-            href="/admin/items/new"
+            href="/admin/lists?view=catalog&mode=place"
             className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] border border-[var(--color-border)] text-[var(--color-text)] text-sm font-medium hover:bg-[var(--color-bg)] transition-colors"
           >
             <Package className="w-4 h-4" />

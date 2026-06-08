@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutGrid, List, Filter, ChevronDown, Bookmark } from 'lucide-react';
+import { LayoutGrid, List, Filter, Bookmark } from 'lucide-react';
 import { lists, categories } from '@prisma/client';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
 import ListsFeaturedCarousel from '@/components/mobile/lists/ListsFeaturedCarousel';
@@ -161,10 +161,10 @@ const DEFAULT_FILTER: FilterState = {
 };
 
 const VIEW_MODE_KEY = 'listsPage_viewMode';
-const PAGE_SIZE = 12;
-/** پیش‌نمایش هر دسته — موبایل ۲×۲ | دسکتاپ تا ۶ */
-const SECTION_PREVIEW_MOBILE = 4;
-const SECTION_PREVIEW_DESKTOP = 6;
+const PAGE_SIZE = 24;
+/** پیش‌نمایش هر دسته در نمای سکشن‌بندی‌شده */
+const SECTION_PREVIEW_MOBILE = 6;
+const SECTION_PREVIEW_DESKTOP = 8;
 const STICKY_OFFSET = 112;
 
 /** فقط نوار افقی چیپ‌ها را اسکرول می‌کند — بدون جابجایی صفحه */
@@ -202,7 +202,6 @@ export default function ListsPageClient({
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [bookmarksLoaded, setBookmarksLoaded] = useState(false);
-  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   const [highlightCategoryId, setHighlightCategoryId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [trendingListIds, setTrendingListIds] = useState<string[]>([]);
@@ -297,7 +296,7 @@ export default function ListsPageClient({
         ...s,
         sortBy,
         vibes,
-        categories: new Set(),
+        categories: resolvedCategoryId ? new Set([resolvedCategoryId]) : s.categories,
       }));
       initialModeApplied.current = true;
     }
@@ -367,12 +366,21 @@ export default function ListsPageClient({
     if (browseMode !== 'newest') params.set('mode', browseMode);
     else params.delete('mode');
 
+    if (filterState.categories.size === 1) {
+      const catId = [...filterState.categories][0];
+      const cat = activeCategories.find((c) => c.id === catId);
+      if (cat?.slug) params.set('category', cat.slug);
+      else params.set('category', catId);
+    } else {
+      params.delete('category');
+    }
+
     const next = params.toString();
     const current = window.location.search.replace(/^\?/, '');
     if (next !== current) {
       router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
     }
-  }, [searchQuery, browseMode, router, pathname]);
+  }, [searchQuery, browseMode, filterState.categories, activeCategories, router, pathname]);
 
   const searchFiltered = filterListsByQuery(publicLists, searchQuery);
   const filteredLists = applyFilter(searchFiltered, filterState);
@@ -406,7 +414,6 @@ export default function ListsPageClient({
       ...s,
       sortBy,
       vibes,
-      categories: new Set(),
     }));
     setHighlightCategoryId(null);
   };
@@ -441,10 +448,13 @@ export default function ListsPageClient({
     filterState.minItemCount > 0 ||
     filterState.minRating > 0;
 
+  const singleCategoryFilter = filterState.categories.size === 1;
+
   const useSectionLayout =
     !searchQuery.trim() &&
     !hasAdvancedFilters &&
     browseMode !== 'saved' &&
+    !singleCategoryFilter &&
     (browseMode === 'newest' || browseMode === 'popular' || browseMode === 'trending');
 
   useEffect(() => {
@@ -563,18 +573,16 @@ export default function ListsPageClient({
         ? activeCategories.find((c) => filterState.categories.has(c.id))
         : null;
 
-  const hideCategoryChipsByDefault =
-    useSectionLayout && filterState.categories.size === 0;
-
-  const showCategoryChips =
-    categoriesExpanded || !hideCategoryChipsByDefault || filterState.categories.size > 0;
+  const showCategoryChips = true;
 
   const isAllCategoriesSelected = useSectionLayout
     ? highlightCategoryId === null && filterState.categories.size === 0
     : filterState.categories.size === 0;
 
   const isCategorySelected = (catId: string) =>
-    useSectionLayout ? highlightCategoryId === catId : filterState.categories.has(catId);
+    useSectionLayout
+      ? highlightCategoryId === catId
+      : filterState.categories.has(catId);
 
   const handleAllCategoriesClick = () => {
     if (useSectionLayout) {
@@ -583,11 +591,28 @@ export default function ListsPageClient({
       return;
     }
     setFilterState((s) => ({ ...s, categories: new Set() }));
+    const params = new URLSearchParams(window.location.search);
+    params.delete('category');
+    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname, {
+      scroll: false,
+    });
   };
+
+  const handleShowAllCategory = useCallback(
+    (categoryId: string, categorySlug?: string) => {
+      setFilterState((s) => ({ ...s, categories: new Set([categoryId]) }));
+      setHighlightCategoryId(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const params = new URLSearchParams(window.location.search);
+      if (categorySlug) params.set('category', categorySlug);
+      else params.set('category', categoryId);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [router, pathname]
+  );
 
   const handleCategoryClick = (catId: string) => {
     if (useSectionLayout) {
-      setCategoriesExpanded(true);
       scrollToCategory(catId);
       requestAnimationFrame(() => {
         const container = categoryChipsRef.current;
@@ -597,6 +622,12 @@ export default function ListsPageClient({
       return;
     }
     setFilterState((s) => ({ ...s, categories: new Set([catId]) }));
+    const cat = activeCategories.find((c) => c.id === catId);
+    const params = new URLSearchParams(window.location.search);
+    if (cat?.slug) params.set('category', cat.slug);
+    else params.set('category', catId);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const contextParts = [
@@ -613,16 +644,9 @@ export default function ListsPageClient({
   const trendingBrowseEmpty =
     browseMode === 'trending' && trendingLoaded && sortedLists.length === 0 && publicLists.length > 0;
 
-  const showContextBar =
-    hasAdvancedFilters ||
-    Boolean(searchQuery.trim()) ||
-    filterState.categories.size > 0 ||
-    browseMode === 'saved';
+  const showContextBar = true;
 
-  const showSecondaryToolbar =
-    showContextBar ||
-    hasAdvancedFilters ||
-    (showCategoryChips && (!hideCategoryChipsByDefault || categoriesExpanded));
+  const showSecondaryToolbar = true;
 
   return (
     <div className="space-y-0 pb-6 lg:pb-4">
@@ -730,49 +754,10 @@ export default function ListsPageClient({
       {/* غیر sticky: پرش به دسته + context */}
       {(showSecondaryToolbar) && (
         <div className="space-y-2 border-b border-wibe/60 bg-wibe-surface py-2 max-lg:px-4 lg:px-0">
-          {hideCategoryChipsByDefault && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setCategoriesExpanded((prev) => {
-                    const next = !prev;
-                    if (next && highlightCategoryId) {
-                      requestAnimationFrame(() => {
-                        const container = categoryChipsRef.current;
-                        const chip = container?.querySelector<HTMLElement>(
-                          `[data-category-chip="${highlightCategoryId}"]`
-                        );
-                        if (container && chip) scrollChipIntoHorizontalView(container, chip);
-                      });
-                    }
-                    return next;
-                  });
-                }}
-                className={`flex h-8 items-center gap-0.5 rounded-full border px-3 wibe-caption font-medium transition-transform active:scale-[0.98] ${
-                  categoriesExpanded || filterState.categories.size > 0
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-wibe bg-wibe-card text-wibe-secondary'
-                }`}
-                aria-expanded={showCategoryChips}
-              >
-                پرش به دسته
-                <ChevronDown
-                  className={`h-3.5 w-3.5 transition-transform ${categoriesExpanded ? 'rotate-180' : ''}`}
-                />
-              </button>
-              {useSectionLayout && highlightCategoryId && (
-                <span className="truncate wibe-caption text-wibe-secondary">
-                  {activeCategories.find((c) => c.id === highlightCategoryId)?.name}
-                </span>
-              )}
-            </div>
-          )}
-
           {showCategoryChips && (
             <div
               ref={categoryChipsRef}
-              className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 scrollbar-hide"
+              className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 scrollbar-hide lg:flex-wrap lg:overflow-visible"
             >
               <button
                 type="button"
@@ -906,6 +891,7 @@ export default function ListsPageClient({
                 previewCount={sectionPreviewCount}
                 bookmarkedIds={bookmarkedIds}
                 onBookmarkToggle={handleBookmarkToggle}
+                onShowAllCategory={handleShowAllCategory}
               />
             ))}
             {pageSimilarLists.length > 0 && (
@@ -918,6 +904,22 @@ export default function ListsPageClient({
           </>
         ) : (
           <>
+            {singleCategoryFilter && selectedCategory && (
+              <div className="mb-3 flex items-center justify-between gap-2 lg:mb-4">
+                <h2 className="flex min-w-0 items-center gap-1.5 wibe-h3">
+                  {selectedCategory.icon ? <span aria-hidden>{selectedCategory.icon}</span> : null}
+                  <span className="truncate">{selectedCategory.name}</span>
+                </h2>
+                <span className="shrink-0 wibe-caption text-wibe-secondary tabular-nums">
+                  {sortedLists.length.toLocaleString('fa-IR')} لیست
+                </span>
+              </div>
+            )}
+            {searchQuery.trim() && (
+              <p className="mb-3 wibe-caption text-wibe-secondary lg:mb-4">
+                {sortedLists.length.toLocaleString('fa-IR')} نتیجه برای «{normalizeSearchQuery(searchQuery)}»
+              </p>
+            )}
             <FlatListResults
               lists={visibleFlatLists}
               viewMode={viewMode}
@@ -967,7 +969,7 @@ function FlatListResults({
 }) {
   if (viewMode === 'grid') {
     return (
-      <div className="grid grid-cols-2 gap-2.5 max-lg:gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 max-lg:gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 2xl:grid-cols-5">
         {lists.map((list) => (
           <ListCardCompact
             key={list.id}

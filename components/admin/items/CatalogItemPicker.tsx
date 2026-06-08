@@ -238,7 +238,7 @@ export default function CatalogItemPicker({
                   </div>
                   <p className="text-sm text-gray-600 max-w-xs">
                     عنوان آیتم را تایپ کنید (حداقل ۲ حرف) یا از{' '}
-                    <Link href="/admin/catalog" className="text-violet-600 font-semibold hover:underline">
+                    <Link href="/admin/lists?view=catalog" className="text-violet-600 font-semibold hover:underline">
                       کاتالوگ
                     </Link>{' '}
                     مرور کنید
@@ -305,7 +305,7 @@ export default function CatalogItemPicker({
         </div>
 
         <Link
-          href="/admin/catalog"
+          href="/admin/lists?view=catalog"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 hover:text-violet-900"
         >
           <Library className="w-3.5 h-3.5" />

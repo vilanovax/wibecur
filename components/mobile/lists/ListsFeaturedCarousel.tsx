@@ -121,7 +121,7 @@ function FeaturedSlide({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`group relative block aspect-[16/10] min-h-[148px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-all active:scale-[0.99] sm:aspect-[5/3] lg:aspect-[3/2] lg:min-h-[200px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[220px] ${className}`}
+      className={`group relative block aspect-[16/10] min-h-[132px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-all active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[148px] lg:aspect-[3/2] lg:min-h-[180px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
     >
       <ListCoverImage
         coverImage={list.coverImage}

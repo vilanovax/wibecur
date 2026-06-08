@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react';
 import {
   LayoutDashboard,
   List,
-  Package,
   Users,
   Tag,
   BarChart3,
@@ -19,7 +18,6 @@ import {
   ClipboardList,
   Database,
   Star,
-  Library,
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
@@ -36,17 +34,12 @@ const PRIMARY: NavItem[] = [
   { href: '/admin/pulse', label: 'پالس وایب', icon: Activity, permission: 'view_pulse' },
   { href: '/admin/kpi', label: 'داشبورد رشد (KPI)', icon: TrendingUp, permission: 'view_analytics' },
   { href: '/admin/categories', label: 'دسته‌بندی‌ها', icon: Tag, permission: 'manage_categories' },
-  { href: '/admin/lists', label: 'لیست‌ها', icon: List, permission: 'manage_lists' },
   {
-    href: '/admin/catalog',
-    label: 'آیتم‌ها',
-    icon: Package,
+    href: '/admin/lists',
+    label: 'لیست‌ها',
+    icon: List,
     permission: 'manage_lists',
-    matchPrefixes: ['/admin/catalog', '/admin/items'],
-    submenu: [
-      { href: '/admin/catalog', label: 'کاتالوگ', icon: Library },
-      { href: '/admin/items', label: 'بر اساس لیست', icon: List },
-    ],
+    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items'],
   },
   { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
 ];
@@ -58,10 +51,7 @@ const INTELLIGENCE: NavItem[] = [
     label: 'پیشنهادها',
     icon: Lightbulb,
     permission: 'manage_lists',
-    submenu: [
-      { href: '/admin/suggestions?tab=lists', label: 'پیشنهادات لیست', icon: List },
-      { href: '/admin/suggestions?tab=items', label: 'پیشنهادات آیتم', icon: Package },
-    ],
+    badgeKey: 'suggestionsPending',
   },
   { href: '/admin/custom/featured', label: 'منتخب هوم', icon: Star, permission: 'manage_lists' },
 ];

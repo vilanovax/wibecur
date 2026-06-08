@@ -1,0 +1,193 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { List, Library, FileJson, Plus, Sparkles } from 'lucide-react';
+import type { ContentHubStats } from '@/lib/admin/content-hub-stats';
+import type { ListsIntelligenceData } from '@/lib/admin/lists-intelligence';
+import type { CatalogPageData } from '@/lib/admin/catalog-page-data';
+import ContentHubStatsBar from '@/components/admin/lists/ContentHubStatsBar';
+import ListsIntelligenceClient from './ListsIntelligenceClient';
+import CatalogPageClient from '../catalog/CatalogPageClient';
+import type { NewItemFormList } from '../items/new/NewItemForm';
+import BulkImportClient from '../items/import/BulkImportClient';
+
+export type ContentHubView = 'lists' | 'catalog' | 'import';
+
+type ImportListOption = {
+  id: string;
+  title: string;
+  slug: string;
+  categoryId: string | null;
+  itemCount: number;
+  createdAt: string;
+  categories: { id: string; name: string; slug: string; icon: string | null } | null;
+};
+
+type ImportCategoryOption = {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string | null;
+  isActive?: boolean;
+};
+
+interface ContentHubClientProps {
+  view: ContentHubView;
+  hubStats: ContentHubStats;
+  listsData?: ListsIntelligenceData;
+  trash?: boolean;
+  initialCategoryId?: string;
+  catalogData?: CatalogPageData;
+  importCategories?: ImportCategoryOption[];
+  importLists?: ImportListOption[];
+  initialImportListId?: string;
+  initialImportCategoryId?: string;
+  createLists?: NewItemFormList[];
+  initialCreateListId?: string;
+}
+
+const STATS_COLLAPSED_KEY = 'admin-content-hub-stats-collapsed';
+
+function tabClass(active: boolean) {
+  return `inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+    active
+      ? 'bg-white text-violet-700 shadow-sm'
+      : 'text-gray-600 hover:text-gray-900'
+  }`;
+}
+
+export default function ContentHubClient({
+  view,
+  hubStats,
+  listsData,
+  trash = false,
+  initialCategoryId = 'all',
+  catalogData,
+  importCategories = [],
+  importLists = [],
+  initialImportListId,
+  initialImportCategoryId,
+  createLists,
+  initialCreateListId,
+}: ContentHubClientProps) {
+  const router = useRouter();
+  const [statsCollapsed, setStatsCollapsed] = useState(true);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STATS_COLLAPSED_KEY);
+    if (stored === '0') setStatsCollapsed(false);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STATS_COLLAPSED_KEY, statsCollapsed ? '1' : '0');
+  }, [statsCollapsed]);
+
+  const switchView = (next: ContentHubView) => {
+    if (next === view) return;
+    const params = new URLSearchParams();
+    if (next !== 'lists') params.set('view', next);
+    const qs = params.toString();
+    router.push(qs ? `/admin/lists?${qs}` : '/admin/lists');
+  };
+
+  return (
+    <div className="space-y-4" dir="rtl">
+      {/* هدر یکپارچه */}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها و محتوا</h1>
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            لیست · کاتالوگ · import — یک مرکز مدیریت
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {view !== 'import' && !trash && (
+            <>
+              <Link
+                href="/admin/lists?view=import"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-violet-200 text-violet-700 bg-violet-50/80 hover:bg-violet-100 transition-colors"
+              >
+                <FileJson className="w-4 h-4" />
+                <span className="hidden md:inline">import گروهی</span>
+              </Link>
+              <Link
+                href="/admin/custom/featured"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-amber-200 text-amber-800 bg-amber-50/80 hover:bg-amber-100 transition-colors"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden md:inline">Featured</span>
+              </Link>
+              <Link
+                href="/admin/lists/new"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: 'var(--primary)' }}
+              >
+                <Plus className="w-4 h-4" />
+                لیست جدید
+              </Link>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* KPI */}
+      {view !== 'import' && (
+        <ContentHubStatsBar
+          stats={hubStats}
+          view={view}
+          collapsed={statsCollapsed}
+          onToggleCollapse={() => setStatsCollapsed((c) => !c)}
+        />
+      )}
+
+      {/* تب‌ها */}
+      <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100 border border-gray-200/80 w-fit max-w-full overflow-x-auto">
+        <button type="button" onClick={() => switchView('lists')} className={tabClass(view === 'lists')}>
+          <List className="w-4 h-4" />
+          لیست‌ها
+        </button>
+        <button type="button" onClick={() => switchView('catalog')} className={tabClass(view === 'catalog')}>
+          <Library className="w-4 h-4" />
+          کاتالوگ
+        </button>
+        <button type="button" onClick={() => switchView('import')} className={tabClass(view === 'import')}>
+          <FileJson className="w-4 h-4" />
+          import
+        </button>
+      </div>
+
+      {/* محتوا */}
+      {view === 'lists' && listsData && (
+        <ListsIntelligenceClient
+          data={listsData}
+          trash={trash}
+          initialCategoryId={initialCategoryId}
+          embedded
+        />
+      )}
+
+      {view === 'catalog' && catalogData && (
+        <CatalogPageClient
+          {...catalogData}
+          embedded
+          basePath="/admin/lists"
+          viewParam="catalog"
+          createLists={createLists}
+          initialCreateListId={initialCreateListId}
+        />
+      )}
+
+      {view === 'import' && (
+        <BulkImportClient
+          categories={importCategories}
+          lists={importLists}
+          initialListId={initialImportListId}
+          initialCategoryId={initialImportCategoryId}
+          embedded
+        />
+      )}
+    </div>
+  );
+}

@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { nanoid } from 'nanoid';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { createNotification, notifyListBookmarkers } from '@/lib/utils/notifications';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { checkAchievements } from '@/lib/achievements';
 import {
+  addCatalogItemToList,
   createCatalogItem,
-  denormalizedItemFieldsFromCatalog,
   isCatalogInList,
 } from '@/lib/catalog-items';
 
@@ -157,31 +156,10 @@ export async function PUT(
         );
       }
 
-      const denorm = denormalizedItemFieldsFromCatalog(catalog);
       const newItem = await dbQuery(() =>
-        prisma.items.create({
-          data: {
-            id: nanoid(),
-            ...denorm,
-            listId: suggestedItem.listId,
-            catalogItemId: catalog.id,
-            order: 0,
-            commentsEnabled: true,
-            maxComments: null,
-            updatedAt: new Date(),
-          },
-        })
-      );
-
-      // Update list itemCount
-      await dbQuery(() =>
-        prisma.lists.update({
-          where: { id: suggestedItem.listId },
-          data: {
-            itemCount: {
-              increment: 1,
-            },
-          },
+        addCatalogItemToList(prisma, {
+          catalogItemId: catalog.id,
+          listId: suggestedItem.listId,
         })
       );
 

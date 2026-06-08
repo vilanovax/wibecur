@@ -25,8 +25,8 @@ export default async function ListDebugPage({
           لیست‌ها
         </Link>
         <span>/</span>
-        <Link href={`/admin/lists/${id}/edit`} className="hover:text-[var(--primary)]">
-          ویرایش
+        <Link href={`/admin/lists/${id}`} className="hover:text-[var(--primary)]">
+          workspace
         </Link>
         <span>/</span>
         <span className="text-[var(--color-text)]">دیباگ ترند (Runtime)</span>

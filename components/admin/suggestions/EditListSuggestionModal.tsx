@@ -6,34 +6,12 @@ import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import DeleteSuggestionModal from './DeleteSuggestionModal';
 import ApproveRejectModal from './ApproveRejectModal';
-
-interface ListSuggestion {
-  id: string;
-  title: string;
-  description: string | null;
-  coverImage: string | null;
-  categoryId: string;
-  userId: string;
-  status: string;
-  adminNotes: string | null;
-  createdAt: string;
-  updatedAt: string;
-  categories: {
-    id: string;
-    name: string;
-    icon: string;
-  };
-  users: {
-    id: string;
-    name: string | null;
-    email: string;
-  };
-}
+import type { AdminSuggestedListSuggestion } from './AdminSuggestedListCard';
 
 interface EditListSuggestionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  suggestion: ListSuggestion;
+  suggestion: AdminSuggestedListSuggestion;
   onSuccess: () => void;
 }
 

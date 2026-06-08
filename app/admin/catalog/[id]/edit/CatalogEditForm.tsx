@@ -94,7 +94,7 @@ export default function CatalogEditForm({
   return (
     <div className="max-w-2xl pb-20" dir="rtl">
       <Link
-        href="/admin/catalog"
+        href="/admin/lists?view=catalog"
         className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-violet-700 mb-4"
       >
         <ArrowRight className="w-4 h-4" />

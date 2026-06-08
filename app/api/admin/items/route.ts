@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import { requireAdmin } from '@/lib/auth';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { nanoid } from 'nanoid';
@@ -8,8 +9,14 @@ import { ensureImageInLiara } from '@/lib/object-storage';
 import {
   addCatalogItemToList,
   createCatalogItem,
+  createLightweightListItem,
   denormalizedItemFieldsFromCatalog,
 } from '@/lib/catalog-items';
+import {
+  isLightweightEntryKind,
+  isMixedListCategory,
+  parseEntryKind,
+} from '@/lib/list-entry';
 
 // GET /api/admin/items - Get items (optionally filtered by listId)
 export async function GET(request: NextRequest) {
@@ -122,8 +129,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const finalImageUrl = imageUrl ? await ensureImageInLiara(imageUrl, 'items') : null;
     const meta = metadataValidation.data || {};
+    const metaRecord = meta as Record<string, unknown>;
+    const entryKind =
+      parseEntryKind((metadata as Record<string, unknown> | undefined)?.entryKind) ??
+      parseEntryKind(metaRecord.entryKind) ??
+      'catalog_ref';
+
+    if (
+      isMixedListCategory(list.categories.slug) &&
+      isLightweightEntryKind(entryKind)
+    ) {
+      const item = await createLightweightListItem(prisma, {
+        title,
+        description,
+        imageUrl: imageUrl ? await ensureImageInLiara(imageUrl, 'items') : null,
+        externalUrl,
+        listId,
+        order,
+        listNote,
+        commentsEnabled,
+        maxComments,
+        metadata: metaRecord as Prisma.InputJsonValue,
+        entryKind,
+      });
+
+      notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
+      return NextResponse.json(item, { status: 201 });
+    }
+
+    const finalImageUrl = imageUrl ? await ensureImageInLiara(imageUrl, 'items') : null;
 
     const catalog = await createCatalogItem(prisma, {
       title,
@@ -131,7 +166,11 @@ export async function POST(request: NextRequest) {
       imageUrl: finalImageUrl,
       externalUrl,
       categorySlug: list.categories.slug,
-      metadata: meta,
+      metadata: {
+        ...meta,
+        entryKind: 'catalog_ref',
+        sourceCategorySlug: list.categories.slug,
+      },
     });
 
     const denorm = denormalizedItemFieldsFromCatalog(catalog);
@@ -140,6 +179,13 @@ export async function POST(request: NextRequest) {
       data: {
         id: nanoid(),
         ...denorm,
+        metadata: {
+          ...(typeof denorm.metadata === 'object' && denorm.metadata && !Array.isArray(denorm.metadata)
+            ? denorm.metadata
+            : {}),
+          entryKind: 'catalog_ref',
+          sourceCategorySlug: catalog.categorySlug ?? list.categories.slug,
+        },
         listId,
         catalogItemId: catalog.id,
         listNote: listNote?.trim() || null,

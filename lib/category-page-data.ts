@@ -11,7 +11,7 @@ import type {
   CategoryItemCard,
   CityBreakdown,
 } from '@/types/category-page';
-import { getTrendingByCategory } from '@/lib/trending/service';
+import { getTrendingByCategory, getListMetrics7d } from '@/lib/trending/service';
 import { resolveListCover } from '@/lib/resolve-list-cover';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
@@ -67,7 +67,7 @@ function applyListCover<T extends {
 
 const RECENT_DAYS = 7;
 const VIRAL_LIKE_THRESHOLD = 50;
-const TRENDING_LIMIT = 6;
+const TRENDING_LIMIT = 12;
 const CURATORS_LIMIT = 4;
 const NEW_LISTS_LIMIT = 4;
 const TOP_SAVED_LIMIT = 6;
@@ -206,7 +206,7 @@ async function getTrendingAndViralLists(
 ): Promise<{ trending: CategoryListCard[]; viral: CategoryListCard | null }> {
   const results = await getTrendingByCategory(prisma, categoryId, TRENDING_LIMIT + 5);
   const listIds = results.map((r) => r.listId);
-  const [listsWithTags, commentCounts] = listIds.length > 0
+  const [listsWithTags, commentCounts, metricsMap] = listIds.length > 0
     ? await Promise.all([
         prisma.lists.findMany({
           where: { id: { in: listIds } },
@@ -217,12 +217,14 @@ async function getTrendingAndViralLists(
           where: { listId: { in: listIds } },
           _count: { listId: true },
         }),
+        getListMetrics7d(prisma, listIds),
       ])
-    : [[], []];
+    : [[], [], new Map()];
   const tagsMap = Object.fromEntries(listsWithTags.map((l) => [l.id, l.tags ?? []]));
   const commentMap = Object.fromEntries(commentCounts.map((c) => [c.listId, c._count.listId]));
   const toCard = (r: (typeof results)[0]): CategoryListCard => {
     const tags = tagsMap[r.listId] ?? [];
+    const metrics = metricsMap.get(r.listId);
     return {
       id: r.listId,
       title: r.title,
@@ -248,6 +250,7 @@ async function getTrendingAndViralLists(
       tags: tags.length > 0 ? tags : undefined,
       cityTag: extractCity(r.title, tags),
       commentCount: commentMap[r.listId],
+      saves7d: metrics?.S7 ?? 0,
     };
   };
   const trending = results.slice(0, TRENDING_LIMIT).map(toCard);

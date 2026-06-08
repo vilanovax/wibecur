@@ -4,7 +4,16 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { nanoid } from 'nanoid';
-import { normalizeSuggestionTitle } from '@/lib/suggestion-utils';
+import {
+  catalogTitlesMatch,
+  normalizeSuggestionTitle,
+  primarySuggestionTitle,
+} from '@/lib/suggestion-utils';
+import {
+  catalogRefMetadata,
+  type EntryKind,
+  isLightweightEntryKind,
+} from '@/lib/list-entry';
 
 export class CatalogNotReadyError extends Error {
   constructor() {
@@ -130,15 +139,155 @@ export async function findCatalogByExternalKey(
   return catalogDb(prisma).findUnique({ where: { externalKey } });
 }
 
-export async function createCatalogItem(
+function asMetadataRecord(value: unknown): Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function pickRicherString(existing: string | null | undefined, incoming: string | null | undefined) {
+  const inc = incoming?.trim();
+  if (inc) return inc;
+  const ex = existing?.trim();
+  return ex || null;
+}
+
+function pickRicherTitle(existing: string, incoming: string) {
+  const inc = incoming.trim();
+  if (!inc) return existing;
+  if (!existing.trim()) return inc;
+  return inc.length >= existing.length ? inc : existing;
+}
+
+/** ادغام دادهٔ جدید روی کاتالوگ موجود — فیلدهای خالی با دادهٔ غنی‌تر پر می‌شوند */
+export function mergeCatalogEnrichment(
+  existing: {
+    title: string;
+    description: string | null;
+    imageUrl: string | null;
+    externalUrl: string | null;
+    categorySlug: string | null;
+    metadata: Prisma.JsonValue;
+    externalKey?: string | null;
+  },
+  input: CatalogItemInput
+) {
+  const incoming = catalogFieldsFromInput(input);
+  const existingMeta = asMetadataRecord(existing.metadata);
+  const incomingMeta = asMetadataRecord(incoming.metadata);
+
+  const merged = {
+    title: pickRicherTitle(existing.title, incoming.title),
+    description: pickRicherString(existing.description, incoming.description),
+    imageUrl: pickRicherString(existing.imageUrl, incoming.imageUrl),
+    externalUrl: pickRicherString(existing.externalUrl, incoming.externalUrl),
+    categorySlug: incoming.categorySlug || existing.categorySlug,
+    metadata: { ...existingMeta, ...incomingMeta } as Prisma.InputJsonValue,
+  };
+
+  const externalKey =
+    existing.externalKey ||
+    incoming.externalKey ||
+    buildCatalogExternalKey(merged.categorySlug, merged.title, merged.metadata);
+
+  return { ...merged, externalKey };
+}
+
+async function enrichAndUpdateCatalogIfNeeded(
+  prisma: PrismaClient,
+  existing: {
+    id: string;
+    title: string;
+    description: string | null;
+    imageUrl: string | null;
+    externalUrl: string | null;
+    categorySlug: string | null;
+    metadata: Prisma.JsonValue;
+    externalKey: string | null;
+  },
+  input: CatalogItemInput
+) {
+  const merged = mergeCatalogEnrichment(existing, input);
+
+  const changed =
+    merged.title !== existing.title ||
+    merged.description !== existing.description ||
+    merged.imageUrl !== existing.imageUrl ||
+    merged.externalUrl !== existing.externalUrl ||
+    merged.categorySlug !== existing.categorySlug ||
+    merged.externalKey !== existing.externalKey ||
+    JSON.stringify(merged.metadata) !== JSON.stringify(existing.metadata ?? {});
+
+  if (!changed) return existing;
+
+  return updateCatalogItem(prisma, existing.id, {
+    title: merged.title,
+    description: merged.description,
+    imageUrl: merged.imageUrl,
+    externalUrl: merged.externalUrl,
+    categorySlug: merged.categorySlug,
+    metadata: merged.metadata,
+    externalKey: merged.externalKey,
+  });
+}
+
+/** جستجوی کاتالوگ موجود با عنوان مشابه در همان دسته */
+export async function findCatalogByTitleMatch(
+  prisma: PrismaClient,
+  categorySlug: string | null | undefined,
+  title: string
+) {
+  const searchToken = primarySuggestionTitle(title);
+  if (searchToken.length < 2) return null;
+
+  const candidates = await prisma.items.findMany({
+    where: {
+      catalogItemId: { not: null },
+      title: { contains: searchToken, mode: 'insensitive' },
+      ...(categorySlug
+        ? { lists: { categories: { slug: categorySlug }, deletedAt: null } }
+        : { lists: { deletedAt: null } }),
+    },
+    select: {
+      title: true,
+      catalog_items: true,
+    },
+    take: 40,
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  for (const row of candidates) {
+    const catalog = row.catalog_items;
+    if (!catalog) continue;
+    if (catalogTitlesMatch(title, row.title) || catalogTitlesMatch(title, catalog.title)) {
+      return catalog;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * پیدا کردن یا ساخت کاتالوگ — اگر از قبل وجود داشت، دادهٔ جدید را merge می‌کند
+ * (برای تأیید پیشنهاد وقتی آیتم در لیست دیگر هم هست)
+ */
+export async function resolveOrCreateCatalogItem(
   prisma: PrismaClient,
   input: CatalogItemInput
 ) {
   const fields = catalogFieldsFromInput(input);
 
-  if (fields.externalKey) {
-    const existing = await findCatalogByExternalKey(prisma, fields.externalKey);
-    if (existing) return existing;
+  let existing =
+    fields.externalKey != null
+      ? await findCatalogByExternalKey(prisma, fields.externalKey)
+      : null;
+
+  if (!existing) {
+    existing = await findCatalogByTitleMatch(prisma, input.categorySlug, input.title);
+  }
+
+  if (existing) {
+    return enrichAndUpdateCatalogIfNeeded(prisma, existing, input);
   }
 
   return catalogDb(prisma).create({
@@ -148,6 +297,13 @@ export async function createCatalogItem(
       updatedAt: new Date(),
     },
   });
+}
+
+export async function createCatalogItem(
+  prisma: PrismaClient,
+  input: CatalogItemInput
+) {
+  return resolveOrCreateCatalogItem(prisma, input);
 }
 
 export async function syncPlacementsFromCatalog(
@@ -176,6 +332,54 @@ export async function isCatalogInList(
     select: { id: true },
   });
   return !!row;
+}
+
+/**
+ * آیتم‌های بدون تصویر/توضیح را به کاتالوگ غنی‌تر موجود وصل می‌کند
+ * (برای تعمیر آیتم‌های تأییدشدهٔ قبلی)
+ */
+export async function relinkSparseItemToMatchingCatalog(
+  prisma: PrismaClient,
+  itemId: string
+) {
+  const item = await prisma.items.findUnique({
+    where: { id: itemId },
+    include: { lists: { include: { categories: true } } },
+  });
+  if (!item) return null;
+
+  const categorySlug = item.lists?.categories?.slug ?? null;
+  const matched = await findCatalogByTitleMatch(prisma, categorySlug, item.title);
+  if (!matched) return null;
+
+  const denorm = denormalizedItemFieldsFromCatalog(matched);
+  const hasRicherData =
+    (!item.imageUrl && denorm.imageUrl) ||
+    (!item.description && denorm.description) ||
+    (item.catalogItemId !== matched.id);
+
+  if (!hasRicherData) return matched;
+
+  const conflict = await prisma.items.findFirst({
+    where: {
+      listId: item.listId,
+      catalogItemId: matched.id,
+      NOT: { id: item.id },
+    },
+    select: { id: true },
+  });
+  if (conflict) return matched;
+
+  await prisma.items.update({
+    where: { id: itemId },
+    data: {
+      catalogItemId: matched.id,
+      ...denorm,
+      updatedAt: new Date(),
+    },
+  });
+
+  return matched;
 }
 
 export type AddToListOptions = {
@@ -220,10 +424,12 @@ export async function addCatalogItemToList(
   }
 
   const denorm = denormalizedItemFieldsFromCatalog(catalog);
+  const placementMetadata = catalogRefMetadata(catalog, denorm.metadata);
   const item = await prisma.items.create({
     data: {
       id: nanoid(),
       ...denorm,
+      metadata: placementMetadata as Prisma.InputJsonValue,
       listId,
       catalogItemId,
       listNote: opts.listNote?.trim() || null,
@@ -240,6 +446,78 @@ export async function addCatalogItemToList(
 
   await prisma.lists.update({
     where: { id: listId },
+    data: { itemCount: { increment: 1 } },
+  });
+
+  return item;
+}
+
+export type LightweightListItemInput = {
+  title: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  externalUrl?: string | null;
+  listId: string;
+  order?: number;
+  listNote?: string | null;
+  commentsEnabled?: boolean;
+  maxComments?: number | null;
+  metadata?: Prisma.InputJsonValue;
+  entryKind?: EntryKind;
+};
+
+/** ورودی سبک در لیست — بدون کاتالوگ (tip/fact/link) */
+export async function createLightweightListItem(
+  prisma: PrismaClient,
+  input: LightweightListItemInput
+) {
+  const entryKind = input.entryKind ?? 'tip';
+  if (!isLightweightEntryKind(entryKind)) {
+    throw new Error('نوع ورودی برای آیتم سبک نامعتبر است');
+  }
+
+  const list = await prisma.lists.findUnique({ where: { id: input.listId } });
+  if (!list) throw new Error('لیست یافت نشد');
+
+  let order = input.order;
+  if (order === undefined) {
+    const maxOrder = await prisma.items.aggregate({
+      where: { listId: input.listId },
+      _max: { order: true },
+    });
+    order = (maxOrder._max.order ?? -1) + 1;
+  }
+
+  const meta = {
+    ...(input.metadata != null && typeof input.metadata === 'object' && !Array.isArray(input.metadata)
+      ? (input.metadata as Record<string, unknown>)
+      : {}),
+    entryKind,
+  };
+
+  const item = await prisma.items.create({
+    data: {
+      id: nanoid(),
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      imageUrl: input.imageUrl?.trim() || null,
+      externalUrl: input.externalUrl?.trim() || null,
+      listId: input.listId,
+      catalogItemId: null,
+      listNote: input.listNote?.trim() || null,
+      order,
+      metadata: meta as Prisma.InputJsonValue,
+      commentsEnabled: input.commentsEnabled ?? true,
+      maxComments: input.maxComments ?? null,
+      updatedAt: new Date(),
+    },
+    include: {
+      lists: { include: { categories: true } },
+    },
+  });
+
+  await prisma.lists.update({
+    where: { id: input.listId },
     data: { itemCount: { increment: 1 } },
   });
 
@@ -453,6 +731,8 @@ export type CatalogListRow = {
   externalKey: string | null;
   listCount: number;
   updatedAt: string;
+  /** وقتی placementListId داده شده — آیا در آن لیست جایگاه دارد */
+  alreadyInList?: boolean;
 };
 
 export type CatalogDetailPlacement = {
@@ -481,6 +761,8 @@ export async function listCatalogItems(
     q?: string;
     categorySlug?: string;
     listId?: string;
+    /** لیست مقصد برای افزودن — فقط alreadyInList را پر می‌کند، فیلتر نمی‌کند */
+    placementListId?: string;
     multiListOnly?: boolean;
     page?: number;
     perPage?: number;
@@ -527,6 +809,20 @@ export async function listCatalogItems(
     catalogDb(prisma).count({ where }),
   ]);
 
+  let inPlacementListSet = new Set<string>();
+  if (options.placementListId && rows.length > 0) {
+    const placements = await prisma.items.findMany({
+      where: {
+        listId: options.placementListId,
+        catalogItemId: { in: rows.map((r) => r.id) },
+      },
+      select: { catalogItemId: true },
+    });
+    inPlacementListSet = new Set(
+      placements.map((p) => p.catalogItemId).filter((id): id is string => Boolean(id))
+    );
+  }
+
   return {
     total,
     rows: rows.map((r) => ({
@@ -538,6 +834,9 @@ export async function listCatalogItems(
       externalKey: r.externalKey,
       listCount: r._count.items,
       updatedAt: r.updatedAt.toISOString(),
+      ...(options.placementListId
+        ? { alreadyInList: inPlacementListSet.has(r.id) }
+        : {}),
     })),
   };
 }

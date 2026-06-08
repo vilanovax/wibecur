@@ -65,6 +65,7 @@ const config: NextAuthConfig = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        if (user.email) token.email = user.email;
       }
       return token;
     },
@@ -72,6 +73,9 @@ const config: NextAuthConfig = {
       if (session.user) {
         session.user.id = (typeof token.id === 'string' ? token.id : token.sub) || '';
         session.user.role = ((token.role as string) || 'USER') as AppRole;
+        if (typeof token.email === 'string') {
+          session.user.email = token.email;
+        }
       }
       return session;
     },

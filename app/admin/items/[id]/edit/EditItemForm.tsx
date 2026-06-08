@@ -76,7 +76,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
 
   const categorySlug = selectedList?.categories?.slug;
   const isFilm = isFilmCategory(categorySlug);
-  const backHref = `/admin/items?listId=${formData.listId}`;
+  const backHref = `/admin/lists/${formData.listId}`;
   const catalogUsageCount = item.catalog_items?._count?.items ?? 0;
 
   useEffect(() => {
@@ -357,7 +357,10 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
             </div>
             <p className="text-xs text-gray-500 shrink-0">
               برای جابه‌جایی به لیست دیگر،{' '}
-              <Link href="/admin/items/new" className="text-violet-600 font-medium hover:underline">
+              <Link
+                href={`/admin/lists?view=catalog&mode=create&listId=${formData.listId}`}
+                className="text-violet-600 font-medium hover:underline"
+              >
                 آیتم جدید
               </Link>{' '}
               بسازید

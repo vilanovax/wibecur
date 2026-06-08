@@ -6,7 +6,7 @@ export type ItemProxyRow = {
   imageUrl: string | null;
   catalogItemId?: string | null;
   catalog_items?: { imageUrl: string | null } | null;
-  metadata?: Prisma.JsonValue | Record<string, unknown> | null;
+  metadata?: Prisma.JsonValue | Record<string, unknown> | unknown | null;
 };
 
 /** همان URLی که در کارت ادمین نمایش داده می‌شود */

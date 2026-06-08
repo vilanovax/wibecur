@@ -5,6 +5,7 @@ import { dbQuery } from '@/lib/db';
 import { slugify } from '@/lib/utils/slug';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { checkAchievements } from '@/lib/achievements';
+import { resolveSessionUserId } from '@/lib/api-db';
 
 // PUT /api/user/lists/[id] - ویرایش لیست شخصی
 export async function PUT(
@@ -13,9 +14,17 @@ export async function PUT(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'احراز هویت نشده است' },
+        { status: 401 }
+      );
+    }
+
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید' },
         { status: 401 }
       );
     }
@@ -23,27 +32,6 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const { title, description, coverImage, categoryId, isPublic, commentsEnabled } = body;
-
-    // Get user (session.user is guaranteed to exist after the check above)
-    const userEmail = session.user.email;
-    if (!userEmail) {
-      return NextResponse.json(
-        { error: 'احراز هویت نشده است' },
-        { status: 401 }
-      );
-    }
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: userEmail },
-      })
-    );
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'کاربر یافت نشد' },
-        { status: 404 }
-      );
-    }
 
     // Check if list exists and belongs to user
     const existingList = await dbQuery(() =>
@@ -67,7 +55,7 @@ export async function PUT(
     }
 
     // Only allow editing if user is the owner OR if user is admin (but admin should use admin routes)
-    if (existingList.userId !== user.id) {
+    if (existingList.userId !== userId) {
       return NextResponse.json(
         { error: 'شما اجازه ویرایش این لیست را ندارید' },
         { status: 403 }
@@ -251,35 +239,22 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'احراز هویت نشده است' },
+        { status: 401 }
+      );
+    }
+
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید' },
         { status: 401 }
       );
     }
 
     const { id } = await params;
-
-    // Get user (session.user is guaranteed to exist after the check above)
-    const userEmail = session.user.email;
-    if (!userEmail) {
-      return NextResponse.json(
-        { error: 'احراز هویت نشده است' },
-        { status: 401 }
-      );
-    }
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: userEmail },
-      })
-    );
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'کاربر یافت نشد' },
-        { status: 404 }
-      );
-    }
 
     // Check if list exists and belongs to user
     const existingList = await dbQuery(() =>
@@ -295,7 +270,7 @@ export async function DELETE(
       );
     }
 
-    if (existingList.userId !== user.id) {
+    if (existingList.userId !== userId) {
       return NextResponse.json(
         { error: 'شما اجازه حذف این لیست را ندارید' },
         { status: 403 }

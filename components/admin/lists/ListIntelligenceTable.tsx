@@ -138,7 +138,7 @@ export default function ListIntelligenceTable({
                 <tr
                   key={row.id}
                   onClick={() => {
-                    if (!isTrashView) router.push(`/admin/items?listId=${row.id}`);
+                    if (!isTrashView) router.push(`/admin/lists/${row.id}`);
                   }}
                   className={`border-b border-[var(--color-border-muted)] transition-colors hover:bg-[var(--color-bg)]/60 ${bg} ${
                     !row.isActive && !isTrashView ? 'opacity-65' : ''

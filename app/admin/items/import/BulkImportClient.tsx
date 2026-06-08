@@ -37,6 +37,7 @@ import {
 import BulkImportMetadataEditor, {
   bulkImportFallbackIcon,
 } from '@/components/admin/items/BulkImportMetadataEditor';
+import BulkImportConfirmDialog from '@/components/admin/items/BulkImportConfirmDialog';
 
 type CategoryOption = { id: string; name: string; slug: string; icon: string | null; isActive?: boolean };
 type ListOption = {
@@ -45,6 +46,7 @@ type ListOption = {
   slug: string;
   categoryId: string | null;
   itemCount: number;
+  createdAt: string;
   categories: { id: string; name: string; slug: string; icon: string | null } | null;
 };
 
@@ -57,12 +59,14 @@ function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 function rowToPayload(r: BulkImportRow) {
+  const entryKind = r.metadata.entryKind;
   return {
     title: r.title,
     description: r.description || undefined,
     imageUrl: r.imageUrl || undefined,
     externalUrl: r.externalUrl || undefined,
     order: r.order,
+    entryKind: typeof entryKind === 'string' ? entryKind : undefined,
     metadata: Object.keys(r.metadata).length ? r.metadata : undefined,
   };
 }
@@ -72,11 +76,13 @@ export default function BulkImportClient({
   lists,
   initialListId,
   initialCategoryId,
+  embedded = false,
 }: {
   categories: CategoryOption[];
   lists: ListOption[];
   initialListId?: string;
   initialCategoryId?: string;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const initialList = initialListId ? lists.find((l) => l.id === initialListId) : null;
@@ -105,6 +111,7 @@ export default function BulkImportClient({
     new: number;
     existing_catalog: number;
     already_in_list: number;
+    lightweight?: number;
   } | null>(null);
   const [matchFilter, setMatchFilter] = useState<'all' | BulkImportMatchKind>('all');
   const [jsonCollapsed, setJsonCollapsed] = useState(false);
@@ -116,6 +123,7 @@ export default function BulkImportClient({
     batch: number;
     batchCount: number;
   } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedCategory = categories.find((c) => c.id === categoryId);
@@ -131,7 +139,12 @@ export default function BulkImportClient({
   }, [lists]);
 
   const filteredLists = useMemo(
-    () => lists.filter((l) => l.categoryId === categoryId),
+    () =>
+      lists
+        .filter((l) => l.categoryId === categoryId)
+        .sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ),
     [lists, categoryId]
   );
 
@@ -304,7 +317,7 @@ export default function BulkImportClient({
     setRows((prev) => prev.map((r) => (r.valid ? { ...r, selected: on } : r)));
   };
 
-  const handleImport = async () => {
+  const handleImport = () => {
     if (!listId) {
       setError('لیست مقصد را انتخاب کنید');
       return;
@@ -314,6 +327,14 @@ export default function BulkImportClient({
       setError('حداقل یک ردیف معتبر انتخاب کنید');
       return;
     }
+    setError('');
+    setConfirmOpen(true);
+  };
+
+  const executeImport = async () => {
+    if (!listId) return;
+    const payload = rows.filter((r) => r.selected && r.valid);
+    if (payload.length === 0) return;
 
     setImporting(true);
     setError('');
@@ -379,6 +400,7 @@ export default function BulkImportClient({
         updated: updatedTotal,
         results: allResults,
       });
+      setConfirmOpen(false);
       void enrichWithPreview(rows.map(({ match: _m, ...r }) => r));
       router.refresh();
     } catch (e: unknown) {
@@ -404,26 +426,30 @@ export default function BulkImportClient({
       : 0;
 
   return (
-    <div className="pb-12 max-w-5xl" dir="rtl">
-      <Link
-        href="/admin/items"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-violet-700 mb-4"
-      >
-        <ArrowRight className="w-4 h-4" />
-        بازگشت به آیتم‌ها
-      </Link>
+    <div className={`pb-12 ${embedded ? '' : 'max-w-5xl'}`} dir="rtl">
+      {!embedded && (
+        <>
+          <Link
+            href="/admin/lists"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-violet-700 mb-4"
+          >
+            <ArrowRight className="w-4 h-4" />
+            بازگشت به لیست‌ها
+          </Link>
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <FileJson className="w-7 h-7 text-violet-600" />
-            import گروهی آیتم
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            هر دسته JSON اختصاصی · یک موجودیت کاتالوگ · چند لیست
-          </p>
-        </div>
-      </div>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <FileJson className="w-7 h-7 text-violet-600" />
+                import گروهی آیتم
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">
+                هر دسته JSON اختصاصی · یک موجودیت کاتالوگ · چند لیست
+              </p>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="mb-5 flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/90 px-4 py-3 text-sm text-blue-900">
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
@@ -631,7 +657,11 @@ export default function BulkImportClient({
       {rows.length > 0 && (
         <section className="rounded-2xl border border-gray-200 bg-white overflow-hidden mb-5 shadow-sm">
           {summary && (
-            <div className="grid grid-cols-3 divide-x divide-x-reverse divide-gray-100 border-b border-gray-100">
+            <div
+              className={`grid divide-x divide-x-reverse divide-gray-100 border-b border-gray-100 ${
+                (summary.lightweight ?? 0) > 0 ? 'grid-cols-4' : 'grid-cols-3'
+              }`}
+            >
               <SummaryChip
                 label="جدید"
                 count={summary.new}
@@ -657,6 +687,17 @@ export default function BulkImportClient({
                 }
                 tone="violet"
               />
+              {(summary.lightweight ?? 0) > 0 && (
+                <SummaryChip
+                  label="سبک"
+                  count={summary.lightweight ?? 0}
+                  active={matchFilter === 'lightweight'}
+                  onClick={() =>
+                    setMatchFilter(matchFilter === 'lightweight' ? 'all' : 'lightweight')
+                  }
+                  tone="emerald"
+                />
+              )}
             </div>
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 bg-gray-50">
@@ -875,7 +916,7 @@ export default function BulkImportClient({
           </ul>
           {listId && (
             <Link
-              href={`/admin/items?listId=${listId}`}
+              href={`/admin/lists/${listId}`}
               className="inline-block mt-3 text-violet-700 font-semibold hover:underline"
             >
               مشاهده لیست →
@@ -904,11 +945,33 @@ export default function BulkImportClient({
           )}
         </button>
       )}
+
+      <BulkImportConfirmDialog
+        isOpen={confirmOpen}
+        isLoading={importing}
+        categoryName={selectedCategory?.name ?? '—'}
+        categoryIcon={selectedCategory?.icon}
+        listTitle={selectedList?.title ?? '—'}
+        currentItemCount={selectedList?.itemCount ?? 0}
+        importCount={selectedCount}
+        onCancel={() => {
+          if (!importing) setConfirmOpen(false);
+        }}
+        onConfirm={executeImport}
+      />
     </div>
   );
 }
 
 function MatchBadge({ match }: { match: NonNullable<BulkImportRow['match']> }) {
+  if (match.kind === 'lightweight') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">
+        <Sparkles className="w-3 h-3" />
+        ورودی سبک · بدون کاتالوگ
+      </span>
+    );
+  }
   if (match.kind === 'new') {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
@@ -928,7 +991,8 @@ function MatchBadge({ match }: { match: NonNullable<BulkImportRow['match']> }) {
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
       <Link2 className="w-3 h-3" />
-      کاتالوگ موجود · {match.listCount.toLocaleString('fa-IR')} لیست
+      کاتالوگ موجود · افزودن به لیست
+      {match.listCount > 0 && ` (${match.listCount.toLocaleString('fa-IR')} لیست دیگر)`}
     </span>
   );
 }
