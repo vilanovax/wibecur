@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GripVertical, Trash2, Pencil, Loader2 } from 'lucide-react';
+import EntryKindBadge, { resolveItemEntryKind } from '@/components/admin/items/EntryKindBadge';
+import { entryKindIcon, isLightweightListItem } from '@/lib/list-entry';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import type { ListWorkspaceItem } from '@/lib/admin/list-workspace-data';
@@ -166,7 +168,11 @@ export default function ListWorkspaceItemsPanel({
         </div>
       ) : (
         <ul className="divide-y divide-[var(--color-border-muted)] max-h-[calc(100vh-18rem)] overflow-y-auto">
-          {items.map((item, index) => (
+          {items.map((item, index) => {
+            const entryKind = resolveItemEntryKind(item);
+            const lightweight = isLightweightListItem(item);
+
+            return (
             <li
               key={item.id}
               draggable={!reorderLoading}
@@ -184,17 +190,28 @@ export default function ListWorkspaceItemsPanel({
                 {(index + 1).toLocaleString('fa-IR')}
               </span>
               <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-lg border border-[var(--color-border-muted)] bg-gray-100">
-                <ImageWithFallback
-                  src={item.displayImageUrl || item.imageUrl || ''}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  categorySlug={categorySlug}
-                  fallbackIcon={categoryIcon ?? '📌'}
-                  fallbackClassName="flex h-full w-full items-center justify-center text-lg"
-                />
+                {lightweight ? (
+                  <div className="flex h-full w-full items-center justify-center bg-amber-50 text-xl">
+                    {entryKindIcon(entryKind)}
+                  </div>
+                ) : (
+                  <ImageWithFallback
+                    src={item.displayImageUrl || item.imageUrl || ''}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    categorySlug={categorySlug}
+                    fallbackIcon={categoryIcon ?? '📌'}
+                    fallbackClassName="flex h-full w-full items-center justify-center text-lg"
+                  />
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[var(--color-text)] truncate">{item.title}</p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <p className="text-sm font-semibold text-[var(--color-text)] truncate min-w-0 flex-1">
+                    {item.title}
+                  </p>
+                  <EntryKindBadge kind={entryKind} compact />
+                </div>
                 {item.description && (
                   <p className="text-[11px] text-[var(--color-text-muted)] line-clamp-2 mt-0.5 leading-relaxed">
                     {item.description}
@@ -220,7 +237,8 @@ export default function ListWorkspaceItemsPanel({
                 </button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
 
