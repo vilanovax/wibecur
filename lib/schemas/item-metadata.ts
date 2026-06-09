@@ -80,14 +80,16 @@ export type CafeMetadata = z.infer<typeof CafeMetadataSchema>;
 // ===================================
 // Mixed / Lifestyle entry metadata
 // ===================================
-export const LifestyleEntrySchema = z.object({
-  ...tipField,
-  entryKind: z.enum(ENTRY_KINDS).default('tip'),
-  factType: z.enum(FACT_TYPES).optional(),
-  sourceCategorySlug: z.string().optional(),
-  tags: z.array(z.string().min(1)).max(8).optional(),
-  duration: z.string().max(40).optional(),
-});
+export const LifestyleEntrySchema = z
+  .object({
+    ...tipField,
+    entryKind: z.enum(ENTRY_KINDS).default('tip'),
+    factType: z.enum(FACT_TYPES).optional(),
+    sourceCategorySlug: z.string().optional(),
+    tags: z.array(z.string().min(1)).max(8).optional(),
+    duration: z.string().max(40).optional(),
+  })
+  .passthrough();
 
 export type LifestyleEntryMetadata = z.infer<typeof LifestyleEntrySchema>;
 

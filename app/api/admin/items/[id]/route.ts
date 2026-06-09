@@ -157,8 +157,8 @@ export async function PUT(
           ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
           externalUrl: externalUrl !== undefined ? externalUrl : existingItem.externalUrl,
           categorySlug,
-          metadata: meta,
-          externalKey: buildCatalogExternalKey(categorySlug, title ?? existingItem.title, meta),
+          metadata: metaRecord as Prisma.InputJsonValue,
+          externalKey: buildCatalogExternalKey(categorySlug, title ?? existingItem.title, metaRecord),
           updatedAt: new Date(),
         },
       });

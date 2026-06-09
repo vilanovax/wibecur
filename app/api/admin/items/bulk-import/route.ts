@@ -171,7 +171,7 @@ async function importOneRow(
         imageUrl: finalImage,
         externalUrl: row.externalUrl?.trim() || null,
         categorySlug: ctx.categorySlug,
-        metadata: meta,
+        metadata: metaRecord as Prisma.InputJsonValue,
       });
       catalogId = catalog.id;
     }

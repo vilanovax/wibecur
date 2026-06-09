@@ -346,18 +346,41 @@ export function validateBulkImportRow(
   };
 }
 
+/** پاک‌سازی paste از چت/Markdown قبل از JSON.parse */
+export function sanitizeBulkImportJsonText(text: string): string {
+  let out = text.trim();
+  if (out.startsWith('\uFEFF')) out = out.slice(1);
+
+  const fence = out.match(/^```(?:json)?\s*([\s\S]*?)```\s*$/i);
+  if (fence) out = fence[1].trim();
+
+  out = out
+    .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
+    .replace(/[\u2018\u2019\u2032]/g, "'");
+
+  return out;
+}
+
 export function parseBulkImportJson(
   text: string,
   categorySlug: string
 ): { rows: BulkImportRow[]; parseError?: string } {
-  const trimmed = text.trim();
+  const trimmed = sanitizeBulkImportJsonText(text);
   if (!trimmed) return { rows: [], parseError: 'JSON خالی است' };
 
   let data: unknown;
   try {
     data = JSON.parse(trimmed);
-  } catch {
-    return { rows: [], parseError: 'JSON نامعتبر است' };
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : '';
+    const hint =
+      trimmed.includes('```') || trimmed.includes('“')
+        ? ' — اگر از چت کپی کردید، بلوک ```json را حذف کنید و از گیومهٔ انگلیسی " استفاده کنید'
+        : '';
+    return {
+      rows: [],
+      parseError: `JSON نامعتبر است${detail ? `: ${detail}` : ''}${hint}`,
+    };
   }
 
   let items: unknown[];
@@ -445,6 +468,9 @@ export function getBulkImportJsonExample(
     case 'movie':
       return personalizeImportExample(MOVIE_JSON_EXAMPLE, listTitle, categoryName, kind);
     default:
+      if (categorySlug.toLowerCase().includes('lifestyle') || kind === 'general') {
+        return personalizeImportExample(LIFESTYLE_JSON_EXAMPLE, listTitle, categoryName, kind);
+      }
       return personalizeImportExample(GENERAL_JSON_EXAMPLE, listTitle, categoryName, kind);
   }
 }
@@ -492,7 +518,7 @@ export function getBulkImportJsonHint(categorySlug: string, list?: BulkImportLis
     case 'cafe':
       return `tip (اختیاری) · metadata: address (الزامی), priceRange, cuisine${listPart}`;
     default:
-      return `entryKind: tip | fact | link (لیست ترکیبی) · tip · description · externalUrl · metadata.factType${listPart}`;
+      return `فرمت: { "items": [...] } · entryKind: tip (سبک، بدون کاتلگ) یا بدون entryKind (کاتالوگ) · title · description · tip · metadata.tags (حداکثر ۸) · externalUrl را خالی نگذارید${listPart}`;
   }
 }
 
@@ -558,29 +584,36 @@ const CAFE_JSON_EXAMPLE = `{
   ]
 }`;
 
-const GENERAL_JSON_EXAMPLE = `{
+const LIFESTYLE_JSON_EXAMPLE = `{
   "items": [
     {
       "entryKind": "tip",
-      "title": "قبل از خواب گوشی نگذارید",
-      "description": "نور آبی صفحه تولید ملاتونین را کم می‌کند — حداقل ۳۰ دقیقه قبل از خواب."
+      "title": "ورزش کوتاه اما جدی",
+      "description": "۲۰ تا ۳۰ دقیقه ورزش می‌تواند انرژی و حال روزانه را بهتر کند.",
+      "tip": "برای شروع، فقط ۲۰ دقیقه کافی است؛ استمرار مهم‌تر از شدت است."
     },
     {
-      "entryKind": "link",
-      "title": "مقالهٔ علمی خواب",
-      "externalUrl": "https://example.com/sleep-science",
-      "description": "خلاصهٔ تحقیق دربارهٔ اثر نور آبی"
+      "entryKind": "tip",
+      "title": "نور آفتاب صبح",
+      "description": "قرار گرفتن در نور طبیعی صبح به تنظیم خواب و انرژی کمک می‌کند.",
+      "metadata": {
+        "tags": ["دوپامین", "نور صبح", "انرژی"],
+        "duration": "10-15 دقیقه"
+      }
     },
     {
-      "title": "عنوان آیتم کاتالوگی",
-      "description": "توضیح کوتاه",
-      "tip": "نکتهٔ ویژهٔ ادمین (اختیاری)",
-      "imageUrl": "https://example.com/image.jpg",
-      "externalUrl": "https://example.com",
-      "metadata": {}
+      "title": "پیاده‌روی تند",
+      "description": "یکی از ساده‌ترین راه‌ها برای بهتر شدن حال.",
+      "tip": "اگر بی‌حوصله‌ای، فقط با ۱۰ دقیقه شروع کن.",
+      "imageUrl": "https://example.com/brisk-walk.jpg",
+      "metadata": {
+        "tags": ["پیاده‌روی", "دوپامین", "حال خوب"]
+      }
     }
   ]
 }`;
+
+const GENERAL_JSON_EXAMPLE = LIFESTYLE_JSON_EXAMPLE;
 
 /** @deprecated use getBulkImportJsonExample */
 export const BULK_MOVIE_JSON_EXAMPLE = MOVIE_JSON_EXAMPLE;
