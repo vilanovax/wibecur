@@ -5,12 +5,9 @@ import type { CategoryPageData, CategoryLayoutType } from '@/types/category-page
 import CategoryHero from './CategoryHero';
 import TrendingListsSection from './TrendingListsSection';
 import ViralSpotlightSection from './ViralSpotlightSection';
-import TopCuratorsSection from './TopCuratorsSection';
-import TopCuratorSpotlight from './TopCuratorSpotlight';
 import NewListsSection from './NewListsSection';
 import {
   HubHeroV2,
-  HubCurators,
   HubNewLists,
   ExploreByCityPills,
   CafeWeeklyTrending,
@@ -26,7 +23,6 @@ import {
   MostDebatedLists,
   NewListsCompact,
   CuratorCTABlock,
-  TopFilmCuratorsVIP,
 } from './film';
 import { FILM_PAGE_SHELL } from './film/film-layout';
 
@@ -90,8 +86,6 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
     trendingLists,
     topSavedThisWeek = [],
     viralSpotlight,
-    topCurators,
-    topCuratorSpotlight,
     newLists,
     popularAllTime = [],
     cityBreakdown = [],
@@ -128,11 +122,6 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
           />
           {featuredList && <FeaturedCinematicList list={featuredList} />}
           {mostDebated.length > 0 && <MostDebatedLists lists={mostDebated} />}
-          <TopFilmCuratorsVIP
-            curator={topCuratorSpotlight ?? null}
-            curators={topCurators}
-            categoryName={category.name}
-          />
           <NewListsCompact lists={newLists} categoryName={category.name} />
           <CuratorCTABlock categorySlug={category.slug} />
         </div>
@@ -166,15 +155,6 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
           <ExploreByCityPills
             categorySlug={category.slug}
             cityCounts={cityCounts}
-            accentColor={accentColor}
-          />
-        </SectionReveal>
-
-        <SectionReveal>
-          <HubCurators
-            topCurator={topCuratorSpotlight ?? null}
-            curators={topCurators}
-            categoryName={category.name}
             accentColor={accentColor}
           />
         </SectionReveal>
@@ -229,11 +209,6 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
           accentColor={accentColor}
         />
       )}
-
-      <TopCuratorsSection
-        curators={topCurators}
-        categoryName={category.name}
-      />
 
       <NewListsSection
         lists={newLists}
