@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc, getLiaraImageMode } from '@/lib/liara-image-url';
+import { directStorageFallbackSrc } from '@/lib/resilient-image';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import {
   isAllowedExternalImageUrl,
@@ -59,10 +60,12 @@ export default function ImageWithFallback({
 }: ImageWithFallbackProps) {
   const [forceLocal, setForceLocal] = useState(false);
   const [forceLiaraProxy, setForceLiaraProxy] = useState(false);
+  const [directStorageSrc, setDirectStorageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     setForceLocal(false);
     setForceLiaraProxy(false);
+    setDirectStorageSrc(null);
   }, [src, preferStoredImage, categorySlug, listSlug, listTitle, itemImageSource]);
 
   const resolvedSrc = useMemo(() => {
@@ -92,10 +95,11 @@ export default function ImageWithFallback({
   }, [src, categorySlug, listSlug, listTitle, forceLocal, preferStoredImage, itemImageSource]);
 
   const displaySrc = useMemo(() => {
+    if (directStorageSrc) return directStorageSrc;
     const base = toDisplaySrc(resolvedSrc);
     if (!base || !forceLiaraProxy || !isOurStorageUrl(resolvedSrc)) return base;
     return toLiaraImageSrc(resolvedSrc, { forceProxy: true });
-  }, [resolvedSrc, forceLiaraProxy]);
+  }, [resolvedSrc, forceLiaraProxy, directStorageSrc]);
 
   const fallbackGradient = useMemo(() => {
     const slug =
@@ -122,6 +126,13 @@ export default function ImageWithFallback({
       alt={alt}
       className={className}
       onError={() => {
+        if (!directStorageSrc) {
+          const direct = directStorageFallbackSrc(displaySrc);
+          if (direct) {
+            setDirectStorageSrc(direct);
+            return;
+          }
+        }
         if (
           preferStoredImage &&
           !forceLiaraProxy &&

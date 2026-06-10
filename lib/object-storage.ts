@@ -268,7 +268,10 @@ export async function getObjectByPublicUrl(
       const res = await axios.get(publicUrl, {
         responseType: 'arraybuffer',
         timeout: 15000,
-        headers: { Accept: 'image/*' },
+        headers: {
+          Accept: 'image/*,*/*;q=0.8',
+          'User-Agent': 'WibeImageProxy/1.0',
+        },
         validateStatus: (s) => s === 200,
       });
       if (!res.data) return null;

@@ -3,11 +3,14 @@
 import { Search } from 'lucide-react';
 import { useSearchOptional } from '@/contexts/SearchContext';
 import SearchInput from '@/components/mobile/search/SearchInput';
+import GuidedDiscoveryChips from './GuidedDiscoveryChips';
+import type { GuidedScenario } from '@/lib/discovery/guided-intent';
 
 interface ExploreSmartHeroProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onModeScroll: (id: string) => void;
+  onGuidedScenarioSelect?: (scenario: GuidedScenario) => void;
 }
 
 const EXPLORE_MODES = [
@@ -21,6 +24,7 @@ export default function ExploreSmartHero({
   searchQuery,
   onSearchChange,
   onModeScroll,
+  onGuidedScenarioSelect,
 }: ExploreSmartHeroProps) {
   const search = useSearchOptional();
   const hasQuery = Boolean(searchQuery.trim());
@@ -89,6 +93,13 @@ export default function ExploreSmartHero({
             پاک کردن فیلتر
           </button>
           <p className="truncate wibe-caption text-wibe-secondary">فیلتر: «{searchQuery.trim()}»</p>
+        </div>
+      )}
+
+      {!hasQuery && onGuidedScenarioSelect && (
+        <div className="mb-2.5">
+          <p className="mb-2 wibe-caption font-medium text-wibe-secondary">دستیار کشف</p>
+          <GuidedDiscoveryChips onSelect={onGuidedScenarioSelect} />
         </div>
       )}
 

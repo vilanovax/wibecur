@@ -56,7 +56,7 @@ export default function ResponsiveOverlay({
         escapeToClose={escapeToClose}
         closeOnBackdrop={closeOnBackdrop}
       >
-        <div className="max-h-[min(80vh,640px)] overflow-y-auto">{children}</div>
+        <div className="min-h-0">{children}</div>
       </DesktopDialog>
     );
   }

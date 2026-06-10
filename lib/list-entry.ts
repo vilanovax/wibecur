@@ -48,6 +48,13 @@ export function isMixedListCategory(slug: string | null | undefined): boolean {
   return !STRICT_ENTITY_SLUGS.some((key) => s === key || s.includes(key));
 }
 
+/** لیست‌های لایف‌استایل — نمایش سبک‌تر ورودی‌های tip/fact/link */
+export function isLifestyleCategory(slug: string | null | undefined): boolean {
+  if (!slug) return false;
+  const s = slug.toLowerCase();
+  return s === 'lifestyle' || s.includes('lifestyle');
+}
+
 export function isLightweightEntryKind(kind: EntryKind): boolean {
   return kind === 'tip' || kind === 'fact' || kind === 'link';
 }

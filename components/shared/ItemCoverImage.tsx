@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc } from '@/lib/liara-image-url';
+import { directStorageFallbackSrc } from '@/lib/resilient-image';
 import {
   isAllowedExternalImageUrl,
   isAllowedItemImageUrl,
@@ -62,6 +63,7 @@ export default function ItemCoverImage({
   preferPosterEnrich = false,
 }: ItemCoverImageProps) {
   const [fetchedPoster, setFetchedPoster] = useState<string | null>(null);
+  const [directStorageSrc, setDirectStorageSrc] = useState<string | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [posterLoading, setPosterLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -113,6 +115,7 @@ export default function ItemCoverImage({
 
   useEffect(() => {
     setFetchedPoster(null);
+    setDirectStorageSrc(null);
     setLoadFailed(false);
     setPosterLoading(false);
     setImageLoaded(false);
@@ -165,7 +168,7 @@ export default function ItemCoverImage({
         : needsPosterEnrich && !fetchedPoster
           ? displayFallback
           : baseResolved || displayFallback);
-  const displaySrc = toItemDisplaySrc(resolvedSrc);
+  const displaySrc = directStorageSrc ?? toItemDisplaySrc(resolvedSrc);
   const showFallback = !displaySrc;
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -218,6 +221,14 @@ export default function ItemCoverImage({
         referrerPolicy="no-referrer"
         onLoad={() => setImageLoaded(true)}
         onError={() => {
+          if (!directStorageSrc) {
+            const direct = directStorageFallbackSrc(displaySrc);
+            if (direct) {
+              setDirectStorageSrc(direct);
+              setImageLoaded(false);
+              return;
+            }
+          }
           setImageLoaded(false);
           setLoadFailed(true);
         }}

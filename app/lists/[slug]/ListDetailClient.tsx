@@ -24,6 +24,7 @@ import { isMovieLikeCategory } from '@/lib/resolve-item-image';
 import LightweightEntryRow from '@/components/shared/list-entries/LightweightEntryRow';
 import {
   isLightweightListItem,
+  isLifestyleCategory,
   isMixedListCategory,
   resolveEntryKind,
   sourceCategorySlugFromItem,
@@ -268,20 +269,23 @@ function LightweightGridCard({
   index,
   entryKind,
   onOpen,
+  hideEntryKindChrome = false,
 }: {
   item: Item;
   index: number;
   entryKind: ReturnType<typeof resolveEntryKind>;
   onOpen: () => void;
+  hideEntryKindChrome?: boolean;
 }) {
   return (
-    <div className="col-span-2 sm:col-span-1">
+    <div className={hideEntryKindChrome ? 'col-span-2' : 'col-span-2 sm:col-span-1'}>
       <LightweightEntryRow
         item={item}
         index={index}
         entryKind={entryKind}
         onOpen={onOpen}
-        compact
+        compact={!hideEntryKindChrome}
+        hideEntryKindChrome={hideEntryKindChrome}
       />
     </div>
   );
@@ -533,6 +537,7 @@ export default function ListDetailClient({
     categorySlug: list.categories?.slug,
   });
   const categorySlug = list.categories?.slug ?? null;
+  const isLifestyleList = isLifestyleCategory(categorySlug);
   const categoryIcon = list.categories?.icon ?? null;
   const listDescription = list.description?.trim();
 
@@ -701,6 +706,7 @@ export default function ListDetailClient({
                   index={originalIndex}
                   entryKind={entryKind}
                   onOpen={() => openItemPreview(originalIndex)}
+                  hideEntryKindChrome={isLifestyleList}
                 />
               );
             }
@@ -721,7 +727,13 @@ export default function ListDetailClient({
     }
 
     return (
-      <div className="space-y-2.5 lg:grid lg:grid-cols-1 lg:gap-2.5 lg:space-y-0 xl:grid-cols-2 xl:gap-3">
+      <div
+        className={
+          isLifestyleList
+            ? 'mx-auto max-w-2xl space-y-2.5'
+            : 'space-y-2.5 lg:grid lg:grid-cols-1 lg:gap-2.5 lg:space-y-0 xl:grid-cols-2 xl:gap-3'
+        }
+      >
         {entries.map(({ item, originalIndex }, i) => {
           const prevEntry = i > 0 ? entries[i - 1] : null;
           const isSimilar =
@@ -737,6 +749,7 @@ export default function ListDetailClient({
                 index={originalIndex}
                 entryKind={entryKind}
                 onOpen={() => openItemPreview(originalIndex)}
+                hideEntryKindChrome={isLifestyleList}
               />
             );
           }

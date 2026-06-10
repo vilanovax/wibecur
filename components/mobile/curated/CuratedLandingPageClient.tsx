@@ -7,6 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 import ExploreSmartHero from './ExploreSmartHero';
+import GuidedDiscoverySheet from './GuidedDiscoverySheet';
+import type { GuidedScenario } from '@/lib/discovery/guided-intent';
 import TrendingNowSection from './TrendingNowSection';
 import RisingListsSection from './RisingListsSection';
 import ForYouSection from './ForYouSection';
@@ -43,6 +45,8 @@ export default function CuratedLandingPageClient({
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [guidedScenario, setGuidedScenario] = useState<GuidedScenario | null>(null);
+  const [guidedOpen, setGuidedOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['explore'],
@@ -99,6 +103,11 @@ export default function CuratedLandingPageClient({
     ]
   );
 
+  const handleGuidedScenarioSelect = useCallback((scenario: GuidedScenario) => {
+    setGuidedScenario(scenario);
+    setGuidedOpen(true);
+  }, []);
+
   const handleModeScroll = useCallback((id: string) => {
     const sectionId = SECTION_IDS[id] ?? id;
     const el = document.getElementById(sectionId);
@@ -133,6 +142,7 @@ export default function CuratedLandingPageClient({
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onModeScroll={handleModeScroll}
+        onGuidedScenarioSelect={showDiscovery ? handleGuidedScenarioSelect : undefined}
       />
 
       <main className="space-y-0">
@@ -190,6 +200,15 @@ export default function CuratedLandingPageClient({
       <CreateListForm
         isOpen={isCreateFormOpen}
         onClose={() => setIsCreateFormOpen(false)}
+      />
+
+      <GuidedDiscoverySheet
+        scenario={guidedScenario}
+        isOpen={guidedOpen}
+        onClose={() => {
+          setGuidedOpen(false);
+          setGuidedScenario(null);
+        }}
       />
     </div>
   );

@@ -9,12 +9,18 @@ import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
 import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
 import { resolveImageDisplaySrc } from '@/lib/image-url-policy';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
-import { buildItemMetadataChips, extractItemTip } from '@/lib/item-metadata-display';
+import {
+  buildItemMetadataChips,
+  buildLightweightDisplayBody,
+  extractItemTip,
+  shouldShowSeparateTipCard,
+} from '@/lib/item-metadata-display';
 import ItemTipCard from '@/components/shared/ItemTipCard';
 import {
   entryKindBadgeLabel,
   entryKindIcon,
   FACT_TYPE_LABELS,
+  isLifestyleCategory,
   isLightweightListItem,
   resolveEntryKind,
   sourceCategorySlugFromItem,
@@ -240,6 +246,7 @@ export default function ItemPreviewSheet({
   const entryKind = resolveEntryKind(item);
   const isLightweight = isLightweightListItem(item);
   const itemCategorySlug = sourceCategorySlugFromItem(item) ?? categorySlug;
+  const isLifestyle = isLifestyleCategory(categorySlug);
 
   const meta = (item.metadata ?? {}) as Record<string, unknown>;
   const chips = buildItemMetadataChips(meta, itemCategorySlug, {
@@ -247,10 +254,14 @@ export default function ItemPreviewSheet({
   });
   const itemTip = extractItemTip(meta);
   const listNote = item.listNote?.trim() || null;
-  const desc =
-    item.description?.trim() ||
-    (isLightweight && !item.title?.trim() ? itemTip : null) ||
-    null;
+  const desc = isLightweight
+    ? buildLightweightDisplayBody(item, { lifestyleMode: isLifestyle }) ||
+      (!item.title?.trim() ? itemTip : null)
+    : item.description?.trim() || null;
+  const showSeparateTip =
+    isLightweight &&
+    !isLifestyle &&
+    shouldShowSeparateTipCard(item, { lifestyleMode: false });
   const imdbRating =
     meta.imdbRating != null && String(meta.imdbRating).trim()
       ? String(meta.imdbRating)
@@ -285,37 +296,45 @@ export default function ItemPreviewSheet({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-3 pb-2 text-right lg:px-0 lg:pt-0 lg:pb-0">
           {isLightweight ? (
             <div className="flex flex-col gap-4">
-              <div className="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/50 p-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm ring-1 ring-amber-200/60">
-                  {entryKindIcon(entryKind)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex flex-wrap gap-1.5">
-                    <span className="inline-flex rounded-md bg-white/80 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary ring-1 ring-amber-200/50">
-                      {entryKindBadgeLabel(entryKind)}
-                    </span>
-                    {factLabel && (
-                      <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
-                        {factLabel}
+              {!isLifestyle && (
+                <div className="flex items-start gap-3 rounded-2xl border border-amber-200/70 bg-amber-50/50 p-4">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm ring-1 ring-amber-200/60">
+                    {entryKindIcon(entryKind)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      <span className="inline-flex rounded-md bg-white/80 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary ring-1 ring-amber-200/50">
+                        {entryKindBadgeLabel(entryKind)}
                       </span>
+                      {factLabel && (
+                        <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
+                          {factLabel}
+                        </span>
+                      )}
+                    </div>
+                    {item.title?.trim() && (
+                      <h3 className="wibe-h3 font-bold text-foreground">{item.title}</h3>
                     )}
                   </div>
-                  {item.title?.trim() && (
-                    <h3 className="wibe-h3 font-bold text-foreground">{item.title}</h3>
-                  )}
                 </div>
-              </div>
+              )}
 
               {desc ? (
-                <p className="text-right text-[0.9375rem] leading-[1.85] text-foreground/80 whitespace-pre-line">
+                <p
+                  className={`text-right text-[0.9375rem] leading-[1.85] text-foreground/80 whitespace-pre-line ${
+                    isLifestyle ? 'pt-0.5' : ''
+                  }`}
+                >
                   {desc}
                 </p>
               ) : (
                 <p className="wibe-caption text-wibe-secondary text-right">متنی ثبت نشده</p>
               )}
 
-              {listNote && listNote !== desc && <ItemTipCard tip={listNote} className="text-right" />}
-              {itemTip && itemTip !== desc && itemTip !== listNote && (
+              {!isLifestyle && listNote && listNote !== desc && (
+                <ItemTipCard tip={listNote} className="text-right" />
+              )}
+              {showSeparateTip && itemTip && (
                 <ItemTipCard tip={itemTip} className="text-right" />
               )}
 

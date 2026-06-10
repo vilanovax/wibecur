@@ -15,11 +15,16 @@ import ItemDiscoverySection from '@/components/mobile/items/ItemDiscoverySection
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
 import Toast from '@/components/shared/Toast';
 import { isMovieLikeCategory } from '@/lib/resolve-item-image';
-import { buildItemMetadataFacts, extractItemTip } from '@/lib/item-metadata-display';
+import {
+  buildItemMetadataFacts,
+  buildLightweightDisplayBody,
+  extractItemTip,
+} from '@/lib/item-metadata-display';
 import {
   entryKindBadgeLabel,
   entryKindIcon,
   FACT_TYPE_LABELS,
+  isLifestyleCategory,
   isLightweightListItem,
   resolveEntryKind,
   sourceCategorySlugFromItem,
@@ -124,6 +129,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
     }) ?? listCategorySlug;
   const entryKind = resolveEntryKind(item);
   const isLightweight = isLightweightListItem(item);
+  const isLifestyle = isLifestyleCategory(listCategorySlug);
   const meta = (item.metadata || {}) as Record<string, string | number>;
   const year = meta.year ?? null;
   const ratingLabel = displayRating(item.rating ?? (meta.imdbRating as number | undefined) ?? null);
@@ -141,10 +147,9 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
     typeof factTypeRaw === 'string'
       ? FACT_TYPE_LABELS[factTypeRaw as FactType] ?? factTypeRaw
       : null;
-  const bodyText =
-    item.description?.trim() ||
-    (isLightweight ? itemTip : null) ||
-    null;
+  const bodyText = isLightweight
+    ? buildLightweightDisplayBody(item, { lifestyleMode: isLifestyle }) || null
+    : item.description?.trim() || null;
 
   const canTruncateDescription =
     !!bodyText && bodyText.length > DESCRIPTION_TRUNCATE;
@@ -200,7 +205,13 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
       <main className="pb-2" dir="rtl">
         {/* Hero */}
         {isLightweight ? (
-          <section className="relative overflow-hidden rounded-b-2xl bg-gradient-to-br from-amber-50 via-white to-violet-50 px-4 pb-5 pt-4 lg:rounded-2xl lg:px-6 lg:pb-6 lg:pt-5">
+          <section
+            className={`relative overflow-hidden rounded-b-2xl px-4 pb-5 pt-4 lg:rounded-2xl lg:px-6 lg:pb-6 lg:pt-5 ${
+              isLifestyle
+                ? 'bg-wibe-surface'
+                : 'bg-gradient-to-br from-amber-50 via-white to-violet-50'
+            }`}
+          >
             <button
               type="button"
               onClick={handleShare}
@@ -218,28 +229,36 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
               <span className="truncate">از لیست: {item.lists.title}</span>
             </Link>
 
-            <div className="flex items-start gap-3">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm ring-1 ring-amber-200/70">
-                {entryKindIcon(entryKind)}
-              </span>
-              <div className="min-w-0 flex-1 pt-1">
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  <span className="inline-flex rounded-md bg-white/90 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary shadow-sm">
-                    {entryKindBadgeLabel(entryKind)}
-                  </span>
-                  {factLabel && (
-                    <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
-                      {factLabel}
+            {isLifestyle ? (
+              item.title?.trim() && (
+                <h1 className="pe-12 text-xl font-bold leading-snug text-foreground sm:text-2xl">
+                  {item.title}
+                </h1>
+              )
+            ) : (
+              <div className="flex items-start gap-3">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm ring-1 ring-amber-200/70">
+                  {entryKindIcon(entryKind)}
+                </span>
+                <div className="min-w-0 flex-1 pt-1">
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    <span className="inline-flex rounded-md bg-white/90 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary shadow-sm">
+                      {entryKindBadgeLabel(entryKind)}
                     </span>
+                    {factLabel && (
+                      <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
+                        {factLabel}
+                      </span>
+                    )}
+                  </div>
+                  {item.title?.trim() && (
+                    <h1 className="text-xl font-bold leading-snug text-foreground sm:text-2xl">
+                      {item.title}
+                    </h1>
                   )}
                 </div>
-                {item.title?.trim() && (
-                  <h1 className="text-xl font-bold leading-snug text-foreground sm:text-2xl">
-                    {item.title}
-                  </h1>
-                )}
               </div>
-            </div>
+            )}
           </section>
         ) : (
         <section
@@ -366,7 +385,6 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                     className="inline-flex max-w-full items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/15"
                   >
                     #{item.listRank.toLocaleString('fa-IR')} از {item.listItemCount.toLocaleString('fa-IR')}
-                    <span className="truncate font-normal opacity-80">· {item.lists.title}</span>
                   </Link>
                 )}
                 {likeCount > 0 && (
@@ -392,7 +410,9 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             )}
 
             {itemTip && !isLightweight && <ItemTipCard tip={itemTip} />}
-            {listNote && listNote !== bodyText && <ItemTipCard tip={listNote} />}
+            {listNote && listNote !== bodyText && !(isLightweight && isLifestyle) && (
+              <ItemTipCard tip={listNote} />
+            )}
 
             {bodyText ? (
               <div className="rounded-xl bg-gray-50/80 px-3.5 py-3.5 text-start lg:bg-transparent lg:p-0">

@@ -4,6 +4,10 @@ export const INTERNAL_METADATA_KEYS = new Set([
   'imdbID',
   'tmdbId',
   'tmdbID',
+  'entryKind',
+  'sourceCategorySlug',
+  'tags',
+  'factType',
 ]);
 
 /** نکته جداگانه نمایش داده می‌شود — نه در grid متادیتا */
@@ -18,6 +22,42 @@ export function extractItemTip(metadata: Record<string, unknown> | null | undefi
   if (typeof raw !== 'string') return null;
   const tip = raw.trim();
   return tip || null;
+}
+
+type LightweightBodySource = {
+  description?: string | null;
+  listNote?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+/** متن اصلی ورودی سبک — بدون کارت نکته جدا */
+export function buildLightweightDisplayBody(
+  item: LightweightBodySource,
+  options?: { lifestyleMode?: boolean }
+): string {
+  const desc = item.description?.trim() || '';
+  const tip = extractItemTip(item.metadata);
+  const note = item.listNote?.trim() || '';
+
+  if (options?.lifestyleMode) {
+    // لایف‌استایل: فقط description؛ tip جدا نمایش داده نمی‌شود
+    return desc || tip || note;
+  }
+
+  return desc || tip || note;
+}
+
+/** آیا metadata.tip باید به‌صورت ItemTipCard جدا نمایش داده شود */
+export function shouldShowSeparateTipCard(
+  item: LightweightBodySource,
+  options?: { lifestyleMode?: boolean }
+): boolean {
+  if (options?.lifestyleMode) return false;
+
+  const desc = item.description?.trim() || '';
+  const tip = extractItemTip(item.metadata);
+  const note = item.listNote?.trim() || '';
+  return Boolean(tip && tip !== desc && tip !== note);
 }
 
 export type MetadataFact = {
@@ -37,6 +77,7 @@ const FACT_LABELS: Record<string, { label: string; icon: string }> = {
   priceRange: { label: 'بازه قیمت', icon: '💰' },
   cuisine: { label: 'نوع غذا', icon: '🍽️' },
   phone: { label: 'تلفن', icon: '📞' },
+  duration: { label: 'مدت', icon: '⏱️' },
 };
 
 const MOVIE_FACT_ORDER = ['director', 'imdbRating', 'country', 'actors'] as const;

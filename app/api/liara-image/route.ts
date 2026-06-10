@@ -24,13 +24,8 @@ export async function GET(request: NextRequest) {
 
   const result = await getObjectByPublicUrl(url);
   if (!result) {
-    return NextResponse.json(
-      {
-        error: 'Image not found in storage',
-        hint: 'تنظیمات ParsPack را در Admin → Settings یا PARSPACK_* در .env بررسی کنید',
-      },
-      { status: 404 }
-    );
+    // سرور (S3/fetch) شکست خورد؛ مرورگر ممکن است مستقیم به CDN دسترسی داشته باشد
+    return NextResponse.redirect(url, 307);
   }
 
   const headers = new Headers();

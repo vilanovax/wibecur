@@ -32,3 +32,27 @@ export function buildLiaraDisplaySrc(
 export function shouldFallbackLiaraToProxy(rawUrl: string, forceProxy: boolean): boolean {
   return !forceProxy && isOurStorageUrl(rawUrl) && getLiaraImageMode() === 'direct';
 }
+
+/** آدرس فعلی از /api/liara-image است؟ */
+export function isStorageProxySrc(src: string): boolean {
+  return typeof src === 'string' && src.startsWith('/api/liara-image?');
+}
+
+/** URL اصلی ParsPack از داخل proxy */
+export function unwrapStorageProxySrc(proxySrc: string): string | null {
+  if (!isStorageProxySrc(proxySrc)) return null;
+  try {
+    const parsed = new URL(proxySrc, 'http://localhost');
+    const raw = parsed.searchParams.get('url');
+    if (!raw?.trim()) return null;
+    const decoded = decodeURIComponent(raw.trim());
+    return isOurStorageUrl(decoded) ? decoded : null;
+  } catch {
+    return null;
+  }
+}
+
+/** بعد از خطای proxy، URL مستقیم استوریج */
+export function directStorageFallbackSrc(displaySrc: string): string | null {
+  return unwrapStorageProxySrc(displaySrc);
+}
