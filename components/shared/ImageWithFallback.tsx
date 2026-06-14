@@ -44,6 +44,12 @@ interface ImageWithFallbackProps {
    * مثال: sizes="(min-width:1024px) 25vw, 50vw"
    */
   sizes?: string;
+  /**
+   * برای تصاویر با ابعاد ثابت (مثل آواتار). اگر هر دو داده شوند، next/image با
+   * width/height مشخص رندر می‌شود (نه fill) — مستقل از positioning والد و امن.
+   */
+  width?: number;
+  height?: number;
 }
 
 function toDisplaySrc(resolved: string): string {
@@ -68,6 +74,8 @@ export default function ImageWithFallback({
   preferStoredImage = false,
   itemImageSource,
   sizes,
+  width,
+  height,
 }: ImageWithFallbackProps) {
   const [forceLocal, setForceLocal] = useState(false);
   const [forceLiaraProxy, setForceLiaraProxy] = useState(false);
@@ -162,6 +170,30 @@ export default function ImageWithFallback({
       >
         <span className="text-2xl opacity-90 drop-shadow-sm sm:text-3xl">{fallbackIcon}</span>
       </div>
+    );
+  }
+
+  // مسیر بهینه‌شدهٔ ابعاد-ثابت (آواتارها) — مستقل از positioning والد.
+  if (width && height && !sizes) {
+    const unwrappedFixed = normalizeImageUrlForStorage(directStorageSrc ?? displaySrc);
+    const fixedSrc =
+      unwrappedFixed && /^https?:\/\//.test(unwrappedFixed)
+        ? unwrappedFixed
+        : (directStorageSrc ?? displaySrc);
+    const unoptimizedFixed = fixedSrc.startsWith('/') && fixedSrc.includes('?');
+    return (
+      <Image
+        key={fixedSrc}
+        src={fixedSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        className={className}
+        onError={handleError}
+        priority={priority}
+        unoptimized={unoptimizedFixed}
+        referrerPolicy="no-referrer"
+      />
     );
   }
 

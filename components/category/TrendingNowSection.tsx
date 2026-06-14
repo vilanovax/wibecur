@@ -66,6 +66,8 @@ export default function TrendingNowSection({
                     <ImageWithFallback
                       src={list.creator.image}
                       alt={list.creator.name || ''}
+                      width={24}
+                      height={24}
                       className="w-6 h-6 rounded-full object-cover flex-shrink-0"
                     />
                   ) : (
