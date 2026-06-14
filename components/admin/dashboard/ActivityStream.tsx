@@ -112,7 +112,7 @@ export default function ActivityStream({ events }: ActivityStreamProps) {
                   {event.href && (
                     <Link
                       href={event.href}
-                      className="shrink-0 text-xs text-[var(--primary)] hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="shrink-0 text-xs text-[var(--primary)] hover:underline opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                     >
                       باز کردن
                     </Link>

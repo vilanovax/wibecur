@@ -254,6 +254,8 @@ export default function AdminHeader() {
           <button
             type="button"
             onClick={() => setShowNotifications(!showNotifications)}
+            aria-label={unreadCount > 0 ? `اعلان‌ها (${unreadCount} خوانده‌نشده)` : 'اعلان‌ها'}
+            aria-expanded={showNotifications}
             className="relative w-10 h-10 rounded-lg bg-admin-muted dark:bg-gray-700 hover:bg-admin-hover dark:hover:bg-gray-600 flex items-center justify-center transition-colors text-gray-600 dark:text-gray-300"
           >
             <Bell className="h-5 w-5" />
@@ -294,19 +296,18 @@ export default function AdminHeader() {
                           </p>
                         </Link>
                       ) : (
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => !n.read && markAsRead(n.id)}
-                          onKeyDown={(e) => e.key === 'Enter' && !n.read && markAsRead(n.id)}
-                          className={`p-3 rounded-lg text-right cursor-default ${n.read ? 'bg-admin-muted dark:bg-gray-700/50' : 'bg-violet-50 dark:bg-violet-900/20'}`}
+                        <button
+                          type="button"
+                          disabled={n.read}
+                          onClick={() => markAsRead(n.id)}
+                          className={`block w-full p-3 rounded-lg text-right disabled:cursor-default ${n.read ? 'bg-admin-muted dark:bg-gray-700/50' : 'bg-violet-50 dark:bg-violet-900/20'}`}
                         >
                           <p className="text-sm font-medium text-admin-text-primary dark:text-white">{n.title}</p>
                           <p className="text-xs text-admin-text-secondary dark:text-gray-400 mt-1">{n.message}</p>
                           <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-2">
                             {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
                           </p>
-                        </div>
+                        </button>
                       )}
                     </div>
                   ))

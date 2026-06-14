@@ -209,7 +209,17 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
     align?: 'right' | 'center';
     className?: string;
   }) => (
-    <th className={`px-3 py-2.5 ${className}`}>
+    <th
+      scope="col"
+      aria-sort={
+        sortKey === keyName
+          ? sortDir === 'desc'
+            ? 'descending'
+            : 'ascending'
+          : 'none'
+      }
+      className={`px-3 py-2.5 ${className}`}
+    >
       <button
         type="button"
         onClick={() => toggleSort(keyName)}
@@ -311,10 +321,10 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                 keyName="trendingScore"
                 className="w-[140px]"
               />
-              <th className="px-3 py-2.5 text-center text-xs font-semibold text-[var(--color-text-muted)] w-[88px]">
+              <th scope="col" className="px-3 py-2.5 text-center text-xs font-semibold text-[var(--color-text-muted)] w-[88px]">
                 وضعیت
               </th>
-              <th className="pl-4 pr-3 py-2.5 text-center text-xs font-semibold text-[var(--color-text-muted)] w-[108px]">
+              <th scope="col" className="pl-4 pr-3 py-2.5 text-center text-xs font-semibold text-[var(--color-text-muted)] w-[108px]">
                 عملیات
               </th>
             </tr>
@@ -421,6 +431,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                       target="_blank"
                       className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--primary)] transition-colors"
                       title="مشاهده در سایت"
+                      aria-label="مشاهده در سایت"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </Link>
@@ -428,6 +439,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                       href={`/admin/lists/${row.id}/edit`}
                       className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--primary)] transition-colors"
                       title="ویرایش"
+                      aria-label="ویرایش لیست"
                     >
                       <Pencil className="w-4 h-4" />
                     </Link>
@@ -435,6 +447,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                       href={`/admin/lists/${row.id}/debug`}
                       className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-amber-500/10 hover:text-amber-700 transition-colors"
                       title="دیباگ ترند"
+                      aria-label="دیباگ ترند"
                     >
                       <Bug className="w-4 h-4" />
                     </Link>
