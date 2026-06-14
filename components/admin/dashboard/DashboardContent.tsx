@@ -50,24 +50,25 @@ export default function DashboardContent({ data }: DashboardContentProps) {
         <AdminTopBar initialRange={range} />
       </Suspense>
 
-      <DashboardPeriodKpis kpis={kpis} periodLabel={periodLabel} range={range} />
-
-      <section>
-        <SystemPulseBar cards={systemPulse} />
-      </section>
-
+      {/* مرکز اقدام بالاتر از متریک‌های منفعل — کارِ اصلی ادمین «خالی‌کردن صف‌ها»ست */}
       <DashboardActionCenter
         actionQueue={actionQueue}
         comments={commentsModeration}
         riskAlerts={riskAlerts}
       />
 
-      {(pendingSuggestionCount > 0 || suggestionPreviews.length > 0) && (
-        <SuggestionsQueueWidget
-          count={pendingSuggestionCount}
-          previews={suggestionPreviews}
-        />
-      )}
+      <section>
+        <SystemPulseBar cards={systemPulse} />
+      </section>
+
+      {/* همیشه رندر می‌شود (با empty state) تا IA و لینک ورود به صف ثابت بماند */}
+      <SuggestionsQueueWidget
+        count={pendingSuggestionCount}
+        previews={suggestionPreviews}
+      />
+
+      {/* KPIهای دوره‌ای تحلیلی‌اند، نه عملیاتی — پایین‌تر از اقدام/نبض */}
+      <DashboardPeriodKpis kpis={kpis} periodLabel={periodLabel} range={range} />
 
       <section className="min-h-[320px]">
         <TrendingRadar rows={trendingRadar} />
