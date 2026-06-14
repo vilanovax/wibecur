@@ -61,33 +61,42 @@ export default function DashboardContent({ data }: DashboardContentProps) {
         <SystemPulseBar cards={systemPulse} />
       </section>
 
-      {/* همیشه رندر می‌شود (با empty state) تا IA و لینک ورود به صف ثابت بماند */}
-      <SuggestionsQueueWidget
-        count={pendingSuggestionCount}
-        previews={suggestionPreviews}
-      />
-
       {/* KPIهای دوره‌ای تحلیلی‌اند، نه عملیاتی — پایین‌تر از اقدام/نبض */}
       <DashboardPeriodKpis kpis={kpis} periodLabel={periodLabel} range={range} />
 
+      {/* رادار ترند عریض است → تمام‌عرض می‌ماند */}
       <section className="min-h-[320px]">
         <TrendingRadar rows={trendingRadar} />
       </section>
 
-      <section>
-        <h2 className="text-base font-semibold text-[var(--color-text)] mb-4">
-          عملکرد دسته‌ها
-        </h2>
-        <CategoryIntelligenceGrid categories={categoryIntelligence} />
-      </section>
+      {/* دو ستون مستقل (بدون coupling ارتفاع ردیف): پنل‌های کوتاه‌تر کنار هم
+          تا طول عمودی صفحه کم شود و از عرض دسکتاپ استفاده شود. روی موبایل تک‌ستون. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="space-y-6">
+          <section>
+            <h2 className="text-base font-semibold text-[var(--color-text)] mb-4">
+              عملکرد دسته‌ها
+            </h2>
+            <CategoryIntelligenceGrid categories={categoryIntelligence} />
+          </section>
 
-      <section>
-        <CuratorIntelligence curators={curatorIntelligence} />
-      </section>
+          <section>
+            <CuratorIntelligence curators={curatorIntelligence} />
+          </section>
+        </div>
 
-      <section>
-        <ActivityStream events={normalizedActivities} />
-      </section>
+        <div className="space-y-6">
+          {/* همیشه رندر می‌شود (با empty state) تا IA و لینک ورود به صف ثابت بماند */}
+          <SuggestionsQueueWidget
+            count={pendingSuggestionCount}
+            previews={suggestionPreviews}
+          />
+
+          <section>
+            <ActivityStream events={normalizedActivities} />
+          </section>
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Bell, User, Settings, LogOut, ChevronLeft, Menu, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Bell, User, Settings, LogOut, ChevronLeft, Menu, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { signOut, useSession } from 'next-auth/react';
 import RoleBadge from '@/components/auth/RoleBadge';
@@ -244,17 +244,9 @@ export default function AdminHeader() {
         </div>
       </div>
 
-      {/* Center: Search */}
-      <div className="flex-1 flex justify-center px-4">
-        <div className="relative w-full max-w-[420px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-admin-text-tertiary dark:text-gray-500" />
-          <input
-            type="search"
-            placeholder="جستجو در لیست‌ها، کاربران، آیتم‌ها…"
-            className="w-full h-10 pl-4 pr-10 rounded-lg bg-admin-muted dark:bg-gray-700 border border-transparent focus:border-admin-border dark:focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-admin-border dark:focus:ring-gray-600 text-sm text-admin-text-primary dark:text-white placeholder:text-admin-text-tertiary dark:placeholder:text-gray-500 transition-colors"
-          />
-        </div>
-      </div>
+      {/* Spacer — سرچِ تزئینیِ غیرفعال حذف شد (handler/state نداشت و در داشبورد
+          با سرچ کاربردیِ AdminTopBar تکراری می‌شد). */}
+      <div className="flex-1" />
 
       {/* Left: Profile + Notifications + Role */}
       <div className="flex items-center gap-3 shrink-0">
