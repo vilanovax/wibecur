@@ -38,6 +38,7 @@ export default function TrendingNowSection({
                     src={list.coverImage}
                     alt={list.title}
                     className="w-full h-full object-cover"
+                    sizes="(min-width: 768px) 280px, 75vw"
                   />
                 ) : (
                   <div
