@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { TrendingUp, Bookmark } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { useHomeData } from '@/contexts/HomeDataContext';
+import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import HomeSectionTitle from './HomeSectionTitle';
+import HomeGridListCard from './HomeGridListCard';
 
 export default function NewAndRisingSection({ embedded = false }: { embedded?: boolean }) {
   const { data, isLoading } = useHomeData();
-  const lists = (data?.rising ?? []).slice(0, 6);
+  const lists = (data?.rising ?? []).slice(0, 8);
 
   if (isLoading && lists.length === 0) {
     return (
@@ -18,9 +20,9 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
             <div className="h-5 w-40 animate-pulse rounded bg-gray-200" />
           </div>
         )}
-        <div className="space-y-3 px-4">
+        <div className="space-y-3 px-4 lg:px-0">
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-lg h-20 bg-gray-100 animate-pulse" />
+            <div key={i} className="h-20 animate-pulse rounded-lg bg-gray-100 lg:h-36" />
           ))}
         </div>
       </section>
@@ -29,7 +31,9 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
 
   if (lists.length === 0) {
     return embedded ? (
-      <p className="px-4 py-6 text-center wibe-small text-wibe-secondary">فعلاً لیست اوج‌گیری نیست</p>
+      <p className="px-4 py-6 text-center wibe-small text-wibe-secondary lg:px-0">
+        فعلاً لیست اوج‌گیری نیست
+      </p>
     ) : null;
   }
 
@@ -44,38 +48,54 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
           actionLabel="همه"
         />
       )}
-      <div className="space-y-2 px-4 lg:grid lg:grid-cols-3 lg:gap-3 lg:space-y-0 lg:px-0">
+
+      <div className="space-y-2 px-4 lg:hidden">
         {lists.map((list) => (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex flex-row-reverse gap-3 overflow-hidden rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm transition-transform active:scale-[0.99] lg:min-h-0 lg:p-2.5 lg:hover:border-primary/20 lg:hover:shadow-md"
+            className="flex flex-row-reverse gap-3 overflow-hidden rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm transition-transform active:scale-[0.99]"
           >
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-200 lg:h-[4.5rem] lg:w-[4.5rem]">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-200">
               <ImageWithFallback
                 src={list.coverImage}
                 alt={list.title}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
                 fallbackIcon={list.categories?.icon ?? '📋'}
-                fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200"
                 categorySlug={list.categories?.slug}
                 listSlug={list.slug}
                 listTitle={list.title}
               />
               {(list as { isFastRising?: boolean }).isFastRising && (
-                <span className="absolute top-1 right-1 bg-success text-white wibe-caption font-semibold px-1.5 py-0.5 rounded-pill flex items-center gap-0.5">
-                  <TrendingUp className="w-2.5 h-2.5" />
+                <span className="absolute right-1 top-1 flex items-center gap-0.5 rounded-pill bg-success px-1.5 py-0.5 wibe-caption font-semibold text-white">
+                  <TrendingUp className="h-2.5 w-2.5" />
                 </span>
               )}
             </div>
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
-              <p className="wibe-caption text-wibe-secondary mt-1 flex items-center gap-1">
-                <Bookmark className="w-3.5 h-3.5 text-primary" />
+            <div className="flex min-w-0 flex-1 flex-col justify-center">
+              <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
+                {list.title}
+              </h3>
+              <p className="mt-1 flex items-center gap-1 wibe-caption text-wibe-secondary">
+                <Bookmark className="h-3.5 w-3.5 text-primary" />
                 {list.saveCount.toLocaleString('fa-IR')} ذخیره · {list.itemCount} آیتم
               </p>
             </div>
           </Link>
+        ))}
+      </div>
+
+      <div
+        className={`hidden lg:grid lg:overflow-visible lg:snap-none lg:px-0 ${HOME_FEED_GRID_CLASS}`}
+      >
+        {lists.map((list) => (
+          <HomeGridListCard
+            key={list.id}
+            list={list}
+            badge={(list as { isFastRising?: boolean }).isFastRising ? 'سریع' : null}
+            badgeClassName="bg-success text-white"
+          />
         ))}
       </div>
     </section>

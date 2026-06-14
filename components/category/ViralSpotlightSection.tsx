@@ -4,18 +4,23 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import CategorySectionTitle from './CategorySectionTitle';
+import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryListCard } from '@/types/category-page';
 
 interface ViralSpotlightSectionProps {
   list: CategoryListCard;
   accentColor?: string;
+  inset?: boolean;
 }
 
 export default function ViralSpotlightSection({
   list,
+  inset = false,
 }: ViralSpotlightSectionProps) {
+  const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
+
   return (
-    <section className="px-4 py-6">
+    <section className={sectionClass}>
       <CategorySectionTitle title="وایرال این هفته" icon="🔥" />
       <Link href={`/lists/${list.slug}`} className="block active:scale-[0.99] transition-transform">
         <div className="rounded-lg overflow-hidden border border-wibe shadow-card bg-wibe-card">

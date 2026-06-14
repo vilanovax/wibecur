@@ -48,7 +48,7 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
     isOpen: boolean;
     commentId: string | null;
     commentContent: string;
-    action: 'delete' | 'edit' | 'report';
+    action: 'delete' | 'edit' | 'report' | 'reject';
   }>({ isOpen: false, commentId: null, commentContent: '', action: 'delete' });
   const [penaltyLoading, setPenaltyLoading] = useState(false);
   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
@@ -259,7 +259,14 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
 
   const confirmReject = () => {
     if (!rejectTarget) return;
-    performReject(rejectTarget.id);
+    const comment = localComments.find((c) => c.id === rejectTarget.id);
+    setPenaltyModal({
+      isOpen: true,
+      commentId: rejectTarget.id,
+      commentContent: comment?.content ?? rejectTarget.preview,
+      action: 'reject',
+    });
+    setRejectTarget(null);
   };
 
   const handleBulkApprove = () => setBulkConfirm('approve');
@@ -324,6 +331,8 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
         showToast('کامنت حذف شد', 'success');
       } else if (penaltyModal.action === 'report') {
         await performApprove(penaltyModal.commentId);
+      } else if (penaltyModal.action === 'reject') {
+        await performReject(penaltyModal.commentId);
       }
       setPenaltyModal({
         isOpen: false,

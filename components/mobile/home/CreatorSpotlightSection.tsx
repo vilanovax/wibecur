@@ -54,11 +54,11 @@ async function fetchSpotlightCurrent(): Promise<SpotlightData | null> {
 }
 
 interface CreatorSpotlightSectionProps {
-  /** دسکتاپ: ستون کناری کنار فید */
-  layout?: 'default' | 'sidebar';
+  /** @deprecated sidebar حذف شد — فقط layout تمام‌عرض */
+  layout?: 'default';
 }
 
-export default function CreatorSpotlightSection({ layout = 'default' }: CreatorSpotlightSectionProps) {
+export default function CreatorSpotlightSection({ layout: _layout = 'default' }: CreatorSpotlightSectionProps) {
   const { data: session } = useSession();
   const { data, isLoading: loading } = useQuery({
     queryKey: ['spotlight', 'current'],
@@ -81,13 +81,11 @@ export default function CreatorSpotlightSection({ layout = 'default' }: CreatorS
     }
   };
 
-  const isSidebar = layout === 'sidebar';
-
   if (loading) {
     return (
-      <section className={`mb-4 px-4 ${isSidebar ? 'lg:mb-0 lg:px-0' : 'lg:px-0'}`}>
+      <section className="mb-4 px-4 lg:mb-0 lg:px-0">
         <div className="mb-3 h-6 w-52 animate-pulse rounded bg-gray-200" />
-        <div className={`animate-pulse rounded-lg border border-wibe bg-wibe-card p-5 ${isSidebar ? 'lg:h-64' : 'lg:h-40'}`} />
+        <div className="h-40 animate-pulse rounded-xl border border-wibe bg-wibe-card p-5 lg:h-44" />
       </section>
     );
   }
@@ -100,21 +98,15 @@ export default function CreatorSpotlightSection({ layout = 'default' }: CreatorS
     c.avatarType === 'DEFAULT' && c.avatarId ? VIBE_AVATARS.find((a) => a.id === c.avatarId) : null;
 
   return (
-    <section className={`mb-4 px-4 pb-2 ${isSidebar ? 'lg:mb-0 lg:pb-0 lg:px-0' : 'lg:mb-0 lg:pb-0 lg:px-0'}`}>
+    <section className="mb-4 px-4 pb-2 lg:mb-0 lg:pb-0 lg:px-0">
       <HomeSectionTitle
         icon="🏆"
         title="کیوریتور منتخب"
-        subtitle={isSidebar ? 'لیست‌های برتر' : 'لیست‌های برتر از یک سازنده'}
+        subtitle="لیست‌های برتر از یک سازنده"
       />
 
       <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card lg:rounded-xl">
-        <div
-          className={`p-5 lg:p-5 ${
-            isSidebar
-              ? 'lg:flex lg:flex-col'
-              : 'lg:grid lg:grid-cols-[minmax(0,17rem)_1fr] lg:items-start lg:gap-6 lg:p-6'
-          }`}
-        >
+        <div className="p-5 lg:grid lg:grid-cols-[minmax(0,15rem)_1fr] lg:items-start lg:gap-6 lg:p-6">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-right">
             <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-wibe bg-gray-100">
               {vibeAvatar ? (
@@ -177,19 +169,9 @@ export default function CreatorSpotlightSection({ layout = 'default' }: CreatorS
           </div>
 
           {data.lists.length > 0 ? (
-            <div
-              className={`border-t border-wibe px-4 py-3 lg:border-wibe/80 lg:px-0 lg:py-0 ${
-                isSidebar ? 'lg:mt-4 lg:border-t lg:pt-4' : 'lg:border-s-0 lg:border-t-0'
-              }`}
-            >
+            <div className="border-t border-wibe px-4 py-3 lg:border-t-0 lg:px-0 lg:py-0">
             <p className="mb-2 wibe-caption text-wibe-secondary lg:mb-3">لیست‌های برتر</p>
-            <div
-              className={`-mx-1 flex gap-3 overflow-x-auto scrollbar-hide lg:mx-0 lg:overflow-visible ${
-                isSidebar
-                  ? 'lg:grid lg:grid-cols-2 lg:gap-2.5'
-                  : 'lg:grid lg:grid-cols-3 lg:gap-3 xl:grid-cols-4'
-              }`}
-            >
+            <div className="-mx-1 flex gap-3 overflow-x-auto scrollbar-hide lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible xl:grid-cols-5">
               {data.lists.map((list) => (
                 <Link
                   key={list.id}

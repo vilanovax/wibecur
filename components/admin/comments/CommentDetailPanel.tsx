@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentStatusBadge from './CommentStatusBadge';
 import UserAvatar from '@/components/shared/UserAvatar';
+import { UserPenaltyBadge, CommentRestrictionStatusBadge } from './UserPenaltyBadge';
 import type { CommentRowData } from './CommentRow';
 
 export type ReportDetailRow = {
@@ -91,7 +92,18 @@ export default function CommentDetailPanel({
             size={36}
           />
           <div className="min-w-0 flex-1">
-            <p className="font-medium truncate">{comment.users.name || 'بدون نام'}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium truncate">{comment.users.name || 'بدون نام'}</p>
+              {comment.userModeration && (
+                <>
+                  <CommentRestrictionStatusBadge status={comment.userModeration.status} />
+                  <UserPenaltyBadge
+                    totalPenaltyScore={comment.userModeration.totalPenaltyScore}
+                    status={comment.userModeration.status}
+                  />
+                </>
+              )}
+            </div>
             <p className="text-xs text-[var(--color-text-muted)] truncate">
               {comment.users.email}
             </p>

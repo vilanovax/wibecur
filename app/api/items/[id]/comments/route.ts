@@ -5,6 +5,12 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getClientErrorMessage, logServerError } from '@/lib/api-error';
 import { getCachedBadWords } from '@/lib/bad-words';
+import {
+  getCommentPermission,
+  recordBadWordViolation,
+  applyAutoRestrictionAfterPenalty,
+  getUserPenaltyScore,
+} from '@/lib/comment-permission';
 import { DEFAULT_LIST_COMMENT_MAX_LENGTH } from '@/lib/comment-limits';
 
 // GET /api/items/[id]/comments - دریافت کامنت‌های یک آیتم
@@ -182,6 +188,15 @@ export async function POST(
 
     const userId = session.user.id;
     const { id: itemId } = await params;
+
+    const commentPermission = await getCommentPermission(userId);
+    if (!commentPermission.allowed) {
+      return NextResponse.json(
+        { success: false, error: commentPermission.reason || 'امکان ثبت کامنت وجود ندارد' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { content } = body;
 
@@ -378,7 +393,6 @@ export async function POST(
 
       // If bad word found, report automatically and track violation
       if (hasBadWord) {
-        // Auto-report to admin
         await tx.comment_reports.create({
           data: {
             commentId: newComment.id,
@@ -387,35 +401,19 @@ export async function POST(
           },
         });
 
-        // Track user violation (find by userId + violationType for correct record)
-        const existingViolation = await tx.user_violations.findFirst({
-          where: { userId, violationType: 'bad_word' },
+        await recordBadWordViolation(userId, newComment.id, tx, {
+          skipAutoRestrict: true,
         });
-
-        if (existingViolation) {
-          await tx.user_violations.update({
-            where: { id: existingViolation.id },
-            data: {
-              violationCount: { increment: 1 },
-              lastViolationDate: new Date(),
-            },
-          });
-        } else {
-          await tx.user_violations.create({
-            data: {
-              userId,
-              commentId: newComment.id,
-              violationType: 'bad_word',
-              violationCount: 1,
-              updatedAt: new Date(),
-            },
-          });
-        }
       }
 
         return newComment;
       });
     });
+
+    if (hasBadWord) {
+      const totalScore = await getUserPenaltyScore(userId);
+      await applyAutoRestrictionAfterPenalty(userId, totalScore);
+    }
 
     return NextResponse.json({
       success: true,

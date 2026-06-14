@@ -46,56 +46,59 @@ export default function HomeHeroSpotlight() {
     if (!isLoading && !list) return null;
     return (
       <section className="mb-4 mt-3 px-4 lg:mb-0 lg:mt-0 lg:px-0" aria-hidden>
-        <div className="h-[240px] animate-pulse rounded-xl bg-gray-200 shadow-card sm:h-[260px] lg:grid lg:min-h-[260px] lg:grid-cols-2 lg:rounded-2xl lg:overflow-hidden">
-          <div className="bg-gray-200" />
-          <div className="hidden bg-gray-100 lg:block" />
-        </div>
+        <div className="h-[240px] animate-pulse rounded-xl bg-gray-200 shadow-card sm:h-[260px] lg:h-[26rem] lg:rounded-2xl xl:h-[30rem]" />
       </section>
     );
   }
 
   const creator = list.creator;
+  const heroImage = list.bannerImage ?? list.coverImage;
 
   return (
     <section className="mb-4 mt-3 px-4 lg:mb-0 lg:mt-0 lg:px-0" aria-label="منتخب هفته">
       <p className="mb-2 wibe-caption text-wibe-secondary lg:hidden">منتخب هفته</p>
 
-      <div className="relative h-[240px] overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[260px] lg:grid lg:h-auto lg:min-h-[260px] lg:grid-cols-2 lg:rounded-2xl lg:border lg:border-wibe lg:shadow-md">
-        {/* تصویر — ستون راست در RTL */}
-        <div className="absolute inset-0 lg:relative lg:min-h-[260px]">
-          <ImageWithFallback
-            src={list.bannerImage ?? list.coverImage}
-            alt={list.title}
-            className="absolute inset-0 h-full w-full object-cover object-center lg:static lg:min-h-[260px]"
-            fallbackIcon={list.categories?.icon ?? '📚'}
-            fallbackClassName="flex h-full w-full min-h-[240px] items-center justify-center bg-gray-200 text-5xl lg:min-h-[260px] lg:text-6xl"
-            categorySlug={list.categories?.slug}
-            listSlug={list.slug}
-            listTitle={list.title}
-            priority
-          />
-          <div
-            className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent lg:hidden"
-            aria-hidden
-          />
-        </div>
+      <div className="group relative h-[240px] overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[260px] lg:h-[26rem] lg:rounded-2xl lg:shadow-lg xl:h-[30rem]">
+        <ImageWithFallback
+          src={heroImage}
+          alt={list.title}
+          className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] lg:object-[center_35%]"
+          fallbackIcon={list.categories?.icon ?? '📚'}
+          fallbackClassName="flex h-full w-full min-h-[240px] items-center justify-center bg-gray-200 text-5xl lg:min-h-0 lg:text-7xl"
+          categorySlug={list.categories?.slug}
+          listSlug={list.slug}
+          listTitle={list.title}
+          priority
+        />
 
-        {/* متن — موبایل روی تصویر | دسکتاپ پنل کنار تصویر */}
-        <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6 lg:relative lg:justify-center lg:bg-wibe-card lg:p-6 lg:text-right lg:pe-7">
-          <span className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 wibe-caption font-semibold text-white backdrop-blur-md lg:border-primary/20 lg:bg-primary/10 lg:text-primary">
-            <Sparkles className="h-3.5 w-3.5 text-amber-300 lg:text-primary" aria-hidden />
+        {/* گرادیان — موبایل از پایین | دسکتاپ از راست (RTL) برای خوانایی تیتر */}
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent lg:bg-gradient-to-l lg:from-black/95 lg:via-black/70 lg:via-[45%] lg:to-transparent"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 hidden bg-gradient-to-t from-black/30 via-transparent to-black/10 lg:block"
+          aria-hidden
+        />
+
+        <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6 lg:max-w-[min(100%,34rem)] lg:justify-end lg:p-8 lg:pb-9 xl:max-w-[min(100%,38rem)] xl:p-10 xl:pb-11">
+          <span
+            className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-0.5 wibe-caption font-semibold text-white backdrop-blur-md lg:mb-3 lg:gap-2 lg:px-3.5 lg:py-1 lg:text-sm"
+            aria-hidden
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-300 lg:h-4 lg:w-4" aria-hidden />
             منتخب هفته
           </span>
 
-          <h2 className="line-clamp-2 text-h2 font-bold leading-tight text-white lg:text-2xl lg:text-foreground xl:text-[1.625rem]">
+          <h2 className="line-clamp-2 text-h2 font-bold leading-tight text-white lg:line-clamp-3 lg:text-4xl lg:leading-[1.15] xl:text-5xl xl:leading-[1.1]">
             {list.title}
           </h2>
           {list.description && (
-            <p className="mt-2 line-clamp-2 wibe-small leading-relaxed text-white/90 lg:mt-2.5 lg:text-wibe-secondary lg:line-clamp-3">
+            <p className="mt-2 line-clamp-2 wibe-small leading-relaxed text-white/90 lg:mt-3 lg:line-clamp-2 lg:text-base lg:leading-relaxed xl:mt-4 xl:text-lg xl:leading-8">
               {list.description}
             </p>
           )}
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 wibe-caption text-white/75 lg:mt-3 lg:text-wibe-secondary">
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 wibe-caption text-white/85 lg:mt-3 lg:text-sm xl:mt-4">
             {creator?.name && <span>از {creator.name}</span>}
             {(list.saveCount ?? 0) > 0 && (
               <span>
@@ -104,26 +107,27 @@ export default function HomeHeroSpotlight() {
             )}
           </div>
 
-          <div className="mt-4 flex gap-2.5 sm:gap-3 lg:mt-5">
+          <div className="mt-4 flex gap-2.5 sm:gap-3 lg:mt-6 lg:gap-3 xl:mt-7">
             <Link
               href={`/lists/${list.slug}`}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/20 py-3 wibe-small font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/30 active:scale-[0.99] lg:flex-none lg:border-wibe lg:bg-wibe-surface lg:px-5 lg:py-2.5 lg:text-foreground lg:hover:bg-gray-50"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/20 py-3 wibe-small font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/30 active:scale-[0.99] lg:flex-none lg:border-primary lg:bg-primary lg:px-6 lg:py-3 lg:text-base lg:shadow-md lg:hover:bg-primary-dark"
               onClick={() => {
                 if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'view_list');
               }}
             >
-              <Eye className="h-4 w-4 shrink-0" />
+              <Eye className="h-4 w-4 shrink-0 lg:h-5 lg:w-5" />
               مشاهده
             </Link>
-            <div className="min-w-0 flex-1 lg:w-auto lg:flex-none lg:min-w-[8.5rem]">
+            <div className="min-w-0 flex-1 lg:w-auto lg:flex-none lg:min-w-[9.5rem]">
               <BookmarkButton
                 listId={list.id}
                 initialBookmarkCount={list.saveCount}
                 variant="button"
                 size="md"
+                tone="secondary"
                 labelSave="ذخیره"
                 labelSaved="ذخیره شد ✓"
-                className="lg:!w-auto lg:min-w-[8.5rem] lg:py-2.5"
+                className="lg:!w-auto lg:min-w-[9.5rem] lg:rounded-lg lg:py-3 lg:text-base"
                 onToggle={(saved) => {
                   if (saved && featuredSlotId && list.id) {
                     trackFeaturedClick(featuredSlotId, list.id, 'quick_save');

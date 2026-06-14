@@ -23,7 +23,7 @@ export {
 } from '@/lib/layout-tokens';
 
 /**
- * شِل adaptive: موبایل 428px | دسکتاپ فریم واحد 1024px (منو + محتوا + فوتر)
+ * شِل adaptive: موبایل 428px | دسکتاپ فریم واحد 1200px (منو + محتوا + فوتر)
  */
 export default function MainContainer({
   children,

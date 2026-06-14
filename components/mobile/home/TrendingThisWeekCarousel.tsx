@@ -1,6 +1,7 @@
 'use client';
 
 import { useHomeData } from '@/contexts/HomeDataContext';
+import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeGridListCard from './HomeGridListCard';
 
@@ -14,8 +15,11 @@ interface TrendingThisWeekCarouselProps {
 
 export default function TrendingThisWeekCarousel({ embedded = false }: TrendingThisWeekCarouselProps) {
   const { data, isLoading } = useHomeData();
-  const limit = embedded ? 10 : 6;
-  const lists = (data?.trending ?? []).slice(0, limit);
+  const limit = embedded ? 12 : 8;
+  const featuredId = data?.featured?.id;
+  const lists = (data?.trending ?? [])
+    .filter((l) => l.id !== featuredId)
+    .slice(0, limit);
 
   if (isLoading && lists.length === 0) {
     return (
@@ -25,8 +29,8 @@ export default function TrendingThisWeekCarousel({ embedded = false }: TrendingT
             <div className="h-5 w-40 animate-pulse rounded bg-gray-200" />
           </div>
         )}
-        <div className="flex gap-2.5 overflow-hidden px-4 lg:grid lg:grid-cols-3 lg:gap-3 lg:px-0">
-          {[1, 2, 3, 4].map((i) => (
+        <div className={`flex gap-2.5 overflow-hidden px-4 lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
               className="shrink-0 animate-pulse rounded-lg bg-gray-100 lg:w-full"
@@ -57,9 +61,9 @@ export default function TrendingThisWeekCarousel({ embedded = false }: TrendingT
           actionLabel="همه"
         />
       )}
-      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-3 lg:overflow-visible lg:snap-none lg:px-0">
+      <div className={`flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:overflow-visible lg:snap-none lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
         {lists.map((list) => (
-          <HomeGridListCard key={list.id} list={list} badge="ترند" badgeClassName="bg-warning text-white" />
+          <HomeGridListCard key={list.id} list={list} />
         ))}
       </div>
     </section>

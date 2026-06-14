@@ -71,6 +71,10 @@ export default function SettingsPageClient() {
     maxCommentLength: null,
     rateLimitMinutes: 5,
     globalRateLimitMinutes: null,
+    penaltyWarnThreshold: 5,
+    penaltyRestrictThreshold: 10,
+    penaltyBanThreshold: 15,
+    penaltyRestrictDays: 7,
   });
 
   const [loading, setLoading] = useState(true);
@@ -99,6 +103,10 @@ export default function SettingsPageClient() {
           maxCommentLength: json.data.maxCommentLength ?? null,
           rateLimitMinutes: json.data.rateLimitMinutes ?? 5,
           globalRateLimitMinutes: json.data.globalRateLimitMinutes ?? null,
+          penaltyWarnThreshold: json.data.penaltyWarnThreshold ?? 5,
+          penaltyRestrictThreshold: json.data.penaltyRestrictThreshold ?? 10,
+          penaltyBanThreshold: json.data.penaltyBanThreshold ?? 15,
+          penaltyRestrictDays: json.data.penaltyRestrictDays ?? 7,
         });
       }
     } catch {

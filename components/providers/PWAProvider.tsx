@@ -5,39 +5,72 @@ import { useEffect } from 'react';
 const PWA_ENABLED = process.env.NEXT_PUBLIC_PWA_ENABLED === '1';
 
 /**
- * PWA / Service Worker
- * sw.js با next-pwa + Turbopack (Next.js 16) ساخته نمی‌شود؛
- * تا فعال‌سازی واقعی PWA، فقط SWهای قدیمی پاک می‌شوند.
- * برای فعال‌سازی: NEXT_PUBLIC_PWA_ENABLED=1 + build با webpack/next-pwa
+ * PWA / Service Worker + bust cache بعد از rebuild
  */
 export default function PWAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
-    if (process.env.NODE_ENV === 'development') return;
+    if (typeof window === 'undefined') return;
 
     let cancelled = false;
+    let removeControllerListener: (() => void) | undefined;
 
-    if (!PWA_ENABLED) {
-      void navigator.serviceWorker.getRegistrations().then((registrations) => {
-        if (cancelled || registrations.length === 0) return;
-        return Promise.all(registrations.map((registration) => registration.unregister()));
-      });
-      return;
-    }
+    const run = async () => {
+      if (process.env.NODE_ENV === 'production') {
+        const buildId = process.env.NEXT_PUBLIC_BUILD_ID;
+        if (buildId) {
+          const storageKey = 'wibe-build-id';
+          const previousBuildId = localStorage.getItem(storageKey);
+          if (previousBuildId !== buildId) {
+            localStorage.setItem(storageKey, buildId);
 
-    let refreshing = false;
-    const onControllerChange = () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
+            if ('caches' in window) {
+              const names = await caches.keys();
+              await Promise.all(names.map((name) => caches.delete(name)));
+            }
+
+            if ('serviceWorker' in navigator) {
+              const registrations = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(registrations.map((registration) => registration.unregister()));
+            }
+
+            if (previousBuildId) {
+              window.location.reload();
+              return;
+            }
+          }
+        }
       }
-    };
-    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
 
-    void navigator.serviceWorker
-      .register('/sw.js', { scope: '/', updateViaCache: 'none' })
-      .then((reg) => {
+      if (cancelled || !('serviceWorker' in navigator)) return;
+      if (process.env.NODE_ENV === 'development') return;
+
+      if (!PWA_ENABLED) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        if (!cancelled && registrations.length > 0) {
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+        }
+        return;
+      }
+
+      let refreshing = false;
+      const onControllerChange = () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      };
+      navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+      removeControllerListener = () => {
+        navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      };
+
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+          updateViaCache: 'none',
+        });
         if (cancelled) return;
+
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           if (!newWorker) return;
@@ -47,14 +80,16 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
             }
           });
         });
-      })
-      .catch(() => {
+      } catch {
         /* sw.js موجود نیست */
-      });
+      }
+    };
+
+    void run();
 
     return () => {
       cancelled = true;
-      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      removeControllerListener?.();
     };
   }, []);
 

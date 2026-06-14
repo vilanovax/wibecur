@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { requireAdmin } from '@/lib/auth';
 import { getCachedCommentsIntelligenceData } from '@/lib/admin/comments-intelligence-cached';
 import { getCachedCommentsHubStats } from '@/lib/admin/comments-hub-stats-cached';
+import { buildCommentsNavStats } from '@/lib/admin/comments-nav-stats';
 import { parseCommentSort } from '@/lib/admin/comments-intelligence';
 import { parseCommentFilter } from '@/lib/admin/comments-filter-utils';
 import { parseCommentsPageSize } from '@/lib/admin/comments-page-size';
@@ -51,11 +52,7 @@ export default async function CommentsAllPage({
   if (data.sort !== 'created_desc') paginationParams.sort = data.sort;
   if (data.pageSize !== 10) paginationParams.pageSize = String(data.pageSize);
 
-  const navStats = {
-    pending: hubStats.comments.pending,
-    commentReportsOpen: hubStats.commentReports.open,
-    itemReportsOpen: hubStats.itemReportsOpen,
-  };
+  const navStats = buildCommentsNavStats(hubStats);
 
   return (
     <>

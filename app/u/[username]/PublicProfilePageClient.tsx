@@ -10,6 +10,7 @@ import CuratorBadge from '@/components/shared/CuratorBadge';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
 import Toast from '@/components/shared/Toast';
+import PublicProfileBreadcrumb from '@/components/profile/PublicProfileBreadcrumb';
 
 interface PublicProfilePageClientProps {
   username: string;
@@ -197,6 +198,7 @@ export default function PublicProfilePageClient({
 
   return (
     <>
+      <PublicProfileBreadcrumb username={username} displayName={data.user.name} />
       <div className="min-h-screen bg-wibe-surface">
         <div className="relative overflow-hidden rounded-b-lg bg-primary px-4 pb-6 pt-8 lg:rounded-xl lg:mx-0 lg:px-8 lg:pb-8 lg:pt-10">
           <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center lg:max-w-none lg:flex-row lg:items-end lg:justify-center lg:gap-8">

@@ -16,6 +16,7 @@ export type CommentsNavStats = {
   pending?: number;
   commentReportsOpen?: number;
   itemReportsOpen?: number;
+  violationsRestricted?: number;
 };
 
 const NAV = [
@@ -64,7 +65,7 @@ const NAV = [
     label: 'تخلفات',
     icon: ShieldBan,
     exact: false,
-    badgeKey: null,
+    badgeKey: 'violationsRestricted' as const,
     permission: 'moderate_comments' as const,
   },
 ] as const;

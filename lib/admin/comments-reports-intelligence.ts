@@ -5,6 +5,10 @@ import {
   DEFAULT_COMMENTS_PAGE_SIZE,
   type CommentsPageSize,
 } from '@/lib/admin/comments-page-size';
+import {
+  getUsersCommentModerationMeta,
+  type CommentPermissionStatus,
+} from '@/lib/comment-permission';
 
 export const DEFAULT_REPORTS_PAGE_SIZE = DEFAULT_COMMENTS_PAGE_SIZE;
 
@@ -48,6 +52,11 @@ export type ReportGroup = {
     items: {
       id: string;
       title: string;
+    };
+    userModeration?: {
+      totalPenaltyScore: number;
+      status: CommentPermissionStatus;
+      restrictedUntil: string | null;
     };
   };
   reports: ReportRow[];
@@ -148,30 +157,46 @@ export async function getCommentsReportsIntelligenceData(opts: {
     dbQuery(() => prisma.bad_words.findMany({ select: { word: true } })),
   ]);
 
-  const groups: ReportGroup[] = commentsRaw.map((c) => ({
-    comment: {
-      id: c.id,
-      content: c.content,
-      isFiltered: c.isFiltered,
-      isApproved: c.isApproved,
-      likeCount: c.likeCount,
-      deletedAt: c.deletedAt ? c.deletedAt.toISOString() : null,
-      createdAt: c.createdAt.toISOString(),
-      updatedAt: c.updatedAt.toISOString(),
-      users: c.users,
-      items: c.items,
-    },
-    reports: c.comment_reports.map((report) => ({
-      id: report.id,
-      commentId: report.commentId,
-      userId: report.userId,
-      reason: report.reason,
-      resolved: report.resolved,
-      createdAt: report.createdAt.toISOString(),
-      users: report.users,
-    })),
-    reportCount: c.comment_reports.length,
-  }));
+  const moderationMeta = await getUsersCommentModerationMeta(
+    commentsRaw.map((c) => c.users.id)
+  );
+
+  const groups: ReportGroup[] = commentsRaw.map((c) => {
+    const meta = moderationMeta.get(c.users.id);
+    return {
+      comment: {
+        id: c.id,
+        content: c.content,
+        isFiltered: c.isFiltered,
+        isApproved: c.isApproved,
+        likeCount: c.likeCount,
+        deletedAt: c.deletedAt ? c.deletedAt.toISOString() : null,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+        users: c.users,
+        items: c.items,
+        ...(meta
+          ? {
+              userModeration: {
+                totalPenaltyScore: meta.totalPenaltyScore,
+                status: meta.status,
+                restrictedUntil: meta.restrictedUntil,
+              },
+            }
+          : {}),
+      },
+      reports: c.comment_reports.map((report) => ({
+        id: report.id,
+        commentId: report.commentId,
+        userId: report.userId,
+        reason: report.reason,
+        resolved: report.resolved,
+        createdAt: report.createdAt.toISOString(),
+        users: report.users,
+      })),
+      reportCount: c.comment_reports.length,
+    };
+  });
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 

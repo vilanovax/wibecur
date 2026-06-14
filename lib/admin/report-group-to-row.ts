@@ -19,5 +19,6 @@ export function reportGroupToCommentRow(group: ReportGroup): CommentRowData {
     },
     items: comment.items,
     _count: { comment_reports: reportCount },
+    ...(comment.userModeration ? { userModeration: comment.userModeration } : {}),
   };
 }

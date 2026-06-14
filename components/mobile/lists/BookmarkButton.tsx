@@ -13,6 +13,8 @@ interface BookmarkButtonProps {
   initialBookmarkCount?: number;
   variant?: 'icon' | 'button' | 'compact';
   size?: 'sm' | 'md' | 'lg';
+  /** primary: CTA پررنگ | secondary: outline/خنثی */
+  tone?: 'primary' | 'secondary';
   labelSave?: string;
   labelSaved?: string;
   onToggle?: (isBookmarked: boolean) => void;
@@ -25,6 +27,7 @@ export default function BookmarkButton({
   initialBookmarkCount = 0,
   variant = 'icon',
   size = 'md',
+  tone = 'primary',
   labelSave = 'ذخیره',
   labelSaved = 'ذخیره شده',
   onToggle,
@@ -186,6 +189,11 @@ export default function BookmarkButton({
     );
   }
 
+  const unsavedToneClasses =
+    tone === 'secondary'
+      ? 'border border-wibe bg-wibe-surface text-foreground shadow-none hover:bg-gray-50 active:scale-[0.99]'
+      : 'bg-primary text-white shadow-sm hover:bg-primary-dark active:scale-[0.99]';
+
   return (
     <button
       type="button"
@@ -194,7 +202,7 @@ export default function BookmarkButton({
       className={`${buttonSizeClasses[size]} flex w-full items-center justify-center gap-2 rounded-md font-semibold transition-all duration-300 disabled:opacity-50 ${
         isBookmarked
           ? 'animate-saved-pulse border border-success/30 bg-success/10 text-success'
-          : 'bg-primary text-white shadow-sm hover:bg-primary-dark active:scale-[0.99]'
+          : unsavedToneClasses
       } ${className}`}
       aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
     >

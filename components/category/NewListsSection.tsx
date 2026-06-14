@@ -4,21 +4,27 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import CategorySectionTitle from './CategorySectionTitle';
+import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryListCard } from '@/types/category-page';
 
 interface NewListsSectionProps {
   lists: CategoryListCard[];
   categoryName: string;
+  /** بدون padding افقی — داخل شِل صفحه */
+  inset?: boolean;
 }
 
 export default function NewListsSection({
   lists,
   categoryName,
+  inset = false,
 }: NewListsSectionProps) {
   if (lists.length === 0) return null;
 
+  const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
+
   return (
-    <section className="px-4 py-6">
+    <section className={sectionClass}>
       <CategorySectionTitle
         title={`لیست‌های جدید ${categoryName}`}
         subtitle="تازه‌ترین لیست‌های ساخته شده"

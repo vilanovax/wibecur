@@ -4,6 +4,7 @@ import { MessageSquare } from 'lucide-react';
 import CommentsSubNav from './CommentsSubNav';
 import CommentsHubKpiStrip from './CommentsHubKpiStrip';
 import CommentsHubPriorityQueue from './CommentsHubPriorityQueue';
+import { buildCommentsNavStats } from '@/lib/admin/comments-nav-stats';
 import type { CommentsHubStats } from '@/lib/admin/comments-hub-stats';
 import type { HubPriorityItem } from '@/lib/admin/comments-hub-priority';
 
@@ -14,11 +15,7 @@ export default function CommentsHubDashboard({
   stats: CommentsHubStats;
   priorityItems?: HubPriorityItem[];
 }) {
-  const navStats = {
-    pending: stats.comments.pending,
-    commentReportsOpen: stats.commentReports.open,
-    itemReportsOpen: stats.itemReportsOpen,
-  };
+  const navStats = buildCommentsNavStats(stats);
 
   const actionTotal =
     stats.comments.pending +

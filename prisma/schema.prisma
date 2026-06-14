@@ -381,6 +381,8 @@ model users {
   avatarStatus         AvatarStatus?       // برای آپلود شخصی
   showBadge            Boolean             @default(true)
   allowCommentNotifications Boolean        @default(true)
+  commentRestrictedUntil    DateTime?
+  commentBanReason          String?
   createdAt            DateTime            @default(now())
   updatedAt            DateTime
   deletedAt            DateTime?
@@ -656,6 +658,10 @@ model comment_settings {
   maxCommentLength        Int?     // حداکثر تعداد کاراکتر برای کامنت (null = بدون محدودیت)
   rateLimitMinutes        Int      @default(5)  // حداقل فاصله بین کامنت‌ها برای یک آیتم (دقیقه)
   globalRateLimitMinutes  Int?     // حداقل فاصله برای همه کامنت‌ها (null = غیرفعال)
+  penaltyWarnThreshold    Int      @default(5)
+  penaltyRestrictThreshold Int     @default(10)
+  penaltyBanThreshold     Int      @default(15)
+  penaltyRestrictDays     Int      @default(7)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 }

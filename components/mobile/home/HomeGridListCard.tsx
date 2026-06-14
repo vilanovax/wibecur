@@ -15,15 +15,16 @@ export interface HomeGridListCardList {
 
 interface HomeGridListCardProps {
   list: HomeGridListCardList;
-  badge?: string;
+  /** بدون badge پیش‌فرض — فقط وقتی معنای اضافه دارد */
+  badge?: string | null;
   badgeClassName?: string;
 }
 
 /** کارت گرید Home — موبایل اسکرول افقی، دسکتاپ landscape فشرده */
 export default function HomeGridListCard({
   list,
-  badge = 'ترند',
-  badgeClassName = 'bg-warning text-white',
+  badge,
+  badgeClassName = 'bg-primary/90 text-white',
 }: HomeGridListCardProps) {
   return (
     <Link
@@ -49,7 +50,10 @@ export default function HomeGridListCard({
             listSlug={list.slug}
             listTitle={list.title}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent lg:via-black/30" />
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/5 lg:via-black/25"
+            aria-hidden
+          />
           <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
             <h3 className="line-clamp-2 wibe-small font-semibold text-white drop-shadow-sm lg:text-[0.8125rem] lg:leading-snug">
               {list.title}

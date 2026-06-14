@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { isSameCategorySlug } from '@/lib/category-slug-aliases';
 
 type CategoryChip = { id: string; slug: string; name: string; icon: string | null };
 
@@ -12,7 +13,20 @@ async function fetchActiveCategories(): Promise<CategoryChip[]> {
   return json.data ?? [];
 }
 
-export default function QuickCategoryChips() {
+function isActiveCategorySlug(chipSlug: string, activeSlug?: string | null): boolean {
+  if (!activeSlug) return false;
+  return isSameCategorySlug(chipSlug, activeSlug);
+}
+
+interface QuickCategoryChipsProps {
+  activeSlug?: string | null;
+  variant?: 'default' | 'nav';
+}
+
+export default function QuickCategoryChips({
+  activeSlug = null,
+  variant = 'default',
+}: QuickCategoryChipsProps) {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories', 'active', 'menu'],
     queryFn: fetchActiveCategories,
@@ -23,9 +37,15 @@ export default function QuickCategoryChips() {
     return null;
   }
 
+  const isNav = variant === 'nav';
+
   return (
     <section
-      className="px-4 py-2 pb-3 lg:border-b lg:border-wibe/60 lg:px-0 lg:py-3 lg:pb-4"
+      className={
+        isNav
+          ? 'px-4 py-2 lg:px-0 lg:py-2.5'
+          : 'px-4 py-2 pb-3 lg:border-b lg:border-wibe/60 lg:px-0 lg:py-3 lg:pb-4'
+      }
       aria-label="دسته‌های سریع"
     >
       <div
@@ -42,16 +62,24 @@ export default function QuickCategoryChips() {
             ))}
           </>
         ) : (
-          categories.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/categories/${cat.slug}`}
-              className="flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border border-wibe bg-wibe-card px-3.5 wibe-small font-medium text-foreground shadow-sm transition-all hover:border-primary/30 active:scale-[0.98] lg:h-8 lg:bg-wibe-surface lg:px-3 lg:py-0 lg:wibe-caption"
-            >
-              {cat.icon ? `${cat.icon} ` : ''}
-              {cat.name}
-            </Link>
-          ))
+          categories.map((cat) => {
+            const isActive = isActiveCategorySlug(cat.slug, activeSlug);
+            return (
+              <Link
+                key={cat.id}
+                href={`/categories/${cat.slug}`}
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-3.5 wibe-small font-medium shadow-sm transition-all active:scale-[0.98] lg:h-8 lg:px-3 lg:wibe-caption ${
+                  isActive
+                    ? 'border-primary bg-primary text-white shadow-sm hover:bg-primary-dark'
+                    : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30 lg:bg-wibe-surface'
+                }`}
+              >
+                {cat.icon ? `${cat.icon} ` : ''}
+                {cat.name}
+              </Link>
+            );
+          })
         )}
       </div>
     </section>

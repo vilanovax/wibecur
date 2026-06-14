@@ -1,5 +1,11 @@
 import { z } from 'zod';
 import { ENTRY_KINDS, FACT_TYPES } from '@/lib/list-entry';
+import {
+  normalizeInstagramUrl,
+  normalizeMapsUrl,
+  normalizePhoneNumber,
+  normalizeWebsiteUrl,
+} from '@/lib/cafe-metadata';
 
 const tipField = {
   tip: z
@@ -73,6 +79,22 @@ export const CafeMetadataSchema = z.object({
     errorMap: () => ({ message: 'بازه قیمت الزامی است' }),
   }),
   cuisine: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .transform((val) => normalizePhoneNumber(val)),
+  instagram: z
+    .string()
+    .optional()
+    .transform((val) => normalizeInstagramUrl(val)),
+  website: z
+    .string()
+    .optional()
+    .transform((val) => normalizeWebsiteUrl(val)),
+  mapsUrl: z
+    .string()
+    .optional()
+    .transform((val) => normalizeMapsUrl(val)),
 });
 
 export type CafeMetadata = z.infer<typeof CafeMetadataSchema>;

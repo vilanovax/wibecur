@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Clock, Flag, Package, ArrowLeft, ListTodo } from 'lucide-react';
+import { Clock, Flag, Package, ArrowLeft, ListTodo, ShieldBan } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import type { HubPriorityItem } from '@/lib/admin/comments-hub-priority';
@@ -24,6 +24,11 @@ const typeMeta: Record<
     icon: Package,
     label: 'ریپورت آیتم',
     color: 'text-orange-600 bg-orange-50',
+  },
+  user_penalty: {
+    icon: ShieldBan,
+    label: 'کاربر پرریسک',
+    color: 'text-rose-700 bg-rose-50',
   },
 };
 

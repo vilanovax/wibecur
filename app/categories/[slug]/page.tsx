@@ -1,5 +1,6 @@
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
+import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import { notFound } from 'next/navigation';
 import CategoryPage2Client from '@/components/category/CategoryPage2Client';
 import { resolveCategoryBySlug } from '@/lib/category-resolve';
@@ -61,18 +62,10 @@ export default async function CategoryPage({
 
   const initialData = JSON.parse(JSON.stringify(pageData));
 
-  const filmSlugs = ['movie', 'movies', 'film', 'film-serial'];
-  const isFilmCategory =
-    pageData.category.layoutType === 'cinematic' || filmSlugs.includes(category.slug);
-
   return (
     <div className="bg-wibe-surface">
-      <Header
-        title={category.name}
-        showBack
-        hideTitleOnDesktop={isFilmCategory}
-        showDesktopSearch={false}
-      />
+      <Header title={category.name} showBack showDesktopSearch={false} />
+      <CategoryNavStrip activeSlug={category.slug} />
       <CategoryPage2Client slug={category.slug} initialData={initialData} />
       <BottomNav />
     </div>

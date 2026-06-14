@@ -102,8 +102,8 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
 
   if (kind === 'cafe') {
     return wrap(
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <div className="sm:col-span-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="sm:col-span-2">
           <label className="text-[10px] font-semibold text-gray-500">آدرس *</label>
           <input
             value={String(m.address ?? '')}
@@ -126,7 +126,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
             ))}
           </select>
         </div>
-        <div className="sm:col-span-2">
+        <div>
           <label className="text-[10px] font-semibold text-gray-500">نوع غذا</label>
           <select
             value={String(m.cuisine ?? '')}
@@ -140,6 +140,43 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-gray-500">تلفن</label>
+          <input
+            dir="ltr"
+            value={String(m.phone ?? '')}
+            onChange={(e) => set('phone', e.target.value || undefined)}
+            className={fieldClass}
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-gray-500">اینستاگرام</label>
+          <input
+            dir="ltr"
+            value={String(m.instagram ?? '')}
+            onChange={(e) => set('instagram', e.target.value || undefined)}
+            className={fieldClass}
+            placeholder="@username"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-gray-500">وب‌سایت</label>
+          <input
+            dir="ltr"
+            value={String(m.website ?? '')}
+            onChange={(e) => set('website', e.target.value || undefined)}
+            className={fieldClass}
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-gray-500">مسیریابی</label>
+          <input
+            dir="ltr"
+            value={String(m.mapsUrl ?? '')}
+            onChange={(e) => set('mapsUrl', e.target.value || undefined)}
+            className={fieldClass}
+          />
         </div>
       </div>
     );

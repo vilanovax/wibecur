@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { MessageSquare, ExternalLink } from 'lucide-react';
+import { MessageSquare, ExternalLink, ShieldBan } from 'lucide-react';
 import type { CommentSettingsState } from '@/lib/admin/settings-types';
 import SettingsSectionCard from './SettingsSectionCard';
 import SettingsSaveButton from './SettingsSaveButton';
@@ -147,6 +147,106 @@ export default function CommentSettingsPanel({
             </p>
           </div>
         </div>
+      </SettingsSectionCard>
+
+      <SettingsSectionCard
+        title="آستانه امتیاز منفی"
+        description="اعمال خودکار اخطار، محدودیت موقت و مسدودسازی کامنت"
+        icon={<ShieldBan className="w-5 h-5 text-rose-600" />}
+        footer={
+          <SettingsSaveButton
+            onClick={onSave}
+            loading={saving}
+            label="ذخیره تنظیمات کامنت"
+          />
+        }
+      >
+        <p className="text-xs text-[var(--color-text-muted)] -mt-1 mb-1">
+          امتیاز منفی تجمعی کاربر از جدول تخلفات خوانده می‌شود. با عبور از هر آستانه،
+          وضعیت کامنت‌گذاری به‌صورت خودکار تغییر می‌کند.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+              آستانه اخطار
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={value.penaltyWarnThreshold}
+              onChange={(e) =>
+                onChange({
+                  penaltyWarnThreshold: parseInt(e.target.value, 10) || 1,
+                })
+              }
+              className={inputClass}
+            />
+            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+              نمایش badge اخطار در پنل
+            </p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+              آستانه محدودیت
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={value.penaltyRestrictThreshold}
+              onChange={(e) =>
+                onChange({
+                  penaltyRestrictThreshold: parseInt(e.target.value, 10) || 1,
+                })
+              }
+              className={inputClass}
+            />
+            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+              مسدود موقت ثبت کامنت
+            </p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+              آستانه مسدودسازی
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={value.penaltyBanThreshold}
+              onChange={(e) =>
+                onChange({
+                  penaltyBanThreshold: parseInt(e.target.value, 10) || 1,
+                })
+              }
+              className={inputClass}
+            />
+            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+              مسدود دائم کامنت‌گذاری
+            </p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+              مدت محدودیت (روز)
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={value.penaltyRestrictDays}
+              onChange={(e) =>
+                onChange({
+                  penaltyRestrictDays: parseInt(e.target.value, 10) || 1,
+                })
+              }
+              className={inputClass}
+            />
+            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+              هنگام عبور از آستانه محدودیت
+            </p>
+          </div>
+        </div>
+        <p className="text-[11px] text-[var(--color-text-subtle)]">
+          ترتیب: اخطار ({value.penaltyWarnThreshold}) &lt; محدودیت (
+          {value.penaltyRestrictThreshold}) &lt; مسدود ({value.penaltyBanThreshold})
+        </p>
       </SettingsSectionCard>
     </div>
   );

@@ -1,4 +1,8 @@
-/** کلیدهای داخلی — در UI نمایش داده نمی‌شوند (فقط برای کاتالوگ/ادغام) */
+import {
+  displayInstagramHandle,
+  displayWebsiteHost,
+  phoneToTelHref,
+} from '@/lib/cafe-metadata';
 export const INTERNAL_METADATA_KEYS = new Set([
   'imdbId',
   'imdbID',
@@ -22,6 +26,19 @@ export function extractItemTip(metadata: Record<string, unknown> | null | undefi
   if (typeof raw !== 'string') return null;
   const tip = raw.trim();
   return tip || null;
+}
+
+/** اگر tip فقط مترجم است، به‌جای کارت زرد در chips نمایش داده شود */
+export function parseTipAsMetadataFact(tip: string | null): MetadataFact | null {
+  if (!tip) return null;
+  const match = tip.match(/^مترجم\s*[:：]\s*(.+)$/u);
+  if (!match?.[1]?.trim()) return null;
+  return {
+    key: 'translator',
+    label: 'مترجم',
+    value: match[1].trim(),
+    icon: '📖',
+  };
 }
 
 type LightweightBodySource = {
@@ -65,6 +82,7 @@ export type MetadataFact = {
   label: string;
   value: string;
   icon: string;
+  href?: string;
 };
 
 const FACT_LABELS: Record<string, { label: string; icon: string }> = {
@@ -73,16 +91,29 @@ const FACT_LABELS: Record<string, { label: string; icon: string }> = {
   country: { label: 'ساخت', icon: '🌍' },
   actors: { label: 'بازیگران', icon: '🎭' },
   author: { label: 'نویسنده', icon: '✍️' },
+  translator: { label: 'مترجم', icon: '📖' },
   address: { label: 'آدرس', icon: '📍' },
   priceRange: { label: 'بازه قیمت', icon: '💰' },
   cuisine: { label: 'نوع غذا', icon: '🍽️' },
   phone: { label: 'تلفن', icon: '📞' },
+  instagram: { label: 'اینستاگرام', icon: '📸' },
+  website: { label: 'وب‌سایت', icon: '🌐' },
+  mapsUrl: { label: 'مسیریابی', icon: '🗺️' },
   duration: { label: 'مدت', icon: '⏱️' },
 };
 
+const CAFE_FACT_ORDER = [
+  'address',
+  'phone',
+  'cuisine',
+  'priceRange',
+  'instagram',
+  'website',
+  'mapsUrl',
+] as const;
+
 const MOVIE_FACT_ORDER = ['director', 'imdbRating', 'country', 'actors'] as const;
-const BOOK_FACT_ORDER = ['author'] as const;
-const CAFE_FACT_ORDER = ['address', 'priceRange', 'cuisine', 'phone'] as const;
+const BOOK_FACT_ORDER = ['author', 'translator'] as const;
 
 function isMovieLikeCategory(slug: string | null | undefined): boolean {
   if (!slug) return false;
@@ -144,7 +175,21 @@ function formatFactValue(key: string, value: unknown): string | null {
   if (key === 'imdbRating') return formatImdbRating(value);
   if (key === 'actors') return formatActors(value);
   if (key === 'priceRange' && typeof value === 'string') return formatPriceRange(value);
+  if (key === 'instagram' && typeof value === 'string') return displayInstagramHandle(value);
+  if (key === 'website' && typeof value === 'string') return displayWebsiteHost(value);
+  if (key === 'mapsUrl' && typeof value === 'string') return 'باز کردن در نقشه';
   return String(value).trim() || null;
+}
+
+function factHref(key: string, value: unknown): string | undefined {
+  if (value == null || value === '') return undefined;
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  if (key === 'phone') return phoneToTelHref(trimmed);
+  if (key === 'instagram' || key === 'website' || key === 'mapsUrl') return trimmed;
+  return undefined;
 }
 
 function pushFact(
@@ -155,7 +200,8 @@ function pushFact(
   const formatted = formatFactValue(key, metadata[key]);
   if (!formatted) return;
   const meta = FACT_LABELS[key] ?? { label: key, icon: '📋' };
-  facts.push({ key, label: meta.label, value: formatted, icon: meta.icon });
+  const href = factHref(key, metadata[key]);
+  facts.push({ key, label: meta.label, value: formatted, icon: meta.icon, href });
 }
 
 /** فکت‌های قابل نمایش برای UI جزئیات آیتم */

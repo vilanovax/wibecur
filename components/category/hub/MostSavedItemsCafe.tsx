@@ -2,54 +2,58 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import CategorySectionTitle from '../CategorySectionTitle';
+import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryItemCard } from '@/types/category-page';
 
 interface MostSavedItemsCafeProps {
   items: CategoryItemCard[];
   accentColor?: string;
+  inset?: boolean;
 }
 
-/** محبوب‌ترین آیتم‌ها — Micro Explore Layer */
 export default function MostSavedItemsCafe({
   items,
   accentColor = '#EA580C',
+  inset = false,
 }: MostSavedItemsCafeProps) {
   if (items.length === 0) return null;
 
-  return (
-    <section className="px-4 py-8">
-      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-1">
-        ⭐ محبوب‌ترین آیتم‌ها
-      </h2>
-      <p className="text-xs text-gray-500 mb-4">
-        از لیست‌های پربار
-      </p>
+  const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
 
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+  return (
+    <section className={sectionClass}>
+      <CategorySectionTitle
+        title="محبوب‌ترین آیتم‌ها"
+        subtitle="از لیست‌های پربازدید این دسته"
+        icon="⭐"
+      />
+
+      <div className="-mx-1 flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
         {items.map((item) => (
           <Link
             key={item.id}
             href={`/lists/${item.listSlug}#item-${item.id}`}
-            className="flex-shrink-0 w-24"
+            className="w-24 shrink-0 active:scale-[0.97] transition-transform"
           >
-            <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-md active:scale-[0.97] transition-transform aspect-square">
+            <div className="aspect-square overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm">
               {item.imageUrl ? (
                 <ImageWithFallback
                   src={item.imageUrl}
                   alt={item.title}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                   placeholderSize="square"
                 />
               ) : (
                 <div
-                  className="w-full h-full flex items-center justify-center text-2xl opacity-40"
+                  className="flex h-full w-full items-center justify-center text-2xl opacity-40"
                   style={{ backgroundColor: `${accentColor}20` }}
                 >
-                  ☕
+                  📋
                 </div>
               )}
             </div>
-            <p className="text-xs font-medium text-gray-900 mt-1.5 line-clamp-2 leading-tight">
+            <p className="mt-1.5 line-clamp-2 wibe-caption font-medium leading-tight text-foreground">
               {item.title}
             </p>
           </Link>

@@ -4,6 +4,7 @@ import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
 import HomeHeroSpotlight from '@/components/mobile/home/HomeHeroSpotlight';
 import HomeFeedTabs from '@/components/mobile/home/HomeFeedTabs';
 import HomePullToRefresh from '@/components/mobile/home/HomePullToRefresh';
+import HomeDesktopView from '@/components/mobile/home/HomeDesktopView';
 import CreatorSpotlightSection from '@/components/mobile/home/CreatorSpotlightSection';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
@@ -40,15 +41,7 @@ export default async function Home() {
             </div>
 
             <HomePullToRefresh>
-              {/* دسکتاپ */}
-              <div className="hidden lg:flex lg:w-full lg:flex-col lg:gap-5">
-                <QuickCategoryChips />
-                <HomeHeroSpotlight />
-                <div className="w-full overflow-hidden rounded-2xl border border-wibe bg-wibe-card shadow-sm">
-                  <HomeFeedTabs />
-                </div>
-                <CreatorSpotlightSection />
-              </div>
+              <HomeDesktopView />
 
               {/* موبایل */}
               <div className="flex flex-col lg:hidden">

@@ -2,23 +2,26 @@
 
 import Link from 'next/link';
 import { DEFAULT_FILM_GENRES } from '@/lib/film-genres';
+import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { FilmGenreChip } from '@/types/category-page';
-import { FILM_SECTION_COMPACT } from './film-layout';
 
 interface GenreScrollBarProps {
   categorySlug: string;
   genres?: FilmGenreChip[];
+  inset?: boolean;
 }
 
-/** ژانرها — از تگ‌های DB + fallback | موبایل اسکرول RTL */
-export default function GenreScrollBar({ categorySlug, genres }: GenreScrollBarProps) {
+/** ژانرها — از تگ‌های DB + fallback */
+export default function GenreScrollBar({ categorySlug, genres, inset = false }: GenreScrollBarProps) {
   const chips: FilmGenreChip[] =
     genres && genres.length > 0
       ? genres
       : DEFAULT_FILM_GENRES.map((g) => ({ ...g, listCount: 0 }));
 
+  const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
+
   return (
-    <section className={FILM_SECTION_COMPACT}>
+    <section className={sectionClass}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="wibe-caption font-semibold text-wibe-secondary">ژانرها</p>
         <Link

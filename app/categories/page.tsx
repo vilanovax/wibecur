@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
+import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
+import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
+import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
@@ -47,10 +50,23 @@ export default async function CategoriesIndexPage() {
     }
   }
 
+  const breadcrumbItems = [
+    { label: 'خانه', href: '/' },
+    { label: 'دسته‌ها' },
+  ];
+
   return (
     <div className="bg-wibe-surface">
+      <JsonLdBreadcrumb
+        items={[
+          { name: 'خانه', path: '/' },
+          { name: 'دسته‌ها', path: '/categories' },
+        ]}
+      />
       <Header title="دسته‌ها" showBack />
+      <CategoryNavStrip />
       <main className="px-2.5 pt-3">
+        <PageBreadcrumb className="mb-3 px-1.5" items={breadcrumbItems} />
         <p className="mb-4 wibe-small text-wibe-secondary">
           بر اساس موضوع، لیست‌های کیوریت‌شده را پیدا کن
         </p>

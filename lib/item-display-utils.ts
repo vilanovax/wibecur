@@ -1,5 +1,6 @@
 import { isDisplayableDescription } from '@/lib/lists-card-utils';
 import { normalizeSearchQuery } from '@/lib/list-search';
+import { isLocationCategorySlug } from '@/lib/category-layout';
 
 type ItemMeta = Record<string, unknown> | null | undefined;
 
@@ -17,6 +18,31 @@ function metaYear(meta: ItemMeta): string | null {
   return n.toLocaleString('fa-IR');
 }
 
+function shortenAddress(address: string): string {
+  const trimmed = address.trim();
+  if (trimmed.length <= 44) return trimmed;
+  return `${trimmed.slice(0, 42)}…`;
+}
+
+function formatPriceRangeLabel(value: string): string {
+  if (value === '$') return 'ارزان';
+  if (value === '$$') return 'متوسط';
+  if (value === '$$$') return 'گران';
+  if (value === '$$$$') return 'لوکس';
+  return value;
+}
+
+function buildCafeCardSubtitle(meta: ItemMeta): string | null {
+  const parts: string[] = [];
+  const address = metaString(meta, 'address');
+  if (address) parts.push(shortenAddress(address));
+  const cuisine = metaString(meta, 'cuisine');
+  if (cuisine) parts.push(cuisine);
+  const priceRange = metaString(meta, 'priceRange');
+  if (priceRange) parts.push(formatPriceRangeLabel(priceRange));
+  return parts.length > 0 ? parts.slice(0, 3).join(' · ') : null;
+}
+
 /** زیرعنوان کارت آیتم — metadata اول، بعد description، بعد rating */
 export function getItemCardSubtitle(item: {
   description?: string | null;
@@ -25,6 +51,13 @@ export function getItemCardSubtitle(item: {
   categorySlug?: string | null;
 }): string | null {
   const meta = item.metadata;
+  const slug = item.categorySlug?.toLowerCase() ?? '';
+
+  if (slug && isLocationCategorySlug(slug)) {
+    const cafeLine = buildCafeCardSubtitle(meta);
+    if (cafeLine) return cafeLine;
+  }
+
   const parts: string[] = [];
 
   const year = metaYear(meta);
@@ -84,6 +117,8 @@ function itemSearchHaystack(item: {
     meta.year,
     meta.imdbRating,
     meta.cuisine,
+    meta.address,
+    meta.priceRange,
   ]
     .filter((v) => v != null && String(v).trim())
     .map((v) => String(v));

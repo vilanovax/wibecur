@@ -41,6 +41,10 @@ export type CommentSettingsState = {
   maxCommentLength: number | null;
   rateLimitMinutes: number;
   globalRateLimitMinutes: number | null;
+  penaltyWarnThreshold: number;
+  penaltyRestrictThreshold: number;
+  penaltyBanThreshold: number;
+  penaltyRestrictDays: number;
 };
 
 export function countConfiguredIntegrations(settings: SettingsData): {

@@ -246,7 +246,7 @@ export default function ListIntelligenceTable({
                     </>
                   )}
 
-                  <td className={`sticky left-0 z-10 py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`} onClick={(e) => e.stopPropagation()}>
+                  <td className={`sticky left-0 z-10 overflow-visible py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`} onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-center gap-0.5">
                       {isTrashView ? (
                         onRestore && (

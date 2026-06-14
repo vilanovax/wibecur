@@ -46,7 +46,7 @@ export default function ReportsPageClient({ data, navStats }: ReportsPageClientP
     isOpen: boolean;
     commentId: string | null;
     commentContent: string;
-    action: 'delete' | 'edit' | 'report';
+    action: 'delete' | 'edit' | 'report' | 'reject';
   }>({
     isOpen: false,
     commentId: null,

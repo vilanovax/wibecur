@@ -7,6 +7,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentStatusBadge from './CommentStatusBadge';
 import UserAvatar from '@/components/shared/UserAvatar';
+import { UserPenaltyBadge } from './UserPenaltyBadge';
+import type { CommentPermissionStatus } from '@/lib/comment-permission';
 
 export interface CommentRowData {
   id: string;
@@ -21,6 +23,11 @@ export interface CommentRowData {
     name: string | null;
     email: string;
     image: string | null;
+  };
+  userModeration?: {
+    totalPenaltyScore: number;
+    status: CommentPermissionStatus;
+    restrictedUntil: string | null;
   };
   items: {
     id: string;
@@ -114,9 +121,18 @@ function CommentRow({
             size={32}
           />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-900 truncate">
-              {comment.users.name || 'بدون نام'}
-            </p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <p className="text-sm font-medium text-slate-900 truncate">
+                {comment.users.name || 'بدون نام'}
+              </p>
+              {comment.userModeration && (
+                <UserPenaltyBadge
+                  totalPenaltyScore={comment.userModeration.totalPenaltyScore}
+                  status={comment.userModeration.status}
+                  compact
+                />
+              )}
+            </div>
             <p className="text-xs text-slate-500 truncate">{comment.users.email}</p>
           </div>
         </div>

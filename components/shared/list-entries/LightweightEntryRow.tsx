@@ -1,6 +1,7 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
+import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import {
   entryKindBadgeLabel,
   entryKindIcon,
@@ -9,6 +10,7 @@ import {
   type FactType,
 } from '@/lib/list-entry';
 import { buildLightweightDisplayBody } from '@/lib/item-metadata-display';
+import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
 
 export type LightweightEntryItem = {
   id: string;
@@ -23,6 +25,7 @@ type Props = {
   item: LightweightEntryItem;
   index: number;
   entryKind: EntryKind;
+  categorySlug?: string | null;
   onOpen?: () => void;
   compact?: boolean;
   /** لایف‌استایل: بدون آیکن و برچسب «نکته / داده» */
@@ -35,30 +38,29 @@ function factTypeLabel(metadata?: Record<string, unknown> | null): string | null
   return FACT_TYPE_LABELS[raw as FactType] ?? raw;
 }
 
-export default function LightweightEntryRow({
+function EntryBody({
   item,
   index,
   entryKind,
-  onOpen,
-  compact = false,
-  hideEntryKindChrome = false,
-}: Props) {
-  const body = buildLightweightDisplayBody(item, {
-    lifestyleMode: hideEntryKindChrome,
-  });
-  const headline = item.title?.trim();
-  const factLabel = entryKind === 'fact' ? factTypeLabel(item.metadata) : null;
-  const hasLink = Boolean(item.externalUrl?.trim());
-  const Wrapper = onOpen ? 'button' : 'div';
-
+  compact,
+  hideEntryKindChrome,
+  headline,
+  body,
+  factLabel,
+  hasLink,
+}: {
+  item: LightweightEntryItem;
+  index: number;
+  entryKind: EntryKind;
+  compact: boolean;
+  hideEntryKindChrome: boolean;
+  headline: string;
+  body: string;
+  factLabel: string | null;
+  hasLink: boolean;
+}) {
   return (
-    <Wrapper
-      type={onOpen ? 'button' : undefined}
-      onClick={onOpen}
-      className={`flex w-full items-start gap-3 rounded-xl border border-wibe bg-wibe-card text-right shadow-sm transition-all ${
-        compact ? 'p-2.5' : hideEntryKindChrome ? 'p-3.5 lg:p-4' : 'p-3 lg:p-3.5'
-      } ${onOpen ? 'active:scale-[0.99] lg:hover:border-primary/15 lg:hover:shadow-sm' : ''}`}
-    >
+    <>
       <div
         className={`flex shrink-0 items-center justify-center rounded-full bg-gray-100 wibe-caption font-semibold text-wibe-secondary tabular-nums ${
           hideEntryKindChrome
@@ -131,6 +133,81 @@ export default function LightweightEntryRow({
           </span>
         )}
       </div>
-    </Wrapper>
+    </>
+  );
+}
+
+export default function LightweightEntryRow({
+  item,
+  index,
+  entryKind,
+  categorySlug,
+  onOpen,
+  compact = false,
+  hideEntryKindChrome = false,
+}: Props) {
+  const body = buildLightweightDisplayBody(item, {
+    lifestyleMode: hideEntryKindChrome,
+  });
+  const headline = item.title?.trim() || '';
+  const factLabel = entryKind === 'fact' ? factTypeLabel(item.metadata) : null;
+  const hasLink = Boolean(item.externalUrl?.trim());
+  const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
+
+  const shellClass = `rounded-xl border border-wibe bg-wibe-card text-right shadow-sm transition-all ${
+    compact ? 'p-2.5' : hideEntryKindChrome ? 'p-3.5 lg:p-4' : 'p-3 lg:p-3.5'
+  } ${onOpen ? 'lg:hover:border-primary/15 lg:hover:shadow-sm' : ''}`;
+
+  const bodyProps = {
+    item,
+    index,
+    entryKind,
+    compact,
+    hideEntryKindChrome,
+    headline,
+    body,
+    factLabel,
+    hasLink,
+  };
+
+  if (quickActions.length > 0) {
+    return (
+      <div className={`flex flex-col gap-2 ${shellClass}`}>
+        {onOpen ? (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="flex w-full items-start gap-3 text-right transition-all active:scale-[0.99]"
+          >
+            <EntryBody {...bodyProps} />
+          </button>
+        ) : (
+          <div className="flex w-full items-start gap-3 text-right">
+            <EntryBody {...bodyProps} />
+          </div>
+        )}
+        <div className={onOpen ? 'border-t border-wibe/60 pt-2' : 'pt-0.5'}>
+          <ListItemQuickActions actions={quickActions} size="sm" />
+        </div>
+      </div>
+    );
+  }
+
+  if (onOpen) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className={`flex w-full items-start gap-3 ${shellClass} active:scale-[0.99]`}
+      >
+        <EntryBody {...bodyProps} />
+      </button>
+    );
+  }
+
+  return (
+    <div className={`flex w-full items-start gap-3 ${shellClass}`}>
+      <EntryBody {...bodyProps} />
+    </div>
   );
 }

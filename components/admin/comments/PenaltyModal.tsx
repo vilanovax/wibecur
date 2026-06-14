@@ -1,14 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import {
+  getDefaultPenaltyScore,
+  type PenaltyModalAction,
+} from '@/lib/comment-permission';
 
 interface PenaltyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (score: number) => Promise<void>;
   commentContent?: string;
-  action: 'delete' | 'edit' | 'report';
+  action: PenaltyModalAction;
+  defaultScore?: number;
   isLoading?: boolean;
 }
 
@@ -18,9 +23,17 @@ export default function PenaltyModal({
   onSubmit,
   commentContent,
   action,
+  defaultScore,
   isLoading = false,
 }: PenaltyModalProps) {
-  const [selectedScore, setSelectedScore] = useState<number>(0);
+  const resolvedDefault = defaultScore ?? getDefaultPenaltyScore(action);
+  const [selectedScore, setSelectedScore] = useState<number>(resolvedDefault);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedScore(defaultScore ?? getDefaultPenaltyScore(action));
+    }
+  }, [isOpen, action, defaultScore]);
 
   if (!isOpen) return null;
 
@@ -29,10 +42,11 @@ export default function PenaltyModal({
     await onSubmit(selectedScore);
   };
 
-  const actionLabels = {
+  const actionLabels: Record<PenaltyModalAction, string> = {
     delete: 'حذف',
     edit: 'ویرایش',
     report: 'ریپورت',
+    reject: 'رد',
   };
 
   return (
@@ -144,4 +158,3 @@ export default function PenaltyModal({
     </div>
   );
 }
-

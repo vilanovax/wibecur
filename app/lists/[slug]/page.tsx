@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
+import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import { getTopSimilarLists, type ListForSimilarity } from '@/lib/listSimilarity';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
@@ -154,6 +155,7 @@ export default async function ListDetailPage({
   return (
     <div className="bg-wibe-surface lg:pt-1">
       <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
+      <CategoryNavStrip activeSlug={list.categories?.slug ?? null} />
       <ListDetailClient
         list={JSON.parse(JSON.stringify(listWithCreator))}
         relatedLists={JSON.parse(JSON.stringify(relatedLists))}

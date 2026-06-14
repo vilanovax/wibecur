@@ -1,14 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
-export const FILM_SLUG_ALIASES = ['movie', 'movies', 'film'];
-export const BOOK_SLUG_ALIASES = ['book', 'books'];
-
-export function resolveCategorySlugAliases(slug: string): string[] {
-  if (FILM_SLUG_ALIASES.includes(slug)) return FILM_SLUG_ALIASES;
-  if (BOOK_SLUG_ALIASES.includes(slug)) return BOOK_SLUG_ALIASES;
-  return [];
-}
+import { BOOK_SLUG_ALIASES, FILM_SLUG_ALIASES, resolveCategorySlugAliases } from '@/lib/category-slug-aliases';
 
 function isLikelyCuid(param: string): boolean {
   return param.length >= 20 && param.length <= 30 && /^[a-z0-9]+$/i.test(param);

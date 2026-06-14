@@ -19,6 +19,10 @@ import FilterBottomSheetPro, {
   type FilterState,
   type VibeFilter,
 } from '@/components/mobile/lists/FilterBottomSheetPro';
+import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
+import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
+import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
+import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { DESKTOP_BREAKPOINT_PX, useIsDesktop } from '@/lib/hooks/useIsDesktop';
 
 type ListWithCategory = lists & {
@@ -167,6 +171,17 @@ const SECTION_PREVIEW_MOBILE = 6;
 const SECTION_PREVIEW_DESKTOP = 8;
 const STICKY_OFFSET = 112;
 
+function resolveCategoryIdFromParam(
+  param: string | undefined,
+  categoryList: categories[]
+): string | null {
+  if (!param) return null;
+  const byId = categoryList.find((c) => c.id === param);
+  if (byId) return byId.id;
+  const bySlug = categoryList.find((c) => c.slug === param);
+  return bySlug?.id ?? null;
+}
+
 /** فقط نوار افقی چیپ‌ها را اسکرول می‌کند — بدون جابجایی صفحه */
 function scrollChipIntoHorizontalView(container: HTMLElement, chip: HTMLElement) {
   const containerRect = container.getBoundingClientRect();
@@ -191,7 +206,11 @@ export default function ListsPageClient({
 
   const categoryById = categories.find((c) => c.id === initialCategory);
   const categoryBySlug = categories.find((c) => 'slug' in c && (c as { slug: string }).slug === initialCategory);
-  const resolvedCategoryId = categoryById?.id ?? categoryBySlug?.id ?? null;
+  const resolvedCategoryId =
+    resolveCategoryIdFromParam(initialCategory, categories) ??
+    categoryById?.id ??
+    categoryBySlug?.id ??
+    null;
 
   const [filterState, setFilterState] = useState<FilterState>(() => ({
     ...DEFAULT_FILTER,
@@ -267,9 +286,6 @@ export default function ListsPageClient({
         if (parsed) {
           setFilterState((prev) => ({
             ...prev,
-            categories: Array.isArray(parsed.categories)
-              ? new Set(parsed.categories)
-              : prev.categories,
             sortBy: parsed.sortBy ?? prev.sortBy,
             vibes: Array.isArray(parsed.vibes) ? new Set(parsed.vibes) : prev.vibes,
             creatorType: parsed.creatorType ?? prev.creatorType,
@@ -286,6 +302,16 @@ export default function ListsPageClient({
       }
     }
   }, []);
+
+  /** پارامتر category در URL منبع اصلی فیلتر دسته است — localStorage نباید آن را بازنویسی کند */
+  useEffect(() => {
+    const categoryId = resolveCategoryIdFromParam(initialCategory, categories);
+    setFilterState((prev) => ({
+      ...prev,
+      categories: categoryId ? new Set([categoryId]) : new Set(),
+    }));
+    setHighlightCategoryId(null);
+  }, [initialCategory, categories]);
 
   useEffect(() => {
     if (initialModeApplied.current) return;
@@ -306,7 +332,6 @@ export default function ListsPageClient({
     localStorage.setItem(
       'listsPage_filterState',
       JSON.stringify({
-        categories: [...filterState.categories],
         sortBy: filterState.sortBy,
         vibes: [...filterState.vibes],
         creatorType: filterState.creatorType,
@@ -573,6 +598,18 @@ export default function ListsPageClient({
         ? activeCategories.find((c) => filterState.categories.has(c.id))
         : null;
 
+  const breadcrumbCategory =
+    selectedCategory ?? categories.find((c) => c.slug === initialCategory) ?? null;
+
+  const breadcrumbItems = useMemo(
+    () => [
+      { label: 'خانه', href: '/' },
+      { label: 'لیست‌ها', href: '/lists' },
+      ...(breadcrumbCategory ? [{ label: breadcrumbCategory.name }] : []),
+    ],
+    [breadcrumbCategory]
+  );
+
   const showCategoryChips = true;
 
   const isAllCategoriesSelected = useSectionLayout
@@ -650,6 +687,10 @@ export default function ListsPageClient({
 
   return (
     <div className="space-y-0 pb-6 lg:pb-4">
+      <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
+      <div className="mb-2 max-lg:px-4 lg:mb-3">
+        <PageBreadcrumb items={breadcrumbItems} />
+      </div>
       <h1 className="mb-2 hidden wibe-h3 font-bold text-foreground lg:block">لیست‌ها</h1>
       {/* جستجو در همین صفحه — هدر دسکتاپ جستجو ندارد تا تکراری نشود */}
       <div className="pb-2 pt-1 max-lg:px-4 lg:pb-2 lg:pt-0 lg:px-0">
@@ -691,9 +732,10 @@ export default function ListsPageClient({
         </div>
       </div>
 
-      {/* Sticky: ترند / جدید / نمای / فیلتر */}
-      <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-surface/95 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-surface/90 lg:top-14">
-        <div className="flex items-center gap-1.5 max-lg:px-4 lg:px-0">
+      {/* Sticky: دسته‌ها + ترند / جدید / نمای / فیلتر */}
+      <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-surface/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-surface/90 lg:top-14">
+        <CategoryNavStrip embedded activeSlug={initialCategory ?? null} />
+        <div className="flex items-center gap-1.5 max-lg:px-4 lg:px-0 pb-2">
           <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 scrollbar-hide">
             {BROWSE_MODES.map(({ value, label }) => (
               <button

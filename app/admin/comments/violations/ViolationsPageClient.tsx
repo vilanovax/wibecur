@@ -7,6 +7,8 @@ import CommentsSubNav, { type CommentsNavStats } from '@/components/admin/commen
 import ViolationsPageHeader from '@/components/admin/comments/ViolationsPageHeader';
 import ViolationsStatsBar from '@/components/admin/comments/ViolationsStatsBar';
 import ViolationsTable, { type ViolationRow } from '@/components/admin/comments/ViolationsTable';
+import ViolationUserDrawer from '@/components/admin/comments/ViolationUserDrawer';
+import type { ViolationStatusFilter } from '@/lib/admin/violations-filter';
 
 type Stats = {
   totalOffenders: number;
@@ -14,10 +16,18 @@ type Stats = {
   totalPenalty: number;
 };
 
+const STATUS_FILTERS: { id: ViolationStatusFilter; label: string }[] = [
+  { id: 'all', label: 'همه' },
+  { id: 'warn', label: 'اخطار' },
+  { id: 'restricted', label: 'محدود' },
+  { id: 'banned', label: 'مسدود' },
+];
+
 interface ViolationsPageClientProps {
   violations: ViolationRow[];
   stats: Stats;
   search: string;
+  statusFilter: ViolationStatusFilter;
   navStats?: CommentsNavStats;
 }
 
@@ -25,22 +35,40 @@ export default function ViolationsPageClient({
   violations = [],
   stats,
   search: initialSearch,
+  statusFilter,
   navStats,
 }: ViolationsPageClientProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState(initialSearch);
+  const [drawerUserId, setDrawerUserId] = useState<string | null>(null);
+
+  const buildUrl = useCallback(
+    (patch: { search?: string; status?: ViolationStatusFilter }) => {
+      const params = new URLSearchParams();
+      const q = patch.search !== undefined ? patch.search.trim() : initialSearch;
+      const status = patch.status !== undefined ? patch.status : statusFilter;
+      if (q) params.set('search', q);
+      if (status !== 'all') params.set('status', status);
+      const qs = params.toString();
+      return qs
+        ? `/admin/comments/violations?${qs}`
+        : '/admin/comments/violations';
+    },
+    [initialSearch, statusFilter]
+  );
 
   const applySearch = useCallback(
     (value: string) => {
-      const params = new URLSearchParams();
-      const q = value.trim();
-      if (q) params.set('search', q);
-      const qs = params.toString();
-      router.push(
-        qs ? `/admin/comments/violations?${qs}` : '/admin/comments/violations'
-      );
+      router.push(buildUrl({ search: value }));
     },
-    [router]
+    [router, buildUrl]
+  );
+
+  const applyStatus = useCallback(
+    (status: ViolationStatusFilter) => {
+      router.push(buildUrl({ status }));
+    },
+    [router, buildUrl]
   );
 
   return (
@@ -53,6 +81,23 @@ export default function ViolationsPageClient({
         totalViolations={stats.totalViolations}
         totalPenalty={stats.totalPenalty}
       />
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {STATUS_FILTERS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => applyStatus(id)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              statusFilter === id
+                ? 'bg-[var(--primary)] text-white'
+                : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border border-[var(--color-border)] hover:text-[var(--color-text)]'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 mb-4">
         <form
@@ -107,21 +152,32 @@ export default function ViolationsPageClient({
           <p className="text-[var(--color-text-muted)]">
             {initialSearch
               ? 'کاربری با این مشخصات یافت نشد'
-              : 'کاربر خاطی‌ای ثبت نشده است'}
+              : statusFilter !== 'all'
+                ? 'کاربری با این وضعیت یافت نشد'
+                : 'کاربر خاطی‌ای ثبت نشده است'}
           </p>
-          {initialSearch && (
+          {(initialSearch || statusFilter !== 'all') && (
             <button
               type="button"
-              onClick={() => applySearch('')}
+              onClick={() => router.push('/admin/comments/violations')}
               className="mt-3 text-sm text-[var(--primary)] hover:underline"
             >
-              پاک کردن جستجو
+              نمایش همه
             </button>
           )}
         </div>
       ) : (
-        <ViolationsTable violations={violations} />
+        <ViolationsTable
+          violations={violations}
+          onViewDetails={(userId) => setDrawerUserId(userId)}
+        />
       )}
+
+      <ViolationUserDrawer
+        userId={drawerUserId}
+        onClose={() => setDrawerUserId(null)}
+        onUpdated={() => router.refresh()}
+      />
     </div>
   );
 }

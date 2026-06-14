@@ -11,6 +11,10 @@ import {
   parseCommentsPageSize,
   type CommentsPageSize,
 } from '@/lib/admin/comments-page-size';
+import {
+  getUsersCommentModerationMeta,
+  type CommentPermissionStatus,
+} from '@/lib/comment-permission';
 
 export { COMMENTS_PAGE_SIZE_OPTIONS } from '@/lib/admin/comments-page-size';
 export const COMMENTS_PAGE_SIZE = DEFAULT_COMMENTS_PAGE_SIZE;
@@ -52,6 +56,11 @@ export type CommentListRow = {
     name: string | null;
     email: string;
     image: string | null;
+  };
+  userModeration?: {
+    totalPenaltyScore: number;
+    status: CommentPermissionStatus;
+    restrictedUntil: string | null;
   };
   items: {
     id: string;
@@ -211,8 +220,25 @@ export async function getCommentsIntelligenceData(
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
+  const moderationMeta = await getUsersCommentModerationMeta(
+    comments.map((c) => c.users.id)
+  );
+
   return {
-    comments: comments.map(serializeComment),
+    comments: comments.map((c) => {
+      const row = serializeComment(c);
+      const meta = moderationMeta.get(c.users.id);
+      return meta
+        ? {
+            ...row,
+            userModeration: {
+              totalPenaltyScore: meta.totalPenaltyScore,
+              status: meta.status,
+              restrictedUntil: meta.restrictedUntil,
+            },
+          }
+        : row;
+    }),
     pulse,
     badWords: badWordsRows.map((bw) => bw.word.toLowerCase()),
     totalCount,

@@ -230,15 +230,7 @@ function normalizeBookImportMetadata(meta: Record<string, unknown> | null | unde
   return out;
 }
 
-function normalizeCafeImportMetadata(meta: Record<string, unknown> | null | undefined): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  if (!meta || typeof meta !== 'object') return out;
-  if (typeof meta.address === 'string' && meta.address.trim()) out.address = meta.address.trim();
-  if (typeof meta.priceRange === 'string' && meta.priceRange.trim()) out.priceRange = meta.priceRange.trim();
-  if (typeof meta.cuisine === 'string' && meta.cuisine.trim()) out.cuisine = meta.cuisine.trim();
-  if (typeof meta.tip === 'string' && meta.tip.trim()) out.tip = meta.tip.trim();
-  return out;
-}
+import { normalizeCafeMetadataFields } from '@/lib/cafe-metadata';
 
 export function normalizeBulkImportMetadata(
   categorySlug: string,
@@ -252,7 +244,7 @@ export function normalizeBulkImportMetadata(
     case 'book':
       return normalizeBookImportMetadata(meta);
     case 'cafe':
-      return normalizeCafeImportMetadata(meta);
+      return normalizeCafeMetadataFields(meta);
     default: {
       const out: Record<string, unknown> =
         meta && typeof meta === 'object' ? { ...meta } : {};
@@ -431,6 +423,7 @@ export function formatBulkImportRowSubtitle(row: BulkImportRow, categorySlug: st
       const parts: string[] = [];
       if (m.cuisine) parts.push(String(m.cuisine));
       if (m.priceRange) parts.push(String(m.priceRange));
+      if (m.phone) parts.push(String(m.phone));
       if (m.address) parts.push(String(m.address).slice(0, 40));
       return parts.join(' · ') || '—';
     }
@@ -516,7 +509,7 @@ export function getBulkImportJsonHint(categorySlug: string, list?: BulkImportLis
     case 'book':
       return `tip (اختیاری) · metadata: author, genre, isbn${listPart}`;
     case 'cafe':
-      return `tip (اختیاری) · metadata: address (الزامی), priceRange, cuisine${listPart}`;
+      return `title · description · imageUrl · tip · metadata.address (الزامی) · metadata.priceRange ($|$$|$$$|$$$$) · cuisine · phone · instagram · website · mapsUrl${listPart}`;
     default:
       return `فرمت: { "items": [...] } · entryKind: tip (سبک، بدون کاتلگ) یا بدون entryKind (کاتالوگ) · title · description · tip · metadata.tags (حداکثر ۸) · externalUrl را خالی نگذارید${listPart}`;
   }
@@ -570,15 +563,47 @@ const BOOK_JSON_EXAMPLE = `{
 const CAFE_JSON_EXAMPLE = `{
   "items": [
     {
-      "title": "کافه رستوران مولین",
-      "description": "فضای دنج با منوی ایرانی-فرانسوی در مرکز شهر.",
-      "tip": "برای صبحانه آخر هفته حتماً از قبل رزرو کنید.",
-      "imageUrl": "https://example.com/cafe.jpg",
-      "externalUrl": "https://example.com/cafe",
+      "title": "رستوران سنتی نادری",
+      "description": "فضای سنتی با غذای اصیل ایرانی، چلوکباب و خورشت‌های روز. مناسب مهمانی خانوادگی.",
+      "tip": "برای ناهار جمعه از قبل تماس بگیرید؛ پارکینگ محدود است.",
+      "imageUrl": "https://example.com/images/naderi.jpg",
+      "order": 1,
       "metadata": {
-        "address": "تهران، خیابان ولیعصر",
+        "address": "تهران، خیابان جردن، کوچه ۲۳، پلاک ۱۵",
+        "priceRange": "$$$",
+        "cuisine": "ایرانی",
+        "phone": "021-88776655",
+        "instagram": "@naderi.rest",
+        "website": "naderi-restaurant.ir",
+        "mapsUrl": "https://maps.google.com/?q=35.7219,51.4056"
+      }
+    },
+    {
+      "title": "کافه روما",
+      "description": "کافه دنج با قهوه تخصصی و دسر؛ فضای کوچک و مناسب کار یا قرار دو نفره.",
+      "tip": "لاته و چیزکیک توت‌فرنگی را امتحان کنید.",
+      "imageUrl": "https://example.com/images/roma-cafe.jpg",
+      "order": 2,
+      "metadata": {
+        "address": "تهران، ولیعصر، بالاتر از پارک ملت، پلاک ۴۵",
         "priceRange": "$$",
-        "cuisine": "ایرانی"
+        "cuisine": "کافه",
+        "phone": "021-22334455",
+        "instagram": "roma.cafe.teh",
+        "mapsUrl": "تهران، ولیعصر، پارک ملت"
+      }
+    },
+    {
+      "title": "پیتزا روما",
+      "description": "پیتزای ناپلی با خمیر دست‌ساز و فضای صمیمی.",
+      "imageUrl": "https://example.com/images/roma-pizza.jpg",
+      "order": 3,
+      "metadata": {
+        "address": "تهران، سعادت‌آباد، میدان کاج",
+        "priceRange": "$$",
+        "cuisine": "ایتالیایی",
+        "website": "https://romapizza.ir",
+        "instagram": "https://www.instagram.com/romapizza.teh"
       }
     }
   ]

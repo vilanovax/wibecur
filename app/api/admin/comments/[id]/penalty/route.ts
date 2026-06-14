@@ -3,6 +3,13 @@ import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { revalidateAdminCommentsCache } from '@/lib/admin/admin-cache';
+import {
+  applyAutoRestrictionAfterPenalty,
+  getUserPenaltyScore,
+} from '@/lib/comment-permission';
+import { logAudit } from '@/lib/audit/log';
+import { getRequestMeta } from '@/lib/audit/request-meta';
+import type { UserRole } from '@prisma/client';
 
 // POST /api/admin/comments/[id]/penalty - ثبت امتیاز منفی برای کامنت
 export async function POST(
@@ -100,6 +107,37 @@ export async function POST(
         })
       );
     }
+
+    if (penaltyScore > 0) {
+      await dbQuery(() =>
+        prisma.users.update({
+          where: { id: comment.userId },
+          data: {
+            reputationScore: { decrement: penaltyScore },
+            updatedAt: new Date(),
+          },
+        })
+      );
+      const totalScore = await getUserPenaltyScore(comment.userId);
+      await applyAutoRestrictionAfterPenalty(comment.userId, totalScore);
+    }
+
+    const { ipAddress, userAgent } = getRequestMeta(request);
+    const actorRole = (session.user as { role?: UserRole }).role ?? 'ADMIN';
+    await logAudit({
+      actorId: adminId,
+      actorRole,
+      action: 'COMMENT_PENALTY',
+      entityType: 'COMMENT',
+      entityId: commentId,
+      after: {
+        userId: comment.userId,
+        penaltyScore,
+        action: action || 'delete',
+      },
+      ipAddress,
+      userAgent,
+    });
 
     revalidateAdminCommentsCache();
 

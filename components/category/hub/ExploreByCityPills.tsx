@@ -4,18 +4,24 @@ import Link from 'next/link';
 import { LOCATION_CITIES } from '@/types/category-page';
 import CategorySectionTitle from '../CategorySectionTitle';
 
+import { CATEGORY_SECTION } from '@/lib/category-layout';
+
 interface ExploreByCityPillsProps {
   categorySlug: string;
   cityCounts?: Record<string, number>;
   accentColor?: string;
+  inset?: boolean;
 }
 
 export default function ExploreByCityPills({
   categorySlug,
   cityCounts = {},
+  inset = false,
 }: ExploreByCityPillsProps) {
+  const sectionClass = `${CATEGORY_SECTION} scroll-mt-4 ${inset ? '' : 'px-4'}`;
+
   return (
-    <section id="explore-by-city" className="px-4 py-6 scroll-mt-4">
+    <section id="explore-by-city" className={sectionClass}>
       <CategorySectionTitle
         title="محبوب‌ترین‌ها در شهرها"
         subtitle="کشف لیست‌ها بر اساس شهر"

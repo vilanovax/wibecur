@@ -18,6 +18,10 @@ const ACTION_BADGE: Record<string, BadgeVariant> = {
   CATEGORY_UPDATE: 'success',
   REPORT_RESOLVE: 'success',
   COMMENT_DELETE: 'warning',
+  COMMENT_PENALTY: 'warning',
+  COMMENT_RESTRICT: 'warning',
+  COMMENT_UNRESTRICT: 'success',
+  COMMENT_BAN: 'danger',
 };
 
 interface AuditRow {

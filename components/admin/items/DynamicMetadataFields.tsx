@@ -215,13 +215,14 @@ export default function DynamicMetadataFields({
   // Cafe/Restaurant metadata fields
   if (categorySlug === 'cafe' || categorySlug === 'restaurant') {
     return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
-          اطلاعات تکمیلی کافه/رستوران
-        </h3>
+      <div className={fieldWrap}>
+        {!hideTitle && (
+          <h3 className={`text-lg font-semibold text-gray-900 ${fieldFull}`}>
+            اطلاعات تکمیلی کافه/رستوران
+          </h3>
+        )}
 
-        {/* Address */}
-        <div>
+        <div className={fieldFull}>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             آدرس <span className="text-red-500">*</span>
           </label>
@@ -235,7 +236,6 @@ export default function DynamicMetadataFields({
           />
         </div>
 
-        {/* Price Range */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             بازه قیمت <span className="text-red-500">*</span>
@@ -255,7 +255,6 @@ export default function DynamicMetadataFields({
           </select>
         </div>
 
-        {/* Cuisine */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             نوع غذا (اختیاری)
@@ -272,6 +271,59 @@ export default function DynamicMetadataFields({
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">تلفن (اختیاری)</label>
+          <input
+            type="tel"
+            dir="ltr"
+            value={metadata?.phone || ''}
+            onChange={(e) => handleChange('phone', e.target.value || undefined)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="021-12345678"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">اینستاگرام (اختیاری)</label>
+          <input
+            type="text"
+            dir="ltr"
+            value={metadata?.instagram || ''}
+            onChange={(e) => handleChange('instagram', e.target.value || undefined)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="@username یا لینک"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">وب‌سایت (اختیاری)</label>
+          <input
+            type="url"
+            dir="ltr"
+            value={metadata?.website || ''}
+            onChange={(e) => handleChange('website', e.target.value || undefined)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="https://example.com"
+          />
+        </div>
+
+        <div className={fieldFull}>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            لینک مسیریابی (اختیاری)
+          </label>
+          <input
+            type="url"
+            dir="ltr"
+            value={metadata?.mapsUrl || ''}
+            onChange={(e) => handleChange('mapsUrl', e.target.value || undefined)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="Google Maps یا مختصات"
+          />
+          <p className="mt-1 text-[11px] text-gray-500">
+            لینک گوگل‌مپ یا آدرس متنی — در صورت آدرس، لینک مسیریابی ساخته می‌شود
+          </p>
         </div>
       </div>
     );

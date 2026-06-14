@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { requireAdmin } from '@/lib/auth';
 import { getCachedCommentsReportsIntelligenceData } from '@/lib/admin/comments-reports-intelligence-cached';
 import { getCachedCommentsHubStats } from '@/lib/admin/comments-hub-stats-cached';
+import { buildCommentsNavStats } from '@/lib/admin/comments-nav-stats';
 import { parseReportsResolved } from '@/lib/admin/comments-reports-intelligence';
 import { parseCommentsPageSize } from '@/lib/admin/comments-page-size';
 import CommentsPaginationBar from '@/components/admin/comments/CommentsPaginationBar';
@@ -34,11 +35,7 @@ export default async function ReportsPage({
     getCachedCommentsHubStats(),
   ]);
 
-  const navStats = {
-    pending: hubStats.comments.pending,
-    commentReportsOpen: hubStats.commentReports.open,
-    itemReportsOpen: hubStats.itemReportsOpen,
-  };
+  const navStats = buildCommentsNavStats(hubStats);
 
   const paginationParams: Record<string, string> = {
     resolved:

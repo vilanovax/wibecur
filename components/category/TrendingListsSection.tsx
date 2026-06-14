@@ -4,6 +4,7 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import CategorySectionTitle from './CategorySectionTitle';
+import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryListCard } from '@/types/category-page';
 
 interface TrendingListsSectionProps {
@@ -11,83 +12,100 @@ interface TrendingListsSectionProps {
   subtitle?: string;
   lists: CategoryListCard[];
   categoryName: string;
+  categorySlug?: string;
   accentColor?: string;
-  improved?: boolean;
+  /** بدون padding افقی — داخل شِل صفحه */
+  inset?: boolean;
+}
+
+function TrendingListCard({
+  list,
+  index,
+  accentColor,
+}: {
+  list: CategoryListCard;
+  index: number;
+  accentColor: string;
+}) {
+  const showTrendBadge = index < 3 || list.badge === 'viral' || list.badge === 'hot';
+
+  return (
+    <Link
+      href={`/lists/${list.slug}`}
+      className="group block active:scale-[0.99] transition-transform lg:hover:-translate-y-0.5"
+    >
+      <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-card lg:rounded-2xl lg:transition-shadow lg:group-hover:shadow-md">
+        <div className="relative aspect-[4/3] bg-gray-200">
+          {list.coverImage ? (
+            <ImageWithFallback
+              src={list.coverImage}
+              alt={list.title}
+              className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div
+              className="flex h-full w-full items-center justify-center bg-gray-200 text-4xl opacity-40"
+              style={{ color: accentColor }}
+            >
+              📋
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+          {showTrendBadge && (
+            <span className="absolute right-2 top-2 rounded-pill bg-warning px-2 py-0.5 wibe-caption font-semibold text-white">
+              ترند
+            </span>
+          )}
+          {list.cityTag && (
+            <span className="absolute bottom-2 right-2 rounded-md bg-black/40 px-2 py-0.5 wibe-caption text-white/95 backdrop-blur-sm">
+              {list.cityTag}
+            </span>
+          )}
+          <div className="absolute bottom-0 left-0 right-0 p-2.5">
+            <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="overlay" />
+          </div>
+        </div>
+        <div className="p-3">
+          {list.creator?.name && (
+            <p className="mb-1 truncate wibe-caption text-wibe-secondary">{list.creator.name}</p>
+          )}
+          <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 export default function TrendingListsSection({
   title,
   subtitle,
   lists,
+  categorySlug,
   accentColor = '#6366F1',
-  improved = false,
+  inset = false,
 }: TrendingListsSectionProps) {
   if (lists.length === 0) return null;
 
+  const visible = lists.slice(0, 8);
+  const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
+
   return (
-    <section className="px-4 py-6">
-      <CategorySectionTitle title={title} subtitle={subtitle} icon="🔥" />
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory -mx-4 px-4">
-        {lists.map((list, index) => (
+    <section className={sectionClass}>
+      <div className="mb-3 flex items-end justify-between gap-3 lg:mb-4">
+        <CategorySectionTitle title={title} subtitle={subtitle} icon="🔥" className="mb-0" />
+        {categorySlug && (
           <Link
-            key={list.id}
-            href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-[75vw] max-w-[280px] snap-start active:scale-[0.99] transition-transform"
+            href={`/lists?category=${categorySlug}`}
+            className="shrink-0 pb-0.5 wibe-small font-medium text-primary hover:text-primary-dark"
           >
-            <div className="rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-card">
-              <div className="relative aspect-[4/3] bg-gray-200">
-                {list.coverImage ? (
-                  <ImageWithFallback
-                    src={list.coverImage}
-                    alt={list.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className="w-full h-full flex items-center justify-center text-4xl opacity-40 bg-gray-200"
-                    style={{ color: accentColor }}
-                  >
-                    📋
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                {(index < 3 || list.badge === 'viral' || list.badge === 'hot') && (
-                  <span className="absolute top-2 right-2 wibe-caption font-semibold text-white px-2 py-0.5 rounded-pill bg-warning">
-                    ترند
-                  </span>
-                )}
-                {improved && list.cityTag && (
-                  <span className="absolute bottom-2 right-2 wibe-caption text-white/95 px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm">
-                    {list.cityTag}
-                  </span>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                  <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="overlay" />
-                </div>
-              </div>
-              <div className="p-3">
-                {improved && list.creator && (
-                  <div className="flex items-center gap-2 mb-1.5">
-                    {list.creator.image ? (
-                      <ImageWithFallback
-                        src={list.creator.image}
-                        alt={list.creator.name || ''}
-                        className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center wibe-caption flex-shrink-0">
-                        {(list.creator.name || '?')[0]}
-                      </div>
-                    )}
-                    <span className="wibe-caption text-wibe-secondary truncate">
-                      {list.creator.name || 'کاربر'}
-                    </span>
-                  </div>
-                )}
-                <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
-              </div>
-            </div>
+            مشاهده همه
           </Link>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        {visible.map((list, index) => (
+          <TrendingListCard key={list.id} list={list} index={index} accentColor={accentColor} />
         ))}
       </div>
     </section>

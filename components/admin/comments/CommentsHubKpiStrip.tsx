@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Clock, Flag, Package, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Clock, Flag, Package, CheckCircle, AlertTriangle, ShieldBan } from 'lucide-react';
 import type { CommentsHubStats } from '@/lib/admin/comments-hub-stats';
 
 export default function CommentsHubKpiStrip({ stats }: { stats: CommentsHubStats }) {
@@ -35,6 +35,13 @@ export default function CommentsHubKpiStrip({ stats }: { stats: CommentsHubStats
       accent: 'from-violet-500/10 to-violet-600/5 border-violet-200/60',
     },
     {
+      href: '/admin/comments/violations',
+      label: 'کاربران محدود',
+      value: stats.violations.restrictedUsers,
+      icon: ShieldBan,
+      accent: 'from-rose-500/10 to-rose-600/5 border-rose-200/60',
+    },
+    {
       href: '/admin/comments/all?filter=approved',
       label: 'تاییدشده',
       value: stats.comments.approved,
@@ -44,7 +51,7 @@ export default function CommentsHubKpiStrip({ stats }: { stats: CommentsHubStats
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       {items.map(({ href, label, value, icon: Icon, accent }) => (
         <Link
           key={href}

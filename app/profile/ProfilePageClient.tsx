@@ -8,6 +8,7 @@ import type { ProfileUser } from '@/components/profile/types';
 import type { ListWithCategory } from '@/components/mobile/profile/tabs/MyListsTab';
 import { LISTS_UPDATED_EVENT, PROFILE_UPDATED_EVENT } from '@/lib/profile-events';
 import type { ProfileActivitySSR, ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
+import ProfileBreadcrumb from '@/components/profile/ProfileBreadcrumb';
 
 interface ProfilePageClientProps {
   userId: string;
@@ -87,6 +88,7 @@ export default function ProfilePageClient({
   if (isLoading) {
     return (
       <div className="space-y-4">
+        <ProfileBreadcrumb />
         <div className="overflow-hidden rounded-xl border border-wibe">
           <div className="h-14 animate-pulse bg-gray-200" />
           <div className="flex items-start gap-3 px-2.5 pb-2.5 -mt-8">
@@ -111,7 +113,9 @@ export default function ProfilePageClient({
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-lg text-center">
+      <div className="space-y-4">
+        <ProfileBreadcrumb />
+        <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-lg text-center">
         <p className="wibe-small">{error}</p>
         <button
           type="button"
@@ -120,14 +124,18 @@ export default function ProfilePageClient({
         >
           تلاش مجدد
         </button>
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="text-center py-12 bg-wibe-card rounded-lg border border-wibe">
+      <div className="space-y-4">
+        <ProfileBreadcrumb />
+        <div className="text-center py-12 bg-wibe-card rounded-lg border border-wibe">
         <p className="wibe-small text-wibe-secondary">کاربر یافت نشد</p>
+        </div>
       </div>
     );
   }
@@ -142,6 +150,9 @@ export default function ProfilePageClient({
 
   return (
     <div className="space-y-0 pb-4 lg:pb-2">
+      <ProfileBreadcrumb
+        currentLabel={user.name?.trim() ? `${user.name.trim()} (پروفایل من)` : 'پروفایل من'}
+      />
       <h1 className="mb-3 hidden text-xl font-bold text-foreground lg:block">پروفایل</h1>
       <div className="mb-4 overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:mb-5">
         <ProfileHeader user={user} isOwner onUpdate={() => fetchProfile(true)} />

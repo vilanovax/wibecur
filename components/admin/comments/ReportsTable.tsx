@@ -3,6 +3,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import type { ReportGroup } from '@/lib/admin/comments-reports-intelligence';
+import { UserPenaltyBadge } from '@/components/admin/comments/UserPenaltyBadge';
 
 type Props = {
   groups: ReportGroup[];
@@ -66,9 +67,18 @@ export default function ReportsTable({
                 </td>
                 <td className="px-3 py-2.5 max-w-[280px]">
                   <p className="text-sm text-[var(--color-text)] line-clamp-2">{preview}</p>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
-                    {group.comment.users.name || group.comment.users.email}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                    <p className="text-xs text-[var(--color-text-muted)] truncate">
+                      {group.comment.users.name || group.comment.users.email}
+                    </p>
+                    {group.comment.userModeration && (
+                      <UserPenaltyBadge
+                        totalPenaltyScore={group.comment.userModeration.totalPenaltyScore}
+                        status={group.comment.userModeration.status}
+                        compact
+                      />
+                    )}
+                  </div>
                 </td>
                 <td className="px-3 py-2.5 text-sm text-[var(--color-text-muted)] max-w-[140px] truncate">
                   {group.comment.items.title}

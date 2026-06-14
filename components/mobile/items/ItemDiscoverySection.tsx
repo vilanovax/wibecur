@@ -7,16 +7,14 @@ import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
 
 type DiscoveryTab = 'similar' | 'saves' | 'trending';
 
-const TAB_ACTIVE =
-  'bg-primary text-white shadow-sm ring-1 ring-primary/20';
+const TAB_ACTIVE = 'bg-primary text-white shadow-sm';
 const TAB_INACTIVE =
-  'bg-gray-100 text-gray-600 hover:bg-gray-200/90 hover:text-gray-800';
+  'text-wibe-secondary hover:bg-wibe-card hover:text-foreground';
 
-const DISCOVERY_ROW_CLASS =
-  'flex gap-3 overflow-x-auto overflow-y-hidden pb-1 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-4 lg:overflow-visible lg:snap-none xl:grid-cols-5';
+const DISCOVERY_GRID_CLASS =
+  'flex gap-3 overflow-x-auto overflow-y-hidden pb-1 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:snap-none';
 
-const DISCOVERY_TRENDING_ROW_CLASS =
-  'flex gap-2.5 overflow-x-auto overflow-y-hidden pb-1 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-6 lg:gap-3 lg:overflow-visible lg:snap-none';
+const DESKTOP_ITEM_LIMIT = 8;
 
 function displayRating(rating: number | null | undefined): string | null {
   if (rating == null || Number(rating) === 0) return null;
@@ -32,7 +30,7 @@ function DiscoveryCarouselCard({
   fallbackIcon,
   rating,
   subtitle,
-  className = 'flex-shrink-0 w-[calc(52vw)] max-w-[210px] lg:w-full lg:max-w-none lg:flex-shrink',
+  className = 'flex-shrink-0 w-[calc(52vw)] max-w-[210px] snap-start lg:w-full lg:max-w-none',
   rank,
 }: {
   href: string;
@@ -51,29 +49,34 @@ function DiscoveryCarouselCard({
   return (
     <Link
       href={href}
-      className={`${className} rounded-xl overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform bg-wibe-card`}
+      className={`${className} overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md`}
     >
-      <div className="relative aspect-[2/3] w-full bg-gray-100 lg:aspect-[16/10] lg:max-h-[9.5rem]">
+      <div className="relative aspect-[2/3] w-full bg-gray-100 lg:aspect-[16/10] lg:max-h-[9rem]">
         <LazyItemCoverImage
           itemId={itemId}
           title={title}
           imageUrl={imageUrl}
           categorySlug={categorySlug}
           fallbackIcon={fallbackIcon ?? '📋'}
-          className="absolute inset-0 w-full h-full object-cover"
-          fallbackClassName="absolute inset-0 w-full h-full"
+          className="absolute inset-0 h-full w-full object-cover"
+          fallbackClassName="absolute inset-0 h-full w-full"
           coverLayout="grid"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"
+          aria-hidden
+        />
         {rank != null && rank <= 3 && (
-          <span className="absolute top-2 right-2 wibe-caption bg-warning text-white px-1.5 py-0.5 rounded-pill font-medium shadow-sm">
+          <span className="absolute right-2 top-2 wibe-caption rounded-pill bg-warning px-1.5 py-0.5 font-medium text-white shadow-sm">
             #{rank.toLocaleString('fa-IR')}
           </span>
         )}
-        <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white">
-          <h3 className="wibe-small font-semibold leading-snug line-clamp-2 drop-shadow-sm">{title}</h3>
+        <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug drop-shadow-sm">
+            {title}
+          </h3>
           {(ratingLabel || subtitle) && (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 wibe-caption text-white/90">
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-white/90">
               {ratingLabel && (
                 <span className="flex items-center gap-0.5">
                   <span>⭐</span>
@@ -90,16 +93,19 @@ function DiscoveryCarouselCard({
 }
 
 function CarouselSkeleton({
-  count = 3,
-  className = 'min-w-[calc(52vw)] w-[calc(52vw)] max-w-[210px] aspect-[2/3] lg:w-full lg:min-w-0 lg:max-w-none',
+  count = 4,
+  className = 'min-w-[calc(52vw)] w-[calc(52vw)] max-w-[210px] aspect-[2/3] lg:w-full lg:min-w-0 lg:max-w-none lg:aspect-[16/10]',
 }: {
   count?: number;
   className?: string;
 }) {
   return (
-    <div className="flex gap-3 overflow-hidden -mx-4 px-4 pb-1">
+    <div className={`${DISCOVERY_GRID_CLASS}`}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className={`${className} flex-shrink-0 rounded-xl bg-gray-200 animate-pulse`} />
+        <div
+          key={i}
+          className={`${className} flex-shrink-0 animate-pulse rounded-xl bg-gray-200`}
+        />
       ))}
     </div>
   );
@@ -167,41 +173,43 @@ export default function ItemDiscoverySection({
 
   return (
     <section className="pt-1 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
-      <div className="mb-3 flex items-end justify-between gap-3 border-b border-wibe/60 pb-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 text-right">
           <h2 className="wibe-h3 text-foreground">پیشنهاد برای تو</h2>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">{tabDescriptions[activeTab]}</p>
+          <p className="mt-0.5 wibe-caption text-wibe-secondary">
+            {tabDescriptions[activeTab]}
+          </p>
         </div>
+
+        {availableTabs.length > 1 && (
+          <div
+            className="flex shrink-0 gap-1 rounded-xl border border-wibe bg-wibe-surface p-1"
+            role="tablist"
+            aria-label="نوع پیشنهاد"
+          >
+            {availableTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all active:scale-[0.98] ${
+                  activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {availableTabs.length > 1 && (
-        <div
-          className="mb-4 flex gap-1.5 overflow-x-auto rounded-xl bg-gray-100/80 p-1 scrollbar-hide"
-          role="tablist"
-          aria-label="نوع پیشنهاد"
-        >
-          {availableTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-[0.98] ${
-                activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
-
       {isLoading ? (
-        <CarouselSkeleton count={activeTab === 'trending' ? 4 : 3} />
+        <CarouselSkeleton count={4} />
       ) : activeTab === 'similar' && hasSimilar ? (
-        <div className={DISCOVERY_ROW_CLASS}>
-          {similarItems.map((s) => (
+        <div className={DISCOVERY_GRID_CLASS}>
+          {similarItems.slice(0, DESKTOP_ITEM_LIMIT).map((s) => (
             <DiscoveryCarouselCard
               key={s.id}
               href={`/items/${s.id}`}
@@ -212,13 +220,12 @@ export default function ItemDiscoverySection({
               fallbackIcon={s.category?.icon ?? undefined}
               rating={s.rating}
               subtitle={s.category?.name ?? undefined}
-              className="flex-shrink-0 w-[calc(52vw)] max-w-[210px] snap-start lg:w-full lg:max-w-none"
             />
           ))}
         </div>
       ) : activeTab === 'saves' && hasSaves ? (
-        <div className={DISCOVERY_ROW_CLASS}>
-          {alsoLikedItems.map((a) => (
+        <div className={DISCOVERY_GRID_CLASS}>
+          {alsoLikedItems.slice(0, DESKTOP_ITEM_LIMIT).map((a) => (
             <DiscoveryCarouselCard
               key={a.id}
               href={`/items/${a.id}`}
@@ -233,8 +240,8 @@ export default function ItemDiscoverySection({
           ))}
         </div>
       ) : activeTab === 'trending' && hasTrending ? (
-        <div className={DISCOVERY_TRENDING_ROW_CLASS}>
-          {trendingItems.slice(0, 8).map((t, index) => (
+        <div className={DISCOVERY_GRID_CLASS}>
+          {trendingItems.slice(0, DESKTOP_ITEM_LIMIT).map((t, index) => (
             <DiscoveryCarouselCard
               key={t.id}
               href={`/items/${t.id}`}
@@ -249,7 +256,7 @@ export default function ItemDiscoverySection({
           ))}
         </div>
       ) : (
-        <div className="py-6 px-4 rounded-xl bg-gray-50 border border-wibe/80 text-center">
+        <div className="rounded-xl border border-wibe/80 bg-gray-50 py-6 text-center">
           <p className="wibe-small text-wibe-secondary">فعلاً پیشنهادی برای این بخش نداریم</p>
         </div>
       )}

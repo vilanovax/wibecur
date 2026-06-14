@@ -189,7 +189,7 @@ export default async function ItemDetailPage({
 
   return (
     <div className="bg-wibe-surface">
-      <Header title={item.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
+      <Header showBack hideTitleOnDesktop showDesktopSearch={false} />
       <ItemDetailClient item={serializedItem} />
       <BottomNav />
     </div>

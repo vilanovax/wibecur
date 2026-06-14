@@ -16,6 +16,8 @@ import {
   shouldShowSeparateTipCard,
 } from '@/lib/item-metadata-display';
 import ItemTipCard from '@/components/shared/ItemTipCard';
+import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
+import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
 import {
   entryKindBadgeLabel,
   entryKindIcon,
@@ -156,13 +158,26 @@ function PreviewActions({
   className = '',
   layout = 'stacked',
   externalUrl,
+  categorySlug,
 }: {
   item: ItemPreviewData;
   onClose: () => void;
   className?: string;
   layout?: 'stacked' | 'inline';
   externalUrl?: string | null;
+  categorySlug?: string | null;
 }) {
+  const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
+
+  const quickActionsRow =
+    quickActions.length > 0 ? (
+      <ListItemQuickActions
+        actions={quickActions}
+        size="md"
+        className={layout === 'inline' ? 'shrink-0' : 'justify-start'}
+      />
+    ) : null;
+
   const actionButtons = (
     <>
       <ItemSaveButton itemId={item.id} />
@@ -203,16 +218,20 @@ function PreviewActions({
 
   if (layout === 'inline') {
     return (
-      <div className={`flex items-center gap-2 ${className}`} aria-label="عملیات آیتم">
-        {actionButtons}
-        {externalLink}
-        {fullPageLink}
+      <div className={`flex flex-col gap-2 ${className}`}>
+        {quickActionsRow}
+        <div className="flex items-center gap-2" aria-label="عملیات آیتم">
+          {actionButtons}
+          {externalLink}
+          {fullPageLink}
+        </div>
       </div>
     );
   }
 
   return (
     <div className={`flex flex-col gap-2.5 ${className}`}>
+      {quickActionsRow}
       <div className="flex items-center justify-start gap-2.5" aria-label="ذخیره و پسندیدن">
         {actionButtons}
       </div>
@@ -343,6 +362,7 @@ export default function ItemPreviewSheet({
                   item={item}
                   onClose={onClose}
                   externalUrl={item.externalUrl}
+                  categorySlug={itemCategorySlug}
                 />
               </div>
             </div>
@@ -389,6 +409,7 @@ export default function ItemPreviewSheet({
                     item={item}
                     onClose={onClose}
                     externalUrl={item.externalUrl}
+                    categorySlug={itemCategorySlug}
                   />
                 </div>
               </div>
@@ -407,6 +428,7 @@ export default function ItemPreviewSheet({
               onClose={onClose}
               layout="inline"
               externalUrl={item.externalUrl}
+              categorySlug={itemCategorySlug}
             />
           </div>
         </div>

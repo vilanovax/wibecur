@@ -8,6 +8,9 @@ import CuratorBadge from '@/components/shared/CuratorBadge';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 import type { LeaderboardRow, LeaderboardCategoryOption } from '@/lib/leaderboard';
+import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
+import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
+import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 
 type TabType = 'global' | 'rising' | 'category' | 'monthly';
 
@@ -164,8 +167,15 @@ export default function LeaderboardClient({
     { id: 'monthly', label: 'ماهانه', icon: Calendar },
   ];
 
+  const breadcrumbItems = [
+    { label: 'خانه', href: '/' },
+    { label: 'رتبه‌بندی' },
+  ];
+
   return (
     <div className="px-4 py-4 lg:max-w-3xl lg:mx-auto">
+      <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
+      <PageBreadcrumb className="mb-3" items={breadcrumbItems} />
       <div className="flex items-center gap-2 mb-4">
         <Trophy className="w-6 h-6 text-warning flex-shrink-0" />
         <h1 className="wibe-h2">رتبه‌بندی کریتورها</h1>

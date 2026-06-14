@@ -2,6 +2,9 @@
 const path = require('path');
 const { withSentryConfig } = require('@sentry/nextjs');
 
+/** هر build یک شناسهٔ تازه — برای bust کردن cache مرورگر بعد از deploy/rebuild */
+const BUILD_ID = process.env.BUILD_ID ?? `build-${Date.now()}`;
+
 // next-pwa با Turbopack (پیش‌فرض Next.js 16) سازگار نیست؛ در صورت نیاز به PWA از راهنمای Next.js استفاده کنید.
 let withPWA = (config) => config;
 
@@ -19,6 +22,10 @@ try {
 
 const nextConfig = {
   reactStrictMode: true,
+  generateBuildId: async () => BUILD_ID,
+  env: {
+    NEXT_PUBLIC_BUILD_ID: BUILD_ID,
+  },
   async headers() {
     return [
       {

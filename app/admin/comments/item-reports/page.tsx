@@ -2,6 +2,7 @@ import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCachedCommentsHubStats } from '@/lib/admin/comments-hub-stats-cached';
+import { buildCommentsNavStats } from '@/lib/admin/comments-nav-stats';
 import { parseCommentsPageSize } from '@/lib/admin/comments-page-size';
 import CommentsPaginationBar from '@/components/admin/comments/CommentsPaginationBar';
 import ItemReportsPageClient from './ItemReportsPageClient';
@@ -72,11 +73,7 @@ export default async function ItemReportsPage({
         reports={reports}
         counts={{ open: openCount, resolved: resolvedCount, total: totalAll }}
         activeFilter={activeFilter}
-        navStats={{
-          pending: hubStats.comments.pending,
-          commentReportsOpen: hubStats.commentReports.open,
-          itemReportsOpen: hubStats.itemReportsOpen,
-        }}
+        navStats={buildCommentsNavStats(hubStats)}
       />
       <CommentsPaginationBar
         currentPage={currentPage}
