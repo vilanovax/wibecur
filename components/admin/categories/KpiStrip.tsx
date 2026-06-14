@@ -55,7 +55,7 @@ export default function KpiStrip({
   insightLine,
 }: KpiStripProps) {
   return (
-    <div className="space-y-2" dir="rtl">
+    <div className="space-y-2 min-w-0" dir="rtl">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard title="کل دسته‌ها" value={totalCategories} />
         <KpiCard title="فعال" value={activeCategories} />
@@ -63,7 +63,7 @@ export default function KpiStrip({
         <KpiCard title="میانگین تعامل" value={avgEngagementRate} />
       </div>
       {insightLine && (
-        <p className="text-sm text-[var(--color-text-muted)] px-1 leading-relaxed">{insightLine}</p>
+        <p className="text-sm text-[var(--color-text-muted)] px-1 leading-relaxed break-words min-w-0">{insightLine}</p>
       )}
     </div>
   );

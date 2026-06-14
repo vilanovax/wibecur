@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import {
@@ -7,6 +8,7 @@ import {
   isCatalogClientReady,
 } from '@/lib/catalog-items';
 import { getSuggestionsStats } from '@/lib/admin/suggestions-stats';
+import { ADMIN_LISTS_CACHE_SECONDS, ADMIN_CACHE_TAGS } from '@/lib/admin/admin-cache';
 
 export type ContentHubStats = {
   activeLists: number;
@@ -84,5 +86,16 @@ export async function getContentHubStats(): Promise<ContentHubStats> {
     insightLine: parts.length > 0 ? parts.join(' · ') : 'همه چیز مرتب به نظر می‌رسد',
   };
 }
+
+/**
+ * نسخهٔ کش‌شده — getContentHubStats روی هر لود صفحهٔ لیست‌ها ~۷ کوئری (شامل
+ * count کل‌جدولِ catalog_items و اسکن گروه‌های تکراری) می‌زد و کشِ دادهٔ لیست‌ها
+ * را خنثی می‌کرد. با tag `admin-lists` پس از mutation ابطال می‌شود.
+ */
+export const getCachedContentHubStats = unstable_cache(
+  getContentHubStats,
+  ['admin-content-hub-stats'],
+  { revalidate: ADMIN_LISTS_CACHE_SECONDS, tags: [ADMIN_CACHE_TAGS.lists] }
+);
 
 export { CatalogNotReadyError };

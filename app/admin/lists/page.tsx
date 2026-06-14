@@ -2,7 +2,7 @@ import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCachedListsIntelligenceData } from '@/lib/admin/lists-intelligence-cached';
-import { getContentHubStats } from '@/lib/admin/content-hub-stats';
+import { getCachedContentHubStats } from '@/lib/admin/content-hub-stats';
 import { loadCatalogPageData } from '@/lib/admin/catalog-page-data';
 import { isCatalogClientReady } from '@/lib/catalog-items';
 import AdminDatabaseUnavailable from '@/components/admin/shared/AdminDatabaseUnavailable';
@@ -52,7 +52,7 @@ export default async function AdminListsPage({
   const initialCategoryId = trash ? 'all' : await resolveCategoryId(params.category);
   const currentPage = Math.max(1, parseInt(params.page ?? '1', 10) || 1);
 
-  const hubStats = await getContentHubStats();
+  const hubStats = await getCachedContentHubStats();
 
   if (view === 'import') {
     const [categories, lists] = await Promise.all([
