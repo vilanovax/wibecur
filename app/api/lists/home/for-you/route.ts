@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -37,7 +38,7 @@ export async function GET() {
     if (fb) return fb;
     console.error('Home for-you error:', error);
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message ?? 'خطا در دریافت پیشنهادها' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت پیشنهادها') },
       { status: 500 }
     );
   }

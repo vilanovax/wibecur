@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     console.error('Error searching lists:', error);
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message || 'خطا در جستجو' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در جستجو') },
       { status: 500 }
     );
   }

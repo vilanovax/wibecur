@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { resolveSessionUserId, tryApiDbFallback } from '@/lib/api-db';
 import { fetchExploreData } from '@/lib/curated/explore-data';
@@ -46,7 +47,7 @@ export async function GET() {
     }
     console.error('Error fetching explore data:', error);
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message ?? 'خطا در دریافت اکسپلور' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت اکسپلور') },
       { status: 500 }
     );
   }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { logSearchQuery } from '@/lib/search-analytics';
 import { normalizeSearchQuery, SEARCH_MIN_LENGTH } from '@/lib/list-search';
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: { logged: true } });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
+    const message = getClientErrorMessage(error, 'Internal server error');
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

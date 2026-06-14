@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -126,7 +127,7 @@ export async function POST(
   } catch (error: any) {
     console.error('Error voting on comment:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در ثبت رای' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در ثبت رای') },
       { status: 500 }
     );
   }

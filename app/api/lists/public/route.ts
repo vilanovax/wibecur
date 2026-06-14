@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { tryApiDbFallback } from '@/lib/api-db';
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
     console.error('Error fetching public lists:', error);
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message || 'خطا در دریافت لیست‌ها' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت لیست‌ها') },
       { status: 500 }
     );
   }

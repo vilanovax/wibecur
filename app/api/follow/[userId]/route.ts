@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 
@@ -65,7 +66,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error('Follow error:', error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'خطا در دنبال کردن' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دنبال کردن') },
       { status: 500 }
     );
   }
@@ -101,7 +102,7 @@ export async function DELETE(
   } catch (error: unknown) {
     console.error('Unfollow error:', error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'خطا در لغو دنبال کردن' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در لغو دنبال کردن') },
       { status: 500 }
     );
   }
@@ -138,7 +139,7 @@ export async function GET(
   } catch (error: unknown) {
     console.error('Follow status error:', error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'خطا' },
+      { success: false, error: getClientErrorMessage(error, 'خطا') },
       { status: 500 }
     );
   }

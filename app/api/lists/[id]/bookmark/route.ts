@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
@@ -119,7 +120,7 @@ export async function POST(
   } catch (error: any) {
     console.error('Error toggling bookmark:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در بوک‌مارک کردن لیست' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در بوک‌مارک کردن لیست') },
       { status: 500 }
     );
   }

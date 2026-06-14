@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import type { LeaderboardType } from '@/lib/leaderboard';
 import { getCachedLeaderboard } from '@/lib/leaderboard-cached';
 
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
   } catch (e) {
     console.error('Leaderboard error:', e);
     return NextResponse.json(
-      { success: false, error: e instanceof Error ? e.message : 'Internal error' },
+      { success: false, error: getClientErrorMessage(e, 'Internal error') },
       { status: 500 }
     );
   }

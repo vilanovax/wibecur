@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
@@ -156,7 +157,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'خطا در لایک کردن آیتم',
+        error: getClientErrorMessage(error, 'خطا در لایک کردن آیتم'),
       },
       { status: 500 }
     );
@@ -226,7 +227,7 @@ export async function GET(
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'خطا در دریافت وضعیت لایک',
+        error: getClientErrorMessage(error, 'خطا در دریافت وضعیت لایک'),
       },
       { status: 500 }
     );

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { AvatarType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -45,7 +46,7 @@ export async function GET(_request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
+    const message = getClientErrorMessage(error, 'Internal server error');
     console.error('Error fetching user profile:', message);
 
     if (session?.user) {
@@ -200,6 +201,7 @@ export async function PUT(request: NextRequest) {
         data: { user: updatedUser },
       });
     } catch (updateErr: unknown) {
+      // پیام خام فقط برای تشخیص داخلیِ ناسازگاری اسکیما — به کلاینت ارسال نمی‌شود.
       const msg = updateErr instanceof Error ? updateErr.message : '';
       const isUnknownField = (updateErr as { name?: string }).name === 'PrismaClientValidationError' || msg.includes('Unknown field') || msg.includes('column');
       // وقتی کلاینت Prisma با اسکیما همگام نیست (مثلاً prisma generate نشده)، فقط فیلدهای پایه آپدیت می‌شوند
@@ -263,7 +265,7 @@ export async function PUT(request: NextRequest) {
       throw updateErr;
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
+    const message = getClientErrorMessage(error, 'Internal server error');
     console.error('Error updating user profile:', error);
     if (isDbUnavailableError(error)) {
       return NextResponse.json(

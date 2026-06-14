@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -191,7 +192,7 @@ export async function GET(
   } catch (error: any) {
     console.error('Error fetching list comments:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در دریافت کامنت‌ها' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت کامنت‌ها') },
       { status: 500 }
     );
   }
@@ -506,7 +507,7 @@ export async function POST(
   } catch (error: any) {
     console.error('Error creating list comment:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در ثبت کامنت' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در ثبت کامنت') },
       { status: 500 }
     );
   }

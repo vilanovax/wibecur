@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { getTrendingSearchQueries } from '@/lib/search-analytics';
 
 /** GET /api/search/trending?limit=6 — پرجستجوهای اخیر */
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     return response;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
+    const message = getClientErrorMessage(error, 'Internal server error');
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

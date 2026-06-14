@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 
@@ -24,7 +25,7 @@ export async function GET() {
   } catch (error: unknown) {
     console.error('Following list error:', error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'خطا' },
+      { success: false, error: getClientErrorMessage(error, 'خطا') },
       { status: 500 }
     );
   }
