@@ -28,3 +28,37 @@ export async function checkRateLimit(identifier: string): Promise<{ success: boo
   const { success } = await rl.limit(identifier);
   return { success };
 }
+
+/**
+ * Rate limit سفارشی به‌ازای اکشن/کاربر (مثلاً endpointهای گران: آپلود، AI، جستجوی تصویر).
+ * نمونه‌های Ratelimit بر اساس (max:window) کش می‌شوند. اگر Upstash تنظیم نباشد، غیرفعال است.
+ */
+const actionLimiters = new Map<string, Ratelimit>();
+
+function getActionRatelimit(max: number, window: `${number} ${'s' | 'm' | 'h'}`) {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  const key = `${max}:${window}`;
+  let rl = actionLimiters.get(key);
+  if (!rl) {
+    rl = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(max, window),
+      analytics: true,
+    });
+    actionLimiters.set(key, rl);
+  }
+  return rl;
+}
+
+export async function checkActionRateLimit(
+  identifier: string,
+  max: number,
+  window: `${number} ${'s' | 'm' | 'h'}`
+): Promise<{ success: boolean }> {
+  const rl = getActionRatelimit(max, window);
+  if (!rl) return { success: true };
+  const { success } = await rl.limit(identifier);
+  return { success };
+}

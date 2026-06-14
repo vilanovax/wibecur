@@ -6,14 +6,13 @@ import { resolveSessionUserId } from '@/lib/api-db';
 import { slugify } from '@/lib/utils/slug';
 import { nanoid } from 'nanoid';
 import { ensureImageInLiara } from '@/lib/object-storage';
+import { logServerError } from '@/lib/api-error';
 
 // POST /api/user/lists - ایجاد لیست شخصی
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/user/lists - Request received');
     const session = await auth();
-    console.log('Session:', session ? 'exists' : 'missing', session?.user?.email);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { error: 'احراز هویت نشده است' },
@@ -32,9 +31,7 @@ export async function POST(request: NextRequest) {
     let body;
     try {
       body = await request.json();
-      console.log('Request body:', body);
-    } catch (error) {
-      console.error('Error parsing request body:', error);
+    } catch {
       return NextResponse.json(
         { error: 'خطا در پردازش داده‌های ارسالی' },
         { status: 400 }
@@ -42,10 +39,9 @@ export async function POST(request: NextRequest) {
     }
 
     const { title, description, coverImage, commentsEnabled } = body;
-    console.log('Extracted fields:', { title, hasDescription: !!description, hasCoverImage: !!coverImage });
 
     // Validate required fields
-    if (!title || !title.trim()) {
+    if (!title || typeof title !== 'string' || !title.trim()) {
       return NextResponse.json(
         { error: 'عنوان الزامی است' },
         { status: 400 }
@@ -119,56 +115,31 @@ export async function POST(request: NextRequest) {
 
     // Create list (isPublic defaults to false for user-created lists, categoryId is null)
     // Note: updatedAt is managed by Prisma @updatedAt directive
-    console.log('Creating list with data:', {
-      title: title.trim(),
-      slug,
-      categoryId: null,
-      userId,
-      hasDescription: !!description,
-      hasCoverImage: !!finalCoverImage,
-      isPublic: false,
-      isActive: true, // Private lists are always active
-      commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
-    });
-    
-    let list;
-    try {
-      list = await dbQuery(() =>
-        prisma.lists.create({
-          data: {
-            id: nanoid(),
-            title: title.trim(),
-            slug,
-            description: description ? description.trim() : null,
-            coverImage: finalCoverImage,
-            categoryId: null, // Personal lists don't have categories
-            userId,
-            isPublic: false, // User lists start as private
-            isActive: true, // Private lists are always active
-            commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
-          },
-          include: {
-            users: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
+    const list = await dbQuery(() =>
+      prisma.lists.create({
+        data: {
+          id: nanoid(),
+          title: title.trim(),
+          slug,
+          description: typeof description === 'string' ? description.trim() : null,
+          coverImage: finalCoverImage,
+          categoryId: null, // Personal lists don't have categories
+          userId,
+          isPublic: false, // User lists start as private
+          isActive: true, // Private lists are always active
+          commentsEnabled: typeof commentsEnabled === 'boolean' ? commentsEnabled : true,
+        },
+        include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
             },
           },
-        })
-      );
-      console.log('List created successfully:', list.id);
-    } catch (createError: any) {
-      console.error('Error in prisma.lists.create:', createError);
-      console.error('Create error details:', {
-        message: createError.message,
-        code: createError.code,
-        meta: createError.meta,
-      });
-      throw createError;
-    }
+        },
+      })
+    );
 
     return NextResponse.json(
       {
@@ -179,37 +150,19 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    console.error('Error creating user list:', error);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
-      stack: error.stack,
-      name: error.name,
-    });
-    
-    // More specific error messages
+  } catch (error: unknown) {
+    logServerError('user/lists POST', error);
+
+    // پیام امن و عمومی؛ فقط کدهای شناخته‌شدهٔ Prisma پیام اختصاصی می‌گیرند.
+    const code = (error as { code?: string })?.code;
     let errorMessage = 'خطا در ایجاد لیست';
-    if (error.code === 'P2002') {
+    if (code === 'P2002') {
       errorMessage = 'این slug قبلاً استفاده شده است';
-    } else if (error.code === 'P2003') {
+    } else if (code === 'P2003') {
       errorMessage = 'دسته‌بندی یا کاربر معتبر نیست';
-    } else if (error.message) {
-      errorMessage = error.message;
     }
-    
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? {
-          code: error.code,
-          meta: error.meta,
-          name: error.name,
-        } : undefined,
-      },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
@@ -264,10 +217,10 @@ export async function GET(request: NextRequest) {
       success: true,
       data: lists,
     });
-  } catch (error: any) {
-    console.error('Error fetching user lists:', error);
+  } catch (error: unknown) {
+    logServerError('user/lists GET', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در دریافت لیست‌ها' },
+      { error: 'خطا در دریافت لیست‌ها' },
       { status: 500 }
     );
   }

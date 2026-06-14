@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { createAdminOpenAIChatCompletion, formatOpenAIError } from '@/lib/openai-chat';
+import { checkActionRateLimit } from '@/lib/rate-limit';
+
+const MAX_TITLE_LEN = 200;
+const MAX_PLOT_LEN = 4000;
 
 // POST /api/items/generate-description - تولید توضیحات با AI (برای کاربران لاگین شده)
 export async function POST(request: NextRequest) {
@@ -14,12 +18,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // محدودیت به‌ازای کاربر — هر فراخوانی به OpenAI پولی هزینه دارد.
+    const { success } = await checkActionRateLimit(
+      `gen-desc:${session.user.id ?? session.user.email}`,
+      15,
+      '1 m'
+    );
+    if (!success) {
+      return NextResponse.json(
+        { error: 'درخواست‌های زیاد — کمی صبر کنید.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { title, categorySlug, metadata, plot } = body;
 
-    if (!title || !categorySlug) {
+    if (!title || typeof title !== 'string' || !categorySlug || typeof categorySlug !== 'string') {
       return NextResponse.json(
         { error: 'عنوان و دسته‌بندی الزامی هستند' },
+        { status: 400 }
+      );
+    }
+
+    if (title.length > MAX_TITLE_LEN || (typeof plot === 'string' && plot.length > MAX_PLOT_LEN)) {
+      return NextResponse.json(
+        { error: 'ورودی بیش از حد طولانی است' },
         { status: 400 }
       );
     }

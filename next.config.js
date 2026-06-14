@@ -27,7 +27,27 @@ const nextConfig = {
     NEXT_PUBLIC_BUILD_ID: BUILD_ID,
   },
   async headers() {
+    // هدرهای امنیتی سراسری. CSP عمداً اینجا نیست چون نیاز به تست دقیق با
+    // Sentry/اسکریپت‌های inline دارد (فاز بعد).
+    const securityHeaders = [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'X-DNS-Prefetch-Control', value: 'on' },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+      },
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      },
+    ];
     return [
+      {
+        source: '/:path*',
+        headers: securityHeaders,
+      },
       {
         source: '/sw.js',
         headers: [
@@ -38,6 +58,14 @@ const nextConfig = {
     ];
   },
   images: {
+    // فرمت‌های مدرن برای کاهش حجم (وقتی تصاویر از next/image عبور کنند).
+    formats: ['image/avif', 'image/webp'],
+    // SVG ریموت غیرفعال — جلوگیری از XSS از طریق SVG اسکریپت‌دار.
+    dangerouslyAllowSVG: false,
+    contentDispositionType: 'attachment',
+    // یادداشت امنیتی: `hostname: '**'` هر هاست HTTPS را برای بهینه‌ساز مجاز می‌کند
+    // (بردار SSRF/هزینه از طریق /_next/image). محدودسازی به allowlist باید همراه با
+    // مهاجرت ImageWithFallback به next/image و ممیزی هاست‌های ذخیره‌شده در DB انجام شود (فاز ۲).
     remotePatterns: [
       {
         protocol: 'http',

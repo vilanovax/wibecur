@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { computeAndUpsertUserCategoryAffinity } from '@/lib/discovery';
-
-const CRON_SECRET = process.env.CRON_SECRET || process.env.REVALIDATE_SECRET;
+import { authorizeCron } from '@/lib/cron-auth';
+import { logServerError } from '@/lib/api-error';
 
 /** POST /api/cron/discovery — به‌روزرسانی وزن دسته‌ای کاربران (روزانه). */
 export async function POST(request: NextRequest) {
-  try {
-    const authHeader = request.headers.get('authorization');
-    const secret = authHeader?.replace(/^Bearer\s+/i, '').trim();
-    if (CRON_SECRET && secret !== CRON_SECRET) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
+  const authResult = authorizeCron(request);
+  if (!authResult.ok) {
+    return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status });
+  }
 
+  try {
     const userIds = await prisma.bookmarks.findMany({
       select: { userId: true },
       distinct: ['userId'],
@@ -39,9 +38,9 @@ export async function POST(request: NextRequest) {
       message: `Discovery affinity updated for ${done} users`,
     });
   } catch (e) {
-    console.error('Cron discovery error:', e);
+    logServerError('cron/discovery', e);
     return NextResponse.json(
-      { success: false, error: e instanceof Error ? e.message : 'Internal error' },
+      { success: false, error: 'Internal error' },
       { status: 500 }
     );
   }

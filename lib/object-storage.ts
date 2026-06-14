@@ -16,6 +16,11 @@ import {
   normalizeImageUrlForStorage,
 } from './image-url-sanitize';
 import { isTmdbImageUrl } from './image-url-policy';
+import {
+  isPublicHttpUrl,
+  ssrfSafeHttpAgent,
+  ssrfSafeHttpsAgent,
+} from './ssrf-guard';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -148,6 +153,15 @@ export async function uploadImageFromUrlDetailed(
       };
     }
 
+    // محافظ SSRF — قبل از هر fetch سمت سرور آدرس را اعتبارسنجی کن.
+    if (!isPublicHttpUrl(imageUrl)) {
+      return {
+        ok: false,
+        code: 'download_failed',
+        error: 'آدرس تصویر نامعتبر یا غیرمجاز است',
+      };
+    }
+
     if (isDev) console.log('Downloading image from:', imageUrl);
 
     let response;
@@ -155,6 +169,11 @@ export async function uploadImageFromUrlDetailed(
       response = await axios.get(imageUrl, {
         responseType: 'arraybuffer',
         timeout: 30000,
+        // اعتبارسنجی IP مقصد در هر اتصال/redirect توسط lookup سفارشی
+        httpAgent: ssrfSafeHttpAgent,
+        httpsAgent: ssrfSafeHttpsAgent,
+        maxRedirects: 3,
+        maxContentLength: 25 * 1024 * 1024, // سقف ۲۵MB
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
