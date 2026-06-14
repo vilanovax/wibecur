@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { requireAdmin } from '@/lib/auth';
-import { getDashboardData } from '@/lib/admin/dashboard-data';
+import { getCachedDashboardData } from '@/lib/admin/dashboard-data-cached';
 import { parseDashboardRange } from '@/lib/admin/dashboard-range';
 import DashboardContent from '@/components/admin/dashboard/DashboardContent';
 
@@ -30,7 +30,7 @@ export default async function AdminDashboardPage({
   await requireAdmin();
   const { range: rangeParam } = await searchParams;
   const range = parseDashboardRange(rangeParam);
-  const data = await getDashboardData(range);
+  const data = await getCachedDashboardData(range);
 
   return (
     <Suspense fallback={<DashboardSkeleton />}>

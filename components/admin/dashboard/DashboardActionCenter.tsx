@@ -109,6 +109,10 @@ export default function DashboardActionCenter({
   }
 
   const actionTotal = primary.reduce((s, p) => s + p.count, 0);
+  // کارت‌های بزرگ فقط برای صف‌های دارای مورد؛ صف‌های خالی به ردیف chip فشرده می‌روند
+  // تا فوریتِ موارد واقعی رقیق نشود.
+  const activePrimary = primary.filter((p) => p.count > 0);
+  const emptyPrimary = primary.filter((p) => p.count === 0);
 
   const secondary = [
     {
@@ -185,37 +189,57 @@ export default function DashboardActionCenter({
         </div>
       ) : (
         <>
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {primary.map((item) => {
-              const Icon = PRIMARY_ICONS[item.iconKey] ?? MessageSquare;
-              const isEmpty = item.count === 0;
-              return (
+          {activePrimary.length > 0 && (
+            <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {activePrimary.map((item) => {
+                const Icon = PRIMARY_ICONS[item.iconKey] ?? MessageSquare;
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={`rounded-xl border bg-[var(--color-surface)] p-4 transition-all hover:shadow-md hover:border-[var(--primary)]/40 ring-1 ${severityRing[item.severity]}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="p-2 rounded-lg bg-[var(--color-bg)]">
+                        <Icon className="w-5 h-5 text-[var(--color-text)]" />
+                      </span>
+                      <ChevronLeft className="w-4 h-4 text-[var(--color-text-muted)] rotate-180" />
+                    </div>
+                    <p className="mt-3 text-2xl font-bold tabular-nums text-[var(--color-text)]">
+                      {item.count.toLocaleString('fa-IR')}
+                    </p>
+                    <p className="text-sm font-medium text-[var(--color-text)] mt-1">
+                      {item.label}
+                    </p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                      نیازمند اقدام
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          {/* صف‌های خالی — chip فشرده و کم‌رنگ، نه کارت تمام‌اندازه */}
+          {emptyPrimary.length > 0 && (
+            <div
+              className={`px-4 sm:px-6 ${activePrimary.length > 0 ? 'pb-4' : 'py-4'} flex flex-wrap items-center gap-2`}
+            >
+              <span className="text-xs text-[var(--color-text-muted)] shrink-0">
+                صف‌های خالی:
+              </span>
+              {emptyPrimary.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`rounded-xl border bg-[var(--color-surface)] p-4 transition-all hover:shadow-md hover:border-[var(--primary)]/40 ring-1 ${
-                    isEmpty ? 'border-[var(--color-border)] opacity-75' : severityRing[item.severity]
-                  }`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--primary)]/30 transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="p-2 rounded-lg bg-[var(--color-bg)]">
-                      <Icon className="w-5 h-5 text-[var(--color-text)]" />
-                    </span>
-                    <ChevronLeft className="w-4 h-4 text-[var(--color-text-muted)] rotate-180" />
-                  </div>
-                  <p className="mt-3 text-2xl font-bold tabular-nums text-[var(--color-text)]">
-                    {item.count.toLocaleString('fa-IR')}
-                  </p>
-                  <p className="text-sm font-medium text-[var(--color-text)] mt-1">
-                    {item.label}
-                  </p>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                    {isEmpty ? 'بدون مورد باز' : 'نیازمند اقدام'}
-                  </p>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  {item.label}
                 </Link>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
 
           {(secondary.length > 0 || extraRisks.length > 0) && (
             <div className="px-4 sm:px-6 pb-4 flex flex-col gap-3">
