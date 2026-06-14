@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
@@ -106,3 +107,14 @@ export function serializeLiveActivity(items: LiveActivityItem[]) {
     createdAt: item.createdAt.toISOString(),
   }));
 }
+
+/**
+ * نسخهٔ کش‌شدهٔ مشترک — هم poll route و هم SSE stream از این استفاده می‌کنند تا
+ * چند ادمینِ هم‌زمان یک چرخهٔ کوئری (هر ۱۰ث) را به‌اشتراک بگذارند، نه اینکه هر
+ * اتصال SSE هر ۱۲ث ۴ کوئری خام بزند.
+ */
+export const getCachedLiveActivity = unstable_cache(
+  async () => serializeLiveActivity(await getLiveActivityData()),
+  ['admin-live-activity'],
+  { revalidate: 10, tags: ['admin-live'] }
+);

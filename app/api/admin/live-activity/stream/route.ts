@@ -1,10 +1,14 @@
 import { checkAdminAuth } from '@/lib/auth';
-import { getLiveActivityData, serializeLiveActivity } from '@/lib/admin/live-activity';
+import { getCachedLiveActivity } from '@/lib/admin/live-activity';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const PUSH_INTERVAL_MS = 12_000;
+const HEARTBEAT_MS = 20_000;
+// بستن دوره‌ای اتصال تا روی serverless/پراکسی، اتصال‌های idle انباشته/مرده نشوند؛
+// مرورگر به‌صورت خودکار دوباره وصل می‌شود (EventSource).
+const MAX_DURATION_MS = 5 * 60_000;
 
 export async function GET(request: Request) {
   const session = await checkAdminAuth();
@@ -13,28 +17,57 @@ export async function GET(request: Request) {
   }
 
   const encoder = new TextEncoder();
-  let intervalId: ReturnType<typeof setInterval> | undefined;
+  let pushId: ReturnType<typeof setInterval> | undefined;
+  let heartbeatId: ReturnType<typeof setInterval> | undefined;
+  let maxTimer: ReturnType<typeof setTimeout> | undefined;
   let closed = false;
 
   const stream = new ReadableStream({
     async start(controller) {
+      const cleanup = () => {
+        closed = true;
+        if (pushId) clearInterval(pushId);
+        if (heartbeatId) clearInterval(heartbeatId);
+        if (maxTimer) clearTimeout(maxTimer);
+      };
+      const safeEnqueue = (chunk: string) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(chunk));
+        } catch {
+          cleanup();
+        }
+      };
+
+      // فاصلهٔ تلاش مجدد سمت کلاینت
+      safeEnqueue('retry: 5000\n\n');
+
       const push = async () => {
         if (closed) return;
         try {
-          const data = serializeLiveActivity(await getLiveActivityData());
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ data })}\n\n`));
+          const data = await getCachedLiveActivity();
+          safeEnqueue(`data: ${JSON.stringify({ data })}\n\n`);
         } catch (err) {
           console.error('Live activity stream error:', err);
-          controller.enqueue(encoder.encode(`event: error\ndata: {}\n\n`));
+          safeEnqueue('event: error\ndata: {}\n\n');
         }
       };
 
       await push();
-      intervalId = setInterval(() => void push(), PUSH_INTERVAL_MS);
+      pushId = setInterval(() => void push(), PUSH_INTERVAL_MS);
+      // heartbeat تا اتصال idle توسط پراکسی کشته نشود
+      heartbeatId = setInterval(() => safeEnqueue(': keepalive\n\n'), HEARTBEAT_MS);
+      maxTimer = setTimeout(() => {
+        cleanup();
+        try {
+          controller.close();
+        } catch {
+          /* already closed */
+        }
+      }, MAX_DURATION_MS);
 
       request.signal.addEventListener('abort', () => {
-        closed = true;
-        if (intervalId) clearInterval(intervalId);
+        cleanup();
         try {
           controller.close();
         } catch {
@@ -44,7 +77,9 @@ export async function GET(request: Request) {
     },
     cancel() {
       closed = true;
-      if (intervalId) clearInterval(intervalId);
+      if (pushId) clearInterval(pushId);
+      if (heartbeatId) clearInterval(heartbeatId);
+      if (maxTimer) clearTimeout(maxTimer);
     },
   });
 

@@ -98,6 +98,9 @@ export default function PulseDashboardClient() {
     queryKey: ['admin', 'pulse'],
     queryFn: fetchPulseData,
     staleTime: 60 * 1000,
+    // داده واقعاً «زنده» شود — هر ۶۰ث، اما فقط وقتی تب در پیش‌زمینه است
+    refetchInterval: 60 * 1000,
+    refetchIntervalInBackground: false,
   });
 
   const overview = data?.overview ?? null;

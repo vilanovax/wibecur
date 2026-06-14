@@ -35,7 +35,7 @@ export default function PulsePageToolbar({
           <Activity className="h-5 w-5 shrink-0 text-violet-600" />
           <h1 className="text-lg font-bold text-admin-text-primary truncate">پالس وایب</h1>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
           <LiveStatusBar
             activeUsers={activeUsers}
             interactions24h={interactions24h}

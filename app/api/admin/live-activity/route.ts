@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
-import { unstable_cache } from 'next/cache';
 import { checkAdminAuth } from '@/lib/auth';
-import { getLiveActivityData, serializeLiveActivity } from '@/lib/admin/live-activity';
-
-const CACHE_SECONDS = 10;
+import { getCachedLiveActivity } from '@/lib/admin/live-activity';
 
 export async function GET() {
   try {
@@ -11,12 +8,7 @@ export async function GET() {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const getCached = unstable_cache(
-      async () => serializeLiveActivity(await getLiveActivityData()),
-      ['admin-live-activity'],
-      { revalidate: CACHE_SECONDS, tags: ['admin-live'] }
-    );
-    const data = await getCached();
+    const data = await getCachedLiveActivity();
     return NextResponse.json({ data }, { status: 200 });
   } catch (err) {
     console.error('Live activity error:', err);
