@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { checkAdminAuth } from '@/lib/auth';
@@ -16,7 +17,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const data = await dbQuery(async () => {
+    // محاسبهٔ KPI بسیار سنگین است (~۸۰+ کوئری). کش ۲ دقیقه‌ای تا هر ناوبری/remount
+    // کل تجمیع را دوباره اجرا نکند. برای ابطال: revalidateTag('admin-kpi').
+    const getCachedGrowth = unstable_cache(
+      async () => dbQuery(async () => {
       const now = new Date();
       const todayStart = startOfDay(now);
       const weekStart = new Date(now);
@@ -245,7 +249,11 @@ export async function GET() {
         creatorStats,
         activityFeed,
       };
-    });
+      }),
+      ['admin-kpi-growth'],
+      { revalidate: 120, tags: ['admin-kpi'] }
+    );
+    const data = await getCachedGrowth();
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (err) {
