@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc } from '@/lib/liara-image-url';
 import { directStorageFallbackSrc } from '@/lib/resilient-image';
+import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 import {
   isAllowedExternalImageUrl,
   isAllowedItemImageUrl,
@@ -36,6 +38,12 @@ export interface ItemCoverImageProps {
   /** grid = poster card در لیست */
   coverLayout?: ItemCoverLayout;
   preferPosterEnrich?: boolean;
+  /**
+   * اگر مقدار بگیرد، تصویر با next/image (fill) رندر و بهینه می‌شود
+   * (AVIF/WebP + srcset). والدِ این کامپوننت همیشه relative+sized است.
+   * مثال: sizes="(min-width:1024px) 33vw, 50vw"
+   */
+  sizes?: string;
 }
 
 function toItemDisplaySrc(resolved: string): string {
@@ -61,6 +69,7 @@ export default function ItemCoverImage({
   enrichPoster = false,
   coverLayout = 'default',
   preferPosterEnrich = false,
+  sizes,
 }: ItemCoverImageProps) {
   const [fetchedPoster, setFetchedPoster] = useState<string | null>(null);
   const [directStorageSrc, setDirectStorageSrc] = useState<string | null>(null);
@@ -196,6 +205,26 @@ export default function ItemCoverImage({
     );
   }
 
+  const handleImgError = () => {
+    if (!directStorageSrc) {
+      const direct = directStorageFallbackSrc(displaySrc);
+      if (direct) {
+        setDirectStorageSrc(direct);
+        setImageLoaded(false);
+        return;
+      }
+    }
+    setImageLoaded(false);
+    setLoadFailed(true);
+  };
+
+  // مسیر بهینه‌شده (next/image) — فقط با opt-in از طریق prop `sizes`.
+  // proxy داخلی را به URL اصلی باز می‌کنیم تا next آن را بهینه کند.
+  const unwrapped = sizes ? normalizeImageUrlForStorage(directStorageSrc ?? displaySrc) : '';
+  const nextSrc =
+    unwrapped && /^https?:\/\//.test(unwrapped) ? unwrapped : displaySrc;
+  const unoptimized = nextSrc.startsWith('/') && nextSrc.includes('?');
+
   return (
     <div className={`relative h-full w-full overflow-hidden ${className}`}>
       {!imageLoaded && (
@@ -203,36 +232,43 @@ export default function ItemCoverImage({
           title={title}
           categorySlug={categorySlug}
           fallbackIcon={fallbackIcon}
-          state={posterLoading ? 'loading' : 'loading'}
+          state="loading"
           layout={coverLayout}
           className="absolute inset-0 h-full w-full"
           ariaLabel={`در حال بارگذاری ${title}`}
         />
       )}
-      <img
-        ref={imgRef}
-        src={displaySrc}
-        alt={title}
-        className={`h-full w-full object-cover transition-opacity duration-300 ease-out ${
-          imageLoaded ? 'opacity-100' : 'opacity-0'
-        }`}
-        loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : undefined}
-        referrerPolicy="no-referrer"
-        onLoad={() => setImageLoaded(true)}
-        onError={() => {
-          if (!directStorageSrc) {
-            const direct = directStorageFallbackSrc(displaySrc);
-            if (direct) {
-              setDirectStorageSrc(direct);
-              setImageLoaded(false);
-              return;
-            }
-          }
-          setImageLoaded(false);
-          setLoadFailed(true);
-        }}
-      />
+      {sizes ? (
+        <Image
+          key={nextSrc}
+          src={nextSrc}
+          alt={title}
+          fill
+          sizes={sizes}
+          className={`object-cover transition-opacity duration-300 ease-out ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          priority={priority}
+          unoptimized={unoptimized}
+          referrerPolicy="no-referrer"
+          onLoad={() => setImageLoaded(true)}
+          onError={handleImgError}
+        />
+      ) : (
+        <img
+          ref={imgRef}
+          src={displaySrc}
+          alt={title}
+          className={`h-full w-full object-cover transition-opacity duration-300 ease-out ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
+          referrerPolicy="no-referrer"
+          onLoad={() => setImageLoaded(true)}
+          onError={handleImgError}
+        />
+      )}
     </div>
   );
 }

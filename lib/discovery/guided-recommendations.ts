@@ -6,6 +6,7 @@ import { Prisma, type PrismaClient } from '@prisma/client';
 import { dbQuery } from '@/lib/db';
 import { getHomeRecommendationsForUser } from '@/lib/home-recommendations';
 import { getGlobalTrending } from '@/lib/trending/service';
+import { getCachedGlobalTrending } from '@/lib/trending/cached';
 import { publicCuratedListWhere } from '@/lib/public-content-filters';
 import { withResolvedListCovers } from '@/lib/resolve-list-cover';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
@@ -307,7 +308,8 @@ export async function getGuidedDiscoveryResults(
   }
 
   if (plan.includeTrending) {
-    const trending = await getGlobalTrending(prisma, 6);
+    // از نسخهٔ کش‌شده استفاده کن (۶۰۰ ثانیه) تا fan-out سنگین per-category تکرار نشود
+    const trending = await getCachedGlobalTrending(6);
     const mapped = trendingToListCards(trending).filter((l) => !usedListIds.has(l.id));
     if (mapped.length > 0) {
       rows.push({

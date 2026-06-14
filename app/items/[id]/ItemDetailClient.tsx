@@ -454,6 +454,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                 categorySlug={itemCategorySlug}
                 enrichPoster={isMovieLikeCategory(itemCategorySlug)}
                 priority
+                sizes="100vw"
                 fallbackIcon={item.lists.categories?.icon || '📋'}
                 className={`h-full w-full object-cover object-top transition-transform duration-500 ease-out ${
                   heroCollapsed ? 'scale-100' : 'scale-105'

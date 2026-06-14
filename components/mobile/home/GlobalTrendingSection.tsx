@@ -63,6 +63,7 @@ export default function GlobalTrendingSection() {
                   fallbackClassName="w-full h-full flex items-center justify-center bg-gray-200"
                   placeholderSize="square"
                   priority={idx < 2}
+                  sizes="(min-width: 1024px) 20vw, 40vw"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-200 text-3xl opacity-50">

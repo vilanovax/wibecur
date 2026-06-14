@@ -69,6 +69,7 @@ export default function HomeHeroSpotlight() {
           listSlug={list.slug}
           listTitle={list.title}
           priority
+          sizes="100vw"
         />
 
         {/* گرادیان — موبایل از پایین | دسکتاپ از راست (RTL) برای خوانایی تیتر */}

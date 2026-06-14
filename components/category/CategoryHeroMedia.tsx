@@ -25,6 +25,7 @@ export default function CategoryHeroMedia({
         aria-hidden
         priority={priority}
         placeholderSize="cover"
+        sizes="100vw"
         className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-55 saturate-125"
       />
       <ImageWithFallback
@@ -32,6 +33,7 @@ export default function CategoryHeroMedia({
         alt={alt}
         priority={priority}
         placeholderSize="cover"
+        sizes="100vw"
         className="absolute inset-0 h-full w-full object-contain object-center"
       />
     </>

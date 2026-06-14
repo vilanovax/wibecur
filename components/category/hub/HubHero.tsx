@@ -32,6 +32,7 @@ export default function HubHero({
           className="absolute inset-0 w-full h-full object-cover"
           priority
           placeholderSize="cover"
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/50 to-black/20" />
 

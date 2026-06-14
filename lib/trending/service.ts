@@ -44,11 +44,13 @@ export async function getListMetrics7d(
   if (listIds.length === 0) return new Map();
   const cutoff = new Date(Date.now() - ms(days));
 
-  const [saves, likes, comments, lists, lastSaveDates] = await Promise.all([
+  const [saves, likes, comments, lists] = await Promise.all([
+    // یک groupBy واحد برای تعداد و آخرین تاریخ ذخیره (به‌جای دو پویش جداگانهٔ bookmarks)
     prisma.bookmarks.groupBy({
       by: ['listId'],
       where: { listId: { in: listIds }, createdAt: { gte: cutoff } },
       _count: { listId: true },
+      _max: { createdAt: true },
     }),
     prisma.list_likes.groupBy({
       by: ['listId'],
@@ -69,11 +71,6 @@ export async function getListMetrics7d(
       where: { id: { in: listIds } },
       select: { id: true, createdAt: true },
     }),
-    prisma.bookmarks.groupBy({
-      by: ['listId'],
-      where: { listId: { in: listIds }, createdAt: { gte: cutoff } },
-      _max: { createdAt: true },
-    }),
   ]);
 
   const S7Map = new Map<string, number>();
@@ -82,12 +79,12 @@ export async function getListMetrics7d(
   const lastSaveMap = new Map<string, Date>();
   const createdAtMap = new Map<string, Date>();
 
-  saves.forEach((r) => S7Map.set(r.listId, r._count.listId));
-  likes.forEach((r) => L7Map.set(r.listId, r._count.listId));
-  comments.forEach((r) => C7Map.set(r.listId, r._count.listId));
-  lastSaveDates.forEach((r) => {
+  saves.forEach((r) => {
+    S7Map.set(r.listId, r._count.listId);
     if (r._max.createdAt) lastSaveMap.set(r.listId, r._max.createdAt);
   });
+  likes.forEach((r) => L7Map.set(r.listId, r._count.listId));
+  comments.forEach((r) => C7Map.set(r.listId, r._count.listId));
   lists.forEach((l) => createdAtMap.set(l.id, l.createdAt));
 
   const result = new Map<string, ListMetrics7d>();
@@ -225,11 +222,11 @@ export async function getFullGlobalTrendingSorted(
       where: { isActive: true },
       select: { id: true },
     });
-    const allResults: TrendingListResult[] = [];
-    for (const cat of categories) {
-      const top = await getTrendingByCategory(prisma, cat.id, 20);
-      allResults.push(...top);
-    }
+    // محاسبهٔ هر دسته به‌صورت موازی (به‌جای ترتیبی) برای کاهش تأخیر کل
+    const perCategory = await Promise.all(
+      categories.map((cat) => getTrendingByCategory(prisma, cat.id, 20))
+    );
+    const allResults: TrendingListResult[] = perCategory.flat();
     allResults.sort((a, b) => b.score - a.score);
     return allResults.slice(0, maxItems);
   });

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc, getLiaraImageMode } from '@/lib/liara-image-url';
 import { directStorageFallbackSrc } from '@/lib/resilient-image';
@@ -16,6 +17,7 @@ import {
   inferCategorySlugFromTitle,
   pickCategoryCoverGradient,
 } from '@/lib/category-cover-images';
+import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 
 interface ImageWithFallbackProps {
   src: string;
@@ -34,6 +36,14 @@ interface ImageWithFallbackProps {
   preferStoredImage?: boolean;
   /** برای poster آیتم — imageUrl + metadata.posterUrl و … */
   itemImageSource?: Omit<ItemImageSource, 'id'>;
+  /**
+   * اگر مقدار بگیرد، تصویر با next/image (fill) رندر می‌شود تا بهینه‌سازی
+   * (AVIF/WebP + srcset واکنش‌گرا) فعال شود. لازمهٔ آن این است که والدِ
+   * مستقیم `position: relative` و دارای ابعاد باشد. اگر undefined باشد،
+   * همان <img> قبلی رندر می‌شود (سازگاری کامل با ۷۲ call-site موجود).
+   * مثال: sizes="(min-width:1024px) 25vw, 50vw"
+   */
+  sizes?: string;
 }
 
 function toDisplaySrc(resolved: string): string {
@@ -57,6 +67,7 @@ export default function ImageWithFallback({
   listTitle,
   preferStoredImage = false,
   itemImageSource,
+  sizes,
 }: ImageWithFallbackProps) {
   const [forceLocal, setForceLocal] = useState(false);
   const [forceLiaraProxy, setForceLiaraProxy] = useState(false);
@@ -110,6 +121,40 @@ export default function ImageWithFallback({
     return pickCategoryCoverGradient(slug, seed);
   }, [categorySlug, listSlug, listTitle]);
 
+  // زنجیرهٔ fallback مشترک بین <img> و next/image:
+  // ۱) تلاش با URL مستقیم storage ۲) سوییچ به proxy لیارا ۳) کاور محلی دسته
+  const handleError = useCallback(() => {
+    if (!directStorageSrc) {
+      const direct = directStorageFallbackSrc(displaySrc);
+      if (direct) {
+        setDirectStorageSrc(direct);
+        return;
+      }
+    }
+    if (
+      preferStoredImage &&
+      !forceLiaraProxy &&
+      isOurStorageUrl(resolvedSrc) &&
+      getLiaraImageMode() === 'direct'
+    ) {
+      setForceLiaraProxy(true);
+      return;
+    }
+    if (!forceLocal && (categorySlug || listSlug || listTitle) && !preferStoredImage) {
+      setForceLocal(true);
+    }
+  }, [
+    directStorageSrc,
+    displaySrc,
+    preferStoredImage,
+    forceLiaraProxy,
+    resolvedSrc,
+    forceLocal,
+    categorySlug,
+    listSlug,
+    listTitle,
+  ]);
+
   if (!displaySrc) {
     return (
       <div
@@ -120,32 +165,38 @@ export default function ImageWithFallback({
     );
   }
 
+  // مسیر بهینه‌شده — فقط وقتی call-site با دادن `sizes` آن را فعال کرده باشد.
+  if (sizes) {
+    // به next/image آدرس مستقیم می‌دهیم (نه proxy داخلی) تا خودش بهینه‌سازی کند:
+    // proxy داخلی `/api/liara-image?url=...` را به URL اصلی storage باز می‌کنیم؛
+    // آن URL از طریق remotePatterns بهینه‌سازی می‌شود (AVIF/WebP + srcset).
+    const unwrapped = normalizeImageUrlForStorage(directStorageSrc ?? displaySrc);
+    const nextSrc =
+      unwrapped && /^https?:\/\//.test(unwrapped) ? unwrapped : (directStorageSrc ?? displaySrc);
+    // مسیرهای local دارای query-string را بدون بهینه‌سازی سرو کن تا قانون localPatterns لازم نشود.
+    const unoptimized = nextSrc.startsWith('/') && nextSrc.includes('?');
+    return (
+      <Image
+        key={nextSrc}
+        src={nextSrc}
+        alt={alt}
+        fill
+        sizes={sizes}
+        className={className}
+        onError={handleError}
+        priority={priority}
+        unoptimized={unoptimized}
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+
   return (
     <img
       src={displaySrc}
       alt={alt}
       className={className}
-      onError={() => {
-        if (!directStorageSrc) {
-          const direct = directStorageFallbackSrc(displaySrc);
-          if (direct) {
-            setDirectStorageSrc(direct);
-            return;
-          }
-        }
-        if (
-          preferStoredImage &&
-          !forceLiaraProxy &&
-          isOurStorageUrl(resolvedSrc) &&
-          getLiaraImageMode() === 'direct'
-        ) {
-          setForceLiaraProxy(true);
-          return;
-        }
-        if (!forceLocal && (categorySlug || listSlug || listTitle) && !preferStoredImage) {
-          setForceLocal(true);
-        }
-      }}
+      onError={handleError}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : undefined}
       referrerPolicy="no-referrer"

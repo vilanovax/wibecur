@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
@@ -35,6 +36,12 @@ interface ListCardCompactProps {
   isBookmarked?: boolean;
   onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   highlightQuery?: string;
+  /**
+   * وضعیت لاگین کاربر. اگر والد (مثلاً گرید) این را یک‌بار پاس بدهد،
+   * هیچ useSession در سطح کارت صدا زده نمی‌شود → حذف N اشتراک context در گریدها.
+   * اگر undefined باشد، کارت خودش از useSession می‌خواند (سازگاری با کد قبلی).
+   */
+  isLoggedIn?: boolean;
 }
 
 const NEW_LIST_DAYS = 14;
@@ -85,28 +92,32 @@ function CreatorRow({ list }: { list: ListWithCreator }) {
   );
 }
 
-function InlineBookmark({
-  listId,
-  saveCount,
-  isBookmarked,
-  onToggle,
-  size = 'sm',
-  className = '',
-}: {
+type InlineBookmarkProps = {
   listId: string;
   saveCount: number;
   isBookmarked?: boolean;
   onToggle?: (listId: string, isBookmarked: boolean) => void;
   size?: 'sm' | 'xs';
   className?: string;
-}) {
-  const { data: session } = useSession();
+  isLoggedIn?: boolean;
+};
+
+/** هستهٔ خالص — بدون خواندن context؛ قابل memo. */
+function InlineBookmarkView({
+  listId,
+  saveCount,
+  isBookmarked,
+  onToggle,
+  size = 'sm',
+  className = '',
+  loggedIn,
+}: Omit<InlineBookmarkProps, 'isLoggedIn'> & { loggedIn: boolean }) {
   const btnClass =
     size === 'xs'
       ? 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface/95 text-wibe-secondary shadow-sm backdrop-blur-sm transition-transform active:scale-95'
       : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface text-wibe-secondary transition-transform active:scale-95';
 
-  if (!session?.user) {
+  if (!loggedIn) {
     return (
       <Link
         href="/login"
@@ -132,13 +143,28 @@ function InlineBookmark({
   );
 }
 
-export default function ListCardCompact({
+/** نسخه‌ای که خودش session را می‌خواند — فقط وقتی والد isLoggedIn نداده باشد. */
+function InlineBookmarkAuto(props: Omit<InlineBookmarkProps, 'isLoggedIn'>) {
+  const { data: session } = useSession();
+  return <InlineBookmarkView {...props} loggedIn={!!session?.user} />;
+}
+
+function InlineBookmark({ isLoggedIn, ...rest }: InlineBookmarkProps) {
+  // اگر والد وضعیت لاگین را داده باشد، هیچ subscription به session ساخته نمی‌شود.
+  if (typeof isLoggedIn === 'boolean') {
+    return <InlineBookmarkView {...rest} loggedIn={isLoggedIn} />;
+  }
+  return <InlineBookmarkAuto {...rest} />;
+}
+
+function ListCardCompact({
   list,
   variant = 'compact',
   showCreator = false,
   isBookmarked,
   onBookmarkToggle,
   highlightQuery,
+  isLoggedIn,
 }: ListCardCompactProps) {
   const itemCount = list.itemCount ?? list._count?.items ?? 0;
   const saveCount = list.saveCount ?? 0;
@@ -170,6 +196,7 @@ export default function ListCardCompact({
               title={list.title}
               slug={list.slug}
               categorySlug={categorySlug}
+              sizes="56px"
               className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
               fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-lg"
@@ -189,6 +216,7 @@ export default function ListCardCompact({
           saveCount={saveCount}
           isBookmarked={isBookmarked}
           onToggle={onBookmarkToggle}
+          isLoggedIn={isLoggedIn}
           size="xs"
           className="pointer-events-auto absolute bottom-2 left-2 z-[2]"
         />
@@ -207,6 +235,7 @@ export default function ListCardCompact({
               title={list.title}
               slug={list.slug}
               categorySlug={categorySlug}
+              sizes="72px"
               className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
               fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
@@ -248,6 +277,7 @@ export default function ListCardCompact({
           saveCount={saveCount}
           isBookmarked={isBookmarked}
           onToggle={onBookmarkToggle}
+          isLoggedIn={isLoggedIn}
           className="pointer-events-auto absolute bottom-2.5 left-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
         />
       </div>
@@ -264,6 +294,7 @@ export default function ListCardCompact({
           title={list.title}
           slug={list.slug}
           categorySlug={categorySlug}
+          sizes="(min-width: 1024px) 25vw, 50vw"
           className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
           fallbackIcon={list.categories?.icon ?? '📋'}
           fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl lg:text-4xl"
@@ -306,9 +337,13 @@ export default function ListCardCompact({
         saveCount={saveCount}
         isBookmarked={isBookmarked}
         onToggle={onBookmarkToggle}
+        isLoggedIn={isLoggedIn}
         size="xs"
         className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-all lg:group-hover:scale-110 lg:group-hover:opacity-100"
       />
     </div>
   );
 }
+
+// memo: تغییر state والد (تایپ جستجو، toggle و …) دیگر کل گرید کارت‌ها را re-render نمی‌کند.
+export default memo(ListCardCompact);

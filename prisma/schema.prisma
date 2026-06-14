@@ -31,27 +31,27 @@ model bookmarks {
 }
 
 model categories {
-  id               String            @id
-  name             String
-  slug             String            @unique
-  icon             String
-  color            String            @default("#6366F1")
-  accentColor      String?           // برای Category Page 2.0 - رنگ تاکید (مثلاً بنفش فیلم، نارنجی رستوران)
-  description      String?
-  heroImage        String?           // تصویر هیرو صفحه دسته
-  layoutType       String?           // cinematic | locationBased | editorial | minimal
-  order            Int               @default(0)
-  isActive         Boolean           @default(true)
-  commentsEnabled  Boolean           @default(true)  // فعال/غیرفعال کردن کامنت برای دسته
-  trendingWeight   Float             @default(1)     // ضریب وزن در الگوریتم ترندینگ (0.8 | 1.0 | 1.2 | 1.4)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime
-  deletedAt        DateTime?
-  deletedById      String?
-  deleteReason     String?
-  lists            lists[]
-  suggested_lists  suggested_lists[]
-  deletedBy        users?            @relation("CategoryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  id              String            @id
+  name            String
+  slug            String            @unique
+  icon            String
+  color           String            @default("#6366F1")
+  accentColor     String? // برای Category Page 2.0 - رنگ تاکید (مثلاً بنفش فیلم، نارنجی رستوران)
+  description     String?
+  heroImage       String? // تصویر هیرو صفحه دسته
+  layoutType      String? // cinematic | locationBased | editorial | minimal
+  order           Int               @default(0)
+  isActive        Boolean           @default(true)
+  commentsEnabled Boolean           @default(true) // فعال/غیرفعال کردن کامنت برای دسته
+  trendingWeight  Float             @default(1) // ضریب وزن در الگوریتم ترندینگ (0.8 | 1.0 | 1.2 | 1.4)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  deletedAt       DateTime?
+  deletedById     String?
+  deleteReason    String?
+  lists           lists[]
+  suggested_lists suggested_lists[]
+  deletedBy       users?            @relation("CategoryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
 }
@@ -163,9 +163,9 @@ model item_reports {
   id             String   @id @default(cuid())
   itemId         String
   userId         String
-  reason         String   // incorrect_info, offensive, spam, wrong_category, duplicate, other
-  description    String?  // توضیحات اضافی برای reason: other
-  weightSnapshot Float?   // وزن لحظه ثبت (User Trust × Report Type) برای Auto Flagging
+  reason         String // incorrect_info, offensive, spam, wrong_category, duplicate, other
+  description    String? // توضیحات اضافی برای reason: other
+  weightSnapshot Float? // وزن لحظه ثبت (User Trust × Report Type) برای Auto Flagging
   resolved       Boolean  @default(false)
   createdAt      DateTime @default(now())
   penaltyScore   Int?     @default(0)
@@ -179,12 +179,12 @@ model item_reports {
 
 // Vibe Moderation Engine v1 – Weighted Flag Score و وضعیت نمایش
 model item_moderation {
-  id          String              @id @default(cuid())
-  itemId      String              @unique
-  flagScore   Float               @default(0)
+  id          String               @id @default(cuid())
+  itemId      String               @unique
+  flagScore   Float                @default(0)
   status      ItemModerationStatus @default(NORMAL)
-  lastUpdated DateTime            @updatedAt
-  items       items               @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  lastUpdated DateTime             @updatedAt
+  items       items                @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([flagScore])
@@ -192,46 +192,46 @@ model item_moderation {
 
 /// موجودیت مشترک آیتم — یک فیلم/کتاب/کافه در چند لیست با یک شناسهٔ کاتالوگ
 model catalog_items {
-  id            String   @id
-  title         String
-  description   String?
-  imageUrl      String?
-  externalUrl   String?
-  categorySlug  String?
-  metadata      Json?
+  id           String   @id
+  title        String
+  description  String?
+  imageUrl     String?
+  externalUrl  String?
+  categorySlug String?
+  metadata     Json?
   /// کلید یکتا برای ادغام (مثلاً imdb:tt123 یا title:book:نام-نرمال)
-  externalKey   String?  @unique
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  items         items[]
+  externalKey  String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  items        items[]
 
   @@index([title])
   @@index([categorySlug])
 }
 
 model items {
-  id               String         @id
-  title            String
-  description      String?
-  imageUrl         String?
-  externalUrl      String?
-  listId           String
-  catalogItemId    String?
-  listNote         String?
-  order            Int            @default(0)
-  metadata         Json?
-  voteCount        Int            @default(0)
-  rating           Float          @default(0)
-  maxComments      Int?           // حداکثر تعداد کامنت
-  commentsEnabled  Boolean        @default(true)  // فعال/غیرفعال بودن کامنت
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime
-  comments         comments[]
-  item_votes       item_votes[]
-  item_reports     item_reports[]
-  item_moderation  item_moderation?
-  catalog_items    catalog_items? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
-  lists            lists          @relation(fields: [listId], references: [id], onDelete: Cascade)
+  id              String           @id
+  title           String
+  description     String?
+  imageUrl        String?
+  externalUrl     String?
+  listId          String
+  catalogItemId   String?
+  listNote        String?
+  order           Int              @default(0)
+  metadata        Json?
+  voteCount       Int              @default(0)
+  rating          Float            @default(0)
+  maxComments     Int? // حداکثر تعداد کامنت
+  commentsEnabled Boolean          @default(true) // فعال/غیرفعال بودن کامنت
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime
+  comments        comments[]
+  item_votes      item_votes[]
+  item_reports    item_reports[]
+  item_moderation item_moderation?
+  catalog_items   catalog_items?   @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+  lists           lists            @relation(fields: [listId], references: [id], onDelete: Cascade)
 
   @@unique([listId, catalogItemId])
   @@index([listId])
@@ -256,7 +256,7 @@ model list_reactions {
   id           String   @id @default(cuid())
   listId       String
   userId       String
-  reactionType String   // love | cry | night | meh | suggestion
+  reactionType String // love | cry | night | meh | suggestion
   createdAt    DateTime @default(now())
   lists        lists    @relation(fields: [listId], references: [id], onDelete: Cascade)
   users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -267,45 +267,49 @@ model list_reactions {
 }
 
 model lists {
-  id               String            @id
-  title            String
-  slug             String            @unique
-  description      String?
-  coverImage       String?
-  horizontalImage  String?  // بنر افقی — featured و جزئیات لیست
-  categoryId       String?
-  userId           String
-  tags             String[]          @default([])  // برای Similar Lists هوشمند
-  badge            ListBadge?
-  isPublic         Boolean           @default(true)
-  isFeatured       Boolean           @default(false)
-  viewCount        Int               @default(0)
-  likeCount        Int               @default(0)
-  saveCount        Int               @default(0)
-  itemCount        Int               @default(0)
-  commentsEnabled  Boolean           @default(true)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  isActive         Boolean           @default(true)
-  deletedAt        DateTime?
-  deletedById      String?
-  deleteReason     String?
-  bookmarks        bookmarks[]
-  items            items[]
-  list_likes       list_likes[]
-  list_reactions   list_reactions[]
-  suggested_items  suggested_items[]
-  list_comments    list_comments[]
-  list_reports     list_reports[]
-  categories       categories?       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  users            users             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deletedBy        users?            @relation("ListDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  id                  String               @id
+  title               String
+  slug                String               @unique
+  description         String?
+  coverImage          String?
+  horizontalImage     String? // بنر افقی — featured و جزئیات لیست
+  categoryId          String?
+  userId              String
+  tags                String[]             @default([]) // برای Similar Lists هوشمند
+  badge               ListBadge?
+  isPublic            Boolean              @default(true)
+  isFeatured          Boolean              @default(false)
+  viewCount           Int                  @default(0)
+  likeCount           Int                  @default(0)
+  saveCount           Int                  @default(0)
+  itemCount           Int                  @default(0)
+  commentsEnabled     Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  isActive            Boolean              @default(true)
+  deletedAt           DateTime?
+  deletedById         String?
+  deleteReason        String?
+  bookmarks           bookmarks[]
+  items               items[]
+  list_likes          list_likes[]
+  list_reactions      list_reactions[]
+  suggested_items     suggested_items[]
+  list_comments       list_comments[]
+  list_reports        list_reports[]
+  categories          categories?          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  users               users                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deletedBy           users?               @relation("ListDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   home_featured_slots home_featured_slot[]
 
   @@index([categoryId])
   @@index([createdAt])
   @@index([userId])
   @@index([deletedAt])
+  // کوئری داغ فید: فیلتر دستهٔ فعال/عمومی + مرتب‌سازی بر اساس saveCount
+  @@index([categoryId, isActive, isPublic, saveCount(sort: Desc)])
+  // واکشی «جدیدترین»های هر دسته
+  @@index([categoryId, isActive, isPublic, createdAt(sort: Desc)])
 }
 
 model list_reports {
@@ -325,21 +329,21 @@ model list_reports {
 }
 
 model settings {
-  id                           String   @id @default("settings")
-  openaiApiKey                 String?
-  openaiModel                  String?  @default("gpt-4o-mini")
-  tmdbApiKey                   String?
-  liaraBucketName              String?
-  liaraEndpoint                String?
-  liaraAccessKey               String?
-  liaraSecretKey               String?
-  updatedAt                    DateTime
-  createdAt                    DateTime @default(now())
-  omdbApiKey                   String?
-  googleApiKey                 String?
-  googleSearchEngineId         String?
-  minItemsForPublicList        Int      @default(5)
-  maxPersonalLists             Int      @default(3)
+  id                             String   @id @default("settings")
+  openaiApiKey                   String?
+  openaiModel                    String?  @default("gpt-4o-mini")
+  tmdbApiKey                     String?
+  liaraBucketName                String?
+  liaraEndpoint                  String?
+  liaraAccessKey                 String?
+  liaraSecretKey                 String?
+  updatedAt                      DateTime
+  createdAt                      DateTime @default(now())
+  omdbApiKey                     String?
+  googleApiKey                   String?
+  googleSearchEngineId           String?
+  minItemsForPublicList          Int      @default(5)
+  maxPersonalLists               Int      @default(3)
   personalListPublicInstructions String?
 }
 
@@ -360,94 +364,96 @@ model user_violations {
 }
 
 model users {
-  id                   String              @id
-  name                 String?
-  email                String              @unique
-  emailVerified        DateTime?
-  image                String?
-  password             String?
-  role                 UserRole            @default(USER)
-  isActive             Boolean             @default(true)
-  reputationScore      Int                 @default(0)  // +1 comment, +2 suggestion, -3 removed
-  curatorScore         Int                 @default(0)
-  curatorLevel         CuratorLevel        @default(EXPLORER)
-  viralListsCount      Int                 @default(0)
-  totalLikesReceived   Int                 @default(0)
-  approvedItemsCount   Int                 @default(0)
-  bio                  String?
-  username             String?             @unique
-  avatarType           AvatarType          @default(DEFAULT)
-  avatarId             String?
-  avatarStatus         AvatarStatus?       // برای آپلود شخصی
-  showBadge            Boolean             @default(true)
-  allowCommentNotifications Boolean        @default(true)
-  commentRestrictedUntil    DateTime?
-  commentBanReason          String?
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime
-  deletedAt            DateTime?
-  deletedById          String?
-  deleteReason         String?
-  bookmarks            bookmarks[]
-  comment_likes     comment_likes[]
-  comment_votes     comment_votes[]
-  comment_penalties comment_penalties[]
-  comment_reports   comment_reports[]
-  comments          comments[]
-  item_votes        item_votes[]
-  item_reports      item_reports[]
-  list_likes        list_likes[]
-  list_reactions    list_reactions[]
-  list_reports      list_reports[]
-  lists             lists[]
-  user_violations   user_violations[]
-  suggested_items   suggested_items[]
-  suggested_lists   suggested_lists[]
-  notifications     notifications[]
-  list_comment_likes list_comment_likes[]
-  list_comment_reports list_comment_reports[]
-  list_comment_votes list_comment_votes[]
-  list_comments     list_comments[]
-  followRelationsAsFollower   follows[] @relation("FollowsAsFollower")
-  followRelationsAsFollowing  follows[] @relation("FollowsAsFollowing")
-  user_achievements           user_achievements[]
-  creator_ranking             creator_rankings?
+  id                         String                     @id
+  name                       String?
+  email                      String                     @unique
+  emailVerified              DateTime?
+  image                      String?
+  password                   String?
+  role                       UserRole                   @default(USER)
+  isActive                   Boolean                    @default(true)
+  reputationScore            Int                        @default(0) // +1 comment, +2 suggestion, -3 removed
+  curatorScore               Int                        @default(0)
+  curatorLevel               CuratorLevel               @default(EXPLORER)
+  viralListsCount            Int                        @default(0)
+  totalLikesReceived         Int                        @default(0)
+  approvedItemsCount         Int                        @default(0)
+  bio                        String?
+  username                   String?                    @unique
+  avatarType                 AvatarType                 @default(DEFAULT)
+  avatarId                   String?
+  avatarStatus               AvatarStatus? // برای آپلود شخصی
+  showBadge                  Boolean                    @default(true)
+  allowCommentNotifications  Boolean                    @default(true)
+  commentRestrictedUntil     DateTime?
+  commentBanReason           String?
+  createdAt                  DateTime                   @default(now())
+  updatedAt                  DateTime
+  deletedAt                  DateTime?
+  deletedById                String?
+  deleteReason               String?
+  bookmarks                  bookmarks[]
+  comment_likes              comment_likes[]
+  comment_votes              comment_votes[]
+  comment_penalties          comment_penalties[]
+  comment_reports            comment_reports[]
+  comments                   comments[]
+  item_votes                 item_votes[]
+  item_reports               item_reports[]
+  list_likes                 list_likes[]
+  list_reactions             list_reactions[]
+  list_reports               list_reports[]
+  lists                      lists[]
+  user_violations            user_violations[]
+  suggested_items            suggested_items[]
+  suggested_lists            suggested_lists[]
+  notifications              notifications[]
+  list_comment_likes         list_comment_likes[]
+  list_comment_reports       list_comment_reports[]
+  list_comment_votes         list_comment_votes[]
+  list_comments              list_comments[]
+  followRelationsAsFollower  follows[]                  @relation("FollowsAsFollower")
+  followRelationsAsFollowing follows[]                  @relation("FollowsAsFollowing")
+  user_achievements          user_achievements[]
+  creator_ranking            creator_rankings?
   user_category_affinity     user_category_affinity[]
   discovery_spotlight_cache  discovery_spotlight_cache?
   creator_spotlights         creator_spotlights[]
   audit_logs                 audit_log[]
-  backup_jobs_created        backup_jobs[]       @relation("BackupJobsCreated")
+  backup_jobs_created        backup_jobs[]              @relation("BackupJobsCreated")
   moderation_cases_assigned  moderation_case[]
   moderation_notes           moderation_note[]
-  listsDeletedBy             lists[]           @relation("ListDeletedBy")
-  categoriesDeletedBy        categories[]       @relation("CategoryDeletedBy")
-  usersDeletedBy             users[]            @relation("UserDeletedBy")
-  deletedBy                  users?             @relation("UserDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  listsDeletedBy             lists[]                    @relation("ListDeletedBy")
+  categoriesDeletedBy        categories[]               @relation("CategoryDeletedBy")
+  usersDeletedBy             users[]                    @relation("UserDeletedBy")
+  deletedBy                  users?                     @relation("UserDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
+  // فیلتر کریتور در کوئری‌های curated (users.role != USER)
+  @@index([role])
 }
 
 model creator_spotlights {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   userId       String
-  type         String    // weekly | rising | category | editor
+  type         String // weekly | rising | category | editor
   categorySlug String?
   startDate    DateTime
   endDate      DateTime
-  createdBy    String?   // admin userId if editor pick
-  users        users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdBy    String? // admin userId if editor pick
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([startDate, endDate])
   @@index([userId])
 }
 
 model discovery_spotlight_cache {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  creatorId  String
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  creatorId   String
   explanation String?
-  updatedAt  DateTime @updatedAt
-  users      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt   DateTime @updatedAt
+  users       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([updatedAt])
 }
@@ -457,7 +463,7 @@ model user_category_affinity {
   userId       String
   categorySlug String
   weight       Float    @default(0)
-  updatedAt   DateTime @updatedAt
+  updatedAt    DateTime @updatedAt
   users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, categorySlug])
@@ -465,20 +471,20 @@ model user_category_affinity {
 }
 
 model creator_rankings {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
-  curatorScore       Int      @default(0)
-  influenceScore     Int      @default(0)
-  momentumScore      Int      @default(0)
-  rankingScore       Float    @default(0)
-  globalRank         Int      @default(0)
-  previousGlobalRank Int?     // for rank change indicator
-  monthlyRank        Int?     // current month rank (reset monthly)
-  monthYear          String?  // e.g. "2025-02"
-  categoryRank       Json?    // { "film": 1, "book": 3 } slug -> rank
-  lastUpdated        DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  curatorScore       Int       @default(0)
+  influenceScore     Int       @default(0)
+  momentumScore      Int       @default(0)
+  rankingScore       Float     @default(0)
+  globalRank         Int       @default(0)
+  previousGlobalRank Int? // for rank change indicator
+  monthlyRank        Int? // current month rank (reset monthly)
+  monthYear          String? // e.g. "2025-02"
+  categoryRank       Json? // { "film": 1, "book": 3 } slug -> rank
+  lastUpdated        DateTime  @updatedAt
   lastActivityAt     DateTime? // for decay: last list/bookmark/comment activity
-  users              users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users              users     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([rankingScore])
   @@index([globalRank])
@@ -487,14 +493,14 @@ model creator_rankings {
 }
 
 model achievements {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  title       String
-  description String
-  category    String   // creation | impact | community | consistency
-  tier        String   @default("bronze") // bronze | silver | gold | elite
-  icon        String   // emoji or icon key
-  isSecret    Boolean  @default(false)
+  id                String              @id @default(cuid())
+  code              String              @unique
+  title             String
+  description       String
+  category          String // creation | impact | community | consistency
+  tier              String              @default("bronze") // bronze | silver | gold | elite
+  icon              String // emoji or icon key
+  isSecret          Boolean             @default(false)
   user_achievements user_achievements[]
 
   @@index([category])
@@ -527,10 +533,10 @@ model follows {
 }
 
 enum ItemModerationStatus {
-  NORMAL       // فقط ثبت
-  SOFT_FLAG    // ادمین ببیند، نمایش عادی
+  NORMAL // فقط ثبت
+  SOFT_FLAG // ادمین ببیند، نمایش عادی
   UNDER_REVIEW // از ترند/اسپاتلایت حذف، اولویت پایین
-  HIDDEN       // مخفی برای کاربران عادی، فقط ادمین و سازنده
+  HIDDEN // مخفی برای کاربران عادی، فقط ادمین و سازنده
 }
 
 enum ListBadge {
@@ -549,18 +555,18 @@ enum UserRole {
 }
 
 enum CuratorLevel {
-  EXPLORER           // 0–49
-  NEW_CURATOR        // 50–149
-  ACTIVE_CURATOR     // 150–299
-  TRUSTED_CURATOR    // 300–499
+  EXPLORER // 0–49
+  NEW_CURATOR // 50–149
+  ACTIVE_CURATOR // 150–299
+  TRUSTED_CURATOR // 300–499
   INFLUENTIAL_CURATOR // 500–799
-  ELITE_CURATOR      // 800–1199
-  VIBE_LEGEND        // 1200+
+  ELITE_CURATOR // 800–1199
+  VIBE_LEGEND // 1200+
 }
 
 enum AvatarType {
-  DEFAULT   // آواتار وایب
-  UPLOADED  // آپلود شخصی
+  DEFAULT // آواتار وایب
+  UPLOADED // آپلود شخصی
 }
 
 enum AvatarStatus {
@@ -570,7 +576,7 @@ enum AvatarStatus {
 }
 
 model audit_log {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   actorId    String
   actorRole  UserRole
   action     String
@@ -580,9 +586,9 @@ model audit_log {
   after      Json?
   ipAddress  String?
   userAgent  String?
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime @default(now())
 
-  users      users      @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  users users @relation(fields: [actorId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@index([actorId, createdAt])
@@ -612,21 +618,21 @@ enum ModerationEntityType {
 }
 
 model moderation_case {
-  id           String                @id @default(cuid())
-  type         ModerationType
-  entityType   ModerationEntityType
-  entityId     String
-  reason       String
-  severity     Int                   @default(1)
-  status       ModerationStatus      @default(OPEN)
-  reportCount  Int                   @default(0)
-  metadata     Json?
-  assigneeId   String?
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
+  id          String               @id @default(cuid())
+  type        ModerationType
+  entityType  ModerationEntityType
+  entityId    String
+  reason      String
+  severity    Int                  @default(1)
+  status      ModerationStatus     @default(OPEN)
+  reportCount Int                  @default(0)
+  metadata    Json?
+  assigneeId  String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
-  users        users?                @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
-  notes        moderation_note[]
+  users users?            @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  notes moderation_note[]
 
   @@index([status])
   @@index([type])
@@ -638,32 +644,32 @@ model moderation_case {
 }
 
 model moderation_note {
-  id        String           @id @default(cuid())
+  id        String   @id @default(cuid())
   caseId    String
   authorId  String
   body      String
-  createdAt DateTime         @default(now())
+  createdAt DateTime @default(now())
 
   moderation_case moderation_case @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  users            users           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  users           users           @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([caseId])
   @@index([authorId])
 }
 
 model comment_settings {
-  id                      String   @id @default(cuid())
-  defaultMaxComments      Int?     // پیش‌فرض برای آیتم‌های جدید
-  defaultCommentsEnabled  Boolean  @default(true)
-  maxCommentLength        Int?     // حداکثر تعداد کاراکتر برای کامنت (null = بدون محدودیت)
-  rateLimitMinutes        Int      @default(5)  // حداقل فاصله بین کامنت‌ها برای یک آیتم (دقیقه)
-  globalRateLimitMinutes  Int?     // حداقل فاصله برای همه کامنت‌ها (null = غیرفعال)
-  penaltyWarnThreshold    Int      @default(5)
-  penaltyRestrictThreshold Int     @default(10)
-  penaltyBanThreshold     Int      @default(15)
-  penaltyRestrictDays     Int      @default(7)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  defaultMaxComments       Int? // پیش‌فرض برای آیتم‌های جدید
+  defaultCommentsEnabled   Boolean  @default(true)
+  maxCommentLength         Int? // حداکثر تعداد کاراکتر برای کامنت (null = بدون محدودیت)
+  rateLimitMinutes         Int      @default(5) // حداقل فاصله بین کامنت‌ها برای یک آیتم (دقیقه)
+  globalRateLimitMinutes   Int? // حداقل فاصله برای همه کامنت‌ها (null = غیرفعال)
+  penaltyWarnThreshold     Int      @default(5)
+  penaltyRestrictThreshold Int      @default(10)
+  penaltyBanThreshold      Int      @default(15)
+  penaltyRestrictDays      Int      @default(7)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }
 
 model suggested_items {
@@ -709,10 +715,10 @@ model suggested_lists {
 model notifications {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // 'suggestion_approved', 'suggestion_rejected', 'admin_message', etc.
+  type      String // 'suggestion_approved', 'suggestion_rejected', 'admin_message', etc.
   title     String
   message   String
-  link      String?  // Optional link to related content
+  link      String? // Optional link to related content
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -723,32 +729,32 @@ model notifications {
 }
 
 model list_comments {
-  id                 String                @id @default(cuid())
-  listId             String
-  userId             String
-  parentId           String?               // یک سطح پاسخ
-  type               String                @default("comment")  // comment | suggestion | opinion
-  content            String
-  contentHash        String?               // برای تشخیص تکرار
-  suggestionStatus   String?               // pending | approved | rejected
-  approvedItemId     String?
-  status             String                @default("active")   // active | review | hidden | rejected
-  isFiltered         Boolean               @default(false)
-  isApproved         Boolean               @default(true)
-  likeCount          Int                   @default(0)
-  helpfulUp          Int                   @default(0)
-  helpfulDown        Int                   @default(0)
-  weightedScore      Float                 @default(0)
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
-  deletedAt         DateTime?
-  list_comment_likes list_comment_likes[]
+  id                   String                 @id @default(cuid())
+  listId               String
+  userId               String
+  parentId             String? // یک سطح پاسخ
+  type                 String                 @default("comment") // comment | suggestion | opinion
+  content              String
+  contentHash          String? // برای تشخیص تکرار
+  suggestionStatus     String? // pending | approved | rejected
+  approvedItemId       String?
+  status               String                 @default("active") // active | review | hidden | rejected
+  isFiltered           Boolean                @default(false)
+  isApproved           Boolean                @default(true)
+  likeCount            Int                    @default(0)
+  helpfulUp            Int                    @default(0)
+  helpfulDown          Int                    @default(0)
+  weightedScore        Float                  @default(0)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+  list_comment_likes   list_comment_likes[]
   list_comment_reports list_comment_reports[]
-  list_comment_votes list_comment_votes[]
-  lists              lists                 @relation(fields: [listId], references: [id], onDelete: Cascade)
-  users              users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent             list_comments?        @relation("ListCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies            list_comments[]       @relation("ListCommentReplies")
+  list_comment_votes   list_comment_votes[]
+  lists                lists                  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users                users                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent               list_comments?         @relation("ListCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies              list_comments[]        @relation("ListCommentReplies")
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -763,12 +769,12 @@ model list_comments {
 }
 
 model list_comment_likes {
-  id        String   @id @default(cuid())
-  commentId String
-  userId    String
-  createdAt DateTime @default(now())
+  id            String        @id @default(cuid())
+  commentId     String
+  userId        String
+  createdAt     DateTime      @default(now())
   list_comments list_comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users         users         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([commentId, userId])
   @@index([commentId])
@@ -776,15 +782,15 @@ model list_comment_likes {
 }
 
 model list_comment_reports {
-  id           String   @id @default(cuid())
-  commentId    String
-  userId       String
-  reason       String?
-  resolved     Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  penaltyScore Int?     @default(0)
+  id            String        @id @default(cuid())
+  commentId     String
+  userId        String
+  reason        String?
+  resolved      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  penaltyScore  Int?          @default(0)
   list_comments list_comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users         users         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([commentId])
   @@index([resolved])
@@ -792,13 +798,13 @@ model list_comment_reports {
 }
 
 model list_comment_votes {
-  id        String   @id @default(cuid())
-  userId    String
-  commentId String
-  value     Int      // 1 = helpful, -1 = not helpful
-  createdAt DateTime @default(now())
+  id            String        @id @default(cuid())
+  userId        String
+  commentId     String
+  value         Int // 1 = helpful, -1 = not helpful
+  createdAt     DateTime      @default(now())
   list_comments list_comments @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users         users         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, commentId])
   @@index([commentId])
@@ -812,23 +818,23 @@ enum HomeFeaturedAction {
 }
 
 model home_featured_slot {
-  id         String    @id @default(cuid())
+  id         String                @id @default(cuid())
   listId     String
   startAt    DateTime
-  endAt      DateTime?  // null = تا شروع اسلات بعدی یا نامحدود
-  orderIndex Int       @default(0)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  lists      lists     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  endAt      DateTime? // null = تا شروع اسلات بعدی یا نامحدود
+  orderIndex Int                   @default(0)
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+  lists      lists                 @relation(fields: [listId], references: [id], onDelete: Cascade)
   events     home_featured_event[]
 
   // Featured Performance Analytics (MVP)
-  impressions    Int     @default(0)
-  clicks         Int     @default(0)
-  baselineSaves  Int?
-  savesDuring    Int     @default(0)
-  baselineScore  Float?
-  peakScore      Float?
+  impressions   Int    @default(0)
+  clicks        Int    @default(0)
+  baselineSaves Int?
+  savesDuring   Int    @default(0)
+  baselineScore Float?
+  peakScore     Float?
 
   @@index([startAt])
   @@index([listId])
@@ -837,9 +843,9 @@ model home_featured_slot {
 model home_featured_event {
   id        String             @id @default(cuid())
   slotId    String
-  listId    String             // برای کوئری راحت
+  listId    String // برای کوئری راحت
   action    HomeFeaturedAction
-  userId    String?            // null برای مهمان
+  userId    String? // null برای مهمان
   createdAt DateTime           @default(now())
   slot      home_featured_slot @relation(fields: [slotId], references: [id], onDelete: Cascade)
 
