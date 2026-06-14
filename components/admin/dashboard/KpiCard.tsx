@@ -29,9 +29,9 @@ export default function KpiCard({ item }: KpiCardProps) {
           <span
             className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-xs font-medium ${
               deltaUp
-                ? 'bg-emerald-100 text-emerald-700'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
                 : deltaDown
-                  ? 'bg-red-100 text-red-700'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
                   : 'bg-[var(--gray-100)] text-[var(--color-text-muted)]'
             }`}
           >
