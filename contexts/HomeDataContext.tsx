@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useMemo,
   type ReactNode,
 } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -85,13 +86,17 @@ export function HomeDataProvider({
     staleTime: 5 * 60 * 1000,
   });
 
-  const value: HomeDataContextValue = {
-    data: data ?? null,
-    isLoading: initialData ? false : isLoading,
-    isRefetching: isFetching && !isLoading,
-    error: error instanceof Error ? error : null,
-    refetch,
-  };
+  // memo تا مصرف‌کننده‌ها با هر render والد دوباره render نشوند.
+  const value = useMemo<HomeDataContextValue>(
+    () => ({
+      data: data ?? null,
+      isLoading: initialData ? false : isLoading,
+      isRefetching: isFetching && !isLoading,
+      error: error instanceof Error ? error : null,
+      refetch,
+    }),
+    [data, initialData, isLoading, isFetching, error, refetch]
+  );
 
   return (
     <HomeDataContext.Provider value={value}>

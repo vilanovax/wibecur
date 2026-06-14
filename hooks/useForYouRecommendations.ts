@@ -1,8 +1,12 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import type { HomeListData } from '@/types/home-data';
+
+/** هویت پایدار برای حالت خالی — جلوگیری از تغییر identity آرایه در هر render. */
+const EMPTY_LISTS: ForYouList[] = [];
 
 export type ForYouList = HomeListData & {
   reasonType?: 'similar' | 'category' | 'popular';
@@ -63,13 +67,16 @@ export function useForYouRecommendations() {
     enabled: status !== 'loading',
   });
 
-  return {
-    lists: query.data?.lists ?? [],
-    isPersonalized: query.data?.isPersonalized ?? false,
-    isLoading: query.isLoading,
-    isRefetching: query.isFetching && !query.isLoading,
-    refetch: query.refetch,
-  };
+  return useMemo(
+    () => ({
+      lists: query.data?.lists ?? EMPTY_LISTS,
+      isPersonalized: query.data?.isPersonalized ?? false,
+      isLoading: query.isLoading,
+      isRefetching: query.isFetching && !query.isLoading,
+      refetch: query.refetch,
+    }),
+    [query.data, query.isLoading, query.isFetching, query.refetch]
+  );
 }
 
 export function getForYouReasonLabel(
