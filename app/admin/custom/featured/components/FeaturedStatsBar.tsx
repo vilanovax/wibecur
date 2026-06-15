@@ -71,22 +71,22 @@ export default function FeaturedStatsBar({
       value: hasActiveSlot ? 'اسلات زنده' : 'Fallback',
       sub: hasActiveSlot ? 'منتخب زمان‌بندی‌شده' : 'لیست ویژه ستاره‌دار',
       accent: hasActiveSlot
-        ? 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/60'
-        : 'from-slate-500/10 to-slate-600/5 border-slate-200/60',
+        ? 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/60 dark:border-emerald-800/60'
+        : 'from-slate-500/10 to-slate-600/5 border-slate-200/60 dark:border-gray-700',
     },
     {
       icon: Layers,
       label: 'صف اسلات',
       value: upcomingCount.toLocaleString('fa-IR'),
       sub: 'آینده',
-      accent: 'from-violet-500/10 to-violet-600/5 border-violet-200/50',
+      accent: 'from-violet-500/10 to-violet-600/5 border-violet-200/50 dark:border-violet-800/60',
     },
     {
       icon: Calendar,
       label: 'اسلات این هفته',
       value: loading ? '…' : (report?.totalSlots ?? 0).toLocaleString('fa-IR'),
       sub: weekLabel ?? 'هفته جاری',
-      accent: 'from-blue-500/10 to-blue-600/5 border-blue-200/50',
+      accent: 'from-blue-500/10 to-blue-600/5 border-blue-200/50 dark:border-blue-800/60',
     },
     {
       icon: BarChart3,
@@ -96,7 +96,7 @@ export default function FeaturedStatsBar({
         : report
           ? `${(report.avgCTR * 100).toFixed(2)}٪`
           : '—',
-      accent: 'from-indigo-500/10 to-indigo-600/5 border-indigo-200/50',
+      accent: 'from-indigo-500/10 to-indigo-600/5 border-indigo-200/50 dark:border-indigo-800/60',
     },
     {
       icon: Save,
@@ -106,7 +106,7 @@ export default function FeaturedStatsBar({
         : report?.avgSaveLift != null
           ? `${report.avgSaveLift.toFixed(1)}٪`
           : '—',
-      accent: 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/50',
+      accent: 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/50 dark:border-emerald-800/60',
     },
     {
       icon: Award,
@@ -118,7 +118,7 @@ export default function FeaturedStatsBar({
           : pastCount > 0
             ? `${pastCount.toLocaleString('fa-IR')} اسلات گذشته`
             : undefined,
-      accent: 'from-amber-500/10 to-amber-600/5 border-amber-200/50',
+      accent: 'from-amber-500/10 to-amber-600/5 border-amber-200/50 dark:border-amber-800/60',
     },
   ];
 

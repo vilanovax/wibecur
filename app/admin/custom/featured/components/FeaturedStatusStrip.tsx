@@ -32,22 +32,22 @@ export default function FeaturedStatusStrip({
 
     return (
       <article
-        className="rounded-2xl border border-emerald-200/80 bg-gradient-to-l from-emerald-50/90 to-[var(--color-surface)] p-5 shadow-sm"
+        className="rounded-2xl border border-emerald-200/80 dark:border-emerald-800/60 bg-gradient-to-l from-emerald-50/90 to-[var(--color-surface)] p-5 shadow-sm"
         dir="rtl"
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex gap-4 min-w-0 flex-1">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-              <Sparkles className="w-6 h-6 text-emerald-600" />
+            <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+              <Sparkles className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-emerald-700 mb-1">الان در هوم اپ</p>
+              <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-1">الان در هوم اپ</p>
               <h2 className="text-lg font-bold text-[var(--color-text)] truncate">
                 {current.list.title}
               </h2>
               <div className="flex flex-wrap gap-2 mt-1 text-sm text-[var(--color-text-muted)]">
                 {catName && (
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-100/80 text-emerald-800 text-xs">
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 text-xs">
                     {catName}
                   </span>
                 )}
@@ -56,7 +56,7 @@ export default function FeaturedStatusStrip({
                   {current.endAt ? ` → ${formatDate(current.endAt)}` : ' → نامحدود'}
                 </span>
                 {remainingText && (
-                  <span className="text-emerald-600 font-medium">· {remainingText}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">· {remainingText}</span>
                 )}
               </div>
               <p className="text-xs text-[var(--color-text-subtle)] mt-1">
@@ -86,7 +86,7 @@ export default function FeaturedStatusStrip({
             <button
               type="button"
               onClick={onRemove}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-red-600 dark:text-red-400 hover:bg-red-50"
             >
               <Trash2 className="w-4 h-4" />
               حذف
@@ -99,14 +99,14 @@ export default function FeaturedStatusStrip({
 
   return (
     <div
-      className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-5 flex flex-wrap items-center justify-between gap-4"
+      className="rounded-2xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-900/20 p-5 flex flex-wrap items-center justify-between gap-4"
       dir="rtl"
     >
       <div className="flex gap-3 min-w-0">
-        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-amber-900">اسلات زمان‌بندی‌شده فعال نیست</p>
-          <p className="text-sm text-amber-800/90 mt-1">
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-200">اسلات زمان‌بندی‌شده فعال نیست</p>
+          <p className="text-sm text-amber-800/90 dark:text-amber-300 mt-1">
             {fallbackList ? (
               <>
                 فعلاً لیست ویژه{' '}

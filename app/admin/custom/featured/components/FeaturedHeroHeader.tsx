@@ -34,7 +34,7 @@ export default function FeaturedHeroHeader({
         <span
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
             hasActiveSlot
-              ? 'bg-emerald-100 text-emerald-800'
+              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300'
               : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
           }`}
         >

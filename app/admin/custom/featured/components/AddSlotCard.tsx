@@ -142,7 +142,7 @@ export default function AddSlotCard({
       </div>
 
       {lists.length === 0 && (
-        <p className="text-sm text-amber-800 bg-amber-50 rounded-xl p-3 mb-4">
+        <p className="text-sm text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 mb-4">
           لیستی برای انتخاب وجود ندارد.
         </p>
       )}
@@ -308,7 +308,7 @@ export default function AddSlotCard({
         </div>
 
         {hasConflict && conflict?.conflictingSlot && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-3 flex gap-2 text-sm text-red-800">
+          <div className="rounded-xl border border-red-200 dark:border-red-800/60 bg-red-50 dark:bg-red-900/20 p-3 flex gap-2 text-sm text-red-800 dark:text-red-300">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <div>
               <p className="font-medium">تداخل با «{conflict.conflictingSlot.title}»</p>
@@ -322,7 +322,7 @@ export default function AddSlotCard({
           </div>
         )}
 
-        {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+        {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
 
         <button
           type="submit"

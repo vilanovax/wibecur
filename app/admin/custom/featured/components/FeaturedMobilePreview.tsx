@@ -45,7 +45,7 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
         {modeLabel}
       </div>
       <div className="mx-auto max-w-[280px] rounded-[2rem] border-[6px] border-gray-800 bg-gray-900 p-2 shadow-xl">
-        <div className="rounded-[1.4rem] overflow-hidden bg-white">
+        <div className="rounded-[1.4rem] overflow-hidden bg-white dark:bg-gray-800">
           {!list ? (
             <div className="h-52 flex items-center justify-center bg-[var(--color-bg)] text-sm text-[var(--color-text-muted)] p-4 text-center">
               لیستی برای پیش‌نمایش انتخاب نشده
@@ -79,11 +79,11 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
                   </p>
                 </div>
               </div>
-              <div className="p-2 flex gap-1.5 bg-white">
+              <div className="p-2 flex gap-1.5 bg-white dark:bg-gray-800">
                 <div className="flex-1 py-2 rounded-lg bg-[var(--primary)] text-white text-[10px] font-medium text-center">
                   ذخیره کن ⭐
                 </div>
-                <div className="flex-1 py-2 rounded-lg border border-gray-200 text-gray-600 text-[10px] font-medium text-center">
+                <div className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-medium text-center">
                   مشاهده لیست
                 </div>
               </div>

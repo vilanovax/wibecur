@@ -36,11 +36,11 @@ export default function SmartSuggestionsPanel({ onPickList, defaultOpen = false 
   }, [open, loaded]);
 
   return (
-    <div className="rounded-xl border border-amber-200/80 bg-amber-50/50 overflow-hidden" dir="rtl">
+    <div className="rounded-xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-900/20 overflow-hidden" dir="rtl">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-amber-900 hover:bg-amber-50/80"
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-50/80"
       >
         <span className="inline-flex items-center gap-2">
           <Lightbulb className="w-4 h-4" />
@@ -49,15 +49,15 @@ export default function SmartSuggestionsPanel({ onPickList, defaultOpen = false 
         {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </button>
       {open && (
-        <div className="px-4 pb-4 border-t border-amber-200/60">
+        <div className="px-4 pb-4 border-t border-amber-200/60 dark:border-amber-800/60">
           {loading && (
             <div className="flex justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
+              <Loader2 className="w-5 h-5 animate-spin text-amber-600 dark:text-amber-400" />
             </div>
           )}
-          {error && <p className="text-sm text-red-600 py-2">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400 py-2">{error}</p>}
           {!loading && !error && items.length === 0 && (
-            <p className="text-xs text-amber-800 py-2">پیشنهادی در دسترس نیست.</p>
+            <p className="text-xs text-amber-800 dark:text-amber-300 py-2">پیشنهادی در دسترس نیست.</p>
           )}
           {!loading && items.length > 0 && (
             <ul className="space-y-2 mt-2">
@@ -68,10 +68,10 @@ export default function SmartSuggestionsPanel({ onPickList, defaultOpen = false 
                     onClick={() => onPickList(item.listId)}
                     className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-white/80 border border-transparent hover:border-amber-200 text-right transition-colors"
                   >
-                    <span className="w-6 h-6 rounded-full bg-amber-200 text-amber-900 text-xs font-bold flex items-center justify-center shrink-0">
+                    <span className="w-6 h-6 rounded-full bg-amber-200 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center justify-center shrink-0">
                       {i + 1}
                     </span>
-                    <div className="w-12 h-8 rounded-lg overflow-hidden bg-gray-200 shrink-0">
+                    <div className="w-12 h-8 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0">
                       <ImageWithFallback
                         src={item.coverImage ?? ''}
                         alt=""
@@ -88,7 +88,7 @@ export default function SmartSuggestionsPanel({ onPickList, defaultOpen = false 
                         {item.categoryName ? ` · ${item.categoryName}` : ''}
                       </p>
                     </div>
-                    <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                    <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                   </button>
                 </li>
               ))}
