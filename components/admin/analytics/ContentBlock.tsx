@@ -26,17 +26,17 @@ export default function ContentBlock({ data }: ContentBlockProps) {
 
   return (
     <section
-      className="rounded-2xl shadow-sm border border-slate-200 bg-white overflow-hidden border-l-4 border-l-emerald-500"
+      className="rounded-2xl shadow-sm border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden border-l-4 border-l-emerald-500"
       style={{ direction: 'rtl' }}
     >
       <div className="p-6">
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <List className="w-5 h-5 text-slate-500" />
-            <h2 className="font-semibold text-slate-800">موتور محتوا</h2>
+            <List className="w-5 h-5 text-slate-500 dark:text-gray-400" />
+            <h2 className="font-semibold text-slate-800 dark:text-gray-100">موتور محتوا</h2>
           </div>
           {showWarning && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
               <AlertTriangle className="w-4 h-4" />
               هشدار: سهم بالای لیست بدون ذخیره
             </span>
@@ -45,34 +45,34 @@ export default function ContentBlock({ data }: ContentBlockProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">
-            <p className="text-sm text-slate-500 mb-1">📦 لیست‌های جدید (۷ روز)</p>
-            <p className="text-3xl font-bold text-slate-900 tabular-nums">
+            <p className="text-sm text-slate-500 dark:text-gray-400 mb-1">📦 لیست‌های جدید (۷ روز)</p>
+            <p className="text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
               {data.newLists7d.toLocaleString('fa-IR')}
             </p>
           </div>
           <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p className="text-xs text-slate-500 mb-0.5">میانگین لیست به ازای کاربر فعال</p>
-              <p className="text-lg font-semibold text-slate-800 tabular-nums">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
+              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">میانگین لیست به ازای کاربر فعال</p>
+              <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.listsPerActiveUser.toLocaleString('fa-IR')}
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p className="text-xs text-slate-500 mb-0.5">میانگین ذخیره به ازای لیست</p>
-              <p className="text-lg font-semibold text-slate-800 tabular-nums">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
+              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">میانگین ذخیره به ازای لیست</p>
+              <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.avgSavesPerList7d.toLocaleString('fa-IR')}
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <p className="text-xs text-slate-500 mb-0.5">٪ لیست‌های بدون ذخیره</p>
-              <p className="text-lg font-semibold text-slate-800 tabular-nums">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
+              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">٪ لیست‌های بدون ذخیره</p>
+              <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.percentListsZeroSaves}٪
               </p>
             </div>
           </div>
         </div>
 
-        <p className="text-sm text-slate-600 mt-3">{buildInsight(data)}</p>
+        <p className="text-sm text-slate-600 dark:text-gray-300 mt-3">{buildInsight(data)}</p>
       </div>
     </section>
   );
