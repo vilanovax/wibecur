@@ -5,6 +5,7 @@ export const ADMIN_LISTS_CACHE_SECONDS = 120;
 export const ADMIN_CATEGORIES_CACHE_SECONDS = 180;
 export const ADMIN_USERS_CACHE_SECONDS = 120;
 export const ADMIN_COMMENTS_CACHE_SECONDS = 90;
+export const ADMIN_ANALYTICS_CACHE_SECONDS = 120;
 
 export const ADMIN_CACHE_TAGS = {
   lists: 'admin-lists',
@@ -12,6 +13,7 @@ export const ADMIN_CACHE_TAGS = {
   users: 'admin-users',
   comments: 'admin-comments',
   commentReports: 'admin-comment-reports',
+  analytics: 'admin-analytics',
 } as const;
 
 export function revalidateAdminListsCache() {
