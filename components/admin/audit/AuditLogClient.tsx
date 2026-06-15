@@ -54,7 +54,7 @@ export default function AuditLogClient() {
     dateTo: '',
   });
 
-  const fetchLogs = useCallback(async () => {
+  const fetchLogs = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     const params = new URLSearchParams();
     if (filters.actorId) params.set('actorId', filters.actorId);
@@ -65,20 +65,24 @@ export default function AuditLogClient() {
     params.set('page', String(page));
     params.set('pageSize', String(pageSize));
     try {
-      const res = await fetch(`/api/admin/audit?${params}`);
+      const res = await fetch(`/api/admin/audit?${params}`, { signal });
       const json = await res.json();
       if (res.ok) {
         const rows = json.rows ?? json.data ?? [];
         setItems(rows);
         setTotal(json.total ?? 0);
       }
+    } catch (e) {
+      if ((e as Error)?.name === 'AbortError') return; // پاسخ قدیمی لغو شد
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, [filters, page, pageSize]);
 
   useEffect(() => {
-    fetchLogs();
+    const ctrl = new AbortController();
+    void fetchLogs(ctrl.signal);
+    return () => ctrl.abort();
   }, [fetchLogs]);
 
   const formatExact = (s: string) =>
