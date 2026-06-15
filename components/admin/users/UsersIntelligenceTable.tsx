@@ -20,16 +20,27 @@ import {
 import UserAvatar from '@/components/shared/UserAvatar';
 
 const qualityClass: Record<Row['quality'], string> = {
-  high_impact: 'bg-emerald-100 text-emerald-700',
-  stable: 'bg-amber-100 text-amber-700',
-  low_engagement: 'bg-gray-100 text-gray-600',
+  high_impact: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  stable: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  low_engagement: 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300',
 };
 
 const roleColors: Record<string, string> = {
-  USER: 'bg-gray-100 text-gray-800',
-  EDITOR: 'bg-blue-100 text-blue-800',
-  ADMIN: 'bg-red-100 text-red-800',
+  USER: 'bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-200',
+  EDITOR: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };
+
+/** ماسک ایمیل برای نمای فهرست — جلوگیری از نمایش انبوه PII (ایمیل کامل در مدال جزئیات) */
+function maskEmail(email: string): string {
+  const at = email.indexOf('@');
+  if (at <= 0) return email;
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const shown = local.slice(0, 2);
+  const dots = '•'.repeat(Math.max(1, Math.min(local.length - shown.length, 4)));
+  return `${shown}${dots}@${domain}`;
+}
 
 interface UsersIntelligenceTableProps {
   users: Row[];
@@ -121,7 +132,7 @@ export default function UsersIntelligenceTable({
                           {user.name || 'بدون نام'}
                         </p>
                         {user.isBot && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-medium">
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 text-[10px] font-medium">
                             <Bot className="w-3 h-3" />
                             بات
                           </span>
@@ -130,9 +141,9 @@ export default function UsersIntelligenceTable({
                       <p className="text-xs text-[var(--color-text-muted)] truncate">
                         {user.username ? `@${user.username}` : user.email}
                       </p>
-                      {user.username && (
-                        <p className="text-[11px] text-[var(--color-text-subtle)] truncate">
-                          {user.email}
+                      {user.username && user.email && (
+                        <p className="text-[11px] text-[var(--color-text-subtle)] truncate" title="ایمیل کامل در جزئیات کاربر">
+                          {maskEmail(user.email)}
                         </p>
                       )}
                     </div>
@@ -142,8 +153,8 @@ export default function UsersIntelligenceTable({
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${
                       user.isActive
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-gray-100 text-gray-600'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300'
                     }`}
                   >
                     {user.isActive ? 'فعال' : 'غیرفعال'}
@@ -211,7 +222,7 @@ export default function UsersIntelligenceTable({
                       {USER_RISK_LABELS.clean}
                     </span>
                   ) : (
-                    <span className="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium bg-red-100 text-red-700">
+                    <span className="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
                       {user.riskLabel ?? USER_RISK_LABELS[user.risk]}
                     </span>
                   )}

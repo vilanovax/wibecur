@@ -92,6 +92,16 @@ export default function UserDetailModal({
     if (isOpen && userId) fetchUserDetails();
   }, [isOpen, userId]);
 
+  // بستن با Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   const fetchUserDetails = async () => {
     setIsLoading(true);
     try {
@@ -123,13 +133,23 @@ export default function UserDetailModal({
   const sectionCard = 'rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="user-detail-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-5 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[var(--color-text)]">جزئیات کاربر</h2>
+          <h2 id="user-detail-title" className="text-lg font-bold text-[var(--color-text)]">جزئیات کاربر</h2>
           <button
             onClick={onClose}
+            aria-label="بستن"
             className="w-8 h-8 rounded-full hover:bg-[var(--color-bg)] flex items-center justify-center transition-colors"
           >
             <X className="w-5 h-5 text-[var(--color-text-muted)]" />
