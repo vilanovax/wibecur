@@ -13,22 +13,22 @@ const typeMeta: Record<
   comment_pending: {
     icon: Clock,
     label: 'کامنت در انتظار',
-    color: 'text-amber-600 bg-amber-50',
+    color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20',
   },
   comment_report: {
     icon: Flag,
     label: 'ریپورت کامنت',
-    color: 'text-rose-600 bg-rose-50',
+    color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20',
   },
   item_report: {
     icon: Package,
     label: 'ریپورت آیتم',
-    color: 'text-orange-600 bg-orange-50',
+    color: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20',
   },
   user_penalty: {
     icon: ShieldBan,
     label: 'کاربر پرریسک',
-    color: 'text-rose-700 bg-rose-50',
+    color: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-900/20',
   },
 };
 

@@ -61,7 +61,7 @@ export default function ReportsTable({
                 } ${openCount > 0 ? 'border-r-4 border-r-rose-500' : ''}`}
               >
                 <td className="px-3 py-2.5">
-                  <span className="inline-flex min-w-[2rem] justify-center px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-bold tabular-nums">
+                  <span className="inline-flex min-w-[2rem] justify-center px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 text-xs font-bold tabular-nums">
                     {group.reportCount.toLocaleString('fa-IR')}
                   </span>
                 </td>
@@ -91,11 +91,11 @@ export default function ReportsTable({
                 </td>
                 <td className="px-3 py-2.5">
                   {group.comment.isApproved ? (
-                    <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg">
+                    <span className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-lg">
                       تایید
                     </span>
                   ) : openCount > 0 ? (
-                    <span className="text-xs text-rose-700 bg-rose-50 px-2 py-0.5 rounded-lg">
+                    <span className="text-xs text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-900/20 px-2 py-0.5 rounded-lg">
                       باز
                     </span>
                   ) : (

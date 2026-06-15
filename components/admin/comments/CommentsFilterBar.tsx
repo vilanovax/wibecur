@@ -148,7 +148,7 @@ export default function CommentsFilterBar({
               {count != null && count > 0 && (
                 <span
                   className={`min-w-[1.1rem] px-1 rounded-full text-[10px] font-bold tabular-nums ${
-                    active ? 'bg-white/25' : 'bg-rose-500 text-white'
+                    active ? 'bg-white/25 dark:bg-gray-800' : 'bg-rose-500 text-white'
                   }`}
                 >
                   {count.toLocaleString('fa-IR')}

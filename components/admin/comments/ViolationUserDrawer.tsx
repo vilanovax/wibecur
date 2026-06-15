@@ -135,7 +135,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
           )}
 
           {error && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-900/20 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
               {error}
             </div>
           )}
@@ -158,7 +158,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <CommentRestrictionStatusBadge status={status} />
-                    <span className="rounded-lg bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-800 tabular-nums">
+                    <span className="rounded-lg bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 text-xs font-bold text-orange-800 dark:text-orange-300 tabular-nums">
                       امتیاز منفی: {detail.totalPenaltyScore.toLocaleString('fa-IR')}
                     </span>
                     <span className="text-xs text-[var(--color-text-muted)]">
@@ -251,7 +251,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                         className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg)] px-3 py-2 text-xs"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-rose-700 tabular-nums">
+                          <span className="font-bold text-rose-700 dark:text-rose-300 tabular-nums">
                             -{p.penaltyScore}
                           </span>
                           <span className="text-[var(--color-text-muted)]">{p.action}</span>

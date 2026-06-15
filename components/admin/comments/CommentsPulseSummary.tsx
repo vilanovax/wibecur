@@ -14,25 +14,25 @@ const cards: {
     key: 'pending',
     label: 'در انتظار بررسی',
     icon: Clock,
-    bg: 'from-amber-500/10 to-amber-600/5 border-amber-200/50',
+    bg: 'from-amber-500/10 to-amber-600/5 border-amber-200/50 dark:border-amber-800/60',
   },
   {
     key: 'flagged',
     label: 'نیاز به بررسی',
     icon: AlertTriangle,
-    bg: 'from-orange-500/10 to-orange-600/5 border-orange-200/50',
+    bg: 'from-orange-500/10 to-orange-600/5 border-orange-200/50 dark:border-orange-800/60',
   },
   {
     key: 'reported',
     label: 'ریپورت‌شده',
     icon: Flag,
-    bg: 'from-rose-500/10 to-rose-600/5 border-rose-200/50',
+    bg: 'from-rose-500/10 to-rose-600/5 border-rose-200/50 dark:border-rose-800/60',
   },
   {
     key: 'approved',
     label: 'تایید شده',
     icon: CheckCircle,
-    bg: 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/50',
+    bg: 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/50 dark:border-emerald-800/60',
   },
 ];
 
@@ -71,7 +71,7 @@ export default function CommentsPulseSummary({
             title={clickable ? `فیلتر: ${label}` : undefined}
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className="p-1.5 rounded-lg bg-white/60">
+              <span className="p-1.5 rounded-lg bg-white/60 dark:bg-gray-800">
                 <Icon className="w-4 h-4 text-[var(--color-text)]" />
               </span>
               <span className="text-[13px] font-medium text-[var(--color-text-muted)]">

@@ -38,34 +38,34 @@ export default function CommentsTable({
     selectableComments.every((c) => selectedIds.has(c.id));
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
       <table className="w-full min-w-[800px]">
-        <thead className="bg-slate-50 border-b border-slate-200">
+        <thead className="bg-slate-50 dark:bg-gray-800/60 border-b border-slate-200 dark:border-gray-700">
           <tr style={{ direction: 'rtl' }}>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 w-10">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300 w-10">
               <input
                 type="checkbox"
                 checked={allSelected}
                 onChange={(e) => onSelectAll(e.target.checked)}
-                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                className="rounded border-slate-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500"
               />
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
               کاربر
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 max-w-[220px]">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300 max-w-[220px]">
               متن کامنت
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
               آیتم
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
               تاریخ
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
               وضعیت
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
               عملیات
             </th>
           </tr>

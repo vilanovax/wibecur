@@ -56,7 +56,7 @@ export default function BadWordsTable({
                 key={word.id}
                 className={`border-b border-[var(--color-border-muted)] transition-colors ${
                   hasHits
-                    ? 'border-r-4 border-r-amber-500 bg-amber-50/40'
+                    ? 'border-r-4 border-r-amber-500 bg-amber-50/40 dark:bg-amber-900/20'
                     : 'hover:bg-[var(--color-bg)]'
                 }`}
               >
@@ -79,7 +79,7 @@ export default function BadWordsTable({
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium tabular-nums ${
                       hasHits
-                        ? 'bg-amber-100 text-amber-800'
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
                         : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
                     }`}
                   >
@@ -93,7 +93,7 @@ export default function BadWordsTable({
                         <button
                           type="button"
                           onClick={() => onSaveEdit(word.id)}
-                          className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50"
+                          className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50"
                           title="ذخیره"
                         >
                           <Save className="w-4 h-4" />
@@ -121,7 +121,7 @@ export default function BadWordsTable({
                           type="button"
                           onClick={() => onDelete(word.id)}
                           disabled={deletingId === word.id}
-                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                          className="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 disabled:opacity-50"
                           title="حذف"
                         >
                           <Trash2 className="w-4 h-4" />

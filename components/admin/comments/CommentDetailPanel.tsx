@@ -148,7 +148,7 @@ export default function CommentDetailPanel({
                       locale: faIR,
                     })}
                     {r.resolved && (
-                      <span className="mr-1 text-emerald-600">· حل‌شده</span>
+                      <span className="mr-1 text-emerald-600 dark:text-emerald-400">· حل‌شده</span>
                     )}
                   </p>
                 </li>
@@ -208,7 +208,7 @@ export default function CommentDetailPanel({
             <button
               type="button"
               onClick={() => onDelete(comment.id, comment.content)}
-              className="px-3 py-2 rounded-xl border border-rose-200 text-rose-600 text-sm hover:bg-rose-50"
+              className="px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 text-sm hover:bg-rose-50"
             >
               حذف
             </button>

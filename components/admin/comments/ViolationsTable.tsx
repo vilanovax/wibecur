@@ -69,9 +69,9 @@ export default function ViolationsTable({ violations, onViewDetails }: Props) {
             const risk = riskLevel(v.violationCount, v.totalPenaltyScore);
             const rowAccent =
               risk === 'high'
-                ? 'border-r-4 border-r-rose-500 bg-rose-50/50'
+                ? 'border-r-4 border-r-rose-500 bg-rose-50/50 dark:bg-rose-900/20'
                 : risk === 'mid'
-                  ? 'border-r-4 border-r-amber-500 bg-amber-50/40'
+                  ? 'border-r-4 border-r-amber-500 bg-amber-50/40 dark:bg-amber-900/20'
                   : 'hover:bg-[var(--color-bg)]';
 
             return (
@@ -98,13 +98,13 @@ export default function ViolationsTable({ violations, onViewDetails }: Props) {
                   </div>
                 </td>
                 <td className="px-3 py-2.5">
-                  <span className="inline-flex items-center gap-1 text-sm font-bold tabular-nums text-rose-700">
+                  <span className="inline-flex items-center gap-1 text-sm font-bold tabular-nums text-rose-700 dark:text-rose-300">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     {v.violationCount.toLocaleString('fa-IR')}
                   </span>
                 </td>
                 <td className="px-3 py-2.5">
-                  <span className="inline-flex px-2 py-0.5 rounded-lg bg-orange-100 text-orange-800 text-xs font-bold tabular-nums">
+                  <span className="inline-flex px-2 py-0.5 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 text-xs font-bold tabular-nums">
                     {v.totalPenaltyScore.toLocaleString('fa-IR')}
                   </span>
                 </td>

@@ -27,19 +27,19 @@ const STYLES: Record<
 > = {
   APPROVED: {
     label: 'تایید شده',
-    className: 'bg-emerald-100 text-emerald-700',
+    className: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
   },
   PENDING: {
     label: 'در انتظار بررسی',
-    className: 'bg-amber-100 text-amber-700',
+    className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
   },
   REJECTED: {
     label: 'رد شده',
-    className: 'bg-rose-100 text-rose-700',
+    className: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300',
   },
   FLAGGED: {
     label: 'نیاز به بررسی',
-    className: 'bg-orange-100 text-orange-700',
+    className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
   },
 };
 
