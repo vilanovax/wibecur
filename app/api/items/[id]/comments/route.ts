@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
+import { resolveSessionUserId, sessionUserNotFoundResponse } from '@/lib/api-db';
 
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -24,7 +25,7 @@ export async function GET(
     const sort = searchParams.get('sort') || 'newest'; // newest, popular
 
     const session = await auth();
-    const userId = session?.user ? session.user.id : null;
+    const userId = session?.user ? await resolveSessionUserId(session) : null;
 
     // موازی‌سازی کوئری‌های مستقل
     const [badWordsList, comments, item, globalSettings] = await Promise.all([
@@ -186,7 +187,10 @@ export async function POST(
       );
     }
 
-    const userId = session.user.id;
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
+      return sessionUserNotFoundResponse();
+    }
     const { id: itemId } = await params;
 
     const commentPermission = await getCommentPermission(userId);

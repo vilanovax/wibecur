@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { track } from '@/lib/analytics';
+import { signOutIfStaleSession } from '@/lib/session-client';
 
 interface BaseCommentFormProps {
   isOpen: boolean;
@@ -45,6 +46,10 @@ export default function BaseCommentForm({
       });
 
       const data = await response.json().catch(() => ({}));
+
+      if (await signOutIfStaleSession(response, data)) {
+        return;
+      }
 
       if (!response.ok) {
         const message = data?.error || (response.status === 429 ? 'لطفاً چند دقیقه صبر کنید و دوباره امتحان کنید.' : 'خطا در ثبت کامنت');

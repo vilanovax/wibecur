@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
+import { signOutIfStaleSession } from '@/lib/session-client';
 
 type LikeState = { isLiked: boolean; likeCount: number };
 
@@ -53,6 +54,9 @@ export default function ItemLikeButton({
     mutationFn: async (): Promise<LikeState> => {
       const response = await fetch(`/api/items/${itemId}/like`, { method: 'POST' });
       const json = await response.json();
+      if (await signOutIfStaleSession(response, json)) {
+        throw new Error('نشست نامعتبر است؛ لطفاً دوباره وارد شوید');
+      }
       if (!json.success) throw new Error(json.error || 'like toggle failed');
       return json.data as LikeState;
     },

@@ -24,6 +24,7 @@ import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import { getItemCardSubtitle, filterItemsByQuery, LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
 import { isLocationCategorySlug } from '@/lib/category-layout';
@@ -569,10 +570,11 @@ export default function ListDetailClient({
 }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const isDesktop = useIsDesktop();
   const [stickyVisible, setStickyVisible] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [stickySaving, setStickySaving] = useState(false);
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  const heroBannerRef = useRef<HTMLElement>(null);
   const itemsSectionRef = useRef<HTMLElement>(null);
   const similarSectionRef = useRef<HTMLElement>(null);
   const commentsSectionRef = useRef<HTMLDivElement>(null);
@@ -674,7 +676,7 @@ export default function ListDetailClient({
       ([entry]) => setStickyVisible(!entry.isIntersecting),
       { threshold: 0, rootMargin: '-80px 0px 0px 0px' }
     );
-    const el = titleRef.current;
+    const el = heroBannerRef.current;
     if (el) observer.observe(el);
     return () => (el ? observer.unobserve(el) : undefined);
   }, []);
@@ -959,6 +961,31 @@ export default function ListDetailClient({
     );
   };
 
+  const heroImage = list.bannerImage ?? list.horizontalImage ?? list.coverImage ?? '';
+
+  const listHeroChips = (
+    <>
+      {list.categories && (
+        <Link
+          href={`/categories/${list.categories.slug}`}
+          className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2.5 py-1 wibe-caption font-medium text-foreground transition-colors hover:bg-gray-200 lg:bg-wibe-surface lg:ring-1 lg:ring-wibe/80"
+        >
+          {list.categories.icon} {list.categories.name}
+        </Link>
+      )}
+      {list.badge && BADGE_LABELS[list.badge] && (
+        <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-gray-100 text-foreground'}`}>
+          {BADGE_LABELS[list.badge]}
+        </span>
+      )}
+      {isViral && (
+        <span className="inline-flex items-center gap-1 rounded-md bg-warning/15 px-2.5 py-1 wibe-caption font-semibold text-warning">
+          <Flame className="h-3.5 w-3.5" /> وایرال
+        </span>
+      )}
+    </>
+  );
+
   return (
     <div className="bg-wibe-surface" dir="rtl">
       <div className="px-4 pt-2 lg:px-0 lg:pt-3">
@@ -966,92 +993,98 @@ export default function ListDetailClient({
         <PageBreadcrumb items={breadcrumbItems} />
       </div>
 
-      {/* Hero — تمام‌عرض در دسکتاپ */}
-      <section className="lg:-mx-4 xl:-mx-5">
-        <div className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-900 sm:h-[240px] lg:h-auto lg:min-h-[280px] lg:aspect-[16/9] lg:rounded-none lg:shadow-sm xl:min-h-[300px]">
-          <ImageWithFallback
-            src={list.bannerImage ?? list.horizontalImage ?? list.coverImage ?? ''}
-            alt={displayTitle}
-            className="absolute inset-0 h-full w-full object-cover object-center"
-            fallbackIcon={categoryIcon ?? '📋'}
-            fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-gray-200 text-6xl"
-            categorySlug={categorySlug}
-            listSlug={list.slug}
-            listTitle={list.title}
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15 lg:from-black/85 lg:via-black/40 lg:to-transparent" />
-          <div className="absolute top-4 right-4 z-10 lg:top-5 lg:right-5">
-            <button
-              type="button"
-              onClick={() => setMoreOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform active:scale-95"
-              aria-label="بیشتر"
-            >
-              <MoreVertical className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-2 lg:top-5 lg:left-5">
-            {isViral && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-white">
-                <Flame className="w-3.5 h-3.5" /> وایرال
-              </span>
-            )}
-          </div>
-          <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-right lg:p-6 lg:pb-7">
-            <h1
-              ref={titleRef}
-              className="text-h1 font-bold leading-tight text-white line-clamp-2 lg:text-[1.75rem] lg:leading-snug xl:text-3xl"
-            >
-              {displayTitle}
-            </h1>
-            {listDescription && (
-              <p className="mt-1 line-clamp-2 wibe-small leading-relaxed text-white/85 lg:max-w-3xl lg:text-[0.9375rem]">
-                {listDescription}
-              </p>
-            )}
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              {list.users?.name && (
-                list.users.username ? (
-                  <Link
-                    href={`/u/${encodeURIComponent(list.users.username)}`}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 wibe-caption font-medium text-white/95 backdrop-blur hover:bg-white/15"
-                  >
-                    {list.users.image ? (
-                      <ImageWithFallback
-                        src={list.users.image}
-                        alt=""
-                        className="h-4 w-4 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[10px]">
-                        {(list.users.name[0] || '?').toUpperCase()}
-                      </span>
-                    )}
-                    {list.users.name}
-                  </Link>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 wibe-caption font-medium text-white/95 backdrop-blur">
-                    {list.users.name}
-                  </span>
-                )
+      {/* Hero — سینمایی موبایل | split header دسکتاپ */}
+      <section ref={heroBannerRef} className="lg:mt-1">
+        {isDesktop ? (
+          <div className="grid grid-cols-[minmax(13rem,17.5rem)_minmax(0,1fr)] items-center gap-5 xl:grid-cols-[18rem_minmax(0,1fr)] xl:gap-6">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-200 shadow-sm ring-1 ring-black/[0.04] xl:aspect-[16/10]">
+              <ImageWithFallback
+                src={heroImage}
+                alt={displayTitle}
+                className="h-full w-full object-cover object-center"
+                fallbackIcon={categoryIcon ?? '📋'}
+                fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-5xl"
+                categorySlug={categorySlug}
+                listSlug={list.slug}
+                listTitle={list.title}
+                priority
+              />
+              <button
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform hover:scale-105 active:scale-95"
+                aria-label="بیشتر"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="min-w-0 py-1">
+              <h1 className="text-[1.5rem] font-bold leading-snug text-foreground line-clamp-2 xl:text-[1.65rem]">
+                {displayTitle}
+              </h1>
+              {listDescription && (
+                <p className="mt-2 line-clamp-3 max-w-2xl wibe-small leading-relaxed text-wibe-secondary xl:line-clamp-2">
+                  {listDescription}
+                </p>
               )}
-              {list.categories && (
-                <Link
-                  href={`/categories/${list.categories.slug}`}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
-                >
-                  {list.categories.icon} {list.categories.name}
-                </Link>
-              )}
-              {list.badge && BADGE_LABELS[list.badge] && (
-                <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-white/20 text-white'}`}>
-                  {BADGE_LABELS[list.badge]}
-                </span>
-              )}
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">{listHeroChips}</div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-900 sm:h-[240px]">
+            <ImageWithFallback
+              src={heroImage}
+              alt={displayTitle}
+              className="absolute inset-0 h-full w-full object-cover object-center"
+              fallbackIcon={categoryIcon ?? '📋'}
+              fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-gray-200 text-6xl"
+              categorySlug={categorySlug}
+              listSlug={list.slug}
+              listTitle={list.title}
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
+            <div className="absolute top-4 right-4 z-10">
+              <button
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform active:scale-95"
+                aria-label="بیشتر"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </button>
+            </div>
+            {isViral && (
+              <div className="absolute top-4 left-4 z-10">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-white">
+                  <Flame className="w-3.5 h-3.5" /> وایرال
+                </span>
+              </div>
+            )}
+            <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-right">
+              <h1 className="text-h1 font-bold leading-tight text-white line-clamp-2">{displayTitle}</h1>
+              {listDescription && (
+                <p className="mt-1 line-clamp-2 wibe-small leading-relaxed text-white/85">{listDescription}</p>
+              )}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {list.categories && (
+                  <Link
+                    href={`/categories/${list.categories.slug}`}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
+                  >
+                    {list.categories.icon} {list.categories.name}
+                  </Link>
+                )}
+                {list.badge && BADGE_LABELS[list.badge] && (
+                  <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-white/20 text-white'}`}>
+                    {BADGE_LABELS[list.badge]}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="relative z-20 -mt-4 px-4 lg:hidden">
@@ -1077,7 +1110,7 @@ export default function ListDetailClient({
         />
       </div>
 
-      <main className="relative z-10 px-4 pt-3 lg:px-0 lg:pt-4">
+      <main className="relative z-10 px-4 pt-2 lg:px-0 lg:pt-3">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_19rem] xl:gap-8">
           <div className="min-w-0 space-y-4 lg:space-y-5">
             <div className="space-y-3 lg:hidden">

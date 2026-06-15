@@ -52,9 +52,6 @@ export default function NewListsSection({
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
-              {list.creator?.name && (
-                <p className="wibe-caption text-wibe-secondary mt-0.5">{list.creator.name}</p>
-              )}
               <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="compact" className="mt-1" />
             </div>
           </Link>

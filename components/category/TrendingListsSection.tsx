@@ -66,9 +66,6 @@ function TrendingListCard({
           </div>
         </div>
         <div className="p-3">
-          {list.creator?.name && (
-            <p className="mb-1 truncate wibe-caption text-wibe-secondary">{list.creator.name}</p>
-          )}
           <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
         </div>
       </div>
