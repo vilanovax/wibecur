@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UserPulseSummary from '@/components/admin/users/UserPulseSummary';
 import SmartFilterBar from '@/components/admin/users/SmartFilterBar';
@@ -26,6 +26,7 @@ interface UsersPageClientProps {
 export default function UsersPageClient({ data }: UsersPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isNavigating, startNavigation] = useTransition();
 
   const [search, setSearch] = useState(data.search || '');
   const [filterKind, setFilterKind] = useState<UserFilterKind>(data.filter);
@@ -83,7 +84,8 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
         else params.set('page', opts.page);
       }
 
-      router.push(params.toString() ? `/admin/users?${params.toString()}` : '/admin/users');
+      const url = params.toString() ? `/admin/users?${params.toString()}` : '/admin/users';
+      startNavigation(() => router.push(url));
     },
     [searchParams, filterKind, hideBots, search, sort, router]
   );
@@ -119,7 +121,8 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
     setSort('created_desc');
     const params = new URLSearchParams();
     if (!hideBots) params.set('hideBots', 'false');
-    router.push(params.toString() ? `/admin/users?${params.toString()}` : '/admin/users');
+    const url = params.toString() ? `/admin/users?${params.toString()}` : '/admin/users';
+    startNavigation(() => router.push(url));
   };
 
   const handleUserClick = (user: UserIntelligenceRow) => {
@@ -220,7 +223,7 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
           </p>
         </div>
 
-        <UserPulseSummary data={data.pulse} onFilterClick={handlePulseFilter} />
+        <UserPulseSummary data={data.pulse} onFilterClick={handlePulseFilter} activeFilter={filterKind} />
 
         <SmartFilterBar
           value={filterKind}
@@ -237,15 +240,18 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
           onClearFilters={handleClearFilters}
         />
 
-        <UsersIntelligenceTable
-          users={users}
-          onToggleActiveRequest={requestToggleActive}
-          togglingId={togglingId}
-          onUserClick={handleUserClick}
-          emptyBecauseFilter={users.length === 0 && data.totalCount === 0 && filterKind !== 'all'}
-          filterLabel={USER_FILTER_PILLS.find((p) => p.value === filterKind)?.label}
-          hasSearch={!!data.search.trim()}
-        />
+        {/* حین ناوبری سرور (فیلتر/جستجو/مرتب) جدول کم‌رنگ و غیرفعال می‌شود تا فریزِ بی‌بازخورد نباشد */}
+        <div className={`transition-opacity ${isNavigating ? 'opacity-50 pointer-events-none' : ''}`} aria-busy={isNavigating}>
+          <UsersIntelligenceTable
+            users={users}
+            onToggleActiveRequest={requestToggleActive}
+            togglingId={togglingId}
+            onUserClick={handleUserClick}
+            emptyBecauseFilter={users.length === 0 && data.totalCount === 0 && filterKind !== 'all'}
+            filterLabel={USER_FILTER_PILLS.find((p) => p.value === filterKind)?.label}
+            hasSearch={!!data.search.trim()}
+          />
+        </div>
 
         {data.totalPages > 1 && (
           <div className="mt-6">
