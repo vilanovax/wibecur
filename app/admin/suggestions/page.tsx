@@ -18,7 +18,7 @@ export default async function SuggestionsPage({
   const stats = await getSuggestionsStats();
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="space-y-5">
       <header className="rounded-2xl border border-violet-100 dark:border-violet-800/40 bg-gradient-to-l from-violet-600 to-indigo-600 px-5 py-5 text-white shadow-sm md:px-6">
         <h1 className="text-xl font-bold md:text-2xl">پیشنهادها</h1>
         <p className="mt-1 text-sm text-white/75">
