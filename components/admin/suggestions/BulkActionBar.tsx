@@ -20,8 +20,8 @@ export default function BulkActionBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="sticky bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-4 p-4 bg-white border-t border-gray-200 shadow-lg rounded-t-2xl">
-      <p className="text-sm font-medium text-gray-700">
+    <div className="sticky bottom-0 left-0 right-0 z-40 flex items-center justify-between gap-4 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg rounded-t-2xl">
+      <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
         <span className="text-primary font-semibold">{selectedCount}</span> مورد انتخاب شده
       </p>
       <div className="flex items-center gap-2">
@@ -29,7 +29,7 @@ export default function BulkActionBar({
           type="button"
           onClick={onClear}
           disabled={loading}
-          className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+          className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
         >
           لغو
         </button>
@@ -37,7 +37,7 @@ export default function BulkActionBar({
           type="button"
           onClick={onReject}
           disabled={loading}
-          className="px-4 py-2.5 rounded-xl border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50 flex items-center gap-1.5"
+          className="px-4 py-2.5 rounded-xl border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 disabled:opacity-50 flex items-center gap-1.5"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
           رد همه

@@ -19,7 +19,7 @@ export default async function SuggestionsPage({
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <header className="rounded-2xl border border-violet-100 bg-gradient-to-l from-violet-600 to-indigo-600 px-5 py-5 text-white shadow-sm md:px-6">
+      <header className="rounded-2xl border border-violet-100 dark:border-violet-800/40 bg-gradient-to-l from-violet-600 to-indigo-600 px-5 py-5 text-white shadow-sm md:px-6">
         <h1 className="text-xl font-bold md:text-2xl">پیشنهادها</h1>
         <p className="mt-1 text-sm text-white/75">
           بررسی پیشنهاد لیست، فرم آیتم، و پیشنهاد سریع کاربران
@@ -30,13 +30,13 @@ export default async function SuggestionsPage({
               <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
               {stats.totalPending.toLocaleString('fa-IR')} در انتظار
             </span>
-            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-sm text-white/90 ring-1 ring-white/10">
+            <span className="inline-flex items-center rounded-full bg-white/10 dark:bg-gray-800 px-3 py-1.5 text-sm text-white/90 ring-1 ring-white/10">
               {stats.itemPending.toLocaleString('fa-IR')} آیتم
               {stats.itemMenuPending > 0 && (
                 <span className="mr-1 text-white/60">· {stats.itemMenuPending.toLocaleString('fa-IR')} منو</span>
               )}
             </span>
-            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5 text-sm text-white/90 ring-1 ring-white/10">
+            <span className="inline-flex items-center rounded-full bg-white/10 dark:bg-gray-800 px-3 py-1.5 text-sm text-white/90 ring-1 ring-white/10">
               {stats.listPending.toLocaleString('fa-IR')} لیست
             </span>
             <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1.5 text-sm text-emerald-100 ring-1 ring-emerald-400/20">

@@ -52,9 +52,9 @@ interface AdminSuggestedItemCardProps {
 }
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  pending: { label: 'در انتظار', className: 'bg-amber-50 text-amber-700' },
-  approved: { label: 'تأیید شده', className: 'bg-emerald-50 text-emerald-700' },
-  rejected: { label: 'رد شده', className: 'bg-red-50 text-red-700' },
+  pending: { label: 'در انتظار', className: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' },
+  approved: { label: 'تأیید شده', className: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' },
+  rejected: { label: 'رد شده', className: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' },
 };
 
 export default function AdminSuggestedItemCard({
@@ -90,13 +90,13 @@ export default function AdminSuggestedItemCard({
         isRemoving ? 'opacity-60 pointer-events-none' : ''
       } ${
         isSelected
-          ? 'border-violet-300 bg-violet-50/40 ring-1 ring-violet-200'
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+          ? 'border-violet-300 bg-violet-50/40 dark:bg-violet-900/20 ring-1 ring-violet-200'
+          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 hover:shadow-sm'
       }`}
     >
       <div className="flex gap-3 p-3 md:p-4">
         {/* پوستر */}
-        <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded-lg bg-gray-100 md:h-16 md:w-12">
+        <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700/50 md:h-16 md:w-12">
           {suggestion.imageUrl ? (
             <Image
               src={suggestion.imageUrl}
@@ -117,7 +117,7 @@ export default function AdminSuggestedItemCard({
               className={`absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 text-[10px] ${
                 isSelected
                   ? 'border-violet-600 bg-violet-600 text-white'
-                  : 'border-gray-300 bg-white text-transparent'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-transparent'
               }`}
               aria-label="انتخاب"
             >
@@ -130,8 +130,8 @@ export default function AdminSuggestedItemCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-bold text-gray-900">{suggestion.title}</h3>
-              <p className="mt-0.5 truncate text-sm text-gray-500">
+              <h3 className="truncate text-base font-bold text-gray-900 dark:text-white">{suggestion.title}</h3>
+              <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
                 {listSlug ? (
                   <Link href={`/lists/${listSlug}`} className="hover:text-violet-600 hover:underline">
                     {listTitle}
@@ -151,7 +151,7 @@ export default function AdminSuggestedItemCard({
                 {statusCfg.label}
               </span>
               {suggestion.source === 'menu' && (
-                <span className="rounded-md bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700">
+                <span className="rounded-md bg-violet-50 dark:bg-violet-900/20 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
                   منو
                 </span>
               )}
@@ -159,7 +159,7 @@ export default function AdminSuggestedItemCard({
                 <button
                   type="button"
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="rounded-lg p-1.5 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100"
+                  className="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100"
                   aria-label="گزینه‌ها"
                 >
                   <MoreVertical className="h-4 w-4" />
@@ -167,12 +167,12 @@ export default function AdminSuggestedItemCard({
                 {menuOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} aria-hidden />
-                    <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                    <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 shadow-lg">
                       {suggestion.source !== 'menu' && (
                         <button
                           type="button"
                           onClick={() => { onEdit(suggestion); setMenuOpen(false); }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
                         >
                           <Edit className="h-4 w-4" /> ویرایش
                         </button>
@@ -182,7 +182,7 @@ export default function AdminSuggestedItemCard({
                           href={suggestion.externalUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
                           onClick={() => setMenuOpen(false)}
                         >
                           <ExternalLink className="h-4 w-4" /> لینک
@@ -191,7 +191,7 @@ export default function AdminSuggestedItemCard({
                       <button
                         type="button"
                         onClick={() => { onViewList(suggestion); setMenuOpen(false); }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
                       >
                         <ListIcon className="h-4 w-4" /> لیست
                       </button>
@@ -199,7 +199,7 @@ export default function AdminSuggestedItemCard({
                         <button
                           type="button"
                           onClick={() => { onDelete(suggestion); setMenuOpen(false); }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" /> حذف
                         </button>
@@ -212,11 +212,11 @@ export default function AdminSuggestedItemCard({
           </div>
 
           {description && (
-            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-gray-600">{description}</p>
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">{description}</p>
           )}
 
           {category?.name && (
-            <span className="mt-2 inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+            <span className="mt-2 inline-block rounded-md bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
               {category.icon} {category.name}
             </span>
           )}
@@ -240,7 +240,7 @@ export default function AdminSuggestedItemCard({
                 type="button"
                 disabled={processing}
                 onClick={() => onReject(suggestion)}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
                 رد
