@@ -157,9 +157,6 @@ function filterWhereClause(filter: UserFilterKind): Prisma.usersWhereInput | nul
       };
     case 'new':
       return { createdAt: { gte: thirtyDaysAgo } };
-    case 'growing':
-      // resolved dynamically via growing user ids
-      return null;
     default:
       return null;
   }
