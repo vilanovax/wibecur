@@ -171,21 +171,23 @@ export default function BackupPageClient() {
     }
   }, []);
 
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (signal?: AbortSignal) => {
     setStatsLoading(true);
     try {
       const params = new URLSearchParams();
       params.set('includeTrash', String(includeTrash));
       if (selectedScopes.length) params.set('scopes', selectedScopes.join(','));
-      const res = await fetch(`/api/admin/backup/stats?${params}`);
+      const res = await fetch(`/api/admin/backup/stats?${params}`, { signal });
       const json = await res.json();
       if (res.ok) {
         setStats(json.data ?? null);
       } else if (process.env.NODE_ENV === 'development' && json.detail) {
         console.warn('[backup stats]', json.detail);
       }
+    } catch (e) {
+      if ((e as Error)?.name === 'AbortError') return; // پاسخ قدیمی لغو شد — نادیده بگیر
     } finally {
-      setStatsLoading(false);
+      if (!signal?.aborted) setStatsLoading(false);
     }
   }, [includeTrash, selectedScopes]);
 
@@ -194,7 +196,9 @@ export default function BackupPageClient() {
   }, [fetchJobs]);
 
   useEffect(() => {
-    void fetchStats();
+    const ctrl = new AbortController();
+    void fetchStats(ctrl.signal);
+    return () => ctrl.abort();
   }, [fetchStats]);
 
   const activeJob = useMemo(

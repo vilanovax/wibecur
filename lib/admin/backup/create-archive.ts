@@ -40,7 +40,9 @@ export async function writeBackupArchive(params: {
       archive.append(README_FA, { name: 'README-fa.txt' });
 
       for (const [table, rows] of Object.entries(dataFiles)) {
-        archive.append(JSON.stringify(rows, null, 2), { name: `data/${table}.json` });
+        // فایل‌های داده ماشین‌خوان‌اند (دوباره import می‌شوند) — JSON فشرده به‌جای
+        // pretty-print، تا حجم/حافظه/CPU روی دیتاست بزرگ کم شود (محتوا یکسان).
+        archive.append(JSON.stringify(rows), { name: `data/${table}.json` });
       }
 
       if (mediaManifest && mediaManifest.length > 0) {
