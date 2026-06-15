@@ -162,7 +162,11 @@ export default function CategoryCard({
             <span className="text-[var(--color-text-muted)]"> لیست · </span>
             <span className="font-semibold">{category.uniqueItemCount.toLocaleString('fa-IR')}</span>
             <span className="text-[var(--color-text-muted)]"> آیتم یکتا · </span>
-            <span className="font-semibold">{category.engagementRatio.toFixed(1)}٪</span>
+            {category.listCount > 0 ? (
+              <span className="font-semibold">{category.engagementRatio.toFixed(1)}٪</span>
+            ) : (
+              <span className="font-semibold text-[var(--color-text-muted)]">—</span>
+            )}
             <span className="text-[var(--color-text-muted)]"> تعامل</span>
             {growth.label !== '—' && (
               <>

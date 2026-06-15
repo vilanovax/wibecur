@@ -277,9 +277,11 @@ export function getCategoryBadgeFlags(row: CategoryIntelligenceRow) {
   const engagement = row.engagementRatio;
   const growth = row.saveGrowthPercent;
   const isNewActivity = row.saveGrowthPrevious === 0 && row.saveGrowthRecent > 0;
+  const isFastRising = isNewActivity || growth > 10 || row.avgSavesPerList >= 50;
   return {
-    isFastRising: isNewActivity || growth > 10 || row.avgSavesPerList >= 50,
-    isLowEngagement: engagement < 10 && row.listCount > 0,
+    isFastRising,
+    // دسته‌ی در حال رشد را «تعامل پایین» علامت نزن (سیگنال متناقض)
+    isLowEngagement: engagement < 10 && row.listCount > 0 && !isFastRising,
     isMonetizable: isMonetizableCategory(row),
     isDeclining: growth < 0 && !isNewActivity,
   };

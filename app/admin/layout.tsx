@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import AdminLayoutShell from '@/components/admin/layout/AdminLayoutShell';
 
 export const dynamic = 'force-dynamic';
+
+// عنوان تب مرورگر برای همهٔ صفحات ادمین: «پنل ادمین»
+// (صفحاتی که عنوان خاص خود را ست کنند به‌صورت «X · پنل ادمین» نمایش داده می‌شوند)
+export const metadata: Metadata = {
+  title: { default: 'پنل ادمین', template: '%s · پنل ادمین' },
+};
 
 /**
  * Layout ادمین 2.0: Sidebar + MainArea (Header + Content)
