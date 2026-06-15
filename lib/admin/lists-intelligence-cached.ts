@@ -13,22 +13,25 @@ export type ListsIntelligenceQuery = {
   trash: boolean;
   page: number;
   categoryId: string;
+  q?: string;
 };
 
-function cacheKey(q: ListsIntelligenceQuery): string[] {
+function cacheKey(query: ListsIntelligenceQuery): string[] {
   return [
     'admin-lists-intelligence',
-    q.trash ? 'trash' : 'active',
-    String(q.page),
-    q.categoryId,
+    query.trash ? 'trash' : 'active',
+    String(query.page),
+    query.categoryId,
+    query.q?.trim() || '',
   ];
 }
 
-async function loadListsIntelligence(q: ListsIntelligenceQuery): Promise<ListsIntelligenceData> {
+async function loadListsIntelligence(query: ListsIntelligenceQuery): Promise<ListsIntelligenceData> {
   return dbQuery(() =>
-    getListsIntelligenceData(q.trash, {
-      page: q.page,
-      categoryId: q.categoryId === 'all' ? undefined : q.categoryId,
+    getListsIntelligenceData(query.trash, {
+      page: query.page,
+      categoryId: query.categoryId === 'all' ? undefined : query.categoryId,
+      q: query.q,
     })
   );
 }

@@ -277,7 +277,7 @@ function buildIntelligenceRows(
 
 export async function getListsIntelligenceData(
   trash: boolean = false,
-  options?: { page?: number; pageSize?: number; categoryId?: string }
+  options?: { page?: number; pageSize?: number; categoryId?: string; q?: string }
 ): Promise<ListsIntelligenceData> {
   const now = Date.now();
   const last24h = new Date(now - 24 * 60 * 60 * 1000);
@@ -289,10 +289,13 @@ export async function getListsIntelligenceData(
   const skip = (page - 1) * pageSize;
   const categoryId =
     options?.categoryId && options.categoryId !== 'all' ? options.categoryId : undefined;
+  const q = options?.q?.trim() || undefined;
 
   const listWhere = {
     ...(trash ? { deletedAt: { not: null } } : { deletedAt: null }),
     ...(categoryId ? { categoryId } : {}),
+    // جستجوی سرور-ساید روی عنوان (در همهٔ صفحات، نه فقط صفحهٔ جاری)
+    ...(q ? { title: { contains: q, mode: 'insensitive' as const } } : {}),
   };
 
   const select = listSelectFor(trash);

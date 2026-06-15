@@ -39,6 +39,7 @@ interface ContentHubClientProps {
   listsData?: ListsIntelligenceData;
   trash?: boolean;
   initialCategoryId?: string;
+  initialSearch?: string;
   catalogData?: CatalogPageData;
   importCategories?: ImportCategoryOption[];
   importLists?: ImportListOption[];
@@ -64,6 +65,7 @@ export default function ContentHubClient({
   listsData,
   trash = false,
   initialCategoryId = 'all',
+  initialSearch = '',
   catalogData,
   importCategories = [],
   importLists = [],
@@ -164,6 +166,7 @@ export default function ContentHubClient({
           data={listsData}
           trash={trash}
           initialCategoryId={initialCategoryId}
+          initialSearch={initialSearch}
           embedded
         />
       )}

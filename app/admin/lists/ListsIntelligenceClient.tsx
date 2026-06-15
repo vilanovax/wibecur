@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus, Sparkles, ChevronDown, ChevronUp, BarChart3, FileJson } from 'lucide-react';
@@ -93,17 +93,20 @@ export default function ListsIntelligenceClient({
   data,
   trash: isTrashView,
   initialCategoryId = 'all',
+  initialSearch = '',
   embedded = false,
 }: {
   data: ListsIntelligenceData;
   trash: boolean;
   initialCategoryId?: string;
+  initialSearch?: string;
   embedded?: boolean;
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<ListFilterKind>('all');
   const [categoryId, setCategoryId] = useState(initialCategoryId);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>('score_desc');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [kpiCollapsed, setKpiCollapsed] = useState(true);
@@ -115,6 +118,18 @@ export default function ListsIntelligenceClient({
     setLists(data.lists);
     setCategoryId(initialCategoryId);
   }, [data.lists, initialCategoryId]);
+
+  // همگام‌سازی با URL (back/forward یا بعد از ناوبریِ جستجو)
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
+
+  useEffect(
+    () => () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    },
+    []
+  );
 
   useEffect(() => {
     const storedView = localStorage.getItem(VIEW_MODE_KEY);
@@ -170,11 +185,37 @@ export default function ListsIntelligenceClient({
     [data.categories, router]
   );
 
+  // جستجوی سرور-ساید: ورودی فوراً به‌روز می‌شود (واکنش‌گرا) و با debounce به URL
+  // ناوبری می‌شود تا سرور روی همهٔ صفحات جستجو کند (نه فقط صفحهٔ جاری).
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = setTimeout(() => {
+        const params = new URLSearchParams(window.location.search);
+        const trimmed = value.trim();
+        if (trimmed) params.set('q', trimmed);
+        else params.delete('q');
+        params.delete('page');
+        const qs = params.toString();
+        router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+      }, 400);
+    },
+    [router]
+  );
+
   const handleClearFilters = useCallback(() => {
     setFilter('all');
     setSearch('');
-    if (categoryId !== 'all') handleCategoryChange('all');
-  }, [categoryId, handleCategoryChange]);
+    setCategoryId('all');
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    const params = new URLSearchParams(window.location.search);
+    params.delete('q');
+    params.delete('category');
+    params.delete('page');
+    const qs = params.toString();
+    router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+  }, [router]);
 
   const handleMoveToTrash = async (id: string, reason?: string) => {
     const res = await fetch(`/api/admin/lists/${id}/trash`, {
@@ -226,7 +267,7 @@ export default function ListsIntelligenceClient({
     onChange: setFilter,
     counts: filterCounts,
     search,
-    onSearchChange: setSearch,
+    onSearchChange: handleSearchChange,
     sortBy,
     onSortChange: (v: string) => setSortBy(v as SortKey),
     viewMode,
@@ -442,6 +483,7 @@ export default function ListsIntelligenceClient({
           searchParams={{
             ...(isTrashView ? { trash: 'true' } : {}),
             ...(categoryId !== 'all' && activeCategory ? { category: activeCategory.slug } : {}),
+            ...(search.trim() ? { q: search.trim() } : {}),
           }}
         />
       )}

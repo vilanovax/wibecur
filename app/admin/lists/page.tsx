@@ -138,6 +138,7 @@ export default async function AdminListsPage({
     trash,
     page: currentPage,
     categoryId: initialCategoryId,
+    q: trash ? undefined : params.q,
   });
 
   return (
@@ -147,6 +148,7 @@ export default async function AdminListsPage({
       listsData={listsData}
       trash={trash}
       initialCategoryId={initialCategoryId}
+      initialSearch={params.q ?? ''}
     />
   );
 }
