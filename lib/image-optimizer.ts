@@ -44,6 +44,25 @@ function formatMeta(format: string | undefined): {
   return { ext: '.jpg', contentType: 'image/jpeg' };
 }
 
+function resolveTargetDimensions(
+  maxWidth: number,
+  maxHeight: number,
+  aspectRatio?: number
+): { width: number; height: number } {
+  if (!aspectRatio || aspectRatio <= 0) {
+    return { width: maxWidth, height: maxHeight };
+  }
+
+  let width = maxWidth;
+  let height = Math.round(width / aspectRatio);
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = Math.round(height * aspectRatio);
+  }
+  return { width, height };
+}
+
+
 function shouldSkipOptimization(
   metadata: sharp.Metadata,
   originalSize: number,
@@ -52,6 +71,7 @@ function shouldSkipOptimization(
   maxHeight: number
 ): boolean {
   if (!profileConfig) return false;
+  if (profileConfig.resizeFit === 'cover') return false;
 
   const width = metadata.width || 0;
   const height = metadata.height || 0;
@@ -72,12 +92,29 @@ async function encodeImage(
     maxHeight: number;
     quality: number;
     format: 'webp' | 'jpeg' | 'png';
+    resizeFit?: 'inside' | 'cover';
+    aspectRatio?: number;
   }
 ): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
-  let pipeline = sharp(buffer).rotate().resize(opts.maxWidth, opts.maxHeight, {
-    fit: 'inside',
-    withoutEnlargement: true,
-  });
+  let pipeline = sharp(buffer).rotate();
+
+  if (opts.resizeFit === 'cover' && opts.aspectRatio) {
+    const { width, height } = resolveTargetDimensions(
+      opts.maxWidth,
+      opts.maxHeight,
+      opts.aspectRatio
+    );
+    pipeline = pipeline.resize(width, height, {
+      fit: 'cover',
+      position: 'centre',
+      withoutEnlargement: false,
+    });
+  } else {
+    pipeline = pipeline.resize(opts.maxWidth, opts.maxHeight, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    });
+  }
 
   if (opts.format === 'webp') {
     const optimizedBuffer = await pipeline
@@ -117,6 +154,8 @@ async function compressToTargetSize(
     quality: number;
     format: 'webp' | 'jpeg' | 'png';
     maxSize: number;
+    resizeFit?: 'inside' | 'cover';
+    aspectRatio?: number;
   }
 ): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
   let quality = opts.quality;
@@ -128,8 +167,18 @@ async function compressToTargetSize(
     if (quality > 52) {
       quality -= 8;
     } else {
-      width = Math.max(Math.round(width * 0.88), 480);
-      height = Math.max(Math.round(height * 0.88), 360);
+      if (opts.resizeFit === 'cover' && opts.aspectRatio) {
+        const scaled = resolveTargetDimensions(
+          Math.max(Math.round(width * 0.88), 640),
+          Math.max(Math.round(height * 0.88), 360),
+          opts.aspectRatio
+        );
+        width = scaled.width;
+        height = scaled.height;
+      } else {
+        width = Math.max(Math.round(width * 0.88), 480);
+        height = Math.max(Math.round(height * 0.88), 360);
+      }
       quality = Math.max(opts.quality - 18, 58);
     }
 
@@ -173,7 +222,18 @@ export async function optimizeImageDetailed(
   const quality = options.quality ?? profileConfig?.quality ?? 80;
   const format = options.format ?? profileConfig?.format ?? 'webp';
   const maxSize = profileConfig?.maxSize;
+  const resizeFit = profileConfig?.resizeFit;
+  const aspectRatio = profileConfig?.aspectRatio;
   const originalSize = buffer.length;
+
+  const encodeOpts = {
+    maxWidth,
+    maxHeight,
+    quality,
+    format,
+    resizeFit,
+    aspectRatio,
+  };
 
   try {
     const metadata = await sharp(buffer).metadata();
@@ -185,14 +245,11 @@ export async function optimizeImageDetailed(
       return buildResult(buffer, contentType, ext, originalSize, true);
     }
 
-    let encoded = await encodeImage(buffer, { maxWidth, maxHeight, quality, format });
+    let encoded = await encodeImage(buffer, encodeOpts);
 
     if (maxSize && encoded.buffer.length > maxSize) {
       encoded = await compressToTargetSize(buffer, {
-        maxWidth,
-        maxHeight,
-        quality,
-        format,
+        ...encodeOpts,
         maxSize,
       });
     }

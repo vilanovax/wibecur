@@ -2,10 +2,12 @@ import Header from '@/components/mobile/layout/Header';
 import HomeSearchBar from '@/components/mobile/home/HomeSearchBar';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
 import HomeHeroSpotlight from '@/components/mobile/home/HomeHeroSpotlight';
+import HomeStartStrip from '@/components/mobile/home/HomeStartStrip';
 import HomeFeedTabs from '@/components/mobile/home/HomeFeedTabs';
+import HomeMoodRowSection from '@/components/mobile/home/HomeMoodRowSection';
+import HomeSavedListsSection from '@/components/mobile/home/HomeSavedListsSection';
 import HomePullToRefresh from '@/components/mobile/home/HomePullToRefresh';
 import HomeDesktopView from '@/components/mobile/home/HomeDesktopView';
-import CreatorSpotlightSection from '@/components/mobile/home/CreatorSpotlightSection';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
@@ -35,7 +37,7 @@ export default async function Home() {
         <HomeDataProvider initialData={initialHomeData}>
           <ErrorBoundary>
             {/* موبایل: جستجو + دسته‌ها */}
-            <div className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 pb-2 pt-1 backdrop-blur-sm lg:hidden">
+            <div className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 pb-1.5 pt-0.5 backdrop-blur-sm lg:hidden">
               <HomeSearchBar />
               <QuickCategoryChips />
             </div>
@@ -45,9 +47,11 @@ export default async function Home() {
 
               {/* موبایل */}
               <div className="flex flex-col lg:hidden">
+                <HomeStartStrip />
                 <HomeHeroSpotlight />
+                <HomeMoodRowSection />
                 <HomeFeedTabs />
-                <CreatorSpotlightSection />
+                <HomeSavedListsSection />
               </div>
             </HomePullToRefresh>
           </ErrorBoundary>

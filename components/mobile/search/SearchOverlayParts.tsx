@@ -4,8 +4,10 @@ import Link from 'next/link';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import SearchHighlight from '@/components/mobile/search/SearchHighlight';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import { getDisplayListTitle } from '@/lib/list-display-title';
+import type { UnifiedSearchItem } from '@/lib/unified-search';
 
 export type SearchListRowData = {
   id: string;
@@ -18,6 +20,8 @@ export type SearchListRowData = {
   description?: string | null;
   categories?: { name: string; icon?: string | null; slug?: string | null } | null;
   category?: { name: string; icon?: string | null; slug?: string | null } | null;
+  matchedItemTitle?: string | null;
+  matchHint?: string | null;
 };
 
 export function SearchListRow({
@@ -73,7 +77,20 @@ export function SearchListRow({
             displayTitle
           )}
         </h3>
-        {subtitle && (
+        {list.matchedItemTitle && (
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-primary/90">
+            شامل:{' '}
+            {highlightQuery ? (
+              <SearchHighlight text={list.matchedItemTitle} query={highlightQuery} />
+            ) : (
+              list.matchedItemTitle
+            )}
+          </p>
+        )}
+        {!list.matchedItemTitle && list.matchHint && (
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-primary/90">{list.matchHint}</p>
+        )}
+        {subtitle && !list.matchedItemTitle && !list.matchHint && (
           <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">
             {highlightQuery ? (
               <SearchHighlight text={subtitle} query={highlightQuery} />
@@ -82,12 +99,84 @@ export function SearchListRow({
             )}
           </p>
         )}
+        {subtitle && list.matchedItemTitle && (
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
+        )}
+        {subtitle && !list.matchedItemTitle && list.matchHint && (
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
+        )}
         <ListCardStats
           saves={list.saveCount ?? 0}
           itemCount={list.itemCount ?? 0}
           variant="minimal"
           className="mt-1"
         />
+      </div>
+    </Link>
+  );
+}
+
+export function SearchItemRow({
+  item,
+  onClick,
+  highlightQuery,
+  isActive,
+  innerRef,
+  compact = false,
+}: {
+  item: UnifiedSearchItem;
+  onClick?: () => void;
+  highlightQuery?: string;
+  isActive?: boolean;
+  innerRef?: (el: HTMLAnchorElement | null) => void;
+  compact?: boolean;
+}) {
+  const fallbackIcon = item.categoryIcon ?? '🎬';
+  const meta =
+    item.listTitle && item.categoryName
+      ? `${item.categoryIcon ? `${item.categoryIcon} ` : ''}${item.categoryName} · ${item.listTitle}`
+      : item.categoryName
+        ? `${item.categoryIcon ? `${item.categoryIcon} ` : ''}${item.categoryName}`
+        : item.listTitle ?? null;
+
+  return (
+    <Link
+      ref={innerRef}
+      href={`/items/${item.id}`}
+      onClick={onClick}
+      className={`flex min-w-0 flex-row-reverse gap-2.5 rounded-xl border p-2 transition-transform active:scale-[0.99] ${
+        isActive
+          ? 'border-primary bg-primary/[0.06] ring-2 ring-primary/25'
+          : 'border-wibe bg-wibe-card'
+      } ${compact ? 'p-1.5' : ''}`}
+    >
+      <div
+        className={`shrink-0 overflow-hidden rounded-lg bg-gray-100 ${
+          compact ? 'h-14 w-14' : 'h-16 w-16 sm:h-[72px] sm:w-[72px]'
+        }`}
+      >
+        <ImageWithFallback
+          src={item.imageUrl ?? ''}
+          alt={item.title}
+          className="h-full w-full object-cover"
+          fallbackIcon={fallbackIcon}
+          fallbackClassName="flex h-full w-full items-center justify-center text-lg"
+        />
+      </div>
+      <div className="min-w-0 flex-1 text-right">
+        <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground">
+          {highlightQuery ? (
+            <SearchHighlight text={item.title} query={highlightQuery} />
+          ) : (
+            item.title
+          )}
+        </h3>
+        {item.matchHint && (
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-primary/90">{item.matchHint}</p>
+        )}
+        {meta && (
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{meta}</p>
+        )}
       </div>
     </Link>
   );

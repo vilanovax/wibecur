@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
-import { Edit2, Camera, UserPlus, Check, Loader2, LogOut } from 'lucide-react';
+import { Edit2, Camera, UserPlus, Check, Loader2, LogOut, MoreVertical, AlertTriangle } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import type { CuratorLevelKey } from '@/lib/curator';
+import { getLevelByScore, type CuratorLevelKey } from '@/lib/curator';
 import { VIBE_AVATARS, isUserEliteLevel } from '@/lib/vibe-avatars';
 import type { ProfileUser } from './types';
 import EditProfileSheet2 from '@/components/mobile/profile/EditProfileSheet2';
+import BottomSheet from '@/components/mobile/shared/BottomSheet';
 
 interface ProfileHeaderProps {
   user: ProfileUser;
@@ -29,6 +30,8 @@ export default function ProfileHeader({
   followersCount,
 }: ProfileHeaderProps) {
   const [showEditSheet, setShowEditSheet] = useState(false);
+  const [showOwnerMenu, setShowOwnerMenu] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
@@ -38,6 +41,11 @@ export default function ProfileHeader({
     } finally {
       setIsLoggingOut(false);
     }
+  };
+
+  const requestLogout = () => {
+    setShowOwnerMenu(false);
+    setShowLogoutConfirm(true);
   };
 
   const levelKey = (user.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
@@ -58,12 +66,14 @@ export default function ProfileHeader({
         : 'user';
 
   const openEdit = () => setShowEditSheet(true);
+  const curatorTier = getLevelByScore(user.curatorScore ?? 0);
+  const curatorScore = user.curatorScore ?? 0;
 
   return (
     <>
       <div className="relative">
         {/* کاور — inset 10px از لبه باکس */}
-        <div className="relative h-[60px] w-full overflow-hidden bg-gradient-to-br from-primary via-primary to-primary-dark lg:h-[4.5rem]">
+        <div className="relative h-12 w-full overflow-hidden bg-gradient-to-br from-primary via-primary to-primary-dark lg:h-[4.5rem]">
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgba(255,255,255,0.14),transparent_55%)]"
             aria-hidden
@@ -78,7 +88,7 @@ export default function ProfileHeader({
               <button
                 type="button"
                 onClick={openEdit}
-                className="absolute start-2.5 top-2.5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 text-[11px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97]"
+                className="absolute start-2.5 top-2.5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 text-[11px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97] lg:hidden"
                 aria-label="ویرایش پروفایل"
               >
                 <Edit2 className="h-3.5 w-3.5" />
@@ -86,17 +96,11 @@ export default function ProfileHeader({
               </button>
               <button
                 type="button"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="absolute end-2.5 top-2.5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 text-[11px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97] disabled:opacity-50 lg:hidden"
-                aria-label="خروج از حساب"
+                onClick={() => setShowOwnerMenu(true)}
+                className="absolute end-2.5 top-2.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97] lg:hidden"
+                aria-label="منوی پروفایل"
               >
-                {isLoggingOut ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <LogOut className="h-3.5 w-3.5" />
-                )}
-                خروج
+                <MoreVertical className="h-4 w-4" />
               </button>
             </>
           ) : onFollowToggle ? (
@@ -153,7 +157,7 @@ export default function ProfileHeader({
                   </button>
                   <button
                     type="button"
-                    onClick={handleLogout}
+                    onClick={requestLogout}
                     disabled={isLoggingOut}
                     className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
                   >
@@ -174,6 +178,14 @@ export default function ProfileHeader({
               >
                 @{displayUsername}
               </p>
+
+              {isOwner && curatorScore >= 0 && (
+                <p className="mt-1.5 inline-flex max-w-full items-center gap-1 text-[11px] text-wibe-secondary">
+                  <span className="font-semibold text-primary">{curatorTier.short}</span>
+                  <span aria-hidden>·</span>
+                  <span>{curatorScore.toLocaleString('fa-IR')} XP</span>
+                </p>
+              )}
 
               {user.bio?.trim() ? (
                 <p className="mt-2 text-[13px] leading-relaxed text-wibe-secondary line-clamp-3 whitespace-pre-wrap break-words">
@@ -218,7 +230,8 @@ export default function ProfileHeader({
                   type="button"
                   onClick={openEdit}
                   className="absolute -bottom-0.5 left-0 flex h-6 w-6 items-center justify-center rounded-full border border-wibe bg-wibe-card shadow-sm"
-                  aria-label="تغییر آواتار"
+                  aria-label="عکس پروفایل اضافه کن"
+                  title="عکس پروفایل اضافه کن"
                 >
                   <Camera className="h-3 w-3 text-wibe-secondary" />
                 </button>
@@ -242,6 +255,86 @@ export default function ProfileHeader({
           userLevel={levelKey}
           onUpdate={onUpdate}
         />
+      )}
+
+      {isOwner && (
+        <>
+          <BottomSheet
+            isOpen={showOwnerMenu}
+            onClose={() => setShowOwnerMenu(false)}
+            title="گزینه‌های پروفایل"
+          >
+            <div className="space-y-1 p-2 pb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOwnerMenu(false);
+                  openEdit();
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-right wibe-small font-medium text-foreground transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
+              >
+                <Edit2 className="h-4 w-4 shrink-0 text-wibe-secondary" />
+                ویرایش پروفایل
+              </button>
+              <button
+                type="button"
+                onClick={requestLogout}
+                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-right wibe-small font-medium text-red-600 transition-colors hover:bg-red-50 active:bg-red-50"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                خروج از حساب
+              </button>
+            </div>
+          </BottomSheet>
+
+          <BottomSheet
+            isOpen={showLogoutConfirm}
+            onClose={() => !isLoggingOut && setShowLogoutConfirm(false)}
+            title="خروج از حساب"
+          >
+            <div className="space-y-5 p-6">
+              <div className="flex justify-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
+                  <AlertTriangle className="h-7 w-7 text-red-600" />
+                </div>
+              </div>
+              <div className="space-y-1.5 text-center">
+                <p className="wibe-body font-semibold text-foreground">از حساب خارج می‌شوید؟</p>
+                <p className="wibe-small text-wibe-secondary">
+                  برای ورود دوباره باید نام کاربری و رمز عبور را وارد کنید.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 wibe-small font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      در حال خروج...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="h-4 w-4" />
+                      بله، خارج شو
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  disabled={isLoggingOut}
+                  className="w-full rounded-lg bg-wibe-surface px-4 py-3 wibe-small font-medium text-foreground transition-colors hover:bg-gray-100 disabled:opacity-50"
+                >
+                  انصراف
+                </button>
+              </div>
+            </div>
+          </BottomSheet>
+        </>
       )}
     </>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle, XCircle, ExternalLink, FileText, Flag } from 'lucide-react';
+import { CheckCircle, XCircle, ExternalLink, FileText, Flag, FlagOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentStatusBadge from './CommentStatusBadge';
@@ -23,11 +23,13 @@ type Props = {
   reportCount?: number;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onDiscardReports?: (id: string) => void;
   onOpenFullDetail?: (comment: CommentRowData) => void;
   onEdit?: (comment: CommentRowData) => void;
   onDelete?: (commentId: string, preview: string) => void;
   approvingId: string | null;
   rejectingId: string | null;
+  discardingId?: string | null;
   filterBadWords?: (text: string) => string;
   showReject?: boolean;
   emptyLabel?: string;
@@ -40,11 +42,13 @@ export default function CommentDetailPanel({
   reportCount,
   onApprove,
   onReject,
+  onDiscardReports,
   onOpenFullDetail,
   onEdit,
   onDelete,
   approvingId,
   rejectingId,
+  discardingId = null,
   filterBadWords,
   showReject = true,
   emptyLabel = 'یک کامنت از لیست انتخاب کنید',
@@ -63,6 +67,14 @@ export default function CommentDetailPanel({
   const displayContent = filterBadWords
     ? filterBadWords(comment.content)
     : comment.content;
+
+  const hasOpenReports =
+    reports?.some((r) => !r.resolved) ??
+    (reportCount ?? comment._count?.comment_reports ?? 0) > 0;
+  const isActionBusy =
+    approvingId === comment.id ||
+    rejectingId === comment.id ||
+    discardingId === comment.id;
 
   return (
     <div
@@ -170,13 +182,25 @@ export default function CommentDetailPanel({
       </div>
 
       {!comment.deletedAt && (
-        <div className="p-3 border-t border-[var(--color-border)] flex flex-wrap gap-2">
+        <div className="p-3 border-t border-[var(--color-border)] flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
+          {onDiscardReports && (
+            <button
+              type="button"
+              onClick={() => onDiscardReports(comment.id)}
+              disabled={isActionBusy || !hasOpenReports}
+              className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
+              title="ریپورت اشتباه بود — بدون تغییر کامنت یا امتیاز منفی"
+            >
+              <FlagOff className="w-4 h-4" />
+              رد ریپورت
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onApprove(comment.id)}
             disabled={
-              approvingId === comment.id ||
-              rejectingId === comment.id ||
+              isActionBusy ||
               comment.isApproved
             }
             className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
@@ -188,7 +212,7 @@ export default function CommentDetailPanel({
             <button
               type="button"
               onClick={() => onReject(comment.id)}
-              disabled={approvingId === comment.id || rejectingId === comment.id}
+              disabled={isActionBusy}
               className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50"
             >
               <XCircle className="w-4 h-4" />
@@ -213,6 +237,7 @@ export default function CommentDetailPanel({
               حذف
             </button>
           )}
+          </div>
         </div>
       )}
     </div>

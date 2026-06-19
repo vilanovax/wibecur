@@ -10,10 +10,16 @@ import {
   primarySuggestionTitle,
 } from '@/lib/suggestion-utils';
 import {
+  catalogMissingPosterImage,
+  extractCatalogImdbId,
+} from '@/lib/missing-image-utils';
+import {
   catalogRefMetadata,
   type EntryKind,
   isLightweightEntryKind,
 } from '@/lib/list-entry';
+import { catalogHasSearchProfile } from '@/lib/catalog-search-profile';
+import { buildCatalogItemSearchOrClauses } from '@/lib/search-keywords';
 
 export class CatalogNotReadyError extends Error {
   constructor() {
@@ -534,11 +540,7 @@ export async function searchCatalogItems(
   if (query.length < 2) return [];
 
   const where: Prisma.catalog_itemsWhereInput = {
-    OR: [
-      { title: { contains: query, mode: 'insensitive' } },
-      { description: { contains: query, mode: 'insensitive' } },
-      { externalKey: { contains: query, mode: 'insensitive' } },
-    ],
+    OR: buildCatalogItemSearchOrClauses(query),
     ...(options?.categorySlug
       ? { categorySlug: options.categorySlug }
       : {}),
@@ -731,6 +733,7 @@ export type CatalogListRow = {
   externalKey: string | null;
   listCount: number;
   updatedAt: string;
+  hasSearchProfile?: boolean;
   /** وقتی placementListId داده شده — آیا در آن لیست جایگاه دارد */
   alreadyInList?: boolean;
 };
@@ -751,6 +754,7 @@ export type DuplicateCatalogGroup = {
     id: string;
     title: string;
     externalKey: string | null;
+    imageUrl: string | null;
     listCount: number;
   }>;
 };
@@ -775,10 +779,7 @@ export async function listCatalogItems(
   const where: Prisma.catalog_itemsWhereInput = {
     ...(q && q.length >= 2
       ? {
-          OR: [
-            { title: { contains: q, mode: 'insensitive' } },
-            { externalKey: { contains: q, mode: 'insensitive' } },
-          ],
+          OR: buildCatalogItemSearchOrClauses(q),
         }
       : {}),
     ...(catalogCategoryWhere(options.categorySlug) ?? {}),
@@ -804,7 +805,17 @@ export async function listCatalogItems(
       skip: (page - 1) * perPage,
       take: perPage,
       orderBy: { updatedAt: 'desc' },
-      include: { _count: { select: { items: true } } },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        imageUrl: true,
+        categorySlug: true,
+        externalKey: true,
+        metadata: true,
+        updatedAt: true,
+        _count: { select: { items: true } },
+      },
     }),
     catalogDb(prisma).count({ where }),
   ]);
@@ -834,6 +845,7 @@ export async function listCatalogItems(
       externalKey: r.externalKey,
       listCount: r._count.items,
       updatedAt: r.updatedAt.toISOString(),
+      hasSearchProfile: catalogHasSearchProfile(r.metadata),
       ...(options.placementListId
         ? { alreadyInList: inPlacementListSet.has(r.id) }
         : {}),
@@ -994,6 +1006,189 @@ export async function updateCatalogItem(
 }
 
 /** گروه‌های احتمالاً تکراری (عنوان نرمال + دسته) */
+export type SimilarCatalogMatchReason =
+  | 'exact_title'
+  | 'primary_title'
+  | 'external_key'
+  | 'text_search';
+
+export type SimilarCatalogRow = CatalogListRow & {
+  matchReason: SimilarCatalogMatchReason;
+  score: number;
+};
+
+const SIMILAR_MATCH_LABELS: Record<SimilarCatalogMatchReason, string> = {
+  exact_title: 'عنوان یکسان',
+  primary_title: 'عنوان اصلی مشابه',
+  external_key: 'شناسه خارجی یکسان',
+  text_search: 'جستجوی متنی',
+};
+
+export function similarCatalogMatchLabel(reason: SimilarCatalogMatchReason): string {
+  return SIMILAR_MATCH_LABELS[reason];
+}
+
+function scoreCatalogSimilarity(
+  anchor: { title: string; externalKey: string | null; categorySlug: string | null },
+  candidate: { title: string; externalKey: string | null; categorySlug: string | null },
+  textQuery?: string
+): { score: number; matchReason: SimilarCatalogMatchReason } | null {
+  if (
+    anchor.externalKey &&
+    candidate.externalKey &&
+    anchor.externalKey.trim() === candidate.externalKey.trim()
+  ) {
+    return { score: 100, matchReason: 'external_key' };
+  }
+
+  const na = normalizeSuggestionTitle(anchor.title);
+  const nc = normalizeSuggestionTitle(candidate.title);
+  if (na && na === nc) {
+    return { score: 95, matchReason: 'exact_title' };
+  }
+
+  if (catalogTitlesMatch(anchor.title, candidate.title)) {
+    return { score: 85, matchReason: 'primary_title' };
+  }
+
+  if (textQuery && textQuery.trim().length >= 2) {
+    const q = textQuery.trim().toLowerCase();
+    if (
+      nc.includes(q) ||
+      candidate.externalKey?.toLowerCase().includes(q) ||
+      normalizeSuggestionTitle(candidate.title).includes(q)
+    ) {
+      let score = 50;
+      if (anchor.categorySlug && candidate.categorySlug === anchor.categorySlug) score += 10;
+      return { score, matchReason: 'text_search' };
+    }
+  }
+
+  return null;
+}
+
+function mapSimilarCatalogRow(
+  row: {
+    id: string;
+    title: string;
+    description: string | null;
+    imageUrl: string | null;
+    categorySlug: string | null;
+    externalKey: string | null;
+    updatedAt: Date;
+    _count: { items: number };
+  },
+  scored: { score: number; matchReason: SimilarCatalogMatchReason }
+): SimilarCatalogRow {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    imageUrl: row.imageUrl,
+    categorySlug: row.categorySlug,
+    externalKey: row.externalKey,
+    listCount: row._count.items,
+    updatedAt: row.updatedAt.toISOString(),
+    score: scored.score,
+    matchReason: scored.matchReason,
+  };
+}
+
+/** جستجوی آیتم‌های مشابه کاتالوگ — بر اساس catalogId یا عبارت q */
+export async function findSimilarCatalogItems(
+  prisma: PrismaClient,
+  options: {
+    catalogId?: string;
+    q?: string;
+    categorySlug?: string;
+    limit?: number;
+  }
+): Promise<{ anchor: { id: string | null; title: string; categorySlug: string | null } | null; rows: SimilarCatalogRow[] }> {
+  const limit = Math.min(Math.max(options.limit ?? 20, 1), 50);
+  const excludeId = options.catalogId?.trim() || null;
+  const q = options.q?.trim() || '';
+  const categorySlug = options.categorySlug?.trim() || undefined;
+
+  let anchor: { id: string | null; title: string; externalKey: string | null; categorySlug: string | null } | null =
+    null;
+
+  if (excludeId) {
+    const row = await catalogDb(prisma).findUnique({
+      where: { id: excludeId },
+      select: {
+        id: true,
+        title: true,
+        externalKey: true,
+        categorySlug: true,
+      },
+    });
+    if (!row) return { anchor: null, rows: [] };
+    anchor = row;
+  } else if (q.length >= 2) {
+    anchor = { id: null, title: q, externalKey: null, categorySlug: categorySlug ?? null };
+  } else {
+    return { anchor: null, rows: [] };
+  }
+
+  const orConditions: Prisma.catalog_itemsWhereInput[] = [];
+  const primary = primarySuggestionTitle(anchor.title);
+  const normalized = normalizeSuggestionTitle(anchor.title);
+
+  if (primary.length >= 3) {
+    orConditions.push({ title: { contains: primary, mode: 'insensitive' } });
+  }
+  if (anchor.externalKey?.trim()) {
+    orConditions.push({ externalKey: anchor.externalKey.trim() });
+  }
+  if (normalized.length >= 4) {
+    orConditions.push({
+      title: { contains: normalized.slice(0, Math.min(24, normalized.length)), mode: 'insensitive' },
+    });
+  }
+  if (q.length >= 2 && !excludeId) {
+    orConditions.push(
+      { title: { contains: q, mode: 'insensitive' } },
+      { externalKey: { contains: q, mode: 'insensitive' } }
+    );
+  }
+
+  if (orConditions.length === 0) {
+    return { anchor: { id: anchor.id, title: anchor.title, categorySlug: anchor.categorySlug }, rows: [] };
+  }
+
+  const where: Prisma.catalog_itemsWhereInput = {
+    OR: orConditions,
+    ...(excludeId ? { NOT: { id: excludeId } } : {}),
+    ...(categorySlug ? { categorySlug } : anchor.categorySlug ? { categorySlug: anchor.categorySlug } : {}),
+  };
+
+  const candidates = await catalogDb(prisma).findMany({
+    where,
+    take: 120,
+    orderBy: { updatedAt: 'desc' },
+    include: { _count: { select: { items: true } } },
+  });
+
+  const scoredMap = new Map<string, SimilarCatalogRow>();
+  for (const row of candidates) {
+    const scored = scoreCatalogSimilarity(anchor, row, q || anchor.title);
+    if (!scored) continue;
+    const existing = scoredMap.get(row.id);
+    if (!existing || scored.score > existing.score) {
+      scoredMap.set(row.id, mapSimilarCatalogRow(row, scored));
+    }
+  }
+
+  const rows = [...scoredMap.values()]
+    .sort((a, b) => b.score - a.score || b.listCount - a.listCount)
+    .slice(0, limit);
+
+  return {
+    anchor: { id: anchor.id, title: anchor.title, categorySlug: anchor.categorySlug },
+    rows,
+  };
+}
+
 export async function findDuplicateCatalogGroups(
   prisma: PrismaClient,
   options?: { limit?: number }
@@ -1005,6 +1200,7 @@ export async function findDuplicateCatalogGroups(
       title: true,
       categorySlug: true,
       externalKey: true,
+      imageUrl: true,
       _count: { select: { items: true } },
     },
     orderBy: { title: 'asc' },
@@ -1022,6 +1218,7 @@ export async function findDuplicateCatalogGroups(
       id: row.id,
       title: row.title,
       externalKey: row.externalKey,
+      imageUrl: row.imageUrl,
       listCount: row._count.items,
     });
     byKey.set(key, list);
@@ -1035,8 +1232,19 @@ export async function findDuplicateCatalogGroups(
       const sep = groupKey.indexOf('::');
       const categorySlug = sep > 0 ? groupKey.slice(0, sep) || null : null;
       const normalizedTitle = sep > 0 ? groupKey.slice(sep + 2) : groupKey;
-      return { groupKey, categorySlug, normalizedTitle, catalogs };
+      return { groupKey, categorySlug, normalizedTitle, catalogs: sortCatalogsForMerge(catalogs) };
     });
+}
+
+/** مقصد پیشنهادی اول — بیشترین جایگاه در لیست */
+export function pickSuggestedMergeTarget(
+  catalogs: DuplicateCatalogGroup['catalogs']
+): string {
+  return sortCatalogsForMerge(catalogs)[0]?.id ?? '';
+}
+
+function sortCatalogsForMerge(catalogs: DuplicateCatalogGroup['catalogs']) {
+  return [...catalogs].sort((a, b) => b.listCount - a.listCount || a.title.localeCompare(b.title, 'fa'));
 }
 
 export type MergeCatalogResult = {
@@ -1130,7 +1338,7 @@ export async function listCatalogExternalImageItems(
     multiListOnly?: boolean;
   }
 ): Promise<CatalogExternalImageRow[]> {
-  const { externalImageHost, isExternalDirectImageUrl } = await import('@/lib/item-image-storage');
+  const { externalImageHost, needsS3MigrationImageUrl } = await import('@/lib/item-image-storage');
 
   const where: Prisma.catalog_itemsWhereInput = {
     ...(catalogCategoryWhere(options.categorySlug) ?? {}),
@@ -1160,5 +1368,55 @@ export async function listCatalogExternalImageItems(
       listCount: r._count.items,
       host: r.imageUrl ? externalImageHost(r.imageUrl) : '',
     }))
-    .filter((r) => isExternalDirectImageUrl(r.imageUrl));
+    .filter((r) => needsS3MigrationImageUrl(r.imageUrl));
+}
+
+export type CatalogMissingPosterRow = {
+  id: string;
+  title: string;
+  imdbId: string | null;
+  listCount: number;
+};
+
+/** موجودیت‌های کاتالوگ بدون تصویر معتبر — با یا بدون شناسه IMDb */
+export async function listCatalogMissingPosterItems(
+  prisma: PrismaClient,
+  options: {
+    categorySlug?: string;
+    listId?: string;
+    multiListOnly?: boolean;
+  }
+): Promise<CatalogMissingPosterRow[]> {
+  const where: Prisma.catalog_itemsWhereInput = {
+    ...(catalogCategoryWhere(options.categorySlug) ?? {}),
+    ...(options.listId ? { items: { some: { listId: options.listId } } } : {}),
+  };
+
+  if (options.multiListOnly) {
+    const multiIds = await catalogIdsInMultipleLists(prisma, {
+      categorySlug: options.categorySlug,
+      listId: options.listId,
+    });
+    if (multiIds.length === 0) return [];
+    where.id = { in: multiIds };
+  }
+
+  const rows = await catalogDb(prisma).findMany({
+    where,
+    orderBy: { title: 'asc' },
+    include: { _count: { select: { items: true } } },
+  });
+
+  return rows
+    .filter((r) => catalogMissingPosterImage(r.imageUrl))
+    .map((r) => ({
+      id: r.id,
+      title: r.title,
+      imdbId: extractCatalogImdbId({
+        metadata: r.metadata,
+        externalUrl: r.externalUrl,
+        externalKey: r.externalKey,
+      }),
+      listCount: r._count.items,
+    }));
 }

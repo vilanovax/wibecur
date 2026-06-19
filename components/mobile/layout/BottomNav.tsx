@@ -2,14 +2,21 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Home, LayoutList, Compass, User, Plus } from 'lucide-react';
 import CreateSheet from '@/components/mobile/home/CreateSheet';
+import { HOME_CREATE_SHEET_EVENT } from '@/lib/home-create-sheet';
 import { MOBILE_BOTTOM_NAV_SPACER_CLASS } from '@/lib/layout-tokens';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const [createOpen, setCreateOpen] = useState(false);
+
+  useEffect(() => {
+    const open = () => setCreateOpen(true);
+    window.addEventListener(HOME_CREATE_SHEET_EVENT, open);
+    return () => window.removeEventListener(HOME_CREATE_SHEET_EVENT, open);
+  }, []);
 
   const navItems: { href?: string; label: string; icon: React.ReactNode; isButton?: boolean }[] = [
     {

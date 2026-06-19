@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Settings, Eye, EyeOff, Flame } from 'lucide-react';
+import { Settings, Flame } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
+import ListVisibilityBadge, { getListVisibilityVariant } from './ListVisibilityBadge';
 
 export interface MyListCardData {
   id: string;
@@ -14,6 +15,7 @@ export interface MyListCardData {
   itemCount?: number;
   likeCount?: number;
   isPublic?: boolean;
+  isActive?: boolean;
   isFeatured?: boolean;
   badge?: string | null;
   categories?: { name: string; icon: string | null; slug?: string | null } | null;
@@ -35,59 +37,61 @@ export default function MyListCardCompact({ list, onSettingsClick }: MyListCardC
   const isViral = likes >= VIRAL_LIKE_THRESHOLD;
   const badge = list.badge?.toString().toLowerCase() ?? null;
   const isFeatured = list.isFeatured || badge === 'featured';
+  const visibility = getListVisibilityVariant(list);
+
+  const accentClass =
+    visibility === 'public'
+      ? 'border-s-[3px] border-s-emerald-500'
+      : visibility === 'draft'
+        ? 'border-s-[3px] border-s-amber-400'
+        : 'border-s-[3px] border-s-slate-300';
 
   return (
-    <div className="flex flex-row-reverse items-stretch gap-1.5 bg-wibe-card rounded-lg border border-wibe shadow-sm overflow-hidden">
+    <div
+      className={`flex flex-row-reverse items-stretch gap-1.5 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm ${accentClass}`}
+    >
       <Link
         href={`/user-lists/${list.id}`}
-        className="flex flex-1 flex-row-reverse gap-2.5 p-2.5 min-w-0 active:scale-[0.99] transition-transform min-h-[72px]"
+        className="flex min-h-[72px] min-w-0 flex-1 flex-row-reverse gap-2.5 p-2.5 transition-transform active:scale-[0.99]"
       >
-        <div className="relative w-[72px] h-[72px] flex-shrink-0 rounded-md overflow-hidden bg-gray-200">
+        <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-md bg-gray-200">
           <ListCoverImage
             coverImage={list.coverImage}
             title={list.title}
             slug={list.slug}
             categorySlug={categorySlug}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
             fallbackIcon={list.categories?.icon ?? '📋'}
-            fallbackClassName="w-full h-full flex items-center justify-center text-xl bg-gray-200"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
           />
+          <div className="absolute bottom-1 start-1">
+            <ListVisibilityBadge variant={visibility} size="sm" />
+          </div>
         </div>
-        <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
-          <div className="flex flex-wrap items-center gap-1 mb-0.5">
-            {list.isPublic ? (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded wibe-caption font-medium bg-success/10 text-success">
-                <Eye className="w-3 h-3" />
-                عمومی
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded wibe-caption font-medium bg-gray-100 text-wibe-secondary">
-                <EyeOff className="w-3 h-3" />
-                خصوصی
-              </span>
-            )}
+        <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
+          <div className="mb-0.5 flex flex-wrap items-center gap-1">
             {isViral && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded wibe-caption font-medium bg-warning/10 text-warning">
-                <Flame className="w-3 h-3" />
+              <span className="inline-flex items-center gap-0.5 rounded bg-warning/10 px-1.5 py-0.5 wibe-caption font-medium text-warning">
+                <Flame className="h-3 w-3" />
                 وایرال
               </span>
             )}
             {isFeatured && (
-              <span className="px-1.5 py-0.5 rounded wibe-caption font-medium bg-primary/10 text-primary">
+              <span className="rounded bg-primary/10 px-1.5 py-0.5 wibe-caption font-medium text-primary">
                 منتخب
               </span>
             )}
             {badge === 'trending' && (
-              <span className="px-1.5 py-0.5 rounded wibe-caption font-medium bg-success/10 text-success">
+              <span className="rounded bg-success/10 px-1.5 py-0.5 wibe-caption font-medium text-success">
                 ترند
               </span>
             )}
           </div>
-          <h3 className="wibe-small font-semibold text-foreground line-clamp-2 leading-snug">
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground">
             {list.title}
           </h3>
           {list.categories?.name && (
-            <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">
+            <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">
               {list.categories.icon ? `${list.categories.icon} ` : ''}
               {list.categories.name}
             </p>
@@ -98,10 +102,10 @@ export default function MyListCardCompact({ list, onSettingsClick }: MyListCardC
       <button
         type="button"
         onClick={onSettingsClick}
-        className="shrink-0 self-center mx-1.5 w-8 h-8 rounded-md border border-wibe bg-wibe-surface flex items-center justify-center text-wibe-secondary hover:text-primary hover:border-primary/30 transition-colors"
+        className="mx-1.5 flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-md border border-wibe bg-wibe-surface text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary"
         aria-label="تنظیمات لیست"
       >
-        <Settings className="w-4 h-4" />
+        <Settings className="h-4 w-4" />
       </button>
     </div>
   );

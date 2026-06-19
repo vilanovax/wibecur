@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Lightbulb, Plus, Settings, Share2 } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
+import { trackCreatorProfileView } from '@/lib/analytics';
 import { DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS } from '@/lib/layout-tokens';
 
 type ListUser = {
@@ -102,6 +103,7 @@ export default function ListDetailSidebar({
             {curator.username ? (
               <Link
                 href={`/u/${encodeURIComponent(curator.username)}`}
+                onClick={() => trackCreatorProfileView(curator.username!, 'list_detail')}
                 className="flex items-center gap-3 rounded-lg transition-colors hover:bg-gray-50"
               >
                 <CuratorAvatar curator={curator} />

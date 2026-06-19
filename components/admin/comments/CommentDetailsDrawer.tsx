@@ -11,10 +11,12 @@ interface CommentDetailsDrawerProps {
   comment: CommentRowData | null;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onDiscardReports?: (id: string) => void;
   onOpenFullDetail?: (comment: CommentRowData) => void;
   onDelete?: (commentId: string, preview: string) => void;
   approvingId: string | null;
   rejectingId: string | null;
+  discardingId?: string | null;
   filterBadWords?: (text: string) => string;
   reports?: ReportDetailRow[];
   reportCount?: number;
@@ -28,10 +30,12 @@ export default function CommentDetailsDrawer({
   comment,
   onApprove,
   onReject,
+  onDiscardReports,
   onOpenFullDetail,
   onDelete,
   approvingId,
   rejectingId,
+  discardingId,
   filterBadWords,
   reports,
   reportCount,
@@ -73,10 +77,12 @@ export default function CommentDetailsDrawer({
             reportCount={reportCount}
             onApprove={onApprove}
             onReject={onReject}
+            onDiscardReports={onDiscardReports}
             onOpenFullDetail={onOpenFullDetail}
             onDelete={onDelete}
             approvingId={approvingId}
             rejectingId={rejectingId}
+            discardingId={discardingId}
             filterBadWords={filterBadWords}
             showReject={showReject}
             className="flex-1 border-0 rounded-none shadow-none min-h-0"

@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { trackHomeSectionClick, type HomeSectionId } from '@/lib/analytics';
 
 interface HomeSectionTitleProps {
   title: string;
@@ -7,6 +10,8 @@ interface HomeSectionTitleProps {
   id?: string;
   actionHref?: string;
   actionLabel?: string;
+  /** برای analytics — کلیک «همه» */
+  analyticsSection?: HomeSectionId;
 }
 
 /** عنوان یکسان بخش‌های Home — Wibe Design System */
@@ -17,9 +22,10 @@ export default function HomeSectionTitle({
   id,
   actionHref,
   actionLabel = 'همه',
+  analyticsSection,
 }: HomeSectionTitleProps) {
   return (
-    <div className="mb-3 flex items-start justify-between gap-2 px-4 lg:px-0" id={id}>
+    <div className="mb-3 flex items-start justify-between gap-3 px-4 lg:mb-4 lg:items-center lg:px-0" id={id}>
       <div className="min-w-0">
         <h2 className="flex items-center gap-2 wibe-h3">
           {icon ? <span aria-hidden>{icon}</span> : null}
@@ -30,7 +36,12 @@ export default function HomeSectionTitle({
       {actionHref ? (
         <Link
           href={actionHref}
-          className="shrink-0 pt-1 wibe-caption font-medium text-primary hover:underline"
+          onClick={() => {
+            if (analyticsSection) {
+              trackHomeSectionClick(analyticsSection, { target: 'see_all' });
+            }
+          }}
+          className="shrink-0 wibe-caption font-semibold text-primary hover:underline lg:text-sm"
         >
           {actionLabel}
         </Link>

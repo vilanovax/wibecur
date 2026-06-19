@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw, Search } from 'lucide-react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import type { UserListRecord } from '@/lib/user-lists';
+import type { UserListRecord, UserListFilter, UserListVisibilityCounts } from '@/lib/user-lists';
 import { LISTS_UPDATED_EVENT } from '@/lib/profile-events';
+import { openHomeCreateSheet } from '@/lib/home-create-sheet';
 import MyListCardCompact, { type MyListCardData } from '@/components/mobile/profile/MyListCardCompact';
 import MyListsTopCarousel from '@/components/mobile/profile/MyListsTopCarousel';
 import MyListsEmptyState from '@/components/mobile/profile/MyListsEmptyState';
@@ -13,29 +14,34 @@ import PersonalListSettingsModal from '../PersonalListSettingsModal';
 
 export type ListWithCategory = UserListRecord;
 
-type FilterType = 'all' | 'public' | 'private' | 'draft';
+type VisibilityFilter = 'public' | 'private' | null;
+
+const SEARCH_MIN_LISTS = 8;
 
 interface MyListsTabProps {
   userId: string;
   initialLists?: UserListRecord[];
   initialTotal?: number;
+  initialVisibilityCounts?: UserListVisibilityCounts;
 }
 
 interface MyListsResponse {
   lists: ListWithCategory[];
   pagination: { page: number; totalPages: number; total: number };
+  counts?: UserListVisibilityCounts;
 }
 
-const FILTERS: { id: FilterType; label: string }[] = [
-  { id: 'all', label: 'همه' },
-  { id: 'public', label: 'عمومی' },
-  { id: 'private', label: 'خصوصی' },
-  { id: 'draft', label: 'پیش‌نویس' },
-];
+function toApiFilter(filter: VisibilityFilter): UserListFilter {
+  if (filter === 'public') return 'public';
+  if (filter === 'private') return 'personal';
+  return 'all';
+}
 
-async function fetchMyLists(pageParam: number, filter: FilterType): Promise<MyListsResponse> {
+async function fetchMyLists(pageParam: number, filter: UserListFilter): Promise<MyListsResponse> {
   const params = new URLSearchParams({ page: String(pageParam), limit: '20' });
-  if (filter !== 'all') params.set('filter', filter);
+  if (filter !== 'all') {
+    params.set('filter', filter);
+  }
   const res = await fetch(`/api/user/my-lists?${params}`);
   const data = await res.json();
   if (!res.ok || !data.success) {
@@ -44,6 +50,7 @@ async function fetchMyLists(pageParam: number, filter: FilterType): Promise<MyLi
   return {
     lists: data.data.lists,
     pagination: data.data.pagination,
+    counts: data.data.counts,
   };
 }
 
@@ -57,6 +64,7 @@ function toCardData(list: ListWithCategory): MyListCardData {
     itemCount: list.itemCount ?? list._count?.items,
     likeCount: list.likeCount ?? list._count?.list_likes,
     isPublic: list.isPublic,
+    isActive: list.isActive,
     isFeatured: list.isFeatured,
     badge: list.badge,
     categories: list.categories,
@@ -66,6 +74,7 @@ function toCardData(list: ListWithCategory): MyListCardData {
 
 function pickTopLists(all: ListWithCategory[], limit = 3): MyListCardData[] {
   return [...all]
+    .filter((l) => l.isPublic && l.isActive !== false)
     .sort((a, b) => {
       const savesA = a.saveCount ?? a._count?.bookmarks ?? 0;
       const savesB = b.saveCount ?? b._count?.bookmarks ?? 0;
@@ -76,14 +85,21 @@ function pickTopLists(all: ListWithCategory[], limit = 3): MyListCardData[] {
     .map(toCardData);
 }
 
-export default function MyListsTab({ userId, initialLists, initialTotal }: MyListsTabProps) {
-  const [filter, setFilter] = useState<FilterType>('all');
+export default function MyListsTab({
+  userId,
+  initialLists,
+  initialTotal,
+  initialVisibilityCounts,
+}: MyListsTabProps) {
+  const [search, setSearch] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>(null);
   const [selectedList, setSelectedList] = useState<ListWithCategory | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const queryClient = useQueryClient();
 
-  const hasInitial = Boolean(initialLists?.length);
+  const apiFilter = toApiFilter(visibilityFilter);
+  const hasInitial = Boolean(initialLists?.length) && apiFilter === 'all';
 
   const {
     data,
@@ -96,15 +112,15 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
     refetch,
     isFetching,
   } = useInfiniteQuery({
-    queryKey: ['user', userId, 'my-lists', filter],
-    queryFn: ({ pageParam }) => fetchMyLists(pageParam, filter),
+    queryKey: ['user', userId, 'my-lists', apiFilter],
+    queryFn: ({ pageParam }) => fetchMyLists(pageParam, apiFilter),
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
         : undefined,
     initialData:
-      filter === 'all' && hasInitial
+      hasInitial
         ? {
             pages: [
               {
@@ -114,6 +130,7 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
                   totalPages: Math.ceil((initialTotal ?? initialLists!.length) / 20) || 1,
                   total: initialTotal ?? initialLists!.length,
                 },
+                counts: initialVisibilityCounts,
               },
             ],
             pageParams: [1],
@@ -132,25 +149,107 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
   }, [userId, queryClient, refetch]);
 
   const lists = data?.pages.flatMap((p) => p.lists) ?? [];
-  const totalCount = data?.pages[0]?.pagination.total ?? lists.length;
   const hasMore = !!hasNextPage;
 
+  const visibilityCounts = useMemo<UserListVisibilityCounts>(() => {
+    const fromQuery = data?.pages.find((page) => page.counts)?.counts;
+    if (fromQuery) return fromQuery;
+    if (initialVisibilityCounts) return initialVisibilityCounts;
+    return {
+      public: lists.filter((l) => l.isPublic && l.isActive !== false).length,
+      personal: lists.filter((l) => !l.isPublic || l.isActive === false).length,
+    };
+  }, [data?.pages, initialVisibilityCounts, lists]);
+
+  const publicCount = visibilityCounts.public;
+  const personalCount = visibilityCounts.personal;
+
   const topLists = useMemo(() => {
-    if (filter !== 'all' || lists.length === 0) return [];
+    if (lists.length === 0) return [];
     return pickTopLists(lists, 3);
-  }, [lists, filter]);
+  }, [lists]);
 
   const topIds = useMemo(() => new Set(topLists.map((l) => l.id)), [topLists]);
 
   const displayLists = useMemo(() => {
-    if (filter !== 'all' || topLists.length === 0) return lists;
+    if (topLists.length === 0) return lists;
     return lists.filter((l) => !topIds.has(l.id));
-  }, [lists, filter, topLists.length, topIds]);
+  }, [lists, topLists.length, topIds]);
 
-  const publicCount = useMemo(
-    () => (filter === 'all' ? lists.filter((l) => l.isPublic).length : 0),
-    [lists, filter]
+  const listCountHint = initialTotal ?? lists.length;
+
+  const filteredSortedLists = useMemo(() => {
+    let result = [...displayLists];
+    const q = search.trim().toLowerCase();
+    if (q) {
+      result = result.filter((l) => l.title.toLowerCase().includes(q));
+    }
+    if (visibilityFilter === 'public') {
+      result = result.filter((l) => l.isPublic && l.isActive !== false);
+    } else if (visibilityFilter === 'private') {
+      result = result.filter((l) => !l.isPublic || l.isActive === false);
+    }
+    result.sort((a, b) => {
+      const dateA = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+      const dateB = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+      return dateB - dateA;
+    });
+    return result;
+  }, [displayLists, search, visibilityFilter]);
+
+  const publicLists = useMemo(
+    () => filteredSortedLists.filter((l) => l.isPublic && l.isActive !== false),
+    [filteredSortedLists]
   );
+  const personalLists = useMemo(
+    () => filteredSortedLists.filter((l) => !l.isPublic || l.isActive === false),
+    [filteredSortedLists]
+  );
+
+  const showGroupedSections =
+    !search.trim() && visibilityFilter === null && publicLists.length > 0 && personalLists.length > 0;
+
+  const toggleVisibilityFilter = (next: VisibilityFilter) => {
+    setVisibilityFilter((prev) => (prev === next ? null : next));
+  };
+
+  const visibilityChips =
+    publicCount + personalCount > 0 ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => toggleVisibilityFilter('public')}
+          className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-all ${
+            visibilityFilter === 'public'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'border border-emerald-200 bg-emerald-50/80 text-emerald-800'
+          }`}
+        >
+          <span>عمومی</span>
+          <span className="tabular-nums opacity-90">{publicCount.toLocaleString('fa-IR')}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => toggleVisibilityFilter('private')}
+          className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-all ${
+            visibilityFilter === 'private'
+              ? 'bg-slate-700 text-white shadow-sm'
+              : 'border border-slate-200 bg-slate-50 text-slate-700'
+          }`}
+        >
+          <span>شخصی</span>
+          <span className="tabular-nums opacity-90">{personalCount.toLocaleString('fa-IR')}</span>
+        </button>
+      </div>
+    ) : null;
+
+  const openCreate = () => {
+    if (typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches) {
+      setShowCreate(true);
+    } else {
+      openHomeCreateSheet();
+    }
+  };
 
   const handleSettingsClick = (e: React.MouseEvent, list: ListWithCategory) => {
     e.preventDefault();
@@ -165,51 +264,60 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
     refetch();
   };
 
-  const filterChips = (
-    <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
-      {FILTERS.map((f) => (
-        <button
-          key={f.id}
-          type="button"
-          onClick={() => setFilter(f.id)}
-          className={`shrink-0 h-8 px-3 rounded-full wibe-small font-medium transition-all ${
-            filter === f.id
-              ? 'bg-primary text-white shadow-sm'
-              : 'bg-wibe-card border border-wibe text-wibe-secondary'
-          }`}
-        >
-          {f.label}
-        </button>
+  const renderListGrid = (items: ListWithCategory[]) => (
+    <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
+      {items.map((list) => (
+        <MyListCardCompact
+          key={list.id}
+          list={toCardData(list)}
+          onSettingsClick={(e) => handleSettingsClick(e, list)}
+        />
       ))}
     </div>
   );
 
   const createButton = (
-    <button
-      type="button"
-      onClick={() => setShowCreate(true)}
-      className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-white wibe-caption font-semibold transition-transform active:scale-[0.98] lg:h-9 lg:px-4 lg:wibe-small"
-    >
-      <Plus className="h-3.5 w-3.5" />
-      ایجاد لیست
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={openCreate}
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-wibe bg-wibe-card text-primary transition-colors hover:border-primary/30 active:scale-[0.98] lg:hidden"
+        aria-label="ایجاد لیست"
+        title="ایجاد لیست"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setShowCreate(true)}
+        className="hidden h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-white wibe-small font-semibold transition-transform hover:bg-primary-dark active:scale-[0.98] lg:inline-flex"
+      >
+        <Plus className="h-4 w-4" />
+        ایجاد لیست
+      </button>
+    </>
   );
+
+  const searchField =
+    listCountHint >= SEARCH_MIN_LISTS ? (
+      <div className="relative">
+        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary" />
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="جستجو در لیست‌ها..."
+          className="h-9 w-full rounded-lg border border-wibe bg-wibe-card pe-3 ps-9 wibe-small text-foreground placeholder:text-wibe-secondary"
+          aria-label="جستجو در لیست‌ها"
+        />
+      </div>
+    ) : null;
 
   let content: React.ReactNode = null;
 
   if (isLoading && lists.length === 0 && !hasInitial) {
     content = (
       <div className="space-y-3 px-4 lg:px-0">
-        <div className="flex gap-2 overflow-hidden">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-8 w-16 bg-gray-200 rounded-full animate-pulse shrink-0" />
-          ))}
-        </div>
-        <div className="flex gap-2.5 overflow-hidden">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 w-[140px] bg-gray-200 rounded-lg animate-pulse shrink-0" />
-          ))}
-        </div>
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="h-[72px] bg-gray-200 rounded-lg animate-pulse" />
@@ -219,8 +327,7 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
     );
   } else if (isError && lists.length === 0) {
     content = (
-      <div className="px-4">
-        {filterChips}
+      <div className="px-4 lg:px-0">
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
           <p className="wibe-small text-red-600">
             {error instanceof Error ? error.message : 'خطا در بارگذاری لیست‌ها'}
@@ -237,25 +344,15 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
       </div>
     );
   } else {
-    const emptyMessage =
-      filter === 'draft'
-        ? 'پیش‌نویسی ندارید'
-        : filter === 'private'
-          ? 'لیست خصوصی ندارید'
-          : filter === 'public'
-            ? 'لیست عمومی ندارید'
-            : 'هنوز لیستی ایجاد نکرده‌اید';
+    const emptyMessage = 'هنوز لیستی ایجاد نکرده‌اید';
 
     if (lists.length === 0 && !isLoading) {
       content = (
       <div className="space-y-3 px-4 lg:px-0">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:gap-3">
-          <div className="min-w-0 flex-1">{filterChips}</div>
-        </div>
         <MyListsEmptyState
           message={emptyMessage}
-          showCreate={filter !== 'draft'}
-          onCreate={() => setShowCreate(true)}
+          showCreate
+          onCreate={openCreate}
         />
       </div>
     );
@@ -263,48 +360,94 @@ export default function MyListsTab({ userId, initialLists, initialTotal }: MyLis
       content = (
         <>
           <div className="space-y-3 px-4 lg:px-0">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:gap-3">
-              <div className="min-w-0 flex-1">{filterChips}</div>
-              {createButton}
+            <div className="rounded-xl border border-wibe/60 bg-wibe-surface/30 p-2.5 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {visibilityChips}
+                {createButton}
+              </div>
+              {searchField}
             </div>
 
-            {filter === 'all' && totalCount > 0 && (
-              <p className="wibe-caption text-wibe-secondary -mt-1">
-                {totalCount.toLocaleString('fa-IR')} لیست
-                {publicCount > 0 && ` · ${publicCount.toLocaleString('fa-IR')} عمومی`}
-                {isFetching && !isFetchingNextPage && (
-                  <span className="text-primary mr-1"> · در حال بروزرسانی...</span>
-                )}
-              </p>
+            {isFetching && !isFetchingNextPage && (
+              <p className="wibe-caption text-primary -mt-1 px-0">در حال بروزرسانی...</p>
             )}
 
-            {filter === 'all' && topLists.length > 0 && <MyListsTopCarousel lists={topLists} />}
+            {topLists.length > 0 && visibilityFilter !== 'private' && (
+              <MyListsTopCarousel lists={topLists} />
+            )}
 
-            {displayLists.length > 0 && (
-              <div>
-                {filter === 'all' && topLists.length > 0 && (
-                  <h2 className="wibe-h3 mb-2.5">همه لیست‌ها</h2>
+            {filteredSortedLists.length > 0 && (
+              <div className="space-y-5">
+                {showGroupedSections ? (
+                  <>
+                    <section>
+                      <div className="mb-2.5 flex items-center justify-between gap-2">
+                        <h2 className="flex items-center gap-1.5 wibe-h3 text-emerald-900">
+                          <span aria-hidden>🌐</span>
+                          لیست‌های عمومی
+                        </h2>
+                        <span className="wibe-caption tabular-nums text-wibe-secondary">
+                          {publicCount.toLocaleString('fa-IR')}
+                        </span>
+                      </div>
+                      {renderListGrid(publicLists)}
+                    </section>
+                    <section>
+                      <div className="mb-2.5 flex items-center justify-between gap-2">
+                        <h2 className="flex items-center gap-1.5 wibe-h3 text-slate-800">
+                          <span aria-hidden>🔒</span>
+                          لیست‌های شخصی
+                        </h2>
+                        <span className="wibe-caption tabular-nums text-wibe-secondary">
+                          {personalCount.toLocaleString('fa-IR')}
+                        </span>
+                      </div>
+                      {renderListGrid(personalLists)}
+                    </section>
+                  </>
+                ) : (
+                  <div>
+                    {visibilityFilter === 'public' && (
+                      <h2 className="mb-2.5 wibe-h3 text-emerald-900">لیست‌های عمومی</h2>
+                    )}
+                    {visibilityFilter === 'private' && (
+                      <h2 className="mb-2.5 wibe-h3 text-slate-800">لیست‌های شخصی</h2>
+                    )}
+                    {!visibilityFilter && topLists.length > 0 && (
+                      <h2 className="mb-2.5 wibe-h3">همه لیست‌ها</h2>
+                    )}
+                    {renderListGrid(filteredSortedLists)}
+                  </div>
                 )}
-                <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
-                  {displayLists.map((list) => (
-                    <MyListCardCompact
-                      key={list.id}
-                      list={toCardData(list)}
-                      onSettingsClick={(e) => handleSettingsClick(e, list)}
-                    />
-                  ))}
-                </div>
               </div>
             )}
 
-            {filter === 'all' && topLists.length > 0 && displayLists.length === 0 && (
+            {visibilityFilter === 'private' &&
+              !isLoading &&
+              filteredSortedLists.length === 0 &&
+              personalCount === 0 && (
+                <MyListsEmptyState
+                  message="لیست شخصی ندارید"
+                  showCreate
+                  onCreate={openCreate}
+                />
+              )}
+
+            {search.trim() && filteredSortedLists.length === 0 && displayLists.length > 0 && (
+              <p className="wibe-caption text-wibe-secondary py-4 text-center">
+                لیستی با این عنوان پیدا نشد
+              </p>
+            )}
+
+            {topLists.length > 0 && displayLists.length === 0 && !search.trim() && (
               <p className="wibe-caption text-wibe-secondary text-center py-2">
                 فقط {topLists.length.toLocaleString('fa-IR')} لیست برتر دارید
               </p>
             )}
           </div>
 
-          {hasMore && (
+          {hasMore &&
+            !(visibilityFilter === 'private' && filteredSortedLists.length === 0 && !isLoading) && (
             <button
               type="button"
               onClick={() => fetchNextPage()}

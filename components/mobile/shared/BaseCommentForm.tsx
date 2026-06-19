@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
-import { track } from '@/lib/analytics';
+import { track, type AnalyticsData } from '@/lib/analytics';
 import { signOutIfStaleSession } from '@/lib/session-client';
 
 interface BaseCommentFormProps {
@@ -12,6 +12,7 @@ interface BaseCommentFormProps {
   apiUrl: string;
   onSubmit: () => void;
   title?: string;
+  analytics?: AnalyticsData;
 }
 
 export default function BaseCommentForm({
@@ -20,6 +21,7 @@ export default function BaseCommentForm({
   apiUrl,
   onSubmit,
   title = 'ثبت کامنت',
+  analytics,
 }: BaseCommentFormProps) {
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +62,7 @@ export default function BaseCommentForm({
       }
 
       setContent('');
-      track('comment_submit');
+      track('comment_submit', analytics);
       onClose();
       onSubmit();
     } catch (err: unknown) {

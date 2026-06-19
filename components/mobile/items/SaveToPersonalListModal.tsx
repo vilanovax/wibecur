@@ -144,7 +144,12 @@ export default function SaveToPersonalListModal({
       setToastMessage(`به «${list.title}» اضافه شد ✨`);
       setToastType('success');
       setShowToast(true);
-      track('item_save', { itemId, listId: list.id });
+      track('item_save', {
+        itemId,
+        listId: list.id,
+        ...(list.slug ? { list_slug: list.slug } : {}),
+        source: 'save_modal',
+      });
 
       // پس از افزودن موفق، کوتاه «افزوده شد» نشان داده می‌شود و سپس مودال بسته
       // می‌شود تا کاربر به صفحه/مودال قبلیِ آیتم بازگردد.
@@ -183,7 +188,7 @@ export default function SaveToPersonalListModal({
               <div className="text-center py-12 px-6">
                 <p className="text-gray-600 mb-4">برای ذخیره در لیست شخصی وارد شوید</p>
                 <Link
-                  href={`/login?callbackUrl=${encodeURIComponent(`/items/${itemId}`)}`}
+                  href={`/login?callbackUrl=${encodeURIComponent(`/items/${itemId}`)}&source=item_gate`}
                   className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary text-white font-semibold"
                 >
                   ورود

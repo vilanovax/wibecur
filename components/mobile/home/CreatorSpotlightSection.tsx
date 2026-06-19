@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Check, User } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { track } from '@/lib/analytics';
+import { track, trackCreatorProfileView } from '@/lib/analytics';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 import { type CuratorLevelKey } from '@/lib/curator';
@@ -74,7 +74,11 @@ export default function CreatorSpotlightSection({ layout: _layout = 'default' }:
       const json = await res.json();
       if (json.success) {
         setFollowing(true);
-        track('follow', { targetUserId: data.creator.userId });
+        track('follow', {
+          targetUserId: data.creator.userId,
+          creator_username: data.creator.username ?? '',
+          source: 'creator_spotlight',
+        });
       }
     } catch {
       // ignore
@@ -138,6 +142,9 @@ export default function CreatorSpotlightSection({ layout: _layout = 'default' }:
             <div className="mt-4 flex w-full gap-3 lg:mt-5">
               <Link
                 href={c.username ? `/u/${encodeURIComponent(c.username)}` : '#'}
+                onClick={() => {
+                  if (c.username) trackCreatorProfileView(c.username, 'spotlight');
+                }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-md border border-wibe py-3 wibe-small font-semibold text-primary lg:py-2.5"
               >
                 <User className="h-5 w-5" />

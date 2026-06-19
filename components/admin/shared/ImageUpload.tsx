@@ -29,6 +29,8 @@ interface ImageUploadProps {
   metadata?: Record<string, unknown> | null;
   /** slug دسته — برای ساخت عبارت Google */
   categorySlug?: string | null;
+  /** پس از انتخاب از جستجو، تب لینک فعال شود */
+  onSwitchToUrlTab?: () => void;
 }
 
 export default function ImageUpload({
@@ -43,12 +45,14 @@ export default function ImageUpload({
   enableMoviePosterSources = false,
   metadata = null,
   categorySlug = null,
+  onSwitchToUrlTab,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(displayMode === 'url');
   const [urlInput, setUrlInput] = useState('');
   const [showImageSearch, setShowImageSearch] = useState(false);
   const [moviePosterSource, setMoviePosterSource] = useState<MoviePosterSearchSource | null>(null);
+  const [pendingImportMeta, setPendingImportMeta] = useState<Record<string, unknown>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showUpload = displayMode === 'all' || displayMode === 'upload';
@@ -100,10 +104,45 @@ export default function ImageUpload({
     }
   };
 
-  const handleUrlSubmit = () => {
-    if (urlInput.trim()) {
-      onChange(urlInput.trim());
-      setUrlInput('');
+  const importExternalImage = async (imageUrl: string): Promise<string | null> => {
+    setUploading(true);
+    const mergedMeta = { ...(metadata ?? {}), ...pendingImportMeta };
+    try {
+      const res = await fetch('/api/admin/items/import-image-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          folder: 'items',
+          metadata: mergedMeta,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && typeof data.url === 'string' && data.url.trim()) {
+        setPendingImportMeta({});
+        return data.url.trim();
+      }
+
+      throw new Error(data.error || 'خطا در آپلود تصویر به استوریج');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'خطا در آپلود تصویر';
+      alert(message);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUrlSubmit = async () => {
+    const raw = urlInput.trim();
+    if (!raw) return;
+
+    const storedUrl = await importExternalImage(raw);
+    if (!storedUrl) return;
+
+    onChange(storedUrl);
+    setUrlInput('');
+    if (displayMode === 'all') {
       setShowUrlInput(false);
     }
   };
@@ -112,34 +151,39 @@ export default function ImageUpload({
     onChange('');
   };
 
+  const placeSearchResultInUrlField = (
+    imageUrl: string,
+    extraMeta?: Record<string, unknown>
+  ) => {
+    const trimmed = imageUrl.trim();
+    if (!trimmed) return;
+    setUrlInput(trimmed);
+    setShowUrlInput(true);
+    if (extraMeta && Object.keys(extraMeta).length > 0) {
+      setPendingImportMeta(extraMeta);
+    }
+    onSwitchToUrlTab?.();
+  };
+
   const handleImageSelected = (imageUrl: string) => {
     setShowImageSearch(false);
     onModalOpenChange?.(false);
-    setTimeout(() => {
-      onChange(imageUrl);
-    }, 100);
+    placeSearchResultInUrlField(imageUrl);
   };
 
-  const handlePosterFromMovieSource = async (posterUrl: string) => {
+  const handlePosterFromMovieSource = (
+    posterUrl: string,
+    context?: { imdbId?: string; tmdbId?: string }
+  ) => {
     setMoviePosterSource(null);
     onModalOpenChange?.(false);
-
-    let finalUrl = posterUrl;
-    try {
-      const uploadRes = await fetch('/api/admin/items/upload-movie-poster', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ posterUrl }),
-      });
-      if (uploadRes.ok) {
-        const uploadData = await uploadRes.json();
-        if (uploadData.uploadedUrl) finalUrl = uploadData.uploadedUrl;
-      }
-    } catch {
-      // keep original poster URL
+    const extraMeta: Record<string, unknown> = {};
+    if (context?.imdbId) {
+      extraMeta.imdbId = context.imdbId;
+      extraMeta.imdbID = context.imdbId;
     }
-
-    setTimeout(() => onChange(finalUrl), 100);
+    if (context?.tmdbId) extraMeta.tmdbId = context.tmdbId;
+    placeSearchResultInUrlField(posterUrl, extraMeta);
   };
 
   const openMoviePosterSearch = (source: MoviePosterSearchSource) => {
@@ -268,7 +312,14 @@ export default function ImageUpload({
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUrlSubmit(); } }}
                 />
-                <button type="button" onClick={handleUrlSubmit} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">تأیید</button>
+                <button
+                  type="button"
+                  onClick={handleUrlSubmit}
+                  disabled={uploading}
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? 'در حال آپلود...' : 'تأیید'}
+                </button>
                 {displayMode === 'all' && (
                   <button type="button" onClick={() => { setShowUrlInput(false); setUrlInput(''); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">انصراف</button>
                 )}

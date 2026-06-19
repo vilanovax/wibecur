@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { Flame, Sparkles, Bookmark } from 'lucide-react';
@@ -11,6 +12,7 @@ import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import SearchHighlight from '@/components/mobile/search/SearchHighlight';
+import { trackSearchResultClick } from '@/lib/analytics';
 
 type ListWithCreator = {
   id: string;
@@ -36,6 +38,8 @@ interface ListCardCompactProps {
   isBookmarked?: boolean;
   onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   highlightQuery?: string;
+  /** موقعیت در نتایج جستجو (برای آنالیتیکس) */
+  searchResultIndex?: number;
   /**
    * وضعیت لاگین کاربر. اگر والد (مثلاً گرید) این را یک‌بار پاس بدهد،
    * هیچ useSession در سطح کارت صدا زده نمی‌شود → حذف N اشتراک context در گریدها.
@@ -94,24 +98,32 @@ function CreatorRow({ list }: { list: ListWithCreator }) {
 
 type InlineBookmarkProps = {
   listId: string;
+  listSlug?: string;
+  categorySlug?: string | null;
   saveCount: number;
   isBookmarked?: boolean;
   onToggle?: (listId: string, isBookmarked: boolean) => void;
   size?: 'sm' | 'xs';
   className?: string;
   isLoggedIn?: boolean;
+  analyticsSource?: string;
 };
 
 /** هستهٔ خالص — بدون خواندن context؛ قابل memo. */
 function InlineBookmarkView({
   listId,
+  listSlug,
+  categorySlug,
   saveCount,
   isBookmarked,
   onToggle,
   size = 'sm',
   className = '',
   loggedIn,
+  analyticsSource = 'list_card',
 }: Omit<InlineBookmarkProps, 'isLoggedIn'> & { loggedIn: boolean }) {
+  const pathname = usePathname();
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || '/')}&source=bookmark_gate`;
   const btnClass =
     size === 'xs'
       ? 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface/95 text-wibe-secondary shadow-sm backdrop-blur-sm transition-transform active:scale-95'
@@ -120,7 +132,7 @@ function InlineBookmarkView({
   if (!loggedIn) {
     return (
       <Link
-        href="/login"
+        href={loginHref}
         onClick={(e) => e.stopPropagation()}
         className={`${btnClass} ${className}`}
         aria-label="ورود برای ذخیره لیست"
@@ -137,6 +149,11 @@ function InlineBookmarkView({
         initialIsBookmarked={isBookmarked}
         initialBookmarkCount={saveCount}
         size="sm"
+        analytics={{
+          listSlug,
+          categorySlug,
+          source: analyticsSource,
+        }}
         onToggle={(bookmarked) => onToggle?.(listId, bookmarked)}
       />
     </div>
@@ -164,6 +181,7 @@ function ListCardCompact({
   isBookmarked,
   onBookmarkToggle,
   highlightQuery,
+  searchResultIndex,
   isLoggedIn,
 }: ListCardCompactProps) {
   const itemCount = list.itemCount ?? list._count?.items ?? 0;
@@ -178,6 +196,19 @@ function ListCardCompact({
     categorySlug,
   });
 
+  const handleSearchResultClick = () => {
+    const q = highlightQuery?.trim();
+    if (!q) return;
+    trackSearchResultClick({
+      query: q,
+      source: 'lists_page',
+      result_type: 'list',
+      result_slug: list.slug,
+      category_slug: categorySlug ?? undefined,
+      position: searchResultIndex,
+    });
+  };
+
   const renderTitle = (className: string) =>
     highlightQuery ? (
       <SearchHighlight text={displayTitle} query={highlightQuery} className={className} />
@@ -188,7 +219,12 @@ function ListCardCompact({
   if (variant === 'mini') {
     return (
       <div className="group relative min-h-[68px] rounded-lg border border-wibe bg-wibe-card p-2 shadow-sm transition-shadow lg:hover:border-primary/25 lg:hover:shadow-md">
-        <Link href={href} className="absolute inset-0 z-0 rounded-lg" aria-label={displayTitle} />
+        <Link
+          href={href}
+          onClick={handleSearchResultClick}
+          className="absolute inset-0 z-0 rounded-lg"
+          aria-label={displayTitle}
+        />
         <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2">
           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-gray-200 lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
             <ListCoverImage
@@ -213,6 +249,8 @@ function ListCardCompact({
         </div>
         <InlineBookmark
           listId={list.id}
+          listSlug={list.slug}
+          categorySlug={categorySlug}
           saveCount={saveCount}
           isBookmarked={isBookmarked}
           onToggle={onBookmarkToggle}
@@ -227,7 +265,12 @@ function ListCardCompact({
   if (variant === 'compact') {
     return (
       <div className="group relative min-h-[76px] rounded-lg border border-wibe bg-wibe-card p-2.5 shadow-sm transition-all active:scale-[0.99] lg:hover:border-primary/30 lg:hover:shadow-md">
-        <Link href={href} className="absolute inset-0 z-0 rounded-lg" aria-label={displayTitle} />
+        <Link
+          href={href}
+          onClick={handleSearchResultClick}
+          className="absolute inset-0 z-0 rounded-lg"
+          aria-label={displayTitle}
+        />
         <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2.5">
           <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-gray-200 lg:h-[72px] lg:w-[72px]">
             <ListCoverImage
@@ -274,6 +317,8 @@ function ListCardCompact({
         </div>
         <InlineBookmark
           listId={list.id}
+          listSlug={list.slug}
+          categorySlug={categorySlug}
           saveCount={saveCount}
           isBookmarked={isBookmarked}
           onToggle={onBookmarkToggle}
@@ -286,7 +331,12 @@ function ListCardCompact({
 
   return (
     <div className="group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg">
-      <Link href={href} className="absolute inset-0 z-0" aria-label={displayTitle} />
+      <Link
+        href={href}
+        onClick={handleSearchResultClick}
+        className="absolute inset-0 z-0"
+        aria-label={displayTitle}
+      />
       {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
       <div className="pointer-events-none relative z-[1] aspect-[4/5] w-full overflow-hidden bg-gray-200 max-lg:min-h-[148px] sm:aspect-[5/4] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
         <ListCoverImage
@@ -334,6 +384,8 @@ function ListCardCompact({
       </div>
       <InlineBookmark
         listId={list.id}
+        listSlug={list.slug}
+        categorySlug={categorySlug}
         saveCount={saveCount}
         isBookmarked={isBookmarked}
         onToggle={onBookmarkToggle}

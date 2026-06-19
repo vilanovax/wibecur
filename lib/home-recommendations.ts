@@ -20,6 +20,13 @@ export type HomeRecommendationItem = {
   likes: number;
   categories: { id: string; name: string; slug: string; icon: string; isActive?: boolean } | null;
   reasonType: 'similar' | 'category' | 'popular';
+  creator?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    image: string | null;
+    curatorLevel?: string | null;
+  } | null;
 };
 
 export type HomeRecommendationsResult = {
@@ -38,6 +45,7 @@ const listSelect = {
   likeCount: true,
   categoryId: true,
   categories: { select: { id: true, name: true, slug: true, icon: true, isActive: true } },
+  users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
 } as const;
 
 function mapList(
@@ -51,6 +59,13 @@ function mapList(
     itemCount: number | null;
     likeCount: number | null;
     categories: HomeRecommendationItem['categories'];
+    users?: {
+      id: string;
+      name: string | null;
+      username: string | null;
+      image: string | null;
+      curatorLevel?: string | null;
+    } | null;
   },
   reasonType: HomeRecommendationItem['reasonType']
 ): HomeRecommendationItem | null {
@@ -71,6 +86,15 @@ function mapList(
     likes: l.likeCount ?? 0,
     categories: l.categories,
     reasonType,
+    creator: l.users
+      ? {
+          id: l.users.id,
+          name: l.users.name,
+          username: l.users.username,
+          image: l.users.image,
+          curatorLevel: l.users.curatorLevel ?? null,
+        }
+      : null,
   };
 }
 
@@ -90,6 +114,40 @@ async function fetchPopularLists(
   });
   return rows
     .map((l) => mapList(l, 'popular'))
+    .filter((x): x is HomeRecommendationItem => x !== null);
+}
+
+async function fetchListsByCategorySlugs(
+  prisma: PrismaClient,
+  slugs: string[],
+  excludeIds: Set<string>,
+  limit: number
+): Promise<HomeRecommendationItem[]> {
+  if (slugs.length === 0) return [];
+
+  const categories = await prisma.categories.findMany({
+    where: {
+      slug: { in: slugs },
+      isActive: true,
+      deletedAt: null,
+    },
+    select: { id: true },
+  });
+  const categoryIds = categories.map((c) => c.id);
+  if (categoryIds.length === 0) return [];
+
+  const rows = await prisma.lists.findMany({
+    where: {
+      ...publicCuratedListWhere,
+      categoryId: { in: categoryIds },
+      ...(excludeIds.size > 0 ? { id: { notIn: [...excludeIds] } } : {}),
+    },
+    select: listSelect,
+    orderBy: [{ saveCount: 'desc' }, { likeCount: 'desc' }],
+    take: limit,
+  });
+  return rows
+    .map((l) => mapList(l, 'category'))
     .filter((x): x is HomeRecommendationItem => x !== null);
 }
 
@@ -184,9 +242,27 @@ async function fetchCategoryLists(
 export async function getHomeRecommendationsForUser(
   prisma: PrismaClient,
   userId: string | null,
-  limit: number = DEFAULT_LIMIT
+  limit: number = DEFAULT_LIMIT,
+  interestCategorySlugs: string[] = []
 ): Promise<HomeRecommendationsResult> {
+  const slugs = interestCategorySlugs.filter(Boolean).slice(0, 3);
+
   if (!userId) {
+    if (slugs.length > 0) {
+      const picked = new Set<string>();
+      const result: HomeRecommendationItem[] = [];
+      const interestLists = await fetchListsByCategorySlugs(prisma, slugs, picked, limit);
+      for (const item of interestLists) {
+        result.push(item);
+        picked.add(item.id);
+        if (result.length >= limit) break;
+      }
+      if (result.length < limit) {
+        const popular = await fetchPopularLists(prisma, picked, limit - result.length);
+        result.push(...popular);
+      }
+      return { lists: result.slice(0, limit), isPersonalized: false };
+    }
     const lists = await fetchPopularLists(prisma, new Set(), limit);
     return { lists, isPersonalized: false };
   }
@@ -224,6 +300,27 @@ export async function getHomeRecommendationsForUser(
   ];
 
   if (seedListIds.length < MIN_SEEDS) {
+    if (slugs.length > 0) {
+      const picked = new Set<string>(excludeIds);
+      const result: HomeRecommendationItem[] = [];
+      const interestLists = await fetchListsByCategorySlugs(
+        prisma,
+        slugs,
+        picked,
+        limit
+      );
+      for (const item of interestLists) {
+        if (picked.has(item.id)) continue;
+        result.push(item);
+        picked.add(item.id);
+        if (result.length >= limit) break;
+      }
+      if (result.length < limit) {
+        const popular = await fetchPopularLists(prisma, picked, limit - result.length);
+        result.push(...popular);
+      }
+      return { lists: result.slice(0, limit), isPersonalized: false };
+    }
     const lists = await fetchPopularLists(prisma, excludeIds, limit);
     return { lists, isPersonalized: false };
   }

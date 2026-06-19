@@ -72,7 +72,45 @@ describe('optimizeImageDetailed coverList', () => {
     expect(result.optimizedBytes).toBeLessThanOrEqual(profile.maxSize);
 
     const meta = await sharp(result.buffer).metadata();
-    expect(meta.width).toBeLessThanOrEqual(profile.maxWidth);
-    expect(meta.height).toBeLessThanOrEqual(profile.maxHeight);
+    expect(meta.width).toBe(1280);
+    expect(meta.height).toBe(960);
+  });
+
+  it('crops wide image to 4:3 for coverList', async () => {
+    const wideJpeg = await sharp({
+      create: {
+        width: 2400,
+        height: 1000,
+        channels: 3,
+        background: { r: 20, g: 80, b: 140 },
+      },
+    })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    const result = await optimizeImageDetailed(wideJpeg, { profile: 'coverList' });
+    const meta = await sharp(result.buffer).metadata();
+    expect(meta.width).toBe(1280);
+    expect(meta.height).toBe(960);
+  });
+});
+
+describe('optimizeImageDetailed coverListHorizontal', () => {
+  it('crops image to 21:9 banner', async () => {
+    const tallJpeg = await sharp({
+      create: {
+        width: 2000,
+        height: 2000,
+        channels: 3,
+        background: { r: 90, g: 20, b: 40 },
+      },
+    })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    const result = await optimizeImageDetailed(tallJpeg, { profile: 'coverListHorizontal' });
+    const meta = await sharp(result.buffer).metadata();
+    expect(meta.width).toBe(1600);
+    expect(meta.height).toBe(686);
   });
 });

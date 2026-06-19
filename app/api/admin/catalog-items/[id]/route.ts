@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getCatalogItemDetail, updateCatalogItem } from '@/lib/catalog-items';
@@ -32,12 +33,13 @@ export async function PUT(
     await requireAdmin();
     const { id } = await params;
     const body = await request.json();
-    const { title, description, imageUrl, externalUrl, categorySlug } = body as {
+    const { title, description, imageUrl, externalUrl, categorySlug, metadata } = body as {
       title?: string;
       description?: string;
       imageUrl?: string;
       externalUrl?: string;
       categorySlug?: string | null;
+      metadata?: Record<string, unknown> | null;
     };
 
     if (!title?.trim()) {
@@ -55,6 +57,9 @@ export async function PUT(
       description,
       externalUrl,
       categorySlug: categorySlug.trim(),
+      ...(metadata !== undefined && {
+        metadata: (metadata ?? {}) as Prisma.InputJsonValue,
+      }),
       ...(finalImage !== undefined && { imageUrl: finalImage }),
     });
 

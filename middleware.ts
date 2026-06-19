@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { isAdminRole, isMaintenanceBypassPath } from '@/lib/maintenance-mode-types';
 
 function getClientIp(req: Request): string {
   const forwarded = req.headers.get('x-forwarded-for');
@@ -10,10 +11,25 @@ function getClientIp(req: Request): string {
   return 'unknown';
 }
 
+async function fetchMaintenanceStatus(origin: string): Promise<{
+  enabled: boolean;
+  allowAdminBrowse: boolean;
+} | null> {
+  try {
+    const res = await fetch(`${origin}/api/site/maintenance-status`, {
+      next: { revalidate: 10 },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 export default auth(async (req) => {
   const url = req.nextUrl;
+  const pathname = url.pathname;
 
-  // Rate limiting برای API
   if (url.pathname.startsWith('/api')) {
     const ip = getClientIp(req);
     const { success } = await checkRateLimit(`api:${ip}`);
@@ -25,13 +41,30 @@ export default auth(async (req) => {
     }
   }
 
-  return NextResponse.next();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-pathname', pathname);
+
+  if (!isMaintenanceBypassPath(pathname)) {
+    const status = await fetchMaintenanceStatus(url.origin);
+    if (status?.enabled) {
+      const adminBypass =
+        status.allowAdminBrowse && isAdminRole(req.auth?.user?.role);
+      if (!adminBypass && pathname.startsWith('/api')) {
+        return NextResponse.json(
+          { error: 'سایت در حال به‌روزرسانی است. لطفاً بعداً تلاش کنید.' },
+          { status: 503 }
+        );
+      }
+    }
+  }
+
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 });
 
 export const config = {
   matcher: [
-    '/api/(.*)',
-    '/admin/(.*)',
-    '/profile',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };

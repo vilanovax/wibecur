@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { isSameCategorySlug } from '@/lib/category-slug-aliases';
+import { trackCategoryChipClick } from '@/lib/analytics';
 
 type CategoryChip = { id: string; slug: string; name: string; icon: string | null };
 
@@ -68,6 +69,7 @@ export default function QuickCategoryChips({
               <Link
                 key={cat.id}
                 href={`/categories/${cat.slug}`}
+                onClick={() => trackCategoryChipClick(cat.slug, cat.name)}
                 aria-current={isActive ? 'page' : undefined}
                 className={`flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-3.5 wibe-small font-medium shadow-sm transition-all active:scale-[0.98] lg:h-8 lg:px-3 lg:wibe-caption ${
                   isActive

@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { uploadImageFromUrlDetailed } from '@/lib/object-storage';
 import {
   isAppObjectStorageImageUrl,
-  isExternalDirectImageUrl,
+  needsS3MigrationImageUrl,
+  resolveUrlForS3Migration,
 } from '@/lib/item-image-storage';
 import { checkObjectStorageReady } from '@/lib/object-storage-readiness';
 import { syncPlacementsFromCatalog } from '@/lib/catalog-items';
@@ -48,7 +49,7 @@ export async function migrateCatalogExternalImageToLiara(
     return { catalogId, status: 'no_image', error: 'تصویری برای این موجودیت یافت نشد' };
   }
 
-  if (!isExternalDirectImageUrl(imageUrl)) {
+  if (!needsS3MigrationImageUrl(imageUrl)) {
     return {
       catalogId,
       status: 'already_on_storage',
@@ -57,7 +58,8 @@ export async function migrateCatalogExternalImageToLiara(
     };
   }
 
-  const upload = await uploadImageFromUrlDetailed(imageUrl, 'items');
+  const downloadUrl = resolveUrlForS3Migration(imageUrl);
+  const upload = await uploadImageFromUrlDetailed(downloadUrl, 'items');
 
   if (!upload.ok) {
     return {

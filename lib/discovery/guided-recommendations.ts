@@ -7,6 +7,7 @@ import { dbQuery } from '@/lib/db';
 import { getHomeRecommendationsForUser } from '@/lib/home-recommendations';
 import { getGlobalTrending } from '@/lib/trending/service';
 import { getCachedGlobalTrending } from '@/lib/trending/cached';
+import { buildPublicListSearchWhere } from '@/lib/public-list-search';
 import { publicCuratedListWhere } from '@/lib/public-content-filters';
 import { withResolvedListCovers } from '@/lib/resolve-list-cover';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
@@ -105,19 +106,8 @@ async function searchListsByQuery(
   if (q.length < SEARCH_MIN_LENGTH) return [];
 
   const searchWhere: Prisma.listsWhereInput = {
-    ...publicCuratedListWhere,
+    ...buildPublicListSearchWhere(q),
     id: excludeIds.size > 0 ? { notIn: [...excludeIds] } : undefined,
-    OR: [
-      { title: { contains: q, mode: 'insensitive' } },
-      { description: { contains: q, mode: 'insensitive' } },
-      {
-        categories: {
-          isActive: true,
-          deletedAt: null,
-          name: { contains: q, mode: 'insensitive' },
-        },
-      },
-    ],
   };
 
   const lists = await dbQuery(() =>

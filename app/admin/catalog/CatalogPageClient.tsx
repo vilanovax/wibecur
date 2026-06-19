@@ -27,17 +27,21 @@ import NewItemForm, { type NewItemFormList } from '@/app/admin/items/new/NewItem
 import AddToListModal from '@/components/admin/catalog/AddToListModal';
 import CatalogPlacementPanel from '@/components/admin/catalog/CatalogPlacementPanel';
 import CatalogBulkToolbar from '@/components/admin/catalog/CatalogBulkToolbar';
+import CatalogDuplicateMergeTab from '@/components/admin/catalog/CatalogDuplicateMergeTab';
+import CatalogSimilarMergePanel from '@/components/admin/catalog/CatalogSimilarMergePanel';
 import ExternalImageItemsModal from '@/components/admin/items/ExternalImageItemsModal';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import {
   catalogCategoryLabel,
   formatExternalKeyHint,
 } from '@/lib/catalog-display';
-import type {
-  CatalogCategoryFilter,
-  CatalogListFilter,
-  CatalogListRow,
-  DuplicateCatalogGroup,
+import {
+  pickSuggestedMergeTarget,
+  type CatalogCategoryFilter,
+  type CatalogListFilter,
+  type CatalogListRow,
+  type DuplicateCatalogGroup,
+  type SimilarCatalogRow,
 } from '@/lib/catalog-items';
 import type { CatalogPageMode, CatalogPlacementList } from '@/lib/admin/catalog-page-data';
 
@@ -109,7 +113,13 @@ export default function CatalogPageClient({
   const [groups, setGroups] = useState(initialDuplicateGroups);
   const [dupCount, setDupCount] = useState(initialDuplicateGroups.length);
   const [mergeLoading, setMergeLoading] = useState<string | null>(null);
+  const [similarMergeLoading, setSimilarMergeLoading] = useState(false);
   const [mergeTarget, setMergeTarget] = useState<Record<string, string>>({});
+  const [similarQuery, setSimilarQuery] = useState('');
+  const [similarItems, setSimilarItems] = useState<SimilarCatalogRow[]>([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
+  const [detailSimilarItems, setDetailSimilarItems] = useState<SimilarCatalogRow[]>([]);
+  const [detailSimilarLoading, setDetailSimilarLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [selectedDetail, setSelectedDetail] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -283,7 +293,7 @@ export default function CatalogPageClient({
       setDupCount(g.length);
       const defaults: Record<string, string> = {};
       for (const group of g as DuplicateCatalogGroup[]) {
-        defaults[group.groupKey] = group.catalogs[0]?.id ?? '';
+        defaults[group.groupKey] = pickSuggestedMergeTarget(group.catalogs);
       }
       setMergeTarget((prev) => ({ ...defaults, ...prev }));
     } catch (e: unknown) {
@@ -303,20 +313,99 @@ export default function CatalogPageClient({
   const openDetail = async (catalogId: string) => {
     setSelectedDetail(catalogId);
     setDetail(null);
+    setDetailSimilarItems([]);
     setDetailLoading(true);
+    setDetailSimilarLoading(true);
     try {
-      const res = await fetch(`/api/admin/catalog-items/${catalogId}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const [detailRes, similarRes] = await Promise.all([
+        fetch(`/api/admin/catalog-items/${catalogId}`),
+        fetch(`/api/admin/catalog-items/similar?catalogId=${encodeURIComponent(catalogId)}&limit=12`),
+      ]);
+      const data = await detailRes.json();
+      if (!detailRes.ok) throw new Error(data.error);
       setDetail({
         title: data.title,
         categorySlug: data.categorySlug ?? null,
         placements: data.placements ?? [],
       });
+
+      const similarData = await similarRes.json();
+      if (similarRes.ok) {
+        setDetailSimilarItems(similarData.rows ?? []);
+      }
     } catch {
       setDetail(null);
+      setDetailSimilarItems([]);
     } finally {
       setDetailLoading(false);
+      setDetailSimilarLoading(false);
+    }
+  };
+
+  const loadSimilarSearch = async (rawQ: string) => {
+    const q = rawQ.trim();
+    if (q.length < 2) {
+      setSimilarItems([]);
+      return;
+    }
+    setSimilarLoading(true);
+    setMessage('');
+    try {
+      const params = new URLSearchParams({ q, limit: '24' });
+      if (category) params.set('categorySlug', category);
+      const res = await fetch(`/api/admin/catalog-items/similar?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSimilarItems(data.rows ?? []);
+    } catch (e: unknown) {
+      setSimilarItems([]);
+      setMessage(e instanceof Error ? e.message : 'خطا در جستجوی مشابه');
+    } finally {
+      setSimilarLoading(false);
+    }
+  };
+
+  const handleSimilarMerge = async (targetCatalogId: string, sourceCatalogIds: string[]) => {
+    const sources = sourceCatalogIds.filter((id) => id && id !== targetCatalogId);
+    if (sources.length === 0) return;
+
+    setSimilarMergeLoading(true);
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/catalog-items/merge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetCatalogId, sourceCatalogIds: sources }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setMessage(data.message ?? 'ادغام انجام شد');
+
+      setSimilarItems((prev) => prev.filter((item) => !sources.includes(item.id)));
+      setDetailSimilarItems((prev) => prev.filter((item) => !sources.includes(item.id)));
+      setGroups((prev) =>
+        prev
+          .map((group) => ({
+            ...group,
+            catalogs: group.catalogs.filter((c) => !sources.includes(c.id)),
+          }))
+          .filter((group) => group.catalogs.length >= 2)
+      );
+      setDupCount((c) => Math.max(0, c - 1));
+
+      if (sources.includes(selectedDetail ?? '')) {
+        setSelectedDetail(null);
+        setDetail(null);
+      } else if (selectedDetail === targetCatalogId) {
+        void openDetail(targetCatalogId);
+      }
+
+      if (tab === 'browse') void loadBrowse(page, query, category, listId, multiListOnly);
+      router.refresh();
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : 'خطا در ادغام');
+    } finally {
+      setSimilarMergeLoading(false);
     }
   };
 
@@ -389,7 +478,7 @@ export default function CatalogPageClient({
   };
 
   const handleMergeGroup = async (group: DuplicateCatalogGroup) => {
-    const targetId = mergeTarget[group.groupKey] || group.catalogs[0]?.id;
+    const targetId = mergeTarget[group.groupKey] || pickSuggestedMergeTarget(group.catalogs);
     if (!targetId) return;
     const sources = group.catalogs.map((c) => c.id).filter((id) => id !== targetId);
     if (sources.length === 0) return;
@@ -766,11 +855,18 @@ export default function CatalogPageClient({
                   )}
 
                   <div className="flex flex-wrap items-end gap-2">
+                    <Link
+                      href={`${basePath}?view=${viewParam ?? 'catalog'}&mode=create`}
+                      className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-700 shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      آیتم جدید
+                    </Link>
                     <button
                       type="button"
                       onClick={() => setExternalImagesOpen(true)}
                       className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100"
-                      title="موجودیت‌هایی که poster هنوز روی ParsPack نیست — آپلود به S3"
+                      title="موجودیت‌هایی که poster هنوز روی ParsPack نیست — شامل banner و URLهای بدون parspack"
                     >
                       <Link2 className="w-4 h-4" />
                       S3
@@ -979,6 +1075,14 @@ export default function CatalogPageClient({
                                   {isMultiList && <ListPlus className="w-3 h-3" />}
                                   {row.listCount.toLocaleString('fa-IR')} لیست
                                 </span>
+                                {row.hasSearchProfile && (
+                                  <span
+                                    className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800"
+                                    title="پروفایل جستجو ساخته شده"
+                                  >
+                                    🔍 جستجو
+                                  </span>
+                                )}
                               </div>
                               {extHint && (
                                 <p
@@ -1034,69 +1138,23 @@ export default function CatalogPageClient({
           )}
 
           {tab === 'duplicates' && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                موارد با عنوان مشابه را یکی کنید: یکی را به‌عنوان <strong>مقصد</strong> انتخاب
-                کنید، بقیه ادغام می‌شوند.
-              </p>
-              {loading && groups.length === 0 ? (
-                <div className="space-y-3">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="h-32 rounded-xl bg-gray-100 animate-pulse" />
-                  ))}
-                </div>
-              ) : groups.length === 0 ? (
-                <div className="text-center py-14 rounded-2xl bg-emerald-50 border border-emerald-100">
-                  <p className="text-emerald-800 font-medium">تکرار احتمالی یافت نشد</p>
-                </div>
-              ) : (
-                groups.map((group) => (
-                  <div
-                    key={group.groupKey}
-                    className="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50/80 to-white p-4 space-y-3 shadow-sm"
-                  >
-                    <p className="text-xs font-bold text-amber-900">
-                      {group.catalogs.length.toLocaleString('fa-IR')} مورد مشابه
-                      {group.categorySlug && (
-                        <span className="font-normal text-amber-800/80">
-                          {' '}
-                          · {catalogCategoryLabel(group.categorySlug)}
-                        </span>
-                      )}
-                    </p>
-                    <ul className="space-y-1.5" role="radiogroup" aria-label="انتخاب مقصد ادغام">
-                      {group.catalogs.map((c) => (
-                        <li key={c.id}>
-                          <label className="flex items-center gap-3 rounded-xl border border-white/80 bg-white px-3 py-2.5 cursor-pointer hover:border-violet-200 has-[:checked]:border-violet-400 has-[:checked]:bg-violet-50/50">
-                            <input
-                              type="radio"
-                              name={`merge-${group.groupKey}`}
-                              checked={(mergeTarget[group.groupKey] ?? group.catalogs[0]?.id) === c.id}
-                              onChange={() =>
-                                setMergeTarget((p) => ({ ...p, [group.groupKey]: c.id }))
-                              }
-                              className="text-violet-600 focus:ring-violet-500"
-                            />
-                            <span className="flex-1 text-sm font-medium truncate">{c.title}</span>
-                            <span className="text-xs text-gray-500 shrink-0">
-                              {c.listCount} لیست
-                            </span>
-                          </label>
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      disabled={mergeLoading === group.groupKey}
-                      onClick={() => handleMergeGroup(group)}
-                      className="w-full py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-50"
-                    >
-                      {mergeLoading === group.groupKey ? 'در حال ادغام…' : 'ادغام در مقصد انتخاب‌شده'}
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
+            <CatalogDuplicateMergeTab
+              groups={groups}
+              loading={loading}
+              mergeLoadingKey={mergeLoading}
+              mergeTarget={mergeTarget}
+              onMergeTargetChange={(groupKey, catalogId) =>
+                setMergeTarget((p) => ({ ...p, [groupKey]: catalogId }))
+              }
+              onMergeGroup={handleMergeGroup}
+              similarQuery={similarQuery}
+              onSimilarQueryChange={setSimilarQuery}
+              onSimilarSearch={() => void loadSimilarSearch(similarQuery)}
+              similarItems={similarItems}
+              similarLoading={similarLoading}
+              similarMergeLoading={similarMergeLoading}
+              onSimilarMerge={handleSimilarMerge}
+            />
           )}
         </div>
 
@@ -1188,6 +1246,22 @@ export default function CatalogPageClient({
                       </li>
                     ))}
                   </ul>
+
+                  <div className="mt-5 border-t border-gray-100 pt-4">
+                    <h4 className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1.5">
+                      <GitMerge className="w-3.5 h-3.5 text-violet-600" />
+                      موارد مشابه
+                    </h4>
+                    <CatalogSimilarMergePanel
+                      items={detailSimilarItems}
+                      loading={detailSimilarLoading}
+                      mergeLoading={similarMergeLoading}
+                      fixedTargetId={selectedDetail}
+                      fixedTargetTitle={detail.title}
+                      onMerge={handleSimilarMerge}
+                      emptyMessage="مورد مشابه دیگری در کاتالوگ نیست"
+                    />
+                  </div>
                 </div>
               ) : (
                 <p className="p-4 text-sm text-red-600">بارگذاری جزئیات ناموفق بود</p>

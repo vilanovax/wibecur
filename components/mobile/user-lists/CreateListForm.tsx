@@ -96,7 +96,10 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
 
       setToastMessage(data.message || 'لیست با موفقیت ایجاد شد');
       setShowToast(true);
-      track('list_create');
+      track('list_create', {
+        list_id: data.data?.id ?? '',
+        type: 'personal',
+      });
       setTitle('');
       fetchUserListsCount();
       dispatchListsUpdated({

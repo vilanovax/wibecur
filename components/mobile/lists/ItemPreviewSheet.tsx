@@ -18,6 +18,7 @@ import {
 import ItemTipCard from '@/components/shared/ItemTipCard';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
+import { trackItemPreviewOpen } from '@/lib/analytics';
 import {
   entryKindBadgeLabel,
   entryKindIcon,
@@ -250,7 +251,28 @@ export default function ItemPreviewSheet({
   categorySlug,
   categoryIcon,
   categoryName,
+  listSlug,
+  onPrev,
+  onNext,
 }: ItemPreviewSheetProps) {
+  const previewTrackedId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !item) return;
+    if (previewTrackedId.current === item.id) return;
+    previewTrackedId.current = item.id;
+    trackItemPreviewOpen({
+      item_id: item.id,
+      list_slug: listSlug,
+      category_slug: categorySlug ?? undefined,
+      position: itemIndex != null ? itemIndex + 1 : undefined,
+    });
+  }, [isOpen, item, listSlug, categorySlug, itemIndex]);
+
+  useEffect(() => {
+    if (!isOpen) previewTrackedId.current = null;
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {

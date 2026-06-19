@@ -1,4 +1,10 @@
-export type SettingsTab = 'integrations' | 'comments' | 'lists' | 'account';
+export type SettingsTab =
+  | 'integrations'
+  | 'branding'
+  | 'emergency'
+  | 'comments'
+  | 'lists'
+  | 'account';
 
 export const SETTINGS_TABS: {
   id: SettingsTab;
@@ -6,6 +12,8 @@ export const SETTINGS_TABS: {
   hash?: string;
 }[] = [
   { id: 'integrations', label: 'یکپارچه‌سازی' },
+  { id: 'branding', label: 'ظاهر سایت' },
+  { id: 'emergency', label: 'حالت اضطراری' },
   { id: 'comments', label: 'کامنت‌ها' },
   { id: 'lists', label: 'لیست‌ها' },
   { id: 'account', label: 'حساب ادمین', hash: 'password' },
@@ -14,7 +22,15 @@ export const SETTINGS_TABS: {
 export function parseSettingsTab(
   tab: string | null | undefined
 ): SettingsTab {
-  if (tab === 'comments' || tab === 'lists' || tab === 'account') return tab;
+  if (
+    tab === 'branding' ||
+    tab === 'emergency' ||
+    tab === 'comments' ||
+    tab === 'lists' ||
+    tab === 'account'
+  ) {
+    return tab;
+  }
   if (tab === 'password') return 'account';
   return 'integrations';
 }
@@ -33,6 +49,7 @@ export type SettingsData = {
   minItemsForPublicList: number;
   maxPersonalLists: number;
   personalListPublicInstructions: string | null;
+  siteLogoUrl: string | null;
 };
 
 export type CommentSettingsState = {

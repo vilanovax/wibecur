@@ -36,6 +36,7 @@ export default async function CatalogEditPage({
         imageUrl: detail.imageUrl,
         externalUrl: detail.externalUrl,
         categorySlug: detail.categorySlug,
+        metadata: detail.metadata,
         listCount: detail.listCount,
       }}
     />

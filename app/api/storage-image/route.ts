@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getObjectByStorageKey } from '@/lib/object-storage';
-import { extractStorageObjectKeyFromUrl } from '@/lib/storage-image-url';
+import {
+  buildLegacyLiaraPublicUrl,
+  extractStorageObjectKeyFromUrl,
+} from '@/lib/storage-image-url';
 import { isLegacyLiaraStorageUrl } from '@/lib/object-storage-config';
 
 function contentTypeFromKey(key: string, fallback?: string): string {
@@ -33,8 +36,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid storage key' }, { status: 400 });
   }
 
-  const result = await getObjectByStorageKey(key);
+  const legacySourceUrl =
+    urlParam?.trim() && isLegacyLiaraStorageUrl(urlParam.trim())
+      ? urlParam.trim()
+      : buildLegacyLiaraPublicUrl(key);
+
+  const result = await getObjectByStorageKey(key, { legacyUrl: legacySourceUrl });
   if (!result) {
+    if (isLegacyLiaraStorageUrl(legacySourceUrl)) {
+      return NextResponse.redirect(legacySourceUrl, 307);
+    }
     return NextResponse.json(
       {
         error: 'Image not found in ParsPack',

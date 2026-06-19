@@ -50,6 +50,10 @@ export async function POST(
       })
     );
 
+    const priorBookmarkCount = existingBookmark
+      ? 0
+      : await dbQuery(() => prisma.bookmarks.count({ where: { userId } }));
+
     const { isBookmarked, bookmarkCount } = await dbQuery(() =>
       prisma.$transaction(async (tx) => {
         if (existingBookmark) {
@@ -115,6 +119,7 @@ export async function POST(
       data: {
         isBookmarked,
         bookmarkCount,
+        isFirstBookmark: isBookmarked && priorBookmarkCount === 0,
       },
     });
   } catch (error: any) {

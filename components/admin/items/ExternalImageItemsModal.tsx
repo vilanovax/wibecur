@@ -19,13 +19,16 @@ import {
   AlertCircle,
   RotateCcw,
   CheckCircle2,
+  ImageOff,
 } from 'lucide-react';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
+import { resolveUrlForS3Migration } from '@/lib/item-image-storage';
 
 function resolveModalImageSrc(url: string): string {
   if (!url) return '';
   if (isOurStorageUrl(url)) return toAdminStorageImageSrc(url);
+  if (url.startsWith('/')) return resolveUrlForS3Migration(url);
   return url;
 }
 
@@ -37,6 +40,15 @@ type ExternalImageItem = {
   listTitle: string;
   imageUrl: string;
   host: string;
+};
+
+type MissingPosterItem = {
+  id: string;
+  title: string;
+  imdbId: string | null;
+  order: number;
+  listTitle: string;
+  catalogItemId?: string | null;
 };
 
 type ItemMigratePhase = 'idle' | 'converting' | 'done' | 'error';
@@ -63,6 +75,8 @@ type ExternalImageItemsModalProps = {
 };
 
 function hostLabel(host: string): string {
+  if (host.includes('banner')) return 'banner/banners';
+  if (host === 'محلی') return 'محلی';
   if (host.includes('tmdb')) return 'TMDb';
   if (host.includes('amazon') || host.includes('imdb')) return 'IMDb / Amazon';
   if (host.includes('google')) return 'Google';
@@ -157,6 +171,7 @@ export default function ExternalImageItemsModal({
   onMigrated,
 }: ExternalImageItemsModalProps) {
   const [items, setItems] = useState<ExternalImageItem[]>([]);
+  const [missingPosters, setMissingPosters] = useState<MissingPosterItem[]>([]);
   const [scope, setScope] = useState<'list' | 'category' | 'catalog'>('list');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -164,7 +179,9 @@ export default function ExternalImageItemsModal({
   const [query, setQuery] = useState('');
   const [hostFilter, setHostFilter] = useState<string>('all');
   const [migrateMap, setMigrateMap] = useState<Record<string, ItemMigrateState>>({});
+  const [posterMigrateMap, setPosterMigrateMap] = useState<Record<string, ItemMigrateState>>({});
   const [isMigrating, setIsMigrating] = useState(false);
+  const [isFetchingPosters, setIsFetchingPosters] = useState(false);
   const [migrateSummary, setMigrateSummary] = useState<{
     success: number;
     failed: number;
@@ -221,6 +238,18 @@ export default function ExternalImageItemsModal({
     });
   }, [items, query, hostFilter]);
 
+  const filteredMissingPosters = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return missingPosters.filter((item) => {
+      if (!q) return true;
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.listTitle.toLowerCase().includes(q) ||
+        (item.imdbId?.toLowerCase().includes(q) ?? false)
+      );
+    });
+  }, [missingPosters, query]);
+
   const [migrateTotal, setMigrateTotal] = useState(0);
 
   const migrateProgress = useMemo(() => {
@@ -239,15 +268,17 @@ export default function ExternalImageItemsModal({
 
   const resetMigrationState = useCallback(() => {
     setMigrateMap({});
+    setPosterMigrateMap({});
     setIsMigrating(false);
+    setIsFetchingPosters(false);
     setMigrateSummary(null);
     setMigrateTotal(0);
     abortRef.current = false;
   }, []);
 
   const handleClose = useCallback(() => {
-    if (isMigrating) {
-      const ok = window.confirm('تبدیل در حال انجام است. مطمئنید می‌خواهید ببندید؟');
+    if (isMigrating || isFetchingPosters) {
+      const ok = window.confirm('عملیات در حال انجام است. مطمئنید می‌خواهید ببندید؟');
       if (!ok) return;
       abortRef.current = true;
     }
@@ -255,7 +286,7 @@ export default function ExternalImageItemsModal({
     setHostFilter('all');
     resetMigrationState();
     onClose();
-  }, [isMigrating, onClose, resetMigrationState]);
+  }, [isMigrating, isFetchingPosters, onClose, resetMigrationState]);
 
   const migrateOne = useCallback(
     async (
@@ -389,6 +420,127 @@ export default function ExternalImageItemsModal({
     [isMigrating, storageReady, migrateOne, onMigrated]
   );
 
+  const fetchPosterOne = useCallback(
+    async (item: MissingPosterItem): Promise<{ success: boolean; stopBatch?: boolean }> => {
+      setPosterMigrateMap((prev) => ({
+        ...prev,
+        [item.id]: { phase: 'converting' },
+      }));
+
+      try {
+        const fetchPath =
+          mode === 'catalog'
+            ? `/api/admin/catalog/${item.id}/fetch-omdb-poster`
+            : `/api/admin/items/${item.id}/fetch-omdb-poster`;
+        const res = await fetch(fetchPath, {
+          method: 'POST',
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          const message = (data.error as string) || 'خطا در دریافت پوستر';
+          const stopBatch =
+            res.status === 503 || data.errorCode === 'storage_not_configured';
+
+          if (stopBatch) {
+            setStorageReady(false);
+            setStorageError(message);
+          }
+
+          setPosterMigrateMap((prev) => ({
+            ...prev,
+            [item.id]: { phase: 'error', error: message },
+          }));
+
+          return { success: false, stopBatch };
+        }
+
+        const newUrl = (data.newUrl as string) || '';
+
+        setPosterMigrateMap((prev) => ({
+          ...prev,
+          [item.id]: { phase: 'done', newUrl },
+        }));
+
+        window.setTimeout(() => {
+          setMissingPosters((prev) => prev.filter((row) => row.id !== item.id));
+          setPosterMigrateMap((prev) => {
+            const next = { ...prev };
+            delete next[item.id];
+            return next;
+          });
+        }, 900);
+
+        const success =
+          data.status === 'fetched' || data.status === 'already_has_image';
+        return { success };
+      } catch (err: unknown) {
+        const message = (err as Error).message || 'خطا در دریافت پوستر';
+        setPosterMigrateMap((prev) => ({
+          ...prev,
+          [item.id]: { phase: 'error', error: message },
+        }));
+        return { success: false };
+      }
+    },
+    [mode]
+  );
+
+  const handleFetchAllPosters = useCallback(async () => {
+    const withImdb = missingPosters.filter((item) => item.imdbId);
+    if (withImdb.length === 0 || isFetchingPosters || !storageReady) return;
+
+    const ok = window.confirm(
+      `پوستر ${withImdb.length.toLocaleString('fa-IR')} موجودیت از OMDb دریافت و روی ParsPack آپلود می‌شود.\n\nادامه می‌دهید؟`
+    );
+    if (!ok) return;
+
+    abortRef.current = false;
+    setIsFetchingPosters(true);
+    setPosterMigrateMap({});
+
+    let success = 0;
+    let failed = 0;
+    let hadFetch = false;
+
+    for (const item of withImdb) {
+      if (abortRef.current) break;
+
+      const result = await fetchPosterOne(item);
+      if (result.success) {
+        success++;
+        hadFetch = true;
+      } else {
+        failed++;
+        if (result.stopBatch) {
+          abortRef.current = true;
+          break;
+        }
+      }
+
+      if (!abortRef.current) {
+        await new Promise((r) => window.setTimeout(r, 400));
+      }
+    }
+
+    setIsFetchingPosters(false);
+
+    if (hadFetch) {
+      onMigrated?.();
+    }
+  }, [missingPosters, isFetchingPosters, storageReady, fetchPosterOne, onMigrated]);
+
+  const handleRetryPoster = useCallback(
+    async (item: MissingPosterItem) => {
+      if (isFetchingPosters || !storageReady || !item.imdbId) return;
+      setIsFetchingPosters(true);
+      const result = await fetchPosterOne(item);
+      setIsFetchingPosters(false);
+      if (result.success) onMigrated?.();
+    },
+    [isFetchingPosters, storageReady, fetchPosterOne, onMigrated]
+  );
+
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
@@ -397,11 +549,11 @@ export default function ExternalImageItemsModal({
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isMigrating) handleClose();
+      if (e.key === 'Escape' && !isMigrating && !isFetchingPosters) handleClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, isMigrating, handleClose]);
+  }, [isOpen, isMigrating, isFetchingPosters, handleClose]);
 
   useEffect(() => {
     if (!isOpen || !fetchUrl) return;
@@ -410,6 +562,7 @@ export default function ExternalImageItemsModal({
     setLoading(true);
     setError('');
     setItems([]);
+    setMissingPosters([]);
     setQuery('');
     setHostFilter('all');
     resetMigrationState();
@@ -420,6 +573,7 @@ export default function ExternalImageItemsModal({
         if (!res.ok) throw new Error(data.error || 'خطا در بارگذاری');
         if (!cancelled) {
           setItems(data.items || []);
+          setMissingPosters(data.missingPosters || []);
           setScope(
             data.scope === 'catalog'
               ? 'catalog'
@@ -444,6 +598,9 @@ export default function ExternalImageItemsModal({
     };
   }, [isOpen, fetchUrl, resetMigrationState]);
 
+  const totalCount = items.length + missingPosters.length;
+  const isBusy = isMigrating || isFetchingPosters;
+
   if (!isOpen || !mounted) return null;
 
   const showProgress = isMigrating || (migrateSummary && migrateProgress.total > 0);
@@ -451,7 +608,7 @@ export default function ExternalImageItemsModal({
   return createPortal(
     <div
       className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/45 p-0 sm:p-4 backdrop-blur-[2px]"
-      onClick={(e) => e.target === e.currentTarget && !isMigrating && handleClose()}
+      onClick={(e) => e.target === e.currentTarget && !isBusy && handleClose()}
       dir="rtl"
     >
       <div
@@ -472,15 +629,15 @@ export default function ExternalImageItemsModal({
                 <h2 id="external-images-title" className="text-base sm:text-lg font-bold text-gray-900">
                   S3
                 </h2>
-                {!loading && items.length > 0 && (
+                {!loading && totalCount > 0 && (
                   <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900">
-                    {items.length.toLocaleString('fa-IR')}
+                    {totalCount.toLocaleString('fa-IR')}
                   </span>
                 )}
               </div>
               <p className="mt-0.5 truncate text-sm font-medium text-gray-700">{scopeTitle}</p>
               <p className="mt-1 text-xs leading-relaxed text-gray-500">
-                دانلود، بهینه‌سازی WebP (حداکثر ~۱۰۰۰px) و آپلود به ParsPack
+                تصاویر خارجی به ParsPack منتقل می‌شوند؛ موارد بدون تصویر از OMDb دریافت می‌شوند (در صورت داشتن IMDb).
               </p>
             </div>
             <button
@@ -540,7 +697,7 @@ export default function ExternalImageItemsModal({
         )}
 
         {/* Toolbar */}
-        {!loading && !error && items.length > 0 && (
+        {!loading && !error && (items.length > 0 || missingPosters.length > 0) && (
           <div className="shrink-0 space-y-3 border-b border-gray-100 bg-gray-50/60 px-5 py-3">
             <div className="relative">
               <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -548,7 +705,7 @@ export default function ExternalImageItemsModal({
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                disabled={isMigrating}
+                disabled={isBusy}
                 placeholder="جستجو در عنوان یا لیست…"
                 className="w-full rounded-xl border border-gray-200 bg-white py-2 pr-9 pl-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 disabled:opacity-60"
               />
@@ -558,7 +715,7 @@ export default function ExternalImageItemsModal({
               <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
-                  disabled={isMigrating}
+                  disabled={isBusy}
                   onClick={() => setHostFilter('all')}
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
                     hostFilter === 'all'
@@ -572,7 +729,7 @@ export default function ExternalImageItemsModal({
                   <button
                     key={host}
                     type="button"
-                    disabled={isMigrating}
+                    disabled={isBusy}
                     onClick={() => setHostFilter(host)}
                     className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
                       hostFilter === host
@@ -603,7 +760,7 @@ export default function ExternalImageItemsModal({
             </div>
           )}
 
-          {!loading && !error && items.length === 0 && !isMigrating && (
+          {!loading && !error && totalCount === 0 && !isBusy && (
             <div className="mx-1 flex flex-col items-center rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 px-6 py-14 text-center">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                 {migrateSummary?.success ? (
@@ -621,7 +778,7 @@ export default function ExternalImageItemsModal({
                 {migrateSummary?.failed
                   ? `${migrateSummary.failed.toLocaleString('fa-IR')} مورد با خطا مواجه شد — می‌توانید دوباره تلاش کنید.`
                   : scope === 'catalog'
-                    ? 'هیچ موجودیتی در این فیلتر با تصویر خارجی پیدا نشد.'
+                    ? 'هیچ موجودیتی در این فیلتر با تصویر خارجی یا بدون پوستر (OMDb) پیدا نشد.'
                     : scope === 'category'
                       ? 'هیچ آیتمی در این دسته با تصویر خارجی پیدا نشد.'
                       : 'هیچ آیتمی در این لیست با تصویر خارجی پیدا نشد.'}
@@ -629,13 +786,175 @@ export default function ExternalImageItemsModal({
             </div>
           )}
 
-          {!loading && items.length > 0 && filteredItems.length === 0 && (
+          {!loading && filteredMissingPosters.length > 0 && (
+            <div className="mb-4">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
+                <div className="flex items-center gap-2">
+                  <ImageOff className="h-4 w-4 text-sky-600" />
+                  <h3 className="text-sm font-bold text-gray-900">بدون تصویر (OMDb)</h3>
+                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800">
+                    {missingPosters.length.toLocaleString('fa-IR')}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleFetchAllPosters()}
+                  disabled={
+                    isBusy ||
+                    !storageReady ||
+                    missingPosters.filter((item) => item.imdbId).length === 0
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isFetchingPosters ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      در حال دریافت…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5" />
+                      دریافت همه از OMDb
+                    </>
+                  )}
+                </button>
+              </div>
+              <ul className="space-y-1.5">
+                {filteredMissingPosters.map((item, index) => {
+                  const migrateState = posterMigrateMap[item.id];
+                  const isDone = migrateState?.phase === 'done';
+                  const isConverting = migrateState?.phase === 'converting';
+                  const isFailed = migrateState?.phase === 'error';
+                  const displayUrl = migrateState?.newUrl || '';
+
+                  return (
+                    <li
+                      key={item.id}
+                      className={`group flex items-center gap-3 rounded-xl border px-2.5 py-2 transition-all sm:px-3 ${
+                        isDone
+                          ? 'border-emerald-200 bg-emerald-50/60'
+                          : isFailed
+                            ? 'border-red-200 bg-red-50/40'
+                            : isConverting
+                              ? 'border-sky-200 bg-sky-50/40'
+                              : 'border-transparent bg-white hover:border-sky-100 hover:bg-sky-50/30'
+                      }`}
+                    >
+                      <div className="relative flex w-6 shrink-0 flex-col items-center gap-1">
+                        <span className="text-[10px] font-mono text-gray-300">
+                          {(index + 1).toLocaleString('fa-IR')}
+                        </span>
+                        {isDone && (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 animate-in fade-in zoom-in duration-300" />
+                        )}
+                        {isConverting && (
+                          <Loader2 className="h-4 w-4 animate-spin text-sky-600" />
+                        )}
+                        {isFailed && (
+                          <button
+                            type="button"
+                            onClick={() => void handleRetryPoster(item)}
+                            disabled={isBusy}
+                            title={migrateState.error}
+                            className="rounded p-0.5 text-red-500 hover:bg-red-100 disabled:opacity-50"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="relative flex h-[4.5rem] w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100 shadow-sm ring-1 ring-black/5 sm:h-16 sm:w-11 sm:rounded-lg">
+                        {isDone && displayUrl ? (
+                          <Image
+                            src={toAdminStorageImageSrc(displayUrl)}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <ImageOff className="h-5 w-5 text-gray-400" />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <p className="truncate text-sm font-semibold text-gray-900">{item.title}</p>
+                          <MigrateStatusBadge state={migrateState} />
+                        </div>
+                        <p className="mt-0.5 truncate text-[11px] text-violet-600">{item.listTitle}</p>
+                        {!isDone && (
+                          <p className="mt-1 font-mono text-[10px] text-gray-500">
+                            {item.imdbId || 'بدون IMDb'}
+                          </p>
+                        )}
+                        {isFailed && migrateState.error && (
+                          <p className="mt-1 truncate text-[10px] text-red-600">{migrateState.error}</p>
+                        )}
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+                        {!isConverting && !isDone && (
+                          <>
+                            {item.imdbId ? (
+                              <button
+                                type="button"
+                                onClick={() => void handleRetryPoster(item)}
+                                disabled={isBusy || !storageReady}
+                                className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-sky-700 disabled:opacity-60 sm:px-3 sm:text-xs"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                <span className="hidden sm:inline">OMDb</span>
+                              </button>
+                            ) : null}
+                            <Link
+                              href={
+                                mode === 'catalog'
+                                  ? `/admin/catalog/${item.id}/edit`
+                                  : `/admin/items/${item.id}/edit`
+                              }
+                              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:px-3 sm:text-xs"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Link>
+                            {item.imdbId ? (
+                              <a
+                                href={`https://www.imdb.com/title/${item.imdbId}/`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="باز کردن در IMDb"
+                                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-gray-500 transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {!loading && items.length > 0 && filteredItems.length === 0 && filteredMissingPosters.length === 0 && (
             <div className="mx-1 rounded-xl border border-dashed border-gray-200 py-10 text-center text-sm text-gray-500">
               نتیجه‌ای برای «{query}» پیدا نشد.
             </div>
           )}
 
           {!loading && filteredItems.length > 0 && (
+            <>
+              {missingPosters.length > 0 && (
+                <div className="mb-2 flex items-center gap-2 px-1">
+                  <CloudOff className="h-4 w-4 text-amber-600" />
+                  <h3 className="text-sm font-bold text-gray-900">تصاویر خارجی</h3>
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                    {items.length.toLocaleString('fa-IR')}
+                  </span>
+                </div>
+              )}
             <ul className="space-y-1.5">
               {filteredItems.map((item, index) => {
                 const migrateState = migrateMap[item.id];
@@ -672,7 +991,7 @@ export default function ExternalImageItemsModal({
                         <button
                           type="button"
                           onClick={() => void handleRetryOne(item)}
-                          disabled={isMigrating}
+                          disabled={isBusy}
                           title={migrateState.error}
                           className="rounded p-0.5 text-red-500 hover:bg-red-100 disabled:opacity-50"
                         >
@@ -719,7 +1038,7 @@ export default function ExternalImageItemsModal({
                             <Link2 className="h-2.5 w-2.5 opacity-70" />
                             {hostLabel(item.host)}
                           </span>
-                          <CopyUrlButton url={item.imageUrl} disabled={isMigrating} />
+                          <CopyUrlButton url={item.imageUrl} disabled={isBusy} />
                         </div>
                       )}
 
@@ -743,7 +1062,7 @@ export default function ExternalImageItemsModal({
                             <span className="hidden sm:inline">ویرایش</span>
                           </Link>
                           <a
-                            href={item.imageUrl}
+                            href={resolveUrlForS3Migration(item.imageUrl) || item.imageUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             title="باز کردن تصویر"
@@ -758,18 +1077,20 @@ export default function ExternalImageItemsModal({
                 );
               })}
             </ul>
+            </>
           )}
         </div>
 
         {/* Footer */}
-        {!loading && (items.length > 0 || migrateSummary) && (
+        {!loading && (totalCount > 0 || migrateSummary) && (
           <div className="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="text-xs text-gray-500">
-                {items.length > 0 ? (
+                {totalCount > 0 ? (
                   <>
-                    {filteredItems.length.toLocaleString('fa-IR')} از{' '}
-                    {items.length.toLocaleString('fa-IR')} آیتم
+                    {filteredItems.length + filteredMissingPosters.length > 0
+                      ? `${(filteredItems.length + filteredMissingPosters.length).toLocaleString('fa-IR')} از ${totalCount.toLocaleString('fa-IR')} آیتم`
+                      : `${totalCount.toLocaleString('fa-IR')} آیتم`}
                   </>
                 ) : migrateSummary ? (
                   <>
@@ -784,7 +1105,7 @@ export default function ExternalImageItemsModal({
                 <button
                   type="button"
                   onClick={() => void handleMigrateAll()}
-                  disabled={isMigrating || !storageReady}
+                  disabled={isBusy || !storageReady}
                   title={!storageReady ? storageError : undefined}
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-l from-violet-600 to-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-violet-700 hover:to-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >

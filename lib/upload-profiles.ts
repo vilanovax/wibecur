@@ -7,6 +7,7 @@ export type UploadPurpose =
   | 'list-cover'
   | 'list-horizontal'
   | 'category-hero'
+  | 'site-logo'
   | 'avatar'
   | 'cover'
   | 'item';
@@ -21,6 +22,7 @@ const PURPOSE_TARGETS: Record<string, UploadTarget> = {
   'list-horizontal': { folder: 'lists', profile: 'coverListHorizontal' },
   cover: { folder: 'lists', profile: 'coverList' },
   'category-hero': { folder: 'hubs', profile: 'hubCover' },
+  'site-logo': { folder: 'site', profile: 'siteLogo' },
   avatar: { folder: 'avatars', profile: 'avatar' },
   item: { folder: 'items', profile: 'itemImage' },
 };
@@ -38,6 +40,7 @@ export function resolveUploadTarget(
     return PURPOSE_TARGETS['list-cover'];
   }
   if (fallbackFolder === 'hubs') return PURPOSE_TARGETS['category-hero'];
+  if (fallbackFolder === 'site') return PURPOSE_TARGETS['site-logo'];
   if (fallbackFolder === 'items' || fallbackFolder === 'movies') {
     return PURPOSE_TARGETS.item;
   }

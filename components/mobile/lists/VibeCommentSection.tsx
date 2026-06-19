@@ -12,6 +12,7 @@ import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import CommentReportModal from '@/components/mobile/comments/CommentReportModal';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import CommentAvatar from '@/components/shared/CommentAvatar';
+import { track } from '@/lib/analytics';
 import {
   COMMENT_CLAMP_CHAR_THRESHOLD,
   COMMENTS_INITIAL_VISIBLE,
@@ -76,6 +77,7 @@ interface VibeCommentSectionProps {
   /** داخل ستون sticky دسکتاپ — بدون border بالایی اضافه */
   embeddedInSidebar?: boolean;
   listId: string;
+  listSlug?: string;
   isOwner: boolean;
   categorySlug?: string | null;
   /** وقتی کاربر روی «پیشنهاد» کلیک می‌کند، این فراخوانی می‌شود (مثلاً برای باز کردن مودال جستجو-محور) */
@@ -533,6 +535,7 @@ function VibeCommentInput({
 
 export default function VibeCommentSection({
   listId,
+  listSlug,
   isOwner,
   categorySlug,
   onOpenSuggestItem,
@@ -619,6 +622,12 @@ export default function VibeCommentSection({
         setIsFormExpanded(false);
         setIsSuggestionMode(false);
         setToast({ message: data.message || 'نظرت به لیست اضافه شد ✨', type: 'success' });
+        track('comment_submit', {
+          list_id: listId,
+          ...(listSlug ? { list_slug: listSlug } : {}),
+          ...(categorySlug ? { category_slug: categorySlug } : {}),
+          type,
+        });
         return true;
       }
       setToast({

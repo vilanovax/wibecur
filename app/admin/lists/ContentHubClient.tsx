@@ -47,6 +47,7 @@ interface ContentHubClientProps {
   initialImportCategoryId?: string;
   createLists?: NewItemFormList[];
   initialCreateListId?: string;
+  catalogMode?: string;
 }
 
 const STATS_COLLAPSED_KEY = 'admin-content-hub-stats-collapsed';
@@ -73,6 +74,7 @@ export default function ContentHubClient({
   initialImportCategoryId,
   createLists,
   initialCreateListId,
+  catalogMode,
 }: ContentHubClientProps) {
   const router = useRouter();
   const [statsCollapsed, setStatsCollapsed] = useState(true);
@@ -105,6 +107,15 @@ export default function ContentHubClient({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {view === 'catalog' && catalogMode !== 'create' && (
+            <Link
+              href="/admin/lists?view=catalog&mode=create"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              آیتم جدید
+            </Link>
+          )}
           {view !== 'import' && !trash && (
             <>
               <Link

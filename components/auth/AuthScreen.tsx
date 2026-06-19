@@ -10,15 +10,37 @@ import RegisterAvatarPicker, {
   getDefaultRegisterAvatarId,
   getRegisterAvatarById,
 } from './RegisterAvatarPicker';
+import { trackSignupComplete, type SignupSource } from '@/lib/analytics';
 
 export type AuthMode = 'login' | 'register';
 
 interface AuthScreenProps {
   mode: AuthMode;
   callbackUrl: string;
+  signupSource?: SignupSource;
 }
 
-export default function AuthScreen({ mode, callbackUrl }: AuthScreenProps) {
+const SIGNUP_SOURCES: SignupSource[] = [
+  'home_strip',
+  'login_banner',
+  'item_gate',
+  'bookmark_gate',
+  'home_empty',
+  'direct',
+];
+
+function parseSignupSource(raw?: string | null): SignupSource {
+  if (raw && SIGNUP_SOURCES.includes(raw as SignupSource)) {
+    return raw as SignupSource;
+  }
+  return 'direct';
+}
+
+export function resolveSignupSource(raw?: string | null): SignupSource {
+  return parseSignupSource(raw);
+}
+
+export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' }: AuthScreenProps) {
   const router = useRouter();
   const isRegister = mode === 'register';
 
@@ -32,6 +54,8 @@ export default function AuthScreen({ mode, callbackUrl }: AuthScreenProps) {
 
   const selectedAvatar = useMemo(() => getRegisterAvatarById(avatarId), [avatarId]);
   const passwordStrength = getPasswordStrength(password);
+  const sourceQuery =
+    signupSource !== 'direct' ? `&source=${encodeURIComponent(signupSource)}` : '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +107,10 @@ export default function AuthScreen({ mode, callbackUrl }: AuthScreenProps) {
             : 'شماره یا رمز عبور اشتباه است'
         );
         return;
+      }
+
+      if (isRegister) {
+        trackSignupComplete(signupSource);
       }
 
       router.push(callbackUrl);
@@ -245,7 +273,7 @@ export default function AuthScreen({ mode, callbackUrl }: AuthScreenProps) {
               <>
                 حساب داری؟{' '}
                 <Link
-                  href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                  href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}${sourceQuery}`}
                   className="font-semibold text-white hover:underline"
                 >
                   ورود
@@ -255,7 +283,7 @@ export default function AuthScreen({ mode, callbackUrl }: AuthScreenProps) {
               <>
                 حساب نداری؟{' '}
                 <Link
-                  href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                  href={`/register?callbackUrl=${encodeURIComponent(callbackUrl)}${sourceQuery}`}
                   className="font-semibold text-white hover:underline"
                 >
                   ثبت‌نام رایگان

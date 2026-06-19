@@ -30,6 +30,7 @@ export interface TrendingListResult {
   saveCount: number;
   likeCount: number;
   itemCount: number;
+  weeklySaves?: number;
 }
 
 function ms(days: number): number {
@@ -200,6 +201,7 @@ export async function getTrendingByCategory(
         saveCount: l.saveCount ?? 0,
         likeCount: l.likeCount ?? 0,
         itemCount: l.itemCount ?? 0,
+        weeklySaves: metrics.S7,
       });
     }
 
@@ -294,6 +296,7 @@ export async function getFastRising(
         userId: true,
         categoryId: true,
         categories: { select: { slug: true } },
+        users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
       },
       take: 80,
     });
@@ -322,11 +325,21 @@ export async function getFastRising(
         categoryId: l.categoryId,
         categorySlug: l.categories?.slug ?? null,
         creatorId: l.userId,
+        creator: l.users
+          ? {
+              id: l.users.id,
+              name: l.users.name,
+              username: l.users.username,
+              image: l.users.image,
+              curatorLevel: l.users.curatorLevel,
+            }
+          : undefined,
         coverImage: l.coverImage,
         horizontalImage: l.horizontalImage,
         saveCount: l.saveCount ?? 0,
         likeCount: l.likeCount ?? 0,
         itemCount: l.itemCount ?? 0,
+        weeklySaves: metrics.S7,
       });
     }
 

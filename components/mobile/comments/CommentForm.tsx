@@ -21,6 +21,7 @@ export default function CommentForm({
       onClose={onClose}
       apiUrl={`/api/items/${itemId}/comments`}
       onSubmit={onSubmit}
+      analytics={{ target: 'item', item_id: itemId }}
     />
   );
 }

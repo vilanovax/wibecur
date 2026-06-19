@@ -10,6 +10,8 @@ import SettingsStatusStrip from '@/components/admin/settings/SettingsStatusStrip
 import IntegrationsSettingsPanel from '@/components/admin/settings/IntegrationsSettingsPanel';
 import CommentSettingsPanel from '@/components/admin/settings/CommentSettingsPanel';
 import ListSettingsPanel from '@/components/admin/settings/ListSettingsPanel';
+import BrandingSettingsPanel from '@/components/admin/settings/BrandingSettingsPanel';
+import MaintenanceModePanel from '@/components/admin/settings/MaintenanceModePanel';
 import AccountSettingsPanel from '@/components/admin/settings/AccountSettingsPanel';
 import {
   parseSettingsTab,
@@ -17,6 +19,12 @@ import {
   type CommentSettingsState,
   type SettingsTab,
 } from '@/lib/admin/settings-types';
+import {
+  DEFAULT_MAINTENANCE_ACCENT,
+  DEFAULT_MAINTENANCE_MESSAGE,
+  DEFAULT_MAINTENANCE_TITLE,
+  type MaintenanceModeSettings,
+} from '@/lib/maintenance-mode-types';
 import { DEFAULT_OPENAI_MODEL, resolveOpenAIModel } from '@/lib/openai-models';
 
 type SectionToast = {
@@ -56,6 +64,7 @@ export default function SettingsPageClient() {
     minItemsForPublicList: 5,
     maxPersonalLists: 3,
     personalListPublicInstructions: null,
+    siteLogoUrl: null,
   });
 
   const [integrationForm, setIntegrationForm] = useState(emptyIntegrationForm);
@@ -63,6 +72,16 @@ export default function SettingsPageClient() {
     minItemsForPublicList: 5,
     maxPersonalLists: 3,
     personalListPublicInstructions: '',
+  });
+  const [brandingForm, setBrandingForm] = useState({ siteLogoUrl: '' });
+  const [maintenanceForm, setMaintenanceForm] = useState<MaintenanceModeSettings>({
+    enabled: false,
+    title: DEFAULT_MAINTENANCE_TITLE,
+    subtitle: '',
+    message: DEFAULT_MAINTENANCE_MESSAGE,
+    showLogo: true,
+    accentColor: DEFAULT_MAINTENANCE_ACCENT,
+    allowAdminBrowse: true,
   });
 
   const [commentSettings, setCommentSettings] = useState<CommentSettingsState>({
@@ -80,6 +99,8 @@ export default function SettingsPageClient() {
   const [loading, setLoading] = useState(true);
   const [savingIntegrations, setSavingIntegrations] = useState(false);
   const [savingLists, setSavingLists] = useState(false);
+  const [savingBranding, setSavingBranding] = useState(false);
+  const [savingMaintenance, setSavingMaintenance] = useState(false);
   const [commentSettingsLoading, setCommentSettingsLoading] = useState(false);
   const [sectionToast, setSectionToast] = useState<SectionToast | null>(null);
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
@@ -114,6 +135,17 @@ export default function SettingsPageClient() {
     }
   }, []);
 
+  const fetchMaintenanceSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/settings/maintenance-mode');
+      const json = await res.json();
+      if (!res.ok || !json.success || !json.data) return;
+      setMaintenanceForm(json.data);
+    } catch {
+      /* defaults */
+    }
+  }, []);
+
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
@@ -136,6 +168,9 @@ export default function SettingsPageClient() {
         maxPersonalLists: data.maxPersonalLists || 3,
         personalListPublicInstructions: data.personalListPublicInstructions || '',
       });
+      setBrandingForm({
+        siteLogoUrl: data.siteLogoUrl || '',
+      });
     } catch (error: unknown) {
       showSectionToast(
         'integrations',
@@ -150,7 +185,8 @@ export default function SettingsPageClient() {
   useEffect(() => {
     fetchSettings();
     fetchCommentSettings();
-  }, [fetchSettings, fetchCommentSettings]);
+    fetchMaintenanceSettings();
+  }, [fetchSettings, fetchCommentSettings, fetchMaintenanceSettings]);
 
   const handleSaveIntegrations = async () => {
     try {
@@ -235,6 +271,69 @@ export default function SettingsPageClient() {
       );
     } finally {
       setSavingLists(false);
+    }
+  };
+
+  const handleSaveBranding = async () => {
+    try {
+      setSavingBranding(true);
+      setSectionToast(null);
+
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          siteLogoUrl: brandingForm.siteLogoUrl.trim() || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'خطا در ذخیره');
+
+      showSectionToast('branding', 'success', 'لوگوی سایت ذخیره شد');
+      await fetchSettings();
+    } catch (error: unknown) {
+      showSectionToast(
+        'branding',
+        'error',
+        error instanceof Error ? error.message : 'خطا'
+      );
+    } finally {
+      setSavingBranding(false);
+    }
+  };
+
+  const handleSaveMaintenance = async () => {
+    try {
+      setSavingMaintenance(true);
+      setSectionToast(null);
+
+      const res = await fetch('/api/admin/settings/maintenance-mode', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(maintenanceForm),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در ذخیره');
+      }
+
+      showSectionToast(
+        'emergency',
+        'success',
+        json.message ||
+          (maintenanceForm.enabled
+            ? 'حالت اضطراری فعال شد'
+            : 'تنظیمات حالت اضطراری ذخیره شد')
+      );
+      await fetchMaintenanceSettings();
+    } catch (error: unknown) {
+      showSectionToast(
+        'emergency',
+        'error',
+        error instanceof Error ? error.message : 'خطا'
+      );
+    } finally {
+      setSavingMaintenance(false);
     }
   };
 
@@ -375,6 +474,27 @@ export default function SettingsPageClient() {
             onTestLiara={testLiara}
           />
         </>
+      )}
+
+      {activeTab === 'branding' && (
+        <BrandingSettingsPanel
+          siteLogoUrl={brandingForm.siteLogoUrl}
+          onChange={(url) => setBrandingForm({ siteLogoUrl: url })}
+          saving={savingBranding}
+          onSave={handleSaveBranding}
+        />
+      )}
+
+      {activeTab === 'emergency' && (
+        <MaintenanceModePanel
+          value={maintenanceForm}
+          siteLogoUrl={settings.siteLogoUrl}
+          onChange={(patch) =>
+            setMaintenanceForm((prev) => ({ ...prev, ...patch }))
+          }
+          saving={savingMaintenance}
+          onSave={handleSaveMaintenance}
+        />
       )}
 
       {activeTab === 'comments' && (

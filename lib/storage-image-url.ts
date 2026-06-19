@@ -5,7 +5,6 @@ import {
 } from '@/lib/object-storage-config';
 import { toStorageImageSrc } from '@/lib/liara-image-url';
 
-/** استخراج کلید S3 از URL قدیمی Liara یا ParsPack */
 export function extractStorageObjectKeyFromUrl(url: string): string | null {
   try {
     const normalized = url.startsWith('http') ? url : `https://${url.replace(/^\/+/, '')}`;
@@ -24,6 +23,12 @@ export function extractStorageObjectKeyFromUrl(url: string): string | null {
   }
 }
 
+/** URL عمومی Liara قدیمی برای یک کلید wibe/… */
+export function buildLegacyLiaraPublicUrl(objectKey: string): string {
+  const key = objectKey.replace(/^\/+/, '');
+  return `https://storage.c2.liara.space/${key}`;
+}
+
 /**
  * URL نمایش تصویر storage — ParsPack از proxy، Liara قدیمی از /api/storage-image
  * هرگز مستقیم به storage.c2.liara.space درخواست نمی‌زند.
@@ -38,7 +43,10 @@ export function resolveStorageImageDisplayUrl(raw: string | null | undefined): s
 
   if (isLegacyLiaraStorageUrl(url)) {
     const key = extractStorageObjectKeyFromUrl(url);
-    if (key) return `/api/storage-image?key=${encodeURIComponent(key)}`;
+    if (key) {
+      const params = new URLSearchParams({ key, url });
+      return `/api/storage-image?${params.toString()}`;
+    }
     return '';
   }
 

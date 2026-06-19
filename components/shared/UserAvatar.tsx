@@ -1,6 +1,6 @@
 'use client';
 
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { useState } from 'react';
 import { resolveStorageImageDisplayUrl } from '@/lib/storage-image-url';
 
 interface UserAvatarProps {
@@ -33,12 +33,13 @@ export default function UserAvatar({
   className = '',
   rounded = 'full',
 }: UserAvatarProps) {
+  const [failed, setFailed] = useState(false);
   const initial = (name || email || '?').charAt(0).toUpperCase();
   const roundedClass = rounded === 'xl' ? 'rounded-xl' : 'rounded-full';
   const sizeClass = getSizeClass(size);
   const displaySrc = resolveStorageImageDisplayUrl(src);
 
-  if (!displaySrc) {
+  if (!displaySrc || failed) {
     return (
       <div
         className={`${roundedClass} ${sizeClass} bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-semibold shrink-0 ${className}`}
@@ -50,13 +51,12 @@ export default function UserAvatar({
 
   return (
     <div className={`${roundedClass} ${sizeClass} overflow-hidden shrink-0 ${className}`}>
-      <ImageWithFallback
+      <img
         src={displaySrc}
         alt={name || email || 'Avatar'}
         className="object-cover w-full h-full"
-        placeholderSize="square"
-        fallbackIcon={initial}
-        fallbackClassName={`w-full h-full bg-[var(--primary)]/10 text-[var(--primary)] font-semibold flex items-center justify-center ${roundedClass}`}
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
       />
     </div>
   );

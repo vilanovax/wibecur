@@ -4,10 +4,12 @@ import '@fontsource/vazirmatn/600.css';
 import '@fontsource/vazirmatn/700.css';
 import './globals.css';
 import VercelAnalytics from '@/components/analytics/VercelAnalytics';
+import UmamiAnalytics from '@/components/analytics/UmamiAnalytics';
 import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import PWAProvider from '@/components/providers/PWAProvider';
 import MainContainer from '@/components/providers/MainContainer';
+import MaintenanceGate from '@/components/site/MaintenanceGate';
 import { SearchProvider } from '@/contexts/SearchContext';
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from '@/lib/seo';
 
@@ -76,7 +78,7 @@ export default function RootLayout({
         inLanguage: 'fa-IR',
         potentialAction: {
           '@type': 'SearchAction',
-          target: { '@type': 'EntryPoint', urlTemplate: `${baseUrl}/lists?q={search_term_string}` },
+          target: { '@type': 'EntryPoint', urlTemplate: `${baseUrl}/search?q={search_term_string}` },
           'query-input': 'required name=search_term_string',
         },
       },
@@ -104,12 +106,15 @@ export default function RootLayout({
           <QueryProvider>
             <SearchProvider>
               <PWAProvider>
-                <MainContainer>{children}</MainContainer>
+                <MaintenanceGate>
+                  <MainContainer>{children}</MainContainer>
+                </MaintenanceGate>
               </PWAProvider>
             </SearchProvider>
           </QueryProvider>
         </SessionProvider>
         <VercelAnalytics />
+        <UmamiAnalytics />
       </body>
     </html>
   );

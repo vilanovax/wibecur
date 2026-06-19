@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useListScrollDepth } from '@/hooks/useListScrollDepth';
 import { Share2, MoreVertical, Flame, Bookmark, LayoutGrid, List as ListIcon, Plus, Settings, Link2, Flag, Lightbulb, Map } from 'lucide-react';
 import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
 import ListDetailSidebar from '@/components/mobile/lists/ListDetailSidebar';
@@ -570,6 +571,7 @@ export default function ListDetailClient({
 }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  useListScrollDepth(list.slug, list.categories?.slug);
   const isDesktop = useIsDesktop();
   const [stickyVisible, setStickyVisible] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -1124,6 +1126,8 @@ export default function ListDetailClient({
               ) : (
                 <ListDetailActionRow
                   listId={list.id}
+                  listSlug={list.slug}
+                  categorySlug={list.categories?.slug}
                   saveCount={saveCount}
                   isOwner={false}
                   onBookmarkToggle={(saved) => setIsBookmarked(saved)}
@@ -1286,6 +1290,7 @@ export default function ListDetailClient({
             >
               <VibeCommentSectionLazy
                 listId={list.id}
+                listSlug={list.slug}
                 isOwner={isOwner}
                 categorySlug={categorySlug}
                 onOpenSuggestItem={() => setSuggestOpen(true)}

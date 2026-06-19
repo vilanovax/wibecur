@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { IMAGE_UPLOAD_HINTS, MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
 import { getDisplayImageUrl } from '@/lib/display-image';
 
-export type ListImageUploadPurpose = 'list-cover' | 'list-horizontal' | 'category-hero' | 'avatar';
+export type ListImageUploadPurpose = 'list-cover' | 'list-horizontal' | 'category-hero' | 'site-logo' | 'avatar';
 
 interface ImageUploadProps {
   value: string;
@@ -14,8 +14,8 @@ interface ImageUploadProps {
   label?: string;
   /** نوع آپلود — تعیین پروفایل بهینه‌سازی در سرور */
   uploadPurpose?: ListImageUploadPurpose;
-  /** نسبت پیش‌نمایش */
-  previewVariant?: 'cover' | 'horizontal' | 'default';
+  /** نسبت پیش‌نمایش (cover | horizontal | logo | default) */
+  previewVariant?: 'cover' | 'horizontal' | 'logo' | 'default';
   /** نمای فشرده برای فرم ویرایش */
   compact?: boolean;
 }
@@ -24,12 +24,14 @@ const PURPOSE_HINT: Record<ListImageUploadPurpose, string> = {
   'list-cover': IMAGE_UPLOAD_HINTS.listCover,
   'list-horizontal': IMAGE_UPLOAD_HINTS.listHorizontal,
   'category-hero': IMAGE_UPLOAD_HINTS.categoryHero,
+  'site-logo': IMAGE_UPLOAD_HINTS.siteLogo,
   avatar: IMAGE_UPLOAD_HINTS.avatar,
 };
 
-const PREVIEW_CLASS: Record<'cover' | 'horizontal' | 'default', string> = {
+const PREVIEW_CLASS: Record<'cover' | 'horizontal' | 'logo' | 'default', string> = {
   cover: 'aspect-[4/3] max-h-44',
   horizontal: 'aspect-[21/9] max-h-36',
+  logo: 'aspect-[4/1] max-h-28 bg-[var(--color-bg)]',
   default: 'h-64',
 };
 
@@ -46,7 +48,7 @@ function CoverPreview({
   onReplace?: () => void;
   replaceLoading?: boolean;
   compact?: boolean;
-  previewVariant?: 'cover' | 'horizontal' | 'default';
+  previewVariant?: 'cover' | 'horizontal' | 'logo' | 'default';
 }) {
   const [broken, setBroken] = useState(false);
   const displaySrc = getDisplayImageUrl(src) || src;
@@ -70,7 +72,7 @@ function CoverPreview({
             src={displaySrc}
             alt="کاور"
             fill
-            className="object-cover"
+              className={previewVariant === 'logo' ? 'object-contain p-3' : 'object-cover'}
             unoptimized
             onError={() => setBroken(true)}
           />
@@ -126,11 +128,13 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const resolvedPreview =
     previewVariant ??
-    (uploadPurpose === 'list-horizontal' || uploadPurpose === 'category-hero'
-      ? 'horizontal'
-      : uploadPurpose === 'list-cover'
-        ? 'cover'
-        : 'default');
+    (uploadPurpose === 'site-logo'
+      ? 'logo'
+      : uploadPurpose === 'list-horizontal' || uploadPurpose === 'category-hero'
+        ? 'horizontal'
+        : uploadPurpose === 'list-cover'
+          ? 'cover'
+          : 'default');
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadMethod, setUploadMethod] = useState<'url' | 'upload'>('upload');
@@ -192,8 +196,35 @@ export default function ImageUpload({
     }
   };
 
-  const handleUrlSubmit = () => {
-    if (urlInput.trim()) onChange(urlInput.trim());
+  const handleUrlSubmit = async () => {
+    const raw = urlInput.trim();
+    if (!raw) return;
+
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      setUploading(true);
+      try {
+        const res = await fetch('/api/admin/items/import-image-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: raw, purpose: uploadPurpose }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || typeof data.url !== 'string' || !data.url.trim()) {
+          throw new Error(data.error || 'خطا در دانلود و بهینه‌سازی تصویر');
+        }
+        onChange(data.url.trim());
+        setUrlInput(data.url.trim());
+        return;
+      } catch (error) {
+        console.error('URL import error:', error);
+        alert(error instanceof Error ? error.message : 'خطا در پردازش لینک تصویر');
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    onChange(raw);
   };
 
   const handleRemove = () => {
@@ -296,23 +327,26 @@ export default function ImageUpload({
               type="url"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
-              onBlur={handleUrlSubmit}
+              onBlur={() => {
+                if (urlInput.trim() && urlInput.trim() !== value) {
+                  void handleUrlSubmit();
+                }
+              }}
               placeholder="https://..."
               dir="ltr"
               className="flex-1 px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] focus:ring-2 focus:ring-[var(--primary)]/30"
             />
             <button
               type="button"
-              onClick={handleUrlSubmit}
-              className="px-3 py-2 rounded-xl bg-[var(--primary)] text-white text-sm hover:opacity-90"
+              onClick={() => void handleUrlSubmit()}
+              disabled={uploading}
+              className="px-3 py-2 rounded-xl bg-[var(--primary)] text-white text-sm hover:opacity-90 disabled:opacity-50"
             >
-              تایید
+              {uploading ? 'در حال پردازش…' : 'تایید'}
             </button>
           </div>
           <p className="text-[10px] text-[var(--color-text-muted)] leading-relaxed">
-            {uploadPurpose === 'category-hero'
-              ? 'با ذخیره دسته، تصویر از URL دانلود، بهینه و در ParsPack ذخیره می‌شود.'
-              : 'با ذخیره لیست، تصویر از URL دانلود، بهینه و در ParsPack ذخیره می‌شود.'}
+            با تأیید، تصویر دانلود، برش و بهینه‌سازی و در ParsPack ذخیره می‌شود.
           </p>
           {value && (
             <CoverPreview

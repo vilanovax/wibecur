@@ -115,6 +115,7 @@ export function buildSessionProfileFallback(session: Session) {
       viralListsCount: 0,
       popularListsCount: 0,
       totalLikesReceived: 0,
+      totalSavesReceived: 0,
       profileViews: 0,
       totalItemsCurated: 0,
     },

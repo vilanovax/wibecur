@@ -65,6 +65,7 @@ export async function updateSettings(data: {
   minItemsForPublicList?: number;
   maxPersonalLists?: number;
   personalListPublicInstructions?: string | null;
+  siteLogoUrl?: string | null;
 }) {
   const updateData: any = {};
 
@@ -124,6 +125,10 @@ export async function updateSettings(data: {
 
   if (data.personalListPublicInstructions !== undefined) {
     updateData.personalListPublicInstructions = data.personalListPublicInstructions || null;
+  }
+
+  if (data.siteLogoUrl !== undefined) {
+    updateData.siteLogoUrl = data.siteLogoUrl?.trim() || null;
   }
 
   return await prisma.settings.update({

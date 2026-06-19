@@ -28,11 +28,21 @@ function mapApiItem(l: {
   slug: string;
   description?: string;
   coverImage?: string;
+  horizontalImage?: string | null;
+  bannerImage?: string;
   saveCount?: number;
   itemCount?: number;
   likes?: number;
+  weeklySaves?: number;
   badge?: string;
   categories?: { id: string; name: string; slug: string; icon: string };
+  creator?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    image?: string | null;
+    curatorLevel?: string | null;
+  } | null;
 }): HomeListData {
   return {
     id: l.id,
@@ -40,11 +50,15 @@ function mapApiItem(l: {
     slug: l.slug,
     description: l.description ?? '',
     coverImage: l.coverImage ?? '',
+    horizontalImage: l.horizontalImage ?? null,
+    bannerImage: l.bannerImage,
     saveCount: l.saveCount ?? 0,
     itemCount: l.itemCount ?? 0,
     likes: l.likes ?? 0,
+    weeklySaves: l.weeklySaves,
     badge: (l.badge?.toLowerCase() as 'trending' | 'new' | 'featured') ?? undefined,
     categories: l.categories,
+    creator: l.creator ?? null,
   };
 }
 

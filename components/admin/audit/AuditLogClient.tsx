@@ -19,6 +19,7 @@ const ACTION_BADGE: Record<string, BadgeVariant> = {
   REPORT_RESOLVE: 'success',
   COMMENT_DELETE: 'warning',
   COMMENT_PENALTY: 'warning',
+  COMMENT_REPORTS_DISCARDED: 'success',
   COMMENT_RESTRICT: 'warning',
   COMMENT_UNRESTRICT: 'success',
   COMMENT_BAN: 'danger',

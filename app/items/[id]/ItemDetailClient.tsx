@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import Link from 'next/link';
 import {
@@ -25,6 +25,7 @@ import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import Toast from '@/components/shared/Toast';
 import { isMovieLikeCategory } from '@/lib/resolve-item-image';
+import { isLocationCategorySlug } from '@/lib/category-layout';
 import {
   buildItemMetadataFacts,
   buildLightweightDisplayBody,
@@ -43,7 +44,6 @@ import {
 } from '@/lib/list-entry';
 import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
 
-const HERO_COLLAPSE_SCROLL_Y = 120;
 const DESCRIPTION_TRUNCATE = 180;
 
 function displayRating(rating: number | null | undefined): string | null {
@@ -106,7 +106,6 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${item.id}`)}`;
-  const [heroCollapsed, setHeroCollapsed] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [commentRefreshTrigger, setCommentRefreshTrigger] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(
@@ -156,6 +155,7 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
       metadata: item.metadata,
       catalogItemId: item.catalogItemId,
     }) ?? listCategorySlug;
+  const isLocationPoster = isLocationCategorySlug(itemCategorySlug ?? '');
   const entryKind = resolveEntryKind(item);
   const isLightweight = isLightweightListItem(item);
   const isLifestyle = isLifestyleCategory(listCategorySlug);
@@ -217,17 +217,6 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
     ],
     [item.lists.categories, item.lists.slug, item.lists.title, item.title]
   );
-
-  useEffect(() => {
-    if (isDesktop) {
-      setHeroCollapsed(false);
-      return;
-    }
-    const onScroll = () => setHeroCollapsed(window.scrollY > HERO_COLLAPSE_SCROLL_Y);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [isDesktop]);
 
   const handleShare = async () => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -440,99 +429,83 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
             )}
           </section>
         ) : (
-          <section
-            className={`relative w-full overflow-hidden transition-[height] duration-500 ease-out lg:!h-[min(280px,34vh)] lg:rounded-2xl lg:transition-none ${
-              heroCollapsed ? 'h-[5.5rem]' : 'h-[18rem] sm:h-[20rem]'
-            }`}
-          >
-            <div className="absolute inset-0">
-              <ItemCoverImage
-                itemId={item.id}
-                imageUrl={item.imageUrl}
-                title={item.title}
-                metadata={item.metadata}
-                categorySlug={itemCategorySlug}
-                enrichPoster={isMovieLikeCategory(itemCategorySlug)}
-                priority
-                sizes="100vw"
-                fallbackIcon={item.lists.categories?.icon || '📋'}
-                className={`h-full w-full object-cover object-top transition-transform duration-500 ease-out ${
-                  heroCollapsed ? 'scale-100' : 'scale-105'
-                }`}
-              />
-            </div>
-
-            <div
-              className={`absolute inset-0 bg-gradient-to-t from-black/92 via-black/40 to-black/10 transition-opacity duration-500 lg:from-black/88 lg:via-black/35 ${
-                heroCollapsed ? 'opacity-95' : 'opacity-100'
-              }`}
-            />
-
-            <button
-              type="button"
-              onClick={handleShare}
-              className="absolute end-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-md transition-colors hover:bg-black/50 active:scale-95 lg:end-4 lg:top-4 lg:h-10 lg:w-10"
-              aria-label="اشتراک‌گذاری"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
-
-            <div className="absolute inset-0 flex flex-col justify-end p-4 pb-4 text-start text-white lg:p-6 lg:pb-5">
+          <section className="px-4 pt-2 lg:px-0 lg:pt-1">
+            <div className="flex gap-3.5 sm:gap-4 lg:grid lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-6">
               <div
-                className={`overflow-hidden transition-all duration-500 ease-out ${
-                  heroCollapsed
-                    ? 'max-h-0 opacity-0 pointer-events-none'
-                    : 'mb-2 max-h-12 opacity-100'
+                className={`relative shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-sm ring-1 ring-black/[0.05] lg:rounded-2xl ${
+                  isLocationPoster
+                    ? 'h-[7.25rem] w-[6.5rem] sm:h-32 sm:w-[8.5rem] lg:h-auto lg:w-full lg:aspect-[4/3]'
+                    : 'h-[10.5rem] w-[7rem] sm:h-[11.5rem] sm:w-[7.75rem] lg:h-auto lg:w-full lg:aspect-[2/3]'
                 }`}
               >
-                <Link
-                  href={`/lists/${item.lists.slug}`}
-                  className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-white/12 px-2.5 py-1 wibe-caption font-medium backdrop-blur-sm transition-colors hover:bg-white/20"
+                <ItemCoverImage
+                  itemId={item.id}
+                  imageUrl={item.imageUrl}
+                  title={item.title}
+                  metadata={item.metadata}
+                  categorySlug={itemCategorySlug}
+                  enrichPoster={isMovieLikeCategory(itemCategorySlug)}
+                  priority
+                  sizes="(min-width: 1280px) 15rem, (min-width: 1024px) 14rem, 7rem"
+                  fallbackIcon={item.lists.categories?.icon || '📋'}
+                  coverLayout="grid"
+                  className={
+                    isLocationPoster
+                      ? 'h-full w-full object-cover object-center'
+                      : 'h-full w-full object-contain bg-gray-100'
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="absolute end-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/55 active:scale-95 lg:end-2.5 lg:top-2.5 lg:h-9 lg:w-9"
+                  aria-label="اشتراک‌گذاری"
                 >
-                  <span>{item.lists.categories?.icon || '📋'}</span>
-                  <span className="truncate">{item.lists.title}</span>
-                </Link>
+                  <Share2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+                </button>
               </div>
 
-              <h1
-                className={`leading-tight text-white transition-all duration-500 ease-out ${
-                  heroCollapsed
-                    ? 'line-clamp-1 text-base font-bold'
-                    : 'text-xl font-bold sm:text-2xl lg:text-[1.65rem] lg:leading-snug'
-                }`}
-              >
-                {item.title}
-              </h1>
+              <div className="flex min-w-0 flex-1 flex-col justify-end lg:justify-center lg:py-1">
+                <Link
+                  href={`/lists/${item.lists.slug}`}
+                  className="mb-2 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-wibe/80 bg-wibe-card px-2.5 py-1 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary lg:mb-3"
+                >
+                  <span aria-hidden>{item.lists.categories?.icon || '📋'}</span>
+                  <span className="truncate">{item.lists.title}</span>
+                </Link>
 
-              <div
-                className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 overflow-hidden wibe-caption text-white/90 transition-all duration-500 ease-out ${
-                  heroCollapsed
-                    ? 'mt-0 max-h-0 opacity-0'
-                    : 'mt-1.5 max-h-10 opacity-100'
-                }`}
-              >
-                {(genre || categoryName) && <span>{String(genre || categoryName)}</span>}
-                {year != null && (
-                  <>
-                    {(genre || categoryName) && <span className="text-white/40">·</span>}
-                    <span>{String(year)}</span>
-                  </>
-                )}
-                {ratingLabel && (
-                  <>
-                    <span className="text-white/40">·</span>
-                    <span>⭐ {ratingLabel}</span>
-                  </>
-                )}
-                {item.listRank != null && item.listItemCount > 0 && (
-                  <>
-                    <span className="text-white/40">·</span>
-                    <span>
-                      #{item.listRank.toLocaleString('fa-IR')} از{' '}
-                      {item.listItemCount.toLocaleString('fa-IR')}
-                    </span>
-                  </>
-                )}
+                <h1 className="text-lg font-bold leading-snug text-foreground sm:text-xl lg:text-[1.65rem] lg:leading-snug">
+                  {item.title}
+                </h1>
+
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-wibe-secondary lg:mt-2 lg:text-sm">
+                  {(genre || categoryName) && <span>{String(genre || categoryName)}</span>}
+                  {year != null && (
+                    <>
+                      {(genre || categoryName) && <span className="text-wibe-secondary/40">·</span>}
+                      <span>{String(year)}</span>
+                    </>
+                  )}
+                  {ratingLabel && (
+                    <>
+                      <span className="text-wibe-secondary/40">·</span>
+                      <span>⭐ {ratingLabel}</span>
+                    </>
+                  )}
+                  {item.listRank != null && item.listItemCount > 0 && (
+                    <>
+                      <span className="text-wibe-secondary/40">·</span>
+                      <span>
+                        #{item.listRank.toLocaleString('fa-IR')} از{' '}
+                        {item.listItemCount.toLocaleString('fa-IR')}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <div className="mt-3 hidden lg:block">
+                  <ItemDetailTopActions itemId={item.id} likeCount={likeCount} variant="inline" />
+                </div>
               </div>
             </div>
           </section>
@@ -586,26 +559,25 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           </div>
 
           <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-[6.5rem] lg:self-start">
-            <ItemSidebarPanel>
-              <p className="mb-3 wibe-caption font-medium text-wibe-secondary">تعامل</p>
-              <ItemDetailTopActions itemId={item.id} likeCount={likeCount} variant="inline" />
-              {(likeCount > 0 || item.personalSaveCount > 0) && (
-                <div className="mt-3 flex flex-wrap gap-2 border-t border-wibe/60 pt-3">
+            {(likeCount > 0 || item.personalSaveCount > 0) && (
+              <ItemSidebarPanel>
+                <p className="mb-2 wibe-caption font-medium text-wibe-secondary">آمار</p>
+                <div className="flex flex-wrap gap-2">
                   {likeCount > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 wibe-caption text-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
                       <Heart className="h-3.5 w-3.5 text-red-500" aria-hidden />
                       {likeCount.toLocaleString('fa-IR')} پسند
                     </span>
                   )}
                   {item.personalSaveCount > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1 wibe-caption text-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
                       <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
                       {item.personalSaveCount.toLocaleString('fa-IR')} ذخیره
                     </span>
                   )}
                 </div>
-              )}
-            </ItemSidebarPanel>
+              </ItemSidebarPanel>
+            )}
 
             {listContextCard}
 

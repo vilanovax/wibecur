@@ -10,7 +10,7 @@ interface ProfileBreadcrumbProps {
 
 export default function ProfileBreadcrumb({
   currentLabel = 'پروفایل من',
-  className = 'mb-3',
+  className = 'mb-3 hidden lg:block',
 }: ProfileBreadcrumbProps) {
   return (
     <PageBreadcrumb

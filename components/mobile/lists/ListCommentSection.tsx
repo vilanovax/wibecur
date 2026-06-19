@@ -24,6 +24,8 @@ interface Comment {
 
 interface ListCommentSectionProps {
   listId: string;
+  listSlug?: string;
+  categorySlug?: string | null;
 }
 
 const COMMENTS_PER_PAGE = 10;
@@ -43,7 +45,11 @@ async function fetchListComments(listId: string, sortBy: string): Promise<ListCo
   };
 }
 
-export default function ListCommentSection({ listId }: ListCommentSectionProps) {
+export default function ListCommentSection({
+  listId,
+  listSlug,
+  categorySlug,
+}: ListCommentSectionProps) {
   const queryClient = useQueryClient();
   const [visibleCount, setVisibleCount] = useState(COMMENTS_PER_PAGE);
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
@@ -232,6 +238,8 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         listId={listId}
+        listSlug={listSlug}
+        categorySlug={categorySlug}
         onSubmit={refetch}
       />
 

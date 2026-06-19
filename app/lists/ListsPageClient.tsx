@@ -11,8 +11,11 @@ import ListsCategorySection from '@/components/mobile/lists/ListsCategorySection
 import InfiniteScrollSentinel from '@/components/mobile/lists/InfiniteScrollSentinel';
 import ListsSimilarRow from '@/components/mobile/lists/ListsSimilarRow';
 import SearchInput from '@/components/mobile/search/SearchInput';
-import { filterListsByQuery, normalizeSearchQuery, pushRecentSearch } from '@/lib/list-search';
-import { trackSearch } from '@/lib/analytics';
+import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
+import SearchResultsPanel from '@/components/mobile/search/SearchResultsPanel';
+import { filterListsByQuery, normalizeSearchQuery, pushRecentSearch, SEARCH_MIN_LENGTH } from '@/lib/list-search';
+import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
+import { trackSearch, trackSearchNoResults } from '@/lib/analytics';
 import { useSearch } from '@/contexts/SearchContext';
 import { pickSimilarLists } from '@/lib/lists-page-similar';
 import FilterBottomSheetPro, {
@@ -217,6 +220,8 @@ export default function ListsPageClient({
     categories: resolvedCategoryId ? new Set([resolvedCategoryId]) : new Set(),
   }));
   const [searchQuery, setSearchQuery] = useState(initialSearch ?? '');
+  const search = useUnifiedSearchQuery(searchQuery);
+  const lastNoResultsQuery = useRef('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
@@ -253,8 +258,24 @@ export default function ListsPageClient({
     };
   }, [bookmarkedIds, trendingIdSet]);
 
+  const normalizedSearch = search.normalized;
+  const isSearchActive = search.isActive;
+  const searchLoading = search.loading;
+  const hasSearchResults = search.hasResults;
+
+  const searchFilteredLists = useMemo(() => {
+    if (!isSearchActive) return [];
+    return filterListsByQuery(publicLists, searchQuery);
+  }, [isSearchActive, publicLists, searchQuery]);
+
+  const searchFiltered = useMemo(() => {
+    const q = normalizeSearchQuery(searchQuery);
+    if (!q) return publicLists;
+    if (isSearchActive) return searchFilteredLists;
+    return filterListsByQuery(publicLists, searchQuery);
+  }, [publicLists, searchQuery, isSearchActive, searchFilteredLists]);
+
   const getResultCount = (state: FilterState) => {
-    const searchFiltered = filterListsByQuery(publicLists, searchQuery);
     return applyFilter(searchFiltered, state).length;
   };
 
@@ -407,9 +428,13 @@ export default function ListsPageClient({
     }
   }, [searchQuery, browseMode, filterState.categories, activeCategories, router, pathname]);
 
-  const searchFiltered = filterListsByQuery(publicLists, searchQuery);
-  const filteredLists = applyFilter(searchFiltered, filterState);
+  const filteredLists = isSearchActive
+    ? searchFiltered
+    : applyFilter(searchFiltered, filterState);
+
   const sortedLists = useMemo(() => {
+    if (isSearchActive) return filteredLists;
+
     const result = [...filteredLists].sort((a, b) => {
       switch (filterState.sortBy) {
         case 'newest':
@@ -431,7 +456,22 @@ export default function ListsPageClient({
     }
 
     return result;
-  }, [filteredLists, filterState.sortBy, browseMode, trendingListIds]);
+  }, [filteredLists, filterState.sortBy, browseMode, trendingListIds, isSearchActive]);
+
+  useEffect(() => {
+    if (!isSearchActive) {
+      lastNoResultsQuery.current = '';
+      return;
+    }
+    if (searchLoading || publicLists.length === 0) return;
+    if (hasSearchResults) {
+      lastNoResultsQuery.current = '';
+      return;
+    }
+    if (lastNoResultsQuery.current === normalizedSearch) return;
+    lastNoResultsQuery.current = normalizedSearch;
+    trackSearchNoResults(normalizedSearch, 'lists_page');
+  }, [isSearchActive, normalizedSearch, searchLoading, hasSearchResults, publicLists.length]);
 
   const setBrowseMode = (mode: BrowseMode) => {
     const { sortBy, vibes } = browseModeToFilter(mode);
@@ -610,7 +650,7 @@ export default function ListsPageClient({
     [breadcrumbCategory]
   );
 
-  const showCategoryChips = true;
+  const showCategoryChips = !isSearchActive;
 
   const isAllCategoriesSelected = useSectionLayout
     ? highlightCategoryId === null && filterState.categories.size === 0
@@ -681,9 +721,9 @@ export default function ListsPageClient({
   const trendingBrowseEmpty =
     browseMode === 'trending' && trendingLoaded && sortedLists.length === 0 && publicLists.length > 0;
 
-  const showContextBar = true;
-
-  const showSecondaryToolbar = true;
+  const showContextBar = !isSearchActive;
+  const showSecondaryToolbar = !isSearchActive;
+  const showBrowseToolbar = !isSearchActive;
 
   return (
     <div className="space-y-0 pb-6 lg:pb-4">
@@ -707,7 +747,7 @@ export default function ListsPageClient({
                     trackSearch(q, 'lists_input');
                   }
                 }}
-                placeholder="جستجو در لیست‌ها…"
+                placeholder="جستجو در لیست‌ها و آیتم‌ها…"
                 inputRef={searchInputRef}
               />
             </div>
@@ -720,7 +760,9 @@ export default function ListsPageClient({
                   localActionLabel: 'فیلتر همین صفحه',
                 })
               }
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 lg:w-9"
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 lg:w-9 ${
+                isSearchActive ? 'hidden' : ''
+              }`}
               aria-label="جستجوی سراسری"
               title="جستجو در کل وایب"
             >
@@ -732,7 +774,8 @@ export default function ListsPageClient({
         </div>
       </div>
 
-      {/* Sticky: دسته‌ها + ترند / جدید / نمای / فیلتر */}
+      {/* Sticky: دسته‌ها + ترند / جدید / نمای / فیلتر — مخفی در حالت جستجو */}
+      {showBrowseToolbar && (
       <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-surface/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-surface/90 lg:top-14">
         <CategoryNavStrip embedded activeSlug={initialCategory ?? null} />
         <div className="flex items-center gap-1.5 max-lg:px-4 lg:px-0 pb-2">
@@ -792,6 +835,7 @@ export default function ListsPageClient({
           </div>
         </div>
       </div>
+      )}
 
       {/* غیر sticky: پرش به دسته + context */}
       {(showSecondaryToolbar) && (
@@ -903,6 +947,23 @@ export default function ListsPageClient({
             buttonText="ساخت لیست"
             buttonHref="/user-lists?openCreate=1"
           />
+        ) : searchLoading && isSearchActive ? (
+          <SearchResultSkeleton rows={5} className="max-lg:px-0" />
+        ) : isSearchActive && !hasSearchResults ? (
+          <SearchEmptyState
+            query={searchQuery}
+            onClear={() => setSearchQuery('')}
+            onResetFilters={() =>
+              setFilterState((s) => ({
+                ...s,
+                ...browseModeToFilter(browseMode),
+                creatorType: 'all',
+                minItemCount: 0,
+                minRating: 0,
+              }))
+            }
+            hasFilters={hasAdvancedFilters || filterState.categories.size > 0}
+          />
         ) : sortedLists.length === 0 ? (
           <SearchEmptyState
             query={searchQuery}
@@ -946,36 +1007,63 @@ export default function ListsPageClient({
           </>
         ) : (
           <>
-            {singleCategoryFilter && selectedCategory && (
-              <div className="mb-3 flex items-center justify-between gap-2 lg:mb-4">
-                <h2 className="flex min-w-0 items-center gap-1.5 wibe-h3">
-                  {selectedCategory.icon ? <span aria-hidden>{selectedCategory.icon}</span> : null}
-                  <span className="truncate">{selectedCategory.name}</span>
-                </h2>
-                <span className="shrink-0 wibe-caption text-wibe-secondary tabular-nums">
-                  {sortedLists.length.toLocaleString('fa-IR')} لیست
-                </span>
-              </div>
-            )}
-            {searchQuery.trim() && (
-              <p className="mb-3 wibe-caption text-wibe-secondary lg:mb-4">
-                {sortedLists.length.toLocaleString('fa-IR')} نتیجه برای «{normalizeSearchQuery(searchQuery)}»
-              </p>
-            )}
-            <FlatListResults
-              lists={visibleFlatLists}
-              viewMode={viewMode}
-              bookmarkedIds={bookmarkedIds}
-              onBookmarkToggle={handleBookmarkToggle}
-              highlightQuery={searchQuery.trim() ? normalizeSearchQuery(searchQuery) : undefined}
-            />
-            <InfiniteScrollSentinel hasMore={hasMoreFlat} onLoadMore={loadMoreFlat} />
-            {!hasMoreFlat && flatSimilarLists.length > 0 && (
-              <ListsSimilarRow
-                lists={flatSimilarLists}
-                bookmarkedIds={bookmarkedIds}
-                onBookmarkToggle={handleBookmarkToggle}
+            {isSearchActive && hasSearchResults ? (
+              <SearchResultsPanel
+                query={normalizedSearch}
+                queryIntent={search.queryIntent}
+                directItems={search.directItems}
+                indirectItems={search.indirectItems}
+                topPicks={search.topPicks}
+                subThemes={search.subThemes}
+                similarItems={search.similarItems}
+                lists={search.lists}
+                totals={search.totals}
+                hasMore={search.hasMore}
+                viewTab={search.viewTab}
+                onTabChange={search.setViewTab}
+                onLoadMore={search.loadMore}
+                onSubThemeClick={setSearchQuery}
+                loadingMore={search.loadingMore}
+                highlightQuery={normalizedSearch}
               />
+            ) : (
+              <>
+                {singleCategoryFilter && selectedCategory && (
+                  <div className="mb-3 flex items-center justify-between gap-2 lg:mb-4">
+                    <h2 className="flex min-w-0 items-center gap-1.5 wibe-h3">
+                      {selectedCategory.icon ? (
+                        <span aria-hidden>{selectedCategory.icon}</span>
+                      ) : null}
+                      <span className="truncate">{selectedCategory.name}</span>
+                    </h2>
+                    <span className="shrink-0 wibe-caption text-wibe-secondary tabular-nums">
+                      {sortedLists.length.toLocaleString('fa-IR')} لیست
+                    </span>
+                  </div>
+                )}
+
+                {searchQuery.trim() && (
+                  <p className="mb-3 wibe-caption text-wibe-secondary lg:mb-4">
+                    {sortedLists.length.toLocaleString('fa-IR')} نتیجه برای «{normalizedSearch}»
+                  </p>
+                )}
+
+                <FlatListResults
+                  lists={visibleFlatLists}
+                  viewMode={viewMode}
+                  bookmarkedIds={bookmarkedIds}
+                  onBookmarkToggle={handleBookmarkToggle}
+                />
+                <InfiniteScrollSentinel hasMore={hasMoreFlat} onLoadMore={loadMoreFlat} />
+
+                {!hasMoreFlat && flatSimilarLists.length > 0 && (
+                  <ListsSimilarRow
+                    lists={flatSimilarLists}
+                    bookmarkedIds={bookmarkedIds}
+                    onBookmarkToggle={handleBookmarkToggle}
+                  />
+                )}
+              </>
             )}
           </>
         )}
@@ -1012,7 +1100,7 @@ function FlatListResults({
   if (viewMode === 'grid') {
     return (
       <div className="grid grid-cols-2 gap-2.5 max-lg:gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 2xl:grid-cols-5">
-        {lists.map((list) => (
+        {lists.map((list, index) => (
           <ListCardCompact
             key={list.id}
             list={list}
@@ -1021,6 +1109,7 @@ function FlatListResults({
             isBookmarked={bookmarkedIds?.has(list.id)}
             onBookmarkToggle={onBookmarkToggle}
             highlightQuery={highlightQuery}
+            searchResultIndex={highlightQuery ? index : undefined}
           />
         ))}
       </div>
@@ -1028,7 +1117,7 @@ function FlatListResults({
   }
   return (
     <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
-      {lists.map((list) => (
+      {lists.map((list, index) => (
         <ListCardCompact
           key={list.id}
           list={list}
@@ -1037,6 +1126,7 @@ function FlatListResults({
           isBookmarked={bookmarkedIds?.has(list.id)}
           onBookmarkToggle={onBookmarkToggle}
           highlightQuery={highlightQuery}
+          searchResultIndex={highlightQuery ? index : undefined}
         />
       ))}
     </div>
@@ -1134,7 +1224,7 @@ function SearchEmptyState({
     <div className="rounded-xl border border-dashed border-wibe bg-wibe-card/60 px-4 py-14 text-center">
       <div className="mx-auto mb-4 text-5xl">🔍</div>
       <h3 className="mb-1 wibe-h3 text-foreground">
-        {trimmed ? `نتیجه‌ای برای «${trimmed}» نیست` : 'لیستی پیدا نشد'}
+        {trimmed ? `نتیجه‌ای برای «${trimmed}» نیست` : 'نتیجه‌ای پیدا نشد'}
       </h3>
       <p className="mx-auto mb-5 max-w-xs wibe-small leading-relaxed text-wibe-secondary">
         {hasFilters

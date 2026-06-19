@@ -160,17 +160,24 @@ export default function NewItemForm({
     let finalPosterUrl = movie.posterUrl;
     if (movie.posterUrl) {
       try {
-        const uploadRes = await fetch('/api/admin/items/upload-movie-poster', {
+        const uploadRes = await fetch('/api/admin/items/import-image-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ posterUrl: movie.posterUrl }),
+          body: JSON.stringify({
+            imageUrl: movie.posterUrl,
+            folder: 'items',
+            metadata: { imdbId: movie.imdbID, imdbID: movie.imdbID },
+          }),
         });
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
-          if (uploadData.uploadedUrl) finalPosterUrl = uploadData.uploadedUrl;
+          if (uploadData.url) finalPosterUrl = uploadData.url;
+        } else {
+          const errData = await uploadRes.json().catch(() => ({}));
+          setError(errData.error || 'خطا در آپلود تصویر به استوریج');
         }
       } catch {
-        // keep original
+        setError('خطا در آپلود تصویر به استوریج');
       }
     }
     if (movie.plot) setMoviePlot(movie.plot);
@@ -536,6 +543,7 @@ export default function NewItemForm({
               enableMoviePosterSources={isFilmCategory}
               metadata={(formData.metadata as Record<string, unknown>) ?? null}
               categorySlug={selectedList?.categories?.slug}
+              onSwitchToUrlTab={() => setMediaTab('url')}
             />
         </section>
         )}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
-import { uploadImageFromUrl } from '@/lib/object-storage';
+import { importExternalImageToStorage } from '@/lib/admin/import-external-image-to-storage';
 
 // POST /api/admin/items/upload-movie-poster
 export async function POST(request: NextRequest) {
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
 
     const body = await request.json();
-    const { posterUrl } = body;
+    const { posterUrl, metadata } = body;
 
     if (!posterUrl) {
       return NextResponse.json(
@@ -17,22 +17,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Liara Object Storage
-    const uploadedUrl = await uploadImageFromUrl(posterUrl, 'movies');
+    const meta =
+      metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+        ? (metadata as Record<string, unknown>)
+        : {};
 
-    if (!uploadedUrl) {
-      return NextResponse.json(
-        { error: 'خطا در آپلود تصویر' },
-        { status: 500 }
-      );
+    const result = await importExternalImageToStorage(posterUrl, 'items', meta);
+
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
-    return NextResponse.json({ uploadedUrl });
-  } catch (error: any) {
+    return NextResponse.json({ uploadedUrl: result.url });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'خطا در آپلود تصویر';
     console.error('Error uploading poster:', error);
-    return NextResponse.json(
-      { error: error.message || 'خطا در آپلود تصویر' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

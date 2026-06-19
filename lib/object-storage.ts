@@ -9,6 +9,7 @@ import {
 } from './object-storage-config';
 import crypto from 'crypto';
 import { optimizeImage } from './image-optimizer';
+import { buildImageDownloadHeaders } from './image-download-headers';
 import { profileForStorageFolder } from './upload-profiles';
 import type { ImageProfile } from './image-config';
 import {
@@ -174,11 +175,7 @@ export async function uploadImageFromUrlDetailed(
         httpsAgent: ssrfSafeHttpsAgent,
         maxRedirects: 3,
         maxContentLength: 25 * 1024 * 1024, // سقف ۲۵MB
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept: 'image/webp,image/apng,image/*,*/*;q=0.8',
-        },
+        headers: buildImageDownloadHeaders(imageUrl),
         validateStatus: (s) => s >= 200 && s < 400,
       });
     } catch (downloadErr: unknown) {
@@ -253,7 +250,7 @@ export async function uploadImageBuffer(
   }
 }
 
-export type ImageFolder = 'items' | 'avatars' | 'covers' | 'lists' | 'hubs';
+export type ImageFolder = 'items' | 'avatars' | 'covers' | 'lists' | 'hubs' | 'site';
 
 export async function getObjectByPublicUrl(
   publicUrl: string
@@ -316,7 +313,8 @@ export async function getObjectByPublicUrl(
 
 /** خواندن فایل از ParsPack با کلید S3 — برای URLهای قدیمی Liara */
 export async function getObjectByStorageKey(
-  objectKey: string
+  objectKey: string,
+  options?: { legacyUrl?: string }
 ): Promise<{ buffer: Buffer; contentType?: string } | null> {
   const key = objectKey.replace(/^\/+/, '');
   if (!key.startsWith('wibe/')) return null;
@@ -337,24 +335,55 @@ export async function getObjectByStorageKey(
     console.error('getObjectByStorageKey error:', (e as Error).message);
   }
 
-  // فایل هنوز migrate نشده — تلاش از Liara قدیمی (سرور، نه مرورگر)
   try {
-    const legacyUrl = `https://storage.c2.liara.space/${key}`;
-    const res = await axios.get(legacyUrl, {
-      responseType: 'arraybuffer',
-      timeout: 12000,
-      headers: { Accept: 'image/*' },
-      validateStatus: (s) => s === 200,
-    });
-    if (!res.data) return null;
-    const contentType = res.headers['content-type'];
-    return {
-      buffer: Buffer.from(res.data),
-      contentType: typeof contentType === 'string' ? contentType : undefined,
-    };
+    const config = await getObjectStorageConfig();
+    if (config) {
+      const publicUrl = buildStoragePublicUrl(config, key);
+      const fromPublic = await getObjectByPublicUrl(publicUrl);
+      if (fromPublic) return fromPublic;
+    }
   } catch {
-    return null;
+    /* ادامه به Liara قدیمی */
   }
+
+  // فایل هنوز migrate نشده — تلاش از Liara قدیمی (سرور، نه مرورگر)
+  const legacyCandidates = [
+    options?.legacyUrl?.trim(),
+    `https://storage.c2.liara.space/${key}`,
+    `https://storage.iran.liara.space/${key}`,
+  ].filter((u): u is string => !!u);
+
+  for (const legacyUrl of [...new Set(legacyCandidates)]) {
+    try {
+      const res = await axios.get(legacyUrl, {
+        responseType: 'arraybuffer',
+        timeout: 12000,
+        headers: { Accept: 'image/*' },
+        validateStatus: (s) => s === 200,
+      });
+      if (!res.data) continue;
+      const contentType = res.headers['content-type'];
+      void ensureImageInLiara(legacyUrl, folderFromStorageKey(key)).catch(() => {});
+      return {
+        buffer: Buffer.from(res.data),
+        contentType: typeof contentType === 'string' ? contentType : undefined,
+      };
+    } catch {
+      /* candidate بعدی */
+    }
+  }
+
+  return null;
+}
+
+function folderFromStorageKey(key: string): ImageFolder {
+  const segment = key.split('/')[1];
+  if (segment === 'avatars') return 'avatars';
+  if (segment === 'covers') return 'covers';
+  if (segment === 'items') return 'items';
+  if (segment === 'hubs') return 'hubs';
+  if (segment === 'site') return 'site';
+  return 'covers';
 }
 
 /** اگر URL خارج از ParsPack باشد، آپلود می‌کند */

@@ -176,6 +176,7 @@ export async function fetchApiProfileUser(userId: string): Promise<ApiProfileUse
         viralListsCount,
         popularListsCount,
         totalLikesReceived,
+        totalSavesReceived: savedCount,
         profileViews,
         totalItemsCurated,
       },

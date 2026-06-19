@@ -20,7 +20,7 @@ interface MoviePosterSearchModalProps {
   isOpen: boolean;
   source: MoviePosterSearchSource;
   onClose: () => void;
-  onSelectPoster: (posterUrl: string) => void;
+  onSelectPoster: (posterUrl: string, context?: { imdbId?: string; tmdbId?: string }) => void;
   initialQuery?: string;
   metadata?: Record<string, unknown> | null;
   year?: number | string | null;
@@ -67,6 +67,7 @@ export default function MoviePosterSearchModal({
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!searchQuery.trim()) {
       setError('عبارت جستجو را وارد کنید');
       return;
@@ -105,7 +106,12 @@ export default function MoviePosterSearchModal({
 
   const handleConfirm = () => {
     if (selected?.posterUrl) {
-      onSelectPoster(selected.posterUrl);
+      const imdbMatch = selected.id.match(/^imdb-(tt\d+)/i);
+      const tmdbMatch = selected.id.match(/^tmdb-(\d+)/i);
+      onSelectPoster(selected.posterUrl, {
+        imdbId: imdbMatch?.[1],
+        tmdbId: tmdbMatch?.[1],
+      });
       onClose();
     }
   };
@@ -113,6 +119,7 @@ export default function MoviePosterSearchModal({
   const modalContent = (
     <div
       data-image-search-modal="true"
+      data-movie-poster-search-modal="true"
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >

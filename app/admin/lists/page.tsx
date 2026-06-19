@@ -130,6 +130,7 @@ export default async function AdminListsPage({
           createLists ? JSON.parse(JSON.stringify(createLists)) : undefined
         }
         initialCreateListId={params.listId}
+        catalogMode={params.mode}
       />
     );
   }

@@ -55,15 +55,15 @@ export async function fetchHomePageData(): Promise<HomeData> {
             select: { id: true, name: true, slug: true, icon: true, isActive: true },
           },
           users: {
-            select: { id: true, name: true, username: true },
+            select: { id: true, name: true, username: true, image: true },
           },
         },
         orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
         take: 10,
       })
     ),
-    getCachedGlobalTrending(6),
-    getCachedFastRising(6),
+    getCachedGlobalTrending(10),
+    getCachedFastRising(10),
   ]);
 
   const visibleLists = filterListsInActiveCategories(lists);
@@ -109,22 +109,31 @@ export async function fetchHomePageData(): Promise<HomeData> {
       categorySlug: l.categories?.slug,
     });
     return {
-    id: l.id,
-    title: l.title,
-    slug: l.slug,
-    description: l.description ?? '',
-    coverImage: images.coverImage,
-    bannerImage: images.bannerImage,
-    saveCount: l.saveCount ?? 0,
-    itemCount: l.itemCount ?? 0,
-    likes: l.likeCount ?? 0,
-    badge: (l.isFeatured ? 'featured' : (l.badge?.toLowerCase() ?? undefined)) as
-      | 'trending'
-      | 'new'
-      | 'featured'
-      | undefined,
-    categories: l.categories,
-  };
+      id: l.id,
+      title: l.title,
+      slug: l.slug,
+      description: l.description ?? '',
+      coverImage: images.coverImage,
+      horizontalImage: l.horizontalImage,
+      bannerImage: images.bannerImage,
+      saveCount: l.saveCount ?? 0,
+      itemCount: l.itemCount ?? 0,
+      likes: l.likeCount ?? 0,
+      badge: (l.isFeatured ? 'featured' : (l.badge?.toLowerCase() ?? undefined)) as
+        | 'trending'
+        | 'new'
+        | 'featured'
+        | undefined,
+      categories: l.categories,
+      creator: l.users
+        ? {
+            id: l.users.id,
+            name: l.users.name,
+            username: l.users.username,
+            image: l.users.image,
+          }
+        : null,
+    };
   };
 
   const mapTrending = (t: (typeof trendingResults)[0]): HomeListData => {
@@ -136,24 +145,35 @@ export async function fetchHomePageData(): Promise<HomeData> {
       categorySlug: t.categorySlug,
     });
     return {
-    id: t.listId,
-    title: t.title,
-    slug: t.slug,
-    description: '',
-    coverImage: images.coverImage,
-    bannerImage: images.bannerImage,
-    saveCount: t.saveCount,
-    itemCount: t.itemCount,
-    likes: t.likeCount,
-    badge: (t.badge === 'viral' ? 'trending' : t.badge === 'hot' ? 'trending' : undefined) as
-      | 'trending'
-      | 'new'
-      | 'featured'
-      | undefined,
-    categories: t.categorySlug
-      ? { slug: t.categorySlug, name: '', id: '', icon: '' }
-      : undefined,
-  };
+      id: t.listId,
+      title: t.title,
+      slug: t.slug,
+      description: '',
+      coverImage: images.coverImage,
+      horizontalImage: t.horizontalImage,
+      bannerImage: images.bannerImage,
+      saveCount: t.saveCount,
+      itemCount: t.itemCount,
+      likes: t.likeCount,
+      weeklySaves: t.weeklySaves,
+      badge: (t.badge === 'viral' ? 'trending' : t.badge === 'hot' ? 'trending' : undefined) as
+        | 'trending'
+        | 'new'
+        | 'featured'
+        | undefined,
+      categories: t.categorySlug
+        ? { slug: t.categorySlug, name: '', id: '', icon: '' }
+        : undefined,
+      creator: t.creator
+        ? {
+            id: t.creator.id,
+            name: t.creator.name,
+            username: t.creator.username,
+            image: t.creator.image,
+            curatorLevel: t.creator.curatorLevel ?? null,
+          }
+        : null,
+    };
   };
 
   const mapRising = (r: (typeof risingResults)[0]): RisingListData => {
@@ -165,28 +185,36 @@ export async function fetchHomePageData(): Promise<HomeData> {
       categorySlug: r.categorySlug,
     });
     return {
-    id: r.listId,
-    title: r.title,
-    slug: r.slug,
-    description: '',
-    coverImage: images.coverImage,
-    bannerImage: images.bannerImage,
-    saveCount: r.saveCount,
-    itemCount: r.itemCount,
-    likes: r.likeCount,
-    isFastRising: r.isFastRising ?? false,
-    categories: r.categorySlug
-      ? { slug: r.categorySlug, name: '', id: '', icon: '' }
-      : undefined,
-  };
+      id: r.listId,
+      title: r.title,
+      slug: r.slug,
+      description: '',
+      coverImage: images.coverImage,
+      horizontalImage: r.horizontalImage,
+      bannerImage: images.bannerImage,
+      saveCount: r.saveCount,
+      itemCount: r.itemCount,
+      likes: r.likeCount,
+      weeklySaves: r.weeklySaves,
+      isFastRising: r.isFastRising ?? false,
+      categories: r.categorySlug
+        ? { slug: r.categorySlug, name: '', id: '', icon: '' }
+        : undefined,
+      creator: r.creator
+        ? {
+            id: r.creator.id,
+            name: r.creator.name,
+            username: r.creator.username,
+            image: r.creator.image,
+            curatorLevel: r.creator.curatorLevel ?? null,
+          }
+        : null,
+    };
   };
 
   const mapFeatured: FeaturedListData | null = featured
     ? {
         ...mapList(featured as (typeof lists)[0]),
-        creator: featured.users
-          ? { name: featured.users.name, username: featured.users.username }
-          : null,
       }
     : null;
 

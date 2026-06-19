@@ -3,6 +3,7 @@ import { requirePermission } from '@/lib/auth/require-permission';
 import { getDecryptedSettings, updateSettings } from '@/lib/settings';
 import { resolveOpenAIModel } from '@/lib/openai-models';
 import { prisma } from '@/lib/prisma';
+import { ensureImageInLiara } from '@/lib/object-storage';
 
 // GET /api/admin/settings
 export async function GET(request: NextRequest) {
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
       minItemsForPublicList: rawSettings?.minItemsForPublicList ?? 5,
       maxPersonalLists: rawSettings?.maxPersonalLists ?? 3,
       personalListPublicInstructions: rawSettings?.personalListPublicInstructions ?? null,
+      siteLogoUrl: rawSettings?.siteLogoUrl ?? null,
     };
 
     return NextResponse.json({ success: true, data: maskedSettings });
@@ -70,7 +72,19 @@ export async function PUT(request: NextRequest) {
       minItemsForPublicList,
       maxPersonalLists,
       personalListPublicInstructions,
+      siteLogoUrl,
     } = body;
+
+    let finalSiteLogoUrl: string | null | undefined = undefined;
+    if (siteLogoUrl !== undefined) {
+      if (!siteLogoUrl || typeof siteLogoUrl !== 'string' || !siteLogoUrl.trim()) {
+        finalSiteLogoUrl = null;
+      } else {
+        finalSiteLogoUrl = await ensureImageInLiara(siteLogoUrl.trim(), 'site', {
+          profile: 'siteLogo',
+        });
+      }
+    }
 
     await updateSettings({
       openaiApiKey,
@@ -86,6 +100,7 @@ export async function PUT(request: NextRequest) {
       minItemsForPublicList,
       maxPersonalLists,
       personalListPublicInstructions,
+      siteLogoUrl: finalSiteLogoUrl,
     });
 
     return NextResponse.json({ success: true });

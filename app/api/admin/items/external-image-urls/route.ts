@@ -5,9 +5,10 @@ import { dbQuery } from '@/lib/db';
 import {
   externalImageHost,
   getItemEffectiveImageUrl,
-  isExternalDirectImageUrl,
+  needsS3MigrationImageUrl,
 } from '@/lib/item-image-storage';
 import { checkObjectStorageReady } from '@/lib/object-storage-readiness';
+import { listItemsMissingImageItems } from '@/lib/list-items-missing-image';
 
 type ItemRow = {
   id: string;
@@ -35,7 +36,7 @@ function mapExternalImageItems(rows: ItemRow[]) {
         host: imageUrl ? externalImageHost(imageUrl) : '',
       };
     })
-    .filter((row) => isExternalDirectImageUrl(row.imageUrl));
+    .filter((row) => needsS3MigrationImageUrl(row.imageUrl));
 }
 
 /** GET /api/admin/items/external-image-urls?listId= | ?categoryId= */
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'لیست یافت نشد' }, { status: 404 });
       }
 
-      const [rows, liara] = await dbQuery(() =>
+      const [rows, missingPosters, liara] = await dbQuery(() =>
         Promise.all([
           prisma.items.findMany({
             where: { listId },
@@ -86,6 +87,7 @@ export async function GET(request: NextRequest) {
               lists: { select: { id: true, title: true } },
             },
           }),
+          listItemsMissingImageItems(prisma, { listId }),
           checkObjectStorageReady(),
         ])
       );
@@ -97,6 +99,16 @@ export async function GET(request: NextRequest) {
         list,
         items,
         total: items.length,
+        missingPosters: missingPosters.map((item) => ({
+          id: item.id,
+          title: item.title,
+          imdbId: item.imdbId,
+          order: item.order,
+          listId: item.listId,
+          listTitle: item.listTitle,
+          catalogItemId: item.catalogItemId,
+        })),
+        missingPosterTotal: missingPosters.length,
         storage: liara,
         liara,
       });
@@ -113,7 +125,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'دسته یافت نشد' }, { status: 404 });
     }
 
-    const [rows, liara] = await dbQuery(() =>
+    const [rows, missingPosters, liara] = await dbQuery(() =>
       Promise.all([
         prisma.items.findMany({
           where: { lists: { categoryId: categoryId! } },
@@ -127,6 +139,7 @@ export async function GET(request: NextRequest) {
             lists: { select: { id: true, title: true } },
           },
         }),
+        listItemsMissingImageItems(prisma, { categoryId: categoryId! }),
         checkObjectStorageReady(),
       ])
     );
@@ -138,6 +151,16 @@ export async function GET(request: NextRequest) {
       category,
       items,
       total: items.length,
+      missingPosters: missingPosters.map((item) => ({
+        id: item.id,
+        title: item.title,
+        imdbId: item.imdbId,
+        order: item.order,
+        listId: item.listId,
+        listTitle: item.listTitle,
+        catalogItemId: item.catalogItemId,
+      })),
+      missingPosterTotal: missingPosters.length,
       storage: liara,
       liara,
     });

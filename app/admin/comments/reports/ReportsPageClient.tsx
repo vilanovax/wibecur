@@ -60,6 +60,7 @@ export default function ReportsPageClient({ data, navStats }: ReportsPageClientP
   } | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [discardingId, setDiscardingId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -107,6 +108,23 @@ export default function ReportsPageClient({ data, navStats }: ReportsPageClientP
       router.refresh();
     } finally {
       setApprovingId(null);
+    }
+  };
+
+  const handleDiscardReports = async (commentId: string) => {
+    setDiscardingId(commentId);
+    try {
+      const res = await fetch(`/api/admin/comments/${commentId}/discard-reports`, {
+        method: 'POST',
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'خطا در رد ریپورت');
+      showToast('ریپورت‌ها رد شد', 'success');
+      router.refresh();
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'خطا در رد ریپورت', 'error');
+    } finally {
+      setDiscardingId(null);
     }
   };
 
@@ -326,6 +344,7 @@ export default function ReportsPageClient({ data, navStats }: ReportsPageClientP
               reportCount={selectedGroup?.reportCount}
               onApprove={handleApprove}
               onReject={() => {}}
+              onDiscardReports={handleDiscardReports}
               showReject={false}
               onDelete={
                 panelComment
@@ -335,6 +354,7 @@ export default function ReportsPageClient({ data, navStats }: ReportsPageClientP
               onOpenFullDetail={handleOpenFullDetail}
               approvingId={approvingId}
               rejectingId={null}
+              discardingId={discardingId}
               filterBadWords={filterBadWords}
               emptyLabel="یک ردیف ریپورت انتخاب کنید"
             />
@@ -364,6 +384,7 @@ export default function ReportsPageClient({ data, navStats }: ReportsPageClientP
         reportCount={selectedGroup?.reportCount}
         onApprove={handleApprove}
         onReject={() => {}}
+        onDiscardReports={handleDiscardReports}
         showReject={false}
         onDelete={
           panelComment
@@ -373,6 +394,7 @@ export default function ReportsPageClient({ data, navStats }: ReportsPageClientP
         onOpenFullDetail={handleOpenFullDetail}
         approvingId={approvingId}
         rejectingId={null}
+        discardingId={discardingId}
         filterBadWords={filterBadWords}
         title="جزئیات ریپورت"
       />

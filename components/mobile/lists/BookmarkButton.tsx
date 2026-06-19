@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Bookmark, Check } from 'lucide-react';
-import { track } from '@/lib/analytics';
+import { track, listAnalyticsPayload, trackFirstBookmark, type ListAnalyticsContext } from '@/lib/analytics';
 
 interface BookmarkButtonProps {
   listId: string;
@@ -19,6 +19,9 @@ interface BookmarkButtonProps {
   labelSaved?: string;
   onToggle?: (isBookmarked: boolean) => void;
   className?: string;
+  analytics?: ListAnalyticsContext;
+  /** نمایش تعداد ذخیره کنار دکمه (پیش‌فرض: true) */
+  showCount?: boolean;
 }
 
 export default function BookmarkButton({
@@ -32,6 +35,8 @@ export default function BookmarkButton({
   labelSaved = 'ذخیره شده',
   onToggle,
   className = '',
+  analytics,
+  showCount = true,
 }: BookmarkButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -80,7 +85,18 @@ export default function BookmarkButton({
         setIsBookmarked(data.data.isBookmarked);
         setBookmarkCount(data.data.bookmarkCount);
         onToggle?.(data.data.isBookmarked);
-        track(data.data.isBookmarked ? 'list_bookmark' : 'list_unbookmark', { listId });
+        const payload = listAnalyticsPayload({ listId, ...analytics });
+        track(
+          data.data.isBookmarked ? 'list_bookmark' : 'list_unbookmark',
+          payload
+        );
+        if (data.data.isBookmarked && data.data.isFirstBookmark) {
+          trackFirstBookmark({
+            list_slug: analytics?.listSlug ?? undefined,
+            category_slug: analytics?.categorySlug ?? undefined,
+            source: analytics?.source,
+          });
+        }
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
@@ -212,7 +228,7 @@ export default function BookmarkButton({
         <Bookmark className={sizeClasses[size === 'lg' ? 'md' : 'sm']} />
       )}
       <span>{isBookmarked ? labelSaved : labelSave}</span>
-      {bookmarkCount > 0 && (
+      {showCount && bookmarkCount > 0 && (
         <span className="wibe-caption opacity-80">({bookmarkCount.toLocaleString('fa-IR')})</span>
       )}
     </button>

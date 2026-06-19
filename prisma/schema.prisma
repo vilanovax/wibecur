@@ -345,6 +345,14 @@ model settings {
   minItemsForPublicList          Int      @default(5)
   maxPersonalLists               Int      @default(3)
   personalListPublicInstructions String?
+  siteLogoUrl                    String?
+  maintenanceModeEnabled         Boolean  @default(false)
+  maintenanceTitle               String?  @default("در حال به‌روزرسانی")
+  maintenanceSubtitle            String?
+  maintenanceMessage             String?
+  maintenanceShowLogo            Boolean  @default(true)
+  maintenanceAccentColor         String?  @default("#6366F1")
+  maintenanceAllowAdminBrowse    Boolean  @default(true)
 }
 
 model user_violations {

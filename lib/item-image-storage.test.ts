@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   getItemEffectiveImageUrl,
+  hasBannerPathInUrl,
+  hasParsPackInUrl,
   isExternalDirectImageUrl,
   isAppObjectStorageImageUrl,
   itemUsesExternalDirectImage,
+  needsS3MigrationImageUrl,
+  resolveUrlForS3Migration,
 } from './item-image-storage';
 
 describe('item-image-storage', () => {
@@ -54,5 +58,37 @@ describe('item-image-storage', () => {
         imageUrl: 'https://c466145.parspack.net/c466145/wibe/x.webp',
       })
     ).toBe(false);
+  });
+
+  it('needsS3MigrationImageUrl includes banner/banners paths and excludes ParsPack', () => {
+    expect(needsS3MigrationImageUrl('/images/banners/cafe.jpg')).toBe(true);
+    expect(needsS3MigrationImageUrl('/images/Banners/restaurant-2.jpg')).toBe(true);
+    expect(needsS3MigrationImageUrl('/images/BANNER/foo.jpg')).toBe(true);
+    expect(needsS3MigrationImageUrl('https://s3.castbox.fm/foo.jpg')).toBe(true);
+    expect(
+      needsS3MigrationImageUrl('https://c466145.parspack.net/c466145/wibe/x.webp')
+    ).toBe(false);
+    expect(needsS3MigrationImageUrl('/images/placeholder-cover.svg')).toBe(false);
+  });
+
+  it('hasBannerPathInUrl matches banner and banners case-insensitively', () => {
+    expect(hasBannerPathInUrl('/images/banners/cafe.jpg')).toBe(true);
+    expect(hasBannerPathInUrl('/images/Banner/x.jpg')).toBe(true);
+    expect(hasBannerPathInUrl('https://x.com/poster.jpg')).toBe(false);
+  });
+
+  it('hasParsPackInUrl is case-insensitive', () => {
+    expect(hasParsPackInUrl('https://c466145.parspack.net/x.jpg')).toBe(true);
+    expect(hasParsPackInUrl('https://c466145.PARSPACK.net/x.jpg')).toBe(true);
+    expect(hasParsPackInUrl('https://example.com/x.jpg')).toBe(false);
+  });
+
+  it('resolveUrlForS3Migration absolutizes relative paths', () => {
+    expect(resolveUrlForS3Migration('/images/banners/cafe.jpg')).toContain(
+      '/images/banners/cafe.jpg'
+    );
+    expect(resolveUrlForS3Migration('https://example.com/a.jpg')).toBe(
+      'https://example.com/a.jpg'
+    );
   });
 });
