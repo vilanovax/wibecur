@@ -1,0 +1,17 @@
+---
+description: Push git changes to both GitHub and Hamgit remotes
+alwaysApply: true
+---
+
+# Git dual remote push
+
+When pushing to git, always push the current branch to **both** remotes:
+
+1. **GitHub (origin):** `https://github.com/vilanovax/wibecur.git`
+2. **Hamgit:** `https://hamgit.ir/ramtinica/wibe.git`
+
+`origin` is configured with two push URLs, so `git push origin HEAD` pushes to both.
+
+Also run `git push hamgit HEAD` if dual push on origin fails for Hamgit.
+
+Do not commit or push the nested `wibe/` directory (embedded repo).
