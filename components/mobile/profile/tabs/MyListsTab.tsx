@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { Plus, RefreshCw, Search } from 'lucide-react';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UserListRecord, UserListFilter, UserListVisibilityCounts } from '@/lib/user-lists';
 import { LISTS_UPDATED_EVENT } from '@/lib/profile-events';
 import { openHomeCreateSheet } from '@/lib/home-create-sheet';
@@ -14,7 +14,7 @@ import PersonalListSettingsModal from '../PersonalListSettingsModal';
 
 export type ListWithCategory = UserListRecord;
 
-type VisibilityFilter = 'public' | 'private' | null;
+type VisibilityFilter = 'public' | 'private' | 'shared' | null;
 
 const SEARCH_MIN_LISTS = 8;
 
@@ -72,6 +72,18 @@ function toCardData(list: ListWithCategory): MyListCardData {
   };
 }
 
+async function fetchSharedLists(): Promise<{ lists: ListWithCategory[]; total: number }> {
+  const res = await fetch('/api/user/shared-lists?page=1&limit=50');
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || 'خطا در دریافت لیست‌های مشترک');
+  }
+  return {
+    lists: data.data.lists,
+    total: data.data.pagination.total,
+  };
+}
+
 function pickTopLists(all: ListWithCategory[], limit = 3): MyListCardData[] {
   return [...all]
     .filter((l) => l.isPublic && l.isActive !== false)
@@ -98,8 +110,17 @@ export default function MyListsTab({
   const [showCreate, setShowCreate] = useState(false);
   const queryClient = useQueryClient();
 
-  const apiFilter = toApiFilter(visibilityFilter);
-  const hasInitial = Boolean(initialLists?.length) && apiFilter === 'all';
+  const apiFilter = visibilityFilter === 'shared' ? 'all' : toApiFilter(visibilityFilter);
+  const hasInitial = Boolean(initialLists?.length) && apiFilter === 'all' && visibilityFilter !== 'shared';
+
+  const { data: sharedData, isLoading: isSharedLoading } = useQuery({
+    queryKey: ['user', userId, 'shared-lists'],
+    queryFn: fetchSharedLists,
+    staleTime: 30_000,
+  });
+
+  const sharedLists = sharedData?.lists ?? [];
+  const sharedCount = sharedData?.total ?? 0;
 
   const {
     data,
@@ -179,6 +200,13 @@ export default function MyListsTab({
   const listCountHint = initialTotal ?? lists.length;
 
   const filteredSortedLists = useMemo(() => {
+    if (visibilityFilter === 'shared') {
+      return [...sharedLists].sort((a, b) => {
+        const dateA = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+        const dateB = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+        return dateB - dateA;
+      });
+    }
     let result = [...displayLists];
     const q = search.trim().toLowerCase();
     if (q) {
@@ -195,7 +223,7 @@ export default function MyListsTab({
       return dateB - dateA;
     });
     return result;
-  }, [displayLists, search, visibilityFilter]);
+  }, [displayLists, search, visibilityFilter, sharedLists]);
 
   const publicLists = useMemo(
     () => filteredSortedLists.filter((l) => l.isPublic && l.isActive !== false),
@@ -214,7 +242,7 @@ export default function MyListsTab({
   };
 
   const visibilityChips =
-    publicCount + personalCount > 0 ? (
+    publicCount + personalCount + sharedCount > 0 ? (
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -240,6 +268,20 @@ export default function MyListsTab({
           <span>شخصی</span>
           <span className="tabular-nums opacity-90">{personalCount.toLocaleString('fa-IR')}</span>
         </button>
+        {sharedCount > 0 && (
+          <button
+            type="button"
+            onClick={() => toggleVisibilityFilter('shared')}
+            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-all ${
+              visibilityFilter === 'shared'
+                ? 'bg-violet-600 text-white shadow-sm'
+                : 'border border-violet-200 bg-violet-50/80 text-violet-800'
+            }`}
+          >
+            <span>مشترک</span>
+            <span className="tabular-nums opacity-90">{sharedCount.toLocaleString('fa-IR')}</span>
+          </button>
+        )}
       </div>
     ) : null;
 
@@ -264,12 +306,13 @@ export default function MyListsTab({
     refetch();
   };
 
-  const renderListGrid = (items: ListWithCategory[]) => (
+  const renderListGrid = (items: ListWithCategory[], options?: { hideSettings?: boolean }) => (
     <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
       {items.map((list) => (
         <MyListCardCompact
           key={list.id}
           list={toCardData(list)}
+          hideSettings={options?.hideSettings}
           onSettingsClick={(e) => handleSettingsClick(e, list)}
         />
       ))}
@@ -372,7 +415,7 @@ export default function MyListsTab({
               <p className="wibe-caption text-primary -mt-1 px-0">در حال بروزرسانی...</p>
             )}
 
-            {topLists.length > 0 && visibilityFilter !== 'private' && (
+            {topLists.length > 0 && visibilityFilter !== 'private' && visibilityFilter !== 'shared' && (
               <MyListsTopCarousel lists={topLists} />
             )}
 
@@ -413,10 +456,15 @@ export default function MyListsTab({
                     {visibilityFilter === 'private' && (
                       <h2 className="mb-2.5 wibe-h3 text-slate-800">لیست‌های شخصی</h2>
                     )}
+                    {visibilityFilter === 'shared' && (
+                      <h2 className="mb-2.5 wibe-h3 text-violet-900">لیست‌های مشترک با من</h2>
+                    )}
                     {!visibilityFilter && topLists.length > 0 && (
                       <h2 className="mb-2.5 wibe-h3">همه لیست‌ها</h2>
                     )}
-                    {renderListGrid(filteredSortedLists)}
+                    {renderListGrid(filteredSortedLists, {
+                      hideSettings: visibilityFilter === 'shared',
+                    })}
                   </div>
                 )}
               </div>
@@ -447,6 +495,7 @@ export default function MyListsTab({
           </div>
 
           {hasMore &&
+            visibilityFilter !== 'shared' &&
             !(visibilityFilter === 'private' && filteredSortedLists.length === 0 && !isLoading) && (
             <button
               type="button"

@@ -5,6 +5,7 @@ import { Settings, Edit, Trash2, X, Eye, EyeOff } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import EditPersonalListForm from './EditPersonalListForm';
 import DeleteListConfirmModal from './DeleteListConfirmModal';
+import ListCollaborationPanel from './ListCollaborationPanel';
 import Toast from '@/components/shared/Toast';
 
 interface PersonalListSettingsModalProps {
@@ -286,6 +287,12 @@ export default function PersonalListSettingsModal({
               </div>
             )}
           </div>
+
+          {!list.isPublic && (
+            <div className="border-t border-gray-200 pt-6">
+              <ListCollaborationPanel listId={list.id} isPublic={list.isPublic} onChanged={onUpdate} />
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="border-t border-gray-200 pt-6 space-y-3">

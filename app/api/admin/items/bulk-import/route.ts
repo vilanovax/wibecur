@@ -313,7 +313,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (placementsAdded > 0) {
-      notifyListBookmarkers(listId, `${placementsAdded} آیتم جدید`, list.title).catch(console.error);
+      notifyListBookmarkers(listId, {
+        itemCount: placementsAdded,
+        categorySlug: list.categories?.slug,
+        categoryName: list.categories?.name,
+        listTitle: list.title,
+      }).catch(console.error);
     }
 
     return NextResponse.json({

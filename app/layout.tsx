@@ -10,6 +10,8 @@ import QueryProvider from '@/components/providers/QueryProvider';
 import PWAProvider from '@/components/providers/PWAProvider';
 import MainContainer from '@/components/providers/MainContainer';
 import MaintenanceGate from '@/components/site/MaintenanceGate';
+import { SiteBrandingProvider } from '@/contexts/SiteBrandingContext';
+import { getSiteBrandingForLayout, getSiteLogoUrl } from '@/lib/site-branding';
 import { SearchProvider } from '@/contexts/SearchContext';
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from '@/lib/seo';
 
@@ -61,11 +63,18 @@ export const viewport: Viewport = {
   themeColor: '#6366F1',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [{ logoUrl, logoDisplayUrl }, siteLogoForMeta] = await Promise.all([
+    getSiteBrandingForLayout(),
+    getSiteLogoUrl(),
+  ]);
+
+  const orgLogoUrl = siteLogoForMeta ?? `${baseUrl}/icon-512.png`;
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -87,7 +96,7 @@ export default function RootLayout({
         '@id': `${baseUrl}/#organization`,
         name: SITE_NAME,
         url: baseUrl,
-        logo: { '@type': 'ImageObject', url: `${baseUrl}/icon-512.png` },
+        logo: { '@type': 'ImageObject', url: orgLogoUrl },
       },
     ],
   };
@@ -104,13 +113,15 @@ export default function RootLayout({
         </a>
         <SessionProvider>
           <QueryProvider>
-            <SearchProvider>
-              <PWAProvider>
-                <MaintenanceGate>
-                  <MainContainer>{children}</MainContainer>
-                </MaintenanceGate>
-              </PWAProvider>
-            </SearchProvider>
+            <SiteBrandingProvider logoUrl={logoUrl} logoDisplayUrl={logoDisplayUrl}>
+              <SearchProvider>
+                <PWAProvider>
+                  <MaintenanceGate>
+                    <MainContainer>{children}</MainContainer>
+                  </MaintenanceGate>
+                </PWAProvider>
+              </SearchProvider>
+            </SiteBrandingProvider>
           </QueryProvider>
         </SessionProvider>
         <VercelAnalytics />

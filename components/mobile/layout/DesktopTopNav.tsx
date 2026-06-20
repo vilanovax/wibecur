@@ -10,6 +10,7 @@ import { CONSUMER_NAV_ITEMS, isNavItemActive } from '@/components/mobile/layout/
 import { DESKTOP_CONTENT_PADDING_CLASS } from '@/lib/layout-tokens';
 import { useRefetchOnVisible } from '@/lib/hooks/useRefetchOnVisible';
 import { useSession } from 'next-auth/react';
+import SiteLogo from '@/components/shared/SiteLogo';
 
 /** آیتم‌های ناو دسکتاپ — پروفایل از منوی آواتار در دسترس است */
 const DESKTOP_NAV_ITEMS = CONSUMER_NAV_ITEMS.filter((item) => item.href !== '/profile');
@@ -71,9 +72,7 @@ export default function DesktopTopNav() {
         <div className={`flex h-[3.5rem] w-full min-w-0 items-center gap-3 ${DESKTOP_CONTENT_PADDING_CLASS}`}>
           {/* راست: لوگو + ناو — چسبیده به هم */}
           <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
-            <Link href="/" className="shrink-0 text-right leading-none" aria-label="وایب — خانه">
-              <span className="text-lg font-bold text-primary">وایب</span>
-            </Link>
+            <SiteLogo variant="nav" href="/" />
 
             <nav
               className="flex min-w-0 items-center justify-start gap-0.5 overflow-x-auto scrollbar-hide"

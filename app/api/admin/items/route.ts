@@ -85,7 +85,12 @@ export async function POST(request: NextRequest) {
       });
       const list = item.lists;
       if (list) {
-        notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
+        notifyListBookmarkers(listId, {
+          itemCount: 1,
+          categorySlug: list.categories?.slug,
+          categoryName: list.categories?.name,
+          listTitle: list.title,
+        }).catch(console.error);
       }
       return NextResponse.json(item, { status: 201 });
     }
@@ -154,7 +159,12 @@ export async function POST(request: NextRequest) {
         entryKind,
       });
 
-      notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
+      notifyListBookmarkers(listId, {
+        itemCount: 1,
+        categorySlug: list.categories?.slug,
+        categoryName: list.categories?.name,
+        listTitle: list.title,
+      }).catch(console.error);
       return NextResponse.json(item, { status: 201 });
     }
 
@@ -211,7 +221,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Notify users who bookmarked this list
-    notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
+    notifyListBookmarkers(listId, {
+      itemCount: 1,
+      categorySlug: list.categories?.slug,
+      categoryName: list.categories?.name,
+      listTitle: list.title,
+    }).catch(console.error);
 
     return NextResponse.json(item, { status: 201 });
   } catch (error: any) {

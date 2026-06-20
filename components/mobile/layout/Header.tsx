@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { ChevronRight } from 'lucide-react';
 import HeaderActions, { type HeaderActionsProfile } from './HeaderActions';
 import HeaderDesktopSearch from './HeaderDesktopSearch';
+import SiteLogo from '@/components/shared/SiteLogo';
 
 interface HeaderProps {
   /** عنوان صفحه — بدون title لوگوی «وایب» نمایش داده می‌شود */
@@ -110,11 +111,7 @@ export default function Header({
               {title}
             </h1>
           ) : (
-            <h1
-              className={`text-xl font-bold lg:hidden ${isDark ? 'text-violet-400' : 'text-primary'}`}
-            >
-              وایب
-            </h1>
+            <SiteLogo variant="header" href="/" className="lg:hidden" />
           )}
         </div>
         {showDesktopSearch && (

@@ -25,11 +25,12 @@ export interface MyListCardData {
 interface MyListCardCompactProps {
   list: MyListCardData;
   onSettingsClick: (e: React.MouseEvent) => void;
+  hideSettings?: boolean;
 }
 
 const VIRAL_LIKE_THRESHOLD = 50;
 
-export default function MyListCardCompact({ list, onSettingsClick }: MyListCardCompactProps) {
+export default function MyListCardCompact({ list, onSettingsClick, hideSettings }: MyListCardCompactProps) {
   const itemCount = list.itemCount ?? list._count?.items ?? 0;
   const saveCount = list.saveCount ?? list._count?.bookmarks ?? 0;
   const likes = list.likeCount ?? list._count?.list_likes ?? 0;
@@ -99,6 +100,7 @@ export default function MyListCardCompact({ list, onSettingsClick }: MyListCardC
           <ListCardStats saves={saveCount} itemCount={itemCount} variant="compact" className="mt-1" />
         </div>
       </Link>
+      {!hideSettings && (
       <button
         type="button"
         onClick={onSettingsClick}
@@ -107,6 +109,7 @@ export default function MyListCardCompact({ list, onSettingsClick }: MyListCardC
       >
         <Settings className="h-4 w-4" />
       </button>
+      )}
     </div>
   );
 }

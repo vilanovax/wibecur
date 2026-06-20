@@ -192,7 +192,7 @@ model item_moderation {
 
 /// موجودیت مشترک آیتم — یک فیلم/کتاب/کافه در چند لیست با یک شناسهٔ کاتالوگ
 model catalog_items {
-  id           String   @id
+  id           String          @id
   title        String
   description  String?
   imageUrl     String?
@@ -200,13 +200,30 @@ model catalog_items {
   categorySlug String?
   metadata     Json?
   /// کلید یکتا برای ادغام (مثلاً imdb:tt123 یا title:book:نام-نرمال)
-  externalKey  String?  @unique
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  externalKey  String?         @unique
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
   items        items[]
+  profile_picks profile_picks[]
 
   @@index([title])
   @@index([categorySlug])
+}
+
+model profile_picks {
+  id            String        @id @default(cuid())
+  userId        String
+  catalogItemId String
+  categorySlug  String
+  sortOrder     Int           @default(0)
+  note          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  users         users         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  catalog_items catalog_items @relation(fields: [catalogItemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, catalogItemId])
+  @@index([userId, categorySlug, sortOrder])
 }
 
 model items {
@@ -301,6 +318,8 @@ model lists {
   users               users                @relation(fields: [userId], references: [id], onDelete: Cascade)
   deletedBy           users?               @relation("ListDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   home_featured_slots home_featured_slot[]
+  collaborationEnabled Boolean              @default(false)
+  list_collaborators   list_collaborators[]
 
   @@index([categoryId])
   @@index([createdAt])
@@ -310,6 +329,36 @@ model lists {
   @@index([categoryId, isActive, isPublic, saveCount(sort: Desc)])
   // واکشی «جدیدترین»های هر دسته
   @@index([categoryId, isActive, isPublic, createdAt(sort: Desc)])
+}
+
+enum ListCollaboratorRole {
+  CONTRIBUTOR
+  EDITOR
+}
+
+enum ListCollaborationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  REVOKED
+}
+
+model list_collaborators {
+  id        String                  @id @default(cuid())
+  listId    String
+  userId    String
+  role      ListCollaboratorRole    @default(CONTRIBUTOR)
+  status    ListCollaborationStatus @default(PENDING)
+  invitedBy String?
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  lists     lists                   @relation(fields: [listId], references: [id], onDelete: Cascade)
+  users     users                   @relation("ListCollaboratorMember", fields: [userId], references: [id], onDelete: Cascade)
+  inviter   users?                  @relation("ListCollaboratorInviter", fields: [invitedBy], references: [id], onDelete: SetNull)
+
+  @@unique([listId, userId])
+  @@index([userId, status])
+  @@index([listId, status])
 }
 
 model list_reports {
@@ -392,7 +441,8 @@ model users {
   avatarId                   String?
   avatarStatus               AvatarStatus? // برای آپلود شخصی
   showBadge                  Boolean                    @default(true)
-  allowCommentNotifications  Boolean                    @default(true)
+  allowCommentNotifications        Boolean                    @default(true)
+  allowBookmarkListNotifications Boolean                    @default(true)
   commentRestrictedUntil     DateTime?
   commentBanReason           String?
   createdAt                  DateTime                   @default(now())
@@ -412,6 +462,9 @@ model users {
   list_reactions             list_reactions[]
   list_reports               list_reports[]
   lists                      lists[]
+  list_collaborators         list_collaborators[]       @relation("ListCollaboratorMember")
+  list_collaborators_invited list_collaborators[]       @relation("ListCollaboratorInviter")
+  profile_picks              profile_picks[]
   user_violations            user_violations[]
   suggested_items            suggested_items[]
   suggested_lists            suggested_lists[]

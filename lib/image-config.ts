@@ -26,6 +26,12 @@ export interface ImageProfileConfig {
   aspectRatio?: number;
   /** cover = برش مرکزی به نسبت هدف؛ inside = حفظ نسبت داخل قاب */
   resizeFit?: 'inside' | 'cover';
+  /** همیشه بهینه‌سازی شود (مثلاً لوگو) */
+  forceOptimize?: boolean;
+  /** برش حاشیه شفاف قبل از resize */
+  trimTransparent?: boolean;
+  /** حفظ آلفا در WebP */
+  preserveAlpha?: boolean;
 }
 
 /**
@@ -112,10 +118,13 @@ export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
     maxWidth: 480,
     maxHeight: 120,
     resizeFit: 'inside',
-    quality: 90,
+    quality: 88,
     maxSize: 120 * 1024, // 120KB
-    skipOptimizationIfSmallerThan: 40 * 1024,
+    skipOptimizationIfSmallerThan: 0,
     format: 'webp',
+    forceOptimize: true,
+    trimTransparent: true,
+    preserveAlpha: true,
   },
 
   /** پیش‌فرض (fallback) */

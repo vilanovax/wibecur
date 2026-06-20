@@ -9,7 +9,9 @@ import type { ListWithCategory } from '@/components/mobile/profile/tabs/MyListsT
 import { LISTS_UPDATED_EVENT, PROFILE_UPDATED_EVENT } from '@/lib/profile-events';
 import type { UserListVisibilityCounts } from '@/lib/user-lists';
 import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
+import type { ProfilePicksResponse } from '@/lib/profile-picks-types';
 import ProfileBreadcrumb from '@/components/profile/ProfileBreadcrumb';
+import ProfilePicksSection from '@/components/mobile/profile/ProfilePicksSection';
 
 interface ProfilePageClientProps {
   userId: string;
@@ -19,6 +21,7 @@ interface ProfilePageClientProps {
   initialVisibilityCounts?: UserListVisibilityCounts;
   initialBookmarks?: ProfileBookmarkSSR[];
   initialBookmarksTotal?: number;
+  initialProfilePicks?: ProfilePicksResponse | null;
 }
 
 export default function ProfilePageClient({
@@ -29,6 +32,7 @@ export default function ProfilePageClient({
   initialVisibilityCounts,
   initialBookmarks = [],
   initialBookmarksTotal = 0,
+  initialProfilePicks = null,
 }: ProfilePageClientProps) {
   const [user, setUser] = useState<ProfileUser | null>(initialUser);
   const [isLoading, setIsLoading] = useState(!initialUser);
@@ -163,6 +167,12 @@ export default function ProfilePageClient({
           <ProfileStats creatorStats={creatorStats} onNavigate={setActiveTab} />
         </div>
       </div>
+
+      <ProfilePicksSection
+        userId={userId}
+        isOwner
+        initialData={initialProfilePicks}
+      />
 
       <ProfileTabs
         userId={userId}

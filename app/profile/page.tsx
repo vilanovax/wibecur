@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { fetchUserLists, type UserListRecord } from '@/lib/user-lists';
 import { fetchProfileUser } from '@/lib/profile-server';
 import { fetchUserBookmarks } from '@/lib/user-bookmarks';
+import { getProfilePicksForUser } from '@/lib/profile-picks';
 import type { ProfileUser } from '@/components/profile/types';
 import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
 import ProfilePageClient from './ProfilePageClient';
@@ -46,10 +47,12 @@ export default async function ProfilePage() {
   let initialVisibilityCounts = { public: 0, personal: 0 };
   let initialBookmarks: ProfileBookmarkSSR[] = [];
   let initialBookmarksTotal = 0;
-  const [profileResult, listsResult, bookmarksResult] = await Promise.allSettled([
+  let initialProfilePicks = null;
+  const [profileResult, listsResult, bookmarksResult, picksResult] = await Promise.allSettled([
     fetchProfileUser(userId),
     fetchUserLists(userId, { page: 1, limit: 20, filter: 'all' }),
     fetchUserBookmarks(userId, { page: 1, limit: 50 }),
+    getProfilePicksForUser(userId),
   ]);
 
   if (profileResult.status === 'fulfilled' && profileResult.value) {
@@ -76,6 +79,12 @@ export default async function ProfilePage() {
     console.warn('Profile SSR bookmarks fetch failed:', bookmarksResult.reason);
   }
 
+  if (picksResult.status === 'fulfilled') {
+    initialProfilePicks = picksResult.value;
+  } else {
+    console.warn('Profile SSR picks fetch failed:', picksResult.reason);
+  }
+
   return (
     <div className="bg-wibe-surface">
       <Header title="پروفایل" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
@@ -88,6 +97,7 @@ export default async function ProfilePage() {
           initialVisibilityCounts={initialVisibilityCounts}
           initialBookmarks={initialBookmarks}
           initialBookmarksTotal={initialBookmarksTotal}
+          initialProfilePicks={initialProfilePicks}
         />
       </main>
       <BottomNav />

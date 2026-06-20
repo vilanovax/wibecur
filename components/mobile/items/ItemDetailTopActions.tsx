@@ -3,10 +3,12 @@
 import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
 import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
 import ItemReportButton from '@/components/mobile/items/ItemReportButton';
+import ItemProfilePickButton from '@/components/mobile/items/ItemProfilePickButton';
 
 interface ItemDetailTopActionsProps {
   itemId: string;
   likeCount: number;
+  catalogItemId?: string | null;
   /** sticky زیر هدر (موبایل) | داخل کارت جزئیات (دسکتاپ) */
   variant?: 'bar' | 'inline';
 }
@@ -14,11 +16,13 @@ interface ItemDetailTopActionsProps {
 export default function ItemDetailTopActions({
   itemId,
   likeCount,
+  catalogItemId,
   variant = 'bar',
 }: ItemDetailTopActionsProps) {
   const actions = (
     <>
       <ItemSaveButton itemId={itemId} />
+      <ItemProfilePickButton itemId={itemId} catalogItemId={catalogItemId} variant="compact" />
       <ItemLikeButton itemId={itemId} initialLikeCount={likeCount} variant="compact" />
       <ItemReportButton itemId={itemId} />
     </>

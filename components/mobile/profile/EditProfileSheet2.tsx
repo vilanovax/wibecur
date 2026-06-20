@@ -25,6 +25,7 @@ export interface EditProfileUser {
   avatarStatus?: 'APPROVED' | 'PENDING' | 'REJECTED' | null;
   showBadge?: boolean;
   allowCommentNotifications?: boolean;
+  allowBookmarkListNotifications?: boolean;
   curatorLevel?: string;
 }
 
@@ -174,6 +175,7 @@ function buildSnapshot(user: EditProfileUser) {
     bio: (user.bio ?? '').slice(0, BIO_MAX),
     showBadge: user.showBadge ?? true,
     allowCommentNotifications: user.allowCommentNotifications ?? true,
+    allowBookmarkListNotifications: user.allowBookmarkListNotifications ?? true,
     avatarType: user.avatarType ?? 'DEFAULT',
     avatarId: user.avatarId ?? null,
   };
@@ -194,6 +196,9 @@ export default function EditProfileSheet2({
   const [showBadge, setShowBadge] = useState(user.showBadge ?? true);
   const [allowCommentNotifications, setAllowCommentNotifications] = useState(
     user.allowCommentNotifications ?? true
+  );
+  const [allowBookmarkListNotifications, setAllowBookmarkListNotifications] = useState(
+    user.allowBookmarkListNotifications ?? true
   );
   const [avatarType, setAvatarType] = useState<'DEFAULT' | 'UPLOADED'>(user.avatarType ?? 'DEFAULT');
   const [avatarId, setAvatarId] = useState<string | null>(user.avatarId ?? null);
@@ -223,6 +228,7 @@ export default function EditProfileSheet2({
       setBio(snapshot.bio);
       setShowBadge(snapshot.showBadge);
       setAllowCommentNotifications(snapshot.allowCommentNotifications);
+      setAllowBookmarkListNotifications(snapshot.allowBookmarkListNotifications);
       setAvatarType(snapshot.avatarType);
       setAvatarId(snapshot.avatarId);
       setAvatarStatus(user.avatarStatus ?? null);
@@ -307,6 +313,7 @@ export default function EditProfileSheet2({
       bio !== initial.bio ||
       showBadge !== initial.showBadge ||
       allowCommentNotifications !== initial.allowCommentNotifications ||
+      allowBookmarkListNotifications !== initial.allowBookmarkListNotifications ||
       avatarType !== initial.avatarType ||
       avatarId !== initial.avatarId
     );
@@ -316,6 +323,7 @@ export default function EditProfileSheet2({
     bio,
     showBadge,
     allowCommentNotifications,
+    allowBookmarkListNotifications,
     avatarType,
     avatarId,
   ]);
@@ -358,6 +366,7 @@ export default function EditProfileSheet2({
           bio: (bio || '').slice(0, BIO_MAX) || null,
           showBadge,
           allowCommentNotifications,
+          allowBookmarkListNotifications,
           avatarType: avatarType || 'DEFAULT',
           avatarId: avatarType === 'DEFAULT' && avatarId ? String(avatarId) : null,
         }),
@@ -380,6 +389,7 @@ export default function EditProfileSheet2({
         bio: bio || null,
         showBadge,
         allowCommentNotifications,
+        allowBookmarkListNotifications,
         avatarType,
         avatarId,
       });
@@ -644,6 +654,12 @@ export default function EditProfileSheet2({
                   description="وقتی روی لیستت کامنت می‌گذارند"
                   checked={allowCommentNotifications}
                   onChange={setAllowCommentNotifications}
+                />
+                <ToggleRow
+                  label="به‌روزرسانی لیست‌های ذخیره‌شده"
+                  description="وقتی آیتم جدید به لیستی که ذخیره کردی اضافه شود"
+                  checked={allowBookmarkListNotifications}
+                  onChange={setAllowBookmarkListNotifications}
                 />
               </div>
             </section>

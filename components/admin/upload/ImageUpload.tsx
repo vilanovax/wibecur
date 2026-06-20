@@ -137,6 +137,7 @@ export default function ImageUpload({
           : 'default');
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
   const [uploadMethod, setUploadMethod] = useState<'url' | 'upload'>('upload');
   const [urlInput, setUrlInput] = useState(value || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -177,6 +178,7 @@ export default function ImageUpload({
     }
 
     setUploading(true);
+    setUploadFeedback(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -188,6 +190,12 @@ export default function ImageUpload({
         throw new Error(data.error || 'خطا در آپلود تصویر');
       }
       onChange(data.url);
+      if (data.optimized && data.optimized.width && data.optimized.height) {
+        const kb = Math.max(1, Math.round((data.optimized.bytes ?? 0) / 1024));
+        setUploadFeedback(
+          `بهینه شد: ${data.optimized.width}×${data.optimized.height}px · WebP · ~${kb}KB`
+        );
+      }
     } catch (error) {
       console.error('Upload error:', error);
       alert(error instanceof Error ? error.message : 'خطا در آپلود تصویر. لطفاً دوباره تلاش کنید.');
@@ -253,6 +261,12 @@ export default function ImageUpload({
     <div className="space-y-3" dir="rtl">
       {label ? (
         <label className="block text-sm font-medium text-[var(--color-text)]">{label}</label>
+      ) : null}
+
+      {uploadFeedback ? (
+        <p className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-lg px-2.5 py-1.5">
+          {uploadFeedback}
+        </p>
       ) : null}
 
       <div className="inline-flex gap-1 p-1 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border-muted)]">

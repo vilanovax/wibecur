@@ -82,6 +82,7 @@ export async function PUT(request: NextRequest) {
       } else {
         finalSiteLogoUrl = await ensureImageInLiara(siteLogoUrl.trim(), 'site', {
           profile: 'siteLogo',
+          forceOptimize: true,
         });
       }
     }

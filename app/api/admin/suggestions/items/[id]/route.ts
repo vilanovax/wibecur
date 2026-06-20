@@ -187,11 +187,12 @@ export async function PUT(
       );
 
       // Notify users who bookmarked this list
-      notifyListBookmarkers(
-        suggestedItem.listId,
-        newItem.title,
-        suggestedItem.lists.title || 'لیست'
-      ).catch(console.error);
+      notifyListBookmarkers(suggestedItem.listId, {
+        itemCount: 1,
+        categorySlug: suggestedItem.lists.categories?.slug,
+        categoryName: suggestedItem.lists.categories?.name,
+        listTitle: suggestedItem.lists.title || 'لیست',
+      }).catch(console.error);
 
       checkAchievements(prisma, suggestedItem.userId).catch((e) => console.warn('Achievement check failed:', e));
 

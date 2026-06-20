@@ -43,7 +43,13 @@ export async function POST(request: NextRequest) {
     });
 
     const listTitle = item.lists?.title ?? 'لیست';
-    notifyListBookmarkers(listId, item.title, listTitle).catch(console.error);
+    const category = item.lists?.categories;
+    notifyListBookmarkers(listId, {
+      itemCount: 1,
+      categorySlug: category?.slug,
+      categoryName: category?.name,
+      listTitle,
+    }).catch(console.error);
 
     return NextResponse.json(item, { status: 201 });
   } catch (error: unknown) {

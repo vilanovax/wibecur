@@ -110,6 +110,7 @@ export function buildSessionProfileFallback(session: Session) {
     avatarStatus: null,
     showBadge: true,
     allowCommentNotifications: true,
+    allowBookmarkListNotifications: true,
     stats: { listsCreated: 0, bookmarks: 0, likes: 0, itemLikes: 0 },
     creatorStats: {
       viralListsCount: 0,

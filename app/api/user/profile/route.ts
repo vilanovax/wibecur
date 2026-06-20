@@ -83,6 +83,7 @@ export async function PUT(request: NextRequest) {
       bio,
       showBadge,
       allowCommentNotifications,
+      allowBookmarkListNotifications,
       avatarType,
       avatarId,
     } = body;
@@ -130,6 +131,7 @@ export async function PUT(request: NextRequest) {
       bio?: string | null;
       showBadge?: boolean;
       allowCommentNotifications?: boolean;
+      allowBookmarkListNotifications?: boolean;
       avatarType?: 'DEFAULT' | 'UPLOADED';
       avatarId?: string | null;
       avatarStatus?: 'APPROVED' | 'PENDING' | 'REJECTED' | null;
@@ -141,6 +143,9 @@ export async function PUT(request: NextRequest) {
     if (bio !== undefined) updateData.bio = bio === '' ? null : String(bio).slice(0, 160);
     if (typeof showBadge === 'boolean') updateData.showBadge = showBadge;
     if (typeof allowCommentNotifications === 'boolean') updateData.allowCommentNotifications = allowCommentNotifications;
+    if (typeof allowBookmarkListNotifications === 'boolean') {
+      updateData.allowBookmarkListNotifications = allowBookmarkListNotifications;
+    }
     const wantVibeAvatar = (String(avatarType ?? '').toUpperCase() === 'DEFAULT' && avatarId && String(avatarId).trim());
     const avatarIdVal = wantVibeAvatar ? String(avatarId).trim() : null;
 
@@ -193,6 +198,7 @@ export async function PUT(request: NextRequest) {
             avatarStatus: true,
             showBadge: true,
             allowCommentNotifications: true,
+            allowBookmarkListNotifications: true,
           },
         })
       );
@@ -229,6 +235,7 @@ export async function PUT(request: NextRequest) {
                 avatarStatus: null,
                 showBadge: true,
                 allowCommentNotifications: true,
+            allowBookmarkListNotifications: true,
               },
             },
           });
@@ -254,6 +261,7 @@ export async function PUT(request: NextRequest) {
                   avatarStatus: null,
                   showBadge: true,
                   allowCommentNotifications: true,
+            allowBookmarkListNotifications: true,
                 },
               },
             });

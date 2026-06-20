@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { addCatalogItemToList, isCatalogInList } from '@/lib/catalog-items';
+import { notifyListBookmarkers } from '@/lib/utils/notifications';
 
 export type CatalogBulkAction =
   | 'remove-from-list'
@@ -233,6 +234,10 @@ export async function executeCatalogBulkAction(
 
     default:
       return { processed: 0, skipped: 0, errors: ['عملیات نامعتبر'], message: '' };
+  }
+
+  if (input.action === 'add-to-list' && processed > 0 && input.targetListId) {
+    notifyListBookmarkers(input.targetListId, { itemCount: processed }).catch(console.error);
   }
 
   const message = buildBulkMessage(input.action, processed, skipped, errors.length);

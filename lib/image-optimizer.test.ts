@@ -114,3 +114,46 @@ describe('optimizeImageDetailed coverListHorizontal', () => {
     expect(meta.height).toBe(686);
   });
 });
+
+describe('optimizeImageDetailed siteLogo', () => {
+  it('resizes large PNG with alpha to webp within siteLogo limits', async () => {
+    const largePng = await sharp({
+      create: {
+        width: 2000,
+        height: 600,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    })
+      .composite([
+        {
+          input: await sharp({
+            create: {
+              width: 1600,
+              height: 400,
+              channels: 4,
+              background: { r: 20, g: 80, b: 200, alpha: 1 },
+            },
+          })
+            .png()
+            .toBuffer(),
+          left: 200,
+          top: 100,
+        },
+      ])
+      .png()
+      .toBuffer();
+
+    const result = await optimizeImageDetailed(largePng, { profile: 'siteLogo' });
+    const profile = getImageProfile('siteLogo');
+
+    expect(result.skipped).toBe(false);
+    expect(result.contentType).toBe('image/webp');
+    expect(result.optimizedBytes).toBeLessThanOrEqual(profile.maxSize);
+
+    const meta = await sharp(result.buffer).metadata();
+    expect(meta.width).toBeLessThanOrEqual(profile.maxWidth);
+    expect(meta.height).toBeLessThanOrEqual(profile.maxHeight);
+    expect(meta.format).toBe('webp');
+  });
+});

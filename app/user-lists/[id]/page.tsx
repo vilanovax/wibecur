@@ -9,6 +9,7 @@ import ListCommentSection from '@/components/mobile/lists/ListCommentSection';
 import { auth } from '@/lib/auth-config';
 
 import { dbQuery } from '@/lib/db';
+import { getListAccessForUser, getCollaboratorRecord } from '@/lib/list-collaboration';
 import UserListDetailClient from './UserListDetailClient';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -178,18 +179,22 @@ export default async function UserListDetailPage({
       console.log('UserListDetailPage - Access denied: Private list but no user session');
       notFound();
     }
-    if (list.userId !== currentUserId) {
-      console.log('UserListDetailPage - Access denied: Private list and user is not owner', {
-        listUserId: list.userId,
-        currentUserId,
-        areEqual: list.userId === currentUserId,
-        listUserIdType: typeof list.userId,
-        currentUserIdType: typeof currentUserId,
-      });
+
+    const access = await dbQuery(() => getListAccessForUser(list, currentUserId));
+    if (!access.canView) {
+      console.log('UserListDetailPage - Access denied: Private list without permission');
       notFound();
     }
-    console.log('UserListDetailPage - Access granted: Private list and user is owner');
+    console.log('UserListDetailPage - Access granted: Private list with owner/collaborator access');
   }
+
+  const listAccess = currentUserId
+    ? await dbQuery(() => getListAccessForUser(list, currentUserId))
+    : null;
+  const pendingCollab =
+    currentUserId && listAccess && !listAccess.isOwner
+      ? await dbQuery(() => getCollaboratorRecord(list.id, currentUserId))
+      : null;
 
   // Increment view count (in background) only for public lists
   if (list.isPublic) {
@@ -204,7 +209,17 @@ export default async function UserListDetailPage({
     return (
       <div className="bg-wibe-surface">
         <Header title={list.title} showBack />
-        <UserListDetailClient list={list} currentUserId={currentUserId} />
+        <UserListDetailClient
+          list={list}
+          currentUserId={currentUserId}
+          canAddItems={listAccess?.canAddItems ?? false}
+          isOwner={listAccess?.isOwner ?? currentUserId === list.userId}
+          pendingCollaboration={
+            pendingCollab?.status === 'PENDING' && pendingCollab.invitedBy
+              ? { listId: list.id, invitedBy: pendingCollab.invitedBy }
+              : null
+          }
+        />
         <BottomNav />
       </div>
     );

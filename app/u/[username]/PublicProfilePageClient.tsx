@@ -11,6 +11,8 @@ import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
 import Toast from '@/components/shared/Toast';
 import PublicProfileBreadcrumb from '@/components/profile/PublicProfileBreadcrumb';
+import ProfilePicksSection from '@/components/mobile/profile/ProfilePicksSection';
+import type { ProfilePickShelfDto } from '@/lib/profile-picks-types';
 
 interface PublicProfilePageClientProps {
   username: string;
@@ -59,6 +61,7 @@ interface ProfileData {
   }[];
   likedLists: unknown[];
   recentActivity: unknown[];
+  profilePicks?: ProfilePickShelfDto[];
 }
 
 export default function PublicProfilePageClient({
@@ -311,6 +314,16 @@ export default function PublicProfilePageClient({
             ))}
           </div>
         </div>
+
+        {data.profilePicks && data.profilePicks.length > 0 && (
+          <div className="mt-6 px-4 lg:px-0">
+            <ProfilePicksSection
+              userId={data.user.id}
+              isOwner={isOwnProfile}
+              publicShelves={data.profilePicks}
+            />
+          </div>
+        )}
 
         {data.topTags.length > 0 && (
           <section className="mt-6 px-4 lg:px-0">

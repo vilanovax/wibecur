@@ -504,7 +504,12 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
                 </div>
 
                 <div className="mt-3 hidden lg:block">
-                  <ItemDetailTopActions itemId={item.id} likeCount={likeCount} variant="inline" />
+                  <ItemDetailTopActions
+                    itemId={item.id}
+                    likeCount={likeCount}
+                    catalogItemId={item.catalogItemId}
+                    variant="inline"
+                  />
                 </div>
               </div>
             </div>
@@ -514,7 +519,12 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
         {/* موبایل: نوار اکشن چسبان */}
         {!isLightweight && (
           <div className="lg:hidden">
-            <ItemDetailTopActions itemId={item.id} likeCount={likeCount} variant="bar" />
+            <ItemDetailTopActions
+              itemId={item.id}
+              likeCount={likeCount}
+              catalogItemId={item.catalogItemId}
+              variant="bar"
+            />
           </div>
         )}
 
@@ -522,7 +532,12 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
           <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
             {isLightweight && (
               <div className="rounded-2xl border border-wibe/70 bg-wibe-card px-3 py-2.5 shadow-sm">
-                <ItemDetailTopActions itemId={item.id} likeCount={likeCount} variant="inline" />
+                <ItemDetailTopActions
+                  itemId={item.id}
+                  likeCount={likeCount}
+                  catalogItemId={item.catalogItemId}
+                  variant="inline"
+                />
               </div>
             )}
 

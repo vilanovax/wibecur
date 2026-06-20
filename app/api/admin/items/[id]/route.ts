@@ -198,11 +198,10 @@ export async function PUT(
       });
 
       if (newList) {
-        notifyListBookmarkers(
-          listId,
-          item.title,
-          newList.title || 'لیست'
-        ).catch(console.error);
+        notifyListBookmarkers(listId, {
+          itemCount: 1,
+          listTitle: newList.title || 'لیست',
+        }).catch(console.error);
       }
     }
 

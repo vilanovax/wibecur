@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import SettingsPageHeader from '@/components/admin/settings/SettingsPageHeader';
@@ -48,6 +48,7 @@ const emptyIntegrationForm = () => ({
 
 export default function SettingsPageClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const activeTab = parseSettingsTab(searchParams.get('tab'));
 
   const [settings, setSettings] = useState<SettingsData>({
@@ -291,6 +292,7 @@ export default function SettingsPageClient() {
 
       showSectionToast('branding', 'success', 'لوگوی سایت ذخیره شد');
       await fetchSettings();
+      router.refresh();
     } catch (error: unknown) {
       showSectionToast(
         'branding',

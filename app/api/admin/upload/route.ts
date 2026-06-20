@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
-import { uploadImageBuffer } from '@/lib/object-storage';
+import { uploadImageBufferDetailed } from '@/lib/object-storage';
 import { validateImage } from '@/lib/image-validator';
 import { MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
 import { resolveUploadTarget } from '@/lib/upload-profiles';
@@ -51,20 +51,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const url = await uploadImageBuffer(buffer, file.type, folder, profile);
+    const uploaded = await uploadImageBufferDetailed(buffer, file.type, folder, profile);
 
-    if (!url) {
+    if (!uploaded?.url) {
       return NextResponse.json(
         { error: 'خطا در آپلود فایل به Object Storage' },
         { status: 500 }
       );
     }
 
+    const { optimization } = uploaded;
+
     return NextResponse.json(
       {
-        url,
+        url: uploaded.url,
         profile,
         folder,
+        optimized: {
+          width: optimization.width,
+          height: optimization.height,
+          bytes: optimization.optimizedBytes,
+          originalBytes: optimization.originalBytes,
+          format: optimization.ext.replace('.', ''),
+          skipped: optimization.skipped,
+        },
       },
       { status: 201 }
     );

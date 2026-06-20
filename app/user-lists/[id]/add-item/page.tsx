@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCategories } from '@/lib/db';
 import { auth } from '@/lib/auth-config';
-
+import { getListAccessForUser } from '@/lib/list-collaboration';
+import { fetchBrowseTotals } from '@/lib/browse-public-items';
 import { notFound } from 'next/navigation';
 import AddItemClient from './AddItemClient';
 
@@ -17,7 +18,6 @@ export default async function AddItemPage({
   const session = await auth();
   let currentUserId = session?.user ? (session.user.id || null) : null;
 
-  // If we have a session but no ID, try to get user ID from email
   if (!currentUserId && session?.user?.email) {
     const userEmail = session.user.email;
     if (!userEmail) {
@@ -32,7 +32,6 @@ export default async function AddItemPage({
     currentUserId = userFromEmail?.id || null;
   }
 
-  // Get the list to verify ownership
   const list = await dbQuery(() =>
     prisma.lists.findUnique({
       where: { id },
@@ -41,10 +40,11 @@ export default async function AddItemPage({
         title: true,
         userId: true,
         isActive: true,
-        categoryId: true,
         items: {
           select: {
             id: true,
+            catalogItemId: true,
+            title: true,
           },
         },
       },
@@ -55,104 +55,68 @@ export default async function AddItemPage({
     notFound();
   }
 
-  // Verify ownership
-  if (list.userId !== currentUserId) {
+  const access = currentUserId
+    ? await dbQuery(() => getListAccessForUser(list, currentUserId))
+    : null;
+  if (!access?.canAddItems) {
     notFound();
   }
 
-  // Get all items from public lists only
-  const [allItems, categories, allLists] = await Promise.all([
-    dbQuery(() =>
-      prisma.items.findMany({
-        where: {
-          lists: {
-            isActive: true,
-            isPublic: true, // Only public lists
-          },
-        },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          imageUrl: true,
-          externalUrl: true,
-          listId: true,
-          createdAt: true,
-          lists: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              categoryId: true,
-              categories: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                  icon: true,
-                  color: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      })
-    ),
+  const existingInList = list.items.map((item) => ({
+    personalItemId: item.id,
+    catalogItemId: item.catalogItemId,
+    titleKey: item.title.trim().toLowerCase(),
+  }));
+
+  const existingKeys = {
+    catalogItemIds: existingInList
+      .map((e) => e.catalogItemId)
+      .filter((cid): cid is string => Boolean(cid)),
+    titleKeys: existingInList.map((e) => e.titleKey).filter(Boolean),
+  };
+
+  const [categories, publicLists, totals] = await Promise.all([
     getCategories(),
     dbQuery(() =>
       prisma.lists.findMany({
-        where: {
-          isActive: true,
-          isPublic: true, // Only public lists
-        },
+        where: { isActive: true, isPublic: true },
         select: {
           id: true,
           title: true,
           slug: true,
           categoryId: true,
           categories: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              icon: true,
-              color: true,
-            },
+            select: { id: true, name: true, slug: true, icon: true, color: true },
           },
         },
         orderBy: { createdAt: 'desc' },
       })
     ),
+    dbQuery(() => fetchBrowseTotals(existingKeys)),
   ]);
-
-  // Get list of item IDs already in the list (to exclude them)
-  const existingItemIds = new Set(list.items.map((item) => item.id));
-
-  // Serialize dates
-  const serializedItems = allItems
-    .filter((item) => !existingItemIds.has(item.id))
-    .map((item) => ({
-      ...item,
-      createdAt: item.createdAt.toISOString(),
-    }));
 
   return (
     <div className="bg-wibe-surface">
-      <Header title={`افزودن به ${list.title}`} showBack />
+      <Header
+        title={`افزودن به ${list.title}`}
+        showBack
+        showDesktopSearch={false}
+        hideTitleOnDesktop
+      />
       <AddItemClient
         listId={id}
         listTitle={list.title}
-        items={serializedItems}
         categories={categories}
-        lists={allLists.map((l) => ({
+        lists={publicLists.map((l) => ({
           ...l,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }))}
+        initialExistingInList={existingInList}
+        initialTotals={totals}
+        canRemoveFromList={access.isOwner}
       />
       <BottomNav />
     </div>
   );
 }
-

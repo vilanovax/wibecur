@@ -32,7 +32,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, coverImage, categoryId, isPublic, commentsEnabled } = body;
+    const { title, description, coverImage, categoryId, isPublic, commentsEnabled, collaborationEnabled } = body;
 
     // Check if list exists and belongs to user
     const existingList = await dbQuery(() =>
@@ -182,6 +182,9 @@ export async function PUT(
     }
     // Don't allow changing categoryId for personal lists (they should remain null)
     if (commentsEnabled !== undefined) updateData.commentsEnabled = commentsEnabled;
+    if (collaborationEnabled !== undefined && !newIsPublic) {
+      updateData.collaborationEnabled = Boolean(collaborationEnabled);
+    }
     updateData.isPublic = newIsPublic;
     updateData.slug = slug;
     // Personal lists remain active when private, only check when public

@@ -17,6 +17,7 @@ services:
       dockerfile: Dockerfile
       args:
         DOCKER_MIRROR: ${DOCKER_MIRROR:-docker-mirror.liara.ir}
+        NPM_LOGLEVEL: ${NPM_LOGLEVEL:-verbose}
         NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-docker-build-placeholder}
         ENCRYPTION_KEY: ${ENCRYPTION_KEY:-docker-build-placeholder}
         DATABASE_URL: ${DATABASE_URL:-postgresql://build:build@localhost:5432/build}

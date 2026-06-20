@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { calculateCuratorResult } from '@/lib/curator';
 import { getActiveSpotlightForUser } from '@/lib/spotlight';
 import { withResolvedListCover, withResolvedListCovers } from '@/lib/resolve-list-cover';
+import { getPublicProfilePicksForUser, type ProfilePickShelfDto } from '@/lib/profile-picks';
 
 export type PublicProfileData = {
   user: {
@@ -55,6 +56,7 @@ export type PublicProfileData = {
         listSlug: string;
       }
   >;
+  profilePicks: ProfilePickShelfDto[];
 };
 
 export async function fetchPublicProfile(
@@ -99,6 +101,7 @@ export async function fetchPublicProfile(
     creatorRanking,
     activeSpotlight,
     approvedItemsCount,
+    profilePicks,
   ] = await Promise.all([
     prisma.lists.findMany({
       where: { userId, isActive: true, isPublic: true },
@@ -169,6 +172,7 @@ export async function fetchPublicProfile(
     prisma.suggested_items.count({
       where: { userId, status: 'approved' },
     }),
+    getPublicProfilePicksForUser(userId),
   ]);
 
   const totalSaves = publicLists.reduce((s, l) => s + (l.saveCount ?? 0), 0);
@@ -306,5 +310,6 @@ export async function fetchPublicProfile(
     publicLists: allPublicLists,
     likedLists: likedListsFormatted,
     recentActivity,
+    profilePicks,
   };
 }

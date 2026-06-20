@@ -7,6 +7,8 @@ import { nanoid } from 'nanoid';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { resolveSessionUserId } from '@/lib/api-db';
+import { getListAccessForUser } from '@/lib/list-collaboration';
+import { notifyListBookmarkers } from '@/lib/utils/notifications';
 import {
   addCatalogItemToList,
   backfillCatalogForItem,
@@ -66,8 +68,9 @@ export async function POST(
       );
     }
 
-    // Check ownership
-    if (list.userId !== userId) {
+    // Check ownership or collaborator add permission
+    const access = await getListAccessForUser(list, userId);
+    if (!access.canAddItems) {
       return NextResponse.json(
         { success: false, error: 'شما اجازه افزودن آیتم به این لیست را ندارید' },
         { status: 403 }
@@ -265,6 +268,14 @@ export async function POST(
         })
       );
     }
+
+    notifyListBookmarkers(listId, {
+      itemCount: 1,
+      categorySlug: list.categories?.slug ?? categorySlug,
+      categoryName: list.categories?.name,
+      listTitle: list.title,
+      excludeUserIds: [userId],
+    }).catch(console.error);
 
     return NextResponse.json({
       success: true,

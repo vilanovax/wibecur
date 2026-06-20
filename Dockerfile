@@ -7,10 +7,12 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 FROM base AS deps
+ARG NPM_LOGLEVEL=verbose
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --loglevel ${NPM_LOGLEVEL}
 
 FROM base AS builder
+ARG NPM_LOGLEVEL=verbose
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -43,8 +45,8 @@ ENV NEXT_PUBLIC_UMAMI_DOMAINS=$NEXT_PUBLIC_UMAMI_DOMAINS
 ENV NEXT_PUBLIC_VERCEL=$NEXT_PUBLIC_VERCEL
 ENV BUILD_ID=$BUILD_ID
 
-RUN npx prisma generate
-RUN npm run build
+RUN npx --loglevel ${NPM_LOGLEVEL} prisma generate
+RUN npm run build --loglevel ${NPM_LOGLEVEL}
 
 FROM base AS runner
 ENV NODE_ENV=production

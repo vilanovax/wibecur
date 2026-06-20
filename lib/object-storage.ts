@@ -8,7 +8,7 @@ import {
   isOurStorageUrl,
 } from './object-storage-config';
 import crypto from 'crypto';
-import { optimizeImage } from './image-optimizer';
+import { optimizeImageDetailed } from './image-optimizer';
 import { buildImageDownloadHeaders } from './image-download-headers';
 import { profileForStorageFolder } from './upload-profiles';
 import type { ImageProfile } from './image-config';
@@ -88,16 +88,22 @@ async function uploadBufferToStorage(
   contentType: string,
   folder: string,
   profile: ImageProfile
-): Promise<string | null> {
+): Promise<{ url: string; optimization: Awaited<ReturnType<typeof optimizeImageDetailed>> } | null> {
   const client = await getS3Client();
   const config = await getObjectStorageConfig();
   if (!client || !config) return null;
 
-  const optimized = await optimizeImage(buffer, { profile });
+  const optimized = await optimizeImageDetailed(buffer, { profile });
   const filename = `${crypto.randomUUID()}${optimized.ext}`;
   const key = buildStorageObjectKey(folder, filename);
 
-  if (isDev) console.log('Uploading to ParsPack:', key);
+  if (isDev) {
+    console.log('Uploading to ParsPack:', key, {
+      profile,
+      bytes: optimized.optimizedBytes,
+      dimensions: `${optimized.width ?? '?'}x${optimized.height ?? '?'}`,
+    });
+  }
 
   const uploadParams = {
     Bucket: config.bucketName,
@@ -120,7 +126,10 @@ async function uploadBufferToStorage(
     }
   });
 
-  return buildStoragePublicUrl(config, key);
+  return {
+    url: buildStoragePublicUrl(config, key),
+    optimization: optimized,
+  };
 }
 
 export type UploadImageFromUrlResult =
@@ -210,8 +219,8 @@ export async function uploadImageFromUrlDetailed(
       };
     }
 
-    if (isDev) console.log('Image uploaded:', publicUrl);
-    return { ok: true, url: publicUrl };
+    if (isDev) console.log('Image uploaded:', publicUrl.url);
+    return { ok: true, url: publicUrl.url };
   } catch (error: unknown) {
     console.error('Error uploading image:', error);
     return {
@@ -237,6 +246,26 @@ export async function uploadImageBuffer(
   folder: string = 'images',
   profile?: ImageProfile
 ): Promise<string | null> {
+  try {
+    const result = await uploadBufferToStorage(
+      buffer,
+      contentType,
+      folder,
+      profile ?? profileForFolder(folder)
+    );
+    return result?.url ?? null;
+  } catch (error: unknown) {
+    console.error('Error uploading image:', formatStorageUploadError(error));
+    return null;
+  }
+}
+
+export async function uploadImageBufferDetailed(
+  buffer: Buffer,
+  contentType: string = 'image/jpeg',
+  folder: string = 'images',
+  profile?: ImageProfile
+) {
   try {
     return await uploadBufferToStorage(
       buffer,
@@ -390,7 +419,7 @@ function folderFromStorageKey(key: string): ImageFolder {
 export async function ensureImageInLiara(
   url: string | null | undefined,
   folder: ImageFolder,
-  options?: { profile?: ImageProfile }
+  options?: { profile?: ImageProfile; forceOptimize?: boolean }
 ): Promise<string | null> {
   if (!url || typeof url !== 'string') return null;
 
@@ -399,11 +428,27 @@ export async function ensureImageInLiara(
     return null;
   }
 
-  if (isOurStorageUrl(normalized)) {
+  const profile = options?.profile ?? profileForStorageFolder(folder);
+
+  if (isOurStorageUrl(normalized) && !options?.forceOptimize) {
     return normalized;
   }
 
-  const uploaded = await uploadImageFromUrl(normalized, folder, options?.profile);
+  if (isOurStorageUrl(normalized) && options?.forceOptimize) {
+    const existing = await getObjectByPublicUrl(normalized);
+    if (existing?.buffer?.length) {
+      const reuploaded = await uploadBufferToStorage(
+        existing.buffer,
+        existing.contentType || 'image/png',
+        folder,
+        profile
+      );
+      return reuploaded?.url ?? normalized;
+    }
+    return normalized;
+  }
+
+  const uploaded = await uploadImageFromUrl(normalized, folder, profile);
   if (uploaded) return uploaded;
 
   // TMDB و URLهای مسدود را ذخیره نکن

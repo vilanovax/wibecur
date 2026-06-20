@@ -28,6 +28,7 @@ export interface ProfileUser {
   avatarStatus?: 'APPROVED' | 'PENDING' | 'REJECTED' | null;
   showBadge?: boolean;
   allowCommentNotifications?: boolean;
+  allowBookmarkListNotifications?: boolean;
   stats: { listsCreated: number; bookmarks: number; likes: number; itemLikes: number };
   creatorStats?: CreatorStats;
   expertise?: { name: string; slug: string; icon: string; count: number }[];
