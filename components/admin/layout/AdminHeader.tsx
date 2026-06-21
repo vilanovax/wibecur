@@ -7,6 +7,7 @@ import { Bell, User, Settings, LogOut, ChevronLeft, Menu, PanelRightClose, Panel
 import { useSidebar } from './SidebarContext';
 import { signOut, useSession } from 'next-auth/react';
 import RoleBadge from '@/components/auth/RoleBadge';
+import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import { BREADCRUMB_MAP } from '@/lib/admin/breadcrumb-labels';
@@ -267,8 +268,15 @@ export default function AdminHeader() {
           با سرچ کاربردیِ AdminTopBar تکراری می‌شد). */}
       <div className="flex-1" />
 
-      {/* Left: Trash + Profile + Notifications + Role */}
+      {/* Left: Version + Trash + Profile + Notifications + Role */}
       <div className="flex items-center gap-3 shrink-0">
+        <span
+          className="text-[11px] font-medium tabular-nums text-gray-400/90 dark:text-gray-500 select-none"
+          title="Admin panel build version"
+        >
+          v{ADMIN_PANEL_VERSION}
+        </span>
+
         <Link
           href="/admin/trash"
           aria-label={trashCount > 0 ? `زباله‌دان (${trashCount} مورد)` : 'زباله‌دان'}

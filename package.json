@@ -12,7 +12,7 @@
     "build": "next build",
     "postbuild": "node scripts/prepare-standalone.mjs",
     "prestart": "node scripts/prepare-standalone.mjs",
-    "prebuild": "prisma generate",
+    "prebuild": "node scripts/bump-admin-panel-version.mjs && prisma generate",
     "start": "NODE_OPTIONS='--max-http-header-size=16384' node .next/standalone/server.js",
     "lint": "next lint",
     "db:push": "prisma db push",

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Home, LayoutList, Compass, User, Plus } from 'lucide-react';
+import { LayoutList, Compass, User, Plus } from 'lucide-react';
 
 export type ConsumerNavItem = {
   href?: string;
@@ -11,12 +11,6 @@ export type ConsumerNavItem = {
 };
 
 export const CONSUMER_NAV_ITEMS: ConsumerNavItem[] = [
-  {
-    href: '/',
-    label: 'خانه',
-    icon: <Home className="h-4 w-4" strokeWidth={2} />,
-    iconOnly: true,
-  },
   { href: '/lists', label: 'لیست‌ها', icon: <LayoutList className="h-4 w-4" strokeWidth={2} /> },
   {
     label: 'ساخت',
