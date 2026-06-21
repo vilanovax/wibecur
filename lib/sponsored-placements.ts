@@ -16,9 +16,9 @@ export type SponsoredSurface =
 export type SponsoredPlacementAction = 'IMPRESSION' | 'CLICK';
 
 export type ListPagePlacements = {
-  banner: SponsoredPlacementPublic | null;
-  sidebar: SponsoredPlacementPublic | null;
-  afterSimilar: SponsoredPlacementPublic | null;
+  banner: SponsoredPlacementPublic[];
+  sidebar: SponsoredPlacementPublic[];
+  afterSimilar: SponsoredPlacementPublic[];
 };
 
 export const LIST_PAGE_SURFACES: SponsoredSurface[] = [
@@ -37,8 +37,8 @@ export const SPONSORED_SURFACE_META: Record<
     page: 'list',
   },
   LIST_SIDEBAR: {
-    label: 'جایگزین کیوریتور',
-    hint: 'سایدبار دسکتاپ — به‌جای باکس کیوریتور',
+    label: 'سایدبار لیست',
+    hint: 'ستون کناری دسکتاپ — زیر دکمه‌های مدیریت',
     page: 'list',
   },
   LIST_AFTER_SIMILAR: {
@@ -217,37 +217,56 @@ export async function resolveListPagePlacements(
   });
 
   const active = rows.filter((r) => isActivePlacement(r, now));
-  const pick = (surface: SponsoredSurface) => {
-    const matched = active
+  const pickAll = (surface: SponsoredSurface) =>
+    active
       .filter((r) => matchesListForSurface(r, surface, listId, categoryId))
-      .sort(comparePlacements);
-    return matched[0] ? toPublic(matched[0]) : null;
-  };
+      .sort(comparePlacements)
+      .map(toPublic);
 
   return {
-    banner: pick('LIST_BANNER'),
-    sidebar: pick('LIST_SIDEBAR'),
-    afterSimilar: pick('LIST_AFTER_SIMILAR'),
+    banner: pickAll('LIST_BANNER'),
+    sidebar: pickAll('LIST_SIDEBAR'),
+    afterSimilar: pickAll('LIST_AFTER_SIMILAR'),
   };
 }
 
+export async function resolveListBannerPlacements(
+  client: PrismaClient,
+  listId: string,
+  categoryId: string | null
+): Promise<SponsoredPlacementPublic[]> {
+  const page = await resolveListPagePlacements(client, listId, categoryId);
+  return page.banner;
+}
+
+/** @deprecated use resolveListBannerPlacements */
 export async function resolveListBannerPlacement(
   client: PrismaClient,
   listId: string,
   categoryId: string | null
 ): Promise<SponsoredPlacementPublic | null> {
-  const rows = await fetchActivePlacementsForSurface(client, 'LIST_BANNER');
-  const matched = rows.filter((r) => matchesList(r, listId, categoryId)).sort(comparePlacements);
-  return matched[0] ? toPublic(matched[0]) : null;
+  const placements = await resolveListBannerPlacements(client, listId, categoryId);
+  return placements[0] ?? null;
 }
 
+export async function resolveCategoryBannerPlacements(
+  client: PrismaClient,
+  categoryId: string
+): Promise<SponsoredPlacementPublic[]> {
+  const rows = await fetchActivePlacementsForSurface(client, 'CATEGORY_BANNER');
+  return rows
+    .filter((r) => matchesCategory(r, categoryId))
+    .sort(comparePlacements)
+    .map(toPublic);
+}
+
+/** @deprecated use resolveCategoryBannerPlacements */
 export async function resolveCategoryBannerPlacement(
   client: PrismaClient,
   categoryId: string
 ): Promise<SponsoredPlacementPublic | null> {
-  const rows = await fetchActivePlacementsForSurface(client, 'CATEGORY_BANNER');
-  const matched = rows.filter((r) => matchesCategory(r, categoryId)).sort(comparePlacements);
-  return matched[0] ? toPublic(matched[0]) : null;
+  const placements = await resolveCategoryBannerPlacements(client, categoryId);
+  return placements[0] ?? null;
 }
 
 export function getCachedListPagePlacements(listId: string, categoryId: string | null) {
@@ -262,19 +281,24 @@ export function getCachedListBannerPlacement(listId: string, categoryId: string 
   return unstable_cache(
     async () => {
       const page = await dbQuery(() => resolveListPagePlacements(prisma, listId, categoryId));
-      return page.banner;
+      return page.banner[0] ?? null;
     },
     [`sponsored-list-${listId}-banner`],
     { revalidate: 90, tags: [`sponsored-list-${listId}`, 'sponsored-placements'] }
   )();
 }
 
-export function getCachedCategoryBannerPlacement(categoryId: string) {
+export function getCachedCategoryBannerPlacements(categoryId: string) {
   return unstable_cache(
-    () => dbQuery(() => resolveCategoryBannerPlacement(prisma, categoryId)),
+    () => dbQuery(() => resolveCategoryBannerPlacements(prisma, categoryId)),
     [`sponsored-category-${categoryId}`],
     { revalidate: 90, tags: [`sponsored-category-${categoryId}`, 'sponsored-placements'] }
   )();
+}
+
+/** @deprecated use getCachedCategoryBannerPlacements */
+export function getCachedCategoryBannerPlacement(categoryId: string) {
+  return getCachedCategoryBannerPlacements(categoryId).then((placements) => placements[0] ?? null);
 }
 
 export function validateDestinationUrl(url: string): boolean {
@@ -400,21 +424,32 @@ export async function getSponsoredPerformance(
 }
 
 /** برای تست unit — export matching helpers */
+export function pickAllListPlacements(
+  rows: PlacementRow[],
+  listId: string,
+  categoryId: string | null,
+  surface: SponsoredSurface = 'LIST_BANNER'
+): PlacementRow[] {
+  return rows
+    .filter((r) => matchesListForSurface(r, surface, listId, categoryId))
+    .sort(comparePlacements);
+}
+
 export function pickBestListPlacement(
   rows: PlacementRow[],
   listId: string,
   categoryId: string | null,
   surface: SponsoredSurface = 'LIST_BANNER'
 ): PlacementRow | null {
-  const matched = rows
-    .filter((r) => matchesListForSurface(r, surface, listId, categoryId))
-    .sort(comparePlacements);
-  return matched[0] ?? null;
+  return pickAllListPlacements(rows, listId, categoryId, surface)[0] ?? null;
+}
+
+export function pickAllCategoryPlacements(rows: PlacementRow[], categoryId: string): PlacementRow[] {
+  return rows.filter((r) => matchesCategory(r, categoryId)).sort(comparePlacements);
 }
 
 export function pickBestCategoryPlacement(rows: PlacementRow[], categoryId: string): PlacementRow | null {
-  const matched = rows.filter((r) => matchesCategory(r, categoryId)).sort(comparePlacements);
-  return matched[0] ?? null;
+  return pickAllCategoryPlacements(rows, categoryId)[0] ?? null;
 }
 
 export function isPlacementActive(row: PlacementRow, now = new Date()): boolean {

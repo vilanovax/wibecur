@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Loader2,
   Plus,
-  Trash2,
   BarChart3,
   Megaphone,
   X,
@@ -12,14 +11,15 @@ import {
   MousePointerClick,
   Calendar,
   ChevronDown,
-  Pencil,
 } from 'lucide-react';
-import DatePicker, { type DateObject } from 'react-multi-date-picker';
+import DatePicker, { DateObject } from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
+import 'react-multi-date-picker/styles/colors/teal.css';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import SponsoredTextBanner from '@/components/shared/SponsoredTextBanner';
 import MetricCard from '@/components/admin/design-system/MetricCard';
+import SponsoredPlacementRowMenu from '@/app/admin/custom/sponsored/SponsoredPlacementRowMenu';
 import type {
   SponsoredPlacementPublic,
   SponsoredSurface,
@@ -91,6 +91,15 @@ const inputClass =
   'w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30';
 
 const labelClass = 'block text-xs font-medium text-[var(--color-text-muted)] mb-1.5';
+
+const datePickerInputClass = `${inputClass} !py-2 !px-2 flex-1 text-right`;
+
+function normalizeDestinationUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `http://${trimmed.replace(/^\/+/, '')}`;
+}
 
 function scopeLabel(p: PlacementRow): string {
   if (p.scopeType === 'LIST') return `لیست: ${p.lists?.title ?? p.listId}`;
@@ -218,13 +227,13 @@ export default function SponsoredPlacementsClient() {
   const [formEndDate, setFormEndDate] = useState<DateObject | null>(null);
   const [formEndTime, setFormEndTime] = useState('23:59');
   const [activePreset, setActivePreset] = useState<DurationPreset | null>(null);
-  const [showAdvancedDates, setShowAdvancedDates] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [perfId, setPerfId] = useState<string | null>(null);
   const [perf, setPerf] = useState<PerformanceData | null>(null);
   const [perfLoading, setPerfLoading] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -283,7 +292,6 @@ export default function SponsoredPlacementsClient() {
     setFormEndDate(null);
     setFormEndTime('23:59');
     setActivePreset(null);
-    setShowAdvancedDates(false);
     setFormError(null);
   };
 
@@ -295,7 +303,6 @@ export default function SponsoredPlacementsClient() {
     setFormEndDate(null);
     setFormEndTime('23:59');
     setActivePreset(null);
-    setShowAdvancedDates(false);
     setFormError(null);
     setForm(DEFAULT_FORM);
     setFormOpen(true);
@@ -310,7 +317,6 @@ export default function SponsoredPlacementsClient() {
     setFormEndDate(schedule.endDate);
     setFormEndTime(schedule.endTime);
     setActivePreset(null);
-    setShowAdvancedDates(true);
     setFormError(null);
     setFormOpen(true);
   };
@@ -350,8 +356,9 @@ export default function SponsoredPlacementsClient() {
 
   const validateForm = (): string | null => {
     if (!form.headline.trim()) return 'عنوان تبلیغ الزامی است';
-    if (!form.destinationUrl.trim()) return 'لینک مقصد الزامی است';
-    if (!/^https?:\/\//i.test(form.destinationUrl.trim())) {
+    const destinationUrl = normalizeDestinationUrl(form.destinationUrl);
+    if (!destinationUrl) return 'لینک مقصد الزامی است';
+    if (!/^https?:\/\//i.test(destinationUrl)) {
       return 'لینک باید با http:// یا https:// شروع شود';
     }
     if (!formStartDate) return 'تاریخ شروع الزامی است';
@@ -397,6 +404,7 @@ export default function SponsoredPlacementsClient() {
       const endAt = formEndDate ? combineDateAndTime(formEndDate, formEndTime, true) : null;
       const payload = {
         ...form,
+        destinationUrl: normalizeDestinationUrl(form.destinationUrl),
         startAt,
         endAt,
         categoryId: form.categoryId || null,
@@ -443,6 +451,31 @@ export default function SponsoredPlacementsClient() {
     }
   };
 
+  const handleToggleActive = async (p: PlacementRow) => {
+    setTogglingId(p.id);
+    try {
+      const res = await fetch(`/api/admin/custom/sponsored/${p.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !p.isActive }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'خطا');
+      setToast({
+        message: p.isActive ? 'تبلیغ غیرفعال شد' : 'تبلیغ فعال شد',
+        type: 'success',
+      });
+      await fetchData();
+    } catch (e: unknown) {
+      setToast({
+        message: e instanceof Error ? e.message : 'خطا',
+        type: 'error',
+      });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const loadPerformance = async (id: string) => {
     setPerfId(id);
     setPerfLoading(true);
@@ -484,7 +517,7 @@ export default function SponsoredPlacementsClient() {
             تبلیغات اسپانسری
           </h1>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            متن تبلیغ با لینک — تا ۳ جایگاه در هر صفحه لیست + بنر دسته
+            متن تبلیغ با لینک — چند تبلیغ هم‌پوزیشن زیر هم نمایش داده می‌شوند
           </p>
         </div>
         <button
@@ -498,7 +531,7 @@ export default function SponsoredPlacementsClient() {
       </div>
 
       {!loading && placements.length > 0 ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <MetricCard title="فعال" value={stats.active} icon={Megaphone} />
           <MetricCard title="کل تبلیغ‌ها" value={stats.total} icon={Calendar} />
           <MetricCard title="نمایش" value={stats.impressions} icon={Eye} />
@@ -527,63 +560,77 @@ export default function SponsoredPlacementsClient() {
           </button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+          <div className="-mx-px overflow-x-auto rounded-2xl">
+            <table className="w-full min-w-[880px] table-fixed text-sm">
+              <colgroup>
+                <col style={{ width: '28%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '22%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '48px' }} />
+              </colgroup>
               <thead className="bg-[var(--color-bg)] text-[var(--color-text-muted)]">
                 <tr>
                   <th className="px-4 py-3 text-right font-medium">تبلیغ</th>
                   <th className="px-4 py-3 text-right font-medium">محل نمایش</th>
                   <th className="px-4 py-3 text-right font-medium">محدوده</th>
-                  <th className="px-4 py-3 text-right font-medium hidden md:table-cell">زمان‌بندی</th>
+                  <th className="hidden px-4 py-3 text-right font-medium md:table-cell">زمان‌بندی</th>
                   <th className="px-4 py-3 text-right font-medium">وضعیت</th>
                   <th className="px-4 py-3 text-right font-medium">نمایش / کلیک</th>
-                  <th className="px-4 py-3 text-right font-medium w-24">عملیات</th>
+                  <th
+                    className="sticky left-0 z-20 bg-[var(--color-bg)] px-2 py-3 shadow-[4px_0_8px_-6px_rgba(0,0,0,0.08)]"
+                    aria-label="عملیات"
+                  />
                 </tr>
               </thead>
               <tbody>
                 {placements.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t border-[var(--color-border)] hover:bg-[var(--color-bg)]/60 transition-colors"
+                    className="group border-t border-[var(--color-border)] hover:bg-[var(--color-bg)]/60 transition-colors"
                   >
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-[var(--color-text)]">{p.headline}</p>
-                      <p className="mt-0.5 text-xs text-[var(--color-text-muted)] truncate max-w-[220px]">
+                    <td className="px-4 py-3 align-top">
+                      <p className="font-medium text-[var(--color-text)] line-clamp-2">{p.headline}</p>
+                      <p className="mt-0.5 truncate text-xs text-[var(--color-text-muted)]" dir="ltr">
                         {p.destinationUrl}
                       </p>
                       {p.sponsorName ? (
-                        <p className="mt-0.5 text-xs text-amber-700">{p.sponsorName}</p>
+                        <p className="mt-0.5 truncate text-xs text-amber-700">{p.sponsorName}</p>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 align-top">
                       <p className="text-xs font-medium text-[var(--color-text)]">
                         {surfaceLabel(p.surface)}
                       </p>
                     </td>
-                    <td className="px-4 py-3">
-                      <p className="text-xs text-[var(--color-text)]">{scopeLabel(p)}</p>
+                    <td className="px-4 py-3 align-top">
+                      <p className="text-xs leading-relaxed text-[var(--color-text)] line-clamp-3">
+                        {scopeLabel(p)}
+                      </p>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
+                    <td className="hidden px-4 py-3 align-top md:table-cell">
                       <p className="text-xs text-[var(--color-text)]">{formatPersianDay(p.startAt)}</p>
                       <p className="text-[10px] text-[var(--color-text-muted)]">
                         {p.endAt ? `تا ${formatPersianDay(p.endAt)}` : 'بدون پایان'}
                       </p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 align-top">
                       <span
                         className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           p.isLive
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300'
                             : p.isExpired
                               ? 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400'
-                              : 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300'
+                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400'
                         }`}
                       >
-                        {p.isLive ? 'فعال' : p.isExpired ? 'منقضی' : 'آینده'}
+                        {p.isLive ? 'فعال' : p.isExpired ? 'منقضی' : 'غیرفعال'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs tabular-nums">
+                    <td className="px-4 py-3 align-top text-xs tabular-nums whitespace-nowrap">
                       <span className="text-[var(--color-text)]">
                         {p.impressions.toLocaleString('fa-IR')}
                       </span>
@@ -597,33 +644,15 @@ export default function SponsoredPlacementsClient() {
                         </span>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          title="ویرایش"
-                          onClick={() => openEditForm(p)}
-                          className="rounded-lg p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--primary)] transition-colors"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          title="گزارش"
-                          onClick={() => void loadPerformance(p.id)}
-                          className="rounded-lg p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--primary)] transition-colors"
-                        >
-                          <BarChart3 className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          title="حذف"
-                          onClick={() => void handleDelete(p.id)}
-                          className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                    <td className="sticky left-0 z-10 bg-[var(--color-surface)] px-2 py-3 shadow-[4px_0_8px_-6px_rgba(0,0,0,0.12)] group-hover:bg-[var(--color-bg)]">
+                      <SponsoredPlacementRowMenu
+                        isActive={p.isActive}
+                        toggling={togglingId === p.id}
+                        onEdit={() => openEditForm(p)}
+                        onToggleActive={() => void handleToggleActive(p)}
+                        onPerformance={() => void loadPerformance(p.id)}
+                        onDelete={() => void handleDelete(p.id)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -669,8 +698,8 @@ export default function SponsoredPlacementsClient() {
                   <div>
                     <label className={labelClass}>محل نمایش در صفحه</label>
                     <p className="mb-2 text-[11px] text-[var(--color-text-muted)] leading-relaxed">
-                      هر صفحه می‌تواند تا سه تبلیغ همزمان داشته باشد — هر کدام در محل جدا. تبلیغ‌های
-                      فعال با اولویت بالاتر نمایش داده می‌شوند.
+                      هر صفحه می‌تواند چند تبلیغ فعال در هر محل داشته باشد — همهٔ تبلیغ‌های
+                      هم‌پوزیشن زیر هم نمایش داده می‌شوند. اولویت بالاتر بالاتر قرار می‌گیرد.
                     </p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {(Object.keys(SPONSORED_SURFACE_META) as SponsoredSurface[]).map((surface) => {
@@ -870,13 +899,32 @@ export default function SponsoredPlacementsClient() {
                   </div>
                   <div>
                     <label className={labelClass}>لینک مقصد *</label>
-                    <input
-                      className={inputClass}
-                      dir="ltr"
-                      placeholder="https://example.com"
-                      value={form.destinationUrl}
-                      onChange={(e) => setForm((f) => ({ ...f, destinationUrl: e.target.value }))}
-                    />
+                    <div className="flex overflow-hidden rounded-xl border border-[var(--color-border)] focus-within:ring-2 focus-within:ring-[var(--primary)]/30">
+                      <span className="flex shrink-0 items-center bg-[var(--color-bg)] px-3 text-xs text-[var(--color-text-muted)] border-l border-[var(--color-border)]">
+                        http://
+                      </span>
+                      <input
+                        className="min-w-0 flex-1 border-0 bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none"
+                        dir="ltr"
+                        placeholder="www.example.com"
+                        value={form.destinationUrl.replace(/^https?:\/\//i, '')}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            destinationUrl: e.target.value.replace(/^https?:\/\//i, ''),
+                          }))
+                        }
+                        onBlur={() =>
+                          setForm((f) => ({
+                            ...f,
+                            destinationUrl: normalizeDestinationUrl(f.destinationUrl),
+                          }))
+                        }
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] text-[var(--color-text-muted)]">
+                      اگر http:// ننویسید، هنگام ذخیره خودکار اضافه می‌شود
+                    </p>
                   </div>
                 </FormSection>
 
@@ -923,60 +971,60 @@ export default function SponsoredPlacementsClient() {
                     </p>
                   ) : null}
 
-                  <button
-                    type="button"
-                    onClick={() => setShowAdvancedDates((v) => !v)}
-                    className="text-xs text-[var(--primary)] hover:underline"
-                  >
-                    {showAdvancedDates ? 'بستن تنظیم دستی' : 'تنظیم دستی تاریخ و ساعت'}
-                  </button>
-
-                  {showAdvancedDates ? (
-                    <div className="grid sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[var(--color-bg)]">
-                      <div>
-                        <label className={labelClass}>شروع</label>
-                        <div className="flex gap-2">
-                          <DatePicker
-                            value={formStartDate}
-                            onChange={(d) => {
-                              setFormStartDate(d ?? null);
-                              setActivePreset(null);
-                            }}
-                            calendar={persian}
-                            locale={persian_fa}
-                            inputClass={`${inputClass} !py-2 !px-2 flex-1`}
-                          />
-                          <input
-                            type="time"
-                            value={formStartTime}
-                            onChange={(e) => setFormStartTime(e.target.value)}
-                            className="rounded-xl border border-[var(--color-border)] text-sm px-2 w-[88px]"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className={labelClass}>پایان (اختیاری)</label>
-                        <div className="flex gap-2">
-                          <DatePicker
-                            value={formEndDate}
-                            onChange={(d) => {
-                              setFormEndDate(d ?? null);
-                              setActivePreset(null);
-                            }}
-                            calendar={persian}
-                            locale={persian_fa}
-                            inputClass={`${inputClass} !py-2 !px-2 flex-1`}
-                          />
-                          <input
-                            type="time"
-                            value={formEndTime}
-                            onChange={(e) => setFormEndTime(e.target.value)}
-                            className="rounded-xl border border-[var(--color-border)] text-sm px-2 w-[88px]"
-                          />
-                        </div>
+                  <div className="grid sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)]">
+                    <div>
+                      <label className={labelClass}>تاریخ شروع (شمسی)</label>
+                      <div className="flex gap-2">
+                        <DatePicker
+                          value={formStartDate}
+                          onChange={(d) => {
+                            setFormStartDate(d ?? null);
+                            setActivePreset(null);
+                          }}
+                          calendar={persian}
+                          locale={persian_fa}
+                          calendarPosition="bottom-right"
+                          portal
+                          zIndex={10060}
+                          format="DD MMMM YYYY"
+                          placeholder="انتخاب تاریخ"
+                          inputClass={datePickerInputClass}
+                        />
+                        <input
+                          type="time"
+                          value={formStartTime}
+                          onChange={(e) => setFormStartTime(e.target.value)}
+                          className="rounded-xl border border-[var(--color-border)] text-sm px-2 w-[88px] bg-[var(--color-surface)]"
+                        />
                       </div>
                     </div>
-                  ) : null}
+                    <div>
+                      <label className={labelClass}>تاریخ پایان (شمسی، اختیاری)</label>
+                      <div className="flex gap-2">
+                        <DatePicker
+                          value={formEndDate}
+                          onChange={(d) => {
+                            setFormEndDate(d ?? null);
+                            setActivePreset(null);
+                          }}
+                          calendar={persian}
+                          locale={persian_fa}
+                          calendarPosition="bottom-right"
+                          portal
+                          zIndex={10060}
+                          format="DD MMMM YYYY"
+                          placeholder="بدون پایان"
+                          inputClass={datePickerInputClass}
+                        />
+                        <input
+                          type="time"
+                          value={formEndTime}
+                          onChange={(e) => setFormEndTime(e.target.value)}
+                          className="rounded-xl border border-[var(--color-border)] text-sm px-2 w-[88px] bg-[var(--color-surface)]"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </FormSection>
 
                 {formError ? (

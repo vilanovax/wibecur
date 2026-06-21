@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isPlacementActive,
+  pickAllListPlacements,
   pickBestCategoryPlacement,
   pickBestListPlacement,
   validateDestinationUrl,
@@ -109,6 +110,16 @@ describe('sponsored-placements resolver', () => {
     ];
     expect(pickBestListPlacement(rows, 'list-1', 'cat-book', 'LIST_BANNER')?.id).toBe('banner');
     expect(pickBestListPlacement(rows, 'list-1', 'cat-book', 'LIST_SIDEBAR')?.id).toBe('sidebar');
+  });
+
+  it('returns all matching placements for the same surface', () => {
+    const rows = [
+      row({ id: 'a', scopeType: 'CATEGORY_ALL', priority: 2 }),
+      row({ id: 'b', scopeType: 'CATEGORY_ALL', priority: 1 }),
+      row({ id: 'c', scopeType: 'LIST', listId: 'list-1', priority: 0 }),
+    ];
+    const all = pickAllListPlacements(rows, 'list-1', 'cat-book');
+    expect(all.map((r) => r.id)).toEqual(['c', 'a', 'b']);
   });
 
   it('validates destination URLs', () => {

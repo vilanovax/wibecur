@@ -37,7 +37,7 @@ import {
 import { normalizeSearchQuery } from '@/lib/list-search';
 import { isMovieLikeCategory } from '@/lib/resolve-item-image';
 import LightweightEntryRow from '@/components/shared/list-entries/LightweightEntryRow';
-import SponsoredTextBanner from '@/components/shared/SponsoredTextBanner';
+import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { ListPagePlacements } from '@/lib/sponsored-placements';
 import {
   isLightweightListItem,
@@ -572,7 +572,7 @@ function ListItemRow({
 export default function ListDetailClient({
   list,
   relatedLists,
-  sponsoredPlacements = { banner: null, sidebar: null, afterSimilar: null },
+  sponsoredPlacements = { banner: [], sidebar: [], afterSimilar: [] },
 }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -1123,9 +1123,9 @@ export default function ListDetailClient({
         />
       </div>
 
-      {sponsoredPlacements.banner ? (
-        <SponsoredTextBanner
-          placement={sponsoredPlacements.banner}
+      {sponsoredPlacements.banner.length > 0 ? (
+        <SponsoredPlacementStack
+          placements={sponsoredPlacements.banner}
           listId={list.id}
           categoryId={list.categories?.id}
           variant="banner"
@@ -1303,9 +1303,9 @@ export default function ListDetailClient({
               <SimilarListsCarousel relatedLists={relatedLists} sectionRef={similarSectionRef} />
             )}
 
-            {sponsoredPlacements.afterSimilar ? (
-              <SponsoredTextBanner
-                placement={sponsoredPlacements.afterSimilar}
+            {sponsoredPlacements.afterSimilar.length > 0 ? (
+              <SponsoredPlacementStack
+                placements={sponsoredPlacements.afterSimilar}
                 listId={list.id}
                 categoryId={list.categories?.id}
                 variant="inline"
@@ -1336,12 +1336,9 @@ export default function ListDetailClient({
             isOwner={isOwner}
             isViral={isViral}
             viralProgress={viralProgress}
-            curator={list.users}
-            sidebarAd={sponsoredPlacements.sidebar}
+            sidebarAds={sponsoredPlacements.sidebar}
             sidebarAdListId={list.id}
             sidebarAdCategoryId={list.categories?.id}
-            categoryName={list.categories?.name}
-            categoryIcon={list.categories?.icon}
             tags={list.tags}
             onBookmarkToggle={(saved) => setIsBookmarked(saved)}
             onShare={handleShare}

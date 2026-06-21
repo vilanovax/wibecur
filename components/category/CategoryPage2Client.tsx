@@ -18,13 +18,13 @@ import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { ExploreByCityPills, MostSavedItemsCafe, SectionReveal } from './hub';
 import { GenreScrollBar } from './film';
-import SponsoredTextBanner from '@/components/shared/SponsoredTextBanner';
+import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 
 interface CategoryPage2ClientProps {
   slug: string;
   initialData?: CategoryPageData | null;
-  sponsoredPlacement?: SponsoredPlacementPublic | null;
+  sponsoredPlacements?: SponsoredPlacementPublic[];
 }
 
 async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
@@ -37,7 +37,7 @@ async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
 export default function CategoryPage2Client({
   slug,
   initialData = null,
-  sponsoredPlacement = null,
+  sponsoredPlacements = [],
 }: CategoryPage2ClientProps) {
   useInterestTracking({ type: 'category_view', categorySlug: slug });
 
@@ -107,8 +107,8 @@ export default function CategoryPage2Client({
 
         <CategoryStandardHero category={category} metrics={metrics} />
 
-        {sponsoredPlacement ? (
-          <SponsoredTextBanner placement={sponsoredPlacement} categoryId={category.id} />
+        {sponsoredPlacements.length > 0 ? (
+          <SponsoredPlacementStack placements={sponsoredPlacements} categoryId={category.id} />
         ) : null}
 
         {showGenreBar && (

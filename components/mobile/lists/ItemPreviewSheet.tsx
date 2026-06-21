@@ -144,11 +144,65 @@ function PreviewPoster({
   );
 }
 
-function MetadataChip({ label, value }: { label: string; value: string }) {
+function MetadataChip({
+  label,
+  value,
+  href,
+  profileLinks,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+  profileLinks?: Array<{ name: string; href: string }>;
+}) {
+  if (profileLinks?.length) {
+    return (
+      <span className="inline-flex max-w-full flex-wrap items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
+        <span className="shrink-0 font-medium text-foreground/55">{label}</span>
+        <span className="min-w-0 font-semibold text-foreground">
+          {profileLinks.map((link, index) => (
+            <span key={link.href}>
+              {index > 0 ? <span className="text-foreground/40"> · </span> : null}
+              <Link href={link.href} className="text-primary hover:underline">
+                {link.name}
+              </Link>
+            </span>
+          ))}
+        </span>
+      </span>
+    );
+  }
+
+  const content = (
+    <>
+      <span className="shrink-0 font-medium text-foreground/55">{label}</span>
+      <span className={`min-w-0 font-semibold ${href ? 'text-primary' : 'text-foreground'}`}>{value}</span>
+    </>
+  );
+
+  if (href) {
+    if (href.startsWith('/')) {
+      return (
+        <Link href={href} className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
+          {content}
+        </Link>
+      );
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right"
+      >
+        {content}
+      </a>
+    );
+  }
+
   return (
     <span className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
-      <span className="shrink-0 font-medium text-foreground/55">{label}</span>
-      <span className="min-w-0 font-semibold text-foreground">{value}</span>
+      {content}
     </span>
   );
 }
@@ -411,8 +465,14 @@ export default function ItemPreviewSheet({
               <div className="flex min-w-0 flex-1 flex-col gap-3.5 lg:gap-4 lg:pt-1">
                 {chips.length > 0 && (
                   <div className="flex flex-wrap justify-start gap-1.5">
-                    {chips.map(({ key, label, value }) => (
-                      <MetadataChip key={key} label={label} value={value} />
+                    {chips.map(({ key, label, value, href, profileLinks }) => (
+                      <MetadataChip
+                        key={key}
+                        label={label}
+                        value={value}
+                        href={href}
+                        profileLinks={profileLinks}
+                      />
                     ))}
                   </div>
                 )}

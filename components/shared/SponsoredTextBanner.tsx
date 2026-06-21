@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ExternalLink } from 'lucide-react';
 import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 
 export type SponsoredBannerVariant = 'banner' | 'sidebar' | 'inline';
@@ -15,11 +14,48 @@ type SponsoredTextBannerProps = {
 
 const VARIANT_CLASS: Record<SponsoredBannerVariant, string> = {
   banner:
-    'mx-2.5 my-2.5 rounded-2xl border border-wibe bg-wibe-card px-3.5 py-3 shadow-sm lg:mx-0 lg:my-3 lg:px-4',
+    'rounded-2xl border border-wibe bg-wibe-card px-3.5 py-3 shadow-sm lg:px-4',
   sidebar: 'rounded-xl border border-wibe bg-wibe-card p-3.5 shadow-sm',
-  inline:
-    'my-4 rounded-2xl border border-wibe bg-wibe-card px-4 py-3.5 shadow-sm lg:rounded-2xl lg:border lg:p-4',
+  inline: 'rounded-2xl border border-wibe bg-wibe-card px-4 py-3.5 shadow-sm lg:rounded-2xl lg:border lg:p-4',
 };
+
+const STACK_CLASS: Record<SponsoredBannerVariant, string> = {
+  banner: 'mx-2.5 my-2.5 space-y-3 lg:mx-0 lg:my-3',
+  sidebar: 'space-y-3',
+  inline: 'my-4 space-y-3',
+};
+
+type SponsoredPlacementStackProps = {
+  placements: SponsoredPlacementPublic[];
+  listId?: string;
+  categoryId?: string;
+  variant?: SponsoredBannerVariant;
+  className?: string;
+};
+
+export function SponsoredPlacementStack({
+  placements,
+  listId,
+  categoryId,
+  variant = 'banner',
+  className = '',
+}: SponsoredPlacementStackProps) {
+  if (placements.length === 0) return null;
+
+  return (
+    <div className={`${STACK_CLASS[variant]} ${className}`.trim()}>
+      {placements.map((placement) => (
+        <SponsoredTextBanner
+          key={placement.id}
+          placement={placement}
+          listId={listId}
+          categoryId={categoryId}
+          variant={variant}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function SponsoredTextBanner({
   placement,
@@ -62,16 +98,12 @@ export default function SponsoredTextBanner({
   const isPreview = placement.id === 'preview';
   const isSidebar = variant === 'sidebar';
 
-  const ctaClass = isSidebar
-    ? 'mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary/90 px-3 py-2 wibe-caption font-medium text-white transition-colors hover:bg-primary'
-    : 'mt-2.5 inline-flex items-center gap-1 rounded-lg bg-primary/90 px-3 py-1.5 wibe-caption font-medium text-white transition-colors hover:bg-primary';
+  const cardClass = `${VARIANT_CLASS[variant]} ${
+    isPreview ? '' : 'block transition-colors hover:border-primary/30 hover:bg-primary/[0.02]'
+  }`;
 
-  return (
-    <aside
-      className={VARIANT_CLASS[variant]}
-      aria-label="محتوای تبلیغاتی"
-      data-sponsored-variant={variant}
-    >
+  const content = (
+    <>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="inline-flex items-center rounded-md bg-amber-100/90 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
           {placement.disclosureLabel}
@@ -94,20 +126,31 @@ export default function SponsoredTextBanner({
           {placement.bodyText}
         </p>
       ) : null}
+    </>
+  );
 
-      {isPreview ? (
-        <span className={`${ctaClass} cursor-default opacity-90`}>{placement.ctaLabel}</span>
-      ) : (
-        <a
-          href={clickHref}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className={ctaClass}
-        >
-          {placement.ctaLabel}
-          {!isSidebar ? <ExternalLink className="h-3 w-3 opacity-80" aria-hidden /> : null}
-        </a>
-      )}
-    </aside>
+  if (isPreview) {
+    return (
+      <aside
+        className={cardClass}
+        aria-label="محتوای تبلیغاتی"
+        data-sponsored-variant={variant}
+      >
+        {content}
+      </aside>
+    );
+  }
+
+  return (
+    <a
+      href={clickHref}
+      target="_blank"
+      rel="noopener noreferrer sponsored"
+      className={cardClass}
+      aria-label={`${placement.headline} — ${placement.disclosureLabel}`}
+      data-sponsored-variant={variant}
+    >
+      {content}
+    </a>
   );
 }

@@ -3,18 +3,10 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Lightbulb, Plus, Settings, Share2 } from 'lucide-react';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
-import SponsoredTextBanner from '@/components/shared/SponsoredTextBanner';
+import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
-import { trackCreatorProfileView } from '@/lib/analytics';
 import { DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS } from '@/lib/layout-tokens';
-
-type ListUser = {
-  name: string | null;
-  image: string | null;
-  username: string | null;
-} | null;
 
 interface ListDetailSidebarProps {
   listId: string;
@@ -22,12 +14,9 @@ interface ListDetailSidebarProps {
   isOwner: boolean;
   isViral: boolean;
   viralProgress: number;
-  curator: ListUser;
-  sidebarAd?: SponsoredPlacementPublic | null;
+  sidebarAds?: SponsoredPlacementPublic[];
   sidebarAdListId?: string;
   sidebarAdCategoryId?: string;
-  categoryName?: string | null;
-  categoryIcon?: string | null;
   tags?: string[];
   onBookmarkToggle?: (saved: boolean) => void;
   onShare: () => void;
@@ -42,12 +31,9 @@ export default function ListDetailSidebar({
   isOwner,
   isViral,
   viralProgress,
-  curator,
-  sidebarAd = null,
+  sidebarAds = [],
   sidebarAdListId,
   sidebarAdCategoryId,
-  categoryName,
-  categoryIcon,
   tags = [],
   onBookmarkToggle,
   onShare,
@@ -105,37 +91,13 @@ export default function ListDetailSidebar({
           />
         )}
 
-        {sidebarAd ? (
-          <SponsoredTextBanner
-            placement={sidebarAd}
+        {sidebarAds.length > 0 ? (
+          <SponsoredPlacementStack
+            placements={sidebarAds}
             listId={sidebarAdListId}
             categoryId={sidebarAdCategoryId}
             variant="sidebar"
           />
-        ) : curator?.name ? (
-          <div className="rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm">
-            <p className="mb-2 wibe-caption font-medium text-wibe-secondary">کیوریتور</p>
-            {curator.username ? (
-              <Link
-                href={`/u/${encodeURIComponent(curator.username)}`}
-                onClick={() => trackCreatorProfileView(curator.username!, 'list_detail')}
-                className="flex items-center gap-3 rounded-lg transition-colors hover:bg-gray-50"
-              >
-                <CuratorAvatar curator={curator} />
-                <span className="wibe-small font-semibold text-foreground">{curator.name}</span>
-              </Link>
-            ) : (
-              <div className="flex items-center gap-3">
-                <CuratorAvatar curator={curator} />
-                <span className="wibe-small font-semibold text-foreground">{curator.name}</span>
-              </div>
-            )}
-            {categoryName && (
-              <p className="mt-2 wibe-caption text-wibe-secondary">
-                {categoryIcon} {categoryName}
-              </p>
-            )}
-          </div>
         ) : null}
 
         {tags.length > 0 && (
@@ -182,22 +144,5 @@ export default function ListDetailSidebar({
         )}
       </div>
     </aside>
-  );
-}
-
-function CuratorAvatar({ curator }: { curator: NonNullable<ListUser> }) {
-  if (curator.image) {
-    return (
-      <ImageWithFallback
-        src={curator.image}
-        alt=""
-        className="h-10 w-10 shrink-0 rounded-full object-cover"
-      />
-    );
-  }
-  return (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-      {(curator.name?.[0] || '?').toUpperCase()}
-    </span>
   );
 }
