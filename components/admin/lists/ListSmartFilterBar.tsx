@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, LayoutGrid, Table2, SlidersHorizontal, X, Images } from 'lucide-react';
+import { Search, LayoutGrid, Table2, SlidersHorizontal, X, Images, Sparkles } from 'lucide-react';
 import type { ListCategoryOption } from '@/lib/admin/lists-intelligence';
 import type { ListAdminViewMode } from './ListCoversGallery';
 
@@ -49,6 +49,8 @@ interface ListSmartFilterBarProps {
   onCategoryChange: (categoryId: string) => void;
   onClearFilters?: () => void;
   hasActiveFilters?: boolean;
+  /** باز کردن ممیزی تصاویر استوریج (فقط در نمای کاورها) */
+  onOpenCoverAudit?: () => void;
   /** فشرده برای نوار sticky */
   compact?: boolean;
 }
@@ -69,6 +71,7 @@ export default function ListSmartFilterBar({
   onCategoryChange,
   onClearFilters,
   hasActiveFilters,
+  onOpenCoverAudit,
   compact = false,
 }: ListSmartFilterBarProps) {
   const [showSecondary, setShowSecondary] = useState(false);
@@ -164,6 +167,18 @@ export default function ListSmartFilterBar({
               <Table2 className="w-4 h-4" />
             </button>
           </div>
+
+          {viewMode === 'covers' && onOpenCoverAudit ? (
+            <button
+              type="button"
+              onClick={onOpenCoverAudit}
+              title="بررسی حجم و بهینه‌سازی کاورها در ParsPack"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-violet-300 bg-violet-50 text-violet-800 text-xs font-medium hover:bg-violet-100 transition-colors"
+            >
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">ممیزی استوریج</span>
+            </button>
+          ) : null}
 
           {!compact && (
             <button

@@ -246,65 +246,75 @@ export async function optimizeListCoverSlot(
   listId: string,
   field: ListCoverField
 ): Promise<OptimizeCoverResult> {
-  const list = await prisma.lists.findUnique({
-    where: { id: listId },
-    select: { id: true, coverImage: true, horizontalImage: true },
-  });
+  try {
+    const list = await prisma.lists.findUnique({
+      where: { id: listId },
+      select: { id: true, coverImage: true, horizontalImage: true },
+    });
 
-  if (!list) {
-    return { listId, field, status: 'failed', message: 'لیست یافت نشد' };
-  }
+    if (!list) {
+      return { listId, field, status: 'failed', message: 'لیست یافت نشد' };
+    }
 
-  const url = field === 'coverImage' ? list.coverImage : list.horizontalImage;
-  if (!url?.trim() || isPlaceholderCoverPath(url)) {
-    return { listId, field, status: 'skipped', message: 'تصویری برای بهینه‌سازی نیست' };
-  }
+    const url = field === 'coverImage' ? list.coverImage : list.horizontalImage;
+    if (!url?.trim() || isPlaceholderCoverPath(url)) {
+      return { listId, field, status: 'skipped', message: 'تصویری برای بهینه‌سازی نیست' };
+    }
 
-  if (!isOurStorageUrl(url)) {
-    return { listId, field, status: 'failed', message: 'فقط تصاویر ParsPack قابل بهینه‌سازی گروهی هستند' };
-  }
+    if (!isOurStorageUrl(url)) {
+      return { listId, field, status: 'failed', message: 'فقط تصاویر ParsPack قابل بهینه‌سازی گروهی هستند' };
+    }
 
-  const headBefore = await headObjectByPublicUrl(url);
-  const profile = FIELD_META[field].profile;
+    const headBefore = await headObjectByPublicUrl(url);
+    const profile = FIELD_META[field].profile;
 
-  const newUrl = await ensureImageInLiara(url, 'lists', { profile, forceOptimize: true });
-  if (!newUrl) {
-    return { listId, field, status: 'failed', previousUrl: url, message: 'بهینه‌سازی ناموفق' };
-  }
+    const newUrl = await ensureImageInLiara(url, 'lists', { profile, forceOptimize: true });
+    if (!newUrl) {
+      return { listId, field, status: 'failed', previousUrl: url, message: 'بهینه‌سازی ناموفق' };
+    }
 
-  if (newUrl === url) {
+    if (newUrl === url) {
+      return {
+        listId,
+        field,
+        status: 'skipped',
+        previousUrl: url,
+        newUrl,
+        beforeBytes: headBefore?.bytes ?? null,
+        afterBytes: headBefore?.bytes ?? null,
+        message: 'قبلاً بهینه است',
+      };
+    }
+
+    await prisma.lists.update({
+      where: { id: listId },
+      data: {
+        [field]: newUrl,
+        updatedAt: new Date(),
+      },
+    });
+
+    const headAfter = await headObjectByPublicUrl(newUrl);
+
     return {
       listId,
       field,
-      status: 'skipped',
+      status: 'optimized',
       previousUrl: url,
       newUrl,
       beforeBytes: headBefore?.bytes ?? null,
-      afterBytes: headBefore?.bytes ?? null,
-      message: 'قبلاً بهینه است',
+      afterBytes: headAfter?.bytes ?? null,
+      message: 'بهینه و جایگزین شد',
+    };
+  } catch (error: unknown) {
+    console.error(`optimizeListCoverSlot ${listId}:${field}:`, error);
+    return {
+      listId,
+      field,
+      status: 'failed',
+      message: error instanceof Error ? error.message : 'خطای غیرمنتظره',
     };
   }
-
-  await prisma.lists.update({
-    where: { id: listId },
-    data: {
-      [field]: newUrl,
-      updatedAt: new Date(),
-    },
-  });
-
-  const headAfter = await headObjectByPublicUrl(newUrl);
-
-  return {
-    listId,
-    field,
-    status: 'optimized',
-    previousUrl: url,
-    newUrl,
-    beforeBytes: headBefore?.bytes ?? null,
-    afterBytes: headAfter?.bytes ?? null,
-    message: 'بهینه و جایگزین شد',
-  };
 }
 
 export function sortCoverAudits(

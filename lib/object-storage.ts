@@ -25,6 +25,13 @@ import {
 
 const isDev = process.env.NODE_ENV === 'development';
 
+/** کپی امن به Node Buffer — sharp/Buffer.from با SharedArrayBuffer خطا می‌دهد */
+function toNodeBuffer(data: Buffer | Uint8Array | ArrayBuffer): Buffer {
+  if (Buffer.isBuffer(data)) return Buffer.from(data);
+  if (data instanceof Uint8Array) return Buffer.from(data.slice());
+  return Buffer.from(new Uint8Array(data));
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -199,7 +206,7 @@ export async function uploadImageFromUrlDetailed(
       };
     }
 
-    const imageBuffer = Buffer.from(response.data);
+    const imageBuffer = toNodeBuffer(response.data as Uint8Array);
     if (!imageBuffer.length) {
       return { ok: false, code: 'download_failed', error: 'فایل تصویر خالی است' };
     }
@@ -335,7 +342,7 @@ export async function getObjectByPublicUrl(
     if (!body) return null;
 
     const bytes = await body.transformToByteArray();
-    return { buffer: Buffer.from(bytes), contentType: res.ContentType ?? undefined };
+    return { buffer: toNodeBuffer(bytes), contentType: res.ContentType ?? undefined };
   };
 
   const tryDirectFetch = async (): Promise<{ buffer: Buffer; contentType?: string } | null> => {
@@ -352,7 +359,7 @@ export async function getObjectByPublicUrl(
       if (!res.data) return null;
       const contentType = res.headers['content-type'];
       return {
-        buffer: Buffer.from(res.data),
+        buffer: toNodeBuffer(res.data as Uint8Array),
         contentType: typeof contentType === 'string' ? contentType : undefined,
       };
     } catch {
@@ -389,7 +396,7 @@ export async function getObjectByStorageKey(
     if (!body) return null;
 
     const bytes = await body.transformToByteArray();
-    return { buffer: Buffer.from(bytes), contentType: res.ContentType ?? undefined };
+    return { buffer: toNodeBuffer(bytes), contentType: res.ContentType ?? undefined };
   } catch (e) {
     console.error('getObjectByStorageKey error:', (e as Error).message);
   }
@@ -424,7 +431,7 @@ export async function getObjectByStorageKey(
       const contentType = res.headers['content-type'];
       void ensureImageInLiara(legacyUrl, folderFromStorageKey(key)).catch(() => {});
       return {
-        buffer: Buffer.from(res.data),
+        buffer: toNodeBuffer(res.data as Uint8Array),
         contentType: typeof contentType === 'string' ? contentType : undefined,
       };
     } catch {

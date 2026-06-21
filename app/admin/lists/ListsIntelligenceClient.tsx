@@ -113,6 +113,7 @@ export default function ListsIntelligenceClient({
   const [kpiCollapsed, setKpiCollapsed] = useState(true);
   const [lists, setLists] = useState<ListIntelligenceRow[]>(data.lists);
   const [moveToTrashRow, setMoveToTrashRow] = useState<ListIntelligenceRow | null>(null);
+  const [coverAuditOpen, setCoverAuditOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   useEffect(() => {
@@ -143,6 +144,7 @@ export default function ListsIntelligenceClient({
 
   useEffect(() => {
     localStorage.setItem(VIEW_MODE_KEY, viewMode);
+    if (viewMode !== 'covers') setCoverAuditOpen(false);
   }, [viewMode]);
 
   useEffect(() => {
@@ -282,6 +284,8 @@ export default function ListsIntelligenceClient({
     onCategoryChange: handleCategoryChange,
     onClearFilters: handleClearFilters,
     hasActiveFilters,
+    onOpenCoverAudit:
+      viewMode === 'covers' && !isTrashView ? () => setCoverAuditOpen(true) : undefined,
   };
 
   const tabClass = (active: boolean) =>
@@ -468,6 +472,8 @@ export default function ListsIntelligenceClient({
           ) : viewMode === 'covers' && !isTrashView ? (
             <ListCoversGallery
               rows={sorted}
+              auditOpen={coverAuditOpen}
+              onAuditOpenChange={setCoverAuditOpen}
               onFeatureToggle={handleFeatureToggle}
               onDisableToggle={handleDisableToggle}
               onMoveToTrash={(row) => setMoveToTrashRow(row)}
