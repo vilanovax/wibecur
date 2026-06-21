@@ -17,8 +17,8 @@ export default function CategoryDiscoverySection({ categories }: CategoryDiscove
     <section id="categories" className="px-2.5 py-4 lg:px-0 lg:py-5" aria-labelledby="categories-title">
       <ExploreSectionTitle
         id="categories-title"
-        title="کشف دسته‌ها"
-        subtitle="لیست‌ها را بر اساس موضوع پیدا کن"
+        title="بر اساس موضوع بگرد"
+        subtitle="اگر می‌دونی دنبال چی می‌گردی"
         icon="🗂"
       />
 

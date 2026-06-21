@@ -6,6 +6,8 @@ import SearchInput from '@/components/mobile/search/SearchInput';
 import MoodExplorerHero from './MoodExplorerHero';
 import type { MoodExplorerCard } from '@/lib/discovery/mood-explorer-config';
 
+const EXPLORE_SEARCH_PLACEHOLDER = 'جستجو در وایب‌ها، مودها و لیست‌ها…';
+
 interface ExploreSmartHeroProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
@@ -32,12 +34,13 @@ export default function ExploreSmartHero({
       aria-label="اکسپلور هوشمند"
     >
       <div className="mb-2.5 hidden lg:block">
+        <p className="mb-1.5 wibe-caption font-medium text-wibe-secondary">جستجو در اکسپلور</p>
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <SearchInput
               value={searchQuery}
               onChange={onSearchChange}
-              placeholder="جستجو در آیتم‌ها و لیست‌ها…"
+              placeholder={EXPLORE_SEARCH_PLACEHOLDER}
             />
           </div>
           <button
@@ -52,6 +55,7 @@ export default function ExploreSmartHero({
         </div>
       </div>
 
+      <p className="mb-1.5 wibe-caption font-medium text-wibe-secondary lg:hidden">جستجو در اکسپلور</p>
       <button
         type="button"
         onClick={openGlobalSearch}
@@ -65,7 +69,7 @@ export default function ExploreSmartHero({
         <span
           className={`block w-full truncate py-0.5 pl-2 pr-8 text-right wibe-small ${hasQuery ? 'text-foreground' : 'text-wibe-secondary'}`}
         >
-          {hasQuery ? searchQuery : 'جستجو در آیتم‌ها و لیست‌ها…'}
+          {hasQuery ? searchQuery : EXPLORE_SEARCH_PLACEHOLDER}
         </span>
       </button>
 

@@ -26,21 +26,11 @@ export default function TrendingNowSection({
         icon="🔥"
       />
 
-      <div
-        className={
-          lists.length === 1
-            ? 'max-w-md'
-            : 'scrollbar-hide flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 lg:grid lg:grid-cols-4 lg:gap-4 lg:overflow-visible lg:snap-none xl:grid-cols-4'
-        }
-      >
+      <div className="scrollbar-hide -mx-2.5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2.5 pb-1 lg:mx-0 lg:px-0">
         {lists.map((list) => (
           <div
             key={list.id}
-            className={
-              lists.length === 1
-                ? 'w-full'
-                : 'w-[88%] max-w-[280px] shrink-0 snap-start lg:w-full lg:max-w-none'
-            }
+            className="w-[78%] max-w-[280px] shrink-0 snap-start sm:w-[46%] md:w-[38%] lg:w-[calc(25%-0.5625rem)] lg:max-w-none xl:w-[calc(20%-0.6rem)]"
           >
             <TrendingCard list={list} />
           </div>
@@ -57,7 +47,7 @@ function TrendingCard({ list }: { list: CuratedList }) {
       className="group block transition-transform active:scale-[0.99] lg:hover:scale-[1.01]"
     >
       <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:rounded-xl lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10] lg:max-h-[200px]">
+        <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10]">
           <ImageWithFallback
             src={list.coverUrl ?? ''}
             alt={list.title}
