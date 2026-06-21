@@ -116,6 +116,9 @@ export const MOOD_EXPLORER_CARDS: MoodExplorerCard[] = [
   },
 ];
 
+/** مودهای پیش‌فرض موبایل — ۲×۲ در نگاه اول */
+export const MOBILE_FEATURED_MOOD_IDS = ['tired', 'bored', 'free_night', 'with_friend'] as const;
+
 export const QUICK_NOW_PILLS: QuickNowPill[] = [
   {
     id: 'quick_30min',
