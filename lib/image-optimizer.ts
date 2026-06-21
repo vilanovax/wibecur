@@ -1,5 +1,6 @@
 import sharp, { type Metadata, type Sharp } from 'sharp';
 import { ImageProfile, getImageProfile } from './image-config';
+import { toNodeBuffer } from './to-node-buffer';
 
 export interface OptimizeImageOptions {
   profile?: ImageProfile;
@@ -28,12 +29,13 @@ function buildResult(
   skipped = false,
   dimensions?: { width?: number; height?: number }
 ): OptimizeImageResult {
+  const safe = toNodeBuffer(buffer);
   return {
-    buffer,
+    buffer: safe,
     contentType,
     ext,
     originalBytes,
-    optimizedBytes: buffer.length,
+    optimizedBytes: safe.length,
     skipped,
     width: dimensions?.width,
     height: dimensions?.height,
@@ -94,7 +96,7 @@ async function preparePipeline(
   buffer: Buffer,
   profileConfig: ReturnType<typeof getImageProfile> | null
 ): Promise<Sharp> {
-  let pipeline = sharp(buffer).rotate();
+  let pipeline = sharp(toNodeBuffer(buffer)).rotate();
 
   if (profileConfig?.trimTransparent) {
     try {
@@ -125,7 +127,7 @@ async function encodeImage(
   },
   profileConfig: ReturnType<typeof getImageProfile> | null
 ): Promise<{ buffer: Buffer; contentType: string; ext: string; width?: number; height?: number }> {
-  let pipeline = await preparePipeline(buffer, profileConfig);
+  let pipeline = await preparePipeline(toNodeBuffer(buffer), profileConfig);
 
   if (opts.resizeFit === 'cover' && opts.aspectRatio) {
     const { width, height } = resolveTargetDimensions(
@@ -147,28 +149,34 @@ async function encodeImage(
 
   let optimizedBuffer: Buffer;
   if (opts.format === 'webp') {
-    optimizedBuffer = await pipeline
-      .webp({
-        quality: opts.quality,
-        effort: 6,
-        smartSubsample: true,
-        alphaQuality: opts.preserveAlpha ? 90 : undefined,
-      })
-      .toBuffer();
+    optimizedBuffer = toNodeBuffer(
+      await pipeline
+        .webp({
+          quality: opts.quality,
+          effort: 6,
+          smartSubsample: true,
+          alphaQuality: opts.preserveAlpha ? 90 : undefined,
+        })
+        .toBuffer()
+    );
   } else if (opts.format === 'jpeg') {
-    optimizedBuffer = await pipeline
-      .jpeg({
-        quality: opts.quality,
-        mozjpeg: true,
-      })
-      .toBuffer();
+    optimizedBuffer = toNodeBuffer(
+      await pipeline
+        .jpeg({
+          quality: opts.quality,
+          mozjpeg: true,
+        })
+        .toBuffer()
+    );
   } else {
-    optimizedBuffer = await pipeline
-      .png({
-        quality: opts.quality,
-        compressionLevel: 9,
-      })
-      .toBuffer();
+    optimizedBuffer = toNodeBuffer(
+      await pipeline
+        .png({
+          quality: opts.quality,
+          compressionLevel: 9,
+        })
+        .toBuffer()
+    );
   }
 
   const meta = await sharp(optimizedBuffer).metadata();
@@ -256,6 +264,7 @@ export async function optimizeImageDetailed(
   buffer: Buffer,
   options: OptimizeImageOptions = {}
 ): Promise<OptimizeImageResult> {
+  const normalized = toNodeBuffer(buffer);
   const profileConfig = options.profile ? getImageProfile(options.profile) : null;
 
   const maxWidth = options.maxWidth ?? profileConfig?.maxWidth ?? 1200;
@@ -267,7 +276,7 @@ export async function optimizeImageDetailed(
   const aspectRatio = profileConfig?.aspectRatio;
   const preserveAlpha = profileConfig?.preserveAlpha;
   const trimTransparent = profileConfig?.trimTransparent;
-  const originalSize = buffer.length;
+  const originalSize = normalized.length;
 
   const encodeOpts = {
     maxWidth,
@@ -281,14 +290,14 @@ export async function optimizeImageDetailed(
   };
 
   try {
-    const metadata = await sharp(buffer).metadata();
+    const metadata = await sharp(normalized).metadata();
     const width = metadata.width || 0;
     const height = metadata.height || 0;
 
     if (shouldSkipOptimization(metadata, originalSize, profileConfig, maxWidth, maxHeight)) {
       const { ext, contentType } = formatMeta(metadata.format);
       return buildResult(
-        buffer,
+        normalized,
         contentType,
         ext,
         originalSize,
@@ -297,11 +306,11 @@ export async function optimizeImageDetailed(
       );
     }
 
-    let encoded = await encodeImage(buffer, encodeOpts, profileConfig);
+    let encoded = await encodeImage(normalized, encodeOpts, profileConfig);
 
     if (maxSize && encoded.buffer.length > maxSize) {
       encoded = await compressToTargetSize(
-        buffer,
+        normalized,
         { ...encodeOpts, maxSize },
         profileConfig
       );
@@ -320,7 +329,7 @@ export async function optimizeImageDetailed(
 
     try {
       const fallback = await encodeImage(
-        buffer,
+        normalized,
         {
           maxWidth,
           maxHeight,
@@ -340,9 +349,9 @@ export async function optimizeImageDetailed(
         { width: fallback.width, height: fallback.height }
       );
     } catch {
-      const metadata = await sharp(buffer).metadata().catch(() => null);
+      const metadata = await sharp(normalized).metadata().catch(() => null);
       const { ext, contentType } = formatMeta(metadata?.format);
-      return buildResult(buffer, contentType, ext, originalSize, true, {
+      return buildResult(normalized, contentType, ext, originalSize, true, {
         width: metadata?.width,
         height: metadata?.height,
       });
@@ -352,7 +361,7 @@ export async function optimizeImageDetailed(
 
 export async function detectImageType(buffer: Buffer): Promise<string | null> {
   try {
-    const metadata = await sharp(buffer).metadata();
+    const metadata = await sharp(toNodeBuffer(buffer)).metadata();
     return metadata.format || null;
   } catch {
     return null;

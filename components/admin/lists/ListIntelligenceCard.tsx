@@ -172,10 +172,7 @@ export default function ListIntelligenceCard({
         </div>
       </Link>
 
-      <div
-        className="flex items-center gap-1.5 px-3 py-2 border-t border-[var(--color-border-muted)] bg-[var(--color-bg)]/40"
-        onClick={(e) => e.preventDefault()}
-      >
+      <div className="flex items-center gap-1.5 px-3 py-2 border-t border-[var(--color-border-muted)] bg-[var(--color-bg)]/40">
         {isTrashView ? (
           <>
             {row.deletedAt && (

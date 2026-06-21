@@ -22,15 +22,9 @@ import {
   ssrfSafeHttpAgent,
   ssrfSafeHttpsAgent,
 } from './ssrf-guard';
+import { toNodeBuffer } from './to-node-buffer';
 
 const isDev = process.env.NODE_ENV === 'development';
-
-/** کپی امن به Node Buffer — sharp/Buffer.from با SharedArrayBuffer خطا می‌دهد */
-function toNodeBuffer(data: Buffer | Uint8Array | ArrayBuffer): Buffer {
-  if (Buffer.isBuffer(data)) return Buffer.from(data);
-  if (data instanceof Uint8Array) return Buffer.from(data.slice());
-  return Buffer.from(new Uint8Array(data));
-}
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

@@ -5,6 +5,7 @@ import { validateImage } from '@/lib/image-validator';
 import { MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
 import { resolveUploadTarget } from '@/lib/upload-profiles';
 import { getClientErrorMessage, logServerError } from '@/lib/api-error';
+import { toNodeBuffer } from '@/lib/to-node-buffer';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -52,8 +53,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const buffer = toNodeBuffer(await file.arrayBuffer());
 
     const purpose = formData.get('purpose') as string | null;
     const { folder, profile } = resolveUploadTarget(purpose, purpose === 'cover' ? 'covers' : 'avatars');

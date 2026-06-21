@@ -16,6 +16,7 @@ import {
   type ListCoverField,
   type ListCoverImageAudit,
 } from '@/lib/admin/list-cover-audit-shared';
+import { toNodeBuffer } from '@/lib/to-node-buffer';
 
 export type {
   CoverAuditSummary,
@@ -48,7 +49,7 @@ async function fetchImageDimensions(
   }
 
   try {
-    const meta = await sharp(obj.buffer).metadata();
+    const meta = await sharp(toNodeBuffer(obj.buffer)).metadata();
     return {
       width: meta.width ?? null,
       height: meta.height ?? null,

@@ -4,6 +4,7 @@ import { uploadImageBufferDetailed } from '@/lib/object-storage';
 import { validateImage } from '@/lib/image-validator';
 import { MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
 import { resolveUploadTarget } from '@/lib/upload-profiles';
+import { toNodeBuffer } from '@/lib/to-node-buffer';
 
 // POST /api/admin/upload - Upload image file
 export async function POST(request: NextRequest) {
@@ -34,8 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const buffer = toNodeBuffer(await file.arrayBuffer());
 
     const purpose =
       (formData.get('purpose') as string | null) ??
