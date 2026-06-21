@@ -3,28 +3,21 @@
 import { Search } from 'lucide-react';
 import { useSearchOptional } from '@/contexts/SearchContext';
 import SearchInput from '@/components/mobile/search/SearchInput';
-import GuidedDiscoveryChips from './GuidedDiscoveryChips';
-import type { GuidedScenario } from '@/lib/discovery/guided-intent';
+import MoodExplorerHero from './MoodExplorerHero';
+import type { MoodExplorerCard } from '@/lib/discovery/mood-explorer-config';
 
 interface ExploreSmartHeroProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  onModeScroll: (id: string) => void;
-  onGuidedScenarioSelect?: (scenario: GuidedScenario) => void;
+  onMoodSelect?: (card: MoodExplorerCard) => void;
+  showMoodExplorer?: boolean;
 }
-
-const EXPLORE_MODES = [
-  { id: 'trending', label: 'ترند', icon: '🔥' },
-  { id: 'foryou', label: 'برای تو', icon: '🎯' },
-  { id: 'rising', label: 'در حال رشد', icon: '🌱' },
-  { id: 'more', label: 'بیشتر', icon: '✨' },
-] as const;
 
 export default function ExploreSmartHero({
   searchQuery,
   onSearchChange,
-  onModeScroll,
-  onGuidedScenarioSelect,
+  onMoodSelect,
+  showMoodExplorer = true,
 }: ExploreSmartHeroProps) {
   const search = useSearchOptional();
   const hasQuery = Boolean(searchQuery.trim());
@@ -38,8 +31,6 @@ export default function ExploreSmartHero({
       className="border-b border-wibe bg-wibe-surface px-2.5 pb-3 pt-2 lg:border-b-0 lg:px-0 lg:pb-4 lg:pt-0"
       aria-label="اکسپلور هوشمند"
     >
-      <h2 className="mb-2 wibe-h3 lg:mb-3">امروز چی کشف می‌کنی؟</h2>
-
       <div className="mb-2.5 hidden lg:block">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
@@ -64,7 +55,7 @@ export default function ExploreSmartHero({
       <button
         type="button"
         onClick={openGlobalSearch}
-        className="relative mb-2.5 flex w-full items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 text-right transition-colors hover:border-primary/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:hidden"
+        className="relative mb-3 flex w-full items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 text-right transition-colors hover:border-primary/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:hidden"
         aria-label="باز کردن جستجو"
       >
         <Search
@@ -78,28 +69,8 @@ export default function ExploreSmartHero({
         </span>
       </button>
 
-      {!hasQuery && onGuidedScenarioSelect && (
-        <div className="mb-2.5">
-          <p className="mb-2 wibe-caption font-medium text-wibe-secondary">دستیار کشف</p>
-          <GuidedDiscoveryChips onSelect={onGuidedScenarioSelect} />
-        </div>
-      )}
-
-      {!hasQuery && (
-        <div className="scrollbar-hide -mx-2.5 flex gap-1.5 overflow-x-auto px-2.5 pb-0.5 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
-          {EXPLORE_MODES.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => onModeScroll(m.id)}
-              className="flex shrink-0 items-center gap-1 rounded-full border border-wibe bg-wibe-card px-3 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/30 lg:py-2 lg:wibe-small"
-              aria-label={`رفتن به ${m.label}`}
-            >
-              <span aria-hidden>{m.icon}</span>
-              {m.label}
-            </button>
-          ))}
-        </div>
+      {showMoodExplorer && !hasQuery && onMoodSelect && (
+        <MoodExplorerHero onMoodSelect={onMoodSelect} />
       )}
     </section>
   );

@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import { ChevronDown, Loader2, LogOut, User } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
 import NotificationIcon from './NotificationIcon';
+import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
 import { VIBE_AVATARS } from '@/lib/vibe-avatars';
 
 export type HeaderActionsProfile = {
@@ -192,7 +193,17 @@ export default function HeaderActions({
 
   return (
     <div className="flex flex-shrink-0 items-center gap-2">
-      {session?.user && !hideNotifications && <NotificationIcon />}
+      {session?.user && !hideNotifications && (
+        <>
+          <span
+            className="text-[11px] font-medium tabular-nums text-gray-400/90 dark:text-gray-500 select-none"
+            title="Build version"
+          >
+            v{ADMIN_PANEL_VERSION}
+          </span>
+          <NotificationIcon />
+        </>
+      )}
       {showProfileControl &&
         (enableAccountMenu && session?.user ? (
           <>

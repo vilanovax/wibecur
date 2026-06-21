@@ -14,10 +14,16 @@ import { trackGuidedDiscoveryEvent } from '@/lib/discovery/guided-client';
 type Props = {
   data: GuidedDiscoveryPayload;
   scenario: GuidedScenario;
+  headlineOverride?: string;
   onItemClick?: () => void;
 };
 
-export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: Props) {
+export default function GuidedDiscoveryResults({
+  data,
+  scenario,
+  headlineOverride,
+  onItemClick,
+}: Props) {
   if (data.rows.length === 0) {
     return (
       <p className="py-8 text-center wibe-small text-wibe-secondary">
@@ -28,7 +34,9 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
 
   return (
     <div className="space-y-5" dir="rtl">
-      <p className="text-right wibe-body font-semibold text-foreground">{data.headline}</p>
+      <p className="text-right wibe-body font-semibold text-foreground">
+        {headlineOverride ?? data.headline}
+      </p>
 
       {data.rows.map((row) => (
         <section key={row.id} aria-labelledby={`guided-row-${row.id}`}>

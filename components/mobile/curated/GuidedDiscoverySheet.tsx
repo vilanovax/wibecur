@@ -7,18 +7,31 @@ import {
   GUIDED_SCENARIO_CONFIGS,
   type GuidedScenario,
 } from '@/lib/discovery/guided-intent';
+import type { MoodExplorerSelection } from '@/lib/discovery/mood-explorer-config';
 import type { GuidedDiscoveryPayload } from '@/lib/discovery/guided-recommendations';
 import { fetchGuidedDiscovery, trackGuidedDiscoveryEvent } from '@/lib/discovery/guided-client';
 
 type Props = {
-  scenario: GuidedScenario | null;
+  selection: MoodExplorerSelection | null;
   isOpen: boolean;
   onClose: () => void;
 };
 
 type Step = 'question' | 'loading' | 'results';
 
-export default function GuidedDiscoverySheet({ scenario, isOpen, onClose }: Props) {
+function needsQuestion(
+  scenario: GuidedScenario,
+  answers: { location?: string; timeBudget?: string }
+): boolean {
+  const config = GUIDED_SCENARIO_CONFIGS.find((c) => c.id === scenario);
+  if (!config?.question) return false;
+  if (config.question.id === 'location' && answers.location) return false;
+  if (config.question.id === 'timeBudget' && answers.timeBudget) return false;
+  return true;
+}
+
+export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Props) {
+  const scenario = selection?.scenario ?? null;
   const config = useMemo(
     () => GUIDED_SCENARIO_CONFIGS.find((c) => c.id === scenario) ?? null,
     [scenario]
@@ -39,15 +52,24 @@ export default function GuidedDiscoverySheet({ scenario, isOpen, onClose }: Prop
   }, []);
 
   useEffect(() => {
-    if (!isOpen || !scenario) return;
+    if (!isOpen || !selection || !scenario) return;
     reset();
+
+    const preset = selection.preset;
+    if (preset?.location) setLocation(preset.location);
+    if (preset?.timeBudget) setTimeBudget(preset.timeBudget);
+
     trackGuidedDiscoveryEvent('scenario_start', { scenario });
 
-    const cfg = GUIDED_SCENARIO_CONFIGS.find((c) => c.id === scenario);
-    if (!cfg?.question) {
+    if (
+      !needsQuestion(scenario, {
+        location: preset?.location,
+        timeBudget: preset?.timeBudget,
+      })
+    ) {
       setStep('loading');
     }
-  }, [isOpen, scenario, reset]);
+  }, [isOpen, selection, scenario, reset]);
 
   const loadResults = useCallback(
     async (params: { location?: string; timeBudget?: string }) => {
@@ -57,8 +79,8 @@ export default function GuidedDiscoverySheet({ scenario, isOpen, onClose }: Prop
       try {
         const result = await fetchGuidedDiscovery({
           scenario,
-          location: params.location,
-          timeBudget: params.timeBudget,
+          location: params.location ?? selection?.preset?.location,
+          timeBudget: params.timeBudget ?? selection?.preset?.timeBudget,
         });
         setData(result);
         setStep('results');
@@ -67,19 +89,32 @@ export default function GuidedDiscoverySheet({ scenario, isOpen, onClose }: Prop
         setStep('question');
       }
     },
-    [scenario]
+    [scenario, selection?.preset]
   );
 
   useEffect(() => {
-    if (!isOpen || !scenario || step !== 'loading') return;
-    const cfg = GUIDED_SCENARIO_CONFIGS.find((c) => c.id === scenario);
-    if (cfg?.question) return;
+    if (!isOpen || !scenario || !selection || step !== 'loading') return;
+
+    const resolvedLocation =
+      location ?? selection.preset?.location ?? config?.preset?.location;
+    const resolvedTimeBudget =
+      timeBudget ?? selection.preset?.timeBudget ?? config?.preset?.timeBudget;
+
+    if (
+      needsQuestion(scenario, {
+        location: resolvedLocation,
+        timeBudget: resolvedTimeBudget,
+      })
+    ) {
+      setStep('question');
+      return;
+    }
 
     void loadResults({
-      location: cfg?.preset?.location,
-      timeBudget: cfg?.preset?.timeBudget,
+      location: resolvedLocation,
+      timeBudget: resolvedTimeBudget,
     });
-  }, [isOpen, scenario, step, loadResults]);
+  }, [isOpen, scenario, selection, step, loadResults, location, timeBudget, config]);
 
   const handleAnswer = (value: string) => {
     if (!scenario || !config?.question) return;
@@ -87,13 +122,13 @@ export default function GuidedDiscoverySheet({ scenario, isOpen, onClose }: Prop
     if (config.question.id === 'location') {
       setLocation(value);
       trackGuidedDiscoveryEvent('question_answered', { scenario, location: value });
-      void loadResults({ location: value });
+      void loadResults({ location: value, timeBudget: timeBudget ?? selection?.preset?.timeBudget });
       return;
     }
 
     setTimeBudget(value);
     trackGuidedDiscoveryEvent('question_answered', { scenario, timeBudget: value });
-    void loadResults({ timeBudget: value });
+    void loadResults({ timeBudget: value, location: location ?? selection?.preset?.location });
   };
 
   const handleClose = () => {
@@ -101,10 +136,17 @@ export default function GuidedDiscoverySheet({ scenario, isOpen, onClose }: Prop
     reset();
   };
 
-  if (!scenario || !config) return null;
+  if (!selection || !scenario || !config) return null;
 
+  const moodMeta = selection.moodMeta;
   const title =
-    step === 'results' ? config.label : step === 'loading' ? 'در حال آماده‌سازی…' : 'کشف هوشمند';
+    step === 'results'
+      ? moodMeta.title
+      : step === 'loading'
+        ? 'در حال آماده‌سازی…'
+        : moodMeta.title;
+
+  const resultsHeadline = moodMeta.subtitle || data?.headline;
 
   return (
     <BottomSheet
@@ -115,8 +157,11 @@ export default function GuidedDiscoverySheet({ scenario, isOpen, onClose }: Prop
       desktopMaxWidth="lg"
     >
       <div className="px-4 pb-4 pt-2 lg:px-0" dir="rtl">
-        {step === 'question' && config.question && (
+        {step === 'question' && config.question && needsQuestion(scenario, { location, timeBudget }) && (
           <div className="space-y-4">
+            {moodMeta.subtitle && (
+              <p className="text-right wibe-caption text-wibe-secondary">{moodMeta.subtitle}</p>
+            )}
             <p className="text-right wibe-body text-foreground">{config.question.prompt}</p>
             <div className="grid gap-2.5 sm:grid-cols-2">
               {config.question.options.map((opt) => (
@@ -137,12 +182,19 @@ export default function GuidedDiscoverySheet({ scenario, isOpen, onClose }: Prop
         {step === 'loading' && (
           <div className="flex flex-col items-center justify-center gap-3 py-16">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <p className="wibe-small text-wibe-secondary">پیشنهادها رو جمع می‌کنیم…</p>
+            <p className="text-center wibe-small text-wibe-secondary">
+              {moodMeta.subtitle || 'پیشنهادها رو جمع می‌کنیم…'}
+            </p>
           </div>
         )}
 
         {step === 'results' && data && (
-          <GuidedDiscoveryResults data={data} scenario={scenario} onItemClick={handleClose} />
+          <GuidedDiscoveryResults
+            data={data}
+            scenario={scenario}
+            headlineOverride={resultsHeadline}
+            onItemClick={handleClose}
+          />
         )}
       </div>
     </BottomSheet>

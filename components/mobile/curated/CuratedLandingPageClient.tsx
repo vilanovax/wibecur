@@ -4,18 +4,15 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft } from 'lucide-react';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 import ExploreSmartHero from './ExploreSmartHero';
 import GuidedDiscoverySheet from './GuidedDiscoverySheet';
-import type { GuidedScenario } from '@/lib/discovery/guided-intent';
+import QuickNowSection from './QuickNowSection';
+import RandomSurpriseCard from './RandomSurpriseCard';
 import TrendingNowSection from './TrendingNowSection';
-import RisingListsSection from './RisingListsSection';
 import ForYouSection from './ForYouSection';
 import CategoryDiscoverySection from './CategoryDiscoverySection';
-import CuratedGrid from './CuratedGrid';
 import ExploreBottomCTA from './ExploreBottomCTA';
-import ExploreSectionTitle from './ExploreSectionTitle';
 import { ExplorePageSkeleton } from './ExplorePageSkeleton';
 import SearchResultsPanel from '@/components/mobile/search/SearchResultsPanel';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
@@ -23,14 +20,12 @@ import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
 import { MOCK_CATEGORIES, getMockLists } from '@/lib/curated/mock-data';
 import { buildExploreSections } from '@/lib/curated/explore-sections';
 import type { ExplorePayload } from '@/lib/curated/explore-data';
-
-const SECTION_IDS: Record<string, string> = {
-  trending: 'trending',
-  foryou: 'foryou',
-  rising: 'rising',
-  categories: 'categories',
-  more: 'more',
-};
+import {
+  moodCardToSelection,
+  type MoodExplorerCard,
+  type MoodExplorerSelection,
+} from '@/lib/discovery/mood-explorer-config';
+import { trackMoodExplorerClick } from '@/lib/analytics';
 
 async function fetchExplore(): Promise<ExplorePayload> {
   const res = await fetch('/api/explore');
@@ -49,7 +44,7 @@ export default function CuratedLandingPageClient({
   const search = useUnifiedSearchQuery(searchQuery);
   const isSearchActive = search.isActive;
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
-  const [guidedScenario, setGuidedScenario] = useState<GuidedScenario | null>(null);
+  const [moodSelection, setMoodSelection] = useState<MoodExplorerSelection | null>(null);
   const [guidedOpen, setGuidedOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
@@ -57,11 +52,9 @@ export default function CuratedLandingPageClient({
     queryFn: fetchExplore,
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    // داده‌ی SSR — از first paint بدون skeleton و بدون round-trip اضافه استفاده می‌شود
     initialData,
   });
 
-  /** فقط در خطای API — خالی بودن دادهٔ واقعی نباید mock با دستهٔ کتاب نشان دهد */
   const usingMockFallback = isError;
 
   const allLists = useMemo(() => {
@@ -106,18 +99,18 @@ export default function CuratedLandingPageClient({
     ]
   );
 
-  const handleGuidedScenarioSelect = useCallback((scenario: GuidedScenario) => {
-    setGuidedScenario(scenario);
+  const openMoodSelection = useCallback((selection: MoodExplorerSelection, source: 'card' | 'quick_now') => {
+    trackMoodExplorerClick(selection.moodId, source);
+    setMoodSelection(selection);
     setGuidedOpen(true);
   }, []);
 
-  const handleModeScroll = useCallback((id: string) => {
-    const sectionId = SECTION_IDS[id] ?? id;
-    const el = document.getElementById(sectionId);
-    if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 120;
-    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-  }, []);
+  const handleMoodCardSelect = useCallback(
+    (card: MoodExplorerCard) => {
+      openMoodSelection(moodCardToSelection(card), 'card');
+    },
+    [openMoodSelection]
+  );
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -144,8 +137,8 @@ export default function CuratedLandingPageClient({
       <ExploreSmartHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onModeScroll={handleModeScroll}
-        onGuidedScenarioSelect={showDiscovery ? handleGuidedScenarioSelect : undefined}
+        onMoodSelect={showDiscovery ? handleMoodCardSelect : undefined}
+        showMoodExplorer={showDiscovery}
       />
 
       <main className="space-y-0">
@@ -184,31 +177,14 @@ export default function CuratedLandingPageClient({
           </div>
         ) : (
           <>
+            <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
+            <RandomSurpriseCard lists={sections.trending} />
+            {sections.trending.length > 0 && (
+              <TrendingNowSection lists={sections.trending} subtitle="محبوب‌ترین‌ها همین الان" />
+            )}
             <CategoryDiscoverySection categories={categories} />
-            {sections.trending.length > 0 && <TrendingNowSection lists={sections.trending} />}
             {sections.forYou.length > 0 && (
               <ForYouSection lists={sections.forYou} personalized={sections.isPersonalized} />
-            )}
-            {sections.rising.length > 0 && <RisingListsSection lists={sections.rising} />}
-
-            {sections.more.length > 0 && (
-              <section className="border-t border-wibe/60 px-2.5 py-4 lg:px-0 lg:py-5" id="more">
-                <ExploreSectionTitle
-                  title="بیشتر ببین"
-                  subtitle="لیست‌های کیوریت‌شده"
-                  icon="✨"
-                />
-                <CuratedGrid lists={sections.more} showSponsoredAfter={99} />
-                {sections.moreTotal > sections.more.length && (
-                  <Link
-                    href="/lists"
-                    className="mt-3 flex items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card py-2.5 wibe-small font-semibold text-primary transition-colors active:scale-[0.99] lg:mx-auto lg:max-w-sm lg:hover:bg-primary/5"
-                  >
-                    مشاهده همه ({sections.moreTotal.toLocaleString('fa-IR')} لیست)
-                    <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />
-                  </Link>
-                )}
-              </section>
             )}
 
             {sections.filtered.length === 0 && (
@@ -237,11 +213,11 @@ export default function CuratedLandingPageClient({
       />
 
       <GuidedDiscoverySheet
-        scenario={guidedScenario}
+        selection={moodSelection}
         isOpen={guidedOpen}
         onClose={() => {
           setGuidedOpen(false);
-          setGuidedScenario(null);
+          setMoodSelection(null);
         }}
       />
     </div>

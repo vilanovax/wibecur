@@ -27,6 +27,7 @@ export type AnalyticsEvent =
   | 'home_tab_switch'
   | 'category_chip_click'
   | 'mood_card_click'
+  | 'mood_explorer_click'
   | 'search_result_click'
   | 'search_no_results'
   | 'item_preview_open'
@@ -139,6 +140,18 @@ export function trackMoodCardClick(
   track('mood_card_click', {
     mood_id: moodId,
     target,
+    ...(listSlug ? { list_slug: listSlug } : {}),
+  });
+}
+
+export function trackMoodExplorerClick(
+  moodId: string,
+  source: 'card' | 'quick_now' | 'surprise',
+  listSlug?: string
+) {
+  track('mood_explorer_click', {
+    mood_id: moodId,
+    source,
     ...(listSlug ? { list_slug: listSlug } : {}),
   });
 }

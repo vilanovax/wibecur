@@ -8,9 +8,13 @@ import type { CuratedList } from '@/types/curated';
 
 interface TrendingNowSectionProps {
   lists: CuratedList[];
+  subtitle?: string;
 }
 
-export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
+export default function TrendingNowSection({
+  lists,
+  subtitle = 'بر اساس ذخیره',
+}: TrendingNowSectionProps) {
   if (lists.length === 0) return null;
 
   return (
@@ -18,7 +22,7 @@ export default function TrendingNowSection({ lists }: TrendingNowSectionProps) {
       <ExploreSectionTitle
         id="trending-title"
         title="داغ‌ترین لیست‌های امروز"
-        subtitle="بر اساس ذخیره"
+        subtitle={subtitle}
         icon="🔥"
       />
 
