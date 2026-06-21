@@ -119,7 +119,7 @@ async function getCategoryAndMetrics(
     lists: { categoryId, isActive: true, isPublic: true },
   };
 
-  const [category, listCount, itemCount, weeklySaves, viralCount, curatorCount, lastWeekSaves, uniqueTags] =
+  const [category, listCount, itemCount, weeklySaves, viralCount, curatorCount, lastWeekSaves] =
     await Promise.all([
     prisma.categories.findUniqueOrThrow({
       where: { id: categoryId, isActive: true },
@@ -166,18 +166,6 @@ async function getCategoryAndMetrics(
         createdAt: { gte: lastWeekStart, lt: cutoff },
       },
     }),
-    prisma.lists.findMany({
-      where: { categoryId, isActive: true, isPublic: true },
-      select: { tags: true },
-    }).then((lists) => {
-      const allTags = new Set<string>();
-      for (const l of lists) {
-        for (const t of l.tags ?? []) {
-          if (t && typeof t === 'string') allTags.add(t.trim());
-        }
-      }
-      return allTags.size;
-    }),
   ]);
 
   const weeklyGrowthPercent =
@@ -196,7 +184,7 @@ async function getCategoryAndMetrics(
       viralCount,
       totalCuratorsCount: curatorCount,
       weeklyGrowthPercent,
-      genreCount: uniqueTags > 0 ? uniqueTags : 14,
+      genreCount: 14,
     },
   };
 }
@@ -760,49 +748,30 @@ export async function getCategoryPageData(
   const [
     { category, metrics },
     { trending, viral },
-    topCurators,
     newLists,
-    trending24h,
-    topCuratorSpotlight,
-    popularAllTime,
-    topSavedThisWeek,
     cityBreakdown,
-    mostDebatedLists,
     mostSavedItems,
     filmGenres,
   ] = await Promise.all([
     getCategoryAndMetrics(prisma, categoryId),
     getTrendingAndViralLists(prisma, categoryId),
-    getTopCurators(prisma, categoryId),
     getNewLists(prisma, categoryId),
-    getTrending24h(prisma, categoryId),
-    getTopCuratorWithLists(prisma, categoryId),
-    getPopularAllTime(prisma, categoryId, 6),
-    getTopSavedThisWeek(prisma, categoryId, TOP_SAVED_LIMIT),
     getCityBreakdown(prisma, categoryId),
-    getMostDebatedLists(prisma, categoryId),
     getMostSavedItems(prisma, categoryId),
     getFilmGenres(prisma, categoryId),
   ]);
 
+  const resolvedGenreCount =
+    filmGenres.length > 0 ? filmGenres.length : metrics.genreCount;
+
   return {
     category,
-    metrics,
+    metrics: { ...metrics, genreCount: resolvedGenreCount },
     trendingLists: applyListCovers(trending, category.slug),
-    trendingNow24h: applyListCovers(trending24h, category.slug),
-    topSavedThisWeek: applyListCovers(topSavedThisWeek, category.slug),
     viralSpotlight: applyListCover(viral, category.slug),
-    topCurators,
-    topCuratorSpotlight: topCuratorSpotlight
-      ? {
-          ...topCuratorSpotlight,
-          topLists: applyListCovers(topCuratorSpotlight.topLists ?? [], category.slug),
-        }
-      : null,
+    topCurators: [],
     newLists: applyListCovers(newLists, category.slug),
-    popularAllTime: applyListCovers(popularAllTime, category.slug),
     cityBreakdown,
-    mostDebatedLists: applyListCovers(mostDebatedLists, category.slug),
     mostSavedItems,
     filmGenres,
   };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 
 type UseLazyInViewOptions = {
   rootMargin?: string;
@@ -10,9 +10,11 @@ type UseLazyInViewOptions = {
 };
 
 /** IntersectionObserver — برای lazy-load تصویر/poster */
-export function useLazyInView(options: UseLazyInViewOptions = {}) {
+export function useLazyInView<T extends Element = HTMLElement>(
+  options: UseLazyInViewOptions = {}
+): { ref: RefObject<T | null>; inView: boolean } {
   const { rootMargin = '160px', threshold = 0.01, once = true } = options;
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<T | null>(null);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {

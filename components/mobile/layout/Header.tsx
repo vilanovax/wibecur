@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { ChevronRight } from 'lucide-react';
@@ -43,6 +43,16 @@ export default function Header({
 
   const [profile, setProfile] = useState<HeaderActionsProfile | null>(null);
 
+  const sessionProfile = useMemo<HeaderActionsProfile | null>(() => {
+    if (!session?.user?.id) return null;
+    return {
+      image: session.user.image ?? null,
+      avatarType: null,
+      avatarId: null,
+      avatarStatus: null,
+    };
+  }, [session?.user?.id, session?.user?.image]);
+
   const fetchProfile = useCallback(async () => {
     if (!session?.user?.id) return;
     try {
@@ -63,15 +73,40 @@ export default function Header({
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (session?.user) fetchProfile();
-    else setProfile(null);
-  }, [session?.user, fetchProfile]);
+    if (!session?.user?.id) {
+      setProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+    const load = () => {
+      if (!cancelled) void fetchProfile();
+    };
+
+    if (typeof requestIdleCallback === 'function') {
+      const id = requestIdleCallback(load, { timeout: 2500 });
+      return () => {
+        cancelled = true;
+        cancelIdleCallback(id);
+      };
+    }
+
+    const timer = setTimeout(load, 1200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [session?.user?.id, fetchProfile]);
 
   useEffect(() => {
-    const onProfileUpdated = () => fetchProfile();
+    const onProfileUpdated = () => {
+      void fetchProfile();
+    };
     window.addEventListener('profile-updated', onProfileUpdated);
     return () => window.removeEventListener('profile-updated', onProfileUpdated);
   }, [fetchProfile]);
+
+  const displayProfile = profile ?? sessionProfile;
 
   const isDark = variant === 'dark';
   const headerClass = isDark
@@ -121,7 +156,7 @@ export default function Header({
         )}
         <div className="shrink-0 lg:hidden">
           <HeaderActions
-            profile={profile}
+            profile={displayProfile}
             hideNotifications={hideNotifications}
             variant={variant}
           />

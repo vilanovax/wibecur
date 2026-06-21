@@ -1,6 +1,7 @@
 'use client';
 
 import { useHomeData } from '@/contexts/HomeDataContext';
+import { selectHomeTrendingLists } from '@/lib/home-list-selectors';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { padHomeFeedLists, buildDesktopFeedCells } from '@/lib/home-feed-grid';
 import HomeSectionTitle from './HomeSectionTitle';
@@ -19,10 +20,12 @@ export default function TrendingThisWeekCarousel({ embedded = false }: TrendingT
   const { data, isLoading } = useHomeData();
   const featuredId = data?.featured?.id;
   const rising = data?.rising ?? [];
-  const trending = (data?.trending ?? []).filter((l) => l.id !== featuredId);
-
   const mobileLimit = embedded ? 12 : 8;
   const desktopLimit = 8;
+  const trending = selectHomeTrendingLists(
+    { trending: data?.trending ?? [], featured: data?.featured ?? null },
+    { limit: Math.max(mobileLimit, desktopLimit), excludeFeatured: true }
+  );
 
   const mobileLists = trending.slice(0, mobileLimit);
   const desktopSource = padHomeFeedLists(

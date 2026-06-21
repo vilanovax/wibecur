@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { TrendingUp } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { useHomeData } from '@/contexts/HomeDataContext';
+import { selectHomeRisingLists } from '@/lib/home-list-selectors';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 import { trackHomeSectionClick } from '@/lib/analytics';
@@ -12,7 +13,7 @@ import HomeFeedGrid from './HomeFeedGrid';
 
 export default function NewAndRisingSection({ embedded = false }: { embedded?: boolean }) {
   const { data, isLoading } = useHomeData();
-  const lists = (data?.rising ?? []).slice(0, 8);
+  const lists = selectHomeRisingLists({ rising: data?.rising ?? [] }, { limit: 8 });
   const desktopCells = buildDesktopFeedCells(lists, {
     maxLists: 8,
     seeAll: {

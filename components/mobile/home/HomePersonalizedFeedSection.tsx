@@ -1,7 +1,5 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
-import { useQuery } from '@tanstack/react-query';
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeFeedGrid from './HomeFeedGrid';
 import type { HomeGridListCardList } from './HomeGridListCard';
@@ -11,27 +9,12 @@ import {
 } from '@/hooks/useForYouRecommendations';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
 import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
+import { useHomeBookmarks, type HomeBookmarkList } from '@/hooks/useHomeBookmarks';
+import { useLazyInView } from '@/hooks/useLazyInView';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 
-type BookmarkList = {
-  id: string;
-  title: string;
-  slug: string;
-  coverImage: string | null;
-  saveCount?: number;
-  categories?: { slug?: string; icon?: string | null } | null;
-};
-
-async function fetchRecentBookmarks(): Promise<BookmarkList[]> {
-  const res = await fetch('/api/user/bookmarks?page=1&limit=6');
-  const json = await res.json();
-  if (!res.ok || !json.success) return [];
-  const items = json.data?.bookmarks ?? [];
-  return items.map((b: { list: BookmarkList }) => b.list).filter(Boolean);
-}
-
-function toGridList(list: BookmarkList): HomeGridListCardList {
+function toGridList(list: HomeBookmarkList): HomeGridListCardList {
   return {
     id: list.id,
     title: list.title,
@@ -44,20 +27,16 @@ function toGridList(list: BookmarkList): HomeGridListCardList {
 
 /** دسکتاپ: ادغام ذخیره‌شده‌ها + برای تو در یک گرید */
 export default function HomePersonalizedFeedSection() {
-  const { data: session, status } = useSession();
+  const { ref, inView } = useLazyInView({ rootMargin: '240px' });
   const { hasSaves, isLoading: userLoading } = useHomeUserState();
   const { interests } = useHomeOnboardingInterests();
   const { lists: forYouLists, isPersonalized, isLoading: forYouLoading } =
-    useForYouRecommendations();
-
-  const { data: savedLists = [], isLoading: savedLoading } = useQuery({
-    queryKey: ['user', session?.user?.id, 'home-bookmarks-combined'],
-    queryFn: fetchRecentBookmarks,
-    enabled: status !== 'loading' && !!session?.user?.id && hasSaves,
-    staleTime: 60_000,
+    useForYouRecommendations({ enabled: inView });
+  const { data: savedLists = [], isLoading: savedLoading } = useHomeBookmarks({
+    enabled: inView && hasSaves,
   });
 
-  if (status === 'loading' || userLoading || !hasSaves) return null;
+  if (userLoading || !hasSaves) return null;
 
   const isLoading = savedLoading || forYouLoading;
   const savedIds = new Set(savedLists.map((l) => l.id));
@@ -92,8 +71,28 @@ export default function HomePersonalizedFeedSection() {
       ? 'ذخیره‌هایت + بر اساس علاقه‌مندی‌ها'
       : 'ذخیره‌هایت + پیشنهاد برای ادامه';
 
+  if (!inView) {
+    return (
+      <section ref={ref}>
+        <HomeSectionTitle
+          icon="✨"
+          title="برای تو"
+          subtitle={subtitle}
+          actionHref="/lists"
+          actionLabel="همه"
+          analyticsSection="for_you"
+        />
+        <div className="grid grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="aspect-[16/10] animate-pulse rounded-xl bg-gray-100" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="hidden lg:block">
+    <section ref={ref}>
       <HomeSectionTitle
         icon="✨"
         title="برای تو"

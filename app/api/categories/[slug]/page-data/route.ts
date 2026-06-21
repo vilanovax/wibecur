@@ -20,7 +20,10 @@ export async function GET(
     const data = await getCachedCategoryPageData(category.id);
 
     const res = NextResponse.json({ data });
-    res.headers.set('Cache-Control', 'public, max-age=180, stale-while-revalidate=300');
+    res.headers.set(
+      'Cache-Control',
+      'public, max-age=180, s-maxage=300, stale-while-revalidate=600'
+    );
     return res;
   } catch (err) {
     console.error('Category page data error:', err);

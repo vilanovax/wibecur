@@ -3,9 +3,17 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import { notFound } from 'next/navigation';
 import CategoryPage2Client from '@/components/category/CategoryPage2Client';
+import CategoryHeroServer from '@/components/category/CategoryHeroServer';
+import CategoryTrendingSectionServer from '@/components/category/CategoryTrendingSectionServer';
+import CategoryNewListsSectionServer from '@/components/category/CategoryNewListsSectionServer';
+import CategoryViralSpotlightSectionServer from '@/components/category/CategoryViralSpotlightSectionServer';
+import CategoryMostSavedItemsServer from '@/components/category/CategoryMostSavedItemsServer';
+import HomeLcpPreload from '@/components/mobile/home/HomeLcpPreload';
 import { resolveCategoryBySlug } from '@/lib/category-resolve';
 import { getCachedCategoryPageData } from '@/lib/category-page-cached';
 import { getCachedCategoryBannerPlacements } from '@/lib/sponsored-placements';
+import { fetchActiveCategoryMenu } from '@/lib/category-menu';
+import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
 
 export const revalidate = 60;
 
@@ -44,11 +52,15 @@ export default async function CategoryPage({
 
   let category;
   let pageData = null;
+  let menuCategories: Awaited<ReturnType<typeof fetchActiveCategoryMenu>> = [];
 
   try {
     category = await resolveCategoryBySlug(slug);
     if (category) {
-      pageData = await getCachedCategoryPageData(category.id);
+      [pageData, menuCategories] = await Promise.all([
+        getCachedCategoryPageData(category.id),
+        fetchActiveCategoryMenu(),
+      ]);
     }
   } catch (e) {
     if (isDbError(e) || process.env.NODE_ENV === 'development') {
@@ -61,19 +73,65 @@ export default async function CategoryPage({
     notFound();
   }
 
-  const initialData = JSON.parse(JSON.stringify(pageData));
   const sponsoredPlacements = await getCachedCategoryBannerPlacements(category.id);
+  const lcpImage = getCategoryHeroDisplayUrl(pageData.category.heroImage, pageData.category.slug);
+  const accentColor = pageData.category.accentColor || pageData.category.color;
+  const featuredSpotlight =
+    pageData.viralSpotlight &&
+    pageData.viralSpotlight.id !== pageData.trendingLists[0]?.id
+      ? pageData.viralSpotlight
+      : null;
 
   return (
-    <div className="bg-wibe-surface">
-      <Header title={category.name} showBack showDesktopSearch={false} />
-      <CategoryNavStrip activeSlug={category.slug} />
-      <CategoryPage2Client
-        slug={category.slug}
-        initialData={initialData}
-        sponsoredPlacements={JSON.parse(JSON.stringify(sponsoredPlacements))}
-      />
-      <BottomNav />
-    </div>
+    <>
+      <HomeLcpPreload href={lcpImage} />
+      <div className="bg-wibe-surface">
+        <Header title={category.name} showBack showDesktopSearch={false} />
+        <CategoryNavStrip
+          activeSlug={category.slug}
+          initialCategories={menuCategories}
+        />
+        <CategoryPage2Client
+          slug={category.slug}
+          initialData={pageData}
+          sponsoredPlacements={sponsoredPlacements}
+          heroSection={
+            <CategoryHeroServer category={pageData.category} metrics={pageData.metrics} />
+          }
+          trendingSection={
+            <CategoryTrendingSectionServer
+              inset
+              title={`داغ‌ترین لیست‌های هفته در ${pageData.category.name}`}
+              subtitle="بر اساس ذخیره و engagement"
+              lists={pageData.trendingLists}
+              categorySlug={pageData.category.slug}
+              accentColor={pageData.category.accentColor || pageData.category.color}
+            />
+          }
+          newListsSection={
+            <CategoryNewListsSectionServer
+              inset
+              lists={pageData.newLists}
+              categoryName={pageData.category.name}
+            />
+          }
+          viralSpotlightSection={
+            featuredSpotlight ? (
+              <CategoryViralSpotlightSectionServer inset list={featuredSpotlight} />
+            ) : null
+          }
+          mostSavedItemsSection={
+            pageData.mostSavedItems && pageData.mostSavedItems.length > 0 ? (
+              <CategoryMostSavedItemsServer
+                inset
+                items={pageData.mostSavedItems}
+                accentColor={accentColor}
+              />
+            ) : null
+          }
+        />
+        <BottomNav />
+      </div>
+    </>
   );
 }

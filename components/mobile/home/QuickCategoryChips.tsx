@@ -4,10 +4,9 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { isSameCategorySlug } from '@/lib/category-slug-aliases';
 import { trackCategoryChipClick } from '@/lib/analytics';
+import type { CategoryMenuChip } from '@/lib/category-menu';
 
-type CategoryChip = { id: string; slug: string; name: string; icon: string | null };
-
-async function fetchActiveCategories(): Promise<CategoryChip[]> {
+async function fetchActiveCategories(): Promise<CategoryMenuChip[]> {
   const res = await fetch('/api/categories');
   const json = await res.json();
   if (!res.ok || !json.success) return [];
@@ -22,16 +21,23 @@ function isActiveCategorySlug(chipSlug: string, activeSlug?: string | null): boo
 interface QuickCategoryChipsProps {
   activeSlug?: string | null;
   variant?: 'default' | 'nav';
+  /** از SSR — بدون fetch اولیه */
+  initialCategories?: CategoryMenuChip[];
 }
 
 export default function QuickCategoryChips({
   activeSlug = null,
   variant = 'default',
+  initialCategories,
 }: QuickCategoryChipsProps) {
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = initialCategories ?? [], isLoading } = useQuery({
     queryKey: ['categories', 'active', 'menu'],
     queryFn: fetchActiveCategories,
+    initialData: initialCategories,
+    initialDataUpdatedAt: initialCategories ? Date.now() : undefined,
     staleTime: 10 * 60 * 1000,
+    refetchOnMount: initialCategories ? false : undefined,
+    enabled: initialCategories === undefined,
   });
 
   if (!isLoading && categories.length === 0) {

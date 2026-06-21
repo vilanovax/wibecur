@@ -33,6 +33,7 @@ export default function HomePullToRefresh({ children }: HomePullToRefreshProps) 
         refetch(),
         queryClient.invalidateQueries({ queryKey: ['home', 'for-you'] }),
         queryClient.invalidateQueries({ queryKey: ['user', 'interaction-count'] }),
+        queryClient.invalidateQueries({ queryKey: ['user'] }),
         queryClient.invalidateQueries({ queryKey: ['spotlight', 'current'] }),
       ]);
     } finally {

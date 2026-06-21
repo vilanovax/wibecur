@@ -3,11 +3,11 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
 import TrendingThisWeekCarousel from './TrendingThisWeekCarousel';
-import ForYouSection from './ForYouSection';
-import NewAndRisingSection from './NewAndRisingSection';
+import { HomeFeedSectionSkeleton } from './home-section-skeletons';
 import {
   fetchForYouRecommendations,
   forYouQueryKey,
@@ -15,6 +15,14 @@ import {
 import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
 import { trackHomeTabSwitch } from '@/lib/analytics';
+
+const ForYouSection = dynamic(() => import('./ForYouSection'), {
+  loading: () => <HomeFeedSectionSkeleton titleWidth="w-32" />,
+});
+
+const NewAndRisingSection = dynamic(() => import('./NewAndRisingSection'), {
+  loading: () => <HomeFeedSectionSkeleton titleWidth="w-40" />,
+});
 
 type FeedTab = 'trending' | 'foryou' | 'rising';
 
@@ -148,7 +156,7 @@ export default function HomeFeedTabs() {
         className="lg:px-5 lg:pb-5 lg:pt-1"
       >
         {tab === 'trending' && <TrendingThisWeekCarousel embedded />}
-        {tab === 'foryou' && <ForYouSection embedded />}
+        {tab === 'foryou' && <ForYouSection embedded fetchEnabled />}
         {tab === 'rising' && <NewAndRisingSection embedded />}
       </div>
     </section>

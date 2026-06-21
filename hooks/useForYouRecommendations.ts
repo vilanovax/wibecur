@@ -69,14 +69,15 @@ export async function fetchForYouRecommendations(
   };
 }
 
-export function useForYouRecommendations() {
+export function useForYouRecommendations(options?: { enabled?: boolean }) {
   const { data: session, status } = useSession();
   const { interests, hydrated } = useHomeOnboardingInterests();
+  const fetchEnabled = options?.enabled ?? true;
   const query = useQuery({
     queryKey: forYouQueryKey(session?.user?.id, interests),
     queryFn: () => fetchForYouRecommendations(interests),
     staleTime: 2 * 60 * 1000,
-    enabled: status !== 'loading' && hydrated,
+    enabled: fetchEnabled && status !== 'loading' && hydrated,
   });
 
   return useMemo(

@@ -97,7 +97,9 @@ export function HomeDataProvider({
     queryKey: ['home', 'lists'],
     queryFn: fetchHomeData,
     initialData: initialData ?? undefined,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: initialData ? false : undefined,
   });
 
   // memo تا مصرف‌کننده‌ها با هر render والد دوباره render نشوند.

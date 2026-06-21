@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useQuery } from '@tanstack/react-query';
 import { Bookmark } from 'lucide-react';
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeGridListCard from './HomeGridListCard';
@@ -10,38 +9,17 @@ import HomeFeedGrid from './HomeFeedGrid';
 import HomeStarterEmptyPanel from './HomeStarterEmptyPanel';
 import { useHomeData } from '@/contexts/HomeDataContext';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
+import { useHomeBookmarks } from '@/hooks/useHomeBookmarks';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 
-type BookmarkList = {
-  id: string;
-  title: string;
-  slug: string;
-  coverImage: string | null;
-  saveCount?: number;
-  categories?: { slug?: string; icon?: string | null } | null;
-};
-
-async function fetchRecentBookmarks(): Promise<BookmarkList[]> {
-  const res = await fetch('/api/user/bookmarks?page=1&limit=8');
-  const json = await res.json();
-  if (!res.ok || !json.success) return [];
-  const items = json.data?.bookmarks ?? [];
-  return items.map((b: { list: BookmarkList }) => b.list).filter(Boolean);
-}
-
 export default function HomeSavedListsSection() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { isGuest, hasSaves, isLoading: userLoading } = useHomeUserState();
   const { data: homeData } = useHomeData();
   const trendingFallback = (homeData?.trending ?? []).slice(0, 4);
 
-  const { data: savedLists = [], isLoading } = useQuery({
-    queryKey: ['user', session?.user?.id, 'home-bookmarks'],
-    queryFn: fetchRecentBookmarks,
-    enabled: status !== 'loading' && !!session?.user?.id,
-    staleTime: 60_000,
-  });
+  const { data: savedLists = [], isLoading } = useHomeBookmarks();
 
   if (status === 'loading' || userLoading) {
     return (

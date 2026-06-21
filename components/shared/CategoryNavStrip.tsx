@@ -1,10 +1,13 @@
 'use client';
 
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
+import type { CategoryMenuChip } from '@/lib/category-menu';
 
 interface CategoryNavStripProps {
   /** slug دسته فعال — برای هایلایت */
   activeSlug?: string | null;
+  /** دسته‌ها از SSR — جلوگیری از fetch تکراری */
+  initialCategories?: CategoryMenuChip[];
   /** داخل sticky دیگر — بدون sticky و border جدا */
   embedded?: boolean;
   className?: string;
@@ -16,10 +19,17 @@ interface CategoryNavStripProps {
  */
 export default function CategoryNavStrip({
   activeSlug,
+  initialCategories,
   embedded = false,
   className = '',
 }: CategoryNavStripProps) {
-  const inner = <QuickCategoryChips activeSlug={activeSlug} variant="nav" />;
+  const inner = (
+    <QuickCategoryChips
+      activeSlug={activeSlug}
+      variant="nav"
+      initialCategories={initialCategories}
+    />
+  );
 
   if (embedded) {
     return <div className={className}>{inner}</div>;

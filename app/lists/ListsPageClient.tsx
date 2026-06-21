@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { LayoutGrid, List, Filter, Bookmark } from 'lucide-react';
-import { lists, categories } from '@prisma/client';
+import { categories } from '@prisma/client';
+import type { ListsBrowseList } from '@/lib/lists-browse';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
 import ListsFeaturedCarousel from '@/components/mobile/lists/ListsFeaturedCarousel';
 import ListsCategorySection from '@/components/mobile/lists/ListsCategorySection';
@@ -12,7 +13,6 @@ import InfiniteScrollSentinel from '@/components/mobile/lists/InfiniteScrollSent
 import ListsSimilarRow from '@/components/mobile/lists/ListsSimilarRow';
 import SearchInput from '@/components/mobile/search/SearchInput';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
-import SearchResultsPanel from '@/components/mobile/search/SearchResultsPanel';
 import { filterListsByQuery, normalizeSearchQuery, pushRecentSearch, SEARCH_MIN_LENGTH } from '@/lib/list-search';
 import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
 import { trackSearch, trackSearchNoResults } from '@/lib/analytics';
@@ -21,33 +21,24 @@ import { pickSimilarLists } from '@/lib/lists-page-similar';
 import FilterBottomSheetPro, {
   type FilterState,
   type VibeFilter,
-} from '@/components/mobile/lists/FilterBottomSheetPro';
+} from '@/components/mobile/lists/lists-lazy-sections';
+import {
+  SearchResultsPanelLazy,
+  ListsCategorySectionLazy,
+} from '@/components/mobile/lists/lists-lazy-sections';
+import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
 import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { DESKTOP_BREAKPOINT_PX, useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import { LISTS_BROWSE_DEFAULT_LIMIT } from '@/lib/lists-browse';
 
-type ListWithCategory = lists & {
-  categories: categories | null;
-  saveCount?: number;
-  itemCount?: number;
-  likeCount?: number;
-  viewCount?: number;
-  users?: {
-    id: string;
-    name: string | null;
-    username: string | null;
-    image: string | null;
-  } | null;
-  _count: {
-    items: number;
-    list_likes: number;
-  };
-};
+type ListWithCategory = ListsBrowseList;
 
 interface ListsPageClientProps {
   lists: ListWithCategory[];
+  totalListCount: number;
   categories: categories[];
   initialCategory?: string;
   initialSearch?: string;
@@ -196,6 +187,7 @@ function scrollChipIntoHorizontalView(container: HTMLElement, chip: HTMLElement)
 
 export default function ListsPageClient({
   lists: initialLists,
+  totalListCount,
   categories,
   initialCategory,
   initialSearch,
@@ -230,14 +222,28 @@ export default function ListsPageClient({
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [trendingListIds, setTrendingListIds] = useState<string[]>([]);
   const [trendingLoaded, setTrendingLoaded] = useState(false);
+  const [allLists, setAllLists] = useState(initialLists);
+  const [hasMoreRemote, setHasMoreRemote] = useState(totalListCount > initialLists.length);
+  const [isLoadingRemote, setIsLoadingRemote] = useState(false);
+  const remoteFetchLock = useRef(false);
   const categoryChipsRef = useRef<HTMLDivElement>(null);
   const isScrollingToCategory = useRef(false);
   const viewModeInitialized = useRef(false);
   const isDesktop = useIsDesktop();
   const sectionPreviewCount = isDesktop ? SECTION_PREVIEW_DESKTOP : SECTION_PREVIEW_MOBILE;
 
-  const publicLists = initialLists.filter((l) => l.isActive && l.isPublic);
+  const publicLists = allLists.filter((l) => l.isActive && l.isPublic);
   const activeCategories = categories.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const menuCategories = useMemo(
+    () =>
+      activeCategories.map((c) => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        icon: c.icon,
+      })),
+    [activeCategories]
+  );
   const browseMode = inferBrowseMode(filterState);
   const trendingIdSet = useMemo(() => new Set(trendingListIds), [trendingListIds]);
 
@@ -363,6 +369,10 @@ export default function ListsPageClient({
   }, [filterState]);
 
   useEffect(() => {
+    const needsTrending =
+      browseMode === 'trending' || [...filterState.vibes].includes('trending');
+    if (!needsTrending || trendingLoaded) return;
+
     fetch('/api/trending/global')
       .then((res) => res.json())
       .then((json) => {
@@ -376,9 +386,13 @@ export default function ListsPageClient({
       })
       .catch(() => {})
       .finally(() => setTrendingLoaded(true));
-  }, []);
+  }, [browseMode, filterState.vibes, trendingLoaded]);
 
   useEffect(() => {
+    const needsBookmarks =
+      browseMode === 'saved' || [...filterState.vibes].includes('saved');
+    if (!needsBookmarks || bookmarksLoaded) return;
+
     fetch('/api/user/bookmarks?limit=500')
       .then((res) => res.json())
       .then((data) => {
@@ -393,7 +407,7 @@ export default function ListsPageClient({
       })
       .catch(() => {})
       .finally(() => setBookmarksLoaded(true));
-  }, []);
+  }, [browseMode, filterState.vibes, bookmarksLoaded]);
 
   useEffect(() => {
     if (initialSearch) {
@@ -527,8 +541,118 @@ export default function ListsPageClient({
   }, [useSectionLayout]);
 
   useEffect(() => {
+    setAllLists(initialLists);
+    setHasMoreRemote(totalListCount > initialLists.length);
+  }, [initialLists, totalListCount]);
+
+  const serverBrowseCategoryId =
+    filterState.categories.size === 1 ? [...filterState.categories][0] : null;
+
+  const fetchMoreRemoteLists = useCallback(async () => {
+    if (remoteFetchLock.current || !hasMoreRemote || isLoadingRemote) return;
+    remoteFetchLock.current = true;
+    setIsLoadingRemote(true);
+
+    try {
+      const params = new URLSearchParams({
+        offset: String(allLists.length),
+        limit: String(LISTS_BROWSE_DEFAULT_LIMIT),
+        sort: filterState.sortBy,
+      });
+      if (serverBrowseCategoryId) {
+        params.set('categoryId', serverBrowseCategoryId);
+      }
+
+      const res = await fetch(`/api/lists/browse?${params.toString()}`);
+      const data = await res.json();
+      if (!data?.success || !Array.isArray(data.lists)) return;
+
+      setAllLists((prev) => {
+        const seen = new Set(prev.map((l) => l.id));
+        const next = data.lists.filter(
+          (list: ListWithCategory) => !seen.has(list.id)
+        );
+        return next.length > 0 ? [...prev, ...next] : prev;
+      });
+      setHasMoreRemote(Boolean(data.pagination?.hasMore));
+    } catch {
+      // keep current state
+    } finally {
+      setIsLoadingRemote(false);
+      remoteFetchLock.current = false;
+    }
+  }, [
+    allLists.length,
+    filterState.sortBy,
+    hasMoreRemote,
+    isLoadingRemote,
+    serverBrowseCategoryId,
+  ]);
+
+  useEffect(() => {
+    remoteFetchLock.current = false;
+  }, [filterState.sortBy, serverBrowseCategoryId, browseMode]);
+
+  useEffect(() => {
+    const isDefaultBrowse =
+      filterState.sortBy === 'newest' &&
+      !serverBrowseCategoryId &&
+      browseMode !== 'trending' &&
+      browseMode !== 'saved';
+
+    if (isDefaultBrowse) {
+      setAllLists(initialLists);
+      setHasMoreRemote(totalListCount > initialLists.length);
+      return;
+    }
+
+    let cancelled = false;
+    remoteFetchLock.current = true;
+    setIsLoadingRemote(true);
+
+    const params = new URLSearchParams({
+      offset: '0',
+      limit: '120',
+      sort: filterState.sortBy,
+    });
+    if (serverBrowseCategoryId) {
+      params.set('categoryId', serverBrowseCategoryId);
+    }
+
+    fetch(`/api/lists/browse?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !data?.success || !Array.isArray(data.lists)) return;
+        setAllLists(data.lists);
+        setHasMoreRemote(Boolean(data.pagination?.hasMore));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingRemote(false);
+          remoteFetchLock.current = false;
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    filterState.sortBy,
+    serverBrowseCategoryId,
+    browseMode,
+    initialLists,
+    totalListCount,
+  ]);
+
+  useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [filterState, searchQuery, browseMode, viewMode]);
+
+  const canRemotePaginate =
+    !isSearchActive &&
+    browseMode !== 'saved' &&
+    !hasAdvancedFilters;
 
   const featuredLists = useMemo(() => {
     if (!useSectionLayout || sortedLists.length === 0) return [];
@@ -616,11 +740,26 @@ export default function ListsPageClient({
   }, [useSectionLayout]);
 
   const visibleFlatLists = sortedLists.slice(0, visibleCount);
-  const hasMoreFlat = !useSectionLayout && visibleCount < sortedLists.length;
+  const hasMoreFlat =
+    !useSectionLayout &&
+    (visibleCount < sortedLists.length || (canRemotePaginate && hasMoreRemote));
 
-  const loadMoreFlat = useCallback(() => {
-    setVisibleCount((n) => Math.min(n + PAGE_SIZE, sortedLists.length));
-  }, [sortedLists.length]);
+  const loadMoreFlat = useCallback(async () => {
+    if (visibleCount < sortedLists.length) {
+      setVisibleCount((n) => Math.min(n + PAGE_SIZE, sortedLists.length));
+      return;
+    }
+    if (!canRemotePaginate || !hasMoreRemote || isLoadingRemote) return;
+    await fetchMoreRemoteLists();
+    setVisibleCount((n) => n + PAGE_SIZE);
+  }, [
+    visibleCount,
+    sortedLists.length,
+    canRemotePaginate,
+    hasMoreRemote,
+    isLoadingRemote,
+    fetchMoreRemoteLists,
+  ]);
 
   const flatSimilarLists = useMemo(() => {
     if (useSectionLayout || sortedLists.length < 5) return [];
@@ -771,7 +910,11 @@ export default function ListsPageClient({
       {/* Sticky: دسته‌ها + ترند / جدید / نمای / فیلتر — مخفی در حالت جستجو */}
       {showBrowseToolbar && (
       <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-surface/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-surface/90 lg:top-14">
-        <CategoryNavStrip embedded activeSlug={initialCategory ?? null} />
+        <CategoryNavStrip
+          embedded
+          activeSlug={initialCategory ?? null}
+          initialCategories={menuCategories}
+        />
         <div className="flex items-center gap-1.5 max-lg:px-4 lg:px-0 pb-2">
           <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 scrollbar-hide">
             {BROWSE_MODES.map(({ value, label }) => (
@@ -976,21 +1119,42 @@ export default function ListsPageClient({
         ) : useSectionLayout ? (
           <>
             {featuredLists.length > 0 && <ListsFeaturedCarousel lists={featuredLists} />}
-            {categorySections.map(({ category, lists: sectionLists }) => (
-              <ListsCategorySection
-                key={category.id}
-                title={category.name}
-                icon={category.icon}
-                categoryId={category.id}
-                categorySlug={category.slug}
-                lists={sectionLists}
-                viewMode={viewMode}
-                previewCount={sectionPreviewCount}
-                bookmarkedIds={bookmarkedIds}
-                onBookmarkToggle={handleBookmarkToggle}
-                onShowAllCategory={handleShowAllCategory}
-              />
-            ))}
+            {categorySections.map(({ category, lists: sectionLists }, index) => {
+              const sectionProps = {
+                title: category.name,
+                icon: category.icon,
+                categoryId: category.id,
+                categorySlug: category.slug,
+                lists: sectionLists,
+                viewMode,
+                previewCount: sectionPreviewCount,
+                bookmarkedIds,
+                onBookmarkToggle: handleBookmarkToggle,
+                onShowAllCategory: handleShowAllCategory,
+              };
+
+              if (index === 0) {
+                return <ListsCategorySection key={category.id} {...sectionProps} />;
+              }
+
+              return (
+                <HomeDeferredMount
+                  key={category.id}
+                  fallback={
+                    <section className="mb-6" aria-hidden>
+                      <div className="mb-3 h-6 w-36 animate-pulse rounded bg-gray-200" />
+                      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="aspect-[5/4] animate-pulse rounded-xl bg-gray-100" />
+                        ))}
+                      </div>
+                    </section>
+                  }
+                >
+                  <ListsCategorySectionLazy {...sectionProps} />
+                </HomeDeferredMount>
+              );
+            })}
             {pageSimilarLists.length > 0 && (
               <ListsSimilarRow
                 lists={pageSimilarLists}
@@ -998,11 +1162,17 @@ export default function ListsPageClient({
                 onBookmarkToggle={handleBookmarkToggle}
               />
             )}
+            {canRemotePaginate && hasMoreRemote ? (
+              <InfiniteScrollSentinel
+                hasMore={hasMoreRemote}
+                onLoadMore={fetchMoreRemoteLists}
+              />
+            ) : null}
           </>
         ) : (
           <>
             {isSearchActive && (hasSearchResults || (search.viewTab === 'lists' && search.loadingMore)) ? (
-              <SearchResultsPanel
+              <SearchResultsPanelLazy
                 query={normalizedSearch}
                 queryIntent={search.queryIntent}
                 directItems={search.directItems}
@@ -1062,17 +1232,19 @@ export default function ListsPageClient({
         )}
       </div>
 
-      <FilterBottomSheetPro
-        isOpen={filterSheetOpen}
-        onClose={() => setFilterSheetOpen(false)}
-        categories={activeCategories}
-        filterState={filterState}
-        getResultCount={getResultCount}
-        onApply={(state) => {
-          setFilterState(state);
-          setFilterSheetOpen(false);
-        }}
-      />
+      {filterSheetOpen ? (
+        <FilterBottomSheetPro
+          isOpen={filterSheetOpen}
+          onClose={() => setFilterSheetOpen(false)}
+          categories={activeCategories}
+          filterState={filterState}
+          getResultCount={getResultCount}
+          onApply={(state) => {
+            setFilterState(state);
+            setFilterSheetOpen(false);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

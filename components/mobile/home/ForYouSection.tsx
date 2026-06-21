@@ -16,12 +16,22 @@ import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 import { trackHomeSectionClick } from '@/lib/analytics';
+import { useLazyInView } from '@/hooks/useLazyInView';
 
-export default function ForYouSection({ embedded = false }: { embedded?: boolean }) {
+type ForYouSectionProps = {
+  embedded?: boolean;
+  /** وقتی embedded است، والد تعیین می‌کند API چه موقع fetch شود */
+  fetchEnabled?: boolean;
+};
+
+export default function ForYouSection({ embedded = false, fetchEnabled: fetchEnabledProp }: ForYouSectionProps) {
+  const { ref, inView } = useLazyInView({ rootMargin: '240px' });
+  const shouldFetch = embedded ? (fetchEnabledProp ?? false) : inView;
+
   const { isGuest } = useHomeUserState();
   const { interests } = useHomeOnboardingInterests();
   const { data: homeData } = useHomeData();
-  const { lists, isPersonalized, isLoading } = useForYouRecommendations();
+  const { lists, isPersonalized, isLoading } = useForYouRecommendations({ enabled: shouldFetch });
 
   const trendingFallback = (homeData?.trending ?? []).filter(
     (l) => l.id !== homeData?.featured?.id
@@ -46,7 +56,7 @@ export default function ForYouSection({ embedded = false }: { embedded?: boolean
 
   if (isLoading && displayLists.length === 0) {
     return (
-      <section className={embedded ? '' : 'mb-6'}>
+      <section ref={ref} className={embedded ? '' : 'mb-6'}>
         {!embedded && (
           <div className="mb-3 px-4">
             <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
@@ -62,7 +72,7 @@ export default function ForYouSection({ embedded = false }: { embedded?: boolean
   }
 
   return (
-    <section className={embedded ? '' : 'mb-6'}>
+    <section ref={ref} className={embedded ? '' : 'mb-6'}>
       {!embedded && (
         <HomeSectionTitle
           icon="✨"

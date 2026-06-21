@@ -7,6 +7,8 @@
     "test:run": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "lighthouse:ci": "lhci autorun",
+    "lighthouse:prod": "LHCI_BASE_URL=${LHCI_BASE_URL:-http://localhost:3003} LHCI_CATEGORY_PATH=/categories/film lhci autorun",
     "dev": "cross-env NODE_OPTIONS=--max-http-header-size=16384 next dev -p 3003",
     "dev:next": "next dev",
     "build": "next build",
@@ -87,6 +89,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.14.0",
     "@playwright/test": "^1.58.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -109,7 +112,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "wait-on": "^8.0.5"
   },
   "overrides": {
     "baseline-browser-mapping": "^2.9.19"

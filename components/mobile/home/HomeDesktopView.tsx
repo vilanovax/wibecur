@@ -1,64 +1,93 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
 import HomeStartStrip from '@/components/mobile/home/HomeStartStrip';
-import HomeHeroSpotlight from '@/components/mobile/home/HomeHeroSpotlight';
-import TrendingThisWeekCarousel from '@/components/mobile/home/TrendingThisWeekCarousel';
-import HomeSavedListsSection from '@/components/mobile/home/HomeSavedListsSection';
-import ForYouSection from '@/components/mobile/home/ForYouSection';
-import HomePersonalizedFeedSection from '@/components/mobile/home/HomePersonalizedFeedSection';
 import HomeMoodRowSection from '@/components/mobile/home/HomeMoodRowSection';
-import NewAndRisingSection from '@/components/mobile/home/NewAndRisingSection';
+import TrendingThisWeekCarousel from '@/components/mobile/home/TrendingThisWeekCarousel';
 import HomeFeedSection from '@/components/mobile/home/HomeFeedSection';
+import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
+import HomeHeroSpotlightSlot from '@/components/mobile/home/HomeHeroSpotlightSlot';
+import HomeSectionRefreshSlot from '@/components/mobile/home/HomeSectionRefreshSlot';
+import { HomeFeedSectionSkeleton } from '@/components/mobile/home/home-section-skeletons';
+import {
+  HomeSavedListsSectionLazy,
+  ForYouSectionLazy,
+  HomePersonalizedFeedSectionLazy,
+  NewAndRisingSectionLazy,
+} from '@/components/mobile/home/home-lazy-sections';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
+
+type HomeDesktopViewProps = {
+  ssrFeaturedId: string | null;
+  heroSpotlight: ReactNode;
+  desktopTrending: ReactNode;
+  desktopRising: ReactNode;
+};
 
 /**
  * چیدمان دسکتاپ — Magazine / Editorial
  * xl: هیرو + حال‌وهوا کنار هم | بقیه سکشن‌ها تمام‌عرض
  */
-export default function HomeDesktopView() {
+export default function HomeDesktopView({
+  ssrFeaturedId,
+  heroSpotlight,
+  desktopTrending,
+  desktopRising,
+}: HomeDesktopViewProps) {
   const { hasSaves, isLoggedIn, isLoading: userLoading } = useHomeUserState();
   const showCombinedPersonal = isLoggedIn && hasSaves && !userLoading;
 
   return (
-    <div className="hidden lg:flex lg:flex-col lg:gap-6 xl:gap-7">
+    <div className="flex flex-col gap-6 xl:gap-7">
       <QuickCategoryChips />
 
       <HomeStartStrip />
 
-      {/* xl: هیرو (راست) + mood (چپ) */}
-      <div className="hidden xl:grid xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.55fr)] xl:items-stretch xl:gap-5">
-        <HomeMoodRowSection variant="sidebar" />
-        <HomeHeroSpotlight fillHeight />
-      </div>
-
-      <div className="flex flex-col gap-6 xl:hidden">
-        <HomeHeroSpotlight />
-        <HomeMoodRowSection />
+      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.55fr)] xl:items-stretch xl:gap-5">
+        <div className="hidden xl:block">
+          <HomeMoodRowSection variant="sidebar" />
+        </div>
+        <HomeHeroSpotlightSlot ssrFeaturedId={ssrFeaturedId} fillHeight>
+          {heroSpotlight}
+        </HomeHeroSpotlightSlot>
+        <div className="xl:hidden">
+          <HomeMoodRowSection />
+        </div>
       </div>
 
       <div className="flex flex-col gap-6 xl:gap-7">
         <HomeFeedSection divider>
-          <TrendingThisWeekCarousel />
+          <HomeSectionRefreshSlot fallback={<TrendingThisWeekCarousel />}>
+            {desktopTrending}
+          </HomeSectionRefreshSlot>
         </HomeFeedSection>
 
         {showCombinedPersonal ? (
           <HomeFeedSection divider>
-            <HomePersonalizedFeedSection />
+            <HomeDeferredMount fallback={<HomeFeedSectionSkeleton titleWidth="w-24" />}>
+              <HomePersonalizedFeedSectionLazy />
+            </HomeDeferredMount>
           </HomeFeedSection>
         ) : (
           <>
             <HomeFeedSection divider>
-              <HomeSavedListsSection />
+              <HomeDeferredMount fallback={<HomeFeedSectionSkeleton />}>
+                <HomeSavedListsSectionLazy />
+              </HomeDeferredMount>
             </HomeFeedSection>
             <HomeFeedSection divider>
-              <ForYouSection />
+              <HomeDeferredMount fallback={<HomeFeedSectionSkeleton titleWidth="w-32" />}>
+                <ForYouSectionLazy />
+              </HomeDeferredMount>
             </HomeFeedSection>
           </>
         )}
 
         <HomeFeedSection divider>
-          <NewAndRisingSection />
+          <HomeSectionRefreshSlot fallback={<NewAndRisingSectionLazy />}>
+            {desktopRising}
+          </HomeSectionRefreshSlot>
         </HomeFeedSection>
       </div>
     </div>
