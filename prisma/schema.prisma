@@ -51,6 +51,7 @@ model categories {
   deleteReason    String?
   lists           lists[]
   suggested_lists suggested_lists[]
+  sponsored_placements sponsored_placement[]
   deletedBy       users?            @relation("CategoryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
@@ -323,6 +324,7 @@ model lists {
   users               users                @relation(fields: [userId], references: [id], onDelete: Cascade)
   deletedBy           users?               @relation("ListDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   home_featured_slots home_featured_slot[]
+  sponsored_placements sponsored_placement[] @relation("SponsoredPlacementList")
   collaborationEnabled Boolean              @default(false)
   list_collaborators   list_collaborators[]
 
@@ -485,9 +487,12 @@ model users {
   user_achievements          user_achievements[]
   creator_ranking            creator_rankings?
   user_category_affinity     user_category_affinity[]
+  user_category_preferences  user_category_preference[]
+  user_keyword_preferences   user_keyword_preference[]
   discovery_spotlight_cache  discovery_spotlight_cache?
   creator_spotlights         creator_spotlights[]
   audit_logs                 audit_log[]
+  sponsored_placements_created sponsored_placement[] @relation("SponsoredPlacementCreator")
   backup_jobs_created        backup_jobs[]              @relation("BackupJobsCreated")
   moderation_cases_assigned  moderation_case[]
   moderation_notes           moderation_note[]
@@ -537,6 +542,40 @@ model user_category_affinity {
 
   @@unique([userId, categorySlug])
   @@index([userId])
+}
+
+model user_category_preference {
+  id           String   @id @default(cuid())
+  userId       String
+  categorySlug String
+  source       String   @default("inferred") // manual | inferred
+  weight       Float    @default(0)
+  pinned       Boolean  @default(false)
+  hidden       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categorySlug])
+  @@index([userId])
+  @@index([categorySlug])
+}
+
+model user_keyword_preference {
+  id        String   @id @default(cuid())
+  userId    String
+  keywordId String
+  source    String   @default("inferred") // manual | inferred
+  weight    Float    @default(0)
+  pinned    Boolean  @default(false)
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, keywordId])
+  @@index([userId])
+  @@index([keywordId])
 }
 
 model creator_rankings {
@@ -930,6 +969,54 @@ model admin_featured_notification_sent {
   createdAt DateTime @default(now())
 
   @@index([slotId])
+}
+
+// --- تبلیغات متنی اسپانسری (دسته / لیست) ---
+model sponsored_placement {
+  id              String   @id @default(cuid())
+  name            String?
+  scopeType       String // CATEGORY_ALL | CATEGORY_SELECTED | LIST
+  categoryId      String?
+  listIds         String[] @default([])
+  listId          String?
+  surface         String // LIST_BANNER | LIST_SIDEBAR | LIST_AFTER_SIMILAR | CATEGORY_BANNER
+  headline        String
+  bodyText        String?
+  ctaLabel        String
+  destinationUrl  String
+  sponsorName     String?
+  disclosureLabel String   @default("تبلیغ")
+  startAt         DateTime
+  endAt           DateTime?
+  isActive        Boolean  @default(true)
+  priority        Int      @default(0)
+  impressions     Int      @default(0)
+  clicks          Int      @default(0)
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  categories      categories? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  lists           lists?      @relation("SponsoredPlacementList", fields: [listId], references: [id], onDelete: SetNull)
+  createdBy       users?      @relation("SponsoredPlacementCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  events          sponsored_placement_event[]
+
+  @@index([categoryId])
+  @@index([listId])
+  @@index([surface, isActive, startAt])
+}
+
+model sponsored_placement_event {
+  id          String   @id @default(cuid())
+  placementId String
+  action      String // IMPRESSION | CLICK
+  userId      String?
+  listId      String?
+  categoryId  String?
+  createdAt   DateTime @default(now())
+  placement   sponsored_placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
+
+  @@index([placementId])
+  @@index([createdAt])
 }
 
 /// آمار تجمیعی جستجو — برای «پرجستجو» در overlay

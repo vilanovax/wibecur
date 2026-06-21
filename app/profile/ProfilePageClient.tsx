@@ -12,6 +12,7 @@ import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
 import type { ProfilePicksResponse } from '@/lib/profile-picks-types';
 import ProfileBreadcrumb from '@/components/profile/ProfileBreadcrumb';
 import ProfilePicksSection from '@/components/mobile/profile/ProfilePicksSection';
+import ProfileInterestsSection from '@/components/mobile/profile/ProfileInterestsSection';
 
 interface ProfilePageClientProps {
   userId: string;
@@ -173,6 +174,8 @@ export default function ProfilePageClient({
         isOwner
         initialData={initialProfilePicks}
       />
+
+      <ProfileInterestsSection />
 
       <ProfileTabs
         userId={userId}

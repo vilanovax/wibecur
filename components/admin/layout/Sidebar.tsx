@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Database,
   Star,
+  Megaphone,
   Trash2,
   Shield,
   PanelRightClose,
@@ -59,6 +60,7 @@ const INTELLIGENCE: NavItem[] = [
     badgeKey: 'suggestionsPending',
   },
   { href: '/admin/custom/featured', label: 'منتخب هوم', icon: Star, permission: 'manage_lists' },
+  { href: '/admin/custom/sponsored', label: 'تبلیغات اسپانسری', icon: Megaphone, permission: 'manage_lists' },
 ];
 
 const MODERATION: NavItem[] = [

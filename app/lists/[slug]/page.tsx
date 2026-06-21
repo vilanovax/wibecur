@@ -7,6 +7,7 @@ import { getTopSimilarLists, type ListForSimilarity } from '@/lib/listSimilarity
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ListDetailClient from './ListDetailClient';
+import { getCachedListPagePlacements } from '@/lib/sponsored-placements';
 import { withResolvedItemImages } from '@/lib/resolve-item-image';
 import { withResolvedListDisplay } from '@/lib/list-display-images';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
@@ -141,6 +142,8 @@ export default async function ListDetailPage({
   };
   const relatedLists = await getCachedSimilarLists(list.id, currentForSimilarity);
 
+  const sponsoredPlacements = await getCachedListPagePlacements(list.id, list.categoryId);
+
   const listWithCreator = withResolvedListDisplay({
     ...list,
     categorySlug: list.categories?.slug ?? null,
@@ -160,6 +163,7 @@ export default async function ListDetailPage({
       <ListDetailClient
         list={JSON.parse(JSON.stringify(listWithCreator))}
         relatedLists={JSON.parse(JSON.stringify(relatedLists))}
+        sponsoredPlacements={JSON.parse(JSON.stringify(sponsoredPlacements))}
       />
       <BottomNav />
     </div>

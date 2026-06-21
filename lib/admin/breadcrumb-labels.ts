@@ -16,6 +16,7 @@ export const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/analytics': 'آنالیتیکس',
   '/admin/suggestions': 'پیشنهادها',
   '/admin/custom/featured': 'منتخب هوم',
+  '/admin/custom/sponsored': 'تبلیغات اسپانسری',
   '/admin/comments': 'داشبورد کامنت‌ها',
   '/admin/comments/all': 'همه کامنت‌ها',
   '/admin/comments/reports': 'ریپورت کامنت‌ها',

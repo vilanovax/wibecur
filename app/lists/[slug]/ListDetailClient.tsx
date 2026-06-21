@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useListScrollDepth } from '@/hooks/useListScrollDepth';
+import { useInterestTracking } from '@/hooks/useInterestTracking';
 import { Share2, MoreVertical, Flame, Bookmark, LayoutGrid, List as ListIcon, Plus, Settings, Link2, Flag, Lightbulb, Map } from 'lucide-react';
 import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
 import ListDetailSidebar from '@/components/mobile/lists/ListDetailSidebar';
@@ -36,6 +37,8 @@ import {
 import { normalizeSearchQuery } from '@/lib/list-search';
 import { isMovieLikeCategory } from '@/lib/resolve-item-image';
 import LightweightEntryRow from '@/components/shared/list-entries/LightweightEntryRow';
+import SponsoredTextBanner from '@/components/shared/SponsoredTextBanner';
+import type { ListPagePlacements } from '@/lib/sponsored-placements';
 import {
   isLightweightListItem,
   isLifestyleCategory,
@@ -111,6 +114,7 @@ type RelatedList = {
 interface ListDetailClientProps {
   list: ListDetail;
   relatedLists: RelatedList[];
+  sponsoredPlacements?: ListPagePlacements;
 }
 
 const LIST_VIEW_PREFERENCE_KEY = 'wibe:listViewPreference';
@@ -568,10 +572,17 @@ function ListItemRow({
 export default function ListDetailClient({
   list,
   relatedLists,
+  sponsoredPlacements = { banner: null, sidebar: null, afterSimilar: null },
 }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
   useListScrollDepth(list.slug, list.categories?.slug);
+  useInterestTracking({
+    type: 'list_view',
+    categorySlug: list.categories?.slug,
+    listId: list.id,
+    keywords: list.tags,
+  });
   const isDesktop = useIsDesktop();
   const [stickyVisible, setStickyVisible] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -1112,6 +1123,15 @@ export default function ListDetailClient({
         />
       </div>
 
+      {sponsoredPlacements.banner ? (
+        <SponsoredTextBanner
+          placement={sponsoredPlacements.banner}
+          listId={list.id}
+          categoryId={list.categories?.id}
+          variant="banner"
+        />
+      ) : null}
+
       <main className="relative z-10 px-4 pt-2 lg:px-0 lg:pt-3">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_19rem] xl:gap-8">
           <div className="min-w-0 space-y-4 lg:space-y-5">
@@ -1283,6 +1303,15 @@ export default function ListDetailClient({
               <SimilarListsCarousel relatedLists={relatedLists} sectionRef={similarSectionRef} />
             )}
 
+            {sponsoredPlacements.afterSimilar ? (
+              <SponsoredTextBanner
+                placement={sponsoredPlacements.afterSimilar}
+                listId={list.id}
+                categoryId={list.categories?.id}
+                variant="inline"
+              />
+            ) : null}
+
             <div
               ref={commentsSectionRef}
               id="list-comments-section"
@@ -1308,6 +1337,9 @@ export default function ListDetailClient({
             isViral={isViral}
             viralProgress={viralProgress}
             curator={list.users}
+            sidebarAd={sponsoredPlacements.sidebar}
+            sidebarAdListId={list.id}
+            sidebarAdCategoryId={list.categories?.id}
             categoryName={list.categories?.name}
             categoryIcon={list.categories?.icon}
             tags={list.tags}

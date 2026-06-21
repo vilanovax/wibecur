@@ -7,6 +7,7 @@ import {
 } from '@/lib/public-content-filters';
 import { dbQuery } from '@/lib/db';
 import { getGlobalTrending, getFastRising, type TrendingListResult } from '@/lib/trending/service';
+import { getPreferredCategoryIds, getPreferredKeywordIds } from '@/lib/user-interests';
 
 // trending/rising سراسری‌اند (وابسته به کاربر نیستند) — هر ۵ دقیقه یک‌بار محاسبه
 // می‌شوند به‌جای هر بار لود اکسپلورِ هر کاربر.
@@ -37,6 +38,7 @@ type DbListRow = {
   categoryId: string | null;
   isFeatured: boolean;
   badge: string | null;
+  tags?: string[];
   saveCount: number;
   likeCount: number;
   itemCount: number;
@@ -61,6 +63,7 @@ type DbListRow = {
 export type ExplorePayload = {
   lists: CuratedList[];
   categories: CuratedCategory[];
+  preferredKeywordIds: string[];
   preferredCategoryIds: string[];
   bookmarkedListIds: string[];
 };
@@ -149,6 +152,7 @@ function mapDbListToCurated(
     createdAt,
     trendScore: meta?.trendScore ?? computeTrendScore({ createdAt, savesLast7d: savesCount }),
     weeklyVelocity: meta?.weeklyVelocity ?? savesCount,
+    tags: row.tags?.length ? row.tags : undefined,
   };
 }
 
@@ -217,60 +221,34 @@ function enrichListCategory(
 }
 
 async function fetchUserPreferences(userId: string) {
-  const bookmarks = await dbQuery(() =>
-    prisma.bookmarks.findMany({
-      where: {
-        userId,
-        lists: {
-          deletedAt: null,
-          isActive: true,
-          OR: [
-            { categoryId: null },
-            { categories: { isActive: true, deletedAt: null } },
-          ],
+  const [bookmarks, preferredKeywordIds, preferredCategoryIds] = await Promise.all([
+    dbQuery(() =>
+      prisma.bookmarks.findMany({
+        where: {
+          userId,
+          lists: {
+            deletedAt: null,
+            isActive: true,
+            OR: [
+              { categoryId: null },
+              { categories: { isActive: true, deletedAt: null } },
+            ],
+          },
         },
-      },
-      select: {
-        listId: true,
-        lists: { select: { categoryId: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    })
-  );
+        select: { listId: true },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      })
+    ),
+    getPreferredKeywordIds(userId),
+    getPreferredCategoryIds(userId),
+  ]);
 
-  const categoryCount = new Map<string, number>();
-  const bookmarkedListIds: string[] = [];
-
-  for (const bookmark of bookmarks) {
-    bookmarkedListIds.push(bookmark.listId);
-    const categoryId = bookmark.lists?.categoryId;
-    if (categoryId) {
-      categoryCount.set(categoryId, (categoryCount.get(categoryId) ?? 0) + 1);
-    }
-  }
-
-  const candidateIds = [...categoryCount.keys()];
-  const activeIds = new Set(
-    candidateIds.length === 0
-      ? []
-      : (
-          await dbQuery(() =>
-            prisma.categories.findMany({
-              where: { id: { in: candidateIds }, ...activeCategoryWhere },
-              select: { id: true },
-            })
-          )
-        ).map((c) => c.id)
-  );
-
-  const preferredCategoryIds = [...categoryCount.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .filter(([id]) => activeIds.has(id))
-    .slice(0, 5)
-    .map(([id]) => id);
-
-  return { preferredCategoryIds, bookmarkedListIds };
+  return {
+    preferredKeywordIds,
+    preferredCategoryIds,
+    bookmarkedListIds: bookmarks.map((b) => b.listId),
+  };
 }
 
 async function fetchMissingLists(ids: string[]): Promise<DbListRow[]> {
@@ -290,6 +268,7 @@ async function fetchMissingLists(ids: string[]): Promise<DbListRow[]> {
         coverImage: true,
         categoryId: true,
         badge: true,
+        tags: true,
         isFeatured: true,
         saveCount: true,
         likeCount: true,
@@ -334,6 +313,7 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
           coverImage: true,
           categoryId: true,
           badge: true,
+          tags: true,
           isFeatured: true,
           saveCount: true,
           likeCount: true,
@@ -359,7 +339,7 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
     ),
     getCachedGlobalTrending(),
     getCachedFastRising(),
-    userId ? fetchUserPreferences(userId) : Promise.resolve({ preferredCategoryIds: [], bookmarkedListIds: [] }),
+    userId ? fetchUserPreferences(userId) : Promise.resolve({ preferredKeywordIds: [], preferredCategoryIds: [], bookmarkedListIds: [] }),
   ]);
 
   const trendingIds = new Set(trendingRaw.map((t) => t.listId));
@@ -418,6 +398,7 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
   return {
     lists,
     categories: mapCategories(categoriesRaw),
+    preferredKeywordIds: userPrefs.preferredKeywordIds,
     preferredCategoryIds: userPrefs.preferredCategoryIds,
     bookmarkedListIds: userPrefs.bookmarkedListIds,
   };

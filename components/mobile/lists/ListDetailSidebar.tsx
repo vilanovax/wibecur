@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Lightbulb, Plus, Settings, Share2 } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
+import SponsoredTextBanner from '@/components/shared/SponsoredTextBanner';
+import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 import { trackCreatorProfileView } from '@/lib/analytics';
 import { DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS } from '@/lib/layout-tokens';
 
@@ -21,6 +23,9 @@ interface ListDetailSidebarProps {
   isViral: boolean;
   viralProgress: number;
   curator: ListUser;
+  sidebarAd?: SponsoredPlacementPublic | null;
+  sidebarAdListId?: string;
+  sidebarAdCategoryId?: string;
   categoryName?: string | null;
   categoryIcon?: string | null;
   tags?: string[];
@@ -38,6 +43,9 @@ export default function ListDetailSidebar({
   isViral,
   viralProgress,
   curator,
+  sidebarAd = null,
+  sidebarAdListId,
+  sidebarAdCategoryId,
   categoryName,
   categoryIcon,
   tags = [],
@@ -97,7 +105,14 @@ export default function ListDetailSidebar({
           />
         )}
 
-        {curator?.name && (
+        {sidebarAd ? (
+          <SponsoredTextBanner
+            placement={sidebarAd}
+            listId={sidebarAdListId}
+            categoryId={sidebarAdCategoryId}
+            variant="sidebar"
+          />
+        ) : curator?.name ? (
           <div className="rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm">
             <p className="mb-2 wibe-caption font-medium text-wibe-secondary">کیوریتور</p>
             {curator.username ? (
@@ -121,7 +136,7 @@ export default function ListDetailSidebar({
               </p>
             )}
           </div>
-        )}
+        ) : null}
 
         {tags.length > 0 && (
           <div className="rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm">

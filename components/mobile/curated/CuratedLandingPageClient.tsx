@@ -86,12 +86,14 @@ export default function CuratedLandingPageClient({
   const sections = useMemo(
     () =>
       buildExploreSections(allLists, '', {
+        preferredKeywordIds: usingMockFallback ? undefined : data?.preferredKeywordIds,
         preferredCategoryIds: usingMockFallback ? undefined : data?.preferredCategoryIds,
         activeCategoryIds,
         excludeListIds: usingMockFallback ? undefined : data?.bookmarkedListIds,
       }),
     [
       allLists,
+      data?.preferredKeywordIds,
       data?.preferredCategoryIds,
       data?.bookmarkedListIds,
       usingMockFallback,

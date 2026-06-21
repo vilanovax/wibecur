@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useInterestTracking } from '@/hooks/useInterestTracking';
 import type { CategoryPageData } from '@/types/category-page';
 import {
   CATEGORY_PAGE_SHELL,
@@ -17,10 +18,13 @@ import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { ExploreByCityPills, MostSavedItemsCafe, SectionReveal } from './hub';
 import { GenreScrollBar } from './film';
+import SponsoredTextBanner from '@/components/shared/SponsoredTextBanner';
+import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 
 interface CategoryPage2ClientProps {
   slug: string;
   initialData?: CategoryPageData | null;
+  sponsoredPlacement?: SponsoredPlacementPublic | null;
 }
 
 async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
@@ -30,7 +34,13 @@ async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
   return json.data;
 }
 
-export default function CategoryPage2Client({ slug, initialData = null }: CategoryPage2ClientProps) {
+export default function CategoryPage2Client({
+  slug,
+  initialData = null,
+  sponsoredPlacement = null,
+}: CategoryPage2ClientProps) {
+  useInterestTracking({ type: 'category_view', categorySlug: slug });
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['category-page', slug],
     queryFn: () => fetchCategoryPageData(slug),
@@ -96,6 +106,10 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
         <PageBreadcrumb className="mb-2 mt-3 lg:mb-3" items={breadcrumbItems} />
 
         <CategoryStandardHero category={category} metrics={metrics} />
+
+        {sponsoredPlacement ? (
+          <SponsoredTextBanner placement={sponsoredPlacement} categoryId={category.id} />
+        ) : null}
 
         {showGenreBar && (
           <SectionReveal>

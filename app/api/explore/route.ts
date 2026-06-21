@@ -7,6 +7,7 @@ import { fetchExploreData } from '@/lib/curated/explore-data';
 const EMPTY_EXPLORE = {
   lists: [],
   categories: [],
+  preferredKeywordIds: [],
   preferredCategoryIds: [],
   bookmarkedListIds: [],
 };

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import CategoryPage2Client from '@/components/category/CategoryPage2Client';
 import { resolveCategoryBySlug } from '@/lib/category-resolve';
 import { getCachedCategoryPageData } from '@/lib/category-page-cached';
+import { getCachedCategoryBannerPlacement } from '@/lib/sponsored-placements';
 
 export const revalidate = 60;
 
@@ -61,12 +62,17 @@ export default async function CategoryPage({
   }
 
   const initialData = JSON.parse(JSON.stringify(pageData));
+  const sponsoredPlacement = await getCachedCategoryBannerPlacement(category.id);
 
   return (
     <div className="bg-wibe-surface">
       <Header title={category.name} showBack showDesktopSearch={false} />
       <CategoryNavStrip activeSlug={category.slug} />
-      <CategoryPage2Client slug={category.slug} initialData={initialData} />
+      <CategoryPage2Client
+        slug={category.slug}
+        initialData={initialData}
+        sponsoredPlacement={sponsoredPlacement ? JSON.parse(JSON.stringify(sponsoredPlacement)) : null}
+      />
       <BottomNav />
     </div>
   );
