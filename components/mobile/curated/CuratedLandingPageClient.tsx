@@ -15,9 +15,11 @@ import ForYouSection from './ForYouSection';
 import CategoryDiscoverySection from './CategoryDiscoverySection';
 import CuratedGrid from './CuratedGrid';
 import ExploreBottomCTA from './ExploreBottomCTA';
-import ExploreSearchResults from './ExploreSearchResults';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import { ExplorePageSkeleton } from './ExplorePageSkeleton';
+import SearchResultsPanel from '@/components/mobile/search/SearchResultsPanel';
+import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
+import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
 import { MOCK_CATEGORIES, getMockLists } from '@/lib/curated/mock-data';
 import { buildExploreSections } from '@/lib/curated/explore-sections';
 import type { ExplorePayload } from '@/lib/curated/explore-data';
@@ -44,6 +46,8 @@ export default function CuratedLandingPageClient({
 }) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  const search = useUnifiedSearchQuery(searchQuery);
+  const isSearchActive = search.isActive;
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [guidedScenario, setGuidedScenario] = useState<GuidedScenario | null>(null);
   const [guidedOpen, setGuidedOpen] = useState(false);
@@ -88,14 +92,13 @@ export default function CuratedLandingPageClient({
 
   const sections = useMemo(
     () =>
-      buildExploreSections(allLists, searchQuery, {
+      buildExploreSections(allLists, '', {
         preferredCategoryIds: usingMockFallback ? undefined : data?.preferredCategoryIds,
         activeCategoryIds,
         excludeListIds: usingMockFallback ? undefined : data?.bookmarkedListIds,
       }),
     [
       allLists,
-      searchQuery,
       data?.preferredCategoryIds,
       data?.bookmarkedListIds,
       usingMockFallback,
@@ -134,7 +137,7 @@ export default function CuratedLandingPageClient({
     return <ExplorePageSkeleton />;
   }
 
-  const showDiscovery = !sections.isSearching;
+  const showDiscovery = !isSearchActive;
 
   return (
     <div className="bg-wibe-surface">
@@ -146,8 +149,39 @@ export default function CuratedLandingPageClient({
       />
 
       <main className="space-y-0">
-        {sections.isSearching ? (
-          <ExploreSearchResults lists={sections.filtered} query={searchQuery.trim()} />
+        {isSearchActive ? (
+          <div className="px-2.5 py-4 lg:px-0 lg:py-5">
+            {search.loading && !search.hasResults ? (
+              <SearchResultSkeleton rows={5} />
+            ) : !search.loading &&
+              !search.hasResults &&
+              !(search.viewTab === 'lists' && search.loadingMore) ? (
+              <div className="py-10 text-center">
+                <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
+                <p className="mt-1 wibe-caption text-wibe-secondary">
+                  عبارت دیگری امتحان کن یا از کلمات کلیدی ژانر استفاده کن
+                </p>
+              </div>
+            ) : (
+              <SearchResultsPanel
+                query={search.normalized}
+                queryIntent={search.queryIntent}
+                directItems={search.directItems}
+                indirectItems={search.indirectItems}
+                topPicks={search.topPicks}
+                subThemes={search.subThemes}
+                similarItems={search.similarItems}
+                lists={search.lists}
+                totals={search.totals}
+                hasMore={search.hasMore}
+                viewTab={search.viewTab}
+                onTabChange={search.setViewTab}
+                onSubThemeClick={setSearchQuery}
+                loadingMore={search.viewTab === 'lists' && search.loadingMore}
+                highlightQuery={search.normalized}
+              />
+            )}
+          </div>
         ) : (
           <>
             <CategoryDiscoverySection categories={categories} />

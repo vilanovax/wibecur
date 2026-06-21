@@ -26,17 +26,18 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q') ?? '';
-    const listLimit = parseInt(searchParams.get('listLimit') || '12', 10);
+    const listLimit = parseInt(searchParams.get('listLimit') || '5', 10);
     const listOffset = parseInt(searchParams.get('listOffset') || '0', 10);
-    const itemLimit = parseInt(searchParams.get('itemLimit') || '8', 10);
+    const itemLimit = parseInt(searchParams.get('itemLimit') || '10', 10);
     const directItemLimit = parseInt(searchParams.get('directItemLimit') || String(itemLimit), 10);
     const directItemOffset = parseInt(searchParams.get('directItemOffset') || '0', 10);
-    const indirectItemLimit = parseInt(searchParams.get('indirectItemLimit') || '12', 10);
+    const indirectItemLimit = parseInt(searchParams.get('indirectItemLimit') || '0', 10);
     const indirectItemOffset = parseInt(searchParams.get('indirectItemOffset') || '0', 10);
     const relatedLimit = parseInt(
-      searchParams.get('relatedLimit') || searchParams.get('similarLimit') || '8',
+      searchParams.get('relatedLimit') || searchParams.get('similarLimit') || '0',
       10
     );
+    const fast = searchParams.get('fast') === '1';
 
     const data = await unifiedSearch(prisma, q, {
       listLimit,
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
       indirectItemLimit,
       indirectItemOffset,
       relatedLimit,
+      fast: fast || undefined,
     });
 
     const response = NextResponse.json({ success: true, data });

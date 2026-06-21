@@ -753,13 +753,7 @@ export default function ListsPageClient({
             </div>
             <button
               type="button"
-              onClick={() =>
-                openSearch({
-                  query: searchQuery,
-                  applyLocally: (q) => setSearchQuery(q),
-                  localActionLabel: 'فیلتر همین صفحه',
-                })
-              }
+              onClick={() => openSearch({ query: searchQuery })}
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 lg:w-9 ${
                 isSearchActive ? 'hidden' : ''
               }`}
@@ -949,7 +943,7 @@ export default function ListsPageClient({
           />
         ) : searchLoading && isSearchActive ? (
           <SearchResultSkeleton rows={5} className="max-lg:px-0" />
-        ) : isSearchActive && !hasSearchResults ? (
+        ) : isSearchActive && !hasSearchResults && !(search.viewTab === 'lists' && search.loadingMore) ? (
           <SearchEmptyState
             query={searchQuery}
             onClear={() => setSearchQuery('')}
@@ -1007,7 +1001,7 @@ export default function ListsPageClient({
           </>
         ) : (
           <>
-            {isSearchActive && hasSearchResults ? (
+            {isSearchActive && (hasSearchResults || (search.viewTab === 'lists' && search.loadingMore)) ? (
               <SearchResultsPanel
                 query={normalizedSearch}
                 queryIntent={search.queryIntent}
@@ -1021,9 +1015,8 @@ export default function ListsPageClient({
                 hasMore={search.hasMore}
                 viewTab={search.viewTab}
                 onTabChange={search.setViewTab}
-                onLoadMore={search.loadMore}
                 onSubThemeClick={setSearchQuery}
-                loadingMore={search.loadingMore}
+                loadingMore={search.viewTab === 'lists' && search.loadingMore}
                 highlightQuery={normalizedSearch}
               />
             ) : (

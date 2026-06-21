@@ -2,7 +2,7 @@
 
 import type { SearchQueryIntent } from '@/lib/search-keywords';
 
-export type SearchResultTab = 'all' | 'items' | 'lists';
+export type SearchResultTab = 'items' | 'lists';
 
 type Props = {
   query: string;
@@ -16,7 +16,6 @@ type Props = {
 };
 
 const TABS: { id: SearchResultTab; label: string }[] = [
-  { id: 'all', label: 'همه' },
   { id: 'items', label: 'آیتم‌ها' },
   { id: 'lists', label: 'لیست‌ها' },
 ];

@@ -8,6 +8,7 @@ import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 import {
   buildItemSearchHaystack,
   buildItemSearchWhere,
+  buildItemTitleSearchWhere,
   detectBroadQuery,
   expandSearchTerms,
   scoreItemForSearch,
@@ -263,10 +264,11 @@ async function fetchItemsFromMatchingLists(
   );
 }
 
-const BROAD_TOP_PICKS_LIMIT = 12;
+const BROAD_TOP_PICKS_LIMIT = 10;
+const FAST_TOP_PICKS_POOL = 40;
 
-async function fetchTopPicks(prisma: PrismaClient, q: string, limit: number) {
-  const poolSize = Math.max(limit * 10, 80);
+async function fetchTopPicks(prisma: PrismaClient, q: string, limit: number, fast = false) {
+  const poolSize = fast ? FAST_TOP_PICKS_POOL : Math.max(limit * 10, 80);
 
   const [directRows, listContextRows] = await Promise.all([
     dbQuery(() =>
@@ -285,7 +287,7 @@ async function fetchTopPicks(prisma: PrismaClient, q: string, limit: number) {
 
   const titleDirect = scored
     .filter((e) => e.scored.matchTier === 'direct' && e.scored.reason === 'title')
-    .slice(0, 4);
+    .slice(0, Math.min(4, limit));
 
   const titleDirectIds = new Set(titleDirect.map((e) => e.row.id));
 
@@ -295,7 +297,7 @@ async function fetchTopPicks(prisma: PrismaClient, q: string, limit: number) {
       if (b.scored.score !== a.scored.score) return b.scored.score - a.scored.score;
       return (b.row.rating ?? 0) - (a.row.rating ?? 0);
     })
-    .slice(0, limit);
+    .slice(0, Math.max(0, limit - titleDirect.length));
 
   const toItem = (e: (typeof scored)[number]) =>
     mapItemRow(e.row, {
@@ -308,6 +310,56 @@ async function fetchTopPicks(prisma: PrismaClient, q: string, limit: number) {
     titleDirect: titleDirect.map(toItem),
     topPicks: picks.map(toItem),
   };
+}
+
+async function fetchPublicItemsFast(
+  prisma: PrismaClient,
+  q: string,
+  directLimit: number,
+  directOffset = 0
+) {
+  const needed = directOffset + directLimit;
+  const poolSize = Math.min(Math.max(needed * 3, 16), 36);
+
+  const directRows = await dbQuery(() =>
+    prisma.items.findMany({
+      where: buildItemTitleSearchWhere(q, itemListWhere),
+      select: itemSelect,
+      orderBy: [{ voteCount: 'desc' }, { rating: 'desc' }],
+      take: poolSize,
+    })
+  );
+
+  let merged: ItemRow[] = directRows;
+  let result = splitScoredItems(
+    scoreAndRankRows(merged, q),
+    directLimit,
+    0,
+    directOffset,
+    0
+  );
+
+  if (result.directItems.length >= Math.min(directLimit, needed - directOffset)) {
+    return result;
+  }
+
+  const listContextRows = await fetchItemsFromMatchingLists(prisma, q, needed);
+  merged = dedupeSearchItems([...merged, ...listContextRows]);
+  result = splitScoredItems(scoreAndRankRows(merged, q), directLimit, 0, directOffset, 0);
+
+  if (result.directItems.length >= Math.min(directLimit, needed - directOffset)) {
+    return result;
+  }
+
+  const fullRows = await dbQuery(() =>
+    prisma.items.findMany({
+      where: buildItemSearchWhere(q, itemListWhere),
+      select: itemSelect,
+      take: poolSize,
+    })
+  );
+  merged = dedupeSearchItems([...merged, ...fullRows]);
+  return splitScoredItems(scoreAndRankRows(merged, q), directLimit, 0, directOffset, 0);
 }
 
 async function fetchPublicItems(
@@ -581,12 +633,13 @@ export async function unifiedSearch(
     indirectItemOffset?: number;
     similarLimit?: number;
     relatedLimit?: number;
+    fast?: boolean;
   }
 ): Promise<UnifiedSearchResult> {
   const q = normalizeSearchQuery(rawQuery);
-  const listLimit = Math.min(Math.max(options?.listLimit ?? 12, 1), 48);
+  const listLimit = Math.min(Math.max(options?.listLimit ?? 12, 0), 48);
   const listOffset = Math.max(options?.listOffset ?? 0, 0);
-  const directItemLimit = Math.min(Math.max(options?.directItemLimit ?? options?.itemLimit ?? 8, 1), 48);
+  const directItemLimit = Math.min(Math.max(options?.directItemLimit ?? options?.itemLimit ?? 8, 0), 48);
   const directItemOffset = Math.max(options?.directItemOffset ?? 0, 0);
   const indirectItemLimit = Math.min(Math.max(options?.indirectItemLimit ?? 12, 0), 48);
   const indirectItemOffset = Math.max(options?.indirectItemOffset ?? 0, 0);
@@ -594,6 +647,12 @@ export async function unifiedSearch(
     Math.max(options?.relatedLimit ?? options?.similarLimit ?? 8, 0),
     16
   );
+  const fast =
+    options?.fast ??
+    (listLimit <= 5 && indirectItemLimit === 0 && relatedLimit === 0 && directItemLimit <= 10);
+
+  const needLists = listLimit > 0;
+  const needItemCounts = !fast;
 
   const emptyHasMore: UnifiedSearchHasMore = {
     directItems: false,
@@ -626,20 +685,16 @@ export async function unifiedSearch(
 
   const searchWhere = buildPublicListSearchWhere(q);
   const itemWhere = buildItemSearchWhere(q, itemListWhere);
-  const matchingListIds = await dbQuery(() =>
-    prisma.lists.findMany({
-      where: searchWhere,
-      select: { id: true },
-      take: 200,
-    })
-  );
 
   const skipItemFetch =
-    isBroad && (directItemOffset > 0 || indirectItemOffset > 0);
+    (directItemLimit === 0 && indirectItemLimit === 0 && !isBroad) ||
+    (isBroad && (directItemOffset > 0 || indirectItemOffset > 0));
+
+  const needItems = !skipItemFetch;
 
   const [itemBuckets, broadPicks, listRows, directItemTotal, listContextItemTotal, listTotal] =
     await Promise.all([
-      skipItemFetch
+      !needItems
         ? Promise.resolve({
             directItems: [] as UnifiedSearchItem[],
             indirectItems: [] as UnifiedSearchItem[],
@@ -648,53 +703,73 @@ export async function unifiedSearch(
           })
         : isBroad
           ? Promise.resolve(null)
-          : fetchPublicItems(
-              prisma,
-              q,
-              directItemLimit,
-              indirectItemLimit,
-              directItemOffset,
-              indirectItemOffset
-            ),
-      isBroad && !skipItemFetch
-        ? fetchTopPicks(prisma, q, BROAD_TOP_PICKS_LIMIT)
+          : fast && indirectItemLimit === 0
+            ? fetchPublicItemsFast(
+                prisma,
+                q,
+                directItemLimit,
+                directItemOffset
+              )
+            : fetchPublicItems(
+                prisma,
+                q,
+                directItemLimit,
+                indirectItemLimit,
+                directItemOffset,
+                indirectItemOffset
+              ),
+      isBroad && needItems
+        ? fetchTopPicks(prisma, q, BROAD_TOP_PICKS_LIMIT, fast)
         : Promise.resolve(null),
-      dbQuery(() =>
-      prisma.lists.findMany({
-        where: searchWhere,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          coverImage: true,
-          saveCount: true,
-          itemCount: true,
-          badge: true,
-          tags: true,
-          categories: { select: { name: true, icon: true, slug: true } },
-        },
-        orderBy: [{ saveCount: 'desc' }, { createdAt: 'desc' }],
-        skip: listOffset,
-        take: listLimit * 2,
-      })
-    ),
-    dbQuery(() => prisma.items.count({ where: itemWhere })),
-    matchingListIds.length > 0
-      ? dbQuery(() =>
-          prisma.items.count({
-            where: {
-              listId: { in: matchingListIds.map((l) => l.id) },
-              lists: itemListWhere,
-              ...itemModerationWhere,
-            },
+      needLists
+        ? dbQuery(() =>
+            prisma.lists.findMany({
+              where: searchWhere,
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                description: true,
+                coverImage: true,
+                saveCount: true,
+                itemCount: true,
+                badge: true,
+                tags: true,
+                categories: { select: { name: true, icon: true, slug: true } },
+              },
+              orderBy: [{ saveCount: 'desc' }, { createdAt: 'desc' }],
+              skip: listOffset,
+              take: fast ? listLimit : listLimit * 2,
+            })
+          )
+        : Promise.resolve([]),
+      needItemCounts
+        ? dbQuery(() => prisma.items.count({ where: itemWhere }))
+        : Promise.resolve(0),
+      needItemCounts
+        ? dbQuery(async () => {
+            const matchingListIds = await prisma.lists.findMany({
+              where: searchWhere,
+              select: { id: true },
+              take: 200,
+            });
+            if (matchingListIds.length === 0) return 0;
+            return prisma.items.count({
+              where: {
+                listId: { in: matchingListIds.map((l) => l.id) },
+                lists: itemListWhere,
+                ...itemModerationWhere,
+              },
+            });
           })
-        )
-      : Promise.resolve(0),
-    dbQuery(() => prisma.lists.count({ where: searchWhere })),
-  ]);
+        : Promise.resolve(0),
+      needLists
+        ? needItemCounts
+          ? dbQuery(() => prisma.lists.count({ where: searchWhere }))
+          : Promise.resolve(0)
+        : Promise.resolve(0),
+    ]);
 
-  const itemTotal = Math.max(directItemTotal, listContextItemTotal);
   const terms = expandSearchTerms(q);
 
   const rankedLists = [...listRows]
@@ -718,7 +793,9 @@ export async function unifiedSearch(
     categories: list.categories,
   }));
 
-  const listsWithHints = await attachMatchedItemTitles(prisma, q, listsBase);
+  const listsWithHints = fast
+    ? listsBase
+    : await attachMatchedItemTitles(prisma, q, listsBase);
   const listBuckets = splitLists(listsWithHints, q, terms);
 
   const resolvedItems = isBroad
@@ -754,7 +831,20 @@ export async function unifiedSearch(
       ? await fetchRelatedItems(prisma, q, resolvedItems.directItems, excludeKeys, relatedLimit)
       : [];
 
-  const listsHasMore = listOffset + listBuckets.lists.length < listTotal;
+  const listsHasMore = needItemCounts
+    ? listOffset + listBuckets.lists.length < listTotal
+    : listBuckets.lists.length >= listLimit;
+
+  const itemTotal = needItemCounts
+    ? Math.max(directItemTotal, listContextItemTotal)
+    : Math.max(
+        resolvedItems.items.length,
+        resolvedItems.hasMore.directItems || resolvedItems.hasMore.indirectItems
+          ? directItemLimit + 1
+          : resolvedItems.items.length
+      );
+
+  const resolvedListTotal = needItemCounts ? listTotal : listBuckets.lists.length;
 
   return {
     query: q,
@@ -769,7 +859,7 @@ export async function unifiedSearch(
     indirectLists: listBuckets.indirectLists,
     relatedItems,
     similarItems: relatedItems,
-    totals: { items: itemTotal, lists: listTotal },
+    totals: { items: itemTotal, lists: resolvedListTotal },
     hasMore: {
       directItems: isBroad ? false : resolvedItems.hasMore.directItems,
       indirectItems: isBroad ? false : resolvedItems.hasMore.indirectItems,

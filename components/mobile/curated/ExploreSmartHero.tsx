@@ -30,11 +30,7 @@ export default function ExploreSmartHero({
   const hasQuery = Boolean(searchQuery.trim());
 
   const openGlobalSearch = () => {
-    search?.openSearch({
-      query: searchQuery,
-      applyLocally: onSearchChange,
-      localActionLabel: 'فیلتر در اکسپلور',
-    });
+    search?.openSearch({ query: searchQuery });
   };
 
   return (
@@ -44,22 +40,21 @@ export default function ExploreSmartHero({
     >
       <h2 className="mb-2 wibe-h3 lg:mb-3">امروز چی کشف می‌کنی؟</h2>
 
-      {/* موبایل: دکمه → مودال | دسکتاپ: فیلد مستقیم (بدون جستجوی تکراری در هدر) */}
       <div className="mb-2.5 hidden lg:block">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <SearchInput
               value={searchQuery}
               onChange={onSearchChange}
-              placeholder="فیلم آرامش‌بخش، کافه دنج، سریال دهه ۹۰…"
+              placeholder="جستجو در آیتم‌ها و لیست‌ها…"
             />
           </div>
           <button
             type="button"
             onClick={openGlobalSearch}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary"
-            aria-label="جستجو در کل وایب"
-            title="جستجو در کل وایب"
+            aria-label="باز کردن جستجو"
+            title="باز کردن جستجو"
           >
             <Search className="h-4 w-4" />
           </button>
@@ -79,22 +74,9 @@ export default function ExploreSmartHero({
         <span
           className={`block w-full truncate py-0.5 pl-2 pr-8 text-right wibe-small ${hasQuery ? 'text-foreground' : 'text-wibe-secondary'}`}
         >
-          {hasQuery ? searchQuery : 'فیلم آرامش‌بخش، کافه دنج، سریال دهه ۹۰…'}
+          {hasQuery ? searchQuery : 'جستجو در آیتم‌ها و لیست‌ها…'}
         </span>
       </button>
-
-      {hasQuery && (
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => onSearchChange('')}
-            className="wibe-caption font-medium text-primary"
-          >
-            پاک کردن فیلتر
-          </button>
-          <p className="truncate wibe-caption text-wibe-secondary">فیلتر: «{searchQuery.trim()}»</p>
-        </div>
-      )}
 
       {!hasQuery && onGuidedScenarioSelect && (
         <div className="mb-2.5">

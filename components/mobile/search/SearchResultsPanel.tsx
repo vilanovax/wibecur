@@ -68,8 +68,8 @@ export default function SearchResultsPanel({
   compactSimilar = true,
 }: Props) {
   const isBroad = queryIntent === 'broad';
-  const showItems = viewTab === 'all' || viewTab === 'items';
-  const showLists = viewTab === 'all' || viewTab === 'lists';
+  const showItems = viewTab === 'items';
+  const showLists = viewTab === 'lists';
   const shownTopPicks = topPicks.length;
   const shownItemCount = isBroad
     ? directItems.length + topPicks.length + similarItems.length
@@ -107,6 +107,20 @@ export default function SearchResultsPanel({
             >
               {theme}
             </button>
+          ))}
+        </div>
+      )}
+
+      {showLists && loadingMore && lists.length === 0 && (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
+              <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-gray-200" />
+              <div className="flex-1 space-y-2 py-1">
+                <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+              </div>
+            </div>
           ))}
         </div>
       )}

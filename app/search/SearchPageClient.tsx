@@ -72,14 +72,14 @@ export default function SearchPageClient({ initialQuery = '' }: Props) {
 
       {loading && isActive && !hasResults ? (
         <SearchResultSkeleton rows={5} />
-      ) : isActive && !loading && !hasResults ? (
+      ) : isActive && !loading && !hasResults && !(search.viewTab === 'lists' && search.loadingMore) ? (
         <div className="py-16 text-center">
           <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
           <p className="mt-1 wibe-caption text-wibe-secondary">
             عبارت دیگری امتحان کن یا از کلمات کلیدی ژانر استفاده کن
           </p>
         </div>
-      ) : isActive && hasResults ? (
+      ) : isActive && (hasResults || (search.viewTab === 'lists' && search.loadingMore)) ? (
         <SearchResultsPanel
           query={normalized}
           queryIntent={search.queryIntent}
@@ -93,9 +93,8 @@ export default function SearchPageClient({ initialQuery = '' }: Props) {
           hasMore={search.hasMore}
           viewTab={search.viewTab}
           onTabChange={search.setViewTab}
-          onLoadMore={search.loadMore}
           onSubThemeClick={setQuery}
-          loadingMore={search.loadingMore}
+          loadingMore={search.viewTab === 'lists' && search.loadingMore}
           highlightQuery={normalized}
         />
       ) : (

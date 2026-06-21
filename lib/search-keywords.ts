@@ -601,6 +601,35 @@ export function buildItemSearchWhere(
   };
 }
 
+/** شرط سبک Prisma — فقط عنوان آیتم/کاتالوگ (سریع‌تر از buildItemSearchWhere) */
+export function buildItemTitleSearchWhere(
+  rawQuery: string,
+  listWhere: Prisma.listsWhereInput
+): Prisma.itemsWhereInput {
+  const { terms, titleAnchors } = collectDbSearchTerms(rawQuery);
+  const searchTerms = [...new Set([...titleAnchors, ...terms])].slice(0, 4);
+  if (searchTerms.length === 0) {
+    return { id: { in: [] } };
+  }
+
+  const termClauses: Prisma.itemsWhereInput[] = [];
+  for (const term of searchTerms) {
+    termClauses.push(
+      { title: { contains: term, mode: 'insensitive' } },
+      {
+        catalog_items: {
+          is: { title: { contains: term, mode: 'insensitive' } },
+        },
+      }
+    );
+  }
+
+  return {
+    lists: listWhere,
+    AND: [itemModerationWhere, { OR: termClauses }],
+  };
+}
+
 /** شرط Prisma برای جستجوی گسترده لیست‌ها */
 export function buildExtendedListSearchOrClauses(
   rawQuery: string

@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import sharp, { type Metadata, type Sharp } from 'sharp';
 import { ImageProfile, getImageProfile } from './image-config';
 
 export interface OptimizeImageOptions {
@@ -68,7 +68,7 @@ function resolveTargetDimensions(
 }
 
 function shouldSkipOptimization(
-  metadata: sharp.Metadata,
+  metadata: Metadata,
   originalSize: number,
   profileConfig: ReturnType<typeof getImageProfile> | null,
   maxWidth: number,
@@ -93,7 +93,7 @@ function shouldSkipOptimization(
 async function preparePipeline(
   buffer: Buffer,
   profileConfig: ReturnType<typeof getImageProfile> | null
-): Promise<sharp.Sharp> {
+): Promise<Sharp> {
   let pipeline = sharp(buffer).rotate();
 
   if (profileConfig?.trimTransparent) {

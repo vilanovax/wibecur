@@ -30,7 +30,8 @@ import SearchResultsSummary, {
 } from '@/components/mobile/search/SearchResultsSummary';
 import {
   fetchUnifiedSearch,
-  SEARCH_OVERLAY_LIMITS,
+  SEARCH_ITEMS_ONLY_LIMITS,
+  SEARCH_LISTS_ONLY_LIMITS,
 } from '@/lib/search-client';
 import type { UnifiedSearchItem } from '@/lib/unified-search';
 import type { SearchQueryIntent } from '@/lib/search-keywords';
@@ -86,8 +87,9 @@ export default function SearchOverlay({
   const [indirectLists, setIndirectLists] = useState<SearchListResult[]>([]);
   const [similarItems, setSimilarItems] = useState<UnifiedSearchItem[]>([]);
   const [totals, setTotals] = useState({ items: 0, lists: 0 });
-  const [searchViewTab, setSearchViewTab] = useState<SearchResultTab>('all');
+  const [searchViewTab, setSearchViewTab] = useState<SearchResultTab>('items');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingLists, setIsLoadingLists] = useState(false);
   const [recent, setRecent] = useState<string[]>([]);
   const [trendingQueries, setTrendingQueries] = useState<TrendingQueryItem[]>([]);
   const [trendingSource, setTrendingSource] = useState<'analytics' | 'fallback'>('fallback');
@@ -95,7 +97,10 @@ export default function SearchOverlay({
   const [featuredLoading, setFeaturedLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const requestSeq = useRef(0);
+  const listsRequestSeq = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  const listsAbortRef = useRef<AbortController | null>(null);
+  const listsLoadedForRef = useRef('');
   const noResultsTracked = useRef('');
 
   useEffect(() => {
@@ -160,7 +165,7 @@ export default function SearchOverlay({
     };
   }, [isOpen, initialQuery]);
 
-  const runSearch = useCallback(async (raw: string) => {
+  const fetchOverlayItems = useCallback(async (raw: string) => {
     const q = normalizeSearchQuery(raw);
     if (q.length < SEARCH_MIN_LENGTH) {
       setDirectItems([]);
@@ -172,8 +177,9 @@ export default function SearchOverlay({
       setIndirectLists([]);
       setSimilarItems([]);
       setTotals({ items: 0, lists: 0 });
-      setSearchViewTab('all');
+      setSearchViewTab('items');
       setIsLoading(false);
+      listsLoadedForRef.current = '';
       return;
     }
 
@@ -182,10 +188,11 @@ export default function SearchOverlay({
     abortRef.current = controller;
     const seq = ++requestSeq.current;
     setIsLoading(true);
+    listsLoadedForRef.current = '';
 
     try {
       const data = await fetchUnifiedSearch(
-        { q, ...SEARCH_OVERLAY_LIMITS },
+        { q, ...SEARCH_ITEMS_ONLY_LIMITS },
         { signal: controller.signal }
       );
       if (seq !== requestSeq.current || controller.signal.aborted) return;
@@ -196,13 +203,15 @@ export default function SearchOverlay({
         setTopPicks(data.topPicks ?? []);
         setSubThemes(data.subThemes ?? []);
         setQueryIntent(data.queryIntent ?? 'specific');
-        setDirectLists(data.directLists ?? data.lists);
-        setIndirectLists(data.indirectLists ?? []);
         setSimilarItems(data.relatedItems ?? data.similarItems ?? []);
-        setTotals(data.totals);
+        setDirectLists([]);
+        setIndirectLists([]);
+        setTotals((prev) => ({ items: data.totals.items, lists: prev.lists || 0 }));
       } else {
         setDirectItems([]);
         setIndirectItems([]);
+        setTopPicks([]);
+        setSubThemes([]);
         setDirectLists([]);
         setIndirectLists([]);
         setSimilarItems([]);
@@ -227,24 +236,63 @@ export default function SearchOverlay({
     }
   }, []);
 
+  const fetchOverlayLists = useCallback(async (raw: string) => {
+    const q = normalizeSearchQuery(raw);
+    if (q.length < SEARCH_MIN_LENGTH) return;
+    if (listsLoadedForRef.current === q) return;
+
+    listsAbortRef.current?.abort();
+    const controller = new AbortController();
+    listsAbortRef.current = controller;
+    const seq = ++listsRequestSeq.current;
+    setIsLoadingLists(true);
+
+    try {
+      const data = await fetchUnifiedSearch(
+        { q, ...SEARCH_LISTS_ONLY_LIMITS },
+        { signal: controller.signal }
+      );
+      if (seq !== listsRequestSeq.current || controller.signal.aborted) return;
+      if (!data) return;
+
+      setDirectLists(data.directLists ?? data.lists);
+      setIndirectLists(data.indirectLists ?? []);
+      listsLoadedForRef.current = q;
+      setTotals((prev) => ({ items: prev.items, lists: data.totals.lists }));
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
+    } finally {
+      if (seq === listsRequestSeq.current && !controller.signal.aborted) {
+        setIsLoadingLists(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!isOpen) {
       abortRef.current?.abort();
+      listsAbortRef.current?.abort();
       return;
     }
     const timer = window.setTimeout(() => {
-      void runSearch(query);
+      void fetchOverlayItems(query);
     }, SEARCH_DEBOUNCE_MS);
     return () => {
       window.clearTimeout(timer);
       abortRef.current?.abort();
     };
-  }, [query, isOpen, runSearch]);
+  }, [query, isOpen, fetchOverlayItems]);
 
   useEffect(() => {
     if (!isOpen) return;
-    setSearchViewTab('all');
+    setSearchViewTab('items');
+    listsLoadedForRef.current = '';
   }, [query, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || searchViewTab !== 'lists') return;
+    void fetchOverlayLists(query);
+  }, [isOpen, searchViewTab, query, fetchOverlayLists]);
 
   const isBroad = queryIntent === 'broad';
   const shownOverlayItems = isBroad
@@ -258,21 +306,15 @@ export default function SearchOverlay({
 
   const navigableResults = useMemo<NavigableResult[]>(() => {
     const rows: NavigableResult[] = [];
-    const showItems = searchViewTab === 'all' || searchViewTab === 'items';
-    const showLists = searchViewTab === 'all' || searchViewTab === 'lists';
+    const showItems = searchViewTab === 'items';
+    const showLists = searchViewTab === 'lists';
     if (showItems) {
       if (isBroad) {
-        for (const list of directLists) rows.push({ kind: 'list', list });
-        for (const list of indirectLists) rows.push({ kind: 'list', list });
         for (const item of topPicks) rows.push({ kind: 'item', item });
         for (const item of directItems) rows.push({ kind: 'item', item });
       } else {
         for (const item of directItems) rows.push({ kind: 'item', item });
         for (const item of indirectItems) rows.push({ kind: 'item', item });
-        if (showLists) {
-          for (const list of directLists) rows.push({ kind: 'list', list });
-          for (const list of indirectLists) rows.push({ kind: 'list', list });
-        }
       }
     } else if (showLists) {
       for (const list of directLists) rows.push({ kind: 'list', list });
@@ -339,8 +381,8 @@ export default function SearchOverlay({
 
   const normalized = normalizeSearchQuery(query);
   const showResults = normalized.length >= SEARCH_MIN_LENGTH;
-  const showItemResults = searchViewTab === 'all' || searchViewTab === 'items';
-  const showListResults = searchViewTab === 'all' || searchViewTab === 'lists';
+  const showItemResults = searchViewTab === 'items';
+  const showListResults = searchViewTab === 'lists';
   const listNavOffset = showItemResults ? directItems.length + indirectItems.length : 0;
 
   useEffect(() => {
@@ -653,7 +695,7 @@ export default function SearchOverlay({
           </div>
         )}
 
-        {showResults && !isLoading && !hasAnyResults && (
+        {showResults && !isLoading && !hasAnyResults && !(searchViewTab === 'lists' && isLoadingLists) && (
           <div className="py-16 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
               <Search className="h-7 w-7 text-wibe-secondary/70" strokeWidth={1.75} />
@@ -672,7 +714,7 @@ export default function SearchOverlay({
           </div>
         )}
 
-        {showResults && hasAnyResults && (
+        {showResults && (hasAnyResults || (searchViewTab === 'lists' && isLoadingLists)) && (
           <div className="space-y-4">
             <SearchResultsSummary
               query={normalized}
@@ -696,6 +738,20 @@ export default function SearchOverlay({
                   >
                     {theme}
                   </button>
+                ))}
+              </div>
+            )}
+
+            {showListResults && isLoadingLists && directLists.length + indirectLists.length === 0 && (
+              <div className="space-y-2.5">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
+                    <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-gray-200" />
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

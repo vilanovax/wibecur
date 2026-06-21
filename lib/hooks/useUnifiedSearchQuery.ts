@@ -5,7 +5,8 @@ import {
   fetchUnifiedSearch,
   mergeSearchItems,
   mergeSearchLists,
-  SEARCH_DEFAULT_LIMITS,
+  SEARCH_ITEMS_ONLY_LIMITS,
+  SEARCH_LISTS_ONLY_LIMITS,
   type SearchFetchParams,
 } from '@/lib/search-client';
 import { normalizeSearchQuery, SEARCH_DEBOUNCE_MS, SEARCH_MIN_LENGTH } from '@/lib/list-search';
@@ -19,19 +20,14 @@ const EMPTY_HAS_MORE: UnifiedSearchHasMore = {
   lists: false,
 };
 
-type Limits = Pick<
-  SearchFetchParams,
-  'listLimit' | 'directItemLimit' | 'indirectItemLimit' | 'relatedLimit'
->;
+type SearchScope = 'items' | 'lists';
 
 type Options = {
-  limits?: Limits;
   debounceMs?: number;
   enabled?: boolean;
 };
 
 export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
-  const limits = options?.limits ?? SEARCH_DEFAULT_LIMITS;
   const debounceMs = options?.debounceMs ?? SEARCH_DEBOUNCE_MS;
   const enabled = options?.enabled ?? true;
 
@@ -44,22 +40,15 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
   const [lists, setLists] = useState<UnifiedSearchList[]>([]);
   const [totals, setTotals] = useState({ items: 0, lists: 0 });
   const [hasMore, setHasMore] = useState<UnifiedSearchHasMore>(EMPTY_HAS_MORE);
-  const [viewTab, setViewTab] = useState<SearchResultTab>('all');
+  const [viewTab, setViewTab] = useState<SearchResultTab>('items');
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingLists, setLoadingLists] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
+  const listsAbortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<number | null>(null);
-  const countsRef = useRef({ direct: 0, indirect: 0, lists: 0 });
+  const listsLoadedForRef = useRef('');
   const queryIntentRef = useRef<SearchQueryIntent>('specific');
-  const limitsRef = useRef(limits);
-  limitsRef.current = limits;
-
-  countsRef.current = {
-    direct: directItems.length,
-    indirect: indirectItems.length,
-    lists: lists.length,
-  };
 
   const normalized = normalizeSearchQuery(rawQuery);
   const isActive = enabled && normalized.length >= SEARCH_MIN_LENGTH;
@@ -81,90 +70,106 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
     setLists([]);
     setTotals({ items: 0, lists: 0 });
     setHasMore(EMPTY_HAS_MORE);
-    setViewTab('all');
+    setViewTab('items');
+    listsLoadedForRef.current = '';
   }, []);
 
-  const fetchResults = useCallback(
-    async (raw: string, append: boolean) => {
+  const fetchScope = useCallback(
+    async (raw: string, scope: SearchScope, signal: AbortSignal) => {
+      const q = normalizeSearchQuery(raw);
+      const limits: SearchFetchParams =
+        scope === 'lists' ? { q, ...SEARCH_LISTS_ONLY_LIMITS } : { q, ...SEARCH_ITEMS_ONLY_LIMITS };
+
+      const data = await fetchUnifiedSearch(limits, { signal });
+      if (!data || signal.aborted) return null;
+      return data;
+    },
+    []
+  );
+
+  const fetchItems = useCallback(
+    async (raw: string) => {
       const q = normalizeSearchQuery(raw);
       if (!enabled || q.length < SEARCH_MIN_LENGTH) {
         resetResults();
         setLoading(false);
-        setLoadingMore(false);
         return;
       }
 
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
-
-      if (append) setLoadingMore(true);
-      else setLoading(true);
-
-      const offsets =
-        append && queryIntentRef.current === 'broad'
-          ? { listOffset: countsRef.current.lists, directItemOffset: 0, indirectItemOffset: 0 }
-          : append
-            ? {
-                listOffset: countsRef.current.lists,
-                directItemOffset: countsRef.current.direct,
-                indirectItemOffset: countsRef.current.indirect,
-              }
-            : { listOffset: 0, directItemOffset: 0, indirectItemOffset: 0 };
+      setLoading(true);
+      listsLoadedForRef.current = '';
 
       try {
-        const data = await fetchUnifiedSearch(
-          {
-            q,
-            ...limitsRef.current,
-            ...offsets,
-            relatedLimit: append ? 0 : limitsRef.current.relatedLimit,
-          },
-          { signal: controller.signal }
-        );
-
+        const data = await fetchScope(raw, 'items', controller.signal);
         if (controller.signal.aborted) return;
 
         if (!data) {
-          if (!append) resetResults();
+          resetResults();
           return;
         }
 
-        if (append) {
-          if (data.queryIntent === 'broad') {
-            setLists((prev) => mergeSearchLists(prev, data.lists));
-          } else {
-            setDirectItems((prev) => mergeSearchItems(prev, data.directItems));
-            setIndirectItems((prev) => mergeSearchItems(prev, data.indirectItems));
-            setLists((prev) => mergeSearchLists(prev, data.lists));
-          }
-        } else {
-          setDirectItems(data.directItems);
-          setIndirectItems(data.indirectItems);
-          setTopPicks(data.topPicks ?? []);
-          setSubThemes(data.subThemes ?? []);
-          setQueryIntent(data.queryIntent);
-          queryIntentRef.current = data.queryIntent;
-          setSimilarItems(data.relatedItems ?? data.similarItems ?? []);
-          setLists(data.lists);
-        }
-        setTotals(data.totals);
-        setHasMore(data.hasMore);
+        setDirectItems(data.directItems);
+        setIndirectItems(data.indirectItems);
+        setTopPicks(data.topPicks ?? []);
+        setSubThemes(data.subThemes ?? []);
+        setQueryIntent(data.queryIntent);
+        queryIntentRef.current = data.queryIntent;
+        setSimilarItems(data.relatedItems ?? data.similarItems ?? []);
+        setLists([]);
+        setTotals((prev) => ({ items: data.totals.items, lists: prev.lists || 0 }));
+        setHasMore((prev) => ({
+          directItems: data.hasMore.directItems,
+          indirectItems: data.hasMore.indirectItems,
+          lists: prev.lists,
+        }));
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
-        if (!append) resetResults();
+        resetResults();
       } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-          setLoadingMore(false);
-        }
+        if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [enabled, resetResults]
+    [enabled, fetchScope, resetResults]
+  );
+
+  const fetchLists = useCallback(
+    async (raw: string) => {
+      const q = normalizeSearchQuery(raw);
+      if (!enabled || q.length < SEARCH_MIN_LENGTH) return;
+      if (listsLoadedForRef.current === q) return;
+
+      listsAbortRef.current?.abort();
+      const controller = new AbortController();
+      listsAbortRef.current = controller;
+      setLoadingLists(true);
+
+      try {
+        const data = await fetchScope(raw, 'lists', controller.signal);
+        if (controller.signal.aborted) return;
+        if (!data) return;
+
+        setLists(data.lists);
+        listsLoadedForRef.current = q;
+        setTotals((prev) => ({ items: prev.items, lists: data.totals.lists }));
+        setHasMore((prev) => ({
+          ...prev,
+          lists: data.hasMore.lists,
+        }));
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+      } finally {
+        if (!controller.signal.aborted) setLoadingLists(false);
+      }
+    },
+    [enabled, fetchScope]
   );
 
   useEffect(() => {
-    setViewTab('all');
+    setViewTab('items');
+    listsLoadedForRef.current = '';
   }, [normalized]);
 
   useEffect(() => {
@@ -185,25 +190,31 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
 
     setLoading(true);
     debounceRef.current = window.setTimeout(() => {
-      void fetchResults(rawQuery, false);
+      void fetchItems(rawQuery);
     }, debounceMs);
 
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [rawQuery, enabled, debounceMs, fetchResults, resetResults]);
+  }, [rawQuery, enabled, debounceMs, fetchItems, resetResults]);
 
   useEffect(() => {
-    return () => abortRef.current?.abort();
+    if (!isActive || viewTab !== 'lists') return;
+    void fetchLists(rawQuery);
+  }, [isActive, viewTab, rawQuery, fetchLists]);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      listsAbortRef.current?.abort();
+    };
   }, []);
 
-  const loadMore = useCallback(() => {
-    void fetchResults(rawQuery, true);
-  }, [fetchResults, rawQuery]);
-
   const refetch = useCallback(() => {
-    void fetchResults(rawQuery, false);
-  }, [fetchResults, rawQuery]);
+    listsLoadedForRef.current = '';
+    void fetchItems(rawQuery);
+    if (viewTab === 'lists') void fetchLists(rawQuery);
+  }, [fetchItems, fetchLists, rawQuery, viewTab]);
 
   return {
     normalized,
@@ -220,9 +231,8 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
     viewTab,
     setViewTab,
     loading,
-    loadingMore,
+    loadingMore: loadingLists,
     hasResults,
-    loadMore,
     refetch,
     resetResults,
   };

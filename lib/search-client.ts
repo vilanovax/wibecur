@@ -1,18 +1,39 @@
 import type { UnifiedSearchHasMore, UnifiedSearchList, UnifiedSearchItem } from '@/lib/unified-search';
 import type { SearchQueryIntent } from '@/lib/search-keywords';
+import type { SearchResultTab } from '@/components/mobile/search/SearchResultsSummary';
 
 export const SEARCH_DEFAULT_LIMITS = {
-  listLimit: 24,
-  directItemLimit: 12,
-  indirectItemLimit: 16,
-  relatedLimit: 8,
+  listLimit: 5,
+  directItemLimit: 10,
+  indirectItemLimit: 0,
+  relatedLimit: 0,
+  fast: true,
 } as const;
 
 export const SEARCH_OVERLAY_LIMITS = {
-  listLimit: 12,
-  directItemLimit: 8,
-  indirectItemLimit: 10,
-  relatedLimit: 8,
+  listLimit: 5,
+  directItemLimit: 10,
+  indirectItemLimit: 0,
+  relatedLimit: 0,
+  fast: true,
+} as const;
+
+/** فقط آیتم — برای نمایش سریع تب «آیتم‌ها» */
+export const SEARCH_ITEMS_ONLY_LIMITS = {
+  listLimit: 0,
+  directItemLimit: 10,
+  indirectItemLimit: 0,
+  relatedLimit: 0,
+  fast: true,
+} as const;
+
+/** فقط لیست — برای تب «لیست‌ها» */
+export const SEARCH_LISTS_ONLY_LIMITS = {
+  listLimit: 5,
+  directItemLimit: 0,
+  indirectItemLimit: 0,
+  relatedLimit: 0,
+  fast: true,
 } as const;
 
 export type UnifiedSearchPayload = {
@@ -41,6 +62,7 @@ export type SearchFetchParams = {
   indirectItemLimit?: number;
   indirectItemOffset?: number;
   relatedLimit?: number;
+  fast?: boolean;
 };
 
 export function buildSearchApiUrl(params: SearchFetchParams): string {
@@ -53,6 +75,7 @@ export function buildSearchApiUrl(params: SearchFetchParams): string {
   if (params.indirectItemLimit != null) sp.set('indirectItemLimit', String(params.indirectItemLimit));
   if (params.indirectItemOffset != null) sp.set('indirectItemOffset', String(params.indirectItemOffset));
   if (params.relatedLimit != null) sp.set('relatedLimit', String(params.relatedLimit));
+  if (params.fast) sp.set('fast', '1');
   return `/api/search?${sp.toString()}`;
 }
 
@@ -106,7 +129,7 @@ export function mergeSearchItems(
 
 export function searchHasLoadMore(
   hasMore: UnifiedSearchHasMore,
-  tab: 'all' | 'items' | 'lists',
+  tab: SearchResultTab,
   queryIntent: SearchQueryIntent = 'specific'
 ): boolean {
   if (queryIntent === 'broad') {
@@ -114,6 +137,5 @@ export function searchHasLoadMore(
     return hasMore.lists;
   }
   if (tab === 'items') return hasMore.directItems || hasMore.indirectItems;
-  if (tab === 'lists') return hasMore.lists;
-  return hasMore.directItems || hasMore.indirectItems || hasMore.lists;
+  return hasMore.lists;
 }
