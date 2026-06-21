@@ -102,6 +102,8 @@ export default function ListCardMoreMenu({
           >
             <Link
               href={`/admin/lists/${row.id}/edit`}
+              target="_blank"
+              rel="noopener noreferrer"
               role="menuitem"
               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)]"
               onClick={() => setOpen(false)}

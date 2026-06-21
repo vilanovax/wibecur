@@ -35,6 +35,7 @@ export interface ListIntelligenceRow {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  horizontalImage: string | null;
   categoryId: string | null;
   categoryName: string;
   categorySlug: string | null;
@@ -125,6 +126,7 @@ const listSelectCore = {
   title: true,
   slug: true,
   coverImage: true,
+  horizontalImage: true,
   categoryId: true,
   isFeatured: true,
   isActive: true,
@@ -237,6 +239,7 @@ function buildIntelligenceRows(
       slug: l.slug,
       description: trash ? (l as ListRowTrash).description ?? null : null,
       coverImage: l.coverImage ?? null,
+      horizontalImage: l.horizontalImage ?? null,
       categoryId: l.categoryId,
       categoryName: l.categories?.name ?? '—',
       categorySlug: l.categories?.slug ?? null,

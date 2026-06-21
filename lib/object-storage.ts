@@ -1,4 +1,4 @@
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import axios from 'axios';
 import {
@@ -281,6 +281,41 @@ export async function uploadImageBufferDetailed(
 
 export type ImageFolder = 'items' | 'avatars' | 'covers' | 'lists' | 'hubs' | 'site';
 
+function parseStorageUrlParts(publicUrl: string): { bucket: string; key: string } | null {
+  try {
+    const u = new URL(publicUrl);
+    const pathname = decodeURIComponent(u.pathname);
+    const pathParts = pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    if (pathParts.length < 2) return null;
+    return { bucket: pathParts[0], key: pathParts.slice(1).join('/') };
+  } catch {
+    return null;
+  }
+}
+
+/** اندازه و نوع فایل از استوریج — بدون دانلود کامل */
+export async function headObjectByPublicUrl(
+  publicUrl: string
+): Promise<{ bytes: number; contentType?: string } | null> {
+  if (!isOurStorageUrl(publicUrl)) return null;
+
+  const parts = parseStorageUrlParts(publicUrl);
+  if (!parts) return null;
+
+  try {
+    const client = await getS3Client();
+    if (!client) return null;
+    const res = await client.send(
+      new HeadObjectCommand({ Bucket: parts.bucket, Key: parts.key })
+    );
+    if (res.ContentLength == null) return null;
+    return { bytes: res.ContentLength, contentType: res.ContentType ?? undefined };
+  } catch (e) {
+    console.error('headObjectByPublicUrl error:', (e as Error).message);
+    return null;
+  }
+}
+
 export async function getObjectByPublicUrl(
   publicUrl: string
 ): Promise<{ buffer: Buffer; contentType?: string } | null> {
@@ -291,15 +326,10 @@ export async function getObjectByPublicUrl(
     const client = await getS3Client();
     if (!config || !client) return null;
 
-    const u = new URL(publicUrl);
-    const pathname = decodeURIComponent(u.pathname);
-    const pathParts = pathname.replace(/^\/+/, '').split('/').filter(Boolean);
-    if (pathParts.length < 2) return null;
-    const bucketFromUrl = pathParts[0];
-    const key = pathParts.slice(1).join('/');
-    if (!key) return null;
+    const parts = parseStorageUrlParts(publicUrl);
+    if (!parts) return null;
 
-    const cmd = new GetObjectCommand({ Bucket: bucketFromUrl, Key: key });
+    const cmd = new GetObjectCommand({ Bucket: parts.bucket, Key: parts.key });
     const res = await client.send(cmd);
     const body = res.Body;
     if (!body) return null;

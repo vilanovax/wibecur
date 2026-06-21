@@ -61,7 +61,7 @@ describe('item-image-storage', () => {
   });
 
   it('needsS3MigrationImageUrl includes banner/banners paths and excludes ParsPack', () => {
-    expect(needsS3MigrationImageUrl('/images/banners/cafe.jpg')).toBe(true);
+    expect(needsS3MigrationImageUrl('/images/banners/cafe.webp')).toBe(true);
     expect(needsS3MigrationImageUrl('/images/Banners/restaurant-2.jpg')).toBe(true);
     expect(needsS3MigrationImageUrl('/images/BANNER/foo.jpg')).toBe(true);
     expect(needsS3MigrationImageUrl('https://s3.castbox.fm/foo.jpg')).toBe(true);
@@ -72,7 +72,7 @@ describe('item-image-storage', () => {
   });
 
   it('hasBannerPathInUrl matches banner and banners case-insensitively', () => {
-    expect(hasBannerPathInUrl('/images/banners/cafe.jpg')).toBe(true);
+    expect(hasBannerPathInUrl('/images/banners/cafe.webp')).toBe(true);
     expect(hasBannerPathInUrl('/images/Banner/x.jpg')).toBe(true);
     expect(hasBannerPathInUrl('https://x.com/poster.jpg')).toBe(false);
   });
@@ -84,8 +84,8 @@ describe('item-image-storage', () => {
   });
 
   it('resolveUrlForS3Migration absolutizes relative paths', () => {
-    expect(resolveUrlForS3Migration('/images/banners/cafe.jpg')).toContain(
-      '/images/banners/cafe.jpg'
+    expect(resolveUrlForS3Migration('/images/banners/cafe.webp')).toContain(
+      '/images/banners/cafe.webp'
     );
     expect(resolveUrlForS3Migration('https://example.com/a.jpg')).toBe(
       'https://example.com/a.jpg'

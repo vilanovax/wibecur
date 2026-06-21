@@ -10,6 +10,7 @@ import ListPulseSummary from '@/components/admin/lists/ListPulseSummary';
 import ListSmartFilterBar, { type ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
 import ListIntelligenceCard from '@/components/admin/lists/ListIntelligenceCard';
 import ListIntelligenceTable from '@/components/admin/lists/ListIntelligenceTable';
+import ListCoversGallery, { type ListAdminViewMode } from '@/components/admin/lists/ListCoversGallery';
 import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
 import Pagination from '@/components/admin/shared/Pagination';
 import { searchLists, countListsForFilter } from '@/lib/admin/list-list-utils';
@@ -108,7 +109,7 @@ export default function ListsIntelligenceClient({
   const [search, setSearch] = useState(initialSearch);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>('score_desc');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<ListAdminViewMode>('table');
   const [kpiCollapsed, setKpiCollapsed] = useState(true);
   const [lists, setLists] = useState<ListIntelligenceRow[]>(data.lists);
   const [moveToTrashRow, setMoveToTrashRow] = useState<ListIntelligenceRow | null>(null);
@@ -133,7 +134,9 @@ export default function ListsIntelligenceClient({
 
   useEffect(() => {
     const storedView = localStorage.getItem(VIEW_MODE_KEY);
-    if (storedView === 'grid' || storedView === 'table') setViewMode(storedView);
+    if (storedView === 'grid' || storedView === 'table' || storedView === 'covers') {
+      setViewMode(storedView);
+    }
     const storedKpi = localStorage.getItem(KPI_COLLAPSED_KEY);
     if (storedKpi === '0') setKpiCollapsed(false);
   }, []);
@@ -462,6 +465,14 @@ export default function ListsIntelligenceClient({
                 />
               ))}
             </div>
+          ) : viewMode === 'covers' && !isTrashView ? (
+            <ListCoversGallery
+              rows={sorted}
+              onFeatureToggle={handleFeatureToggle}
+              onDisableToggle={handleDisableToggle}
+              onMoveToTrash={(row) => setMoveToTrashRow(row)}
+              onOptimized={() => router.refresh()}
+            />
           ) : (
             <ListIntelligenceTable
               rows={sorted}

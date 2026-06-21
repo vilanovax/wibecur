@@ -80,7 +80,7 @@ export default function UserListDetailClient({
   const canAddItems = canAddItemsProp ?? isOwner;
   const categorySlug = list.categories?.slug ?? null;
   const categoryIcon = list.categories?.icon ?? '📋';
-  const headerSrc = (list.coverImage && list.coverImage.trim()) ? list.coverImage : '/images/banners/default.jpg';
+  const headerSrc = (list.coverImage && list.coverImage.trim()) ? list.coverImage : '/images/banners/default.webp';
 
   const categoryMeta = useMemo(() => {
     const map = new Map<string, number>();
