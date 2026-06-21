@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { getCommentsHubStats } from '@/lib/admin/comments-hub-stats';
 import { getSuggestionsStats } from '@/lib/admin/suggestions-stats';
+import { getTrashCounts } from '@/lib/admin/trash-hub';
 
 export async function GET() {
   try {
@@ -12,6 +13,7 @@ export async function GET() {
 
     const stats = await getCommentsHubStats();
     const suggestionStats = await getSuggestionsStats();
+    const trashCounts = await getTrashCounts();
     const commentsAction =
       stats.comments.pending +
       stats.commentReports.open +
@@ -25,6 +27,7 @@ export async function GET() {
         commentsAction,
         itemReportsOpen: stats.itemReportsOpen,
         suggestionsPending: suggestionStats.totalPending,
+        trashTotal: trashCounts.total,
       },
     });
   } catch (error: unknown) {

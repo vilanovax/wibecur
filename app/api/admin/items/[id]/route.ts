@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { requireAdminUser } from '@/lib/auth/require-permission';
+import { softDeleteItems } from '@/lib/admin/item-trash';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 import { ensureImageInLiara } from '@/lib/object-storage';
@@ -255,35 +257,29 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const userOrRes = await requireAdminUser();
+    if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
 
     // Check if item exists
     const existingItem = await prisma.items.findUnique({
       where: { id },
-      select: { id: true, listId: true },
+      select: { id: true, listId: true, deletedAt: true },
     });
 
     if (!existingItem) {
       return NextResponse.json({ error: 'آیتم یافت نشد' }, { status: 404 });
     }
+    if (existingItem.deletedAt) {
+      return NextResponse.json({ error: 'این آیتم در زباله‌دان است' }, { status: 400 });
+    }
 
-    // Delete item
-    await prisma.items.delete({
-      where: { id },
-    });
+    const processed = await softDeleteItems(prisma, [id], userOrRes.id);
+    if (processed === 0) {
+      return NextResponse.json({ error: 'حذف انجام نشد' }, { status: 400 });
+    }
 
-    // Update list itemCount
-    await prisma.lists.update({
-      where: { id: existingItem.listId },
-      data: {
-        itemCount: {
-          decrement: 1,
-        },
-      },
-    });
-
-    return NextResponse.json({ message: 'آیتم با موفقیت حذف شد' });
+    return NextResponse.json({ message: 'آیتم به زباله‌دان منتقل شد' });
   } catch (error: any) {
     console.error('Error deleting item:', error);
     return NextResponse.json(

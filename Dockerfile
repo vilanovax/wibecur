@@ -8,7 +8,7 @@ WORKDIR /app
 
 FROM base AS deps
 ARG NPM_LOGLEVEL=verbose
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci --loglevel ${NPM_LOGLEVEL}
 
 FROM base AS builder

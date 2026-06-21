@@ -2,7 +2,7 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import { dbQuery } from '@/lib/db';
 import { normalizeSearchQuery, SEARCH_MIN_LENGTH } from '@/lib/list-search';
 import { buildPublicListSearchWhere } from '@/lib/public-list-search';
-import { publicListWhere } from '@/lib/public-content-filters';
+import { publicListWhere, publicItemWhere } from '@/lib/public-content-filters';
 import { withResolvedListCovers } from '@/lib/resolve-list-cover';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 import {
@@ -79,9 +79,7 @@ const itemListWhere: Prisma.listsWhereInput = {
   isActive: true,
 };
 
-const itemModerationWhere: Prisma.itemsWhereInput = {
-  OR: [{ item_moderation: null }, { item_moderation: { status: { notIn: ['HIDDEN', 'UNDER_REVIEW'] } } }],
-};
+const itemModerationWhere: Prisma.itemsWhereInput = publicItemWhere;
 
 type ItemRow = {
   id: string;

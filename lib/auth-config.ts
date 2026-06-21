@@ -3,6 +3,8 @@ import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import type { NextAuthConfig } from 'next-auth';
 import type { AppRole } from '@/types/next-auth';
+import type { Permission } from '@/lib/auth/permissions';
+import { normalizeAdminPermissions } from '@/lib/auth/has-permission';
 
 const config: NextAuthConfig = {
   trustHost: true,
@@ -38,6 +40,10 @@ const config: NextAuthConfig = {
             return null;
           }
 
+          if (!user.isActive || user.deletedAt) {
+            return null;
+          }
+
           const isPasswordValid = bcrypt.compareSync(password, user.password);
 
           if (!isPasswordValid) {
@@ -49,6 +55,8 @@ const config: NextAuthConfig = {
             email: user.email,
             name: user.name,
             role: user.role,
+            isActive: user.isActive,
+            adminPermissions: normalizeAdminPermissions(user.adminPermissions),
           };
         } catch (err: unknown) {
           const e = err as Error & { code?: string };
@@ -65,6 +73,8 @@ const config: NextAuthConfig = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.isActive = user.isActive ?? true;
+        token.adminPermissions = user.adminPermissions ?? [];
         if (user.email) token.email = user.email;
       }
       return token;
@@ -73,6 +83,8 @@ const config: NextAuthConfig = {
       if (session.user) {
         session.user.id = (typeof token.id === 'string' ? token.id : token.sub) || '';
         session.user.role = ((token.role as string) || 'USER') as AppRole;
+        session.user.isActive = token.isActive !== false;
+        session.user.adminPermissions = (token.adminPermissions as Permission[] | undefined) ?? [];
         if (typeof token.email === 'string') {
           session.user.email = token.email;
         }
@@ -86,10 +98,11 @@ const config: NextAuthConfig = {
       const isProtectedRoute = isAdminRoute || isProfileRoute;
       const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'ANALYST', 'EDITOR'];
       const isAdmin = auth?.user?.role && adminRoles.includes(auth.user.role);
+      const isActiveAdmin = auth?.user?.isActive !== false;
 
       if (!isProtectedRoute) return true;
       if (!auth?.user) return false;
-      if (isAdminRoute && !isAdmin) return false;
+      if (isAdminRoute && (!isAdmin || !isActiveAdmin)) return false;
       return true;
     },
   },

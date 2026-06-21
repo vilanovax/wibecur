@@ -29,6 +29,17 @@ export const activeCategoryWhere: Prisma.categoriesWhereInput = {
   deletedAt: null,
 };
 
+/** آیتم‌های فعال (غیرحذف‌شده) در UI عمومی */
+export const publicActiveItemWhere: Prisma.itemsWhereInput = {
+  deletedAt: null,
+};
+
+/** آیتم عمومی قابل نمایش — حذف‌شده و مخفی/در بررسی نیست */
+export const publicItemWhere: Prisma.itemsWhereInput = {
+  deletedAt: null,
+  OR: [{ item_moderation: null }, { item_moderation: { status: { notIn: ['HIDDEN', 'UNDER_REVIEW'] } } }],
+};
+
 type ListWithCategory = {
   categoryId?: string | null;
   categories?: { isActive?: boolean } | null;

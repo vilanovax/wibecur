@@ -34,6 +34,7 @@ const getItemById = cache((id: string) =>
       _count: {
         select: { comments: true },
       },
+      deletedAt: true,
       item_moderation: { select: { status: true } },
       lists: {
         select: {
@@ -103,7 +104,7 @@ export default async function ItemDetailPage({
 
   const item = await getItemById(id);
 
-  if (!item) {
+  if (!item || item.deletedAt) {
     notFound();
   }
 

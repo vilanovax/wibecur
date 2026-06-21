@@ -5,31 +5,42 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { isAdminRole } from './roles';
-import { hasPermission } from './has-permission';
+import { hasPermission, normalizeAdminPermissions } from './has-permission';
 import type { Permission } from './permissions';
+import { prisma } from '@/lib/prisma';
 
 export interface AdminUser {
   id: string;
   role: string;
+  adminPermissions: Permission[];
 }
 
-/**
- * اگر کاربر لاگین نکرده یا ادمین نباشد → null
- * در API می‌توان بعدش 401 برگرداند.
- */
 export async function getAdminUser(): Promise<AdminUser | null> {
   const session = await auth();
   if (!session?.user?.id || !isAdminRole(session.user.role)) return null;
+
+  const row = await prisma.users.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      role: true,
+      isActive: true,
+      deletedAt: true,
+      adminPermissions: true,
+    },
+  });
+
+  if (!row || !row.isActive || row.deletedAt || !isAdminRole(row.role)) {
+    return null;
+  }
+
   return {
-    id: session.user.id,
-    role: session.user.role,
+    id: row.id,
+    role: row.role,
+    adminPermissions: normalizeAdminPermissions(row.adminPermissions),
   };
 }
 
-/**
- * کاربر باید ادمین باشد؛ وگرنه NextResponse 401 برمی‌گرداند.
- * در API: const user = await requireAdminUser(); if (user instanceof NextResponse) return user;
- */
 export async function requireAdminUser(): Promise<AdminUser | NextResponse> {
   const user = await getAdminUser();
   if (!user) {
@@ -41,14 +52,10 @@ export async function requireAdminUser(): Promise<AdminUser | NextResponse> {
   return user;
 }
 
-/**
- * کاربر باید ادمین باشد و permission را داشته باشد؛ وگرنه NextResponse 403.
- * در API: const user = await requirePermission('manage_lists'); if (user instanceof NextResponse) return user;
- */
 export async function requirePermission(permission: Permission): Promise<AdminUser | NextResponse> {
   const maybeUser = await requireAdminUser();
   if (maybeUser instanceof NextResponse) return maybeUser;
-  if (!hasPermission(maybeUser.role, permission)) {
+  if (!hasPermission(maybeUser.role, permission, maybeUser.adminPermissions)) {
     return NextResponse.json(
       { error: 'Forbidden', code: 'FORBIDDEN', permission },
       { status: 403 }

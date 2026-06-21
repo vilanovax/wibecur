@@ -48,6 +48,7 @@ const getListBySlug = cache((slug: string) =>
       },
       users: { select: { id: true, name: true, image: true, username: true, curatorLevel: true, role: true, viralListsCount: true, totalLikesReceived: true } },
       items: {
+        where: { deletedAt: null },
         orderBy: { order: 'asc' },
         select: {
           id: true,

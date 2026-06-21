@@ -33,16 +33,9 @@ export default function MainContainer({
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
   const isAuth = pathname === '/login' || pathname === '/register';
+  const isMaintenance = pathname === '/maintenance';
 
-  if (isAdmin) {
-    return (
-      <div id="main" role="main" className="min-h-screen w-full">
-        {children}
-      </div>
-    );
-  }
-
-  if (isAuth) {
+  if (isAdmin || isAuth || isMaintenance) {
     return (
       <div id="main" role="main" className="min-h-screen w-full">
         {children}

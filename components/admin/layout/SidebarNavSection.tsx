@@ -27,6 +27,8 @@ export type NavItem = {
   matchPrefixes?: string[];
   /** کلید برای نمایش badge از useSidebarBadges */
   badgeKey?: keyof SidebarBadges;
+  /** alert = قرمز (اقدام لازم) · muted = خاکستری (شمارنده) */
+  badgeTone?: 'alert' | 'muted';
 };
 
 function isNavGroupActive(
@@ -68,10 +70,15 @@ function matchHref(pathname: string | null, search: string, href: string): boole
   return pathname === href || pathname.startsWith(href + '/');
 }
 
-function NavBadge({ count }: { count: number }) {
+function NavBadge({ count, tone = 'alert' }: { count: number; tone?: 'alert' | 'muted' }) {
   if (count <= 0) return null;
   return (
-    <span className="min-w-[1.1rem] h-[1.1rem] px-0.5 flex items-center justify-center rounded-full bg-rose-500 text-white text-[9px] font-bold tabular-nums shrink-0">
+    <span
+      className={clsx(
+        'min-w-[1.1rem] h-[1.1rem] px-0.5 flex items-center justify-center rounded-full text-white text-[9px] font-bold tabular-nums shrink-0',
+        tone === 'muted' ? 'bg-gray-500 dark:bg-gray-500' : 'bg-rose-500'
+      )}
+    >
       {count > 99 ? '۹۹+' : count.toLocaleString('fa-IR')}
     </span>
   );
@@ -93,6 +100,7 @@ export function NavItemLink({
   isActive,
   collapsed,
   badge,
+  badgeTone,
 }: {
   href: string;
   label: string;
@@ -100,6 +108,7 @@ export function NavItemLink({
   isActive: boolean;
   collapsed?: boolean;
   badge?: number;
+  badgeTone?: 'alert' | 'muted';
 }) {
   const link = (
     <Link
@@ -123,7 +132,7 @@ export function NavItemLink({
       {!collapsed && (
         <>
           <span className="flex-1 font-medium text-[13px] leading-tight truncate text-right">{label}</span>
-          <NavBadge count={badge ?? 0} />
+          <NavBadge count={badge ?? 0} tone={badgeTone} />
         </>
       )}
     </Link>
@@ -299,6 +308,7 @@ export default function SidebarNavSection({
             isActive={isParentActive}
             collapsed={collapsed}
             badge={badge}
+            badgeTone={item.badgeTone}
           />
         );
       })}

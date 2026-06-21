@@ -12,6 +12,9 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import UserAvatar from '@/components/shared/UserAvatar';
+import { getRoleLabel } from '@/lib/auth/roles';
+import { isAdminRole } from '@/lib/auth/roles';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface UserDetailModalProps {
   userId: string;
@@ -87,6 +90,7 @@ export default function UserDetailModal({
 }: UserDetailModalProps) {
   const [user, setUser] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { can } = usePermissions();
 
   useEffect(() => {
     if (isOpen && userId) fetchUserDetails();
@@ -118,17 +122,18 @@ export default function UserDetailModal({
 
   if (!isOpen) return null;
 
-  const roleLabels: Record<string, string> = {
-    USER: 'کاربر',
-    EDITOR: 'ویرایشگر',
-    ADMIN: 'مدیر',
-  };
-
   const roleColors: Record<string, string> = {
     USER: 'bg-gray-100 text-gray-800',
     EDITOR: 'bg-blue-100 text-blue-800',
     ADMIN: 'bg-red-100 text-red-800',
+    SUPER_ADMIN: 'bg-purple-100 text-purple-800',
+    MODERATOR: 'bg-amber-100 text-amber-800',
+    ANALYST: 'bg-sky-100 text-sky-800',
   };
+
+  const canToggleActive =
+    user &&
+    (can('suspend_user') || (isAdminRole(user.role) && can('manage_roles')));
 
   const sectionCard = 'rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden';
 
@@ -177,8 +182,8 @@ export default function UserDetailModal({
                   </h3>
                   <p className="text-sm text-[var(--color-text-muted)] truncate">{user.email}</p>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-medium ${roleColors[user.role]}`}>
-                      {roleLabels[user.role]}
+                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-medium ${roleColors[user.role] ?? 'bg-gray-100 text-gray-800'}`}>
+                      {getRoleLabel(user.role)}
                     </span>
                     <span
                       className={`px-2.5 py-0.5 rounded-lg text-xs font-medium ${
@@ -305,21 +310,23 @@ export default function UserDetailModal({
                         <EyeOff className="w-4 h-4" />
                         Shadow Ban (به‌زودی)
                       </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onToggleActiveRequest({
-                            id: user.id,
-                            name: user.name,
-                            email: user.email,
-                            isActive: user.isActive,
-                          })
-                        }
-                        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors border border-red-200"
-                      >
-                        <PowerOff className="w-4 h-4" />
-                        {user.isActive ? 'غیرفعال کردن' : 'فعال کردن'}
-                      </button>
+                      {canToggleActive && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onToggleActiveRequest({
+                              id: user.id,
+                              name: user.name,
+                              email: user.email,
+                              isActive: user.isActive,
+                            })
+                          }
+                          className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors border border-red-200"
+                        >
+                          <PowerOff className="w-4 h-4" />
+                          {user.isActive ? 'غیرفعال کردن' : 'فعال کردن'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

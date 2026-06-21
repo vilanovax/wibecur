@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
+import { publicActiveItemWhere } from '@/lib/public-content-filters';
 
 export type BrowseItemsSort =
   | 'newest'
@@ -106,6 +107,7 @@ export async function fetchBrowsePublicItems(options: {
   const existing = options.existing ?? { catalogItemIds: [], titleKeys: [] };
 
   const and: Prisma.itemsWhereInput[] = [
+    publicActiveItemWhere,
     {
       lists: {
         isActive: true,
@@ -173,6 +175,7 @@ export async function fetchBrowseCategoryCounts() {
   const rows = await prisma.items.groupBy({
     by: ['listId'],
     where: {
+      deletedAt: null,
       lists: { isActive: true, isPublic: true, categoryId: { not: null } },
     },
     _count: { id: true },
@@ -197,6 +200,7 @@ export async function fetchBrowseCategoryCounts() {
 
 export async function fetchBrowseTotals(existing: ExistingInListKeys) {
   const baseWhere: Prisma.itemsWhereInput = {
+    ...publicActiveItemWhere,
     lists: { isActive: true, isPublic: true },
   };
 

@@ -468,12 +468,21 @@ export default function CategoryEditForm({
             {dangerOpen && (
               <div className="px-5 pb-5 pt-0 border-t border-red-200/50 dark:border-red-900/30">
                 <p className="text-sm text-red-800 dark:text-red-200 mt-4">
-                  دسته به زباله‌دان منتقل می‌شود و در اپ نمایش داده نمی‌شود.
+                  با انتقال دسته به زباله‌دان، ابتدا همهٔ لیست‌های فعال آن (و آیتم‌هایشان) به
+                  زباله‌دان ادمین منتقل می‌شوند و سپس خود دسته حذف می‌شود.
                   {analytics.listCount > 0 && (
                     <>
                       {' '}
-                      این دسته {analytics.listCount.toLocaleString('fa-IR')} لیست دارد — لیست‌ها حذف
-                      نمی‌شوند.
+                      این دسته{' '}
+                      <strong>{analytics.listCount.toLocaleString('fa-IR')}</strong> لیست فعال
+                      {analytics.uniqueItemCount > 0 && (
+                        <>
+                          {' '}
+                          و{' '}
+                          <strong>{analytics.uniqueItemCount.toLocaleString('fa-IR')}</strong> آیتم
+                        </>
+                      )}{' '}
+                      دارد.
                     </>
                   )}
                 </p>
@@ -511,6 +520,14 @@ export default function CategoryEditForm({
             <h3 className="font-semibold text-[var(--color-text)] mb-2">تأیید انتقال به زباله‌دان</h3>
             <p className="text-sm text-[var(--color-text-muted)] mb-4">
               برای انتقال این دسته به زباله‌دان عبارت <strong>حذف</strong> را وارد کنید.
+              {analytics.listCount > 0 && (
+                <>
+                  {' '}
+                  {analytics.listCount.toLocaleString('fa-IR')} لیست و{' '}
+                  {analytics.uniqueItemCount.toLocaleString('fa-IR')} آیتم همراه آن به زباله‌دان
+                  منتقل می‌شوند.
+                </>
+              )}
             </p>
             <input
               type="text"

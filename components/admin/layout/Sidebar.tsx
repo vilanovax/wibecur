@@ -18,6 +18,8 @@ import {
   ClipboardList,
   Database,
   Star,
+  Trash2,
+  Shield,
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
@@ -44,6 +46,7 @@ const PRIMARY: NavItem[] = [
     matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items'],
   },
   { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
+  { href: '/admin/admins', label: 'ادمین‌ها', icon: Shield, permission: 'manage_roles' },
 ];
 
 const INTELLIGENCE: NavItem[] = [
@@ -52,7 +55,7 @@ const INTELLIGENCE: NavItem[] = [
     href: '/admin/suggestions',
     label: 'پیشنهادها',
     icon: Lightbulb,
-    permission: 'manage_lists',
+    permission: 'manage_suggestions',
     badgeKey: 'suggestionsPending',
   },
   { href: '/admin/custom/featured', label: 'منتخب هوم', icon: Star, permission: 'manage_lists' },
@@ -60,6 +63,14 @@ const INTELLIGENCE: NavItem[] = [
 
 const MODERATION: NavItem[] = [
   { href: '/admin/moderation', label: 'صف بررسی', icon: AlertTriangle, permission: 'view_moderation' },
+  {
+    href: '/admin/trash',
+    label: 'زباله‌دان',
+    icon: Trash2,
+    permission: 'view_dashboard',
+    badgeKey: 'trashTotal',
+    badgeTone: 'muted',
+  },
   {
     href: '/admin/comments',
     label: 'کامنت‌ها',

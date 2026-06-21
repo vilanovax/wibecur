@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { normalizeSearchQuery, SEARCH_MIN_LENGTH } from '@/lib/list-search';
+import { publicItemWhere } from '@/lib/public-content-filters';
 import { expandDbSearchAnchors, fuzzyMatchInText } from '@/lib/search-fuzzy';
 
 export type SearchMatchReason =
@@ -476,9 +477,7 @@ export function scoreItemForSearch(
   return { score, reason, matchHint, matchTier };
 }
 
-const itemModerationWhere: Prisma.itemsWhereInput = {
-  OR: [{ item_moderation: null }, { item_moderation: { status: { notIn: ['HIDDEN', 'UNDER_REVIEW'] } } }],
-};
+const itemModerationWhere: Prisma.itemsWhereInput = publicItemWhere;
 
 function metadataStringContains(term: string, path: string[]): Prisma.JsonFilter {
   return {

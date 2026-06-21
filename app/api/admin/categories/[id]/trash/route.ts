@@ -6,8 +6,12 @@ import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalCategory } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
+import {
+  formatCategoryTrashMessage,
+  trashCategoryWithContents,
+} from '@/lib/admin/category-trash';
 
-/** POST: انتقال به زباله‌دان (soft delete) */
+/** POST: انتقال به زباله‌دان (soft delete) — لیست‌ها و آیتم‌ها هم منتقل می‌شوند */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,7 +25,13 @@ export async function POST(
 
     const existing = await prisma.categories.findUnique({
       where: { id },
-      include: { _count: { select: { lists: true } } },
+      include: {
+        _count: {
+          select: {
+            lists: { where: { deletedAt: null } },
+          },
+        },
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: 'دسته‌بندی یافت نشد' }, { status: 404 });
@@ -30,15 +40,12 @@ export async function POST(
       return NextResponse.json({ error: 'این دسته قبلاً به زباله‌دان منتقل شده' }, { status: 400 });
     }
 
-    const now = new Date();
-    const updated = await prisma.categories.update({
-      where: { id },
-      data: {
-        deletedAt: now,
-        deletedById: userOrRes.id,
-        deleteReason: reason ?? null,
-      },
-    });
+    const cascade = await trashCategoryWithContents(prisma, id, userOrRes.id, reason);
+
+    const updated = await prisma.categories.findUnique({ where: { id } });
+    if (!updated) {
+      return NextResponse.json({ error: 'دسته‌بندی یافت نشد' }, { status: 404 });
+    }
 
     const meta = getRequestMeta(request);
     await logAudit({
@@ -48,7 +55,11 @@ export async function POST(
       entityType: 'CATEGORY',
       entityId: id,
       before: minimalCategory(existing),
-      after: minimalCategory(updated),
+      after: {
+        ...minimalCategory(updated),
+        listsTrashed: cascade.listsTrashed,
+        itemsTrashed: cascade.itemsTrashed,
+      },
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
     });
@@ -56,13 +67,15 @@ export async function POST(
     revalidateAdminListsAndCategoriesCache();
     return NextResponse.json({
       success: true,
-      message: 'به زباله‌دان منتقل شد',
+      message: formatCategoryTrashMessage(cascade),
       listCount: existing._count?.lists ?? 0,
+      listsTrashed: cascade.listsTrashed,
+      itemsTrashed: cascade.itemsTrashed,
     });
   } catch (err: unknown) {
     console.error('Category trash error:', err);
     return NextResponse.json(
-      { error: 'خطا در انتقال به زباله‌دان' },
+      { error: err instanceof Error ? err.message : 'خطا در انتقال به زباله‌دان' },
       { status: 500 }
     );
   }

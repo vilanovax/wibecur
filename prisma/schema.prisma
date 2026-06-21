@@ -243,16 +243,21 @@ model items {
   commentsEnabled Boolean          @default(true) // فعال/غیرفعال بودن کامنت
   createdAt       DateTime         @default(now())
   updatedAt       DateTime
+  deletedAt       DateTime?
+  deletedById     String?
+  deleteReason    String?
   comments        comments[]
   item_votes      item_votes[]
   item_reports    item_reports[]
   item_moderation item_moderation?
   catalog_items   catalog_items?   @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
   lists           lists            @relation(fields: [listId], references: [id], onDelete: Cascade)
+  deletedBy       users?           @relation("ItemDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@unique([listId, catalogItemId])
   @@index([listId])
   @@index([catalogItemId])
+  @@index([deletedAt])
 }
 
 model list_likes {
@@ -429,6 +434,8 @@ model users {
   password                   String?
   role                       UserRole                   @default(USER)
   isActive                   Boolean                    @default(true)
+  /** دسترسی‌های سفارشی ادمین — اگر خالی نباشد جایگزین نقش می‌شود */
+  adminPermissions           String[]                   @default([])
   reputationScore            Int                        @default(0) // +1 comment, +2 suggestion, -3 removed
   curatorScore               Int                        @default(0)
   curatorLevel               CuratorLevel               @default(EXPLORER)
@@ -486,6 +493,7 @@ model users {
   moderation_notes           moderation_note[]
   listsDeletedBy             lists[]                    @relation("ListDeletedBy")
   categoriesDeletedBy        categories[]               @relation("CategoryDeletedBy")
+  itemsDeletedBy             items[]                    @relation("ItemDeletedBy")
   usersDeletedBy             users[]                    @relation("UserDeletedBy")
   deletedBy                  users?                     @relation("UserDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 

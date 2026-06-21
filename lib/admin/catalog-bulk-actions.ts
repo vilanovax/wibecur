@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { addCatalogItemToList, isCatalogInList } from '@/lib/catalog-items';
+import { softDeleteItems } from '@/lib/admin/item-trash';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 
 export type CatalogBulkAction =
@@ -26,35 +27,15 @@ type BulkInput = {
   targetListId?: string;
 };
 
-async function decrementListCounts(
-  prisma: PrismaClient,
-  counts: Map<string, number>
-) {
-  for (const [listId, count] of counts) {
-    if (count <= 0) continue;
-    await prisma.lists.update({
-      where: { id: listId },
-      data: { itemCount: { decrement: count } },
-    });
-  }
-}
-
 async function deletePlacements(
   prisma: PrismaClient,
   placements: { id: string; listId: string }[]
 ): Promise<number> {
   if (placements.length === 0) return 0;
-
-  const listCounts = new Map<string, number>();
-  for (const p of placements) {
-    listCounts.set(p.listId, (listCounts.get(p.listId) ?? 0) + 1);
-  }
-
-  await prisma.items.deleteMany({
-    where: { id: { in: placements.map((p) => p.id) } },
-  });
-  await decrementListCounts(prisma, listCounts);
-  return placements.length;
+  return softDeleteItems(
+    prisma,
+    placements.map((p) => p.id)
+  );
 }
 
 async function setModerationStatus(

@@ -8,6 +8,8 @@ import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalUser } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
 import { revalidateAdminUsersCache } from '@/lib/admin/admin-cache';
+import { isAdminRole } from '@/lib/auth/roles';
+import { assertCanModifyAdmin } from '@/lib/auth/admin-guards';
 
 // PUT /api/admin/users/[id]/toggle-active - فعال/غیرفعال کردن کاربر
 export async function PUT(
@@ -45,11 +47,27 @@ export async function PUT(
 
     // Prevent deactivating yourself
     const session = await auth();
-    if (session?.user?.email === existingUser.email && !isActive) {
+    if (session?.user?.id === existingUser.id && !isActive) {
       return NextResponse.json(
         { error: 'شما نمی‌توانید خود را غیرفعال کنید' },
         { status: 403 }
       );
+    }
+
+    if (isAdminRole(existingUser.role)) {
+      const roleManager = await requirePermission('manage_roles');
+      if (roleManager instanceof NextResponse) return roleManager;
+
+      const guardError = await assertCanModifyAdmin(
+        roleManager.id,
+        roleManager.role,
+        existingUser.id,
+        existingUser.role,
+        isActive
+      );
+      if (guardError) {
+        return NextResponse.json({ error: guardError }, { status: 403 });
+      }
     }
 
     const updatedUser = await dbQuery(() =>

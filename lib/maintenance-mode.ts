@@ -1,6 +1,7 @@
 import { unstable_cache, revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { toAbsoluteImageUrl } from '@/lib/seo';
+import { syncMaintenanceRuntimeFlag } from '@/lib/maintenance-runtime';
 import {
   DEFAULT_MAINTENANCE_ACCENT,
   DEFAULT_MAINTENANCE_MESSAGE,
@@ -74,7 +75,7 @@ export async function getMaintenanceModeSettings(): Promise<MaintenanceModeSetti
     },
   });
 
-  return {
+  const result = {
     enabled: settings?.maintenanceModeEnabled ?? false,
     title: settings?.maintenanceTitle?.trim() || DEFAULT_MAINTENANCE_TITLE,
     subtitle: settings?.maintenanceSubtitle?.trim() || '',
@@ -83,6 +84,18 @@ export async function getMaintenanceModeSettings(): Promise<MaintenanceModeSetti
     accentColor: normalizeAccentColor(settings?.maintenanceAccentColor),
     allowAdminBrowse: settings?.maintenanceAllowAdminBrowse ?? true,
   };
+
+  await ensureMaintenanceRuntimeSynced(result);
+  return result;
+}
+
+async function ensureMaintenanceRuntimeSynced(
+  settings: MaintenanceModeSettings
+): Promise<void> {
+  await syncMaintenanceRuntimeFlag({
+    enabled: settings.enabled,
+    allowAdminBrowse: settings.allowAdminBrowse,
+  });
 }
 
 export async function updateMaintenanceModeSettings(
@@ -117,6 +130,10 @@ export async function updateMaintenanceModeSettings(
   });
 
   invalidateMaintenanceModeCache();
+  await syncMaintenanceRuntimeFlag({
+    enabled: data.enabled,
+    allowAdminBrowse: data.allowAdminBrowse,
+  });
 
   return {
     enabled: data.enabled,
