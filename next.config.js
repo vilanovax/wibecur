@@ -23,6 +23,8 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  // native module — must not be bundled by Turbopack (Alpine Docker build)
+  serverExternalPackages: ['sharp'],
   generateBuildId: async () => BUILD_ID,
   env: {
     NEXT_PUBLIC_BUILD_ID: BUILD_ID,
