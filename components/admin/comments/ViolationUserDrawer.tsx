@@ -195,7 +195,23 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
+                {(status === 'restricted' || status === 'banned') && (
+                  <button
+                    type="button"
+                    disabled={actionLoading != null}
+                    onClick={() => runAction('unrestrict')}
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {actionLoading === 'unrestrict' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="h-4 w-4" />
+                    )}
+                    رفع محدودیت کامنت
+                  </button>
+                )}
+                <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={actionLoading != null}
@@ -222,6 +238,8 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                   )}
                   مسدود کامل
                 </button>
+                </div>
+                {(status === 'restricted' || status === 'banned') ? null : (
                 <button
                   type="button"
                   disabled={actionLoading != null}
@@ -235,6 +253,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                   )}
                   رفع محدودیت
                 </button>
+                )}
               </div>
 
               <section>

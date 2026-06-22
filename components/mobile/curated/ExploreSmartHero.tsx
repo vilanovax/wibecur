@@ -2,7 +2,6 @@
 
 import { Search } from 'lucide-react';
 import { useSearchOptional } from '@/contexts/SearchContext';
-import SearchInput from '@/components/mobile/search/SearchInput';
 import MoodExplorerHero from './MoodExplorerHero';
 import type { MoodExplorerCard } from '@/lib/discovery/mood-explorer-config';
 
@@ -24,8 +23,12 @@ export default function ExploreSmartHero({
   const search = useSearchOptional();
   const hasQuery = Boolean(searchQuery.trim());
 
-  const openGlobalSearch = () => {
-    search?.openSearch({ query: searchQuery });
+  const openExploreSearch = () => {
+    search?.openSearch({
+      query: searchQuery,
+      applyLocally: onSearchChange,
+      localActionLabel: 'جستجو در اکسپلور',
+    });
   };
 
   return (
@@ -33,32 +36,10 @@ export default function ExploreSmartHero({
       className="border-b border-wibe bg-wibe-surface px-2.5 pb-3 pt-2 lg:border-b-0 lg:px-0 lg:pb-4 lg:pt-0"
       aria-label="اکسپلور هوشمند"
     >
-      <div className="mb-2.5 hidden lg:block">
-        <p className="mb-1.5 wibe-caption font-medium text-wibe-secondary">جستجو در اکسپلور</p>
-        <div className="flex items-center gap-2">
-          <div className="min-w-0 flex-1">
-            <SearchInput
-              value={searchQuery}
-              onChange={onSearchChange}
-              placeholder={EXPLORE_SEARCH_PLACEHOLDER}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={openGlobalSearch}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary"
-            aria-label="باز کردن جستجو"
-            title="باز کردن جستجو"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
       <p className="mb-1.5 wibe-caption font-medium text-wibe-secondary lg:hidden">جستجو در اکسپلور</p>
       <button
         type="button"
-        onClick={openGlobalSearch}
+        onClick={openExploreSearch}
         className="relative mb-3 flex w-full items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 text-right transition-colors hover:border-primary/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:hidden"
         aria-label="باز کردن جستجو"
       >

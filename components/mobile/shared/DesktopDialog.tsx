@@ -70,7 +70,7 @@ export default function DesktopDialog({
       }}
       role="presentation"
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" />
+      <div className="absolute inset-0 bg-black/50 animate-in fade-in duration-200" />
       <div
         role="dialog"
         aria-modal="true"

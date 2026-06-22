@@ -8,6 +8,7 @@ import {
   Star,
   EyeOff,
   ExternalLink,
+  ShieldCheck,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
@@ -15,6 +16,8 @@ import UserAvatar from '@/components/shared/UserAvatar';
 import { getRoleLabel } from '@/lib/auth/roles';
 import { isAdminRole } from '@/lib/auth/roles';
 import { usePermissions } from '@/hooks/usePermissions';
+import { CommentRestrictionStatusBadge } from '@/components/admin/comments/UserPenaltyBadge';
+import type { CommentPermissionStatus } from '@/lib/comment-permission';
 
 interface UserDetailModalProps {
   userId: string;
@@ -26,6 +29,7 @@ interface UserDetailModalProps {
     email: string;
     isActive: boolean;
   }) => void;
+  onCommentRestrictionLifted?: () => void;
 }
 
 interface UserDetails {
@@ -87,9 +91,12 @@ export default function UserDetailModal({
   isOpen,
   onClose,
   onToggleActiveRequest,
+  onCommentRestrictionLifted,
 }: UserDetailModalProps) {
   const [user, setUser] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [commentStatus, setCommentStatus] = useState<CommentPermissionStatus | null>(null);
+  const [liftingComment, setLiftingComment] = useState(false);
   const { can } = usePermissions();
 
   useEffect(() => {
@@ -108,15 +115,51 @@ export default function UserDetailModal({
 
   const fetchUserDetails = async () => {
     setIsLoading(true);
+    setCommentStatus(null);
     try {
-      const res = await fetch(`/api/admin/users/${userId}`);
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'خطا در دریافت جزئیات');
-      setUser(data.data);
+      const [userRes, moderationRes] = await Promise.all([
+        fetch(`/api/admin/users/${userId}`),
+        fetch(`/api/admin/comments/violations/user/${userId}`),
+      ]);
+      const userData = await userRes.json();
+      if (!userRes.ok || !userData.success) {
+        throw new Error(userData.error || 'خطا در دریافت جزئیات');
+      }
+      setUser(userData.data);
+
+      if (moderationRes.ok) {
+        const moderationJson = await moderationRes.json();
+        if (moderationJson.success && moderationJson.data?.commentStatus) {
+          setCommentStatus(moderationJson.data.commentStatus);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLiftCommentRestriction = async () => {
+    if (!user) return;
+    setLiftingComment(true);
+    try {
+      const res = await fetch(`/api/admin/comments/violations/user/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unrestrict' }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در رفع محدودیت');
+      }
+      setCommentStatus('allowed');
+      onCommentRestrictionLifted?.();
     } catch (e) {
       console.error(e);
     } finally {
-      setIsLoading(false);
+      setLiftingComment(false);
     }
   };
 
@@ -267,6 +310,12 @@ export default function UserDetailModal({
                     <div className="p-4 space-y-3">
                       <Row label="ریپورت کامنت" value={user._count.comment_reports} />
                       <Row label="تخلفات" value={user._count.user_violations} />
+                      {commentStatus && (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[var(--color-text-muted)] text-sm">وضعیت کامنت</span>
+                          <CommentRestrictionStatusBadge status={commentStatus} />
+                        </div>
+                      )}
                       <div className="pt-2">
                         <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${getRiskBadge(user).className}`}>
                           {getRiskBadge(user).label}
@@ -310,6 +359,24 @@ export default function UserDetailModal({
                         <EyeOff className="w-4 h-4" />
                         Shadow Ban (به‌زودی)
                       </button>
+                      {commentStatus &&
+                        (commentStatus === 'restricted' ||
+                          commentStatus === 'banned' ||
+                          user._count.user_violations > 0) && (
+                          <button
+                            type="button"
+                            onClick={handleLiftCommentRestriction}
+                            disabled={liftingComment}
+                            className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-emerald-700 hover:bg-emerald-50 transition-colors border border-emerald-200 disabled:opacity-50"
+                          >
+                            {liftingComment ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <ShieldCheck className="w-4 h-4" />
+                            )}
+                            رفع محدودیت کامنت
+                          </button>
+                        )}
                       {canToggleActive && (
                         <button
                           type="button"

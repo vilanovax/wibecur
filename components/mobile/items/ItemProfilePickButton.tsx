@@ -3,24 +3,20 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Sparkles } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Toast from '@/components/shared/Toast';
 import { dispatchProfilePicksUpdated } from '@/lib/profile-events';
+import {
+  invalidateItemViewerState,
+  useItemViewerState,
+} from '@/hooks/useItemViewerState';
 
 interface ItemProfilePickButtonProps {
   itemId: string;
   catalogItemId?: string | null;
-  /** hero = روی پس‌زمینه تیره hero */
   variant?: 'default' | 'hero' | 'compact';
-}
-
-interface PickStatus {
-  isPicked: boolean;
-  pickId: string | null;
-  canPick: boolean;
-  catalogItemId: string | null;
 }
 
 export default function ItemProfilePickButton({
@@ -34,23 +30,16 @@ export default function ItemProfilePickButton({
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const { data: statusData } = useQuery<PickStatus>({
-    queryKey: ['item-profile-pick-status', itemId],
-    queryFn: async () => {
-      const res = await fetch(`/api/items/${itemId}/profile-pick-status`);
-      if (!res.ok) throw new Error('status fetch failed');
-      return (await res.json()) as PickStatus;
-    },
+  const { data: viewerState, isLoading: viewerLoading } = useItemViewerState(itemId, {
     enabled: status === 'authenticated',
-    staleTime: 60_000,
-    retry: false,
   });
 
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;
   const isHero = variant === 'hero';
   const isCompact = variant === 'compact';
-  const isPicked = statusData?.isPicked ?? false;
-  const canPick = statusData?.canPick ?? !!catalogItemIdProp;
+  const pickState = viewerState?.profilePick;
+  const isPicked = pickState?.isPicked ?? false;
+  const canPick = pickState?.canPick ?? !!catalogItemIdProp;
 
   if (status === 'unauthenticated') {
     if (isCompact) return null;
@@ -69,7 +58,7 @@ export default function ItemProfilePickButton({
     );
   }
 
-  if (status === 'loading') {
+  if (status === 'loading' || (status === 'authenticated' && viewerLoading && !viewerState)) {
     return (
       <div
         className={`animate-pulse rounded-lg bg-gray-200 ${isCompact ? 'h-9 w-9' : 'h-9 w-28'}`}
@@ -84,8 +73,8 @@ export default function ItemProfilePickButton({
     if (loading) return;
     setLoading(true);
     try {
-      if (isPicked && statusData?.pickId) {
-        const res = await fetch(`/api/user/profile-picks/${statusData.pickId}`, {
+      if (isPicked && pickState?.pickId) {
+        const res = await fetch(`/api/user/profile-picks/${pickState.pickId}`, {
           method: 'DELETE',
         });
         const json = await res.json();
@@ -95,7 +84,7 @@ export default function ItemProfilePickButton({
         }
         setToast({ message: 'از منتخب‌ها حذف شد', type: 'success' });
       } else {
-        const cid = statusData?.catalogItemId ?? catalogItemIdProp;
+        const cid = pickState?.catalogItemId ?? catalogItemIdProp;
         if (!cid) return;
         const res = await fetch('/api/user/profile-picks', {
           method: 'POST',
@@ -110,7 +99,7 @@ export default function ItemProfilePickButton({
         setToast({ message: 'به منتخب‌های پروفایل اضافه شد', type: 'success' });
       }
       dispatchProfilePicksUpdated();
-      void queryClient.invalidateQueries({ queryKey: ['item-profile-pick-status', itemId] });
+      invalidateItemViewerState(queryClient, itemId);
     } catch {
       setToast({ message: 'خطا در ارتباط', type: 'error' });
     } finally {

@@ -1,10 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import {
-  MoreVertical,
-  BarChart3,
-  Power,
   ArrowUp,
   ArrowDown,
   Minus,
@@ -18,6 +14,7 @@ import {
   USER_GROWTH_7D_LABEL,
 } from '@/lib/admin/users-types';
 import UserAvatar from '@/components/shared/UserAvatar';
+import UserRowActionMenu from '@/components/admin/users/UserRowActionMenu';
 
 const qualityClass: Record<Row['quality'], string> = {
   high_impact: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
@@ -45,7 +42,9 @@ function maskEmail(email: string): string {
 interface UsersIntelligenceTableProps {
   users: Row[];
   onToggleActiveRequest: (user: Row) => void;
+  onUnrestrictCommentRequest?: (user: Row) => void;
   togglingId: string | null;
+  liftingCommentId?: string | null;
   onUserClick: (user: Row) => void;
   emptyBecauseFilter?: boolean;
   filterLabel?: string;
@@ -55,16 +54,16 @@ interface UsersIntelligenceTableProps {
 export default function UsersIntelligenceTable({
   users,
   onToggleActiveRequest,
+  onUnrestrictCommentRequest,
   togglingId,
+  liftingCommentId = null,
   onUserClick,
   emptyBecauseFilter = false,
   filterLabel,
   hasSearch = false,
 }: UsersIntelligenceTableProps) {
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[960px]">
           <thead className="bg-[var(--color-bg)] sticky top-0 z-10">
@@ -227,47 +226,18 @@ export default function UsersIntelligenceTable({
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
-                      className="p-2 rounded-lg hover:bg-[var(--color-bg)] transition-colors"
-                      aria-label="منوی عملیات"
-                    >
-                      <MoreVertical className="w-4 h-4 text-[var(--color-text-muted)]" />
-                    </button>
-                    {openMenuId === user.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-10"
-                          onClick={() => setOpenMenuId(null)}
-                        />
-                        <div className="absolute right-0 top-full mt-1 z-20 min-w-[200px] rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-lg py-1">
-                          <Link
-                            href={`/admin/analytics?user=${user.id}`}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
-                            onClick={() => setOpenMenuId(null)}
-                          >
-                            <BarChart3 className="w-4 h-4" />
-                            آنالیتیکس
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onToggleActiveRequest(user);
-                              setOpenMenuId(null);
-                            }}
-                            disabled={togglingId === user.id}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 disabled:opacity-50"
-                          >
-                            <Power className="w-4 h-4" />
-                            {user.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                <td
+                  className="px-4 py-3"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <UserRowActionMenu
+                    user={user}
+                    onToggleActiveRequest={onToggleActiveRequest}
+                    onUnrestrictCommentRequest={onUnrestrictCommentRequest}
+                    togglingId={togglingId}
+                    liftingCommentId={liftingCommentId}
+                  />
                 </td>
               </tr>
             ))}

@@ -3,18 +3,21 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
 import { signOutIfStaleSession } from '@/lib/session-client';
-
-type LikeState = { isLiked: boolean; likeCount: number };
+import { useDeferReady } from '@/hooks/useDeferReady';
+import {
+  invalidateItemViewerState,
+  useItemViewerState,
+} from '@/hooks/useItemViewerState';
 
 interface ItemLikeButtonProps {
   itemId: string;
   initialLikeCount?: number;
   initialIsLiked?: boolean;
-  /** hero = روی hero تیره · compact = آیکون گرد در نوار پایین */
   variant?: 'default' | 'hero' | 'compact';
+  deferViewerState?: boolean;
 }
 
 export default function ItemLikeButton({
@@ -22,46 +25,37 @@ export default function ItemLikeButton({
   initialLikeCount = 0,
   initialIsLiked = false,
   variant = 'default',
+  deferViewerState = false,
 }: ItemLikeButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const queryClient = useQueryClient();
+  const deferReady = useDeferReady(deferViewerState);
 
   const isHero = variant === 'hero';
   const isCompact = variant === 'compact';
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;
 
-  // وضعیت لایک با react-query کش می‌شود تا ناوبری بین آیتم‌ها (مودال پیش‌نمایش)
-  // و بازدید مجدد همان آیتم، درخواست تکراری نزند.
-  const { data } = useQuery<LikeState>({
-    queryKey: ['item-like', itemId],
-    queryFn: async () => {
-      const response = await fetch(`/api/items/${itemId}/like`);
-      const json = await response.json();
-      if (!response.ok || !json.success) {
-        return { isLiked: initialIsLiked, likeCount: initialLikeCount };
-      }
-      return json.data as LikeState;
-    },
-    staleTime: 60 * 1000,
-    retry: false,
+  const { data: viewerState, isLoading: viewerLoading } = useItemViewerState(itemId, {
+    enabled: deferReady,
+    initialLikeCount,
   });
 
-  const isLiked = data?.isLiked ?? initialIsLiked;
-  const likeCount = data?.likeCount ?? initialLikeCount;
+  const isLiked = viewerState?.like.isLiked ?? initialIsLiked;
+  const likeCount = viewerState?.like.likeCount ?? initialLikeCount;
 
   const { mutate: toggleLike, isPending: isLoading } = useMutation({
-    mutationFn: async (): Promise<LikeState> => {
+    mutationFn: async () => {
       const response = await fetch(`/api/items/${itemId}/like`, { method: 'POST' });
       const json = await response.json();
       if (await signOutIfStaleSession(response, json)) {
         throw new Error('نشست نامعتبر است؛ لطفاً دوباره وارد شوید');
       }
       if (!json.success) throw new Error(json.error || 'like toggle failed');
-      return json.data as LikeState;
+      return json.data as { isLiked: boolean; likeCount: number };
     },
-    onSuccess: (next) => {
-      queryClient.setQueryData(['item-like', itemId], next);
+    onSuccess: () => {
+      invalidateItemViewerState(queryClient, itemId);
     },
     onError: (error) => {
       console.error('Error toggling like:', error);
@@ -77,7 +71,7 @@ export default function ItemLikeButton({
 
   const countLabel = likeCount > 0 ? likeCount.toLocaleString('fa-IR') : null;
 
-  if (status === 'loading') {
+  if (status === 'loading' || (deferReady && viewerLoading && !viewerState)) {
     return (
       <div
         className={`h-10 animate-pulse ${

@@ -1,73 +1,30 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import { useState, type ReactNode } from 'react';
+import { useLazyInView } from '@/hooks/useLazyInView';
 import Link from 'next/link';
-import {
-  Share2,
-  Heart,
-  Bookmark,
-  ChevronLeft,
-  ExternalLink,
-  List,
-} from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Heart, Bookmark, ChevronLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import ItemCoverImage from '@/components/shared/ItemCoverImage';
-import ItemMetadataFacts from '@/components/shared/ItemMetadataFacts';
-import ItemTipCard from '@/components/shared/ItemTipCard';
 import CommentSection from '@/components/mobile/comments/CommentSection';
 import ItemDiscoverySection from '@/components/mobile/items/ItemDiscoverySection';
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
-import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
-import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
-import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
-import Toast from '@/components/shared/Toast';
-import { isMovieLikeCategory } from '@/lib/resolve-item-image';
-import { isLocationCategorySlug } from '@/lib/category-layout';
 import {
-  buildItemMetadataFacts,
-  buildLightweightDisplayBody,
-  extractItemTip,
-  parseTipAsMetadataFact,
-} from '@/lib/item-metadata-display';
-import {
-  entryKindBadgeLabel,
-  entryKindIcon,
-  FACT_TYPE_LABELS,
-  isLifestyleCategory,
   isLightweightListItem,
-  resolveEntryKind,
   sourceCategorySlugFromItem,
-  type FactType,
 } from '@/lib/list-entry';
-import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
-
-const DESCRIPTION_TRUNCATE = 180;
-
-function displayRating(rating: number | null | undefined): string | null {
-  if (rating == null || Number(rating) === 0) return null;
-  return String(rating);
-}
+import type { SimilarItem } from '@/types/items';
 
 interface ItemDetailClientProps {
   item: {
     id: string;
     title: string;
-    description: string | null;
-    imageUrl: string | null;
-    displayImageUrl: string;
-    externalUrl: string | null;
     catalogItemId?: string | null;
-    listNote?: string | null;
-    rating: number | null;
-    voteCount: number | null;
     metadata: Record<string, unknown> | null;
-    commentCount: number;
+    voteCount: number | null;
+    personalSaveCount: number;
     listRank: number | null;
     listItemCount: number;
-    personalSaveCount: number;
     lists: {
       id: string;
       title: string;
@@ -81,8 +38,9 @@ interface ItemDetailClientProps {
         color: string;
       } | null;
     };
-    users: { name: string | null } | null;
   };
+  metadataSection: ReactNode;
+  initialSimilarItems?: SimilarItem[];
 }
 
 function ItemSidebarPanel({
@@ -101,148 +59,36 @@ function ItemSidebarPanel({
   );
 }
 
-export default function ItemDetailClient({ item }: ItemDetailClientProps) {
-  const isDesktop = useIsDesktop();
+export default function ItemDetailClient({
+  item,
+  metadataSection,
+  initialSimilarItems,
+}: ItemDetailClientProps) {
   const { status: authStatus } = useSession();
   const pathname = usePathname();
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${item.id}`)}`;
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [commentRefreshTrigger, setCommentRefreshTrigger] = useState(0);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(
-    null
-  );
   const onCommentsUpdate = () => setCommentRefreshTrigger((t) => t + 1);
 
+  const { ref: discoveryRef, inView: discoveryInView } = useLazyInView<HTMLDivElement>({
+    rootMargin: '320px',
+    once: true,
+  });
+
+  const { ref: commentsRef, inView: commentsInView } = useLazyInView<HTMLDivElement>({
+    rootMargin: '240px',
+    once: true,
+  });
+
   const categoryId = item.lists.categories?.id ?? null;
-
-  const { data: similarItems = [], isLoading: similarLoading } = useQuery({
-    queryKey: ['items', item.id, 'similar'],
-    queryFn: async (): Promise<SimilarItem[]> => {
-      const res = await fetch(`/api/items/${item.id}/similar`);
-      const json = await res.json();
-      return json.data && Array.isArray(json.data) ? json.data : [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: trendingRaw = [], isLoading: trendingLoading } = useQuery({
-    queryKey: ['categories', categoryId, 'trending'],
-    queryFn: async (): Promise<TrendingItem[]> => {
-      const res = await fetch(`/api/categories/${categoryId}/trending`);
-      const json = await res.json();
-      const list = json.data && Array.isArray(json.data) ? (json.data as TrendingItem[]) : [];
-      return list.filter((t) => t.id !== item.id);
-    },
-    enabled: !!categoryId,
-    staleTime: 5 * 60 * 1000,
-  });
-  const trendingItems = trendingRaw;
-
-  const { data: alsoLikedItems = [], isLoading: alsoLikedLoading } = useQuery({
-    queryKey: ['items', item.id, 'also-liked'],
-    queryFn: async (): Promise<AlsoLikedItem[]> => {
-      const res = await fetch(`/api/items/${item.id}/also-liked`);
-      const json = await res.json();
-      return json.data && Array.isArray(json.data) ? json.data : [];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const categoryName = item.lists.categories?.name ?? null;
   const listCategorySlug = item.lists.categories?.slug ?? null;
   const itemCategorySlug =
     sourceCategorySlugFromItem({
       metadata: item.metadata,
       catalogItemId: item.catalogItemId,
     }) ?? listCategorySlug;
-  const isLocationPoster = isLocationCategorySlug(itemCategorySlug ?? '');
-  const entryKind = resolveEntryKind(item);
   const isLightweight = isLightweightListItem(item);
-  const isLifestyle = isLifestyleCategory(listCategorySlug);
-  const meta = (item.metadata || {}) as Record<string, string | number>;
-  const year = meta.year ?? null;
-  const ratingLabel = displayRating(
-    item.rating ?? (meta.imdbRating as number | undefined) ?? null
-  );
-  const genre = meta.genre ?? categoryName;
   const likeCount = item.voteCount ?? 0;
-  const baseMetadataFacts = isLightweight
-    ? []
-    : buildItemMetadataFacts(item.metadata, itemCategorySlug, {
-        fallbackImdbRating: meta.imdbRating ?? item.rating,
-      });
-  const itemTip = extractItemTip(item.metadata);
-  const tipAsFact = parseTipAsMetadataFact(itemTip);
-  const displayMetadataFacts = useMemo(() => {
-    if (!tipAsFact) return baseMetadataFacts;
-    if (baseMetadataFacts.some((f) => f.key === 'translator')) return baseMetadataFacts;
-    return [...baseMetadataFacts, tipAsFact];
-  }, [baseMetadataFacts, tipAsFact]);
-  const displayTip = tipAsFact ? null : itemTip;
-  const listNote = item.listNote?.trim() || null;
-  const factTypeRaw = item.metadata?.factType;
-  const factLabel =
-    typeof factTypeRaw === 'string'
-      ? FACT_TYPE_LABELS[factTypeRaw as FactType] ?? factTypeRaw
-      : null;
-  const bodyText = isLightweight
-    ? buildLightweightDisplayBody(item, { lifestyleMode: isLifestyle }) || null
-    : item.description?.trim() || null;
-
-  const canTruncateDescription =
-    !!bodyText && bodyText.length > DESCRIPTION_TRUNCATE;
-  const shortDescription =
-    canTruncateDescription && !descriptionExpanded
-      ? bodyText!.slice(0, DESCRIPTION_TRUNCATE) + '…'
-      : bodyText;
-
-  const hasSocialProof =
-    (item.listRank != null && item.listItemCount > 0) ||
-    likeCount > 0 ||
-    item.personalSaveCount > 0;
-
-  const breadcrumbItems = useMemo(
-    () => [
-      { label: 'خانه', href: '/' },
-      ...(item.lists.categories
-        ? [
-            {
-              label: item.lists.categories.name,
-              href: `/categories/${item.lists.categories.slug}`,
-            },
-          ]
-        : []),
-      { label: item.lists.title, href: `/lists/${item.lists.slug}` },
-      { label: item.title?.trim() || 'آیتم' },
-    ],
-    [item.lists.categories, item.lists.slug, item.lists.title, item.title]
-  );
-
-  const handleShare = async () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    if (!url) return;
-
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      try {
-        await navigator.share({ title: item.title, url });
-        return;
-      } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-      }
-    }
-
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        setToast({ message: 'لینک کپی شد ✨', type: 'success' });
-        return;
-      }
-    } catch {
-      /* fall through */
-    }
-
-    setToast({ message: 'اشتراک‌گذاری ممکن نشد', type: 'error' });
-  };
 
   const listContextCard = (
     <ItemSidebarPanel>
@@ -270,352 +116,101 @@ export default function ItemDetailClient({ item }: ItemDetailClientProps) {
         </div>
         <ChevronLeft className="mt-1 h-4 w-4 shrink-0 rotate-180 text-wibe-secondary opacity-60" />
       </Link>
-      {item.users?.name && (
-        <p className="mt-2 wibe-caption text-wibe-secondary">
-          کیوریتور: <span className="font-medium text-foreground">{item.users.name}</span>
-        </p>
-      )}
     </ItemSidebarPanel>
   );
 
-  const detailsSection = (
-    <section className="space-y-4 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
-      {hasSocialProof && (
-        <div className="flex flex-wrap justify-start gap-1.5 lg:hidden">
-          {item.listRank != null && item.listItemCount > 0 && (
-            <Link
-              href={`/lists/${item.lists.slug}`}
-              className="inline-flex max-w-full items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/15"
-            >
-              #{item.listRank.toLocaleString('fa-IR')} از{' '}
-              {item.listItemCount.toLocaleString('fa-IR')}
-            </Link>
-          )}
-          {likeCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-              <Heart className="h-3.5 w-3.5 text-red-500" aria-hidden />
-              {likeCount.toLocaleString('fa-IR')} پسند
-            </span>
-          )}
-          {item.personalSaveCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-              <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
-              {item.personalSaveCount.toLocaleString('fa-IR')} ذخیره
-            </span>
-          )}
-        </div>
-      )}
-
-      {displayMetadataFacts.length > 0 && (
-        <ItemMetadataFacts
-          facts={displayMetadataFacts}
-          variant={isDesktop ? 'grid' : 'chips'}
-        />
-      )}
-
-      {displayTip && !isLightweight && (
-        <ItemTipCard tip={displayTip} variant="highlight" />
-      )}
-      {listNote && listNote !== bodyText && !(isLightweight && isLifestyle) && (
-        <ItemTipCard tip={listNote} variant="note" />
-      )}
-
-      {bodyText ? (
-        <div className="text-start">
-          <h2 className="mb-2 wibe-small font-semibold text-foreground">درباره</h2>
-          <p className="text-[0.9375rem] leading-[1.85] text-foreground/80 whitespace-pre-line">
-            {shortDescription}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center justify-start gap-3">
-            {canTruncateDescription && (
-              <button
-                type="button"
-                onClick={() => setDescriptionExpanded((v) => !v)}
-                className="wibe-caption font-semibold text-primary transition-colors hover:text-primary-dark"
-              >
-                {descriptionExpanded ? 'کمتر' : 'بیشتر بخوان'}
-              </button>
-            )}
-            {item.externalUrl && (
-              <a
-                href={item.externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={
-                  isLightweight && entryKind === 'link'
-                    ? 'inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark'
-                    : 'inline-flex items-center gap-1 wibe-caption font-medium text-primary hover:underline'
-                }
-              >
-                {isLightweight && entryKind === 'link' && (
-                  <ExternalLink className="h-4 w-4" aria-hidden />
-                )}
-                {isLightweight && entryKind === 'link' ? 'باز کردن لینک' : 'منبع خارجی'}
-              </a>
-            )}
-          </div>
-        </div>
-      ) : (
-        <p className="py-2 text-start wibe-caption text-wibe-secondary">
-          هنوز توضیحی ثبت نشده
-        </p>
-      )}
-    </section>
-  );
-
   return (
-    <>
-      <main className="pb-2" dir="rtl">
-        <div className="px-4 pt-2 lg:px-0 lg:pt-3">
-          <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
-          <PageBreadcrumb items={breadcrumbItems} />
+    <main className="pb-2" dir="rtl">
+      {!isLightweight && (
+        <div className="lg:hidden">
+          <ItemDetailTopActions
+            itemId={item.id}
+            likeCount={likeCount}
+            catalogItemId={item.catalogItemId}
+            variant="bar"
+          />
         </div>
-
-        {/* Hero */}
-        {isLightweight ? (
-          <section
-            className={`relative overflow-hidden rounded-b-2xl px-4 pb-5 pt-4 lg:rounded-2xl lg:px-6 lg:pb-6 lg:pt-5 ${
-              isLifestyle
-                ? 'bg-wibe-surface'
-                : 'bg-gradient-to-br from-amber-50 via-white to-violet-50'
-            }`}
-          >
-            <button
-              type="button"
-              onClick={handleShare}
-              className="absolute end-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-foreground shadow-sm transition-colors hover:bg-white active:scale-95"
-              aria-label="اشتراک‌گذاری"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
-
-            <Link
-              href={`/lists/${item.lists.slug}`}
-              className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 wibe-caption font-medium text-wibe-secondary shadow-sm"
-            >
-              <List className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-              <span className="truncate">{item.lists.title}</span>
-            </Link>
-
-            {isLifestyle ? (
-              item.title?.trim() && (
-                <h1 className="pe-12 text-xl font-bold leading-snug text-foreground sm:text-2xl">
-                  {item.title}
-                </h1>
-              )
-            ) : (
-              <div className="flex items-start gap-3">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm ring-1 ring-amber-200/70">
-                  {entryKindIcon(entryKind)}
-                </span>
-                <div className="min-w-0 flex-1 pt-1">
-                  <div className="mb-2 flex flex-wrap gap-1.5">
-                    <span className="inline-flex rounded-md bg-white/90 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary shadow-sm">
-                      {entryKindBadgeLabel(entryKind)}
-                    </span>
-                    {factLabel && (
-                      <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
-                        {factLabel}
-                      </span>
-                    )}
-                  </div>
-                  {item.title?.trim() && (
-                    <h1 className="text-xl font-bold leading-snug text-foreground sm:text-2xl">
-                      {item.title}
-                    </h1>
-                  )}
-                </div>
-              </div>
-            )}
-          </section>
-        ) : (
-          <section className="px-4 pt-2 lg:px-0 lg:pt-1">
-            <div className="flex gap-3.5 sm:gap-4 lg:grid lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-6">
-              <div
-                className={`relative shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-sm ring-1 ring-black/[0.05] lg:rounded-2xl ${
-                  isLocationPoster
-                    ? 'h-[7.25rem] w-[6.5rem] sm:h-32 sm:w-[8.5rem] lg:h-auto lg:w-full lg:aspect-[4/3]'
-                    : 'h-[10.5rem] w-[7rem] sm:h-[11.5rem] sm:w-[7.75rem] lg:h-auto lg:w-full lg:aspect-[2/3]'
-                }`}
-              >
-                <ItemCoverImage
-                  itemId={item.id}
-                  imageUrl={item.imageUrl}
-                  title={item.title}
-                  metadata={item.metadata}
-                  categorySlug={itemCategorySlug}
-                  enrichPoster={isMovieLikeCategory(itemCategorySlug)}
-                  priority
-                  sizes="(min-width: 1280px) 15rem, (min-width: 1024px) 14rem, 7rem"
-                  fallbackIcon={item.lists.categories?.icon || '📋'}
-                  coverLayout="grid"
-                  className={
-                    isLocationPoster
-                      ? 'h-full w-full object-cover object-center'
-                      : 'h-full w-full object-contain bg-gray-100'
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="absolute end-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/55 active:scale-95 lg:end-2.5 lg:top-2.5 lg:h-9 lg:w-9"
-                  aria-label="اشتراک‌گذاری"
-                >
-                  <Share2 className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-                </button>
-              </div>
-
-              <div className="flex min-w-0 flex-1 flex-col justify-end lg:justify-center lg:py-1">
-                <Link
-                  href={`/lists/${item.lists.slug}`}
-                  className="mb-2 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-wibe/80 bg-wibe-card px-2.5 py-1 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary lg:mb-3"
-                >
-                  <span aria-hidden>{item.lists.categories?.icon || '📋'}</span>
-                  <span className="truncate">{item.lists.title}</span>
-                </Link>
-
-                <h1 className="text-lg font-bold leading-snug text-foreground sm:text-xl lg:text-[1.65rem] lg:leading-snug">
-                  {item.title}
-                </h1>
-
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-wibe-secondary lg:mt-2 lg:text-sm">
-                  {(genre || categoryName) && <span>{String(genre || categoryName)}</span>}
-                  {year != null && (
-                    <>
-                      {(genre || categoryName) && <span className="text-wibe-secondary/40">·</span>}
-                      <span>{String(year)}</span>
-                    </>
-                  )}
-                  {ratingLabel && (
-                    <>
-                      <span className="text-wibe-secondary/40">·</span>
-                      <span>⭐ {ratingLabel}</span>
-                    </>
-                  )}
-                  {item.listRank != null && item.listItemCount > 0 && (
-                    <>
-                      <span className="text-wibe-secondary/40">·</span>
-                      <span>
-                        #{item.listRank.toLocaleString('fa-IR')} از{' '}
-                        {item.listItemCount.toLocaleString('fa-IR')}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                <div className="mt-3 hidden lg:block">
-                  <ItemDetailTopActions
-                    itemId={item.id}
-                    likeCount={likeCount}
-                    catalogItemId={item.catalogItemId}
-                    variant="inline"
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* موبایل: نوار اکشن چسبان */}
-        {!isLightweight && (
-          <div className="lg:hidden">
-            <ItemDetailTopActions
-              itemId={item.id}
-              likeCount={likeCount}
-              catalogItemId={item.catalogItemId}
-              variant="bar"
-            />
-          </div>
-        )}
-
-        <div className="relative z-10 mt-4 flex flex-col gap-5 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
-          <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
-            {isLightweight && (
-              <div className="rounded-2xl border border-wibe/70 bg-wibe-card px-3 py-2.5 shadow-sm">
-                <ItemDetailTopActions
-                  itemId={item.id}
-                  likeCount={likeCount}
-                  catalogItemId={item.catalogItemId}
-                  variant="inline"
-                />
-              </div>
-            )}
-
-            {authStatus === 'unauthenticated' && (
-              <Link
-                href={loginHref}
-                className="flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 wibe-small text-foreground transition-colors hover:bg-primary/10"
-              >
-                <span>برای ذخیره، پسند و نظر وارد شو</span>
-                <span className="shrink-0 font-semibold text-primary">ورود</span>
-              </Link>
-            )}
-
-            {detailsSection}
-
-            <ItemDiscoverySection
-              categorySlug={itemCategorySlug}
-              similarItems={similarItems}
-              similarLoading={similarLoading}
-              alsoLikedItems={alsoLikedItems}
-              alsoLikedLoading={alsoLikedLoading}
-              trendingItems={trendingItems}
-              trendingLoading={trendingLoading}
-            />
-
-            <section className="scroll-mt-16 border-t border-wibe/70 pt-5 lg:hidden">
-              <CommentSection
-                itemId={item.id}
-                onCommentAdded={onCommentsUpdate}
-                refreshTrigger={commentRefreshTrigger}
-                embeddedInPanel
-              />
-            </section>
-          </div>
-
-          <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-[6.5rem] lg:self-start">
-            {(likeCount > 0 || item.personalSaveCount > 0) && (
-              <ItemSidebarPanel>
-                <p className="mb-2 wibe-caption font-medium text-wibe-secondary">آمار</p>
-                <div className="flex flex-wrap gap-2">
-                  {likeCount > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-                      <Heart className="h-3.5 w-3.5 text-red-500" aria-hidden />
-                      {likeCount.toLocaleString('fa-IR')} پسند
-                    </span>
-                  )}
-                  {item.personalSaveCount > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-                      <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
-                      {item.personalSaveCount.toLocaleString('fa-IR')} ذخیره
-                    </span>
-                  )}
-                </div>
-              </ItemSidebarPanel>
-            )}
-
-            {listContextCard}
-
-            <section className="scroll-mt-16 rounded-2xl border border-wibe/60 bg-wibe-card p-5 shadow-sm">
-              <CommentSection
-                itemId={item.id}
-                onCommentAdded={onCommentsUpdate}
-                refreshTrigger={commentRefreshTrigger}
-                embeddedInPanel
-              />
-            </section>
-          </aside>
-        </div>
-      </main>
-
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          duration={2500}
-          onClose={() => setToast(null)}
-        />
       )}
-    </>
+
+      <div className="relative z-10 mt-4 flex flex-col gap-5 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
+          {isLightweight && (
+            <div className="rounded-2xl border border-wibe/70 bg-wibe-card px-3 py-2.5 shadow-sm">
+              <ItemDetailTopActions
+                itemId={item.id}
+                likeCount={likeCount}
+                catalogItemId={item.catalogItemId}
+                variant="inline"
+              />
+            </div>
+          )}
+
+          {authStatus === 'unauthenticated' && (
+            <Link
+              href={loginHref}
+              className="flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 wibe-small text-foreground transition-colors hover:bg-primary/10"
+            >
+              <span>برای ذخیره، پسند و نظر وارد شو</span>
+              <span className="shrink-0 font-semibold text-primary">ورود</span>
+            </Link>
+          )}
+
+          {metadataSection}
+
+          <div ref={discoveryRef} className="min-h-[6rem]">
+            {discoveryInView ? (
+              <ItemDiscoverySection
+                itemId={item.id}
+                categoryId={categoryId}
+                categorySlug={itemCategorySlug}
+                fetchEnabled
+                initialSimilarItems={initialSimilarItems}
+              />
+            ) : null}
+          </div>
+        </div>
+
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-[6.5rem] lg:self-start">
+          {(likeCount > 0 || item.personalSaveCount > 0) && (
+            <ItemSidebarPanel className="hidden lg:block">
+              <p className="mb-2 wibe-caption font-medium text-wibe-secondary">آمار</p>
+              <div className="flex flex-wrap gap-2">
+                {likeCount > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
+                    <Heart className="h-3.5 w-3.5 text-red-500" aria-hidden />
+                    {likeCount.toLocaleString('fa-IR')} پسند
+                  </span>
+                )}
+                {item.personalSaveCount > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
+                    <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
+                    {item.personalSaveCount.toLocaleString('fa-IR')} ذخیره
+                  </span>
+                )}
+              </div>
+            </ItemSidebarPanel>
+          )}
+
+          <div className="hidden lg:block">{listContextCard}</div>
+
+          <section
+            ref={commentsRef}
+            className="scroll-mt-16 rounded-2xl border border-wibe/60 bg-wibe-card p-5 shadow-sm lg:border-wibe/60"
+          >
+            {commentsInView ? (
+              <CommentSection
+                itemId={item.id}
+                onCommentAdded={onCommentsUpdate}
+                refreshTrigger={commentRefreshTrigger}
+                embeddedInPanel
+                fetchEnabled
+              />
+            ) : (
+              <div className="min-h-[8rem] animate-pulse rounded-xl bg-gray-100/80" aria-hidden />
+            )}
+          </section>
+        </aside>
+      </div>
+    </main>
   );
 }

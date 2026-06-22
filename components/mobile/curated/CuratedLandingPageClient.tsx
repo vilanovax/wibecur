@@ -1,58 +1,96 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 import ExploreSmartHero from './ExploreSmartHero';
-import GuidedDiscoverySheet from './GuidedDiscoverySheet';
 import QuickNowSection from './QuickNowSection';
-import RandomSurpriseCard from './RandomSurpriseCard';
-import TrendingNowSection from './TrendingNowSection';
-import ForYouSection from './ForYouSection';
-import CategoryDiscoverySection from './CategoryDiscoverySection';
 import ExploreBottomCTA from './ExploreBottomCTA';
 import { ExplorePageSkeleton } from './ExplorePageSkeleton';
-import SearchResultsPanel from '@/components/mobile/search/SearchResultsPanel';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
+import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
+import {
+  CreateListFormLazy,
+  GuidedDiscoverySheetLazy,
+  SearchResultsPanelLazy,
+  RandomSurpriseCardLazy,
+  TrendingNowSectionLazy,
+  CategoryDiscoverySectionLazy,
+  ForYouSectionLazy,
+} from './explore-lazy-sections';
+import {
+  ExploreCategorySectionSkeleton,
+  ExploreForYouSectionSkeleton,
+  ExploreSurpriseSectionSkeleton,
+  ExploreTrendingSectionSkeleton,
+} from './explore-section-skeletons';
 import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
+import { SEARCH_MIN_LENGTH } from '@/lib/list-search';
 import { MOCK_CATEGORIES, getMockLists } from '@/lib/curated/mock-data';
 import { buildExploreSections } from '@/lib/curated/explore-sections';
-import type { ExplorePayload } from '@/lib/curated/explore-data';
+import type { ExplorePayload, ExploreUserPreferences } from '@/lib/curated/explore-data';
 import {
   moodCardToSelection,
   type MoodExplorerCard,
   type MoodExplorerSelection,
 } from '@/lib/discovery/mood-explorer-config';
 import { trackMoodExplorerClick } from '@/lib/analytics';
+import { useLazyInView } from '@/hooks/useLazyInView';
 
-async function fetchExplore(): Promise<ExplorePayload> {
-  const res = await fetch('/api/explore');
+async function fetchExploreBase(): Promise<ExplorePayload> {
+  const res = await fetch('/api/explore/base');
   const json = await res.json();
   if (!json.success) throw new Error(json.error ?? 'خطا در دریافت اکسپلور');
   return json.data as ExplorePayload;
 }
 
+async function fetchExplorePreferences(): Promise<ExploreUserPreferences> {
+  const res = await fetch('/api/explore/preferences');
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error ?? 'خطا در دریافت ترجیحات');
+  return json.data as ExploreUserPreferences;
+}
+
 export default function CuratedLandingPageClient({
   initialData,
+  trendingSlot,
+  categoriesSlot,
 }: {
   initialData?: ExplorePayload;
+  trendingSlot?: ReactNode;
+  categoriesSlot?: ReactNode;
 }) {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState('');
-  const search = useUnifiedSearchQuery(searchQuery);
+  const searchEnabled = searchQuery.trim().length >= SEARCH_MIN_LENGTH;
+  const search = useUnifiedSearchQuery(searchQuery, { enabled: searchEnabled });
   const isSearchActive = search.isActive;
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [moodSelection, setMoodSelection] = useState<MoodExplorerSelection | null>(null);
   const [guidedOpen, setGuidedOpen] = useState(false);
+  const { ref: forYouRef, inView: forYouInView } = useLazyInView<HTMLDivElement>({
+    rootMargin: '320px',
+    once: true,
+  });
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['explore'],
-    queryFn: fetchExplore,
+    queryKey: ['explore-base'],
+    queryFn: fetchExploreBase,
     staleTime: 5 * 60 * 1000,
     retry: 1,
     initialData,
+  });
+
+  const isLoggedIn = Boolean(session?.user?.id);
+  const { data: userPrefs, isLoading: prefsLoading } = useQuery({
+    queryKey: ['explore-preferences'],
+    queryFn: fetchExplorePreferences,
+    enabled: isLoggedIn && forYouInView,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   const usingMockFallback = isError;
@@ -86,16 +124,16 @@ export default function CuratedLandingPageClient({
   const sections = useMemo(
     () =>
       buildExploreSections(allLists, '', {
-        preferredKeywordIds: usingMockFallback ? undefined : data?.preferredKeywordIds,
-        preferredCategoryIds: usingMockFallback ? undefined : data?.preferredCategoryIds,
+        preferredKeywordIds: usingMockFallback ? undefined : userPrefs?.preferredKeywordIds,
+        preferredCategoryIds: usingMockFallback ? undefined : userPrefs?.preferredCategoryIds,
         activeCategoryIds,
-        excludeListIds: usingMockFallback ? undefined : data?.bookmarkedListIds,
+        excludeListIds: usingMockFallback ? undefined : userPrefs?.bookmarkedListIds,
       }),
     [
       allLists,
-      data?.preferredKeywordIds,
-      data?.preferredCategoryIds,
-      data?.bookmarkedListIds,
+      userPrefs?.preferredKeywordIds,
+      userPrefs?.preferredCategoryIds,
+      userPrefs?.bookmarkedListIds,
       usingMockFallback,
       activeCategoryIds,
     ]
@@ -133,6 +171,8 @@ export default function CuratedLandingPageClient({
   }
 
   const showDiscovery = !isSearchActive;
+  const showPersonalizedForYou = isLoggedIn && Boolean(userPrefs);
+  const forYouPending = isLoggedIn && forYouInView && prefsLoading && !userPrefs;
 
   return (
     <div className="bg-wibe-surface">
@@ -158,7 +198,7 @@ export default function CuratedLandingPageClient({
                 </p>
               </div>
             ) : (
-              <SearchResultsPanel
+              <SearchResultsPanelLazy
                 query={search.normalized}
                 queryIntent={search.queryIntent}
                 directItems={search.directItems}
@@ -180,14 +220,37 @@ export default function CuratedLandingPageClient({
         ) : (
           <>
             <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
-            <RandomSurpriseCard lists={sections.trending} />
-            {sections.trending.length > 0 && (
-              <TrendingNowSection lists={sections.trending} subtitle="محبوب‌ترین‌ها همین الان" />
+
+            <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
+              <RandomSurpriseCardLazy lists={sections.trending} />
+            </HomeDeferredMount>
+
+            {trendingSlot ??
+              (sections.trending.length > 0 ? (
+                <HomeDeferredMount fallback={<ExploreTrendingSectionSkeleton />}>
+                  <TrendingNowSectionLazy
+                    lists={sections.trending}
+                    subtitle="محبوب‌ترین‌ها همین الان"
+                  />
+                </HomeDeferredMount>
+              ) : null)}
+
+            {categoriesSlot ?? (
+              <HomeDeferredMount fallback={<ExploreCategorySectionSkeleton />}>
+                <CategoryDiscoverySectionLazy categories={categories} />
+              </HomeDeferredMount>
             )}
-            <CategoryDiscoverySection categories={categories} />
-            {sections.forYou.length > 0 && (
-              <ForYouSection lists={sections.forYou} personalized={sections.isPersonalized} />
-            )}
+
+            <div ref={forYouRef} className="min-h-[1px]">
+              {forYouPending || !forYouInView ? (
+                <ExploreForYouSectionSkeleton />
+              ) : sections.forYou.length > 0 ? (
+                <ForYouSectionLazy
+                  lists={sections.forYou}
+                  personalized={showPersonalizedForYou && sections.isPersonalized}
+                />
+              ) : null}
+            </div>
 
             {sections.filtered.length === 0 && (
               <div className="px-2.5 py-12 text-center">
@@ -209,19 +272,23 @@ export default function CuratedLandingPageClient({
         {showDiscovery && <ExploreBottomCTA onOpenCreate={() => setIsCreateFormOpen(true)} />}
       </main>
 
-      <CreateListForm
-        isOpen={isCreateFormOpen}
-        onClose={() => setIsCreateFormOpen(false)}
-      />
+      {isCreateFormOpen && (
+        <CreateListFormLazy
+          isOpen={isCreateFormOpen}
+          onClose={() => setIsCreateFormOpen(false)}
+        />
+      )}
 
-      <GuidedDiscoverySheet
-        selection={moodSelection}
-        isOpen={guidedOpen}
-        onClose={() => {
-          setGuidedOpen(false);
-          setMoodSelection(null);
-        }}
-      />
+      {guidedOpen && (
+        <GuidedDiscoverySheetLazy
+          selection={moodSelection}
+          isOpen={guidedOpen}
+          onClose={() => {
+            setGuidedOpen(false);
+            setMoodSelection(null);
+          }}
+        />
+      )}
     </div>
   );
 }

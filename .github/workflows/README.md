@@ -8,7 +8,7 @@
 
 1. **lint-and-test** — lint، unit test، build
 2. **e2e** — Playwright با Postgres
-3. **lighthouse** — Lighthouse CI روی `/lists` و `/categories/movies` (بعد از lint-and-test)
+3. **lighthouse** — Lighthouse CI روی `/lists`، `/categories/movies` و `/items/[id]` (بعد از lint-and-test)
 
 ### Lighthouse
 

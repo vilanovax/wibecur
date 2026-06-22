@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ExternalLink, Star } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
-import ItemCoverPlaceholder from '@/components/shared/ItemCoverPlaceholder';
+import ItemCoverImage from '@/components/shared/ItemCoverImage';
 import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
 import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
-import { resolveImageDisplaySrc } from '@/lib/image-url-policy';
-import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 import {
   buildItemMetadataChips,
   buildLightweightDisplayBody,
@@ -69,78 +68,19 @@ function PreviewPoster({
   categoryIcon?: string | null;
   className?: string;
 }) {
-  const imgRef = useRef<HTMLImageElement>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  const posterSrc = useMemo(() => {
-    const resolved = resolveItemDisplayImage({
-      id: item.id,
-      imageUrl: item.displayImageUrl ?? item.imageUrl,
-      title: item.title,
-      metadata: item.metadata,
-      categorySlug,
-    });
-    return resolveImageDisplaySrc(resolved) || resolved;
-  }, [item, categorySlug]);
-
-  useEffect(() => {
-    setLoaded(false);
-    setFailed(false);
-  }, [posterSrc, item.id]);
-
-  useEffect(() => {
-    const img = imgRef.current;
-    if (img?.complete && img.naturalWidth > 0) {
-      setLoaded(true);
-    }
-  }, [posterSrc]);
-
-  if (!posterSrc || failed) {
-    return (
-      <ItemCoverPlaceholder
-        title={item.title}
-        categorySlug={categorySlug}
-        fallbackIcon={categoryIcon ?? '🎬'}
-        state="empty"
-        layout="grid"
-        className={`h-full w-full ${className}`}
-        ariaLabel={item.title}
-      />
-    );
-  }
-
   return (
-    <div className={`relative h-full w-full overflow-hidden bg-gray-100 ${className}`}>
-      {!loaded && (
-        <ItemCoverPlaceholder
-          title={item.title}
-          categorySlug={categorySlug}
-          fallbackIcon={categoryIcon ?? '🎬'}
-          state="loading"
-          layout="grid"
-          className="absolute inset-0 h-full w-full"
-          ariaLabel={`در حال بارگذاری ${item.title}`}
-        />
-      )}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={imgRef}
-        src={posterSrc}
-        alt={item.title}
-        className={`h-full w-full object-cover transition-opacity duration-300 ${
-          loaded ? 'opacity-100' : 'opacity-0'
-        }`}
-        loading="eager"
-        fetchPriority="high"
-        referrerPolicy="no-referrer"
-        onLoad={() => setLoaded(true)}
-        onError={() => {
-          setLoaded(false);
-          setFailed(true);
-        }}
-      />
-    </div>
+    <ItemCoverImage
+      itemId={item.id}
+      imageUrl={item.displayImageUrl ?? item.imageUrl}
+      title={item.title}
+      metadata={item.metadata}
+      categorySlug={categorySlug}
+      priority
+      sizes="(min-width: 1024px) 12rem, 72vw"
+      fallbackIcon={categoryIcon ?? '🎬'}
+      coverLayout="grid"
+      className={`h-full w-full ${className}`}
+    />
   );
 }
 
@@ -235,11 +175,12 @@ function PreviewActions({
 
   const actionButtons = (
     <>
-      <ItemSaveButton itemId={item.id} />
+      <ItemSaveButton itemId={item.id} deferViewerState />
       <ItemLikeButton
         itemId={item.id}
         initialLikeCount={item.voteCount ?? 0}
         variant="compact"
+        deferViewerState
       />
     </>
   );
@@ -309,7 +250,13 @@ export default function ItemPreviewSheet({
   onPrev,
   onNext,
 }: ItemPreviewSheetProps) {
+  const router = useRouter();
   const previewTrackedId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !item) return;
+    router.prefetch(`/items/${item.id}`);
+  }, [isOpen, item, router]);
 
   useEffect(() => {
     if (!isOpen || !item) return;

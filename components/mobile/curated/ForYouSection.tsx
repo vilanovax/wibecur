@@ -47,6 +47,9 @@ export default function ForYouSection({ lists, personalized = false }: ForYouSec
                   className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-105"
                   fallbackIcon="📋"
                   fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+                  width={80}
+                  height={80}
+                  priority={index === 0}
                 />
               </div>
               <div className="min-w-0 flex-1 text-right">

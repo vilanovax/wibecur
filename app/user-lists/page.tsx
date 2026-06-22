@@ -1,32 +1,63 @@
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import CuratedLandingPageClient from '@/components/mobile/curated/CuratedLandingPageClient';
-import { auth } from '@/lib/auth-config';
-import { resolveSessionUserId } from '@/lib/api-db';
-import { fetchExploreData, type ExplorePayload } from '@/lib/curated/explore-data';
+import ExploreLcpPreload from '@/components/mobile/curated/ExploreLcpPreload';
+import ExploreTrendingServer from '@/components/mobile/curated/ExploreTrendingServer';
+import ExploreCategoriesServer from '@/components/mobile/curated/ExploreCategoriesServer';
+import type { ReactNode } from 'react';
+import {
+  EMPTY_EXPLORE_USER_PREFERENCES,
+  fetchExploreBasePayload,
+  type ExplorePayload,
+} from '@/lib/curated/explore-data';
+import {
+  selectExploreLcpImageUrl,
+  selectExploreTrendingLists,
+} from '@/lib/curated/explore-sections';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export default async function UserListsPage() {
-  // داده‌ی اکسپلور سمت سرور واکشی می‌شود تا کلاینت skeleton + یک round-trip اضافه
-  // نزند؛ react-query با initialData هیدریت می‌شود.
   let initialData: ExplorePayload | undefined;
+  let trendingSlot: ReactNode = null;
+  let categoriesSlot: ReactNode = null;
+  let lcpImage: string | null = null;
+
   try {
-    let userId: string | null = null;
-    const session = await auth();
-    if (session?.user) {
-      userId = await resolveSessionUserId(session);
+    const base = await fetchExploreBasePayload();
+    initialData = { ...base, ...EMPTY_EXPLORE_USER_PREFERENCES };
+
+    const activeCategoryIds = base.categories
+      .filter((c) => c.id !== 'all')
+      .map((c) => c.id);
+    const trendingLists = selectExploreTrendingLists(base.lists, { activeCategoryIds });
+    lcpImage = selectExploreLcpImageUrl(trendingLists);
+
+    if (trendingLists.length > 0) {
+      trendingSlot = (
+        <ExploreTrendingServer lists={trendingLists} subtitle="محبوب‌ترین‌ها همین الان" />
+      );
     }
-    initialData = await fetchExploreData(userId);
+
+    if (base.categories.length > 0) {
+      categoriesSlot = <ExploreCategoriesServer categories={base.categories} />;
+    }
   } catch (err) {
     console.warn('[UserListsPage] SSR explore fetch failed, falling back to client fetch:', err);
   }
 
   return (
-    <div className="bg-wibe-surface">
-      <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
-      <CuratedLandingPageClient initialData={initialData} />
-      <BottomNav />
-    </div>
+    <>
+      <ExploreLcpPreload href={lcpImage} />
+      <div className="bg-wibe-surface">
+        <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
+        <CuratedLandingPageClient
+          initialData={initialData}
+          trendingSlot={trendingSlot}
+          categoriesSlot={categoriesSlot}
+        />
+        <BottomNav />
+      </div>
+    </>
   );
 }

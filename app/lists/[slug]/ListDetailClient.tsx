@@ -20,7 +20,10 @@ import VibeCommentSectionLazy from '@/components/mobile/lists/VibeCommentSection
 import SuggestItemSearch from '@/components/mobile/lists/SuggestItemSearch';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
-import ItemPreviewSheet, { type ItemPreviewData } from '@/components/mobile/lists/ItemPreviewSheet';
+import {
+  ItemPreviewSheetLazy,
+  type ItemPreviewData,
+} from '@/components/mobile/lists/list-detail-lazy-sections';
 import SearchInput from '@/components/mobile/search/SearchInput';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
@@ -1360,20 +1363,21 @@ export default function ListDetailClient({
         </div>
       </main>
 
-      {/* پیش‌نمایش آیتم */}
-      <ItemPreviewSheet
-        isOpen={previewIndex != null}
-        onClose={closeItemPreview}
-        item={previewItem}
-        itemIndex={previewDisplayIndex}
-        totalItems={previewDisplayTotal}
-        categorySlug={categorySlug}
-        categoryIcon={categoryIcon}
-        categoryName={list.categories?.name}
-        listSlug={list.slug}
-        onPrev={canPreviewPrev ? goPreviewPrev : undefined}
-        onNext={canPreviewNext ? goPreviewNext : undefined}
-      />
+      {previewIndex != null && previewItem ? (
+        <ItemPreviewSheetLazy
+          isOpen
+          onClose={closeItemPreview}
+          item={previewItem}
+          itemIndex={previewDisplayIndex}
+          totalItems={previewDisplayTotal}
+          categorySlug={categorySlug}
+          categoryIcon={categoryIcon}
+          categoryName={list.categories?.name}
+          listSlug={list.slug}
+          onPrev={canPreviewPrev ? goPreviewPrev : undefined}
+          onNext={canPreviewNext ? goPreviewNext : undefined}
+        />
+      ) : null}
 
       {/* مدیریت لیست — owner */}
       <BottomSheet

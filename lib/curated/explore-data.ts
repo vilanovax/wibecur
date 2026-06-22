@@ -8,6 +8,11 @@ import {
 import { dbQuery } from '@/lib/db';
 import { getGlobalTrending, getFastRising, type TrendingListResult } from '@/lib/trending/service';
 import { getPreferredCategoryIds, getPreferredKeywordIds } from '@/lib/user-interests';
+import { resolveListCover } from '@/lib/resolve-list-cover';
+import { computeTrendScore } from './utils';
+import type { CuratedCategory, CuratedList, CuratorBadge, ListBadge } from '@/types/curated';
+import type { CuratorLevelKey } from '@/lib/curator';
+import { getLevelConfig } from '@/lib/curator';
 
 // trending/rising سراسری‌اند (وابسته به کاربر نیستند) — هر ۵ دقیقه یک‌بار محاسبه
 // می‌شوند به‌جای هر بار لود اکسپلورِ هر کاربر.
@@ -21,13 +26,8 @@ const getCachedFastRising = unstable_cache(
   ['explore-fast-rising-10'],
   { revalidate: 300, tags: ['trending'] }
 );
-import { resolveListCover } from '@/lib/resolve-list-cover';
-import { computeTrendScore } from './utils';
-import type { CuratedCategory, CuratedList, CuratorBadge, ListBadge } from '@/types/curated';
-import type { CuratorLevelKey } from '@/lib/curator';
-import { getLevelConfig } from '@/lib/curator';
 
-const EXPLORE_LIST_LIMIT = 50;
+const EXPLORE_LIST_LIMIT = 25;
 
 type DbListRow = {
   id: string;
@@ -292,56 +292,14 @@ async function fetchMissingLists(ids: string[]): Promise<DbListRow[]> {
   );
 }
 
-/** دادهٔ اکسپلور از DB — برای API و SSR */
-export async function fetchExploreData(userId?: string | null): Promise<ExplorePayload> {
-  const [categoriesRaw, listsRaw, trendingRaw, risingRaw, userPrefs] = await Promise.all([
-    dbQuery(() =>
-      prisma.categories.findMany({
-        where: activeCategoryWhere,
-        select: { id: true, name: true, slug: true, icon: true },
-        orderBy: { order: 'asc' },
-      })
-    ),
-    dbQuery(() =>
-      prisma.lists.findMany({
-        where: publicCuratedListWhere,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          coverImage: true,
-          categoryId: true,
-          badge: true,
-          tags: true,
-          isFeatured: true,
-          saveCount: true,
-          likeCount: true,
-          itemCount: true,
-          createdAt: true,
-          categories: {
-            select: { id: true, name: true, slug: true, icon: true, isActive: true },
-          },
-          users: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              image: true,
-              curatorLevel: true,
-            },
-          },
-          // _count حذف شد: itemCount/likeCount از ستون‌های denormalized خوانده می‌شوند
-        },
-        orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
-        take: EXPLORE_LIST_LIMIT,
-      })
-    ),
-    getCachedGlobalTrending(),
-    getCachedFastRising(),
-    userId ? fetchUserPreferences(userId) : Promise.resolve({ preferredKeywordIds: [], preferredCategoryIds: [], bookmarkedListIds: [] }),
-  ]);
+type ExploreBasePayload = Pick<ExplorePayload, 'lists' | 'categories'>;
 
+async function mergeExploreLists(
+  categoriesRaw: { id: string; name: string; slug: string | null; icon: string | null }[],
+  listsRaw: DbListRow[],
+  trendingRaw: TrendingListResult[],
+  risingRaw: TrendingListResult[]
+): Promise<ExploreBasePayload> {
   const trendingIds = new Set(trendingRaw.map((t) => t.listId));
   const risingIds = new Set(risingRaw.map((r) => r.listId));
   const scoreById = new Map<string, number>();
@@ -398,6 +356,106 @@ export async function fetchExploreData(userId?: string | null): Promise<ExploreP
   return {
     lists,
     categories: mapCategories(categoriesRaw),
+  };
+}
+
+/** لیست‌ها + دسته‌ها — مستقل از کاربر؛ هر ۵ دقیقه یک‌بار */
+async function fetchExploreBaseData(): Promise<ExploreBasePayload> {
+  const [categoriesRaw, listsRaw, trendingRaw, risingRaw] = await Promise.all([
+    dbQuery(() =>
+      prisma.categories.findMany({
+        where: activeCategoryWhere,
+        select: { id: true, name: true, slug: true, icon: true },
+        orderBy: { order: 'asc' },
+      })
+    ),
+    dbQuery(() =>
+      prisma.lists.findMany({
+        where: publicCuratedListWhere,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          coverImage: true,
+          categoryId: true,
+          badge: true,
+          tags: true,
+          isFeatured: true,
+          saveCount: true,
+          likeCount: true,
+          itemCount: true,
+          createdAt: true,
+          categories: {
+            select: { id: true, name: true, slug: true, icon: true, isActive: true },
+          },
+          users: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              image: true,
+              curatorLevel: true,
+            },
+          },
+        },
+        orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
+        take: EXPLORE_LIST_LIMIT,
+      })
+    ),
+    getCachedGlobalTrending(),
+    getCachedFastRising(),
+  ]);
+
+  return mergeExploreLists(categoriesRaw, listsRaw, trendingRaw, risingRaw);
+}
+
+const getCachedExploreBase = unstable_cache(
+  fetchExploreBaseData,
+  ['explore-base-v25'],
+  { revalidate: 300, tags: ['explore'] }
+);
+
+export type ExploreUserPreferences = Pick<
+  ExplorePayload,
+  'preferredKeywordIds' | 'preferredCategoryIds' | 'bookmarkedListIds'
+>;
+
+const EMPTY_EXPLORE_USER_PREFERENCES: ExploreUserPreferences = {
+  preferredKeywordIds: [],
+  preferredCategoryIds: [],
+  bookmarkedListIds: [],
+};
+
+/** payload پایه (لیست‌ها + دسته‌ها) — برای SSR با revalidate و API مهمان */
+export async function fetchExploreBasePayload(): Promise<ExploreBasePayload> {
+  return getCachedExploreBase();
+}
+
+/** ترجیحات کاربر — جدا از payload پایه برای lazy-load در کلاینت */
+export async function fetchExploreUserPreferences(
+  userId: string
+): Promise<ExploreUserPreferences> {
+  return fetchUserPreferences(userId);
+}
+
+export { EMPTY_EXPLORE_USER_PREFERENCES };
+
+/** دادهٔ اکسپلور از DB — برای API و SSR */
+export async function fetchExploreData(userId?: string | null): Promise<ExplorePayload> {
+  const [base, userPrefs] = await Promise.all([
+    getCachedExploreBase(),
+    userId
+      ? fetchUserPreferences(userId)
+      : Promise.resolve({
+          preferredKeywordIds: [] as string[],
+          preferredCategoryIds: [] as string[],
+          bookmarkedListIds: [] as string[],
+        }),
+  ]);
+
+  return {
+    ...base,
     preferredKeywordIds: userPrefs.preferredKeywordIds,
     preferredCategoryIds: userPrefs.preferredCategoryIds,
     bookmarkedListIds: userPrefs.bookmarkedListIds,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CuratedList } from '@/types/curated';
-import { buildExploreSections } from '@/lib/curated/explore-sections';
+import { buildExploreSections, selectExploreTrendingLists } from '@/lib/curated/explore-sections';
 import { scoreListKeywordMatch } from '@/lib/interest-keywords';
 
 function makeList(overrides: Partial<CuratedList> & { id: string; title: string }): CuratedList {
@@ -65,5 +65,23 @@ describe('buildExploreSections keyword personalization', () => {
 
     const singleScore = scoreListKeywordMatch(lists[0], keywordIds);
     expect(singleScore).toBeGreaterThanOrEqual(0);
+  });
+
+  it('selectExploreTrendingLists returns trending slice', () => {
+    const lists = [
+      ...Array.from({ length: 5 }, (_, i) =>
+        makeList({
+          id: `trending-${i}`,
+          title: `ترند ${i}`,
+          badges: ['trending'],
+          savesCount: 30 + i,
+        })
+      ),
+      ...Array.from({ length: 10 }, (_, i) =>
+        makeList({ id: `filler-${i}`, title: `لیست ${i}`, savesCount: 1 })
+      ),
+    ];
+    const trending = selectExploreTrendingLists(lists);
+    expect(trending.length).toBeGreaterThan(0);
   });
 });

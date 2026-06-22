@@ -1,20 +1,22 @@
-'use client';
-
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import Image from 'next/image';
 import ListCardStats from '@/components/shared/ListCardStats';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
 import type { CuratedList } from '@/types/curated';
 
-interface TrendingNowSectionProps {
+type ExploreTrendingServerProps = {
   lists: CuratedList[];
   subtitle?: string;
+};
+
+function isRenderableCover(src: string | null | undefined): src is string {
+  return Boolean(src && (src.startsWith('/') || src.startsWith('http')));
 }
 
-export default function TrendingNowSection({
+export default function ExploreTrendingServer({
   lists,
   subtitle = 'بر اساس ذخیره',
-}: TrendingNowSectionProps) {
+}: ExploreTrendingServerProps) {
   if (lists.length === 0) return null;
 
   return (
@@ -32,7 +34,7 @@ export default function TrendingNowSection({
             key={list.id}
             className="w-[78%] max-w-[280px] shrink-0 snap-start sm:w-[46%] md:w-[38%] lg:w-[calc(25%-0.5625rem)] lg:max-w-none xl:w-[calc(20%-0.6rem)]"
           >
-            <TrendingCard list={list} priority={index < 2} />
+            <ExploreTrendingCard list={list} priority={index < 2} />
           </div>
         ))}
       </div>
@@ -40,8 +42,16 @@ export default function TrendingNowSection({
   );
 }
 
-function TrendingCard({ list, priority = false }: { list: CuratedList; priority?: boolean }) {
+function ExploreTrendingCard({
+  list,
+  priority = false,
+}: {
+  list: CuratedList;
+  priority?: boolean;
+}) {
   const href = `/lists/${list.slug}`;
+  const coverSrc = isRenderableCover(list.coverUrl) ? list.coverUrl : null;
+  const unoptimized = Boolean(coverSrc?.startsWith('/') && coverSrc.includes('?'));
 
   return (
     <ExploreTrendingPrefetchLink
@@ -50,16 +60,22 @@ function TrendingCard({ list, priority = false }: { list: CuratedList; priority?
     >
       <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:rounded-xl lg:group-hover:shadow-md">
         <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10]">
-          <ImageWithFallback
-            src={list.coverUrl ?? ''}
-            alt={list.title}
-            className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
-            fallbackIcon="📋"
-            fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
-            sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 78vw"
-            priority={priority}
-          />
-          <span className="absolute right-2 top-2 rounded-full bg-warning px-2 py-0.5 wibe-caption font-semibold text-white lg:text-xs">
+          {coverSrc ? (
+            <Image
+              src={coverSrc}
+              alt={list.title}
+              fill
+              sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 78vw"
+              className="object-cover transition-transform duration-500 lg:group-hover:scale-105"
+              priority={priority}
+              unoptimized={unoptimized}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-2xl">
+              {list.category?.icon ?? '📋'}
+            </div>
+          )}
+          <span className="absolute right-2 top-2 z-10 rounded-full bg-warning px-2 py-0.5 wibe-caption font-semibold text-white lg:text-xs">
             ترند
           </span>
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent lg:from-black/85" />

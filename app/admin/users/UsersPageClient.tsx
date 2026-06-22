@@ -36,6 +36,7 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [liftingCommentId, setLiftingCommentId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [toggleTarget, setToggleTarget] = useState<{
     id: string;
@@ -182,6 +183,35 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
     }
   };
 
+  const handleUnrestrictComment = async (user: UserIntelligenceRow) => {
+    setLiftingCommentId(user.id);
+    try {
+      const res = await fetch(`/api/admin/comments/violations/user/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unrestrict' }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در رفع محدودیت کامنت');
+      }
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id ? { ...u, commentStatus: 'allowed' as const } : u
+        )
+      );
+      setToast({ message: 'محدودیت کامنت برداشته شد', type: 'success' });
+      router.refresh();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'خطا در رفع محدودیت کامنت';
+      setToast({ message, type: 'error' });
+    } finally {
+      setLiftingCommentId(null);
+    }
+  };
+
   const hasActiveFilters =
     filterKind !== 'all' || !!search.trim() || sort !== 'created_desc';
 
@@ -245,7 +275,9 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
           <UsersIntelligenceTable
             users={users}
             onToggleActiveRequest={requestToggleActive}
+            onUnrestrictCommentRequest={handleUnrestrictComment}
             togglingId={togglingId}
+            liftingCommentId={liftingCommentId}
             onUserClick={handleUserClick}
             emptyBecauseFilter={users.length === 0 && data.totalCount === 0 && filterKind !== 'all'}
             filterLabel={USER_FILTER_PILLS.find((p) => p.value === filterKind)?.label}
@@ -274,6 +306,16 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
             setSelectedUserId(null);
           }}
           onToggleActiveRequest={requestToggleActive}
+          onCommentRestrictionLifted={() => {
+            setUsers((prev) =>
+              selectedUserId
+                ? prev.map((u) =>
+                    u.id === selectedUserId ? { ...u, commentStatus: 'allowed' as const } : u
+                  )
+                : prev
+            );
+            router.refresh();
+          }}
         />
       )}
 

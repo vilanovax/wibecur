@@ -118,6 +118,8 @@ jobs:
       PORT: '3002'
       LHCI_BASE_URL: http://localhost:3002
       LHCI_CATEGORY_PATH: /categories/movies
+      LHCI_ITEM_PATH: /items/ishGWMipxDOeMKb9W3W80
+      LHCI_EXPLORE_PATH: /user-lists
 
     steps:
       - uses: actions/checkout@v4
@@ -148,7 +150,7 @@ jobs:
           echo $! > /tmp/wibe-server.pid
 
       - name: Wait for server
-        run: npx wait-on -t 120000 http-get://127.0.0.1:3002/lists
+        run: npx wait-on -t 120000 http-get://127.0.0.1:3002/lists http-get://127.0.0.1:3002/items/ishGWMipxDOeMKb9W3W80 http-get://127.0.0.1:3002/user-lists
 
       - name: Run Lighthouse CI
         run: npm run lighthouse:ci

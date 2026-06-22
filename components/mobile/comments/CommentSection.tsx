@@ -48,6 +48,8 @@ interface CommentSectionProps {
   refreshTrigger?: number;
   /** داخل کارت پایین صفحه (دسکتاپ) — بدون border بالای تکراری */
   embeddedInPanel?: boolean;
+  /** وقتی false است تا ورود به viewport درخواست نمی‌زند */
+  fetchEnabled?: boolean;
 }
 
 async function fetchItemComments(itemId: string, sortBy: string): Promise<CommentsResponse> {
@@ -155,6 +157,7 @@ export default function CommentSection({
   onCommentAdded,
   refreshTrigger,
   embeddedInPanel = false,
+  fetchEnabled = true,
 }: CommentSectionProps) {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
@@ -169,7 +172,7 @@ export default function CommentSection({
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
     queryFn: () => fetchItemComments(itemId, sortBy),
-    enabled: !!itemId,
+    enabled: fetchEnabled && !!itemId,
   });
   const comments = data?.comments ?? [];
   const commentsEnabled = data?.commentsEnabled ?? true;

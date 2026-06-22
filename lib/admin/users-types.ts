@@ -38,7 +38,8 @@ export interface UserIntelligenceRow {
   commentReportsCount: number;
   curatorScore: number;
   curatorLevel: string;
-  /** کاربر seed / بات */
+  /** برای نمایش/رفع محدودیت کامنت */
+  commentStatus?: import('@/lib/comment-permission').CommentPermissionStatus;
   isBot: boolean;
 }
 

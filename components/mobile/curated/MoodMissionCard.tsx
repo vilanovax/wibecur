@@ -26,7 +26,7 @@ export default function MoodMissionCard({ card, onSelect }: Props) {
       />
 
       <span
-        className={`relative mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl shadow-sm backdrop-blur-sm lg:mb-3 lg:h-12 lg:w-12 lg:rounded-2xl lg:text-[1.75rem] ${card.accent}`}
+        className={`relative mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl shadow-sm lg:mb-3 lg:h-12 lg:w-12 lg:rounded-2xl lg:text-[1.75rem] ${card.accent}`}
         aria-hidden
       >
         {card.icon}

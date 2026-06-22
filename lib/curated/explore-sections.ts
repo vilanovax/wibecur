@@ -4,7 +4,6 @@ import { filterAndSortLists } from './utils';
 
 const TRENDING_LIMIT = 5;
 const FOR_YOU_LIMIT = 4;
-const RISING_LIMIT = 4;
 const MORE_LIMIT = 8;
 
 function pickUnique(
@@ -63,7 +62,6 @@ export type ExploreSections = {
   filtered: CuratedList[];
   trending: CuratedList[];
   forYou: CuratedList[];
-  rising: CuratedList[];
   more: CuratedList[];
   moreTotal: number;
   isSearching: boolean;
@@ -153,13 +151,6 @@ export function buildExploreSections(
     (l) => l.badges.includes('trending') || (l.savesCount ?? 0) >= 20
   );
 
-  const rising = pickUnique(
-    filtered,
-    used,
-    RISING_LIMIT,
-    (l) => l.badges.includes('rising') || (l.weeklyVelocity ?? 0) > 100
-  );
-
   const unused = filtered.filter((l) => !used.has(l.id));
   const more = unused.slice(0, MORE_LIMIT);
 
@@ -167,10 +158,22 @@ export function buildExploreSections(
     filtered,
     trending,
     forYou,
-    rising,
     more,
     moreTotal: unused.length,
     isSearching,
     isPersonalized: preferredKeywords.length > 0 || preferredCategories.size > 0,
   };
+}
+
+/** لیست‌های سکشن ترند — برای SSR و کلاینت */
+export function selectExploreTrendingLists(
+  allLists: CuratedList[],
+  options?: ExploreSectionsOptions
+): CuratedList[] {
+  return buildExploreSections(allLists, '', options).trending;
+}
+
+export function selectExploreLcpImageUrl(lists: CuratedList[]): string | null {
+  const cover = lists[0]?.coverUrl;
+  return cover && (cover.startsWith('/') || cover.startsWith('http')) ? cover : null;
 }

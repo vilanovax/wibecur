@@ -6,7 +6,9 @@ import { revalidateAdminCommentsCache } from '@/lib/admin/admin-cache';
 import {
   getPenaltyThresholds,
   getUserPenaltyScore,
+  resolveCommentStatus,
 } from '@/lib/comment-permission';
+import { liftUserCommentRestriction } from '@/lib/admin/lift-comment-restriction';
 import { notifyCommentRestriction } from '@/lib/comment-restriction-notify';
 import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
@@ -68,6 +70,12 @@ export async function GET(
     }
 
     const violationCount = violationRows.reduce((sum, v) => sum + v.violationCount, 0);
+    const commentStatus = resolveCommentStatus(
+      totalPenaltyScore,
+      user.commentRestrictedUntil,
+      user.isActive,
+      thresholds
+    );
 
     return NextResponse.json({
       success: true,
@@ -79,6 +87,7 @@ export async function GET(
         },
         totalPenaltyScore,
         violationCount,
+        commentStatus,
         thresholds,
         penalties: penalties.map((p) => ({
           id: p.id,
@@ -153,25 +162,22 @@ export async function PATCH(
     const actorRole = (session.user as { role?: UserRole }).role ?? 'ADMIN';
 
     if (action === 'unrestrict') {
-      await dbQuery(() =>
-        prisma.users.update({
-          where: { id: userId },
-          data: {
-            commentRestrictedUntil: null,
-            commentBanReason: null,
-            updatedAt: new Date(),
-          },
-        })
-      );
-      await notifyCommentRestriction(userId, 'lifted');
+      const liftResult = await liftUserCommentRestriction(userId);
       await logAudit({
         actorId: session.user.id,
         actorRole,
         action: 'COMMENT_UNRESTRICT',
         entityType: 'USER',
         entityId: userId,
-        before,
-        after: { commentRestrictedUntil: null, commentBanReason: null },
+        before: {
+          ...before,
+          totalPenaltyScore: liftResult.previousPenaltyScore,
+        },
+        after: {
+          commentRestrictedUntil: null,
+          commentBanReason: null,
+          totalPenaltyScore: 0,
+        },
         ipAddress,
         userAgent,
       });

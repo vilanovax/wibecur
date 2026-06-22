@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertTriangle, ExternalLink, Eye } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Eye, ShieldCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import UserAvatar from '@/components/shared/UserAvatar';
@@ -29,6 +29,8 @@ export type ViolationRow = {
 type Props = {
   violations: ViolationRow[];
   onViewDetails: (userId: string) => void;
+  onUnrestrict?: (userId: string) => void;
+  liftingUserId?: string | null;
 };
 
 function riskLevel(count: number, penalty: number): 'high' | 'mid' | 'low' {
@@ -37,7 +39,12 @@ function riskLevel(count: number, penalty: number): 'high' | 'mid' | 'low' {
   return 'low';
 }
 
-export default function ViolationsTable({ violations, onViewDetails }: Props) {
+export default function ViolationsTable({
+  violations,
+  onViewDetails,
+  onUnrestrict,
+  liftingUserId = null,
+}: Props) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
       <table className="w-full min-w-[720px]" dir="rtl">
@@ -125,6 +132,18 @@ export default function ViolationsTable({ violations, onViewDetails }: Props) {
                 </td>
                 <td className="px-3 py-2.5">
                   <div className="flex items-center gap-0.5">
+                    {(v.commentStatus === 'restricted' || v.commentStatus === 'banned') &&
+                      onUnrestrict && (
+                        <button
+                          type="button"
+                          onClick={() => onUnrestrict(v.user.id)}
+                          disabled={liftingUserId === v.user.id}
+                          className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 inline-flex disabled:opacity-50"
+                          title="رفع محدودیت کامنت"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                        </button>
+                      )}
                     <button
                       type="button"
                       onClick={() => onViewDetails(v.user.id)}
