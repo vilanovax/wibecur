@@ -5,7 +5,8 @@ export type CommentFilterKind =
   | 'rejected'
   | 'flagged'
   | 'filtered'
-  | 'reported';
+  | 'reported'
+  | 'seeded';
 
 const VALID_FILTERS = new Set<CommentFilterKind>([
   'all',
@@ -15,6 +16,7 @@ const VALID_FILTERS = new Set<CommentFilterKind>([
   'flagged',
   'filtered',
   'reported',
+  'seeded',
 ]);
 
 export function parseCommentFilter(value: string | undefined): CommentFilterKind {

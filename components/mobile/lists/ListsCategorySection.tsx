@@ -4,6 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
+import {
+  listsResultsGridClass,
+  resolveListCardVariant,
+  type ListsViewMode,
+} from '@/lib/lists-page-layout';
 
 type ListItem = Parameters<typeof ListCardCompact>[0]['list'];
 
@@ -13,14 +18,15 @@ interface ListsCategorySectionProps {
   categoryId: string;
   categorySlug?: string;
   lists: ListItem[];
-  viewMode: 'grid' | 'compact';
+  viewMode: ListsViewMode;
+  isDesktop?: boolean;
   previewCount?: number;
   bookmarkedIds?: Set<string>;
   onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   onShowAllCategory?: (categoryId: string, categorySlug?: string) => void;
 }
 
-const SCROLL_MT = 'scroll-mt-[112px]';
+const SCROLL_MT = 'scroll-mt-[96px]';
 
 export default function ListsCategorySection({
   title,
@@ -29,6 +35,7 @@ export default function ListsCategorySection({
   categorySlug,
   lists,
   viewMode,
+  isDesktop = false,
   previewCount = 6,
   bookmarkedIds,
   onBookmarkToggle,
@@ -44,15 +51,13 @@ export default function ListsCategorySection({
     ? `/lists?category=${categorySlug}`
     : `/lists?category=${categoryId}`;
 
-  const gridClass =
-    viewMode === 'grid'
-      ? 'grid grid-cols-2 gap-2.5 max-lg:gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4'
-      : 'space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3';
+  const cardVariant = resolveListCardVariant(viewMode, isDesktop);
+  const gridClass = listsResultsGridClass(viewMode, isDesktop);
 
   return (
     <section
       id={`lists-category-${categoryId}`}
-      className={`mb-5 lg:mb-6 ${SCROLL_MT}`}
+      className={`mb-4 w-full min-w-0 lg:mb-6 ${SCROLL_MT}`}
     >
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <h2 className="flex min-w-0 items-center gap-1.5 wibe-h3">
@@ -84,7 +89,7 @@ export default function ListsCategorySection({
           <ListCardCompact
             key={list.id}
             list={list}
-            variant={viewMode}
+            variant={cardVariant}
             showCreator={false}
             isBookmarked={bookmarkedIds?.has(list.id)}
             onBookmarkToggle={onBookmarkToggle}

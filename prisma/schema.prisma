@@ -113,6 +113,9 @@ model comments {
   helpfulUp         Int                 @default(0)
   helpfulDown       Int                 @default(0)
   weightedScore     Float               @default(0)
+  isSeeded          Boolean             @default(false)
+  seedCampaignId    String?
+  seedDraftId       String?             @unique
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   deletedAt         DateTime?
@@ -122,6 +125,8 @@ model comments {
   comment_reports   comment_reports[]
   items             items               @relation(fields: [itemId], references: [id], onDelete: Cascade)
   users             users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seedCampaign      comment_seed_campaigns? @relation(fields: [seedCampaignId], references: [id], onDelete: SetNull)
+  seedDraft         comment_seed_drafts?  @relation("PublishedSeedDraft", fields: [seedDraftId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -130,6 +135,8 @@ model comments {
   @@index([itemId])
   @@index([userId])
   @@index([weightedScore])
+  @@index([isSeeded])
+  @@index([seedCampaignId])
 }
 
 model comment_votes {
@@ -248,6 +255,7 @@ model items {
   deletedById     String?
   deleteReason    String?
   comments        comments[]
+  comment_seed_drafts comment_seed_drafts[]
   item_votes      item_votes[]
   item_reports    item_reports[]
   item_moderation item_moderation?
@@ -435,6 +443,7 @@ model users {
   image                      String?
   password                   String?
   role                       UserRole                   @default(USER)
+  accountKind                AccountKind                @default(USER)
   isActive                   Boolean                    @default(true)
   /** دسترسی‌های سفارشی ادمین — اگر خالی نباشد جایگزین نقش می‌شود */
   adminPermissions           String[]                   @default([])
@@ -494,6 +503,8 @@ model users {
   audit_logs                 audit_log[]
   sponsored_placements_created sponsored_placement[] @relation("SponsoredPlacementCreator")
   backup_jobs_created        backup_jobs[]              @relation("BackupJobsCreated")
+  comment_personas           comment_personas?
+  comment_seed_campaigns     comment_seed_campaigns[]   @relation("CommentSeedCampaignCreator")
   moderation_cases_assigned  moderation_case[]
   moderation_notes           moderation_note[]
   listsDeletedBy             lists[]                    @relation("ListDeletedBy")
@@ -505,6 +516,7 @@ model users {
   @@index([deletedAt])
   // فیلتر کریتور در کوئری‌های curated (users.role != USER)
   @@index([role])
+  @@index([accountKind])
 }
 
 model creator_spotlights {
@@ -1038,6 +1050,133 @@ enum BackupJobStatus {
   RUNNING
   COMPLETED
   FAILED
+}
+
+enum AccountKind {
+  USER
+  PERSONA
+  BOT
+}
+
+enum CommentSeedTargetType {
+  item
+  list
+  category
+}
+
+enum CommentSeedCampaignStatus {
+  draft
+  generating
+  ready
+  publishing
+  published
+  paused
+  archived
+}
+
+enum CommentSeedDraftStatus {
+  draft
+  approved
+  rejected
+  published
+}
+
+enum CommentSeedTone {
+  positive
+  negative
+  neutral
+  question
+}
+
+enum CommentSeedScopeType {
+  category
+  list
+  item
+}
+
+model comment_personas {
+  id          String   @id @default(cuid())
+  displayName String
+  username    String   @unique
+  avatarUrl   String?
+  userId      String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users              users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment_seed_drafts comment_seed_drafts[]
+
+  @@index([isActive])
+}
+
+model comment_seed_campaigns {
+  id              String                    @id @default(cuid())
+  title           String
+  status          CommentSeedCampaignStatus @default(draft)
+  targetType      CommentSeedTargetType
+  targetIds       String[]                  @default([])
+  commentCount    Int                       @default(10)
+  perItemCount    Int?
+  toneMix         Json
+  wordCountMin    Int                       @default(40)
+  wordCountMax    Int                       @default(120)
+  dateFrom        DateTime
+  dateTo          DateTime
+  openaiModel     String?
+  createdByAdminId String
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  createdByAdmin users                 @relation("CommentSeedCampaignCreator", fields: [createdByAdminId], references: [id], onDelete: Cascade)
+  drafts         comment_seed_drafts[]
+  comments       comments[]
+  rules          comment_seed_rules[]
+
+  @@index([status])
+  @@index([createdByAdminId])
+  @@index([createdAt])
+}
+
+model comment_seed_drafts {
+  id                 String                 @id @default(cuid())
+  campaignId         String
+  itemId             String
+  personaId          String
+  content            String
+  tone               CommentSeedTone
+  wordCount          Int                    @default(0)
+  scheduledAt        DateTime
+  status             CommentSeedDraftStatus @default(draft)
+  publishedCommentId String?                @unique
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  campaign         comment_seed_campaigns @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  items            items                  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  persona          comment_personas       @relation(fields: [personaId], references: [id], onDelete: Restrict)
+  publishedComment comments?              @relation("PublishedSeedDraft")
+
+  @@index([campaignId])
+  @@index([itemId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model comment_seed_rules {
+  id         String               @id @default(cuid())
+  scopeType  CommentSeedScopeType
+  scopeId    String
+  enabled    Boolean              @default(true)
+  campaignId String?
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  campaign comment_seed_campaigns? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@unique([scopeType, scopeId])
+  @@index([enabled])
+  @@index([campaignId])
 }
 
 model backup_jobs {

@@ -338,7 +338,7 @@ function ListCardCompact({
         aria-label={displayTitle}
       />
       {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
-      <div className="pointer-events-none relative z-[1] aspect-[4/5] w-full overflow-hidden bg-gray-200 max-lg:min-h-[148px] sm:aspect-[5/4] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
+      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-gray-200 max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}

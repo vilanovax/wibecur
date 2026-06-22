@@ -12,6 +12,7 @@ import {
   applyAutoRestrictionAfterPenalty,
   getUserPenaltyScore,
 } from '@/lib/comment-permission';
+import { filterSeededCommentsForPublic } from '@/lib/comment-seed/visibility';
 import { DEFAULT_LIST_COMMENT_MAX_LENGTH } from '@/lib/comment-limits';
 
 // GET /api/items/[id]/comments - دریافت کامنت‌های یک آیتم
@@ -106,8 +107,16 @@ export async function GET(
     const likedCommentIds = new Set(userLikes.map((l) => l.commentId));
     const userVoteByCommentId = new Map(userVotes.map((v) => [v.commentId, v.value]));
 
+    const itemScope = {
+      itemId,
+      listId: item?.listId ?? null,
+      categoryId: item?.lists?.categoryId ?? category?.id ?? null,
+    };
+
+    const visibleComments = await filterSeededCommentsForPublic(comments, itemScope);
+
     // Format comments
-    const formattedComments = comments.map((comment) => {
+    const formattedComments = visibleComments.map((comment) => {
       // Filter bad words from content if isFiltered
       let displayContent = comment.content;
       if (comment.isFiltered && badWordsList.length > 0) {

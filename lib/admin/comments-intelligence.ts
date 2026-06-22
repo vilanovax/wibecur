@@ -47,6 +47,7 @@ export type CommentListRow = {
   content: string;
   isFiltered: boolean;
   isApproved: boolean;
+  isSeeded: boolean;
   likeCount: number;
   createdAt: string;
   updatedAt: string;
@@ -138,6 +139,9 @@ export function buildCommentsWhere(
   } else if (filter === 'reported') {
     where.deletedAt = null;
     where.comment_reports = { some: { resolved: false } };
+  } else if (filter === 'seeded') {
+    where.deletedAt = null;
+    where.isSeeded = true;
   } else {
     where.deletedAt = null;
   }
@@ -179,6 +183,7 @@ function serializeComment(
     content: c.content,
     isFiltered: c.isFiltered,
     isApproved: c.isApproved,
+    isSeeded: c.isSeeded,
     likeCount: c.likeCount,
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),

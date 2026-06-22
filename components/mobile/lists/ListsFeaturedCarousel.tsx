@@ -23,7 +23,7 @@ interface ListsFeaturedCarouselProps {
 }
 
 const SLIDE_CLASS =
-  'w-[min(92vw,340px)] shrink-0 snap-start max-lg:snap-center lg:w-full lg:max-w-none lg:shrink';
+  'w-[min(88vw,300px)] shrink-0 snap-start max-lg:snap-center lg:w-full lg:max-w-none lg:shrink';
 
 export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -53,8 +53,8 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
   if (lists.length === 0) return null;
 
   return (
-    <section className="mb-4 lg:mb-5" aria-label="منتخب">
-      <div className="mb-2.5 flex items-center justify-between gap-2">
+    <section className="mb-3 w-full min-w-0 lg:mb-5" aria-label="منتخب">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="wibe-h3 flex items-center gap-1.5">
           <span aria-hidden>⭐</span>
           <span>منتخب</span>
@@ -72,7 +72,7 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
         <>
           <div
             ref={scrollRef}
-            className="flex w-full snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:snap-none"
+            className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-2.5 max-lg:overflow-x-auto max-lg:pb-1 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
             role="list"
             aria-label="لیست‌های منتخب"
           >
@@ -121,7 +121,7 @@ function FeaturedSlide({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`group relative block aspect-[16/10] min-h-[132px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-all active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[148px] lg:aspect-[3/2] lg:min-h-[180px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
+      className={`group relative block aspect-[2/1] min-h-[108px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-all active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[128px] lg:aspect-[3/2] lg:min-h-[180px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
     >
       <ListCoverImage
         coverImage={list.coverImage}

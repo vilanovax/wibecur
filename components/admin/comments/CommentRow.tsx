@@ -15,6 +15,7 @@ export interface CommentRowData {
   content: string;
   isFiltered: boolean;
   isApproved: boolean;
+  isSeeded?: boolean;
   likeCount: number;
   createdAt: string;
   deletedAt?: string | null;
@@ -161,12 +162,19 @@ function CommentRow({
         })}
       </td>
       <td className="px-4 py-3">
-        <CommentStatusBadge
-          isApproved={comment.isApproved}
-          isFiltered={comment.isFiltered}
-          reportsCount={comment._count.comment_reports}
-          deletedAt={comment.deletedAt}
-        />
+        <div className="flex flex-wrap items-center gap-1.5">
+          <CommentStatusBadge
+            isApproved={comment.isApproved}
+            isFiltered={comment.isFiltered}
+            reportsCount={comment._count.comment_reports}
+            deletedAt={comment.deletedAt}
+          />
+          {comment.isSeeded && (
+            <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+              Seed
+            </span>
+          )}
+        </div>
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>

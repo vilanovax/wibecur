@@ -31,7 +31,15 @@ import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
-import { DESKTOP_BREAKPOINT_PX, useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import {
+  LISTS_VIEW_MODE_DESKTOP_KEY,
+  LISTS_VIEW_MODE_MOBILE_KEY,
+  listsResultsGridClass,
+  readStoredListsViewMode,
+  resolveListCardVariant,
+  type ListsViewMode,
+} from '@/lib/lists-page-layout';
 import { LISTS_BROWSE_DEFAULT_LIMIT } from '@/lib/lists-browse';
 
 type ListWithCategory = ListsBrowseList;
@@ -46,7 +54,7 @@ interface ListsPageClientProps {
 }
 
 type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
-type ViewMode = 'grid' | 'compact';
+type ViewMode = ListsViewMode;
 type BrowseMode = 'trending' | 'newest' | 'popular' | 'saved';
 
 const VIBE_CHIPS: { value: VibeFilter; label: string }[] = [
@@ -158,12 +166,12 @@ const DEFAULT_FILTER: FilterState = {
   minRating: 0,
 };
 
-const VIEW_MODE_KEY = 'listsPage_viewMode';
+const VIEW_MODE_KEY = 'listsPage_viewMode'; // legacy — migrated on read
 const PAGE_SIZE = 24;
 /** پیش‌نمایش هر دسته در نمای سکشن‌بندی‌شده */
-const SECTION_PREVIEW_MOBILE = 6;
+const SECTION_PREVIEW_MOBILE = 4;
 const SECTION_PREVIEW_DESKTOP = 8;
-const STICKY_OFFSET = 112;
+const STICKY_OFFSET = 96;
 
 function resolveCategoryIdFromParam(
   param: string | undefined,
@@ -214,7 +222,7 @@ export default function ListsPageClient({
   const [searchQuery, setSearchQuery] = useState(initialSearch ?? '');
   const search = useUnifiedSearchQuery(searchQuery);
   const lastNoResultsQuery = useRef('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('compact');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [bookmarksLoaded, setBookmarksLoaded] = useState(false);
@@ -228,7 +236,7 @@ export default function ListsPageClient({
   const remoteFetchLock = useRef(false);
   const categoryChipsRef = useRef<HTMLDivElement>(null);
   const isScrollingToCategory = useRef(false);
-  const viewModeInitialized = useRef(false);
+  const viewModeHydrated = useRef(false);
   const isDesktop = useIsDesktop();
   const sectionPreviewCount = isDesktop ? SECTION_PREVIEW_DESKTOP : SECTION_PREVIEW_MOBILE;
 
@@ -286,21 +294,21 @@ export default function ListsPageClient({
   };
 
   useEffect(() => {
-    if (viewModeInitialized.current) return;
-    viewModeInitialized.current = true;
-    const savedView = localStorage.getItem(VIEW_MODE_KEY);
-    if (savedView === 'grid' || savedView === 'compact') {
-      setViewMode(savedView);
-      return;
+    const legacy = localStorage.getItem(VIEW_MODE_KEY);
+    if (legacy === 'grid' || legacy === 'compact') {
+      localStorage.setItem(LISTS_VIEW_MODE_MOBILE_KEY, legacy);
+      localStorage.setItem(LISTS_VIEW_MODE_DESKTOP_KEY, legacy);
+      localStorage.removeItem(VIEW_MODE_KEY);
     }
-    if (window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT_PX}px)`).matches) {
-      setViewMode('compact');
-    }
-  }, []);
+    setViewMode(readStoredListsViewMode(isDesktop));
+    viewModeHydrated.current = true;
+  }, [isDesktop]);
 
   useEffect(() => {
-    localStorage.setItem(VIEW_MODE_KEY, viewMode);
-  }, [viewMode]);
+    if (!viewModeHydrated.current) return;
+    const key = isDesktop ? LISTS_VIEW_MODE_DESKTOP_KEY : LISTS_VIEW_MODE_MOBILE_KEY;
+    localStorage.setItem(key, viewMode);
+  }, [viewMode, isDesktop]);
 
   useEffect(() => {
     const saved = localStorage.getItem('listsPage_filterState');
@@ -860,12 +868,14 @@ export default function ListsPageClient({
   const trendingBrowseEmpty =
     browseMode === 'trending' && trendingLoaded && sortedLists.length === 0 && publicLists.length > 0;
 
-  const showContextBar = !isSearchActive;
+  const showContextBar = !isSearchActive && !(useSectionLayout && !isDesktop);
   const showSecondaryToolbar = !isSearchActive;
   const showBrowseToolbar = !isSearchActive;
+  /** نوار دستهٔ خانه روی موبایل با چیپ‌های همین صفحه تکراری است */
+  const showCategoryNavStrip = !isSearchActive && (isDesktop || !showCategoryChips || !useSectionLayout);
 
   return (
-    <div className="space-y-0 pb-6 lg:pb-4">
+    <div className="w-full min-w-0 space-y-0 pb-6 lg:pb-4">
       <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
       <div className="mb-2 max-lg:px-4 lg:mb-3">
         <PageBreadcrumb items={breadcrumbItems} />
@@ -910,19 +920,21 @@ export default function ListsPageClient({
       {/* Sticky: دسته‌ها + ترند / جدید / نمای / فیلتر — مخفی در حالت جستجو */}
       {showBrowseToolbar && (
       <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-surface/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-surface/90 lg:top-14">
-        <CategoryNavStrip
-          embedded
-          activeSlug={initialCategory ?? null}
-          initialCategories={menuCategories}
-        />
-        <div className="flex items-center gap-1.5 max-lg:px-4 lg:px-0 pb-2">
+        {showCategoryNavStrip && (
+          <CategoryNavStrip
+            embedded
+            activeSlug={initialCategory ?? null}
+            initialCategories={menuCategories}
+          />
+        )}
+        <div className="flex items-center gap-1 max-lg:px-3 lg:gap-1.5 lg:px-0 pb-2 pt-1">
           <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 scrollbar-hide">
             {BROWSE_MODES.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => setBrowseMode(value)}
-                className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-all active:scale-[0.98] ${
+                className={`h-7 flex-shrink-0 rounded-md px-2.5 wibe-caption font-medium transition-all active:scale-[0.98] lg:h-8 lg:px-3 ${
                   browseMode === value
                     ? 'bg-wibe-card font-semibold text-primary shadow-sm'
                     : 'text-wibe-secondary'
@@ -939,7 +951,7 @@ export default function ListsPageClient({
                 onClick={() => setViewMode('compact')}
                 aria-label="نمایش لیستی"
                 aria-pressed={viewMode === 'compact'}
-                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${
+                className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors active:scale-[0.98] lg:h-8 lg:w-8 ${
                   viewMode === 'compact' ? 'bg-primary text-white' : 'text-wibe-secondary'
                 }`}
               >
@@ -950,7 +962,7 @@ export default function ListsPageClient({
                 onClick={() => setViewMode('grid')}
                 aria-label="نمایش گریدی"
                 aria-pressed={viewMode === 'grid'}
-                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${
+                className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors active:scale-[0.98] lg:h-8 lg:w-8 ${
                   viewMode === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary'
                 }`}
               >
@@ -960,7 +972,7 @@ export default function ListsPageClient({
             <button
               type="button"
               onClick={() => setFilterSheetOpen(true)}
-              className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-colors active:scale-[0.98] ${
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors active:scale-[0.98] lg:h-9 lg:w-9 ${
                 hasAdvancedFilters
                   ? 'border-primary bg-primary/10 text-primary'
                   : 'border-wibe bg-wibe-card text-wibe-secondary'
@@ -976,7 +988,7 @@ export default function ListsPageClient({
 
       {/* غیر sticky: پرش به دسته + context */}
       {(showSecondaryToolbar) && (
-        <div className="space-y-2 border-b border-wibe/60 bg-wibe-surface py-2 max-lg:px-4 lg:px-0">
+        <div className="space-y-2 border-b border-wibe/60 bg-wibe-surface py-1.5 max-lg:px-3 lg:px-0 lg:py-2">
           {showCategoryChips && (
             <div
               ref={categoryChipsRef}
@@ -1017,7 +1029,7 @@ export default function ListsPageClient({
           )}
 
           {showContextBar && (
-            <div className="flex min-h-[20px] items-center justify-between gap-2">
+            <div className="hidden min-h-[20px] items-center justify-between gap-2 lg:flex">
               <p className="truncate wibe-caption text-wibe-secondary">{contextParts.join(' · ')}</p>
               {hasAdvancedFilters && (
                 <button
@@ -1066,7 +1078,7 @@ export default function ListsPageClient({
         </div>
       )}
 
-      <div className="mt-3 max-lg:px-4 lg:mt-4 lg:px-0">
+      <div className="mt-2 w-full min-w-0 max-lg:px-3 lg:mt-4 lg:px-0">
         {browseMode === 'saved' && !bookmarksLoaded ? (
           <SavedBookmarksSkeleton />
         ) : savedBrowseEmpty ? (
@@ -1127,6 +1139,7 @@ export default function ListsPageClient({
                 categorySlug: category.slug,
                 lists: sectionLists,
                 viewMode,
+                isDesktop,
                 previewCount: sectionPreviewCount,
                 bookmarkedIds,
                 onBookmarkToggle: handleBookmarkToggle,
@@ -1214,6 +1227,7 @@ export default function ListsPageClient({
                 <FlatListResults
                   lists={visibleFlatLists}
                   viewMode={viewMode}
+                  isDesktop={isDesktop}
                   bookmarkedIds={bookmarkedIds}
                   onBookmarkToggle={handleBookmarkToggle}
                 />
@@ -1252,41 +1266,27 @@ export default function ListsPageClient({
 function FlatListResults({
   lists,
   viewMode,
+  isDesktop,
   bookmarkedIds,
   onBookmarkToggle,
   highlightQuery,
 }: {
   lists: ListWithCategory[];
   viewMode: ViewMode;
+  isDesktop: boolean;
   bookmarkedIds?: Set<string>;
   onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   highlightQuery?: string;
 }) {
-  if (viewMode === 'grid') {
-    return (
-      <div className="grid grid-cols-2 gap-2.5 max-lg:gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4 2xl:grid-cols-5">
-        {lists.map((list, index) => (
-          <ListCardCompact
-            key={list.id}
-            list={list}
-            variant="grid"
-            showCreator={false}
-            isBookmarked={bookmarkedIds?.has(list.id)}
-            onBookmarkToggle={onBookmarkToggle}
-            highlightQuery={highlightQuery}
-            searchResultIndex={highlightQuery ? index : undefined}
-          />
-        ))}
-      </div>
-    );
-  }
+  const cardVariant = resolveListCardVariant(viewMode, isDesktop);
+
   return (
-    <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
+    <div className={listsResultsGridClass(viewMode, isDesktop)}>
       {lists.map((list, index) => (
         <ListCardCompact
           key={list.id}
           list={list}
-          variant="compact"
+          variant={cardVariant}
           showCreator={false}
           isBookmarked={bookmarkedIds?.has(list.id)}
           onBookmarkToggle={onBookmarkToggle}

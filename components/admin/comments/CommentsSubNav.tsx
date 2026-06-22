@@ -9,6 +9,7 @@ import {
   Package,
   BookMarked,
   ShieldBan,
+  Sparkles,
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -56,6 +57,14 @@ const NAV = [
     href: '/admin/comments/bad-words',
     label: 'کلمات ممنوع',
     icon: BookMarked,
+    exact: false,
+    badgeKey: null,
+    permission: 'moderate_comments' as const,
+  },
+  {
+    href: '/admin/comments/seed',
+    label: 'کامنت هوشمند',
+    icon: Sparkles,
     exact: false,
     badgeKey: null,
     permission: 'moderate_comments' as const,
