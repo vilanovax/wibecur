@@ -9,7 +9,7 @@ WORKDIR /app
 FROM base AS deps
 ARG NPM_LOGLEVEL=verbose
 COPY package.json package-lock.json .npmrc ./
-RUN npm ci --loglevel ${NPM_LOGLEVEL}
+RUN npm install --loglevel ${NPM_LOGLEVEL}
 
 FROM base AS builder
 ARG NPM_LOGLEVEL=verbose
@@ -17,6 +17,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
+# Turbopack معمولاً کم‌حافظه‌تر است؛ سقف heap برای بیلدهای سنگین
+ENV NODE_OPTIONS=--max-old-space-size=4096
 
 # فقط برای مرحله build (مقادیر واقعی در runtime از .env می‌آیند)
 ARG NEXTAUTH_SECRET=docker-build-placeholder
