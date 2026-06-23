@@ -11,7 +11,7 @@
     "lighthouse:prod": "LHCI_BASE_URL=${LHCI_BASE_URL:-http://localhost:3003} LHCI_CATEGORY_PATH=/categories/film lhci autorun",
     "dev": "cross-env NODE_OPTIONS=--max-http-header-size=16384 next dev -p 3003",
     "dev:next": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "postbuild": "node scripts/prepare-standalone.mjs",
     "prestart": "node scripts/prepare-standalone.mjs",
     "prebuild": "node scripts/bump-admin-panel-version.mjs && prisma generate",

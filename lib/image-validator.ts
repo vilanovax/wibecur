@@ -1,5 +1,5 @@
-import sharp from 'sharp';
 import { ALLOWED_IMAGE_FORMATS, MAX_UPLOAD_SIZE, ImageProfile, getImageProfile } from './image-config';
+import { getSharp } from './get-sharp';
 import { toNodeBuffer } from './to-node-buffer';
 
 export interface ValidationResult {
@@ -37,6 +37,7 @@ export async function validateImage(
     // Check if it's a valid image
     let metadata;
     try {
+      const sharp = await getSharp();
       metadata = await sharp(normalized).metadata();
     } catch (error) {
       return {

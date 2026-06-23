@@ -23,7 +23,7 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  // native module — must not be bundled by Turbopack (Alpine Docker build)
+  // native module — must not be bundled; lazy-loaded via lib/get-sharp.ts
   serverExternalPackages: ['sharp'],
   generateBuildId: async () => BUILD_ID,
   env: {

@@ -1,5 +1,5 @@
-import sharp from 'sharp';
 import { prisma } from '@/lib/prisma';
+import { getSharp } from '@/lib/get-sharp';
 import { getImageProfile, type ImageProfile } from '@/lib/image-config';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { isPlaceholderCoverPath } from '@/lib/image-url-policy';
@@ -49,6 +49,7 @@ async function fetchImageDimensions(
   }
 
   try {
+    const sharp = await getSharp();
     const meta = await sharp(toNodeBuffer(obj.buffer)).metadata();
     return {
       width: meta.width ?? null,

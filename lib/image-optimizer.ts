@@ -1,5 +1,6 @@
-import sharp, { type Metadata, type Sharp } from 'sharp';
+import type { Metadata, Sharp } from 'sharp';
 import { ImageProfile, getImageProfile } from './image-config';
+import { getSharp } from './get-sharp';
 import { toNodeBuffer } from './to-node-buffer';
 
 export interface OptimizeImageOptions {
@@ -96,6 +97,7 @@ async function preparePipeline(
   buffer: Buffer,
   profileConfig: ReturnType<typeof getImageProfile> | null
 ): Promise<Sharp> {
+  const sharp = await getSharp();
   let pipeline = sharp(toNodeBuffer(buffer)).rotate();
 
   if (profileConfig?.trimTransparent) {
@@ -179,6 +181,7 @@ async function encodeImage(
     );
   }
 
+  const sharp = await getSharp();
   const meta = await sharp(optimizedBuffer).metadata();
   const { contentType, ext } = formatMeta(opts.format);
   return {
@@ -290,6 +293,7 @@ export async function optimizeImageDetailed(
   };
 
   try {
+    const sharp = await getSharp();
     const metadata = await sharp(normalized).metadata();
     const width = metadata.width || 0;
     const height = metadata.height || 0;
@@ -349,6 +353,7 @@ export async function optimizeImageDetailed(
         { width: fallback.width, height: fallback.height }
       );
     } catch {
+      const sharp = await getSharp();
       const metadata = await sharp(normalized).metadata().catch(() => null);
       const { ext, contentType } = formatMeta(metadata?.format);
       return buildResult(normalized, contentType, ext, originalSize, true, {
@@ -361,6 +366,7 @@ export async function optimizeImageDetailed(
 
 export async function detectImageType(buffer: Buffer): Promise<string | null> {
   try {
+    const sharp = await getSharp();
     const metadata = await sharp(toNodeBuffer(buffer)).metadata();
     return metadata.format || null;
   } catch {
