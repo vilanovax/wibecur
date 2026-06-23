@@ -60,12 +60,6 @@ function TrendingCardServer({
               {list.cityTag}
             </span>
           ) : null}
-          <div className="absolute bottom-0 left-0 right-0 p-2.5">
-            <p className="line-clamp-1 wibe-caption text-white/95 tabular-nums">
-              {list.saveCount.toLocaleString('fa-IR')} ذخیره ·{' '}
-              {list.itemCount.toLocaleString('fa-IR')} آیتم
-            </p>
-          </div>
         </div>
         <div className="p-3">
           <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>

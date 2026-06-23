@@ -23,7 +23,6 @@ import {
   NewListsSectionLazy,
   ExploreByCityPillsLazy,
   MostSavedItemsCafeLazy,
-  CategoryCreateCTALazy,
   GenreScrollBarLazy,
 } from './category-lazy-sections';
 
@@ -112,7 +111,7 @@ export default function CategoryPage2Client({
   const featuredSpotlight =
     viralSpotlight && viralSpotlight.id !== trendingLists[0]?.id ? viralSpotlight : null;
 
-  const trendingTitle = `داغ‌ترین لیست‌های هفته در ${category.name}`;
+  const trendingTitle = 'داغترین ها';
   const trendingClient = (
     <TrendingListsSectionLazy
       inset
@@ -204,15 +203,6 @@ export default function CategoryPage2Client({
             </HomeDeferredMount>
           </SectionReveal>
         )}
-
-        <SectionReveal defer>
-          <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-            <CategoryCreateCTALazy
-              categorySlug={category.slug}
-              categoryName={category.name}
-            />
-          </HomeDeferredMount>
-        </SectionReveal>
       </div>
     </main>
   );

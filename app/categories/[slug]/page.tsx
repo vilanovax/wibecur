@@ -101,7 +101,7 @@ export default async function CategoryPage({
           trendingSection={
             <CategoryTrendingSectionServer
               inset
-              title={`داغ‌ترین لیست‌های هفته در ${pageData.category.name}`}
+              title="داغترین ها"
               subtitle="بر اساس ذخیره و engagement"
               lists={pageData.trendingLists}
               categorySlug={pageData.category.slug}

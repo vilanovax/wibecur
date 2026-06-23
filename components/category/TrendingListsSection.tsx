@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import ListCardStats from '@/components/shared/ListCardStats';
 import CategorySectionTitle from './CategorySectionTitle';
 import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryListCard } from '@/types/category-page';
@@ -61,9 +60,6 @@ function TrendingListCard({
               {list.cityTag}
             </span>
           )}
-          <div className="absolute bottom-0 left-0 right-0 p-2.5">
-            <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="overlay" />
-          </div>
         </div>
         <div className="p-3">
           <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
