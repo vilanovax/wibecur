@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import CreateSheet from '@/components/mobile/home/CreateSheet';
 import HeaderDesktopSearch from '@/components/mobile/layout/HeaderDesktopSearch';
 import HeaderActions, { type HeaderActionsProfile } from '@/components/mobile/layout/HeaderActions';
 import { CONSUMER_NAV_ITEMS, isNavItemActive } from '@/components/mobile/layout/consumer-nav-config';
@@ -21,7 +20,6 @@ const DESKTOP_NAV_ITEMS = CONSUMER_NAV_ITEMS.filter((item) => item.href !== '/pr
 export default function DesktopTopNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const [createOpen, setCreateOpen] = useState(false);
   const [profile, setProfile] = useState<HeaderActionsProfile | null>(null);
 
   const fetchProfile = useCallback(async () => {
@@ -79,32 +77,16 @@ export default function DesktopTopNav() {
               aria-label="منوی اصلی"
             >
               {DESKTOP_NAV_ITEMS.map((item) => {
-                if (item.isButton) {
-                  return (
-                    <button
-                      key="create"
-                      type="button"
-                      onClick={() => setCreateOpen(true)}
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-colors hover:bg-primary-dark"
-                      aria-label="ساخت لیست یا آیتم"
-                      title="ساخت"
-                    >
-                      {item.icon}
-                    </button>
-                  );
-                }
-                const active = item.href ? isNavItemActive(pathname, item.href) : false;
+                const active = isNavItemActive(pathname, item.href);
                 return (
                   <Link
                     key={item.href}
-                    href={item.href!}
-                    className={`${navLinkClass(active)} ${item.iconOnly ? 'px-2.5' : ''}`}
+                    href={item.href}
+                    className={navLinkClass(active)}
                     aria-current={active ? 'page' : undefined}
-                    aria-label={item.iconOnly ? item.label : undefined}
-                    title={item.iconOnly ? item.label : undefined}
                   >
                     {item.icon}
-                    {!item.iconOnly ? item.label : null}
+                    {item.label}
                   </Link>
                 );
               })}
@@ -124,8 +106,6 @@ export default function DesktopTopNav() {
           </div>
         </div>
       </header>
-
-      <CreateSheet isOpen={createOpen} onClose={() => setCreateOpen(false)} />
     </>
   );
 }

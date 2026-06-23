@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import ListCardStats from '@/components/shared/ListCardStats';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
@@ -82,15 +81,9 @@ function ExploreTrendingCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent lg:from-black/85" />
           <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
             <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:hidden">{list.title}</h3>
-            <h3 className="mb-1 hidden line-clamp-2 text-base font-bold leading-snug text-white lg:block">
+            <h3 className="hidden line-clamp-2 text-base font-bold leading-snug text-white lg:block">
               {list.title}
             </h3>
-            <ListCardStats
-              saves={list.savesCount}
-              itemCount={list.itemsCount}
-              variant="overlay"
-              className="lg:text-sm"
-            />
           </div>
         </div>
         <div className="p-2.5 lg:hidden">

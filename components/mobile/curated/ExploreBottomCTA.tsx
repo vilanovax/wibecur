@@ -4,7 +4,7 @@ interface ExploreBottomCTAProps {
   onOpenCreate?: () => void;
 }
 
-/** CTA فشرده — بدون بنر بزرگ (دکمه ساخت در BottomNav هست) */
+/** CTA فشرده — بدون بنر بزرگ */
 export default function ExploreBottomCTA({ onOpenCreate }: ExploreBottomCTAProps) {
   if (!onOpenCreate) return null;
 
