@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { List } from 'lucide-react';
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
 import ItemShareButton from '@/components/mobile/items/ItemShareButton';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 import {
   entryKindBadgeLabel,
@@ -129,6 +130,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
   }
 
   const posterSrc = item.displayImageUrl || item.imageUrl;
+  const poster = posterSrc ? resolveNextImageSrc(posterSrc) : null;
 
   return (
     <section className="px-4 pt-2 lg:px-0 lg:pt-1">
@@ -140,9 +142,9 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               : 'h-[10.5rem] w-[7rem] sm:h-[11.5rem] sm:w-[7.75rem] lg:h-auto lg:w-full lg:aspect-[2/3]'
           }`}
         >
-          {posterSrc ? (
+          {poster ? (
             <Image
-              src={posterSrc}
+              src={poster.src}
               alt={item.title}
               fill
               priority
@@ -152,6 +154,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
                   ? 'object-cover object-center'
                   : 'object-contain bg-gray-100'
               }
+              unoptimized={poster.unoptimized}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-3xl opacity-40">

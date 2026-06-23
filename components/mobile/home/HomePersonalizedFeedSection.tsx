@@ -3,6 +3,7 @@
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeFeedGrid from './HomeFeedGrid';
 import type { HomeGridListCardList } from './HomeGridListCard';
+import { SAVED_LIST_BADGE } from './HomeGridListCard';
 import {
   useForYouRecommendations,
   getForYouReasonLabel,
@@ -113,12 +114,12 @@ export default function HomePersonalizedFeedSection() {
           <HomeFeedGrid
             cells={cells}
             getBadge={(list) => {
-              if (savedIds.has(list.id)) return 'ذخیره‌شده';
+              if (savedIds.has(list.id)) return SAVED_LIST_BADGE;
               const forYou = forYouLists.find((l) => l.id === list.id);
               return forYou ? getForYouReasonLabel(forYou, isPersonalized) : null;
             }}
             getBadgeClassName={(list) =>
-              savedIds.has(list.id) ? 'bg-emerald-600/90 text-white' : 'bg-primary/90 text-white'
+              savedIds.has(list.id) ? '' : 'bg-primary/90 text-white'
             }
             homeSection="for_you"
           />

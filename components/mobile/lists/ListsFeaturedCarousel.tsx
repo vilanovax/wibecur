@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Bookmark } from 'lucide-react';
-import { isDisplayableDescription } from '@/lib/lists-card-utils';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 
 export type FeaturedListItem = {
@@ -144,15 +142,6 @@ function FeaturedSlide({
       )}
       <div className="absolute inset-0 flex flex-col justify-end p-3 text-right lg:p-4">
         <h3 className="line-clamp-2 wibe-small font-bold text-white lg:text-lg">{list.title}</h3>
-        {list.description?.trim() && isDisplayableDescription(list.description) && (
-          <p className="mt-0.5 line-clamp-2 wibe-caption text-white/85 lg:line-clamp-2 lg:text-sm">
-            {list.description.trim()}
-          </p>
-        )}
-        <p className="mt-1 flex items-center justify-end gap-1 wibe-caption text-white/75 lg:text-sm">
-          <Bookmark className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-          {(list.saveCount ?? 0).toLocaleString('fa-IR')} ذخیره
-        </p>
       </div>
     </Link>
   );

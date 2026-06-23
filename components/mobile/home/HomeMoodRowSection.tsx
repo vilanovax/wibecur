@@ -71,7 +71,6 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
           </span>
           {mood.label}
         </p>
-        <p className="mt-0.5 wibe-caption text-wibe-secondary">{mood.subtitle}</p>
       </div>
 
       <ul className="space-y-1">

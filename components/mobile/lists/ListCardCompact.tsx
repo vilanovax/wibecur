@@ -7,9 +7,7 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { Flame, Sparkles, Bookmark } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
-import ListCardStats from '@/components/shared/ListCardStats';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
-import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import SearchHighlight from '@/components/mobile/search/SearchHighlight';
 import { trackSearchResultClick } from '@/lib/analytics';
@@ -46,6 +44,8 @@ interface ListCardCompactProps {
    * اگر undefined باشد، کارت خودش از useSession می‌خواند (سازگاری با کد قبلی).
    */
   isLoggedIn?: boolean;
+  /** نمایش دکمهٔ ذخیره روی کارت — پیش‌فرض خاموش برای UI خلوت‌تر */
+  showBookmark?: boolean;
 }
 
 const NEW_LIST_DAYS = 14;
@@ -183,12 +183,11 @@ function ListCardCompact({
   highlightQuery,
   searchResultIndex,
   isLoggedIn,
+  showBookmark = false,
 }: ListCardCompactProps) {
-  const itemCount = list.itemCount ?? list._count?.items ?? 0;
   const saveCount = list.saveCount ?? 0;
   const categorySlug = list.categories?.slug ?? null;
   const badges = getListBadges(list);
-  const subtitle = getListCardSubtitle(list);
   const href = `/lists/${list.slug}`;
   const displayTitle = getDisplayListTitle({
     title: list.title,
@@ -242,22 +241,21 @@ function ListCardCompact({
             <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-foreground">
               {renderTitle('')}
             </h3>
-            <div className="mt-0.5 flex items-center justify-between gap-1.5 pe-8">
-              <ListCardStats saves={saveCount} itemCount={itemCount} variant="minimal" className="min-w-0 truncate" />
-            </div>
           </div>
         </div>
-        <InlineBookmark
-          listId={list.id}
-          listSlug={list.slug}
-          categorySlug={categorySlug}
-          saveCount={saveCount}
-          isBookmarked={isBookmarked}
-          onToggle={onBookmarkToggle}
-          isLoggedIn={isLoggedIn}
-          size="xs"
-          className="pointer-events-auto absolute bottom-2 left-2 z-[2]"
-        />
+        {showBookmark ? (
+          <InlineBookmark
+            listId={list.id}
+            listSlug={list.slug}
+            categorySlug={categorySlug}
+            saveCount={saveCount}
+            isBookmarked={isBookmarked}
+            onToggle={onBookmarkToggle}
+            isLoggedIn={isLoggedIn}
+            size="xs"
+            className="pointer-events-auto absolute bottom-2 left-2 z-[2]"
+          />
+        ) : null}
       </div>
     );
   }
@@ -284,7 +282,7 @@ function ListCardCompact({
               fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
             />
           </div>
-          <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5 pe-9 lg:pe-10">
+          <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-9 lg:pe-10' : ''}`}>
             {badges.length > 0 && (
               <div className="mb-0.5 flex flex-wrap gap-1">
                 {badges.map((b) => (
@@ -302,29 +300,21 @@ function ListCardCompact({
             <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground lg:text-base">
               {renderTitle('')}
             </h3>
-            {subtitle && (
-              <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary lg:text-sm">
-                {highlightQuery ? (
-                  <SearchHighlight text={subtitle} query={highlightQuery} />
-                ) : (
-                  subtitle
-                )}
-              </p>
-            )}
-            <ListCardStats saves={saveCount} itemCount={itemCount} variant="minimal" className="mt-1" />
             {showCreator && <CreatorRow list={list} />}
           </div>
         </div>
-        <InlineBookmark
-          listId={list.id}
-          listSlug={list.slug}
-          categorySlug={categorySlug}
-          saveCount={saveCount}
-          isBookmarked={isBookmarked}
-          onToggle={onBookmarkToggle}
-          isLoggedIn={isLoggedIn}
-          className="pointer-events-auto absolute bottom-2.5 left-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
-        />
+        {showBookmark ? (
+          <InlineBookmark
+            listId={list.id}
+            listSlug={list.slug}
+            categorySlug={categorySlug}
+            saveCount={saveCount}
+            isBookmarked={isBookmarked}
+            onToggle={onBookmarkToggle}
+            isLoggedIn={isLoggedIn}
+            className="pointer-events-auto absolute bottom-2.5 left-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
+          />
+        ) : null}
       </div>
     );
   }
@@ -370,29 +360,25 @@ function ListCardCompact({
             مشاهده لیست
           </span>
         </div>
-        <div className="absolute inset-x-0 bottom-0 p-2.5 pe-11 text-right max-lg:pb-2 lg:p-3 lg:pe-12">
+        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-right max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-11 lg:pe-12' : ''}`}>
           <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] max-lg:text-[0.8125rem] lg:text-base lg:font-bold">
             {renderTitle('')}
           </h3>
-          <ListCardStats
-            saves={saveCount}
-            itemCount={itemCount}
-            variant="overlay"
-            className="mt-1 max-lg:text-[0.6875rem] lg:mt-1.5 lg:text-sm"
-          />
         </div>
       </div>
-      <InlineBookmark
-        listId={list.id}
-        listSlug={list.slug}
-        categorySlug={categorySlug}
-        saveCount={saveCount}
-        isBookmarked={isBookmarked}
-        onToggle={onBookmarkToggle}
-        isLoggedIn={isLoggedIn}
-        size="xs"
-        className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-all lg:group-hover:scale-110 lg:group-hover:opacity-100"
-      />
+      {showBookmark ? (
+        <InlineBookmark
+          listId={list.id}
+          listSlug={list.slug}
+          categorySlug={categorySlug}
+          saveCount={saveCount}
+          isBookmarked={isBookmarked}
+          onToggle={onBookmarkToggle}
+          isLoggedIn={isLoggedIn}
+          size="xs"
+          className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-all lg:group-hover:scale-110 lg:group-hover:opacity-100"
+        />
+      ) : null}
     </div>
   );
 }

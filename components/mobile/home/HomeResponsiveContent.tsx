@@ -13,7 +13,6 @@ type HomeResponsiveContentProps = {
   heroSpotlightMobile: ReactNode;
   heroSpotlightDesktop: ReactNode;
   desktopTrending: ReactNode;
-  desktopRising: ReactNode;
 };
 
 export default function HomeResponsiveContent({
@@ -21,7 +20,6 @@ export default function HomeResponsiveContent({
   heroSpotlightMobile,
   heroSpotlightDesktop,
   desktopTrending,
-  desktopRising,
 }: HomeResponsiveContentProps) {
   const isDesktop = useIsDesktop();
 
@@ -40,7 +38,6 @@ export default function HomeResponsiveContent({
             ssrFeaturedId={ssrFeaturedId}
             heroSpotlight={heroSpotlightDesktop}
             desktopTrending={desktopTrending}
-            desktopRising={desktopRising}
           />
         ) : (
           <HomeMobileView

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Bookmark } from 'lucide-react';
 import HomeSectionTitle from './HomeSectionTitle';
-import HomeGridListCard from './HomeGridListCard';
+import HomeGridListCard, { SAVED_LIST_BADGE } from './HomeGridListCard';
 import HomeFeedGrid from './HomeFeedGrid';
 import HomeStarterEmptyPanel from './HomeStarterEmptyPanel';
 import { useHomeData } from '@/contexts/HomeDataContext';
@@ -92,8 +92,7 @@ export default function HomeSavedListsSection() {
                   saveCount: list.saveCount ?? 0,
                   categories: list.categories,
                 }}
-                badge="ذخیره‌شده"
-                badgeClassName="bg-emerald-600/90 text-white"
+                badge={SAVED_LIST_BADGE}
                 homeSection="saved"
               />
             ))}
@@ -101,8 +100,7 @@ export default function HomeSavedListsSection() {
           <div className={`hidden lg:grid lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
             <HomeFeedGrid
               cells={desktopCells}
-              badge="ذخیره‌شده"
-              badgeClassName="bg-emerald-600/90 text-white"
+              badge={SAVED_LIST_BADGE}
               homeSection="saved"
             />
           </div>

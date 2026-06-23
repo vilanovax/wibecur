@@ -4,6 +4,7 @@ import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 import { isSeeAllCell } from '@/lib/home-feed-grid';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import HomeListCardServer from '@/components/mobile/home/HomeListCardServer';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { RisingListData } from '@/types/home-data';
 
 type HomeRisingSectionServerProps = {
@@ -43,20 +44,23 @@ export default function HomeRisingSectionServer({ lists }: HomeRisingSectionServ
       </div>
 
       <div className="space-y-2 px-4 lg:hidden">
-        {lists.map((list) => (
+        {lists.map((list) => {
+          const cover = list.coverImage ? resolveNextImageSrc(list.coverImage) : null;
+          return (
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
             className="flex flex-row-reverse gap-3 overflow-hidden rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm transition-transform active:scale-[0.99]"
           >
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-200">
-              {list.coverImage ? (
+              {cover ? (
                 <Image
-                  src={list.coverImage}
+                  src={cover.src}
                   alt={list.title}
                   fill
                   sizes="64px"
                   className="object-cover"
+                  unoptimized={cover.unoptimized}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gray-200 text-lg">
@@ -80,7 +84,8 @@ export default function HomeRisingSectionServer({ lists }: HomeRisingSectionServ
               ) : null}
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
 
       <div className={`hidden lg:grid lg:overflow-visible lg:snap-none lg:px-0 ${HOME_FEED_GRID_CLASS}`}>

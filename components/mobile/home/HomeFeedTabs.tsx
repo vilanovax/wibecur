@@ -20,16 +20,11 @@ const ForYouSection = dynamic(() => import('./ForYouSection'), {
   loading: () => <HomeFeedSectionSkeleton titleWidth="w-32" />,
 });
 
-const NewAndRisingSection = dynamic(() => import('./NewAndRisingSection'), {
-  loading: () => <HomeFeedSectionSkeleton titleWidth="w-40" />,
-});
-
-type FeedTab = 'trending' | 'foryou' | 'rising';
+type FeedTab = 'trending' | 'foryou';
 
 const TABS: { id: FeedTab; label: string; ariaLabel: string }[] = [
   { id: 'trending', label: 'ترند', ariaLabel: 'ترند این هفته' },
   { id: 'foryou', label: 'برای تو', ariaLabel: 'پیشنهاد برای تو' },
-  { id: 'rising', label: 'اوج', ariaLabel: 'در حال اوج گرفتن' },
 ];
 
 const TAB_META: Record<FeedTab, { subtitle: string; seeAllHref: string }> = {
@@ -40,10 +35,6 @@ const TAB_META: Record<FeedTab, { subtitle: string; seeAllHref: string }> = {
   foryou: {
     subtitle: 'پیشنهاد برای شروع',
     seeAllHref: '/lists',
-  },
-  rising: {
-    subtitle: 'رشد سریع ذخیره در ۲۴ ساعت اخیر',
-    seeAllHref: '/lists?mode=popular',
   },
 };
 
@@ -157,7 +148,6 @@ export default function HomeFeedTabs() {
       >
         {tab === 'trending' && <TrendingThisWeekCarousel embedded />}
         {tab === 'foryou' && <ForYouSection embedded fetchEnabled />}
-        {tab === 'rising' && <NewAndRisingSection embedded />}
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { HomeListData } from '@/types/home-data';
 
 type HomeListCardServerProps = {
@@ -13,7 +14,7 @@ export default function HomeListCardServer({
   badge,
   badgeClassName = 'bg-primary/90 text-white',
 }: HomeListCardServerProps) {
-  const coverSrc = list.coverImage;
+  const cover = list.coverImage ? resolveNextImageSrc(list.coverImage) : null;
 
   return (
     <Link
@@ -29,13 +30,14 @@ export default function HomeListCardServer({
               {badge}
             </span>
           ) : null}
-          {coverSrc ? (
+          {cover ? (
             <Image
-              src={coverSrc}
+              src={cover.src}
               alt={list.title}
               fill
               sizes="(max-width: 1023px) 160px, 25vw"
               className="object-cover transition-transform duration-500 lg:group-hover:scale-105"
+              unoptimized={cover.unoptimized}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gray-200 text-3xl">

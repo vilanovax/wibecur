@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
 
@@ -11,6 +12,7 @@ type CategoryHeroServerProps = {
 
 export default function CategoryHeroServer({ category, metrics }: CategoryHeroServerProps) {
   const heroImage = getCategoryHeroDisplayUrl(category.heroImage, category.slug);
+  const { src: heroSrc, unoptimized } = resolveNextImageSrc(heroImage);
   const showCityLink = isLocationCategorySlug(category.slug);
   const growth =
     metrics.weeklyGrowthPercent != null && metrics.weeklyGrowthPercent !== 0
@@ -22,14 +24,15 @@ export default function CategoryHeroServer({ category, metrics }: CategoryHeroSe
   return (
     <section className="relative mb-1 mt-3 overflow-hidden rounded-2xl lg:mt-4">
       <div className="relative aspect-[16/9] w-full min-h-[200px] overflow-hidden bg-neutral-950">
-        {heroImage ? (
+        {heroSrc ? (
           <Image
-            src={heroImage}
+            src={heroSrc}
             alt={category.name}
             fill
             priority
             sizes="(max-width: 1023px) 100vw, 1200px"
             className="object-cover object-center"
+            unoptimized={unoptimized}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-neutral-900 text-6xl">

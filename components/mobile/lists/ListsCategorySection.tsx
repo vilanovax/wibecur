@@ -63,9 +63,6 @@ export default function ListsCategorySection({
         <h2 className="flex min-w-0 items-center gap-1.5 wibe-h3">
           {icon ? <span aria-hidden>{icon}</span> : null}
           <span className="truncate">{title}</span>
-          <span className="shrink-0 wibe-caption font-normal text-wibe-secondary tabular-nums">
-            ({lists.length.toLocaleString('fa-IR')})
-          </span>
         </h2>
         {hasMore && !expanded && (
           onShowAllCategory ? (

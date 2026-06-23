@@ -14,7 +14,6 @@ import {
   HomeSavedListsSectionLazy,
   ForYouSectionLazy,
   HomePersonalizedFeedSectionLazy,
-  NewAndRisingSectionLazy,
 } from '@/components/mobile/home/home-lazy-sections';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
 
@@ -22,7 +21,6 @@ type HomeDesktopViewProps = {
   ssrFeaturedId: string | null;
   heroSpotlight: ReactNode;
   desktopTrending: ReactNode;
-  desktopRising: ReactNode;
 };
 
 /**
@@ -33,7 +31,6 @@ export default function HomeDesktopView({
   ssrFeaturedId,
   heroSpotlight,
   desktopTrending,
-  desktopRising,
 }: HomeDesktopViewProps) {
   const { hasSaves, isLoggedIn, isLoading: userLoading } = useHomeUserState();
   const showCombinedPersonal = isLoggedIn && hasSaves && !userLoading;
@@ -84,11 +81,6 @@ export default function HomeDesktopView({
           </>
         )}
 
-        <HomeFeedSection divider>
-          <HomeSectionRefreshSlot fallback={<NewAndRisingSectionLazy />}>
-            {desktopRising}
-          </HomeSectionRefreshSlot>
-        </HomeFeedSection>
       </div>
     </div>
   );

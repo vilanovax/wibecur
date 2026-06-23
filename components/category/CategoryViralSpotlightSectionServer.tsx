@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import CategorySectionTitle from './CategorySectionTitle';
 import { CATEGORY_SECTION } from '@/lib/category-layout';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { CategoryListCard } from '@/types/category-page';
 
 type CategoryViralSpotlightSectionServerProps = {
@@ -15,6 +16,7 @@ export default function CategoryViralSpotlightSectionServer({
 }: CategoryViralSpotlightSectionServerProps) {
   const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
   const imageSrc = list.bannerImage ?? list.coverImage;
+  const image = imageSrc ? resolveNextImageSrc(imageSrc) : null;
 
   return (
     <section className={sectionClass}>
@@ -25,13 +27,14 @@ export default function CategoryViralSpotlightSectionServer({
       >
         <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card">
           <div className="relative aspect-video bg-gray-200">
-            {imageSrc ? (
+            {image ? (
               <Image
-                src={imageSrc}
+                src={image.src}
                 alt={list.title}
                 fill
                 sizes="(min-width: 1024px) 50vw, 100vw"
                 className="object-cover"
+                unoptimized={image.unoptimized}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gray-200 text-5xl opacity-40">

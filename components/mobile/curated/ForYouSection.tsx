@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import ListCardStats from '@/components/shared/ListCardStats';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import type { CuratedList } from '@/types/curated';
@@ -61,12 +60,6 @@ export default function ForYouSection({ lists, personalized = false }: ForYouSec
                     {subtitle}
                   </p>
                 )}
-                <ListCardStats
-                  saves={list.savesCount}
-                  itemCount={list.itemsCount}
-                  variant="minimal"
-                  className="mt-1 lg:text-sm"
-                />
               </div>
             </Link>
           );

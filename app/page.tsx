@@ -3,14 +3,12 @@ import HomeResponsiveContent from '@/components/mobile/home/HomeResponsiveConten
 import HomeLcpPreload from '@/components/mobile/home/HomeLcpPreload';
 import HomeHeroSpotlightServer from '@/components/mobile/home/HomeHeroSpotlightServer';
 import HomeTrendingSectionServer from '@/components/mobile/home/HomeTrendingSectionServer';
-import HomeRisingSectionServer from '@/components/mobile/home/HomeRisingSectionServer';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import { fetchHomePageData } from '@/lib/home-data-server';
 import {
   selectHomeLcpImageUrl,
-  selectHomeRisingLists,
   selectHomeTrendingDesktopLists,
 } from '@/lib/home-list-selectors';
 import { EMPTY_HOME_DATA } from '@/types/home-data';
@@ -34,7 +32,6 @@ export default async function Home() {
   const ssrFeaturedId = initialHomeData.featured?.id ?? null;
   const lcpImage = selectHomeLcpImageUrl(initialHomeData);
   const desktopTrendingLists = selectHomeTrendingDesktopLists(initialHomeData);
-  const risingLists = selectHomeRisingLists(initialHomeData);
 
   const heroSpotlightMobile =
     initialHomeData.featured != null ? (
@@ -68,7 +65,6 @@ export default async function Home() {
                 desktopTrending={
                   <HomeTrendingSectionServer lists={desktopTrendingLists} />
                 }
-                desktopRising={<HomeRisingSectionServer lists={risingLists} />}
               />
             </ErrorBoundary>
           </HomeDataProvider>

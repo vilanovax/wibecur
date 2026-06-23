@@ -1,23 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect } from 'react';
-import { Eye, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
-import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { useHomeData } from '@/contexts/HomeDataContext';
-import { trackFeaturedHeroClick } from '@/lib/analytics';
-
-function trackFeaturedClick(slotId: string, listId: string, action: 'view_list' | 'quick_save') {
-  try {
-    fetch('/api/home-featured/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slotId, listId, action }),
-      keepalive: true,
-    }).catch(() => {});
-  } catch {}
-}
 
 function trackFeaturedImpressionOnce(slotId: string) {
   try {
@@ -118,61 +104,6 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           <h2 className="line-clamp-2 text-h2 font-bold text-white lg:line-clamp-2 lg:text-3xl lg:leading-[1.15] xl:text-4xl xl:leading-[1.1]">
             {list.title}
           </h2>
-          {list.description && (
-            <p className="mt-1.5 line-clamp-1 wibe-small leading-relaxed text-white/90 sm:line-clamp-2 lg:mt-3 lg:line-clamp-2 lg:text-base lg:leading-relaxed xl:mt-4 xl:text-lg xl:leading-8">
-              {list.description}
-            </p>
-          )}
-
-          <div className="mt-3 flex gap-2.5 sm:mt-4 sm:gap-3 lg:mt-6 lg:gap-3 xl:mt-7">
-            <Link
-              href={`/lists/${list.slug}`}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/30 bg-white/20 py-3 wibe-small font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/30 active:scale-[0.99] lg:flex-none lg:border-primary lg:bg-primary lg:px-6 lg:py-3 lg:text-base lg:shadow-md lg:hover:bg-primary-dark"
-              onClick={() => {
-                trackFeaturedHeroClick({
-                  list_slug: list.slug,
-                  category_slug: list.categories?.slug,
-                  action: 'view',
-                  slot_id: featuredSlotId ?? undefined,
-                });
-                if (featuredSlotId && list.id) trackFeaturedClick(featuredSlotId, list.id, 'view_list');
-              }}
-            >
-              <Eye className="h-4 w-4 shrink-0 lg:h-5 lg:w-5" />
-              مشاهده
-            </Link>
-            <div className="min-w-0 flex-1 lg:w-auto lg:flex-none lg:min-w-[9.5rem]">
-              <BookmarkButton
-                listId={list.id}
-                initialBookmarkCount={list.saveCount}
-                variant="button"
-                size="md"
-                tone="secondary"
-                showCount={false}
-                labelSave="ذخیره"
-                labelSaved="ذخیره شد ✓"
-                className="lg:!w-auto lg:min-w-[9.5rem] lg:rounded-lg lg:py-3 lg:text-base"
-                analytics={{
-                  listSlug: list.slug,
-                  categorySlug: list.categories?.slug,
-                  source: 'featured_hero',
-                }}
-                onToggle={(saved) => {
-                  if (saved) {
-                    trackFeaturedHeroClick({
-                      list_slug: list.slug,
-                      category_slug: list.categories?.slug,
-                      action: 'save',
-                      slot_id: featuredSlotId ?? undefined,
-                    });
-                  }
-                  if (saved && featuredSlotId && list.id) {
-                    trackFeaturedClick(featuredSlotId, list.id, 'quick_save');
-                  }
-                }}
-              />
-            </div>
-          </div>
         </div>
       </div>
     </section>

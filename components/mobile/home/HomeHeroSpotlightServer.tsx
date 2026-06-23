@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
-import HomeHeroClientActions from '@/components/mobile/home/HomeHeroClientActions';
+import HomeHeroImpressionTracker from '@/components/mobile/home/HomeHeroClientActions';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { FeaturedListData } from '@/types/home-data';
 
 type HomeHeroSpotlightServerProps = {
@@ -16,6 +17,9 @@ export default function HomeHeroSpotlightServer({
   fillHeight = false,
 }: HomeHeroSpotlightServerProps) {
   const bannerSrc = list.bannerImage ?? list.coverImage;
+  const { src: heroSrc, unoptimized } = bannerSrc
+    ? resolveNextImageSrc(bannerSrc)
+    : { src: '', unoptimized: false };
   const sizes = fillHeight
     ? '(max-width: 1279px) 100vw, 58vw'
     : '(max-width: 1023px) 100vw, (max-width: 1279px) 90vw, 58vw';
@@ -34,14 +38,15 @@ export default function HomeHeroSpotlightServer({
             : 'h-[220px] lg:h-[22rem] xl:h-[24rem]'
         }`}
       >
-        {bannerSrc ? (
+        {heroSrc ? (
           <Image
-            src={bannerSrc}
+            src={heroSrc}
             alt={list.title}
             fill
             priority
             sizes={sizes}
             className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] lg:object-[center_35%]"
+            unoptimized={unoptimized}
           />
         ) : (
           <div className="flex h-full w-full min-h-[220px] items-center justify-center bg-gray-200 text-5xl lg:min-h-0 lg:text-7xl">
@@ -70,13 +75,8 @@ export default function HomeHeroSpotlightServer({
           <h2 className="line-clamp-2 text-h2 font-bold text-white lg:line-clamp-2 lg:text-3xl lg:leading-[1.15] xl:text-4xl xl:leading-[1.1]">
             {list.title}
           </h2>
-          {list.description ? (
-            <p className="mt-1.5 line-clamp-1 wibe-small leading-relaxed text-white/90 sm:line-clamp-2 lg:mt-3 lg:line-clamp-2 lg:text-base lg:leading-relaxed xl:mt-4 xl:text-lg xl:leading-8">
-              {list.description}
-            </p>
-          ) : null}
 
-          <HomeHeroClientActions list={list} slotId={slotId} />
+          <HomeHeroImpressionTracker slotId={slotId} />
         </div>
       </div>
     </section>

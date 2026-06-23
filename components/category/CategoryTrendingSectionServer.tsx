@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { CATEGORY_SECTION } from '@/lib/category-layout';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { CategoryListCard } from '@/types/category-page';
 
 type CategoryTrendingSectionServerProps = {
@@ -22,6 +23,7 @@ function TrendingCardServer({
   accentColor: string;
 }) {
   const showTrendBadge = index < 3 || list.badge === 'viral' || list.badge === 'hot';
+  const cover = list.coverImage ? resolveNextImageSrc(list.coverImage) : null;
 
   return (
     <Link
@@ -30,13 +32,14 @@ function TrendingCardServer({
     >
       <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-card lg:rounded-2xl lg:transition-shadow lg:group-hover:shadow-md">
         <div className="relative aspect-[4/3] bg-gray-200">
-          {list.coverImage ? (
+          {cover ? (
             <Image
-              src={list.coverImage}
+              src={cover.src}
               alt={list.title}
               fill
               sizes="(max-width: 1023px) 50vw, 25vw"
               className="object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-[1.03]"
+              unoptimized={cover.unoptimized}
             />
           ) : (
             <div

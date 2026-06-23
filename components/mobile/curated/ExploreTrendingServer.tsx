@@ -2,6 +2,7 @@ import Image from 'next/image';
 import ListCardStats from '@/components/shared/ListCardStats';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { CuratedList } from '@/types/curated';
 
 type ExploreTrendingServerProps = {
@@ -51,7 +52,7 @@ function ExploreTrendingCard({
 }) {
   const href = `/lists/${list.slug}`;
   const coverSrc = isRenderableCover(list.coverUrl) ? list.coverUrl : null;
-  const unoptimized = Boolean(coverSrc?.startsWith('/') && coverSrc.includes('?'));
+  const cover = coverSrc ? resolveNextImageSrc(coverSrc) : null;
 
   return (
     <ExploreTrendingPrefetchLink
@@ -60,15 +61,15 @@ function ExploreTrendingCard({
     >
       <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:rounded-xl lg:group-hover:shadow-md">
         <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10]">
-          {coverSrc ? (
+          {cover ? (
             <Image
-              src={coverSrc}
+              src={cover.src}
               alt={list.title}
               fill
               sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 78vw"
               className="object-cover transition-transform duration-500 lg:group-hover:scale-105"
               priority={priority}
-              unoptimized={unoptimized}
+              unoptimized={cover.unoptimized}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gray-200 text-2xl">

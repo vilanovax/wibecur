@@ -1,9 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { Bookmark } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { HomeListCreator } from '@/types/home-data';
 import { trackHomeSectionClick, type HomeSectionId } from '@/lib/analytics';
+
+/** نشانگر ذخیره — به‌جای متن «ذخیره‌شده» آیکون بوکمارک سبز */
+export const SAVED_LIST_BADGE = '__saved_list_bookmark__';
 
 export interface HomeGridListCardList {
   id: string;
@@ -46,7 +50,14 @@ export default function HomeGridListCard({
     >
       <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md">
         <div className="relative aspect-[5/4] w-full bg-gray-100 sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[11.5rem]">
-          {badge ? (
+          {badge === SAVED_LIST_BADGE ? (
+            <span
+              className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600/90 text-white shadow-sm"
+              aria-label="ذخیره‌شده"
+            >
+              <Bookmark className="h-3.5 w-3.5 fill-current" strokeWidth={1.75} aria-hidden />
+            </span>
+          ) : badge ? (
             <span
               className={`absolute right-2 top-2 z-10 rounded-pill px-2 py-0.5 wibe-caption font-semibold shadow-sm ${badgeClassName}`}
             >
