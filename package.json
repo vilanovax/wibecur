@@ -47,7 +47,16 @@
     "seed:item-images": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/assign-item-placeholder-images.ts",
     "seed:item-images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/assign-item-placeholder-images.ts --dry-run",
     "fix:tmdb-images": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-tmdb-item-images.ts",
-    "fix:tmdb-images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-tmdb-item-images.ts --dry-run"
+    "fix:tmdb-images:dry-run": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/replace-tmdb-item-images.ts --dry-run",
+    "cap:sync": "cross-env CAPACITOR_ENV=prod node scripts/prepare-capacitor-shell.mjs && cross-env CAPACITOR_ENV=prod npx cap sync android",
+    "cap:sync:prod": "cross-env CAPACITOR_ENV=prod node scripts/prepare-capacitor-shell.mjs && cross-env CAPACITOR_ENV=prod npx cap sync android",
+    "cap:sync:dev": "cross-env CAPACITOR_ENV=dev node scripts/prepare-capacitor-shell.mjs && cross-env CAPACITOR_ENV=dev npx cap sync android",
+    "cap:open:android": "npm run cap:sync:prod && npx cap open android",
+    "cap:run:android": "npm run cap:sync:dev && cross-env CAPACITOR_ENV=dev ANDROID_HOME=$HOME/Library/Android/sdk npx cap run android",
+    "cap:run:android:prod": "npm run cap:sync:prod && cross-env CAPACITOR_ENV=prod ANDROID_HOME=$HOME/Library/Android/sdk npx cap run android",
+    "cap:install:android": "npm run cap:sync:prod && cd android && ./gradlew installDebug && $HOME/Library/Android/sdk/platform-tools/adb shell am start -n ir.wibecur.app/.MainActivity",
+    "cap:build:android": "npm run cap:sync:prod && cd android && ./gradlew assembleDebug",
+    "cap:build:android:release": "npm run cap:sync:prod && cd android && ./gradlew assembleRelease"
   },
   "prisma": {
     "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
@@ -56,6 +65,13 @@
     "@auth/prisma-adapter": "^2.11.1",
     "@aws-sdk/client-s3": "^3.946.0",
     "@aws-sdk/lib-storage": "^3.946.0",
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/keyboard": "^8.0.5",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@fontsource/vazirmatn": "^5.2.8",
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^6.19.3",

@@ -8,6 +8,7 @@ import UmamiAnalytics from '@/components/analytics/UmamiAnalytics';
 import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import PWAProvider from '@/components/providers/PWAProvider';
+import CapacitorProvider from '@/components/providers/CapacitorProvider';
 import MainContainer from '@/components/providers/MainContainer';
 import MaintenanceGate from '@/components/site/MaintenanceGate';
 import { SiteBrandingProvider } from '@/contexts/SiteBrandingContext';
@@ -116,9 +117,11 @@ export default async function RootLayout({
             <SiteBrandingProvider logoUrl={logoUrl} logoDisplayUrl={logoDisplayUrl}>
               <SearchProvider>
                 <PWAProvider>
-                  <MaintenanceGate>
-                    <MainContainer>{children}</MainContainer>
-                  </MaintenanceGate>
+                  <CapacitorProvider>
+                    <MaintenanceGate>
+                      <MainContainer>{children}</MainContainer>
+                    </MaintenanceGate>
+                  </CapacitorProvider>
                 </PWAProvider>
               </SearchProvider>
             </SiteBrandingProvider>

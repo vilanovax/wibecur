@@ -1,0 +1,104 @@
+import fs from 'fs';
+import path from 'path';
+import { config as loadEnv } from 'dotenv';
+
+const capEnv = process.env.CAPACITOR_ENV === 'dev' ? 'dev' : 'prod';
+loadEnv({ path: path.resolve(`.env.capacitor.${capEnv}`) });
+
+const serverUrl = (
+  process.env.CAPACITOR_SERVER_URL ||
+  (capEnv === 'dev' ? 'http://10.0.2.2:3003' : 'https://app.wibe.ir')
+).replace(/\/$/, '');
+
+const shellDir = path.resolve('capacitor-shell');
+const androidAssetsDir = path.resolve('android/app/src/main/assets/www');
+const appConfigPath = path.resolve('android/app/src/main/java/ir/wibecur/app/AppConfig.java');
+
+fs.mkdirSync(shellDir, { recursive: true });
+fs.mkdirSync(androidAssetsDir, { recursive: true });
+fs.mkdirSync(path.dirname(appConfigPath), { recursive: true });
+
+const errorHtml = `<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>خطا در بارگذاری</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #e5e7eb;
+        color: #1f2937;
+        display: flex;
+        min-height: 100vh;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+      .card {
+        max-width: 22rem;
+        background: #fff;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        text-align: center;
+      }
+      h1 { font-size: 1.125rem; margin: 0 0 0.75rem; }
+      p { margin: 0 0 1rem; line-height: 1.7; color: #4b5563; font-size: 0.95rem; }
+      button {
+        border: 0;
+        border-radius: 0.75rem;
+        background: #6366f1;
+        color: #fff;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        width: 100%;
+      }
+      code { font-size: 0.8rem; color: #6b7280; word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>اتصال برقرار نشد</h1>
+      <p>اپ نتوانست سایت را باز کند. اینترنت گوشی را بررسی کنید و دوباره تلاش کنید.</p>
+      <button type="button" onclick="retry()">تلاش مجدد</button>
+      <p style="margin-top: 1rem"><code>${serverUrl}</code></p>
+    </div>
+    <script>
+      function retry() {
+        window.location.replace(${JSON.stringify(serverUrl)});
+      }
+    </script>
+  </body>
+</html>
+`;
+
+const indexHtml = `<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0;url=${serverUrl}" />
+    <script>window.location.replace(${JSON.stringify(serverUrl)});</script>
+  </head>
+  <body></body>
+</html>
+`;
+
+const appConfigJava = `package ir.wibecur.app;
+
+/** تولید خودکار — npm run cap:sync:prod */
+public final class AppConfig {
+    public static final String APP_URL = ${JSON.stringify(serverUrl)};
+    public static final String ERROR_PAGE = "file:///android_asset/www/error.html";
+
+    private AppConfig() {}
+}
+`;
+
+fs.writeFileSync(path.join(shellDir, 'index.html'), indexHtml);
+fs.writeFileSync(path.join(shellDir, 'error.html'), errorHtml);
+fs.writeFileSync(path.join(androidAssetsDir, 'error.html'), errorHtml);
+fs.writeFileSync(appConfigPath, appConfigJava);
+
+console.log(`[android] prepared ${capEnv} shell → ${serverUrl}`);

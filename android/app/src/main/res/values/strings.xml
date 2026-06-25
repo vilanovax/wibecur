@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WibeCur</string>
+    <string name="title_activity_main">WibeCur</string>
+    <string name="package_name">ir.wibecur.app</string>
+    <string name="custom_url_scheme">ir.wibecur.app</string>
+</resources>
