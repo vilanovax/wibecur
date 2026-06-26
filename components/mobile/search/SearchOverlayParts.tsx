@@ -123,6 +123,7 @@ export function SearchItemRow({
   isActive,
   innerRef,
   compact = false,
+  variant = 'default',
 }: {
   item: UnifiedSearchItem;
   onClick?: () => void;
@@ -130,25 +131,39 @@ export function SearchItemRow({
   isActive?: boolean;
   innerRef?: (el: HTMLAnchorElement | null) => void;
   compact?: boolean;
+  variant?: 'default' | 'direct' | 'suggestion';
 }) {
   const fallbackIcon = item.categoryIcon ?? '🎬';
+  const isDirect = variant === 'direct';
+  const isSuggestion = variant === 'suggestion';
+
   const meta =
     item.listTitle && item.categoryName
       ? `${item.categoryIcon ? `${item.categoryIcon} ` : ''}${item.categoryName} · ${item.listTitle}`
       : item.categoryName
         ? `${item.categoryIcon ? `${item.categoryIcon} ` : ''}${item.categoryName}`
         : item.listTitle ?? null;
+  const directMeta = item.listTitle
+    ? `${item.categoryIcon ? `${item.categoryIcon} ` : ''}${item.listTitle}`
+    : null;
+  const displayMeta = isDirect ? directMeta : meta;
+
+  const surfaceClass = isActive
+    ? 'border-primary bg-primary/[0.06] ring-2 ring-primary/25'
+    : isDirect
+      ? 'border-amber-200/35 bg-amber-50/30'
+      : isSuggestion
+        ? 'border-wibe/80 bg-wibe-card/60'
+        : 'border-wibe bg-wibe-card';
 
   return (
     <Link
       ref={innerRef}
       href={`/items/${item.id}`}
       onClick={onClick}
-      className={`flex min-w-0 flex-row-reverse gap-2.5 rounded-xl border p-2 transition-transform active:scale-[0.99] ${
-        isActive
-          ? 'border-primary bg-primary/[0.06] ring-2 ring-primary/25'
-          : 'border-wibe bg-wibe-card'
-      } ${compact ? 'p-1.5' : ''}`}
+      className={`flex min-w-0 flex-row-reverse gap-2.5 rounded-xl border p-2 transition-transform active:scale-[0.99] ${surfaceClass} ${
+        compact ? 'p-1.5' : ''
+      }`}
     >
       <div
         className={`shrink-0 overflow-hidden rounded-lg bg-gray-100 ${
@@ -171,11 +186,11 @@ export function SearchItemRow({
             item.title
           )}
         </h3>
-        {item.matchHint && (
+        {item.matchHint && !isDirect && (
           <p className="mt-0.5 line-clamp-1 wibe-caption text-primary/90">{item.matchHint}</p>
         )}
-        {meta && (
-          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{meta}</p>
+        {displayMeta && (
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{displayMeta}</p>
         )}
       </div>
     </Link>

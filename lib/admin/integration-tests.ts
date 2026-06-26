@@ -88,6 +88,60 @@ export async function testLiaraStorage(
   }
 }
 
+export async function testDeepSeekKey(
+  apiKey: string,
+  model?: string | null
+): Promise<{ ok: true; model: string } | { ok: false; error: string }> {
+  const key = apiKey.trim();
+  if (!key) {
+    return {
+      ok: false,
+      error:
+        'کلید DeepSeek را وارد کنید. اگر قبلاً ذخیره کرده‌اید، فیلد را خالی بگذارید و دوباره تست کنید.',
+    };
+  }
+
+  const { resolveDeepSeekModel } = await import('@/lib/deepseek-models');
+  const modelId = resolveDeepSeekModel(model);
+
+  try {
+    const res = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: modelId,
+        messages: [{ role: 'user', content: 'Reply with exactly: OK' }],
+        max_tokens: 5,
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: { message?: string };
+    };
+
+    if (res.status === 401) {
+      return { ok: false, error: 'کلید DeepSeek نامعتبر است' };
+    }
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: data.error?.message || `خطای DeepSeek (${res.status})`,
+      };
+    }
+
+    return { ok: true, model: modelId };
+  } catch (e: unknown) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : 'خطا در اتصال به DeepSeek',
+    };
+  }
+}
+
 export async function testOpenAiKey(
   apiKey: string,
   model?: string | null

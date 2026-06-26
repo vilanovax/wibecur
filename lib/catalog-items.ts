@@ -19,7 +19,14 @@ import {
   isLightweightEntryKind,
 } from '@/lib/list-entry';
 import { catalogHasSearchProfile } from '@/lib/catalog-search-profile';
-import { buildCatalogItemSearchOrClauses } from '@/lib/search-keywords';
+import { isCatalogAdminDisabled } from '@/lib/admin/catalog-visibility';
+import {
+  buildCatalogItemSearchFilter,
+  CATALOG_SEARCH_MIN_SCORE,
+  scoreCatalogItemForSearch,
+} from '@/lib/search-keywords';
+
+const CATALOG_SEARCH_FETCH_CAP = 400;
 
 export class CatalogNotReadyError extends Error {
   constructor() {
@@ -455,6 +462,14 @@ export async function addCatalogItemToList(
     data: { itemCount: { increment: 1 } },
   });
 
+  if (isCatalogAdminDisabled(catalog.metadata)) {
+    await prisma.item_moderation.upsert({
+      where: { itemId: item.id },
+      create: { itemId: item.id, status: 'HIDDEN', flagScore: 0 },
+      update: { status: 'HIDDEN' },
+    });
+  }
+
   return item;
 }
 
@@ -530,6 +545,32 @@ export async function createLightweightListItem(
   return item;
 }
 
+function rankCatalogSearchCandidates<
+  T extends {
+    title: string;
+    description: string | null;
+    metadata: unknown;
+    updatedAt: Date;
+  },
+>(rows: T[], query: string): T[] {
+  return rows
+    .map((row) => ({
+      row,
+      score: scoreCatalogItemForSearch({
+        title: row.title,
+        description: row.description,
+        metadata: row.metadata as Record<string, unknown> | null,
+      }, query).score,
+    }))
+    .filter((entry) => entry.score >= CATALOG_SEARCH_MIN_SCORE)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        b.row.updatedAt.getTime() - a.row.updatedAt.getTime()
+    )
+    .map((entry) => entry.row);
+}
+
 export async function searchCatalogItems(
   prisma: PrismaClient,
   q: string,
@@ -540,15 +581,15 @@ export async function searchCatalogItems(
   if (query.length < 2) return [];
 
   const where: Prisma.catalog_itemsWhereInput = {
-    OR: buildCatalogItemSearchOrClauses(query),
+    ...buildCatalogItemSearchFilter(query),
     ...(options?.categorySlug
       ? { categorySlug: options.categorySlug }
       : {}),
   };
 
-  const rows = await catalogDb(prisma).findMany({
+  const candidates = await catalogDb(prisma).findMany({
     where,
-    take: limit,
+    take: CATALOG_SEARCH_FETCH_CAP,
     orderBy: { updatedAt: 'desc' },
     include: {
       _count: { select: { items: true } },
@@ -561,6 +602,8 @@ export async function searchCatalogItems(
       },
     },
   });
+
+  const rows = rankCatalogSearchCandidates(candidates, query).slice(0, limit);
 
   const listId = options?.listId;
   let inListSet = new Set<string>();
@@ -734,6 +777,7 @@ export type CatalogListRow = {
   listCount: number;
   updatedAt: string;
   hasSearchProfile?: boolean;
+  isDisabled?: boolean;
   /** وقتی placementListId داده شده — آیا در آن لیست جایگاه دارد */
   alreadyInList?: boolean;
 };
@@ -777,11 +821,7 @@ export async function listCatalogItems(
   const q = options.q?.trim();
 
   const where: Prisma.catalog_itemsWhereInput = {
-    ...(q && q.length >= 2
-      ? {
-          OR: buildCatalogItemSearchOrClauses(q),
-        }
-      : {}),
+    ...(q && q.length >= 2 ? buildCatalogItemSearchFilter(q) : {}),
     ...(catalogCategoryWhere(options.categorySlug) ?? {}),
     ...(options.listId
       ? { items: { some: { listId: options.listId } } }
@@ -797,6 +837,62 @@ export async function listCatalogItems(
       return { rows: [], total: 0 };
     }
     where.id = { in: multiIds };
+  }
+
+  if (q && q.length >= 2) {
+    const candidates = await catalogDb(prisma).findMany({
+      where,
+      take: CATALOG_SEARCH_FETCH_CAP,
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        imageUrl: true,
+        categorySlug: true,
+        externalKey: true,
+        metadata: true,
+        updatedAt: true,
+        _count: { select: { items: true } },
+      },
+    });
+
+    const ranked = rankCatalogSearchCandidates(candidates, q);
+    const total = ranked.length;
+    const pageRows = ranked.slice((page - 1) * perPage, page * perPage);
+
+    let inPlacementListSet = new Set<string>();
+    if (options.placementListId && pageRows.length > 0) {
+      const placements = await prisma.items.findMany({
+        where: {
+          listId: options.placementListId,
+          catalogItemId: { in: pageRows.map((r) => r.id) },
+        },
+        select: { catalogItemId: true },
+      });
+      inPlacementListSet = new Set(
+        placements.map((p) => p.catalogItemId).filter((id): id is string => Boolean(id))
+      );
+    }
+
+    return {
+      total,
+      rows: pageRows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        imageUrl: r.imageUrl,
+        categorySlug: r.categorySlug,
+        externalKey: r.externalKey,
+        listCount: r._count.items,
+        updatedAt: r.updatedAt.toISOString(),
+        hasSearchProfile: catalogHasSearchProfile(r.metadata),
+        isDisabled: isCatalogAdminDisabled(r.metadata),
+        ...(options.placementListId
+          ? { alreadyInList: inPlacementListSet.has(r.id) }
+          : {}),
+      })),
+    };
   }
 
   const [rows, total] = await Promise.all([
@@ -846,6 +942,7 @@ export async function listCatalogItems(
       listCount: r._count.items,
       updatedAt: r.updatedAt.toISOString(),
       hasSearchProfile: catalogHasSearchProfile(r.metadata),
+      isDisabled: isCatalogAdminDisabled(r.metadata),
       ...(options.placementListId
         ? { alreadyInList: inPlacementListSet.has(r.id) }
         : {}),
@@ -887,6 +984,7 @@ export async function getCatalogItemDetail(prisma: PrismaClient, id: string) {
     categorySlug: catalog.categorySlug,
     externalKey: catalog.externalKey,
     metadata: catalog.metadata,
+    isDisabled: isCatalogAdminDisabled(catalog.metadata),
     placements,
     listCount: placements.length,
   };

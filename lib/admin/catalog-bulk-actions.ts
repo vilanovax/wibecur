@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { addCatalogItemToList, isCatalogInList } from '@/lib/catalog-items';
 import { softDeleteItems } from '@/lib/admin/item-trash';
+import { setCatalogAdminDisabledFlags } from '@/lib/admin/catalog-visibility';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 
 export type CatalogBulkAction =
@@ -127,10 +128,12 @@ export async function executeCatalogBulkAction(
 
     case 'hide':
       processed = await setModerationStatus(prisma, catalogIds, 'HIDDEN');
+      await setCatalogAdminDisabledFlags(prisma, catalogIds, true);
       break;
 
     case 'show':
       processed = await setModerationStatus(prisma, catalogIds, 'NORMAL');
+      await setCatalogAdminDisabledFlags(prisma, catalogIds, false);
       break;
 
     case 'move-to-list': {
@@ -273,13 +276,13 @@ export const CATALOG_BULK_ACTION_LABELS: Record<
     variant: 'default',
   },
   hide: {
-    label: 'مخفی کردن',
-    description: 'آیتم برای کاربران عادی مخفی می‌شود (فقط ادمین می‌بیند).',
+    label: 'غیرفعال کردن',
+    description: 'آیتم برای کاربران عادی نمایش داده نمی‌شود (فقط ادمین می‌بیند).',
     variant: 'default',
   },
   show: {
-    label: 'نمایش مجدد',
-    description: 'وضعیت نمایش به حالت عادی برمی‌گردد.',
+    label: 'فعال کردن',
+    description: 'آیتم دوباره برای کاربران قابل مشاهده می‌شود.',
     variant: 'primary',
   },
   'move-to-list': {

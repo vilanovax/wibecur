@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
-import { Edit2, Camera, UserPlus, Check, Loader2, LogOut, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Edit2, Camera, UserPlus, Check, Loader2, LogOut, AlertTriangle } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { getLevelByScore, type CuratorLevelKey } from '@/lib/curator';
 import { VIBE_AVATARS, isUserEliteLevel } from '@/lib/vibe-avatars';
@@ -30,7 +30,6 @@ export default function ProfileHeader({
   followersCount,
 }: ProfileHeaderProps) {
   const [showEditSheet, setShowEditSheet] = useState(false);
-  const [showOwnerMenu, setShowOwnerMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -44,7 +43,6 @@ export default function ProfileHeader({
   };
 
   const requestLogout = () => {
-    setShowOwnerMenu(false);
     setShowLogoutConfirm(true);
   };
 
@@ -84,25 +82,29 @@ export default function ProfileHeader({
           />
 
           {isOwner ? (
-            <>
+            <div className="absolute start-2.5 top-2.5 z-10 flex items-center gap-1.5 lg:hidden">
               <button
                 type="button"
                 onClick={openEdit}
-                className="absolute start-2.5 top-2.5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 text-[11px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97] lg:hidden"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97]"
                 aria-label="ویرایش پروفایل"
               >
-                <Edit2 className="h-3.5 w-3.5" />
-                ویرایش
+                <Edit2 className="h-4 w-4" />
               </button>
               <button
                 type="button"
-                onClick={() => setShowOwnerMenu(true)}
-                className="absolute end-2.5 top-2.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97] lg:hidden"
-                aria-label="منوی پروفایل"
+                onClick={requestLogout}
+                disabled={isLoggingOut}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25 active:scale-[0.97] disabled:opacity-60"
+                aria-label="خروج از حساب"
               >
-                <MoreVertical className="h-4 w-4" />
+                {isLoggingOut ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <LogOut className="h-4 w-4" />
+                )}
               </button>
-            </>
+            </div>
           ) : onFollowToggle ? (
             <button
               type="button"
@@ -150,23 +152,23 @@ export default function ProfileHeader({
                   <button
                     type="button"
                     onClick={openEdit}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-wibe bg-wibe-card px-3 text-xs font-semibold text-foreground transition-colors hover:border-primary/30"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-wibe bg-wibe-card text-foreground transition-colors hover:border-primary/30"
+                    aria-label="ویرایش پروفایل"
                   >
-                    <Edit2 className="h-3.5 w-3.5" />
-                    ویرایش پروفایل
+                    <Edit2 className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     onClick={requestLogout}
                     disabled={isLoggingOut}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                    aria-label="خروج از حساب"
                   >
                     {isLoggingOut ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <LogOut className="h-3.5 w-3.5" />
+                      <LogOut className="h-4 w-4" />
                     )}
-                    خروج
                   </button>
                 </div>
               )}
@@ -202,7 +204,7 @@ export default function ProfileHeader({
               ) : null}
             </div>
 
-            <div className="relative shrink-0">
+            <div className="relative z-20 shrink-0">
               <div className="h-[68px] w-[68px] overflow-hidden rounded-full border-[3px] border-wibe-card bg-wibe-card shadow-md ring-1 ring-black/[0.06] lg:h-20 lg:w-20 lg:border-4">
                 {vibeAvatar ? (
                   <div
@@ -259,34 +261,6 @@ export default function ProfileHeader({
 
       {isOwner && (
         <>
-          <BottomSheet
-            isOpen={showOwnerMenu}
-            onClose={() => setShowOwnerMenu(false)}
-            title="گزینه‌های پروفایل"
-          >
-            <div className="space-y-1 p-2 pb-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowOwnerMenu(false);
-                  openEdit();
-                }}
-                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-right wibe-small font-medium text-foreground transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
-              >
-                <Edit2 className="h-4 w-4 shrink-0 text-wibe-secondary" />
-                ویرایش پروفایل
-              </button>
-              <button
-                type="button"
-                onClick={requestLogout}
-                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-right wibe-small font-medium text-red-600 transition-colors hover:bg-red-50 active:bg-red-50"
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                خروج از حساب
-              </button>
-            </div>
-          </BottomSheet>
-
           <BottomSheet
             isOpen={showLogoutConfirm}
             onClose={() => !isLoggingOut && setShowLogoutConfirm(false)}

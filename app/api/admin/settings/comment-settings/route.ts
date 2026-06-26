@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { resolveCommentAiProvider } from '@/lib/comment-ai-provider';
 import {
   invalidatePenaltyThresholdsCache,
   DEFAULT_PENALTY_THRESHOLDS,
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
             penaltyRestrictThreshold: DEFAULT_PENALTY_THRESHOLDS.restrict,
             penaltyBanThreshold: DEFAULT_PENALTY_THRESHOLDS.ban,
             penaltyRestrictDays: DEFAULT_PENALTY_THRESHOLDS.restrictDays,
+            commentAiProvider: 'openai',
           },
         });
       }
@@ -119,6 +121,7 @@ export async function PUT(request: NextRequest) {
       penaltyRestrictThreshold,
       penaltyBanThreshold,
       penaltyRestrictDays,
+      commentAiProvider,
     } = body;
 
     const penaltyError = validatePenaltyThresholds(body);
@@ -165,6 +168,9 @@ export async function PUT(request: NextRequest) {
       ...(penaltyRestrictThreshold !== undefined && { penaltyRestrictThreshold }),
       ...(penaltyBanThreshold !== undefined && { penaltyBanThreshold }),
       ...(penaltyRestrictDays !== undefined && { penaltyRestrictDays }),
+      ...(commentAiProvider !== undefined && {
+        commentAiProvider: resolveCommentAiProvider(commentAiProvider),
+      }),
     };
 
     // Update or create settings (singleton)
@@ -189,6 +195,7 @@ export async function PUT(request: NextRequest) {
             penaltyBanThreshold ?? DEFAULT_PENALTY_THRESHOLDS.ban,
           penaltyRestrictDays:
             penaltyRestrictDays ?? DEFAULT_PENALTY_THRESHOLDS.restrictDays,
+          commentAiProvider: resolveCommentAiProvider(commentAiProvider),
         },
       });
     });

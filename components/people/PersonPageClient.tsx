@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
@@ -17,10 +19,19 @@ function displayRating(rating: number | null): string | null {
 
 export default function PersonPageClient({
   role,
+  slug,
   displayName,
+  bio,
+  bioIsStub,
+  imageUrl,
+  externalUrl,
   items,
 }: PersonPageClientProps) {
   const roleMeta = PERSON_ROLE_META[role];
+  const [bioExpanded, setBioExpanded] = useState(false);
+  const canTruncateBio = !bioIsStub && (bio?.length ?? 0) > 220;
+  const shownBio =
+    canTruncateBio && !bioExpanded ? `${bio!.slice(0, 220).trim()}…` : bio;
 
   const breadcrumbItems = [
     { label: 'خانه', href: '/' },
@@ -34,21 +45,64 @@ export default function PersonPageClient({
       <PageBreadcrumb className="mb-4" items={breadcrumbItems} />
 
       <section className="mb-6 rounded-2xl border border-wibe bg-wibe-card p-5 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div
-            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 text-4xl ring-1 ring-primary/10"
-            aria-hidden
-          >
-            {roleMeta.icon}
+        <div className="flex items-start gap-4">
+          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10">
+            {imageUrl ? (
+              <ImageWithFallback
+                src={imageUrl}
+                alt={displayName}
+                className="h-full w-full object-cover"
+                fallbackIcon={roleMeta.icon}
+                fallbackClassName="flex h-full w-full items-center justify-center text-4xl"
+              />
+            ) : (
+              <div
+                className="flex h-full w-full items-center justify-center text-4xl"
+                aria-hidden
+              >
+                {roleMeta.icon}
+              </div>
+            )}
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 text-right">
             <p className="wibe-caption font-medium text-wibe-secondary">{roleMeta.label}</p>
             <h1 className="mt-1 wibe-h2 font-bold text-foreground">{displayName}</h1>
             <p className="mt-1 wibe-caption text-wibe-secondary">
               {items.length.toLocaleString('fa-IR')} آیتم در وایب
             </p>
+            {externalUrl && (
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex wibe-caption font-medium text-primary hover:underline"
+              >
+                منبع خارجی
+              </a>
+            )}
           </div>
         </div>
+
+        {bio && (
+          <div className="mt-4 border-t border-wibe/60 pt-4">
+            <p
+              className={`text-right text-[0.9375rem] leading-[1.75] whitespace-pre-line ${
+                bioIsStub ? 'text-wibe-secondary' : 'text-foreground/85'
+              }`}
+            >
+              {shownBio}
+            </p>
+            {canTruncateBio && (
+              <button
+                type="button"
+                onClick={() => setBioExpanded((v) => !v)}
+                className="mt-2 text-sm font-medium text-primary"
+              >
+                {bioExpanded ? 'کمتر' : 'بیشتر'}
+              </button>
+            )}
+          </div>
+        )}
       </section>
 
       {items.length === 0 ? (
@@ -57,7 +111,7 @@ export default function PersonPageClient({
         </div>
       ) : (
         <section aria-label={`آیتم‌های ${displayName}`}>
-          <h2 className="mb-3 wibe-body font-semibold text-foreground">آیتم‌ها</h2>
+          <h2 className="mb-3 wibe-body font-semibold text-foreground">آیتم‌ها در وایب</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {items.map((item) => {
               const ratingLabel = displayRating(item.rating);

@@ -6,8 +6,8 @@ import { useSiteBranding } from '@/contexts/SiteBrandingContext';
 
 type SiteLogoProps = {
   href?: string;
-  /** header = موبایل | nav = دسکتاپ | admin = سایدبار ادمین */
-  variant?: 'header' | 'nav' | 'admin' | 'adminCompact';
+  /** header = موبایل | nav = دسکتاپ | admin = سایدبار ادمین | auth = صفحه ورود */
+  variant?: 'header' | 'nav' | 'admin' | 'adminCompact' | 'auth';
   className?: string;
   showFallbackText?: boolean;
   fallbackText?: string;
@@ -20,6 +20,7 @@ const VARIANT_CLASS: Record<NonNullable<SiteLogoProps['variant']>, string> = {
   nav: 'h-9 max-w-[140px]',
   admin: 'h-8 max-w-[128px]',
   adminCompact: 'h-8 w-8',
+  auth: 'h-12 max-w-[180px]',
 };
 
 export default function SiteLogo({
@@ -43,12 +44,18 @@ export default function SiteLogo({
       height={120}
       unoptimized
       className={`object-contain object-right ${isCompact ? 'h-8 w-8' : `${sizeClass} w-auto`}`}
-      priority={variant === 'nav' || variant === 'header'}
+      priority={variant === 'nav' || variant === 'header' || variant === 'auth'}
     />
   ) : showFallbackText ? (
     <span
-      className={`font-bold text-primary leading-none ${
-        variant === 'header' ? 'text-xl' : variant === 'admin' ? 'text-sm' : 'text-lg'
+      className={`font-bold leading-none ${
+        variant === 'auth'
+          ? 'text-[2rem] text-white'
+          : variant === 'header'
+            ? 'text-xl text-primary'
+            : variant === 'admin'
+              ? 'text-sm text-primary'
+              : 'text-lg text-primary'
       }`}
     >
       {fallbackText}

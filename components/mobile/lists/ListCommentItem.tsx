@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Heart, Flag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
-import Image from 'next/image';
+import CommentAvatar from '@/components/shared/CommentAvatar';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 
 interface ListCommentItemProps {
@@ -47,23 +47,12 @@ export default function ListCommentItem({
     <div className="flex gap-3 p-4 bg-white rounded-xl border border-gray-100">
       {/* Avatar */}
       <div className="flex-shrink-0">
-        {comment.users.image ? (
-          <div className="relative w-10 h-10 rounded-full overflow-hidden">
-            <Image
-              src={comment.users.image}
-              alt={comment.users.name || comment.users.email}
-              fill
-              className="object-cover"
-              unoptimized={true}
-            />
-          </div>
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-medium text-sm">
-              {(comment.users.name || comment.users.email).charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
+        <CommentAvatar
+          src={comment.users.image}
+          name={comment.users.name}
+          email={comment.users.email}
+          size={40}
+        />
       </div>
 
       {/* Content */}

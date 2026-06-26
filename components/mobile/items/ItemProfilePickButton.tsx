@@ -82,7 +82,7 @@ export default function ItemProfilePickButton({
           setToast({ message: json.error || 'خطا', type: 'error' });
           return;
         }
-        setToast({ message: 'از منتخب‌ها حذف شد', type: 'success' });
+        setToast({ message: 'از لیست بهترین‌های شما حذف شد', type: 'success' });
       } else {
         const cid = pickState?.catalogItemId ?? catalogItemIdProp;
         if (!cid) return;
@@ -96,7 +96,7 @@ export default function ItemProfilePickButton({
           setToast({ message: json.error || 'خطا', type: 'error' });
           return;
         }
-        setToast({ message: 'به منتخب‌های پروفایل اضافه شد', type: 'success' });
+        setToast({ message: 'به لیست بهترین‌های شما در پروفایل اضافه شد', type: 'success' });
       }
       dispatchProfilePicksUpdated();
       invalidateItemViewerState(queryClient, itemId);

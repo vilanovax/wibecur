@@ -105,12 +105,6 @@ export default function ItemDetailClient({
             {item.lists.title}
           </p>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-wibe-secondary">
-            {item.listRank != null && item.listItemCount > 0 && (
-              <span className="font-semibold text-primary">
-                #{item.listRank.toLocaleString('fa-IR')} از{' '}
-                {item.listItemCount.toLocaleString('fa-IR')}
-              </span>
-            )}
             <span>{item.lists.saveCount.toLocaleString('fa-IR')} ذخیره</span>
           </p>
         </div>

@@ -6,6 +6,7 @@ import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc } from '@/lib/liara-image-url';
 import { directStorageFallbackSrc } from '@/lib/resilient-image';
 import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 import {
   isAllowedExternalImageUrl,
   isAllowedItemImageUrl,
@@ -220,10 +221,9 @@ export default function ItemCoverImage({
 
   // مسیر بهینه‌شده (next/image) — فقط با opt-in از طریق prop `sizes`.
   // proxy داخلی را به URL اصلی باز می‌کنیم تا next آن را بهینه کند.
-  const unwrapped = sizes ? normalizeImageUrlForStorage(directStorageSrc ?? displaySrc) : '';
-  const nextSrc =
-    unwrapped && /^https?:\/\//.test(unwrapped) ? unwrapped : displaySrc;
-  const unoptimized = nextSrc.startsWith('/') && nextSrc.includes('?');
+  const { src: nextSrc, unoptimized } = sizes
+    ? resolveNextImageSrc(directStorageSrc ?? displaySrc)
+    : { src: displaySrc, unoptimized: false };
 
   return (
     <div className={`relative h-full w-full overflow-hidden ${className}`}>

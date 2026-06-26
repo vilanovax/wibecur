@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Heart, Bookmark } from 'lucide-react';
 import ItemMetadataFacts from '@/components/shared/ItemMetadataFacts';
 import ItemTipCard from '@/components/shared/ItemTipCard';
@@ -48,35 +47,25 @@ export default function ItemMetadataServer({ item }: ItemMetadataServerProps) {
       });
   const itemTip = extractItemTip(item.metadata);
   const tipAsFact = parseTipAsMetadataFact(itemTip);
-  const displayMetadataFacts = tipAsFact
+  const displayMetadataFacts = (tipAsFact
     ? baseMetadataFacts.some((f) => f.key === 'translator')
       ? baseMetadataFacts
       : [...baseMetadataFacts, tipAsFact]
-    : baseMetadataFacts;
+    : baseMetadataFacts
+  ).filter((f) => f.key !== 'imdbRating');
+
   const displayTip = tipAsFact ? null : itemTip;
   const listNote = item.listNote?.trim() || null;
   const bodyText = isLightweight
     ? buildLightweightDisplayBody(item, { lifestyleMode: isLifestyle }) || null
     : item.description?.trim() || null;
 
-  const hasSocialProof =
-    (item.listRank != null && item.listItemCount > 0) ||
-    likeCount > 0 ||
-    item.personalSaveCount > 0;
+  const hasSocialProof = likeCount > 0 || item.personalSaveCount > 0;
 
   return (
     <section className="space-y-4 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
       {hasSocialProof && (
         <div className="flex flex-wrap justify-start gap-1.5 lg:hidden">
-          {item.listRank != null && item.listItemCount > 0 && (
-            <Link
-              href={`/lists/${item.lists.slug}`}
-              className="inline-flex max-w-full items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/15"
-            >
-              #{item.listRank.toLocaleString('fa-IR')} از{' '}
-              {item.listItemCount.toLocaleString('fa-IR')}
-            </Link>
-          )}
           {likeCount > 0 && (
             <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
               <Heart className="h-3.5 w-3.5 text-red-500" aria-hidden />

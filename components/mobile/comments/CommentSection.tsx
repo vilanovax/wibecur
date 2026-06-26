@@ -308,11 +308,9 @@ export default function CommentSection({
         embeddedInPanel ? 'mt-0 border-t-0 pt-0' : 'mt-2 border-t border-wibe pt-5'
       }`}
     >
-      <h2 className="wibe-h3 text-foreground mb-0.5">نظرات</h2>
-      <p className="wibe-caption text-wibe-secondary mb-3">
-        {comments.length.toLocaleString('fa-IR')} نظر
-        {!commentsEnabled && ' · نظرها غیرفعال است'}
-      </p>
+      {!commentsEnabled && (
+        <p className="wibe-caption text-wibe-secondary mb-3">نظرها غیرفعال است</p>
+      )}
 
       <div className="space-y-3">
         {commentsEnabled && status === 'authenticated' && (
@@ -326,9 +324,8 @@ export default function CommentSection({
         )}
 
         {!isLoading && comments.length > 0 && (
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex gap-2 mb-4">
-              <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
+          <div className="flex gap-2 pb-1">
+            <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
               <button
                 type="button"
                 onClick={() => setSortBy('popular')}
@@ -348,7 +345,6 @@ export default function CommentSection({
                 جدیدترین
               </button>
             </div>
-          </div>
         )}
 
         <div className={hasComments ? 'mt-2' : 'mt-1'}>

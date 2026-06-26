@@ -12,6 +12,7 @@ import {
   buildItemMetadataChips,
   buildLightweightDisplayBody,
   extractItemTip,
+  resolveImdbRatingDisplay,
   shouldShowSeparateTipCard,
 } from '@/lib/item-metadata-display';
 import ItemTipCard from '@/components/shared/ItemTipCard';
@@ -193,7 +194,7 @@ function PreviewActions({
         layout === 'inline' ? 'flex-1' : 'w-full'
       }`}
     >
-      مشاهده صفحه کامل
+      مشاهده
     </Link>
   );
 
@@ -208,7 +209,7 @@ function PreviewActions({
         }`}
       >
         <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
-        باز کردن لینک
+        منبع
       </a>
     ) : null;
 
@@ -304,12 +305,7 @@ export default function ItemPreviewSheet({
     isLightweight &&
     !isLifestyle &&
     shouldShowSeparateTipCard(item, { lifestyleMode: false });
-  const imdbRating =
-    meta.imdbRating != null && String(meta.imdbRating).trim()
-      ? String(meta.imdbRating)
-      : item.rating != null && Number(item.rating) > 0
-        ? String(item.rating)
-        : null;
+  const imdbRating = resolveImdbRatingDisplay(item.metadata, item.rating);
 
   const factTypeRaw = meta.factType;
   const factLabel =
@@ -377,7 +373,7 @@ export default function ItemPreviewSheet({
                 <ItemTipCard tip={listNote} className="text-right" />
               )}
               {showSeparateTip && itemTip && (
-                <ItemTipCard tip={itemTip} className="text-right" />
+                <ItemTipCard tip={itemTip} variant="highlight" className="text-right" />
               )}
 
               <div className="max-lg:hidden">
@@ -402,9 +398,9 @@ export default function ItemPreviewSheet({
                   </div>
                 </div>
                 {imdbRating && (
-                  <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-lg bg-black/70 px-2 py-1 wibe-caption font-bold text-white backdrop-blur-sm">
-                    <Star className="h-3 w-3 fill-warning text-warning" aria-hidden />
-                    {imdbRating}
+                  <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-lg bg-black/75 px-2 py-1 wibe-caption font-bold backdrop-blur-sm">
+                    <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
+                    <span className="text-amber-400 tabular-nums">{imdbRating}</span>
                   </span>
                 )}
               </div>
@@ -424,7 +420,7 @@ export default function ItemPreviewSheet({
                   </div>
                 )}
 
-                {itemTip && <ItemTipCard tip={itemTip} className="text-right" />}
+                {itemTip && <ItemTipCard tip={itemTip} variant="highlight" className="text-right" />}
                 {listNote && <ItemTipCard tip={listNote} className="text-right" />}
 
                 {desc ? (

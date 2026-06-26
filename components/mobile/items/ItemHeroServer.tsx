@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { List } from 'lucide-react';
+import { List, Star } from 'lucide-react';
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
 import ItemShareButton from '@/components/mobile/items/ItemShareButton';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
@@ -15,6 +15,7 @@ import {
   sourceCategorySlugFromItem,
   type FactType,
 } from '@/lib/list-entry';
+import { resolveImdbRatingDisplay } from '@/lib/item-metadata-display';
 
 export type ItemHeroServerItem = {
   id: string;
@@ -38,11 +39,6 @@ export type ItemHeroServerItem = {
   };
 };
 
-function displayRating(rating: number | null | undefined): string | null {
-  if (rating == null || Number(rating) === 0) return null;
-  return String(rating);
-}
-
 type ItemHeroServerProps = {
   item: ItemHeroServerItem;
 };
@@ -61,9 +57,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
   const meta = (item.metadata || {}) as Record<string, string | number>;
   const year = meta.year ?? null;
   const categoryName = item.lists.categories?.name ?? null;
-  const ratingLabel = displayRating(
-    item.rating ?? (meta.imdbRating as number | undefined) ?? null
-  );
+  const imdbRating = resolveImdbRatingDisplay(item.metadata, item.rating);
   const genre = meta.genre ?? categoryName;
   const likeCount = item.voteCount ?? 0;
   const factTypeRaw = item.metadata?.factType;
@@ -165,6 +159,12 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
             title={item.title}
             className="absolute end-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/55 active:scale-95 lg:end-2.5 lg:top-2.5 lg:h-9 lg:w-9"
           />
+          {imdbRating && (
+            <span className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1 rounded-lg bg-black/75 px-2 py-1 wibe-caption font-bold backdrop-blur-sm">
+              <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
+              <span className="text-amber-400 tabular-nums">{imdbRating}</span>
+            </span>
+          )}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-end lg:justify-center lg:py-1">
@@ -186,21 +186,6 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               <>
                 {(genre || categoryName) && <span className="text-wibe-secondary/40">·</span>}
                 <span>{String(year)}</span>
-              </>
-            )}
-            {ratingLabel && (
-              <>
-                <span className="text-wibe-secondary/40">·</span>
-                <span>⭐ {ratingLabel}</span>
-              </>
-            )}
-            {item.listRank != null && item.listItemCount > 0 && (
-              <>
-                <span className="text-wibe-secondary/40">·</span>
-                <span>
-                  #{item.listRank.toLocaleString('fa-IR')} از{' '}
-                  {item.listItemCount.toLocaleString('fa-IR')}
-                </span>
               </>
             )}
           </div>

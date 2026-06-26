@@ -53,3 +53,11 @@ describe('people helpers', () => {
     );
   });
 });
+
+describe('person bio stub', () => {
+  it('builds fa-IR stub text', async () => {
+    const { buildPersonBioStub } = await import('@/lib/people');
+    expect(buildPersonBioStub('director', 12, 'کارگردان')).toContain('۱۲');
+    expect(buildPersonBioStub('director', 12, 'کارگردان')).toContain('کارگردان');
+  });
+});

@@ -234,6 +234,23 @@ model profile_picks {
   @@index([userId, categorySlug, sortOrder])
 }
 
+model person_profiles {
+  id          String   @id @default(cuid())
+  role        String
+  slug        String
+  displayName String
+  bio         String?
+  imageUrl    String?
+  tmdbId      Int?
+  externalUrl String?
+  status      String   @default("published")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([role, slug])
+  @@index([role, slug])
+}
+
 model items {
   id              String           @id
   title           String
@@ -396,6 +413,8 @@ model settings {
   id                             String   @id @default("settings")
   openaiApiKey                   String?
   openaiModel                    String?  @default("gpt-4o-mini")
+  deepseekApiKey                 String?
+  deepseekModel                  String?  @default("deepseek-chat")
   tmdbApiKey                     String?
   liaraBucketName                String?
   liaraEndpoint                  String?
@@ -788,6 +807,7 @@ model comment_settings {
   penaltyRestrictThreshold Int      @default(10)
   penaltyBanThreshold      Int      @default(15)
   penaltyRestrictDays      Int      @default(7)
+  commentAiProvider        String   @default("openai") // openai | deepseek
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }

@@ -310,8 +310,8 @@ export default function SearchOverlay({
     const showLists = searchViewTab === 'lists';
     if (showItems) {
       if (isBroad) {
-        for (const item of topPicks) rows.push({ kind: 'item', item });
         for (const item of directItems) rows.push({ kind: 'item', item });
+        for (const item of topPicks) rows.push({ kind: 'item', item });
       } else {
         for (const item of directItems) rows.push({ kind: 'item', item });
         for (const item of indirectItems) rows.push({ kind: 'item', item });
@@ -825,57 +825,19 @@ export default function SearchOverlay({
               </section>
             )}
 
-            {showItemResults && isBroad && topPicks.length > 0 && (
-              <section>
-                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
-                  پیشنهادهای برتر
-                </h3>
-                <div className="space-y-2">
-                  {topPicks.map((item, index) => {
-                    const navIndex = directLists.length + indirectLists.length + index;
-                    return (
-                      <SearchItemRow
-                        key={item.id}
-                        item={item}
-                        highlightQuery={normalized}
-                        isActive={activeIndex === navIndex}
-                        innerRef={(el) => {
-                          resultRefs.current[navIndex] = el;
-                        }}
-                        onClick={() => {
-                          pushRecentSearch(normalized);
-                          trackSearchResultClick({
-                            query: normalized,
-                            source: 'overlay_result',
-                            result_type: 'item',
-                            result_slug: item.id,
-                            category_slug: item.categorySlug ?? undefined,
-                            position: navIndex + 1,
-                          });
-                          onClose();
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
             {showItemResults && directItems.length > 0 && (
               <section>
-                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
-                  نتایج مستقیم
-                </h3>
                 <div className="space-y-2">
                   {directItems.map((item, index) => {
                     const navIndex = isBroad
-                      ? directLists.length + indirectLists.length + topPicks.length + index
+                      ? directLists.length + indirectLists.length + index
                       : index;
                     return (
                     <SearchItemRow
                       key={item.id}
                       item={item}
                       highlightQuery={normalized}
+                      variant="direct"
                       isActive={activeIndex === navIndex}
                       innerRef={(el) => {
                         resultRefs.current[navIndex] = el;
@@ -893,6 +855,44 @@ export default function SearchOverlay({
                         onClose();
                       }}
                     />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {showItemResults && isBroad && topPicks.length > 0 && (
+              <section>
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                  پیشنهادهای برتر
+                </h3>
+                <div className="space-y-2">
+                  {topPicks.map((item, index) => {
+                    const navIndex =
+                      directLists.length + indirectLists.length + directItems.length + index;
+                    return (
+                      <SearchItemRow
+                        key={item.id}
+                        item={item}
+                        highlightQuery={normalized}
+                        variant="suggestion"
+                        isActive={activeIndex === navIndex}
+                        innerRef={(el) => {
+                          resultRefs.current[navIndex] = el;
+                        }}
+                        onClick={() => {
+                          pushRecentSearch(normalized);
+                          trackSearchResultClick({
+                            query: normalized,
+                            source: 'overlay_result',
+                            result_type: 'item',
+                            result_slug: item.id,
+                            category_slug: item.categorySlug ?? undefined,
+                            position: navIndex + 1,
+                          });
+                          onClose();
+                        }}
+                      />
                     );
                   })}
                 </div>

@@ -35,6 +35,20 @@ export const draftUpdateSchema = z.object({
   tone: z.enum(['positive', 'negative', 'neutral', 'question']).optional(),
 });
 
+export const draftRegenerateSchema = z.object({
+  tone: z.enum(['positive', 'negative', 'neutral', 'question']).optional(),
+  wordCountMin: z.number().int().min(20).max(300).optional(),
+  wordCountMax: z.number().int().min(20).max(400).optional(),
+  personaId: z.string().optional(),
+  scheduledAt: z.string().datetime().optional(),
+  reschedule: z.boolean().optional(),
+});
+
+export const draftBulkSchema = z.object({
+  action: z.enum(['delete', 'approve', 'reject']),
+  draftIds: z.array(z.string().min(1)).min(1),
+});
+
 export const ruleUpsertSchema = z.object({
   scopeType: z.enum(['category', 'list', 'item']),
   scopeId: z.string().min(1),

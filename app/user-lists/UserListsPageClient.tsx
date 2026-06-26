@@ -7,6 +7,7 @@ import { lists, categories } from '@prisma/client';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import FloatingActionButton from '@/components/mobile/lists/FloatingActionButton';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
+import UserAvatar from '@/components/shared/UserAvatar';
 
 type ListWithRelations = Omit<lists, 'createdAt' | 'updatedAt'> & {
   createdAt: string | Date;
@@ -431,19 +432,12 @@ export default function UserListsPageClient({
 
                   {/* Creator Info */}
                   <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                    {list.users.image ? (
-                      <img
-                        src={list.users.image}
-                        alt={list.users.name || list.users.email}
-                        className="w-6 h-6 rounded-full"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                        <span className="text-xs text-primary font-bold">
-                          {(list.users.name || list.users.email)[0].toUpperCase()}
-                        </span>
-                      </div>
-                    )}
+                    <UserAvatar
+                      src={list.users.image}
+                      name={list.users.name}
+                      email={list.users.email}
+                      size={24}
+                    />
                     <span className="text-xs text-gray-600">
                       {list.users.name || list.users.email.split('@')[0]}
                     </span>

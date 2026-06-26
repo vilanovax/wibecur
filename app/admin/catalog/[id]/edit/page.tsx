@@ -38,6 +38,7 @@ export default async function CatalogEditPage({
         categorySlug: detail.categorySlug,
         metadata: detail.metadata,
         listCount: detail.listCount,
+        isDisabled: detail.isDisabled,
       }}
     />
   );

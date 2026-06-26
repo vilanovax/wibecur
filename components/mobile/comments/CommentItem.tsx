@@ -6,7 +6,6 @@ import { ThumbsUp, ThumbsDown, Flag, Trash2, MoreVertical } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import CommentAvatar from '@/components/shared/CommentAvatar';
-import CuratorBadge from '@/components/shared/CuratorBadge';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { COMMENT_CLAMP_CHAR_THRESHOLD } from '@/lib/comment-limits';
 
@@ -156,9 +155,6 @@ export default function CommentItem({
             <span className="text-xs text-gray-400">
               {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
             </span>
-            {comment.user.curatorLevel && (
-              <CuratorBadge level={comment.user.curatorLevel} size="small" glow={false} />
-            )}
           </div>
           <CommentMoreMenu
             onReport={() => onReport(comment.id)}

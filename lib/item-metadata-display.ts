@@ -176,6 +176,21 @@ function formatImdbRating(value: unknown): string | null {
   return n.toLocaleString('fa-IR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
+/** امتیاز IMDb برای badge روی پوستر — metadata اول، سپس item.rating */
+export function resolveImdbRatingDisplay(
+  metadata: Record<string, unknown> | null | undefined,
+  itemRating?: number | null
+): string | null {
+  const meta = metadata ?? {};
+  if (meta.imdbRating != null && String(meta.imdbRating).trim()) {
+    return formatImdbRating(meta.imdbRating);
+  }
+  if (itemRating != null && Number(itemRating) > 0) {
+    return formatImdbRating(itemRating);
+  }
+  return null;
+}
+
 function formatFactValue(key: string, value: unknown): string | null {
   if (value == null || value === '') return null;
   if (key === 'imdbRating') return formatImdbRating(value);

@@ -21,6 +21,7 @@ import {
   Megaphone,
   Trash2,
   Shield,
+  UserRound,
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
@@ -44,8 +45,9 @@ const PRIMARY: NavItem[] = [
     label: 'لیست‌ها',
     icon: List,
     permission: 'manage_lists',
-    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items'],
+    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items', '/admin/people'],
   },
+  { href: '/admin/people', label: 'اشخاص', icon: UserRound, permission: 'manage_lists' },
   { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
   { href: '/admin/admins', label: 'ادمین‌ها', icon: Shield, permission: 'manage_roles' },
 ];

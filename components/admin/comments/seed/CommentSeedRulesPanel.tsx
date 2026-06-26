@@ -1,6 +1,7 @@
 'use client';
 
 import { EyeOff, Info, Shield, ToggleLeft, ToggleRight } from 'lucide-react';
+import CommentSeedTargetPicker from './CommentSeedTargetPicker';
 
 export type SeedRuleRow = {
   id: string;
@@ -13,12 +14,6 @@ const SCOPE_LABELS: Record<string, string> = {
   item: 'آیتم',
   list: 'لیست',
   category: 'دسته',
-};
-
-const SCOPE_HINTS: Record<string, string> = {
-  item: 'شناسه آیتم — کامنت‌های seed این آیتم',
-  list: 'شناسه لیست — همه آیتم‌های لیست',
-  category: 'شناسه دسته — همه آیتم‌های فعال دسته',
 };
 
 interface CommentSeedRulesPanelProps {
@@ -46,9 +41,6 @@ export default function CommentSeedRulesPanel({
   onSave,
   onToggle,
 }: CommentSeedRulesPanelProps) {
-  const inputClass =
-    'w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
-
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -83,7 +75,10 @@ export default function CommentSeedRulesPanel({
                 <button
                   key={t}
                   type="button"
-                  onClick={() => onScopeTypeChange(t)}
+                  onClick={() => {
+                    onScopeTypeChange(t);
+                    onScopeIdChange('');
+                  }}
                   className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                     scopeType === t
                       ? 'bg-primary text-white shadow-sm'
@@ -96,18 +91,18 @@ export default function CommentSeedRulesPanel({
             </div>
           </div>
 
-          <label className="block text-sm font-medium">
-            شناسه
-            <input
-              value={scopeId}
-              onChange={(e) => onScopeIdChange(e.target.value)}
-              placeholder="مثال: clx..."
-              className={`${inputClass} mt-1.5 font-mono text-xs`}
-            />
-            <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
-              {SCOPE_HINTS[scopeType]}
-            </span>
-          </label>
+          <div>
+            <span className="text-sm font-medium">محدوده</span>
+            <div className="mt-2">
+              <CommentSeedTargetPicker
+                targetType={scopeType}
+                selectedIds={scopeId ? [scopeId] : []}
+                onChange={(ids) => onScopeIdChange(ids[0] ?? '')}
+                multiple={false}
+                disabled={loading}
+              />
+            </div>
+          </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
             <label className="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm">

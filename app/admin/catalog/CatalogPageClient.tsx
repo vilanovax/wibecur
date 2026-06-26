@@ -29,6 +29,7 @@ import CatalogPlacementPanel from '@/components/admin/catalog/CatalogPlacementPa
 import CatalogBulkToolbar from '@/components/admin/catalog/CatalogBulkToolbar';
 import CatalogDuplicateMergeTab from '@/components/admin/catalog/CatalogDuplicateMergeTab';
 import CatalogSimilarMergePanel from '@/components/admin/catalog/CatalogSimilarMergePanel';
+import CatalogVisibilityControl from '@/components/admin/catalog/CatalogVisibilityControl';
 import ExternalImageItemsModal from '@/components/admin/items/ExternalImageItemsModal';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import {
@@ -127,6 +128,7 @@ export default function CatalogPageClient({
     title: string;
     categorySlug: string | null;
     placements: { itemId: string; listId: string; listTitle: string; listSlug: string }[];
+    isDisabled: boolean;
   } | null>(null);
   const [externalImagesOpen, setExternalImagesOpen] = useState(false);
   const [wrappingProxy, setWrappingProxy] = useState(false);
@@ -310,6 +312,15 @@ export default function CatalogPageClient({
     if (t === 'duplicates') void loadDuplicates();
   };
 
+  const markCatalogDisabled = useCallback((catalogId: string, disabled: boolean) => {
+    setRows((prev) =>
+      prev.map((row) => (row.id === catalogId ? { ...row, isDisabled: disabled } : row))
+    );
+    setDetail((prev) =>
+      prev && selectedDetail === catalogId ? { ...prev, isDisabled: disabled } : prev
+    );
+  }, [selectedDetail]);
+
   const openDetail = async (catalogId: string) => {
     setSelectedDetail(catalogId);
     setDetail(null);
@@ -327,6 +338,7 @@ export default function CatalogPageClient({
         title: data.title,
         categorySlug: data.categorySlug ?? null,
         placements: data.placements ?? [],
+        isDisabled: Boolean(data.isDisabled),
       });
 
       const similarData = await similarRes.json();
@@ -991,6 +1003,7 @@ export default function CatalogPageClient({
                     const extHint = formatExternalKeyHint(row.externalKey);
                     const isSelected = selectedIds.has(row.id);
                     const isMultiList = row.listCount > 1;
+                    const isDisabled = Boolean(row.isDisabled);
                     return (
                       <div
                         key={row.id}
@@ -999,21 +1012,32 @@ export default function CatalogPageClient({
                             ? 'border-violet-500 bg-violet-50/50 ring-2 ring-violet-200'
                             : isSelected
                               ? 'border-violet-400 bg-violet-50/40'
-                              : isMultiList
-                                ? 'border-amber-200 bg-amber-50/30 hover:border-amber-300'
-                                : 'border-gray-200 bg-white hover:border-violet-200'
+                              : isDisabled
+                                ? 'border-amber-200 bg-amber-50/40 hover:border-amber-300'
+                                : isMultiList
+                                  ? 'border-amber-200 bg-amber-50/30 hover:border-amber-300'
+                                  : 'border-gray-200 bg-white hover:border-violet-200'
                         }`}
                       >
-                        <label className="absolute top-2 left-2 z-10 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleSelect(row.id)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="rounded border-gray-300 text-violet-600 focus:ring-violet-500 w-4 h-4"
-                            aria-label={`انتخاب ${row.title}`}
+                        <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
+                          <label className="cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelect(row.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="rounded border-gray-300 text-violet-600 focus:ring-violet-500 w-4 h-4"
+                              aria-label={`انتخاب ${row.title}`}
+                            />
+                          </label>
+                          <CatalogVisibilityControl
+                            catalogId={row.id}
+                            isDisabled={isDisabled}
+                            variant="compact"
+                            onChanged={(disabled) => markCatalogDisabled(row.id, disabled)}
+                            onError={setMessage}
                           />
-                        </label>
+                        </div>
                         {placementMode && activePlacementListId && (
                           <div className="absolute bottom-2 left-2 z-10">
                             {placedCatalogIds.has(row.id) ? (
@@ -1081,6 +1105,11 @@ export default function CatalogPageClient({
                                     title="پروفایل جستجو ساخته شده"
                                   >
                                     🔍 جستجو
+                                  </span>
+                                )}
+                                {isDisabled && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                    غیرفعال
                                   </span>
                                 )}
                               </div>
@@ -1202,6 +1231,16 @@ export default function CatalogPageClient({
                     {catalogCategoryLabel(detail.categorySlug)} ·{' '}
                     {detail.placements.length.toLocaleString('fa-IR')} لیست
                   </p>
+
+                  <CatalogVisibilityControl
+                    catalogId={selectedDetail}
+                    isDisabled={detail.isDisabled}
+                    placementCount={detail.placements.length}
+                    onChanged={(disabled) => markCatalogDisabled(selectedDetail, disabled)}
+                    onError={setMessage}
+                    className="mt-4"
+                  />
+
                   <div className="flex flex-wrap gap-2 mt-4">
                     <Link
                       href={`/admin/catalog/${selectedDetail}/edit`}

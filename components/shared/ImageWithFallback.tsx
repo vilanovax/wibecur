@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { isOurStorageUrl } from '@/lib/object-storage-config';
+import { isOurStorageUrl, isLegacyLiaraStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc, getLiaraImageMode } from '@/lib/liara-image-url';
+import { resolveStorageImageDisplayUrl } from '@/lib/storage-image-url';
 import { directStorageFallbackSrc } from '@/lib/resilient-image';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import {
@@ -18,6 +19,7 @@ import {
   pickCategoryCoverGradient,
 } from '@/lib/category-cover-images';
 import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
+import { resolveNextImageSrc } from '@/lib/next-image-src';
 
 interface ImageWithFallbackProps {
   src: string;
@@ -55,7 +57,9 @@ interface ImageWithFallbackProps {
 function toDisplaySrc(resolved: string): string {
   if (!isDisplayableCoverPath(resolved)) return '';
   if (resolved.startsWith('/')) return resolved;
-  if (isOurStorageUrl(resolved)) return toLiaraImageSrc(resolved);
+  if (isOurStorageUrl(resolved) || isLegacyLiaraStorageUrl(resolved)) {
+    return resolveStorageImageDisplayUrl(resolved);
+  }
   if (isAllowedItemImageUrl(resolved)) return resolved;
   if (isAllowedExternalImageUrl(resolved)) return resolved;
   return '';
@@ -180,11 +184,11 @@ export default function ImageWithFallback({
       unwrappedFixed && /^https?:\/\//.test(unwrappedFixed)
         ? unwrappedFixed
         : (directStorageSrc ?? displaySrc);
-    const unoptimizedFixed = fixedSrc.startsWith('/') && fixedSrc.includes('?');
+    const { src: imageSrc, unoptimized: unoptimizedFixed } = resolveNextImageSrc(fixedSrc);
     return (
       <Image
-        key={fixedSrc}
-        src={fixedSrc}
+        key={imageSrc}
+        src={imageSrc}
         alt={alt}
         width={width}
         height={height}
@@ -199,14 +203,7 @@ export default function ImageWithFallback({
 
   // مسیر بهینه‌شده — فقط وقتی call-site با دادن `sizes` آن را فعال کرده باشد.
   if (sizes) {
-    // به next/image آدرس مستقیم می‌دهیم (نه proxy داخلی) تا خودش بهینه‌سازی کند:
-    // proxy داخلی `/api/liara-image?url=...` را به URL اصلی storage باز می‌کنیم؛
-    // آن URL از طریق remotePatterns بهینه‌سازی می‌شود (AVIF/WebP + srcset).
-    const unwrapped = normalizeImageUrlForStorage(directStorageSrc ?? displaySrc);
-    const nextSrc =
-      unwrapped && /^https?:\/\//.test(unwrapped) ? unwrapped : (directStorageSrc ?? displaySrc);
-    // مسیرهای local دارای query-string را بدون بهینه‌سازی سرو کن تا قانون localPatterns لازم نشود.
-    const unoptimized = nextSrc.startsWith('/') && nextSrc.includes('?');
+    const { src: nextSrc, unoptimized } = resolveNextImageSrc(directStorageSrc ?? displaySrc);
     return (
       <Image
         key={nextSrc}

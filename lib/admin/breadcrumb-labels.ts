@@ -10,6 +10,7 @@ export const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/items/new': 'موجودیت جدید',
   '/admin/items/import': 'لیست‌ها',
   '/admin/catalog': 'لیست‌ها',
+  '/admin/people': 'اشخاص',
   '/admin/catalog/edit': 'ویرایش آیتم',
   '/admin/users': 'کاربران',
   '/admin/admins': 'ادمین‌ها',

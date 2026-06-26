@@ -87,6 +87,10 @@ export const DEFAULT_PACK_AVATARS = DEFAULT_AVATARS;
 export const CURATOR_PACK_AVATARS = CURATOR_AVATARS;
 export const ELITE_PACK_AVATARS = ELITE_AVATARS;
 
+/** آواتار هدر برای کاربر مهمان (قبل از ورود / ثبت‌نام) */
+export const GUEST_HEADER_AVATAR =
+  DEFAULT_AVATARS.find((a) => a.id === 'vibe') ?? DEFAULT_AVATARS[0];
+
 export function getLevelIndex(level: CuratorLevelKey): number {
   const i = LEVEL_ORDER.indexOf(level);
   return i >= 0 ? i : 0;

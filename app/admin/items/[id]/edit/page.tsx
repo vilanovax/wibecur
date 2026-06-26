@@ -21,6 +21,7 @@ export default async function EditItemPage({ params }: EditItemPageProps) {
     where: { id },
     include: {
       lists: { include: { categories: true } },
+      item_moderation: { select: { status: true } },
       catalog_items: {
         include: {
           _count: { select: { items: true } },

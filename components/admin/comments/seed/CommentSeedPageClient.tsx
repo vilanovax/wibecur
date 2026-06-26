@@ -6,20 +6,33 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Search,
   Settings2,
   Sparkles,
   Target,
   Zap,
 } from 'lucide-react';
+import { DateObject } from 'react-multi-date-picker';
 import CommentsSubNav from '@/components/admin/comments/CommentsSubNav';
 import PageHeader from '@/components/admin/layout/PageHeader';
 import ActionButton from '@/components/admin/design-system/ActionButton';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import CommentSeedStepper, { type CommentSeedStep } from './CommentSeedStepper';
 import CommentSeedCampaignSidebar, { type CampaignListItem } from './CommentSeedCampaignSidebar';
 import CommentSeedDraftTable, { type SeedDraftRow } from './CommentSeedDraftTable';
 import CommentSeedRulesPanel, { type SeedRuleRow } from './CommentSeedRulesPanel';
 import CommentSeedStatsBar from './CommentSeedStatsBar';
+import CommentSeedTargetPicker from './CommentSeedTargetPicker';
+import PersianDateTimeField from '@/components/admin/shared/PersianDateTimeField';
+import CommentSeedRegenerateModal, {
+  type RegenerateSettings,
+} from './CommentSeedRegenerateModal';
 import { DEFAULT_TONE_MIX, type ToneMix } from '@/lib/comment-seed/types';
+import {
+  combinePersianDateAndTime,
+  isoToPersianDateObject,
+  isoToTimeString,
+} from '@/lib/utils/persian-datetime';
 
 type Campaign = CampaignListItem & {
   targetIds: string[];
@@ -56,20 +69,21 @@ const TONE_COLORS: Record<keyof ToneMix, string> = {
   question: 'bg-violet-500',
 };
 
-const TARGET_HINTS: Record<'item' | 'list' | 'category', string> = {
-  item: 'شناسه آیتم‌ها را با کاما یا خط جدید جدا کنید',
-  list: 'شناسه لیست‌ها — کامنت روی همه آیتم‌های هر لیست تولید می‌شود',
-  category: 'شناسه دسته‌ها — کامنت روی همه آیتم‌های فعال هر دسته',
+const TARGET_DESCRIPTIONS: Record<'item' | 'list' | 'category', string> = {
+  item: 'آیتم‌های انتخاب‌شده — کامنت مستقیم روی همان آیتم‌ها',
+  list: 'لیست‌های انتخاب‌شده — کامنت روی همه آیتم‌های هر لیست',
+  category: 'دسته‌های انتخاب‌شده — کامنت روی همه آیتم‌های فعال هر دسته',
 };
 
 function defaultDateRange() {
   const to = new Date();
   const from = new Date();
   from.setDate(from.getDate() - 28);
-  return {
-    from: from.toISOString().slice(0, 16),
-    to: to.toISOString().slice(0, 16),
-  };
+  return { from, to };
+}
+
+function toDateObject(d: Date) {
+  return isoToPersianDateObject(d.toISOString());
 }
 
 function toneMixTotal(mix: ToneMix) {
@@ -79,7 +93,7 @@ function toneMixTotal(mix: ToneMix) {
 type MainTab = 'campaign' | 'rules';
 
 export default function CommentSeedPageClient() {
-  const dates = useMemo(() => defaultDateRange(), []);
+  const initialRange = useMemo(() => defaultDateRange(), []);
   const [mainTab, setMainTab] = useState<MainTab>('campaign');
   const [step, setStep] = useState<CommentSeedStep>(1);
   const [isNew, setIsNew] = useState(true);
@@ -94,30 +108,30 @@ export default function CommentSeedPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [targetPreview, setTargetPreview] = useState<number | null>(null);
   const [draftFilter, setDraftFilter] = useState<string>('all');
+  const [draftSearch, setDraftSearch] = useState('');
+  const [selectedDraftIds, setSelectedDraftIds] = useState<Set<string>>(new Set());
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [bulkDeletePending, setBulkDeletePending] = useState(false);
+  const [regenerateDraft, setRegenerateDraft] = useState<SeedDraftRow | null>(null);
 
   const [title, setTitle] = useState('کمپین جدید');
   const [targetType, setTargetType] = useState<'item' | 'list' | 'category'>('item');
-  const [targetIdsRaw, setTargetIdsRaw] = useState('');
+  const [targetIds, setTargetIds] = useState<string[]>([]);
   const [commentCount, setCommentCount] = useState(10);
   const [perItemCount, setPerItemCount] = useState('');
   const [toneMix, setToneMix] = useState<ToneMix>(DEFAULT_TONE_MIX);
   const [wordCountMin, setWordCountMin] = useState(40);
   const [wordCountMax, setWordCountMax] = useState(120);
-  const [dateFrom, setDateFrom] = useState(dates.from);
-  const [dateTo, setDateTo] = useState(dates.to);
+  const [dateFromObj, setDateFromObj] = useState<DateObject | null>(() =>
+    toDateObject(initialRange.from)
+  );
+  const [dateFromTime, setDateFromTime] = useState('09:00');
+  const [dateToObj, setDateToObj] = useState<DateObject | null>(() => toDateObject(initialRange.to));
+  const [dateToTime, setDateToTime] = useState('21:00');
 
   const [ruleScopeType, setRuleScopeType] = useState<'category' | 'list' | 'item'>('item');
   const [ruleScopeId, setRuleScopeId] = useState('');
   const [ruleEnabled, setRuleEnabled] = useState(true);
-
-  const targetIds = useMemo(
-    () =>
-      targetIdsRaw
-        .split(/[\n,]+/)
-        .map((s) => s.trim())
-        .filter(Boolean),
-    [targetIdsRaw]
-  );
 
   const selectedCampaign = campaigns.find((c) => c.id === selectedId) ?? null;
   const toneTotal = toneMixTotal(toneMix);
@@ -204,19 +218,23 @@ export default function CommentSeedPageClient() {
   }, [targetType, targetIds]);
 
   function resetNewCampaign() {
+    const range = defaultDateRange();
     setIsNew(true);
     setSelectedId(null);
     setStep(1);
     setTitle('کمپین جدید');
     setTargetType('item');
-    setTargetIdsRaw('');
+    setTargetIds([]);
     setCommentCount(10);
     setPerItemCount('');
     setToneMix(DEFAULT_TONE_MIX);
     setWordCountMin(40);
     setWordCountMax(120);
-    setDateFrom(dates.from);
-    setDateTo(dates.to);
+    setDateFromObj(toDateObject(range.from));
+    setDateFromTime('09:00');
+    setDateToObj(toDateObject(range.to));
+    setDateToTime('21:00');
+    setSelectedDraftIds(new Set());
     setError(null);
   }
 
@@ -227,15 +245,20 @@ export default function CommentSeedPageClient() {
     setSelectedId(id);
     setTitle(c.title);
     setTargetType(c.targetType);
-    setTargetIdsRaw(c.targetIds.join('\n'));
+    setTargetIds(c.targetIds);
     setCommentCount(c.commentCount);
     setPerItemCount(c.perItemCount?.toString() ?? '');
     setToneMix(c.toneMix);
     setWordCountMin(c.wordCountMin);
     setWordCountMax(c.wordCountMax);
-    setDateFrom(c.dateFrom.slice(0, 16));
-    setDateTo(c.dateTo.slice(0, 16));
+    const from = new Date(c.dateFrom);
+    const to = new Date(c.dateTo);
+    setDateFromObj(toDateObject(from));
+    setDateFromTime(isoToTimeString(c.dateFrom));
+    setDateToObj(toDateObject(to));
+    setDateToTime(isoToTimeString(c.dateTo));
     setStep(3);
+    setSelectedDraftIds(new Set());
     setError(null);
   }
 
@@ -252,6 +275,13 @@ export default function CommentSeedPageClient() {
   }
 
   async function createCampaign() {
+    const dateFromIso = combinePersianDateAndTime(dateFromObj, dateFromTime);
+    const dateToIso = combinePersianDateAndTime(dateToObj, dateToTime, true);
+    if (!dateFromIso || !dateToIso) {
+      setError('تاریخ شروع و پایان را وارد کنید');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -267,8 +297,8 @@ export default function CommentSeedPageClient() {
           toneMix,
           wordCountMin,
           wordCountMax,
-          dateFrom: new Date(dateFrom).toISOString(),
-          dateTo: new Date(dateTo).toISOString(),
+          dateFrom: dateFromIso,
+          dateTo: dateToIso,
         }),
       });
       const json = await res.json();
@@ -362,8 +392,92 @@ export default function CommentSeedPageClient() {
   }
 
   async function deleteDraft(id: string) {
-    await fetch(`/api/admin/comments/seed/drafts/${id}`, { method: 'DELETE' });
-    if (selectedId) await loadDrafts(selectedId);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/comments/seed/drafts/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'خطا در حذف');
+      if (selectedId) await loadDrafts(selectedId);
+      setSelectedDraftIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setMessage('پیش‌نویس حذف شد');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'خطا');
+    } finally {
+      setLoading(false);
+      setDeleteTargetId(null);
+    }
+  }
+
+  async function bulkDraftAction(action: 'delete' | 'approve' | 'reject') {
+    if (!selectedId || selectedDraftIds.size === 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/comments/seed/campaigns/${selectedId}/drafts/bulk`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action,
+            draftIds: [...selectedDraftIds],
+          }),
+        }
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'خطا');
+      await loadDrafts(selectedId);
+      setSelectedDraftIds(new Set());
+      const labels = { delete: 'حذف', approve: 'تایید', reject: 'رد' };
+      setMessage(
+        `${json.data.affected.toLocaleString('fa-IR')} مورد ${labels[action]} شد`
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'خطا');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function regenerateDraftWithSettings(draftId: string, settings: RegenerateSettings) {
+    setLoading(true);
+    setError(null);
+    try {
+      const body: Record<string, unknown> = {
+        tone: settings.tone,
+        wordCountMin: settings.wordCountMin,
+        wordCountMax: settings.wordCountMax,
+      };
+      if (settings.personaId === 'random') {
+        body.personaId = 'random';
+      } else if (settings.personaId !== 'keep') {
+        body.personaId = settings.personaId;
+      }
+      if (settings.scheduledAt) {
+        body.scheduledAt = settings.scheduledAt;
+      } else if (settings.reschedule) {
+        body.reschedule = true;
+      }
+
+      const res = await fetch(`/api/admin/comments/seed/drafts/${draftId}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error ?? 'خطا در بازتولید');
+      setRegenerateDraft(null);
+      if (selectedId) await loadDrafts(selectedId);
+      setMessage('کامنت با موفقیت بازتولید شد');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'خطا');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function saveRule() {
@@ -550,7 +664,10 @@ export default function CommentSeedPageClient() {
                         <button
                           key={t}
                           type="button"
-                          onClick={() => setTargetType(t)}
+                          onClick={() => {
+                            setTargetType(t);
+                            setTargetIds([]);
+                          }}
                           className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                             targetType === t
                               ? 'bg-primary text-white shadow-sm'
@@ -564,19 +681,19 @@ export default function CommentSeedPageClient() {
                   </div>
                 </div>
 
-                <label className="block text-sm font-medium">
-                  شناسه‌ها
-                  <textarea
-                    value={targetIdsRaw}
-                    onChange={(e) => setTargetIdsRaw(e.target.value)}
-                    rows={3}
-                    placeholder={TARGET_HINTS[targetType]}
-                    className={`${inputClass} max-w-2xl font-mono text-xs`}
-                  />
-                  <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
-                    {TARGET_HINTS[targetType]}
-                  </span>
-                </label>
+                <div>
+                  <span className="text-sm font-medium">انتخاب هدف</span>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {TARGET_DESCRIPTIONS[targetType]}
+                  </p>
+                  <div className="mt-2">
+                    <CommentSeedTargetPicker
+                      targetType={targetType}
+                      selectedIds={targetIds}
+                      onChange={setTargetIds}
+                    />
+                  </div>
+                </div>
 
                 {targetPreview != null && targetIds.length > 0 && (
                   <div className="inline-flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5">
@@ -589,7 +706,7 @@ export default function CommentSeedPageClient() {
                       <span className="font-medium tabular-nums">
                         {targetIds.length.toLocaleString('fa-IR')}
                       </span>
-                      <span className="text-[var(--color-text-muted)]"> شناسه</span>
+                      <span className="text-[var(--color-text-muted)]"> مورد انتخاب‌شده</span>
                     </p>
                   </div>
                 )}
@@ -648,24 +765,20 @@ export default function CommentSeedPageClient() {
                       className={inputClass}
                     />
                   </label>
-                  <label className="block text-sm font-medium">
-                    از تاریخ
-                    <input
-                      type="datetime-local"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      className={inputClass}
-                    />
-                  </label>
-                  <label className="block text-sm font-medium">
-                    تا تاریخ
-                    <input
-                      type="datetime-local"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                      className={inputClass}
-                    />
-                  </label>
+                  <PersianDateTimeField
+                    label="از تاریخ"
+                    date={dateFromObj}
+                    time={dateFromTime}
+                    onDateChange={setDateFromObj}
+                    onTimeChange={setDateFromTime}
+                  />
+                  <PersianDateTimeField
+                    label="تا تاریخ"
+                    date={dateToObj}
+                    time={dateToTime}
+                    onDateChange={setDateToObj}
+                    onTimeChange={setDateToTime}
+                  />
                 </div>
 
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/30 p-4">
@@ -819,6 +932,7 @@ export default function CommentSeedPageClient() {
                     { id: 'all', label: 'همه' },
                     { id: 'draft', label: 'پیش‌نویس' },
                     { id: 'approved', label: 'تایید شده' },
+                    { id: 'rejected', label: 'رد شده' },
                     { id: 'published', label: 'منتشر شده' },
                   ].map(({ id, label }) => (
                     <button
@@ -836,13 +950,65 @@ export default function CommentSeedPageClient() {
                   ))}
                 </div>
 
+                <div className="relative">
+                  <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                  <input
+                    value={draftSearch}
+                    onChange={(e) => setDraftSearch(e.target.value)}
+                    placeholder="جستجو در متن، آیتم یا پرسونا…"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-white py-2.5 pr-10 pl-3 text-sm"
+                  />
+                </div>
+
+                {selectedDraftIds.size > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
+                    <span className="text-xs font-medium text-primary">
+                      {selectedDraftIds.size.toLocaleString('fa-IR')} انتخاب شده
+                    </span>
+                    <ActionButton
+                      variant="secondary"
+                      disabled={loading}
+                      onClick={() => void bulkDraftAction('approve')}
+                    >
+                      تایید گروهی
+                    </ActionButton>
+                    <ActionButton
+                      variant="secondary"
+                      disabled={loading}
+                      onClick={() => void bulkDraftAction('reject')}
+                    >
+                      رد گروهی
+                    </ActionButton>
+                    <ActionButton
+                      variant="secondary"
+                      disabled={loading}
+                      className="!text-rose-600"
+                      onClick={() => setBulkDeletePending(true)}
+                    >
+                      حذف گروهی
+                    </ActionButton>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDraftIds(new Set())}
+                      className="mr-auto text-xs text-[var(--color-text-muted)] hover:underline"
+                    >
+                      لغو انتخاب
+                    </button>
+                  </div>
+                )}
+
                 <CommentSeedDraftTable
                   drafts={filteredDrafts}
                   personas={personas}
                   loading={loading}
+                  selectedIds={selectedDraftIds}
+                  onSelectionChange={setSelectedDraftIds}
+                  searchQuery={draftSearch}
                   onUpdate={updateDraft}
-                  onDelete={deleteDraft}
+                  onDeleteRequest={setDeleteTargetId}
                   onApprove={(id) => updateDraft(id, { status: 'approved' })}
+                  onReject={(id) => updateDraft(id, { status: 'rejected' })}
+                  onRegenerateRequest={setRegenerateDraft}
                 />
               </div>
             )}
@@ -883,6 +1049,48 @@ export default function CommentSeedPageClient() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={bulkDeletePending}
+        title="حذف گروهی"
+        message={`آیا از حذف ${selectedDraftIds.size.toLocaleString('fa-IR')} پیش‌نویس انتخاب‌شده اطمینان دارید؟`}
+        confirmLabel="حذف همه"
+        cancelLabel="انصراف"
+        variant="danger"
+        loading={loading}
+        onConfirm={() => {
+          setBulkDeletePending(false);
+          void bulkDraftAction('delete');
+        }}
+        onCancel={() => setBulkDeletePending(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteTargetId != null}
+        title="حذف پیش‌نویس"
+        message="آیا از حذف این پیش‌نویس کامنت اطمینان دارید؟ این عمل قابل بازگشت نیست."
+        confirmLabel="حذف"
+        cancelLabel="انصراف"
+        variant="danger"
+        loading={loading}
+        onConfirm={() => {
+          if (deleteTargetId) void deleteDraft(deleteTargetId);
+        }}
+        onCancel={() => setDeleteTargetId(null)}
+      />
+
+      <CommentSeedRegenerateModal
+        draft={regenerateDraft}
+        campaignDefaults={{
+          wordCountMin,
+          wordCountMax,
+          toneMix,
+        }}
+        personas={personas}
+        loading={loading}
+        onClose={() => setRegenerateDraft(null)}
+        onConfirm={regenerateDraftWithSettings}
+      />
     </div>
   );
 }

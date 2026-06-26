@@ -16,6 +16,7 @@ export interface CommentRowData {
   isFiltered: boolean;
   isApproved: boolean;
   isSeeded?: boolean;
+  seedCampaign?: { id: string; title: string } | null;
   likeCount: number;
   createdAt: string;
   deletedAt?: string | null;
@@ -76,6 +77,7 @@ function CommentRow({
   const rowClass = [
     'border-b border-slate-100 dark:border-gray-700 transition-colors',
     isActive && 'bg-indigo-50/80 dark:bg-indigo-900/20 ring-1 ring-inset ring-indigo-200',
+    comment.isSeeded && 'bg-violet-50/50 dark:bg-violet-900/10',
     riskReported && 'border-r-4 border-r-rose-500 bg-rose-50/60 dark:bg-rose-900/20',
     riskBadWords && !riskReported && 'border-r-4 border-r-amber-500 bg-amber-50/60 dark:bg-amber-900/20',
   ]
@@ -170,8 +172,16 @@ function CommentRow({
             deletedAt={comment.deletedAt}
           />
           {comment.isSeeded && (
-            <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
-              Seed
+            <span
+              className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700"
+              title={comment.seedCampaign?.title ?? 'کامنت ساختگی'}
+            >
+              ساختگی
+            </span>
+          )}
+          {comment.isSeeded && comment.seedCampaign?.title && (
+            <span className="inline-flex max-w-[100px] truncate rounded-full bg-violet-50 px-2 py-0.5 text-[10px] text-violet-600">
+              {comment.seedCampaign.title}
             </span>
           )}
         </div>

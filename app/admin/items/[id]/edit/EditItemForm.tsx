@@ -14,6 +14,8 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowRight,
+  Eye,
+  EyeOff,
   Lock,
   Info,
   ExternalLink,
@@ -57,6 +59,8 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
   const [imageSearchModalOpen, setImageSearchModalOpen] = useState(false);
   const [mediaTab, setMediaTab] = useState<ImageUploadDisplayMode>('upload');
   const [metadataOpen, setMetadataOpen] = useState(true);
+  const [isHidden, setIsHidden] = useState(item.item_moderation?.status === 'HIDDEN');
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [entryKind, setEntryKind] = useState<EntryKind>(() =>
     resolveEntryKind({
       catalogItemId: item.catalogItemId,
@@ -263,6 +267,30 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
     }
   };
 
+  const handleToggleVisibility = async () => {
+    setTogglingVisibility(true);
+    setError('');
+
+    try {
+      const action = isHidden ? 'show' : 'hide';
+      const res = await fetch('/api/admin/items/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemIds: [item.id], action }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در تغییر وضعیت آیتم');
+      }
+      setIsHidden(!isHidden);
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'خطا در تغییر وضعیت آیتم');
+    } finally {
+      setTogglingVisibility(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -358,6 +386,45 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
             پیش‌نمایش عمومی
           </Link>
         </div>
+      </div>
+
+      <div
+        className={`mb-6 flex flex-col gap-3 rounded-2xl border px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between ${
+          isHidden
+            ? 'border-amber-200 bg-amber-50'
+            : 'border-emerald-200 bg-emerald-50'
+        }`}
+        dir="rtl"
+      >
+        <div className="flex items-start gap-3">
+          {isHidden ? (
+            <EyeOff className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+          ) : (
+            <Eye className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+          )}
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              {isHidden ? 'آیتم غیرفعال است' : 'آیتم فعال است'}
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-gray-600">
+              {isHidden
+                ? 'این آیتم در سایت عمومی نمایش داده نمی‌شود.'
+                : 'این آیتم برای کاربران در سایت قابل مشاهده است.'}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleToggleVisibility}
+          disabled={togglingVisibility}
+          className={`inline-flex shrink-0 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+            isHidden
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+              : 'bg-amber-600 text-white hover:bg-amber-700'
+          }`}
+        >
+          {togglingVisibility ? 'در حال ذخیره…' : isHidden ? 'فعال کردن آیتم' : 'غیرفعال کردن آیتم'}
+        </button>
       </div>
 
       {item.catalogItemId && item.catalog_items && (

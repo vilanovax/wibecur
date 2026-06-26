@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createAdminOpenAIChatCompletion, formatOpenAIError } from '@/lib/openai-chat';
+import { createCommentSeedChatCompletion, formatCommentAiError } from '@/lib/comment-ai-chat';
 import type { CommentSeedTone, SeedItemContext } from './types';
 
 const generatedCommentSchema = z.object({
@@ -42,7 +42,7 @@ export async function generateSeedComment(input: {
   const user = `برای این آیتم یک کامنت بنویس:\n${contextParts}`;
 
   try {
-    const completion = await createAdminOpenAIChatCompletion(
+    const completion = await createCommentSeedChatCompletion(
       [
         { role: 'system', content: system },
         { role: 'user', content: user },
@@ -57,6 +57,6 @@ export async function generateSeedComment(input: {
     );
     return parsed.content.trim();
   } catch (error) {
-    throw new Error(formatOpenAIError(error));
+    throw new Error(formatCommentAiError(error));
   }
 }

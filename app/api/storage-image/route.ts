@@ -43,13 +43,10 @@ export async function GET(request: NextRequest) {
 
   const result = await getObjectByStorageKey(key, { legacyUrl: legacySourceUrl });
   if (!result) {
-    if (isLegacyLiaraStorageUrl(legacySourceUrl)) {
-      return NextResponse.redirect(legacySourceUrl, 307);
-    }
     return NextResponse.json(
       {
-        error: 'Image not found in ParsPack',
-        hint: 'فایل ممکن است migrate نشده باشد — آواتار را دوباره آپلود کنید',
+        error: 'Image not found in storage',
+        hint: 'فایل migrate نشده یا منبع قدیمی Liara در دسترس نیست',
       },
       { status: 404 }
     );

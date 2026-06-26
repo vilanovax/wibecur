@@ -3,7 +3,6 @@ import { requirePermission } from '@/lib/auth/require-permission';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { draftUpdateSchema } from '@/lib/comment-seed/types';
-import { countWords } from '@/lib/comment-seed/distribution';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -25,7 +24,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const data: Record<string, unknown> = { updatedAt: new Date() };
   if (input.content != null) {
     data.content = input.content;
-    data.wordCount = countWords(input.content);
+    data.wordCount = input.content.length;
   }
   if (input.personaId != null) data.personaId = input.personaId;
   if (input.scheduledAt != null) data.scheduledAt = new Date(input.scheduledAt);

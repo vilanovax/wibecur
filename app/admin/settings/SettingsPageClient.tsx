@@ -26,6 +26,10 @@ import {
   type MaintenanceModeSettings,
 } from '@/lib/maintenance-mode-types';
 import { DEFAULT_OPENAI_MODEL, resolveOpenAIModel } from '@/lib/openai-models';
+import {
+  DEFAULT_DEEPSEEK_MODEL,
+  resolveDeepSeekModel,
+} from '@/lib/deepseek-models';
 
 type SectionToast = {
   section: SettingsTab;
@@ -36,6 +40,8 @@ type SectionToast = {
 const emptyIntegrationForm = () => ({
   openaiApiKey: '',
   openaiModel: DEFAULT_OPENAI_MODEL,
+  deepseekApiKey: '',
+  deepseekModel: DEFAULT_DEEPSEEK_MODEL,
   tmdbApiKey: '',
   omdbApiKey: '',
   googleApiKey: '',
@@ -54,6 +60,8 @@ export default function SettingsPageClient() {
   const [settings, setSettings] = useState<SettingsData>({
     openaiApiKey: null,
     openaiModel: DEFAULT_OPENAI_MODEL,
+    deepseekApiKey: null,
+    deepseekModel: DEFAULT_DEEPSEEK_MODEL,
     tmdbApiKey: null,
     omdbApiKey: null,
     googleApiKey: null,
@@ -95,6 +103,7 @@ export default function SettingsPageClient() {
     penaltyRestrictThreshold: 10,
     penaltyBanThreshold: 15,
     penaltyRestrictDays: 7,
+    commentAiProvider: 'openai',
   });
 
   const [loading, setLoading] = useState(true);
@@ -129,6 +138,7 @@ export default function SettingsPageClient() {
           penaltyRestrictThreshold: json.data.penaltyRestrictThreshold ?? 10,
           penaltyBanThreshold: json.data.penaltyBanThreshold ?? 15,
           penaltyRestrictDays: json.data.penaltyRestrictDays ?? 7,
+          commentAiProvider: json.data.commentAiProvider === 'deepseek' ? 'deepseek' : 'openai',
         });
       }
     } catch {
@@ -160,6 +170,7 @@ export default function SettingsPageClient() {
       setIntegrationForm({
         ...emptyIntegrationForm(),
         openaiModel: resolveOpenAIModel(data.openaiModel),
+        deepseekModel: resolveDeepSeekModel(data.deepseekModel),
         googleSearchEngineId: data.googleSearchEngineId || '',
         liaraBucketName: data.liaraBucketName || '',
         liaraEndpoint: data.liaraEndpoint || '',
@@ -196,9 +207,12 @@ export default function SettingsPageClient() {
 
       const dataToSend: Record<string, unknown> = {
         openaiModel: resolveOpenAIModel(integrationForm.openaiModel),
+        deepseekModel: resolveDeepSeekModel(integrationForm.deepseekModel),
       };
       if (integrationForm.openaiApiKey?.trim())
         dataToSend.openaiApiKey = integrationForm.openaiApiKey;
+      if (integrationForm.deepseekApiKey?.trim())
+        dataToSend.deepseekApiKey = integrationForm.deepseekApiKey;
       if (integrationForm.tmdbApiKey?.trim())
         dataToSend.tmdbApiKey = integrationForm.tmdbApiKey;
       if (integrationForm.omdbApiKey?.trim())
@@ -227,6 +241,7 @@ export default function SettingsPageClient() {
       setIntegrationForm((prev) => ({
         ...prev,
         openaiApiKey: '',
+        deepseekApiKey: '',
         tmdbApiKey: '',
         omdbApiKey: '',
         googleApiKey: '',
@@ -404,6 +419,12 @@ export default function SettingsPageClient() {
       openaiModel: resolveOpenAIModel(integrationForm.openaiModel),
     });
 
+  const testDeepSeek = () =>
+    postIntegrationTest('/api/admin/settings/test-deepseek', 'deepseek', {
+      deepseekApiKey: integrationForm.deepseekApiKey.trim() || undefined,
+      deepseekModel: resolveDeepSeekModel(integrationForm.deepseekModel),
+    });
+
   const testGoogle = () =>
     postIntegrationTest('/api/admin/settings/test-google', 'google', {
       googleApiKey: integrationForm.googleApiKey.trim() || undefined,
@@ -470,6 +491,7 @@ export default function SettingsPageClient() {
             saving={savingIntegrations}
             onSave={handleSaveIntegrations}
             onTestOpenai={testOpenAI}
+            onTestDeepseek={testDeepSeek}
             onTestTmdb={testTMDb}
             onTestOmdb={testOMDb}
             onTestGoogle={testGoogle}

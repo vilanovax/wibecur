@@ -145,23 +145,27 @@ export default function SearchResultsPanel({
         </section>
       )}
 
-      {showItems && isBroad && topPicks.length > 0 && (
+      {showItems && directItems.length > 0 && (
         <section>
-          <h2 className="mb-2 wibe-caption font-medium text-wibe-secondary">پیشنهادهای برتر</h2>
           <div className="space-y-2">
-            {topPicks.map((item) => (
-              <SearchItemRow key={item.id} item={item} highlightQuery={highlightQuery} />
+            {directItems.map((item) => (
+              <SearchItemRow key={item.id} item={item} highlightQuery={highlightQuery} variant="direct" />
             ))}
           </div>
         </section>
       )}
 
-      {showItems && directItems.length > 0 && (
+      {showItems && isBroad && topPicks.length > 0 && (
         <section>
-          <h2 className="mb-2 wibe-caption font-medium text-wibe-secondary">نتایج مستقیم</h2>
+          <h2 className="mb-2 wibe-caption font-medium text-wibe-secondary">پیشنهادهای برتر</h2>
           <div className="space-y-2">
-            {directItems.map((item) => (
-              <SearchItemRow key={item.id} item={item} highlightQuery={highlightQuery} />
+            {topPicks.map((item) => (
+              <SearchItemRow
+                key={item.id}
+                item={item}
+                highlightQuery={highlightQuery}
+                variant="suggestion"
+              />
             ))}
           </div>
         </section>

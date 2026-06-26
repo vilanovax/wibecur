@@ -12,8 +12,8 @@ export default function RegisterAvatarPicker({ value, onChange }: RegisterAvatar
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-white/80">آواتار تو</p>
-        <span className="text-xs text-white/45">یکی انتخاب کن</span>
+        <p className="text-sm font-medium text-gray-800">آواتار تو</p>
+        <span className="text-xs text-gray-400">یکی انتخاب کن</span>
       </div>
       <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory -mx-1 px-1">
         {DEFAULT_PACK_AVATARS.map((avatar) => (
@@ -46,8 +46,8 @@ function AvatarChip({
       aria-label={avatar.label}
       className={`relative flex shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl border-2 p-2.5 transition-all active:scale-95 ${
         selected
-          ? 'border-white bg-white/15 shadow-[0_0_0_2px_rgba(255,255,255,0.25)]'
-          : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10'
+          ? 'border-primary bg-primary/5 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
       }`}
     >
       <div
@@ -55,11 +55,11 @@ function AvatarChip({
       >
         {avatar.emoji}
       </div>
-      <span className="max-w-[72px] truncate text-[11px] font-medium text-white/75">
+      <span className="max-w-[72px] truncate text-[11px] font-medium text-gray-600">
         {avatar.label}
       </span>
       {selected && (
-        <span className="absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-primary shadow-md">
+        <span className="absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow-md">
           <Check className="h-3 w-3" strokeWidth={3} />
         </span>
       )}

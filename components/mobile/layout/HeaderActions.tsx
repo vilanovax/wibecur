@@ -9,7 +9,7 @@ import { ChevronDown, Loader2, LogOut, User } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
 import NotificationIcon from './NotificationIcon';
 import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
-import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { VIBE_AVATARS, GUEST_HEADER_AVATAR } from '@/lib/vibe-avatars';
 
 export type HeaderActionsProfile = {
   image: string | null;
@@ -33,17 +33,35 @@ function AccountAvatar({
   userName,
   isDark,
   showChevron,
+  isGuest = false,
 }: {
   profile: HeaderActionsProfile | null;
   userName: string;
   isDark: boolean;
   showChevron?: boolean;
+  isGuest?: boolean;
 }) {
   const showVibeAvatar = profile?.avatarType === 'DEFAULT' && profile?.avatarId;
   const vibeAvatar = showVibeAvatar ? VIBE_AVATARS.find((a) => a.id === profile!.avatarId!) : null;
   const showUploadedImage =
     profile?.avatarType === 'UPLOADED' && profile?.avatarStatus === 'APPROVED' && profile?.image;
   const headerAvatarUrl = showUploadedImage ? profile!.image! : null;
+
+  if (isGuest) {
+    return (
+      <>
+        <div
+          className={`flex h-full w-full items-center justify-center text-xl ${GUEST_HEADER_AVATAR.bgClass}`}
+          title="ورود به حساب"
+        >
+          {GUEST_HEADER_AVATAR.emoji}
+        </div>
+        {showChevron ? (
+          <ChevronDown className="absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full bg-white text-wibe-secondary ring-1 ring-wibe/80" />
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <>
@@ -190,6 +208,7 @@ export default function HeaderActions({
       : null;
 
   const showProfileControl = !isProfilePage || enableAccountMenu;
+  const isGuest = !session?.user;
 
   return (
     <div className="flex flex-shrink-0 items-center gap-2">
@@ -216,13 +235,24 @@ export default function HeaderActions({
               aria-haspopup="menu"
               onClick={() => setMenuOpen((v) => !v)}
             >
-              <AccountAvatar profile={profile} userName={userName} isDark={isDark} showChevron />
+              <AccountAvatar
+                profile={profile}
+                userName={userName}
+                isDark={isDark}
+                showChevron
+                isGuest={isGuest}
+              />
             </button>
             {accountMenu}
           </>
         ) : (
           <Link href={profileHref} className={avatarShellClass} aria-label={session?.user ? `پروفایل ${userName}` : 'ورود به حساب'}>
-            <AccountAvatar profile={profile} userName={userName} isDark={isDark} />
+            <AccountAvatar
+              profile={profile}
+              userName={userName}
+              isDark={isDark}
+              isGuest={isGuest}
+            />
           </Link>
         ))}
     </div>

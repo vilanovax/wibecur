@@ -3,10 +3,10 @@
 import { memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { Flame, Sparkles, Bookmark } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
+import UserAvatar from '@/components/shared/UserAvatar';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import SearchHighlight from '@/components/mobile/search/SearchHighlight';
@@ -75,22 +75,12 @@ function CreatorRow({ list }: { list: ListWithCreator }) {
 
   return (
     <div className="mt-1 flex min-w-0 flex-row-reverse items-center gap-1.5">
-      <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-gray-200">
-        {list.users?.image ? (
-          <Image
-            src={list.users.image}
-            alt=""
-            width={20}
-            height={20}
-            className="h-full w-full object-cover"
-            unoptimized
-          />
-        ) : (
-          <span className="flex h-full w-full items-center justify-center text-[9px] font-semibold text-wibe-secondary">
-            {creatorName.charAt(0)}
-          </span>
-        )}
-      </div>
+      <UserAvatar
+        src={list.users?.image}
+        name={creatorName}
+        size={20}
+        className="h-5 w-5 shrink-0"
+      />
       <span className="line-clamp-1 wibe-caption text-wibe-secondary/80">{creatorName}</span>
     </div>
   );

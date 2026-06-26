@@ -18,6 +18,9 @@ function cacheKey(q: CommentsIntelligenceQuery): string[] {
     q.filter,
     q.search,
     q.sort,
+    q.origin ?? 'all',
+    q.categoryId ?? '',
+    q.listId ?? '',
   ];
 }
 

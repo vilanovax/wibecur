@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/lib/auth/require-permission';
 import { getDecryptedSettings, updateSettings } from '@/lib/settings';
 import { resolveOpenAIModel } from '@/lib/openai-models';
+import { resolveDeepSeekModel } from '@/lib/deepseek-models';
 import { prisma } from '@/lib/prisma';
 import { ensureImageInLiara } from '@/lib/object-storage';
 
@@ -23,6 +24,10 @@ export async function GET(request: NextRequest) {
         ? maskApiKey(settings.openaiApiKey)
         : null,
       openaiModel: resolveOpenAIModel(rawSettings?.openaiModel),
+      deepseekApiKey: settings.deepseekApiKey
+        ? maskApiKey(settings.deepseekApiKey)
+        : null,
+      deepseekModel: resolveDeepSeekModel(rawSettings?.deepseekModel),
       tmdbApiKey: settings.tmdbApiKey ? maskApiKey(settings.tmdbApiKey) : null,
       omdbApiKey: settings.omdbApiKey ? maskApiKey(settings.omdbApiKey) : null,
       googleApiKey: settings.googleApiKey ? maskApiKey(settings.googleApiKey) : null,
@@ -61,6 +66,8 @@ export async function PUT(request: NextRequest) {
     const {
       openaiApiKey,
       openaiModel,
+      deepseekApiKey,
+      deepseekModel,
       tmdbApiKey,
       omdbApiKey,
       googleApiKey,
@@ -90,6 +97,9 @@ export async function PUT(request: NextRequest) {
     await updateSettings({
       openaiApiKey,
       openaiModel: openaiModel !== undefined ? resolveOpenAIModel(openaiModel) : undefined,
+      deepseekApiKey,
+      deepseekModel:
+        deepseekModel !== undefined ? resolveDeepSeekModel(deepseekModel) : undefined,
       tmdbApiKey,
       omdbApiKey,
       googleApiKey,

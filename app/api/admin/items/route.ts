@@ -25,8 +25,19 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const listId = searchParams.get('listId');
+    const idsParam = searchParams.get('ids');
+    const q = searchParams.get('q')?.trim();
 
-    const where = listId ? { listId } : {};
+    const where: Prisma.itemsWhereInput = { deletedAt: null };
+    if (idsParam) {
+      const ids = idsParam.split(',').map((s) => s.trim()).filter(Boolean);
+      if (ids.length > 0) where.id = { in: ids };
+    } else if (listId) {
+      where.listId = listId;
+    }
+    if (q) {
+      where.title = { contains: q, mode: 'insensitive' };
+    }
 
     const items = await prisma.items.findMany({
       where,

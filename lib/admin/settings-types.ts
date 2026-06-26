@@ -1,3 +1,5 @@
+import type { CommentAiProvider } from '@/lib/comment-ai-provider';
+
 export type SettingsTab =
   | 'integrations'
   | 'branding'
@@ -38,6 +40,8 @@ export function parseSettingsTab(
 export type SettingsData = {
   openaiApiKey: string | null;
   openaiModel: string | null;
+  deepseekApiKey: string | null;
+  deepseekModel: string | null;
   tmdbApiKey: string | null;
   omdbApiKey: string | null;
   googleApiKey: string | null;
@@ -62,6 +66,7 @@ export type CommentSettingsState = {
   penaltyRestrictThreshold: number;
   penaltyBanThreshold: number;
   penaltyRestrictDays: number;
+  commentAiProvider: CommentAiProvider;
 };
 
 export function countConfiguredIntegrations(settings: SettingsData): {
@@ -77,6 +82,7 @@ export function countConfiguredIntegrations(settings: SettingsData): {
 
   const checks = [
     !!settings.openaiApiKey,
+    !!settings.deepseekApiKey,
     !!settings.tmdbApiKey,
     !!settings.omdbApiKey,
     googleComplete,

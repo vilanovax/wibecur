@@ -6,10 +6,23 @@ import {
   distributeCommentCounts,
   pickToneFromMix,
   randomDateInRange,
-  countWords,
 } from './distribution';
 import { resolveSeedTargetItems } from './target-resolver';
-import { toneMixSchema, MAX_SEED_COMMENTS_PER_GENERATE, type ToneMix } from './types';
+import { toneMixSchema, MAX_SEED_COMMENTS_PER_GENERATE, type CommentSeedTone, type ToneMix } from './types';
+
+const draftInclude = {
+  persona: { select: { id: true, displayName: true, username: true, avatarUrl: true } },
+  items: { select: { id: true, title: true } },
+} as const;
+
+export type RegenerateDraftInput = {
+  tone?: CommentSeedTone;
+  wordCountMin?: number;
+  wordCountMax?: number;
+  personaId?: string;
+  scheduledAt?: Date;
+  reschedule?: boolean;
+};
 
 export async function pickRandomActivePersonaIds(count: number): Promise<string[]> {
   const personas = await dbQuery(() =>
@@ -97,7 +110,7 @@ export async function runCampaignGeneration(campaignId: string): Promise<{
             personaId: personaIds[i]!,
             content,
             tone: slot.tone,
-            wordCount: countWords(content),
+            wordCount: content.length,
             scheduledAt,
             status: 'draft',
             updatedAt: new Date(),
@@ -224,4 +237,99 @@ export async function publishCampaignDrafts(
 
 export function parseToneMix(raw: unknown): ToneMix {
   return toneMixSchema.parse(raw ?? {});
+}
+
+export async function regenerateDraft(draftId: string, input: RegenerateDraftInput) {
+  const draft = await dbQuery(() =>
+    prisma.comment_seed_drafts.findUnique({
+      where: { id: draftId },
+      include: { campaign: true },
+    })
+  );
+  if (!draft) throw new Error('پیش‌نویس یافت نشد');
+  if (draft.status === 'published') {
+    throw new Error('پیش‌نویس منتشرشده قابل بازتولید نیست');
+  }
+
+  const items = await resolveSeedTargetItems('item', [draft.itemId]);
+  const item = items[0];
+  if (!item) throw new Error('آیتم یافت نشد');
+
+  const tone = input.tone ?? (draft.tone as CommentSeedTone);
+  const wordCountMin = input.wordCountMin ?? draft.campaign.wordCountMin;
+  const wordCountMax = input.wordCountMax ?? draft.campaign.wordCountMax;
+
+  const content = await generateSeedComment({ item, tone, wordCountMin, wordCountMax });
+
+  let personaId = draft.personaId;
+  if (input.personaId === 'random') {
+    const ids = await pickRandomActivePersonaIds(1);
+    personaId = ids[0]!;
+  } else if (input.personaId) {
+    personaId = input.personaId;
+  }
+
+  let scheduledAt = draft.scheduledAt;
+  if (input.scheduledAt) {
+    scheduledAt = input.scheduledAt;
+  } else if (input.reschedule) {
+    scheduledAt = randomDateInRange(draft.campaign.dateFrom, draft.campaign.dateTo);
+  }
+
+  const updated = await dbQuery(() =>
+    prisma.comment_seed_drafts.update({
+      where: { id: draftId },
+      data: {
+        content,
+        tone,
+        personaId,
+        scheduledAt,
+        wordCount: content.length,
+        status: 'draft',
+        updatedAt: new Date(),
+      },
+      include: draftInclude,
+    })
+  );
+
+  return updated;
+}
+
+export async function bulkUpdateDrafts(
+  campaignId: string,
+  action: 'delete' | 'approve' | 'reject',
+  draftIds: string[]
+) {
+  const drafts = await dbQuery(() =>
+    prisma.comment_seed_drafts.findMany({
+      where: { campaignId, id: { in: draftIds } },
+      select: { id: true, status: true },
+    })
+  );
+
+  if (drafts.length === 0) throw new Error('پیش‌نویسی یافت نشد');
+
+  if (action === 'delete') {
+    const deletable = drafts.filter((d) => d.status !== 'published').map((d) => d.id);
+    if (deletable.length === 0) {
+      throw new Error('پیش‌نویس منتشرشده قابل حذف نیست');
+    }
+    await dbQuery(() =>
+      prisma.comment_seed_drafts.deleteMany({ where: { id: { in: deletable } } })
+    );
+    return { affected: deletable.length, skipped: draftIds.length - deletable.length };
+  }
+
+  const status = action === 'approve' ? 'approved' : 'rejected';
+  const updatable = drafts.filter((d) => d.status !== 'published').map((d) => d.id);
+  if (updatable.length === 0) {
+    throw new Error('پیش‌نویس منتشرشده قابل تغییر نیست');
+  }
+  await dbQuery(() =>
+    prisma.comment_seed_drafts.updateMany({
+      where: { id: { in: updatable } },
+      data: { status, updatedAt: new Date() },
+    })
+  );
+  return { affected: updatable.length, skipped: draftIds.length - updatable.length };
 }

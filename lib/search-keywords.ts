@@ -134,9 +134,25 @@ const SYNONYM_GROUPS: string[][] = [
   ['فیلم', 'movie', 'film', 'سینما'],
   ['کتاب', 'book', 'رمان', 'novel'],
   ['کافه', 'cafe', 'coffee', 'قهوه'],
+  ['جاسوسی', 'جاسوس', 'spy', 'espionage', 'spies'],
 ];
 
 const STOP_WORDS = new Set(['و', 'در', 'با', 'از', 'به', 'the', 'a', 'an', 'of']);
+
+/** واژه‌های پرکننده — در جستجوی کاتالوگ نادیده گرفته می‌شوند */
+export const SEARCH_FILLER_WORDS = new Set([
+  ...STOP_WORDS,
+  'خیلی',
+  'خیلی',
+  'بسیار',
+  'زیاد',
+  'کمی',
+  'خیلیی',
+  'really',
+  'very',
+  'so',
+  'too',
+]);
 
 function tokenizeQuery(query: string): string[] {
   return normalizeSearchQuery(query)
@@ -144,6 +160,23 @@ function tokenizeQuery(query: string): string[] {
     .split(/[\s,،]+/)
     .map((t) => t.trim())
     .filter((t) => t.length >= SEARCH_MIN_LENGTH && !STOP_WORDS.has(t));
+}
+
+/** توکن‌های معنادار برای جستجو — بدون واژه‌های پرکننده مثل «خیلی» */
+export function meaningfulSearchTokens(rawQuery: string): string[] {
+  const tokens = tokenizeQuery(rawQuery).filter((t) => !SEARCH_FILLER_WORDS.has(t));
+  if (tokens.length > 0) return tokens;
+
+  const q = normalizeSearchQuery(rawQuery).toLowerCase();
+  if (q.length >= SEARCH_MIN_LENGTH && !SEARCH_FILLER_WORDS.has(q)) {
+    return [q];
+  }
+  return [];
+}
+
+function catalogTermsForToken(token: string): string[] {
+  const expanded = expandSearchTerms(token).filter((t) => !SEARCH_FILLER_WORDS.has(t));
+  return [...new Set([token, ...expanded])].filter((t) => t.length >= SEARCH_MIN_LENGTH);
 }
 
 /** گسترش کوئری با توکن‌ها و مترادف‌ها */
@@ -487,37 +520,80 @@ function metadataStringContains(term: string, path: string[]): Prisma.JsonFilter
   };
 }
 
-/** شرط Prisma برای جستجوی گسترده آیتم‌های کاتالوگ (ادمین) */
+function catalogTermOrClauses(term: string): Prisma.catalog_itemsWhereInput[] {
+  return [
+    { title: { contains: term, mode: 'insensitive' } },
+    { description: { contains: term, mode: 'insensitive' } },
+    { externalKey: { contains: term, mode: 'insensitive' } },
+    { metadata: metadataStringContains(term, ['genre']) },
+    { metadata: metadataStringContains(term, ['director']) },
+    { metadata: metadataStringContains(term, ['author']) },
+    { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
+    { metadata: metadataStringContains(term, ['searchProfile', 'themes']) },
+    { metadata: metadataStringContains(term, ['searchProfile', 'keywords']) },
+    { metadata: metadataStringContains(term, ['searchProfile', 'genres']) },
+  ];
+}
+
+/** فیلتر Prisma برای جستجوی کاتالوگ — توکن‌های معنادار با AND، مترادف‌ها با OR */
+export function buildCatalogItemSearchFilter(
+  rawQuery: string
+): Prisma.catalog_itemsWhereInput {
+  const meaningful = meaningfulSearchTokens(rawQuery);
+  if (meaningful.length === 0) {
+    return { id: { in: [] } };
+  }
+
+  const perToken = meaningful.map((token) => ({
+    OR: catalogTermsForToken(token).flatMap((term) => catalogTermOrClauses(term)),
+  }));
+
+  if (perToken.length === 1) {
+    return perToken[0]!;
+  }
+
+  return { AND: perToken };
+}
+
+/** @deprecated از buildCatalogItemSearchFilter استفاده کنید */
 export function buildCatalogItemSearchOrClauses(
   rawQuery: string
 ): Prisma.catalog_itemsWhereInput[] {
-  const { terms, titleAnchors } = collectDbSearchTerms(rawQuery);
-  const q = normalizeSearchQuery(rawQuery);
-  const clauses: Prisma.catalog_itemsWhereInput[] = [];
-
-  const addTerm = (term: string) => {
-    clauses.push(
-      { title: { contains: term, mode: 'insensitive' } },
-      { description: { contains: term, mode: 'insensitive' } },
-      { externalKey: { contains: term, mode: 'insensitive' } },
-      { metadata: metadataStringContains(term, ['genre']) },
-      { metadata: metadataStringContains(term, ['director']) },
-      { metadata: metadataStringContains(term, ['author']) },
-      { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) }
-    );
-  };
-
-  const addTitleAnchor = (term: string) => {
-    clauses.push({ title: { contains: term, mode: 'insensitive' } });
-  };
-
-  if (q.length >= SEARCH_MIN_LENGTH) addTerm(q);
-  for (const term of terms) {
-    if (term !== q) addTerm(term);
+  const filter = buildCatalogItemSearchFilter(rawQuery);
+  if ('OR' in filter && filter.OR) {
+    return Array.isArray(filter.OR) ? filter.OR : [filter];
   }
-  for (const anchor of titleAnchors) addTitleAnchor(anchor);
+  if ('AND' in filter && Array.isArray(filter.AND)) {
+    return filter.AND.flatMap((clause) =>
+      'OR' in clause && Array.isArray(clause.OR) ? clause.OR : [clause]
+    );
+  }
+  return [];
+}
 
-  return clauses;
+export const CATALOG_SEARCH_MIN_SCORE = 22;
+
+export function scoreCatalogItemForSearch(
+  item: {
+    title: string;
+    description?: string | null;
+    metadata?: ItemMeta;
+  },
+  rawQuery: string,
+  terms: string[] = expandSearchTerms(rawQuery).filter((t) => !SEARCH_FILLER_WORDS.has(t))
+): SearchScoreResult {
+  return scoreItemForSearch(
+    {
+      title: item.title,
+      description: item.description ?? '',
+      catalogTitle: item.title,
+      catalogDescription: item.description ?? '',
+      catalogMetadata: item.metadata,
+      metadata: item.metadata,
+    },
+    rawQuery,
+    terms
+  );
 }
 
 /** شرط Prisma برای جستجوی گسترده آیتم‌ها */

@@ -6,11 +6,15 @@ import SettingsSectionCard from './SettingsSectionCard';
 import SecretInput from './SecretInput';
 import SettingsSaveButton from './SettingsSaveButton';
 import OpenAIModelSelect from './OpenAIModelSelect';
+import DeepSeekModelSelect from './DeepSeekModelSelect';
 import { resolveOpenAIModel } from '@/lib/openai-models';
+import { resolveDeepSeekModel } from '@/lib/deepseek-models';
 
 export type IntegrationFormState = {
   openaiApiKey: string;
   openaiModel: string;
+  deepseekApiKey: string;
+  deepseekModel: string;
   tmdbApiKey: string;
   omdbApiKey: string;
   googleApiKey: string;
@@ -29,6 +33,7 @@ type Props = {
   saving: boolean;
   onSave: () => void;
   onTestOpenai: () => void;
+  onTestDeepseek: () => void;
   onTestTmdb: () => void;
   onTestOmdb: () => void;
   onTestGoogle: () => void;
@@ -72,12 +77,14 @@ export default function IntegrationsSettingsPanel({
   saving,
   onSave,
   onTestOpenai,
+  onTestDeepseek,
   onTestTmdb,
   onTestOmdb,
   onTestGoogle,
   onTestLiara,
 }: Props) {
   const canTestOpenai = !!(form.openaiApiKey.trim() || settings.openaiApiKey);
+  const canTestDeepseek = !!(form.deepseekApiKey.trim() || settings.deepseekApiKey);
   const canTestTmdb = !!(form.tmdbApiKey.trim() || settings.tmdbApiKey);
   const canTestOmdb = !!(form.omdbApiKey.trim() || settings.omdbApiKey);
   const canTestGoogle =
@@ -116,6 +123,27 @@ export default function IntegrationsSettingsPanel({
         <OpenAIModelSelect
           value={form.openaiModel || resolveOpenAIModel(settings.openaiModel)}
           onChange={(openaiModel) => onFormChange({ openaiModel })}
+        />
+        <SecretInput
+          label="DeepSeek"
+          value={form.deepseekApiKey || ''}
+          onChange={(v) => onFormChange({ deepseekApiKey: v })}
+          configured={!!settings.deepseekApiKey}
+          hint="تولید کامنت هوشمند (جایگزین OpenAI)"
+          placeholder="sk-..."
+          testButton={
+            <TestBtn
+              id="deepseek"
+              testing={testing}
+              current={canTestDeepseek ? '1' : ''}
+              onClick={onTestDeepseek}
+              disabled={!canTestDeepseek}
+            />
+          }
+        />
+        <DeepSeekModelSelect
+          value={form.deepseekModel || resolveDeepSeekModel(settings.deepseekModel)}
+          onChange={(deepseekModel) => onFormChange({ deepseekModel })}
         />
         <SecretInput
           label="TMDb"

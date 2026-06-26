@@ -1,48 +1,28 @@
 import { PrismaClient, AccountKind } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { nanoid } from 'nanoid';
+import {
+  buildPersonaUsername,
+  generatePersonaNameBatch,
+  getPersonaAvatarUrl,
+} from '@/lib/comment-seed/persona-names';
 
 const prisma = new PrismaClient();
-
-const PERSONA_FIRST_NAMES = [
-  'رامین', 'سارا', 'علی', 'مینا', 'حسین', 'نیلوفر', 'امیر', 'پریسا',
-  'محمد', 'شادی', 'رضا', 'مریم', 'دانیال', 'یاسمین', 'کامران', 'الهام',
-  'پویا', 'نازنین', 'مهدی', 'زهرا', 'آرش', 'سمیرا', 'بهرام', 'لیلا',
-  'کیان', 'مهسا', 'فرهاد', 'نرگس', 'سینا', 'آیدا', 'امیرحسین', 'ترانه',
-  'بابک', 'گلناز', 'پیمان', 'شیما', 'آرمان', 'هانیه', 'سهیل', 'مبینا',
-  'کاوه', 'رؤیا', 'نیما', 'پگاه', 'سروش', 'نیلو', 'آرین', 'مونا',
-  'پارسا', 'الناز',
-];
-
-const PERSONA_LAST_INITIALS = ['م', 'ر', 'ک', 'ح', 'ا', 'س', 'ن', 'پ', 'ز', 'ف'];
-
-function getAvatarUrl(name: string, seed: number): string {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128&bold=true&format=png&seed=${seed}`;
-}
-
-function slugifyUsername(base: string, suffix: string): string {
-  const latin = base
-    .replace(/\s+/g, '')
-    .replace(/[^\w.-]/g, '')
-    .toLowerCase();
-  return `${latin || 'user'}_${suffix}`.slice(0, 30);
-}
 
 async function main() {
   const count = parseInt(process.argv[2] || '50', 10);
   const password = await bcrypt.hash(nanoid(32), 10);
+  const names = generatePersonaNameBatch(count);
 
-  console.log(`Creating up to ${count} comment personas...`);
+  console.log(`Creating up to ${count} comment personas with natural full names...`);
 
   let created = 0;
-  for (let i = 0; i < count; i++) {
-    const firstName = PERSONA_FIRST_NAMES[i % PERSONA_FIRST_NAMES.length]!;
-    const lastInitial = PERSONA_LAST_INITIALS[i % PERSONA_LAST_INITIALS.length]!;
-    const displayName = `${firstName} ${lastInitial}.`;
+  for (let i = 0; i < names.length; i++) {
+    const { displayName, firstName, surname } = names[i]!;
     const userId = nanoid();
     const email = `persona+${userId.slice(0, 12)}@internal.wibe.local`;
-    const username = slugifyUsername(firstName, userId.slice(0, 6));
-    const avatarUrl = getAvatarUrl(displayName, i + 1);
+    const username = buildPersonaUsername(firstName, surname, userId.slice(0, 6));
+    const avatarUrl = getPersonaAvatarUrl(displayName, i + 1);
 
     try {
       const existing = await prisma.users.findUnique({ where: { email } });

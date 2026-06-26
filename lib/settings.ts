@@ -32,6 +32,10 @@ export async function getDecryptedSettings() {
       ? decrypt(settings.openaiApiKey) || null
       : null,
     openaiModel: settings.openaiModel ?? null,
+    deepseekApiKey: settings.deepseekApiKey
+      ? decrypt(settings.deepseekApiKey) || null
+      : null,
+    deepseekModel: settings.deepseekModel ?? null,
     tmdbApiKey: settings.tmdbApiKey ? decrypt(settings.tmdbApiKey) || null : null,
     omdbApiKey: settings.omdbApiKey ? decrypt(settings.omdbApiKey) || null : null,
     googleApiKey: settings.googleApiKey ? decrypt(settings.googleApiKey) || null : null,
@@ -54,6 +58,8 @@ export async function getDecryptedSettings() {
 export async function updateSettings(data: {
   openaiApiKey?: string;
   openaiModel?: string | null;
+  deepseekApiKey?: string;
+  deepseekModel?: string | null;
   tmdbApiKey?: string;
   omdbApiKey?: string;
   googleApiKey?: string;
@@ -77,6 +83,16 @@ export async function updateSettings(data: {
 
   if (data.openaiModel !== undefined) {
     updateData.openaiModel = data.openaiModel?.trim() || null;
+  }
+
+  if (data.deepseekApiKey !== undefined) {
+    updateData.deepseekApiKey = data.deepseekApiKey
+      ? encrypt(data.deepseekApiKey)
+      : null;
+  }
+
+  if (data.deepseekModel !== undefined) {
+    updateData.deepseekModel = data.deepseekModel?.trim() || null;
   }
 
   if (data.tmdbApiKey !== undefined) {

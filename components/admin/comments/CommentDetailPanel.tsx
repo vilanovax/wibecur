@@ -78,20 +78,59 @@ export default function CommentDetailPanel({
 
   return (
     <div
-      className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm flex flex-col min-h-[280px] lg:min-h-[calc(100vh-280px)] ${className}`}
+      className={`rounded-2xl border bg-[var(--color-surface)] shadow-sm flex flex-col min-h-[280px] lg:min-h-[calc(100vh-280px)] ${
+        comment.isSeeded
+          ? 'border-violet-200 bg-violet-50/30'
+          : 'border-[var(--color-border)]'
+      } ${className}`}
       dir="rtl"
     >
       <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-[var(--color-text)]">جزئیات</h2>
-        <CommentStatusBadge
-          isApproved={comment.isApproved}
-          isFiltered={comment.isFiltered}
-          reportsCount={comment._count.comment_reports}
-          deletedAt={comment.deletedAt}
-        />
+        <div className="flex flex-wrap items-center gap-1.5">
+          {comment.isSeeded && (
+            <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+              ساختگی
+            </span>
+          )}
+          <CommentStatusBadge
+            isApproved={comment.isApproved}
+            isFiltered={comment.isFiltered}
+            reportsCount={comment._count.comment_reports}
+            deletedAt={comment.deletedAt}
+          />
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {comment.isSeeded && (
+          <div className="rounded-xl border border-violet-200 bg-violet-50/80 px-3 py-2 text-xs text-violet-800">
+            <p className="font-medium">کامنت تولیدشده با AI</p>
+            {comment.seedCampaign?.title && (
+              <p className="mt-1">
+                کمپین: <span className="font-semibold">{comment.seedCampaign.title}</span>
+              </p>
+            )}
+            <p className="mt-1.5 flex flex-wrap gap-2">
+              <Link
+                href="/admin/comments/all?filter=seeded"
+                className="text-violet-700 underline hover:no-underline"
+              >
+                همه کامنت‌های ساختگی
+              </Link>
+              <span className="text-violet-400">·</span>
+              <Link
+                href="/admin/comments/seed"
+                className="text-violet-700 underline hover:no-underline"
+              >
+                کامنت‌سازی هوشمند
+              </Link>
+            </p>
+            {!comment.deletedAt && onDelete && (
+              <p className="mt-1 text-violet-600">برای غیرفعال‌سازی از دکمه «حذف» استفاده کنید.</p>
+            )}
+          </div>
+        )}
         <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap bg-[var(--color-bg)] rounded-xl p-3 leading-relaxed">
           {displayContent}
         </p>

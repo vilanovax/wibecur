@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildItemSearchHaystack,
+  buildCatalogItemSearchFilter,
   detectBroadQuery,
   expandSearchTerms,
+  meaningfulSearchTokens,
+  scoreCatalogItemForSearch,
   scoreItemForSearch,
 } from '@/lib/search-keywords';
 
@@ -88,6 +91,49 @@ describe('scoreItemForSearch', () => {
     );
     expect(result.matchTier).toBe('indirect');
     expect(result.matchHint).toContain('ژانر');
+  });
+});
+
+describe('meaningfulSearchTokens', () => {
+  it('drops filler words like خیلی', () => {
+    expect(meaningfulSearchTokens('خیلی جاسوسی')).toEqual(['جاسوسی']);
+  });
+
+  it('keeps multi-word meaningful queries', () => {
+    expect(meaningfulSearchTokens('جان ویک')).toEqual(['جان', 'ویک']);
+  });
+});
+
+describe('buildCatalogItemSearchFilter', () => {
+  it('builds AND filter for multiple meaningful tokens', () => {
+    const filter = buildCatalogItemSearchFilter('جان ویک');
+    expect(filter).toHaveProperty('AND');
+    expect(Array.isArray((filter as { AND: unknown[] }).AND)).toBe(true);
+  });
+
+  it('ignores filler-only queries', () => {
+    const filter = buildCatalogItemSearchFilter('خیلی');
+    expect(filter).toEqual({ id: { in: [] } });
+  });
+});
+
+describe('scoreCatalogItemForSearch', () => {
+  it('ranks spy profile higher than unrelated title', () => {
+    const spy = scoreCatalogItemForSearch(
+      {
+        title: 'Tinker Tailor Soldier Spy',
+        metadata: {
+          genre: 'Thriller',
+          searchProfile: { searchText: 'جاسوسی سرد جنگ سرد', keywords: ['espionage'] },
+        },
+      },
+      'خیلی جاسوسی'
+    );
+    const other = scoreCatalogItemForSearch(
+      { title: 'Westworld', metadata: { genre: 'Sci-Fi' } },
+      'خیلی جاسوسی'
+    );
+    expect(spy.score).toBeGreaterThan(other.score);
   });
 });
 

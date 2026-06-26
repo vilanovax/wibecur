@@ -10,7 +10,7 @@ import type { CommentFilterKind } from '@/lib/admin/comments-filter-utils';
 
 const MORE_FILTERS: { id: CommentFilterKind; label: string }[] = [
   { id: 'all', label: 'همه' },
-  { id: 'seeded', label: 'Seed' },
+  { id: 'seeded', label: 'ساختگی' },
   { id: 'filtered', label: 'کلمات بد' },
   { id: 'rejected', label: 'رد شده' },
 ];

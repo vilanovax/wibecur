@@ -8,6 +8,7 @@ import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataField
 import ItemTipField from '@/components/admin/items/ItemTipField';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
 import CatalogSearchProfilePanel from '@/components/admin/catalog/CatalogSearchProfilePanel';
+import CatalogVisibilityControl from '@/components/admin/catalog/CatalogVisibilityControl';
 import { catalogCategoryLabel } from '@/lib/catalog-display';
 import { ArrowRight, ChevronDown, ChevronUp, Link as LinkIcon, Search, Upload } from 'lucide-react';
 
@@ -22,6 +23,7 @@ type CatalogEditData = {
   categorySlug: string | null;
   metadata: unknown;
   listCount: number;
+  isDisabled?: boolean;
 };
 
 function isFilmCategory(slug?: string | null) {
@@ -52,6 +54,7 @@ export default function CatalogEditForm({
   const [metadataOpen, setMetadataOpen] = useState(true);
   const [imageSearchModalOpen, setImageSearchModalOpen] = useState(false);
   const [mediaTab, setMediaTab] = useState<ImageUploadDisplayMode>('upload');
+  const [isDisabled, setIsDisabled] = useState(Boolean(catalog.isDisabled));
   const [form, setForm] = useState({
     title: catalog.title,
     description: catalog.description ?? '',
@@ -254,11 +257,20 @@ export default function CatalogEditForm({
       </Link>
 
       <h1 className="text-2xl font-bold text-gray-900 mb-1">ویرایش آیتم</h1>
-      <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-6">
+      <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-4">
         تغییرات روی{' '}
         <strong>{catalog.listCount.toLocaleString('fa-IR')} جایگاه</strong> در لیست‌های مختلف
         اعمال می‌شود.
       </p>
+
+      <CatalogVisibilityControl
+        catalogId={catalog.id}
+        isDisabled={isDisabled}
+        placementCount={catalog.listCount}
+        onChanged={setIsDisabled}
+        onError={setError}
+        className="mb-6"
+      />
 
       {error && (
         <p className="text-sm text-red-700 bg-red-50 rounded-xl px-3 py-2 mb-4">{error}</p>

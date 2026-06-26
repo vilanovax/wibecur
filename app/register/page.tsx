@@ -20,8 +20,8 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#0f172a]">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+        <div className="flex min-h-screen items-center justify-center bg-[#f3f4f6]">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
         </div>
       }
     >
