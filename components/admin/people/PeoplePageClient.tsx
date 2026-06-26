@@ -1,14 +1,23 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCopy,
   ExternalLink,
+  FileJson,
   Loader2,
   RefreshCw,
   Save,
+  Search,
   Sparkles,
+  Upload,
   UserRound,
+  Users,
+  Wand2,
+  X,
 } from 'lucide-react';
 import {
   PERSON_ROLE_META,
@@ -16,7 +25,20 @@ import {
   personPagePath,
   type PersonRole,
 } from '@/lib/people';
-import type { DiscoveredPerson, PersonProfileRecord } from '@/lib/person-profiles';
+import {
+  COMMENT_AI_PROVIDER_OPTIONS,
+  type CommentAiProvider,
+} from '@/lib/comment-ai-provider';
+import {
+  PERSON_BIO_JSON_EXAMPLE,
+  buildPersonBioJsonSchemaDoc,
+} from '@/lib/person-bio-ai';
+import type {
+  DiscoveredPerson,
+  DiscoverPeoplePagination,
+  DiscoverPeopleStats,
+  PersonProfileRecord,
+} from '@/lib/person-profiles';
 
 type EditState = {
   displayName: string;
@@ -34,12 +56,45 @@ const EMPTY_EDIT: EditState = {
   status: 'published',
 };
 
+const PAGE_SIZES = [25, 50, 100] as const;
+
+const ROLE_BADGE: Record<PersonRole, string> = {
+  director: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-200',
+  actor: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200',
+  author: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
+  translator: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200',
+};
+
+const EMPTY_STATS: DiscoverPeopleStats = {
+  total: 0,
+  withBio: 0,
+  withProfile: 0,
+  missingBio: 0,
+};
+
+const EMPTY_PAGINATION: DiscoverPeoplePagination = {
+  page: 1,
+  limit: 50,
+  total: 0,
+  totalPages: 1,
+};
+
 export default function PeoplePageClient() {
   const [roleFilter, setRoleFilter] = useState<PersonRole | 'all'>('all');
+  const [missingBioOnly, setMissingBioOnly] = useState(false);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(50);
+
   const [people, setPeople] = useState<DiscoveredPerson[]>([]);
+  const [stats, setStats] = useState<DiscoverPeopleStats>(EMPTY_STATS);
+  const [pagination, setPagination] = useState<DiscoverPeoplePagination>(EMPTY_PAGINATION);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [aiProvider, setAiProvider] = useState<CommentAiProvider>('openai');
+  const [savingAiProvider, setSavingAiProvider] = useState(false);
 
   const [selected, setSelected] = useState<DiscoveredPerson | null>(null);
   const [edit, setEdit] = useState<EditState>(EMPTY_EDIT);
@@ -48,35 +103,101 @@ export default function PeoplePageClient() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [enriching, setEnriching] = useState(false);
+  const [aiEnriching, setAiEnriching] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
+  const [copyModal, setCopyModal] = useState<{ title: string; content: string } | null>(null);
+  const [importJson, setImportJson] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [copyLoading, setCopyLoading] = useState<'list' | 'prompt' | null>(null);
+
+  const fetchAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [roleFilter, missingBioOnly, debouncedQuery, pageSize]);
+
+  const loadAiSettings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/people/settings');
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setAiProvider(json.data.personBioAiProvider);
+      }
+    } catch {
+      /* optional */
+    }
+  }, []);
+
   const loadPeople = useCallback(async () => {
+    fetchAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    fetchAbortRef.current = ctrl;
+
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(pageSize),
+      });
       if (roleFilter !== 'all') params.set('role', roleFilter);
-      if (query.trim()) params.set('q', query.trim());
-      const res = await fetch(`/api/admin/people?${params}`);
+      if (debouncedQuery) params.set('q', debouncedQuery);
+      if (missingBioOnly) params.set('missingBio', '1');
+
+      const res = await fetch(`/api/admin/people?${params}`, { signal: ctrl.signal });
       const json = await res.json();
       if (!res.ok || !json.success) {
         throw new Error(json.error || 'خطا در بارگذاری');
       }
-      setPeople(json.data as DiscoveredPerson[]);
+
+      setPeople(json.data.people as DiscoveredPerson[]);
+      setStats(json.data.stats as DiscoverPeopleStats);
+      setPagination(json.data.pagination as DiscoverPeoplePagination);
     } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'خطا در بارگذاری');
       setPeople([]);
+      setStats(EMPTY_STATS);
+      setPagination(EMPTY_PAGINATION);
     } finally {
-      setLoading(false);
+      if (!ctrl.signal.aborted) setLoading(false);
     }
-  }, [roleFilter, query]);
+  }, [roleFilter, debouncedQuery, missingBioOnly, page, pageSize]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadPeople();
-    }, 300);
-    return () => window.clearTimeout(timer);
+    void loadAiSettings();
+  }, [loadAiSettings]);
+
+  useEffect(() => {
+    void loadPeople();
   }, [loadPeople]);
+
+  const saveAiProvider = async (provider: CommentAiProvider) => {
+    setSavingAiProvider(true);
+    try {
+      const res = await fetch('/api/admin/people/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personBioAiProvider: provider }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در ذخیره مدل');
+      }
+      setAiProvider(provider);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در ذخیره مدل');
+    } finally {
+      setSavingAiProvider(false);
+    }
+  };
 
   const openEditor = async (person: DiscoveredPerson) => {
     setSelected(person);
@@ -125,6 +246,19 @@ export default function PeoplePageClient() {
     setSaveMessage('');
   };
 
+  const applyProfile = (p: PersonProfileRecord, message: string) => {
+    setProfile(p);
+    setEdit({
+      displayName: p.displayName,
+      bio: p.bio ?? '',
+      imageUrl: p.imageUrl ?? '',
+      externalUrl: p.externalUrl ?? '',
+      status: p.status,
+    });
+    setSaveMessage(message);
+    void loadPeople();
+  };
+
   const handleSave = async () => {
     if (!selected) return;
     setSaving(true);
@@ -146,9 +280,7 @@ export default function PeoplePageClient() {
       if (!res.ok || !json.success) {
         throw new Error(json.error || 'خطا در ذخیره');
       }
-      setProfile(json.data as PersonProfileRecord);
-      setSaveMessage('ذخیره شد');
-      void loadPeople();
+      applyProfile(json.data as PersonProfileRecord, 'ذخیره شد');
     } catch (err) {
       setSaveMessage(err instanceof Error ? err.message : 'خطا در ذخیره');
     } finally {
@@ -166,113 +298,249 @@ export default function PeoplePageClient() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || 'خطا در تکمیل از وب');
+        throw new Error(json.error || 'خطا در تکمیل از TMDB');
       }
-      const p = json.data as PersonProfileRecord;
-      setProfile(p);
-      setEdit({
-        displayName: p.displayName,
-        bio: p.bio ?? '',
-        imageUrl: p.imageUrl ?? '',
-        externalUrl: p.externalUrl ?? '',
-        status: p.status,
-      });
-      setSaveMessage('از TMDB تکمیل شد — در صورت نیاز ویرایش و ذخیره کنید');
-      void loadPeople();
+      applyProfile(json.data as PersonProfileRecord, 'از TMDB تکمیل شد — در صورت نیاز ویرایش و ذخیره کنید');
     } catch (err) {
-      setSaveMessage(err instanceof Error ? err.message : 'خطا در تکمیل از وب');
+      setSaveMessage(err instanceof Error ? err.message : 'خطا در تکمیل از TMDB');
     } finally {
       setEnriching(false);
     }
   };
 
-  const canEnrich = selected && (selected.role === 'director' || selected.role === 'actor');
+  const handleAiEnrich = async (person?: DiscoveredPerson) => {
+    const target = person ?? selected;
+    if (!target) return;
+    setAiEnriching(true);
+    setSaveMessage('');
+    try {
+      const res = await fetch(
+        `/api/admin/people/${target.role}/${target.slug}/ai-enrich`,
+        { method: 'POST' }
+      );
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در تکمیل با هوش مصنوعی');
+      }
+      applyProfile(
+        json.data as PersonProfileRecord,
+        'bio با هوش مصنوعی تولید شد — در صورت نیاز ویرایش و ذخیره کنید'
+      );
+    } catch (err) {
+      setSaveMessage(err instanceof Error ? err.message : 'خطا در تکمیل با هوش مصنوعی');
+    } finally {
+      setAiEnriching(false);
+    }
+  };
 
-  const stats = useMemo(() => {
-    const withProfile = people.filter((p) => p.hasProfile).length;
-    return { total: people.length, withProfile };
-  }, [people]);
+  const openAndAiEnrich = async (person: DiscoveredPerson) => {
+    await openEditor(person);
+    await handleAiEnrich(person);
+  };
+
+  const handleCopyMissing = async (format: 'text' | 'prompt') => {
+    setCopyLoading(format === 'text' ? 'list' : 'prompt');
+    try {
+      const params = new URLSearchParams({ format: format === 'text' ? 'text' : 'prompt' });
+      if (roleFilter !== 'all') params.set('role', roleFilter);
+      const res = await fetch(`/api/admin/people/missing-bio?${params}`);
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا');
+      }
+      const content = format === 'text' ? json.data.text : json.data.prompt;
+      setCopyModal({
+        title: format === 'text' ? 'لیست اشخاص بدون bio' : 'پرامپت برای هوش مصنوعی خارجی',
+        content,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در آماده‌سازی لیست');
+    } finally {
+      setCopyLoading(null);
+    }
+  };
+
+  const handleShowJsonSchema = () => {
+    setCopyModal({
+      title: 'نمونه JSON برای دریافت bio از AI',
+      content: `${buildPersonBioJsonSchemaDoc()}\n\n---\n\nمثال:\n${JSON.stringify(PERSON_BIO_JSON_EXAMPLE, null, 2)}`,
+    });
+  };
+
+  const handleImportJson = async () => {
+    setImporting(true);
+    setSaveMessage('');
+    try {
+      const parsed = JSON.parse(importJson);
+      const res = await fetch('/api/admin/people/import-bios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در ورود JSON');
+      }
+      setImportOpen(false);
+      setImportJson('');
+      setSaveMessage(
+        `${json.data.updated.toLocaleString('fa-IR')} پروفایل به‌روزرسانی شد` +
+          (json.data.failed > 0 ? ` · ${json.data.failed} خطا` : '')
+      );
+      void loadPeople();
+      if (selected) {
+        void openEditor(selected);
+      }
+    } catch (err) {
+      setSaveMessage(err instanceof Error ? err.message : 'JSON نامعتبر است');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+  };
+
+  const canEnrichTmdb = selected && (selected.role === 'director' || selected.role === 'actor');
+  const busy = saving || enriching || aiEnriching;
+
+  const rangeStart =
+    pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
+  const rangeEnd = Math.min(pagination.page * pagination.limit, pagination.total);
 
   return (
-    <div className="space-y-5">
-      <header className="rounded-2xl border border-indigo-100 bg-gradient-to-l from-indigo-600 to-violet-600 px-5 py-5 text-white shadow-sm md:px-6">
-        <h1 className="text-xl font-bold md:text-2xl">اشخاص</h1>
-        <p className="mt-1 text-sm text-white/75">
-          مدیریت پروفایل کارگردان، بازیگر، نویسنده و مترجم — لیست آثار خودکار از آیتم‌های سایت
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2 text-sm">
-          <span className="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/10">
-            {stats.total.toLocaleString('fa-IR')} شخص کشف‌شده
-          </span>
-          <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-emerald-100 ring-1 ring-emerald-400/20">
-            {stats.withProfile.toLocaleString('fa-IR')} با پروفایل
-          </span>
+    <div className="space-y-4">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-[var(--color-text)] md:text-2xl">اشخاص</h1>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            پروفایل کارگردان، بازیگر، نویسنده و مترجم — bio با AI یا JSON
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <StatChip icon={Users} label="کل" value={stats.total} />
+          <StatChip icon={Sparkles} label="با bio" value={stats.withBio} tone="emerald" />
+          <StatChip icon={UserRound} label="بدون bio" value={stats.missingBio} tone="amber" />
         </div>
       </header>
 
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:flex-row sm:items-center">
-            <div className="flex flex-wrap gap-1.5">
-              <FilterChip
-                active={roleFilter === 'all'}
-                onClick={() => setRoleFilter('all')}
-                label="همه"
-              />
-              {PERSON_ROLES.map((role) => (
-                <FilterChip
-                  key={role}
-                  active={roleFilter === role}
-                  onClick={() => setRoleFilter(role)}
-                  label={PERSON_ROLE_META[role].label}
-                />
-              ))}
-            </div>
-            <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-xs sm:ms-auto">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:p-4 space-y-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="relative min-w-0 flex-1 max-w-md">
+              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="جستجوی نام…"
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] py-2.5 ps-9 pe-3 text-sm"
               />
-              <button
-                type="button"
-                onClick={() => void loadPeople()}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
-                aria-label="بارگذاری مجدد"
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
             </div>
+            <button
+              type="button"
+              onClick={() => void loadPeople()}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+              aria-label="بارگذاری مجدد"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
 
-          {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-medium text-[var(--color-text-muted)] ms-1">مدل bio:</span>
+            {COMMENT_AI_PROVIDER_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                disabled={savingAiProvider}
+                onClick={() => void saveAiProvider(option.value)}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+                  aiProvider === option.value
+                    ? 'bg-indigo-600 text-white'
+                    : 'border border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-1.5">
+            <FilterChip active={roleFilter === 'all'} onClick={() => setRoleFilter('all')} label="همه" />
+            {PERSON_ROLES.map((role) => (
+              <FilterChip
+                key={role}
+                active={roleFilter === role}
+                onClick={() => setRoleFilter(role)}
+                label={PERSON_ROLE_META[role].label}
+              />
+            ))}
+            <FilterChip
+              active={missingBioOnly}
+              onClick={() => setMissingBioOnly((v) => !v)}
+              label="بدون bio"
+              accent="amber"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            <ActionButton
+              icon={<ClipboardCopy className="h-3.5 w-3.5" />}
+              label="کپی بدون bio"
+              loading={copyLoading === 'list'}
+              onClick={() => void handleCopyMissing('text')}
+            />
+            <ActionButton
+              icon={<Wand2 className="h-3.5 w-3.5" />}
+              label="پرامپت AI"
+              loading={copyLoading === 'prompt'}
+              onClick={() => void handleCopyMissing('prompt')}
+            />
+            <ActionButton icon={<FileJson className="h-3.5 w-3.5" />} label="JSON" onClick={handleShowJsonSchema} />
+            <ActionButton icon={<Upload className="h-3.5 w-3.5" />} label="ورود" onClick={() => setImportOpen(true)} />
+          </div>
+        </div>
+      </section>
+
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
+          {error}
+        </div>
+      )}
+
+      {saveMessage && !selected && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+          {saveMessage}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1">
+          <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
             {loading ? (
-              <div className="flex items-center justify-center gap-2 px-6 py-16 text-sm text-[var(--color-text-muted)]">
+              <div className="flex items-center justify-center gap-2 px-6 py-20 text-sm text-[var(--color-text-muted)]">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 در حال بارگذاری…
               </div>
             ) : people.length === 0 ? (
-              <div className="px-6 py-16 text-center text-sm text-[var(--color-text-muted)]">
+              <div className="px-6 py-20 text-center text-sm text-[var(--color-text-muted)]">
                 شخصی پیدا نشد
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="max-h-[calc(100vh-18rem)] overflow-auto">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-[var(--color-bg)] text-[var(--color-text-muted)]">
+                  <thead className="sticky top-0 z-10 bg-[var(--color-bg)] text-[var(--color-text-muted)] shadow-[0_1px_0_var(--color-border)]">
                     <tr>
-                      <th className="px-4 py-3 text-right font-medium">نام</th>
-                      <th className="px-4 py-3 text-right font-medium">نقش</th>
-                      <th className="px-4 py-3 text-right font-medium">آیتم‌ها</th>
-                      <th className="px-4 py-3 text-right font-medium">پروفایل</th>
-                      <th className="px-4 py-3 text-left font-medium">عملیات</th>
+                      <th className="px-3 py-2.5 text-right font-medium">نام</th>
+                      <th className="px-3 py-2.5 text-right font-medium">نقش</th>
+                      <th className="hidden sm:table-cell px-3 py-2.5 text-right font-medium">آیتم</th>
+                      <th className="px-3 py-2.5 text-right font-medium">bio</th>
+                      <th className="hidden md:table-cell px-3 py-2.5 text-right font-medium">پروفایل</th>
+                      <th className="px-3 py-2.5 text-left font-medium w-28">عملیات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -282,45 +550,61 @@ export default function PeoplePageClient() {
                       return (
                         <tr
                           key={`${person.role}:${person.slug}`}
-                          className={`border-t border-[var(--color-border)] ${
-                            isSelected ? 'bg-indigo-50/60 dark:bg-indigo-950/20' : ''
+                          className={`border-t border-[var(--color-border)] cursor-pointer transition-colors hover:bg-[var(--color-bg)]/70 ${
+                            isSelected ? 'bg-indigo-50/70 dark:bg-indigo-950/25' : ''
                           }`}
+                          onClick={() => void openEditor(person)}
                         >
-                          <td className="px-4 py-3 font-medium text-[var(--color-text)]">
+                          <td className="px-3 py-2.5 font-medium text-[var(--color-text)] max-w-[180px] truncate">
                             {person.displayName}
                           </td>
-                          <td className="px-4 py-3 text-[var(--color-text-muted)]">
-                            {PERSON_ROLE_META[person.role].icon}{' '}
-                            {PERSON_ROLE_META[person.role].label}
+                          <td className="px-3 py-2.5">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ${ROLE_BADGE[person.role]}`}
+                            >
+                              <span aria-hidden>{PERSON_ROLE_META[person.role].icon}</span>
+                              <span className="hidden sm:inline">{PERSON_ROLE_META[person.role].label}</span>
+                            </span>
                           </td>
-                          <td className="px-4 py-3 tabular-nums">
+                          <td className="hidden sm:table-cell px-3 py-2.5 tabular-nums text-[var(--color-text-muted)]">
                             {person.itemCount.toLocaleString('fa-IR')}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2.5">
+                            <StatusDot ok={person.hasBio} okLabel="دارد" noLabel="ندارد" />
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-2.5">
                             {person.hasProfile ? (
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                              <span className="rounded-md bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-800 dark:bg-sky-900/30 dark:text-sky-200">
                                 {person.profileStatus === 'draft' ? 'پیش‌نویس' : 'منتشر'}
                               </span>
                             ) : (
-                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                                ندارد
-                              </span>
+                              <span className="text-[11px] text-[var(--color-text-muted)]">—</span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-left">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="px-3 py-2.5 text-left" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              {!person.hasBio && (
+                                <button
+                                  type="button"
+                                  title="تکمیل bio با AI"
+                                  onClick={() => void openAndAiEnrich(person)}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                                >
+                                  <Sparkles className="h-3.5 w-3.5" />
+                                </button>
+                              )}
                               <Link
                                 href={personPagePath(person.role, person.displayName)}
                                 target="_blank"
-                                className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                                title="صفحه عمومی"
                               >
                                 <ExternalLink className="h-3.5 w-3.5" />
-                                صفحه
                               </Link>
                               <button
                                 type="button"
                                 onClick={() => void openEditor(person)}
-                                className="rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs font-medium hover:bg-[var(--color-bg)]"
+                                className="rounded-lg border border-[var(--color-border)] px-2 py-1 text-[11px] font-medium hover:bg-[var(--color-bg)]"
                               >
                                 ویرایش
                               </button>
@@ -333,134 +617,314 @@ export default function PeoplePageClient() {
                 </table>
               </div>
             )}
+
+            {!loading && pagination.totalPages > 0 && (
+              <div className="flex flex-col gap-2 border-t border-[var(--color-border)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  {pagination.total === 0
+                    ? 'بدون نتیجه'
+                    : `${rangeStart.toLocaleString('fa-IR')}–${rangeEnd.toLocaleString('fa-IR')} از ${pagination.total.toLocaleString('fa-IR')}`}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={pageSize}
+                    onChange={(e) =>
+                      setPageSize(Number(e.target.value) as (typeof PAGE_SIZES)[number])
+                    }
+                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1.5 text-xs"
+                    aria-label="تعداد در صفحه"
+                  >
+                    {PAGE_SIZES.map((size) => (
+                      <option key={size} value={size}>
+                        {size} در صفحه
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={pagination.page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] disabled:opacity-40 hover:bg-[var(--color-bg)]"
+                    aria-label="صفحه قبل"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <span className="min-w-[4.5rem] text-center text-xs tabular-nums">
+                    {pagination.page.toLocaleString('fa-IR')} / {pagination.totalPages.toLocaleString('fa-IR')}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={pagination.page >= pagination.totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] disabled:opacity-40 hover:bg-[var(--color-bg)]"
+                    aria-label="صفحه بعد"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {selected && (
-          <aside className="w-full shrink-0 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 lg:w-[22rem] xl:w-[24rem]">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  {PERSON_ROLE_META[selected.role].label}
-                </p>
-                <h2 className="text-lg font-bold text-[var(--color-text)]">{selected.displayName}</h2>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                  {itemCount.toLocaleString('fa-IR')} آیتم در سایت
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeEditor}
-                className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-              >
-                بستن
-              </button>
-            </div>
-
-            {detailLoading ? (
-              <div className="flex items-center justify-center gap-2 py-12 text-sm text-[var(--color-text-muted)]">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                بارگذاری…
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {canEnrich && (
-                  <button
-                    type="button"
-                    onClick={() => void handleEnrich()}
-                    disabled={enriching || saving}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+          <aside className="w-full shrink-0 xl:sticky xl:top-4 xl:w-[22rem]">
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ${ROLE_BADGE[selected.role]}`}
                   >
-                    {enriching ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-4 w-4" />
-                    )}
-                    تکمیل از TMDB
-                  </button>
-                )}
-
-                <Field label="نام نمایشی">
-                  <input
-                    value={edit.displayName}
-                    onChange={(e) => setEdit((s) => ({ ...s, displayName: e.target.value }))}
-                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
-                  />
-                </Field>
-
-                <Field label="توضیح کوتاه (bio)">
-                  <textarea
-                    value={edit.bio}
-                    onChange={(e) => setEdit((s) => ({ ...s, bio: e.target.value }))}
-                    rows={5}
-                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm leading-relaxed"
-                    placeholder="اگر خالی بماند، متن پیش‌فرض از تعداد آیتم‌ها ساخته می‌شود"
-                  />
-                </Field>
-
-                <Field label="آدرس تصویر">
-                  <input
-                    value={edit.imageUrl}
-                    onChange={(e) => setEdit((s) => ({ ...s, imageUrl: e.target.value }))}
-                    dir="ltr"
-                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
-                    placeholder="https://…"
-                  />
-                </Field>
-
-                <Field label="لینک خارجی">
-                  <input
-                    value={edit.externalUrl}
-                    onChange={(e) => setEdit((s) => ({ ...s, externalUrl: e.target.value }))}
-                    dir="ltr"
-                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
-                  />
-                </Field>
-
-                <Field label="وضعیت">
-                  <select
-                    value={edit.status}
-                    onChange={(e) =>
-                      setEdit((s) => ({
-                        ...s,
-                        status: e.target.value as 'draft' | 'published',
-                      }))
-                    }
-                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
-                  >
-                    <option value="published">منتشر شده</option>
-                    <option value="draft">پیش‌نویس</option>
-                  </select>
-                </Field>
-
-                {saveMessage && (
-                  <p className="text-sm text-[var(--color-text-muted)]">{saveMessage}</p>
-                )}
-
+                    {PERSON_ROLE_META[selected.role].icon} {PERSON_ROLE_META[selected.role].label}
+                  </span>
+                  <h2 className="mt-2 text-lg font-bold text-[var(--color-text)] truncate">
+                    {selected.displayName}
+                  </h2>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {itemCount.toLocaleString('fa-IR')} آیتم ·{' '}
+                    <span dir="ltr" className="font-mono text-[10px]">
+                      {selected.slug}
+                    </span>
+                  </p>
+                </div>
                 <button
                   type="button"
-                  onClick={() => void handleSave()}
-                  disabled={saving || enriching}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+                  onClick={closeEditor}
+                  className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                  aria-label="بستن"
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  ذخیره پروفایل
+                  <X className="h-4 w-4" />
                 </button>
-
-                <Link
-                  href={personPagePath(selected.role, edit.displayName || selected.displayName)}
-                  target="_blank"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-medium hover:bg-[var(--color-bg)]"
-                >
-                  <UserRound className="h-4 w-4" />
-                  مشاهده صفحه عمومی
-                </Link>
               </div>
-            )}
+
+              {detailLoading ? (
+                <div className="flex items-center justify-center gap-2 py-12 text-sm text-[var(--color-text-muted)]">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  بارگذاری…
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleAiEnrich()}
+                      disabled={busy}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+                    >
+                      {aiEnriching ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )}
+                      تکمیل bio با AI
+                    </button>
+                    {canEnrichTmdb && (
+                      <button
+                        type="button"
+                        onClick={() => void handleEnrich()}
+                        disabled={busy}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-60 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-200"
+                      >
+                        {enriching ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Wand2 className="h-4 w-4" />
+                        )}
+                        تکمیل از TMDB
+                      </button>
+                    )}
+                  </div>
+
+                  <Field label="نام نمایشی">
+                    <input
+                      value={edit.displayName}
+                      onChange={(e) => setEdit((s) => ({ ...s, displayName: e.target.value }))}
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                    />
+                  </Field>
+
+                  <Field label="bio">
+                    <textarea
+                      value={edit.bio}
+                      onChange={(e) => setEdit((s) => ({ ...s, bio: e.target.value }))}
+                      rows={5}
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm leading-relaxed"
+                      placeholder="۲–۴ جمله فارسی برای صفحه پروفایل"
+                    />
+                    <p className="text-[11px] text-[var(--color-text-muted)]">
+                      {edit.bio.length.toLocaleString('fa-IR')} کاراکتر
+                    </p>
+                  </Field>
+
+                  <Field label="تصویر">
+                    <input
+                      value={edit.imageUrl}
+                      onChange={(e) => setEdit((s) => ({ ...s, imageUrl: e.target.value }))}
+                      dir="ltr"
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                      placeholder="https://…"
+                    />
+                  </Field>
+
+                  <Field label="لینک خارجی">
+                    <input
+                      value={edit.externalUrl}
+                      onChange={(e) => setEdit((s) => ({ ...s, externalUrl: e.target.value }))}
+                      dir="ltr"
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                    />
+                  </Field>
+
+                  <Field label="وضعیت">
+                    <select
+                      value={edit.status}
+                      onChange={(e) =>
+                        setEdit((s) => ({
+                          ...s,
+                          status: e.target.value as 'draft' | 'published',
+                        }))
+                      }
+                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                    >
+                      <option value="published">منتشر شده</option>
+                      <option value="draft">پیش‌نویس</option>
+                    </select>
+                  </Field>
+
+                  {saveMessage && (
+                    <p className="rounded-lg bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
+                      {saveMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => void handleSave()}
+                    disabled={busy}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    ذخیره
+                  </button>
+
+                  <Link
+                    href={personPagePath(selected.role, edit.displayName || selected.displayName)}
+                    target="_blank"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-bg)]"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    صفحه عمومی
+                  </Link>
+                </div>
+              )}
+            </div>
           </aside>
         )}
       </div>
+
+      {copyModal && (
+        <Modal title={copyModal.title} onClose={() => setCopyModal(null)}>
+          <textarea
+            readOnly
+            value={copyModal.content}
+            rows={14}
+            dir={copyModal.title.includes('JSON') ? 'ltr' : 'rtl'}
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs font-mono leading-relaxed"
+          />
+          <button
+            type="button"
+            onClick={() => void copyToClipboard(copyModal.content)}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            <ClipboardCopy className="h-4 w-4" />
+            کپی
+          </button>
+        </Modal>
+      )}
+
+      {importOpen && (
+        <Modal title="ورود JSON پروفایل‌ها" onClose={() => setImportOpen(false)}>
+          <p className="text-xs text-[var(--color-text-muted)] mb-3">
+            خروجی AI خارجی با ساختار{' '}
+            <code dir="ltr" className="text-[11px]">
+              {'{ "people": [ ... ] }'}
+            </code>
+          </p>
+          <textarea
+            value={importJson}
+            onChange={(e) => setImportJson(e.target.value)}
+            rows={12}
+            dir="ltr"
+            placeholder={JSON.stringify(PERSON_BIO_JSON_EXAMPLE, null, 2)}
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs font-mono"
+          />
+          <button
+            type="button"
+            onClick={() => void handleImportJson()}
+            disabled={importing || !importJson.trim()}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+          >
+            {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            اعمال
+          </button>
+        </Modal>
+      )}
     </div>
+  );
+}
+
+function StatChip({
+  icon: Icon,
+  label,
+  value,
+  tone = 'default',
+}: {
+  icon: typeof Users;
+  label: string;
+  value: number;
+  tone?: 'default' | 'emerald' | 'amber';
+}) {
+  const toneClass =
+    tone === 'emerald'
+      ? 'text-emerald-700 dark:text-emerald-300'
+      : tone === 'amber'
+        ? 'text-amber-700 dark:text-amber-300'
+        : 'text-[var(--color-text)]';
+
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 min-w-[7rem]">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40">
+        <Icon className="h-3.5 w-3.5 text-indigo-600" />
+      </div>
+      <div>
+        <p className={`text-base font-bold tabular-nums leading-none ${toneClass}`}>
+          {value.toLocaleString('fa-IR')}
+        </p>
+        <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+function StatusDot({
+  ok,
+  okLabel,
+  noLabel,
+}: {
+  ok: boolean;
+  okLabel: string;
+  noLabel: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium">
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-emerald-500' : 'bg-amber-400'}`}
+        aria-hidden
+      />
+      <span className={ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}>
+        {ok ? okLabel : noLabel}
+      </span>
+    </span>
   );
 }
 
@@ -468,10 +932,12 @@ function FilterChip({
   active,
   onClick,
   label,
+  accent,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  accent?: 'amber';
 }) {
   return (
     <button
@@ -479,7 +945,9 @@ function FilterChip({
       onClick={onClick}
       className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
         active
-          ? 'bg-indigo-600 text-white'
+          ? accent === 'amber'
+            ? 'bg-amber-500 text-white'
+            : 'bg-indigo-600 text-white'
           : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
       }`}
     >
@@ -488,11 +956,64 @@ function FilterChip({
   );
 }
 
+function ActionButton({
+  icon,
+  label,
+  onClick,
+  loading,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  loading?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1.5 text-xs font-semibold hover:bg-[var(--color-surface)] disabled:opacity-60"
+    >
+      {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
+      {label}
+    </button>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1.5">
+    <label className="block space-y-1">
       <span className="text-xs font-medium text-[var(--color-text-muted)]">{label}</span>
       {children}
     </label>
+  );
+}
+
+function Modal({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+      <div className="w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xl">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h3 className="font-bold text-[var(--color-text)]">{title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 hover:bg-[var(--color-bg)]"
+            aria-label="بستن"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
   );
 }

@@ -1,0 +1,234 @@
+import { z } from 'zod';
+import OpenAI from 'openai';
+import { prisma } from '@/lib/prisma';
+import { getDecryptedSettings } from '@/lib/settings';
+import {
+  formatOpenAIError,
+  normalizeOpenAICompletionOptions,
+} from '@/lib/openai-chat';
+import { resolveOpenAIModel } from '@/lib/openai-models';
+import { resolveDeepSeekModel } from '@/lib/deepseek-models';
+import {
+  commentAiProviderLabel,
+  resolveCommentAiProvider,
+  type CommentAiProvider,
+} from '@/lib/comment-ai-provider';
+import { PERSON_ROLE_META, type PersonRole } from '@/lib/people';
+import type { DiscoveredPerson } from '@/lib/person-profiles';
+
+export const PersonBioImportItemSchema = z.object({
+  role: z.enum(['director', 'actor', 'author', 'translator']),
+  slug: z.string().min(1),
+  displayName: z.string().min(1),
+  bio: z.string().min(20),
+  imageUrl: z.string().url().optional().nullable(),
+  externalUrl: z.string().url().optional().nullable(),
+  status: z.enum(['draft', 'published']).optional(),
+});
+
+export const PersonBioImportPayloadSchema = z.object({
+  people: z.array(PersonBioImportItemSchema).min(1).max(100),
+});
+
+export type PersonBioImportItem = z.infer<typeof PersonBioImportItemSchema>;
+export type PersonBioImportPayload = z.infer<typeof PersonBioImportPayloadSchema>;
+
+export const PERSON_BIO_JSON_EXAMPLE: PersonBioImportPayload = {
+  people: [
+    {
+      role: 'actor',
+      slug: 'brad-pitt',
+      displayName: 'Brad Pitt',
+      bio: 'برد پیت بازیگر و تهیه‌کننده آمریکایی است که از دهه ۱۹۹۰ در سینما شناخته شده. از آثار شاخص او می‌توان به فیلم‌های درام و اکشن اشاره کرد.',
+      imageUrl: null,
+      externalUrl: 'https://www.imdb.com/name/nm0000093/',
+      status: 'published',
+    },
+  ],
+};
+
+export function buildPersonBioJsonSchemaDoc(): string {
+  return JSON.stringify(
+    {
+      $schema: 'وایب — فرمت ورود bio اشخاص',
+      description:
+        'آرایه people شامل اشخاص. فیلدهای role و slug باید دقیقاً مطابق لیست ارسالی باشند.',
+      people: [
+        {
+          role: 'director | actor | author | translator',
+          slug: 'slug-لاتین-از-لیست',
+          displayName: 'نام نمایشی فارسی یا انگلیسی',
+          bio: '۲ تا ۴ جمله فارسی، مناسب صفحه پروفایل',
+          imageUrl: 'https://… (اختیاری)',
+          externalUrl: 'https://… (اختیاری)',
+          status: 'published | draft (اختیاری)',
+        },
+      ],
+    },
+    null,
+    2
+  );
+}
+
+export function buildExternalAiPrompt(people: DiscoveredPerson[]): string {
+  const roleLabels = Object.fromEntries(
+    (Object.keys(PERSON_ROLE_META) as PersonRole[]).map((role) => [
+      role,
+      PERSON_ROLE_META[role].label,
+    ])
+  );
+
+  const lines = people.map(
+    (p) =>
+      `- role: ${p.role} (${roleLabels[p.role]}) | slug: ${p.slug} | name: ${p.displayName} | items: ${p.itemCount}`
+  );
+
+  return `برای هر شخص زیر یک bio کوتاه فارسی (۲ تا ۴ جمله) بنویس و خروجی را فقط به صورت JSON معتبر برگردان.
+
+قوانین:
+- فقط JSON برگردان، بدون markdown یا توضیح اضافه
+- role و slug را دقیقاً همان‌طور که داده شده حفظ کن
+- bio باید فارسی، رسمی-صمیمی و مناسب صفحه پروفایل در اپ «وایب» باشد
+- برای بازیگر/کارگردان می‌توانی به سبک آثار و شهرت اشاره کنی بدون ادعای جزئیات نادرست
+
+فرمت خروجی:
+${buildPersonBioJsonSchemaDoc()}
+
+لیست اشخاص:
+${lines.join('\n')}`;
+}
+
+export function formatMissingBioCopyList(people: DiscoveredPerson[]): string {
+  return people
+    .map(
+      (p) =>
+        `${PERSON_ROLE_META[p.role].label}\t${p.displayName}\t${p.slug}\t${p.itemCount} آیتم`
+    )
+    .join('\n');
+}
+
+export async function getPersonBioAiProvider(): Promise<CommentAiProvider> {
+  const row = await prisma.comment_settings.findFirst({
+    select: { personBioAiProvider: true },
+  });
+  return resolveCommentAiProvider(row?.personBioAiProvider);
+}
+
+export async function setPersonBioAiProvider(provider: CommentAiProvider): Promise<void> {
+  const resolved = resolveCommentAiProvider(provider);
+  const existing = await prisma.comment_settings.findFirst({ select: { id: true } });
+  if (existing) {
+    await prisma.comment_settings.update({
+      where: { id: existing.id },
+      data: { personBioAiProvider: resolved },
+    });
+    return;
+  }
+  await prisma.comment_settings.create({
+    data: {
+      personBioAiProvider: resolved,
+      commentAiProvider: 'openai',
+    },
+  });
+}
+
+async function createPersonBioChatCompletion(
+  messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+) {
+  const provider = await getPersonBioAiProvider();
+  const settings = await getDecryptedSettings();
+
+  if (provider === 'deepseek') {
+    if (!settings.deepseekApiKey) {
+      throw new Error('کلید DeepSeek در تنظیمات یکپارچه‌سازی وارد نشده است');
+    }
+    const model = resolveDeepSeekModel(settings.deepseekModel);
+    const client = new OpenAI({
+      apiKey: settings.deepseekApiKey,
+      baseURL: 'https://api.deepseek.com',
+    });
+    return client.chat.completions.create({
+      model,
+      messages,
+      ...normalizeOpenAICompletionOptions(model, {
+        temperature: 0.6,
+        max_tokens: 1200,
+      }),
+    });
+  }
+
+  if (!settings.openaiApiKey) {
+    throw new Error('کلید OpenAI در تنظیمات یکپارچه‌سازی وارد نشده است');
+  }
+  const model = resolveOpenAIModel(settings.openaiModel);
+  const client = new OpenAI({ apiKey: settings.openaiApiKey });
+  return client.chat.completions.create({
+    model,
+    messages,
+    ...normalizeOpenAICompletionOptions(model, {
+      temperature: 0.6,
+      max_tokens: 1200,
+    }),
+  });
+}
+
+function extractJsonObject(raw: string): unknown {
+  const trimmed = raw.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced?.[1]?.trim() ?? trimmed;
+  const start = candidate.indexOf('{');
+  const end = candidate.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error('پاسخ هوش مصنوعی JSON معتبر نبود');
+  }
+  return JSON.parse(candidate.slice(start, end + 1));
+}
+
+export async function generatePersonBioWithAi(input: {
+  displayName: string;
+  role: PersonRole;
+  itemCount: number;
+  sampleTitles?: string[];
+}): Promise<{ bio: string }> {
+  const roleLabel = PERSON_ROLE_META[input.role].label;
+  const samples =
+    input.sampleTitles && input.sampleTitles.length > 0
+      ? `\nنمونه آثار در سایت: ${input.sampleTitles.slice(0, 6).join('، ')}`
+      : '';
+
+  const completion = await createPersonBioChatCompletion([
+    {
+      role: 'system',
+      content:
+        'تو نویسنده محتوای فارسی برای اپ لیست‌سازی «وایب» هستی. فقط متن bio را برگردان، بدون عنوان یا markdown.',
+    },
+    {
+      role: 'user',
+      content: `برای ${roleLabel} «${input.displayName}» یک bio کوتاه فارسی (۲ تا ۴ جمله) بنویس.${samples}\nاین شخص در ${input.itemCount} آیتم سایت ذکر شده است.`,
+    },
+  ]);
+
+  const bio = completion.choices[0]?.message?.content?.trim();
+  if (!bio || bio.length < 20) {
+    throw new Error('پاسخ هوش مصنوعی برای bio کافی نبود');
+  }
+  return { bio };
+}
+
+export function parsePersonBioImportPayload(raw: unknown): PersonBioImportPayload {
+  const parsed = PersonBioImportPayloadSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error('ساختار JSON نامعتبر است — فیلدهای role، slug، displayName و bio الزامی‌اند');
+  }
+  return parsed.data;
+}
+
+export async function getActivePersonBioAiLabel(): Promise<string> {
+  const provider = await getPersonBioAiProvider();
+  return commentAiProviderLabel(provider);
+}
+
+export function formatPersonBioAiError(error: unknown): string {
+  const msg = formatOpenAIError(error);
+  return msg.replace('OpenAI', 'هوش مصنوعی');
+}

@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
             penaltyBanThreshold: DEFAULT_PENALTY_THRESHOLDS.ban,
             penaltyRestrictDays: DEFAULT_PENALTY_THRESHOLDS.restrictDays,
             commentAiProvider: 'openai',
+            personBioAiProvider: 'openai',
           },
         });
       }

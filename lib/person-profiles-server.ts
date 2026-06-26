@@ -13,6 +13,7 @@ import {
 } from '@/lib/people';
 import type {
   DiscoveredPerson,
+  DiscoverPeopleResult,
   PersonProfileRecord,
   PersonProfileStatus,
 } from '@/lib/person-profiles';
@@ -80,8 +81,14 @@ export async function upsertPersonProfile(
 /** کشف اشخاص از metadata آیتم‌های منتشرشده */
 export async function discoverPeopleFromItems(
   client: PrismaClient = prisma,
-  options?: { role?: PersonRole; q?: string; limit?: number }
-): Promise<DiscoveredPerson[]> {
+  options?: {
+    role?: PersonRole;
+    q?: string;
+    limit?: number;
+    page?: number;
+    missingBioOnly?: boolean;
+  }
+): Promise<DiscoverPeopleResult> {
   const rows = await client.items.findMany({
     where: {
       ...publicItemWhere,
@@ -126,21 +133,29 @@ export async function discoverPeopleFromItems(
 
   const profiles = await client.person_profiles.findMany({
     where: options?.role ? { role: options.role } : undefined,
-    select: { role: true, slug: true, status: true },
+    select: { role: true, slug: true, status: true, bio: true },
   });
   const profileMap = new Map(
-    profiles.map((p) => [`${p.role}:${p.slug}`, p.status as PersonProfileStatus])
+    profiles.map((p) => [
+      `${p.role}:${p.slug}`,
+      {
+        status: p.status as PersonProfileStatus,
+        hasBio: Boolean(p.bio?.trim()),
+      },
+    ])
   );
 
   let discovered: DiscoveredPerson[] = Array.from(map.values()).map((entry) => {
     const key = `${entry.role}:${entry.slug}`;
-    const status = profileMap.get(key) ?? null;
+    const profile = profileMap.get(key);
+    const status = profile?.status ?? null;
     return {
       role: entry.role,
       slug: entry.slug,
       displayName: entry.displayName,
       itemCount: entry.itemIds.size,
       hasProfile: status != null,
+      hasBio: profile?.hasBio ?? false,
       profileStatus: status,
     };
   });
@@ -154,8 +169,29 @@ export async function discoverPeopleFromItems(
     );
   }
 
+  const stats = {
+    total: discovered.length,
+    withBio: discovered.filter((p) => p.hasBio).length,
+    withProfile: discovered.filter((p) => p.hasProfile).length,
+    missingBio: discovered.filter((p) => !p.hasBio).length,
+  };
+
+  if (options?.missingBioOnly) {
+    discovered = discovered.filter((p) => !p.hasBio);
+  }
+
   discovered.sort((a, b) => b.itemCount - a.itemCount || a.displayName.localeCompare(b.displayName));
 
-  const limit = options?.limit ?? 200;
-  return discovered.slice(0, limit);
+  const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
+  const page = Math.max(options?.page ?? 1, 1);
+  const total = discovered.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * limit;
+
+  return {
+    people: discovered.slice(start, start + limit),
+    stats,
+    pagination: { page: safePage, limit, total, totalPages },
+  };
 }

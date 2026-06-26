@@ -22,5 +22,26 @@ export type DiscoveredPerson = {
   displayName: string;
   itemCount: number;
   hasProfile: boolean;
+  hasBio: boolean;
   profileStatus: PersonProfileStatus | null;
+};
+
+export type DiscoverPeopleStats = {
+  total: number;
+  withBio: number;
+  withProfile: number;
+  missingBio: number;
+};
+
+export type DiscoverPeoplePagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type DiscoverPeopleResult = {
+  people: DiscoveredPerson[];
+  stats: DiscoverPeopleStats;
+  pagination: DiscoverPeoplePagination;
 };

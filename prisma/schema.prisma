@@ -808,6 +808,7 @@ model comment_settings {
   penaltyBanThreshold      Int      @default(15)
   penaltyRestrictDays      Int      @default(7)
   commentAiProvider        String   @default("openai") // openai | deepseek
+  personBioAiProvider      String   @default("openai") // openai | deepseek — bio اشخاص
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }
