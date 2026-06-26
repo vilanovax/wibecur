@@ -39,7 +39,8 @@ export function isParsPackStorageUrl(url: string): boolean {
   if (!t.startsWith('http')) return false;
   try {
     const host = new URL(t).hostname.toLowerCase();
-    return host.includes('parspack.net');
+    // تطبیق دقیقِ suffix (نه includes) تا host مثل `parspack.net.attacker.com` رد شود.
+    return host === 'parspack.net' || host.endsWith('.parspack.net');
   } catch {
     return false;
   }
@@ -50,7 +51,8 @@ export function isLegacyLiaraStorageUrl(url: string): boolean {
   if (!url || !url.startsWith('http')) return false;
   try {
     const host = new URL(url).hostname.toLowerCase();
-    return host.includes('storage.') && host.includes('liara');
+    // تطبیق دقیقِ suffix روی دامنهٔ liara.space (نه includes).
+    return host.endsWith('.liara.space');
   } catch {
     return false;
   }

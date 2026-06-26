@@ -3,6 +3,7 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import { auth } from '@/lib/auth-config';
 import { fetchPublicProfile } from '@/lib/public-profile-server';
 import { buildPublicProfileJsonLd } from '@/lib/profile-schema';
+import { serializeJsonLd } from '@/lib/json-ld';
 import PublicProfilePageClient from './PublicProfilePageClient';
 import { notFound } from 'next/navigation';
 
@@ -40,7 +41,7 @@ export default async function PublicProfilePage({
     <div className="bg-wibe-surface">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(profileJsonLd) }}
       />
       <Header title={`@${username}`} showBack />
       <main className="min-h-screen">

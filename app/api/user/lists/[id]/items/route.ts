@@ -97,12 +97,35 @@ export async function POST(
         prisma.items.findUnique({
           where: { id: itemId },
           include: {
-            lists: { select: { categories: { select: { slug: true } } } },
+            lists: {
+              select: {
+                categories: { select: { slug: true } },
+                isPublic: true,
+                isActive: true,
+                deletedAt: true,
+                userId: true,
+              },
+            },
           },
         })
       );
 
       if (!existingItem) {
+        return NextResponse.json(
+          { success: false, error: 'آیتم یافت نشد' },
+          { status: 404 }
+        );
+      }
+
+      // امنیت (IDOR): فقط می‌توان از آیتم‌هایی کپی کرد که در لیست عمومی و فعال‌اند
+      // یا متعلق به خود کاربرند. در غیر این صورت محتوای لیست خصوصی دیگران افشا می‌شود.
+      const sourceList = existingItem.lists;
+      const sourceVisible =
+        !!sourceList &&
+        !sourceList.deletedAt &&
+        ((sourceList.isPublic && sourceList.isActive) ||
+          sourceList.userId === userId);
+      if (!sourceVisible) {
         return NextResponse.json(
           { success: false, error: 'آیتم یافت نشد' },
           { status: 404 }

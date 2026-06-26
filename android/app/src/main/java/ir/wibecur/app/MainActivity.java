@@ -1,7 +1,10 @@
 package ir.wibecur.app;
 
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.net.http.SslError;
 import android.webkit.CookieManager;
@@ -31,17 +34,25 @@ public class MainActivity extends AppCompatActivity {
         webView.setBackgroundColor(Color.parseColor("#E5E7EB"));
         setContentView(webView);
 
-        WebView.setWebContentsDebuggingEnabled(true);
+        // دیباگ ریموت WebView فقط در بیلد debug؛ در release هرگز روشن نشود
+        // (جلوگیری از اتصال DevTools به نشست احراز‌هویت‌شده روی دستگاه کاربر).
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        // محتوای mixed فقط در dev مجاز است؛ در production هرگز HTTP روی صفحهٔ HTTPS بارگذاری نشود.
+        settings.setMixedContentMode(
+            BuildConfig.DEBUG
+                ? WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                : WebSettings.MIXED_CONTENT_NEVER_ALLOW
+        );
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        // امنیت: باز شدن خودکار پنجره/پاپ‌آپ توسط JS غیرفعال شود.
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
 
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
@@ -49,6 +60,33 @@ public class MainActivity extends AppCompatActivity {
 
         webView.setWebViewClient(
             new WebViewClient() {
+                @Override
+                public boolean shouldOverrideUrlLoading(
+                    WebView view,
+                    WebResourceRequest request
+                ) {
+                    Uri uri = request.getUrl();
+                    String scheme = uri.getScheme();
+                    String host = uri.getHost();
+
+                    // فقط origin خودِ اپ داخل WebView بارگذاری شود.
+                    boolean isAppOrigin =
+                        host != null
+                            && ("https".equals(scheme))
+                            && (host.equals("app.wibe.ir") || host.endsWith(".wibe.ir"));
+                    if (isAppOrigin) {
+                        return false; // بگذار WebView خودش بارگذاری کند.
+                    }
+
+                    // هر مقصد خارجی در مرورگر سیستم باز شود (نه داخل نشست احراز‌هویت‌شده).
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                    } catch (ActivityNotFoundException ignored) {
+                        // اپ مناسبی برای این لینک نیست — نادیده بگیر.
+                    }
+                    return true;
+                }
+
                 @Override
                 public void onReceivedError(
                     WebView view,

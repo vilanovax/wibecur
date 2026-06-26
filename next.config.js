@@ -45,6 +45,14 @@ const nextConfig = {
         key: 'Strict-Transport-Security',
         value: 'max-age=63072000; includeSubDomains; preload',
       },
+      // CSP پایه و غیرمخرب: این دستورها اسکریپت/استایل را بلاک نمی‌کنند پس اپ نمی‌شکند،
+      // ولی clickjacking، تزریق <base>، و embed افزونه (object/embed) را می‌بندند.
+      // فاز بعد: افزودن script-src مبتنی بر nonce برای دفاع کامل در برابر XSS.
+      {
+        key: 'Content-Security-Policy',
+        value:
+          "base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'",
+      },
     ];
     return [
       {
@@ -66,22 +74,25 @@ const nextConfig = {
     // SVG ریموت غیرفعال — جلوگیری از XSS از طریق SVG اسکریپت‌دار.
     dangerouslyAllowSVG: false,
     contentDispositionType: 'attachment',
-    // یادداشت امنیتی: `hostname: '**'` هر هاست HTTPS را برای بهینه‌ساز مجاز می‌کند
-    // (بردار SSRF/هزینه از طریق /_next/image). محدودسازی به allowlist باید همراه با
-    // مهاجرت ImageWithFallback به next/image و ممیزی هاست‌های ذخیره‌شده در DB انجام شود (فاز ۲).
+    // امنیت: allowlist صریح هاست‌ها به‌جای `hostname: '**'` که پراکسی باز و بردار
+    // SSRF/هزینه از طریق /_next/image می‌ساخت. تصاویر ParsPack/Liara از طریق پراکسی
+    // same-origin (lib/next-image-src.ts) سرو می‌شوند؛ هاست‌های زیر آن‌هایی هستند که
+    // مستقیماً به بهینه‌ساز next/image می‌رسند (پوسترهای TMDB، ویکی‌پدیا و حالت direct ذخیره‌ساز).
+    // توجه: قبل از deploy مطمئن شو همهٔ هاست‌های تصویرِ ذخیره‌شده در DB در این فهرست هستند.
     remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-      },
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: '127.0.0.1',
-      },
+      { protocol: 'https', hostname: 'image.tmdb.org' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
+      { protocol: 'https', hostname: '**.parspack.net' },
+      { protocol: 'https', hostname: 'storage.parspack.com' },
+      { protocol: 'https', hostname: '**.liara.space' },
+      { protocol: 'https', hostname: 'app.wibe.ir' },
+      // توسعهٔ محلی فقط — در production حذف می‌شوند.
+      ...(process.env.NODE_ENV === 'development'
+        ? [
+            { protocol: 'http', hostname: 'localhost' },
+            { protocol: 'http', hostname: '127.0.0.1' },
+          ]
+        : []),
     ],
   },
   // Turbopack: ریشه پروژه = همین پوشه (برای بارگذاری صحیح .env و جلوگیری از استفاده env والد)

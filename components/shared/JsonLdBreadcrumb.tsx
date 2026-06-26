@@ -1,4 +1,5 @@
 import { buildBreadcrumbJsonLd, type BreadcrumbSchemaItem } from '@/lib/breadcrumb-schema';
+import { serializeJsonLd } from '@/lib/json-ld';
 
 interface JsonLdBreadcrumbProps {
   items: BreadcrumbSchemaItem[];
@@ -13,7 +14,7 @@ export default function JsonLdBreadcrumb({ items }: JsonLdBreadcrumbProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
     />
   );
 }

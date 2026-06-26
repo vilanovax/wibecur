@@ -37,8 +37,12 @@ export function isPhoneAuthEmail(email: string): boolean {
 }
 
 export function validateAuthPassword(password: string): string | null {
-  if (!password || password.length < 6) {
-    return 'رمز عبور باید حداقل ۶ کاراکتر باشد';
+  if (!password || password.length < 8) {
+    return 'رمز عبور باید حداقل ۸ کاراکتر باشد';
+  }
+  // bcrypt ورودی بیش از ۷۲ بایت را بی‌صدا کوتاه می‌کند؛ صریحاً محدود می‌کنیم.
+  if (password.length > 64) {
+    return 'رمز عبور نباید بیش از ۶۴ کاراکتر باشد';
   }
   return null;
 }

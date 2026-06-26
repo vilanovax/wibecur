@@ -28,6 +28,16 @@ const config: NextAuthConfig = {
           const email = resolveLoginEmail(identifier);
           if (!email) return null;
 
+          // محدودیت brute-force به‌ازای حساب (نه فقط IP — قابل دور زدن با جعل x-forwarded-for):
+          // حداکثر ۱۰ تلاش ناموفق در ۱۵ دقیقه برای هر شناسه.
+          const { checkActionRateLimit } = await import('@/lib/rate-limit');
+          const { success: underLimit } = await checkActionRateLimit(
+            `login:${email}`,
+            10,
+            '15 m'
+          );
+          if (!underLimit) return null;
+
           const { prisma } = await import('@/lib/prisma');
           const { dbQuery } = await import('@/lib/db');
           const user = await dbQuery(() =>
@@ -36,11 +46,12 @@ const config: NextAuthConfig = {
             })
           );
 
-          if (!user || !user.password) {
-            return null;
-          }
+          // مقایسهٔ ساختگی هنگام نبودِ کاربر تا کانال جانبی زمان‌بندی (account enumeration) حذف شود.
+          const DUMMY_HASH =
+            '$2a$10$CwTycUXWue0Thq9StjUM0uJ8Dg.aQH1pOQp8oV.4nq8r9pVf7tF0e';
 
-          if (!user.isActive || user.deletedAt) {
+          if (!user || !user.password || !user.isActive || user.deletedAt) {
+            bcrypt.compareSync(password, DUMMY_HASH);
             return null;
           }
 

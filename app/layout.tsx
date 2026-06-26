@@ -13,6 +13,7 @@ import MainContainer from '@/components/providers/MainContainer';
 import MaintenanceGate from '@/components/site/MaintenanceGate';
 import { SiteBrandingProvider } from '@/contexts/SiteBrandingContext';
 import { getSiteBrandingForLayout, getSiteLogoUrl } from '@/lib/site-branding';
+import { serializeJsonLd } from '@/lib/json-ld';
 import { SearchProvider } from '@/contexts/SearchContext';
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from '@/lib/seo';
 
@@ -107,7 +108,7 @@ export default async function RootLayout({
       <body className="antialiased font-sans bg-gray-200" suppressHydrationWarning>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
         <a href="#main" className="skip-link">
           رفتن به محتوای اصلی

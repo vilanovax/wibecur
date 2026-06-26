@@ -349,6 +349,11 @@ export async function getObjectByPublicUrl(
           'User-Agent': 'WibeImageProxy/1.0',
         },
         validateStatus: (s) => s === 200,
+        // امنیت SSRF: اعتبارسنجی IP مقصد در هر اتصال/ریدایرکت + سقف حجم.
+        httpAgent: ssrfSafeHttpAgent,
+        httpsAgent: ssrfSafeHttpsAgent,
+        maxRedirects: 2,
+        maxContentLength: 25 * 1024 * 1024,
       });
       if (!res.data) return null;
       const contentType = res.headers['content-type'];
@@ -420,6 +425,11 @@ export async function getObjectByStorageKey(
         timeout: 12000,
         headers: { Accept: 'image/*' },
         validateStatus: (s) => s === 200,
+        // امنیت SSRF: اعتبارسنجی IP مقصد + سقف حجم (legacyUrl می‌تواند از ورودی کاربر بیاید).
+        httpAgent: ssrfSafeHttpAgent,
+        httpsAgent: ssrfSafeHttpsAgent,
+        maxRedirects: 2,
+        maxContentLength: 25 * 1024 * 1024,
       });
       if (!res.data) continue;
       const contentType = res.headers['content-type'];

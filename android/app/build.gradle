@@ -18,9 +18,15 @@ android {
     }
     buildTypes {
         release {
+            // امنیت: بیلد release هرگز debuggable نباشد (مکمل گیت BuildConfig.DEBUG در MainActivity).
+            debuggable false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    buildFeatures {
+        // برای دسترسی به BuildConfig.DEBUG در کد (AGP 8 به‌صورت پیش‌فرض خاموش است).
+        buildConfig true
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
