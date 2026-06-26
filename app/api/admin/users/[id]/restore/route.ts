@@ -5,6 +5,8 @@ import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalUser } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
+import { isAdminRole } from '@/lib/auth/roles';
+import { assertCanModifyAdmin } from '@/lib/auth/admin-guards';
 
 /** POST: بازگردانی کاربر از زباله‌دان */
 export async function POST(
@@ -22,6 +24,22 @@ export async function POST(
     }
     if (!existing.deletedAt) {
       return NextResponse.json({ error: 'این کاربر در زباله‌دان نیست' }, { status: 400 });
+    }
+
+    // امنیت: بازگردانی/تغییر کاربرِ ادمین نیازمند manage_roles + سلسله‌مراتب نقش است.
+    if (isAdminRole(existing.role)) {
+      const roleManager = await requirePermission('manage_roles');
+      if (roleManager instanceof NextResponse) return roleManager;
+      const guardError = await assertCanModifyAdmin(
+        roleManager.id,
+        roleManager.role,
+        existing.id,
+        existing.role,
+        true
+      );
+      if (guardError) {
+        return NextResponse.json({ error: guardError }, { status: 403 });
+      }
     }
 
     const updated = await prisma.users.update({

@@ -32,6 +32,11 @@ Dockerfile*
 docker-compose*.yml
 .dockerignore
 
+# legacy bundled sub-project (Vite app + Express "kavosh-backend") — not used by
+# the Next app. Excluded so its source and committed .env secrets never enter the
+# build context or get traced into .next/standalone.
+wibe/
+
 # misc
 .DS_Store
 *.pem

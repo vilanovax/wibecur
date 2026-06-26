@@ -34,6 +34,7 @@ export async function POST(
         where: { id: commentId },
         select: {
           id: true,
+          userId: true,
           helpfulUp: true,
           helpfulDown: true,
           likeCount: true,
@@ -43,6 +44,14 @@ export async function POST(
 
     if (!comment) {
       return NextResponse.json({ success: false, error: 'نظر یافت نشد' }, { status: 404 });
+    }
+
+    // امنیت: رای دادن به نظر خود مجاز نیست (جلوگیری از دستکاری امتیاز/رتبه).
+    if (comment.userId === userId) {
+      return NextResponse.json(
+        { success: false, error: 'نمی‌توانید به نظر خودتان رای دهید' },
+        { status: 403 }
+      );
     }
 
     const existing = await dbQuery(() =>

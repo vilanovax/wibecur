@@ -8,8 +8,12 @@ import { fetchSharedLists } from '@/lib/list-collaboration';
 /** GET /api/user/shared-lists */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get('page') || '1', 10);
-  const limit = parseInt(searchParams.get('limit') || '20', 10);
+  // محدودسازی برای جلوگیری از resource exhaustion.
+  const page = Math.max(parseInt(searchParams.get('page') || '1', 10) || 1, 1);
+  const limit = Math.min(
+    Math.max(parseInt(searchParams.get('limit') || '20', 10) || 20, 1),
+    50
+  );
 
   try {
     const session = await auth();

@@ -96,6 +96,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // امنیت: این endpoint دسته‌های inactive/trash و متادیتای ادمین را برمی‌گرداند؛
+    // باید احراز هویت ادمین شود (قبلاً GET بدون هیچ guard بود).
+    await requireAdmin();
+
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get('includeInactive') === 'true';
     const trash = searchParams.get('trash') === 'true';

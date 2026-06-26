@@ -10,8 +10,12 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get('categoryId');
     const search = searchParams.get('search');
     const sort = searchParams.get('sort') || 'newest'; // newest, popular, mostViewed
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    // محدودسازی برای جلوگیری از resource exhaustion (limit/page بزرگ یا منفی).
+    const page = Math.max(parseInt(searchParams.get('page') || '1', 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get('limit') || '20', 10) || 20, 1),
+      50
+    );
     const skip = (page - 1) * limit;
 
     // Build where clause
@@ -70,7 +74,6 @@ export async function GET(request: NextRequest) {
               select: {
                 id: true,
                 name: true,
-                email: true,
                 image: true,
               },
             },

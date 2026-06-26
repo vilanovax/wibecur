@@ -34,6 +34,14 @@ export async function POST(
       );
     }
 
+    // امنیت: لایک‌کردن نظر خود مجاز نیست (جلوگیری از دستکاری امتیاز/رتبه).
+    if (comment.userId === userId) {
+      return NextResponse.json(
+        { success: false, error: 'نمی‌توانید نظر خودتان را لایک کنید' },
+        { status: 403 }
+      );
+    }
+
     // Check if already liked
     const existingLike = await prisma.comment_likes.findFirst({
       where: {

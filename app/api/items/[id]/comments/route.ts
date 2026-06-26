@@ -46,7 +46,6 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                email: true,
                 username: true,
                 image: true,
                 avatarType: true,
@@ -150,7 +149,6 @@ export async function GET(
         user: {
           id: comment.users.id,
           name: comment.users.name || 'کاربر ناشناس',
-          email: comment.users.email,
           username: comment.users.username ?? null,
           image: comment.users.image,
           avatarType: comment.users.avatarType ?? 'DEFAULT',
@@ -397,7 +395,6 @@ export async function POST(
             select: {
               id: true,
               name: true,
-              email: true,
               image: true,
             },
           },
@@ -445,7 +442,6 @@ export async function POST(
           user: {
             id: comment.users.id,
             name: comment.users.name || 'کاربر ناشناس',
-            email: comment.users.email,
             image: comment.users.image,
           },
           isLiked: false,

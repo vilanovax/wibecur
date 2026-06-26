@@ -23,6 +23,9 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
+  // ریشهٔ tracing را همین پوشه نگه دار تا فایل‌های جانبی (مثل wibe/ قدیمی) به
+  // .next/standalone کشیده نشوند.
+  outputFileTracingRoot: path.resolve(__dirname),
   // native module — must not be bundled; lazy-loaded via lib/get-sharp.ts
   serverExternalPackages: ['sharp'],
   generateBuildId: async () => BUILD_ID,

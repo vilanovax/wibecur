@@ -68,7 +68,6 @@ export async function GET(
             select: {
               id: true,
               name: true,
-              email: true,
               username: true,
               image: true,
               curatorLevel: true,
@@ -84,7 +83,6 @@ export async function GET(
                 select: {
                   id: true,
                   name: true,
-                  email: true,
                   username: true,
                   image: true,
                   curatorLevel: true,
@@ -448,7 +446,6 @@ export async function POST(
               select: {
                 id: true,
                 name: true,
-                email: true,
                 image: true,
               },
             },
