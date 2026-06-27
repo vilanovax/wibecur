@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { enrichPersonFromTmdbByName } from '@/lib/person-enrich/tmdb-person';
-import { getPersonProfile, upsertPersonProfile } from '@/lib/person-profiles-server';
+import { getPersonProfileFlexible, upsertPersonProfile } from '@/lib/person-profiles-server';
+import { uploadPersonImageToStorage } from '@/lib/person-image-storage';
 import { isPersonRole } from '@/lib/people';
 import { resolvePersonPage } from '@/lib/people-server';
 
@@ -27,18 +28,28 @@ export async function POST(
       );
     }
 
-    const existing = await getPersonProfile(prisma, roleRaw, slug);
-    const pageData = await resolvePersonPage(prisma, roleRaw, slug);
-    const searchName = existing?.displayName ?? pageData?.displayName ?? slug.replace(/-/g, ' ');
+    const pageData = await resolvePersonPage(prisma, roleRaw, slug, { forAdmin: true });
+    const displayNameGuess = pageData?.displayName ?? slug.replace(/-/g, ' ');
+    const existing = await getPersonProfileFlexible(prisma, roleRaw, slug, displayNameGuess);
+    const searchName = existing?.displayName ?? displayNameGuess;
 
-    const enriched = await enrichPersonFromTmdbByName(searchName);
+    const enriched = await enrichPersonFromTmdbByName(searchName, {
+      slug,
+      externalUrl: existing?.externalUrl ?? null,
+    });
+
+    let imageUrl = enriched.imageUrl;
+    if (imageUrl) {
+      const stored = await uploadPersonImageToStorage(imageUrl);
+      if (stored.ok) imageUrl = stored.url;
+    }
 
     const profile = await upsertPersonProfile(prisma, {
       role: roleRaw,
       slug,
       displayName: enriched.displayName,
       bio: enriched.bio,
-      imageUrl: enriched.imageUrl,
+      imageUrl,
       tmdbId: enriched.tmdbId,
       externalUrl: enriched.externalUrl,
       status: existing?.status ?? 'published',

@@ -21,7 +21,6 @@ import {
   Megaphone,
   Trash2,
   Shield,
-  UserRound,
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
@@ -45,11 +44,19 @@ const PRIMARY: NavItem[] = [
     label: 'لیست‌ها',
     icon: List,
     permission: 'manage_lists',
-    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items', '/admin/people'],
+    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items'],
   },
-  { href: '/admin/people', label: 'اشخاص', icon: UserRound, permission: 'manage_lists' },
-  { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
-  { href: '/admin/admins', label: 'ادمین‌ها', icon: Shield, permission: 'manage_roles' },
+  {
+    href: '/admin/users',
+    label: 'کاربران',
+    icon: Users,
+    permission: 'manage_users',
+    matchPrefixes: ['/admin/users', '/admin/admins'],
+    submenu: [
+      { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
+      { href: '/admin/admins', label: 'ادمین‌ها', icon: Shield, permission: 'manage_roles' },
+    ],
+  },
 ];
 
 const INTELLIGENCE: NavItem[] = [

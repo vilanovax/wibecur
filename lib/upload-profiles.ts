@@ -25,6 +25,7 @@ const PURPOSE_TARGETS: Record<string, UploadTarget> = {
   'site-logo': { folder: 'site', profile: 'siteLogo' },
   avatar: { folder: 'avatars', profile: 'avatar' },
   item: { folder: 'items', profile: 'itemImage' },
+  people: { folder: 'people', profile: 'avatar' },
 };
 
 export function resolveUploadTarget(
@@ -44,6 +45,7 @@ export function resolveUploadTarget(
   if (fallbackFolder === 'items' || fallbackFolder === 'movies') {
     return PURPOSE_TARGETS.item;
   }
+  if (fallbackFolder === 'people') return PURPOSE_TARGETS.people;
 
   return { folder: fallbackFolder, profile: 'default' };
 }

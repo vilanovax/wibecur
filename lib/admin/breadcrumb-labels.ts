@@ -5,7 +5,7 @@ export const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/kpi': 'داشبورد رشد',
   '/admin/categories': 'دسته‌بندی‌ها',
   '/admin/categories/new': 'دسته جدید',
-  '/admin/lists': 'لیست‌ها',
+  '/admin/lists': 'لیست‌ها و محتوا',
   '/admin/items': 'لیست‌ها',
   '/admin/items/new': 'موجودیت جدید',
   '/admin/items/import': 'لیست‌ها',

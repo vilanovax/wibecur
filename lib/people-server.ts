@@ -6,12 +6,13 @@ import { dbQuery } from '@/lib/db';
 import { prisma } from '@/lib/prisma';
 import { publicItemWhere, publicListWhere } from '@/lib/public-content-filters';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
-import { getPersonProfile, personPageCacheTag } from '@/lib/person-profiles-server';
+import { getPersonProfileFlexible, personPageCacheTag } from '@/lib/person-profiles-server';
 import {
   buildPersonBioStub,
   extractPersonNamesFromMetadata,
   mergeItemMetadata,
   nameMatchesSlug,
+  personItemDedupeKey,
   PERSON_ROLE_META,
   type PersonPageData,
   type PersonPageItem,
@@ -61,39 +62,82 @@ function itemMatchesPerson(
   return names.some((name) => nameMatchesSlug(name, slug));
 }
 
-export async function resolvePersonPage(
+/** همان محدودهٔ اسکن discoverPeopleFromItems — actors اغلب JSON array است */
+const PERSON_ITEM_SCAN_LIMIT = 5000;
+
+const personItemSelect = {
+  id: true,
+  title: true,
+  catalogItemId: true,
+  imageUrl: true,
+  rating: true,
+  metadata: true,
+  catalog_items: { select: { metadata: true } },
+  lists: {
+    select: {
+      slug: true,
+      categories: { select: { slug: true, icon: true } },
+    },
+  },
+} as const;
+
+type PersonItemRow = {
+  id: string;
+  title: string;
+  catalogItemId: string | null;
+  imageUrl: string | null;
+  rating: number | null;
+  metadata: unknown;
+  catalog_items: { metadata: unknown } | null;
+  lists: {
+    slug: string;
+    categories: { slug: string; icon: string | null } | null;
+  };
+};
+
+async function findPublicItemsForPerson(
   client: PrismaClient,
   role: PersonRole,
   slug: string
-): Promise<PersonPageData | null> {
+): Promise<PersonItemRow[]> {
   const pattern = slugToSearchPattern(slug);
-  if (!pattern) return null;
+  if (!pattern) return [];
 
-  const rows = await client.items.findMany({
+  // مسیر سریع — برای director/author که metadata رشته‌ای است
+  const filtered = await client.items.findMany({
     where: {
       ...publicItemWhere,
       lists: publicListWhere,
       OR: buildPersonSearchWhere(role, pattern),
     },
-    select: {
-      id: true,
-      title: true,
-      imageUrl: true,
-      rating: true,
-      metadata: true,
-      catalog_items: { select: { metadata: true } },
-      lists: {
-        select: {
-          slug: true,
-          categories: { select: { slug: true, icon: true } },
-        },
-      },
-    },
+    select: personItemSelect,
     orderBy: [{ title: 'asc' }],
-    take: 250,
+    take: 500,
   });
 
-  const matched = rows.filter((row) => itemMatchesPerson(row, role, slug));
+  const fastMatches = filtered.filter((row) => itemMatchesPerson(row, role, slug));
+  if (fastMatches.length > 0) return fastMatches;
+
+  // fallback: اسکن در حافظه — actors معمولاً آرایه JSON است و Prisma string_contains آن را نمی‌بیند
+  const scanned = await client.items.findMany({
+    where: {
+      ...publicItemWhere,
+      lists: publicListWhere,
+    },
+    select: personItemSelect,
+    take: PERSON_ITEM_SCAN_LIMIT,
+  });
+
+  return scanned.filter((row) => itemMatchesPerson(row, role, slug));
+}
+
+export async function resolvePersonPage(
+  client: PrismaClient,
+  role: PersonRole,
+  slug: string,
+  options?: { forAdmin?: boolean }
+): Promise<PersonPageData | null> {
+  const matched = await findPublicItemsForPerson(client, role, slug);
   if (matched.length === 0) return null;
 
   const displayName =
@@ -102,24 +146,20 @@ export async function resolvePersonPage(
       role
     ).find((name) => nameMatchesSlug(name, slug)) ?? slugToSearchPattern(slug);
 
-  const profile = await getPersonProfile(client, role, slug);
+  const profile = await getPersonProfileFlexible(client, role, slug, displayName);
   const roleLabel = PERSON_ROLE_META[role].label;
-  const publishedProfile = profile?.status === 'published' ? profile : null;
+  const profileForDisplay =
+    options?.forAdmin || profile?.status === 'published' ? profile : null;
 
-  const finalDisplayName = publishedProfile?.displayName ?? displayName;
-  const bio =
-    publishedProfile?.bio?.trim() ||
-    buildPersonBioStub(role, matched.length, roleLabel);
-  const bioIsStub = !publishedProfile?.bio?.trim();
-  const imageUrl = publishedProfile?.imageUrl ?? null;
-  const externalUrl = publishedProfile?.externalUrl ?? null;
+  const finalDisplayName = profileForDisplay?.displayName ?? displayName;
 
   const seen = new Set<string>();
   const items: PersonPageItem[] = [];
 
   for (const row of matched) {
-    if (seen.has(row.id)) continue;
-    seen.add(row.id);
+    const dedupeKey = personItemDedupeKey(row);
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
 
     const metadata = mergeItemMetadata(row.metadata, row.catalog_items?.metadata);
     const categorySlug = row.lists.categories?.slug ?? null;
@@ -142,14 +182,20 @@ export async function resolvePersonPage(
     });
   }
 
+  const bioIsStub = !profileForDisplay?.bio?.trim();
+  const finalBio =
+    profileForDisplay?.bio?.trim() ||
+    buildPersonBioStub(role, items.length, roleLabel);
+
   return {
     role,
     slug,
     displayName: finalDisplayName,
-    bio,
+    bio: finalBio,
     bioIsStub,
-    imageUrl,
-    externalUrl,
+    imageUrl: profileForDisplay?.imageUrl ?? null,
+    externalUrl: profileForDisplay?.externalUrl ?? null,
+    profileStatus: profile?.status ?? null,
     items,
   };
 }

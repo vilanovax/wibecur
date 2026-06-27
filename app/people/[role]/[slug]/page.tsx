@@ -43,7 +43,7 @@ export default async function PersonPage({
   }
 
   const data = await getCachedPersonPage(role, slug);
-  if (!data || data.items.length === 0) {
+  if (!data || data.items.length === 0 || data.profileStatus === 'draft') {
     notFound();
   }
 

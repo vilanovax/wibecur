@@ -3,10 +3,11 @@ import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import {
   getPersonProfile,
+  getPersonProfileFlexible,
   upsertPersonProfile,
 } from '@/lib/person-profiles-server';
 import type { PersonProfileStatus } from '@/lib/person-profiles';
-import { isPersonRole, personPagePath } from '@/lib/people';
+import { isPersonRole, personPublicPath } from '@/lib/people';
 import { resolvePersonPage } from '@/lib/people-server';
 
 type RouteParams = { role: string; slug: string };
@@ -28,10 +29,13 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'نقش نامعتبر' }, { status: 400 });
     }
 
-    const [profile, pageData] = await Promise.all([
-      getPersonProfile(prisma, roleRaw, slug),
-      resolvePersonPage(prisma, roleRaw, slug),
-    ]);
+    const pageData = await resolvePersonPage(prisma, roleRaw, slug, { forAdmin: true });
+    const profile = await getPersonProfileFlexible(
+      prisma,
+      roleRaw,
+      slug,
+      pageData?.displayName
+    );
 
     return NextResponse.json({
       success: true,
@@ -41,9 +45,14 @@ export async function GET(
           ? {
               displayName: pageData.displayName,
               itemCount: pageData.items.length,
-              publicPath: personPagePath(roleRaw, pageData.displayName),
+              publicPath: personPublicPath(roleRaw, slug),
+              isPublicReady:
+                pageData.items.length > 0 &&
+                profile?.status === 'published' &&
+                Boolean(profile?.bio?.trim()),
             }
           : null,
+        publicPreview: pageData,
       },
     });
   } catch (error: unknown) {

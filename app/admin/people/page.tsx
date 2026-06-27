@@ -1,5 +1,5 @@
+import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth';
-import PeoplePageClient from '@/components/admin/people/PeoplePageClient';
 
 export const metadata = {
   title: 'اشخاص | پنل مدیریت',
@@ -8,6 +8,5 @@ export const metadata = {
 
 export default async function AdminPeoplePage() {
   await requireAdmin();
-
-  return <PeoplePageClient />;
+  redirect('/admin/lists?view=people');
 }

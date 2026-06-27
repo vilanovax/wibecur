@@ -14,6 +14,7 @@ export const ADMIN_CACHE_TAGS = {
   comments: 'admin-comments',
   commentReports: 'admin-comment-reports',
   analytics: 'admin-analytics',
+  people: 'admin-people-discovery',
 } as const;
 
 export function revalidateAdminListsCache() {
@@ -33,6 +34,10 @@ export function revalidateAdminCommentsCache() {
   revalidateTag(ADMIN_CACHE_TAGS.commentReports, 'max');
 }
 
+export function revalidateAdminPeopleCache() {
+  revalidateTag(ADMIN_CACHE_TAGS.people, 'max');
+}
+
 export function revalidateAdminListsAndCategoriesCache() {
   revalidateAdminListsCache();
   revalidateAdminCategoriesCache();
@@ -45,4 +50,5 @@ export function revalidateAdminPanelCaches() {
   revalidateAdminCategoriesCache();
   revalidateAdminUsersCache();
   revalidateAdminCommentsCache();
+  revalidateAdminPeopleCache();
 }

@@ -5,7 +5,7 @@ import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import ConfirmBottomSheet from '@/components/mobile/shared/ConfirmBottomSheet';
 import Toast from '@/components/shared/Toast';
 import AvatarSelectionSheet from './AvatarSelectionSheet';
-import { Camera, Check, Loader2, XCircle } from 'lucide-react';
+import { Camera, Check, Eye, EyeOff, KeyRound, Loader2, XCircle } from 'lucide-react';
 import { VIBE_AVATARS, isUserEliteLevel } from '@/lib/vibe-avatars';
 import type { CuratorLevelKey } from '@/lib/curator';
 import { getLevelConfig } from '@/lib/curator';
@@ -104,6 +104,48 @@ function ToggleRow({
             {description}
           </span>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  autoComplete?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <div className="relative">
+        <input
+          id={id}
+          type={visible ? 'text' : 'password'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          className={`${inputClass} pe-10`}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          className="absolute end-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-wibe-secondary hover:bg-gray-100"
+          aria-label={visible ? 'مخفی کردن رمز' : 'نمایش رمز'}
+        >
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
       </div>
     </div>
   );
@@ -214,6 +256,12 @@ export default function EditProfileSheet2({
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<UsernameCheckStatus>('idle');
   const [usernameHint, setUsernameHint] = useState('');
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const prevOpenRef = useRef(false);
   const usernameCheckSeq = useRef(0);
 
@@ -237,6 +285,18 @@ export default function EditProfileSheet2({
       setUsernameStatus('idle');
       setUsernameHint('');
       setShowDiscardConfirm(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordError('');
+      setHasPassword(null);
+      void fetch('/api/user/password')
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.success) setHasPassword(Boolean(json.hasPassword));
+          else setHasPassword(false);
+        })
+        .catch(() => setHasPassword(false));
     }
   }, [isOpen, user]);
 
@@ -401,6 +461,34 @@ export default function EditProfileSheet2({
       setError(err instanceof Error ? err.message : 'خطا در ذخیره');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('هر سه فیلد رمز را پر کنید');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const res = await fetch('/api/user/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در تغییر رمز');
+      }
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setToast({ message: data.message || 'رمز عبور تغییر کرد', type: 'success' });
+    } catch (err: unknown) {
+      setPasswordError(err instanceof Error ? err.message : 'خطا در تغییر رمز');
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -633,6 +721,80 @@ export default function EditProfileSheet2({
               <p className="mt-1.5 text-right wibe-caption text-wibe-secondary">
                 در پروفایل عمومی نمایش داده می‌شود
               </p>
+            </section>
+
+            <div className="my-4 h-px bg-wibe" aria-hidden />
+
+            {/* Password */}
+            <section>
+              <div className="mb-3 flex items-center justify-end gap-2">
+                <h3 className="wibe-caption font-semibold uppercase tracking-wide text-wibe-secondary">
+                  رمز عبور
+                </h3>
+                <KeyRound className="h-4 w-4 text-wibe-secondary" aria-hidden />
+              </div>
+              {hasPassword === null ? (
+                <p className="text-right wibe-caption text-wibe-secondary animate-pulse">
+                  در حال بررسی…
+                </p>
+              ) : hasPassword === false ? (
+                <p className="text-right wibe-caption leading-relaxed text-wibe-secondary">
+                  برای این حساب رمز تنظیم نشده است.
+                </p>
+              ) : (
+                <div className="space-y-3 rounded-2xl border border-wibe bg-wibe-card p-3">
+                  {passwordError && (
+                    <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 wibe-caption text-red-600">
+                      {passwordError}
+                    </p>
+                  )}
+                  <PasswordField
+                    id="edit-current-password"
+                    label="رمز فعلی"
+                    value={currentPassword}
+                    onChange={setCurrentPassword}
+                    autoComplete="current-password"
+                  />
+                  <PasswordField
+                    id="edit-new-password"
+                    label="رمز جدید"
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    placeholder="حداقل ۸ کاراکتر"
+                    autoComplete="new-password"
+                  />
+                  <PasswordField
+                    id="edit-confirm-password"
+                    label="تکرار رمز جدید"
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    autoComplete="new-password"
+                  />
+                  <p className="text-right wibe-caption text-wibe-secondary">
+                    پس از تغییر، با رمز جدید وارد شوید.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void handleChangePassword()}
+                    disabled={
+                      isChangingPassword ||
+                      !currentPassword ||
+                      !newPassword ||
+                      !confirmPassword
+                    }
+                    className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/5 wibe-small font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-45"
+                  >
+                    {isChangingPassword ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        در حال تغییر…
+                      </>
+                    ) : (
+                      'تغییر رمز عبور'
+                    )}
+                  </button>
+                </div>
+              )}
             </section>
 
             <div className="my-4 h-px bg-wibe" aria-hidden />

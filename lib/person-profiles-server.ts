@@ -3,20 +3,16 @@ import 'server-only';
 import { revalidateTag } from 'next/cache';
 import type { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { publicItemWhere, publicListWhere } from '@/lib/public-content-filters';
-import {
-  extractPersonNamesFromMetadata,
-  mergeItemMetadata,
-  personSlug,
-  type PersonRole,
-  PERSON_ROLES,
-} from '@/lib/people';
+import { revalidateAdminPeopleCache } from '@/lib/admin/admin-cache';
+import { queryCachedDiscoveredPeople } from '@/lib/admin/person-discovery-cached';
+import { findBestProfileForDiscoveredEntry, extractImdbNameId, type PersonRole } from '@/lib/people';
 import type {
-  DiscoveredPerson,
   DiscoverPeopleResult,
   PersonProfileRecord,
   PersonProfileStatus,
 } from '@/lib/person-profiles';
+
+export { buildDiscoveredPeopleList } from '@/lib/person-discovery-build';
 
 export function personPageCacheTag(role: PersonRole, slug: string): string {
   return `person-${role}-${slug}`;
@@ -37,6 +33,30 @@ export async function getPersonProfile(
   });
   if (!row) return null;
   return row as PersonProfileRecord;
+}
+
+/** پروفایل با تطبیق انعطاف‌پذیر slug — برای import با slug متفاوت از کشف آیتم‌ها */
+export async function getPersonProfileFlexible(
+  client: PrismaClient,
+  role: PersonRole,
+  slug: string,
+  displayName?: string
+): Promise<PersonProfileRecord | null> {
+  const candidates = await client.person_profiles.findMany({ where: { role } });
+  const best = findBestProfileForDiscoveredEntry(
+    { role, slug, displayName: displayName?.trim() || slug },
+    candidates.map((p) => ({
+      role: p.role as PersonRole,
+      slug: p.slug,
+      displayName: p.displayName,
+      bio: p.bio,
+      externalUrl: p.externalUrl,
+      status: p.status as PersonProfileStatus,
+    }))
+  );
+  if (!best) return null;
+  const row = candidates.find((p) => p.role === best.role && p.slug === best.slug);
+  return row ? (row as PersonProfileRecord) : null;
 }
 
 export async function upsertPersonProfile(
@@ -75,123 +95,51 @@ export async function upsertPersonProfile(
   });
 
   revalidatePersonPageCache(data.role, data.slug);
+  revalidateAdminPeopleCache();
   return row as PersonProfileRecord;
 }
 
-/** کشف اشخاص از metadata آیتم‌های منتشرشده */
+/** قبل از import — IMDb تکراری روی slug دیگر را پاک می‌کند (مثلاً Jamie روی geena-davis) */
+export async function clearImdbUrlConflictsForImport(
+  client: PrismaClient,
+  role: PersonRole,
+  slug: string,
+  externalUrl: string | null | undefined
+): Promise<number> {
+  const imdbId = extractImdbNameId(externalUrl);
+  if (!imdbId) return 0;
+
+  const conflicts = await client.person_profiles.findMany({
+    where: {
+      role,
+      slug: { not: slug },
+      externalUrl: { contains: `nm${imdbId}` },
+    },
+    select: { role: true, slug: true },
+  });
+
+  for (const conflict of conflicts) {
+    await client.person_profiles.update({
+      where: { role_slug: { role: conflict.role, slug: conflict.slug } },
+      data: { externalUrl: null },
+    });
+    revalidatePersonPageCache(conflict.role as PersonRole, conflict.slug);
+  }
+
+  return conflicts.length;
+}
+
+/** کشف اشخاص از metadata آیتم‌های منتشرشده — با کش ۱۲۰ ثانیه‌ای */
 export async function discoverPeopleFromItems(
-  client: PrismaClient = prisma,
+  _client: PrismaClient = prisma,
   options?: {
     role?: PersonRole;
     q?: string;
     limit?: number;
     page?: number;
     missingBioOnly?: boolean;
+    skipPagination?: boolean;
   }
 ): Promise<DiscoverPeopleResult> {
-  const rows = await client.items.findMany({
-    where: {
-      ...publicItemWhere,
-      lists: publicListWhere,
-    },
-    select: {
-      id: true,
-      metadata: true,
-      catalog_items: { select: { metadata: true } },
-    },
-    take: 5000,
-  });
-
-  const map = new Map<
-    string,
-    { role: PersonRole; slug: string; displayName: string; itemIds: Set<string> }
-  >();
-
-  for (const row of rows) {
-    const merged = mergeItemMetadata(row.metadata, row.catalog_items?.metadata);
-    const roles = options?.role ? [options.role] : PERSON_ROLES;
-
-    for (const role of roles) {
-      const names = extractPersonNamesFromMetadata(merged, role);
-      for (const name of names) {
-        const slug = personSlug(name);
-        const key = `${role}:${slug}`;
-        const existing = map.get(key);
-        if (existing) {
-          existing.itemIds.add(row.id);
-        } else {
-          map.set(key, {
-            role,
-            slug,
-            displayName: name.trim(),
-            itemIds: new Set([row.id]),
-          });
-        }
-      }
-    }
-  }
-
-  const profiles = await client.person_profiles.findMany({
-    where: options?.role ? { role: options.role } : undefined,
-    select: { role: true, slug: true, status: true, bio: true },
-  });
-  const profileMap = new Map(
-    profiles.map((p) => [
-      `${p.role}:${p.slug}`,
-      {
-        status: p.status as PersonProfileStatus,
-        hasBio: Boolean(p.bio?.trim()),
-      },
-    ])
-  );
-
-  let discovered: DiscoveredPerson[] = Array.from(map.values()).map((entry) => {
-    const key = `${entry.role}:${entry.slug}`;
-    const profile = profileMap.get(key);
-    const status = profile?.status ?? null;
-    return {
-      role: entry.role,
-      slug: entry.slug,
-      displayName: entry.displayName,
-      itemCount: entry.itemIds.size,
-      hasProfile: status != null,
-      hasBio: profile?.hasBio ?? false,
-      profileStatus: status,
-    };
-  });
-
-  const q = options?.q?.trim().toLowerCase();
-  if (q) {
-    discovered = discovered.filter(
-      (p) =>
-        p.displayName.toLowerCase().includes(q) ||
-        p.slug.includes(q.replace(/\s+/g, '-'))
-    );
-  }
-
-  const stats = {
-    total: discovered.length,
-    withBio: discovered.filter((p) => p.hasBio).length,
-    withProfile: discovered.filter((p) => p.hasProfile).length,
-    missingBio: discovered.filter((p) => !p.hasBio).length,
-  };
-
-  if (options?.missingBioOnly) {
-    discovered = discovered.filter((p) => !p.hasBio);
-  }
-
-  discovered.sort((a, b) => b.itemCount - a.itemCount || a.displayName.localeCompare(b.displayName));
-
-  const limit = Math.min(Math.max(options?.limit ?? 50, 1), 100);
-  const page = Math.max(options?.page ?? 1, 1);
-  const total = discovered.length;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * limit;
-
-  return {
-    people: discovered.slice(start, start + limit),
-    stats,
-    pagination: { page: safePage, limit, total, totalPages },
-  };
+  return queryCachedDiscoveredPeople(options);
 }

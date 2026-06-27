@@ -1,4 +1,5 @@
 import type { PersonRole } from '@/lib/people';
+import { personIdentityMatches, personSlugsMatch } from '@/lib/people';
 
 export type PersonProfileStatus = 'draft' | 'published';
 
@@ -45,3 +46,19 @@ export type DiscoverPeopleResult = {
   stats: DiscoverPeopleStats;
   pagination: DiscoverPeoplePagination;
 };
+
+export function findDiscoveredPersonMatch(
+  discovered: DiscoveredPerson[],
+  item: {
+    role: PersonRole;
+    slug: string;
+    displayName: string;
+    externalUrl?: string | null;
+  }
+): DiscoveredPerson | undefined {
+  const slugMatch = discovered.find(
+    (person) => person.role === item.role && personSlugsMatch(person.slug, item.slug)
+  );
+  if (slugMatch) return slugMatch;
+  return discovered.find((p) => personIdentityMatches(p, item));
+}

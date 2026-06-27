@@ -4,14 +4,16 @@ import { prisma } from '@/lib/prisma';
 import { getDecryptedSettings } from '@/lib/settings';
 import {
   formatOpenAIError,
+  extractChatCompletionText,
   normalizeOpenAICompletionOptions,
 } from '@/lib/openai-chat';
 import { resolveOpenAIModel } from '@/lib/openai-models';
-import { resolveDeepSeekModel } from '@/lib/deepseek-models';
+import { DEFAULT_DEEPSEEK_MODEL, resolveDeepSeekModel } from '@/lib/deepseek-models';
 import {
   commentAiProviderLabel,
   resolveCommentAiProvider,
   type CommentAiProvider,
+  type PersonBioAiSettings,
 } from '@/lib/comment-ai-provider';
 import { PERSON_ROLE_META, type PersonRole } from '@/lib/people';
 import type { DiscoveredPerson } from '@/lib/person-profiles';
@@ -59,7 +61,7 @@ export function buildPersonBioJsonSchemaDoc(): string {
           slug: 'slug-لاتین-از-لیست',
           displayName: 'نام نمایشی فارسی یا انگلیسی',
           bio: '۲ تا ۴ جمله فارسی، مناسب صفحه پروفایل',
-          imageUrl: 'https://… (اختیاری)',
+          imageUrl: 'https://… (اختیاری — پس از import با «آپلود خارجی‌ها» به ParsPack منتقل می‌شود)',
           externalUrl: 'https://… (اختیاری)',
           status: 'published | draft (اختیاری)',
         },
@@ -99,12 +101,7 @@ ${lines.join('\n')}`;
 }
 
 export function formatMissingBioCopyList(people: DiscoveredPerson[]): string {
-  return people
-    .map(
-      (p) =>
-        `${PERSON_ROLE_META[p.role].label}\t${p.displayName}\t${p.slug}\t${p.itemCount} آیتم`
-    )
-    .join('\n');
+  return people.map((p) => p.displayName).join('\n');
 }
 
 export async function getPersonBioAiProvider(): Promise<CommentAiProvider> {
@@ -132,19 +129,83 @@ export async function setPersonBioAiProvider(provider: CommentAiProvider): Promi
   });
 }
 
+type PersonBioKeySettings = {
+  openaiApiKey: string | null;
+  deepseekApiKey: string | null;
+};
+
+/** provider انتخاب‌شده را با fallback به کلید موجود resolve می‌کند */
+export function resolvePersonBioChatProvider(
+  preferred: CommentAiProvider,
+  settings: PersonBioKeySettings
+): CommentAiProvider {
+  const hasOpenai = Boolean(settings.openaiApiKey?.trim());
+  const hasDeepseek = Boolean(settings.deepseekApiKey?.trim());
+
+  if (preferred === 'deepseek' && hasDeepseek) return 'deepseek';
+  if (preferred === 'openai' && hasOpenai) return 'openai';
+  if (hasOpenai) return 'openai';
+  if (hasDeepseek) return 'deepseek';
+
+  throw new Error(
+    'هیچ کلید هوش مصنوعی فعال نیست — در تنظیمات → یکپارچه‌سازی کلید OpenAI یا DeepSeek را وارد کنید'
+  );
+}
+
+export async function getPersonBioAiSettings(): Promise<PersonBioAiSettings> {
+  const [personBioAiProvider, settings] = await Promise.all([
+    getPersonBioAiProvider(),
+    getDecryptedSettings(),
+  ]);
+  const openaiConfigured = Boolean(settings.openaiApiKey?.trim());
+  const deepseekConfigured = Boolean(settings.deepseekApiKey?.trim());
+  const providerReady = openaiConfigured || deepseekConfigured;
+
+  let effectiveProvider: CommentAiProvider | null = null;
+  if (providerReady) {
+    effectiveProvider = resolvePersonBioChatProvider(personBioAiProvider, settings);
+  }
+
+  return {
+    personBioAiProvider,
+    providerLabel: commentAiProviderLabel(personBioAiProvider),
+    openaiConfigured,
+    deepseekConfigured,
+    providerReady,
+    effectiveProvider,
+    fallbackActive:
+      effectiveProvider != null && effectiveProvider !== personBioAiProvider,
+  };
+}
+
+export function personBioAiErrorStatus(message: string): number {
+  if (message.includes('Unauthorized')) return 401;
+  if (message.includes('درخواست‌های زیاد')) return 429;
+  if (
+    message.includes('کلید') ||
+    message.includes('تنظیمات') ||
+    message.includes('هوش مصنوعی فعال نیست')
+  ) {
+    return 400;
+  }
+  return 500;
+}
+
 async function createPersonBioChatCompletion(
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
 ) {
-  const provider = await getPersonBioAiProvider();
-  const settings = await getDecryptedSettings();
+  const [preferredProvider, settings] = await Promise.all([
+    getPersonBioAiProvider(),
+    getDecryptedSettings(),
+  ]);
+  const provider = resolvePersonBioChatProvider(preferredProvider, settings);
+  const tokenLimit = 4000;
 
   if (provider === 'deepseek') {
-    if (!settings.deepseekApiKey) {
-      throw new Error('کلید DeepSeek در تنظیمات یکپارچه‌سازی وارد نشده است');
-    }
-    const model = resolveDeepSeekModel(settings.deepseekModel);
+    const stored = resolveDeepSeekModel(settings.deepseekModel);
+    const model = stored === 'deepseek-reasoner' ? DEFAULT_DEEPSEEK_MODEL : stored;
     const client = new OpenAI({
-      apiKey: settings.deepseekApiKey,
+      apiKey: settings.deepseekApiKey!,
       baseURL: 'https://api.deepseek.com',
     });
     return client.chat.completions.create({
@@ -152,22 +213,19 @@ async function createPersonBioChatCompletion(
       messages,
       ...normalizeOpenAICompletionOptions(model, {
         temperature: 0.6,
-        max_tokens: 1200,
+        max_tokens: tokenLimit,
       }),
     });
   }
 
-  if (!settings.openaiApiKey) {
-    throw new Error('کلید OpenAI در تنظیمات یکپارچه‌سازی وارد نشده است');
-  }
   const model = resolveOpenAIModel(settings.openaiModel);
-  const client = new OpenAI({ apiKey: settings.openaiApiKey });
+  const client = new OpenAI({ apiKey: settings.openaiApiKey! });
   return client.chat.completions.create({
     model,
     messages,
     ...normalizeOpenAICompletionOptions(model, {
       temperature: 0.6,
-      max_tokens: 1200,
+      max_tokens: tokenLimit,
     }),
   });
 }
@@ -196,31 +254,97 @@ export async function generatePersonBioWithAi(input: {
       ? `\nنمونه آثار در سایت: ${input.sampleTitles.slice(0, 6).join('، ')}`
       : '';
 
-  const completion = await createPersonBioChatCompletion([
+  const userPrompt = `برای ${roleLabel} «${input.displayName}» یک bio کوتاه فارسی (۲ تا ۴ جمله) بنویس.${samples}\nاین شخص در ${input.itemCount} آیتم سایت ذکر شده است.`;
+
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     {
       role: 'system',
       content:
         'تو نویسنده محتوای فارسی برای اپ لیست‌سازی «وایب» هستی. فقط متن bio را برگردان، بدون عنوان یا markdown.',
     },
-    {
-      role: 'user',
-      content: `برای ${roleLabel} «${input.displayName}» یک bio کوتاه فارسی (۲ تا ۴ جمله) بنویس.${samples}\nاین شخص در ${input.itemCount} آیتم سایت ذکر شده است.`,
-    },
-  ]);
+    { role: 'user', content: userPrompt },
+  ];
 
-  const bio = completion.choices[0]?.message?.content?.trim();
-  if (!bio || bio.length < 20) {
-    throw new Error('پاسخ هوش مصنوعی برای bio کافی نبود');
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const completion = await createPersonBioChatCompletion(
+      attempt === 0
+        ? messages
+        : [
+            ...messages,
+            {
+              role: 'user',
+              content:
+                'پاسخ قبلی کافی نبود. فقط یک bio فارسی ۲ تا ۴ جمله‌ای بنویس، بدون توضیح اضافه.',
+            },
+          ]
+    );
+
+    const bio = extractChatCompletionText(completion, { minLength: 0 }).trim();
+    if (bio.length >= 20) {
+      return { bio };
+    }
   }
-  return { bio };
+
+  throw new Error('پاسخ هوش مصنوعی برای bio کافی نبود — دوباره امتحان کنید');
 }
 
 export function parsePersonBioImportPayload(raw: unknown): PersonBioImportPayload {
-  const parsed = PersonBioImportPayloadSchema.safeParse(raw);
+  const normalized = normalizePersonBioImportRaw(raw);
+  const parsed = PersonBioImportPayloadSchema.safeParse(normalized);
   if (!parsed.success) {
-    throw new Error('ساختار JSON نامعتبر است — فیلدهای role، slug، displayName و bio الزامی‌اند');
+    throw new Error(formatPersonBioImportError(parsed.error));
   }
   return parsed.data;
+}
+
+export function tryParsePersonBioImportPayload(raw: unknown):
+  | { success: true; data: PersonBioImportPayload }
+  | { success: false; error: string } {
+  try {
+    const normalized = normalizePersonBioImportRaw(raw);
+    const parsed = PersonBioImportPayloadSchema.safeParse(normalized);
+    if (!parsed.success) {
+      return { success: false, error: formatPersonBioImportError(parsed.error) };
+    }
+    return { success: true, data: parsed.data };
+  } catch {
+    return { success: false, error: 'JSON نامعتبر است' };
+  }
+}
+
+function isTemplateImportEntry(entry: unknown): boolean {
+  if (!entry || typeof entry !== 'object') return true;
+  const e = entry as Record<string, unknown>;
+  const role = String(e.role ?? '');
+  const slug = String(e.slug ?? '');
+  const bio = String(e.bio ?? '');
+  if (role.includes('|') || slug.includes('|') || bio.includes('۲ تا ۴')) return true;
+  if (/slug|role|director \|/i.test(slug) || /slug-لاتین/i.test(slug)) return true;
+  return false;
+}
+
+/** استخراج people از JSON خام — شامل خروجی AI با $schema */
+export function normalizePersonBioImportRaw(raw: unknown): unknown {
+  if (raw == null) return raw;
+  if (Array.isArray(raw)) {
+    return { people: raw.filter((entry) => !isTemplateImportEntry(entry)) };
+  }
+  if (typeof raw === 'object') {
+    const obj = raw as Record<string, unknown>;
+    if (Array.isArray(obj.people)) {
+      return {
+        people: obj.people.filter((entry) => !isTemplateImportEntry(entry)),
+      };
+    }
+  }
+  return raw;
+}
+
+function formatPersonBioImportError(error: z.ZodError): string {
+  const first = error.issues[0];
+  if (!first) return 'ساختار JSON نامعتبر است';
+  const path = first.path.length ? ` (${first.path.join('.')})` : '';
+  return `ساختار JSON نامعتبر${path} — role، slug، displayName و bio (حداقل ۲۰ کاراکتر) الزامی‌اند`;
 }
 
 export async function getActivePersonBioAiLabel(): Promise<string> {

@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 import Link from 'next/link';
 import {
   ChevronLeft,
   ChevronRight,
   ClipboardCopy,
   ExternalLink,
+  Eye,
   FileJson,
+  GitMerge,
   Loader2,
   RefreshCw,
   Save,
@@ -18,16 +20,22 @@ import {
   Users,
   Wand2,
   X,
+  ImageIcon,
+  CloudUpload,
 } from 'lucide-react';
 import {
   PERSON_ROLE_META,
   PERSON_ROLES,
-  personPagePath,
+  isPersonPublicReady,
+  personPublicPath,
+  type PersonPageData,
   type PersonRole,
 } from '@/lib/people';
 import {
   COMMENT_AI_PROVIDER_OPTIONS,
+  commentAiProviderLabel,
   type CommentAiProvider,
+  type PersonBioAiSettings,
 } from '@/lib/comment-ai-provider';
 import {
   PERSON_BIO_JSON_EXAMPLE,
@@ -39,6 +47,14 @@ import type {
   DiscoverPeopleStats,
   PersonProfileRecord,
 } from '@/lib/person-profiles';
+import PersonPreviewModal from '@/components/admin/people/PersonPreviewModal';
+import PersonImportModal from '@/components/admin/people/PersonImportModal';
+import PersonSimilarNamesModal from '@/components/admin/people/PersonSimilarNamesModal';
+import type { PersonBioImportItem } from '@/lib/person-bio-ai';
+
+const PersonImagesSection = lazy(
+  () => import('@/components/admin/people/PersonImagesSection')
+);
 
 type EditState = {
   displayName: string;
@@ -65,6 +81,16 @@ const ROLE_BADGE: Record<PersonRole, string> = {
   translator: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200',
 };
 
+const EMPTY_AI_SETTINGS: PersonBioAiSettings = {
+  personBioAiProvider: 'openai',
+  providerLabel: 'OpenAI',
+  openaiConfigured: false,
+  deepseekConfigured: false,
+  providerReady: false,
+  effectiveProvider: null,
+  fallbackActive: false,
+};
+
 const EMPTY_STATS: DiscoverPeopleStats = {
   total: 0,
   withBio: 0,
@@ -79,7 +105,7 @@ const EMPTY_PAGINATION: DiscoverPeoplePagination = {
   totalPages: 1,
 };
 
-export default function PeoplePageClient() {
+export default function PeoplePageClient({ embedded = false }: { embedded?: boolean }) {
   const [roleFilter, setRoleFilter] = useState<PersonRole | 'all'>('all');
   const [missingBioOnly, setMissingBioOnly] = useState(false);
   const [query, setQuery] = useState('');
@@ -94,6 +120,7 @@ export default function PeoplePageClient() {
   const [error, setError] = useState('');
 
   const [aiProvider, setAiProvider] = useState<CommentAiProvider>('openai');
+  const [aiSettings, setAiSettings] = useState<PersonBioAiSettings>(EMPTY_AI_SETTINGS);
   const [savingAiProvider, setSavingAiProvider] = useState(false);
 
   const [selected, setSelected] = useState<DiscoveredPerson | null>(null);
@@ -104,18 +131,23 @@ export default function PeoplePageClient() {
   const [saving, setSaving] = useState(false);
   const [enriching, setEnriching] = useState(false);
   const [aiEnriching, setAiEnriching] = useState(false);
+  const [imageLoading, setImageLoading] = useState<'fetch' | 'migrate' | null>(null);
   const [saveMessage, setSaveMessage] = useState('');
 
   const [copyModal, setCopyModal] = useState<{ title: string; content: string } | null>(null);
   const [importJson, setImportJson] = useState('');
   const [importOpen, setImportOpen] = useState(false);
+  const [similarNamesOpen, setSimilarNamesOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [copyLoading, setCopyLoading] = useState<'list' | 'prompt' | null>(null);
+  const [previewData, setPreviewData] = useState<PersonPageData | null>(null);
+  const [previewLoadingKey, setPreviewLoadingKey] = useState<string | null>(null);
 
   const fetchAbortRef = useRef<AbortController | null>(null);
+  const loadSeqRef = useRef(0);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 450);
     return () => window.clearTimeout(timer);
   }, [query]);
 
@@ -128,7 +160,9 @@ export default function PeoplePageClient() {
       const res = await fetch('/api/admin/people/settings');
       const json = await res.json();
       if (res.ok && json.success) {
-        setAiProvider(json.data.personBioAiProvider);
+        const data = json.data as PersonBioAiSettings;
+        setAiSettings(data);
+        setAiProvider(data.personBioAiProvider);
       }
     } catch {
       /* optional */
@@ -136,6 +170,7 @@ export default function PeoplePageClient() {
   }, []);
 
   const loadPeople = useCallback(async () => {
+    const seq = ++loadSeqRef.current;
     fetchAbortRef.current?.abort();
     const ctrl = new AbortController();
     fetchAbortRef.current = ctrl;
@@ -157,19 +192,27 @@ export default function PeoplePageClient() {
         throw new Error(json.error || 'خطا در بارگذاری');
       }
 
+      if (seq !== loadSeqRef.current) return;
+
       setPeople(json.data.people as DiscoveredPerson[]);
       setStats(json.data.stats as DiscoverPeopleStats);
       setPagination(json.data.pagination as DiscoverPeoplePagination);
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return;
+      if (seq !== loadSeqRef.current) return;
       setError(err instanceof Error ? err.message : 'خطا در بارگذاری');
       setPeople([]);
       setStats(EMPTY_STATS);
       setPagination(EMPTY_PAGINATION);
     } finally {
-      if (!ctrl.signal.aborted) setLoading(false);
+      if (seq === loadSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, [roleFilter, debouncedQuery, missingBioOnly, page, pageSize]);
+
+  const loadPeopleRef = useRef(loadPeople);
+  loadPeopleRef.current = loadPeople;
 
   useEffect(() => {
     void loadAiSettings();
@@ -178,6 +221,27 @@ export default function PeoplePageClient() {
   useEffect(() => {
     void loadPeople();
   }, [loadPeople]);
+
+  const openPreview = async (person: DiscoveredPerson) => {
+    const key = `${person.role}:${person.slug}`;
+    setPreviewLoadingKey(key);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/people/${person.role}/${person.slug}`);
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در بارگذاری پیش‌نمایش');
+      }
+      if (!json.data.publicPreview) {
+        throw new Error('برای این شخص آیتمی در سایت پیدا نشد');
+      }
+      setPreviewData(json.data.publicPreview as PersonPageData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در بارگذاری پیش‌نمایش');
+    } finally {
+      setPreviewLoadingKey(null);
+    }
+  };
 
   const saveAiProvider = async (provider: CommentAiProvider) => {
     setSavingAiProvider(true);
@@ -192,6 +256,7 @@ export default function PeoplePageClient() {
         throw new Error(json.error || 'خطا در ذخیره مدل');
       }
       setAiProvider(provider);
+      void loadAiSettings();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'خطا در ذخیره مدل');
     } finally {
@@ -311,6 +376,12 @@ export default function PeoplePageClient() {
   const handleAiEnrich = async (person?: DiscoveredPerson) => {
     const target = person ?? selected;
     if (!target) return;
+    if (!aiSettings.providerReady) {
+      setSaveMessage(
+        'کلید OpenAI یا DeepSeek در تنظیمات → یکپارچه‌سازی وارد نشده است'
+      );
+      return;
+    }
     setAiEnriching(true);
     setSaveMessage('');
     try {
@@ -336,6 +407,58 @@ export default function PeoplePageClient() {
   const openAndAiEnrich = async (person: DiscoveredPerson) => {
     await openEditor(person);
     await handleAiEnrich(person);
+  };
+
+  const handleFetchImage = async () => {
+    if (!selected) return;
+    setImageLoading('fetch');
+    setSaveMessage('');
+    try {
+      const res = await fetch(
+        `/api/admin/people/${selected.role}/${selected.slug}/fetch-image`,
+        { method: 'POST' }
+      );
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در دریافت تصویر');
+      }
+      if (json.data.newUrl) {
+        setEdit((s) => ({ ...s, imageUrl: json.data.newUrl }));
+      }
+      setSaveMessage('تصویر از TMDB دریافت و روی ParsPack ذخیره شد');
+      void loadPeople();
+      void openEditor(selected);
+    } catch (err) {
+      setSaveMessage(err instanceof Error ? err.message : 'خطا در دریافت تصویر');
+    } finally {
+      setImageLoading(null);
+    }
+  };
+
+  const handleMigrateImage = async () => {
+    if (!selected) return;
+    setImageLoading('migrate');
+    setSaveMessage('');
+    try {
+      const res = await fetch(
+        `/api/admin/people/${selected.role}/${selected.slug}/migrate-image`,
+        { method: 'POST' }
+      );
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در آپلود تصویر');
+      }
+      if (json.data.newUrl) {
+        setEdit((s) => ({ ...s, imageUrl: json.data.newUrl }));
+      }
+      setSaveMessage('تصویر روی ParsPack ذخیره شد');
+      void loadPeople();
+      void openEditor(selected);
+    } catch (err) {
+      setSaveMessage(err instanceof Error ? err.message : 'خطا در آپلود تصویر');
+    } finally {
+      setImageLoading(null);
+    }
   };
 
   const handleCopyMissing = async (format: 'text' | 'prompt') => {
@@ -367,15 +490,14 @@ export default function PeoplePageClient() {
     });
   };
 
-  const handleImportJson = async () => {
+  const handleImportJson = async (payload: { people: PersonBioImportItem[] }) => {
     setImporting(true);
     setSaveMessage('');
     try {
-      const parsed = JSON.parse(importJson);
       const res = await fetch('/api/admin/people/import-bios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -403,27 +525,51 @@ export default function PeoplePageClient() {
   };
 
   const canEnrichTmdb = selected && (selected.role === 'director' || selected.role === 'actor');
-  const busy = saving || enriching || aiEnriching;
+  const busy = saving || enriching || aiEnriching || imageLoading != null;
 
   const rangeStart =
     pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
   const rangeEnd = Math.min(pagination.page * pagination.limit, pagination.total);
 
+  const editorPublicReady = selected
+    ? isPersonPublicReady({
+        hasBio: Boolean(edit.bio.trim()),
+        hasProfile: Boolean(profile),
+        profileStatus: edit.status,
+        itemCount,
+      })
+    : false;
+
   return (
     <div className="space-y-4">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-[var(--color-text)] md:text-2xl">اشخاص</h1>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            پروفایل کارگردان، بازیگر، نویسنده و مترجم — bio با AI یا JSON
-          </p>
+      {!embedded && (
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-[var(--color-text)] md:text-2xl">اشخاص</h1>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+              پروفایل کارگردان، بازیگر، نویسنده و مترجم — bio با AI یا JSON
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <StatChip icon={Users} label="کل" value={stats.total} />
+            <StatChip icon={Sparkles} label="با bio" value={stats.withBio} tone="emerald" />
+            <StatChip icon={UserRound} label="بدون bio" value={stats.missingBio} tone="amber" />
+          </div>
+        </header>
+      )}
+
+      {embedded && (
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <StatChip icon={Users} label="کل" value={stats.total} />
+            <StatChip icon={Sparkles} label="با bio" value={stats.withBio} tone="emerald" />
+            <StatChip icon={UserRound} label="بدون bio" value={stats.missingBio} tone="amber" />
+          </div>
+          {stats.total > 0 && (
+            <BioProgressBar withBio={stats.withBio} total={stats.total} />
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <StatChip icon={Users} label="کل" value={stats.total} />
-          <StatChip icon={Sparkles} label="با bio" value={stats.withBio} tone="emerald" />
-          <StatChip icon={UserRound} label="بدون bio" value={stats.missingBio} tone="amber" />
-        </div>
-      </header>
+      )}
 
       <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:p-4 space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -450,7 +596,12 @@ export default function PeoplePageClient() {
 
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] font-medium text-[var(--color-text-muted)] ms-1">مدل bio:</span>
-            {COMMENT_AI_PROVIDER_OPTIONS.map((option) => (
+            {COMMENT_AI_PROVIDER_OPTIONS.map((option) => {
+              const configured =
+                option.value === 'openai'
+                  ? aiSettings.openaiConfigured
+                  : aiSettings.deepseekConfigured;
+              return (
               <button
                 key={option.value}
                 type="button"
@@ -460,12 +611,30 @@ export default function PeoplePageClient() {
                   aiProvider === option.value
                     ? 'bg-indigo-600 text-white'
                     : 'border border-[var(--color-border)] hover:bg-[var(--color-bg)]'
-                }`}
+                } ${!configured ? 'opacity-70' : ''}`}
+                title={configured ? undefined : `کلید ${option.label} در تنظیمات وارد نشده`}
               >
                 {option.label}
+                {!configured && ' *'}
               </button>
-            ))}
+            );
+            })}
           </div>
+          {!aiSettings.providerReady && (
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              برای bio با AI، کلید OpenAI یا DeepSeek را در{' '}
+              <Link href="/admin/settings?tab=integrations" className="underline">
+                تنظیمات یکپارچه‌سازی
+              </Link>{' '}
+              وارد کنید.
+            </p>
+          )}
+          {aiSettings.fallbackActive && aiSettings.effectiveProvider && (
+            <p className="text-xs text-[var(--color-text-muted)]">
+              {commentAiProviderLabel(aiSettings.personBioAiProvider)} فعال نیست — از{' '}
+              {commentAiProviderLabel(aiSettings.effectiveProvider)} استفاده می‌شود.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -488,23 +657,57 @@ export default function PeoplePageClient() {
           </div>
 
           <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-1">
+              <ActionButton
+                icon={<ClipboardCopy className="h-3.5 w-3.5" />}
+                label="کپی بدون bio"
+                loading={copyLoading === 'list'}
+                onClick={() => void handleCopyMissing('text')}
+                subtle
+              />
+              <ActionButton
+                icon={<Wand2 className="h-3.5 w-3.5" />}
+                label="پرامپت AI"
+                loading={copyLoading === 'prompt'}
+                onClick={() => void handleCopyMissing('prompt')}
+                subtle
+              />
+              <ActionButton
+                icon={<FileJson className="h-3.5 w-3.5" />}
+                label="نمونه JSON"
+                onClick={handleShowJsonSchema}
+                subtle
+              />
+            </div>
             <ActionButton
-              icon={<ClipboardCopy className="h-3.5 w-3.5" />}
-              label="کپی بدون bio"
-              loading={copyLoading === 'list'}
-              onClick={() => void handleCopyMissing('text')}
+              icon={<GitMerge className="h-3.5 w-3.5" />}
+              label="نام‌های مشابه"
+              onClick={() => setSimilarNamesOpen(true)}
+              subtle
             />
             <ActionButton
-              icon={<Wand2 className="h-3.5 w-3.5" />}
-              label="پرامپت AI"
-              loading={copyLoading === 'prompt'}
-              onClick={() => void handleCopyMissing('prompt')}
+              icon={<Upload className="h-3.5 w-3.5" />}
+              label="ورود JSON"
+              onClick={() => setImportOpen(true)}
+              primary
             />
-            <ActionButton icon={<FileJson className="h-3.5 w-3.5" />} label="JSON" onClick={handleShowJsonSchema} />
-            <ActionButton icon={<Upload className="h-3.5 w-3.5" />} label="ورود" onClick={() => setImportOpen(true)} />
           </div>
         </div>
       </section>
+
+      <Suspense
+        fallback={
+          <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-xs text-[var(--color-text-muted)]">
+            در حال آماده‌سازی بخش تصاویر…
+          </section>
+        }
+      >
+        <PersonImagesSection
+          roleFilter={roleFilter}
+          statsEnabled={!loading}
+          onUpdated={() => void loadPeopleRef.current()}
+        />
+      </Suspense>
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
@@ -547,6 +750,8 @@ export default function PeoplePageClient() {
                     {people.map((person) => {
                       const isSelected =
                         selected?.role === person.role && selected?.slug === person.slug;
+                      const publicReady = isPersonPublicReady(person);
+                      const previewKey = `${person.role}:${person.slug}`;
                       return (
                         <tr
                           key={`${person.role}:${person.slug}`}
@@ -586,21 +791,43 @@ export default function PeoplePageClient() {
                               {!person.hasBio && (
                                 <button
                                   type="button"
-                                  title="تکمیل bio با AI"
+                                  title={
+                                    aiSettings.providerReady
+                                      ? 'تکمیل bio با AI'
+                                      : 'کلید AI در تنظیمات وارد نشده'
+                                  }
+                                  disabled={!aiSettings.providerReady || aiEnriching}
                                   onClick={() => void openAndAiEnrich(person)}
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-indigo-600 hover:bg-indigo-50 disabled:opacity-40 dark:hover:bg-indigo-950/40"
                                 >
                                   <Sparkles className="h-3.5 w-3.5" />
                                 </button>
                               )}
-                              <Link
-                                href={personPagePath(person.role, person.displayName)}
-                                target="_blank"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
-                                title="صفحه عمومی"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </Link>
+                              {publicReady && (
+                                <>
+                                  <button
+                                    type="button"
+                                    title="پیش‌نمایش صفحه"
+                                    disabled={previewLoadingKey === previewKey}
+                                    onClick={() => void openPreview(person)}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/40 disabled:opacity-60"
+                                  >
+                                    {previewLoadingKey === previewKey ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <Eye className="h-3.5 w-3.5" />
+                                    )}
+                                  </button>
+                                  <Link
+                                    href={personPublicPath(person.role, person.slug)}
+                                    target="_blank"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                                    title="صفحه عمومی در سایت"
+                                  >
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                  </Link>
+                                </>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => void openEditor(person)}
@@ -757,6 +984,16 @@ export default function PeoplePageClient() {
                   </Field>
 
                   <Field label="تصویر">
+                    {edit.imageUrl && (
+                      <div className="mb-2 flex justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={edit.imageUrl}
+                          alt=""
+                          className="h-20 w-20 rounded-2xl object-cover ring-1 ring-[var(--color-border)]"
+                        />
+                      </div>
+                    )}
                     <input
                       value={edit.imageUrl}
                       onChange={(e) => setEdit((s) => ({ ...s, imageUrl: e.target.value }))}
@@ -764,6 +1001,38 @@ export default function PeoplePageClient() {
                       className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
                       placeholder="https://…"
                     />
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {canEnrichTmdb && (
+                        <button
+                          type="button"
+                          onClick={() => void handleFetchImage()}
+                          disabled={busy}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-[11px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-60 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-200"
+                        >
+                          {imageLoading === 'fetch' ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <ImageIcon className="h-3 w-3" />
+                          )}
+                          TMDB + ParsPack
+                        </button>
+                      )}
+                      {edit.imageUrl.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => void handleMigrateImage()}
+                          disabled={busy}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-semibold hover:bg-[var(--color-bg)] disabled:opacity-60"
+                        >
+                          {imageLoading === 'migrate' ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <CloudUpload className="h-3 w-3" />
+                          )}
+                          آپلود به ParsPack
+                        </button>
+                      )}
+                    </div>
                   </Field>
 
                   <Field label="لینک خارجی">
@@ -807,20 +1076,45 @@ export default function PeoplePageClient() {
                     ذخیره
                   </button>
 
-                  <Link
-                    href={personPagePath(selected.role, edit.displayName || selected.displayName)}
-                    target="_blank"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-bg)]"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    صفحه عمومی
-                  </Link>
+                  {editorPublicReady && selected ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void openPreview(selected)}
+                        disabled={previewLoadingKey === `${selected.role}:${selected.slug}`}
+                        className="flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100 disabled:opacity-60 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-200"
+                      >
+                        {previewLoadingKey === `${selected.role}:${selected.slug}` ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                        پیش‌نمایش
+                      </button>
+                      <Link
+                        href={personPublicPath(selected.role, selected.slug)}
+                        target="_blank"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg)]"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        سایت
+                      </Link>
+                    </div>
+                  ) : selected ? (
+                    <p className="text-[11px] text-center text-[var(--color-text-muted)]">
+                      برای انتشار در سایت: bio بنویسید، وضعیت را «منتشر شده» بگذارید و ذخیره کنید.
+                    </p>
+                  ) : null}
                 </div>
               )}
             </div>
           </aside>
         )}
       </div>
+
+      {previewData && (
+        <PersonPreviewModal data={previewData} onClose={() => setPreviewData(null)} />
+      )}
 
       {copyModal && (
         <Modal title={copyModal.title} onClose={() => setCopyModal(null)}>
@@ -843,32 +1137,41 @@ export default function PeoplePageClient() {
       )}
 
       {importOpen && (
-        <Modal title="ورود JSON پروفایل‌ها" onClose={() => setImportOpen(false)}>
-          <p className="text-xs text-[var(--color-text-muted)] mb-3">
-            خروجی AI خارجی با ساختار{' '}
-            <code dir="ltr" className="text-[11px]">
-              {'{ "people": [ ... ] }'}
-            </code>
-          </p>
-          <textarea
-            value={importJson}
-            onChange={(e) => setImportJson(e.target.value)}
-            rows={12}
-            dir="ltr"
-            placeholder={JSON.stringify(PERSON_BIO_JSON_EXAMPLE, null, 2)}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs font-mono"
-          />
-          <button
-            type="button"
-            onClick={() => void handleImportJson()}
-            disabled={importing || !importJson.trim()}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            اعمال
-          </button>
-        </Modal>
+        <PersonImportModal
+          initialJson={importJson}
+          knownPeople={people}
+          importing={importing}
+          onClose={() => setImportOpen(false)}
+          onImport={handleImportJson}
+        />
       )}
+
+      <PersonSimilarNamesModal
+        open={similarNamesOpen}
+        onClose={() => setSimilarNamesOpen(false)}
+        roleFilter={roleFilter}
+        onMerged={() => void loadPeopleRef.current()}
+      />
+    </div>
+  );
+}
+
+function BioProgressBar({ withBio, total }: { withBio: number; total: number }) {
+  const pct = Math.round((withBio / total) * 100);
+  return (
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5">
+      <div className="mb-1.5 flex items-center justify-between text-[11px]">
+        <span className="font-medium text-[var(--color-text-muted)]">پیشرفت تکمیل bio</span>
+        <span className="tabular-nums font-semibold text-emerald-700 dark:text-emerald-300">
+          {pct.toLocaleString('fa-IR')}٪
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-bg)]">
+        <div
+          className="h-full rounded-full bg-gradient-to-l from-emerald-500 to-emerald-400 transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }
@@ -961,18 +1264,28 @@ function ActionButton({
   label,
   onClick,
   loading,
+  subtle,
+  primary,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
   loading?: boolean;
+  subtle?: boolean;
+  primary?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={loading}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1.5 text-xs font-semibold hover:bg-[var(--color-surface)] disabled:opacity-60"
+      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold disabled:opacity-60 ${
+        primary
+          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+          : subtle
+            ? 'hover:bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+            : 'border border-[var(--color-border)] bg-[var(--color-bg)] hover:bg-[var(--color-surface)]'
+      }`}
     >
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
       {label}

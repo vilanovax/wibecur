@@ -14,6 +14,7 @@ const PATH_PERMISSION: Record<string, Permission> = {
   '/admin/lists/user-created': 'manage_lists',
   '/admin/items': 'manage_lists',
   '/admin/catalog': 'manage_lists',
+  '/admin/people': 'manage_lists',
   '/admin/users': 'manage_users',
   '/admin/admins': 'manage_roles',
   '/admin/trash': 'view_dashboard',

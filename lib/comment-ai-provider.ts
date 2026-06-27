@@ -29,3 +29,13 @@ export function commentAiProviderLabel(provider: CommentAiProvider): string {
     'OpenAI'
   );
 }
+
+export type PersonBioAiSettings = {
+  personBioAiProvider: CommentAiProvider;
+  providerLabel: string;
+  openaiConfigured: boolean;
+  deepseekConfigured: boolean;
+  providerReady: boolean;
+  effectiveProvider: CommentAiProvider | null;
+  fallbackActive: boolean;
+};

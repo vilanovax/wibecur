@@ -24,7 +24,7 @@ async function resolveCategoryId(categoryParam: string | undefined): Promise<str
 
 function resolveView(raw?: string, trash?: boolean): ContentHubView {
   if (trash) return 'lists';
-  if (raw === 'catalog' || raw === 'import') return raw;
+  if (raw === 'catalog' || raw === 'import' || raw === 'people') return raw;
   return 'lists';
 }
 
@@ -53,6 +53,10 @@ export default async function AdminListsPage({
   const currentPage = Math.max(1, parseInt(params.page ?? '1', 10) || 1);
 
   const hubStats = await getCachedContentHubStats();
+
+  if (view === 'people') {
+    return <ContentHubClient view="people" hubStats={hubStats} />;
+  }
 
   if (view === 'import') {
     const [categories, lists] = await Promise.all([

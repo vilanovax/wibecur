@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
 
     const { people: missing } = await discoverPeopleFromItems(undefined, {
       role,
-      limit: 500,
-      page: 1,
+      skipPagination: true,
       missingBioOnly: true,
     });
 

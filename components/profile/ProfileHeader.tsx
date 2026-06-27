@@ -135,7 +135,7 @@ export default function ProfileHeader({
 
         <div className="px-2.5 pb-2.5 pt-0 lg:px-4 lg:pb-4">
           <div className="-mt-8 flex items-start gap-3 lg:-mt-10 lg:items-end lg:gap-5">
-            <div className="min-w-0 flex-1 pt-1.5 text-right lg:pt-0 lg:pb-1">
+            <div className="min-w-0 flex-1 pt-1.5 text-right lg:pb-1 lg:pt-0">
               {isElite && user.showBadge !== false && (
                 <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 ring-1 ring-amber-200/80">
                   <span aria-hidden>⭐</span>
@@ -143,35 +143,35 @@ export default function ProfileHeader({
                 </span>
               )}
 
-              <div className="lg:flex lg:flex-wrap lg:items-center lg:justify-between lg:gap-3">
-              <h1 className="truncate text-[17px] font-bold leading-snug tracking-tight text-foreground lg:text-xl">
-                {user.name || 'کاربر بدون نام'}
-              </h1>
-              {isOwner && (
-                <div className="mt-2 hidden shrink-0 items-center gap-2 lg:mt-0 lg:flex">
-                  <button
-                    type="button"
-                    onClick={openEdit}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-wibe bg-wibe-card text-foreground transition-colors hover:border-primary/30"
-                    aria-label="ویرایش پروفایل"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={requestLogout}
-                    disabled={isLoggingOut}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
-                    aria-label="خروج از حساب"
-                  >
-                    {isLoggingOut ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <LogOut className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              )}
+              <div className="flex w-full flex-wrap items-center justify-start gap-x-2 gap-y-2 lg:gap-x-3">
+                <h1 className="min-w-0 truncate text-[17px] font-bold leading-snug tracking-tight text-foreground lg:text-xl">
+                  {user.name || 'کاربر بدون نام'}
+                </h1>
+                {isOwner && (
+                  <div className="hidden shrink-0 items-center gap-2 lg:flex">
+                    <button
+                      type="button"
+                      onClick={openEdit}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-wibe bg-wibe-card px-3 py-2 text-[13px] font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      ویرایش
+                    </button>
+                    <button
+                      type="button"
+                      onClick={requestLogout}
+                      disabled={isLoggingOut}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[13px] font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                    >
+                      {isLoggingOut ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogOut className="h-4 w-4" />
+                      )}
+                      خروج
+                    </button>
+                  </div>
+                )}
               </div>
 
               <p

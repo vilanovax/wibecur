@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import {
-  getPersonBioAiProvider,
+  getPersonBioAiSettings,
   setPersonBioAiProvider,
 } from '@/lib/person-bio-ai';
-import { commentAiProviderLabel, resolveCommentAiProvider } from '@/lib/comment-ai-provider';
+import { resolveCommentAiProvider } from '@/lib/comment-ai-provider';
 
 /** GET /api/admin/people/settings */
 export async function GET() {
@@ -14,13 +14,10 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const personBioAiProvider = await getPersonBioAiProvider();
+    const data = await getPersonBioAiSettings();
     return NextResponse.json({
       success: true,
-      data: {
-        personBioAiProvider,
-        providerLabel: commentAiProviderLabel(personBioAiProvider),
-      },
+      data,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'خطا';

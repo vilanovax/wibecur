@@ -4,10 +4,11 @@ import { prisma } from '@/lib/prisma';
 import { checkActionRateLimit } from '@/lib/rate-limit';
 import { isPersonRole } from '@/lib/people';
 import { resolvePersonPage } from '@/lib/people-server';
-import { getPersonProfile, upsertPersonProfile } from '@/lib/person-profiles-server';
+import { getPersonProfileFlexible, upsertPersonProfile } from '@/lib/person-profiles-server';
 import {
   formatPersonBioAiError,
   generatePersonBioWithAi,
+  personBioAiErrorStatus,
 } from '@/lib/person-bio-ai';
 
 type RouteParams = { role: string; slug: string };
@@ -37,11 +38,23 @@ export async function POST(
       );
     }
 
-    const existing = await getPersonProfile(prisma, roleRaw, slug);
-    const pageData = await resolvePersonPage(prisma, roleRaw, slug);
-    const displayName = existing?.displayName ?? pageData?.displayName ?? slug.replace(/-/g, ' ');
+    const pageData = await resolvePersonPage(prisma, roleRaw, slug, { forAdmin: true });
+    const displayName = pageData?.displayName ?? slug.replace(/-/g, ' ');
+    const existing = await getPersonProfileFlexible(
+      prisma,
+      roleRaw,
+      slug,
+      displayName
+    );
     const itemCount = pageData?.items.length ?? 0;
     const sampleTitles = pageData?.items.map((i) => i.title).filter(Boolean) ?? [];
+
+    if (!displayName.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'نام شخص برای تولید bio پیدا نشد' },
+        { status: 400 }
+      );
+    }
 
     const { bio } = await generatePersonBioWithAi({
       displayName,
@@ -63,8 +76,9 @@ export async function POST(
 
     return NextResponse.json({ success: true, data: profile });
   } catch (error: unknown) {
+    console.error('[person-ai-enrich]', error);
     const message = formatPersonBioAiError(error);
-    const status = message.includes('Unauthorized') ? 401 : 500;
+    const status = personBioAiErrorStatus(message);
     return NextResponse.json({ success: false, error: message }, { status });
   }
 }

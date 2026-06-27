@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { checkAdminAuth } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { validateAuthPassword } from '@/lib/phone-auth';
+import { changeUserPassword, userHasPassword } from '@/lib/user-password-server';
 
 export async function GET() {
   try {
@@ -11,19 +9,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await prisma.users.findUnique({
-      where: { id: session.user.id },
-      select: { password: true, role: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'کاربر یافت نشد' }, { status: 404 });
-    }
+    const hasPassword = await userHasPassword(session.user.id);
 
     return NextResponse.json({
       success: true,
-      hasPassword: !!user.password,
-      role: user.role,
+      hasPassword,
+      role: session.user.role,
     });
   } catch (error: unknown) {
     console.error('GET password settings:', error);
@@ -42,71 +33,19 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const currentPassword = String(body?.currentPassword ?? '');
-    const newPassword = String(body?.newPassword ?? '');
-    const confirmPassword = String(body?.confirmPassword ?? '');
-
-    if (!currentPassword) {
-      return NextResponse.json(
-        { success: false, error: 'رمز فعلی را وارد کنید' },
-        { status: 400 }
-      );
-    }
-
-    const passwordError = validateAuthPassword(newPassword);
-    if (passwordError) {
-      return NextResponse.json({ success: false, error: passwordError }, { status: 400 });
-    }
-
-    if (newPassword !== confirmPassword) {
-      return NextResponse.json(
-        { success: false, error: 'رمز جدید و تکرار آن یکسان نیستند' },
-        { status: 400 }
-      );
-    }
-
-    if (currentPassword === newPassword) {
-      return NextResponse.json(
-        { success: false, error: 'رمز جدید باید با رمز فعلی متفاوت باشد' },
-        { status: 400 }
-      );
-    }
-
-    const user = await prisma.users.findUnique({
-      where: { id: session.user.id },
-      select: { id: true, password: true },
+    const result = await changeUserPassword(session.user.id, {
+      currentPassword: String(body?.currentPassword ?? ''),
+      newPassword: String(body?.newPassword ?? ''),
+      confirmPassword: String(body?.confirmPassword ?? ''),
     });
 
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'کاربر یافت نشد' }, { status: 404 });
+    if (!result.ok) {
+      return NextResponse.json({ success: false, error: result.error }, { status: result.status });
     }
-
-    if (!user.password) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'این حساب رمز تنظیم‌شده ندارد. با مدیر سیستم تماس بگیرید.',
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!bcrypt.compareSync(currentPassword, user.password)) {
-      return NextResponse.json(
-        { success: false, error: 'رمز فعلی اشتباه است' },
-        { status: 400 }
-      );
-    }
-
-    const hashed = bcrypt.hashSync(newPassword, 10);
-    await prisma.users.update({
-      where: { id: user.id },
-      data: { password: hashed, updatedAt: new Date() },
-    });
 
     return NextResponse.json({
       success: true,
-      message: 'رمز عبور با موفقیت تغییر کرد',
+      message: result.message,
     });
   } catch (error: unknown) {
     console.error('PUT password settings:', error);

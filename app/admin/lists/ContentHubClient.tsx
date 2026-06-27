@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { List, Library, FileJson, Plus, Sparkles } from 'lucide-react';
+import { List, Library, FileJson, Plus, Sparkles, UserRound } from 'lucide-react';
 import type { ContentHubStats } from '@/lib/admin/content-hub-stats';
 import type { ListsIntelligenceData } from '@/lib/admin/lists-intelligence';
 import type { CatalogPageData } from '@/lib/admin/catalog-page-data';
@@ -12,8 +12,9 @@ import ListsIntelligenceClient from './ListsIntelligenceClient';
 import CatalogPageClient from '../catalog/CatalogPageClient';
 import type { NewItemFormList } from '../items/new/NewItemForm';
 import BulkImportClient from '../items/import/BulkImportClient';
+import PeoplePageClient from '@/components/admin/people/PeoplePageClient';
 
-export type ContentHubView = 'lists' | 'catalog' | 'import';
+export type ContentHubView = 'lists' | 'catalog' | 'import' | 'people';
 
 type ImportListOption = {
   id: string;
@@ -103,7 +104,7 @@ export default function ContentHubClient({
         <div className="min-w-0">
           <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها و محتوا</h1>
           <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-            لیست · کاتالوگ · import — یک مرکز مدیریت
+            لیست · کاتالوگ · اشخاص · import — یک مرکز مدیریت
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -116,7 +117,7 @@ export default function ContentHubClient({
               آیتم جدید
             </Link>
           )}
-          {view !== 'import' && !trash && (
+          {view !== 'import' && view !== 'people' && !trash && (
             <>
               <Link
                 href="/admin/lists?view=import"
@@ -146,7 +147,7 @@ export default function ContentHubClient({
       </header>
 
       {/* KPI */}
-      {view !== 'import' && (
+      {view !== 'import' && view !== 'people' && (
         <ContentHubStatsBar
           stats={hubStats}
           view={view}
@@ -164,6 +165,10 @@ export default function ContentHubClient({
         <button type="button" onClick={() => switchView('catalog')} className={tabClass(view === 'catalog')}>
           <Library className="w-4 h-4" />
           کاتالوگ
+        </button>
+        <button type="button" onClick={() => switchView('people')} className={tabClass(view === 'people')}>
+          <UserRound className="w-4 h-4" />
+          اشخاص
         </button>
         <button type="button" onClick={() => switchView('import')} className={tabClass(view === 'import')}>
           <FileJson className="w-4 h-4" />
@@ -202,6 +207,8 @@ export default function ContentHubClient({
           embedded
         />
       )}
+
+      {view === 'people' && <PeoplePageClient embedded />}
     </div>
   );
 }
