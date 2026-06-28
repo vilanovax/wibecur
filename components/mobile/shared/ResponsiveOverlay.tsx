@@ -14,7 +14,7 @@ interface ResponsiveOverlayProps {
   footer?: React.ReactNode;
   maxHeight?: string;
   /** عرض دیالوگ دسکتاپ */
-  desktopMaxWidth?: 'sm' | 'md' | 'lg';
+  desktopMaxWidth?: 'sm' | 'md' | 'lg' | 'xl';
   zIndex?: number;
   escapeToClose?: boolean;
   closeOnBackdrop?: boolean;

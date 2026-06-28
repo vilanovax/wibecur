@@ -27,7 +27,67 @@ const getCachedFastRising = unstable_cache(
   { revalidate: 300, tags: ['trending'] }
 );
 
-const EXPLORE_LIST_LIMIT = 25;
+const EXPLORE_LISTS_PER_CATEGORY = 8;
+const EXPLORE_FEATURED_LIMIT = 12;
+
+const exploreListSelect = {
+  id: true,
+  title: true,
+  slug: true,
+  description: true,
+  coverImage: true,
+  categoryId: true,
+  badge: true,
+  tags: true,
+  isFeatured: true,
+  saveCount: true,
+  likeCount: true,
+  itemCount: true,
+  createdAt: true,
+  categories: {
+    select: { id: true, name: true, slug: true, icon: true, isActive: true },
+  },
+  users: {
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      image: true,
+      curatorLevel: true,
+    },
+  },
+} as const;
+
+async function fetchExploreListsPool(categoryIds: string[]): Promise<DbListRow[]> {
+  const [perCategory, featuredGlobal] = await Promise.all([
+    Promise.all(
+      categoryIds.map((categoryId) =>
+        dbQuery(() =>
+          prisma.lists.findMany({
+            where: { ...publicCuratedListWhere, categoryId },
+            select: exploreListSelect,
+            orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
+            take: EXPLORE_LISTS_PER_CATEGORY,
+          })
+        )
+      )
+    ),
+    dbQuery(() =>
+      prisma.lists.findMany({
+        where: { ...publicCuratedListWhere, isFeatured: true },
+        select: exploreListSelect,
+        orderBy: { saveCount: 'desc' },
+        take: EXPLORE_FEATURED_LIMIT,
+      })
+    ),
+  ]);
+
+  const byId = new Map<string, DbListRow>();
+  for (const row of [...perCategory.flat(), ...featuredGlobal]) {
+    if (!byId.has(row.id)) byId.set(row.id, row as DbListRow);
+  }
+  return [...byId.values()];
+}
 
 type DbListRow = {
   id: string;
@@ -361,48 +421,17 @@ async function mergeExploreLists(
 
 /** لیست‌ها + دسته‌ها — مستقل از کاربر؛ هر ۵ دقیقه یک‌بار */
 async function fetchExploreBaseData(): Promise<ExploreBasePayload> {
-  const [categoriesRaw, listsRaw, trendingRaw, risingRaw] = await Promise.all([
-    dbQuery(() =>
-      prisma.categories.findMany({
-        where: activeCategoryWhere,
-        select: { id: true, name: true, slug: true, icon: true },
-        orderBy: { order: 'asc' },
-      })
-    ),
-    dbQuery(() =>
-      prisma.lists.findMany({
-        where: publicCuratedListWhere,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          coverImage: true,
-          categoryId: true,
-          badge: true,
-          tags: true,
-          isFeatured: true,
-          saveCount: true,
-          likeCount: true,
-          itemCount: true,
-          createdAt: true,
-          categories: {
-            select: { id: true, name: true, slug: true, icon: true, isActive: true },
-          },
-          users: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              image: true,
-              curatorLevel: true,
-            },
-          },
-        },
-        orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
-        take: EXPLORE_LIST_LIMIT,
-      })
-    ),
+  const categoriesRaw = await dbQuery(() =>
+    prisma.categories.findMany({
+      where: activeCategoryWhere,
+      select: { id: true, name: true, slug: true, icon: true },
+      orderBy: { order: 'asc' },
+    })
+  );
+
+  const categoryIds = categoriesRaw.map((c) => c.id);
+  const [listsRaw, trendingRaw, risingRaw] = await Promise.all([
+    fetchExploreListsPool(categoryIds),
     getCachedGlobalTrending(),
     getCachedFastRising(),
   ]);
@@ -412,7 +441,7 @@ async function fetchExploreBaseData(): Promise<ExploreBasePayload> {
 
 const getCachedExploreBase = unstable_cache(
   fetchExploreBaseData,
-  ['explore-base-v25'],
+  ['explore-base-v26'],
   { revalidate: 300, tags: ['explore'] }
 );
 

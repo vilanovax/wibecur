@@ -217,15 +217,36 @@ export function buildGuidedSearchPlan(ctx: GuidedContext): GuidedSearchPlan {
   }
 }
 
+const GUIDED_QUERY_ROW_META: Record<string, { title: string; icon: string }> = {
+  کافه: { title: 'کافه', icon: '☕' },
+  رستوران: { title: 'رستوران و غذا', icon: '🍽️' },
+  فیلم: { title: 'فیلم', icon: '🎬' },
+  سریال: { title: 'سریال', icon: '📺' },
+  کتاب: { title: 'کتاب', icon: '📚' },
+  سفر: { title: 'سفر و گردش', icon: '✈️' },
+  لایف: { title: 'لایف‌استایل', icon: '✨' },
+};
+
 export function rowTitleForQuery(query: string): string {
-  const map: Record<string, string> = {
-    کافه: 'کافه',
-    رستوران: 'رستوران و غذا',
-    فیلم: 'فیلم',
-    سریال: 'سریال',
-    کتاب: 'کتاب',
-    سفر: 'سفر و گردش',
-    لایف: 'لایف‌استایل',
-  };
-  return map[query] ?? query;
+  return GUIDED_QUERY_ROW_META[query]?.title ?? query;
+}
+
+export function rowIconForQuery(query: string): string | null {
+  return GUIDED_QUERY_ROW_META[query]?.icon ?? null;
+}
+
+const GUIDED_ROW_ICONS: Record<string, string> = {
+  quick: '⚡',
+  short: '⏱️',
+  foryou: '✨',
+  trending: '🔥',
+};
+
+export function rowIconForRowId(rowId: string, query?: string): string {
+  if (query) {
+    const fromQuery = rowIconForQuery(query);
+    if (fromQuery) return fromQuery;
+  }
+  const base = rowId.startsWith('search-') ? rowId.slice('search-'.length) : rowId;
+  return GUIDED_ROW_ICONS[base] ?? '📋';
 }

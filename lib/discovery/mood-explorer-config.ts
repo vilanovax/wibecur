@@ -191,7 +191,7 @@ export const QUICK_NOW_PILLS: QuickNowPill[] = [
 export type MoodExplorerSelection = {
   moodId: string;
   scenario: GuidedScenario;
-  moodMeta: { title: string; subtitle: string };
+  moodMeta: { title: string; subtitle: string; icon?: string };
   preset?: MoodExplorerPreset;
 };
 
@@ -199,7 +199,7 @@ export function moodCardToSelection(card: MoodExplorerCard): MoodExplorerSelecti
   return {
     moodId: card.id,
     scenario: card.guidedScenario,
-    moodMeta: { title: card.title, subtitle: card.subtitle },
+    moodMeta: { title: card.title, subtitle: card.subtitle, icon: card.icon },
     preset: card.guidedPreset,
   };
 }
@@ -208,7 +208,7 @@ export function quickPillToSelection(pill: QuickNowPill): MoodExplorerSelection 
   return {
     moodId: pill.id,
     scenario: pill.guidedScenario,
-    moodMeta: pill.moodMeta,
+    moodMeta: { ...pill.moodMeta, icon: pill.icon },
     preset: pill.guidedPreset,
   };
 }

@@ -9,9 +9,21 @@ import type { CuratedList } from '@/types/curated';
 interface ForYouSectionProps {
   lists: CuratedList[];
   personalized?: boolean;
+  diverseCategories?: boolean;
 }
 
-export default function ForYouSection({ lists, personalized = false }: ForYouSectionProps) {
+function resolveForYouSubtitle(personalized: boolean, diverseCategories: boolean): string {
+  if (personalized && diverseCategories) return 'علایق تو · از هر دسته';
+  if (diverseCategories) return 'از هر دسته یک پیشنهاد';
+  if (personalized) return 'بر اساس علایق تو';
+  return 'برترین لیست‌های منتخب';
+}
+
+export default function ForYouSection({
+  lists,
+  personalized = false,
+  diverseCategories = false,
+}: ForYouSectionProps) {
   if (lists.length === 0) return null;
 
   return (
@@ -23,7 +35,7 @@ export default function ForYouSection({ lists, personalized = false }: ForYouSec
       <ExploreSectionTitle
         id="foryou-title"
         title="پیشنهاد وایب"
-        subtitle={personalized ? 'بر اساس علایق تو' : 'برترین لیست‌های منتخب'}
+        subtitle={resolveForYouSubtitle(personalized, diverseCategories)}
         icon="✨"
       />
       <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">

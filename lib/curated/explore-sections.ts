@@ -3,8 +3,15 @@ import { scoreListKeywordMatch } from '@/lib/interest-keywords';
 import { filterAndSortLists } from './utils';
 
 const TRENDING_LIMIT = 5;
-const FOR_YOU_LIMIT = 4;
+const FOR_YOU_MIN = 4;
+const FOR_YOU_MAX = 9;
+const FOR_YOU_PERSONALIZED_EXTRA = 2;
 const MORE_LIMIT = 8;
+
+const KEYWORD_SCORE_WEIGHT = 12;
+const PREFERRED_CATEGORY_BOOST = 6;
+const FEATURED_BOOST = 4;
+const TRENDING_BADGE_BOOST = 3;
 
 function pickUnique(
   pool: CuratedList[],
@@ -36,17 +43,86 @@ function pickUnique(
   return result;
 }
 
-function pickByKeywordScore(
+export function scoreListForForYou(
+  list: CuratedList,
+  preferredKeywords: string[],
+  preferredCategories: Set<string>
+): number {
+  let score = list.trendScore ?? 0;
+  score += scoreListKeywordMatch(list, preferredKeywords) * KEYWORD_SCORE_WEIGHT;
+  if (preferredCategories.has(list.categoryId)) score += PREFERRED_CATEGORY_BOOST;
+  if (list.badges.includes('featured')) score += FEATURED_BOOST;
+  if (list.badges.includes('trending')) score += TRENDING_BADGE_BOOST;
+  if (list.badges.includes('rising')) score += 2;
+  score += Math.log10(Math.max(list.savesCount ?? 0, 1) + 1);
+  return score;
+}
+
+function activeCategoriesWithLists(pool: CuratedList[], activeCategoryIds: string[]): string[] {
+  const poolCategories = new Set(
+    pool.map((l) => l.categoryId).filter((id): id is string => Boolean(id && id !== 'unknown'))
+  );
+  return activeCategoryIds.filter((id) => poolCategories.has(id));
+}
+
+function resolveForYouLimit(activeCategoryIds: string[], pool: CuratedList[]): number {
+  const withLists = activeCategoriesWithLists(pool, activeCategoryIds);
+  const diversityNeed = Math.max(FOR_YOU_MIN, withLists.length);
+  return Math.min(FOR_YOU_MAX, diversityNeed + FOR_YOU_PERSONALIZED_EXTRA);
+}
+
+function pickBestInCategory(
+  pool: CuratedList[],
+  categoryId: string,
+  used: Set<string>,
+  preferredKeywords: string[],
+  preferredCategories: Set<string>
+): CuratedList | null {
+  const ranked = pool
+    .filter((list) => list.categoryId === categoryId && !used.has(list.id))
+    .map((list) => ({
+      list,
+      score: scoreListForForYou(list, preferredKeywords, preferredCategories),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  return ranked[0]?.list ?? null;
+}
+
+function pickCategoryDiverseForYou(
+  pool: CuratedList[],
+  used: Set<string>,
+  activeCategoryIds: string[],
+  preferredKeywords: string[],
+  preferredCategories: Set<string>
+): CuratedList[] {
+  const result: CuratedList[] = [];
+
+  for (const categoryId of activeCategoryIds) {
+    const best = pickBestInCategory(pool, categoryId, used, preferredKeywords, preferredCategories);
+    if (!best) continue;
+    result.push(best);
+    used.add(best.id);
+  }
+
+  return result;
+}
+
+function pickTopScoredForYou(
   pool: CuratedList[],
   used: Set<string>,
   limit: number,
-  keywordIds: string[]
+  preferredKeywords: string[],
+  preferredCategories: Set<string>
 ): CuratedList[] {
-  if (keywordIds.length === 0 || limit <= 0) return [];
+  if (limit <= 0) return [];
 
   const ranked = pool
-    .map((list) => ({ list, score: scoreListKeywordMatch(list, keywordIds) }))
-    .filter(({ list, score }) => score > 0 && !used.has(list.id))
+    .filter((list) => !used.has(list.id))
+    .map((list) => ({
+      list,
+      score: scoreListForForYou(list, preferredKeywords, preferredCategories),
+    }))
     .sort((a, b) => b.score - a.score);
 
   const result: CuratedList[] = [];
@@ -58,6 +134,63 @@ function pickByKeywordScore(
   return result;
 }
 
+function buildForYouLists(
+  filtered: CuratedList[],
+  used: Set<string>,
+  activeCategoryIds: string[],
+  preferredKeywords: string[],
+  preferredCategories: Set<string>
+): { lists: CuratedList[]; diverseCategories: boolean } {
+  const limit = resolveForYouLimit(activeCategoryIds, filtered);
+  const categoriesWithLists = activeCategoriesWithLists(filtered, activeCategoryIds);
+
+  let forYou = pickCategoryDiverseForYou(
+    filtered,
+    used,
+    activeCategoryIds,
+    preferredKeywords,
+    preferredCategories
+  );
+
+  if (forYou.length < limit) {
+    forYou = [
+      ...forYou,
+      ...pickTopScoredForYou(
+        filtered,
+        used,
+        limit - forYou.length,
+        preferredKeywords,
+        preferredCategories
+      ),
+    ];
+  }
+
+  if (forYou.length < limit) {
+    forYou = [
+      ...forYou,
+      ...pickUnique(
+        filtered,
+        used,
+        limit - forYou.length,
+        (list) => list.badges.includes('featured')
+      ),
+    ];
+  }
+
+  if (forYou.length < limit) {
+    forYou = [...forYou, ...pickUnique(filtered, used, limit - forYou.length)];
+  }
+
+  const covered = new Set(
+    forYou.map((list) => list.categoryId).filter((id): id is string => Boolean(id))
+  );
+  const diverseCategories =
+    categoriesWithLists.length > 0 &&
+    categoriesWithLists.every((categoryId) => covered.has(categoryId));
+
+  return { lists: forYou, diverseCategories };
+}
+
 export type ExploreSections = {
   filtered: CuratedList[];
   trending: CuratedList[];
@@ -66,6 +199,7 @@ export type ExploreSections = {
   moreTotal: number;
   isSearching: boolean;
   isPersonalized: boolean;
+  diverseCategories: boolean;
 };
 
 export type ExploreSectionsOptions = {
@@ -77,7 +211,7 @@ export type ExploreSectionsOptions = {
   excludeListIds?: string[];
 };
 
-/** تقسیم لیست‌ها بین سکشن‌ها — scoring keyword فقط در حافظه */
+/** تقسیم لیست‌ها بین سکشن‌ها — تنوع دسته + شخصی‌سازی keyword */
 export function buildExploreSections(
   allLists: CuratedList[],
   searchQuery: string,
@@ -86,7 +220,8 @@ export function buildExploreSections(
   const exclude = new Set(options?.excludeListIds ?? []);
   const preferredCategories = new Set(options?.preferredCategoryIds ?? []);
   const preferredKeywords = options?.preferredKeywordIds ?? [];
-  const activeCategories = new Set(options?.activeCategoryIds ?? []);
+  const activeCategoryIds = options?.activeCategoryIds ?? [];
+  const activeCategories = new Set(activeCategoryIds);
 
   const isInActiveCategory = (list: CuratedList) => {
     if (activeCategories.size === 0) return true;
@@ -106,52 +241,22 @@ export function buildExploreSections(
   const isSearching = searchQuery.trim().length > 0;
   const used = new Set<string>();
 
-  let forYou: CuratedList[] = [];
-
-  if (preferredKeywords.length > 0) {
-    forYou = pickByKeywordScore(filtered, used, FOR_YOU_LIMIT, preferredKeywords);
-  }
-
-  if (forYou.length < FOR_YOU_LIMIT && preferredCategories.size > 0) {
-    forYou = [
-      ...forYou,
-      ...pickUnique(
-        filtered,
-        used,
-        FOR_YOU_LIMIT - forYou.length,
-        (l) =>
-          preferredCategories.has(l.categoryId) &&
-          (activeCategories.size === 0 || activeCategories.has(l.categoryId))
-      ),
-    ];
-  }
-
-  if (forYou.length < FOR_YOU_LIMIT) {
-    forYou = [
-      ...forYou,
-      ...pickUnique(
-        filtered,
-        used,
-        FOR_YOU_LIMIT - forYou.length,
-        (l) => l.badges.includes('featured')
-      ),
-    ];
-  }
-  if (forYou.length < FOR_YOU_LIMIT) {
-    forYou = [
-      ...forYou,
-      ...pickUnique(filtered, used, FOR_YOU_LIMIT - forYou.length),
-    ];
-  }
+  const { lists: forYou, diverseCategories } = buildForYouLists(
+    filtered,
+    used,
+    activeCategoryIds,
+    preferredKeywords,
+    preferredCategories
+  );
 
   const trending = pickUnique(
     filtered,
     used,
     TRENDING_LIMIT,
-    (l) => l.badges.includes('trending') || (l.savesCount ?? 0) >= 20
+    (list) => list.badges.includes('trending') || (list.savesCount ?? 0) >= 20
   );
 
-  const unused = filtered.filter((l) => !used.has(l.id));
+  const unused = filtered.filter((list) => !used.has(list.id));
   const more = unused.slice(0, MORE_LIMIT);
 
   return {
@@ -162,6 +267,7 @@ export function buildExploreSections(
     moreTotal: unused.length,
     isSearching,
     isPersonalized: preferredKeywords.length > 0 || preferredCategories.size > 0,
+    diverseCategories,
   };
 }
 

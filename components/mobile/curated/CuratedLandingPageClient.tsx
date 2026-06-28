@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import ExploreSmartHero from './ExploreSmartHero';
 import QuickNowSection from './QuickNowSection';
-import ExploreBottomCTA from './ExploreBottomCTA';
 import { ExplorePageSkeleton } from './ExplorePageSkeleton';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
@@ -248,6 +247,7 @@ export default function CuratedLandingPageClient({
                 <ForYouSectionLazy
                   lists={sections.forYou}
                   personalized={showPersonalizedForYou && sections.isPersonalized}
+                  diverseCategories={sections.diverseCategories}
                 />
               ) : null}
             </div>
@@ -268,8 +268,6 @@ export default function CuratedLandingPageClient({
             )}
           </>
         )}
-
-        {showDiscovery && <ExploreBottomCTA onOpenCreate={() => setIsCreateFormOpen(true)} />}
       </main>
 
       {isCreateFormOpen && (
