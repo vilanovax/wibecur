@@ -16,11 +16,13 @@ function getScrollPercent(): number {
 /** ثبت عمق اسکرول صفحه لیست — هر milestone فقط یک‌بار در هر بازدید */
 export function useListScrollDepth(listSlug: string, categorySlug?: string | null) {
   const tracked = useRef(new Set<ListScrollDepth>());
+  const rafId = useRef<number | null>(null);
 
   useEffect(() => {
     tracked.current.clear();
 
-    const checkDepth = () => {
+    const flushDepth = () => {
+      rafId.current = null;
       const percent = getScrollPercent();
       for (const milestone of DEPTH_MILESTONES) {
         if (percent >= milestone && !tracked.current.has(milestone)) {
@@ -34,13 +36,19 @@ export function useListScrollDepth(listSlug: string, categorySlug?: string | nul
       }
     };
 
-    checkDepth();
-    window.addEventListener('scroll', checkDepth, { passive: true });
-    window.addEventListener('resize', checkDepth, { passive: true });
+    const scheduleCheck = () => {
+      if (rafId.current != null) return;
+      rafId.current = window.requestAnimationFrame(flushDepth);
+    };
+
+    scheduleCheck();
+    window.addEventListener('scroll', scheduleCheck, { passive: true });
+    window.addEventListener('resize', scheduleCheck, { passive: true });
 
     return () => {
-      window.removeEventListener('scroll', checkDepth);
-      window.removeEventListener('resize', checkDepth);
+      window.removeEventListener('scroll', scheduleCheck);
+      window.removeEventListener('resize', scheduleCheck);
+      if (rafId.current != null) window.cancelAnimationFrame(rafId.current);
     };
   }, [listSlug, categorySlug]);
 }

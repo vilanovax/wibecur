@@ -6,22 +6,24 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useListScrollDepth } from '@/hooks/useListScrollDepth';
 import { useInterestTracking } from '@/hooks/useInterestTracking';
-import { Share2, MoreVertical, Flame, Bookmark, LayoutGrid, List as ListIcon, Plus, Settings, Link2, Flag, Lightbulb, Map } from 'lucide-react';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useLazyInView } from '@/hooks/useLazyInView';
+import { Share2, MoreVertical, Flame, Bookmark, Plus, Settings, Link2, Flag, Lightbulb, Map, LayoutGrid } from 'lucide-react';
 import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
 import ListDetailSidebar from '@/components/mobile/lists/ListDetailSidebar';
 import ListDetailSubNav from '@/components/mobile/lists/ListDetailSubNav';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
-import ListItemsMapView from '@/components/mobile/lists/ListItemsMapView';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
-import ListReportModal from '@/components/mobile/lists/ListReportModal';
 import VibeCommentSectionLazy from '@/components/mobile/lists/VibeCommentSectionLazy';
-import SuggestItemSearch from '@/components/mobile/lists/SuggestItemSearch';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
 import {
   ItemPreviewSheetLazy,
+  ListItemsMapViewLazy,
+  ListReportModalLazy,
+  SuggestItemSearchLazy,
   type ItemPreviewData,
 } from '@/components/mobile/lists/list-detail-lazy-sections';
 import SearchInput from '@/components/mobile/search/SearchInput';
@@ -31,7 +33,7 @@ import ListCardStats from '@/components/shared/ListCardStats';
 import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import { getDisplayListTitle } from '@/lib/list-display-title';
-import { getItemCardSubtitle, filterItemsByQuery, LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
+import { filterItemsByQuery, LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 import {
   buildListItemQuickActions,
@@ -45,7 +47,6 @@ import type { ListPagePlacements } from '@/lib/sponsored-placements';
 import {
   isLightweightListItem,
   isLifestyleCategory,
-  isMixedListCategory,
   resolveEntryKind,
   sourceCategorySlugFromItem,
 } from '@/lib/list-entry';
@@ -120,42 +121,9 @@ interface ListDetailClientProps {
   sponsoredPlacements?: ListPagePlacements;
 }
 
-const LIST_VIEW_PREFERENCE_KEY = 'wibe:listViewPreference';
-
-type ListViewMode = 'list' | 'grid' | 'map';
+type ListViewMode = 'grid' | 'map';
 
 type ItemEntry = { item: Item; originalIndex: number };
-
-const GRID_DEFAULT_CATEGORY_SLUGS = [
-  'movie',
-  'movies',
-  'series',
-  'travel',
-  'restaurant',
-  'cafe',
-  'book',
-  'books',
-];
-
-function getDefaultView(
-  categorySlug: string | undefined,
-  items?: { imageUrl: string | null; catalogItemId?: string | null; metadata?: unknown }[]
-): 'grid' | 'list' {
-  if (categorySlug && isMixedListCategory(categorySlug)) {
-    const lightweightCount =
-      items?.filter((i) => isLightweightListItem(i)).length ?? 0;
-    if (items?.length && lightweightCount / items.length >= 0.35) return 'list';
-  }
-  if (categorySlug) {
-    const slug = categorySlug.toLowerCase();
-    if (GRID_DEFAULT_CATEGORY_SLUGS.some((s) => slug === s || slug.includes(s))) return 'grid';
-  }
-  if (items?.length) {
-    const withImage = items.filter((i) => i.imageUrl?.trim()).length;
-    if (withImage / items.length >= 0.8) return 'grid';
-  }
-  return 'list';
-}
 
 function ListCompactStatsBar({
   saveCount,
@@ -349,8 +317,7 @@ function SimilarListCard({ rel }: { rel: RelatedList }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-2 text-right lg:p-2.5">
-          <h3 className="mb-0.5 line-clamp-2 wibe-small font-semibold text-white lg:hidden">{title}</h3>
-          <ListCardStats saves={rel.saveCount} itemCount={rel.itemCount} variant="overlay" />
+          <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:hidden">{title}</h3>
         </div>
       </div>
       <div className="hidden min-w-0 p-2 lg:block">
@@ -438,12 +405,6 @@ function GridItemCard({
   categoryIcon?: string | null;
   onOpen: () => void;
 }) {
-  const subtitle = getItemCardSubtitle({
-    description: item.description,
-    rating: item.rating,
-    metadata: item.metadata,
-    categorySlug,
-  });
   const isMovieGrid = isMovieLikeCategory(categorySlug);
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
 
@@ -454,118 +415,33 @@ function GridItemCard({
         onClick={onOpen}
         className="block w-full text-right transition-all active:scale-[0.99]"
       >
-      <div
-        className={`relative overflow-hidden ${
-          isMovieGrid
-            ? 'aspect-[2/3] lg:mx-auto lg:max-h-[13.5rem] lg:w-full lg:max-w-[10.5rem]'
-            : 'aspect-[4/3] lg:max-h-[10.5rem]'
-        }`}
-      >
-        <LazyItemCoverImage
-          itemId={item.id}
-          imageUrl={item.displayImageUrl ?? item.imageUrl}
-          title={item.title}
-          metadata={item.metadata}
-          categorySlug={categorySlug}
-          className="h-full w-full object-cover"
-          fallbackIcon={categoryIcon ?? '🎬'}
-          fallbackClassName="flex h-full w-full items-center justify-center text-2xl"
-          enrichWhenVisible={isMovieGrid}
-          coverLayout="grid"
-        />
-        <span className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums">
-          {(index + 1).toLocaleString('fa-IR')}
-        </span>
-      </div>
-      <div className="min-h-0 p-2.5 lg:p-3">
-        <h3 className="line-clamp-2 wibe-small font-semibold leading-tight text-foreground lg:text-[0.9375rem]">
-          {item.title}
-        </h3>
-        {subtitle && (
-          <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">{subtitle}</p>
-        )}
-      </div>
+        <div
+          className={`relative overflow-hidden ${
+            isMovieGrid
+              ? 'aspect-[2/3] lg:mx-auto lg:max-h-[13.5rem] lg:w-full lg:max-w-[10.5rem]'
+              : 'aspect-[4/3] lg:max-h-[10.5rem]'
+          }`}
+        >
+          <LazyItemCoverImage
+            itemId={item.id}
+            imageUrl={item.displayImageUrl ?? item.imageUrl}
+            title={item.title}
+            metadata={item.metadata}
+            categorySlug={categorySlug}
+            className="h-full w-full object-cover"
+            fallbackIcon={categoryIcon ?? '🎬'}
+            fallbackClassName="flex h-full w-full items-center justify-center text-2xl"
+            enrichWhenVisible={isMovieGrid}
+            coverLayout="grid"
+          />
+          <span className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums">
+            {(index + 1).toLocaleString('fa-IR')}
+          </span>
+        </div>
       </button>
       {quickActions.length > 0 && (
         <div className="border-t border-wibe/60 px-2.5 py-2 lg:px-3">
           <ListItemQuickActions actions={quickActions} size="sm" />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ListItemRow({
-  item,
-  index,
-  categorySlug,
-  categoryIcon,
-  isSimilar,
-  onOpen,
-}: {
-  item: Item;
-  index: number;
-  categorySlug?: string | null;
-  categoryIcon?: string | null;
-  isSimilar?: boolean;
-  onOpen: () => void;
-}) {
-  const subtitle = getItemCardSubtitle({
-    description: item.description,
-    rating: item.rating,
-    metadata: item.metadata,
-    categorySlug,
-  });
-  const isMovieRow = isMovieLikeCategory(categorySlug);
-  const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
-
-  return (
-    <div
-      className={`flex items-stretch gap-1 rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all lg:hover:border-primary/15 lg:hover:shadow-sm ${
-        isSimilar ? 'opacity-85' : ''
-      }`}
-    >
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex min-w-0 flex-1 min-h-[68px] items-center gap-3 p-2.5 text-right transition-all active:scale-[0.99] lg:min-h-[80px] lg:gap-4 lg:p-3.5"
-      >
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 wibe-caption font-semibold text-wibe-secondary tabular-nums lg:h-8 lg:w-8">
-        {(index + 1).toLocaleString('fa-IR')}
-      </div>
-      <div
-        className={`relative shrink-0 overflow-hidden rounded-md ${
-          isMovieRow ? 'aspect-[2/3] w-11 lg:w-14' : 'h-12 w-12 lg:h-14 lg:w-14'
-        }`}
-      >
-        <LazyItemCoverImage
-          itemId={item.id}
-          imageUrl={item.displayImageUrl ?? item.imageUrl}
-          title={item.title}
-          metadata={item.metadata}
-          categorySlug={categorySlug}
-          className="h-full w-full object-cover"
-          fallbackIcon={categoryIcon ?? '🎬'}
-          fallbackClassName="flex h-full w-full items-center justify-center text-lg"
-          enrichWhenVisible={isMovieRow}
-          coverLayout="list"
-        />
-      </div>
-      <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:text-[0.9375rem] lg:leading-snug">
-          {item.title}
-          {isSimilar && (
-            <span className="wibe-caption font-normal text-wibe-secondary mr-1">(مشابه)</span>
-          )}
-        </h3>
-        {subtitle && (
-          <p className="wibe-caption text-wibe-secondary line-clamp-1 mt-0.5">{subtitle}</p>
-        )}
-      </div>
-      </button>
-      {quickActions.length > 0 && (
-        <div className="flex shrink-0 items-center border-r border-wibe/60 px-2">
-          <ListItemQuickActions actions={quickActions} layout="vertical" size="sm" />
         </div>
       )}
     </div>
@@ -593,27 +469,24 @@ export default function ListDetailClient({
   const heroBannerRef = useRef<HTMLElement>(null);
   const itemsSectionRef = useRef<HTMLElement>(null);
   const similarSectionRef = useRef<HTMLElement>(null);
-  const commentsSectionRef = useRef<HTMLDivElement>(null);
-  const [viewMode, setViewMode] = useState<ListViewMode>(() => {
-    if (typeof window === 'undefined')
-      return getDefaultView(list.categories?.slug, list.items);
-    try {
-      const stored = localStorage.getItem(LIST_VIEW_PREFERENCE_KEY);
-      if (stored === 'grid' || stored === 'list') return stored;
-    } catch {}
-    return getDefaultView(list.categories?.slug, list.items);
+  const { ref: commentsSectionRef, inView: commentsInView } = useLazyInView<HTMLDivElement>({
+    rootMargin: '280px',
+    once: true,
   });
-  const [showGridHint, setShowGridHint] = useState(false);
-  const [gridHintVisible, setGridHintVisible] = useState(false);
+  const [commentsActivated, setCommentsActivated] = useState(false);
+  const [viewMode, setViewMode] = useState<ListViewMode>('grid');
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [listReportOpen, setListReportOpen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [itemSearchQuery, setItemSearchQuery] = useState('');
+  const debouncedItemSearchQuery = useDebouncedValue(itemSearchQuery, 200);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const viewerStateFetched = useRef(false);
 
   const handleScrollToComment = useCallback((commentId: string) => {
+    setCommentsActivated(true);
     setSuggestOpen(false);
     setTimeout(() => {
       document.getElementById(`comment-${commentId}`)?.scrollIntoView({ behavior: 'smooth' });
@@ -630,7 +503,8 @@ export default function ListDetailClient({
   }, [list.slug, router]);
 
   const fetchViewerState = useCallback(() => {
-    if (!session?.user) return;
+    if (!session?.user || viewerStateFetched.current) return;
+    viewerStateFetched.current = true;
     fetch(`/api/lists/${list.id}/viewer-state`)
       .then((r) => r.json())
       .then((data) => {
@@ -638,47 +512,26 @@ export default function ListDetailClient({
           setIsBookmarked(!!data.data.isBookmarked);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        viewerStateFetched.current = false;
+      });
   }, [session?.user, list.id]);
 
   useEffect(() => {
-    if (!session?.user) return;
+    if (!session?.user) {
+      viewerStateFetched.current = false;
+      return;
+    }
     fetchViewerState();
   }, [session?.user, fetchViewerState]);
 
   useEffect(() => {
-    if (!stickyVisible || !session?.user) return;
-    fetchViewerState();
-  }, [stickyVisible, session?.user, fetchViewerState]);
-
-  const setViewModeAndPersist = (mode: 'list' | 'grid') => {
-    setViewMode(mode);
-    try {
-      localStorage.setItem(LIST_VIEW_PREFERENCE_KEY, mode);
-    } catch {}
-  };
-
-  const handleSetGrid = () => {
-    if (viewMode !== 'grid') {
-      setViewModeAndPersist('grid');
-      setShowGridHint(true);
-      setGridHintVisible(true);
-    }
-  };
-
-  const handleSetList = () => {
-    if (viewMode !== 'list') setViewModeAndPersist('list');
-  };
+    if (commentsInView) setCommentsActivated(true);
+  }, [commentsInView]);
 
   const handleSetMap = () => {
-    if (viewMode !== 'map') setViewMode('map');
+    setViewMode((mode) => (mode === 'map' ? 'grid' : 'map'));
   };
-
-  useEffect(() => {
-    if (!showGridHint) return;
-    const t = setTimeout(() => setGridHintVisible(false), 2500);
-    return () => clearTimeout(t);
-  }, [showGridHint]);
 
   const itemCount = list.itemCount ?? list._count?.items ?? list.items?.length ?? 0;
   const commentCount = list._count?.list_comments ?? 0;
@@ -779,6 +632,11 @@ export default function ListDetailClient({
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const scrollToComments = () => {
+    setCommentsActivated(true);
+    scrollToSection(commentsSectionRef);
+  };
+
   const showStickyBar = stickyVisible && !isBookmarked && !isOwner;
 
   const BADGE_LABELS: Record<string, string> = {
@@ -800,7 +658,7 @@ export default function ListDetailClient({
     [list.items]
   );
 
-  const normalizedItemSearch = normalizeSearchQuery(itemSearchQuery);
+  const normalizedItemSearch = normalizeSearchQuery(debouncedItemSearchQuery);
   const isItemSearchActive = normalizedItemSearch.length > 0;
 
   const filteredItemEntries = useMemo(() => {
@@ -891,7 +749,7 @@ export default function ListDetailClient({
   const renderItemEntries = (entries: ItemEntry[]) => {
     if (viewMode === 'map') {
       return (
-        <ListItemsMapView entries={entries} categorySlug={categorySlug} />
+        <ListItemsMapViewLazy entries={entries} categorySlug={categorySlug} />
       );
     }
 
@@ -930,51 +788,7 @@ export default function ListDetailClient({
       );
     }
 
-    return (
-      <div
-        className={
-          isLifestyleList
-            ? 'mx-auto max-w-2xl space-y-2.5'
-            : 'space-y-2.5 lg:grid lg:grid-cols-1 lg:gap-2.5 lg:space-y-0 xl:grid-cols-2 xl:gap-3'
-        }
-      >
-        {entries.map(({ item, originalIndex }, i) => {
-          const prevEntry = i > 0 ? entries[i - 1] : null;
-          const isSimilar =
-            !!prevEntry &&
-            item.title.slice(0, 12) === prevEntry.item.title.slice(0, 12);
-          const entryKind = resolveEntryKind(item);
-
-          if (isLightweightListItem(item)) {
-            const itemCategorySlug = itemDisplayCategorySlug(item, categorySlug);
-            return (
-              <LightweightEntryRow
-                key={item.id}
-                item={item}
-                index={originalIndex}
-                entryKind={entryKind}
-                categorySlug={itemCategorySlug}
-                onOpen={() => openItemPreview(originalIndex)}
-                hideEntryKindChrome={isLifestyleList}
-              />
-            );
-          }
-
-          const itemCategorySlug = itemDisplayCategorySlug(item, categorySlug);
-          return (
-            <ListItemRow
-              key={item.id}
-              item={item}
-              index={originalIndex}
-              categorySlug={itemCategorySlug}
-              categoryIcon={categoryIcon}
-              isSimilar={isSimilar}
-              onOpen={() => openItemPreview(originalIndex)}
-            />
-          );
-        })}
-      </div>
-    );
+    return null;
   };
 
   const heroImage = list.bannerImage ?? list.horizontalImage ?? list.coverImage ?? '';
@@ -1111,7 +925,7 @@ export default function ListDetailClient({
           viewCount={viewCount}
           isOwner={isOwner}
           onItemsClick={() => scrollToSection(itemsSectionRef)}
-          onCommentsClick={() => scrollToSection(commentsSectionRef)}
+          onCommentsClick={scrollToComments}
         />
       </div>
 
@@ -1122,7 +936,7 @@ export default function ListDetailClient({
           showSimilar={showSimilarLists}
           onItemsClick={() => scrollToSection(itemsSectionRef)}
           onSimilarClick={() => scrollToSection(similarSectionRef)}
-          onCommentsClick={() => scrollToSection(commentsSectionRef)}
+          onCommentsClick={scrollToComments}
         />
       </div>
 
@@ -1186,16 +1000,10 @@ export default function ListDetailClient({
               id="list-items-section"
               className={`${LIST_SECTION_SCROLL_MT} lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card lg:p-5 lg:shadow-sm`}
             >
-              <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 lg:mb-4">
-                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 lg:gap-3">
-                  <h2 className="wibe-h3 shrink-0">
-                    آیتم‌های لیست
-                    <span className="mr-1.5 wibe-caption font-medium text-wibe-secondary">
-                      ({itemCount.toLocaleString('fa-IR')})
-                    </span>
-                  </h2>
-                  {showItemSearch && (
-                    <div className="min-w-0 w-full flex-1 sm:w-auto sm:max-w-xs lg:max-w-sm">
+              {(showItemSearch || showMapView) && (
+                <div className="mb-3 flex items-start gap-2 lg:mb-4">
+                  {showItemSearch ? (
+                    <div className="min-w-0 flex-1">
                       <SearchInput
                         value={itemSearchQuery}
                         onChange={setItemSearchQuery}
@@ -1209,62 +1017,31 @@ export default function ListDetailClient({
                         </p>
                       )}
                     </div>
+                  ) : (
+                    <div className="flex-1" />
                   )}
-                  {list.items?.length > 0 && (
-                    <div className="mr-auto flex shrink-0 rounded-lg border border-wibe bg-gray-100 p-0.5 sm:mr-0">
-                      <button
-                        type="button"
-                        onClick={handleSetList}
-                        title="لیستی"
-                        aria-label="نمایش لیستی"
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md wibe-caption transition-colors ${
-                          viewMode === 'list'
-                            ? 'bg-wibe-card shadow-sm text-primary'
-                            : 'text-wibe-secondary'
-                        }`}
-                      >
-                        <ListIcon className="w-3.5 h-3.5" />
-                        لیست
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSetGrid}
-                        title="شبکه‌ای"
-                        aria-label="نمایش شبکه‌ای"
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md wibe-caption transition-colors ${
-                          viewMode === 'grid'
-                            ? 'bg-wibe-card shadow-sm text-primary'
-                            : 'text-wibe-secondary'
-                        }`}
-                      >
-                        <LayoutGrid className="w-3.5 h-3.5" />
-                        شبکه
-                      </button>
-                      {showMapView && (
-                        <button
-                          type="button"
-                          onClick={handleSetMap}
-                          title="نقشه"
-                          aria-label="نمایش نقشه"
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md wibe-caption transition-colors ${
-                            viewMode === 'map'
-                              ? 'bg-wibe-card shadow-sm text-primary'
-                              : 'text-wibe-secondary'
-                          }`}
-                        >
-                          <Map className="w-3.5 h-3.5" />
-                          نقشه
-                        </button>
+                  {showMapView && list.items.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={handleSetMap}
+                      title={viewMode === 'map' ? 'نمایش شبکه‌ای' : 'نمایش نقشه'}
+                      aria-label={viewMode === 'map' ? 'نمایش شبکه‌ای' : 'نمایش نقشه'}
+                      aria-pressed={viewMode === 'map'}
+                      className={`flex shrink-0 items-center gap-1 rounded-lg border px-3 py-2.5 wibe-caption transition-colors ${
+                        viewMode === 'map'
+                          ? 'border-primary/30 bg-primary/10 text-primary'
+                          : 'border-wibe bg-wibe-card text-wibe-secondary'
+                      }`}
+                    >
+                      {viewMode === 'map' ? (
+                        <LayoutGrid className="h-4 w-4" />
+                      ) : (
+                        <Map className="h-4 w-4" />
                       )}
-                    </div>
-                  )}
+                      {viewMode === 'map' ? 'شبکه' : 'نقشه'}
+                    </button>
+                  ) : null}
                 </div>
-              </div>
-
-              {viewMode === 'grid' && gridHintVisible && !isItemSearchActive && (
-                <p className="wibe-caption text-wibe-secondary mb-2.5 text-center">
-                  مرور سریع‌تر با نمای شبکه‌ای
-                </p>
               )}
 
               {!list.items?.length ? (
@@ -1320,14 +1097,22 @@ export default function ListDetailClient({
               id="list-comments-section"
               className={`${LIST_SECTION_SCROLL_MT} border-t border-wibe pt-6 lg:mt-0 lg:rounded-2xl lg:border lg:bg-wibe-card lg:p-5 lg:pt-5 lg:shadow-sm`}
             >
-              <VibeCommentSectionLazy
-                listId={list.id}
-                listSlug={list.slug}
-                isOwner={isOwner}
-                categorySlug={categorySlug}
-                onOpenSuggestItem={() => setSuggestOpen(true)}
-                embeddedInSidebar
-              />
+              {commentsActivated ? (
+                <VibeCommentSectionLazy
+                  listId={list.id}
+                  listSlug={list.slug}
+                  isOwner={isOwner}
+                  categorySlug={categorySlug}
+                  onOpenSuggestItem={() => setSuggestOpen(true)}
+                  embeddedInSidebar
+                />
+              ) : (
+                <div className="space-y-3" aria-hidden>
+                  <div className="h-11 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                </div>
+              )}
             </div>
 
             <div className="h-6 lg:h-2" />
@@ -1356,7 +1141,7 @@ export default function ListDetailClient({
                 viewCount={viewCount}
                 isOwner={isOwner}
                 onItemsClick={() => scrollToSection(itemsSectionRef)}
-                onCommentsClick={() => scrollToSection(commentsSectionRef)}
+                onCommentsClick={scrollToComments}
               />
             }
           />
@@ -1475,12 +1260,14 @@ export default function ListDetailClient({
         </div>
       </BottomSheet>
 
-      <ListReportModal
-        isOpen={listReportOpen}
-        onClose={() => setListReportOpen(false)}
-        listId={list.id}
-        onReportSuccess={() => setToast({ message: 'گزارش ثبت شد', type: 'success' })}
-      />
+      {listReportOpen ? (
+        <ListReportModalLazy
+          isOpen={listReportOpen}
+          onClose={() => setListReportOpen(false)}
+          listId={list.id}
+          onReportSuccess={() => setToast({ message: 'گزارش ثبت شد', type: 'success' })}
+        />
+      ) : null}
 
       {/* مودال پیشنهاد آیتم */}
       <BottomSheet
@@ -1490,13 +1277,15 @@ export default function ListDetailClient({
         subtitle="جستجو کن یا از پیشنهادها انتخاب کن"
         maxHeight="85vh"
       >
-        <SuggestItemSearch
-          listId={list.id}
-          categorySlug={list.categories?.slug}
-          onSuccess={() => setSuggestOpen(false)}
-          onScrollToComment={handleScrollToComment}
-          showToast={(message, type) => setToast({ message, type })}
-        />
+        {suggestOpen ? (
+          <SuggestItemSearchLazy
+            listId={list.id}
+            categorySlug={list.categories?.slug}
+            onSuccess={() => setSuggestOpen(false)}
+            onScrollToComment={handleScrollToComment}
+            showToast={(message, type) => setToast({ message, type })}
+          />
+        ) : null}
       </BottomSheet>
 
       {toast && (

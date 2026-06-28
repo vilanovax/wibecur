@@ -700,9 +700,6 @@ export default function VibeCommentSection({
   const hasMore = visibleCount < comments.length;
   const remainingCount = comments.length - visibleCount;
   const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
-  const commentCount = comments.filter((c) => c.type === 'comment').length;
-  const suggestionCount = comments.filter((c) => c.type === 'suggestion').length;
-
   const hasComments = comments.length > 0;
 
   return (
@@ -711,10 +708,7 @@ export default function VibeCommentSection({
         embeddedInSidebar ? 'mt-0 border-t-0 pt-0' : 'mt-8 border-t pt-6'
       }`}
     >
-      <h2 className="wibe-h3 text-foreground mb-0.5">نظرات</h2>
-      <p className="wibe-caption text-wibe-secondary mb-3">
-        {commentCount.toLocaleString('fa-IR')} نظر · {suggestionCount.toLocaleString('fa-IR')} پیشنهاد
-      </p>
+      <h2 className="mb-3 wibe-h3 text-foreground">نظرات</h2>
 
       {/* Spacing: Header→Reaction 12, Reaction→Input 12, Input→Suggest 16, Suggest→Empty 20 */}
       <div className="space-y-3">

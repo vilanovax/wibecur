@@ -8,6 +8,7 @@ import CategoryTrendingSectionServer from '@/components/category/CategoryTrendin
 import CategoryNewListsSectionServer from '@/components/category/CategoryNewListsSectionServer';
 import CategoryViralSpotlightSectionServer from '@/components/category/CategoryViralSpotlightSectionServer';
 import CategoryMostSavedItemsServer from '@/components/category/CategoryMostSavedItemsServer';
+import CategoryLatestItemsServer from '@/components/category/CategoryLatestItemsServer';
 import HomeLcpPreload from '@/components/mobile/home/HomeLcpPreload';
 import { resolveCategoryBySlug } from '@/lib/category-resolve';
 import { getCachedCategoryPageData } from '@/lib/category-page-cached';
@@ -125,6 +126,15 @@ export default async function CategoryPage({
               <CategoryMostSavedItemsServer
                 inset
                 items={pageData.mostSavedItems}
+                accentColor={accentColor}
+              />
+            ) : null
+          }
+          latestItemsSection={
+            pageData.latestItems && pageData.latestItems.length > 0 ? (
+              <CategoryLatestItemsServer
+                inset
+                items={pageData.latestItems}
                 accentColor={accentColor}
               />
             ) : null

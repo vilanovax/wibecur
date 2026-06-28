@@ -112,6 +112,8 @@ export interface CategoryPageData {
   filmGenres?: FilmGenreChip[];
   /** آیتم‌های پربذخیره در دسته (برای Most Saved Items) */
   mostSavedItems?: CategoryItemCard[];
+  /** تازه‌ترین آیتم‌های اضافه‌شده در این دسته */
+  latestItems?: CategoryItemCard[];
 }
 
 export interface CategoryItemCard {

@@ -75,6 +75,7 @@ const TOP_SAVED_LIMIT = 6;
 const TRENDING_24H_LIMIT = 10;
 const MOST_DEBATED_LIMIT = 6;
 const MOST_SAVED_ITEMS_LIMIT = 5;
+const LATEST_ITEMS_LIMIT = 5;
 
 /** استخراج شهر از عنوان یا تگ‌ها */
 function extractCity(title: string, tags: string[] = []): string | null {
@@ -614,6 +615,38 @@ async function getMostDebatedLists(
     }));
 }
 
+async function getLatestItems(
+  prisma: PrismaClient,
+  categoryId: string
+): Promise<CategoryItemCard[]> {
+  const rows = await prisma.items.findMany({
+    where: {
+      deletedAt: null,
+      lists: {
+        categoryId,
+        isActive: true,
+        isPublic: true,
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: LATEST_ITEMS_LIMIT,
+    select: {
+      id: true,
+      title: true,
+      imageUrl: true,
+      lists: { select: { slug: true, title: true } },
+    },
+  });
+
+  return rows.map((item) => ({
+    id: item.id,
+    title: item.title,
+    imageUrl: item.imageUrl,
+    listSlug: item.lists.slug,
+    listTitle: item.lists.title,
+  }));
+}
+
 async function getMostSavedItems(
   prisma: PrismaClient,
   categoryId: string
@@ -751,6 +784,7 @@ export async function getCategoryPageData(
     newLists,
     cityBreakdown,
     mostSavedItems,
+    latestItems,
     filmGenres,
   ] = await Promise.all([
     getCategoryAndMetrics(prisma, categoryId),
@@ -758,6 +792,7 @@ export async function getCategoryPageData(
     getNewLists(prisma, categoryId),
     getCityBreakdown(prisma, categoryId),
     getMostSavedItems(prisma, categoryId),
+    getLatestItems(prisma, categoryId),
     getFilmGenres(prisma, categoryId),
   ]);
 
@@ -773,6 +808,7 @@ export async function getCategoryPageData(
     newLists: applyListCovers(newLists, category.slug),
     cityBreakdown,
     mostSavedItems,
+    latestItems,
     filmGenres,
   };
 }

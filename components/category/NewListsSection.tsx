@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import ListCardStats from '@/components/shared/ListCardStats';
 import CategorySectionTitle from './CategorySectionTitle';
 import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryListCard } from '@/types/category-page';
@@ -50,9 +49,8 @@ export default function NewListsSection({
                 </div>
               )}
             </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
-              <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="compact" className="mt-1" />
+            <div className="min-w-0 flex-1 flex items-center">
+              <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
             </div>
           </Link>
         ))}

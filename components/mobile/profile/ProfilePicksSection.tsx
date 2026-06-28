@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Sparkles, Plus } from 'lucide-react';
+import { Sparkles, Plus, HelpCircle } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import ProfilePicksEditorSheet from './ProfilePicksEditorSheet';
 import { PROFILE_PICKS_UPDATED_EVENT } from '@/lib/profile-events';
 import { MAX_PICKS_PER_CATEGORY } from '@/lib/profile-picks';
@@ -23,6 +24,9 @@ async function fetchProfilePicks(): Promise<ProfilePicksResponse> {
   if (!json.success) throw new Error(json.error || 'خطا');
   return json.data as ProfilePicksResponse;
 }
+
+const PROFILE_PICKS_HELP_TEXT =
+  'شما می‌توانید هر فیلم و سریال و رستوران و آیتمی را که خواستید به علاقه‌مندی‌های شخصی خود اضافه کنید و بعداً در شبکه‌های اجتماعی علایق و سلایق خود را می‌توانید با دیگران به نمایش بگذارید.';
 
 function PickCard({ pick, accentColor }: { pick: ProfilePickItemDto; accentColor: string }) {
   const href = pick.itemId ? `/items/${pick.itemId}` : '#';
@@ -182,6 +186,7 @@ export default function ProfilePicksSection({
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorCategory, setEditorCategory] = useState<string | undefined>();
   const [activeShelfSlug, setActiveShelfSlug] = useState<string>('');
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const { data, refetch, isLoading } = useQuery({
     queryKey: ['user', userId, 'profile-picks'],
@@ -255,13 +260,23 @@ export default function ProfilePicksSection({
               </div>
             </div>
             {isOwner && (
-              <button
-                type="button"
-                onClick={() => openEditor(activeShelf?.categorySlug)}
-                className="shrink-0 rounded-lg bg-primary px-3 py-1.5 wibe-caption font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark active:scale-[0.98]"
-              >
-                {hasAnyPicks ? 'مدیریت' : 'شروع کن'}
-              </button>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => openEditor(activeShelf?.categorySlug)}
+                  className="rounded-lg bg-primary px-3 py-1.5 wibe-caption font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark active:scale-[0.98]"
+                >
+                  {hasAnyPicks ? 'مدیریت' : 'شروع کن'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHelpOpen(true)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-wibe bg-wibe-surface text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary active:scale-[0.97]"
+                  aria-label="راهنمای منتخب‌های من"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -313,17 +328,37 @@ export default function ProfilePicksSection({
       </section>
 
       {isOwner && (
-        <ProfilePicksEditorSheet
-          isOpen={editorOpen}
-          onClose={() => {
-            setEditorOpen(false);
-            setEditorCategory(undefined);
-          }}
-          categories={categories}
-          initialCategorySlug={editorCategory}
-          maxPerCategory={maxPerCategory}
-          onUpdated={() => void refetch()}
-        />
+        <>
+          <BottomSheet
+            isOpen={helpOpen}
+            onClose={() => setHelpOpen(false)}
+            title="منتخب‌های من"
+            desktopMaxWidth="sm"
+          >
+            <div className="space-y-4 p-5">
+              <p className="wibe-small leading-relaxed text-foreground">{PROFILE_PICKS_HELP_TEXT}</p>
+              <button
+                type="button"
+                onClick={() => setHelpOpen(false)}
+                className="w-full rounded-lg bg-primary px-4 py-2.5 wibe-small font-semibold text-white transition-colors hover:bg-primary-dark"
+              >
+                متوجه شدم
+              </button>
+            </div>
+          </BottomSheet>
+
+          <ProfilePicksEditorSheet
+            isOpen={editorOpen}
+            onClose={() => {
+              setEditorOpen(false);
+              setEditorCategory(undefined);
+            }}
+            categories={categories}
+            initialCategorySlug={editorCategory}
+            maxPerCategory={maxPerCategory}
+            onUpdated={() => void refetch()}
+          />
+        </>
       )}
     </>
   );

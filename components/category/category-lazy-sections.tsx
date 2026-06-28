@@ -23,6 +23,10 @@ export const MostSavedItemsCafeLazy = dynamic(() => import('./hub/MostSavedItems
   loading: () => <CategorySectionSkeleton />,
 });
 
+export const LatestItemsSectionLazy = dynamic(() => import('./hub/LatestItemsSection'), {
+  loading: () => <CategorySectionSkeleton />,
+});
+
 export const CategoryCreateCTALazy = dynamic(() => import('./CategoryCreateCTA'), {
   loading: () => <CategorySectionSkeleton />,
 });

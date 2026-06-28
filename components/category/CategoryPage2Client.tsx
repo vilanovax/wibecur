@@ -23,6 +23,7 @@ import {
   NewListsSectionLazy,
   ExploreByCityPillsLazy,
   MostSavedItemsCafeLazy,
+  LatestItemsSectionLazy,
   GenreScrollBarLazy,
 } from './category-lazy-sections';
 
@@ -35,6 +36,7 @@ interface CategoryPage2ClientProps {
   newListsSection?: ReactNode;
   viralSpotlightSection?: ReactNode;
   mostSavedItemsSection?: ReactNode;
+  latestItemsSection?: ReactNode;
 }
 
 async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
@@ -53,6 +55,7 @@ export default function CategoryPage2Client({
   newListsSection = null,
   viralSpotlightSection = null,
   mostSavedItemsSection = null,
+  latestItemsSection = null,
 }: CategoryPage2ClientProps) {
   useInterestTracking({ type: 'category_view', categorySlug: slug });
 
@@ -100,6 +103,7 @@ export default function CategoryPage2Client({
     cityBreakdown = [],
     filmGenres = [],
     mostSavedItems = [],
+    latestItems = [],
   } = data;
 
   const accentColor = category.accentColor || category.color;
@@ -135,6 +139,11 @@ export default function CategoryPage2Client({
   const mostSavedItemsClient =
     mostSavedItems.length > 0 ? (
       <MostSavedItemsCafeLazy items={mostSavedItems} accentColor={accentColor} inset />
+    ) : null;
+
+  const latestItemsClient =
+    latestItems.length > 0 ? (
+      <LatestItemsSectionLazy items={latestItems} accentColor={accentColor} inset />
     ) : null;
 
   const breadcrumbItems = [
@@ -200,6 +209,14 @@ export default function CategoryPage2Client({
               {isRefetching || !mostSavedItemsSection
                 ? mostSavedItemsClient
                 : mostSavedItemsSection}
+            </HomeDeferredMount>
+          </SectionReveal>
+        )}
+
+        {latestItems.length > 0 && (
+          <SectionReveal defer>
+            <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
+              {isRefetching || !latestItemsSection ? latestItemsClient : latestItemsSection}
             </HomeDeferredMount>
           </SectionReveal>
         )}

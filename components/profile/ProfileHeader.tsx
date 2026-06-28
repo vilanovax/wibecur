@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { signOut } from 'next-auth/react';
 import { Edit2, Camera, UserPlus, Check, Loader2, LogOut, AlertTriangle } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { getLevelByScore, type CuratorLevelKey } from '@/lib/curator';
+import { type CuratorLevelKey } from '@/lib/curator';
 import { isUserEliteLevel, resolveVibeAvatar } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import type { ProfileUser } from './types';
@@ -65,8 +65,6 @@ export default function ProfileHeader({
         : 'user';
 
   const openEdit = () => setShowEditSheet(true);
-  const curatorTier = getLevelByScore(user.curatorScore ?? 0);
-  const curatorScore = user.curatorScore ?? 0;
 
   return (
     <>
@@ -182,14 +180,6 @@ export default function ProfileHeader({
                 @{displayUsername}
               </p>
 
-              {isOwner && curatorScore >= 0 && (
-                <p className="mt-1.5 inline-flex max-w-full items-center gap-1 text-[11px] text-wibe-secondary">
-                  <span className="font-semibold text-primary">{curatorTier.short}</span>
-                  <span aria-hidden>·</span>
-                  <span>{curatorScore.toLocaleString('fa-IR')} XP</span>
-                </p>
-              )}
-
               {user.bio?.trim() ? (
                 <p className="mt-2 text-[13px] leading-relaxed text-wibe-secondary line-clamp-3 whitespace-pre-wrap break-words">
                   {user.bio.trim()}
@@ -206,9 +196,9 @@ export default function ProfileHeader({
             </div>
 
             <div className="relative z-20 shrink-0">
-              <div className="h-[68px] w-[68px] overflow-hidden rounded-full border-[3px] border-wibe-card bg-wibe-card shadow-md ring-1 ring-black/[0.06] lg:h-20 lg:w-20 lg:border-4">
+              <div className="h-[82px] w-[82px] overflow-hidden rounded-full border-[3px] border-wibe-card bg-wibe-card shadow-md ring-1 ring-black/[0.06] lg:h-24 lg:w-24 lg:border-4">
                 {vibeAvatar ? (
-                  <VibeAvatarDisplay avatar={vibeAvatar} size={80} className="h-full w-full" />
+                  <VibeAvatarDisplay avatar={vibeAvatar} size={96} className="h-full w-full" />
                 ) : showUploadedAvatar || user.image ? (
                   <ImageWithFallback
                     src={user.image!}

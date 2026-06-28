@@ -53,12 +53,8 @@ export default function CategoryNewListsSectionServer({
                 </div>
               )}
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 items-center">
               <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
-              <p className="mt-1 wibe-caption tabular-nums text-wibe-secondary">
-                {list.saveCount.toLocaleString('fa-IR')} ذخیره ·{' '}
-                {list.itemCount.toLocaleString('fa-IR')} آیتم
-              </p>
             </div>
           </Link>
           );

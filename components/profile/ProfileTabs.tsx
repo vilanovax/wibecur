@@ -63,7 +63,7 @@ export default function ProfileTabs({
 
   return (
     <div className="mt-0 -mx-4 lg:mx-0">
-      <div className="sticky top-[57px] z-20 border-b border-wibe bg-wibe-surface/95 px-4 pb-0 backdrop-blur-sm lg:top-14 lg:rounded-t-xl lg:border lg:border-b-0 lg:border-wibe lg:bg-wibe-card">
+      <div className="sticky top-[57px] z-20 border-b border-wibe bg-wibe-card/95 px-4 pb-0 backdrop-blur-sm lg:top-14 lg:rounded-t-xl lg:border lg:border-b-0 lg:border-wibe lg:bg-wibe-card">
         <div className="relative flex gap-1 lg:justify-start lg:gap-0">
           {VISIBLE_TABS.map((tab, index) => {
             const Icon = tab.icon;
@@ -112,7 +112,7 @@ export default function ProfileTabs({
         </div>
       </div>
 
-      <div className="min-h-[240px] border-t border-wibe/40 bg-wibe-card px-0 pt-4 lg:min-h-0 lg:rounded-b-xl lg:border lg:border-t-0 lg:border-wibe lg:px-4 lg:pb-4">
+      <div className="min-h-[calc(100vh-14rem)] border-t border-wibe/40 bg-wibe-card px-0 pt-4 lg:min-h-0 lg:rounded-b-xl lg:border lg:border-t-0 lg:border-wibe lg:px-4 lg:pb-4">
         {visibleTab === 'my-lists' && (
           <MyListsTab
             userId={userId}

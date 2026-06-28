@@ -86,7 +86,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="flex min-h-screen flex-col bg-wibe-card">
       <Header title="پروفایل" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
       <main className="px-4 pt-2 lg:px-0 lg:pt-0">
         <ProfilePageClient

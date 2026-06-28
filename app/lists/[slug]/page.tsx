@@ -4,6 +4,7 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import { getTopSimilarLists, type ListForSimilarity } from '@/lib/listSimilarity';
+import { prepareListDetailForClient } from '@/lib/list-detail-serialize';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ListDetailClient from './ListDetailClient';
@@ -144,26 +145,28 @@ export default async function ListDetailPage({
 
   const sponsoredPlacements = await getCachedListPagePlacements(list.id, list.categoryId);
 
-  const listWithCreator = withResolvedListDisplay({
-    ...list,
-    categorySlug: list.categories?.slug ?? null,
-    items: withResolvedItemImages(
-      list.items.map((item) => ({
-        ...item,
-        metadata: item.metadata as Record<string, unknown> | null,
-      })),
-      list.categories?.slug ?? null
-    ),
-  });
+  const listWithCreator = prepareListDetailForClient(
+    withResolvedListDisplay({
+      ...list,
+      categorySlug: list.categories?.slug ?? null,
+      items: withResolvedItemImages(
+        list.items.map((item) => ({
+          ...item,
+          metadata: item.metadata as Record<string, unknown> | null,
+        })),
+        list.categories?.slug ?? null
+      ),
+    })
+  );
 
   return (
     <div className="bg-wibe-surface lg:pt-1">
       <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
       <CategoryNavStrip activeSlug={list.categories?.slug ?? null} />
       <ListDetailClient
-        list={JSON.parse(JSON.stringify(listWithCreator))}
-        relatedLists={JSON.parse(JSON.stringify(relatedLists))}
-        sponsoredPlacements={JSON.parse(JSON.stringify(sponsoredPlacements))}
+        list={listWithCreator}
+        relatedLists={relatedLists}
+        sponsoredPlacements={sponsoredPlacements}
       />
       <BottomNav />
     </div>
