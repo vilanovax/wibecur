@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import { resolveStorageImageDisplayUrl } from '@/lib/storage-image-url';
 
 /** آواتار کامنت — ParsPack proxy / legacy Liara via API / vibe pack */
@@ -31,18 +32,13 @@ export default function CommentAvatar({
     String(avatarType ?? '').toUpperCase() === 'DEFAULT' &&
     avatarId &&
     String(avatarId).trim();
-  const vibeAvatar = showVibeAvatar ? VIBE_AVATARS.find((a) => a.id === String(avatarId).trim()) : null;
+  const vibeAvatar = showVibeAvatar ? resolveVibeAvatar(String(avatarId).trim()) : null;
 
   const displaySrc = resolveStorageImageDisplayUrl(src);
 
   if (vibeAvatar) {
     return (
-      <div
-        className={`flex-shrink-0 rounded-full overflow-hidden flex items-center justify-center ${vibeAvatar.bgClass} ${className}`}
-        style={{ width: size, height: size }}
-      >
-        <span style={{ fontSize: Math.round(size * 0.5) }}>{vibeAvatar.emoji}</span>
-      </div>
+      <VibeAvatarDisplay avatar={vibeAvatar} size={size} className={className} />
     );
   }
 

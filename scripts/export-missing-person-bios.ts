@@ -102,6 +102,7 @@ async function buildMissingBioList() {
       itemCount: entry.itemKeys.size,
       hasProfile: profile != null,
       hasBio: Boolean(profile?.bio?.trim()),
+      profileStatus: profile?.status ?? null,
     };
   });
 }
@@ -144,12 +145,7 @@ async function main() {
     (p) => (p.role === 'actor' || p.role === 'director') && p.latinSlug && !p.hasProfile
   );
 
-  const promptPeople = missing.map((p) => ({
-    role: p.role,
-    slug: p.slug,
-    displayName: p.displayName,
-    itemCount: p.itemCount,
-  }));
+  const promptPeople = missing;
 
   const outDir = join(process.cwd(), 'exports');
   mkdirSync(outDir, { recursive: true });

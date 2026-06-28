@@ -7,7 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { UserPlus, Check } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
-import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import type { CuratorLevelKey } from '@/lib/curator';
 
 interface SuggestedCreator {
@@ -87,7 +88,7 @@ export default function SuggestedCreatorsSection() {
             const isFollowing = c.isFollowing ?? followingIds.has(c.userId);
             const vibeAvatar =
               c.avatarType === 'DEFAULT' && c.avatarId
-                ? VIBE_AVATARS.find((a) => a.id === c.avatarId)
+                ? resolveVibeAvatar(c.avatarId)
                 : null;
             return (
               <div
@@ -101,11 +102,7 @@ export default function SuggestedCreatorsSection() {
                   <div className="flex flex-col items-center text-center">
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-100">
                       {vibeAvatar ? (
-                        <div
-                          className={`w-full h-full flex items-center justify-center text-2xl ${vibeAvatar.bgClass}`}
-                        >
-                          {vibeAvatar.emoji}
-                        </div>
+                        <VibeAvatarDisplay avatar={vibeAvatar} size={56} className="h-full w-full" />
                       ) : c.image ? (
                         <ImageWithFallback
                           src={c.image}

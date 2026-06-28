@@ -9,7 +9,8 @@ import ListCoverImage from '@/components/shared/ListCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { track, trackCreatorProfileView } from '@/lib/analytics';
 import CuratorBadge from '@/components/shared/CuratorBadge';
-import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import { type CuratorLevelKey } from '@/lib/curator';
 import HomeSectionTitle from './HomeSectionTitle';
 
@@ -99,7 +100,7 @@ export default function CreatorSpotlightSection({ layout: _layout = 'default' }:
   const c = data.creator;
   const levelKey = (c.curatorLevel || 'EXPLORER') as CuratorLevelKey;
   const vibeAvatar =
-    c.avatarType === 'DEFAULT' && c.avatarId ? VIBE_AVATARS.find((a) => a.id === c.avatarId) : null;
+    c.avatarType === 'DEFAULT' && c.avatarId ? resolveVibeAvatar(c.avatarId) : null;
 
   return (
     <section className="mb-4 px-4 pb-2 lg:mb-0 lg:pb-0 lg:px-0">
@@ -114,9 +115,7 @@ export default function CreatorSpotlightSection({ layout: _layout = 'default' }:
           <div className="flex flex-col items-center text-center lg:items-start lg:text-right">
             <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-wibe bg-gray-100">
               {vibeAvatar ? (
-                <div className={`w-full h-full flex items-center justify-center text-3xl ${vibeAvatar.bgClass}`}>
-                  {vibeAvatar.emoji}
-                </div>
+                <VibeAvatarDisplay avatar={vibeAvatar} size={80} className="h-full w-full" />
               ) : c.image ? (
                 <ImageWithFallback
                   src={c.image}

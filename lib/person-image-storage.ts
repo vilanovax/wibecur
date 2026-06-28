@@ -4,13 +4,22 @@ import type { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { uploadImageFromUrlDetailed } from '@/lib/object-storage';
 import { checkObjectStorageReady } from '@/lib/object-storage-readiness';
-import { buildImageImportDownloadCandidates } from '@/lib/admin/import-external-image-to-storage';
+import {
+  buildImageImportDownloadCandidates,
+  buildPersonAvatarDownloadCandidates,
+} from '@/lib/admin/import-external-image-to-storage';
+import { CASTANDO_IMAGE_PROXY_PREFIX } from '@/lib/castando-image-proxy';
+import { isTmdbImageUrl } from '@/lib/image-url-policy';
 import {
   isAppObjectStorageImageUrl,
   needsS3MigrationImageUrl,
   resolveUrlForS3Migration,
 } from '@/lib/item-image-storage';
-import { personImageStorageStatus, type PersonImageStatus } from '@/lib/person-image-utils';
+import {
+  personImageStorageStatus,
+  personImageStatusForDiscovered,
+  type PersonImageStatus,
+} from '@/lib/person-image-utils';
 import {
   discoverPeopleFromItems,
   getPersonProfileFlexible,
@@ -22,6 +31,7 @@ import type { PersonRole } from '@/lib/people';
 import {
   enrichPersonFromTmdbByName,
   fetchTmdbPersonDetails,
+  fetchTmdbPersonProfileImageUrl,
   tmdbProfileUrlFromPath,
 } from '@/lib/person-enrich/tmdb-person';
 
@@ -54,8 +64,17 @@ export type PersonImageStats = {
 
 export type { PersonImageStatus };
 
+export type PersonImageUploadOptions = {
+  /** دانلود سریع با timeout کوتاه — برای import آواتار */
+  fast?: boolean;
+};
+
+const PERSON_IMAGE_FAST_TIMEOUT_MS = 28_000;
+const PERSON_IMAGE_RETRY_TIMEOUT_MS = 35_000;
+
 export async function uploadPersonImageToStorage(
-  sourceUrl: string
+  sourceUrl: string,
+  options?: PersonImageUploadOptions
 ): Promise<{ ok: true; url: string } | { ok: false; error: string; code?: string }> {
   const trimmed = sourceUrl.trim();
   if (!trimmed) {
@@ -74,7 +93,9 @@ export async function uploadPersonImageToStorage(
     };
   }
 
-  const candidates = buildImageImportDownloadCandidates(trimmed);
+  const candidates = options?.fast
+    ? buildPersonAvatarDownloadCandidates(trimmed)
+    : buildImageImportDownloadCandidates(trimmed);
   if (candidates.length === 0) {
     return { ok: false, error: 'آدرس تصویر نامعتبر است', code: 'download_failed' };
   }
@@ -84,11 +105,14 @@ export async function uploadPersonImageToStorage(
     code: 'download_failed',
   };
 
+  const timeoutMs = options?.fast ? PERSON_IMAGE_FAST_TIMEOUT_MS : undefined;
+
   for (const downloadUrl of candidates) {
     const upload = await uploadImageFromUrlDetailed(
       downloadUrl,
       PERSON_IMAGE_STORAGE_FOLDER,
-      'avatar'
+      'avatar',
+      timeoutMs != null ? { timeoutMs } : undefined
     );
     if (upload.ok) {
       if (!isAppObjectStorageImageUrl(upload.url)) {
@@ -103,7 +127,168 @@ export async function uploadPersonImageToStorage(
     lastError = { error: upload.error, code: upload.code };
   }
 
+  if (options?.fast && isTmdbImageUrl(trimmed)) {
+    const retryCandidates = buildImageImportDownloadCandidates(trimmed).filter((url) =>
+      url.startsWith(CASTANDO_IMAGE_PROXY_PREFIX)
+    );
+    for (const downloadUrl of retryCandidates) {
+      const upload = await uploadImageFromUrlDetailed(
+        downloadUrl,
+        PERSON_IMAGE_STORAGE_FOLDER,
+        'avatar',
+        { timeoutMs: PERSON_IMAGE_RETRY_TIMEOUT_MS }
+      );
+      if (upload.ok) {
+        if (!isAppObjectStorageImageUrl(upload.url)) {
+          return {
+            ok: false,
+            error: 'URL آپلودشده به ParsPack تشخیص داده نشد',
+            code: 'upload_failed',
+          };
+        }
+        return { ok: true, url: upload.url };
+      }
+      lastError = { error: upload.error, code: upload.code };
+    }
+  }
+
   return { ok: false, error: lastError.error, code: lastError.code };
+}
+
+export type PersonImageJsonImportResult =
+  | { ok: true; url: string; source: 'url' | 'tmdb'; tmdbId?: number | null }
+  | { ok: false; error: string };
+
+async function resolvePersonProfileImageUrlFromTmdb(
+  displayName: string,
+  options: { slug: string; externalUrl?: string | null; tmdbId?: number | null }
+): Promise<{ imageUrl: string | null; tmdbId: number | null; error?: string }> {
+  try {
+    if (options.tmdbId) {
+      const profile = await fetchTmdbPersonProfileImageUrl(options.tmdbId);
+      if (!profile.imageUrl) {
+        return {
+          imageUrl: null,
+          tmdbId: options.tmdbId,
+          error: 'شخص در TMDB یافت شد اما عکس پروفایل ندارد',
+        };
+      }
+      return { imageUrl: profile.imageUrl, tmdbId: options.tmdbId };
+    }
+    const enriched = await enrichPersonFromTmdbByName(displayName, {
+      slug: options.slug,
+      externalUrl: options.externalUrl ?? null,
+    });
+    if (!enriched.imageUrl) {
+      return {
+        imageUrl: null,
+        tmdbId: enriched.tmdbId,
+        error: 'شخص در TMDB یافت شد اما عکس پروفایل ندارد',
+      };
+    }
+    return { imageUrl: enriched.imageUrl, tmdbId: enriched.tmdbId };
+  } catch (err) {
+    return {
+      imageUrl: null,
+      tmdbId: options.tmdbId ?? null,
+      error: err instanceof Error ? err.message : 'خطا در TMDB',
+    };
+  }
+}
+
+/** import JSON — TMDB API اول (برای کارگردان/بازیگر)، سپس URL JSON */
+export async function importPersonImageFromJson(
+  _client: PrismaClient,
+  role: PersonRole,
+  slug: string,
+  displayName: string,
+  imageUrl: string,
+  existing?: { externalUrl?: string | null; tmdbId?: number | null }
+): Promise<PersonImageJsonImportResult> {
+  const trimmed = imageUrl.trim();
+  const isMediaRole = role === 'actor' || role === 'director';
+  const fast = { fast: true as const };
+  let tmdbLookupError: string | undefined;
+
+  if (isMediaRole) {
+    const tmdb = await resolvePersonProfileImageUrlFromTmdb(displayName, {
+      slug,
+      externalUrl: existing?.externalUrl,
+      tmdbId: existing?.tmdbId,
+    });
+    tmdbLookupError = tmdb.error;
+
+    if (tmdb.imageUrl) {
+      const stored = await uploadPersonImageToStorage(tmdb.imageUrl, fast);
+      if (stored.ok) {
+        return { ok: true, url: stored.url, source: 'tmdb', tmdbId: tmdb.tmdbId };
+      }
+      if (trimmed && !isTmdbImageUrl(trimmed)) {
+        const fromJson = await uploadPersonImageToStorage(trimmed, fast);
+        if (fromJson.ok) {
+          return { ok: true, url: fromJson.url, source: 'url', tmdbId: tmdb.tmdbId };
+        }
+        return {
+          ok: false,
+          error: `TMDB: ${stored.error} · JSON: ${fromJson.error}`,
+        };
+      }
+      return { ok: false, error: `TMDB: ${stored.error}${tmdb.error ? ` · ${tmdb.error}` : ''}` };
+    }
+
+    if (tmdb.error?.includes('کلید TMDB')) {
+      return { ok: false, error: tmdb.error };
+    }
+
+    if (trimmed && !isTmdbImageUrl(trimmed)) {
+      const fromJson = await uploadPersonImageToStorage(trimmed, fast);
+      if (fromJson.ok) {
+        return { ok: true, url: fromJson.url, source: 'url', tmdbId: tmdb.tmdbId };
+      }
+      return {
+        ok: false,
+        error: tmdb.error
+          ? `${tmdb.error} · JSON: ${fromJson.error}`
+          : fromJson.error,
+      };
+    }
+
+    return {
+      ok: false,
+      error:
+        tmdb.error ??
+        (trimmed && isTmdbImageUrl(trimmed)
+          ? 'تصویر در TMDB یافت نشد — URLهای TMDB در JSON نادیده گرفته می‌شوند؛ imageUrl را خالی بگذارید'
+          : 'تصویر در TMDB یافت نشد'),
+    };
+  }
+
+  if (trimmed && isTmdbImageUrl(trimmed)) {
+    return {
+      ok: false,
+      error: 'URLهای TMDB در JSON پشتیبانی نمی‌شوند — imageUrl را خالی بگذارید تا از API جستجو شود',
+    };
+  }
+
+  if (trimmed) {
+    const stored = await uploadPersonImageToStorage(trimmed, fast);
+    if (stored.ok) {
+      return { ok: true, url: stored.url, source: 'url' };
+    }
+    return {
+      ok: false,
+      error: isMediaRole
+        ? `${stored.error}${tmdbLookupError ? ` · TMDB: ${tmdbLookupError}` : ' · تصویر در TMDB یافت نشد'}`
+        : stored.error,
+    };
+  }
+
+  return {
+    ok: false,
+    error: isMediaRole
+      ? 'تصویر در TMDB یافت نشد — imageUrl را خالی بگذارید یا URL معتبر بدهید'
+      : 'آدرس تصویر خالی است',
+  };
 }
 
 async function resolvePersonContext(
@@ -201,8 +386,9 @@ export async function fetchPersonImageFromTmdb(
 
   try {
     if (tmdbId) {
+      const profile = await fetchTmdbPersonProfileImageUrl(tmdbId);
+      sourceUrl = profile.imageUrl;
       const details = await fetchTmdbPersonDetails(tmdbId);
-      sourceUrl = tmdbProfileUrlFromPath(details?.profilePath ?? null);
       if (details?.name) resolvedName = details.name;
     } else {
       const enriched = await enrichPersonFromTmdbByName(displayName, {
@@ -228,7 +414,7 @@ export async function fetchPersonImageFromTmdb(
     return { role, slug, displayName: resolvedName, status: 'no_image', error: 'تصویر در TMDB یافت نشد' };
   }
 
-  const uploaded = await uploadPersonImageToStorage(sourceUrl);
+  const uploaded = await uploadPersonImageToStorage(sourceUrl, { fast: true });
   if (!uploaded.ok) {
     return {
       role,
@@ -270,14 +456,18 @@ export async function getPersonImageStats(
     getCachedDiscoveredPeople(),
     client.person_profiles.findMany({
       where: role ? { role } : undefined,
-      select: { role: true, slug: true, displayName: true, imageUrl: true },
+      select: { role: true, slug: true, displayName: true, imageUrl: true, externalUrl: true },
     }),
   ]);
 
   const filteredPeople = role ? people.filter((person) => person.role === role) : people;
-  const profileBySlug = new Map(
-    profiles.map((profile) => [`${profile.role}:${profile.slug}`, profile] as const)
-  );
+  const profileRows = profiles.map((profile) => ({
+    role: profile.role as PersonRole,
+    slug: profile.slug,
+    displayName: profile.displayName,
+    imageUrl: profile.imageUrl,
+    externalUrl: profile.externalUrl,
+  }));
 
   const stats: PersonImageStats = {
     total: filteredPeople.length,
@@ -292,14 +482,7 @@ export async function getPersonImageStats(
       stats.tmdbCapable += 1;
     }
 
-    const profile =
-      profileBySlug.get(`${person.role}:${person.slug}`) ??
-      profiles.find(
-        (candidate) =>
-          candidate.role === person.role &&
-          candidate.displayName.trim().toLowerCase() === person.displayName.trim().toLowerCase()
-      );
-    const status = personImageStorageStatus(profile?.imageUrl);
+    const status = personImageStatusForDiscovered(person, profileRows);
     if (status === 'none') stats.noImage += 1;
     else if (status === 'storage') stats.onStorage += 1;
     else stats.external += 1;
@@ -320,7 +503,13 @@ async function loadPersonImageProfiles(
 ) {
   return client.person_profiles.findMany({
     where: role ? { role } : undefined,
-    select: { role: true, slug: true, displayName: true, imageUrl: true },
+    select: {
+      role: true,
+      slug: true,
+      displayName: true,
+      imageUrl: true,
+      externalUrl: true,
+    },
   });
 }
 
@@ -340,10 +529,7 @@ export async function listPersonImageCandidates(
     if (action === 'fetch_tmdb' && person.role !== 'actor' && person.role !== 'director') {
       return false;
     }
-    const profile = profiles.find(
-      (candidate) => candidate.role === person.role && candidate.slug === person.slug
-    );
-    const status = personImageStorageStatus(profile?.imageUrl);
+    const status = personImageStatusForDiscovered(person, profiles);
     if (options?.onlyMissing !== false) {
       if (action === 'fetch_tmdb') return status === 'none' || status === 'external';
       return status === 'external';
@@ -397,4 +583,70 @@ export async function bulkProcessPersonImages(
     summary: { processed: results.length, fetched, migrated, failed, skipped },
     remaining,
   };
+}
+
+export type PersonMissingImageRecord = PersonImageCandidate & {
+  itemCount: number;
+  imageStatus: PersonImageStatus;
+};
+
+export type PersonImageListFilter = 'all' | 'none' | 'has' | 'storage' | 'external' | 'missing';
+
+function matchesPersonImageFilter(
+  status: PersonImageStatus,
+  filter: PersonImageListFilter
+): boolean {
+  switch (filter) {
+    case 'all':
+      return true;
+    case 'none':
+      return status === 'none';
+    case 'has':
+      return status !== 'none';
+    case 'storage':
+      return status === 'storage';
+    case 'external':
+      return status === 'external';
+    case 'missing':
+      return status !== 'storage';
+    default:
+      return true;
+  }
+}
+
+/** همهٔ اشخاص کشف‌شده با وضعیت تصویر */
+export async function listDiscoveredPeopleWithImageStatus(
+  client: PrismaClient,
+  options?: { role?: PersonRole; imageFilter?: PersonImageListFilter }
+): Promise<PersonMissingImageRecord[]> {
+  const filter = options?.imageFilter ?? 'all';
+  const { people } = await discoverPeopleFromItems(client, {
+    role: options?.role,
+    skipPagination: true,
+  });
+  const profiles = await loadPersonImageProfiles(client, options?.role);
+
+  return people
+    .map((person) => ({
+      role: person.role,
+      slug: person.slug,
+      displayName: person.displayName,
+      itemCount: person.itemCount,
+      imageStatus: personImageStatusForDiscovered(person, profiles),
+    }))
+    .filter((person) => matchesPersonImageFilter(person.imageStatus, filter));
+}
+
+/** اشخاصی که تصویرشان روی ParsPack نیست (بدون تصویر یا لینک خارجی) */
+export async function listPeopleMissingStorageImage(
+  client: PrismaClient,
+  options?: { role?: PersonRole; onlyNoImage?: boolean; imageFilter?: PersonImageListFilter }
+): Promise<PersonMissingImageRecord[]> {
+  const imageFilter =
+    options?.imageFilter ??
+    (options?.onlyNoImage ? 'none' : 'missing');
+  return listDiscoveredPeopleWithImageStatus(client, {
+    role: options?.role,
+    imageFilter,
+  });
 }

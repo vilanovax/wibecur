@@ -5,7 +5,8 @@ import { signOut } from 'next-auth/react';
 import { Edit2, Camera, UserPlus, Check, Loader2, LogOut, AlertTriangle } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { getLevelByScore, type CuratorLevelKey } from '@/lib/curator';
-import { VIBE_AVATARS, isUserEliteLevel } from '@/lib/vibe-avatars';
+import { isUserEliteLevel, resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import type { ProfileUser } from './types';
 import EditProfileSheet2 from '@/components/mobile/profile/EditProfileSheet2';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
@@ -52,7 +53,7 @@ export default function ProfileHeader({
   const hasVibeId = user.avatarId && String(user.avatarId).trim();
   const vibeAvatar =
     avatarTypeNorm === 'DEFAULT' && hasVibeId
-      ? VIBE_AVATARS.find((a) => a.id === String(user.avatarId).trim())
+      ? resolveVibeAvatar(String(user.avatarId).trim())
       : null;
   const showUploadedAvatar =
     user.avatarType === 'UPLOADED' && user.avatarStatus === 'APPROVED' && user.image;
@@ -207,11 +208,7 @@ export default function ProfileHeader({
             <div className="relative z-20 shrink-0">
               <div className="h-[68px] w-[68px] overflow-hidden rounded-full border-[3px] border-wibe-card bg-wibe-card shadow-md ring-1 ring-black/[0.06] lg:h-20 lg:w-20 lg:border-4">
                 {vibeAvatar ? (
-                  <div
-                    className={`flex h-full w-full items-center justify-center text-2xl ${vibeAvatar.bgClass}`}
-                  >
-                    {vibeAvatar.emoji}
-                  </div>
+                  <VibeAvatarDisplay avatar={vibeAvatar} size={80} className="h-full w-full" />
                 ) : showUploadedAvatar || user.image ? (
                   <ImageWithFallback
                     src={user.image!}

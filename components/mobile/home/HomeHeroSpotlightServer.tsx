@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
 import HomeHeroImpressionTracker from '@/components/mobile/home/HomeHeroClientActions';
+import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { FeaturedListData } from '@/types/home-data';
 
@@ -31,8 +31,12 @@ export default function HomeHeroSpotlightServer({
     >
       <p className="mb-1.5 wibe-caption text-wibe-secondary lg:hidden">منتخب هفته</p>
 
-      <div
-        className={`group relative overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[230px] lg:rounded-2xl lg:shadow-lg ${
+      <HomeHeroBannerLink
+        href={`/lists/${list.slug}`}
+        listId={list.id}
+        slotId={slotId}
+        ariaLabel={`مشاهده لیست ${list.title}`}
+        className={`group relative block overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[230px] lg:rounded-2xl lg:shadow-lg ${
           fillHeight
             ? 'h-[220px] xl:h-full xl:min-h-[20rem]'
             : 'h-[220px] lg:h-[22rem] xl:h-[24rem]'
@@ -78,7 +82,7 @@ export default function HomeHeroSpotlightServer({
 
           <HomeHeroImpressionTracker slotId={slotId} />
         </div>
-      </div>
+      </HomeHeroBannerLink>
     </section>
   );
 }

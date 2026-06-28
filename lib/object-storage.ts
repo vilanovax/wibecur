@@ -145,10 +145,15 @@ function profileForFolder(folder: string) {
   return profileForStorageFolder(folder);
 }
 
+export type UploadImageFromUrlOptions = {
+  timeoutMs?: number;
+};
+
 export async function uploadImageFromUrlDetailed(
   imageUrl: string,
   folder: string = 'images',
-  profile?: ImageProfile
+  profile?: ImageProfile,
+  options?: UploadImageFromUrlOptions
 ): Promise<UploadImageFromUrlResult> {
   try {
     const client = await getS3Client();
@@ -175,11 +180,13 @@ export async function uploadImageFromUrlDetailed(
 
     if (isDev) console.log('Downloading image from:', imageUrl);
 
+    const timeoutMs = options?.timeoutMs ?? 30000;
+
     let response;
     try {
       response = await axios.get(imageUrl, {
         responseType: 'arraybuffer',
-        timeout: 30000,
+        timeout: timeoutMs,
         // اعتبارسنجی IP مقصد در هر اتصال/redirect توسط lookup سفارشی
         httpAgent: ssrfSafeHttpAgent,
         httpsAgent: ssrfSafeHttpsAgent,

@@ -58,9 +58,11 @@ function shouldShowDiscoveredEntry(
 
   if (profile?.bio?.trim()) return false;
 
-  const profileKey = profile ? `${entry.role}:${profile.slug}` : null;
-  if (profileKey && isLatinPersonSlug(profile.slug) && latinKeysInDiscovery.has(profileKey)) {
-    return false;
+  if (profile && isLatinPersonSlug(profile.slug)) {
+    const profileKey = `${entry.role}:${profile.slug}`;
+    if (latinKeysInDiscovery.has(profileKey)) {
+      return false;
+    }
   }
 
   return true;

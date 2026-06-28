@@ -17,6 +17,7 @@ interface DesktopDialogProps {
   subtitle?: string;
   headerAction?: React.ReactNode;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   maxWidth?: keyof typeof MAX_WIDTH_CLASS;
   zIndex?: number;
   escapeToClose?: boolean;
@@ -30,6 +31,7 @@ export default function DesktopDialog({
   subtitle,
   headerAction,
   children,
+  footer,
   maxWidth = 'md',
   zIndex = 60,
   escapeToClose = true,
@@ -107,6 +109,12 @@ export default function DesktopDialog({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 lg:p-5">
           {children}
         </div>
+
+        {footer && (
+          <div className="flex-shrink-0 border-t border-wibe bg-wibe-card px-4 py-3 lg:px-5">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

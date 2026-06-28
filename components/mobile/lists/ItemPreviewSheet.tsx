@@ -243,10 +243,8 @@ export default function ItemPreviewSheet({
   onClose,
   item,
   itemIndex,
-  totalItems,
   categorySlug,
   categoryIcon,
-  categoryName,
   listSlug,
   onPrev,
   onNext,
@@ -313,12 +311,6 @@ export default function ItemPreviewSheet({
       ? FACT_TYPE_LABELS[factTypeRaw as FactType] ?? factTypeRaw
       : null;
 
-  const rankLabel =
-    itemIndex != null && totalItems != null
-      ? `${(itemIndex + 1).toLocaleString('fa-IR')} از ${totalItems.toLocaleString('fa-IR')}`
-      : null;
-
-  const headerSubtitle = [rankLabel, categoryName].filter(Boolean).join(' · ');
   const sheetTitle = item.title?.trim() || (isLightweight ? entryKindBadgeLabel(entryKind) : item.title);
 
   return (
@@ -326,7 +318,6 @@ export default function ItemPreviewSheet({
       isOpen={isOpen}
       onClose={onClose}
       title={sheetTitle}
-      subtitle={headerSubtitle || undefined}
       maxHeight="92vh"
       desktopMaxWidth="lg"
     >

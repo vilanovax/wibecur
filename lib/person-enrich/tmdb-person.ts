@@ -113,13 +113,20 @@ async function pickBestTmdbMatch(
   preferredName?: string
 ): Promise<TmdbPersonSearchResult | null> {
   if (matches.length === 0) return null;
+
   const normalized = preferredName?.trim().toLowerCase();
-  if (normalized) {
-    const exact = matches.find((match) => match.name.trim().toLowerCase() === normalized);
-    if (exact) return exact;
-  }
-  const withPhoto = matches.find((match) => match.profilePath);
-  return withPhoto ?? matches[0] ?? null;
+  const score = (match: TmdbPersonSearchResult): number => {
+    let s = 0;
+    const name = match.name.trim().toLowerCase();
+    if (normalized && name === normalized) s += 100;
+    else if (normalized && name.includes(normalized)) s += 40;
+    if (match.profilePath) s += 50;
+    if (match.knownForDepartment === 'Directing') s += 10;
+    if (match.knownForDepartment === 'Acting') s += 5;
+    return s;
+  };
+
+  return [...matches].sort((a, b) => score(b) - score(a))[0] ?? null;
 }
 
 async function resolveTmdbPersonMatch(
@@ -143,7 +150,9 @@ async function resolveTmdbPersonMatch(
       bestMatch = candidate;
       continue;
     }
-    if (!bestMatch.profilePath && candidate.profilePath) {
+    const candidateScore = (candidate.profilePath ? 50 : 0) + (candidate.knownForDepartment === 'Directing' ? 10 : 0);
+    const bestScore = (bestMatch.profilePath ? 50 : 0) + (bestMatch.knownForDepartment === 'Directing' ? 10 : 0);
+    if (candidateScore > bestScore) {
       bestMatch = candidate;
     }
   }
@@ -153,6 +162,35 @@ async function resolveTmdbPersonMatch(
   }
 
   return bestMatch;
+}
+
+export async function fetchTmdbPersonProfileImageUrl(
+  personId: number
+): Promise<{ imageUrl: string | null; profilePath: string | null }> {
+  const details = await fetchTmdbPersonDetails(personId);
+  if (details?.profilePath) {
+    return { imageUrl: tmdbProfileUrl(details.profilePath), profilePath: details.profilePath };
+  }
+
+  const apiKey = await resolveTmdbApiKey();
+  if (!apiKey?.trim()) {
+    throw new Error('کلید TMDB در تنظیمات تنظیم نشده است');
+  }
+
+  const url = `https://api.themoviedb.org/3/person/${personId}/images?api_key=${apiKey}`;
+  const response = await axios.get(url, { timeout: 12000 });
+  const profiles = response.data?.profiles;
+  if (!Array.isArray(profiles) || profiles.length === 0) {
+    return { imageUrl: null, profilePath: null };
+  }
+
+  const best = [...profiles].sort(
+    (a: Record<string, unknown>, b: Record<string, unknown>) =>
+      Number(b.vote_average ?? 0) - Number(a.vote_average ?? 0)
+  )[0] as Record<string, unknown> | undefined;
+
+  const profilePath = typeof best?.file_path === 'string' ? best.file_path : null;
+  return { imageUrl: tmdbProfileUrl(profilePath), profilePath };
 }
 
 export async function fetchTmdbPersonDetails(personId: number): Promise<TmdbPersonDetails | null> {
@@ -192,6 +230,8 @@ export async function enrichPersonFromTmdbByName(
     throw new Error('جزئیات شخص در TMDB دریافت نشد');
   }
 
+  const profile = await fetchTmdbPersonProfileImageUrl(best.id);
+
   const bio =
     details.biography ||
     (best.knownForDepartment ? `حوزه: ${best.knownForDepartment}` : null);
@@ -200,7 +240,7 @@ export async function enrichPersonFromTmdbByName(
     tmdbId: details.id,
     displayName: details.name || best.name,
     bio,
-    imageUrl: tmdbProfileUrl(details.profilePath ?? best.profilePath),
+    imageUrl: profile.imageUrl,
     externalUrl: details.homepage,
   };
 }

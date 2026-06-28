@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { revalidateAdminPeopleCache } from '@/lib/admin/admin-cache';
 import { publicItemWhere, publicListWhere } from '@/lib/public-content-filters';
@@ -136,7 +136,7 @@ async function updateItemsWithAliasName(
     if (nextItemMeta) {
       await client.items.update({
         where: { id: row.id },
-        data: { metadata: nextItemMeta },
+        data: { metadata: nextItemMeta as Prisma.InputJsonValue },
       });
       updatedItems += 1;
     }
@@ -144,7 +144,7 @@ async function updateItemsWithAliasName(
     if (nextCatalogMeta && row.catalog_items) {
       await client.catalog_items.update({
         where: { id: row.catalog_items.id },
-        data: { metadata: nextCatalogMeta },
+        data: { metadata: nextCatalogMeta as Prisma.InputJsonValue },
       });
     }
   }

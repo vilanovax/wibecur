@@ -9,7 +9,8 @@ import { ChevronDown, Loader2, LogOut, User } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
 import NotificationIcon from './NotificationIcon';
 import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
-import { VIBE_AVATARS, GUEST_HEADER_AVATAR } from '@/lib/vibe-avatars';
+import { GUEST_HEADER_AVATAR, resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 
 export type HeaderActionsProfile = {
   image: string | null;
@@ -42,7 +43,7 @@ function AccountAvatar({
   isGuest?: boolean;
 }) {
   const showVibeAvatar = profile?.avatarType === 'DEFAULT' && profile?.avatarId;
-  const vibeAvatar = showVibeAvatar ? VIBE_AVATARS.find((a) => a.id === profile!.avatarId!) : null;
+  const vibeAvatar = showVibeAvatar ? resolveVibeAvatar(profile!.avatarId!) : null;
   const showUploadedImage =
     profile?.avatarType === 'UPLOADED' && profile?.avatarStatus === 'APPROVED' && profile?.image;
   const headerAvatarUrl = showUploadedImage ? profile!.image! : null;
@@ -50,12 +51,7 @@ function AccountAvatar({
   if (isGuest) {
     return (
       <>
-        <div
-          className={`flex h-full w-full items-center justify-center text-xl ${GUEST_HEADER_AVATAR.bgClass}`}
-          title="ورود به حساب"
-        >
-          {GUEST_HEADER_AVATAR.emoji}
-        </div>
+        <VibeAvatarDisplay avatar={GUEST_HEADER_AVATAR} size={40} className="h-full w-full" />
         {showChevron ? (
           <ChevronDown className="absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full bg-white text-wibe-secondary ring-1 ring-wibe/80" />
         ) : null}
@@ -66,11 +62,8 @@ function AccountAvatar({
   return (
     <>
       {vibeAvatar ? (
-        <div
-          className={`flex h-full w-full items-center justify-center text-xl ${vibeAvatar.bgClass}`}
-          title={userName}
-        >
-          {vibeAvatar.emoji}
+        <div className="h-full w-full" title={userName}>
+          <VibeAvatarDisplay avatar={vibeAvatar} size={40} className="h-full w-full" />
         </div>
       ) : headerAvatarUrl ? (
         <UserAvatar src={headerAvatarUrl} name={userName} size={40} className="h-full w-full" />

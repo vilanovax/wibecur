@@ -8,7 +8,8 @@ import { UserPlus, Check } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { track } from '@/lib/analytics';
 import CuratorBadge from '@/components/shared/CuratorBadge';
-import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import type { CuratorLevelKey } from '@/lib/curator';
 
 interface SpotlightCreator {
@@ -79,7 +80,7 @@ export default function PersonalizedSpotlightSection() {
 
   const vibeAvatar =
     creator.avatarType === 'DEFAULT' && creator.avatarId
-      ? VIBE_AVATARS.find((a) => a.id === creator.avatarId)
+      ? resolveVibeAvatar(creator.avatarId)
       : null;
 
   return (
@@ -97,11 +98,7 @@ export default function PersonalizedSpotlightSection() {
         >
           <div className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-100">
             {vibeAvatar ? (
-              <div
-                className={`w-full h-full flex items-center justify-center text-3xl ${vibeAvatar.bgClass}`}
-              >
-                {vibeAvatar.emoji}
-              </div>
+              <VibeAvatarDisplay avatar={vibeAvatar} size={64} className="h-full w-full" />
             ) : creator.image ? (
               <ImageWithFallback
                 src={creator.image}

@@ -24,6 +24,8 @@ import RegisterAvatarPicker, {
   getDefaultRegisterAvatarId,
   getRegisterAvatarById,
 } from './RegisterAvatarPicker';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
+import type { VibeAvatarOption } from '@/lib/vibe-avatars';
 import { trackSignupComplete, type SignupSource } from '@/lib/analytics';
 
 export type AuthMode = 'login' | 'register';
@@ -447,7 +449,7 @@ function AuthHeroHeader({
   title: string;
   subtitle: string;
   showCategoryPills?: boolean;
-  avatar?: { emoji: string; bgClass: string; label: string } | null;
+  avatar?: VibeAvatarOption | null;
 }) {
   return (
     <div className="relative overflow-hidden px-6 pb-6 pt-8 text-center">
@@ -460,11 +462,7 @@ function AuthHeroHeader({
       <div className="relative">
         {avatar ? (
           <div className="mx-auto mb-3 flex flex-col items-center">
-            <div
-              className={`flex h-20 w-20 items-center justify-center rounded-full text-4xl shadow-md ring-4 ring-white ${avatar.bgClass}`}
-            >
-              {avatar.emoji}
-            </div>
+            <VibeAvatarDisplay avatar={avatar} size={80} />
             <p className="mt-2 text-xs font-medium text-gray-500">{avatar.label}</p>
           </div>
         ) : (

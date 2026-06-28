@@ -17,6 +17,16 @@ function trackFeaturedImpressionOnce(slotId: string) {
   } catch {}
 }
 
+export function trackFeaturedHeroClick(slotId: string | null | undefined, listId: string) {
+  if (!slotId) return;
+  fetch('/api/home-featured/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slotId, listId, action: 'view_list' }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 type HomeHeroImpressionTrackerProps = {
   slotId: string | null;
 };

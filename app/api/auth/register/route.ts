@@ -9,7 +9,7 @@ import {
   validateAuthPassword,
   validatePhoneInput,
 } from '@/lib/phone-auth';
-import { DEFAULT_PACK_AVATARS } from '@/lib/vibe-avatars';
+import { DEFAULT_PACK_AVATARS, resolveVibeAvatarId } from '@/lib/vibe-avatars';
 import { checkActionRateLimit } from '@/lib/rate-limit';
 
 const DEFAULT_AVATAR_IDS = new Set(DEFAULT_PACK_AVATARS.map((a) => a.id));
@@ -37,7 +37,8 @@ export async function POST(request: Request) {
     const password = String(body?.password ?? '');
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
     const avatarRaw = typeof body?.avatarId === 'string' ? body.avatarId.trim() : 'vibe';
-    const avatarId = DEFAULT_AVATAR_IDS.has(avatarRaw) ? avatarRaw : 'vibe';
+    const resolvedAvatarId = resolveVibeAvatarId(avatarRaw) ?? 'vibe';
+    const avatarId = DEFAULT_AVATAR_IDS.has(resolvedAvatarId) ? resolvedAvatarId : 'vibe';
 
     const phoneError = validatePhoneInput(phoneRaw);
     if (phoneError) {

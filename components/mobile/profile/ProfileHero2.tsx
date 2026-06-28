@@ -5,7 +5,8 @@ import { Edit2, Camera, LogOut } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
 import { getLevelByScore, getNextLevelByScore, pointsToNextLevel } from '@/lib/curator';
-import { VIBE_AVATARS, isUserEliteLevel } from '@/lib/vibe-avatars';
+import { isUserEliteLevel, resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import EditProfileSheet2 from './EditProfileSheet2';
 
 export interface CreatorStats {
@@ -73,7 +74,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
   const hasVibeId = user.avatarId && String(user.avatarId).trim();
   const vibeAvatar =
     avatarTypeNorm === 'DEFAULT' && hasVibeId
-      ? VIBE_AVATARS.find((a) => a.id === String(user.avatarId).trim())
+      ? resolveVibeAvatar(String(user.avatarId).trim())
       : null;
   const showVibeAvatar = Boolean(vibeAvatar);
   const showUploadedAvatar =
@@ -107,12 +108,8 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
           <div className="flex flex-col items-center">
             <div className="relative group">
               <div className="w-[96px] h-[96px] rounded-full border-2 border-white/90 overflow-hidden bg-white shadow-sm">
-                {showVibeAvatar ? (
-                  <div
-                    className={`w-full h-full flex items-center justify-center text-4xl ${vibeAvatar!.bgClass}`}
-                  >
-                    {vibeAvatar!.emoji}
-                  </div>
+                {showVibeAvatar && vibeAvatar ? (
+                  <VibeAvatarDisplay avatar={vibeAvatar} size={96} className="h-full w-full" />
                 ) : showUploadedAvatar ? (
                   <ImageWithFallback
                     src={user.image!}

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
+import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
 import { useHomeData } from '@/contexts/HomeDataContext';
 
 function trackFeaturedImpressionOnce(slotId: string) {
@@ -56,8 +57,12 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
     >
       <p className="mb-1.5 wibe-caption text-wibe-secondary lg:hidden">منتخب هفته</p>
 
-      <div
-        className={`group relative overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[230px] lg:rounded-2xl lg:shadow-lg ${
+      <HomeHeroBannerLink
+        href={`/lists/${list.slug}`}
+        listId={list.id}
+        slotId={featuredSlotId}
+        ariaLabel={`مشاهده لیست ${list.title}`}
+        className={`group relative block overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[230px] lg:rounded-2xl lg:shadow-lg ${
           fillHeight
             ? 'h-[220px] xl:h-full xl:min-h-[20rem]'
             : 'h-[220px] lg:h-[22rem] xl:h-[24rem]'
@@ -105,7 +110,7 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
             {list.title}
           </h2>
         </div>
-      </div>
+      </HomeHeroBannerLink>
     </section>
   );
 }

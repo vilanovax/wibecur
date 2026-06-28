@@ -29,6 +29,23 @@ export type ImportExternalImageResult =
   | { ok: true; url: string }
   | { ok: false; error: string; code?: string };
 
+const TMDB_PROFILE_SIZES = ['w500', 'h632', 'w342', 'w185', 'original'] as const;
+
+/** نسخه‌های سایز TMDB — برای پروفایل اشخاص و پوستر */
+export function expandTmdbImageUrlVariants(url: string): string[] {
+  if (!isTmdbImageUrl(url)) return [];
+
+  const inner = unwrapCastandoImageProxyUrl(url);
+  const match = inner.match(/image\.tmdb\.org\/t\/p\/[^/]+(\/[^?#]+)/i);
+  if (!match?.[1]) return [inner];
+
+  const path = match[1];
+  const variants = TMDB_PROFILE_SIZES.map(
+    (size) => `https://image.tmdb.org/t/p/${size}${path}`
+  );
+  return [...new Set([inner, ...variants])];
+}
+
 /** URL دانلود — پراکسی castando برای منابع خارجی مسدود */
 export function resolveDownloadUrlForImageImport(sourceUrl: string): string {
   const normalized = normalizeImageUrlForStorage(sourceUrl);
@@ -45,7 +62,7 @@ export function resolveDownloadUrlForImageImport(sourceUrl: string): string {
   return normalized;
 }
 
-/** ترتیب تلاش دانلود: URL مستقیم → پراکسی castando */
+/** ترتیب تلاش دانلود: TMDB → پراکسی castando اول؛ سایر منابع → مستقیم سپس پراکسی */
 export function buildImageImportDownloadCandidates(sourceUrl: string): string[] {
   const normalized = normalizeImageUrlForStorage(sourceUrl);
   if (!normalized) return [];
@@ -61,6 +78,23 @@ export function buildImageImportDownloadCandidates(sourceUrl: string): string[] 
   };
 
   const inner = unwrapCastandoImageProxyUrl(normalized);
+
+  if (isTmdbImageUrl(inner)) {
+    const tmdbUrls = expandTmdbImageUrlVariants(inner);
+    for (const tmdbUrl of tmdbUrls) {
+      if (needsCastandoProxyWrap(tmdbUrl)) {
+        add(buildCastandoProxyImageUrl(tmdbUrl));
+      }
+    }
+    for (const tmdbUrl of tmdbUrls) {
+      add(tmdbUrl);
+    }
+    if (normalized !== inner) {
+      add(normalized);
+    }
+    return candidates;
+  }
+
   add(inner);
   for (const variant of expandPosterUrlVariants(inner)) {
     add(variant);
@@ -86,6 +120,42 @@ export function buildImageImportDownloadCandidates(sourceUrl: string): string[] 
   }
 
   return candidates;
+}
+
+/** دانلود سریع آواتار — حداکثر ۳ تلاش (پراکسی w500 + مستقیم) */
+export function buildPersonAvatarDownloadCandidates(sourceUrl: string): string[] {
+  const normalized = normalizeImageUrlForStorage(sourceUrl);
+  if (!normalized) return [];
+
+  const inner = unwrapCastandoImageProxyUrl(normalized);
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+
+  const add = (url: string | null | undefined) => {
+    const trimmed = url?.trim();
+    if (!trimmed || !isValidHttpImageUrl(trimmed) || seen.has(trimmed)) return;
+    seen.add(trimmed);
+    candidates.push(trimmed);
+  };
+
+  if (isTmdbImageUrl(inner)) {
+    const pathMatch = inner.match(/image\.tmdb\.org\/t\/p\/[^/]+(\/[^?#]+)/i);
+    const path = pathMatch?.[1];
+    if (path) {
+      const w500 = `https://image.tmdb.org/t/p/w500${path}`;
+      if (needsCastandoProxyWrap(w500)) {
+        add(buildCastandoProxyImageUrl(w500));
+      }
+    } else if (needsCastandoProxyWrap(inner)) {
+      add(buildCastandoProxyImageUrl(inner));
+    }
+    return candidates;
+  }
+
+  add(inner);
+  const proxyUrl = resolveDownloadUrlForImageImport(inner);
+  if (proxyUrl !== inner) add(proxyUrl);
+  return candidates.slice(0, 4);
 }
 
 /** نسخه‌های رایج URL پوستر Amazon / IMDb */

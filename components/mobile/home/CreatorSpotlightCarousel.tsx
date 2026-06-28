@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
-import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
 
 interface CreatorItem {
@@ -73,7 +74,7 @@ export default function CreatorSpotlightCarousel() {
         {creators.map((c) => {
           const levelKey = (c.curatorLevel || 'EXPLORER') as CuratorLevelKey;
           const vibeAvatar = c.avatarType === 'DEFAULT' && c.avatarId
-            ? VIBE_AVATARS.find((a) => a.id === c.avatarId)
+            ? resolveVibeAvatar(c.avatarId)
             : null;
 
           return (
@@ -85,9 +86,7 @@ export default function CreatorSpotlightCarousel() {
               <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm p-4 text-center">
                 <div className="relative w-14 h-14 mx-auto rounded-full overflow-hidden bg-gray-100">
                   {vibeAvatar ? (
-                    <div className={`w-full h-full flex items-center justify-center text-2xl ${vibeAvatar.bgClass}`}>
-                      {vibeAvatar.emoji}
-                    </div>
+                    <VibeAvatarDisplay avatar={vibeAvatar} size={56} className="h-full w-full" />
                   ) : c.image ? (
                     <ImageWithFallback
                       src={c.image}
