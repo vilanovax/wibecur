@@ -31,18 +31,18 @@ interface HeaderActionsProps {
 }
 
 const MENU_WIDTH = 192;
+/** هدر موبایل: ۴۰px + ۲۰٪ */
+const HEADER_AVATAR_PX = 48;
 
 function AccountAvatar({
   profile,
   userName,
   isDark,
-  showChevron,
   isGuest = false,
 }: {
   profile: HeaderActionsProfile | null;
   userName: string;
   isDark: boolean;
-  showChevron?: boolean;
   isGuest?: boolean;
 }) {
   const showVibeAvatar = profile?.avatarType === 'DEFAULT' && profile?.avatarId;
@@ -53,12 +53,7 @@ function AccountAvatar({
 
   if (isGuest) {
     return (
-      <>
-        <VibeAvatarDisplay avatar={GUEST_HEADER_AVATAR} size={40} className="h-full w-full" />
-        {showChevron ? (
-          <ChevronDown className="absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full bg-white text-wibe-secondary ring-1 ring-wibe/80" />
-        ) : null}
-      </>
+      <VibeAvatarDisplay avatar={GUEST_HEADER_AVATAR} size={HEADER_AVATAR_PX} className="h-full w-full" />
     );
   }
 
@@ -66,18 +61,15 @@ function AccountAvatar({
     <>
       {vibeAvatar ? (
         <div className="h-full w-full" title={userName}>
-          <VibeAvatarDisplay avatar={vibeAvatar} size={40} className="h-full w-full" />
+          <VibeAvatarDisplay avatar={vibeAvatar} size={HEADER_AVATAR_PX} className="h-full w-full" />
         </div>
       ) : headerAvatarUrl ? (
-        <UserAvatar src={headerAvatarUrl} name={userName} size={40} className="h-full w-full" />
+        <UserAvatar src={headerAvatarUrl} name={userName} size={HEADER_AVATAR_PX} className="h-full w-full" />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-sm font-bold text-white">
           {userName.charAt(0).toUpperCase()}
         </div>
       )}
-      {showChevron ? (
-        <ChevronDown className="absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full bg-white text-wibe-secondary ring-1 ring-wibe/80" />
-      ) : null}
     </>
   );
 }
@@ -166,8 +158,12 @@ export default function HeaderActions({
     notifications.openNotifications();
   };
 
-  const avatarShellClass = `relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full transition-colors ${
-    isDark ? 'bg-gray-800 ring-1 ring-gray-700 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'
+  const avatarInnerClass = `flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full ${
+    isDark ? 'bg-gray-800 ring-1 ring-gray-700' : 'bg-gray-200'
+  }`;
+
+  const avatarButtonClass = `relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-colors ${
+    isDark ? 'hover:bg-gray-800/60' : 'hover:bg-gray-300/60'
   }`;
 
   const unreadLabel =
@@ -242,19 +238,21 @@ export default function HeaderActions({
             <button
               ref={buttonRef}
               type="button"
-              className={`${avatarShellClass} ${menuOpen ? 'ring-2 ring-primary/40' : ''}`}
+              className={`${avatarButtonClass} ${menuOpen ? 'ring-2 ring-primary/40 rounded-full' : ''}`}
               aria-label={`منوی حساب ${userName}${unreadLabel}`}
               aria-expanded={menuOpen}
               aria-haspopup="menu"
               onClick={() => setMenuOpen((v) => !v)}
             >
-              <AccountAvatar
-                profile={profile}
-                userName={userName}
-                isDark={isDark}
-                showChevron
-                isGuest={isGuest}
-              />
+              <span className={avatarInnerClass}>
+                <AccountAvatar
+                  profile={profile}
+                  userName={userName}
+                  isDark={isDark}
+                  isGuest={isGuest}
+                />
+              </span>
+              <ChevronDown className="absolute -bottom-0.5 -right-0.5 z-10 h-3.5 w-3.5 rounded-full bg-white text-wibe-secondary ring-1 ring-wibe/80" />
               {!hideNotifications && (
                 <NotificationUnreadBadge count={notifications.unreadCount} />
               )}
@@ -263,13 +261,15 @@ export default function HeaderActions({
             {!hideNotifications && <NotificationSheet center={notifications} />}
           </>
         ) : (
-          <Link href={profileHref} className={avatarShellClass} aria-label="ورود به حساب">
-            <AccountAvatar
-              profile={profile}
-              userName={userName}
-              isDark={isDark}
-              isGuest={isGuest}
-            />
+          <Link href={profileHref} className={avatarButtonClass} aria-label="ورود به حساب">
+            <span className={avatarInnerClass}>
+              <AccountAvatar
+                profile={profile}
+                userName={userName}
+                isDark={isDark}
+                isGuest={isGuest}
+              />
+            </span>
           </Link>
         ))}
     </div>

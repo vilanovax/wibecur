@@ -56,6 +56,20 @@ export function isMaintenanceBypassPath(pathname: string): boolean {
   return /\.(svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf|css|js)$/i.test(pathname);
 }
 
+/** APIهای پس‌زمینه — نیازی به چک maintenance در middleware ندارند */
+const MAINTENANCE_CHECK_SKIP_PREFIXES = [
+  '/api/notifications',
+  '/api/auth/session',
+  '/api/user/profile',
+  '/api/user/bookmarks',
+];
+
+export function shouldSkipMaintenanceStatusCheck(pathname: string): boolean {
+  return MAINTENANCE_CHECK_SKIP_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 export function normalizeAccentColor(value: string | null | undefined): string {
   const raw = value?.trim();
   if (!raw) return DEFAULT_MAINTENANCE_ACCENT;

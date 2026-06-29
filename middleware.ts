@@ -1,7 +1,21 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { isAdminRole, isMaintenanceBypassPath } from '@/lib/maintenance-mode-types';
+import {
+  isAdminRole,
+  isMaintenanceBypassPath,
+  shouldSkipMaintenanceStatusCheck,
+} from '@/lib/maintenance-mode-types';
+
+const MAINTENANCE_STATUS_TTL_MS = 15_000;
+
+type MaintenanceStatus = {
+  enabled: boolean;
+  allowAdminBrowse: boolean;
+};
+
+let maintenanceStatusCache: { value: MaintenanceStatus; expiresAt: number } | null = null;
+let maintenanceStatusInflight: Promise<MaintenanceStatus | null> | null = null;
 
 function getClientIp(req: Request): string {
   const forwarded = req.headers.get('x-forwarded-for');
@@ -18,10 +32,7 @@ function getRequestOrigin(url: URL, req: Request): string {
   return url.origin;
 }
 
-async function fetchMaintenanceStatus(origin: string): Promise<{
-  enabled: boolean;
-  allowAdminBrowse: boolean;
-} | null> {
+async function fetchMaintenanceStatus(origin: string): Promise<MaintenanceStatus | null> {
   try {
     const res = await fetch(`${origin}/api/site/maintenance-status`, {
       cache: 'no-store',
@@ -36,8 +47,29 @@ async function fetchMaintenanceStatus(origin: string): Promise<{
 async function resolveMaintenanceStatus(
   url: URL,
   req: Request
-): Promise<{ enabled: boolean; allowAdminBrowse: boolean } | null> {
-  return fetchMaintenanceStatus(getRequestOrigin(url, req));
+): Promise<MaintenanceStatus | null> {
+  const now = Date.now();
+  if (maintenanceStatusCache && maintenanceStatusCache.expiresAt > now) {
+    return maintenanceStatusCache.value;
+  }
+
+  if (!maintenanceStatusInflight) {
+    maintenanceStatusInflight = fetchMaintenanceStatus(getRequestOrigin(url, req))
+      .then((status) => {
+        if (status) {
+          maintenanceStatusCache = {
+            value: status,
+            expiresAt: Date.now() + MAINTENANCE_STATUS_TTL_MS,
+          };
+        }
+        return status;
+      })
+      .finally(() => {
+        maintenanceStatusInflight = null;
+      });
+  }
+
+  return maintenanceStatusInflight;
 }
 
 export default auth(async (req) => {
@@ -58,7 +90,7 @@ export default auth(async (req) => {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-pathname', pathname);
 
-  if (!isMaintenanceBypassPath(pathname)) {
+  if (!isMaintenanceBypassPath(pathname) && !shouldSkipMaintenanceStatusCheck(pathname)) {
     const status = await resolveMaintenanceStatus(url, req);
     if (status?.enabled) {
       const adminBypass =

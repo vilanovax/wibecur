@@ -103,10 +103,12 @@ export function useNotifications(enabled = true) {
 
   const isActive = enabled && Boolean(session?.user);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (options?: { background?: boolean }) => {
     if (!session?.user) return;
 
-    setIsLoading(true);
+    if (!options?.background) {
+      setIsLoading(true);
+    }
     try {
       const res = await fetch('/api/notifications?unreadOnly=false&limit=30');
       const data = await res.json();
@@ -124,18 +126,23 @@ export function useNotifications(enabled = true) {
     } catch {
       setFetchFailed(true);
     } finally {
-      setIsLoading(false);
+      if (!options?.background) {
+        setIsLoading(false);
+      }
     }
   }, [session?.user]);
 
   useEffect(() => {
     if (!isActive) return;
 
-    fetchNotifications();
+    void fetchNotifications();
 
-    pollRef.current = setInterval(() => {
-      if (!fetchFailed) fetchNotifications();
-    }, 60000);
+    const poll = () => {
+      if (fetchFailed || document.visibilityState !== 'visible') return;
+      void fetchNotifications({ background: true });
+    };
+
+    pollRef.current = setInterval(poll, 60000);
 
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
@@ -469,9 +476,14 @@ export function NotificationSheet({
 export function NotificationUnreadBadge({ count }: { count: number }) {
   if (count <= 0) return null;
 
+  const label = count > 9 ? '9+' : count.toLocaleString('fa-IR');
+
   return (
-    <span className="absolute -right-0.5 -top-0.5 z-10 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white ring-2 ring-white">
-      {count > 9 ? '9+' : count.toLocaleString('fa-IR')}
+    <span
+      className="pointer-events-none absolute -top-0.5 -left-0.5 z-20 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] ring-2 ring-[var(--color-bg,#fff)]"
+      aria-hidden
+    >
+      {label}
     </span>
   );
 }
