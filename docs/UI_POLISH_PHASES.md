@@ -295,7 +295,7 @@ npm test -- lib/home-mood-collections.test.ts
 npm run build
 ```
 
-**نکته production:** `npm start` نیاز به `UPSTASH_REDIS_REST_URL` و `UPSTASH_REDIS_REST_TOKEN` دارد (`instrumentation.ts`).
+**نکته production:** `npm start` به Upstash/Redis نیاز ندارد.
 
 ---
 

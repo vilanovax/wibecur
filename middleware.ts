@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { readMaintenanceRuntimeFlag } from '@/lib/maintenance-runtime';
 import { isAdminRole, isMaintenanceBypassPath } from '@/lib/maintenance-mode-types';
 
 function getClientIp(req: Request): string {
@@ -38,8 +37,6 @@ async function resolveMaintenanceStatus(
   url: URL,
   req: Request
 ): Promise<{ enabled: boolean; allowAdminBrowse: boolean } | null> {
-  const fromRedis = await readMaintenanceRuntimeFlag();
-  if (fromRedis) return fromRedis;
   return fetchMaintenanceStatus(getRequestOrigin(url, req));
 }
 
