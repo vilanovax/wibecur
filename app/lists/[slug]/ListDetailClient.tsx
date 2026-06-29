@@ -11,7 +11,6 @@ import { useLazyInView } from '@/hooks/useLazyInView';
 import { Share2, MoreVertical, Flame, Bookmark, Plus, Settings, Link2, Flag, Lightbulb, Map, LayoutGrid } from 'lucide-react';
 import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
 import ListDetailSidebar from '@/components/mobile/lists/ListDetailSidebar';
-import ListDetailSubNav from '@/components/mobile/lists/ListDetailSubNav';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
@@ -437,6 +436,13 @@ function GridItemCard({
           <span className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums">
             {(index + 1).toLocaleString('fa-IR')}
           </span>
+          {!isMovieGrid && (
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2 pb-2 pt-10">
+              <p className="line-clamp-2 text-start text-[11px] font-semibold leading-snug text-white lg:text-xs">
+                {item.title}
+              </p>
+            </div>
+          )}
         </div>
       </button>
       {quickActions.length > 0 && (
@@ -925,17 +931,6 @@ export default function ListDetailClient({
           viewCount={viewCount}
           isOwner={isOwner}
           onItemsClick={() => scrollToSection(itemsSectionRef)}
-          onCommentsClick={scrollToComments}
-        />
-      </div>
-
-      <div className="relative z-20 px-4 lg:px-0">
-        <ListDetailSubNav
-          itemCount={itemCount}
-          commentCount={commentCount}
-          showSimilar={showSimilarLists}
-          onItemsClick={() => scrollToSection(itemsSectionRef)}
-          onSimilarClick={() => scrollToSection(similarSectionRef)}
           onCommentsClick={scrollToComments}
         />
       </div>

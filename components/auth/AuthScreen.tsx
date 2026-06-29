@@ -20,6 +20,7 @@ import {
   User,
 } from 'lucide-react';
 import { validateAuthPassword, validatePhoneInput } from '@/lib/phone-auth';
+import { persianToEnglish } from '@/lib/utils/number-converter';
 import RegisterAvatarPicker, {
   getDefaultRegisterAvatarId,
   getRegisterAvatarById,
@@ -76,6 +77,10 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('password');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handlePhoneChange = (value: string) => {
+    setPhone(persianToEnglish(value));
+  };
 
   const selectedAvatar = useMemo(() => getRegisterAvatarById(avatarId), [avatarId]);
   const passwordStrength = getPasswordStrength(password);
@@ -182,7 +187,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                   type="tel"
                   inputMode="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
                   autoComplete="tel"
                   required
@@ -331,7 +336,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                 type="tel"
                 inputMode="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => handlePhoneChange(e.target.value)}
                 placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
                 autoComplete="tel"
                 required

@@ -27,7 +27,6 @@ import {
   ListsCategorySectionLazy,
 } from '@/components/mobile/lists/lists-lazy-sections';
 import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
-import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
@@ -171,7 +170,7 @@ const PAGE_SIZE = 24;
 /** پیش‌نمایش هر دسته در نمای سکشن‌بندی‌شده */
 const SECTION_PREVIEW_MOBILE = 4;
 const SECTION_PREVIEW_DESKTOP = 8;
-const STICKY_OFFSET = 96;
+const STICKY_OFFSET = 154;
 
 function resolveCategoryIdFromParam(
   param: string | undefined,
@@ -242,16 +241,6 @@ export default function ListsPageClient({
 
   const publicLists = allLists.filter((l) => l.isActive && l.isPublic);
   const activeCategories = categories.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const menuCategories = useMemo(
-    () =>
-      activeCategories.map((c) => ({
-        id: c.id,
-        slug: c.slug,
-        name: c.name,
-        icon: c.icon,
-      })),
-    [activeCategories]
-  );
   const browseMode = inferBrowseMode(filterState);
   const trendingIdSet = useMemo(() => new Set(trendingListIds), [trendingListIds]);
 
@@ -868,11 +857,7 @@ export default function ListsPageClient({
   const trendingBrowseEmpty =
     browseMode === 'trending' && trendingLoaded && sortedLists.length === 0 && publicLists.length > 0;
 
-  const showContextBar = !isSearchActive && !(useSectionLayout && !isDesktop);
-  const showSecondaryToolbar = !isSearchActive;
-  const showBrowseToolbar = !isSearchActive;
-  /** نوار دستهٔ خانه روی موبایل با چیپ‌های همین صفحه تکراری است */
-  const showCategoryNavStrip = !isSearchActive && (isDesktop || !showCategoryChips || !useSectionLayout);
+  const showContextBar = !isSearchActive && isDesktop && !useSectionLayout;
 
   return (
     <div className="w-full min-w-0 space-y-0 pb-6 lg:pb-4">
@@ -917,27 +902,59 @@ export default function ListsPageClient({
         </div>
       </div>
 
-      {/* Sticky: دسته‌ها + ترند / جدید / نمای / فیلتر — مخفی در حالت جستجو */}
-      {showBrowseToolbar && (
-      <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-surface/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-surface/90 lg:top-14">
-        {showCategoryNavStrip && (
-          <CategoryNavStrip
-            embedded
-            activeSlug={initialCategory ?? null}
-            initialCategories={menuCategories}
-          />
+      {/* Sticky: دسته + مرتب‌سازی + نمای/فیلتر — یک بلوک واحد */}
+      {!isSearchActive && (
+      <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
+        {showCategoryChips && (
+          <div
+            ref={categoryChipsRef}
+            className="flex gap-1.5 overflow-x-auto border-b border-wibe/40 px-3 py-2 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-2.5"
+          >
+            <button
+              type="button"
+              data-category-chip="all"
+              onClick={handleAllCategoriesClick}
+              className={`h-8 flex-shrink-0 rounded-full px-3 wibe-caption font-medium transition-all active:scale-[0.98] ${
+                isAllCategoriesSelected
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
+              }`}
+            >
+              همه
+            </button>
+            {activeCategories.map((cat) => {
+              const isSelected = isCategorySelected(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  data-category-chip={cat.id}
+                  onClick={() => handleCategoryClick(cat.id)}
+                  className={`h-8 flex-shrink-0 whitespace-nowrap rounded-full px-3 wibe-caption font-medium transition-all active:scale-[0.98] ${
+                    isSelected
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
+                  }`}
+                >
+                  {cat.icon ? `${cat.icon} ` : ''}
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
         )}
-        <div className="flex items-center gap-1 max-lg:px-3 lg:gap-1.5 lg:px-0 pb-2 pt-1">
-          <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-gray-100 p-0.5 scrollbar-hide">
+
+        <div className="flex items-center gap-1.5 px-3 py-2 lg:gap-2 lg:px-0">
+          <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide">
             {BROWSE_MODES.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => setBrowseMode(value)}
-                className={`h-7 flex-shrink-0 rounded-md px-2.5 wibe-caption font-medium transition-all active:scale-[0.98] lg:h-8 lg:px-3 ${
+                className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-all active:scale-[0.98] lg:px-3.5 ${
                   browseMode === value
                     ? 'bg-wibe-card font-semibold text-primary shadow-sm'
-                    : 'text-wibe-secondary'
+                    : 'text-wibe-secondary hover:text-foreground'
                 }`}
               >
                 {label}
@@ -945,13 +962,13 @@ export default function ListsPageClient({
             ))}
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <div className="flex rounded-lg border border-wibe bg-wibe-card p-0.5">
+            <div className="flex rounded-lg border border-wibe bg-wibe-surface p-0.5">
               <button
                 type="button"
                 onClick={() => setViewMode('compact')}
                 aria-label="نمایش لیستی"
                 aria-pressed={viewMode === 'compact'}
-                className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors active:scale-[0.98] lg:h-8 lg:w-8 ${
+                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${
                   viewMode === 'compact' ? 'bg-primary text-white' : 'text-wibe-secondary'
                 }`}
               >
@@ -962,7 +979,7 @@ export default function ListsPageClient({
                 onClick={() => setViewMode('grid')}
                 aria-label="نمایش گریدی"
                 aria-pressed={viewMode === 'grid'}
-                className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors active:scale-[0.98] lg:h-8 lg:w-8 ${
+                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${
                   viewMode === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary'
                 }`}
               >
@@ -972,10 +989,10 @@ export default function ListsPageClient({
             <button
               type="button"
               onClick={() => setFilterSheetOpen(true)}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors active:scale-[0.98] lg:h-9 lg:w-9 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors active:scale-[0.98] ${
                 hasAdvancedFilters
                   ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-wibe bg-wibe-card text-wibe-secondary'
+                  : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
               }`}
               aria-label="فیلتر پیشرفته"
             >
@@ -983,99 +1000,53 @@ export default function ListsPageClient({
             </button>
           </div>
         </div>
-      </div>
-      )}
 
-      {/* غیر sticky: پرش به دسته + context */}
-      {(showSecondaryToolbar) && (
-        <div className="space-y-2 border-b border-wibe/60 bg-wibe-surface py-1.5 max-lg:px-3 lg:px-0 lg:py-2">
-          {showCategoryChips && (
-            <div
-              ref={categoryChipsRef}
-              className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 scrollbar-hide lg:flex-wrap lg:overflow-visible"
-            >
-              <button
-                type="button"
-                data-category-chip="all"
-                onClick={handleAllCategoriesClick}
-                className={`h-8 flex-shrink-0 rounded-full px-3 wibe-caption font-medium transition-all active:scale-[0.98] ${
-                  isAllCategoriesSelected
-                    ? 'bg-primary text-white'
-                    : 'border border-wibe bg-wibe-card text-foreground'
-                }`}
-              >
-                همه
-              </button>
-              {activeCategories.map((cat) => {
-                const isSelected = isCategorySelected(cat.id);
+        {hasAdvancedFilters && (
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-wibe/40 px-3 py-2 lg:px-0">
+            {[...filterState.vibes]
+              .filter((v) => v !== 'trending' && v !== 'saved')
+              .map((v) => {
+                const label = VIBE_CHIPS.find((c) => c.value === v)?.label ?? v;
                 return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    data-category-chip={cat.id}
-                    onClick={() => handleCategoryClick(cat.id)}
-                    className={`h-8 flex-shrink-0 whitespace-nowrap rounded-full px-3 wibe-caption font-medium transition-all active:scale-[0.98] ${
-                      isSelected
-                        ? 'bg-primary text-white'
-                        : 'border border-wibe bg-wibe-card text-foreground'
-                    }`}
+                  <span
+                    key={v}
+                    className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-medium text-primary"
                   >
-                    {cat.icon ? `${cat.icon} ` : ''}
-                    {cat.name}
-                  </button>
+                    {label}
+                  </span>
                 );
               })}
-            </div>
-          )}
+            {filterState.creatorType !== 'all' && (
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-medium text-primary">
+                {filterState.creatorType === 'top' && 'کیوریتور برتر'}
+                {filterState.creatorType === 'new' && 'تازه‌وارد'}
+                {filterState.creatorType === 'viral' && 'وایرال'}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() =>
+                setFilterState((s) => ({
+                  ...s,
+                  ...browseModeToFilter(browseMode),
+                  creatorType: 'all',
+                  minItemCount: 0,
+                  minRating: 0,
+                }))
+              }
+              className="ms-auto wibe-caption font-medium text-primary hover:underline"
+            >
+              پاک فیلتر
+            </button>
+          </div>
+        )}
 
-          {showContextBar && (
-            <div className="hidden min-h-[20px] items-center justify-between gap-2 lg:flex">
-              <p className="truncate wibe-caption text-wibe-secondary">{contextParts.join(' · ')}</p>
-              {hasAdvancedFilters && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFilterState((s) => ({
-                      ...s,
-                      ...browseModeToFilter(browseMode),
-                      creatorType: 'all',
-                      minItemCount: 0,
-                      minRating: 0,
-                    }))
-                  }
-                  className="shrink-0 wibe-caption font-medium text-primary"
-                >
-                  پاک فیلتر
-                </button>
-              )}
-            </div>
-          )}
-
-          {hasAdvancedFilters && (
-            <div className="flex flex-wrap gap-1.5">
-              {[...filterState.vibes]
-                .filter((v) => v !== 'trending' && v !== 'saved')
-                .map((v) => {
-                  const label = VIBE_CHIPS.find((c) => c.value === v)?.label ?? v;
-                  return (
-                    <span
-                      key={v}
-                      className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 wibe-caption font-medium text-primary"
-                    >
-                      {label}
-                    </span>
-                  );
-                })}
-              {filterState.creatorType !== 'all' && (
-                <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 wibe-caption font-medium text-primary">
-                  {filterState.creatorType === 'top' && 'کیوریتور برتر'}
-                  {filterState.creatorType === 'new' && 'تازه‌وارد'}
-                  {filterState.creatorType === 'viral' && 'وایرال'}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+        {showContextBar && (
+          <p className="hidden border-t border-wibe/40 px-0 py-2 wibe-caption text-wibe-secondary lg:block">
+            {contextParts.join(' · ')}
+          </p>
+        )}
+      </div>
       )}
 
       <div className="mt-2 w-full min-w-0 max-lg:px-3 lg:mt-4 lg:px-0">

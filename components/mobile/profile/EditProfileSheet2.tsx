@@ -915,7 +915,7 @@ export default function EditProfileSheet2({
                       label="رمز جدید"
                       value={newPassword}
                       onChange={setNewPassword}
-                      placeholder="حداقل ۸ کاراکتر"
+                      placeholder="حداقل ۶ کاراکتر"
                       autoComplete="new-password"
                     />
                     <PasswordField

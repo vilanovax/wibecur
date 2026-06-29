@@ -60,7 +60,7 @@ export default async function ListsPage({
   }
 
   return (
-    <div className="flex flex-col lg:bg-transparent">
+    <div className="flex min-h-screen flex-col bg-wibe-card">
       <Header title="لیست‌ها" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
       <main className="min-w-0 flex-1 pt-2 lg:pt-0">
         <ListsPageClient

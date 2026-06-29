@@ -109,7 +109,8 @@ export default function CategoryPage2Client({
   const accentColor = category.accentColor || category.color;
   const cityCounts = Object.fromEntries(cityBreakdown.map((c) => [c.city, c.listCount]));
   const showCityExplorer =
-    isLocationCategorySlug(category.slug) || cityBreakdown.some((c) => c.listCount > 0);
+    !isLocationCategorySlug(category.slug) &&
+    cityBreakdown.some((c) => c.listCount > 0);
   const showGenreBar = isFilmCategorySlug(category.slug);
 
   const featuredSpotlight =
@@ -120,7 +121,6 @@ export default function CategoryPage2Client({
     <TrendingListsSectionLazy
       inset
       title={trendingTitle}
-      subtitle="بر اساس ذخیره و engagement"
       lists={trendingLists}
       categoryName={category.name}
       categorySlug={category.slug}

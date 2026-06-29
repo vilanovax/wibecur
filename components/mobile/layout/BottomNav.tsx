@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Home, LayoutList, Compass, User } from 'lucide-react';
 import CreateSheet from '@/components/mobile/home/CreateSheet';
+import SiteFooter from '@/components/mobile/layout/SiteFooter';
 import { HOME_CREATE_SHEET_EVENT } from '@/lib/home-create-sheet';
 import { MOBILE_BOTTOM_NAV_SPACER_CLASS } from '@/lib/layout-tokens';
 
@@ -43,6 +44,7 @@ export default function BottomNav() {
 
   return (
     <>
+      <SiteFooter variant="mobile" />
       <div aria-hidden className={MOBILE_BOTTOM_NAV_SPACER_CLASS} />
       <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none lg:hidden">
         <nav

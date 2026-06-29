@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
-import { Edit2, Camera, UserPlus, Check, Loader2, LogOut, AlertTriangle } from 'lucide-react';
+import { Edit2, Camera, UserPlus, Check, Loader2, LogOut } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { type CuratorLevelKey } from '@/lib/curator';
 import { isUserEliteLevel, resolveVibeAvatar } from '@/lib/vibe-avatars';
@@ -252,25 +252,18 @@ export default function ProfileHeader({
             isOpen={showLogoutConfirm}
             onClose={() => !isLoggingOut && setShowLogoutConfirm(false)}
             title="خروج از حساب"
-          >
-            <div className="space-y-5 p-6">
-              <div className="flex justify-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
-                  <AlertTriangle className="h-7 w-7 text-red-600" />
-                </div>
-              </div>
-              <div className="space-y-1.5 text-center">
-                <p className="wibe-body font-semibold text-foreground">از حساب خارج می‌شوید؟</p>
-                <p className="wibe-small text-wibe-secondary">
-                  برای ورود دوباره باید نام کاربری و رمز عبور را وارد کنید.
-                </p>
-              </div>
-              <div className="space-y-2">
+            subtitle="برای ورود دوباره نام کاربری و رمز عبور لازم است"
+            desktopMaxWidth="sm"
+            maxHeight="min(420px, 85vh)"
+            closeOnBackdrop={!isLoggingOut}
+            escapeToClose={!isLoggingOut}
+            footer={
+              <div className="flex flex-col gap-2 px-4 py-3 lg:flex-row-reverse lg:justify-start lg:gap-2.5">
                 <button
                   type="button"
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 wibe-small font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 wibe-small font-semibold text-white transition-colors hover:bg-red-700 active:scale-[0.99] disabled:opacity-50 lg:min-w-[8.5rem] lg:w-auto"
                 >
                   {isLoggingOut ? (
                     <>
@@ -280,7 +273,7 @@ export default function ProfileHeader({
                   ) : (
                     <>
                       <LogOut className="h-4 w-4" />
-                      بله، خارج شو
+                      خروج
                     </>
                   )}
                 </button>
@@ -288,11 +281,21 @@ export default function ProfileHeader({
                   type="button"
                   onClick={() => setShowLogoutConfirm(false)}
                   disabled={isLoggingOut}
-                  className="w-full rounded-lg bg-wibe-surface px-4 py-3 wibe-small font-medium text-foreground transition-colors hover:bg-gray-100 disabled:opacity-50"
+                  className="h-11 w-full rounded-xl border border-wibe bg-wibe-card px-4 wibe-small font-semibold text-foreground transition-colors hover:bg-wibe-surface active:scale-[0.99] disabled:opacity-50 lg:min-w-[7.5rem] lg:w-auto"
                 >
                   انصراف
                 </button>
               </div>
+            }
+          >
+            <div className="flex flex-col items-center px-6 pb-4 pt-5 text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 ring-1 ring-red-100">
+                <LogOut className="h-7 w-7 text-red-600" strokeWidth={1.75} />
+              </div>
+              <p className="wibe-body font-semibold text-foreground">از حساب خارج می‌شوید؟</p>
+              <p className="mt-2 max-w-[18rem] wibe-small leading-relaxed text-wibe-secondary">
+                لیست‌ها و ذخیره‌های شما بعد از ورود مجدد در دسترس خواهند بود.
+              </p>
             </div>
           </BottomSheet>
         </>
