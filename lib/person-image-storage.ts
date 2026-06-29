@@ -18,6 +18,7 @@ import {
 import {
   personImageStorageStatus,
   personImageStatusForDiscovered,
+  type PersonImageProfileRow,
   type PersonImageStatus,
 } from '@/lib/person-image-utils';
 import {
@@ -500,8 +501,8 @@ export type PersonImageCandidate = {
 async function loadPersonImageProfiles(
   client: PrismaClient,
   role?: PersonRole
-) {
-  return client.person_profiles.findMany({
+): Promise<PersonImageProfileRow[]> {
+  const profiles = await client.person_profiles.findMany({
     where: role ? { role } : undefined,
     select: {
       role: true,
@@ -511,6 +512,13 @@ async function loadPersonImageProfiles(
       externalUrl: true,
     },
   });
+  return profiles.map((profile) => ({
+    role: profile.role as PersonRole,
+    slug: profile.slug,
+    displayName: profile.displayName,
+    imageUrl: profile.imageUrl,
+    externalUrl: profile.externalUrl,
+  }));
 }
 
 export async function listPersonImageCandidates(
