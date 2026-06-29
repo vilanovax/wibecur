@@ -16,6 +16,7 @@ import { resolveListCover } from '@/lib/resolve-list-cover';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
 import { buildFilmGenreChips } from '@/lib/film-genres';
+import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
 function mapListCover(
   item: { coverImage?: string | null; slug: string; title: string },
@@ -76,6 +77,32 @@ const TRENDING_24H_LIMIT = 10;
 const MOST_DEBATED_LIMIT = 6;
 const MOST_SAVED_ITEMS_LIMIT = 5;
 const LATEST_ITEMS_LIMIT = 5;
+
+type CategoryItemRow = {
+  id: string;
+  title: string;
+  imageUrl?: string | null;
+  metadata?: Record<string, unknown> | null;
+  listSlug: string;
+  listTitle: string;
+};
+
+function mapCategoryItemCards(items: CategoryItemRow[], categorySlug: string): CategoryItemCard[] {
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    imageUrl: item.imageUrl,
+    displayImageUrl: resolveItemDisplayImage({
+      id: item.id,
+      imageUrl: item.imageUrl,
+      title: item.title,
+      metadata: item.metadata ?? null,
+      categorySlug,
+    }),
+    listSlug: item.listSlug,
+    listTitle: item.listTitle,
+  }));
+}
 
 /** استخراج شهر از عنوان یا تگ‌ها */
 function extractCity(title: string, tags: string[] = []): string | null {
@@ -618,7 +645,7 @@ async function getMostDebatedLists(
 async function getLatestItems(
   prisma: PrismaClient,
   categoryId: string
-): Promise<CategoryItemCard[]> {
+): Promise<CategoryItemRow[]> {
   const rows = await prisma.items.findMany({
     where: {
       deletedAt: null,
@@ -626,6 +653,7 @@ async function getLatestItems(
         categoryId,
         isActive: true,
         isPublic: true,
+        users: { role: { not: 'USER' } },
       },
     },
     orderBy: { createdAt: 'desc' },
@@ -634,6 +662,7 @@ async function getLatestItems(
       id: true,
       title: true,
       imageUrl: true,
+      metadata: true,
       lists: { select: { slug: true, title: true } },
     },
   });
@@ -642,6 +671,7 @@ async function getLatestItems(
     id: item.id,
     title: item.title,
     imageUrl: item.imageUrl,
+    metadata: item.metadata as Record<string, unknown> | null,
     listSlug: item.lists.slug,
     listTitle: item.lists.title,
   }));
@@ -650,40 +680,36 @@ async function getLatestItems(
 async function getMostSavedItems(
   prisma: PrismaClient,
   categoryId: string
-): Promise<CategoryItemCard[]> {
-  const topLists = await prisma.lists.findMany({
+): Promise<CategoryItemRow[]> {
+  const rows = await prisma.items.findMany({
     where: {
-      categoryId,
-      isActive: true,
-      isPublic: true,
-      items: { some: {} },
-    },
-    orderBy: { saveCount: 'desc' },
-    take: 6,
-    select: {
-      slug: true,
-      title: true,
-      items: {
-        orderBy: { order: 'asc' },
-        take: 1,
-        select: { id: true, title: true, imageUrl: true },
+      deletedAt: null,
+      lists: {
+        categoryId,
+        isActive: true,
+        isPublic: true,
+        users: { role: { not: 'USER' } },
       },
     },
+    orderBy: [{ voteCount: 'desc' }, { rating: 'desc' }, { createdAt: 'desc' }],
+    take: MOST_SAVED_ITEMS_LIMIT,
+    select: {
+      id: true,
+      title: true,
+      imageUrl: true,
+      metadata: true,
+      lists: { select: { slug: true, title: true } },
+    },
   });
-  const result: CategoryItemCard[] = [];
-  for (const list of topLists) {
-    const item = list.items[0];
-    if (item && result.length < MOST_SAVED_ITEMS_LIMIT) {
-      result.push({
-        id: item.id,
-        title: item.title,
-        imageUrl: item.imageUrl,
-        listSlug: list.slug,
-        listTitle: list.title,
-      });
-    }
-  }
-  return result;
+
+  return rows.map((item) => ({
+    id: item.id,
+    title: item.title,
+    imageUrl: item.imageUrl,
+    metadata: item.metadata as Record<string, unknown> | null,
+    listSlug: item.lists.slug,
+    listTitle: item.lists.title,
+  }));
 }
 
 async function getFilmGenres(
@@ -783,8 +809,8 @@ export async function getCategoryPageData(
     { trending, viral },
     newLists,
     cityBreakdown,
-    mostSavedItems,
-    latestItems,
+    mostSavedItemsRaw,
+    latestItemsRaw,
     filmGenres,
   ] = await Promise.all([
     getCategoryAndMetrics(prisma, categoryId),
@@ -807,8 +833,8 @@ export async function getCategoryPageData(
     topCurators: [],
     newLists: applyListCovers(newLists, category.slug),
     cityBreakdown,
-    mostSavedItems,
-    latestItems,
+    mostSavedItems: mapCategoryItemCards(mostSavedItemsRaw, category.slug),
+    latestItems: mapCategoryItemCards(latestItemsRaw, category.slug),
     filmGenres,
   };
 }

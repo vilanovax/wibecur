@@ -14,12 +14,6 @@ export default function CategoryHeroServer({ category, metrics }: CategoryHeroSe
   const heroImage = getCategoryHeroDisplayUrl(category.heroImage, category.slug);
   const { src: heroSrc, unoptimized } = resolveNextImageSrc(heroImage);
   const showCityLink = isLocationCategorySlug(category.slug);
-  const growth =
-    metrics.weeklyGrowthPercent != null && metrics.weeklyGrowthPercent !== 0
-      ? metrics.weeklyGrowthPercent > 0
-        ? `+${metrics.weeklyGrowthPercent.toLocaleString('fa-IR')}٪ این هفته`
-        : `${metrics.weeklyGrowthPercent.toLocaleString('fa-IR')}٪ این هفته`
-      : null;
 
   return (
     <section className="relative mb-1 mt-3 overflow-hidden rounded-2xl lg:mt-4">
@@ -62,38 +56,18 @@ export default function CategoryHeroServer({ category, metrics }: CategoryHeroSe
                 <span>{metrics.weeklySaveCount.toLocaleString('fa-IR')} ذخیره این هفته</span>
               </>
             )}
-            {growth && (
-              <>
-                <span aria-hidden>·</span>
-                <span
-                  className={
-                    metrics.weeklyGrowthPercent! > 0
-                      ? 'font-semibold text-emerald-300'
-                      : 'text-white/80'
-                  }
-                >
-                  {growth}
-                </span>
-              </>
-            )}
           </div>
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <Link
-              href={`/lists?category=${category.slug}&create=1`}
-              className="inline-flex flex-1 items-center justify-center rounded-xl bg-primary px-4 py-3 wibe-small font-semibold text-white transition-colors hover:bg-primary-dark sm:flex-none sm:px-6"
-            >
-              ساخت لیست در این دسته
-            </Link>
-            {showCityLink && (
+          {showCityLink && (
+            <div className="mt-4">
               <Link
                 href="#explore-by-city"
-                className="inline-flex flex-1 items-center justify-center rounded-xl border border-white/40 px-4 py-3 wibe-small font-medium text-white/95 transition-colors hover:bg-white/10 sm:flex-none"
+                className="inline-flex items-center justify-center rounded-xl border border-white/40 px-4 py-3 wibe-small font-medium text-white/95 transition-colors hover:bg-white/10 sm:px-6"
               >
                 انتخاب شهر
               </Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

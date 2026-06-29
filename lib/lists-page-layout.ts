@@ -3,8 +3,8 @@ export type ListsViewMode = 'grid' | 'compact';
 export const LISTS_VIEW_MODE_MOBILE_KEY = 'listsPage_viewMode_mobile';
 export const LISTS_VIEW_MODE_DESKTOP_KEY = 'listsPage_viewMode_desktop';
 
-export function defaultListsViewMode(isDesktop: boolean): ListsViewMode {
-  return isDesktop ? 'grid' : 'compact';
+export function defaultListsViewMode(_isDesktop: boolean): ListsViewMode {
+  return 'grid';
 }
 
 export function readStoredListsViewMode(isDesktop: boolean): ListsViewMode {

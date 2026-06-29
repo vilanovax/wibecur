@@ -120,6 +120,8 @@ export interface CategoryItemCard {
   id: string;
   title: string;
   imageUrl?: string | null;
+  /** تصویر نمایشی resolve‌شده (placeholder در صورت نبود poster) */
+  displayImageUrl?: string;
   listSlug: string;
   listTitle: string;
 }

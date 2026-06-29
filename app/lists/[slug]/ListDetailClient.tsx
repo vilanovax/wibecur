@@ -7,11 +7,11 @@ import { useSession } from 'next-auth/react';
 import { useListScrollDepth } from '@/hooks/useListScrollDepth';
 import { useInterestTracking } from '@/hooks/useInterestTracking';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useDeferReady } from '@/hooks/useDeferReady';
 import { useLazyInView } from '@/hooks/useLazyInView';
-import { Share2, MoreVertical, Flame, Bookmark, Plus, Settings, Link2, Flag, Lightbulb, Map, LayoutGrid } from 'lucide-react';
-import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
-import ListDetailSidebar from '@/components/mobile/lists/ListDetailSidebar';
-import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
+import { prefetchListSimilar } from '@/lib/list-similar-client';
+import { Share2, MoreVertical, Flame, Bookmark, Plus, Settings, Link2, Flag, Lightbulb, Map, LayoutGrid, Check } from 'lucide-react';
+import ListItemsGrid from '@/components/mobile/lists/ListItemsGrid';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
@@ -23,32 +23,22 @@ import {
   ListItemsMapViewLazy,
   ListReportModalLazy,
   SuggestItemSearchLazy,
+  ListSimilarListsSectionLazy,
+  ListDetailSidebarLazy,
   type ItemPreviewData,
 } from '@/components/mobile/lists/list-detail-lazy-sections';
 import SearchInput from '@/components/mobile/search/SearchInput';
-import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
-import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import { filterItemsByQuery, LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
 import { isLocationCategorySlug } from '@/lib/category-layout';
-import {
-  buildListItemQuickActions,
-  itemHasMapLocation,
-} from '@/lib/list-item-quick-actions';
+import { itemHasMapLocation } from '@/lib/list-item-quick-actions';
 import { normalizeSearchQuery } from '@/lib/list-search';
-import { isMovieLikeCategory } from '@/lib/resolve-item-image';
-import LightweightEntryRow from '@/components/shared/list-entries/LightweightEntryRow';
 import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { ListPagePlacements } from '@/lib/sponsored-placements';
-import {
-  isLightweightListItem,
-  isLifestyleCategory,
-  resolveEntryKind,
-  sourceCategorySlugFromItem,
-} from '@/lib/list-entry';
+import { isLifestyleCategory, sourceCategorySlugFromItem } from '@/lib/list-entry';
 type Item = {
   id: string;
   title: string;
@@ -104,19 +94,8 @@ function formatCompact(n: number): string {
   return n.toLocaleString('fa-IR');
 }
 
-type RelatedList = {
-  id: string;
-  title: string;
-  slug: string;
-  coverImage: string | null;
-  saveCount: number;
-  itemCount: number;
-  categories: Category;
-};
-
 interface ListDetailClientProps {
   list: ListDetail;
-  relatedLists: RelatedList[];
   sponsoredPlacements?: ListPagePlacements;
 }
 
@@ -133,6 +112,7 @@ function ListCompactStatsBar({
   variant = 'horizontal',
   onItemsClick,
   onCommentsClick,
+  onSavesClick,
 }: {
   saveCount: number;
   itemCount: number;
@@ -142,6 +122,7 @@ function ListCompactStatsBar({
   variant?: 'horizontal' | 'vertical';
   onItemsClick?: () => void;
   onCommentsClick?: () => void;
+  onSavesClick?: () => void;
 }) {
   const cells: Array<{
     key: string;
@@ -155,6 +136,7 @@ function ListCompactStatsBar({
       label: 'ذخیره',
       value: isOwner ? '—' : formatCompact(saveCount),
       highlight: !isOwner && saveCount > 0,
+      onClick: !isOwner ? onSavesClick : undefined,
     },
     { key: 'items', label: 'آیتم', value: itemCount.toLocaleString('fa-IR'), onClick: onItemsClick },
     {
@@ -190,6 +172,7 @@ function ListCompactStatsBar({
                   key={key}
                   type="button"
                   onClick={onClick}
+                  aria-label={key === 'save' ? 'ذخیره لیست' : undefined}
                   className="flex w-full items-center justify-between rounded-lg px-1 py-0.5 transition-colors hover:bg-gray-50"
                 >
                   {row}
@@ -230,6 +213,7 @@ function ListCompactStatsBar({
               key={key}
               type="button"
               onClick={onClick}
+              aria-label={key === 'save' ? 'ذخیره لیست' : undefined}
               className="px-1 py-2.5 text-center transition-colors hover:bg-gray-50 active:bg-gray-100"
             >
               {inner}
@@ -292,171 +276,10 @@ function ListOwnerToolbar({
   );
 }
 
-function SimilarListCard({ rel }: { rel: RelatedList }) {
-  const title = getDisplayListTitle({
-    title: rel.title,
-    slug: rel.slug,
-    categorySlug: rel.categories?.slug,
-  });
-  return (
-    <Link
-      href={`/lists/${rel.slug}`}
-      className="w-[calc(55vw)] max-w-[220px] shrink-0 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all active:scale-[0.99] lg:w-full lg:max-w-none lg:hover:border-primary/20 lg:hover:shadow-md"
-    >
-      <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10] lg:max-h-[7.25rem]">
-        <ImageWithFallback
-          src={rel.coverImage ?? ''}
-          alt={title}
-          className="h-full w-full object-cover"
-          fallbackIcon={rel.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
-          categorySlug={rel.categories?.slug}
-          listSlug={rel.slug}
-          listTitle={rel.title}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-2 text-right lg:p-2.5">
-          <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:hidden">{title}</h3>
-        </div>
-      </div>
-      <div className="hidden min-w-0 p-2 lg:block">
-        <h3 className="line-clamp-2 wibe-caption font-semibold text-foreground">{title}</h3>
-      </div>
-    </Link>
-  );
-}
-
 const LIST_SECTION_SCROLL_MT = 'scroll-mt-[7.5rem]';
-
-function SimilarListsCarousel({
-  relatedLists,
-  sectionRef,
-}: {
-  relatedLists: RelatedList[];
-  sectionRef?: React.RefObject<HTMLElement | null>;
-}) {
-  if (relatedLists.length === 0) return null;
-  return (
-    <section
-      ref={sectionRef}
-      id="list-similar-section"
-      className={`${LIST_SECTION_SCROLL_MT} mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
-    >
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <div>
-          <h3 className="wibe-h3 text-foreground">لیست‌های مشابه</h3>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">ممکنه این‌ها هم به کارت بیان</p>
-        </div>
-      </div>
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:px-0 xl:grid-cols-5 2xl:grid-cols-6">
-        {relatedLists.map((rel) => (
-          <SimilarListCard key={rel.id} rel={rel} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function itemDisplayCategorySlug(item: Item, listCategorySlug?: string | null): string | null {
-  return sourceCategorySlugFromItem(item) ?? listCategorySlug ?? null;
-}
-
-function LightweightGridCard({
-  item,
-  index,
-  entryKind,
-  categorySlug,
-  onOpen,
-  hideEntryKindChrome = false,
-}: {
-  item: Item;
-  index: number;
-  entryKind: ReturnType<typeof resolveEntryKind>;
-  categorySlug?: string | null;
-  onOpen: () => void;
-  hideEntryKindChrome?: boolean;
-}) {
-  return (
-    <div className={hideEntryKindChrome ? 'col-span-2' : 'col-span-2 sm:col-span-1'}>
-      <LightweightEntryRow
-        item={item}
-        index={index}
-        entryKind={entryKind}
-        categorySlug={categorySlug}
-        onOpen={onOpen}
-        compact={!hideEntryKindChrome}
-        hideEntryKindChrome={hideEntryKindChrome}
-      />
-    </div>
-  );
-}
-
-function GridItemCard({
-  item,
-  index,
-  categorySlug,
-  categoryIcon,
-  onOpen,
-}: {
-  item: Item;
-  index: number;
-  categorySlug?: string | null;
-  categoryIcon?: string | null;
-  onOpen: () => void;
-}) {
-  const isMovieGrid = isMovieLikeCategory(categorySlug);
-  const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
-
-  return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-wibe bg-wibe-card text-right shadow-sm transition-all lg:hover:border-primary/20 lg:hover:shadow-md">
-      <button
-        type="button"
-        onClick={onOpen}
-        className="block w-full text-right transition-all active:scale-[0.99]"
-      >
-        <div
-          className={`relative overflow-hidden ${
-            isMovieGrid
-              ? 'aspect-[2/3] lg:mx-auto lg:max-h-[13.5rem] lg:w-full lg:max-w-[10.5rem]'
-              : 'aspect-[4/3] lg:max-h-[10.5rem]'
-          }`}
-        >
-          <LazyItemCoverImage
-            itemId={item.id}
-            imageUrl={item.displayImageUrl ?? item.imageUrl}
-            title={item.title}
-            metadata={item.metadata}
-            categorySlug={categorySlug}
-            className="h-full w-full object-cover"
-            fallbackIcon={categoryIcon ?? '🎬'}
-            fallbackClassName="flex h-full w-full items-center justify-center text-2xl"
-            enrichWhenVisible={isMovieGrid}
-            coverLayout="grid"
-          />
-          <span className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums">
-            {(index + 1).toLocaleString('fa-IR')}
-          </span>
-          {!isMovieGrid && (
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2 pb-2 pt-10">
-              <p className="line-clamp-2 text-start text-[11px] font-semibold leading-snug text-white lg:text-xs">
-                {item.title}
-              </p>
-            </div>
-          )}
-        </div>
-      </button>
-      {quickActions.length > 0 && (
-        <div className="border-t border-wibe/60 px-2.5 py-2 lg:px-3">
-          <ListItemQuickActions actions={quickActions} size="sm" />
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function ListDetailClient({
   list,
-  relatedLists,
   sponsoredPlacements = { banner: [], sidebar: [], afterSimilar: [] },
 }: ListDetailClientProps) {
   const router = useRouter();
@@ -469,12 +292,14 @@ export default function ListDetailClient({
     keywords: list.tags,
   });
   const isDesktop = useIsDesktop();
-  const [stickyVisible, setStickyVisible] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [stickySaving, setStickySaving] = useState(false);
+  const [displaySaveCount, setDisplaySaveCount] = useState(0);
+  const [bookmarkSaving, setBookmarkSaving] = useState(false);
   const heroBannerRef = useRef<HTMLElement>(null);
-  const itemsSectionRef = useRef<HTMLElement>(null);
-  const similarSectionRef = useRef<HTMLElement>(null);
+  const { ref: itemsSectionRef, inView: itemsSectionInView } = useLazyInView<HTMLElement>({
+    rootMargin: '240px',
+    once: true,
+  });
   const { ref: commentsSectionRef, inView: commentsInView } = useLazyInView<HTMLDivElement>({
     rootMargin: '280px',
     once: true,
@@ -508,6 +333,21 @@ export default function ListDetailClient({
     }
   }, [list.slug, router]);
 
+  // #item-{id} — باز کردن مودال پیش‌نمایش از لینک‌های خارجی (مثلاً دسته‌بندی قدیمی)
+  useEffect(() => {
+    const hash = window.location.hash;
+    const match = hash.match(/^#item-(.+)$/);
+    if (!match) return;
+
+    const itemId = decodeURIComponent(match[1]);
+    const index = list.items.findIndex((item) => item.id === itemId);
+    if (index < 0) return;
+
+    setPreviewIndex(index);
+    const cleanUrl = `${window.location.pathname}${window.location.search}`;
+    window.history.replaceState(null, '', cleanUrl);
+  }, [list.items]);
+
   const fetchViewerState = useCallback(() => {
     if (!session?.user || viewerStateFetched.current) return;
     viewerStateFetched.current = true;
@@ -523,13 +363,19 @@ export default function ListDetailClient({
       });
   }, [session?.user, list.id]);
 
+  const viewerDeferReady = useDeferReady(true);
+
   useEffect(() => {
-    if (!session?.user) {
-      viewerStateFetched.current = false;
+    if (!viewerDeferReady || !session?.user) {
+      if (!session?.user) viewerStateFetched.current = false;
       return;
     }
     fetchViewerState();
-  }, [session?.user, fetchViewerState]);
+  }, [viewerDeferReady, session?.user, fetchViewerState]);
+
+  useEffect(() => {
+    if (itemsSectionInView) prefetchListSimilar(list.slug);
+  }, [itemsSectionInView, list.slug]);
 
   useEffect(() => {
     if (commentsInView) setCommentsActivated(true);
@@ -547,14 +393,46 @@ export default function ListDetailClient({
   const isOwner = !!session?.user && list.userId === (session.user as { id?: string }).id;
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setStickyVisible(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '-80px 0px 0px 0px' }
-    );
-    const el = heroBannerRef.current;
-    if (el) observer.observe(el);
-    return () => (el ? observer.unobserve(el) : undefined);
-  }, []);
+    setDisplaySaveCount(saveCount);
+  }, [saveCount]);
+
+  const handleToggleBookmark = useCallback(
+    async (closeMenu = false) => {
+      if (isOwner) return;
+      if (closeMenu) setMoreOpen(false);
+
+      if (!session?.user) {
+        router.push(`/login?callbackUrl=${encodeURIComponent(`/lists/${list.slug}`)}`);
+        return;
+      }
+
+      if (bookmarkSaving) return;
+      setBookmarkSaving(true);
+
+      try {
+        const res = await fetch(`/api/lists/${list.id}/bookmark`, { method: 'POST' });
+        const data = await res.json();
+        if (data?.success) {
+          const saved = !!data.data?.isBookmarked;
+          setIsBookmarked(saved);
+          if (typeof data.data?.bookmarkCount === 'number') {
+            setDisplaySaveCount(data.data.bookmarkCount);
+          }
+          setToast({
+            message: saved ? 'لیست ذخیره شد' : 'از ذخیره‌ها حذف شد',
+            type: 'success',
+          });
+        } else {
+          setToast({ message: 'خطا در ذخیره لیست', type: 'error' });
+        }
+      } catch {
+        setToast({ message: 'خطا در ذخیره لیست', type: 'error' });
+      } finally {
+        setBookmarkSaving(false);
+      }
+    },
+    [bookmarkSaving, isOwner, list.id, list.slug, router, session?.user]
+  );
 
   const displayTitle = getDisplayListTitle({
     title: list.title,
@@ -571,7 +449,7 @@ export default function ListDetailClient({
       list.items.filter((item) =>
         itemHasMapLocation(
           item.metadata,
-          itemDisplayCategorySlug(item, categorySlug)
+          sourceCategorySlugFromItem(item) ?? categorySlug
         )
       ).length,
     [list.items, categorySlug]
@@ -643,8 +521,6 @@ export default function ListDetailClient({
     scrollToSection(commentsSectionRef);
   };
 
-  const showStickyBar = stickyVisible && !isBookmarked && !isOwner;
-
   const BADGE_LABELS: Record<string, string> = {
     TRENDING: 'ترند',
     NEW: 'جدید',
@@ -678,7 +554,7 @@ export default function ListDetailClient({
   }, [allItemEntries, isItemSearchActive, normalizedItemSearch]);
 
   const showItemSearch = list.items.length >= LIST_INNER_SEARCH_MIN_ITEMS;
-  const showSimilarLists = !isItemSearchActive && relatedLists.length > 0;
+  const showSimilarLists = !isItemSearchActive;
 
   const previewItem: ItemPreviewData | null =
     previewIndex != null && list.items[previewIndex] ? list.items[previewIndex] : null;
@@ -761,36 +637,13 @@ export default function ListDetailClient({
 
     if (viewMode === 'grid') {
       return (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
-          {entries.map(({ item, originalIndex }) => {
-            const entryKind = resolveEntryKind(item);
-            if (isLightweightListItem(item)) {
-              const itemCategorySlug = itemDisplayCategorySlug(item, categorySlug);
-              return (
-                <LightweightGridCard
-                  key={item.id}
-                  item={item}
-                  index={originalIndex}
-                  entryKind={entryKind}
-                  categorySlug={itemCategorySlug}
-                  onOpen={() => openItemPreview(originalIndex)}
-                  hideEntryKindChrome={isLifestyleList}
-                />
-              );
-            }
-            const itemCategorySlug = itemDisplayCategorySlug(item, categorySlug);
-            return (
-              <GridItemCard
-                key={item.id}
-                item={item}
-                index={originalIndex}
-                categorySlug={itemCategorySlug}
-                categoryIcon={categoryIcon}
-                onOpen={() => openItemPreview(originalIndex)}
-              />
-            );
-          })}
-        </div>
+        <ListItemsGrid
+          entries={entries}
+          listCategorySlug={categorySlug}
+          categoryIcon={categoryIcon}
+          isLifestyleList={isLifestyleList}
+          onOpenAt={openItemPreview}
+        />
       );
     }
 
@@ -925,13 +778,14 @@ export default function ListDetailClient({
 
       <div className="relative z-20 -mt-4 px-4 lg:hidden">
         <ListCompactStatsBar
-          saveCount={saveCount}
+          saveCount={displaySaveCount}
           itemCount={itemCount}
           commentCount={commentCount}
           viewCount={viewCount}
           isOwner={isOwner}
           onItemsClick={() => scrollToSection(itemsSectionRef)}
           onCommentsClick={scrollToComments}
+          onSavesClick={!isOwner ? () => handleToggleBookmark() : undefined}
         />
       </div>
 
@@ -955,17 +809,7 @@ export default function ListDetailClient({
                   onManage={() => setManageOpen(true)}
                   onShare={handleShare}
                 />
-              ) : (
-                <ListDetailActionRow
-                  listId={list.id}
-                  listSlug={list.slug}
-                  categorySlug={list.categories?.slug}
-                  saveCount={saveCount}
-                  isOwner={false}
-                  onBookmarkToggle={(saved) => setIsBookmarked(saved)}
-                  onShare={handleShare}
-                />
-              )}
+              ) : null}
 
               {list.tags && list.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -980,14 +824,6 @@ export default function ListDetailClient({
                 </div>
               )}
 
-              {isViral && !isOwner && (
-                <div className="flex items-center gap-2 rounded-lg border border-warning/20 bg-warning/10 px-3 py-2.5">
-                  <Flame className="h-4 w-4 shrink-0 text-warning" />
-                  <span className="wibe-caption font-medium text-foreground">
-                    لیست وایرال — {formatCompact(saveCount)} ذخیره
-                  </span>
-                </div>
-              )}
             </div>
 
             <section
@@ -1074,9 +910,7 @@ export default function ListDetailClient({
               )}
             </section>
 
-            {showSimilarLists && (
-              <SimilarListsCarousel relatedLists={relatedLists} sectionRef={similarSectionRef} />
-            )}
+            {showSimilarLists ? <ListSimilarListsSectionLazy listSlug={list.slug} /> : null}
 
             {sponsoredPlacements.afterSimilar.length > 0 ? (
               <SponsoredPlacementStack
@@ -1113,30 +947,29 @@ export default function ListDetailClient({
             <div className="h-6 lg:h-2" />
           </div>
 
-          <ListDetailSidebar
+          <ListDetailSidebarLazy
             listId={list.id}
             saveCount={saveCount}
             isOwner={isOwner}
-            isViral={isViral}
             viralProgress={viralProgress}
             sidebarAds={sponsoredPlacements.sidebar}
             sidebarAdListId={list.id}
             sidebarAdCategoryId={list.categories?.id}
             tags={list.tags}
-            onBookmarkToggle={(saved) => setIsBookmarked(saved)}
             onShare={handleShare}
             onManage={() => setManageOpen(true)}
             onSuggestItem={handleOpenSuggest}
             statsBar={
               <ListCompactStatsBar
                 variant="vertical"
-                saveCount={saveCount}
+                saveCount={displaySaveCount}
                 itemCount={itemCount}
                 commentCount={commentCount}
                 viewCount={viewCount}
                 isOwner={isOwner}
                 onItemsClick={() => scrollToSection(itemsSectionRef)}
                 onCommentsClick={scrollToComments}
+                onSavesClick={!isOwner ? () => handleToggleBookmark() : undefined}
               />
             }
           />
@@ -1206,6 +1039,21 @@ export default function ListDetailClient({
       {/* منوی بیشتر */}
       <BottomSheet isOpen={moreOpen} onClose={() => setMoreOpen(false)} title="گزینه‌ها" maxHeight="50vh">
         <div className="space-y-1 px-1 pb-2">
+          {!isOwner && (
+            <button
+              type="button"
+              disabled={bookmarkSaving}
+              onClick={() => handleToggleBookmark(true)}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+            >
+              {isBookmarked ? (
+                <Check className="h-4 w-4 text-success" />
+              ) : (
+                <Bookmark className="h-4 w-4 text-wibe-secondary" />
+              )}
+              {isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره لیست'}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleShare}
@@ -1290,39 +1138,6 @@ export default function ListDetailClient({
           duration={3000}
           onClose={() => setToast(null)}
         />
-      )}
-
-      {showStickyBar && session?.user && (
-        <div className="fixed bottom-24 left-0 right-0 z-30 flex justify-center px-4 lg:hidden">
-          <div className={`flex w-full gap-2 ${MOBILE_SHELL_MAX_WIDTH_CLASS}`}>
-            <button
-              type="button"
-              disabled={stickySaving}
-              onClick={async () => {
-                setStickySaving(true);
-                try {
-                  const res = await fetch(`/api/lists/${list.id}/bookmark`, { method: 'POST' });
-                  const data = await res.json();
-                  if (data?.success && data.data?.isBookmarked) setIsBookmarked(true);
-                } finally {
-                  setStickySaving(false);
-                }
-              }}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 px-4 font-semibold text-white shadow-lg wibe-small transition-colors hover:bg-primary-dark disabled:opacity-70"
-            >
-              <Bookmark className="h-4 w-4" />
-              ذخیره لیست
-            </button>
-            <button
-              type="button"
-              onClick={handleShare}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card shadow-lg"
-              aria-label="اشتراک‌گذاری"
-            >
-              <Share2 className="h-5 w-5 text-wibe-secondary" />
-            </button>
-          </div>
-        </div>
       )}
 
       {/* Bottom nav placeholder - actual BottomNav is in page */}

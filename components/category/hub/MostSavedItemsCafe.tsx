@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CategorySectionTitle from '../CategorySectionTitle';
+import CategoryItemChipLink from '../CategoryItemChipLink';
 import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryItemCard } from '@/types/category-page';
 
@@ -25,38 +24,13 @@ export default function MostSavedItemsCafe({
     <section className={sectionClass}>
       <CategorySectionTitle
         title="محبوب‌ترین آیتم‌ها"
-        subtitle="از لیست‌های پربازدید این دسته"
+        subtitle="بر اساس لایک و تعامل کاربران"
         icon="⭐"
       />
 
       <div className="-mx-1 flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
         {items.map((item) => (
-          <Link
-            key={item.id}
-            href={`/lists/${item.listSlug}#item-${item.id}`}
-            className="w-24 shrink-0 active:scale-[0.97] transition-transform"
-          >
-            <div className="aspect-square overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm">
-              {item.imageUrl ? (
-                <ImageWithFallback
-                  src={item.imageUrl}
-                  alt={item.title}
-                  className="h-full w-full object-cover"
-                  placeholderSize="square"
-                />
-              ) : (
-                <div
-                  className="flex h-full w-full items-center justify-center text-2xl opacity-40"
-                  style={{ backgroundColor: `${accentColor}20` }}
-                >
-                  📋
-                </div>
-              )}
-            </div>
-            <p className="mt-1.5 line-clamp-2 wibe-caption font-medium leading-tight text-foreground">
-              {item.title}
-            </p>
-          </Link>
+          <CategoryItemChipLink key={item.id} item={item} accentColor={accentColor} />
         ))}
       </div>
     </section>

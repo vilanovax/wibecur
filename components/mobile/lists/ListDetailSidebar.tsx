@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Lightbulb, Plus, Settings, Share2 } from 'lucide-react';
-import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
 import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 import { DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS } from '@/lib/layout-tokens';
@@ -12,13 +11,11 @@ interface ListDetailSidebarProps {
   listId: string;
   saveCount: number;
   isOwner: boolean;
-  isViral: boolean;
   viralProgress: number;
   sidebarAds?: SponsoredPlacementPublic[];
   sidebarAdListId?: string;
   sidebarAdCategoryId?: string;
   tags?: string[];
-  onBookmarkToggle?: (saved: boolean) => void;
   onShare: () => void;
   onManage: () => void;
   onSuggestItem: () => void;
@@ -29,13 +26,11 @@ export default function ListDetailSidebar({
   listId,
   saveCount,
   isOwner,
-  isViral,
   viralProgress,
   sidebarAds = [],
   sidebarAdListId,
   sidebarAdCategoryId,
   tags = [],
-  onBookmarkToggle,
   onShare,
   onManage,
   onSuggestItem,
@@ -81,15 +76,7 @@ export default function ListDetailSidebar({
               </div>
             )}
           </div>
-        ) : (
-          <ListDetailActionRow
-            listId={listId}
-            saveCount={saveCount}
-            isOwner={false}
-            onBookmarkToggle={onBookmarkToggle}
-            onShare={onShare}
-          />
-        )}
+        ) : null}
 
         {sidebarAds.length > 0 ? (
           <SponsoredPlacementStack
@@ -113,12 +100,6 @@ export default function ListDetailSidebar({
                 </span>
               ))}
             </div>
-          </div>
-        )}
-
-        {isViral && !isOwner && (
-          <div className="rounded-xl border border-warning/25 bg-warning/10 px-4 py-3 wibe-caption font-medium text-foreground">
-            🔥 لیست وایرال
           </div>
         )}
 

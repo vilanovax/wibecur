@@ -1,14 +1,13 @@
 import { cache } from 'react';
-import { unstable_cache } from 'next/cache';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
-import { getTopSimilarLists, type ListForSimilarity } from '@/lib/listSimilarity';
 import { prepareListDetailForClient } from '@/lib/list-detail-serialize';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ListDetailClient from './ListDetailClient';
 import { getCachedListPagePlacements } from '@/lib/sponsored-placements';
+import HomeLcpPreload from '@/components/mobile/home/HomeLcpPreload';
 import { withResolvedItemImages } from '@/lib/resolve-item-image';
 import { withResolvedListDisplay } from '@/lib/list-display-images';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
@@ -69,18 +68,6 @@ const getListBySlug = cache((slug: string) =>
   })
 );
 
-/**
- * لیست‌های مشابه — در unstable_cache تا مستقل از rebuild صفحه و فقط هر ۵ دقیقه
- * یک‌بار کوئری‌های سنگین رفتاری (bookmarks) اجرا شوند.
- */
-function getCachedSimilarLists(listId: string, input: ListForSimilarity) {
-  return unstable_cache(
-    () => getTopSimilarLists(prisma, input),
-    [`list-similar-${listId}`],
-    { revalidate: 300, tags: [`list-similar-${listId}`] }
-  )();
-}
-
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const list = await getListBySlug(slug);
@@ -134,15 +121,6 @@ export default async function ListDetailPage({
     .update({ where: { id: list.id }, data: { viewCount: { increment: 1 } } })
     .catch(() => {});
 
-  const currentForSimilarity: ListForSimilarity = {
-    id: list.id,
-    categoryId: list.categoryId,
-    saveCount: list.saveCount,
-    tags: list.tags ?? [],
-    items: list.items.map((i) => ({ title: i.title })),
-  };
-  const relatedLists = await getCachedSimilarLists(list.id, currentForSimilarity);
-
   const sponsoredPlacements = await getCachedListPagePlacements(list.id, list.categoryId);
 
   const listWithCreator = prepareListDetailForClient(
@@ -159,15 +137,18 @@ export default async function ListDetailPage({
     })
   );
 
+  const heroLcpImage =
+    listWithCreator.bannerImage ||
+    listWithCreator.horizontalImage ||
+    listWithCreator.coverImage ||
+    '';
+
   return (
     <div className="bg-wibe-surface lg:pt-1">
+      <HomeLcpPreload href={heroLcpImage} />
       <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
       <CategoryNavStrip activeSlug={list.categories?.slug ?? null} />
-      <ListDetailClient
-        list={listWithCreator}
-        relatedLists={relatedLists}
-        sponsoredPlacements={sponsoredPlacements}
-      />
+      <ListDetailClient list={listWithCreator} sponsoredPlacements={sponsoredPlacements} />
       <BottomNav />
     </div>
   );

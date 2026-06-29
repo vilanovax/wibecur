@@ -221,7 +221,7 @@ export default function ListsPageClient({
   const [searchQuery, setSearchQuery] = useState(initialSearch ?? '');
   const search = useUnifiedSearchQuery(searchQuery);
   const lastNoResultsQuery = useRef('');
-  const [viewMode, setViewMode] = useState<ViewMode>('compact');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [bookmarksLoaded, setBookmarksLoaded] = useState(false);
@@ -786,7 +786,8 @@ export default function ListsPageClient({
     [breadcrumbCategory]
   );
 
-  const showCategoryChips = !isSearchActive;
+  const showBrowseToolbar = !isSearchActive && !singleCategoryFilter;
+  const displayViewMode: ViewMode = singleCategoryFilter ? 'grid' : viewMode;
 
   const isAllCategoriesSelected = useSectionLayout
     ? highlightCategoryId === null && filterState.categories.size === 0
@@ -902,10 +903,9 @@ export default function ListsPageClient({
         </div>
       </div>
 
-      {/* Sticky: دسته + مرتب‌سازی + نمای/فیلتر — یک بلوک واحد */}
-      {!isSearchActive && (
+      {/* Sticky: دسته + مرتب‌سازی + نمای/فیلتر — مخفی در نمای تک‌دسته */}
+      {showBrowseToolbar && (
       <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
-        {showCategoryChips && (
           <div
             ref={categoryChipsRef}
             className="flex gap-1.5 overflow-x-auto border-b border-wibe/40 px-3 py-2 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-2.5"
@@ -942,7 +942,6 @@ export default function ListsPageClient({
               );
             })}
           </div>
-        )}
 
         <div className="flex items-center gap-1.5 px-3 py-2 lg:gap-2 lg:px-0">
           <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide">
@@ -1109,7 +1108,7 @@ export default function ListsPageClient({
                 categoryId: category.id,
                 categorySlug: category.slug,
                 lists: sectionLists,
-                viewMode,
+                viewMode: displayViewMode,
                 isDesktop,
                 previewCount: sectionPreviewCount,
                 bookmarkedIds,
@@ -1197,7 +1196,7 @@ export default function ListsPageClient({
 
                 <FlatListResults
                   lists={visibleFlatLists}
-                  viewMode={viewMode}
+                  viewMode={displayViewMode}
                   isDesktop={isDesktop}
                   bookmarkedIds={bookmarkedIds}
                   onBookmarkToggle={handleBookmarkToggle}
