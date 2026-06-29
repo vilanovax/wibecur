@@ -10,6 +10,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useDeferReady } from '@/hooks/useDeferReady';
 import { useLazyInView } from '@/hooks/useLazyInView';
 import { prefetchListSimilar } from '@/lib/list-similar-client';
+import { listBadgeLabel, listBadgeSolidClass } from '@/lib/list-badge-styles';
 import { Share2, MoreVertical, Flame, Bookmark, Plus, Settings, Link2, Flag, Lightbulb, Map, LayoutGrid, Check } from 'lucide-react';
 import ListItemsGrid from '@/components/mobile/lists/ListItemsGrid';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
@@ -521,17 +522,8 @@ export default function ListDetailClient({
     scrollToSection(commentsSectionRef);
   };
 
-  const BADGE_LABELS: Record<string, string> = {
-    TRENDING: 'ترند',
-    NEW: 'جدید',
-    FEATURED: 'ویژه',
-  };
-
-  const badgeStyles: Record<string, string> = {
-    TRENDING: 'bg-warning/90 text-white',
-    NEW: 'bg-success/90 text-white',
-    FEATURED: 'bg-primary/90 text-white',
-  };
+  const badgeLabel = list.badge ? listBadgeLabel(list.badge) : undefined;
+  const badgeClass = list.badge ? listBadgeSolidClass(list.badge) : undefined;
 
   const viralProgress = Math.min(100, (saveCount / 100) * 100);
 
@@ -662,9 +654,9 @@ export default function ListDetailClient({
           {list.categories.icon} {list.categories.name}
         </Link>
       )}
-      {list.badge && BADGE_LABELS[list.badge] && (
-        <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-gray-100 text-foreground'}`}>
-          {BADGE_LABELS[list.badge]}
+      {badgeLabel && (
+        <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-gray-100 text-foreground'}`}>
+          {badgeLabel}
         </span>
       )}
       {isViral && (
@@ -765,9 +757,9 @@ export default function ListDetailClient({
                     {list.categories.icon} {list.categories.name}
                   </Link>
                 )}
-                {list.badge && BADGE_LABELS[list.badge] && (
-                  <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeStyles[list.badge] ?? 'bg-white/20 text-white'}`}>
-                    {BADGE_LABELS[list.badge]}
+                {badgeLabel && (
+                  <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-white/20 text-white'}`}>
+                    {badgeLabel}
                   </span>
                 )}
               </div>

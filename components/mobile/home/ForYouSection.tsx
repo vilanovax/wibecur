@@ -75,7 +75,7 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
     <section ref={ref} className={embedded ? '' : 'mb-6'}>
       {!embedded && (
         <HomeSectionTitle
-          icon="✨"
+          iconVariant="forYou"
           title={isPersonalized ? 'برای تو' : 'پیشنهاد برای شروع'}
           subtitle={subtitle}
           actionHref="/lists"

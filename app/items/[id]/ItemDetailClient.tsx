@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { useLazyInView } from '@/hooks/useLazyInView';
 import Link from 'next/link';
-import { Heart, Bookmark, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import CommentSection from '@/components/mobile/comments/CommentSection';
@@ -121,6 +121,7 @@ export default function ItemDetailClient({
             itemId={item.id}
             likeCount={likeCount}
             catalogItemId={item.catalogItemId}
+            shareTitle={item.title}
             variant="bar"
           />
         </div>
@@ -134,6 +135,7 @@ export default function ItemDetailClient({
                 itemId={item.id}
                 likeCount={likeCount}
                 catalogItemId={item.catalogItemId}
+                shareTitle={item.title}
                 variant="inline"
               />
             </div>
@@ -165,26 +167,6 @@ export default function ItemDetailClient({
         </div>
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-[6.5rem] lg:self-start">
-          {(likeCount > 0 || item.personalSaveCount > 0) && (
-            <ItemSidebarPanel className="hidden lg:block">
-              <p className="mb-2 wibe-caption font-medium text-wibe-secondary">آمار</p>
-              <div className="flex flex-wrap gap-2">
-                {likeCount > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-                    <Heart className="h-3.5 w-3.5 text-red-500" aria-hidden />
-                    {likeCount.toLocaleString('fa-IR')} پسند
-                  </span>
-                )}
-                {item.personalSaveCount > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-                    <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
-                    {item.personalSaveCount.toLocaleString('fa-IR')} ذخیره
-                  </span>
-                )}
-              </div>
-            </ItemSidebarPanel>
-          )}
-
           <div className="hidden lg:block">{listContextCard}</div>
 
           <section

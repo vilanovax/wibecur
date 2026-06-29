@@ -20,7 +20,7 @@ export default function CategoryViralSpotlightSectionServer({
 
   return (
     <section className={sectionClass}>
-      <CategorySectionTitle title="وایرال این هفته" icon="🔥" />
+      <CategorySectionTitle title="وایرال این هفته" iconVariant="viral" />
       <Link
         href={`/lists/${list.slug}`}
         className="block transition-transform active:scale-[0.99]"

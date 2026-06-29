@@ -68,6 +68,7 @@ const config: Config = {
         >,
         success: semantic.success,
         warning: semantic.warning,
+        hot: semantic.hot,
         danger: semantic.danger,
         info: semantic.info,
         surface: {

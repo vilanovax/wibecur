@@ -52,7 +52,7 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
     <section className={embedded ? '' : 'mb-6'}>
       {!embedded && (
         <HomeSectionTitle
-          icon="🚀"
+          iconVariant="rising"
           title="در حال اوج گرفتن"
           subtitle="رشد سریع ذخیره در ۲۴ ساعت اخیر"
           actionHref="/lists?mode=popular"

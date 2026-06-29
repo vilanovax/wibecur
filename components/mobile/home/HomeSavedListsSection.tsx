@@ -36,7 +36,7 @@ export default function HomeSavedListsSection() {
     return (
       <section className="mb-6">
         <HomeSectionTitle
-          icon="📌"
+          iconVariant="bookmark"
           title="ذخیره‌شده‌های تو"
           subtitle="بعد از ورود، لیست‌های ذخیره‌شده اینجا می‌آیند"
           actionHref="/login?callbackUrl=/"
@@ -68,7 +68,7 @@ export default function HomeSavedListsSection() {
   return (
     <section className="mb-6">
       <HomeSectionTitle
-        icon="📌"
+        iconVariant="bookmark"
         title="ذخیره‌شده‌های تو"
         subtitle={showSaved ? 'آخرین لیست‌هایی که ذخیره کردی' : 'هنوز چیزی ذخیره نکردی'}
         actionHref={showSaved ? '/profile' : '/lists?mode=trending'}

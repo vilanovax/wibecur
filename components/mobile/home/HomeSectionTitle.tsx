@@ -1,12 +1,15 @@
 'use client';
 
-import Link from 'next/link';
+import WibeSection from '@/components/ui/WibeSection';
+import type { SectionIconVariant } from '@/components/shared/SectionIcon';
 import { trackHomeSectionClick, type HomeSectionId } from '@/lib/analytics';
 
 interface HomeSectionTitleProps {
   title: string;
   subtitle?: string;
+  /** @deprecated use iconVariant */
   icon?: string;
+  iconVariant?: SectionIconVariant;
   id?: string;
   actionHref?: string;
   actionLabel?: string;
@@ -19,33 +22,26 @@ export default function HomeSectionTitle({
   title,
   subtitle,
   icon,
+  iconVariant,
   id,
   actionHref,
   actionLabel = 'همه',
   analyticsSection,
 }: HomeSectionTitleProps) {
   return (
-    <div className="mb-3 flex items-start justify-between gap-3 px-4 lg:mb-4 lg:items-center lg:px-0" id={id}>
-      <div className="min-w-0">
-        <h2 className="flex items-center gap-2 wibe-h3">
-          {icon ? <span aria-hidden>{icon}</span> : null}
-          {title}
-        </h2>
-        {subtitle ? <p className="mt-0.5 wibe-small text-wibe-secondary">{subtitle}</p> : null}
-      </div>
-      {actionHref ? (
-        <Link
-          href={actionHref}
-          onClick={() => {
-            if (analyticsSection) {
-              trackHomeSectionClick(analyticsSection, { target: 'see_all' });
-            }
-          }}
-          className="shrink-0 wibe-caption font-semibold text-primary hover:underline lg:text-sm"
-        >
-          {actionLabel}
-        </Link>
-      ) : null}
-    </div>
+    <WibeSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      iconVariant={iconVariant}
+      id={id}
+      actionHref={actionHref}
+      actionLabel={actionLabel}
+      onActionClick={() => {
+        if (analyticsSection) {
+          trackHomeSectionClick(analyticsSection, { target: 'see_all' });
+        }
+      }}
+    />
   );
 }

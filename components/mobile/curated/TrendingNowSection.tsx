@@ -1,6 +1,7 @@
 'use client';
 
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
 import type { CuratedList } from '@/types/curated';
@@ -22,10 +23,14 @@ export default function TrendingNowSection({
         id="trending-title"
         title="داغ‌ترین لیست‌های امروز"
         subtitle={subtitle}
-        icon="🔥"
+        iconVariant="trending"
       />
 
-      <div className="scrollbar-hide -mx-2.5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2.5 pb-1 lg:mx-0 lg:px-0">
+      <HorizontalScrollFade
+        surface="surface"
+        fadeClassName="lg:hidden"
+        innerClassName="-mx-2.5 flex snap-x snap-mandatory gap-3 px-2.5 pb-1 lg:mx-0 lg:px-0"
+      >
         {lists.map((list, index) => (
           <div
             key={list.id}
@@ -34,7 +39,7 @@ export default function TrendingNowSection({
             <TrendingCard list={list} priority={index < 2} />
           </div>
         ))}
-      </div>
+      </HorizontalScrollFade>
     </section>
   );
 }
@@ -64,7 +69,7 @@ function TrendingCard({ list, priority = false }: { list: CuratedList; priority?
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent lg:from-black/85" />
           <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
             <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:hidden">{list.title}</h3>
-            <h3 className="hidden line-clamp-2 text-base font-bold leading-snug text-white lg:block">
+            <h3 className="hidden line-clamp-2 wibe-small font-bold leading-snug text-white lg:block">
               {list.title}
             </h3>
           </div>

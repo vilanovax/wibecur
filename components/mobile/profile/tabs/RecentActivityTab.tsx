@@ -43,8 +43,8 @@ const TYPE_CONFIG: Record<
     tag: '📝 ایجاد لیست',
     label: 'ایجاد لیست',
     icon: FileText,
-    dotClass: 'bg-[#7C3AED]',
-    accentClass: 'text-[#7C3AED]',
+    dotClass: 'bg-primary',
+    accentClass: 'text-primary',
   },
   bookmark: {
     tag: '🔖 ذخیره شد',

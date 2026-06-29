@@ -7,7 +7,7 @@ interface ListCardStatsProps {
   periodSaves?: number;
   periodLabel?: string;
   /** compact = یک خط کوتاه | inline = داخل overlay سفید */
-  variant?: 'default' | 'compact' | 'overlay' | 'minimal';
+  variant?: 'default' | 'compact' | 'overlay' | 'minimal' | 'items-only';
   className?: string;
 }
 
@@ -45,6 +45,15 @@ export default function ListCardStats({
     return (
       <p className={`wibe-caption text-wibe-secondary tabular-nums ${className}`}>
         {saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم
+      </p>
+    );
+  }
+
+  if (variant === 'items-only') {
+    return (
+      <p className={`inline-flex items-center gap-1 wibe-caption text-wibe-secondary ${className}`}>
+        <Package className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span className="tabular-nums">{itemCount.toLocaleString('fa-IR')} آیتم</span>
       </p>
     );
   }

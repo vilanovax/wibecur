@@ -76,7 +76,7 @@ export default function HomePersonalizedFeedSection() {
     return (
       <section ref={ref}>
         <HomeSectionTitle
-          icon="✨"
+          iconVariant="forYou"
           title="برای تو"
           subtitle={subtitle}
           actionHref="/lists"
@@ -95,7 +95,7 @@ export default function HomePersonalizedFeedSection() {
   return (
     <section ref={ref}>
       <HomeSectionTitle
-        icon="✨"
+        iconVariant="forYou"
         title="برای تو"
         subtitle={subtitle}
         actionHref="/lists"

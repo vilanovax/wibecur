@@ -1,4 +1,3 @@
-import { Heart, Bookmark } from 'lucide-react';
 import ItemMetadataFacts from '@/components/shared/ItemMetadataFacts';
 import ItemTipCard from '@/components/shared/ItemTipCard';
 import ItemDescriptionBlock from '@/components/mobile/items/ItemDescriptionBlock';
@@ -38,7 +37,6 @@ export default function ItemMetadataServer({ item }: ItemMetadataServerProps) {
   const isLifestyle = isLifestyleCategory(listCategorySlug);
   const entryKind = resolveEntryKind(item);
   const meta = (item.metadata || {}) as Record<string, string | number>;
-  const likeCount = item.voteCount ?? 0;
 
   const baseMetadataFacts = isLightweight
     ? []
@@ -60,27 +58,8 @@ export default function ItemMetadataServer({ item }: ItemMetadataServerProps) {
     ? buildLightweightDisplayBody(item, { lifestyleMode: isLifestyle }) || null
     : item.description?.trim() || null;
 
-  const hasSocialProof = likeCount > 0 || item.personalSaveCount > 0;
-
   return (
     <section className="space-y-4 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
-      {hasSocialProof && (
-        <div className="flex flex-wrap justify-start gap-1.5 lg:hidden">
-          {likeCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-              <Heart className="h-3.5 w-3.5 text-red-500" aria-hidden />
-              {likeCount.toLocaleString('fa-IR')} پسند
-            </span>
-          )}
-          {item.personalSaveCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1 wibe-caption text-foreground">
-              <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
-              {item.personalSaveCount.toLocaleString('fa-IR')} ذخیره
-            </span>
-          )}
-        </div>
-      )}
-
       {displayMetadataFacts.length > 0 && (
         <>
           <div className="lg:hidden">

@@ -85,7 +85,7 @@ export default function TrendingListsSection({
   return (
     <section className={sectionClass}>
       <div className="mb-3 flex items-end justify-between gap-3 lg:mb-4">
-        <CategorySectionTitle title={title} subtitle={subtitle} icon="🔥" className="mb-0" />
+        <CategorySectionTitle title={title} subtitle={subtitle} iconVariant="trending" className="mb-0" />
         {categorySlug && (
           <Link
             href={`/lists?category=${categorySlug}`}

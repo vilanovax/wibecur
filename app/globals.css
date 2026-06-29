@@ -53,6 +53,7 @@
   /* Semantic state */
   --color-success: #10B981;
   --color-warning: #F59E0B;
+  --color-hot: #F59E0B;
   --color-danger: #EF4444;
   --color-info: #3B82F6;
 
@@ -176,6 +177,15 @@
   .wibe-caption { @apply text-caption font-normal text-muted-foreground; }
   .wibe-card-surface {
     @apply bg-wibe-card border border-wibe rounded-lg shadow-card;
+  }
+  .wibe-chip {
+    @apply flex-shrink-0 rounded-pill border px-4 py-2 wibe-small font-medium transition-colors active:scale-[0.98];
+  }
+  .wibe-chip-active {
+    @apply border-primary bg-primary text-white shadow-sm;
+  }
+  .wibe-chip-inactive {
+    @apply border-wibe bg-wibe-card text-wibe-secondary hover:border-primary/30;
   }
 }
 

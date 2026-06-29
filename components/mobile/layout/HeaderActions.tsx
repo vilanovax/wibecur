@@ -5,10 +5,13 @@ import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Loader2, LogOut, User } from 'lucide-react';
+import { Bell, ChevronDown, Loader2, LogOut, User } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
-import NotificationIcon from './NotificationIcon';
-import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
+import {
+  NotificationSheet,
+  NotificationUnreadBadge,
+  useNotifications,
+} from './NotificationIcon';
 import { GUEST_HEADER_AVATAR, resolveVibeAvatar } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 
@@ -23,7 +26,7 @@ interface HeaderActionsProps {
   profile?: HeaderActionsProfile | null;
   hideNotifications?: boolean;
   variant?: 'default' | 'dark';
-  /** دسکتاپ: منوی dropdown روی آواتار (پروفایل + خروج) */
+  /** @deprecated منوی حساب برای همه کاربران لاگین‌شده فعال است */
   enableAccountMenu?: boolean;
 }
 
@@ -83,13 +86,13 @@ export default function HeaderActions({
   profile = null,
   hideNotifications = false,
   variant = 'default',
-  enableAccountMenu = false,
 }: HeaderActionsProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const userName = session?.user?.name || session?.user?.email || 'کاربر';
   const isProfilePage = pathname === '/profile';
   const isDark = variant === 'dark';
+  const notifications = useNotifications(!hideNotifications);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
@@ -158,12 +161,22 @@ export default function HeaderActions({
     }
   };
 
+  const openNotificationsFromMenu = () => {
+    setMenuOpen(false);
+    notifications.openNotifications();
+  };
+
   const avatarShellClass = `relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full transition-colors ${
     isDark ? 'bg-gray-800 ring-1 ring-gray-700 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'
   }`;
 
+  const unreadLabel =
+    notifications.unreadCount > 0
+      ? `، ${notifications.unreadCount.toLocaleString('fa-IR')} اعلان خوانده‌نشده`
+      : '';
+
   const accountMenu =
-    menuOpen && menuPos && enableAccountMenu && session?.user && typeof document !== 'undefined'
+    menuOpen && menuPos && session?.user && typeof document !== 'undefined'
       ? createPortal(
           <div
             ref={menuRef}
@@ -172,6 +185,24 @@ export default function HeaderActions({
             style={{ top: menuPos.top, left: menuPos.left }}
             dir="rtl"
           >
+            {!hideNotifications && (
+              <button
+                type="button"
+                role="menuitem"
+                className="flex w-full items-center gap-2 px-3 py-2.5 wibe-small hover:bg-[var(--color-bg)]"
+                onClick={openNotificationsFromMenu}
+              >
+                <Bell className="h-4 w-4 shrink-0 text-wibe-secondary" />
+                <span>اعلان‌ها</span>
+                {notifications.unreadCount > 0 && (
+                  <span className="mr-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+                    {notifications.unreadCount > 9
+                      ? '9+'
+                      : notifications.unreadCount.toLocaleString('fa-IR')}
+                  </span>
+                )}
+              </button>
+            )}
             <Link
               href="/profile"
               role="menuitem"
@@ -200,30 +231,19 @@ export default function HeaderActions({
         )
       : null;
 
-  const showProfileControl = !isProfilePage || enableAccountMenu;
   const isGuest = !session?.user;
+  const showProfileControl = isGuest || !isProfilePage || Boolean(session?.user);
 
   return (
     <div className="flex flex-shrink-0 items-center gap-2">
-      {session?.user && !hideNotifications && (
-        <>
-          <span
-            className="text-[11px] font-medium tabular-nums text-gray-400/90 dark:text-gray-500 select-none"
-            title="Build version"
-          >
-            v{ADMIN_PANEL_VERSION}
-          </span>
-          <NotificationIcon />
-        </>
-      )}
       {showProfileControl &&
-        (enableAccountMenu && session?.user ? (
+        (session?.user ? (
           <>
             <button
               ref={buttonRef}
               type="button"
               className={`${avatarShellClass} ${menuOpen ? 'ring-2 ring-primary/40' : ''}`}
-              aria-label={`منوی حساب ${userName}`}
+              aria-label={`منوی حساب ${userName}${unreadLabel}`}
               aria-expanded={menuOpen}
               aria-haspopup="menu"
               onClick={() => setMenuOpen((v) => !v)}
@@ -235,11 +255,15 @@ export default function HeaderActions({
                 showChevron
                 isGuest={isGuest}
               />
+              {!hideNotifications && (
+                <NotificationUnreadBadge count={notifications.unreadCount} />
+              )}
             </button>
             {accountMenu}
+            {!hideNotifications && <NotificationSheet center={notifications} />}
           </>
         ) : (
-          <Link href={profileHref} className={avatarShellClass} aria-label={session?.user ? `پروفایل ${userName}` : 'ورود به حساب'}>
+          <Link href={profileHref} className={avatarShellClass} aria-label="ورود به حساب">
             <AccountAvatar
               profile={profile}
               userName={userName}

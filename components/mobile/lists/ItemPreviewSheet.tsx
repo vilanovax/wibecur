@@ -336,7 +336,7 @@ export default function ItemPreviewSheet({
                         {entryKindBadgeLabel(entryKind)}
                       </span>
                       {factLabel && (
-                        <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
+                        <span className="inline-flex rounded-md bg-gray-100 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary">
                           {factLabel}
                         </span>
                       )}

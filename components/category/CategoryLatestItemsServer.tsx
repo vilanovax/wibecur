@@ -1,5 +1,6 @@
 import CategorySectionTitle from './CategorySectionTitle';
 import CategoryItemChipLink from './CategoryItemChipLink';
+import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryItemCard } from '@/types/category-page';
 
@@ -23,14 +24,14 @@ export default function CategoryLatestItemsServer({
       <CategorySectionTitle
         title="آخرین آیتم‌ها"
         subtitle="تازه‌ترین آیتم‌های اضافه‌شده به لیست‌ها"
-        icon="🆕"
+        iconVariant="new"
       />
 
-      <div className="-mx-1 flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+      <HorizontalScrollFade surface="surface" innerClassName="-mx-1 flex gap-3 pb-1">
         {items.map((item) => (
           <CategoryItemChipLink key={item.id} item={item} accentColor={accentColor} />
         ))}
-      </div>
+      </HorizontalScrollFade>
     </section>
   );
 }

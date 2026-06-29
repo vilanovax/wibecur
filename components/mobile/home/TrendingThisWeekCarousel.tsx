@@ -82,7 +82,7 @@ export default function TrendingThisWeekCarousel({ embedded = false }: TrendingT
     <section className={embedded ? 'overflow-x-hidden' : 'mb-6 overflow-x-hidden lg:mb-0'}>
       {!embedded && (
         <HomeSectionTitle
-          icon="🔥"
+          iconVariant="trending"
           title="ترند این هفته"
           subtitle="بر اساس ذخیره و تعامل"
           actionHref="/lists?mode=trending"

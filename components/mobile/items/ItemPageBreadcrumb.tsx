@@ -25,7 +25,7 @@ export default function ItemPageBreadcrumb({
   ];
 
   return (
-    <div className="px-4 pt-2 lg:px-0 lg:pt-3">
+    <div className="hidden px-4 pt-2 lg:block lg:px-0 lg:pt-3">
       <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
       <PageBreadcrumb items={breadcrumbItems} />
     </div>

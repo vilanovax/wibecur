@@ -17,7 +17,7 @@ export default function FeaturedCinematicList({ list }: FeaturedCinematicListPro
 
   return (
     <section className={FILM_SECTION}>
-      <CategorySectionTitle title="لیست ویژه هفته" icon="🎞" />
+      <CategorySectionTitle title="لیست ویژه هفته" iconVariant="film" />
 
       <Link
         href={`/lists/${list.slug}`}

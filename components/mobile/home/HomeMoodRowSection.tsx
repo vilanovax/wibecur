@@ -6,6 +6,8 @@ import { useMemo } from 'react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { useHomeData } from '@/contexts/HomeDataContext';
 import { buildHomeMoodCollections, type HomeMoodCollection } from '@/lib/home-mood-collections';
+import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
+import SectionIcon from '@/components/shared/SectionIcon';
 import HomeSectionTitle from './HomeSectionTitle';
 import type { HomeListData } from '@/types/home-data';
 import { trackMoodCardClick } from '@/lib/analytics';
@@ -34,7 +36,7 @@ function MoodListLink({ moodId, list, compact }: MoodListLinkProps) {
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-gray-100 lg:h-10 lg:w-10">
           <ImageWithFallback
             src={list.coverImage}
-            alt=""
+            alt={list.title}
             className="h-full w-full object-cover"
             fallbackIcon={list.categories?.icon ?? '📋'}
             fallbackClassName="flex h-full w-full items-center justify-center bg-gray-100 text-sm"
@@ -66,11 +68,12 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
     >
       <div className="mb-2">
         <p className="wibe-small font-bold text-foreground">
-          <span aria-hidden className="ml-1">
+          <span aria-hidden className="ms-1">
             {mood.icon}
           </span>
           {mood.label}
         </p>
+        <p className="mt-0.5 wibe-caption text-wibe-secondary">{mood.subtitle}</p>
       </div>
 
       <ul className="space-y-1">
@@ -125,7 +128,7 @@ export default function HomeMoodRowSection({ variant = 'default' }: HomeMoodRowS
       <section className="flex h-full min-h-0 flex-col" aria-label="بر اساس حال‌وهوا">
         <div className="mb-3">
           <h2 className="flex items-center gap-2 wibe-h3">
-            <span aria-hidden>🎯</span>
+            <SectionIcon variant="mood" />
             بر اساس حال‌وهوا
           </h2>
           <p className="mt-0.5 wibe-caption text-wibe-secondary">انتخاب سریع برای امروز</p>
@@ -142,7 +145,7 @@ export default function HomeMoodRowSection({ variant = 'default' }: HomeMoodRowS
   return (
     <section className="mb-6 lg:mb-0" aria-label="بر اساس حال‌وهوا">
       <HomeSectionTitle
-        icon="🎯"
+        iconVariant="mood"
         title="بر اساس حال‌وهوا"
         subtitle="انتخاب سریع برای حال امروزت"
         actionHref="/lists"
@@ -150,24 +153,21 @@ export default function HomeMoodRowSection({ variant = 'default' }: HomeMoodRowS
         analyticsSection="mood"
       />
 
-      <div className="relative lg:hidden">
-        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
-          {moods.map((mood) => (
-            <MoodCard key={mood.id} mood={mood} />
-          ))}
-        </div>
-        {moods.length > 2 ? (
-          <>
-            <div
-              className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-wibe-surface to-transparent"
-              aria-hidden
-            />
-            <p className="mt-1.5 px-4 text-center wibe-caption text-wibe-secondary">
-              بکش برای بیشتر ←
-            </p>
-          </>
-        ) : null}
-      </div>
+      <HorizontalScrollFade
+        surface="surface"
+        fadeClassName="lg:hidden"
+        className="lg:hidden"
+        innerClassName="flex snap-x snap-mandatory gap-3 px-4 pb-1"
+      >
+        {moods.map((mood) => (
+          <MoodCard key={mood.id} mood={mood} />
+        ))}
+      </HorizontalScrollFade>
+      {moods.length > 2 ? (
+        <p className="mt-1.5 px-4 text-center wibe-caption text-wibe-secondary lg:hidden">
+          بکش برای بیشتر ←
+        </p>
+      ) : null}
 
       <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:px-0">
         {moods.map((mood) => (

@@ -25,7 +25,7 @@ export default function ExploreByCityPills({
       <CategorySectionTitle
         title="محبوب‌ترین‌ها در شهرها"
         subtitle="کشف لیست‌ها بر اساس شهر"
-        icon="📍"
+        iconVariant="location"
       />
 
       <div className="flex flex-wrap gap-2">

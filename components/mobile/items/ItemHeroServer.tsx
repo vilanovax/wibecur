@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { List, Star } from 'lucide-react';
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
-import ItemShareButton from '@/components/mobile/items/ItemShareButton';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 import {
@@ -72,15 +71,9 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
         className={`relative overflow-hidden rounded-b-2xl px-4 pb-5 pt-4 lg:rounded-2xl lg:px-6 lg:pb-6 lg:pt-5 ${
           isLifestyle
             ? 'bg-wibe-surface'
-            : 'bg-gradient-to-br from-amber-50 via-white to-violet-50'
+            : 'bg-gradient-to-br from-amber-50 via-white to-wibe-surface'
         }`}
       >
-        <ItemShareButton
-          title={item.title}
-          className="absolute end-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-foreground shadow-sm transition-colors hover:bg-white active:scale-95"
-          iconClassName="h-4 w-4"
-        />
-
         <Link
           href={`/lists/${item.lists.slug}`}
           className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 wibe-caption font-medium text-wibe-secondary shadow-sm"
@@ -91,7 +84,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
 
         {isLifestyle ? (
           item.title?.trim() && (
-            <h1 className="pe-12 text-xl font-bold leading-snug text-foreground sm:text-2xl">
+            <h1 className="text-xl font-bold leading-snug text-foreground sm:text-2xl">
               {item.title}
             </h1>
           )
@@ -106,7 +99,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
                   {entryKindBadgeLabel(entryKind)}
                 </span>
                 {factLabel && (
-                  <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
+                  <span className="inline-flex rounded-md bg-white/90 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary shadow-sm">
                     {factLabel}
                   </span>
                 )}
@@ -155,10 +148,6 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               {item.lists.categories?.icon || '📋'}
             </div>
           )}
-          <ItemShareButton
-            title={item.title}
-            className="absolute end-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-colors hover:bg-black/55 active:scale-95 lg:end-2.5 lg:top-2.5 lg:h-9 lg:w-9"
-          />
           {imdbRating && (
             <span className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1 rounded-lg bg-black/75 px-2 py-1 wibe-caption font-bold backdrop-blur-sm">
               <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
@@ -195,6 +184,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               itemId={item.id}
               likeCount={likeCount}
               catalogItemId={item.catalogItemId}
+              shareTitle={item.title}
               variant="inline"
             />
           </div>

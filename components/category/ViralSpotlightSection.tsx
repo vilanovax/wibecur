@@ -21,7 +21,7 @@ export default function ViralSpotlightSection({
 
   return (
     <section className={sectionClass}>
-      <CategorySectionTitle title="وایرال این هفته" icon="🔥" />
+      <CategorySectionTitle title="وایرال این هفته" iconVariant="viral" />
       <Link href={`/lists/${list.slug}`} className="block active:scale-[0.99] transition-transform">
         <div className="rounded-lg overflow-hidden border border-wibe shadow-card bg-wibe-card">
           <div className="relative aspect-video bg-gray-200">

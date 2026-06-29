@@ -4,22 +4,12 @@ import Link from 'next/link';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
+import { LIST_BADGE_LABELS, listBadgeSolidStyles } from '@/lib/list-badge-styles';
 import { CURATED_CATEGORY_SLUGS } from '@/lib/category-cover-images';
 import type { CuratedList } from '@/types/curated';
 
-const BADGE_STYLES: Record<string, string> = {
-  trending: 'bg-warning text-white',
-  rising: 'bg-primary text-white',
-  featured: 'bg-success text-white',
-  ai: 'bg-info text-white',
-};
-
-const BADGE_LABELS: Record<string, string> = {
-  trending: 'ترند',
-  rising: 'در حال رشد',
-  featured: 'ویژه',
-  ai: 'AI',
-};
+const BADGE_STYLES = listBadgeSolidStyles;
+const BADGE_LABELS = LIST_BADGE_LABELS;
 
 interface CuratedGridCardProps {
   list: CuratedList;

@@ -89,7 +89,7 @@ function EntryBody({
               {entryKindBadgeLabel(entryKind)}
             </span>
             {factLabel && (
-              <span className="inline-flex items-center rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-medium text-violet-700">
+              <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 wibe-caption font-medium text-wibe-secondary">
                 {factLabel}
               </span>
             )}

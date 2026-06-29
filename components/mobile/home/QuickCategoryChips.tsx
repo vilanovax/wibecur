@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import { isSameCategorySlug } from '@/lib/category-slug-aliases';
 import { trackCategoryChipClick } from '@/lib/analytics';
 import type { CategoryMenuChip } from '@/lib/category-menu';
@@ -55,9 +56,11 @@ export default function QuickCategoryChips({
       }
       aria-label="دسته‌های سریع"
     >
-      <div
+      <HorizontalScrollFade
         dir="rtl"
-        className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 lg:mx-0 lg:flex-wrap lg:justify-start lg:gap-2 lg:overflow-visible"
+        surface="surface"
+        fadeClassName="lg:hidden"
+        innerClassName="flex gap-2 snap-x snap-mandatory -mx-1 lg:mx-0 lg:flex-wrap lg:justify-start lg:gap-2 lg:overflow-visible"
       >
         {isLoading ? (
           <>
@@ -89,7 +92,7 @@ export default function QuickCategoryChips({
             );
           })
         )}
-      </div>
+      </HorizontalScrollFade>
     </section>
   );
 }
