@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parseFidiboListResponse, parseFidiboSearchResponse } from '@/lib/books/fidibo';
+import {
+  buildFidiboListRequestBody,
+  parseFidiboListRequest,
+  parseFidiboListResponse,
+  parseFidiboSearchResponse,
+} from '@/lib/books/fidibo';
 
 describe('parseFidiboSearchResponse', () => {
   it('parses search blocks into candidates', () => {
@@ -57,19 +62,36 @@ describe('parseFidiboListResponse', () => {
         per_page: 15,
         result: [
           {
-            id: 84590,
-            title: 'سقوط',
-            subtitle: 'آلبر کامو',
-            content_type: 'audiobook',
+            id: 71338,
+            title: 'نیمه تاریک وجود',
+            subtitle: 'دبیور براون',
+            content_type: 'ebook',
             cover: { image: 'https://cdn.fidibo.com/cover.jpg' },
-            action: { web_url: '/book/84590-کتاب-صوتی-سقوط' },
+            action: { web_url: '/book/71338-کتاب-نیمه-تاریک-وجود' },
           },
         ],
       },
     };
     const candidates = parseFidiboListResponse(data);
     expect(candidates).toHaveLength(1);
-    expect(candidates[0]?.bookId).toBe('84590');
-    expect(candidates[0]?.title).toBe('سقوط');
+    expect(candidates[0]?.bookId).toBe('71338');
+    expect(candidates[0]?.title).toBe('نیمه تاریک وجود');
+  });
+});
+
+describe('parseFidiboListRequest', () => {
+  it('maps lists query param to proposedListId request', () => {
+    const req = parseFidiboListRequest(
+      'https://fidibo.com/contents/list?lists=%5B16854%2C15475%2C15521%5D&sort=WEEK_BESTSELLER'
+    );
+    expect(req).toEqual({
+      kind: 'listIds',
+      listIds: [16854, 15475, 15521],
+      sort: 'WEEK_BESTSELLER',
+    });
+    expect(buildFidiboListRequestBody({ proposedListId: req!.listIds }, req!.sort)).toEqual({
+      order: 'WEEK_BESTSELLER',
+      proposedListId: [16854, 15475, 15521],
+    });
   });
 });

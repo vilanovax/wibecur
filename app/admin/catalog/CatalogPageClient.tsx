@@ -812,7 +812,7 @@ export default function CatalogPageClient({
                           : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'
                       }`}
                     >
-                      {catalogCategoryLabel(c.slug)} ({c.count.toLocaleString('fa-IR')})
+                      {c.name ?? catalogCategoryLabel(c.slug)} ({c.count.toLocaleString('fa-IR')})
                     </button>
                   );
                 })}

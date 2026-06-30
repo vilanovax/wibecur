@@ -69,3 +69,26 @@ export async function PUT(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+/** PATCH /api/admin/catalog-items/[id] — ویرایش سریع عنوان */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdmin();
+    const { id } = await params;
+    const body = await request.json();
+    const { title } = body as { title?: string };
+
+    if (typeof title !== 'string' || !title.trim()) {
+      return NextResponse.json({ error: 'عنوان الزامی است' }, { status: 400 });
+    }
+
+    const updated = await updateCatalogItem(prisma, id, { title: title.trim() });
+    return NextResponse.json(updated);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'خطا';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

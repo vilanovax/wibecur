@@ -16,6 +16,7 @@ type ItemRow = {
   order: number;
   imageUrl: string | null;
   catalog_items: { imageUrl: string | null } | null;
+  item_moderation: { status: string } | null;
   lists: { id: string; title: string };
 };
 
@@ -34,6 +35,7 @@ function mapExternalImageItems(rows: ItemRow[]) {
         listTitle: row.lists.title,
         imageUrl,
         host: imageUrl ? externalImageHost(imageUrl) : '',
+        isHidden: row.item_moderation?.status === 'HIDDEN',
       };
     })
     .filter((row) => needsS3MigrationImageUrl(row.imageUrl));
@@ -84,6 +86,7 @@ export async function GET(request: NextRequest) {
               order: true,
               imageUrl: true,
               catalog_items: { select: { imageUrl: true } },
+              item_moderation: { select: { status: true } },
               lists: { select: { id: true, title: true } },
             },
           }),
@@ -107,6 +110,7 @@ export async function GET(request: NextRequest) {
           listId: item.listId,
           listTitle: item.listTitle,
           catalogItemId: item.catalogItemId,
+          isHidden: item.isHidden,
         })),
         missingPosterTotal: missingPosters.length,
         storage: liara,
@@ -136,6 +140,7 @@ export async function GET(request: NextRequest) {
             order: true,
             imageUrl: true,
             catalog_items: { select: { imageUrl: true } },
+            item_moderation: { select: { status: true } },
             lists: { select: { id: true, title: true } },
           },
         }),
@@ -159,6 +164,7 @@ export async function GET(request: NextRequest) {
         listId: item.listId,
         listTitle: item.listTitle,
         catalogItemId: item.catalogItemId,
+        isHidden: item.isHidden,
       })),
       missingPosterTotal: missingPosters.length,
       storage: liara,

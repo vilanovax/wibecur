@@ -20,6 +20,8 @@ import {
   RotateCcw,
   CheckCircle2,
   ImageOff,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
@@ -40,6 +42,7 @@ type ExternalImageItem = {
   listTitle: string;
   imageUrl: string;
   host: string;
+  isHidden?: boolean;
 };
 
 type MissingPosterItem = {
@@ -49,6 +52,7 @@ type MissingPosterItem = {
   order: number;
   listTitle: string;
   catalogItemId?: string | null;
+  isHidden?: boolean;
 };
 
 type ItemMigratePhase = 'idle' | 'converting' | 'done' | 'error';
@@ -160,6 +164,94 @@ function MigrateStatusBadge({ state }: { state: ItemMigrateState | undefined }) 
   );
 }
 
+function ItemTitleRow({
+  item,
+  editingId,
+  editingTitle,
+  savingTitleId,
+  isBusy,
+  onStartEdit,
+  onChangeTitle,
+  onSave,
+  onCancel,
+}: {
+  item: { id: string; title: string; isHidden?: boolean };
+  editingId: string | null;
+  editingTitle: string;
+  savingTitleId: string | null;
+  isBusy: boolean;
+  onStartEdit: () => void;
+  onChangeTitle: (value: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const isEditing = editingId === item.id;
+
+  if (isEditing) {
+    return (
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        <input
+          type="text"
+          value={editingTitle}
+          autoFocus
+          disabled={savingTitleId === item.id}
+          onChange={(e) => onChangeTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onSave();
+            if (e.key === 'Escape') onCancel();
+          }}
+          className="min-w-0 flex-1 rounded-lg border border-amber-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200"
+        />
+        <button
+          type="button"
+          disabled={savingTitleId === item.id}
+          onClick={onSave}
+          className="rounded-lg bg-emerald-600 p-1.5 text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {savingTitleId === item.id ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Check className="h-3.5 w-3.5" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+      <button
+        type="button"
+        onClick={onStartEdit}
+        disabled={isBusy}
+        className="group/title flex min-w-0 items-center gap-1 text-right disabled:opacity-50"
+        title="ویرایش عنوان"
+      >
+        <p
+          className={`truncate text-sm font-semibold ${
+            item.isHidden ? 'text-gray-400 line-through' : 'text-gray-900'
+          }`}
+        >
+          {item.title}
+        </p>
+        <Pencil className="h-3 w-3 shrink-0 text-gray-300 opacity-0 group-hover/title:opacity-100" />
+      </button>
+      {item.isHidden && (
+        <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold text-gray-600">
+          غیرفعال
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function ExternalImageItemsModal({
   isOpen,
   onClose,
@@ -189,6 +281,10 @@ export default function ExternalImageItemsModal({
   } | null>(null);
   const [storageReady, setStorageReady] = useState(true);
   const [storageError, setStorageError] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [savingTitleId, setSavingTitleId] = useState<string | null>(null);
+  const [togglingHideIds, setTogglingHideIds] = useState<Set<string>>(new Set());
   const abortRef = useRef(false);
 
   const fetchUrl = useMemo(() => {
@@ -284,6 +380,8 @@ export default function ExternalImageItemsModal({
     }
     setQuery('');
     setHostFilter('all');
+    setEditingId(null);
+    setEditingTitle('');
     resetMigrationState();
     onClose();
   }, [isMigrating, isFetchingPosters, onClose, resetMigrationState]);
@@ -540,6 +638,108 @@ export default function ExternalImageItemsModal({
     },
     [isFetchingPosters, storageReady, fetchPosterOne, onMigrated]
   );
+
+  const startEditTitle = (item: { id: string; title: string }) => {
+    if (isBusy) return;
+    setEditingId(item.id);
+    setEditingTitle(item.title);
+  };
+
+  const cancelEditTitle = () => {
+    setEditingId(null);
+    setEditingTitle('');
+  };
+
+  const updateItemTitleInState = (itemId: string, title: string) => {
+    setItems((prev) => prev.map((row) => (row.id === itemId ? { ...row, title } : row)));
+    setMissingPosters((prev) =>
+      prev.map((row) => (row.id === itemId ? { ...row, title } : row))
+    );
+  };
+
+  const saveTitle = async (itemId: string) => {
+    const trimmed = editingTitle.trim();
+    if (!trimmed) {
+      cancelEditTitle();
+      return;
+    }
+
+    const current =
+      items.find((i) => i.id === itemId) ?? missingPosters.find((i) => i.id === itemId);
+    if (!current || current.title === trimmed) {
+      cancelEditTitle();
+      return;
+    }
+
+    setSavingTitleId(itemId);
+    try {
+      const res = await fetch(
+        mode === 'catalog'
+          ? `/api/admin/catalog-items/${itemId}`
+          : `/api/admin/items/${itemId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: trimmed }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'خطا در ذخیره عنوان');
+
+      updateItemTitleInState(itemId, trimmed);
+      cancelEditTitle();
+      onMigrated?.();
+    } catch (err: unknown) {
+      alert((err as Error).message || 'خطا در ذخیره عنوان');
+    } finally {
+      setSavingTitleId(null);
+    }
+  };
+
+  const setItemHiddenInState = (itemId: string, isHidden: boolean) => {
+    setItems((prev) =>
+      prev.map((row) => (row.id === itemId ? { ...row, isHidden } : row))
+    );
+    setMissingPosters((prev) =>
+      prev.map((row) => (row.id === itemId ? { ...row, isHidden } : row))
+    );
+  };
+
+  const toggleItemHidden = async (item: { id: string; isHidden?: boolean }) => {
+    if (isBusy || togglingHideIds.has(item.id)) return;
+
+    setTogglingHideIds((prev) => new Set(prev).add(item.id));
+    try {
+      const action = item.isHidden ? 'show' : 'hide';
+      const res = await fetch(
+        mode === 'catalog' ? '/api/admin/catalog-items/bulk' : '/api/admin/items/bulk',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            mode === 'catalog'
+              ? { catalogIds: [item.id], action }
+              : { itemIds: [item.id], action }
+          ),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در تغییر وضعیت');
+      }
+
+      setItemHiddenInState(item.id, !item.isHidden);
+      onMigrated?.();
+    } catch (err: unknown) {
+      alert((err as Error).message || 'خطا در تغییر وضعیت');
+    } finally {
+      setTogglingHideIds((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -879,7 +1079,17 @@ export default function ExternalImageItemsModal({
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                          <p className="truncate text-sm font-semibold text-gray-900">{item.title}</p>
+                          <ItemTitleRow
+                            item={item}
+                            editingId={editingId}
+                            editingTitle={editingTitle}
+                            savingTitleId={savingTitleId}
+                            isBusy={isBusy}
+                            onStartEdit={() => startEditTitle(item)}
+                            onChangeTitle={setEditingTitle}
+                            onSave={() => void saveTitle(item.id)}
+                            onCancel={cancelEditTitle}
+                          />
                           <MigrateStatusBadge state={migrateState} />
                         </div>
                         <p className="mt-0.5 truncate text-[11px] text-violet-600">{item.listTitle}</p>
@@ -896,6 +1106,25 @@ export default function ExternalImageItemsModal({
                       <div className="flex shrink-0 items-center gap-1">
                         {!isConverting && !isDone && (
                           <>
+                            <button
+                              type="button"
+                              onClick={() => void toggleItemHidden(item)}
+                              disabled={isBusy || togglingHideIds.has(item.id)}
+                              title={item.isHidden ? 'فعال کردن' : 'غیرفعال کردن'}
+                              className={`inline-flex items-center justify-center rounded-lg border p-1.5 text-[10px] disabled:opacity-50 ${
+                                item.isHidden
+                                  ? 'border-gray-300 bg-gray-100 text-gray-600'
+                                  : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                              }`}
+                            >
+                              {togglingHideIds.has(item.id) ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : item.isHidden ? (
+                                <EyeOff className="h-3.5 w-3.5" />
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                            </button>
                             {item.imdbId ? (
                               <button
                                 type="button"
@@ -1022,7 +1251,17 @@ export default function ExternalImageItemsModal({
                           #{item.order}
                         </span>
                       )}
-                      <p className="truncate text-sm font-semibold text-gray-900">{item.title}</p>
+                      <ItemTitleRow
+                        item={item}
+                        editingId={editingId}
+                        editingTitle={editingTitle}
+                        savingTitleId={savingTitleId}
+                        isBusy={isBusy}
+                        onStartEdit={() => startEditTitle(item)}
+                        onChangeTitle={setEditingTitle}
+                        onSave={() => void saveTitle(item.id)}
+                        onCancel={cancelEditTitle}
+                      />
                       <MigrateStatusBadge state={migrateState} />
                     </div>
 
@@ -1050,6 +1289,25 @@ export default function ExternalImageItemsModal({
                     <div className="flex shrink-0 items-center gap-1">
                       {!isConverting && !isDone && (
                         <>
+                          <button
+                            type="button"
+                            onClick={() => void toggleItemHidden(item)}
+                            disabled={isBusy || togglingHideIds.has(item.id)}
+                            title={item.isHidden ? 'فعال کردن' : 'غیرفعال کردن'}
+                            className={`inline-flex items-center justify-center rounded-lg border p-1.5 text-[10px] disabled:opacity-50 ${
+                              item.isHidden
+                                ? 'border-gray-300 bg-gray-100 text-gray-600'
+                                : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {togglingHideIds.has(item.id) ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : item.isHidden ? (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            ) : (
+                              <Eye className="h-3.5 w-3.5" />
+                            )}
+                          </button>
                           <Link
                             href={
                               mode === 'catalog'

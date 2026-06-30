@@ -264,17 +264,33 @@ export function parseFidiboListResponse(data: FidiboListResponse): BookSearchCan
   return parseFidiboSearchResponse(data as FidiboSearchResponse);
 }
 
+export function buildFidiboListRequestBody(
+  filters: Record<string, unknown>,
+  sort: string
+): Record<string, unknown> {
+  const body: Record<string, unknown> = { order: sort, ...filters };
+  delete body.page;
+  delete body.limit;
+  delete body.sort;
+  return body;
+}
+
 async function fetchFidiboListPage(
+  page: number,
+  limit: number,
   body: Record<string, unknown>,
   options?: { maxRetries?: number }
 ): Promise<BookSearchCandidate[]> {
-  const data = await fetchJson<FidiboListResponse>('https://api.fidibo.com/flex/list/book', {
-    method: 'POST',
-    headers: { ...fidiboHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    maxRetries: options?.maxRetries,
-    timeoutMs: 25000,
-  });
+  const data = await fetchJson<FidiboListResponse>(
+    `https://api.fidibo.com/flex/list/book?page=${page}&limit=${limit}`,
+    {
+      method: 'POST',
+      headers: { ...fidiboHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      maxRetries: options?.maxRetries,
+      timeoutMs: 25000,
+    }
+  );
   return parseFidiboListResponse(data);
 }
 
@@ -289,18 +305,20 @@ export async function listFidiboCategory(
   let page = 1;
 
   if (listRequest?.kind === 'listIds') {
+    const seen = new Set<string>();
+    const listBody = buildFidiboListRequestBody(
+      { proposedListId: listRequest.listIds },
+      listRequest.sort
+    );
     while (out.length < limit) {
-      const batch = await fetchFidiboListPage(
-        {
-          listIds: listRequest.listIds,
-          page,
-          limit: pageSize,
-          sort: listRequest.sort,
-        },
-        options
-      );
+      const batch = await fetchFidiboListPage(page, pageSize, listBody, options);
       if (batch.length === 0) break;
-      out.push(...batch);
+      for (const candidate of batch) {
+        if (seen.has(candidate.bookId)) continue;
+        seen.add(candidate.bookId);
+        out.push(candidate);
+        if (out.length >= limit) break;
+      }
       if (batch.length < pageSize) break;
       page++;
     }
@@ -317,18 +335,17 @@ export async function listFidiboCategory(
     throw new Error('categoryId فیدیبو از صفحه استخراج نشد');
   }
 
+  const categoryBody = buildFidiboListRequestBody({ categoryId }, 'bestseller');
+  const seen = new Set<string>();
   while (out.length < limit) {
-    const batch = await fetchFidiboListPage(
-      {
-        categoryId,
-        page,
-        limit: pageSize,
-        sort: 'bestseller',
-      },
-      options
-    );
+    const batch = await fetchFidiboListPage(page, pageSize, categoryBody, options);
     if (batch.length === 0) break;
-    out.push(...batch);
+    for (const candidate of batch) {
+      if (seen.has(candidate.bookId)) continue;
+      seen.add(candidate.bookId);
+      out.push(candidate);
+      if (out.length >= limit) break;
+    }
     if (batch.length < pageSize) break;
     page++;
   }

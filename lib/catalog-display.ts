@@ -6,10 +6,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   film: 'فیلم',
   book: 'کتاب',
   books: 'کتاب',
+  bookpodcast: 'کتاب و پادکست',
+  'book-podcast': 'کتاب و پادکست',
   cafe: 'کافه',
   restaurant: 'رستوران',
   podcast: 'پادکست',
   travel: 'سفر',
+  lifestyle: 'لایف‌استایل',
   general: 'عمومی',
 };
 

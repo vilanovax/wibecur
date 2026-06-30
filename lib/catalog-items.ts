@@ -20,6 +20,7 @@ import {
 } from '@/lib/list-entry';
 import { catalogHasSearchProfile } from '@/lib/catalog-search-profile';
 import { isCatalogAdminDisabled } from '@/lib/admin/catalog-visibility';
+import { expandCategorySlugFilter, isSameCategorySlug } from '@/lib/category-slug-aliases';
 import {
   buildCatalogItemSearchFilter,
   CATALOG_SEARCH_MIN_SCORE,
@@ -688,7 +689,10 @@ export type CatalogListFilter = {
 function catalogCategoryWhere(categorySlug?: string): Prisma.catalog_itemsWhereInput | undefined {
   if (!categorySlug) return undefined;
   if (categorySlug === '__none__') return { categorySlug: null };
-  return { categorySlug };
+  const slugs = expandCategorySlugFilter(categorySlug);
+  if (slugs.length === 0) return undefined;
+  if (slugs.length === 1) return { categorySlug: slugs[0] };
+  return { categorySlug: { in: slugs } };
 }
 
 function itemsCategoryWhere(categorySlug?: string): Prisma.itemsWhereInput | undefined {
@@ -1058,26 +1062,74 @@ export async function getRecentCatalogItems(
   });
 }
 
-export type CatalogCategoryFilter = { slug: string | null; count: number };
+export type CatalogCategoryFilter = { slug: string | null; count: number; name?: string | null };
 
 export async function getCatalogCategoryFilters(
   prisma: PrismaClient
 ): Promise<{ total: number; categories: CatalogCategoryFilter[] }> {
-  const [total, grouped] = await Promise.all([
+  const [total, grouped, dbCategories] = await Promise.all([
     catalogDb(prisma).count(),
     catalogDb(prisma).groupBy({
       by: ['categorySlug'],
       _count: { id: true },
-      orderBy: { _count: { id: 'desc' } },
+    }),
+    prisma.categories.findMany({
+      where: { deletedAt: null, isActive: true },
+      orderBy: { order: 'asc' },
+      select: { slug: true, name: true },
     }),
   ]);
-  return {
-    total,
-    categories: grouped.map((g) => ({
-      slug: g.categorySlug,
-      count: g._count.id,
-    })),
-  };
+
+  const countByCanonical = new Map<string, { slug: string; name: string; count: number }>();
+  let uncategorized = 0;
+
+  for (const g of grouped) {
+    const raw = g.categorySlug;
+    const n = g._count.id;
+    if (!raw) {
+      uncategorized += n;
+      continue;
+    }
+
+    const matched = dbCategories.find((c) => isSameCategorySlug(c.slug, raw));
+    if (matched) {
+      const prev = countByCanonical.get(matched.slug);
+      countByCanonical.set(matched.slug, {
+        slug: matched.slug,
+        name: matched.name,
+        count: (prev?.count ?? 0) + n,
+      });
+    } else {
+      const key = raw;
+      const prev = countByCanonical.get(key);
+      countByCanonical.set(key, {
+        slug: key,
+        name: prev?.name ?? raw,
+        count: (prev?.count ?? 0) + n,
+      });
+    }
+  }
+
+  const categories: CatalogCategoryFilter[] = [];
+  for (const cat of dbCategories) {
+    const entry = countByCanonical.get(cat.slug);
+    if (entry && entry.count > 0) {
+      categories.push({ slug: cat.slug, name: cat.name, count: entry.count });
+      countByCanonical.delete(cat.slug);
+    }
+  }
+
+  for (const entry of [...countByCanonical.values()].sort((a, b) => b.count - a.count)) {
+    if (entry.count > 0) {
+      categories.push({ slug: entry.slug, name: entry.name, count: entry.count });
+    }
+  }
+
+  if (uncategorized > 0) {
+    categories.push({ slug: '__none__', name: 'بدون دسته', count: uncategorized });
+  }
+
+  return { total, categories };
 }
 
 export async function updateCatalogItem(
@@ -1436,6 +1488,7 @@ export type CatalogExternalImageRow = {
   imageUrl: string;
   listCount: number;
   host: string;
+  isHidden: boolean;
 };
 
 /** موجودیت‌های کاتالوگ با تصویر خارج از ParsPack — همان فیلترهای صفحه مرور */
@@ -1476,6 +1529,7 @@ export async function listCatalogExternalImageItems(
       imageUrl: r.imageUrl?.trim() || '',
       listCount: r._count.items,
       host: r.imageUrl ? externalImageHost(r.imageUrl) : '',
+      isHidden: isCatalogAdminDisabled(r.metadata),
     }))
     .filter((r) => needsS3MigrationImageUrl(r.imageUrl));
 }
@@ -1485,6 +1539,7 @@ export type CatalogMissingPosterRow = {
   title: string;
   imdbId: string | null;
   listCount: number;
+  isHidden: boolean;
 };
 
 /** موجودیت‌های کاتالوگ بدون تصویر معتبر — با یا بدون شناسه IMDb */
@@ -1527,5 +1582,6 @@ export async function listCatalogMissingPosterItems(
         externalKey: r.externalKey,
       }),
       listCount: r._count.items,
+      isHidden: isCatalogAdminDisabled(r.metadata),
     }));
 }

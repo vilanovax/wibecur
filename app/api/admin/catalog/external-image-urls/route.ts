@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
       imageUrl: item.imageUrl,
       host: item.host,
       listCount: item.listCount,
+      isHidden: item.isHidden,
     }));
 
     return NextResponse.json({
@@ -72,6 +73,7 @@ export async function GET(request: NextRequest) {
         listTitle:
           item.listCount > 0 ? `${item.listCount.toLocaleString('fa-IR')} لیست` : '—',
         listCount: item.listCount,
+        isHidden: item.isHidden,
       })),
       missingPosterTotal: missingPosters.length,
       storage,

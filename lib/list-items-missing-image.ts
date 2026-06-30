@@ -13,6 +13,7 @@ export type ItemMissingImageRow = {
   listTitle: string;
   imdbId: string | null;
   catalogItemId: string | null;
+  isHidden: boolean;
 };
 
 type ItemRow = {
@@ -31,6 +32,7 @@ type ItemRow = {
     externalKey: string | null;
   } | null;
   lists: { id: string; title: string };
+  item_moderation: { status: string } | null;
 };
 
 function mapMissingImageItem(row: ItemRow): ItemMissingImageRow | null {
@@ -53,6 +55,7 @@ function mapMissingImageItem(row: ItemRow): ItemMissingImageRow | null {
       catalog: row.catalog_items,
     }),
     catalogItemId: row.catalogItemId,
+    isHidden: row.item_moderation?.status === 'HIDDEN',
   };
 }
 
@@ -74,6 +77,7 @@ const itemSelect = {
     },
   },
   lists: { select: { id: true, title: true } },
+  item_moderation: { select: { status: true } },
 } as const;
 
 export async function listItemsMissingImageItems(
