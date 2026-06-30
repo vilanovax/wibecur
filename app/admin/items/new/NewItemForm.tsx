@@ -210,6 +210,12 @@ export default function NewItemForm({
         body: JSON.stringify({
           title: formData.title,
           categorySlug: selectedList?.categories?.slug,
+          categoryName: selectedList?.categories?.name,
+          listTitle: selectedList?.title,
+          listDescription: selectedList?.description,
+          entryKind,
+          listNote: formData.listNote || undefined,
+          externalUrl: formData.externalUrl || undefined,
           metadata: formData.metadata,
           plot: moviePlot || undefined,
         }),

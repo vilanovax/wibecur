@@ -247,6 +247,12 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
         body: JSON.stringify({
           title: formData.title,
           categorySlug,
+          categoryName: selectedList?.categories?.name ?? item.lists?.categories?.name,
+          listTitle: selectedList?.title ?? item.lists?.title,
+          listDescription: selectedList?.description ?? item.lists?.description,
+          entryKind,
+          listNote: formData.listNote || undefined,
+          externalUrl: formData.externalUrl || undefined,
           metadata: formData.metadata,
           plot: moviePlot || undefined,
         }),

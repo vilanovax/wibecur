@@ -104,6 +104,17 @@ export function buildCatalogExternalKey(
   const isbn = meta.isbn ?? meta.ISBN;
   if (isbn != null && String(isbn).trim()) return `isbn:${String(isbn).trim()}`;
 
+  const source = meta.source;
+  const sourceId = meta.sourceId ?? meta.source_id;
+  if (
+    typeof source === 'string' &&
+    ['taaghche', 'fidibo', 'ketabrah'].includes(source) &&
+    sourceId != null &&
+    String(sourceId).trim()
+  ) {
+    return `${source}:${String(sourceId).trim()}`;
+  }
+
   const slug = categorySlug || 'general';
   const norm = normalizeSuggestionTitle(title);
   if (!norm) return null;

@@ -227,6 +227,13 @@ function normalizeBookImportMetadata(meta: Record<string, unknown> | null | unde
   if (typeof meta.tip === 'string' && meta.tip.trim()) out.tip = meta.tip.trim();
   const isbn = meta.isbn ?? meta.ISBN;
   if (isbn != null && String(isbn).trim()) out.isbn = String(isbn).trim();
+  if (typeof meta.source === 'string' && meta.source.trim()) out.source = meta.source.trim();
+  if (meta.sourceId != null && String(meta.sourceId).trim()) {
+    out.sourceId = String(meta.sourceId).trim();
+  }
+  if (meta.contentType === 'ebook' || meta.contentType === 'audiobook') {
+    out.contentType = meta.contentType;
+  }
   return out;
 }
 

@@ -149,25 +149,29 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
           items.map((item, index) => (
             <li
               key={item.id}
-              draggable={!reorderLoading}
-              onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
               className={`flex items-center gap-2 px-3 py-2.5 transition-colors group ${
                 dragIndex === index
-                  ? 'bg-[var(--primary)]/8 cursor-grabbing'
-                  : 'hover:bg-[var(--color-bg)]/40 cursor-grab active:cursor-grabbing'
+                  ? 'bg-[var(--primary)]/8'
+                  : 'hover:bg-[var(--color-bg)]/40'
               }`}
             >
-              <GripVertical className="w-4 h-4 text-[var(--color-text-muted)] shrink-0 opacity-50 group-hover:opacity-100" />
+              <button
+                type="button"
+                draggable={!reorderLoading}
+                disabled={reorderLoading}
+                onDragStart={() => handleDragStart(index)}
+                onDragEnd={() => void handleDragEnd()}
+                className="p-1 rounded-md text-[var(--color-text-muted)] shrink-0 opacity-50 group-hover:opacity-100 cursor-grab active:cursor-grabbing disabled:opacity-30 touch-none"
+                title="کشیدن برای تغییر ترتیب"
+              >
+                <GripVertical className="w-4 h-4" />
+              </button>
               <span className="text-[10px] font-bold text-[var(--color-text-muted)] w-5 tabular-nums text-center shrink-0">
                 {index + 1}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[var(--color-text)] truncate">{item.title}</p>
-                {item.description && (
-                  <p className="text-[10px] text-[var(--color-text-muted)] line-clamp-1 mt-0.5">{item.description}</p>
-                )}
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
                 <Link

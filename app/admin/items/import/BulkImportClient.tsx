@@ -38,6 +38,7 @@ import BulkImportMetadataEditor, {
   bulkImportFallbackIcon,
 } from '@/components/admin/items/BulkImportMetadataEditor';
 import BulkImportConfirmDialog from '@/components/admin/items/BulkImportConfirmDialog';
+import { BOOK_EXTRACT_IMPORT_KEY } from '@/lib/books/constants';
 
 type CategoryOption = { id: string; name: string; slug: string; icon: string | null; isActive?: boolean };
 type ListOption = {
@@ -125,6 +126,18 @@ export default function BulkImportClient({
   } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(BOOK_EXTRACT_IMPORT_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(BOOK_EXTRACT_IMPORT_KEY);
+      setJsonText(JSON.stringify(JSON.parse(raw), null, 2));
+      setLoadedFileName('book-extract.json');
+    } catch {
+      // ignore invalid payload
+    }
+  }, []);
 
   const selectedCategory = categories.find((c) => c.id === categoryId);
   const categorySlug = selectedCategory?.slug ?? 'general';

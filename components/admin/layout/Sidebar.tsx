@@ -44,7 +44,7 @@ const PRIMARY: NavItem[] = [
     label: 'لیست‌ها',
     icon: List,
     permission: 'manage_lists',
-    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items'],
+    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items', '/admin/books'],
   },
   {
     href: '/admin/users',

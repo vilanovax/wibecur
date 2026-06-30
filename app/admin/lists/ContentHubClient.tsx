@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { List, Library, FileJson, Plus, Sparkles, UserRound } from 'lucide-react';
+import { List, Library, FileJson, Plus, Sparkles, UserRound, BookOpen } from 'lucide-react';
 import type { ContentHubStats } from '@/lib/admin/content-hub-stats';
 import type { ListsIntelligenceData } from '@/lib/admin/lists-intelligence';
 import type { CatalogPageData } from '@/lib/admin/catalog-page-data';
@@ -125,6 +125,13 @@ export default function ContentHubClient({
               >
                 <FileJson className="w-4 h-4" />
                 <span className="hidden md:inline">import گروهی</span>
+              </Link>
+              <Link
+                href="/admin/books/extract"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-emerald-200 text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100 transition-colors"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span className="hidden md:inline">استخراج کتاب</span>
               </Link>
               <Link
                 href="/admin/custom/featured"

@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getListIntelligenceForEdit } from '@/lib/admin/trending-debug';
 import { resolveAdminItemThumbnail } from '@/lib/resolve-admin-item-image';
+import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
+import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 import { notFound } from 'next/navigation';
 
 export type ListWorkspaceItem = {
@@ -10,9 +12,11 @@ export type ListWorkspaceItem = {
   description: string | null;
   imageUrl: string | null;
   displayImageUrl: string;
+  catalogImageUrl: string | null;
+  externalUrl: string | null;
+  catalogExternalUrl: string | null;
   order: number;
   catalogItemId: string | null;
-  externalUrl: string | null;
   metadata: Record<string, unknown> | null;
 };
 
@@ -70,6 +74,7 @@ export async function getListWorkspaceData(listId: string): Promise<ListWorkspac
             select: { id: true, name: true, slug: true, icon: true, color: true },
           },
           items: {
+            where: { deletedAt: null },
             orderBy: { order: 'asc' },
             select: {
               id: true,
@@ -80,7 +85,7 @@ export async function getListWorkspaceData(listId: string): Promise<ListWorkspac
               catalogItemId: true,
               externalUrl: true,
               metadata: true,
-              catalog_items: { select: { imageUrl: true } },
+              catalog_items: { select: { imageUrl: true, externalUrl: true } },
             },
           },
         },
@@ -99,12 +104,16 @@ export async function getListWorkspaceData(listId: string): Promise<ListWorkspac
         ? (item.metadata as Record<string, unknown>)
         : null;
 
-    const displayImageUrl = resolveAdminItemThumbnail({
-      imageUrl: item.imageUrl,
-      metadata: meta,
-      catalogImageUrl: item.catalog_items?.imageUrl ?? null,
-      allowTmdb: true,
-    });
+    const resolvedThumb =
+      resolveAdminItemThumbnail({
+        imageUrl: item.imageUrl,
+        metadata: meta,
+        catalogImageUrl: item.catalog_items?.imageUrl ?? null,
+        allowTmdb: true,
+      }) ||
+      normalizeImageUrlForStorage(item.imageUrl || item.catalog_items?.imageUrl || '');
+
+    const displayImageUrl = resolvedThumb ? toAdminStorageImageSrc(resolvedThumb) || resolvedThumb : '';
 
     return {
       id: item.id,
@@ -112,9 +121,11 @@ export async function getListWorkspaceData(listId: string): Promise<ListWorkspac
       description: item.description,
       imageUrl: item.imageUrl,
       displayImageUrl,
+      catalogImageUrl: item.catalog_items?.imageUrl ?? null,
+      externalUrl: item.externalUrl,
+      catalogExternalUrl: item.catalog_items?.externalUrl ?? null,
       order: item.order,
       catalogItemId: item.catalogItemId,
-      externalUrl: item.externalUrl,
       metadata: meta,
     };
   });

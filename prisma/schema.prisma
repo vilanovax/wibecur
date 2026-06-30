@@ -522,6 +522,7 @@ model users {
   audit_logs                 audit_log[]
   sponsored_placements_created sponsored_placement[] @relation("SponsoredPlacementCreator")
   backup_jobs_created        backup_jobs[]              @relation("BackupJobsCreated")
+  book_extract_jobs_created  book_extract_jobs[]        @relation("BookExtractJobsCreated")
   comment_personas           comment_personas?
   comment_seed_campaigns     comment_seed_campaigns[]   @relation("CommentSeedCampaignCreator")
   moderation_cases_assigned  moderation_case[]
@@ -1073,6 +1074,25 @@ enum BackupJobStatus {
   FAILED
 }
 
+enum BookExtractJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum BookExtractSource {
+  taaghche
+  fidibo
+  ketabrah
+}
+
+enum BookExtractMode {
+  titles
+  category
+}
+
 enum AccountKind {
   USER
   PERSONA
@@ -1198,6 +1218,29 @@ model comment_seed_rules {
   @@unique([scopeType, scopeId])
   @@index([enabled])
   @@index([campaignId])
+}
+
+model book_extract_jobs {
+  id            String                @id @default(cuid())
+  createdById   String
+  status        BookExtractJobStatus  @default(PENDING)
+  mode          BookExtractMode       @default(titles)
+  source        BookExtractSource
+  input         Json
+  options       Json                  @default("{}")
+  targetListId  String?
+  progress      Int                   @default(0)
+  progressMeta  Json?
+  resultItems   Json?
+  itemCount     Int                   @default(0)
+  errorMessage  String?
+  createdAt     DateTime              @default(now())
+  completedAt   DateTime?
+
+  createdBy users @relation("BookExtractJobsCreated", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById, createdAt])
+  @@index([status, createdAt])
 }
 
 model backup_jobs {

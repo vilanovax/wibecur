@@ -65,6 +65,9 @@ export const BookMetadataSchema = z.object({
   genre: z.string().optional(),
   isbn: z.string().optional(),
   ISBN: z.string().optional(),
+  source: z.enum(['taaghche', 'fidibo', 'ketabrah']).optional(),
+  sourceId: z.string().optional(),
+  contentType: z.enum(['ebook', 'audiobook']).optional(),
 });
 
 export type BookMetadata = z.infer<typeof BookMetadataSchema>;
