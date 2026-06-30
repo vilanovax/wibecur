@@ -11,14 +11,21 @@ import {
   Trash2,
   Download,
   Upload,
+  Copy,
+  Check,
   History,
   CheckCircle2,
   XCircle,
   AlertCircle,
+  RotateCcw,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
+import BookExtractPreviewEditor from '@/components/admin/books/BookExtractPreviewEditor';
 import type { SerializedBookExtractJob } from '@/lib/admin/book-extract/serialize-job';
 import type { WibeBookImportItem } from '@/lib/books/types';
 import { BOOK_EXTRACT_IMPORT_KEY } from '@/lib/books/constants';
+import { BOOK_EXTRACT_JSON_EXAMPLE } from '@/lib/books/map-to-wibe';
 
 type ListOption = {
   id: string;
@@ -79,6 +86,11 @@ export default function BookExtractClient({ lists }: Props) {
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState('');
   const [resuming, setResuming] = useState(false);
+  const [previewItems, setPreviewItems] = useState<WibeBookImportItem[]>([]);
+  const [previewDirty, setPreviewDirty] = useState(false);
+  const [syncedJobId, setSyncedJobId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(true);
+  const [jsonCopied, setJsonCopied] = useState(false);
 
   const bookLists = useMemo(
     () =>
@@ -90,6 +102,41 @@ export default function BookExtractClient({ lists }: Props) {
   );
 
   const activeJob = jobs.find((j) => j.id === activeJobId) ?? jobs[0] ?? null;
+
+  const jobResultItems = useMemo(
+    () =>
+      (activeJob?.resultItems as { items?: WibeBookImportItem[] } | null)?.items ?? [],
+    [activeJob?.resultItems]
+  );
+
+  useEffect(() => {
+    if (!activeJob) {
+      setPreviewItems([]);
+      setPreviewDirty(false);
+      setSyncedJobId(null);
+      return;
+    }
+    const items = jobResultItems;
+    if (activeJob.id !== syncedJobId) {
+      setPreviewItems(JSON.parse(JSON.stringify(items)) as WibeBookImportItem[]);
+      setSyncedJobId(activeJob.id);
+      setPreviewDirty(false);
+      return;
+    }
+    if (!previewDirty) {
+      setPreviewItems((prev) => {
+        const next = JSON.parse(JSON.stringify(items)) as WibeBookImportItem[];
+        if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+        return next;
+      });
+    }
+  }, [activeJob, jobResultItems, previewDirty, syncedJobId]);
+
+  useEffect(() => {
+    setJsonCopied(false);
+  }, [previewItems, activeJobId]);
+
+  const importPayload = useMemo(() => ({ items: previewItems }), [previewItems]);
 
   const loadJobs = useCallback(async () => {
     try {
@@ -187,25 +234,39 @@ export default function BookExtractClient({ lists }: Props) {
     await loadJobs();
   };
 
-  const resultItems = (activeJob?.resultItems as { items?: WibeBookImportItem[] } | null)?.items ?? [];
+  const handleResetPreview = () => {
+    setPreviewItems(JSON.parse(JSON.stringify(jobResultItems)) as WibeBookImportItem[]);
+    setPreviewDirty(false);
+  };
 
   const handleDownloadJson = () => {
-    if (!activeJob?.resultItems) return;
-    const blob = new Blob([JSON.stringify(activeJob.resultItems, null, 2)], {
+    if (!previewItems.length) return;
+    const blob = new Blob([JSON.stringify(importPayload, null, 2)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `book-extract-${activeJob.id}.json`;
+    a.download = `book-extract-${activeJob?.id ?? 'export'}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
+  const handleCopyJson = async () => {
+    if (!previewItems.length) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(importPayload, null, 2));
+      setJsonCopied(true);
+      window.setTimeout(() => setJsonCopied(false), 2000);
+    } catch {
+      alert('کپی به کلیپ‌بورد ناموفق بود');
+    }
+  };
+
   const handleGoToImport = () => {
-    if (!activeJob?.resultItems) return;
-    const listId = targetListId || activeJob.targetListId;
-    sessionStorage.setItem(BOOK_EXTRACT_IMPORT_KEY, JSON.stringify(activeJob.resultItems));
+    if (!previewItems.length) return;
+    const listId = targetListId || activeJob?.targetListId;
+    sessionStorage.setItem(BOOK_EXTRACT_IMPORT_KEY, JSON.stringify(importPayload));
     const params = new URLSearchParams({ view: 'import' });
     if (listId) params.set('listId', listId);
     router.push(`/admin/lists?${params.toString()}`);
@@ -217,7 +278,7 @@ export default function BookExtractClient({ lists }: Props) {
       setImportMessage('لیست مقصد را انتخاب کنید');
       return;
     }
-    if (!resultItems.length) {
+    if (!previewItems.length) {
       setImportMessage('آیتمی برای import نیست');
       return;
     }
@@ -227,12 +288,12 @@ export default function BookExtractClient({ lists }: Props) {
       const res = await fetch('/api/admin/items/bulk-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listId, items: resultItems }),
+        body: JSON.stringify({ listId, items: previewItems }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'import ناموفق');
       setImportMessage(
-        `import شد: ${data.imported ?? data.placementsAdded ?? resultItems.length} آیتم`
+        `import شد: ${data.imported ?? data.placementsAdded ?? previewItems.length} آیتم`
       );
     } catch (err) {
       setImportMessage(err instanceof Error ? err.message : 'خطا در import');
@@ -322,7 +383,7 @@ export default function BookExtractClient({ lists }: Props) {
                     type="url"
                     value={categoryUrl}
                     onChange={(e) => setCategoryUrl(e.target.value)}
-                    placeholder="https://fidibo.com/ebooks/story-persian-criminal"
+                    placeholder="https://fidibo.com/ebooks/story-persian-criminal یا contents/list?lists=[...]"
                     className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                     dir="ltr"
                   />
@@ -409,6 +470,24 @@ export default function BookExtractClient({ lists }: Props) {
                 />
                 fast mode (فقط نتایج جستجو)
               </label>
+              {fastMode && (
+                <details className="rounded-xl border border-violet-100 bg-violet-50/50 p-3 text-xs text-gray-600">
+                  <summary className="cursor-pointer font-medium text-violet-800">
+                    فرمت خروجی JSON (مطابق import گروهی)
+                  </summary>
+                  <p className="mt-2 mb-2 leading-relaxed">
+                    در fast mode: عنوان، کاور و لینک از جستجو + نویسنده در metadata. اگر لیست
+                    مقصد انتخاب شود، پیشوند «برای لیست …» به description اضافه می‌شود. برای کتاب
+                    صوتی، راوی در tip قرار می‌گیرد.
+                  </p>
+                  <pre
+                    dir="ltr"
+                    className="overflow-x-auto rounded-lg bg-white border border-violet-100 p-2 text-[10px] leading-relaxed text-left font-mono"
+                  >
+                    {BOOK_EXTRACT_JSON_EXAMPLE}
+                  </pre>
+                </details>
+              )}
               <label className="flex items-center gap-2 justify-between">
                 <span>حداقل امتیاز fuzzy (فقط لیست عنوان)</span>
                 <input
@@ -443,23 +522,39 @@ export default function BookExtractClient({ lists }: Props) {
         </div>
 
         <div className="xl:col-span-2 space-y-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                <History className="w-5 h-5" />
-                تاریخچه
-              </h2>
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between gap-2 p-5 pb-0">
+              <button
+                type="button"
+                onClick={() => setHistoryOpen((v) => !v)}
+                className="flex min-w-0 flex-1 items-center gap-2 text-right font-semibold text-gray-900 hover:text-violet-700 transition-colors"
+                aria-expanded={historyOpen}
+              >
+                {historyOpen ? (
+                  <ChevronUp className="w-4 h-4 shrink-0 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 shrink-0 text-gray-400" />
+                )}
+                <History className="w-5 h-5 shrink-0" />
+                <span>تاریخچه</span>
+                {!historyOpen && jobs.length > 0 && (
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    {jobs.length.toLocaleString('fa-IR')}
+                  </span>
+                )}
+              </button>
               <button
                 type="button"
                 onClick={() => void loadJobs()}
-                className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1"
+                className="shrink-0 text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1"
               >
                 <RefreshCw className="w-4 h-4" />
                 بروزرسانی
               </button>
             </div>
 
-            <div className="overflow-x-auto">
+            {historyOpen && (
+            <div className="p-5 pt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-right text-gray-500 border-b">
@@ -516,6 +611,7 @@ export default function BookExtractClient({ lists }: Props) {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
 
           {activeJob && (
@@ -541,8 +637,30 @@ export default function BookExtractClient({ lists }: Props) {
                         ادامه
                       </button>
                     )}
-                  {activeJob.status === 'COMPLETED' && (
+                  {activeJob.status === 'COMPLETED' && previewItems.length > 0 && (
                     <>
+                      {previewDirty && (
+                        <button
+                          type="button"
+                          onClick={handleResetPreview}
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          بازنشانی
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void handleCopyJson()}
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:bg-gray-50"
+                      >
+                        {jsonCopied ? (
+                          <Check className="w-4 h-4 text-emerald-600" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                        {jsonCopied ? 'کپی شد' : 'کپی JSON'}
+                      </button>
                       <button
                         type="button"
                         onClick={handleDownloadJson}
@@ -578,12 +696,56 @@ export default function BookExtractClient({ lists }: Props) {
               </div>
 
               {(activeJob.status === 'PENDING' || activeJob.status === 'RUNNING') && (
-                <div className="rounded-xl bg-blue-50 text-blue-800 text-sm px-4 py-3 flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {activeJob.progressMeta?.currentTitle
-                    ? `در حال پردازش: ${activeJob.progressMeta.currentTitle}`
-                    : 'در حال استخراج...'}
-                  <span className="mr-auto">{activeJob.progress}%</span>
+                <div className="space-y-2">
+                  <div className="rounded-xl bg-blue-50 text-blue-800 text-sm px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        {activeJob.progressMeta?.currentTitle ? (
+                          <div className="font-medium truncate">
+                            {activeJob.progressMeta.currentTitle}
+                          </div>
+                        ) : (
+                          <div>در حال استخراج...</div>
+                        )}
+                        {activeJob.progressMeta?.currentStep && (
+                          <div className="text-xs text-blue-600/90 mt-0.5">
+                            {activeJob.progressMeta.currentStep}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-xs font-medium shrink-0">
+                        {activeJob.progressMeta?.done ?? 0} / {activeJob.progressMeta?.total ?? '—'}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-1.5 rounded-full bg-blue-100 overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 transition-all duration-500"
+                        style={{ width: `${Math.max(activeJob.progress, 2)}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-blue-600/80 mt-1 text-left" dir="ltr">
+                      {activeJob.progress}%
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 px-1">
+                    اگر بیش از ۱ دقیقه ماند، احتمالاً سایت منبع از سرور در دسترس نیست — fast mode را
+                    امتحان کنید یا منبع دیگر انتخاب کنید.
+                  </p>
+                </div>
+              )}
+
+              {activeJob.status === 'COMPLETED' && activeJob.progressMeta?.summary && (
+                <div
+                  className={`rounded-xl text-sm px-4 py-3 ${
+                    activeJob.itemCount > 0
+                      ? 'bg-green-50 text-green-800'
+                      : (activeJob.progressMeta.errors?.length ?? 0) > 0
+                        ? 'bg-red-50 text-red-700'
+                        : 'bg-amber-50 text-amber-800'
+                  }`}
+                >
+                  {activeJob.progressMeta.summary}
                 </div>
               )}
 
@@ -639,42 +801,31 @@ export default function BookExtractClient({ lists }: Props) {
                 </div>
               ) : null}
 
-              {resultItems.length > 0 && (
-                <div className="overflow-x-auto max-h-80 overflow-y-auto">
-                  <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-white">
-                      <tr className="text-right text-gray-500 border-b">
-                        <th className="py-2 pr-2">عنوان</th>
-                        <th className="py-2">نویسنده</th>
-                        <th className="py-2">نوع</th>
-                        <th className="py-2">لینک</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {resultItems.map((item, i) => (
-                        <tr key={i} className="border-b border-gray-50">
-                          <td className="py-2 pr-2 font-medium">{item.title}</td>
-                          <td className="py-2 text-gray-600">{item.metadata?.author ?? '—'}</td>
-                          <td className="py-2 text-gray-500 text-xs">
-                            {item.metadata?.contentType
-                              ? CONTENT_TYPE_LABELS[item.metadata.contentType]
-                              : '—'}
-                          </td>
-                          <td className="py-2">
-                            <a
-                              href={item.externalUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-violet-600 hover:underline text-xs"
-                            >
-                              منبع
-                            </a>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {(activeJob.progressMeta?.errors?.length ?? 0) > 0 && (
+                <div className="rounded-xl border border-red-200 bg-red-50/50 p-3 space-y-2">
+                  <h4 className="text-sm font-medium text-red-800 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    جزئیات خطاها
+                  </h4>
+                  <ul className="space-y-2 text-sm">
+                    {activeJob.progressMeta!.errors!.map((err, i) => (
+                      <li key={i} className="rounded-lg bg-white border border-red-100 px-3 py-2">
+                        <div className="font-medium text-gray-900">{err.title}</div>
+                        <div className="text-red-700 text-xs mt-1 leading-relaxed">{err.message}</div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
+              )}
+
+              {previewItems.length > 0 && (
+                <BookExtractPreviewEditor
+                  items={previewItems}
+                  onChange={(items) => {
+                    setPreviewItems(items);
+                    setPreviewDirty(true);
+                  }}
+                />
               )}
             </div>
           )}

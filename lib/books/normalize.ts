@@ -41,6 +41,26 @@ export function stripHtmlTags(text: string): string {
   return text.replace(/<[^>]+>/g, '').trim();
 }
 
+/** شابک یکدست — فقط رقم */
+export function normalizeIsbn(raw: string | null | undefined): string | null {
+  const digits = (raw ?? '').replace(/[^\d]/g, '');
+  return digits.length >= 10 ? digits : null;
+}
+
+/** عنوان کوتاه برای import — حذف پیشوند و زیرعنوان بعد از : */
+export function shortBookDisplayTitle(title: string): string {
+  let t = stripBookTitlePrefix(sanitizeBookText(title));
+  const colonIdx = t.indexOf(':');
+  if (colonIdx > 0) {
+    t = stripBookTitlePrefix(t.slice(0, colonIdx).trim());
+  }
+  const semiIdx = t.indexOf('؛');
+  if (semiIdx > 0 && semiIdx < 40) {
+    t = stripBookTitlePrefix(t.slice(0, semiIdx).trim());
+  }
+  return t;
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

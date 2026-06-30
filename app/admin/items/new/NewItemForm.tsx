@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
+import { isBookCategorySlug } from '@/lib/book-cover-search';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import ItemTipField from '@/components/admin/items/ItemTipField';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
@@ -27,6 +28,7 @@ import {
 export type NewItemFormList = {
   id: string;
   title: string;
+  description?: string | null;
   categories: { id: string; name: string; slug: string; icon: string | null } | null;
 };
 
@@ -83,6 +85,7 @@ export default function NewItemForm({
     selectedList?.categories?.slug === 'movie' ||
     selectedList?.categories?.slug === 'film' ||
     selectedList?.categories?.slug === 'movies';
+  const isBookCategory = isBookCategorySlug(selectedList?.categories?.slug);
   const isMixedList = isMixedListCategory(selectedList?.categories?.slug);
   const isLightweightMode = isMixedList && isLightweightEntryKind(entryKind);
 
@@ -212,9 +215,10 @@ export default function NewItemForm({
           categorySlug: selectedList?.categories?.slug,
           categoryName: selectedList?.categories?.name,
           listTitle: selectedList?.title,
-          listDescription: selectedList?.description,
+          listDescription: selectedList?.description ?? undefined,
           entryKind,
-          listNote: formData.listNote || undefined,
+          listNote:
+            String((formData.metadata as Record<string, unknown>)?.tip ?? '').trim() || undefined,
           externalUrl: formData.externalUrl || undefined,
           metadata: formData.metadata,
           plot: moviePlot || undefined,
@@ -547,6 +551,7 @@ export default function NewItemForm({
               displayMode={mediaTab}
               previewVariant="poster"
               enableMoviePosterSources={isFilmCategory}
+              enableBookCoverSources={isBookCategory}
               metadata={(formData.metadata as Record<string, unknown>) ?? null}
               categorySlug={selectedList?.categories?.slug}
               onSwitchToUrlTab={() => setMediaTab('url')}

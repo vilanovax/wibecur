@@ -217,7 +217,7 @@ export async function PUT(
   }
 }
 
-// PATCH /api/admin/items/[id] - فقط به‌روزرسانی order (برای جابه‌جایی در لیست)
+// PATCH /api/admin/items/[id] — order و/یا title (ویرایش سریع)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -226,20 +226,39 @@ export async function PATCH(
     await requireAdmin();
     const { id } = await params;
     const body = await request.json();
-    const { order } = body;
+    const { order, title } = body;
 
     const existing = await prisma.items.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: 'آیتم یافت نشد' }, { status: 404 });
     }
 
-    if (typeof order !== 'number') {
-      return NextResponse.json({ error: 'order الزامی است' }, { status: 400 });
+    const data: { order?: number; title?: string; updatedAt: Date } = {
+      updatedAt: new Date(),
+    };
+
+    if (typeof order === 'number') {
+      data.order = order;
+    }
+
+    if (typeof title === 'string') {
+      const trimmed = title.trim();
+      if (!trimmed) {
+        return NextResponse.json({ error: 'عنوان نمی‌تواند خالی باشد' }, { status: 400 });
+      }
+      data.title = trimmed;
+    }
+
+    if (data.order === undefined && data.title === undefined) {
+      return NextResponse.json(
+        { error: 'حداقل یکی از order یا title الزامی است' },
+        { status: 400 }
+      );
     }
 
     const item = await prisma.items.update({
       where: { id },
-      data: { order },
+      data,
     });
     return NextResponse.json(item);
   } catch (error: any) {

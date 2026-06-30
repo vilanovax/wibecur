@@ -14,7 +14,10 @@ import {
   Square,
   X,
   Link2,
+  BookOpen,
 } from 'lucide-react';
+import BookCoverItemsModal from '@/components/admin/items/BookCoverItemsModal';
+import { isBookCategorySlug } from '@/lib/book-cover-search';
 import EntryKindBadge, { resolveItemEntryKind } from '@/components/admin/items/EntryKindBadge';
 import { entryKindIcon, isLightweightListItem } from '@/lib/list-entry';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
@@ -24,9 +27,11 @@ import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
 
 interface ListWorkspaceItemsPanelProps {
   listId: string;
+  listTitle: string;
   categorySlug: string | null;
   categoryIcon: string | null;
   initialItems: ListWorkspaceItem[];
+  onItemsUpdated?: () => void;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -69,10 +74,14 @@ function resolveItemExternalUrl(item: ListWorkspaceItem): string | null {
 
 export default function ListWorkspaceItemsPanel({
   listId,
+  listTitle,
   categorySlug,
   categoryIcon,
   initialItems,
+  onItemsUpdated,
 }: ListWorkspaceItemsPanelProps) {
+  const isBookCategory = isBookCategorySlug(categorySlug);
+  const [bookCoverModalOpen, setBookCoverModalOpen] = useState(false);
   const sortedInitial = useMemo(
     () => [...initialItems].sort((a, b) => a.order - b.order),
     [initialItems]
@@ -359,6 +368,15 @@ export default function ListWorkspaceItemsPanel({
 
   return (
     <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)]">
+      {isBookCategory && (
+        <BookCoverItemsModal
+          isOpen={bookCoverModalOpen}
+          onClose={() => setBookCoverModalOpen(false)}
+          scopeTitle={listTitle}
+          listId={listId}
+          onUpdated={onItemsUpdated}
+        />
+      )}
       {/* Toolbar */}
       <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -399,6 +417,16 @@ export default function ListWorkspaceItemsPanel({
             >
               کاتالوگ
             </Link>
+            {isBookCategory && (
+              <button
+                type="button"
+                onClick={() => setBookCoverModalOpen(true)}
+                className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-emerald-200 text-emerald-800 bg-emerald-50 hover:bg-emerald-100"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                کاور ParsPack
+              </button>
+            )}
           </div>
         </div>
 

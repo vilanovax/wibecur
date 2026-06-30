@@ -64,6 +64,24 @@ export function detectBookUrl(raw: string): DetectedBookUrl | null {
   }
 
   if (source === 'fidibo') {
+    if (path === '/contents/list') {
+      const listsRaw = parsed.searchParams.get('lists');
+      if (listsRaw) {
+        try {
+          const listIds = JSON.parse(listsRaw) as unknown;
+          if (Array.isArray(listIds) && listIds.length > 0) {
+            return {
+              source,
+              mode: 'category',
+              categoryUrl: parsed.toString(),
+              categorySlug: `lists:${listIds.join(',')}`,
+            };
+          }
+        } catch {
+          /* ignore invalid JSON */
+        }
+      }
+    }
     const ebooks = path.match(/^\/ebooks\/(.+)$/i);
     if (ebooks?.[1] && ebooks[1] !== 'categories') {
       return {

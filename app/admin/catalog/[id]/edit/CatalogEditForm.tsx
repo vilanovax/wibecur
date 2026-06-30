@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
+import { isBookCategorySlug } from '@/lib/book-cover-search';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import ItemTipField from '@/components/admin/items/ItemTipField';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
@@ -28,6 +29,10 @@ type CatalogEditData = {
 
 function isFilmCategory(slug?: string | null) {
   return slug === 'movie' || slug === 'film' || slug === 'movies';
+}
+
+function isBookCategory(slug?: string | null) {
+  return isBookCategorySlug(slug);
 }
 
 const MEDIA_TABS: { id: ImageUploadDisplayMode; label: string; icon: React.ElementType }[] = [
@@ -81,6 +86,7 @@ export default function CatalogEditForm({
 
   const categoryChanged = form.categorySlug !== (catalog.categorySlug ?? '');
   const isFilm = isFilmCategory(form.categorySlug);
+  const isBook = isBookCategory(form.categorySlug);
   const categoryLabel =
     categories.find((c) => c.slug === form.categorySlug)?.name ||
     catalogCategoryLabel(form.categorySlug || null);
@@ -399,6 +405,7 @@ export default function CatalogEditForm({
             displayMode={mediaTab}
             previewVariant="poster"
             enableMoviePosterSources={isFilm}
+            enableBookCoverSources={isBook}
             metadata={form.metadata}
             onSwitchToUrlTab={() => setMediaTab('url')}
           />

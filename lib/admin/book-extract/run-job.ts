@@ -47,6 +47,35 @@ function parseOptions(raw: unknown): BookExtractOptions {
   };
 }
 
+function buildJobSummary(
+  records: BookRecord[],
+  notFound: string[],
+  errors: { title: string; message: string }[]
+): string {
+  const parts: string[] = [];
+  if (records.length > 0) parts.push(`${records.length} کتاب استخراج شد`);
+  if (notFound.length > 0) parts.push(`${notFound.length} پیدا نشد`);
+  if (errors.length > 0) parts.push(`${errors.length} خطا`);
+  if (parts.length === 0) return 'نتیجه‌ای ثبت نشد';
+  return parts.join(' · ');
+}
+
+function calcProgressPercent(
+  done: number,
+  total: number,
+  currentTitle: string | null,
+  currentStep: string | null
+): number {
+  if (total <= 0) return 0;
+  if (currentTitle && currentStep && done < total) {
+    return Math.min(99, Math.round(((done + 0.35) / total) * 100));
+  }
+  if (currentTitle && done < total) {
+    return Math.min(99, Math.round(((done + 0.15) / total) * 100));
+  }
+  return Math.min(99, Math.round((done / total) * 100));
+}
+
 function wibeItemsToRecords(items: WibeBookImportItem[], source: BookSource): BookRecord[] {
   return items.map((item) => ({
     source: (item.metadata?.source as BookSource) ?? source,
@@ -78,6 +107,7 @@ async function runTitlesJob(
     done: resumeMeta?.done ?? 0,
     total: titles.length,
     currentTitle: null,
+    currentStep: null,
     notFound: [...(resumeMeta?.notFound ?? [])],
     errors: [...(resumeMeta?.errors ?? [])],
     processedTitles: [...(resumeMeta?.processedTitles ?? [])],
@@ -99,16 +129,26 @@ async function runTitlesJob(
     source,
     titles,
     options,
-    async (done, total, currentTitle) => {
+    async (done, total, currentTitle, state) => {
       progressMeta.done = done;
       progressMeta.total = total;
       progressMeta.currentTitle = currentTitle;
-      const pct = total > 0 ? Math.min(99, Math.round((done / total) * 100)) : 0;
+      if (state) {
+        progressMeta.notFound = state.notFound;
+        progressMeta.errors = state.errors;
+        progressMeta.currentStep = state.currentStep ?? null;
+      }
+      const pct = calcProgressPercent(
+        done,
+        total,
+        currentTitle,
+        progressMeta.currentStep ?? null
+      );
       await prisma.book_extract_jobs.update({
         where: { id: jobId },
         data: {
           progress: pct,
-          progressMeta: { ...progressMeta, notFound, errors },
+          progressMeta: { ...progressMeta },
         },
       });
     },
@@ -119,7 +159,9 @@ async function runTitlesJob(
   progressMeta.errors = errors;
   progressMeta.done = titles.length;
   progressMeta.currentTitle = null;
+  progressMeta.currentStep = null;
   progressMeta.processedTitles = processedTitles;
+  progressMeta.summary = buildJobSummary(records, notFound, errors);
 
   await finalizeJob(jobId, progressMeta, records, options, targetListId);
 }
@@ -131,7 +173,19 @@ async function finalizeJob(
   options: Required<BookExtractOptions>,
   targetListId: string | null
 ): Promise<void> {
-  const resultItems = bookRecordsToImportPayload(records);
+  let listTitle: string | null = null;
+  if (targetListId) {
+    const list = await prisma.lists.findUnique({
+      where: { id: targetListId },
+      select: { title: true },
+    });
+    listTitle = list?.title ?? null;
+  }
+
+  const resultItems = bookRecordsToImportPayload(records, {
+    listTitle,
+    fastMode: options.fastMode,
+  });
   const items = resultItems.items;
 
   if (options.autoImport && targetListId && items.length > 0) {
@@ -163,6 +217,7 @@ async function runCategoryJob(
     done: 0,
     total: limit,
     currentTitle: null,
+    currentStep: null,
     notFound: [],
     errors: [],
   };
@@ -173,14 +228,15 @@ async function runCategoryJob(
     source,
     categoryInput.categoryUrl,
     { ...options, limit },
-    async (done, total, currentTitle) => {
+    async (done, total, currentTitle, state) => {
       progressMeta.done = done;
       progressMeta.total = total;
       progressMeta.currentTitle = currentTitle;
-      const pct = total > 0 ? Math.min(99, Math.round((done / total) * 100)) : 0;
+      if (state) progressMeta.errors = state.errors;
+      const pct = calcProgressPercent(done, total, currentTitle, null);
       await prisma.book_extract_jobs.update({
         where: { id: jobId },
-        data: { progress: pct, progressMeta: { ...progressMeta, errors } },
+        data: { progress: pct, progressMeta: { ...progressMeta } },
       });
     }
   );
@@ -190,6 +246,8 @@ async function runCategoryJob(
   progressMeta.done = records.length;
   progressMeta.total = records.length;
   progressMeta.currentTitle = null;
+  progressMeta.currentStep = null;
+  progressMeta.summary = buildJobSummary(records, [], errors);
 
   await finalizeJob(jobId, progressMeta, records, options, targetListId);
 }

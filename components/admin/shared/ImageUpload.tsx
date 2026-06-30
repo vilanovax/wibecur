@@ -4,7 +4,9 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Upload, X, Link as LinkIcon, Search } from 'lucide-react';
 import ImageSearchModal from '@/components/admin/items/ImageSearchModal';
+import BookCoverSearchModal from '@/components/admin/items/BookCoverSearchModal';
 import MoviePosterSearchModal from '@/components/admin/items/MoviePosterSearchModal';
+import type { BookCoverSearchSource } from '@/lib/book-cover-search';
 import type { MoviePosterSearchSource } from '@/lib/movie-poster-search';
 import {
   buildGoogleImageSearchQuery,
@@ -26,6 +28,8 @@ interface ImageUploadProps {
   previewVariant?: 'default' | 'poster';
   /** دکمه‌های جستجو در IMDb و TMDb (برای آیتم فیلم) */
   enableMoviePosterSources?: boolean;
+  /** دکمه‌های جستجو در فیدیبو، کتابراه و طاقچه (برای آیتم کتاب) */
+  enableBookCoverSources?: boolean;
   metadata?: Record<string, unknown> | null;
   /** slug دسته — برای ساخت عبارت Google */
   categorySlug?: string | null;
@@ -43,6 +47,7 @@ export default function ImageUpload({
   displayMode = 'all',
   previewVariant = 'default',
   enableMoviePosterSources = false,
+  enableBookCoverSources = false,
   metadata = null,
   categorySlug = null,
   onSwitchToUrlTab,
@@ -52,6 +57,7 @@ export default function ImageUpload({
   const [urlInput, setUrlInput] = useState('');
   const [showImageSearch, setShowImageSearch] = useState(false);
   const [moviePosterSource, setMoviePosterSource] = useState<MoviePosterSearchSource | null>(null);
+  const [bookCoverSource, setBookCoverSource] = useState<BookCoverSearchSource | null>(null);
   const [pendingImportMeta, setPendingImportMeta] = useState<Record<string, unknown>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -186,8 +192,25 @@ export default function ImageUpload({
     placeSearchResultInUrlField(posterUrl, extraMeta);
   };
 
+  const handleCoverFromBookSource = (
+    coverUrl: string,
+    context?: { source?: BookCoverSearchSource; sourceId?: string; bookUrl?: string }
+  ) => {
+    setBookCoverSource(null);
+    onModalOpenChange?.(false);
+    const extraMeta: Record<string, unknown> = {};
+    if (context?.source) extraMeta.source = context.source;
+    if (context?.sourceId) extraMeta.sourceId = context.sourceId;
+    placeSearchResultInUrlField(coverUrl, extraMeta);
+  };
+
   const openMoviePosterSearch = (source: MoviePosterSearchSource) => {
     setMoviePosterSource(source);
+    onModalOpenChange?.(true);
+  };
+
+  const openBookCoverSearch = (source: BookCoverSearchSource) => {
+    setBookCoverSource(source);
     onModalOpenChange?.(true);
   };
 
@@ -222,6 +245,18 @@ export default function ImageUpload({
           initialQuery={moviePosterSearchQuery}
           metadata={metadata}
           year={metadata?.year as number | string | null | undefined}
+        />
+      )}
+      {bookCoverSource && (
+        <BookCoverSearchModal
+          isOpen={Boolean(bookCoverSource)}
+          source={bookCoverSource}
+          onClose={() => {
+            setBookCoverSource(null);
+            onModalOpenChange?.(false);
+          }}
+          onSelectCover={handleCoverFromBookSource}
+          initialQuery={title}
         />
       )}
       {label && (
@@ -376,6 +411,46 @@ export default function ImageUpload({
                   >
                     <span className="font-bold text-xs bg-sky-500 text-white px-1.5 py-0.5 rounded">TMDb</span>
                     جستجوی poster
+                  </button>
+                </div>
+              )}
+              {enableBookCoverSources && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openBookCoverSearch('fidibo');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors text-sm font-medium text-emerald-900 dark:text-emerald-200"
+                  >
+                    <span className="font-bold text-xs bg-emerald-500 text-white px-1.5 py-0.5 rounded">فیدیبو</span>
+                    جستجوی کاور
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openBookCoverSearch('ketabrah');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors text-sm font-medium text-orange-900 dark:text-orange-200"
+                  >
+                    <span className="font-bold text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded">کتابراه</span>
+                    جستجوی کاور
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openBookCoverSearch('taaghche');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-violet-200 bg-violet-50 dark:bg-violet-950/30 dark:border-violet-800 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-950/50 transition-colors text-sm font-medium text-violet-900 dark:text-violet-200"
+                  >
+                    <span className="font-bold text-xs bg-violet-500 text-white px-1.5 py-0.5 rounded">طاقچه</span>
+                    جستجوی کاور
                   </button>
                 </div>
               )}

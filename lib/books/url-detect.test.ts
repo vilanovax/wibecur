@@ -8,6 +8,15 @@ describe('detectBookUrl', () => {
     expect(r?.mode).toBe('category');
   });
 
+  it('detects fidibo contents/list with list ids', () => {
+    const r = detectBookUrl(
+      'https://fidibo.com/contents/list?lists=%5B16854%2C15475%2C15521%5D&sort=WEEK_BESTSELLER'
+    );
+    expect(r?.source).toBe('fidibo');
+    expect(r?.mode).toBe('category');
+    expect(r?.categorySlug).toBe('lists:16854,15475,15521');
+  });
+
   it('detects taaghche category', () => {
     const r = detectBookUrl('https://taaghche.com/category/کتاب-تاریخ-جهان');
     expect(r?.source).toBe('taaghche');

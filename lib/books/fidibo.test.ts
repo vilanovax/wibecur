@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseFidiboSearchResponse } from '@/lib/books/fidibo';
+import { parseFidiboListResponse, parseFidiboSearchResponse } from '@/lib/books/fidibo';
 
 describe('parseFidiboSearchResponse', () => {
   it('parses search blocks into candidates', () => {
@@ -47,5 +47,29 @@ describe('parseFidiboSearchResponse', () => {
     };
     const candidates = parseFidiboSearchResponse(data);
     expect(candidates[0]?.contentType).toBe('audiobook');
+  });
+});
+
+describe('parseFidiboListResponse', () => {
+  it('parses flat result array from contents/list API', () => {
+    const data = {
+      data: {
+        per_page: 15,
+        result: [
+          {
+            id: 84590,
+            title: 'سقوط',
+            subtitle: 'آلبر کامو',
+            content_type: 'audiobook',
+            cover: { image: 'https://cdn.fidibo.com/cover.jpg' },
+            action: { web_url: '/book/84590-کتاب-صوتی-سقوط' },
+          },
+        ],
+      },
+    };
+    const candidates = parseFidiboListResponse(data);
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.bookId).toBe('84590');
+    expect(candidates[0]?.title).toBe('سقوط');
   });
 });

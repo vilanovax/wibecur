@@ -6,6 +6,7 @@ import type {
 } from '@/lib/books/types';
 import { DEFAULT_BOOK_EXTRACT_OPTIONS } from '@/lib/books/types';
 import { matchesContentFilter } from '@/lib/books/content-type';
+import { formatBookFetchError, getBookSourceLabel } from '@/lib/books/fetch-errors';
 import { sleep } from '@/lib/books/normalize';
 import { pickBestTitleMatch } from '@/lib/books/title-match';
 import {
@@ -28,6 +29,12 @@ export type TitleExtractRowResult =
   | { status: 'found'; query: string; record: BookRecord; matchScore: number }
   | { status: 'not_found'; query: string }
   | { status: 'error'; query: string; message: string };
+
+export type TitleExtractProgressState = {
+  notFound: string[];
+  errors: { title: string; message: string }[];
+  currentStep?: string | null;
+};
 
 function resolveOptions(options?: BookExtractOptions): Required<BookExtractOptions> {
   return { ...DEFAULT_BOOK_EXTRACT_OPTIONS, ...options };
@@ -64,7 +71,10 @@ async function enrichRecord(
     return fidiboCandidateToRecord(candidate);
   }
   if (source === 'ketabrah') {
-    const detail = await fetchKetabrahBookDetail(candidate.bookId, { maxRetries });
+    const detail = await fetchKetabrahBookDetail(candidate.bookId, {
+      maxRetries,
+      bookUrl: candidate.bookUrl,
+    });
     if (detail) {
       return { ...detail, contentType: detail.contentType ?? candidate.contentType ?? null };
     }
@@ -80,19 +90,25 @@ async function enrichRecord(
 export async function extractSingleTitle(
   source: BookSource,
   title: string,
-  options?: BookExtractOptions
+  options?: BookExtractOptions,
+  onStep?: (step: string | null) => void | Promise<void>
 ): Promise<TitleExtractRowResult> {
   const opts = resolveOptions(options);
   const query = title.trim();
+  const sourceLabel = getBookSourceLabel(source);
   if (!query) return { status: 'error', query: title, message: 'عنوان خالی' };
 
   try {
+    await onStep?.(`جستجو در ${sourceLabel}…`);
     const candidates = filterByContentType(
       await searchBySource(source, query, opts.maxRetries),
       opts.contentTypeFilter
     );
     const best = pickBestTitleMatch(query, candidates, opts.fuzzyMinScore);
-    if (!best) return { status: 'not_found', query };
+    if (!best) {
+      await onStep?.(null);
+      return { status: 'not_found', query };
+    }
 
     let record: BookRecord;
     if (opts.fastMode || !opts.enrichDetails) {
@@ -103,12 +119,15 @@ export async function extractSingleTitle(
             ? ketabrahCandidateToRecord(best)
             : taaghcheCandidateToRecord(best);
     } else {
+      await onStep?.(`دریافت جزئیات «${best.title}» از ${sourceLabel}…`);
       record = await enrichRecord(source, best, opts.maxRetries);
     }
 
+    await onStep?.(null);
     return { status: 'found', query, record, matchScore: best.matchScore };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'خطای ناشناخته';
+    await onStep?.(null);
+    const message = formatBookFetchError(err, `خطا در ${sourceLabel}`);
     return { status: 'error', query, message };
   }
 }
@@ -117,7 +136,12 @@ export async function extractTitlesList(
   source: BookSource,
   titles: string[],
   options?: BookExtractOptions,
-  onProgress?: (done: number, total: number, currentTitle: string | null) => void | Promise<void>,
+  onProgress?: (
+    done: number,
+    total: number,
+    currentTitle: string | null,
+    state?: TitleExtractProgressState
+  ) => void | Promise<void>,
   resumeFrom?: {
     records: BookRecord[];
     notFound: string[];
@@ -139,20 +163,29 @@ export async function extractTitlesList(
   const notFound: string[] = [...(resumeFrom?.notFound ?? [])];
   const errors: { title: string; message: string }[] = [...(resumeFrom?.errors ?? [])];
   let done = processed.size;
+  let currentStep: string | null = null;
+
+  const report = async (title: string | null) => {
+    await onProgress?.(done, total, title, { notFound, errors, currentStep });
+  };
 
   for (let i = 0; i < pending.length; i++) {
     const query = pending[i]!;
-    await onProgress?.(done, total, query);
-    const result = await extractSingleTitle(source, query, opts);
+    await report(query);
+    const result = await extractSingleTitle(source, query, opts, async (step) => {
+      currentStep = step;
+      await report(query);
+    });
     processed.add(query);
     done++;
+    currentStep = null;
     if (result.status === 'found') records.push(result.record);
     else if (result.status === 'not_found') notFound.push(query);
     else errors.push({ title: query, message: result.message });
-    await onProgress?.(done, total, null);
+    await report(null);
     if (i < pending.length - 1 && opts.delayMs > 0) await sleep(opts.delayMs);
   }
 
-  await onProgress?.(total, total, null);
+  await onProgress?.(total, total, null, { notFound, errors, currentStep: null });
   return { records, notFound, errors, processedTitles: [...processed] };
 }

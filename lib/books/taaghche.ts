@@ -162,7 +162,7 @@ export function extractTaaghcheFilterCategoryId(html: string): string | null {
 export function parseTaaghcheFilterHtml(html: string): BookSearchCandidate[] {
   const data = extractNextData(html);
   const list =
-    (data?.props as { pageProps?: { filters?: { list?: TaaghcheBookSummary[] } } } })?.pageProps
+    (data?.props as { pageProps?: { filters?: { list?: TaaghcheBookSummary[] } } })?.pageProps
       ?.filters?.list ?? [];
   return list
     .filter((b) => typeof b.id === 'number' && b.title)

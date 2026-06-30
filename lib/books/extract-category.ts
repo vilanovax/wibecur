@@ -48,7 +48,10 @@ async function enrichCandidate(
     return fidiboCandidateToRecord(candidate);
   }
   if (source === 'ketabrah') {
-    const detail = await fetchKetabrahBookDetail(candidate.bookId, { maxRetries });
+    const detail = await fetchKetabrahBookDetail(candidate.bookId, {
+      maxRetries,
+      bookUrl: candidate.bookUrl,
+    });
     if (detail) {
       return { ...detail, contentType: detail.contentType ?? candidate.contentType ?? null };
     }
@@ -65,7 +68,12 @@ export async function extractCategoryList(
   source: BookSource,
   categoryUrl: string,
   options?: BookExtractOptions,
-  onProgress?: (done: number, total: number, currentTitle: string | null) => void | Promise<void>
+  onProgress?: (
+    done: number,
+    total: number,
+    currentTitle: string | null,
+    state?: { errors: { title: string; message: string }[] }
+  ) => void | Promise<void>
 ): Promise<{
   records: BookRecord[];
   errors: { title: string; message: string }[];
@@ -106,6 +114,7 @@ export async function extractCategoryList(
         message: err instanceof Error ? err.message : 'خطا',
       });
     }
+    await onProgress?.(i + 1, total, null, { errors });
     if (i < candidates.length - 1 && opts.delayMs > 0) await sleep(opts.delayMs);
   }
 

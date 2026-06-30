@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -43,6 +44,7 @@ function StatPill({
 }
 
 export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) {
+  const router = useRouter();
   const { list, items, intelligence } = data;
   const category = list.categories;
   const publicUrl = `/lists/${list.slug}`;
@@ -148,9 +150,11 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
       {/* آیتم‌ها */}
       <ListWorkspaceItemsPanel
         listId={list.id}
+        listTitle={list.title}
         categorySlug={category?.slug ?? null}
         categoryIcon={category?.icon ?? null}
         initialItems={items}
+        onItemsUpdated={() => router.refresh()}
       />
 
       <p className="text-center text-xs text-[var(--color-text-muted)]">

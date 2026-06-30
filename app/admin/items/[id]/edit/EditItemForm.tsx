@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
+import { isBookCategorySlug } from '@/lib/book-cover-search';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import ItemTipField from '@/components/admin/items/ItemTipField';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
@@ -44,6 +45,10 @@ const MEDIA_TABS: { id: ImageUploadDisplayMode; label: string; icon: React.Eleme
 
 function isFilmCategory(slug?: string | null) {
   return slug === 'movie' || slug === 'film' || slug === 'movies';
+}
+
+function isBookCategory(slug?: string | null) {
+  return isBookCategorySlug(slug);
 }
 
 export default function EditItemForm({ item, lists }: EditItemFormProps) {
@@ -97,6 +102,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
 
   const categorySlug = selectedList?.categories?.slug;
   const isFilm = isFilmCategory(categorySlug);
+  const isBook = isBookCategory(categorySlug);
   const isMixedList = isMixedListCategory(categorySlug);
   const hasCatalog = Boolean(item.catalogItemId);
   const isLightweightMode =
@@ -814,6 +820,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
               displayMode={mediaTab}
               previewVariant="poster"
               enableMoviePosterSources={isFilm}
+              enableBookCoverSources={isBook}
               metadata={(formData.metadata as Record<string, unknown>) ?? null}
               categorySlug={selectedList?.categories?.slug}
               onSwitchToUrlTab={() => setMediaTab('url')}

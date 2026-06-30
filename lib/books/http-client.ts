@@ -1,4 +1,5 @@
 import { sleep } from '@/lib/books/normalize';
+import { formatBookFetchError } from '@/lib/books/fetch-errors';
 
 const DEFAULT_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -43,7 +44,7 @@ export async function fetchHtml(
       if (attempt < maxRetries - 1) await sleep(retryDelayMs * (attempt + 1));
     }
   }
-  throw lastError instanceof Error ? lastError : new Error('درخواست ناموفق');
+  throw new Error(formatBookFetchError(lastError, url));
 }
 
 export async function fetchJson<T>(
@@ -79,7 +80,7 @@ export async function fetchJson<T>(
       if (attempt < maxRetries - 1) await sleep(retryDelayMs * (attempt + 1));
     }
   }
-  throw lastError instanceof Error ? lastError : new Error('درخواست JSON ناموفق');
+  throw new Error(formatBookFetchError(lastError, url));
 }
 
 export function extractNextData(html: string): Record<string, unknown> | null {

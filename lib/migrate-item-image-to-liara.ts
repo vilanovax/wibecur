@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { uploadImageFromUrlDetailed } from '@/lib/object-storage';
+import { importExternalImageToStorage } from '@/lib/admin/import-external-image-to-storage';
 import {
   getItemEffectiveImageUrl,
   isAppObjectStorageImageUrl,
@@ -68,7 +68,7 @@ export async function migrateItemExternalImageToLiara(
   }
 
   const downloadUrl = resolveUrlForS3Migration(effectiveUrl);
-  const upload = await uploadImageFromUrlDetailed(downloadUrl, 'items');
+  const upload = await importExternalImageToStorage(downloadUrl, 'items');
 
   if (!upload.ok) {
     return {
@@ -76,7 +76,12 @@ export async function migrateItemExternalImageToLiara(
       status: 'failed',
       previousUrl: effectiveUrl,
       error: upload.error,
-      errorCode: upload.code,
+      errorCode:
+        upload.code === 'storage_not_configured'
+          ? 'storage_not_configured'
+          : upload.code === 'download_failed'
+            ? 'download_failed'
+            : 'upload_failed',
     };
   }
 

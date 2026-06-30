@@ -83,11 +83,15 @@ export type BookExtractProgressMeta = {
   done: number;
   total: number;
   currentTitle?: string | null;
+  /** مرحله جاری — مثلاً «جستجو در فیدیبو» */
+  currentStep?: string | null;
   notFound: string[];
   errors: { title: string; message: string }[];
   /** عناوین پردازش‌شده — برای resume */
   processedTitles?: string[];
   importResult?: BookExtractImportResult | null;
+  /** خلاصه نتیجه پس از اتمام */
+  summary?: string | null;
 };
 
 export const DEFAULT_BOOK_EXTRACT_OPTIONS: Required<BookExtractOptions> = {
@@ -95,7 +99,7 @@ export const DEFAULT_BOOK_EXTRACT_OPTIONS: Required<BookExtractOptions> = {
   fastMode: false,
   fuzzyMinScore: 70,
   delayMs: 700,
-  maxRetries: 3,
+  maxRetries: 2,
   limit: 20,
   contentTypeFilter: 'all',
   autoImport: false,
