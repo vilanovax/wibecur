@@ -18,6 +18,7 @@ import {
   createCatalogItem,
   createLightweightListItem,
   isCatalogInList,
+  updateCatalogItem,
 } from '@/lib/catalog-items';
 import {
   extractBulkImportEntryKind,
@@ -28,6 +29,7 @@ import {
   isMixedListCategory,
 } from '@/lib/list-entry';
 import type { BulkImportPayloadItem } from '@/lib/admin/bulk-import';
+import { isOurStorageUrl } from '@/lib/object-storage-config';
 
 export type BulkImportRowResult = {
   index: number;
@@ -55,6 +57,37 @@ export type BulkImportExecuteResult = {
 };
 
 const IMPORT_CONCURRENCY = 5;
+
+async function resolveRowImageForImport(
+  row: BulkImportPayloadItem,
+  metadata: Record<string, unknown>,
+  imageCtx: BulkImportImageContext
+): Promise<string | null> {
+  if (!row.imageUrl?.trim()) return null;
+  return (await resolveBulkImportImageForStorage(row.imageUrl, metadata, 'items', imageCtx)) ?? null;
+}
+
+async function ensureCatalogImageFromImport(
+  db: PrismaClient,
+  catalogId: string,
+  row: BulkImportPayloadItem,
+  metadata: Record<string, unknown>,
+  imageCtx: BulkImportImageContext
+): Promise<void> {
+  if (!row.imageUrl?.trim()) return;
+
+  const catalog = await db.catalog_items.findUnique({
+    where: { id: catalogId },
+    select: { imageUrl: true },
+  });
+  if (!catalog) return;
+  if (catalog.imageUrl && isOurStorageUrl(catalog.imageUrl)) return;
+
+  const stored = await resolveRowImageForImport(row, metadata, imageCtx);
+  if (stored && isOurStorageUrl(stored)) {
+    await updateCatalogItem(db, catalogId, { imageUrl: stored });
+  }
+}
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -138,10 +171,12 @@ async function importOneRow(
       }
 
       const order = row.order ?? assignedOrder;
+      const storedImage = await resolveRowImageForImport(row, metaRecord, ctx.imageCtx);
+      const imageUrl = storedImage || row.imageUrl?.trim() || null;
       const item = await createLightweightListItem(db, {
         title,
         description: row.description?.trim() || null,
-        imageUrl: row.imageUrl?.trim() || null,
+        imageUrl,
         externalUrl: row.externalUrl?.trim() || null,
         listId: ctx.listId,
         order,
@@ -171,13 +206,7 @@ async function importOneRow(
     if (!catalogId) {
       let finalImage: string | null = null;
       if (row.imageUrl?.trim()) {
-        finalImage =
-          (await resolveBulkImportImageForStorage(
-            row.imageUrl,
-            meta as Record<string, unknown>,
-            'items',
-            ctx.imageCtx
-          )) ?? null;
+        finalImage = await resolveRowImageForImport(row, metaRecord, ctx.imageCtx);
       }
 
       const catalog = await createCatalogItem(db, {
@@ -189,6 +218,8 @@ async function importOneRow(
         metadata: metaRecord as Prisma.InputJsonValue,
       });
       catalogId = catalog.id;
+    } else if (row.imageUrl?.trim()) {
+      await ensureCatalogImageFromImport(db, catalogId, row, metaRecord, ctx.imageCtx);
     }
 
     const inTargetList = await isCatalogInList(db, catalogId, ctx.listId);

@@ -80,7 +80,7 @@ describe('bookRecordToWibeItem enrich mode', () => {
 
     expect(item.title).toBe('کار عمیق');
     expect(item.description).toContain('تکنولوژی');
-    expect(item.tip).toContain('استراتژی');
+    expect(item.tip).toBe('ترجمه: ناهید ملکی');
     expect(item.metadata?.author).toBe('کال نیوپورت');
     expect(item.metadata?.genre).toBe('مدیریت ذهن');
     expect(item.metadata?.isbn).toBe('9786226840125');

@@ -75,7 +75,7 @@ function detailToRecord(book: TaaghcheBookDetail): BookRecord | null {
     .filter(Boolean);
   return {
     ...base,
-    description: sanitizeBookText(book.description ?? '') || null,
+    description: sanitizeBookText(stripHtmlTags(book.description ?? '')) || null,
     isbn: sanitizeBookText(book.isbn ?? '') || null,
     genres: genresFromSubjects.length > 0 ? genresFromSubjects : base.genres,
   };

@@ -3,18 +3,23 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { List, Library, FileJson, Plus, Sparkles, UserRound, BookOpen } from 'lucide-react';
+import { List, Library, FileJson, Plus, UserRound, AlignLeft, Lightbulb } from 'lucide-react';
 import type { ContentHubStats } from '@/lib/admin/content-hub-stats';
 import type { ListsIntelligenceData } from '@/lib/admin/lists-intelligence';
 import type { CatalogPageData } from '@/lib/admin/catalog-page-data';
 import ContentHubStatsBar from '@/components/admin/lists/ContentHubStatsBar';
+import ContentHubToolsMenu from '@/components/admin/lists/ContentHubToolsMenu';
 import ListsIntelligenceClient from './ListsIntelligenceClient';
 import CatalogPageClient from '../catalog/CatalogPageClient';
 import type { NewItemFormList } from '../items/new/NewItemForm';
 import BulkImportClient from '../items/import/BulkImportClient';
 import PeoplePageClient from '@/components/admin/people/PeoplePageClient';
+import ListDescriptionsClient from '@/components/admin/lists/ListDescriptionsClient';
+import ItemTipsClient from '@/components/admin/lists/ItemTipsClient';
+import type { ListDescriptionsPageData } from '@/lib/admin/list-description-import';
+import type { ItemTipsPageData } from '@/lib/admin/item-tip-import';
 
-export type ContentHubView = 'lists' | 'catalog' | 'import' | 'people';
+export type ContentHubView = 'lists' | 'catalog' | 'import' | 'people' | 'descriptions' | 'item-tips';
 
 type ImportListOption = {
   id: string;
@@ -49,6 +54,8 @@ interface ContentHubClientProps {
   createLists?: NewItemFormList[];
   initialCreateListId?: string;
   catalogMode?: string;
+  descriptionsData?: ListDescriptionsPageData;
+  itemTipsData?: ItemTipsPageData;
 }
 
 const STATS_COLLAPSED_KEY = 'admin-content-hub-stats-collapsed';
@@ -76,9 +83,11 @@ export default function ContentHubClient({
   createLists,
   initialCreateListId,
   catalogMode,
+  descriptionsData,
+  itemTipsData,
 }: ContentHubClientProps) {
   const router = useRouter();
-  const [statsCollapsed, setStatsCollapsed] = useState(true);
+  const [statsCollapsed, setStatsCollapsed] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STATS_COLLAPSED_KEY);
@@ -97,63 +106,39 @@ export default function ContentHubClient({
     router.push(qs ? `/admin/lists?${qs}` : '/admin/lists');
   };
 
+  const showHubTools = view !== 'import' && view !== 'people' && !trash;
+  const primaryAction =
+    view === 'lists' ? (
+      <Link
+        href="/admin/lists/new"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+        style={{ backgroundColor: 'var(--primary)' }}
+      >
+        <Plus className="w-4 h-4" />
+        لیست جدید
+      </Link>
+    ) : view === 'catalog' && catalogMode !== 'create' ? (
+      <Link
+        href="/admin/lists?view=catalog&mode=create"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-colors"
+      >
+        <Plus className="w-4 h-4" />
+        آیتم جدید
+      </Link>
+    ) : null;
+
   return (
     <div className="space-y-4" dir="rtl">
-      {/* هدر یکپارچه */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها و محتوا</h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-            لیست · کاتالوگ · اشخاص · import — یک مرکز مدیریت
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {view === 'catalog' && catalogMode !== 'create' && (
-            <Link
-              href="/admin/lists?view=catalog&mode=create"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              آیتم جدید
-            </Link>
-          )}
-          {view !== 'import' && view !== 'people' && !trash && (
-            <>
-              <Link
-                href="/admin/lists?view=import"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-violet-200 text-violet-700 bg-violet-50/80 hover:bg-violet-100 transition-colors"
-              >
-                <FileJson className="w-4 h-4" />
-                <span className="hidden md:inline">import گروهی</span>
-              </Link>
-              <Link
-                href="/admin/books/extract"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-emerald-200 text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100 transition-colors"
-              >
-                <BookOpen className="w-4 h-4" />
-                <span className="hidden md:inline">استخراج کتاب</span>
-              </Link>
-              <Link
-                href="/admin/custom/featured"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-amber-200 text-amber-800 bg-amber-50/80 hover:bg-amber-100 transition-colors"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden md:inline">Featured</span>
-              </Link>
-              <Link
-                href="/admin/lists/new"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium text-white hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: 'var(--primary)' }}
-              >
-                <Plus className="w-4 h-4" />
-                لیست جدید
-              </Link>
-            </>
-          )}
-        </div>
+        <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها و محتوا</h1>
+        {showHubTools && (
+          <div className="flex flex-wrap items-center gap-2">
+            {primaryAction}
+            <ContentHubToolsMenu showNewList={view !== 'lists'} />
+          </div>
+        )}
       </header>
 
-      {/* KPI */}
       {view !== 'import' && view !== 'people' && (
         <ContentHubStatsBar
           stats={hubStats}
@@ -176,6 +161,22 @@ export default function ContentHubClient({
         <button type="button" onClick={() => switchView('people')} className={tabClass(view === 'people')}>
           <UserRound className="w-4 h-4" />
           اشخاص
+        </button>
+        <button
+          type="button"
+          onClick={() => switchView('descriptions')}
+          className={tabClass(view === 'descriptions')}
+        >
+          <AlignLeft className="w-4 h-4" />
+          توضیحات
+        </button>
+        <button
+          type="button"
+          onClick={() => switchView('item-tips')}
+          className={tabClass(view === 'item-tips')}
+        >
+          <Lightbulb className="w-4 h-4" />
+          tip
         </button>
         <button type="button" onClick={() => switchView('import')} className={tabClass(view === 'import')}>
           <FileJson className="w-4 h-4" />
@@ -216,6 +217,14 @@ export default function ContentHubClient({
       )}
 
       {view === 'people' && <PeoplePageClient embedded />}
+
+      {view === 'descriptions' && descriptionsData && (
+        <ListDescriptionsClient data={descriptionsData} embedded />
+      )}
+
+      {view === 'item-tips' && itemTipsData && (
+        <ItemTipsClient data={itemTipsData} embedded />
+      )}
     </div>
   );
 }

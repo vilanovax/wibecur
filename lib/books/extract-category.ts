@@ -27,10 +27,13 @@ async function listCategoryCandidates(
   source: BookSource,
   categoryUrl: string,
   limit: number,
-  maxRetries: number
+  maxRetries: number,
+  delayMs: number
 ): Promise<BookSearchCandidate[]> {
   const url = assertCategoryUrlForSource(categoryUrl, source);
-  if (source === 'fidibo') return listFidiboCategory(url, limit, { maxRetries });
+  if (source === 'fidibo') {
+    return listFidiboCategory(url, limit, { maxRetries, delayMs: Math.min(delayMs, 500) });
+  }
   if (source === 'ketabrah') return listKetabrahCategory(url, limit, { maxRetries });
   return listTaaghcheCategory(url, limit, { maxRetries });
 }
@@ -84,7 +87,13 @@ export async function extractCategoryList(
   const records: BookRecord[] = [];
 
   await onProgress?.(0, limit, null);
-  let candidates = await listCategoryCandidates(source, categoryUrl, limit, opts.maxRetries);
+  let candidates = await listCategoryCandidates(
+    source,
+    categoryUrl,
+    limit,
+    opts.maxRetries,
+    opts.delayMs
+  );
   if (opts.contentTypeFilter !== 'all') {
     candidates = candidates.filter((c) =>
       matchesContentFilter(c.contentType, opts.contentTypeFilter)

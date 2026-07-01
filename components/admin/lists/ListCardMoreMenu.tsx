@@ -37,13 +37,15 @@ export default function ListCardMoreMenu({
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const skipNextOutsideRef = useRef(false);
 
   const updatePosition = useCallback(() => {
     const el = buttonRef.current;
     if (!el) return;
 
     const rect = el.getBoundingClientRect();
-    let left = rect.left;
+    let left = rect.right - MENU_WIDTH;
+    if (left < 8) left = 8;
     if (left + MENU_WIDTH > window.innerWidth - 8) {
       left = Math.max(8, window.innerWidth - MENU_WIDTH - 8);
     }
@@ -71,14 +73,25 @@ export default function ListCardMoreMenu({
   }, [open, updatePosition]);
 
   useEffect(() => {
+    if (!open) return;
+
     function handleClickOutside(e: MouseEvent) {
+      if (skipNextOutsideRef.current) {
+        skipNextOutsideRef.current = false;
+        return;
+      }
       const target = e.target as Node;
       if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return;
       setOpen(false);
     }
-    if (!open) return;
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    const frame = requestAnimationFrame(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -96,7 +109,7 @@ export default function ListCardMoreMenu({
           <div
             ref={menuRef}
             role="menu"
-            className="fixed z-[200] w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg"
+            className="fixed z-[1200] w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg"
             style={{ top: menuPos.top, left: menuPos.left }}
             dir="rtl"
           >
@@ -170,12 +183,17 @@ export default function ListCardMoreMenu({
       <button
         ref={buttonRef}
         type="button"
+        data-list-ops=""
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          skipNextOutsideRef.current = true;
           setOpen((v) => !v);
         }}
-        className="rounded-xl border border-[var(--color-border)] p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+        className="relative z-20 rounded-xl border border-[var(--color-border)] p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
         aria-label="عملیات بیشتر"
         aria-expanded={open}
         aria-haspopup="menu"

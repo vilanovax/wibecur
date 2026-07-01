@@ -7,6 +7,8 @@ import { loadCatalogPageData } from '@/lib/admin/catalog-page-data';
 import { isCatalogClientReady } from '@/lib/catalog-items';
 import AdminDatabaseUnavailable from '@/components/admin/shared/AdminDatabaseUnavailable';
 import ContentHubClient, { type ContentHubView } from './ContentHubClient';
+import { loadListDescriptionsPageData } from '@/lib/admin/list-descriptions-data';
+import { loadItemTipsPageData } from '@/lib/admin/item-tips-data';
 
 async function resolveCategoryId(categoryParam: string | undefined): Promise<string> {
   if (!categoryParam || categoryParam === 'all') return 'all';
@@ -24,7 +26,7 @@ async function resolveCategoryId(categoryParam: string | undefined): Promise<str
 
 function resolveView(raw?: string, trash?: boolean): ContentHubView {
   if (trash) return 'lists';
-  if (raw === 'catalog' || raw === 'import' || raw === 'people') return raw;
+  if (raw === 'catalog' || raw === 'import' || raw === 'people' || raw === 'descriptions' || raw === 'item-tips') return raw;
   return 'lists';
 }
 
@@ -42,6 +44,8 @@ export default async function AdminListsPage({
     multiList?: string;
     categoryId?: string;
     mode?: string;
+    tipsCategory?: string;
+    tipsList?: string;
   }>;
 }) {
   await requireAdmin();
@@ -56,6 +60,27 @@ export default async function AdminListsPage({
 
   if (view === 'people') {
     return <ContentHubClient view="people" hubStats={hubStats} />;
+  }
+
+  if (view === 'descriptions') {
+    const descriptionsData = await loadListDescriptionsPageData();
+    return (
+      <ContentHubClient view="descriptions" hubStats={hubStats} descriptionsData={descriptionsData} />
+    );
+  }
+
+  if (view === 'item-tips') {
+    const tipsCategoryId =
+      params.tipsCategory && params.tipsCategory !== 'all'
+        ? await resolveCategoryId(params.tipsCategory)
+        : '';
+    const itemTipsData = await loadItemTipsPageData({
+      categoryId: tipsCategoryId === 'all' ? '' : tipsCategoryId,
+      listId: params.tipsList,
+    });
+    return (
+      <ContentHubClient view="item-tips" hubStats={hubStats} itemTipsData={itemTipsData} />
+    );
   }
 
   if (view === 'import') {

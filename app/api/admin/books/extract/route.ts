@@ -56,8 +56,8 @@ function parseOptions(body: Record<string, unknown>) {
   };
 }
 
-/** GET /api/admin/books/extract — تاریخچه jobs */
-export async function GET() {
+/** GET /api/admin/books/extract — تاریخچه jobs (صفحه‌بندی) */
+export async function GET(request: NextRequest) {
   try {
     const session = await checkAdminAuth();
     if (!session?.user?.id) {
@@ -73,15 +73,38 @@ export async function GET() {
       );
     }
 
-    const jobs = await prisma.book_extract_jobs.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-      include: {
-        createdBy: { select: { id: true, name: true, email: true } },
-      },
-    });
+    const { searchParams } = new URL(request.url);
+    const limit = Math.min(50, Math.max(1, Number(searchParams.get('limit')) || 5));
+    const offset = Math.max(0, Number(searchParams.get('offset')) || 0);
+    const listOnly = searchParams.get('listOnly') === '1';
 
-    return NextResponse.json({ data: jobs.map(serializeBookExtractJob) });
+    const [jobs, total] = await Promise.all([
+      prisma.book_extract_jobs.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+        select: {
+          id: true,
+          status: true,
+          mode: true,
+          source: true,
+          input: true,
+          options: true,
+          targetListId: true,
+          progress: true,
+          progressMeta: true,
+          itemCount: true,
+          errorMessage: true,
+          createdAt: true,
+          completedAt: true,
+          createdBy: { select: { id: true, name: true, email: true } },
+          ...(listOnly ? {} : { resultItems: true }),
+        },
+      }),
+      prisma.book_extract_jobs.count(),
+    ]);
+
+    return NextResponse.json({ data: jobs.map(serializeBookExtractJob), total });
   } catch (err) {
     console.error('[book-extract] list error:', err);
     return NextResponse.json({ error: 'خطا در دریافت تاریخچه' }, { status: 500 });

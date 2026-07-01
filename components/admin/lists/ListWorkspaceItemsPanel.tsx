@@ -18,15 +18,17 @@ import {
 } from 'lucide-react';
 import BookCoverItemsModal from '@/components/admin/items/BookCoverItemsModal';
 import { isBookCategorySlug } from '@/lib/book-cover-search';
-import EntryKindBadge, { resolveItemEntryKind } from '@/components/admin/items/EntryKindBadge';
+import { resolveItemEntryKind } from '@/components/admin/items/EntryKindBadge';
 import { entryKindIcon, isLightweightListItem } from '@/lib/list-entry';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import type { ListWorkspaceItem } from '@/lib/admin/list-workspace-data';
+import { buildListItemPreviewPath } from '@/lib/list-item-preview-url';
 import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
 
 interface ListWorkspaceItemsPanelProps {
   listId: string;
+  listSlug: string;
   listTitle: string;
   categorySlug: string | null;
   categoryIcon: string | null;
@@ -53,27 +55,9 @@ function normalizeSearch(text: string): string {
   return text.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-function resolveItemExternalUrl(item: ListWorkspaceItem): string | null {
-  const candidates = [item.externalUrl, item.catalogExternalUrl];
-  for (const raw of candidates) {
-    const url = raw?.trim();
-    if (url && /^https?:\/\//i.test(url)) return url;
-  }
-  const meta = item.metadata;
-  if (meta) {
-    for (const key of ['externalUrl', 'url', 'link', 'website']) {
-      const val = meta[key];
-      if (typeof val === 'string') {
-        const url = val.trim();
-        if (/^https?:\/\//i.test(url)) return url;
-      }
-    }
-  }
-  return null;
-}
-
 export default function ListWorkspaceItemsPanel({
   listId,
+  listSlug,
   listTitle,
   categorySlug,
   categoryIcon,
@@ -284,26 +268,22 @@ export default function ListWorkspaceItemsPanel({
   };
 
   const renderEntryLink = (item: ListWorkspaceItem) => {
-    const kind = resolveItemEntryKind(item);
-    const externalUrl = resolveItemExternalUrl(item);
+    const previewHref = buildListItemPreviewPath(listSlug, item.id);
+    if (!previewHref) return null;
 
-    if (externalUrl) {
-      return (
-        <a
-          href={externalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex max-w-full items-center gap-1 rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-900 ring-1 ring-sky-200/80 hover:bg-sky-100 transition-colors"
-          title={externalUrl}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Link2 className="w-3 h-3 shrink-0" aria-hidden />
-          <span className="truncate">لینک</span>
-        </a>
-      );
-    }
-
-    return <EntryKindBadge kind={kind} compact />;
+    return (
+      <a
+        href={previewHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex max-w-full items-center gap-1 rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-900 ring-1 ring-sky-200/80 hover:bg-sky-100 transition-colors"
+        title="پیش‌نمایش آیتم در اپ"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Link2 className="w-3 h-3 shrink-0" aria-hidden />
+        <span className="truncate">لینک</span>
+      </a>
+    );
   };
 
   const renderItemActions = (item: ListWorkspaceItem, compact = false) => {

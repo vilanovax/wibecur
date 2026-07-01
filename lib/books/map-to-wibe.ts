@@ -25,35 +25,22 @@ function translatorTip(record: BookRecord): string | undefined {
   return `ترجمه: ${name}`;
 }
 
-function tipFromDescription(description: string): string | undefined {
-  const text = sanitizeBookText(description);
-  if (!text) return undefined;
-
-  const paragraphs = text.split(/\n\n+/).map((p) => p.trim()).filter((p) => p.length > 40);
-  if (paragraphs.length >= 2) return paragraphs[1];
-
-  const sentences = text.match(/[^.!?؟۔\n]+[.!?؟۔]+/gu) ?? [];
-  const cleaned = sentences.map((s) => sanitizeBookText(s)).filter((s) => s.length > 30);
-  if (cleaned.length >= 2) return cleaned[1];
-  if (cleaned.length === 1 && cleaned[0]!.length > 80) {
-    const mid = Math.min(160, cleaned[0]!.length);
-    const slice = cleaned[0]!.slice(0, mid).trim();
-    return slice.endsWith('…') ? slice : `${slice}…`;
-  }
-  return undefined;
-}
-
 function buildTip(record: BookRecord, opts?: BookImportMapOptions): string | undefined {
   if (opts?.fastMode) return narratorTip(record.authors);
 
   const narrator = narratorTip(record.authors);
   if (narrator) return narrator;
 
-  const desc = sanitizeBookText(stripHtmlTags(record.description ?? ''));
-  const fromDesc = tipFromDescription(desc);
-  if (fromDesc) return fromDesc;
-
   return translatorTip(record);
+}
+
+function tipsAreEquivalent(tip: string, description: string): boolean {
+  const a = sanitizeBookText(tip);
+  const b = sanitizeBookText(description);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (b.startsWith(a) || a.startsWith(b)) return true;
+  return false;
 }
 
 function withListPrefix(text: string, listTitle?: string | null): string {
@@ -94,12 +81,6 @@ export function bookRecordToWibeItem(
   if (record.isbn?.trim()) metadata.isbn = record.isbn.trim();
   metadata.source = record.source;
   metadata.sourceId = record.bookId;
-  if (record.contentType) metadata.contentType = record.contentType;
-  if (!opts?.fastMode) {
-    if (record.publisher?.trim()) metadata.publisher = record.publisher.trim();
-    if (record.rating != null) metadata.rating = record.rating;
-    if (record.price != null) metadata.price = record.price;
-  }
 
   const item: WibeBookImportItem = {
     title: shortBookDisplayTitle(sanitizeBookText(record.title)),
@@ -108,7 +89,9 @@ export function bookRecordToWibeItem(
     metadata,
   };
   if (description) item.description = description;
-  if (tip) item.tip = tip;
+  if (tip && !(description && tipsAreEquivalent(tip, description))) {
+    item.tip = tip;
+  }
   return item;
 }
 
@@ -131,6 +114,8 @@ export const BOOK_EXTRACT_JSON_EXAMPLE = `{
       "metadata": {
         "author": "کال نیوپورت",
         "genre": "مدیریت ذهن",
+        "source": "ketabrah",
+        "sourceId": "40821",
         "isbn": "9786226840125"
       }
     }

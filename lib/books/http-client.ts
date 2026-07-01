@@ -72,8 +72,11 @@ export async function fetchJson<T>(
         body: options.body,
       });
       clearTimeout(timer);
+      if (res.status === 204) return {} as T;
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as T;
+      const text = await res.text();
+      if (!text.trim()) return {} as T;
+      const data = JSON.parse(text) as T;
       return data;
     } catch (err) {
       lastError = err;

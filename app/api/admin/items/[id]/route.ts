@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { requireAdminUser } from '@/lib/auth/require-permission';
 import { softDeleteItems } from '@/lib/admin/item-trash';
+import { updateItemTip } from '@/lib/admin/item-tips-server';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 import { ensureImageInLiara } from '@/lib/object-storage';
@@ -217,7 +218,7 @@ export async function PUT(
   }
 }
 
-// PATCH /api/admin/items/[id] — order و/یا title (ویرایش سریع)
+// PATCH /api/admin/items/[id] — order، title، tip (ویرایش سریع)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -226,11 +227,17 @@ export async function PATCH(
     await requireAdmin();
     const { id } = await params;
     const body = await request.json();
-    const { order, title } = body;
+    const { order, title, tip } = body;
 
     const existing = await prisma.items.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: 'آیتم یافت نشد' }, { status: 404 });
+    }
+
+    if (tip === null || typeof tip === 'string') {
+      await updateItemTip(prisma, id, tip);
+      const item = await prisma.items.findUnique({ where: { id } });
+      return NextResponse.json(item);
     }
 
     const data: { order?: number; title?: string; updatedAt: Date } = {
@@ -251,7 +258,7 @@ export async function PATCH(
 
     if (data.order === undefined && data.title === undefined) {
       return NextResponse.json(
-        { error: 'حداقل یکی از order یا title الزامی است' },
+        { error: 'حداقل یکی از order، title یا tip الزامی است' },
         { status: 400 }
       );
     }

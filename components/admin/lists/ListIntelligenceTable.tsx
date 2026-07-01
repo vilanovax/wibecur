@@ -137,8 +137,11 @@ export default function ListIntelligenceTable({
               return (
                 <tr
                   key={row.id}
-                  onClick={() => {
-                    if (!isTrashView) router.push(`/admin/lists/${row.id}`);
+                  onClick={(e) => {
+                    if (isTrashView) return;
+                    const target = e.target as HTMLElement;
+                    if (target.closest('[data-list-ops]')) return;
+                    router.push(`/admin/lists/${row.id}`);
                   }}
                   className={`border-b border-[var(--color-border-muted)] transition-colors hover:bg-[var(--color-bg)]/60 ${bg} ${
                     !row.isActive && !isTrashView ? 'opacity-65' : ''
@@ -246,8 +249,13 @@ export default function ListIntelligenceTable({
                     </>
                   )}
 
-                  <td className={`sticky left-0 z-10 overflow-visible py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`} onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-center gap-1 flex-wrap">
+                  <td
+                    data-list-ops=""
+                    className={`sticky left-0 z-20 overflow-visible py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="relative z-20 flex items-center justify-center gap-1 flex-wrap">
                       {isTrashView ? (
                         onRestore && (
                           <button
@@ -272,6 +280,7 @@ export default function ListIntelligenceTable({
                             href={`/admin/lists/${row.id}/edit`}
                             target="_blank"
                             rel="noopener noreferrer"
+                            data-list-ops=""
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-[var(--primary)] text-white hover:opacity-90"
                             title="ویرایش در تب جدید"
                           >
@@ -282,6 +291,7 @@ export default function ListIntelligenceTable({
                             href={`/lists/${row.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
+                            data-list-ops=""
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
                             title="نمایش در سایت"
                           >

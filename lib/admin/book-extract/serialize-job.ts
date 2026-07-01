@@ -29,7 +29,7 @@ export function serializeBookExtractJob(job: {
   targetListId: string | null;
   progress: number;
   progressMeta: unknown;
-  resultItems: unknown;
+  resultItems?: unknown;
   itemCount: number;
   errorMessage: string | null;
   createdAt: Date;
@@ -46,7 +46,7 @@ export function serializeBookExtractJob(job: {
     targetListId: job.targetListId,
     progress: job.progress,
     progressMeta: (job.progressMeta as BookExtractProgressMeta | null) ?? null,
-    resultItems: job.resultItems,
+    resultItems: job.resultItems ?? null,
     itemCount: job.itemCount,
     errorMessage: job.errorMessage,
     createdAt: job.createdAt.toISOString(),

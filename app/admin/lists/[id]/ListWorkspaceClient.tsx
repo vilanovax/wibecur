@@ -150,6 +150,7 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
       {/* آیتم‌ها */}
       <ListWorkspaceItemsPanel
         listId={list.id}
+        listSlug={list.slug}
         listTitle={list.title}
         categorySlug={category?.slug ?? null}
         categoryIcon={category?.icon ?? null}

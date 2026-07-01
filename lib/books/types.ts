@@ -9,6 +9,9 @@ export type BookRecord = {
   title: string;
   authors: string[];
   translator?: string | null;
+  subtitle?: string | null;
+  /** خلاصه کوتاه — معمولاً برای tip در حالت جزئیات کامل */
+  excerpt?: string | null;
   genres: string[];
   description?: string | null;
   isbn?: string | null;
@@ -98,9 +101,9 @@ export const DEFAULT_BOOK_EXTRACT_OPTIONS: Required<BookExtractOptions> = {
   enrichDetails: true,
   fastMode: false,
   fuzzyMinScore: 70,
-  delayMs: 700,
+  delayMs: 1200,
   maxRetries: 2,
   limit: 20,
-  contentTypeFilter: 'all',
+  contentTypeFilter: 'ebook',
   autoImport: false,
 };

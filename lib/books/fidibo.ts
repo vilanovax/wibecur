@@ -1,7 +1,7 @@
 import type { BookRecord, BookSearchCandidate } from '@/lib/books/types';
 import { inferFidiboContentType } from '@/lib/books/content-type';
 import { extractJsObjectAssignment, fetchHtml, fetchJson } from '@/lib/books/http-client';
-import { sanitizeBookText, stripHtmlTags } from '@/lib/books/normalize';
+import { sanitizeBookText, sleep, stripHtmlTags } from '@/lib/books/normalize';
 
 const FIDIBO_ORIGIN = 'https://fidibo.com';
 
@@ -28,15 +28,112 @@ type FidiboBookContextEntry = {
   title?: string;
   subtitle?: string;
   description?: string;
+  content_type?: string;
+  format?: string;
   isbn?: string;
   authors?: { full_name?: string; name?: string; last_name?: string }[];
   categories?: { name?: string }[];
   publisher?: { name?: string };
+  publishers?: { name?: string }[];
   cover?: { image?: string };
   rate?: { score?: number };
   price?: number;
   action?: { web_url?: string };
+  content?: {
+    list?: {
+      component?: string;
+      items?: {
+        introduction?: {
+          description?: string;
+          short_description?: string;
+        };
+        categories?: { name?: string }[];
+      }[];
+    }[];
+  };
 };
+
+function htmlToBookText(html: string): string {
+  const paragraphs = html
+    .split(/<\/p>/i)
+    .map((chunk) => sanitizeBookText(stripHtmlTags(chunk)))
+    .filter((p) => p.length > 20);
+  if (paragraphs.length > 0) return paragraphs.join('\n\n');
+  return sanitizeBookText(stripHtmlTags(html));
+}
+
+function parseFidiboGenres(entry: FidiboBookContextEntry): string[] {
+  const genres: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (name?: string) => {
+    const text = sanitizeBookText(name ?? '');
+    if (!text || seen.has(text)) return;
+    seen.add(text);
+    genres.push(text);
+  };
+
+  for (const category of entry.categories ?? []) push(category.name);
+  for (const block of entry.content?.list ?? []) {
+    for (const item of block.items ?? []) {
+      for (const category of item.categories ?? []) push(category.name);
+    }
+  }
+  return genres;
+}
+
+function parseFidiboPublisher(entry: FidiboBookContextEntry): string | null {
+  const fromSingle = sanitizeBookText(entry.publisher?.name ?? '');
+  if (fromSingle) return fromSingle;
+  const fromList = sanitizeBookText(entry.publishers?.[0]?.name ?? '');
+  return fromList || null;
+}
+
+function parseFidiboDescription(entry: FidiboBookContextEntry): {
+  description: string | null;
+  excerpt: string | null;
+} {
+  const introParts: string[] = [];
+  const shortParts: string[] = [];
+
+  for (const block of entry.content?.list ?? []) {
+    if (block.component !== 'BOOK_INTRODUCTION') continue;
+    for (const item of block.items ?? []) {
+      const intro = item.introduction;
+      if (!intro) continue;
+      if (intro.description) {
+        const text = htmlToBookText(intro.description);
+        if (text.length > 40) introParts.push(text);
+      }
+      if (intro.short_description) {
+        const short = sanitizeBookText(stripHtmlTags(intro.short_description)).replace(
+          /\.{3,}$/,
+          ''
+        );
+        if (short.length > 30) shortParts.push(short);
+      }
+    }
+  }
+
+  if (introParts.length > 0) {
+    return {
+      description: introParts.join('\n\n'),
+      excerpt: shortParts[0] ?? (sanitizeBookText(entry.subtitle ?? '') || null),
+    };
+  }
+
+  const legacy = sanitizeBookText(stripHtmlTags(entry.description ?? ''));
+  if (legacy.length > 40) {
+    return { description: legacy, excerpt: sanitizeBookText(entry.subtitle ?? '') || null };
+  }
+
+  const subtitle = sanitizeBookText(entry.subtitle ?? '');
+  if (subtitle.length > 40) {
+    return { description: subtitle, excerpt: shortParts[0] ?? null };
+  }
+
+  return { description: null, excerpt: shortParts[0] ?? (subtitle || null) };
+}
 
 function fidiboHeaders(): Record<string, string> {
   return {
@@ -85,9 +182,8 @@ function contextEntryToRecord(
   const authors = (entry.authors ?? [])
     .map((a) => sanitizeBookText(a.full_name || `${a.name ?? ''} ${a.last_name ?? ''}`.trim()))
     .filter(Boolean);
-  const genres = (entry.categories ?? [])
-    .map((c) => sanitizeBookText(c.name ?? ''))
-    .filter(Boolean);
+  const genres = parseFidiboGenres(entry);
+  const { description, excerpt } = parseFidiboDescription(entry);
   const webUrl = entry.action?.web_url;
   const bookUrl = webUrl
     ? webUrl.startsWith('http')
@@ -98,15 +194,17 @@ function contextEntryToRecord(
   return {
     source: 'fidibo',
     bookId,
-    contentType: null,
+    contentType: inferFidiboContentType(entry),
     title,
     authors,
+    subtitle: sanitizeBookText(entry.subtitle ?? '') || null,
+    excerpt,
     genres,
-    description: sanitizeBookText(stripHtmlTags(entry.description ?? '')) || null,
+    description,
     isbn: sanitizeBookText(entry.isbn ?? '') || null,
     coverUrl: entry.cover?.image ?? null,
     bookUrl,
-    publisher: sanitizeBookText(entry.publisher?.name ?? '') || null,
+    publisher: parseFidiboPublisher(entry),
     price: typeof entry.price === 'number' ? entry.price : null,
     rating: entry.rate?.score ?? null,
     scrapedAt: new Date().toISOString(),
@@ -232,13 +330,125 @@ function isFidiboSearchItem(value: unknown): value is FidiboSearchItem {
   );
 }
 
-export function parseFidiboCategoryContext(html: string): number | null {
+export function parseFidiboSortFromUrl(categoryUrl: string): string {
+  try {
+    const parsed = new URL(categoryUrl.trim());
+    return parsed.searchParams.get('sort')?.trim() || 'BESTSELLER';
+  } catch {
+    return 'BESTSELLER';
+  }
+}
+
+function parseFidiboEbooksSlugFromUrl(categoryUrl: string): string | null {
+  try {
+    const parsed = new URL(categoryUrl.trim());
+    const match = parsed.pathname.replace(/\/+$/, '').match(/^\/ebooks\/(.+)$/i);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+type FidiboCategoryActionEntry = {
+  action?: {
+    inputs?: { key?: string; value?: string | number }[];
+    web_url?: string;
+  };
+  long_slug?: string;
+  slug?: string;
+  children?: unknown[];
+};
+
+function categoryIdFromActionEntry(entry: FidiboCategoryActionEntry): number | null {
+  for (const input of entry.action?.inputs ?? []) {
+    if (input.key === 'categoryId' && input.value != null) {
+      const id = Number(input.value);
+      if (Number.isFinite(id) && id > 0) return id;
+    }
+  }
+  return null;
+}
+
+function walkCategoryTree(node: unknown, ebooksSlug: string | null): FidiboCategoryActionEntry | null {
+  if (!node || typeof node !== 'object') return null;
+
+  const entry = node as FidiboCategoryActionEntry;
+  const entryWeb = entry.action?.web_url?.replace(/\/+$/, '');
+  const matchesSlug =
+    !!ebooksSlug &&
+    (entry.long_slug === ebooksSlug ||
+      entry.slug === ebooksSlug ||
+      entryWeb === `/ebooks/${ebooksSlug}`);
+
+  if (matchesSlug) return entry;
+
+  for (const child of entry.children ?? []) {
+    const found = walkCategoryTree(child, ebooksSlug);
+    if (found) return found;
+  }
+  return null;
+}
+
+/** categoryId و sort از صفحه دسته فیدیبو (ساختار جدید action.inputs) */
+export function parseFidiboCategoryListMeta(
+  html: string,
+  categoryUrl: string
+): { categoryId: number; sort: string } | null {
+  const sort = parseFidiboSortFromUrl(categoryUrl);
+  const ebooksSlug = parseFidiboEbooksSlugFromUrl(categoryUrl);
+
+  const ctx = extractJsObjectAssignment(html, 'window.categoryContext');
+  if (ctx) {
+    const directKey = ebooksSlug ? `ebooks${ebooksSlug}` : null;
+    if (directKey && ctx[directKey]) {
+      const id = categoryIdFromActionEntry(ctx[directKey] as FidiboCategoryActionEntry);
+      if (id) return { categoryId: id, sort };
+    }
+
+    for (const value of Object.values(ctx)) {
+      const found = walkCategoryTree(value, ebooksSlug);
+      if (found) {
+        const id = categoryIdFromActionEntry(found);
+        if (id) return { categoryId: id, sort };
+      }
+
+      if (!ebooksSlug && value && typeof value === 'object') {
+        const legacyId =
+          (value as { categoryId?: number }).categoryId ??
+          (value as { id?: number }).id;
+        if (typeof legacyId === 'number' && legacyId > 0) {
+          return { categoryId: legacyId, sort };
+        }
+      }
+    }
+  }
+
+  const inputMatch = html.match(/"key"\s*:\s*"categoryId"\s*,\s*"value"\s*:\s*"?(\d+)"?/i);
+  if (inputMatch?.[1]) {
+    return { categoryId: parseInt(inputMatch[1], 10), sort };
+  }
+
+  const slugMatch = html.match(/categoryId["\s:]+(\d+)/i);
+  if (slugMatch?.[1]) {
+    return { categoryId: parseInt(slugMatch[1], 10), sort };
+  }
+
+  return null;
+}
+
+export function parseFidiboCategoryContext(html: string, categoryUrl?: string): number | null {
+  if (categoryUrl) {
+    return parseFidiboCategoryListMeta(html, categoryUrl)?.categoryId ?? null;
+  }
+
   const ctx = extractJsObjectAssignment(html, 'window.categoryContext');
   if (!ctx) return null;
   for (const value of Object.values(ctx)) {
+    const fromAction = categoryIdFromActionEntry(value as FidiboCategoryActionEntry);
+    if (fromAction) return fromAction;
     if (value && typeof value === 'object') {
-      const id = (value as { categoryId?: number; id?: number }).categoryId ??
-        (value as { id?: number }).id;
+      const id =
+        (value as { categoryId?: number }).categoryId ?? (value as { id?: number }).id;
       if (typeof id === 'number' && id > 0) return id;
     }
   }
@@ -294,35 +504,52 @@ async function fetchFidiboListPage(
   return parseFidiboListResponse(data);
 }
 
+async function collectFidiboListPages(
+  limit: number,
+  body: Record<string, unknown>,
+  options?: { maxRetries?: number; delayMs?: number }
+): Promise<BookSearchCandidate[]> {
+  const requestLimit = Math.min(30, limit);
+  const out: BookSearchCandidate[] = [];
+  const seen = new Set<string>();
+  let page = 1;
+
+  while (out.length < limit) {
+    const batch = await fetchFidiboListPage(page, requestLimit, body, options);
+    if (batch.length === 0) break;
+
+    let added = 0;
+    for (const candidate of batch) {
+      if (seen.has(candidate.bookId)) continue;
+      seen.add(candidate.bookId);
+      out.push(candidate);
+      added++;
+      if (out.length >= limit) break;
+    }
+
+    if (out.length >= limit) break;
+    if (added === 0) break;
+    page++;
+    const delayMs = options?.delayMs ?? 0;
+    if (delayMs > 0) await sleep(delayMs);
+  }
+
+  return out.slice(0, limit);
+}
+
 export async function listFidiboCategory(
   categoryUrl: string,
   limit: number,
-  options?: { maxRetries?: number }
+  options?: { maxRetries?: number; delayMs?: number }
 ): Promise<BookSearchCandidate[]> {
   const listRequest = parseFidiboListRequest(categoryUrl);
-  const pageSize = Math.min(30, limit);
-  const out: BookSearchCandidate[] = [];
-  let page = 1;
 
   if (listRequest?.kind === 'listIds') {
-    const seen = new Set<string>();
     const listBody = buildFidiboListRequestBody(
       { proposedListId: listRequest.listIds },
       listRequest.sort
     );
-    while (out.length < limit) {
-      const batch = await fetchFidiboListPage(page, pageSize, listBody, options);
-      if (batch.length === 0) break;
-      for (const candidate of batch) {
-        if (seen.has(candidate.bookId)) continue;
-        seen.add(candidate.bookId);
-        out.push(candidate);
-        if (out.length >= limit) break;
-      }
-      if (batch.length < pageSize) break;
-      page++;
-    }
-    return out.slice(0, limit);
+    return collectFidiboListPages(limit, listBody, options);
   }
 
   const html = await fetchHtml(categoryUrl, {
@@ -330,25 +557,14 @@ export async function listFidiboCategory(
     maxRetries: options?.maxRetries,
     timeoutMs: 45000,
   });
-  const categoryId = parseFidiboCategoryContext(html);
-  if (!categoryId) {
+  const categoryMeta = parseFidiboCategoryListMeta(html, categoryUrl);
+  if (!categoryMeta) {
     throw new Error('categoryId فیدیبو از صفحه استخراج نشد');
   }
 
-  const categoryBody = buildFidiboListRequestBody({ categoryId }, 'bestseller');
-  const seen = new Set<string>();
-  while (out.length < limit) {
-    const batch = await fetchFidiboListPage(page, pageSize, categoryBody, options);
-    if (batch.length === 0) break;
-    for (const candidate of batch) {
-      if (seen.has(candidate.bookId)) continue;
-      seen.add(candidate.bookId);
-      out.push(candidate);
-      if (out.length >= limit) break;
-    }
-    if (batch.length < pageSize) break;
-    page++;
-  }
-
-  return out.slice(0, limit);
+  const categoryBody = buildFidiboListRequestBody(
+    { categoryId: categoryMeta.categoryId },
+    categoryMeta.sort
+  );
+  return collectFidiboListPages(limit, categoryBody, options);
 }

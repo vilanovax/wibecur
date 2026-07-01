@@ -20,7 +20,7 @@ import {
 } from '@/lib/list-entry';
 import { catalogHasSearchProfile } from '@/lib/catalog-search-profile';
 import { isCatalogAdminDisabled } from '@/lib/admin/catalog-visibility';
-import { expandCategorySlugFilter, isSameCategorySlug } from '@/lib/category-slug-aliases';
+import { expandCategorySlugFilter, dedupeActiveCategoriesByAlias, isSameCategorySlug } from '@/lib/category-slug-aliases';
 import {
   buildCatalogItemSearchFilter,
   CATALOG_SEARCH_MIN_SCORE,
@@ -1076,11 +1076,14 @@ export async function getCatalogCategoryFilters(
     prisma.categories.findMany({
       where: { deletedAt: null, isActive: true },
       orderBy: { order: 'asc' },
-      select: { slug: true, name: true },
+      select: { slug: true, name: true, order: true },
     }),
   ]);
 
-  const countByCanonical = new Map<string, { slug: string; name: string; count: number }>();
+  const canonicalCategories = dedupeActiveCategoriesByAlias(dbCategories);
+  const countByCanonical = new Map<string, number>(
+    canonicalCategories.map((cat) => [cat.slug, 0])
+  );
   let uncategorized = 0;
 
   for (const g of grouped) {
@@ -1091,39 +1094,21 @@ export async function getCatalogCategoryFilters(
       continue;
     }
 
-    const matched = dbCategories.find((c) => isSameCategorySlug(c.slug, raw));
-    if (matched) {
-      const prev = countByCanonical.get(matched.slug);
-      countByCanonical.set(matched.slug, {
-        slug: matched.slug,
-        name: matched.name,
-        count: (prev?.count ?? 0) + n,
-      });
+    const canonical = canonicalCategories.find((c) => isSameCategorySlug(c.slug, raw));
+    if (canonical) {
+      countByCanonical.set(canonical.slug, (countByCanonical.get(canonical.slug) ?? 0) + n);
     } else {
-      const key = raw;
-      const prev = countByCanonical.get(key);
-      countByCanonical.set(key, {
-        slug: key,
-        name: prev?.name ?? raw,
-        count: (prev?.count ?? 0) + n,
-      });
+      uncategorized += n;
     }
   }
 
-  const categories: CatalogCategoryFilter[] = [];
-  for (const cat of dbCategories) {
-    const entry = countByCanonical.get(cat.slug);
-    if (entry && entry.count > 0) {
-      categories.push({ slug: cat.slug, name: cat.name, count: entry.count });
-      countByCanonical.delete(cat.slug);
-    }
-  }
-
-  for (const entry of [...countByCanonical.values()].sort((a, b) => b.count - a.count)) {
-    if (entry.count > 0) {
-      categories.push({ slug: entry.slug, name: entry.name, count: entry.count });
-    }
-  }
+  const categories: CatalogCategoryFilter[] = canonicalCategories
+    .map((cat) => ({
+      slug: cat.slug,
+      name: cat.name,
+      count: countByCanonical.get(cat.slug) ?? 0,
+    }))
+    .filter((entry) => entry.count > 0);
 
   if (uncategorized > 0) {
     categories.push({ slug: '__none__', name: 'بدون دسته', count: uncategorized });

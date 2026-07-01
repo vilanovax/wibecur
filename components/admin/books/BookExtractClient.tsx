@@ -60,6 +60,8 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'لغو شده',
 };
 
+const RECENT_JOBS_LIMIT = 5;
+
 type ExtractMode = 'titles' | 'category';
 
 type Props = {
@@ -73,14 +75,22 @@ export default function BookExtractClient({ lists }: Props) {
   const [titlesText, setTitlesText] = useState('');
   const [categoryUrl, setCategoryUrl] = useState('');
   const [categoryLimit, setCategoryLimit] = useState(20);
+  const [delayMs, setDelayMs] = useState(1200);
   const [targetListId, setTargetListId] = useState('');
-  const [contentTypeFilter, setContentTypeFilter] = useState<'all' | 'ebook' | 'audiobook'>('all');
+  const [contentTypeFilter, setContentTypeFilter] = useState<'all' | 'ebook' | 'audiobook'>('ebook');
   const [autoImport, setAutoImport] = useState(false);
   const [enrichDetails, setEnrichDetails] = useState(true);
   const [fastMode, setFastMode] = useState(false);
   const [fuzzyMinScore, setFuzzyMinScore] = useState(70);
-  const [jobs, setJobs] = useState<SerializedBookExtractJob[]>([]);
+  const [recentJobs, setRecentJobs] = useState<SerializedBookExtractJob[]>([]);
+  const [archivedJobs, setArchivedJobs] = useState<SerializedBookExtractJob[]>([]);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiveLoaded, setArchiveLoaded] = useState(false);
+  const [archiveLoading, setArchiveLoading] = useState(false);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [activeJob, setActiveJob] = useState<SerializedBookExtractJob | null>(null);
+  const [loadingJobDetail, setLoadingJobDetail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [importing, setImporting] = useState(false);
@@ -101,7 +111,113 @@ export default function BookExtractClient({ lists }: Props) {
     [lists]
   );
 
-  const activeJob = jobs.find((j) => j.id === activeJobId) ?? jobs[0] ?? null;
+  const archivedCount = Math.max(0, totalJobs - RECENT_JOBS_LIMIT);
+
+  const loadRecentJobs = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/admin/books/extract?limit=${RECENT_JOBS_LIMIT}&offset=0`
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'خطا در بارگذاری تاریخچه');
+      }
+      const data = await res.json();
+      const rows = (data.data ?? []) as SerializedBookExtractJob[];
+      setRecentJobs(rows);
+      setTotalJobs(data.total ?? rows.length);
+      if (!activeJobId && rows[0]?.id) {
+        const running = rows.find((j) => ['PENDING', 'RUNNING'].includes(j.status));
+        if (running) setActiveJobId(running.id);
+      }
+      return rows;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا');
+      return [];
+    }
+  }, [activeJobId]);
+
+  const loadArchivedJobs = useCallback(async () => {
+    if (totalJobs <= RECENT_JOBS_LIMIT) {
+      setArchivedJobs([]);
+      setArchiveLoaded(true);
+      return;
+    }
+    setArchiveLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/books/extract?limit=50&offset=${RECENT_JOBS_LIMIT}&listOnly=1`
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'خطا در بارگذاری آرشیو');
+      }
+      const data = await res.json();
+      setArchivedJobs((data.data ?? []) as SerializedBookExtractJob[]);
+      setArchiveLoaded(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا');
+    } finally {
+      setArchiveLoading(false);
+    }
+  }, [totalJobs]);
+
+  const loadJobs = loadRecentJobs;
+
+  const fetchJobDetail = useCallback(async (id: string) => {
+    setLoadingJobDetail(true);
+    try {
+      const res = await fetch(`/api/admin/books/extract/${id}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'خطا در دریافت job');
+      }
+      const data = await res.json();
+      const job = data.data as SerializedBookExtractJob;
+      setActiveJob(job);
+      return job;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا');
+      return null;
+    } finally {
+      setLoadingJobDetail(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRecentJobs();
+  }, [loadRecentJobs]);
+
+  useEffect(() => {
+    if (!activeJobId) {
+      setActiveJob(null);
+      return;
+    }
+    const inRecent = recentJobs.find((j) => j.id === activeJobId);
+    if (inRecent) {
+      setActiveJob(inRecent);
+      return;
+    }
+    const inArchive = archivedJobs.find((j) => j.id === activeJobId);
+    if (inArchive?.resultItems) {
+      setActiveJob(inArchive);
+      return;
+    }
+    void fetchJobDetail(activeJobId);
+  }, [activeJobId, recentJobs, archivedJobs, fetchJobDetail]);
+
+  useEffect(() => {
+    const running = recentJobs.some((j) => j.status === 'PENDING' || j.status === 'RUNNING');
+    if (!running) return;
+    const timer = setInterval(() => void loadRecentJobs(), 2000);
+    return () => clearInterval(timer);
+  }, [recentJobs, loadRecentJobs]);
+
+  useEffect(() => {
+    if (archiveOpen && !archiveLoaded && totalJobs > RECENT_JOBS_LIMIT) {
+      void loadArchivedJobs();
+    }
+  }, [archiveOpen, archiveLoaded, totalJobs, loadArchivedJobs]);
 
   const jobResultItems = useMemo(
     () =>
@@ -138,37 +254,6 @@ export default function BookExtractClient({ lists }: Props) {
 
   const importPayload = useMemo(() => ({ items: previewItems }), [previewItems]);
 
-  const loadJobs = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/books/extract');
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'خطا در بارگذاری تاریخچه');
-      }
-      const data = await res.json();
-      setJobs(data.data ?? []);
-      if (!activeJobId && data.data?.[0]?.id) {
-        const running = (data.data as SerializedBookExtractJob[]).find((j) =>
-          ['PENDING', 'RUNNING'].includes(j.status)
-        );
-        if (running) setActiveJobId(running.id);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'خطا');
-    }
-  }, [activeJobId]);
-
-  useEffect(() => {
-    void loadJobs();
-  }, [loadJobs]);
-
-  useEffect(() => {
-    const running = jobs.some((j) => j.status === 'PENDING' || j.status === 'RUNNING');
-    if (!running) return;
-    const timer = setInterval(() => void loadJobs(), 2000);
-    return () => clearInterval(timer);
-  }, [jobs, loadJobs]);
-
   const handleStart = async () => {
     setError('');
     setLoading(true);
@@ -182,6 +267,7 @@ export default function BookExtractClient({ lists }: Props) {
         enrichDetails,
         fastMode,
         fuzzyMinScore,
+        delayMs,
         limit: categoryLimit,
       };
       if (mode === 'titles') body.titlesText = titlesText;
@@ -222,16 +308,26 @@ export default function BookExtractClient({ lists }: Props) {
   const canStart =
     mode === 'titles' ? titlesText.trim().length > 0 : categoryUrl.trim().length > 0;
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('این job حذف شود؟')) return;
+  const handleDelete = async (id: string, fromArchive = false) => {
+    if (!confirm(fromArchive ? 'این job از آرشیو حذف شود؟' : 'این job حذف شود؟')) return;
     const res = await fetch(`/api/admin/books/extract/${id}`, { method: 'DELETE' });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       alert(data.error || 'حذف ناموفق');
       return;
     }
-    if (activeJobId === id) setActiveJobId(null);
-    await loadJobs();
+    if (activeJobId === id) {
+      setActiveJobId(null);
+      setActiveJob(null);
+    }
+    await loadRecentJobs();
+    if (fromArchive) {
+      setArchivedJobs((prev) => prev.filter((j) => j.id !== id));
+      setTotalJobs((t) => Math.max(0, t - 1));
+    } else if (archiveLoaded) {
+      setArchiveLoaded(false);
+      void loadArchivedJobs();
+    }
   };
 
   const handleResetPreview = () => {
@@ -489,6 +585,22 @@ export default function BookExtractClient({ lists }: Props) {
                 </details>
               )}
               <label className="flex items-center gap-2 justify-between">
+                <span>فاصله بین درخواست‌ها (میلی‌ثانیه)</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={10000}
+                  step={100}
+                  value={delayMs}
+                  onChange={(e) => setDelayMs(Math.max(0, Number(e.target.value) || 0))}
+                  className="w-20 rounded border border-gray-200 px-2 py-1 text-center"
+                  dir="ltr"
+                />
+              </label>
+              <p className="text-xs text-gray-400 pr-6">
+                بین هر صفحه لیست و هر جزئیات کتاب؛ برای جلوگیری از بلاک فیدیبو ۱۲۰۰+ پیشنهاد می‌شود.
+              </p>
+              <label className="flex items-center gap-2 justify-between">
                 <span>حداقل امتیاز fuzzy (فقط لیست عنوان)</span>
                 <input
                   type="number"
@@ -537,9 +649,9 @@ export default function BookExtractClient({ lists }: Props) {
                 )}
                 <History className="w-5 h-5 shrink-0" />
                 <span>تاریخچه</span>
-                {!historyOpen && jobs.length > 0 && (
+                {!historyOpen && totalJobs > 0 && (
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                    {jobs.length.toLocaleString('fa-IR')}
+                    {totalJobs.toLocaleString('fa-IR')}
                   </span>
                 )}
               </button>
@@ -554,7 +666,7 @@ export default function BookExtractClient({ lists }: Props) {
             </div>
 
             {historyOpen && (
-            <div className="p-5 pt-4 overflow-x-auto">
+            <div className="p-5 pt-4 overflow-x-auto space-y-4">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-right text-gray-500 border-b">
@@ -568,48 +680,77 @@ export default function BookExtractClient({ lists }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {jobs.length === 0 && (
+                  {recentJobs.length === 0 && (
                     <tr>
                       <td colSpan={7} className="py-6 text-center text-gray-400">
                         هنوز jobی ثبت نشده
                       </td>
                     </tr>
                   )}
-                  {jobs.map((job) => (
-                    <tr
+                  {recentJobs.map((job) => (
+                    <JobHistoryRow
                       key={job.id}
-                      className={`border-b border-gray-50 cursor-pointer hover:bg-gray-50 ${
-                        activeJob?.id === job.id ? 'bg-violet-50' : ''
-                      }`}
-                      onClick={() => setActiveJobId(job.id)}
-                    >
-                      <td className="py-2 pr-2">
-                        <StatusBadge status={job.status} />
-                      </td>
-                      <td className="py-2">{MODE_LABELS[job.mode] ?? job.mode}</td>
-                      <td className="py-2">{SOURCE_LABELS[job.source] ?? job.source}</td>
-                      <td className="py-2">{job.itemCount}</td>
-                      <td className="py-2">{job.progress}%</td>
-                      <td className="py-2 text-gray-500 text-xs">
-                        {new Date(job.createdAt).toLocaleString('fa-IR')}
-                      </td>
-                      <td className="py-2 pl-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleDelete(job.id);
-                          }}
-                          className="p-1 text-gray-400 hover:text-red-600"
-                          title="حذف"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
+                      job={job}
+                      selected={activeJob?.id === job.id}
+                      onSelect={() => setActiveJobId(job.id)}
+                      onDelete={() => void handleDelete(job.id)}
+                    />
                   ))}
                 </tbody>
               </table>
+
+              {archivedCount > 0 && (
+                <div className="border-t border-gray-100 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setArchiveOpen((v) => !v)}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    aria-expanded={archiveOpen}
+                  >
+                    <span>
+                      آرشیو ({archivedCount.toLocaleString('fa-IR')} مورد قدیمی‌تر)
+                    </span>
+                    {archiveOpen ? (
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+
+                  {archiveOpen && (
+                    <div className="mt-2">
+                      {archiveLoading ? (
+                        <div className="flex items-center justify-center gap-2 py-6 text-sm text-gray-500">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          در حال بارگذاری آرشیو...
+                        </div>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <tbody>
+                            {archivedJobs.length === 0 && (
+                              <tr>
+                                <td colSpan={7} className="py-4 text-center text-gray-400">
+                                  موردی در آرشیو نیست
+                                </td>
+                              </tr>
+                            )}
+                            {archivedJobs.map((job) => (
+                              <JobHistoryRow
+                                key={job.id}
+                                job={job}
+                                selected={activeJob?.id === job.id}
+                                onSelect={() => setActiveJobId(job.id)}
+                                onDelete={() => void handleDelete(job.id, true)}
+                                muted
+                              />
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             )}
           </div>
@@ -617,7 +758,10 @@ export default function BookExtractClient({ lists }: Props) {
           {activeJob && (
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-semibold text-gray-900">جزئیات job</h3>
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  جزئیات job
+                  {loadingJobDetail && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {activeJob.status === 'FAILED' &&
                     activeJob.mode === 'titles' &&
@@ -832,6 +976,53 @@ export default function BookExtractClient({ lists }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+function JobHistoryRow({
+  job,
+  selected,
+  onSelect,
+  onDelete,
+  muted = false,
+}: {
+  job: SerializedBookExtractJob;
+  selected: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+  muted?: boolean;
+}) {
+  return (
+    <tr
+      className={`border-b border-gray-50 cursor-pointer hover:bg-gray-50 ${
+        selected ? 'bg-violet-50' : muted ? 'text-gray-600' : ''
+      }`}
+      onClick={onSelect}
+    >
+      <td className="py-2 pr-2">
+        <StatusBadge status={job.status} />
+      </td>
+      <td className="py-2">{MODE_LABELS[job.mode] ?? job.mode}</td>
+      <td className="py-2">{SOURCE_LABELS[job.source] ?? job.source}</td>
+      <td className="py-2">{job.itemCount}</td>
+      <td className="py-2">{job.progress}%</td>
+      <td className="py-2 text-gray-500 text-xs">
+        {new Date(job.createdAt).toLocaleString('fa-IR')}
+      </td>
+      <td className="py-2 pl-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1 text-gray-400 hover:text-red-600"
+          title="حذف"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </td>
+    </tr>
   );
 }
 

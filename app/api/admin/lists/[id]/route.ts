@@ -116,7 +116,7 @@ export async function PUT(
   }
 }
 
-/** PATCH: فقط به‌روزرسانی isFeatured / isActive برای پنل ادمین */
+/** PATCH: به‌روزرسانی سریع isFeatured / isActive / description برای پنل ادمین */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -126,16 +126,19 @@ export async function PATCH(
     if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
     const body = await request.json();
-    const { isFeatured, isActive } = body;
+    const { isFeatured, isActive, description } = body;
 
     const existing = await prisma.lists.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: 'لیست یافت نشد' }, { status: 404 });
     }
 
-    const data: { isFeatured?: boolean; isActive?: boolean } = {};
+    const data: { isFeatured?: boolean; isActive?: boolean; description?: string | null } = {};
     if (typeof isFeatured === 'boolean') data.isFeatured = isFeatured;
     if (typeof isActive === 'boolean') data.isActive = isActive;
+    if (description === null || typeof description === 'string') {
+      data.description = description === null ? null : description.trim() || null;
+    }
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json(existing);

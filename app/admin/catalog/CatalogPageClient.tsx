@@ -867,13 +867,15 @@ export default function CatalogPageClient({
                   )}
 
                   <div className="flex flex-wrap items-end gap-2">
-                    <Link
-                      href={`${basePath}?view=${viewParam ?? 'catalog'}&mode=create`}
-                      className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-700 shadow-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      آیتم جدید
-                    </Link>
+                    {!embedded && (
+                      <Link
+                        href={`${basePath}?view=${viewParam ?? 'catalog'}&mode=create`}
+                        className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-700 shadow-sm"
+                      >
+                        <Plus className="w-4 h-4" />
+                        آیتم جدید
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={() => setExternalImagesOpen(true)}
