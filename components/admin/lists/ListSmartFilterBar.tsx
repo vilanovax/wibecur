@@ -13,7 +13,8 @@ export type ListFilterKind =
   | 'suspicious'
   | 'needs_review'
   | 'zero_save'
-  | 'featured';
+  | 'featured'
+  | 'no_cover';
 
 const FILTER_LABELS: Record<ListFilterKind, string> = {
   all: 'همه',
@@ -24,12 +25,14 @@ const FILTER_LABELS: Record<ListFilterKind, string> = {
   needs_review: 'نیازمند بررسی',
   zero_save: 'بدون ذخیره',
   featured: 'Featured',
+  no_cover: 'بدون کاور',
 };
 
 const secondaryPills: { value: ListFilterKind; label: string }[] = [
   { value: 'trending_top', label: '۱۰ برتر' },
   { value: 'needs_review', label: 'نیازمند بررسی' },
   { value: 'zero_save', label: 'بدون ذخیره' },
+  { value: 'no_cover', label: 'بدون کاور' },
 ];
 
 interface ListSmartFilterBarProps {

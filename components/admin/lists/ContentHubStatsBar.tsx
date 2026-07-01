@@ -182,7 +182,7 @@ export default function ContentHubStatsBar({
           <StatChip
             label="تصویر خارجی"
             value={stats.catalogExternalImages}
-            href="/admin/lists?view=catalog"
+            href="/admin/lists?view=catalog&externalImages=1"
             tone="rose"
             ok={stats.catalogExternalImages === 0}
           />
@@ -212,7 +212,7 @@ export default function ContentHubStatsBar({
           <StatChip
             label="لیست بدون کاور"
             value={stats.listsMissingCover}
-            href="/admin/lists"
+            href="/admin/lists?filter=no_cover"
             tone="amber"
             ok={stats.listsMissingCover === 0}
           />

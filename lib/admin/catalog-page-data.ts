@@ -34,6 +34,7 @@ export type CatalogPageData = {
   initialListFilters: Awaited<ReturnType<typeof getCatalogListFilters>>;
   initialDuplicateGroups: Awaited<ReturnType<typeof findDuplicateCatalogGroups>>;
   lists: { id: string; title: string; icon: string | null }[];
+  initialExternalImagesOpen: boolean;
 };
 
 export async function loadCatalogPageData(params: {
@@ -44,6 +45,7 @@ export async function loadCatalogPageData(params: {
   listId?: string;
   multiList?: string;
   mode?: string;
+  externalImages?: string;
 }): Promise<CatalogPageData> {
   const page = parseInt(params.page || '1', 10);
   const q = params.q?.trim() || '';
@@ -140,5 +142,6 @@ export async function loadCatalogPageData(params: {
       title: l.title,
       icon: l.categories?.icon ?? null,
     })),
+    initialExternalImagesOpen: params.externalImages === '1',
   };
 }

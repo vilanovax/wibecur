@@ -18,6 +18,7 @@ import ListDescriptionsClient from '@/components/admin/lists/ListDescriptionsCli
 import ItemTipsClient from '@/components/admin/lists/ItemTipsClient';
 import type { ListDescriptionsPageData } from '@/lib/admin/list-description-import';
 import type { ItemTipsPageData } from '@/lib/admin/item-tip-import';
+import type { ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
 
 export type ContentHubView = 'lists' | 'catalog' | 'import' | 'people' | 'descriptions' | 'item-tips';
 
@@ -46,6 +47,7 @@ interface ContentHubClientProps {
   trash?: boolean;
   initialCategoryId?: string;
   initialSearch?: string;
+  initialFilter?: ListFilterKind;
   catalogData?: CatalogPageData;
   importCategories?: ImportCategoryOption[];
   importLists?: ImportListOption[];
@@ -75,6 +77,7 @@ export default function ContentHubClient({
   trash = false,
   initialCategoryId = 'all',
   initialSearch = '',
+  initialFilter = 'all',
   catalogData,
   importCategories = [],
   importLists = [],
@@ -191,6 +194,7 @@ export default function ContentHubClient({
           trash={trash}
           initialCategoryId={initialCategoryId}
           initialSearch={initialSearch}
+          initialFilter={initialFilter}
           embedded
         />
       )}

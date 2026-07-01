@@ -13,7 +13,7 @@ import ListIntelligenceTable from '@/components/admin/lists/ListIntelligenceTabl
 import ListCoversGallery, { type ListAdminViewMode } from '@/components/admin/lists/ListCoversGallery';
 import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
 import Pagination from '@/components/admin/shared/Pagination';
-import { searchLists, countListsForFilter } from '@/lib/admin/list-list-utils';
+import { searchLists, countListsForFilter, listHasMissingCover } from '@/lib/admin/list-list-utils';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 
 type SortKey =
@@ -45,6 +45,8 @@ function filterLists(lists: ListIntelligenceRow[], filter: ListFilterKind): List
       return lists.filter((l) => l.saveCount === 0);
     case 'featured':
       return lists.filter((l) => l.isFeatured);
+    case 'no_cover':
+      return lists.filter((l) => listHasMissingCover(l));
     default:
       return lists;
   }
@@ -88,6 +90,7 @@ const EMPTY_COUNTS: Record<ListFilterKind, number> = {
   needs_review: 0,
   zero_save: 0,
   featured: 0,
+  no_cover: 0,
 };
 
 export default function ListsIntelligenceClient({
@@ -95,16 +98,18 @@ export default function ListsIntelligenceClient({
   trash: isTrashView,
   initialCategoryId = 'all',
   initialSearch = '',
+  initialFilter = 'all',
   embedded = false,
 }: {
   data: ListsIntelligenceData;
   trash: boolean;
   initialCategoryId?: string;
   initialSearch?: string;
+  initialFilter?: ListFilterKind;
   embedded?: boolean;
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<ListFilterKind>('all');
+  const [filter, setFilter] = useState<ListFilterKind>(initialFilter);
   const [categoryId, setCategoryId] = useState(initialCategoryId);
   const [search, setSearch] = useState(initialSearch);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -125,6 +130,10 @@ export default function ListsIntelligenceClient({
   useEffect(() => {
     setSearch(initialSearch);
   }, [initialSearch]);
+
+  useEffect(() => {
+    setFilter(initialFilter);
+  }, [initialFilter]);
 
   useEffect(
     () => () => {
@@ -161,6 +170,7 @@ export default function ListsIntelligenceClient({
       'needs_review',
       'zero_save',
       'featured',
+      'no_cover',
     ];
     const counts = { ...EMPTY_COUNTS };
     for (const k of keys) {
@@ -172,6 +182,19 @@ export default function ListsIntelligenceClient({
   const filteredByTab = useMemo(() => filterLists(lists, filter), [lists, filter]);
   const searched = useMemo(() => searchLists(filteredByTab, search), [filteredByTab, search]);
   const sorted = useMemo(() => sortLists(searched, sortBy), [searched, sortBy]);
+
+  const handleFilterChange = useCallback(
+    (next: ListFilterKind) => {
+      setFilter(next);
+      const params = new URLSearchParams(window.location.search);
+      if (next === 'all') params.delete('filter');
+      else params.set('filter', next);
+      params.delete('page');
+      const qs = params.toString();
+      router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+    },
+    [router]
+  );
 
   const handleCategoryChange = useCallback(
     (nextCategoryId: string) => {
@@ -217,6 +240,7 @@ export default function ListsIntelligenceClient({
     const params = new URLSearchParams(window.location.search);
     params.delete('q');
     params.delete('category');
+    params.delete('filter');
     params.delete('page');
     const qs = params.toString();
     router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
@@ -269,7 +293,7 @@ export default function ListsIntelligenceClient({
 
   const filterBarProps = {
     value: filter,
-    onChange: setFilter,
+    onChange: handleFilterChange,
     counts: filterCounts,
     search,
     onSearchChange: handleSearchChange,
@@ -403,7 +427,7 @@ export default function ListsIntelligenceClient({
               <ListPulseSummary
                 pulse={data.pulse}
                 activeFilter={filter}
-                onFilterClick={(f) => setFilter(f)}
+                onFilterClick={handleFilterChange}
               />
             </div>
           )}

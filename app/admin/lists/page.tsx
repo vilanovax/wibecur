@@ -9,6 +9,7 @@ import AdminDatabaseUnavailable from '@/components/admin/shared/AdminDatabaseUna
 import ContentHubClient, { type ContentHubView } from './ContentHubClient';
 import { loadListDescriptionsPageData } from '@/lib/admin/list-descriptions-data';
 import { loadItemTipsPageData } from '@/lib/admin/item-tips-data';
+import { parseListFilterParam } from '@/lib/admin/list-list-utils';
 
 async function resolveCategoryId(categoryParam: string | undefined): Promise<string> {
   if (!categoryParam || categoryParam === 'all') return 'all';
@@ -46,6 +47,8 @@ export default async function AdminListsPage({
     mode?: string;
     tipsCategory?: string;
     tipsList?: string;
+    filter?: string;
+    externalImages?: string;
   }>;
 }) {
   await requireAdmin();
@@ -139,6 +142,7 @@ export default async function AdminListsPage({
       listId: params.listId,
       multiList: params.multiList,
       mode: params.mode,
+      externalImages: params.externalImages,
     });
 
     const createLists =
@@ -170,6 +174,7 @@ export default async function AdminListsPage({
     categoryId: initialCategoryId,
     q: trash ? undefined : params.q,
   });
+  const initialFilter = trash ? 'all' : parseListFilterParam(params.filter);
 
   return (
     <ContentHubClient
@@ -179,6 +184,7 @@ export default async function AdminListsPage({
       trash={trash}
       initialCategoryId={initialCategoryId}
       initialSearch={params.q ?? ''}
+      initialFilter={initialFilter}
     />
   );
 }

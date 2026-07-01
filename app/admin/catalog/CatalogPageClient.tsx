@@ -71,6 +71,7 @@ interface CatalogPageClientProps {
   viewParam?: string;
   createLists?: NewItemFormList[];
   initialCreateListId?: string;
+  initialExternalImagesOpen?: boolean;
 }
 
 export default function CatalogPageClient({
@@ -95,6 +96,7 @@ export default function CatalogPageClient({
   viewParam,
   createLists,
   initialCreateListId,
+  initialExternalImagesOpen = false,
 }: CatalogPageClientProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -130,7 +132,7 @@ export default function CatalogPageClient({
     placements: { itemId: string; listId: string; listTitle: string; listSlug: string }[];
     isDisabled: boolean;
   } | null>(null);
-  const [externalImagesOpen, setExternalImagesOpen] = useState(false);
+  const [externalImagesOpen, setExternalImagesOpen] = useState(initialExternalImagesOpen);
   const [wrappingProxy, setWrappingProxy] = useState(false);
   const placementMode = initialMode === 'place';
   const createMode = initialMode === 'create';
@@ -147,6 +149,19 @@ export default function CatalogPageClient({
       new Set(rows.filter((r) => r.alreadyInList).map((r) => r.id))
     );
   }, [rows]);
+  useEffect(() => {
+    if (initialExternalImagesOpen) setExternalImagesOpen(true);
+  }, [initialExternalImagesOpen]);
+
+  const handleCloseExternalImages = useCallback(() => {
+    setExternalImagesOpen(false);
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('externalImages')) return;
+    params.delete('externalImages');
+    const qs = params.toString();
+    router.replace(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
+  }, [router, basePath]);
+
   const activePlacementMeta =
     lists.find((l) => l.id === activePlacementListId) ??
     (placementList
@@ -1344,7 +1359,7 @@ export default function CatalogPageClient({
       {tab === 'browse' && (
         <ExternalImageItemsModal
           isOpen={externalImagesOpen}
-          onClose={() => setExternalImagesOpen(false)}
+          onClose={handleCloseExternalImages}
           mode="catalog"
           scopeTitle={externalImagesScopeTitle}
           catalogFilters={{
