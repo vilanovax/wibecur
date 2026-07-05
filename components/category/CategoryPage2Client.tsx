@@ -116,7 +116,7 @@ export default function CategoryPage2Client({
   const featuredSpotlight =
     viralSpotlight && viralSpotlight.id !== trendingLists[0]?.id ? viralSpotlight : null;
 
-  const trendingTitle = 'داغترین ها';
+  const trendingTitle = 'داغ‌ترین‌ها';
   const trendingClient = (
     <TrendingListsSectionLazy
       inset

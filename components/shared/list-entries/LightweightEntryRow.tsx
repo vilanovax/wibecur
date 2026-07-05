@@ -32,6 +32,11 @@ type Props = {
   hideEntryKindChrome?: boolean;
 };
 
+function itemOpenLabel(index: number, title?: string | null): string {
+  const n = (index + 1).toLocaleString('fa-IR');
+  return title?.trim() ? `رفتن به آیتم ${n} — ${title.trim()}` : `رفتن به آیتم ${n}`;
+}
+
 function factTypeLabel(metadata?: Record<string, unknown> | null): string | null {
   const raw = metadata?.factType;
   if (typeof raw !== 'string') return null;
@@ -67,6 +72,7 @@ function EntryBody({
             ? 'mt-0.5 h-6 w-6 text-[0.6875rem] lg:h-7 lg:w-7'
             : 'h-7 w-7 lg:h-8 lg:w-8'
         }`}
+        aria-hidden
       >
         {(index + 1).toLocaleString('fa-IR')}
       </div>
@@ -177,6 +183,7 @@ export default function LightweightEntryRow({
           <button
             type="button"
             onClick={onOpen}
+            aria-label={itemOpenLabel(index, headline || item.title)}
             className="flex w-full items-start gap-3 text-right transition-all active:scale-[0.99]"
           >
             <EntryBody {...bodyProps} />
@@ -198,6 +205,7 @@ export default function LightweightEntryRow({
       <button
         type="button"
         onClick={onOpen}
+        aria-label={itemOpenLabel(index, headline || item.title)}
         className={`flex w-full items-start gap-3 ${shellClass} active:scale-[0.99]`}
       >
         <EntryBody {...bodyProps} />

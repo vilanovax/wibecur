@@ -19,8 +19,9 @@ type MoodListLinkProps = {
 };
 
 type HomeMoodRowSectionProps = {
-  /** sidebar = ستون کنار هیرو در xl */
-  variant?: 'default' | 'sidebar';
+  /** sidebar = ستون کنار هیرو | responsive = یک mount با layout واکنش‌گرا */
+  variant?: 'default' | 'sidebar' | 'responsive';
+  className?: string;
 };
 
 function MoodListLink({ moodId, list, compact }: MoodListLinkProps) {
@@ -96,15 +97,22 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
   );
 }
 
-export default function HomeMoodRowSection({ variant = 'default' }: HomeMoodRowSectionProps) {
+export default function HomeMoodRowSection({
+  variant = 'default',
+  className = '',
+}: HomeMoodRowSectionProps) {
   const { data, isLoading } = useHomeData();
   const moods = useMemo(() => buildHomeMoodCollections(data), [data]);
   const isSidebar = variant === 'sidebar';
+  const isResponsive = variant === 'responsive';
 
   if (isLoading && moods.length === 0) {
-    if (isSidebar) {
+    if (isSidebar || isResponsive) {
       return (
-        <div className="h-full min-h-[20rem] animate-pulse rounded-2xl bg-gray-100" aria-hidden />
+        <div
+          className={`h-full min-h-[20rem] animate-pulse rounded-2xl bg-gray-100 ${className}`}
+          aria-hidden
+        />
       );
     }
     return (
@@ -123,9 +131,64 @@ export default function HomeMoodRowSection({ variant = 'default' }: HomeMoodRowS
 
   if (moods.length === 0) return null;
 
+  if (isResponsive) {
+    return (
+      <section className={className} aria-label="بر اساس حال‌وهوا">
+        <div className="hidden xl:flex xl:h-full xl:min-h-0 xl:flex-col">
+          <div className="mb-3">
+            <h2 className="flex items-center gap-2 wibe-h3">
+              <SectionIcon variant="mood" />
+              بر اساس حال‌وهوا
+            </h2>
+            <p className="mt-0.5 wibe-caption text-wibe-secondary">انتخاب سریع برای امروز</p>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
+            {moods.map((mood) => (
+              <MoodCard key={mood.id} mood={mood} compact />
+            ))}
+          </div>
+        </div>
+
+        <div className="xl:hidden">
+          <HomeSectionTitle
+            iconVariant="mood"
+            title="بر اساس حال‌وهوا"
+            subtitle="انتخاب سریع برای حال امروزت"
+            actionHref="/lists"
+            actionLabel="همه"
+            analyticsSection="mood"
+          />
+          <HorizontalScrollFade
+            surface="surface"
+            fadeClassName="lg:hidden"
+            className="lg:hidden"
+            innerClassName="flex snap-x snap-mandatory gap-3 px-4 pb-1"
+          >
+            {moods.map((mood) => (
+              <MoodCard key={mood.id} mood={mood} />
+            ))}
+          </HorizontalScrollFade>
+          {moods.length > 2 ? (
+            <p className="mt-1.5 px-4 text-center wibe-caption text-wibe-secondary lg:hidden">
+              بکش برای بیشتر ←
+            </p>
+          ) : null}
+          <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 lg:px-0">
+            {moods.map((mood) => (
+              <MoodCard key={mood.id} mood={mood} />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (isSidebar) {
     return (
-      <section className="flex h-full min-h-0 flex-col" aria-label="بر اساس حال‌وهوا">
+      <section
+        className={`flex h-full min-h-0 flex-col ${className}`}
+        aria-label="بر اساس حال‌وهوا"
+      >
         <div className="mb-3">
           <h2 className="flex items-center gap-2 wibe-h3">
             <SectionIcon variant="mood" />
@@ -143,7 +206,7 @@ export default function HomeMoodRowSection({ variant = 'default' }: HomeMoodRowS
   }
 
   return (
-    <section className="mb-6 lg:mb-0" aria-label="بر اساس حال‌وهوا">
+    <section className={`mb-6 lg:mb-0 ${className}`} aria-label="بر اساس حال‌وهوا">
       <HomeSectionTitle
         iconVariant="mood"
         title="بر اساس حال‌وهوا"

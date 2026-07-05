@@ -1,7 +1,6 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import HeroCoverImage from '@/components/shared/HeroCoverImage';
 import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
-import { resolveNextImageSrc } from '@/lib/next-image-src';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
 
@@ -12,27 +11,20 @@ type CategoryHeroServerProps = {
 
 export default function CategoryHeroServer({ category, metrics }: CategoryHeroServerProps) {
   const heroImage = getCategoryHeroDisplayUrl(category.heroImage, category.slug);
-  const { src: heroSrc, unoptimized } = resolveNextImageSrc(heroImage);
   const showCityLink = isLocationCategorySlug(category.slug);
 
   return (
     <section className="relative mb-1 mt-3 overflow-hidden rounded-2xl lg:mt-4">
-      <div className="relative aspect-[16/9] w-full min-h-[200px] overflow-hidden bg-neutral-950">
-        {heroSrc ? (
-          <Image
-            src={heroSrc}
-            alt={category.name}
-            fill
-            priority
-            sizes="(max-width: 1023px) 100vw, 1200px"
-            className="object-cover object-center"
-            unoptimized={unoptimized}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-neutral-900 text-6xl">
-            {category.icon}
-          </div>
-        )}
+      <div className="relative aspect-[16/9] w-full min-h-[200px] overflow-hidden bg-neutral-900">
+        <HeroCoverImage
+          src={heroImage}
+          alt={category.name}
+          priority
+          sizes="(max-width: 1023px) 100vw, 1200px"
+          fallbackIcon={category.icon ?? '📚'}
+          categorySlug={category.slug}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
 
         <div className="absolute inset-0 flex flex-col justify-end p-4 pb-5 text-right lg:p-6 lg:pb-6">

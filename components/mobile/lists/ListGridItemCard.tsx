@@ -39,6 +39,7 @@ function ListGridItemCard({
       <button
         type="button"
         onClick={() => onOpenAt(index)}
+        aria-label={`رفتن به آیتم ${(index + 1).toLocaleString('fa-IR')}${item.title ? ` — ${item.title}` : ''}`}
         className="block w-full text-right transition-all active:scale-[0.99]"
       >
         <div
@@ -61,7 +62,10 @@ function ListGridItemCard({
             coverLayout="grid"
             sizes={LIST_GRID_IMAGE_SIZES}
           />
-          <span className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums">
+          <span
+            className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums"
+            aria-hidden
+          >
             {(index + 1).toLocaleString('fa-IR')}
           </span>
           {!isMovieGrid && (

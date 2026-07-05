@@ -22,6 +22,7 @@ import type { TrendingRadarRow as TrendingRadarRowType } from '@/lib/admin/types
 type SortKey =
   | 'listName'
   | 'category'
+  | 'viewCount'
   | 'saves24h'
   | 'growth7dPercent'
   | 'trendingScore';
@@ -50,6 +51,20 @@ const TREND_FILTERS: { key: TrendFilter; label: string }[] = [
 function formatCount(n: number): string {
   if (n <= 0) return '—';
   return n.toLocaleString('fa-IR');
+}
+
+function formatSaveCell(saves24h: number, saveCount: number): {
+  text: string;
+  hint: string | null;
+  muted: boolean;
+} {
+  if (saves24h > 0) {
+    return { text: saves24h.toLocaleString('fa-IR'), hint: '۲۴h', muted: false };
+  }
+  if (saveCount > 0) {
+    return { text: saveCount.toLocaleString('fa-IR'), hint: 'کل', muted: true };
+  }
+  return { text: '۰', hint: null, muted: true };
 }
 
 function CategoryChip({ name }: { name: string }) {
@@ -253,7 +268,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
               </h2>
             </div>
             <p className="text-xs text-[var(--color-text-muted)] mt-1">
-              لیست‌های پربازدید بر اساس ذخیره ۲۴ ساعت، رشد ۷ روز و امتیاز ترکیبی
+              لیست‌های پربازدید بر اساس بازدید، ذخیره ۲۴ ساعت، رشد ۷ روز و امتیاز ترکیبی
             </p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
@@ -299,16 +314,22 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[800px] text-sm">
           <thead className="bg-[var(--color-bg)]/80 sticky top-0 z-10 border-b border-[var(--color-border)]">
             <tr>
               <Th label="لیست" keyName="listName" className="pr-4 min-w-[180px]" />
               <Th label="دسته" keyName="category" className="w-[130px]" />
               <Th
-                label="ذخیره ۲۴h"
+                label="بازدید"
+                keyName="viewCount"
+                align="center"
+                className="w-[80px]"
+              />
+              <Th
+                label="ذخیره"
                 keyName="saves24h"
                 align="center"
-                className="w-[88px]"
+                className="w-[96px]"
               />
               <Th
                 label="رشد ۷ روز"
@@ -346,13 +367,10 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                     <Link
                       href={`/admin/lists/${row.id}/edit`}
                       className="font-medium text-[var(--color-text)] hover:text-[var(--primary)] line-clamp-1"
-                      title={row.listName}
+                      title={`${row.listName}${row.listSlug ? `\n/${row.listSlug}` : ''}`}
                     >
                       {row.listName}
                     </Link>
-                    <p className="text-[11px] text-[var(--color-text-subtle)] truncate mt-0.5 dir-ltr text-right">
-                      /{row.listSlug}
-                    </p>
                   </div>
                 </td>
                 <td className="px-3 py-2.5">
@@ -361,13 +379,41 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                 <td className="px-3 py-2.5 text-center">
                   <span
                     className={`tabular-nums font-medium ${
-                      row.saves24h > 0
+                      row.viewCount > 0
                         ? 'text-[var(--color-text)]'
                         : 'text-[var(--color-text-subtle)]'
                     }`}
                   >
-                    {formatCount(row.saves24h)}
+                    {formatCount(row.viewCount)}
                   </span>
+                </td>
+                <td className="px-3 py-2.5 text-center">
+                  {(() => {
+                    const save = formatSaveCell(row.saves24h, row.saveCount);
+                    return (
+                      <span
+                        className={`inline-flex flex-col items-center tabular-nums font-medium ${
+                          save.muted
+                            ? 'text-[var(--color-text-subtle)]'
+                            : 'text-[var(--color-text)]'
+                        }`}
+                        title={
+                          save.hint === 'کل'
+                            ? 'ذخیره کل — فعالیت ۲۴ ساعت اخیر ندارد'
+                            : save.hint === '۲۴h'
+                              ? 'ذخیره در ۲۴ ساعت اخیر'
+                              : undefined
+                        }
+                      >
+                        <span>{save.text}</span>
+                        {save.hint ? (
+                          <span className="text-[10px] font-normal text-[var(--color-text-subtle)]">
+                            {save.hint}
+                          </span>
+                        ) : null}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="px-3 py-2.5 text-center">
                   <span

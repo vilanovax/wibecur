@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -26,11 +26,19 @@ import {
   type ItemTipsPageData,
 } from '@/lib/admin/item-tip-import';
 import {
-  getReviewedItemTipIds,
+  hydrateItemTipReviewedIds,
+  isItemTipReviewed,
   markItemTipReviewed,
   markManyItemTipsReviewed,
+  syncItemTipReviewedIds,
   unmarkItemTipReviewed,
+  getReviewedItemTipIds,
 } from '@/lib/admin/item-tip-review-storage';
+import {
+  INITIAL_BULK_IMPORT_PROGRESS,
+  runBatchedJsonImport,
+  type BulkImportProgress,
+} from '@/lib/admin/bulk-json-import-client';
 
 type Props = {
   data: ItemTipsPageData;
@@ -56,6 +64,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
   const [importOpen, setImportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<BulkImportProgress>(INITIAL_BULK_IMPORT_PROGRESS);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   useEffect(() => {
@@ -66,9 +75,24 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     setDrafts({});
   }, [data]);
 
+  const hydrateDoneRef = useRef(false);
+
   useEffect(() => {
-    setReviewedIds(getReviewedItemTipIds());
-  }, []);
+    let cancelled = false;
+    void (async () => {
+      let base = getReviewedItemTipIds();
+      if (!hydrateDoneRef.current) {
+        base = await hydrateItemTipReviewedIds(base);
+        hydrateDoneRef.current = true;
+      }
+      const synced = syncItemTipReviewedIds(data.items);
+      const merged = new Set([...base, ...synced]);
+      if (!cancelled) setReviewedIds(merged);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [data.items]);
 
   const listsInCategory = useMemo(() => {
     if (!categoryId) return data.lists;
@@ -89,7 +113,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   const filteredItems = useMemo(() => {
     const q = normalizeSearch(search);
     return items.filter((item) => {
-      const reviewed = reviewedIds.has(item.id);
+      const reviewed = isItemTipReviewed(item, reviewedIds);
       if (!showReviewed && reviewed) return false;
       if (showReviewed && !reviewed) return false;
       if (!q) return true;
@@ -102,7 +126,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   }, [items, search, reviewedIds, showReviewed]);
 
   const reviewedInScope = useMemo(
-    () => items.filter((item) => reviewedIds.has(item.id)).length,
+    () => items.filter((item) => isItemTipReviewed(item, reviewedIds)).length,
     [items, reviewedIds]
   );
 
@@ -208,7 +232,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
         return;
       }
     }
-    setReviewedIds(markItemTipReviewed(item.id));
+    setReviewedIds(markItemTipReviewed(item));
     setSelectedIds((prev) => {
       const next = new Set(prev);
       next.delete(item.id);
@@ -218,7 +242,9 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   };
 
   const markSelectedReviewed = async () => {
-    const targets = items.filter((item) => selectedIds.has(item.id) && !reviewedIds.has(item.id));
+    const targets = items.filter(
+      (item) => selectedIds.has(item.id) && !isItemTipReviewed(item, reviewedIds)
+    );
     if (targets.length === 0) return;
     for (const item of targets) {
       if (isDirty(item)) {
@@ -229,7 +255,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
         }
       }
     }
-    setReviewedIds(markManyItemTipsReviewed(targets.map((item) => item.id)));
+    setReviewedIds(markManyItemTipsReviewed(targets));
     setSelectedIds(new Set());
     setToast({
       message: `${targets.length.toLocaleString('fa-IR')} آیتم از صف خارج شد`,
@@ -257,14 +283,14 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
 
   const handleImport = async (payload: { items: { id: string; tip: string | null }[] }) => {
     setImporting(true);
+    setImportProgress({ ...INITIAL_BULK_IMPORT_PROGRESS, total: payload.items.length });
     try {
-      const res = await fetch('/api/admin/items/import-tips', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const result = await runBatchedJsonImport({
+        items: payload.items,
+        endpoint: '/api/admin/items/import-tips',
+        buildBody: (batch) => ({ items: batch }),
+        onProgress: setImportProgress,
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'خطا در import');
 
       const byId = new Map(payload.items.map((item) => [item.id, item]));
       setItems((prev) =>
@@ -275,13 +301,15 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
         })
       );
       setDrafts({});
-      setImportOpen(false);
       setToast({
-        message: `${(body.data?.updated ?? 0).toLocaleString('fa-IR')} tip به‌روز شد`,
-        type: 'success',
+        message: `${result.updated.toLocaleString('fa-IR')} tip به‌روز شد · ${result.skipped.toLocaleString('fa-IR')} بدون تغییر${
+          result.failed > 0 ? ` · ${result.failed.toLocaleString('fa-IR')} خطا` : ''
+        }`,
+        type: result.failed > 0 ? 'error' : 'success',
       });
       router.refresh();
     } catch (error) {
+      setImportProgress(INITIAL_BULK_IMPORT_PROGRESS);
       setToast({
         message: error instanceof Error ? error.message : 'خطا در import',
         type: 'error',
@@ -289,6 +317,12 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     } finally {
       setImporting(false);
     }
+  };
+
+  const closeImportModal = () => {
+    if (importing) return;
+    setImportOpen(false);
+    setImportProgress(INITIAL_BULK_IMPORT_PROGRESS);
   };
 
   const exportTarget = selectedItems.length > 0 ? selectedItems : filteredItems;
@@ -466,7 +500,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
                 filteredItems.map((item) => {
                   const dirty = isDirty(item);
                   const saveState = saveStates[item.id] ?? 'idle';
-                  const isReviewed = reviewedIds.has(item.id);
+                  const isReviewed = isItemTipReviewed(item, reviewedIds);
                   return (
                     <tr key={item.id} className={`align-top hover:bg-[var(--color-bg)]/30 ${isReviewed ? 'bg-emerald-50/40' : ''}`}>
                       <td className="px-3 py-3">
@@ -557,7 +591,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
                             <button
                               type="button"
                               onClick={() => {
-                                setReviewedIds(unmarkItemTipReviewed(item.id));
+                                setReviewedIds(unmarkItemTipReviewed(item));
                                 setToast({ message: 'به صف بررسی برگشت', type: 'success' });
                               }}
                               title="بازگردانی به صف"
@@ -581,7 +615,8 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
       {importOpen && (
         <ItemTipImportModal
           importing={importing}
-          onClose={() => setImportOpen(false)}
+          importProgress={importProgress}
+          onClose={closeImportModal}
           onImport={handleImport}
         />
       )}

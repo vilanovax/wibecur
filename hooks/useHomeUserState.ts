@@ -33,7 +33,7 @@ export function useHomeUserState() {
   const isLoggedIn = !!userId;
   const bookmarks = userId ? (interactionQuery.data?.bookmarks ?? 0) : 0;
   const hasSaves = bookmarks > 0;
-  const isNewUser = !hasSaves;
+  const isNewUser = isLoggedIn && !hasSaves;
   const isLoading =
     status === 'loading' || (!!userId && interactionQuery.isLoading && !interactionQuery.data);
 

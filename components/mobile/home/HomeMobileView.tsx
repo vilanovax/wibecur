@@ -8,6 +8,7 @@ import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
 import HomeHeroSpotlightSlot from '@/components/mobile/home/HomeHeroSpotlightSlot';
 import { HomeFeedSectionSkeleton } from '@/components/mobile/home/home-section-skeletons';
 import { HomeSavedListsSectionLazy } from '@/components/mobile/home/home-lazy-sections';
+import { useHomeUserState } from '@/hooks/useHomeUserState';
 
 type HomeMobileViewProps = {
   ssrFeaturedId: string | null;
@@ -15,15 +16,19 @@ type HomeMobileViewProps = {
 };
 
 export default function HomeMobileView({ ssrFeaturedId, heroSpotlight }: HomeMobileViewProps) {
+  const { isGuest, isLoading: userLoading } = useHomeUserState();
+
   return (
     <div className="flex flex-col">
       <HomeStartStrip />
       <HomeHeroSpotlightSlot ssrFeaturedId={ssrFeaturedId}>{heroSpotlight}</HomeHeroSpotlightSlot>
       <HomeMoodRowSection />
       <HomeFeedTabs />
-      <HomeDeferredMount fallback={<HomeFeedSectionSkeleton />}>
-        <HomeSavedListsSectionLazy />
-      </HomeDeferredMount>
+      {!userLoading && !isGuest ? (
+        <HomeDeferredMount fallback={<HomeFeedSectionSkeleton />}>
+          <HomeSavedListsSectionLazy />
+        </HomeDeferredMount>
+      ) : null}
     </div>
   );
 }

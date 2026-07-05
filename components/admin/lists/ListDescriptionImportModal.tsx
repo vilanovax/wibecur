@@ -15,10 +15,13 @@ import {
   tryParseListDescriptionImportPayload,
   type ListDescriptionImportItem,
 } from '@/lib/admin/list-description-import';
+import type { BulkImportProgress } from '@/lib/admin/bulk-json-import-client';
+import BulkJsonImportProgress from '@/components/admin/shared/BulkJsonImportProgress';
 
 type Props = {
   initialJson?: string;
   importing: boolean;
+  importProgress: BulkImportProgress;
   onClose: () => void;
   onImport: (payload: { lists: ListDescriptionImportItem[] }) => Promise<void>;
 };
@@ -47,6 +50,7 @@ function parseImportJson(text: string): ParseState {
 export default function ListDescriptionImportModal({
   initialJson = '',
   importing,
+  importProgress,
   onClose,
   onImport,
 }: Props) {
@@ -69,6 +73,8 @@ export default function ListDescriptionImportModal({
     await onImport({ lists: parseState.lists });
   };
 
+  const isRunning = importing || importProgress.phase === 'running';
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2 sm:items-center sm:p-4">
       <div className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
@@ -87,7 +93,8 @@ export default function ListDescriptionImportModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+            disabled={isRunning}
+            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] disabled:opacity-40"
             aria-label="بستن"
           >
             <X className="h-5 w-5" />
@@ -120,10 +127,17 @@ export default function ListDescriptionImportModal({
           </div>
         </div>
 
+        <BulkJsonImportProgress
+          progress={importProgress}
+          runningLabel="در حال اعمال توضیحات…"
+          doneLabel="اعمال توضیحات تمام شد"
+        />
+
         <div className="flex-1 overflow-hidden p-4 sm:p-5">
           <textarea
             value={json}
             onChange={(e) => setJson(e.target.value)}
+            disabled={isRunning}
             dir="ltr"
             spellCheck={false}
             placeholder='{ "lists": [ { "id": "...", "description": "..." } ] }'
@@ -135,18 +149,21 @@ export default function ListDescriptionImportModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-bg)]"
+            disabled={isRunning}
+            className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-40"
           >
-            انصراف
+            {importProgress.phase === 'done' ? 'بستن' : 'انصراف'}
           </button>
           <button
             type="button"
-            disabled={parseState.status !== 'valid' || importing}
+            disabled={parseState.status !== 'valid' || isRunning}
             onClick={() => void handleImport()}
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
-            {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardPaste className="h-4 w-4" />}
-            اعمال توضیحات
+            {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardPaste className="h-4 w-4" />}
+            {isRunning
+              ? `${importProgress.processed.toLocaleString('fa-IR')} / ${importProgress.total.toLocaleString('fa-IR')}`
+              : 'اعمال توضیحات'}
           </button>
         </footer>
       </div>

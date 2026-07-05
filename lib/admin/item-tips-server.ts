@@ -63,3 +63,37 @@ export async function updateItemTip(
     },
   });
 }
+
+/** تبدیل placement id یا catalog id به کلید پایدار «انجام شد» */
+export async function resolveItemTipReviewKeys(
+  prisma: PrismaClient,
+  ids: string[]
+): Promise<string[]> {
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  if (unique.length === 0) return [];
+
+  const [placements, catalogs] = await Promise.all([
+    prisma.items.findMany({
+      where: { id: { in: unique }, deletedAt: null },
+      select: { id: true, catalogItemId: true },
+    }),
+    prisma.catalog_items.findMany({
+      where: { id: { in: unique } },
+      select: { id: true },
+    }),
+  ]);
+
+  const placementKeys = new Map(
+    placements.map((row) => [row.id, row.catalogItemId ?? row.id])
+  );
+  const catalogIds = new Set(catalogs.map((row) => row.id));
+
+  const keys = new Set<string>();
+  for (const id of unique) {
+    if (placementKeys.has(id)) keys.add(placementKeys.get(id)!);
+    else if (catalogIds.has(id)) keys.add(id);
+    else keys.add(id);
+  }
+
+  return [...keys];
+}

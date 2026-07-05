@@ -5,6 +5,7 @@ import {
   extractStorageObjectKeyFromUrl,
 } from '@/lib/storage-image-url';
 import { isLegacyLiaraStorageUrl } from '@/lib/object-storage-config';
+import { avatarPlaceholderResponse, isAvatarStorageKey } from '@/lib/storage-image-fallback';
 
 function contentTypeFromKey(key: string, fallback?: string): string {
   if (fallback) return fallback;
@@ -43,6 +44,9 @@ export async function GET(request: NextRequest) {
 
   const result = await getObjectByStorageKey(key, { legacyUrl: legacySourceUrl });
   if (!result) {
+    if (isAvatarStorageKey(key)) {
+      return avatarPlaceholderResponse();
+    }
     return NextResponse.json(
       {
         error: 'Image not found in storage',

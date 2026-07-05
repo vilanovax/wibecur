@@ -27,15 +27,9 @@ const TABS: { id: FeedTab; label: string; ariaLabel: string }[] = [
   { id: 'foryou', label: 'برای تو', ariaLabel: 'پیشنهاد برای تو' },
 ];
 
-const TAB_META: Record<FeedTab, { subtitle: string; seeAllHref: string }> = {
-  trending: {
-    subtitle: 'بر اساس ذخیره و تعامل',
-    seeAllHref: '/lists?mode=trending',
-  },
-  foryou: {
-    subtitle: 'پیشنهاد برای شروع',
-    seeAllHref: '/lists',
-  },
+const TAB_SEE_ALL: Record<FeedTab, string> = {
+  trending: '/lists?mode=trending',
+  foryou: '/lists',
 };
 
 export default function HomeFeedTabs() {
@@ -44,18 +38,6 @@ export default function HomeFeedTabs() {
   const { interests, shouldShowStartStrip } = useHomeOnboardingInterests();
   const { isNewUser, isGuest } = useHomeUserState();
   const queryClient = useQueryClient();
-
-  const meta = {
-    ...TAB_META[tab],
-    subtitle:
-      tab === 'foryou' && isNewUser
-        ? isGuest
-          ? 'کاوش عمومی — با ورود شخصی‌تر می‌شود'
-          : 'پیشنهاد برای شروع — با ذخیره دقیق‌تر می‌شود'
-        : tab === 'foryou' && !isNewUser
-          ? 'بر اساس ذخیره‌ها و علایق تو'
-          : TAB_META[tab].subtitle,
-  };
 
   const prefetchForYou = useCallback(() => {
     void queryClient.prefetchQuery({
@@ -93,7 +75,7 @@ export default function HomeFeedTabs() {
                       : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/30'
                   }`}
                 >
-                  {item.id === 'trending' && isNewUser ? (
+                  {item.id === 'trending' && isNewUser && !isGuest ? (
                     <span
                       className={`rounded-pill px-1.5 py-0.5 text-[10px] font-bold leading-none ${
                         isActive ? 'bg-white/20 text-white' : 'bg-amber-400/20 text-amber-700'
@@ -108,10 +90,9 @@ export default function HomeFeedTabs() {
             })}
           </div>
 
-          <div className="flex min-w-0 flex-1 items-center justify-between gap-3 lg:justify-end lg:gap-4">
-            <p className="wibe-small font-medium text-foreground">{meta.subtitle}</p>
+          <div className="flex min-w-0 flex-1 justify-end lg:gap-4">
             <Link
-              href={meta.seeAllHref}
+              href={TAB_SEE_ALL[tab]}
               className="inline-flex shrink-0 items-center gap-0.5 wibe-caption font-semibold text-primary hover:underline"
             >
               مشاهده همه

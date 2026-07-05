@@ -1,13 +1,13 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import AdminTopBar from './AdminTopBar';
-import DashboardPeriodKpis from './DashboardPeriodKpis';
-import SystemPulseBar from './SystemPulseBar';
 import DashboardActionCenter from './DashboardActionCenter';
+import ContentOverviewStrip from './ContentOverviewStrip';
+import DashboardPeriodChips from './DashboardPeriodChips';
 import TrendingRadar from './TrendingRadar';
 import CategoryIntelligenceGrid from './CategoryIntelligenceGrid';
-import CuratorIntelligence from './CuratorIntelligence';
+import TopContentPanels from './TopContentPanels';
 import SuggestionsQueueWidget from './SuggestionsQueueWidget';
 import ActivityStream from './ActivityStream';
 import type { DashboardData } from '@/lib/admin/types';
@@ -18,13 +18,13 @@ interface DashboardContentProps {
 
 export default function DashboardContent({ data }: DashboardContentProps) {
   const {
-    kpis,
-    periodLabel,
-    range,
+    contentOverview,
+    periodSnapshot,
     systemPulse,
     trendingRadar,
     categoryIntelligence,
-    curatorIntelligence,
+    topLists,
+    topCategories,
     riskAlerts,
     commentsModeration,
     activities,
@@ -35,67 +35,71 @@ export default function DashboardContent({ data }: DashboardContentProps) {
   const pendingSuggestionCount =
     actionQueue.find((a) => a.id === 'action-suggestions')?.count ?? 0;
 
-  const normalizedActivities = activities.map((a) => ({
-    ...a,
-    timestamp: typeof a.timestamp === 'string' ? new Date(a.timestamp) : a.timestamp,
+  const normalizedActivities = useMemo(
+    () =>
+      activities
+        .filter((a) => a.type === 'list_created' || a.type === 'item_added')
+        .map((a) => ({
+          ...a,
+          timestamp:
+            typeof a.timestamp === 'string' ? new Date(a.timestamp) : a.timestamp,
+        })),
+    [activities]
+  );
+
+  const pulseChips = systemPulse.map((c) => ({
+    label: c.label,
+    value: c.value,
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <Suspense
         fallback={
           <div className="h-[72px] animate-pulse bg-[var(--color-border-muted)] rounded-2xl" />
         }
       >
-        <AdminTopBar initialRange={range} />
+        <AdminTopBar initialRange={periodSnapshot.range} />
       </Suspense>
 
-      {/* مرکز اقدام بالاتر از متریک‌های منفعل — کارِ اصلی ادمین «خالی‌کردن صف‌ها»ست */}
       <DashboardActionCenter
         actionQueue={actionQueue}
         comments={commentsModeration}
         riskAlerts={riskAlerts}
       />
 
-      <section>
-        <SystemPulseBar cards={systemPulse} />
-      </section>
+      <ContentOverviewStrip overview={contentOverview} />
 
-      {/* KPIهای دوره‌ای تحلیلی‌اند، نه عملیاتی — پایین‌تر از اقدام/نبض */}
-      <DashboardPeriodKpis kpis={kpis} periodLabel={periodLabel} range={range} />
+      <DashboardPeriodChips snapshot={periodSnapshot} pulseCards={pulseChips} />
 
-      {/* رادار ترند عریض است → تمام‌عرض می‌ماند */}
-      <section className="min-h-[320px]">
+      <section className="min-h-[280px]">
         <TrendingRadar rows={trendingRadar} />
       </section>
 
-      {/* دو ستون مستقل (بدون coupling ارتفاع ردیف): پنل‌های کوتاه‌تر کنار هم
-          تا طول عمودی صفحه کم شود و از عرض دسکتاپ استفاده شود. روی موبایل تک‌ستون. */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <div className="space-y-6">
-          <section>
-            <h2 className="text-base font-semibold text-[var(--color-text)] mb-4">
-              عملکرد دسته‌ها
-            </h2>
-            <CategoryIntelligenceGrid categories={categoryIntelligence} />
-          </section>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
+        <section className="xl:col-span-2 space-y-3">
+          <h2 className="text-base font-semibold text-[var(--color-text)]">
+            عملکرد دسته‌ها
+          </h2>
+          <CategoryIntelligenceGrid categories={categoryIntelligence} />
+        </section>
 
-          <section>
-            <CuratorIntelligence curators={curatorIntelligence} />
-          </section>
-        </div>
+        <TopContentPanels topLists={topLists} topCategories={topCategories} />
+      </div>
 
-        <div className="space-y-6">
-          {/* همیشه رندر می‌شود (با empty state) تا IA و لینک ورود به صف ثابت بماند */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        {pendingSuggestionCount > 0 && (
           <SuggestionsQueueWidget
             count={pendingSuggestionCount}
             previews={suggestionPreviews}
           />
+        )}
 
-          <section>
+        {normalizedActivities.length > 0 && (
+          <section className={pendingSuggestionCount > 0 ? '' : 'lg:col-span-2'}>
             <ActivityStream events={normalizedActivities} />
           </section>
-        </div>
+        )}
       </div>
     </div>
   );

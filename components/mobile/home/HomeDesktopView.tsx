@@ -32,8 +32,9 @@ export default function HomeDesktopView({
   heroSpotlight,
   desktopTrending,
 }: HomeDesktopViewProps) {
-  const { hasSaves, isLoggedIn, isLoading: userLoading } = useHomeUserState();
+  const { hasSaves, isLoggedIn, isLoading: userLoading, isGuest } = useHomeUserState();
   const showCombinedPersonal = isLoggedIn && hasSaves && !userLoading;
+  const showSavedSection = isLoggedIn && !isGuest && !userLoading;
 
   return (
     <div className="flex flex-col gap-6 xl:gap-7">
@@ -42,14 +43,11 @@ export default function HomeDesktopView({
       <HomeStartStrip />
 
       <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.55fr)] xl:items-stretch xl:gap-5">
-        <div className="hidden xl:block">
-          <HomeMoodRowSection variant="sidebar" />
-        </div>
-        <HomeHeroSpotlightSlot ssrFeaturedId={ssrFeaturedId} fillHeight>
-          {heroSpotlight}
-        </HomeHeroSpotlightSlot>
-        <div className="xl:hidden">
-          <HomeMoodRowSection />
+        <HomeMoodRowSection variant="responsive" className="order-2 xl:order-1" />
+        <div className="order-1 xl:order-2">
+          <HomeHeroSpotlightSlot ssrFeaturedId={ssrFeaturedId} fillHeight>
+            {heroSpotlight}
+          </HomeHeroSpotlightSlot>
         </div>
       </div>
 
@@ -68,11 +66,13 @@ export default function HomeDesktopView({
           </HomeFeedSection>
         ) : (
           <>
-            <HomeFeedSection divider>
-              <HomeDeferredMount fallback={<HomeFeedSectionSkeleton />}>
-                <HomeSavedListsSectionLazy />
-              </HomeDeferredMount>
-            </HomeFeedSection>
+            {showSavedSection ? (
+              <HomeFeedSection divider>
+                <HomeDeferredMount fallback={<HomeFeedSectionSkeleton />}>
+                  <HomeSavedListsSectionLazy />
+                </HomeDeferredMount>
+              </HomeFeedSection>
+            ) : null}
             <HomeFeedSection divider>
               <HomeDeferredMount fallback={<HomeFeedSectionSkeleton titleWidth="w-32" />}>
                 <ForYouSectionLazy />

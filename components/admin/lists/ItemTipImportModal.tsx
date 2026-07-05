@@ -15,9 +15,12 @@ import {
   tryParseItemTipImportPayload,
   type ItemTipImportItem,
 } from '@/lib/admin/item-tip-import';
+import type { BulkImportProgress } from '@/lib/admin/bulk-json-import-client';
+import BulkJsonImportProgress from '@/components/admin/shared/BulkJsonImportProgress';
 
 type Props = {
   importing: boolean;
+  importProgress: BulkImportProgress;
   onClose: () => void;
   onImport: (payload: { items: ItemTipImportItem[] }) => Promise<void>;
 };
@@ -43,7 +46,12 @@ function parseImportJson(text: string): ParseState {
   }
 }
 
-export default function ItemTipImportModal({ importing, onClose, onImport }: Props) {
+export default function ItemTipImportModal({
+  importing,
+  importProgress,
+  onClose,
+  onImport,
+}: Props) {
   const [json, setJson] = useState('');
   const [debouncedJson, setDebouncedJson] = useState('');
 
@@ -59,6 +67,8 @@ export default function ItemTipImportModal({ importing, onClose, onImport }: Pro
     await onImport({ items: parseState.items });
   };
 
+  const isRunning = importing || importProgress.phase === 'running';
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2 sm:items-center sm:p-4">
       <div className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
@@ -72,7 +82,13 @@ export default function ItemTipImportModal({ importing, onClose, onImport }: Pro
               <p className="text-xs text-[var(--color-text-muted)]">فقط فیلد tip به‌روز می‌شود</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1.5 hover:bg-[var(--color-bg)]" aria-label="بستن">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isRunning}
+            className="rounded-lg p-1.5 hover:bg-[var(--color-bg)] disabled:opacity-40"
+            aria-label="بستن"
+          >
             <X className="h-5 w-5" />
           </button>
         </header>
@@ -101,10 +117,17 @@ export default function ItemTipImportModal({ importing, onClose, onImport }: Pro
           </button>
         </div>
 
+        <BulkJsonImportProgress
+          progress={importProgress}
+          runningLabel="در حال اعمال tipها…"
+          doneLabel="اعمال tipها تمام شد"
+        />
+
         <div className="flex-1 overflow-hidden p-4 sm:p-5">
           <textarea
             value={json}
             onChange={(e) => setJson(e.target.value)}
+            disabled={isRunning}
             dir="ltr"
             spellCheck={false}
             placeholder='{ "items": [ { "id": "...", "tip": "..." } ] }'
@@ -113,17 +136,24 @@ export default function ItemTipImportModal({ importing, onClose, onImport }: Pro
         </div>
 
         <footer className="flex justify-between gap-2 border-t border-[var(--color-border)] px-4 py-3 sm:px-5">
-          <button type="button" onClick={onClose} className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-[var(--color-bg)]">
-            انصراف
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isRunning}
+            className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-40"
+          >
+            {importProgress.phase === 'done' ? 'بستن' : 'انصراف'}
           </button>
           <button
             type="button"
-            disabled={parseState.status !== 'valid' || importing}
+            disabled={parseState.status !== 'valid' || isRunning}
             onClick={() => void handleImport()}
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
-            {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardPaste className="h-4 w-4" />}
-            اعمال tipها
+            {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardPaste className="h-4 w-4" />}
+            {isRunning
+              ? `${importProgress.processed.toLocaleString('fa-IR')} / ${importProgress.total.toLocaleString('fa-IR')}`
+              : 'اعمال tipها'}
           </button>
         </footer>
       </div>

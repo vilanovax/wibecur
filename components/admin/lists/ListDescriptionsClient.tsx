@@ -31,6 +31,11 @@ import {
   markManyListDescriptionsReviewed,
   unmarkListDescriptionReviewed,
 } from '@/lib/admin/list-description-review-storage';
+import {
+  INITIAL_BULK_IMPORT_PROGRESS,
+  runBatchedJsonImport,
+  type BulkImportProgress,
+} from '@/lib/admin/bulk-json-import-client';
 
 type Props = {
   data: ListDescriptionsPageData;
@@ -55,6 +60,7 @@ export default function ListDescriptionsClient({ data, embedded = false }: Props
   const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
   const [importOpen, setImportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<BulkImportProgress>(INITIAL_BULK_IMPORT_PROGRESS);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   useEffect(() => {
@@ -244,14 +250,14 @@ export default function ListDescriptionsClient({ data, embedded = false }: Props
     lists: { id?: string; slug?: string; description: string | null }[];
   }) => {
     setImporting(true);
+    setImportProgress({ ...INITIAL_BULK_IMPORT_PROGRESS, total: payload.lists.length });
     try {
-      const res = await fetch('/api/admin/lists/import-descriptions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const result = await runBatchedJsonImport({
+        items: payload.lists,
+        endpoint: '/api/admin/lists/import-descriptions',
+        buildBody: (batch) => ({ lists: batch }),
+        onProgress: setImportProgress,
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'خطا در import');
 
       const byId = new Map(payload.lists.filter((item) => item.id).map((item) => [item.id!, item]));
       const bySlug = new Map(payload.lists.filter((item) => item.slug).map((item) => [item.slug!, item]));
@@ -264,13 +270,15 @@ export default function ListDescriptionsClient({ data, embedded = false }: Props
         })
       );
       setDrafts({});
-      setImportOpen(false);
       setToast({
-        message: `${(body.data?.updated ?? 0).toLocaleString('fa-IR')} توضیحات به‌روز شد`,
-        type: 'success',
+        message: `${result.updated.toLocaleString('fa-IR')} توضیح به‌روز شد · ${result.skipped.toLocaleString('fa-IR')} بدون تغییر${
+          result.failed > 0 ? ` · ${result.failed.toLocaleString('fa-IR')} خطا` : ''
+        }`,
+        type: result.failed > 0 ? 'error' : 'success',
       });
       router.refresh();
     } catch (error) {
+      setImportProgress(INITIAL_BULK_IMPORT_PROGRESS);
       setToast({
         message: error instanceof Error ? error.message : 'خطا در import',
         type: 'error',
@@ -278,6 +286,12 @@ export default function ListDescriptionsClient({ data, embedded = false }: Props
     } finally {
       setImporting(false);
     }
+  };
+
+  const closeImportModal = () => {
+    if (importing) return;
+    setImportOpen(false);
+    setImportProgress(INITIAL_BULK_IMPORT_PROGRESS);
   };
 
   const exportTarget = selectedLists.length > 0 ? selectedLists : filteredLists;
@@ -535,7 +549,8 @@ export default function ListDescriptionsClient({ data, embedded = false }: Props
       {importOpen && (
         <ListDescriptionImportModal
           importing={importing}
-          onClose={() => setImportOpen(false)}
+          importProgress={importProgress}
+          onClose={closeImportModal}
           onImport={handleImport}
         />
       )}

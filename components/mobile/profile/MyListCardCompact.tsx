@@ -6,6 +6,13 @@ import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import ListVisibilityBadge, { getListVisibilityVariant } from './ListVisibilityBadge';
 
+export function getListItemCount(list: {
+  itemCount?: number;
+  _count?: { items?: number };
+}): number {
+  return list.itemCount ?? list._count?.items ?? 0;
+}
+
 export interface MyListCardData {
   id: string;
   title: string;
@@ -31,7 +38,7 @@ interface MyListCardCompactProps {
 const VIRAL_LIKE_THRESHOLD = 50;
 
 export default function MyListCardCompact({ list, onSettingsClick, hideSettings }: MyListCardCompactProps) {
-  const itemCount = list.itemCount ?? list._count?.items ?? 0;
+  const itemCount = getListItemCount(list);
   const saveCount = list.saveCount ?? list._count?.bookmarks ?? 0;
   const likes = list.likeCount ?? list._count?.list_likes ?? 0;
   const categorySlug = list.categories?.slug ?? null;
@@ -39,6 +46,7 @@ export default function MyListCardCompact({ list, onSettingsClick, hideSettings 
   const badge = list.badge?.toString().toLowerCase() ?? null;
   const isFeatured = list.isFeatured || badge === 'featured';
   const visibility = getListVisibilityVariant(list);
+  const isEmptyPublic = visibility === 'public' && itemCount === 0;
 
   const accentClass =
     visibility === 'public'
@@ -85,6 +93,11 @@ export default function MyListCardCompact({ list, onSettingsClick, hideSettings 
             {badge === 'trending' && (
               <span className="rounded bg-success/10 px-1.5 py-0.5 wibe-caption font-medium text-success">
                 ترند
+              </span>
+            )}
+            {isEmptyPublic && (
+              <span className="rounded bg-orange-50 px-1.5 py-0.5 wibe-caption font-medium text-orange-700 ring-1 ring-orange-200/80">
+                خالی
               </span>
             )}
           </div>

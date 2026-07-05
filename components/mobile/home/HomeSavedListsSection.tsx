@@ -1,12 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Bookmark } from 'lucide-react';
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeGridListCard, { SAVED_LIST_BADGE } from './HomeGridListCard';
 import HomeFeedGrid from './HomeFeedGrid';
-import HomeStarterEmptyPanel from './HomeStarterEmptyPanel';
 import { useHomeData } from '@/contexts/HomeDataContext';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
 import { useHomeBookmarks } from '@/hooks/useHomeBookmarks';
@@ -33,21 +31,26 @@ export default function HomeSavedListsSection() {
   }
 
   if (isGuest) {
-    return (
-      <section className="mb-6">
-        <HomeSectionTitle
-          iconVariant="bookmark"
-          title="ذخیره‌شده‌های تو"
-          subtitle="بعد از ورود، لیست‌های ذخیره‌شده اینجا می‌آیند"
-          actionHref="/login?callbackUrl=/"
-          actionLabel="ورود"
-        />
-        <HomeStarterEmptyPanel lists={trendingFallback} isGuest variant="saved" />
-      </section>
-    );
+    return null;
   }
 
   const showSaved = hasSaves && savedLists.length > 0;
+  const suggestionLists = trendingFallback.map((list) => ({
+    id: list.id,
+    title: list.title,
+    slug: list.slug,
+    coverImage: list.coverImage ?? '',
+    saveCount: list.saveCount ?? 0,
+    categories: list.categories,
+  }));
+  const suggestionCells = buildDesktopFeedCells(suggestionLists, {
+    maxLists: 4,
+    seeAll: {
+      href: '/lists?mode=trending',
+      label: 'مشاهده همه',
+      description: 'لیست‌های ترند',
+    },
+  });
   const desktopGridLists = savedLists.map((list) => ({
     id: list.id,
     title: list.title,
@@ -70,7 +73,9 @@ export default function HomeSavedListsSection() {
       <HomeSectionTitle
         iconVariant="bookmark"
         title="ذخیره‌شده‌های تو"
-        subtitle={showSaved ? 'آخرین لیست‌هایی که ذخیره کردی' : 'هنوز چیزی ذخیره نکردی'}
+        subtitle={
+          showSaved ? 'آخرین لیست‌هایی که ذخیره کردی' : 'لیست‌های محبوب — با یک ذخیره شخصی‌تر می‌شود'
+        }
         actionHref={showSaved ? '/profile' : '/lists?mode=trending'}
         actionLabel={showSaved ? 'همه' : 'ترندها'}
         analyticsSection="saved"
@@ -106,7 +111,27 @@ export default function HomeSavedListsSection() {
           </div>
         </>
       ) : (
-        <HomeStarterEmptyPanel lists={trendingFallback} isGuest={false} variant="saved" />
+        <>
+          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
+            {suggestionLists.map((list) => (
+              <HomeGridListCard
+                key={list.id}
+                list={list}
+                badge="پیشنهاد"
+                badgeClassName="bg-primary/90 text-white"
+                homeSection="saved"
+              />
+            ))}
+          </div>
+          <div className={`hidden lg:grid lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
+            <HomeFeedGrid
+              cells={suggestionCells}
+              badge="پیشنهاد"
+              badgeClassName="bg-primary/90 text-white"
+              homeSection="saved"
+            />
+          </div>
+        </>
       )}
 
       {showSaved ? (

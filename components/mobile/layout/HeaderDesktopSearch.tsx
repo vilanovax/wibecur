@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearch } from '@/contexts/SearchContext';
+import SearchShortcutHint from '@/components/shared/SearchShortcutHint';
 
 /** دکمه جستجو برای هدر دسکتاپ */
 export default function HeaderDesktopSearch() {
@@ -28,9 +29,7 @@ export default function HeaderDesktopSearch() {
         />
       </svg>
       <span className="flex-1 wibe-small text-wibe-secondary">فیلم، کتاب، کافه، لیست…</span>
-      <kbd className="hidden xl:inline-flex rounded-md border border-wibe bg-wibe-card px-1.5 py-0.5 wibe-caption text-wibe-secondary">
-        ⌘K
-      </kbd>
+      <SearchShortcutHint />
     </button>
   );
 }

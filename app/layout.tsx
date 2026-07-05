@@ -7,6 +7,7 @@ import VercelAnalytics from '@/components/analytics/VercelAnalytics';
 import UmamiAnalytics from '@/components/analytics/UmamiAnalytics';
 import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
+import { auth } from '@/lib/auth-config';
 import PWAProvider from '@/components/providers/PWAProvider';
 import CapacitorProvider from '@/components/providers/CapacitorProvider';
 import MainContainer from '@/components/providers/MainContainer';
@@ -70,9 +71,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [{ logoUrl, logoDisplayUrl }, siteLogoForMeta] = await Promise.all([
+  const [{ logoUrl, logoDisplayUrl }, siteLogoForMeta, session] = await Promise.all([
     getSiteBrandingForLayout(),
     getSiteLogoUrl(),
+    auth(),
   ]);
 
   const orgLogoUrl = siteLogoForMeta ?? `${baseUrl}/icon-512.png`;
@@ -113,7 +115,7 @@ export default async function RootLayout({
         <a href="#main" className="skip-link">
           رفتن به محتوای اصلی
         </a>
-        <SessionProvider>
+        <SessionProvider session={session}>
           <QueryProvider>
             <SiteBrandingProvider logoUrl={logoUrl} logoDisplayUrl={logoDisplayUrl}>
               <SearchProvider>

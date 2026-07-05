@@ -86,7 +86,12 @@ async function fetchSharedLists(): Promise<{ lists: ListWithCategory[]; total: n
 
 function pickTopLists(all: ListWithCategory[], limit = 3): MyListCardData[] {
   return [...all]
-    .filter((l) => l.isPublic && l.isActive !== false)
+    .filter(
+      (l) =>
+        l.isPublic &&
+        l.isActive !== false &&
+        (l.itemCount ?? l._count?.items ?? 0) > 0
+    )
     .sort((a, b) => {
       const savesA = a.saveCount ?? a._count?.bookmarks ?? 0;
       const savesB = b.saveCount ?? b._count?.bookmarks ?? 0;

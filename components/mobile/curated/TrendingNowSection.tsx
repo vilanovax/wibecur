@@ -68,14 +68,10 @@ function TrendingCard({ list, priority = false }: { list: CuratedList; priority?
           </span>
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent lg:from-black/85" />
           <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
-            <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:hidden">{list.title}</h3>
-            <h3 className="hidden line-clamp-2 wibe-small font-bold leading-snug text-white lg:block">
+            <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:text-base lg:font-bold lg:leading-snug">
               {list.title}
             </h3>
           </div>
-        </div>
-        <div className="p-2.5 lg:hidden">
-          <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
         </div>
       </div>
     </ExploreTrendingPrefetchLink>

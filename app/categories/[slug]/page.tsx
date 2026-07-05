@@ -102,7 +102,7 @@ export default async function CategoryPage({
           trendingSection={
             <CategoryTrendingSectionServer
               inset
-              title="داغترین ها"
+              title="داغ‌ترین‌ها"
               lists={pageData.trendingLists}
               categorySlug={pageData.category.slug}
               accentColor={pageData.category.accentColor || pageData.category.color}

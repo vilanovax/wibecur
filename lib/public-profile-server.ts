@@ -245,6 +245,8 @@ export async function fetchPublicProfile(
     }))
   );
 
+  const visiblePublicLists = allPublicLists.filter((l) => (l.items ?? 0) > 0);
+
   type ActivityItem =
     | { type: 'comment'; id: string; content: string; createdAt: Date; listTitle: string; listSlug: string }
     | { type: 'suggestion'; id: string; title: string; updatedAt: Date; listTitle: string; listSlug: string };
@@ -298,7 +300,7 @@ export async function fetchPublicProfile(
       spotlightEndDate: activeSpotlight?.endDate ?? null,
     },
     stats: {
-      listsCount,
+      listsCount: visiblePublicLists.length,
       followersCount,
       followingCount,
       savedCount: totalSaves,
@@ -306,8 +308,8 @@ export async function fetchPublicProfile(
     },
     isFollowing: !!isFollowing,
     topTags,
-    featuredLists: allPublicLists.filter((l) => l.isFeatured),
-    publicLists: allPublicLists,
+    featuredLists: visiblePublicLists.filter((l) => l.isFeatured),
+    publicLists: visiblePublicLists,
     likedLists: likedListsFormatted,
     recentActivity,
     profilePicks,

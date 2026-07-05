@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   Shield,
@@ -10,6 +11,8 @@ import {
   AlertTriangle,
   MessageSquare,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   LayoutGrid,
   CheckCircle2,
 } from 'lucide-react';
@@ -136,6 +139,41 @@ export default function DashboardActionCenter({
     secondary.length === 0 &&
     extraRisks.length === 0;
 
+  const [expanded, setExpanded] = useState(false);
+  const isCollapsed = allClear && !expanded;
+
+  if (isCollapsed) {
+    return (
+      <section
+        className="rounded-xl border border-emerald-200/60 bg-emerald-50/30 dark:bg-emerald-500/5 overflow-hidden"
+        dir="rtl"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="inline-flex items-center gap-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+          >
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+            <span>
+              <span className="font-medium text-[var(--color-text)]">صف‌های مودریشن خالی</span>
+              {' — '}
+              کلیک برای جزئیات
+            </span>
+            <ChevronDown className="w-4 h-4 shrink-0" />
+          </button>
+          <Link
+            href="/admin/comments"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-[var(--primary)] hover:bg-[var(--color-bg)] transition-colors"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            کامنت‌ها
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden"
@@ -165,27 +203,36 @@ export default function DashboardActionCenter({
             </p>
           </div>
         </div>
-        <Link
-          href="/admin/comments"
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          <LayoutGrid className="w-4 h-4" />
-          داشبورد کامنت‌ها
-          <ChevronLeft className="w-4 h-4 rotate-180" />
-        </Link>
+        <div className="flex items-center gap-2">
+          {allClear && (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] transition-colors"
+              title="جمع کردن"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+          )}
+          <Link
+            href="/admin/comments"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            داشبورد کامنت‌ها
+            <ChevronLeft className="w-4 h-4 rotate-180" />
+          </Link>
+        </div>
       </div>
 
       {allClear ? (
-        <div className="flex items-center gap-3 px-4 sm:px-6 py-8 text-emerald-700">
-          <CheckCircle2 className="w-8 h-8 shrink-0 text-emerald-500" />
-          <div>
-            <p className="font-medium text-[var(--color-text)]">
-              وضعیت مودریشن مطلوب است
-            </p>
-            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
-              کامنت معلق، ریپورت باز و هشدار اضافه‌ای وجود ندارد.
-            </p>
-          </div>
+        <div className="flex items-center gap-2.5 px-4 sm:px-6 py-3 text-emerald-700">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
+          <p className="text-sm text-[var(--color-text-muted)]">
+            <span className="font-medium text-[var(--color-text)]">صف‌های مودریشن خالی است</span>
+            {' — '}
+            کامنت معلق، ریپورت باز و هشدار اضافه‌ای وجود ندارد.
+          </p>
         </div>
       ) : (
         <>

@@ -40,8 +40,8 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
         <div
           className={`animate-pulse rounded-xl bg-gray-200 shadow-card lg:rounded-2xl ${
             fillHeight
-              ? 'h-[220px] sm:h-[230px] xl:h-full xl:min-h-[20rem]'
-              : 'h-[220px] sm:h-[230px] lg:h-[22rem] xl:h-[24rem]'
+              ? 'h-[200px] sm:h-[210px] xl:h-full xl:min-h-[18rem]'
+              : 'h-[200px] sm:h-[210px] lg:h-[19rem] xl:h-[20rem]'
           }`}
         />
       </section>
@@ -62,10 +62,10 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
         listId={list.id}
         slotId={featuredSlotId}
         ariaLabel={`مشاهده لیست ${list.title}`}
-        className={`group relative block overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[230px] lg:rounded-2xl lg:shadow-lg ${
+        className={`group relative block overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[210px] lg:rounded-2xl lg:shadow-lg ${
           fillHeight
-            ? 'h-[220px] xl:h-full xl:min-h-[20rem]'
-            : 'h-[220px] lg:h-[22rem] xl:h-[24rem]'
+            ? 'h-[200px] xl:h-full xl:min-h-[18rem]'
+            : 'h-[200px] lg:h-[19rem] xl:h-[20rem]'
         }`}
       >
         <ListCoverImage
@@ -78,7 +78,7 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           categorySlug={categorySlug}
           className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] lg:object-[center_35%]"
           fallbackIcon={list.categories?.icon ?? '📚'}
-          fallbackClassName="flex h-full w-full min-h-[220px] items-center justify-center bg-gray-200 text-5xl lg:min-h-0 lg:text-7xl"
+          fallbackClassName="flex h-full w-full min-h-[200px] items-center justify-center bg-gray-200 text-5xl lg:min-h-0 lg:text-7xl"
           priority
           sizes={
             fillHeight

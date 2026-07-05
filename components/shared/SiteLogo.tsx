@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSiteBranding } from '@/contexts/SiteBrandingContext';
 
 type SiteLogoProps = {
@@ -13,6 +12,8 @@ type SiteLogoProps = {
   fallbackText?: string;
   onClick?: () => void;
   linked?: boolean;
+  /** مقدار SSR از Provider — جلوگیری از hydration mismatch */
+  initialLogoDisplayUrl?: string | null;
 };
 
 const VARIANT_CLASS: Record<NonNullable<SiteLogoProps['variant']>, string> = {
@@ -31,20 +32,24 @@ export default function SiteLogo({
   fallbackText = 'وایب',
   onClick,
   linked = true,
+  initialLogoDisplayUrl,
 }: SiteLogoProps) {
-  const { logoDisplayUrl } = useSiteBranding();
+  const { logoDisplayUrl: contextLogoUrl } = useSiteBranding();
+  const logoDisplayUrl =
+    initialLogoDisplayUrl !== undefined ? initialLogoDisplayUrl : contextLogoUrl;
+
   const sizeClass = VARIANT_CLASS[variant];
   const isCompact = variant === 'adminCompact';
 
   const inner = logoDisplayUrl ? (
-    <Image
+    // img ساده — پایدارتر از next/image برای لوگوی داینامیک از تنظیمات
+    <img
       src={logoDisplayUrl}
       alt={fallbackText}
       width={480}
       height={120}
-      unoptimized
-      className={`object-contain object-right ${isCompact ? 'h-8 w-8' : `${sizeClass} w-auto`}`}
-      priority={variant === 'nav' || variant === 'header' || variant === 'auth'}
+      decoding="async"
+      className={`object-contain object-right ${isCompact ? 'h-8 w-8' : `${sizeClass} w-auto h-auto max-h-full`}`}
     />
   ) : showFallbackText ? (
     <span
@@ -85,7 +90,7 @@ export default function SiteLogo({
   }
 
   return (
-    <Link href={href} className={linkClass} aria-label={`${fallbackText} — خانه`}>
+    <Link href={href} className={linkClass} aria-label={`${fallbackText} — خانه`} suppressHydrationWarning>
       {inner}
     </Link>
   );

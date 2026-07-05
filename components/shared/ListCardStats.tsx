@@ -21,12 +21,11 @@ export default function ListCardStats({
   className = '',
 }: ListCardStatsProps) {
   const saveLabel = saves.toLocaleString('fa-IR');
+  const itemLabel = itemCount.toLocaleString('fa-IR');
   const periodLabelText =
     periodSaves != null && periodSaves > 0
       ? `+${periodSaves.toLocaleString('fa-IR')} ${periodLabel}`
-      : saves > 0
-        ? `${saveLabel} ذخیره`
-        : 'ترند';
+      : `${saveLabel} ذخیره`;
 
   if (variant === 'overlay') {
     return (
@@ -35,7 +34,7 @@ export default function ListCardStats({
       >
         <Bookmark className="h-3 w-3 shrink-0 max-lg:opacity-90 lg:h-4 lg:w-4" />
         <span className="line-clamp-1">
-          {periodLabelText} · {itemCount.toLocaleString('fa-IR')} آیتم
+          {periodLabelText} · {itemLabel} آیتم
         </span>
       </p>
     );
@@ -44,7 +43,7 @@ export default function ListCardStats({
   if (variant === 'minimal') {
     return (
       <p className={`wibe-caption text-wibe-secondary tabular-nums ${className}`}>
-        {saveLabel} ذخیره · {itemCount.toLocaleString('fa-IR')} آیتم
+        {saveLabel} ذخیره · {itemLabel} آیتم
       </p>
     );
   }
@@ -53,7 +52,7 @@ export default function ListCardStats({
     return (
       <p className={`inline-flex items-center gap-1 wibe-caption text-wibe-secondary ${className}`}>
         <Package className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        <span className="tabular-nums">{itemCount.toLocaleString('fa-IR')} آیتم</span>
+        <span className="tabular-nums">{itemLabel} آیتم</span>
       </p>
     );
   }
@@ -63,12 +62,12 @@ export default function ListCardStats({
       <p className={`flex items-center gap-2 wibe-caption text-wibe-secondary ${className}`}>
         <span className="inline-flex items-center gap-1 text-primary font-medium">
           <Bookmark className="w-3.5 h-3.5" />
-          {saveLabel}
+          {saveLabel} ذخیره
         </span>
         <span className="text-wibe-secondary/60">·</span>
         <span className="inline-flex items-center gap-1">
           <Package className="w-3.5 h-3.5" />
-          {itemCount} آیتم
+          {itemLabel} آیتم
         </span>
       </p>
     );
@@ -82,7 +81,7 @@ export default function ListCardStats({
       </span>
       <span className="inline-flex items-center gap-1 wibe-caption text-wibe-secondary">
         <Package className="w-3.5 h-3.5" />
-        {itemCount} آیتم
+        {itemLabel} آیتم
       </span>
     </div>
   );

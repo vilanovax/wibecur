@@ -1,8 +1,8 @@
-import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
 import HomeHeroImpressionTracker from '@/components/mobile/home/HomeHeroClientActions';
 import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
-import { resolveNextImageSrc } from '@/lib/next-image-src';
+import HeroCoverImage from '@/components/shared/HeroCoverImage';
+import { resolveListBannerImage } from '@/lib/list-display-images';
 import type { FeaturedListData } from '@/types/home-data';
 
 type HomeHeroSpotlightServerProps = {
@@ -11,15 +11,28 @@ type HomeHeroSpotlightServerProps = {
   fillHeight?: boolean;
 };
 
+function resolveFeaturedHeroSrc(list: FeaturedListData): string {
+  return (
+    list.bannerImage?.trim() ||
+    resolveListBannerImage({
+      coverImage: list.coverImage,
+      horizontalImage: list.horizontalImage,
+      slug: list.slug,
+      title: list.title,
+      categorySlug: list.categories?.slug,
+    }) ||
+    list.coverImage ||
+    ''
+  );
+}
+
 export default function HomeHeroSpotlightServer({
   list,
   slotId,
   fillHeight = false,
 }: HomeHeroSpotlightServerProps) {
-  const bannerSrc = list.bannerImage ?? list.coverImage;
-  const { src: heroSrc, unoptimized } = bannerSrc
-    ? resolveNextImageSrc(bannerSrc)
-    : { src: '', unoptimized: false };
+  const heroSrc = resolveFeaturedHeroSrc(list);
+  const categorySlug = list.categories?.slug ?? null;
   const sizes = fillHeight
     ? '(max-width: 1279px) 100vw, 58vw'
     : '(max-width: 1023px) 100vw, (max-width: 1279px) 90vw, 58vw';
@@ -36,24 +49,26 @@ export default function HomeHeroSpotlightServer({
         listId={list.id}
         slotId={slotId}
         ariaLabel={`مشاهده لیست ${list.title}`}
-        className={`group relative block overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[230px] lg:rounded-2xl lg:shadow-lg ${
+        className={`group relative block overflow-hidden rounded-xl bg-gray-200 shadow-card sm:h-[210px] lg:rounded-2xl lg:shadow-lg ${
           fillHeight
-            ? 'h-[220px] xl:h-full xl:min-h-[20rem]'
-            : 'h-[220px] lg:h-[22rem] xl:h-[24rem]'
+            ? 'h-[200px] xl:h-full xl:min-h-[18rem]'
+            : 'h-[200px] lg:h-[19rem] xl:h-[20rem]'
         }`}
       >
         {heroSrc ? (
-          <Image
+          <HeroCoverImage
             src={heroSrc}
             alt={list.title}
-            fill
             priority
             sizes={sizes}
-            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] lg:object-[center_35%]"
-            unoptimized={unoptimized}
+            fallbackIcon={list.categories?.icon ?? '📚'}
+            categorySlug={categorySlug}
+            listSlug={list.slug}
+            listTitle={list.title}
+            className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03] lg:object-[center_35%]"
           />
         ) : (
-          <div className="flex h-full w-full min-h-[220px] items-center justify-center bg-gray-200 text-5xl lg:min-h-0 lg:text-7xl">
+          <div className="flex h-full w-full min-h-[200px] items-center justify-center bg-gradient-to-br from-neutral-700 to-neutral-900 text-5xl lg:min-h-0 lg:text-7xl">
             {list.categories?.icon ?? '📚'}
           </div>
         )}

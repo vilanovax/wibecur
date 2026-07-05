@@ -28,7 +28,9 @@ export interface TrendingRadarRow {
   listSlug: string;
   category: string;
   categoryId?: string;
+  viewCount: number;
   saves24h: number;
+  saveCount: number;
   growth7dPercent: number;
   trendingScore: number;
   trend: 'up' | 'down' | 'neutral';
@@ -146,9 +148,34 @@ export interface CommentsModerationSnapshot {
   totalCommentReports: number;
 }
 
+/** Totals for content-focused dashboard strip */
+export interface ContentOverview {
+  categories: number;
+  lists: number;
+  items: number;
+  users: number;
+  totalViews: number;
+  totalSaves: number;
+  saveRate: string;
+}
+
+/** Period activity snapshot (users / lists / saves) */
+export interface PeriodSnapshot {
+  label: string;
+  range: DashboardRange;
+  newUsers: number;
+  newLists: number;
+  saves: number;
+  usersDelta: number;
+  listsDelta: number;
+  savesDelta: number;
+}
+
 export interface DashboardData {
   /** Legacy / fallback */
   kpis: KpiItem[];
+  contentOverview: ContentOverview;
+  periodSnapshot: PeriodSnapshot;
   moderationAlerts: ModerationAlert[];
   topLists: TopList[];
   topCategories: TopCategory[];

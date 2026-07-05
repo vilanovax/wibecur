@@ -92,17 +92,31 @@ const SCOPE_GROUPS: { title: string; scopes: BackupScope[] }[] = [
   { title: 'سیستم', scopes: ['settings'] },
 ];
 
-const PRESETS: { id: string; label: string; scopes: BackupScope[] }[] = [
-  { id: 'full', label: 'پشتیبان کامل', scopes: [...SELECTABLE_SCOPES] },
+const PRESETS: { id: string; label: string; scopes: BackupScope[]; recommended?: boolean; hint?: string }[] = [
+  {
+    id: 'full',
+    label: 'پشتیبان کامل',
+    scopes: [...SELECTABLE_SCOPES],
+    recommended: true,
+    hint: 'همه بخش‌ها — برای migration یا بازیابی کامل',
+  },
   {
     id: 'content',
     label: 'هسته محتوا',
     scopes: ['categories', 'lists', 'items'],
+    hint: 'دسته، لیست و آیتم',
   },
   {
     id: 'content-settings',
     label: 'محتوا + تنظیمات',
     scopes: ['categories', 'lists', 'items', 'settings'],
+    hint: 'محتوا + config سایت',
+  },
+  {
+    id: 'users-engagement',
+    label: 'کاربران + تعامل',
+    scopes: ['users', 'engagement'],
+    hint: 'کاربر، ذخیره، کامنت، فالو',
   },
 ];
 
@@ -288,7 +302,27 @@ export default function BackupPageClient() {
   const selectedCount = selectedScopes.length;
   const isFullSelection = selectedCount === SELECTABLE_SCOPES.length;
   const hasContentCore = contentSelected.length > 0;
+  const hasFullContentCore = CONTENT_SCOPES.every((c) => selectedScopes.includes(c));
   const estimatedRows = stats?.estimatedRows ?? null;
+  const lastCompletedJob = useMemo(
+    () => jobs.find((j) => j.status === 'COMPLETED' && j.fileName),
+    [jobs]
+  );
+
+  const contentWarnings = useMemo(() => {
+    const warnings: string[] = [];
+    const has = (s: ContentScope) => selectedScopes.includes(s);
+    if (has('items') && !has('lists')) {
+      warnings.push('آیتم‌ها بدون لیست‌ها — در بازیابی ممکن است آیتم‌های بدون والد import شوند.');
+    }
+    if (has('lists') && !has('categories')) {
+      warnings.push('لیست‌ها بدون دسته‌بندی — slug دسته در export ناقص می‌ماند.');
+    }
+    if (hasContentCore && !hasFullContentCore) {
+      warnings.push('برای پشتیبان کامل محتوا، هر سه بخش دسته / لیست / آیتم را انتخاب کنید.');
+    }
+    return warnings;
+  }, [selectedScopes, hasContentCore, hasFullContentCore]);
 
   return (
     <div className="space-y-5">
@@ -332,6 +366,10 @@ export default function BackupPageClient() {
         <ActiveJobBanner job={activeJob} />
       )}
 
+      {stats && !statsLoading && (
+        <DataOverviewStrip stats={stats} includeTrash={includeTrash} />
+      )}
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_17.5rem] xl:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="space-y-4 min-w-0">
           <AdminCard padding="compact" hover={false} className="!p-0 overflow-hidden">
@@ -372,18 +410,38 @@ export default function BackupPageClient() {
               <button
                 key={p.id}
                 type="button"
+                title={p.hint}
                 onClick={() => applyPreset(p.scopes)}
                 className={clsx(
-                  'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors',
                   arraysEqual(selectedScopes, p.scopes)
                     ? 'border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-200'
                     : 'border-gray-200 bg-white text-gray-700 hover:border-violet-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
                 )}
               >
+                {p.recommended && (
+                  <span className="rounded bg-violet-600 px-1 py-0.5 text-[9px] font-bold text-white leading-none">
+                    توصیه
+                  </span>
+                )}
                 {p.label}
               </button>
             ))}
           </div>
+
+          {contentWarnings.length > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10">
+              <p className="flex items-start gap-2 text-xs font-medium text-amber-900 dark:text-amber-200">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>توجه به انتخاب محتوا</span>
+              </p>
+              <ul className="mt-2 space-y-1 pr-6 text-xs text-amber-800 dark:text-amber-300/90 list-disc">
+                {contentWarnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <AdminCard padding="default" hover={false} className="space-y-5">
             <BackupContentCore
@@ -426,10 +484,10 @@ export default function BackupPageClient() {
 
             {SCOPE_GROUPS.map((group) => (
               <div key={group.title} className="space-y-2">
-                <h3 className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                <h3 className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
                   {group.title}
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
                   {group.scopes.map((scope) => (
                     <ScopeChip
                       key={scope}
@@ -531,17 +589,29 @@ export default function BackupPageClient() {
                   <SummaryRow
                     label="دسته‌ها"
                     value={contentSelected.includes('categories') ? fmt(stats.categories) : '—'}
+                    highlight={contentSelected.includes('categories')}
                   />
                   <SummaryRow
                     label="لیست‌ها"
                     value={contentSelected.includes('lists') ? fmt(stats.lists) : '—'}
+                    highlight={contentSelected.includes('lists')}
                   />
                   <SummaryRow
                     label="آیتم‌ها"
                     value={contentSelected.includes('items') ? fmt(stats.items) : '—'}
+                    highlight={contentSelected.includes('items')}
                   />
                 </>
               )}
+              {stats &&
+                OTHER_SCOPES.filter((s) => selectedScopes.includes(s)).map((scope) => (
+                  <SummaryRow
+                    key={scope}
+                    label={SCOPE_META[scope].short}
+                    value={fmt(getScopeCount(stats, scope) ?? 0)}
+                  />
+                ))}
+              <li className="border-t border-gray-100 dark:border-gray-700/80 pt-2 mt-1" />
               <SummaryRow
                 label="تخمین ردیف"
                 value={
@@ -549,15 +619,32 @@ export default function BackupPageClient() {
                     ? estimatedRows.toLocaleString('fa-IR')
                     : '—'
                 }
+                highlight={Boolean(estimatedRows && selectedCount)}
               />
               <SummaryRow
                 label="پوشش"
-                value={isFullSelection ? 'کامل' : selectedCount ? 'جزئی' : '—'}
+                value={isFullSelection ? 'کامل ✓' : selectedCount ? `${selectedCount} بخش` : '—'}
               />
               <SummaryRow label="رسانه" value={assetMode === 'urls_only' ? 'فهرست URL' : 'ساختاری'} />
               <SummaryRow label="سطل‌زباله" value={includeTrash ? 'بله' : 'خیر'} />
               <SummaryRow label="فرمت" value="ZIP + JSON" />
             </ul>
+
+            <div className="flex items-start gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-2 text-[10px] text-emerald-800 dark:text-emerald-300">
+              <Shield className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>رمز عبور و API key در خروجی نیست</span>
+            </div>
+
+            {lastCompletedJob && (
+              <p className="text-[10px] text-gray-400 leading-relaxed">
+                آخرین خروجی موفق:{' '}
+                {new Date(lastCompletedJob.completedAt ?? lastCompletedJob.createdAt).toLocaleString(
+                  'fa-IR',
+                  { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+                )}
+                {lastCompletedJob.fileSizeBytes ? ` · ${formatBytes(lastCompletedJob.fileSizeBytes)}` : ''}
+              </p>
+            )}
 
             {selectedCount > 0 && (
               <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
@@ -632,7 +719,7 @@ export default function BackupPageClient() {
             <Loader2 className="h-6 w-6 animate-spin text-violet-500" />
           </div>
         ) : jobs.length === 0 ? (
-          <EmptyJobsState />
+          <EmptyJobsState onQuickFull={() => applyPreset(PRESETS[0].scopes)} />
         ) : (
           <ul className="space-y-2">
             {jobs.map((job) => (
@@ -688,20 +775,27 @@ function ScopeChip({
     <button
       type="button"
       onClick={onToggle}
-      title={hint ? `${BACKUP_SCOPE_LABELS[scope]} — ${hint}` : BACKUP_SCOPE_LABELS[scope]}
+      title={BACKUP_SCOPE_LABELS[scope]}
       className={clsx(
-        'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all',
+        'inline-flex flex-col items-start gap-0.5 rounded-xl border px-3 py-2.5 text-sm transition-all min-w-[7.5rem]',
         selected
           ? 'border-violet-400 bg-violet-50 text-violet-900 shadow-sm shadow-violet-500/10 dark:border-violet-500 dark:bg-violet-900/35 dark:text-violet-100'
           : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-300'
       )}
     >
-      <Icon className={clsx('h-4 w-4 shrink-0', selected ? 'text-violet-600 dark:text-violet-300' : 'text-gray-400')} />
-      <span className="font-medium">{short}</span>
-      {count != null && (
-        <span className="text-[10px] tabular-nums opacity-70">{fmt(count)}</span>
+      <span className="flex w-full items-center gap-2">
+        <Icon className={clsx('h-4 w-4 shrink-0', selected ? 'text-violet-600 dark:text-violet-300' : 'text-gray-400')} />
+        <span className="font-medium">{short}</span>
+        {selected && <CheckCircle2 className="h-3.5 w-3.5 ms-auto text-violet-600 dark:text-violet-400" />}
+      </span>
+      {hint && (
+        <span className="text-[10px] text-gray-400 dark:text-gray-500 pr-6 leading-snug">{hint}</span>
       )}
-      {selected && <CheckCircle2 className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />}
+      {count != null && (
+        <span className="text-[11px] tabular-nums font-semibold text-violet-700 dark:text-violet-300 pr-6">
+          {fmt(count)} رکورد
+        </span>
+      )}
     </button>
   );
 }
@@ -739,12 +833,70 @@ function SegmentOption({
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryRow({
+  label,
+  value,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
     <li className="flex items-center justify-between gap-2">
       <span>{label}</span>
-      <span className="font-medium text-gray-800 dark:text-gray-200">{value}</span>
+      <span
+        className={clsx(
+          'font-medium tabular-nums',
+          highlight ? 'text-violet-700 dark:text-violet-300' : 'text-gray-800 dark:text-gray-200'
+        )}
+      >
+        {value}
+      </span>
     </li>
+  );
+}
+
+function DataOverviewStrip({
+  stats,
+  includeTrash,
+}: {
+  stats: BackupPreviewStats;
+  includeTrash: boolean;
+}) {
+  const tiles = [
+    { label: 'دسته', value: stats.categories, icon: Tag },
+    { label: 'لیست', value: stats.lists, icon: List },
+    { label: 'آیتم', value: stats.items, icon: Package },
+    { label: 'کاربر', value: stats.users, icon: Users },
+  ] as const;
+
+  return (
+    <AdminCard padding="compact" hover={false} className="!py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <Database className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
+          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+            وضعیت فعلی دیتابیس
+            {includeTrash ? ' (شامل سطل‌زباله)' : ''}
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {tiles.map(({ label, value, icon: Icon }) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50/80 px-2.5 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-800/50"
+            >
+              <Icon className="h-3.5 w-3.5 text-gray-400" />
+              <span className="text-gray-500 dark:text-gray-400">{label}</span>
+              <strong className="tabular-nums text-gray-900 dark:text-white">
+                {value.toLocaleString('fa-IR')}
+              </strong>
+            </span>
+          ))}
+        </div>
+      </div>
+    </AdminCard>
   );
 }
 
@@ -772,14 +924,24 @@ function ActiveJobBanner({ job }: { job: BackupJobRow }) {
   );
 }
 
-function EmptyJobsState() {
+function EmptyJobsState({ onQuickFull }: { onQuickFull?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-14 px-4 text-center rounded-xl border border-dashed border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/20">
       <Archive className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">هنوز خروجی ندارید</p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs">
-        بخش‌ها را انتخاب کنید و از کارت «خلاصه خروجی» پشتیبان را بسازید
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm leading-relaxed">
+        بخش‌ها را انتخاب کنید یا با «پشتیبان کامل» همه داده‌ها را یک‌جا export کنید
       </p>
+      {onQuickFull && (
+        <button
+          type="button"
+          onClick={onQuickFull}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          پیش‌تنظیم پشتیبان کامل
+        </button>
+      )}
     </div>
   );
 }

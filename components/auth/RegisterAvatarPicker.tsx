@@ -1,8 +1,10 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { Check } from 'lucide-react';
-import { DEFAULT_PACK_AVATARS, resolveVibeAvatar, type VibeAvatarOption } from '@/lib/vibe-avatars';
+import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
+import { DEFAULT_PACK_AVATARS, resolveVibeAvatar, type VibeAvatarOption } from '@/lib/vibe-avatars';
 
 interface RegisterAvatarPickerProps {
   value: string;
@@ -10,23 +12,59 @@ interface RegisterAvatarPickerProps {
 }
 
 export default function RegisterAvatarPicker({ value, onChange }: RegisterAvatarPickerProps) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const selectedAvatar = useMemo(() => resolveVibeAvatar(value), [value]);
+
+  const handleSelect = (avatarId: string) => {
+    onChange(avatarId);
+    setSheetOpen(false);
+  };
+
   return (
-    <div dir="rtl">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-gray-800">آواتار تو</p>
-        <span className="text-xs text-gray-400">یکی انتخاب کن</span>
+    <>
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {selectedAvatar ? (
+            <VibeAvatarDisplay avatar={selectedAvatar} size={52} />
+          ) : (
+            <div className="h-[52px] w-[52px] rounded-full bg-gray-200" />
+          )}
+          <div className="min-w-0 text-right">
+            <p className="text-sm font-medium text-gray-800">آواتار تو</p>
+            <p className="mt-0.5 truncate text-xs text-gray-500">
+              {selectedAvatar?.label ?? 'پیش‌فرض'}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="shrink-0 text-xs font-medium text-primary transition-colors hover:text-primary-dark"
+        >
+          تغییر آواتار
+        </button>
       </div>
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-4">
-        {DEFAULT_PACK_AVATARS.map((avatar) => (
-          <AvatarChip
-            key={avatar.id}
-            avatar={avatar}
-            selected={value === avatar.id}
-            onSelect={() => onChange(avatar.id)}
-          />
-        ))}
-      </div>
-    </div>
+
+      <BottomSheet
+        isOpen={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title="انتخاب آواتار"
+        subtitle="یکی انتخاب کن"
+        desktopMaxWidth="sm"
+        constrainToMobileShell={false}
+      >
+        <div className="grid grid-cols-4 gap-2 px-1 pb-2">
+          {DEFAULT_PACK_AVATARS.map((avatar) => (
+            <AvatarChip
+              key={avatar.id}
+              avatar={avatar}
+              selected={value === avatar.id}
+              onSelect={() => handleSelect(avatar.id)}
+            />
+          ))}
+        </div>
+      </BottomSheet>
+    </>
   );
 }
 

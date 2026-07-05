@@ -383,6 +383,12 @@ export async function getObjectByPublicUrl(
   }
 }
 
+function buildStorageKeyCandidates(bucketName: string, objectKey: string): string[] {
+  const key = objectKey.replace(/^\/+/, '');
+  const bucket = bucketName.replace(/^\/+|\/+$/g, '');
+  return [...new Set([key, `${bucket}/${key}`])];
+}
+
 /** خواندن فایل از ParsPack با کلید S3 — برای URLهای قدیمی Liara */
 export async function getObjectByStorageKey(
   objectKey: string,
@@ -394,28 +400,26 @@ export async function getObjectByStorageKey(
   try {
     const config = await getObjectStorageConfig();
     const client = await getS3Client();
-    if (!config || !client) return null;
+    if (config && client) {
+      for (const candidate of buildStorageKeyCandidates(config.bucketName, key)) {
+        try {
+          const cmd = new GetObjectCommand({ Bucket: config.bucketName, Key: candidate });
+          const res = await client.send(cmd);
+          const body = res.Body;
+          if (!body) continue;
 
-    const cmd = new GetObjectCommand({ Bucket: config.bucketName, Key: key });
-    const res = await client.send(cmd);
-    const body = res.Body;
-    if (!body) return null;
+          const bytes = await body.transformToByteArray();
+          return { buffer: toNodeBuffer(bytes), contentType: res.ContentType ?? undefined };
+        } catch {
+          /* کلید بعدی */
+        }
+      }
 
-    const bytes = await body.transformToByteArray();
-    return { buffer: toNodeBuffer(bytes), contentType: res.ContentType ?? undefined };
-  } catch (e) {
-    console.error('getObjectByStorageKey error:', (e as Error).message);
-  }
-
-  try {
-    const config = await getObjectStorageConfig();
-    if (config) {
-      const publicUrl = buildStoragePublicUrl(config, key);
-      const fromPublic = await getObjectByPublicUrl(publicUrl);
+      const fromPublic = await getObjectByPublicUrl(buildStoragePublicUrl(config, key));
       if (fromPublic) return fromPublic;
     }
-  } catch {
-    /* ادامه به Liara قدیمی */
+  } catch (e) {
+    console.error('getObjectByStorageKey error:', (e as Error).message);
   }
 
   // فایل هنوز migrate نشده — تلاش از Liara قدیمی (سرور، نه مرورگر)
@@ -432,7 +436,6 @@ export async function getObjectByStorageKey(
         timeout: 12000,
         headers: { Accept: 'image/*' },
         validateStatus: (s) => s === 200,
-        // امنیت SSRF: اعتبارسنجی IP مقصد + سقف حجم (legacyUrl می‌تواند از ورودی کاربر بیاید).
         httpAgent: ssrfSafeHttpAgent,
         httpsAgent: ssrfSafeHttpsAgent,
         maxRedirects: 2,

@@ -17,9 +17,8 @@ export default async function BackupPage() {
             <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
               پشتیبان‌گیری
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-lg leading-relaxed">
-              خروجی ZIP، پیش‌نمایش محتوا و بازیابی انتخابی (دسته، لیست، آیتم و سایر جداول) ·{' '}
-              <span className="text-gray-400 dark:text-gray-500">ادغام با داده موجود</span>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-xl leading-relaxed">
+              export امن داده‌های سایت — دسته، لیست، آیتم، کاربران و تنظیمات · بازیابی merge بدون حذف
             </p>
           </div>
         </div>

@@ -218,7 +218,9 @@ export default function CuratedLandingPageClient({
           </div>
         ) : (
           <>
-            <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
+            <div className="hidden lg:block">
+              <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
+            </div>
 
             <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
               <RandomSurpriseCardLazy lists={sections.trending} />

@@ -16,6 +16,7 @@ import {
   publicCuratedListWhere,
   isListVisibleInPublicFeed,
 } from '@/lib/public-content-filters';
+import { dedupeListsById } from '@/lib/dedupe-lists';
 
 export type HomeApiPayload = {
   featured: FeaturedListData | null;
@@ -221,8 +222,8 @@ export async function fetchHomePageData(): Promise<HomeData> {
   return {
     featured: mapFeatured,
     featuredSlotId: slotList ? slotResult?.slotId ?? null : null,
-    trending: trendingResults.map(mapTrending),
-    rising: risingResults.map(mapRising),
+    trending: dedupeListsById(trendingResults.map(mapTrending)),
+    rising: dedupeListsById(risingResults.map(mapRising)),
     recommendations: visibleLists.slice(0, 4).map(mapList),
   };
   } catch (err) {

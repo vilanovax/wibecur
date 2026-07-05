@@ -104,12 +104,16 @@ type ListViewMode = 'grid' | 'map';
 
 type ItemEntry = { item: Item; originalIndex: number };
 
+import { calcViralProgress, shouldShowViralProgress } from '@/lib/list-viral-display';
+
 function ListCompactStatsBar({
   saveCount,
   itemCount,
   commentCount,
   viewCount,
   isOwner = false,
+  isBookmarked = false,
+  bookmarkSaving = false,
   variant = 'horizontal',
   onItemsClick,
   onCommentsClick,
@@ -120,25 +124,19 @@ function ListCompactStatsBar({
   commentCount: number;
   viewCount: number;
   isOwner?: boolean;
+  isBookmarked?: boolean;
+  bookmarkSaving?: boolean;
   variant?: 'horizontal' | 'vertical';
   onItemsClick?: () => void;
   onCommentsClick?: () => void;
   onSavesClick?: () => void;
 }) {
-  const cells: Array<{
+  const metricCells: Array<{
     key: string;
     label: string;
     value: string;
-    highlight?: boolean;
     onClick?: () => void;
   }> = [
-    {
-      key: 'save',
-      label: 'ذخیره',
-      value: isOwner ? '—' : formatCompact(saveCount),
-      highlight: !isOwner && saveCount > 0,
-      onClick: !isOwner ? onSavesClick : undefined,
-    },
     { key: 'items', label: 'آیتم', value: itemCount.toLocaleString('fa-IR'), onClick: onItemsClick },
     {
       key: 'comments',
@@ -149,21 +147,143 @@ function ListCompactStatsBar({
     { key: 'views', label: 'بازدید', value: formatCompact(viewCount) },
   ];
 
+  const renderSaveCell = (layout: 'horizontal' | 'vertical') => {
+    if (isOwner) {
+      const countLabel = formatCompact(saveCount);
+      const row = (
+        <>
+          <span className="wibe-caption text-wibe-secondary">ذخیره</span>
+          <span className="wibe-small font-bold tabular-nums text-foreground">{countLabel}</span>
+        </>
+      );
+      return layout === 'vertical' ? (
+        <div className="flex items-center justify-between px-1 py-0.5">{row}</div>
+      ) : (
+        <div className="px-1 py-2.5 text-center">
+          <p className="wibe-small font-bold tabular-nums leading-none text-foreground">{countLabel}</p>
+          <p className="mt-0.5 wibe-caption text-wibe-secondary">ذخیره</p>
+        </div>
+      );
+    }
+
+    const saveInteractive = Boolean(onSavesClick);
+    const saveLabel = isBookmarked ? 'ذخیره شد' : 'ذخیره';
+    const saveCountLabel = saveCount > 0 ? formatCompact(saveCount) : null;
+
+    const bookmarkedHorizontal = (
+      <>
+        <Bookmark
+          className={`mx-auto mb-1 h-4 w-4 fill-primary text-primary ${bookmarkSaving ? 'opacity-60' : ''}`}
+          aria-hidden
+        />
+        <p className="wibe-caption font-bold leading-none text-primary">{saveLabel}</p>
+        {saveCountLabel ? (
+          <p className="mt-0.5 wibe-caption tabular-nums text-primary/75">{saveCountLabel}</p>
+        ) : null}
+      </>
+    );
+
+    const defaultHorizontal = (
+      <>
+        <p
+          className={`wibe-small font-bold tabular-nums leading-none ${
+            saveCount > 0 ? 'text-primary' : 'text-foreground'
+          }`}
+        >
+          {saveCountLabel ?? '۰'}
+        </p>
+        <p className="mt-0.5 wibe-caption text-wibe-secondary">{saveLabel}</p>
+      </>
+    );
+
+    const bookmarkedVertical = (
+      <>
+        <span className="inline-flex items-center gap-1.5 wibe-caption font-bold text-primary">
+          <Bookmark className="h-3.5 w-3.5 fill-primary text-primary" aria-hidden />
+          {saveLabel}
+        </span>
+        {saveCountLabel ? (
+          <span className="wibe-caption tabular-nums text-primary/75">{saveCountLabel}</span>
+        ) : null}
+      </>
+    );
+
+    const defaultVertical = (
+      <>
+        <span className="wibe-caption text-wibe-secondary">{saveLabel}</span>
+        <span
+          className={`wibe-small font-bold tabular-nums ${
+            saveCount > 0 ? 'text-primary' : 'text-foreground'
+          }`}
+        >
+          {saveCountLabel ?? '۰'}
+        </span>
+      </>
+    );
+
+    const horizontalInner = isBookmarked ? bookmarkedHorizontal : defaultHorizontal;
+    const verticalInner = isBookmarked ? bookmarkedVertical : defaultVertical;
+
+    const horizontalClass = isBookmarked
+      ? 'bg-primary/[0.12] ring-1 ring-inset ring-primary/25'
+      : saveInteractive
+        ? 'hover:bg-primary/[0.06] active:bg-primary/10'
+        : '';
+
+    const verticalClass = isBookmarked
+      ? 'rounded-lg bg-primary/[0.1] px-2 py-1.5 ring-1 ring-inset ring-primary/20'
+      : saveInteractive
+        ? 'rounded-lg px-1 py-0.5 hover:bg-gray-50'
+        : 'px-1 py-0.5';
+
+    if (layout === 'vertical') {
+      if (saveInteractive) {
+        return (
+          <button
+            type="button"
+            onClick={onSavesClick}
+            disabled={bookmarkSaving}
+            aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره لیست'}
+            aria-pressed={isBookmarked}
+            className={`flex w-full items-center justify-between transition-colors disabled:opacity-60 ${verticalClass}`}
+          >
+            {verticalInner}
+          </button>
+        );
+      }
+      return (
+        <div className={`flex items-center justify-between ${verticalClass}`}>{verticalInner}</div>
+      );
+    }
+
+    if (saveInteractive) {
+      return (
+        <button
+          type="button"
+          onClick={onSavesClick}
+          disabled={bookmarkSaving}
+          aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره لیست'}
+          aria-pressed={isBookmarked}
+          className={`px-1 py-2.5 text-center transition-colors disabled:opacity-60 ${horizontalClass}`}
+        >
+          {horizontalInner}
+        </button>
+      );
+    }
+
+    return <div className={`px-1 py-2.5 text-center ${horizontalClass}`}>{horizontalInner}</div>;
+  };
+
   if (variant === 'vertical') {
     return (
       <div className="rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm">
         <div className="space-y-2">
-          {cells.map(({ key, label, value, highlight, onClick }) => {
+          {renderSaveCell('vertical')}
+          {metricCells.map(({ key, label, value, onClick }) => {
             const row = (
               <>
                 <span className="wibe-caption text-wibe-secondary">{label}</span>
-                <span
-                  className={`wibe-small font-bold tabular-nums ${
-                    highlight ? 'text-primary' : 'text-foreground'
-                  }`}
-                >
-                  {value}
-                </span>
+                <span className="wibe-small font-bold tabular-nums text-foreground">{value}</span>
               </>
             );
 
@@ -173,7 +293,6 @@ function ListCompactStatsBar({
                   key={key}
                   type="button"
                   onClick={onClick}
-                  aria-label={key === 'save' ? 'ذخیره لیست' : undefined}
                   className="flex w-full items-center justify-between rounded-lg px-1 py-0.5 transition-colors hover:bg-gray-50"
                 >
                   {row}
@@ -194,16 +313,11 @@ function ListCompactStatsBar({
 
   return (
     <div className="grid grid-cols-4 divide-x divide-x-reverse divide-wibe overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:py-0.5">
-      {cells.map(({ key, label, value, highlight, onClick }) => {
+      {renderSaveCell('horizontal')}
+      {metricCells.map(({ key, label, value, onClick }) => {
         const inner = (
           <>
-            <p
-              className={`wibe-small font-bold tabular-nums leading-none ${
-                highlight ? 'text-primary' : 'text-foreground'
-              }`}
-            >
-              {value}
-            </p>
+            <p className="wibe-small font-bold tabular-nums leading-none text-foreground">{value}</p>
             <p className="mt-0.5 wibe-caption text-wibe-secondary">{label}</p>
           </>
         );
@@ -214,7 +328,6 @@ function ListCompactStatsBar({
               key={key}
               type="button"
               onClick={onClick}
-              aria-label={key === 'save' ? 'ذخیره لیست' : undefined}
               className="px-1 py-2.5 text-center transition-colors hover:bg-gray-50 active:bg-gray-100"
             >
               {inner}
@@ -243,7 +356,7 @@ function ListOwnerToolbar({
   onManage: () => void;
   onShare: () => void;
 }) {
-  const showViral = saveCount < 100;
+  const showViral = shouldShowViralProgress(saveCount);
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/15 bg-primary/[0.04] px-3 py-2.5">
@@ -525,7 +638,7 @@ export default function ListDetailClient({
   const badgeLabel = list.badge ? listBadgeLabel(list.badge) : undefined;
   const badgeClass = list.badge ? listBadgeSolidClass(list.badge) : undefined;
 
-  const viralProgress = Math.min(100, (saveCount / 100) * 100);
+  const viralProgress = calcViralProgress(saveCount);
 
   const allItemEntries = useMemo<ItemEntry[]>(
     () => list.items.map((item, originalIndex) => ({ item, originalIndex })),
@@ -775,6 +888,8 @@ export default function ListDetailClient({
           commentCount={commentCount}
           viewCount={viewCount}
           isOwner={isOwner}
+          isBookmarked={isBookmarked}
+          bookmarkSaving={bookmarkSaving}
           onItemsClick={() => scrollToSection(itemsSectionRef)}
           onCommentsClick={scrollToComments}
           onSavesClick={!isOwner ? () => handleToggleBookmark() : undefined}
@@ -959,6 +1074,8 @@ export default function ListDetailClient({
                 commentCount={commentCount}
                 viewCount={viewCount}
                 isOwner={isOwner}
+                isBookmarked={isBookmarked}
+                bookmarkSaving={bookmarkSaving}
                 onItemsClick={() => scrollToSection(itemsSectionRef)}
                 onCommentsClick={scrollToComments}
                 onSavesClick={!isOwner ? () => handleToggleBookmark() : undefined}

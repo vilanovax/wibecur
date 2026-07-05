@@ -6,6 +6,7 @@ import { Lightbulb, Plus, Settings, Share2 } from 'lucide-react';
 import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 import { DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS } from '@/lib/layout-tokens';
+import { shouldShowViralProgress } from '@/lib/list-viral-display';
 
 interface ListDetailSidebarProps {
   listId: string;
@@ -59,7 +60,7 @@ export default function ListDetailSidebar({
               <Share2 className="h-4 w-4 text-wibe-secondary" />
               اشتراک‌گذاری
             </button>
-            {saveCount < 100 && (
+            {shouldShowViralProgress(saveCount) && (
               <div>
                 <div className="mb-1 flex items-center justify-between wibe-caption text-wibe-secondary">
                   <span>پیشرفت وایرال</span>

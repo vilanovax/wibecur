@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Sparkles } from 'lucide-react';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
@@ -20,7 +19,7 @@ async function fetchActiveCategories(): Promise<CategoryChip[]> {
 }
 
 export default function HomeStartStrip() {
-  const { isNewUser, isLoading: userLoading, isGuest } = useHomeUserState();
+  const { isNewUser, isLoading: userLoading } = useHomeUserState();
   const { shouldShowStartStrip, interests, saveInterests, completeOnboarding, hydrated } =
     useHomeOnboardingInterests();
   const { data: session } = useSession();
@@ -76,7 +75,7 @@ export default function HomeStartStrip() {
                 شروع سریع
               </p>
               <h2 className="mt-1 wibe-body font-bold text-foreground lg:text-lg">
-                {isGuest ? 'علاقه‌مندی‌ات را انتخاب کن' : '۳ تا از علاقه‌مندی‌ات را انتخاب کن'}
+                ۳ تا از علاقه‌مندی‌ات را انتخاب کن
               </h2>
               <p className="mt-1 wibe-small text-wibe-secondary">
                 فید «برای تو» بر اساس انتخاب‌هایت پر می‌شود
@@ -129,23 +128,14 @@ export default function HomeStartStrip() {
             >
               {selected.length > 0 ? 'ادامه با انتخاب‌ها' : 'ادامه بدون انتخاب'}
             </button>
-            {!isGuest ? (
-              <button
-                type="button"
-                onClick={openHomeCreateSheet}
-                className="inline-flex items-center justify-center gap-1 rounded-lg border border-wibe bg-wibe-card px-4 py-2 wibe-small font-medium text-foreground hover:border-primary/30 lg:w-full"
-              >
-                <Plus className="h-4 w-4" />
-                اولین لیستت را بساز
-              </button>
-            ) : (
-              <Link
-                href="/login?callbackUrl=%2F&source=home_strip"
-                className="inline-flex items-center justify-center rounded-lg border border-wibe bg-wibe-card px-4 py-2 wibe-small font-medium text-foreground hover:border-primary/30 lg:w-full"
-              >
-                ورود برای ذخیره
-              </Link>
-            )}
+            <button
+              type="button"
+              onClick={openHomeCreateSheet}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-wibe bg-wibe-card px-4 py-2 wibe-small font-medium text-foreground hover:border-primary/30 lg:w-full"
+            >
+              <Plus className="h-4 w-4" />
+              اولین لیستت را بساز
+            </button>
           </div>
         </div>
       </div>

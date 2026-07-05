@@ -1,5 +1,6 @@
 import type { HomeData, HomeListData, RisingListData } from '@/types/home-data';
 import { padHomeFeedLists } from '@/lib/home-feed-grid';
+import { dedupeListsById } from '@/lib/dedupe-lists';
 
 export function selectHomeTrendingLists(
   data: Pick<HomeData, 'trending' | 'featured'>,
@@ -7,9 +8,9 @@ export function selectHomeTrendingLists(
 ): HomeListData[] {
   const limit = options?.limit ?? 8;
   const featuredId = options?.excludeFeatured !== false ? data.featured?.id : undefined;
-  const trending = featuredId
-    ? data.trending.filter((list) => list.id !== featuredId)
-    : data.trending;
+  const trending = dedupeListsById(
+    featuredId ? data.trending.filter((list) => list.id !== featuredId) : data.trending
+  );
   return trending.slice(0, limit);
 }
 
@@ -20,8 +21,10 @@ export function selectHomeTrendingDesktopLists(
   const limit = options?.limit ?? 8;
   const featuredId = data.featured?.id;
   const excludeIds = featuredId ? new Set([featuredId]) : new Set<string>();
-  const trending = data.trending.filter((list) => !excludeIds.has(list.id));
-  return padHomeFeedLists(trending, data.rising, limit, excludeIds);
+  const trending = dedupeListsById(
+    data.trending.filter((list) => !excludeIds.has(list.id))
+  );
+  return padHomeFeedLists(trending, dedupeListsById(data.rising), limit, excludeIds);
 }
 
 export function selectHomeRisingLists(
@@ -34,5 +37,10 @@ export function selectHomeRisingLists(
 export function selectHomeLcpImageUrl(data: Pick<HomeData, 'featured'>): string | null {
   const featured = data.featured;
   if (!featured) return null;
-  return featured.bannerImage ?? featured.coverImage ?? null;
+  return (
+    featured.bannerImage ??
+    featured.horizontalImage ??
+    featured.coverImage ??
+    null
+  );
 }
