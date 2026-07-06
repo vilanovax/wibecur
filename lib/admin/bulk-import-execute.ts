@@ -15,6 +15,7 @@ import {
 } from '@/lib/admin/bulk-import-resolve';
 import {
   addCatalogItemToList,
+  buildCatalogExternalKey,
   createCatalogItem,
   createLightweightListItem,
   isCatalogInList,
@@ -23,6 +24,7 @@ import {
 import {
   extractBulkImportEntryKind,
   isBulkImportLightweightRow,
+  mergeItemTipIntoMetadata,
 } from '@/lib/admin/bulk-import';
 import {
   isLightweightEntryKind,
@@ -109,6 +111,36 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+async function overwriteCatalogFromImportRow(
+  db: PrismaClient,
+  catalogId: string,
+  row: BulkImportPayloadItem,
+  metaRecord: Record<string, unknown>,
+  categorySlug: string,
+  imageCtx: BulkImportImageContext
+): Promise<void> {
+  const title = row.title?.trim();
+  if (!title) return;
+
+  const metaWithTip = mergeItemTipIntoMetadata(metaRecord, row.tip);
+  let imageUrl: string | null | undefined;
+  if (row.imageUrl?.trim()) {
+    imageUrl = await resolveRowImageForImport(row, metaRecord, imageCtx);
+  }
+
+  await updateCatalogItem(db, catalogId, {
+    title,
+    description: row.description?.trim() || null,
+    ...(row.imageUrl?.trim()
+      ? { imageUrl: imageUrl ?? row.imageUrl.trim() }
+      : {}),
+    externalUrl: row.externalUrl?.trim() || null,
+    categorySlug,
+    metadata: metaWithTip as Prisma.InputJsonValue,
+    externalKey: buildCatalogExternalKey(categorySlug, title, metaWithTip),
+  });
+}
+
 async function importOneRow(
   db: PrismaClient,
   index: number,
@@ -118,6 +150,7 @@ async function importOneRow(
     categorySlug: string;
     listId: string;
     imageCtx: BulkImportImageContext;
+    overwriteExistingData: boolean;
     match: Awaited<ReturnType<typeof resolveBulkImportMatchesBatch>>[number];
   }
 ): Promise<BulkImportRowResult> {
@@ -218,6 +251,15 @@ async function importOneRow(
         metadata: metaRecord as Prisma.InputJsonValue,
       });
       catalogId = catalog.id;
+    } else if (ctx.overwriteExistingData) {
+      await overwriteCatalogFromImportRow(
+        db,
+        catalogId,
+        row,
+        metaRecord,
+        ctx.categorySlug,
+        ctx.imageCtx
+      );
     } else if (row.imageUrl?.trim()) {
       await ensureCatalogImageFromImport(db, catalogId, row, metaRecord, ctx.imageCtx);
     }
@@ -231,7 +273,9 @@ async function importOneRow(
         catalogItemId: catalogId,
         listCount: match.listCount,
         updated: true,
-        message: 'از قبل در این لیست است — دادهٔ اصلی کاتالوگ حفظ شد',
+        message: ctx.overwriteExistingData
+          ? 'از قبل در این لیست بود — دادهٔ کاتالوگ با JSON به‌روز شد'
+          : 'از قبل در این لیست است — دادهٔ اصلی کاتالوگ حفظ شد',
       };
     }
 
@@ -253,8 +297,11 @@ async function importOneRow(
         listCount,
         placementAdded: true,
         linked: true,
-        message:
-          listCount != null
+        message: ctx.overwriteExistingData
+          ? listCount != null
+            ? `کاتالوگ با JSON به‌روز شد و به این لیست اضافه شد (${listCount.toLocaleString('fa-IR')} لیست دیگر)`
+            : 'کاتالوگ با JSON به‌روز شد و به این لیست اضافه شد'
+          : listCount != null
             ? `کاتالوگ موجود — با دادهٔ اصلی DB به این لیست اضافه شد (${listCount.toLocaleString('fa-IR')} لیست دیگر)`
             : 'کاتالوگ موجود — با دادهٔ اصلی DB به این لیست اضافه شد',
       };
@@ -283,10 +330,11 @@ async function importOneRow(
 export async function executeBulkImportForList(
   listId: string,
   items: BulkImportPayloadItem[],
-  options?: { prisma?: PrismaClient; notify?: boolean }
+  options?: { prisma?: PrismaClient; notify?: boolean; overwriteExistingData?: boolean }
 ): Promise<BulkImportExecuteResult> {
   const db = options?.prisma ?? defaultPrisma;
   const shouldNotify = options?.notify !== false;
+  const overwriteExistingData = options?.overwriteExistingData === true;
 
   if (!listId?.trim()) {
     throw new Error('لیست الزامی است');
@@ -325,6 +373,7 @@ export async function executeBulkImportForList(
       categorySlug,
       listId,
       imageCtx,
+      overwriteExistingData,
       match: matches[index],
     })
   );

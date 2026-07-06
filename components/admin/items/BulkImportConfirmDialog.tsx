@@ -10,6 +10,7 @@ interface BulkImportConfirmDialogProps {
   listTitle: string;
   currentItemCount: number;
   importCount: number;
+  overwriteExistingData?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -22,6 +23,7 @@ export default function BulkImportConfirmDialog({
   listTitle,
   currentItemCount,
   importCount,
+  overwriteExistingData = false,
   onCancel,
   onConfirm,
 }: BulkImportConfirmDialogProps) {
@@ -69,6 +71,12 @@ export default function BulkImportConfirmDialog({
             <span className="text-[var(--color-text-muted)]">افزودن</span>
             <span className="font-bold text-violet-700">
               +{importCount.toLocaleString('fa-IR')} آیتم
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3 border-t border-violet-100 pt-2">
+            <span className="text-[var(--color-text-muted)]">دادهٔ موجود</span>
+            <span className="font-medium text-[var(--color-text)]">
+              {overwriteExistingData ? 'به‌روزرسانی با JSON' : 'حفظ دادهٔ DB'}
             </span>
           </div>
         </div>

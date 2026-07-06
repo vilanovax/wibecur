@@ -10,6 +10,7 @@ import type {
 import { DEFAULT_BOOK_EXTRACT_OPTIONS } from '@/lib/books/types';
 import { autoImportBookExtractResults } from '@/lib/admin/book-extract/auto-import';
 import { bookRecordsToImportPayload } from '@/lib/books/map-to-wibe';
+import { resolveExistingBooksByTitles } from '@/lib/books/find-existing-in-db';
 import { extractCategoryList } from '@/lib/books/extract-category';
 import { extractTitlesList } from '@/lib/books/extract-titles';
 import type { BookRecord, BookSource } from '@/lib/books/types';
@@ -50,10 +51,12 @@ function parseOptions(raw: unknown): BookExtractOptions {
 function buildJobSummary(
   records: BookRecord[],
   notFound: string[],
-  errors: { title: string; message: string }[]
+  errors: { title: string; message: string }[],
+  fromDatabase: string[] = []
 ): string {
   const parts: string[] = [];
-  if (records.length > 0) parts.push(`${records.length} کتاب استخراج شد`);
+  if (records.length > 0) parts.push(`${records.length} کتاب`);
+  if (fromDatabase.length > 0) parts.push(`${fromDatabase.length} از دیتابیس`);
   if (notFound.length > 0) parts.push(`${notFound.length} پیدا نشد`);
   if (errors.length > 0) parts.push(`${errors.length} خطا`);
   if (parts.length === 0) return 'نتیجه‌ای ثبت نشد';
@@ -111,6 +114,7 @@ async function runTitlesJob(
     notFound: [...(resumeMeta?.notFound ?? [])],
     errors: [...(resumeMeta?.errors ?? [])],
     processedTitles: [...(resumeMeta?.processedTitles ?? [])],
+    fromDatabase: [...(resumeMeta?.fromDatabase ?? [])],
   };
 
   const existingRecords =
@@ -118,8 +122,40 @@ async function runTitlesJob(
       ? wibeItemsToRecords((resumeItems as { items: WibeBookImportItem[] }).items, source)
       : [];
 
+  const processedSet = new Set(progressMeta.processedTitles ?? []);
+  const pendingTitles = titles.filter((title) => !processedSet.has(title));
+
+  let dbRecords: BookRecord[] = [];
+  let fromDatabase = [...(progressMeta.fromDatabase ?? [])];
+
+  if (pendingTitles.length > 0) {
+    progressMeta.currentStep = 'بررسی دیتابیس…';
+    await prisma.book_extract_jobs.update({
+      where: { id: jobId },
+      data: { progressMeta: { ...progressMeta } },
+    });
+
+    const resolved = await resolveExistingBooksByTitles(pendingTitles);
+    dbRecords = resolved.matches.map((match) => match.record);
+    fromDatabase = [...fromDatabase, ...resolved.matches.map((match) => match.queryTitle)];
+
+    const dbProcessedTitles = resolved.matches.map((match) => match.queryTitle);
+    progressMeta.processedTitles = [...(progressMeta.processedTitles ?? []), ...dbProcessedTitles];
+    progressMeta.fromDatabase = fromDatabase;
+    progressMeta.done = progressMeta.processedTitles.length;
+    progressMeta.currentStep = null;
+
+    await prisma.book_extract_jobs.update({
+      where: { id: jobId },
+      data: {
+        progress: calcProgressPercent(progressMeta.done, titles.length, null, null),
+        progressMeta: { ...progressMeta },
+      },
+    });
+  }
+
   const resumeFrom = {
-    records: existingRecords,
+    records: [...existingRecords, ...dbRecords],
     notFound: progressMeta.notFound,
     errors: progressMeta.errors,
     processedTitles: progressMeta.processedTitles ?? [],
@@ -129,9 +165,9 @@ async function runTitlesJob(
     source,
     titles,
     options,
-    async (done, total, currentTitle, state) => {
+    async (done, _total, currentTitle, state) => {
       progressMeta.done = done;
-      progressMeta.total = total;
+      progressMeta.total = titles.length;
       progressMeta.currentTitle = currentTitle;
       if (state) {
         progressMeta.notFound = state.notFound;
@@ -140,7 +176,7 @@ async function runTitlesJob(
       }
       const pct = calcProgressPercent(
         done,
-        total,
+        titles.length,
         currentTitle,
         progressMeta.currentStep ?? null
       );
@@ -161,7 +197,8 @@ async function runTitlesJob(
   progressMeta.currentTitle = null;
   progressMeta.currentStep = null;
   progressMeta.processedTitles = processedTitles;
-  progressMeta.summary = buildJobSummary(records, notFound, errors);
+  progressMeta.fromDatabase = fromDatabase;
+  progressMeta.summary = buildJobSummary(records, notFound, errors, fromDatabase);
 
   await finalizeJob(jobId, progressMeta, records, options, targetListId);
 }

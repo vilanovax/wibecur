@@ -101,6 +101,7 @@ export default function BookExtractClient({ lists }: Props) {
   const [syncedJobId, setSyncedJobId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(true);
   const [jsonCopied, setJsonCopied] = useState(false);
+  const [notFoundCopied, setNotFoundCopied] = useState(false);
 
   const bookLists = useMemo(
     () =>
@@ -900,10 +901,16 @@ export default function BookExtractClient({ lists }: Props) {
               )}
 
               {activeJob.progressMeta && (
-                <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                   <div className="rounded-xl bg-gray-50 p-3">
                     <div className="text-gray-500">موفق</div>
                     <div className="text-lg font-semibold">{activeJob.itemCount}</div>
+                  </div>
+                  <div className="rounded-xl bg-emerald-50 p-3">
+                    <div className="text-emerald-700">از دیتابیس</div>
+                    <div className="text-lg font-semibold">
+                      {activeJob.progressMeta.fromDatabase?.length ?? 0}
+                    </div>
                   </div>
                   <div className="rounded-xl bg-amber-50 p-3">
                     <div className="text-amber-700">پیدا نشد</div>
@@ -938,11 +945,25 @@ export default function BookExtractClient({ lists }: Props) {
                 </div>
               )}
 
-              {activeJob.progressMeta?.notFound?.length ? (
+              {activeJob.progressMeta?.fromDatabase?.length ? (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">پیدا نشد:</h4>
-                  <p className="text-sm text-gray-500">{activeJob.progressMeta.notFound.join('، ')}</p>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">از دیتابیس (بدون استخراج):</h4>
+                  <p className="text-sm text-gray-500">
+                    {activeJob.progressMeta.fromDatabase.join('، ')}
+                  </p>
                 </div>
+              ) : null}
+
+              {activeJob.progressMeta?.notFound?.length ? (
+                <NotFoundTitlesPanel
+                  titles={activeJob.progressMeta.notFound}
+                  jobId={activeJob.id}
+                  copied={notFoundCopied}
+                  onCopied={() => {
+                    setNotFoundCopied(true);
+                    window.setTimeout(() => setNotFoundCopied(false), 2000);
+                  }}
+                />
               ) : null}
 
               {(activeJob.progressMeta?.errors?.length ?? 0) > 0 && (
@@ -975,6 +996,80 @@ export default function BookExtractClient({ lists }: Props) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function NotFoundTitlesPanel({
+  titles,
+  jobId,
+  copied,
+  onCopied,
+}: {
+  titles: string[];
+  jobId: string;
+  copied: boolean;
+  onCopied: () => void;
+}) {
+  const text = titles.join('\n');
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      onCopied();
+    } catch {
+      alert('کپی به کلیپ‌بورد ناموفق بود');
+    }
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `book-extract-not-found-${jobId.slice(0, 8)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-medium text-amber-900">
+            عناوین پیدا نشده ({titles.length})
+          </h4>
+          <p className="mt-0.5 text-xs text-amber-800/80">
+            برای استخراج مجدد، لیست را کپی کنید یا دانلود بگیرید.
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void handleCopy()}
+            className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs font-medium text-amber-900 transition-colors hover:bg-amber-50"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? 'کپی شد' : 'کپی لیست'}
+          </button>
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs font-medium text-amber-900 transition-colors hover:bg-amber-50"
+          >
+            <Download className="h-3.5 w-3.5" />
+            TXT
+          </button>
+        </div>
+      </div>
+      <ol className="max-h-56 space-y-1.5 overflow-y-auto rounded-lg border border-amber-100 bg-white px-3 py-2.5 text-sm text-gray-700">
+        {titles.map((title, index) => (
+          <li key={`${index}-${title}`} className="flex gap-2 leading-relaxed">
+            <span className="shrink-0 tabular-nums text-xs text-amber-700/70">{index + 1}.</span>
+            <span className="min-w-0 flex-1">{title}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }

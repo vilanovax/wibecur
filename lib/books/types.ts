@@ -93,6 +93,8 @@ export type BookExtractProgressMeta = {
   /** عناوین پردازش‌شده — برای resume */
   processedTitles?: string[];
   importResult?: BookExtractImportResult | null;
+  /** عناوینی که از کاتالوگ دیتابیس آمده‌اند — بدون استخراج خارجی */
+  fromDatabase?: string[];
   /** خلاصه نتیجه پس از اتمام */
   summary?: string | null;
 };

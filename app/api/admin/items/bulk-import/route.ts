@@ -8,12 +8,15 @@ export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
     const body = await request.json();
-    const { listId, items } = body as {
+    const { listId, items, overwriteExistingData } = body as {
       listId?: string;
       items?: BulkImportPayloadItem[];
+      overwriteExistingData?: boolean;
     };
 
-    const result = await executeBulkImportForList(listId ?? '', items ?? []);
+    const result = await executeBulkImportForList(listId ?? '', items ?? [], {
+      overwriteExistingData: overwriteExistingData === true,
+    });
     return NextResponse.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'خطا در import';

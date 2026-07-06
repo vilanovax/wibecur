@@ -118,6 +118,7 @@ export default function BulkImportClient({
   const [jsonCollapsed, setJsonCollapsed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
+  const [overwriteExistingData, setOverwriteExistingData] = useState(false);
   const [importProgress, setImportProgress] = useState<{
     done: number;
     total: number;
@@ -385,6 +386,7 @@ export default function BulkImportClient({
           body: JSON.stringify({
             listId,
             items: batch.map(rowToPayload),
+            overwriteExistingData,
           }),
         });
         const data = await res.json();
@@ -468,8 +470,8 @@ export default function BulkImportClient({
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
         <p>
           هر آیتم <strong>یک رکورد در کاتالوگ</strong> دارد (با شناسهٔ یکتا مثل imdbId یا isbn).
-          اگر در چند لیست تکرار شود، همان داده به‌روز می‌شود و فقط <strong>جایگاه</strong> جدید
-          اضافه می‌شود.
+          اگر در چند لیست تکرار شود، می‌توانید انتخاب کنید دادهٔ موجود با JSON{' '}
+          <strong>به‌روز شود</strong> یا <strong>حفظ شود</strong> و فقط جایگاه جدید اضافه گردد.
         </p>
       </div>
 
@@ -548,6 +550,54 @@ export default function BulkImportClient({
             {selectedList.itemCount.toLocaleString('fa-IR')} آیتم فعلی اضافه می‌شوند.
           </p>
         )}
+
+        <div className="rounded-xl border border-gray-100 bg-gray-50/80 p-4">
+          <p className="text-xs font-semibold text-gray-700 mb-3">دادهٔ آیتم‌های موجود در کاتالوگ</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors ${
+                !overwriteExistingData
+                  ? 'border-violet-300 bg-white shadow-sm'
+                  : 'border-gray-200 bg-white/70 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="overwriteExistingData"
+                checked={!overwriteExistingData}
+                onChange={() => setOverwriteExistingData(false)}
+                className="mt-1"
+              />
+              <span>
+                <span className="block text-sm font-medium text-gray-900">حفظ دادهٔ موجود</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-gray-500">
+                  فقط جایگاه جدید اضافه می‌شود؛ توضیح، تصویر و متادیتای DB دست‌نخورده می‌ماند.
+                </span>
+              </span>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors ${
+                overwriteExistingData
+                  ? 'border-violet-300 bg-white shadow-sm'
+                  : 'border-gray-200 bg-white/70 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="overwriteExistingData"
+                checked={overwriteExistingData}
+                onChange={() => setOverwriteExistingData(true)}
+                className="mt-1"
+              />
+              <span>
+                <span className="block text-sm font-medium text-gray-900">به‌روزرسانی با JSON</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-gray-500">
+                  اگر آیتم در کاتالوگ یا این لیست باشد، فیلدهای JSON جایگزین دادهٔ فعلی می‌شود.
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
       </section>
 
       {/* JSON */}
@@ -799,7 +849,12 @@ export default function BulkImportClient({
                         </button>
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                        {row.match && <MatchBadge match={row.match} />}
+                        {row.match && (
+                          <MatchBadge
+                            match={row.match}
+                            overwriteExistingData={overwriteExistingData}
+                          />
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 truncate mt-1">
                         {formatBulkImportRowSubtitle(row, categorySlug)}
@@ -967,6 +1022,7 @@ export default function BulkImportClient({
         listTitle={selectedList?.title ?? '—'}
         currentItemCount={selectedList?.itemCount ?? 0}
         importCount={selectedCount}
+        overwriteExistingData={overwriteExistingData}
         onCancel={() => {
           if (!importing) setConfirmOpen(false);
         }}
@@ -976,7 +1032,13 @@ export default function BulkImportClient({
   );
 }
 
-function MatchBadge({ match }: { match: NonNullable<BulkImportRow['match']> }) {
+function MatchBadge({
+  match,
+  overwriteExistingData,
+}: {
+  match: NonNullable<BulkImportRow['match']>;
+  overwriteExistingData: boolean;
+}) {
   if (match.kind === 'lightweight') {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">
@@ -997,14 +1059,18 @@ function MatchBadge({ match }: { match: NonNullable<BulkImportRow['match']> }) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-800">
         <RefreshCw className="w-3 h-3" />
-        در این لیست · به‌روزرسانی داده
+        {overwriteExistingData
+          ? 'در این لیست · به‌روزرسانی داده'
+          : 'در این لیست · بدون تغییر داده'}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">
       <Link2 className="w-3 h-3" />
-      کاتالوگ موجود · افزودن به لیست
+      {overwriteExistingData
+        ? 'کاتالوگ موجود · به‌روزرسانی + افزودن'
+        : 'کاتالوگ موجود · افزودن به لیست'}
       {match.listCount > 0 && ` (${match.listCount.toLocaleString('fa-IR')} لیست دیگر)`}
     </span>
   );
