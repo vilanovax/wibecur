@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, ChevronDown, Loader2, LogOut, User } from 'lucide-react';
+import { Bell, ChevronDown, LayoutDashboard, Loader2, LogOut, User } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
 import {
   NotificationSheet,
@@ -14,6 +14,7 @@ import {
 } from './NotificationIcon';
 import { GUEST_HEADER_AVATAR, resolveVibeAvatar } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export type HeaderActionsProfile = {
   image: string | null;
@@ -81,6 +82,7 @@ export default function HeaderActions({
 }: HeaderActionsProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { isAdmin } = usePermissions();
   const userName = session?.user?.name || session?.user?.email || 'کاربر';
   const isProfilePage = pathname === '/profile';
   const isDark = variant === 'dark';
@@ -208,6 +210,17 @@ export default function HeaderActions({
               <User className="h-4 w-4 shrink-0 text-wibe-secondary" />
               پروفایل
             </Link>
+            {isAdmin && (
+              <Link
+                href="/admin/dashboard"
+                role="menuitem"
+                className="flex items-center gap-2 px-3 py-2.5 wibe-small hover:bg-[var(--color-bg)]"
+                onClick={() => setMenuOpen(false)}
+              >
+                <LayoutDashboard className="h-4 w-4 shrink-0 text-wibe-secondary" />
+                پنل مدیریت
+              </Link>
+            )}
             <button
               type="button"
               role="menuitem"
