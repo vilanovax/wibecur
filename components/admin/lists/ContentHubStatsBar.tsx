@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ImageIcon } from 'lucide-react';
 import type { ContentHubStats } from '@/lib/admin/content-hub-stats';
 
 type ContentHubView = 'lists' | 'catalog' | 'import' | 'people' | 'descriptions' | 'item-tips';
@@ -175,21 +175,31 @@ export default function ContentHubStatsBar({
       </div>
 
       <div>
-        <p className="text-[10px] font-semibold text-[var(--color-text-muted)] mb-1.5">
-          نیاز به توجه
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+          <p className="text-[10px] font-semibold text-[var(--color-text-muted)]">نیاز به توجه</p>
+          {(stats.catalogExternalImages > 0 || stats.catalogMissingPosters > 0) && (
+            <Link
+              href="/admin/catalog/storage-images"
+              className="inline-flex items-center gap-1 rounded-lg bg-orange-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-orange-700 transition-colors"
+              title="جستجوی Google و آپلود تصویر روی ParsPack"
+            >
+              <ImageIcon className="w-3 h-3" />
+              تصاویر
+            </Link>
+          )}
+        </div>
         <div className="flex flex-wrap gap-2">
           <StatChip
             label="تصویر خارجی"
             value={stats.catalogExternalImages}
-            href="/admin/lists?view=catalog&externalImages=1"
+            href="/admin/catalog/storage-images?status=external"
             tone="rose"
             ok={stats.catalogExternalImages === 0}
           />
           <StatChip
             label="بدون تصویر"
             value={stats.catalogMissingPosters}
-            href="/admin/lists?view=catalog"
+            href="/admin/catalog/storage-images?status=missing"
             tone="rose"
             ok={stats.catalogMissingPosters === 0}
           />

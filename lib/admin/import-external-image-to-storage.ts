@@ -63,9 +63,33 @@ export function resolveDownloadUrlForImageImport(sourceUrl: string): string {
 }
 
 /** ترتیب تلاش دانلود: TMDB → پراکسی castando اول؛ سایر منابع → مستقیم سپس پراکسی */
-export function buildImageImportDownloadCandidates(sourceUrl: string): string[] {
+export function buildImageImportDownloadCandidates(
+  sourceUrl: string,
+  options?: { preferCastandoProxy?: boolean }
+): string[] {
   const normalized = normalizeImageUrlForStorage(sourceUrl);
   if (!normalized) return [];
+
+  if (options?.preferCastandoProxy) {
+    const candidates: string[] = [];
+    const seen = new Set<string>();
+
+    const add = (url: string | null | undefined) => {
+      const trimmed = url?.trim();
+      if (!trimmed || !isValidHttpImageUrl(trimmed) || seen.has(trimmed)) return;
+      seen.add(trimmed);
+      candidates.push(trimmed);
+    };
+
+    const inner = unwrapCastandoImageProxyUrl(normalized);
+    if (inner && isValidHttpImageUrl(inner)) {
+      add(buildCastandoProxyImageUrl(inner));
+      add(`${CASTANDO_IMAGE_PROXY_PREFIX}${encodeURIComponent(inner)}`);
+      add(inner);
+    }
+
+    return candidates;
+  }
 
   const candidates: string[] = [];
   const seen = new Set<string>();
@@ -234,7 +258,8 @@ export async function importExternalImageToStorage(
   folder: ImageFolder = 'items',
   metadata: Record<string, unknown> = {},
   imageCtx?: BulkImportImageContext,
-  profile?: ImageProfile
+  profile?: ImageProfile,
+  options?: { preferCastandoProxy?: boolean }
 ): Promise<ImportExternalImageResult> {
   const readiness = await checkObjectStorageReady();
   if (!readiness.ready) {
@@ -263,7 +288,9 @@ export async function importExternalImageToStorage(
     return { ok: true, url: downloadTarget };
   }
 
-  const candidates = buildImageImportDownloadCandidates(downloadTarget);
+  const candidates = buildImageImportDownloadCandidates(downloadTarget, {
+    preferCastandoProxy: options?.preferCastandoProxy,
+  });
   const upload = await uploadFromDownloadCandidates(candidates, folder, profile);
 
   if (!upload.ok) {

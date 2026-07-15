@@ -1,61 +1,52 @@
 'use client';
 
-import { Link2, Loader2, Film } from 'lucide-react';
+import Link from 'next/link';
+import { Link2, Loader2, Film, ImageIcon } from 'lucide-react';
 
 type ItemsImageToolbarProps = {
   showTools: boolean;
   showOmdb?: boolean;
-  wrappingProxy: boolean;
+  showStorageImages?: boolean;
+  storageImagesHref?: string;
   refreshingOmdb?: boolean;
   onOpenS3: () => void;
-  onWrapProxy: () => void;
   onOmdbRefresh?: () => void;
 };
 
 export default function ItemsImageToolbar({
   showTools,
   showOmdb = false,
-  wrappingProxy,
+  showStorageImages = false,
+  storageImagesHref = '/admin/catalog/storage-images',
   refreshingOmdb = false,
   onOpenS3,
-  onWrapProxy,
   onOmdbRefresh,
 }: ItemsImageToolbarProps) {
-  if (!showTools && !showOmdb) return null;
+  if (!showTools && !showOmdb && !showStorageImages) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {showTools && (
-        <div
-          className="inline-flex overflow-hidden rounded-xl border border-gray-200 bg-gray-50/80 p-0.5"
-          role="group"
-          aria-label="ابزار تصویر"
+      {showStorageImages && (
+        <Link
+          href={storageImagesHref}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-orange-300 bg-orange-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-orange-700"
+          title="جستجوی Google و آپلود تصویر روی ParsPack"
         >
-          <button
-            type="button"
-            onClick={onOpenS3}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100"
-            title="آپلود تصاویر خارجی به ParsPack (S3)"
-          >
-            <Link2 className="h-3.5 w-3.5" />
-            S3
-          </button>
-          <span className="my-1.5 w-px self-stretch bg-gray-200" aria-hidden />
-          <button
-            type="button"
-            onClick={onWrapProxy}
-            disabled={wrappingProxy}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100 disabled:opacity-50"
-            title="wrap با castando proxy"
-          >
-            {wrappingProxy ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <span aria-hidden>🔗</span>
-            )}
-            پراکسی
-          </button>
-        </div>
+          <ImageIcon className="h-3.5 w-3.5" />
+          تصاویر
+        </Link>
+      )}
+
+      {showTools && (
+        <button
+          type="button"
+          onClick={onOpenS3}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+          title="آپلود تصاویر خارجی به ParsPack (S3)"
+        >
+          <Link2 className="h-3.5 w-3.5" />
+          S3
+        </button>
       )}
 
       {showOmdb && onOmdbRefresh && (

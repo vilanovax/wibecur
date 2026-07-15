@@ -15,9 +15,12 @@ import {
   X,
   Link2,
   BookOpen,
+  Coffee,
 } from 'lucide-react';
 import BookCoverItemsModal from '@/components/admin/items/BookCoverItemsModal';
+import CafeCoverItemsModal from '@/components/admin/items/CafeCoverItemsModal';
 import { isBookCategorySlug } from '@/lib/book-cover-search';
+import { isCafeCategorySlug } from '@/lib/cafe-cover-search';
 import { resolveItemEntryKind } from '@/components/admin/items/EntryKindBadge';
 import { entryKindIcon, isLightweightListItem } from '@/lib/list-entry';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
@@ -65,7 +68,9 @@ export default function ListWorkspaceItemsPanel({
   onItemsUpdated,
 }: ListWorkspaceItemsPanelProps) {
   const isBookCategory = isBookCategorySlug(categorySlug);
+  const isCafeCategory = isCafeCategorySlug(categorySlug);
   const [bookCoverModalOpen, setBookCoverModalOpen] = useState(false);
+  const [cafeCoverModalOpen, setCafeCoverModalOpen] = useState(false);
   const sortedInitial = useMemo(
     () => [...initialItems].sort((a, b) => a.order - b.order),
     [initialItems]
@@ -357,6 +362,15 @@ export default function ListWorkspaceItemsPanel({
           onUpdated={onItemsUpdated}
         />
       )}
+      {isCafeCategory && (
+        <CafeCoverItemsModal
+          isOpen={cafeCoverModalOpen}
+          onClose={() => setCafeCoverModalOpen(false)}
+          scopeTitle={listTitle}
+          listId={listId}
+          onUpdated={onItemsUpdated}
+        />
+      )}
       {/* Toolbar */}
       <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -405,6 +419,16 @@ export default function ListWorkspaceItemsPanel({
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 کاور ParsPack
+              </button>
+            )}
+            {isCafeCategory && (
+              <button
+                type="button"
+                onClick={() => setCafeCoverModalOpen(true)}
+                className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-orange-200 text-orange-800 bg-orange-50 hover:bg-orange-100"
+              >
+                <Coffee className="w-3.5 h-3.5" />
+                تصویر ParsPack
               </button>
             )}
           </div>

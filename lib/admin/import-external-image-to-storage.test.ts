@@ -44,6 +44,13 @@ describe('buildImageImportDownloadCandidates', () => {
     ).toBe(true);
   });
 
+  it('tries castando proxy first when preferCastandoProxy is set', () => {
+    const src = 'https://instagram.com/p/example/media.jpg';
+    const candidates = buildImageImportDownloadCandidates(src, { preferCastandoProxy: true });
+    expect(candidates[0]).toBe(`${CASTANDO_IMAGE_PROXY_PREFIX}${src}`);
+    expect(candidates.some((u) => u === src)).toBe(true);
+  });
+
   it('tries direct URL before castando proxy for amazon', () => {
     const src = 'https://m.media-amazon.com/images/M/poster.jpg';
     const candidates = buildImageImportDownloadCandidates(src);

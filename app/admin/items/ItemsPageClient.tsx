@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { items, lists, categories } from '@prisma/client';
-import { FileJson, CheckSquare, Square } from 'lucide-react';
+import { FileJson, CheckSquare, Square, Coffee } from 'lucide-react';
 import AdminItemCard from '@/components/admin/items/AdminItemCard';
 import ExternalImageItemsModal from '@/components/admin/items/ExternalImageItemsModal';
+import CafeCoverItemsModal from '@/components/admin/items/CafeCoverItemsModal';
 import ItemsBulkToolbar from '@/components/admin/items/ItemsBulkToolbar';
 import ItemsImageToolbar from '@/components/admin/items/ItemsImageToolbar';
 import { isMovieCategorySlug } from '@/lib/movie-category';
+import { isCafeCategorySlug } from '@/lib/cafe-cover-search';
 
 type ItemWithRelations = Omit<items, 'lists' | 'createdAt' | 'updatedAt'> & {
   createdAt: string;
@@ -62,8 +64,7 @@ export default function ItemsPageClient({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPerPage, setCurrentPerPage] = useState<number>(perPage);
   const [externalImagesOpen, setExternalImagesOpen] = useState(false);
-  const [wrappingProxy, setWrappingProxy] = useState(false);
-  const [proxyMessage, setProxyMessage] = useState<string | null>(null);
+  const [cafeCoverOpen, setCafeCoverOpen] = useState(false);
   const [refreshingOmdb, setRefreshingOmdb] = useState(false);
   const [omdbMessage, setOmdbMessage] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -276,75 +277,15 @@ export default function ItemsPageClient({
     return false;
   }, [selectedListId, selectedList, selectedCategory, selectedCategoryObj]);
 
-  const handleWrapImageProxy = async () => {
-    if (!canShowExternalImages) return;
-    const scopeLabel =
-      selectedListId !== 'all' && selectedList
-        ? `لیست «${selectedList.title}»`
-        : selectedCategoryObj
-          ? `دسته «${selectedCategoryObj.name}»`
-          : '';
-
-    setWrappingProxy(true);
-    setProxyMessage(null);
-    try {
-      const params = new URLSearchParams();
-      if (selectedListId !== 'all') params.set('listId', selectedListId);
-      else if (selectedCategory !== 'all') params.set('categoryId', selectedCategory);
-
-      const previewRes = await fetch(`/api/admin/items/wrap-image-proxy?${params.toString()}`);
-      const preview = await previewRes.json();
-      if (!previewRes.ok || !preview.success) {
-        throw new Error(preview.error || 'خطا در شمارش');
-      }
-
-      if (preview.count === 0) {
-        setProxyMessage(
-          `همه ${preview.totalInScope.toLocaleString('fa-IR')} آیتم از قبل روی ParsPack یا پراکسی هستند — موردی برای تغییر نیست.`
-        );
-        return;
-      }
-
-      const sampleTitles = (preview.samples as { title: string }[])
-        .slice(0, 3)
-        .map((s) => s.title)
-        .join('، ');
-
-      const confirmMsg = [
-        `${preview.count.toLocaleString('fa-IR')} تصویر در ${scopeLabel} بدون پراکسی هستند (خارج از ParsPack).`,
-        preview.totalInScope > preview.count
-          ? `${(preview.totalInScope - preview.count).toLocaleString('fa-IR')} مورد دیگر بدون تغییر می‌ماند.`
-          : null,
-        sampleTitles ? `نمونه: ${sampleTitles}` : null,
-        '',
-        'آدرس castando proxy به imageUrl در DB اضافه و ذخیره شود؟',
-      ]
-        .filter(Boolean)
-        .join('\n');
-
-      if (!confirm(confirmMsg)) return;
-
-      const res = await fetch('/api/admin/items/wrap-image-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          listId: selectedListId !== 'all' ? selectedListId : undefined,
-          categoryId:
-            selectedListId === 'all' && selectedCategory !== 'all'
-              ? selectedCategory
-              : undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'اعمال پراکسی ناموفق');
-      setProxyMessage(data.message || 'پراکسی در DB ذخیره شد');
-      router.refresh();
-    } catch (e: unknown) {
-      setProxyMessage(e instanceof Error ? e.message : 'خطا در اعمال پراکسی');
-    } finally {
-      setWrappingProxy(false);
+  const isCafeCategory = useMemo(() => {
+    if (selectedListId !== 'all' && selectedList?.categories?.slug) {
+      return isCafeCategorySlug(selectedList.categories.slug);
     }
-  };
+    if (selectedCategory !== 'all') {
+      return isCafeCategorySlug(selectedCategoryObj?.slug);
+    }
+    return false;
+  }, [selectedListId, selectedList, selectedCategory, selectedCategoryObj]);
 
   const handleOmdbRefresh = async () => {
     if (!canShowExternalImages || !isMovieCategory) return;
@@ -558,13 +499,23 @@ export default function ItemsPageClient({
           </div>
           <ItemsImageToolbar
             showTools={canShowExternalImages}
+            showStorageImages={canShowExternalImages}
             showOmdb={canShowExternalImages && isMovieCategory}
-            wrappingProxy={wrappingProxy}
             refreshingOmdb={refreshingOmdb}
             onOpenS3={() => setExternalImagesOpen(true)}
-            onWrapProxy={() => void handleWrapImageProxy()}
             onOmdbRefresh={() => void handleOmdbRefresh()}
           />
+          {canShowExternalImages && isCafeCategory && (
+            <button
+              type="button"
+              onClick={() => setCafeCoverOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-900 transition-colors hover:bg-orange-100"
+              title="جستجو و ذخیره تصویر کافه/رستوران روی ParsPack"
+            >
+              <Coffee className="h-3.5 w-3.5" />
+              تصویر کافه
+            </button>
+          )}
           {filteredItems.length > 0 && (
             <button
               type="button"
@@ -580,18 +531,11 @@ export default function ItemsPageClient({
             </button>
           )}
         </div>
-        {(proxyMessage || omdbMessage) && (
-          <div className="space-y-2 mt-3">
-            {proxyMessage && (
-              <p className="text-xs text-sky-800 bg-sky-50 border border-sky-100 rounded-lg px-3 py-2">
-                {proxyMessage}
-              </p>
-            )}
-            {omdbMessage && (
-              <p className="text-xs text-violet-800 bg-violet-50 border border-violet-100 rounded-lg px-3 py-2">
-                {omdbMessage}
-              </p>
-            )}
+        {omdbMessage && (
+          <div className="mt-3">
+            <p className="text-xs text-violet-800 bg-violet-50 border border-violet-100 rounded-lg px-3 py-2">
+              {omdbMessage}
+            </p>
           </div>
         )}
       </div>
@@ -608,6 +552,21 @@ export default function ItemsPageClient({
               : undefined
           }
           onMigrated={() => router.refresh()}
+        />
+      )}
+
+      {canShowExternalImages && isCafeCategory && (
+        <CafeCoverItemsModal
+          isOpen={cafeCoverOpen}
+          onClose={() => setCafeCoverOpen(false)}
+          scopeTitle={externalImagesScopeTitle}
+          listId={selectedListId !== 'all' ? selectedListId : undefined}
+          categoryId={
+            selectedListId === 'all' && selectedCategory !== 'all'
+              ? selectedCategory
+              : undefined
+          }
+          onUpdated={() => router.refresh()}
         />
       )}
 

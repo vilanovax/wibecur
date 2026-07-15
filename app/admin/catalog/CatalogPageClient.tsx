@@ -20,6 +20,7 @@ import {
   Filter,
   RotateCcw,
   Link2,
+  ImageIcon,
   Check,
   Loader2,
 } from 'lucide-react';
@@ -133,7 +134,6 @@ export default function CatalogPageClient({
     isDisabled: boolean;
   } | null>(null);
   const [externalImagesOpen, setExternalImagesOpen] = useState(initialExternalImagesOpen);
-  const [wrappingProxy, setWrappingProxy] = useState(false);
   const placementMode = initialMode === 'place';
   const createMode = initialMode === 'create';
   const [activePlacementListId, setActivePlacementListId] = useState(
@@ -433,74 +433,6 @@ export default function CatalogPageClient({
       setMessage(e instanceof Error ? e.message : 'خطا در ادغام');
     } finally {
       setSimilarMergeLoading(false);
-    }
-  };
-
-  const handleWrapImageProxy = async () => {
-    const scopeParts: string[] = [];
-    if (category) scopeParts.push(`دسته ${category}`);
-    if (listId) {
-      const listTitle = listFilters.find((l) => l.id === listId)?.title ?? listId;
-      scopeParts.push(`لیست «${listTitle}»`);
-    }
-    if (multiListOnly) scopeParts.push('فقط چندلیستی');
-    const scopeLabel = scopeParts.length > 0 ? scopeParts.join(' · ') : 'همه موجودیت‌ها';
-
-    setWrappingProxy(true);
-    setMessage('');
-    try {
-      const params = new URLSearchParams();
-      if (category) params.set('categorySlug', category);
-      if (listId) params.set('listId', listId);
-      if (multiListOnly) params.set('multiListOnly', '1');
-
-      const previewRes = await fetch(`/api/admin/catalog/wrap-image-proxy?${params.toString()}`);
-      const preview = await previewRes.json();
-      if (!previewRes.ok || !preview.success) {
-        throw new Error(preview.error || 'خطا در شمارش');
-      }
-
-      if (preview.count === 0) {
-        setMessage(
-          `همه ${preview.totalInScope.toLocaleString('fa-IR')} موجودیت از قبل روی ParsPack یا پراکسی هستند.`
-        );
-        return;
-      }
-
-      const sampleTitles = (preview.samples as { title: string }[])
-        .slice(0, 3)
-        .map((s) => s.title)
-        .join('، ');
-
-      const confirmMsg = [
-        `${preview.count.toLocaleString('fa-IR')} تصویر در ${scopeLabel} بدون پراکسی هستند.`,
-        sampleTitles ? `نمونه: ${sampleTitles}` : null,
-        '',
-        'آدرس castando proxy به imageUrl در DB اضافه شود؟',
-      ]
-        .filter(Boolean)
-        .join('\n');
-
-      if (!confirm(confirmMsg)) return;
-
-      const res = await fetch('/api/admin/catalog/wrap-image-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          categorySlug: category || undefined,
-          listId: listId || undefined,
-          multiListOnly,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'اعمال پراکسی ناموفق');
-      setMessage(data.message || 'پراکسی در DB ذخیره شد');
-      void loadBrowse(page, query, category, listId, multiListOnly);
-      router.refresh();
-    } catch (e: unknown) {
-      setMessage(e instanceof Error ? e.message : 'خطا در اعمال پراکسی');
-    } finally {
-      setWrappingProxy(false);
     }
   };
 
@@ -891,6 +823,18 @@ export default function CatalogPageClient({
                         آیتم جدید
                       </Link>
                     )}
+                    <Link
+                      href={
+                        category
+                          ? `/admin/catalog/storage-images?categorySlug=${encodeURIComponent(category)}`
+                          : '/admin/catalog/storage-images'
+                      }
+                      className="inline-flex items-center gap-2 rounded-xl border border-orange-300 bg-orange-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-orange-700 shadow-sm"
+                      title="جستجوی Google و آپلود تصویر روی ParsPack"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      تصاویر
+                    </Link>
                     <button
                       type="button"
                       onClick={() => setExternalImagesOpen(true)}
@@ -899,16 +843,6 @@ export default function CatalogPageClient({
                     >
                       <Link2 className="w-4 h-4" />
                       S3
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleWrapImageProxy()}
-                      disabled={wrappingProxy}
-                      className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-900 transition-colors hover:bg-sky-100 disabled:opacity-50"
-                      title="افزودن پراکسی castando به تصاویر خارج از ParsPack"
-                    >
-                      {wrappingProxy ? '…' : '🔗'}
-                      پراکسی
                     </button>
                     <button
                       type="button"
