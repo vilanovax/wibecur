@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
@@ -11,15 +12,13 @@ import HomeLcpPreload from '@/components/mobile/home/HomeLcpPreload';
 import { withResolvedItemImages } from '@/lib/resolve-item-image';
 import { withResolvedListDisplay } from '@/lib/list-display-images';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
+import { listDetailCacheTag } from '@/lib/public-cache';
+import { fetchActiveCategoryMenu } from '@/lib/category-menu';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
 
-/**
- * واکشی لیست بر اساس slug — با React cache() تا generateMetadata و بدنه‌ی صفحه
- * در یک request فقط یک‌بار کوئری بزنند (به‌جای دو کوئری جدا).
- */
-const getListBySlug = cache((slug: string) =>
-  prisma.lists.findUnique({
+function loadListBySlug(slug: string) {
+  return prisma.lists.findUnique({
     where: { slug },
     select: {
       id: true,
@@ -65,7 +64,21 @@ const getListBySlug = cache((slug: string) =>
       },
       _count: { select: { items: true, list_comments: true } },
     },
-  })
+  });
+}
+
+/**
+ * واکشی لیست بر اساس slug.
+ * - `unstable_cache`: کش بین‌درخواستی (Data Cache) با tag `list-slug-{slug}` تا
+ *   کوئری سنگین لیست + همهٔ آیتم‌ها روی هر بازدید تکرار نشود. با revalidateTag
+ *   هنگام ویرایش لیست فوراً تازه می‌شود.
+ * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنهٔ صفحه).
+ */
+const getListBySlug = cache((slug: string) =>
+  unstable_cache(() => loadListBySlug(slug), ['list-by-slug', slug], {
+    revalidate: 300,
+    tags: [listDetailCacheTag(slug)],
+  })()
 );
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -117,11 +130,13 @@ export default async function ListDetailPage({
 
   if (list.users?.role === 'USER') notFound();
 
-  prisma.lists
-    .update({ where: { id: list.id }, data: { viewCount: { increment: 1 } } })
-    .catch(() => {});
+  // شمارش بازدید از مسیر رندر جدا شد (beacon کلاینت → POST /api/lists/[id]/view)
+  // تا صفحه static/ISR بماند و write روی هر revalidation انجام نشود.
 
-  const sponsoredPlacements = await getCachedListPagePlacements(list.id, list.categoryId);
+  const [sponsoredPlacements, menuCategories] = await Promise.all([
+    getCachedListPagePlacements(list.id, list.categoryId),
+    fetchActiveCategoryMenu(),
+  ]);
 
   const listWithCreator = prepareListDetailForClient(
     withResolvedListDisplay({
@@ -147,7 +162,10 @@ export default async function ListDetailPage({
     <div className="bg-wibe-surface lg:pt-1">
       <HomeLcpPreload href={heroLcpImage} />
       <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
-      <CategoryNavStrip activeSlug={list.categories?.slug ?? null} />
+      <CategoryNavStrip
+        activeSlug={list.categories?.slug ?? null}
+        initialCategories={menuCategories}
+      />
       <ListDetailClient list={listWithCreator} sponsoredPlacements={sponsoredPlacements} />
       <BottomNav />
     </div>

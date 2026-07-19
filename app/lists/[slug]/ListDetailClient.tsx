@@ -104,6 +104,10 @@ type ListViewMode = 'grid' | 'map';
 
 type ItemEntry = { item: Item; originalIndex: number };
 
+/** رندر پنجره‌ای گرید آیتم‌ها — تعداد اولیه و گام آشکارسازی با اسکرول. */
+const LIST_GRID_WINDOW_INITIAL = 24;
+const LIST_GRID_WINDOW_STEP = 24;
+
 import { calcViralProgress, shouldShowViralProgress } from '@/lib/list-viral-display';
 
 function ListCompactStatsBar({
@@ -425,6 +429,11 @@ export default function ListDetailClient({
   const [moreOpen, setMoreOpen] = useState(false);
   const [listReportOpen, setListReportOpen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  // رندر پنجره‌ای گرید: ابتدا فقط تعداد محدودی کارت mount می‌شود و بقیه با اسکرول
+  // آشکار می‌شوند (HTML اولیه و هزینهٔ hydration برای لیست‌های بزرگ کم می‌شود).
+  // دادهٔ کامل آیتم‌ها همچنان در حافظه است تا جستجو/نقشه/preview دست‌نخورده بماند.
+  const [visibleCount, setVisibleCount] = useState(LIST_GRID_WINDOW_INITIAL);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [itemSearchQuery, setItemSearchQuery] = useState('');
   const debouncedItemSearchQuery = useDebouncedValue(itemSearchQuery, 200);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -486,6 +495,23 @@ export default function ListDetailClient({
     }
     fetchViewerState();
   }, [viewerDeferReady, session?.user, fetchViewerState]);
+
+  // ثبت بازدید یک‌بار در هر لود صفحه — خارج از مسیر رندر سرور (beacon).
+  const viewBeaconSent = useRef(false);
+  useEffect(() => {
+    if (viewBeaconSent.current) return;
+    viewBeaconSent.current = true;
+    const url = `/api/lists/${list.id}/view`;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(url);
+        return;
+      }
+    } catch {
+      // fallthrough به fetch
+    }
+    void fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
+  }, [list.id]);
 
   useEffect(() => {
     if (itemsSectionInView) prefetchListSimilar(list.slug);
@@ -660,6 +686,31 @@ export default function ListDetailClient({
 
   const showItemSearch = list.items.length >= LIST_INNER_SEARCH_MIN_ITEMS;
   const showSimilarLists = !isItemSearchActive;
+
+  // پنجره‌سازی فقط برای گرید و حالت غیرجستجو؛ نقشه و نتایج جستجو کامل رندر می‌شوند.
+  const gridWindowActive = viewMode === 'grid' && !isItemSearchActive;
+  const hasMoreToReveal = gridWindowActive && visibleCount < allItemEntries.length;
+  const nonSearchEntries = gridWindowActive
+    ? allItemEntries.slice(0, visibleCount)
+    : allItemEntries;
+
+  useEffect(() => {
+    if (!hasMoreToReveal) return;
+    const el = loadMoreRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisibleCount((c) =>
+            Math.min(c + LIST_GRID_WINDOW_STEP, allItemEntries.length)
+          );
+        }
+      },
+      { rootMargin: '800px 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMoreToReveal, visibleCount, allItemEntries.length]);
 
   const previewItem: ItemPreviewData | null =
     previewIndex != null && list.items[previewIndex] ? list.items[previewIndex] : null;
@@ -1013,7 +1064,12 @@ export default function ListDetailClient({
               ) : isItemSearchActive ? (
                 renderItemEntries(filteredItemEntries)
               ) : (
-                renderItemEntries(allItemEntries)
+                <>
+                  {renderItemEntries(nonSearchEntries)}
+                  {hasMoreToReveal ? (
+                    <div ref={loadMoreRef} aria-hidden className="h-6 w-full" />
+                  ) : null}
+                </>
               )}
             </section>
 

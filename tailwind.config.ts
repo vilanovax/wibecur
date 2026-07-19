@@ -150,6 +150,7 @@ const config: Config = {
       fontFamily: {
         sans: [
           'var(--font-vazirmatn)',
+          'Vazirmatn Variable',
           'Vazirmatn',
           'Vazir',
           '-apple-system',
@@ -158,7 +159,7 @@ const config: Config = {
           'Roboto',
           'sans-serif',
         ],
-        vazir: ['var(--font-vazirmatn)', 'Vazirmatn', 'Vazir', 'sans-serif'],
+        vazir: ['var(--font-vazirmatn)', 'Vazirmatn Variable', 'Vazirmatn', 'Vazir', 'sans-serif'],
       },
       fontSize: {
         /* Wibe Design System scale */

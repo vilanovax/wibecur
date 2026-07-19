@@ -1,17 +1,21 @@
+import { cache } from 'react';
+import { unstable_cache, revalidateTag } from 'next/cache';
 import { prisma } from './prisma';
 import { encrypt, decrypt } from './encryption';
 
+export const SETTINGS_CACHE_TAG = 'settings';
+
 /**
- * Get or create settings (singleton)
+ * Get or create settings (singleton) — بدون کش
  */
-export async function getSettings() {
+async function loadSettings() {
   let settings = await prisma.settings.findUnique({
     where: { id: 'settings' },
   });
 
   if (!settings) {
     settings = await prisma.settings.create({
-      data: { 
+      data: {
         id: 'settings',
         updatedAt: new Date(),
       },
@@ -19,6 +23,31 @@ export async function getSettings() {
   }
 
   return settings;
+}
+
+/**
+ * کش بین‌درخواستی (Data Cache) — تنظیمات سایت تقریباً ثابت‌اند.
+ * با revalidateTag('settings') هنگام هر تغییر تازه می‌شود.
+ */
+const getCachedSettings = unstable_cache(loadSettings, ['site-settings'], {
+  revalidate: 300,
+  tags: [SETTINGS_CACHE_TAG],
+});
+
+/**
+ * Get or create settings (singleton).
+ * - `cache()` React: dedupe داخل یک request (مثلاً چند صدا در layout).
+ * - `unstable_cache`: dedupe بین request‌ها تا کوئری DB از مسیر بحرانی حذف شود.
+ */
+export const getSettings = cache(() => getCachedSettings());
+
+/** باطل‌کردن کش تنظیمات — بعد از هر تغییر صدا زده می‌شود. */
+export function invalidateSettingsCache(): void {
+  try {
+    revalidateTag(SETTINGS_CACHE_TAG, 'max');
+  } catch {
+    // خارج از request scope (مثلاً اسکریپت‌ها) — نادیده بگیر
+  }
 }
 
 /**
@@ -147,10 +176,14 @@ export async function updateSettings(data: {
     updateData.siteLogoUrl = data.siteLogoUrl?.trim() || null;
   }
 
-  return await prisma.settings.update({
+  const updated = await prisma.settings.update({
     where: { id: 'settings' },
     data: updateData,
   });
+
+  invalidateSettingsCache();
+
+  return updated;
 }
 
 /**

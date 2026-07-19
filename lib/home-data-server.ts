@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCachedGlobalTrending, getCachedFastRising } from '@/lib/trending/cached';
@@ -10,7 +11,6 @@ import type {
   HomeListData,
   RisingListData,
 } from '@/types/home-data';
-import { EMPTY_HOME_DATA } from '@/types/home-data';
 import {
   filterListsInActiveCategories,
   publicCuratedListWhere,
@@ -26,16 +26,13 @@ export type HomeApiPayload = {
   recommendations: HomeListData[];
 };
 
-export async function fetchHomePageData(): Promise<HomeData> {
-  try {
-  let slotResult: Awaited<ReturnType<typeof getCurrentFeaturedSlot>> = null;
-  try {
-    slotResult = await dbQuery(() => getCurrentFeaturedSlot(prisma));
-  } catch (slotErr) {
-    console.warn('getCurrentFeaturedSlot failed, using fallback:', slotErr);
-  }
-
-  const [lists, trendingResults, risingResults] = await Promise.all([
+async function computeHomePageData(): Promise<HomeData> {
+  // همهٔ کوئری‌های مستقل موازی — featured-slot دیگر بقیه را بلاک نمی‌کند.
+  const [slotResult, lists, trendingResults, risingResults] = await Promise.all([
+    dbQuery(() => getCurrentFeaturedSlot(prisma)).catch((slotErr) => {
+      console.warn('getCurrentFeaturedSlot failed, using fallback:', slotErr);
+      return null;
+    }),
     dbQuery(() =>
       prisma.lists.findMany({
         where: publicCuratedListWhere,
@@ -226,8 +223,14 @@ export async function fetchHomePageData(): Promise<HomeData> {
     rising: dedupeListsById(risingResults.map(mapRising)),
     recommendations: visibleLists.slice(0, 4).map(mapList),
   };
-  } catch (err) {
-    console.warn('fetchHomePageData failed:', err);
-    return EMPTY_HOME_DATA;
-  }
 }
+
+/**
+ * دادهٔ صفحهٔ اول — کش بین‌درخواستی (Data Cache) با tag `home`.
+ * خطاها کش نمی‌شوند؛ صفحه/API خودشان fallback دارند.
+ */
+export const fetchHomePageData: () => Promise<HomeData> = unstable_cache(
+  computeHomePageData,
+  ['home-page-data'],
+  { revalidate: 60, tags: ['home', 'trending'] }
+);

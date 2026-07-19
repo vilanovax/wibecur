@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { activeCategoryWhere } from '@/lib/public-content-filters';
@@ -9,7 +10,9 @@ export type CategoryMenuChip = {
   icon: string | null;
 };
 
-export async function fetchActiveCategoryMenu(): Promise<CategoryMenuChip[]> {
+export const CATEGORY_MENU_CACHE_TAG = 'category-menu';
+
+async function loadActiveCategoryMenu(): Promise<CategoryMenuChip[]> {
   return dbQuery(() =>
     prisma.categories.findMany({
       where: activeCategoryWhere,
@@ -23,3 +26,13 @@ export async function fetchActiveCategoryMenu(): Promise<CategoryMenuChip[]> {
     })
   );
 }
+
+/**
+ * منوی دسته‌ها تقریباً ثابت است و برای همهٔ صفحات یکسان — کش بین‌درخواستی طولانی.
+ * با revalidateTag('category-menu') هنگام تغییر دسته‌ها تازه می‌شود.
+ */
+export const fetchActiveCategoryMenu: () => Promise<CategoryMenuChip[]> =
+  unstable_cache(loadActiveCategoryMenu, ['active-category-menu'], {
+    revalidate: 600,
+    tags: [CATEGORY_MENU_CACHE_TAG],
+  });

@@ -16,9 +16,11 @@ import {
   HomePersonalizedFeedSectionLazy,
 } from '@/components/mobile/home/home-lazy-sections';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
+import type { CategoryMenuChip } from '@/lib/category-menu';
 
 type HomeDesktopViewProps = {
   ssrFeaturedId: string | null;
+  initialCategories?: CategoryMenuChip[];
   heroSpotlight: ReactNode;
   desktopTrending: ReactNode;
 };
@@ -29,6 +31,7 @@ type HomeDesktopViewProps = {
  */
 export default function HomeDesktopView({
   ssrFeaturedId,
+  initialCategories,
   heroSpotlight,
   desktopTrending,
 }: HomeDesktopViewProps) {
@@ -38,7 +41,7 @@ export default function HomeDesktopView({
 
   return (
     <div className="flex flex-col gap-6 xl:gap-7">
-      <QuickCategoryChips />
+      <QuickCategoryChips initialCategories={initialCategories} />
 
       <HomeStartStrip />
 

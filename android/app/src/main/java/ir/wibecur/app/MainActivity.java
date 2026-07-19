@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.net.http.SslError;
+import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
@@ -17,18 +18,53 @@ import android.webkit.WebViewClient;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 /**
  * WebView مستقیم به سایت — بدون Capacitor Bridge.
  * Capacitor با server.url روی اندروید جدید درخواست‌ها را intercept می‌کند و صفحه سفید می‌دهد.
  */
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "WibeWebView";
+
     private WebView webView;
+
+    private String appScheme;
+    private String appHost;
+
+    /** origin خودِ اپ (از AppConfig.APP_URL) — تا dev و prod هر دو داخل WebView بمانند. */
+    private boolean isAppOrigin(Uri uri) {
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        if (scheme == null || host == null) return false;
+        if (!scheme.equalsIgnoreCase(appScheme)) return false;
+        // میزبان دقیق یا زیردامنه‌های همان دامنهٔ ریشه (مثلاً *.wibe.ir).
+        if (host.equalsIgnoreCase(appHost)) return true;
+        String rootDot = "." + appHost;
+        return host.toLowerCase().endsWith(rootDot.toLowerCase());
+    }
+
+    /** صفحهٔ خطا را با علت واقعی (کد + توضیح) باز می‌کند تا دیباگ ممکن شود. */
+    private void showErrorPage(WebView view, String reason) {
+        String encoded;
+        try {
+            encoded = URLEncoder.encode(reason == null ? "" : reason, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            encoded = "";
+        }
+        view.loadUrl(AppConfig.ERROR_PAGE + "?reason=" + encoded);
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Uri appUri = Uri.parse(AppConfig.APP_URL);
+        appScheme = appUri.getScheme() != null ? appUri.getScheme() : "https";
+        appHost = appUri.getHost() != null ? appUri.getHost() : "app.wibe.ir";
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.parseColor("#E5E7EB"));
@@ -66,15 +102,9 @@ public class MainActivity extends AppCompatActivity {
                     WebResourceRequest request
                 ) {
                     Uri uri = request.getUrl();
-                    String scheme = uri.getScheme();
-                    String host = uri.getHost();
 
                     // فقط origin خودِ اپ داخل WebView بارگذاری شود.
-                    boolean isAppOrigin =
-                        host != null
-                            && ("https".equals(scheme))
-                            && (host.equals("app.wibe.ir") || host.endsWith(".wibe.ir"));
-                    if (isAppOrigin) {
+                    if (isAppOrigin(uri)) {
                         return false; // بگذار WebView خودش بارگذاری کند.
                     }
 
@@ -93,9 +123,16 @@ public class MainActivity extends AppCompatActivity {
                     WebResourceRequest request,
                     WebResourceError error
                 ) {
-                    if (request.isForMainFrame()) {
-                        view.loadUrl(AppConfig.ERROR_PAGE);
+                    // فقط خطای فریم اصلی (سند) باعث صفحهٔ خطا شود؛
+                    // خطای زیرمنبع‌ها (تصویر/فونت) نباید کل صفحه را از کار بیندازد.
+                    if (!request.isForMainFrame()) {
+                        return;
                     }
+                    String reason = "code=" + error.getErrorCode()
+                        + " desc=" + error.getDescription()
+                        + " url=" + request.getUrl();
+                    Log.e(TAG, "onReceivedError " + reason);
+                    showErrorPage(view, reason);
                 }
 
                 @Override
@@ -106,8 +143,32 @@ public class MainActivity extends AppCompatActivity {
                 ) {
                     // گواهی نامعتبر = هندشیک را لغو کن (امن؛ هرگز proceed نکن)
                     // و به‌جای صفحهٔ سفید، صفحهٔ خطای فارسی را نشان بده.
+                    // SslError.SSL_UNTRUSTED = 3 — معمولاً زنجیرهٔ ناقص یا ریشهٔ جدید LE (Root YR)
+                    String label;
+                    switch (error.getPrimaryError()) {
+                        case SslError.SSL_UNTRUSTED:
+                            label = "SSL_UNTRUSTED(3)";
+                            break;
+                        case SslError.SSL_EXPIRED:
+                            label = "SSL_EXPIRED(1)";
+                            break;
+                        case SslError.SSL_IDMISMATCH:
+                            label = "SSL_IDMISMATCH(2)";
+                            break;
+                        case SslError.SSL_DATE_INVALID:
+                            label = "SSL_DATE_INVALID(4)";
+                            break;
+                        case SslError.SSL_INVALID:
+                            label = "SSL_INVALID(5)";
+                            break;
+                        default:
+                            label = "SSL_" + error.getPrimaryError();
+                            break;
+                    }
+                    String reason = label + " url=" + error.getUrl();
+                    Log.e(TAG, "onReceivedSslError " + reason + " cert=" + error.getCertificate());
                     handler.cancel();
-                    view.loadUrl(AppConfig.ERROR_PAGE);
+                    showErrorPage(view, reason);
                 }
             }
         );

@@ -1,17 +1,15 @@
 import type { Metadata, Viewport } from 'next';
-import '@fontsource/vazirmatn/400.css';
-import '@fontsource/vazirmatn/600.css';
-import '@fontsource/vazirmatn/700.css';
+// فونت متغیر (variable): یک فایل به‌ازای هر subset به‌جای ۳ فایل وزن جدا (۴۰۰/۶۰۰/۷۰۰)
+// — کاهش تعداد درخواست فونت با پوشش تمام وزن‌ها. subset با unicode-range و display:swap.
+import '@fontsource-variable/vazirmatn';
 import './globals.css';
 import VercelAnalytics from '@/components/analytics/VercelAnalytics';
 import UmamiAnalytics from '@/components/analytics/UmamiAnalytics';
 import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
-import { auth } from '@/lib/auth-config';
 import PWAProvider from '@/components/providers/PWAProvider';
 import CapacitorProvider from '@/components/providers/CapacitorProvider';
 import MainContainer from '@/components/providers/MainContainer';
-import MaintenanceGate from '@/components/site/MaintenanceGate';
 import { SiteBrandingProvider } from '@/contexts/SiteBrandingContext';
 import { getSiteBrandingForLayout, getSiteLogoUrl } from '@/lib/site-branding';
 import { serializeJsonLd } from '@/lib/json-ld';
@@ -71,10 +69,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [{ logoUrl, logoDisplayUrl }, siteLogoForMeta, session] = await Promise.all([
+  // نکته: عمداً از auth() اینجا استفاده نمی‌شود تا کل درخت static/ISR بماند.
+  // سشن سمت کلاینت در SessionProvider از /api/auth/session خوانده می‌شود و
+  // اعمال حالت تعمیر (maintenance) در middleware انجام می‌گیرد.
+  const [{ logoUrl, logoDisplayUrl }, siteLogoForMeta] = await Promise.all([
     getSiteBrandingForLayout(),
     getSiteLogoUrl(),
-    auth(),
   ]);
 
   const orgLogoUrl = siteLogoForMeta ?? `${baseUrl}/icon-512.png`;
@@ -115,15 +115,13 @@ export default async function RootLayout({
         <a href="#main" className="skip-link">
           رفتن به محتوای اصلی
         </a>
-        <SessionProvider session={session}>
+        <SessionProvider>
           <QueryProvider>
             <SiteBrandingProvider logoUrl={logoUrl} logoDisplayUrl={logoDisplayUrl}>
               <SearchProvider>
                 <PWAProvider>
                   <CapacitorProvider>
-                    <MaintenanceGate>
-                      <MainContainer>{children}</MainContainer>
-                    </MaintenanceGate>
+                    <MainContainer>{children}</MainContainer>
                   </CapacitorProvider>
                 </PWAProvider>
               </SearchProvider>

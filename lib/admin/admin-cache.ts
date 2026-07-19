@@ -1,4 +1,5 @@
 import { revalidateTag } from 'next/cache';
+import { revalidateHomeCache, revalidateCategoryMenuCache } from '@/lib/public-cache';
 
 /** TTL کش پنل ادمین (ثانیه) */
 export const ADMIN_LISTS_CACHE_SECONDS = 120;
@@ -19,10 +20,14 @@ export const ADMIN_CACHE_TAGS = {
 
 export function revalidateAdminListsCache() {
   revalidateTag(ADMIN_CACHE_TAGS.lists, 'max');
+  // هر تغییر لیست ممکن است ترکیب هوم/ترند را عوض کند.
+  revalidateHomeCache();
 }
 
 export function revalidateAdminCategoriesCache() {
   revalidateTag(ADMIN_CACHE_TAGS.categories, 'max');
+  // منوی دسته‌ها روی همهٔ صفحات عمومی مشترک است.
+  revalidateCategoryMenuCache();
 }
 
 export function revalidateAdminUsersCache() {

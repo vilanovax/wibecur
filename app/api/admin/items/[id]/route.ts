@@ -19,6 +19,19 @@ import {
   isMixedListCategory,
   parseEntryKind,
 } from '@/lib/list-entry';
+import { revalidateListDetailCache, revalidateCategoryCache } from '@/lib/public-cache';
+
+/** تازه‌سازی کش صفحهٔ لیستِ والدِ یک آیتم (با یک کوئری سبک برای slug). */
+async function revalidateItemParentList(listId: string): Promise<void> {
+  const parent = await prisma.lists.findUnique({
+    where: { id: listId },
+    select: { slug: true, categoryId: true },
+  });
+  if (parent) {
+    revalidateListDetailCache(parent.slug);
+    revalidateCategoryCache(parent.categoryId);
+  }
+}
 
 // GET /api/admin/items/[id] - Get single item
 export async function GET(
@@ -208,6 +221,12 @@ export async function PUT(
       }
     }
 
+    // صفحهٔ لیست (مبدأ و مقصد در صورت جابه‌جایی) و دسته‌ها را تازه کن.
+    revalidateListDetailCache(existingItem.lists.slug);
+    revalidateListDetailCache(item.lists.slug);
+    revalidateCategoryCache(existingItem.lists.categoryId);
+    revalidateCategoryCache(item.lists.categoryId);
+
     return NextResponse.json(item);
   } catch (error: any) {
     console.error('Error updating item:', error);
@@ -237,6 +256,7 @@ export async function PATCH(
     if (tip === null || typeof tip === 'string') {
       await updateItemTip(prisma, id, tip);
       const item = await prisma.items.findUnique({ where: { id } });
+      await revalidateItemParentList(existing.listId);
       return NextResponse.json(item);
     }
 
@@ -267,6 +287,7 @@ export async function PATCH(
       where: { id },
       data,
     });
+    await revalidateItemParentList(existing.listId);
     return NextResponse.json(item);
   } catch (error: any) {
     console.error('Error PATCH item:', error);
@@ -304,6 +325,8 @@ export async function DELETE(
     if (processed === 0) {
       return NextResponse.json({ error: 'حذف انجام نشد' }, { status: 400 });
     }
+
+    await revalidateItemParentList(existingItem.listId);
 
     return NextResponse.json({ message: 'آیتم به زباله‌دان منتقل شد' });
   } catch (error: any) {

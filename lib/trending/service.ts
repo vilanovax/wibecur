@@ -172,7 +172,10 @@ export async function getTrendingByCategory(
         categories: { select: { slug: true } },
         users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
       },
-      take: 100,
+      // نامزدها را با ایندکس [categoryId,isActive,isPublic,saveCount desc] بگیر تا
+      // نمونهٔ اسکن‌شده معنادار باشد و بتوان take را کم کرد (کاهش groupByهای متریک).
+      orderBy: { saveCount: 'desc' },
+      take: 60,
     });
 
     if (lists.length === 0) return [];

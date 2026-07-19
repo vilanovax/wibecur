@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: 'دسته یافت نشد' }, { status: 404 });
     }
 
-    const data = await getCachedCategoryPageData(category.id);
+    const data = await getCachedCategoryPageData(category.id, category.slug);
 
     const res = NextResponse.json({ data });
     res.headers.set(

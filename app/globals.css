@@ -18,7 +18,7 @@
 /* ─── Wibe Design System — CSS Variables (sync with lib/design-tokens.ts) ─ */
 :root {
   /* Brand */
-  --font-vazirmatn: 'Vazirmatn', 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-vazirmatn: 'Vazirmatn Variable', 'Vazirmatn', 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --primary: #6366F1;
   --primary-dark: #4F46E5;
   --primary-light: #818CF8;
@@ -276,7 +276,7 @@ a {
   }
 }
 
-/* Font Family — self-hosted via @fontsource/vazirmatn (no SSR inline font styles) */
+/* Font Family — self-hosted via @fontsource-variable/vazirmatn (no SSR inline font styles) */
 body {
   font-family: var(--font-vazirmatn), 'Vazirmatn', 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;

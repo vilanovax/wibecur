@@ -12,6 +12,7 @@ import {
   normalizeOptionalUrl,
 } from '@/lib/admin/category-form-constants';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
+import { revalidateCategoryCache } from '@/lib/public-cache';
 import {
   formatCategoryTrashMessage,
   trashCategoryWithContents,
@@ -135,6 +136,7 @@ export async function PUT(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateCategoryCache(id);
     return NextResponse.json(category);
   } catch (error: any) {
     console.error('Error updating category:', error);
@@ -221,6 +223,7 @@ export async function PATCH(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateCategoryCache(id);
     return NextResponse.json(category);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'خطا در به‌روزرسانی';
@@ -281,6 +284,7 @@ export async function DELETE(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateCategoryCache(id);
     return NextResponse.json({
       success: true,
       message: formatCategoryTrashMessage(cascade),

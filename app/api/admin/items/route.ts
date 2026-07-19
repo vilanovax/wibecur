@@ -17,6 +17,7 @@ import {
   isMixedListCategory,
   parseEntryKind,
 } from '@/lib/list-entry';
+import { revalidateListDetailCache, revalidateCategoryCache } from '@/lib/public-cache';
 
 // GET /api/admin/items - Get items (optionally filtered by listId)
 export async function GET(request: NextRequest) {
@@ -102,6 +103,8 @@ export async function POST(request: NextRequest) {
           categoryName: list.categories?.name,
           listTitle: list.title,
         }).catch(console.error);
+        revalidateListDetailCache(list.slug);
+        revalidateCategoryCache(list.categoryId);
       }
       return NextResponse.json(item, { status: 201 });
     }
@@ -176,6 +179,8 @@ export async function POST(request: NextRequest) {
         categoryName: list.categories?.name,
         listTitle: list.title,
       }).catch(console.error);
+      revalidateListDetailCache(list.slug);
+      revalidateCategoryCache(list.categoryId);
       return NextResponse.json(item, { status: 201 });
     }
 
@@ -238,6 +243,9 @@ export async function POST(request: NextRequest) {
       categoryName: list.categories?.name,
       listTitle: list.title,
     }).catch(console.error);
+
+    revalidateListDetailCache(list.slug);
+    revalidateCategoryCache(list.categoryId);
 
     return NextResponse.json(item, { status: 201 });
   } catch (error: any) {

@@ -7,6 +7,7 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
 import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import { fetchHomePageData } from '@/lib/home-data-server';
+import { fetchActiveCategoryMenu, type CategoryMenuChip } from '@/lib/category-menu';
 import {
   selectHomeLcpImageUrl,
   selectHomeTrendingDesktopLists,
@@ -22,12 +23,18 @@ export const metadata = {
 };
 
 export default async function Home() {
-  let initialHomeData = EMPTY_HOME_DATA;
-  try {
-    initialHomeData = await fetchHomePageData();
-  } catch (err) {
-    console.warn('Home SSR data fetch failed:', err);
+  // داده هوم و منوی دسته‌ها موازی — منوی دسته‌ها برای SSR چیپ‌ها (بدون fetch کلاینتی).
+  const [homeResult, menuResult] = await Promise.allSettled([
+    fetchHomePageData(),
+    fetchActiveCategoryMenu(),
+  ]);
+  const initialHomeData =
+    homeResult.status === 'fulfilled' ? homeResult.value : EMPTY_HOME_DATA;
+  if (homeResult.status === 'rejected') {
+    console.warn('Home SSR data fetch failed:', homeResult.reason);
   }
+  const menuCategories: CategoryMenuChip[] =
+    menuResult.status === 'fulfilled' ? menuResult.value : [];
 
   const ssrFeaturedId = initialHomeData.featured?.id ?? null;
   const lcpImage = selectHomeLcpImageUrl(initialHomeData);
@@ -60,6 +67,7 @@ export default async function Home() {
             <ErrorBoundary>
               <HomeResponsiveContent
                 ssrFeaturedId={ssrFeaturedId}
+                initialCategories={menuCategories}
                 heroSpotlightMobile={heroSpotlightMobile}
                 heroSpotlightDesktop={heroSpotlightDesktop}
                 desktopTrending={

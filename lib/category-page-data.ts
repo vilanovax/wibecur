@@ -11,7 +11,8 @@ import type {
   CategoryItemCard,
   CityBreakdown,
 } from '@/types/category-page';
-import { getTrendingByCategory, getListMetrics7d } from '@/lib/trending/service';
+import { getTrendingByCategory } from '@/lib/trending/service';
+import { isFilmCategorySlug, isLocationCategorySlug } from '@/lib/category-layout';
 import { resolveListCover } from '@/lib/resolve-list-cover';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
@@ -223,7 +224,9 @@ async function getTrendingAndViralLists(
 ): Promise<{ trending: CategoryListCard[]; viral: CategoryListCard | null }> {
   const results = await getTrendingByCategory(prisma, categoryId, TRENDING_LIMIT + 5);
   const listIds = results.map((r) => r.listId);
-  const [listsWithTags, commentCounts, metricsMap] = listIds.length > 0
+  // متریک‌های ۷روزه قبلاً داخل getTrendingByCategory محاسبه شده و در r.weeklySaves هست؛
+  // این‌جا دوباره getListMetrics7d صدا زده نمی‌شود.
+  const [listsWithTags, commentCounts] = listIds.length > 0
     ? await Promise.all([
         prisma.lists.findMany({
           where: { id: { in: listIds } },
@@ -234,14 +237,12 @@ async function getTrendingAndViralLists(
           where: { listId: { in: listIds } },
           _count: { listId: true },
         }),
-        getListMetrics7d(prisma, listIds),
       ])
-    : [[], [], new Map()];
+    : [[], []];
   const tagsMap = Object.fromEntries(listsWithTags.map((l) => [l.id, l.tags ?? []]));
   const commentMap = Object.fromEntries(commentCounts.map((c) => [c.listId, c._count.listId]));
   const toCard = (r: (typeof results)[0]): CategoryListCard => {
     const tags = tagsMap[r.listId] ?? [];
-    const metrics = metricsMap.get(r.listId);
     return {
       id: r.listId,
       title: r.title,
@@ -267,7 +268,7 @@ async function getTrendingAndViralLists(
       tags: tags.length > 0 ? tags : undefined,
       cityTag: extractCity(r.title, tags),
       commentCount: commentMap[r.listId],
-      saves7d: metrics?.S7 ?? 0,
+      saves7d: r.weeklySaves ?? 0,
     };
   };
   const trending = results.slice(0, TRENDING_LIMIT).map(toCard);
@@ -802,8 +803,19 @@ async function getNewLists(
 
 export async function getCategoryPageData(
   prisma: PrismaClient,
-  categoryId: string
+  categoryId: string,
+  categorySlug?: string | null
 ): Promise<CategoryPageData> {
+  const slug = categorySlug ?? '';
+  const isFilm = isFilmCategorySlug(slug);
+  const isLocation = isLocationCategorySlug(slug);
+
+  // getCityBreakdown و getFilmGenres هرکدام همهٔ لیست‌های دسته را اسکن می‌کنند.
+  // - City breakdown برای فیلم بی‌ربط است و برای دسته‌های location هم نمایش داده نمی‌شود.
+  // - Film genres فقط برای دستهٔ فیلم لازم است.
+  const shouldScanCities = slug ? !isFilm && !isLocation : true;
+  const shouldScanGenres = slug ? isFilm : true;
+
   const [
     { category, metrics },
     { trending, viral },
@@ -816,10 +828,14 @@ export async function getCategoryPageData(
     getCategoryAndMetrics(prisma, categoryId),
     getTrendingAndViralLists(prisma, categoryId),
     getNewLists(prisma, categoryId),
-    getCityBreakdown(prisma, categoryId),
+    shouldScanCities
+      ? getCityBreakdown(prisma, categoryId)
+      : Promise.resolve([] as CityBreakdown[]),
     getMostSavedItems(prisma, categoryId),
     getLatestItems(prisma, categoryId),
-    getFilmGenres(prisma, categoryId),
+    shouldScanGenres
+      ? getFilmGenres(prisma, categoryId)
+      : Promise.resolve([] as Awaited<ReturnType<typeof getFilmGenres>>),
   ]);
 
   const resolvedGenreCount =

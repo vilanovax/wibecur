@@ -55,7 +55,11 @@ export default function SessionProvider({
   session,
 }: {
   children: React.ReactNode;
-  session: Session | null;
+  /**
+   * وقتی undefined باشد، next-auth سشن را سمت کلاینت از /api/auth/session می‌خواند.
+   * این حالت لازم است تا layout بدون auth() سرور، static/ISR بماند.
+   */
+  session?: Session | null;
 }) {
   return (
     <NextAuthSessionProvider

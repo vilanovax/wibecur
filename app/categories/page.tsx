@@ -6,6 +6,7 @@ import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
+import { fetchActiveCategoryMenu, type CategoryMenuChip } from '@/lib/category-menu';
 
 export const revalidate = 3600;
 
@@ -50,6 +51,13 @@ export default async function CategoriesIndexPage() {
     }
   }
 
+  let menuCategories: CategoryMenuChip[] = [];
+  try {
+    menuCategories = await fetchActiveCategoryMenu();
+  } catch {
+    // چیپ‌ها اختیاری‌اند؛ در نبود DB خالی می‌مانند.
+  }
+
   const breadcrumbItems = [
     { label: 'خانه', href: '/' },
     { label: 'دسته‌ها' },
@@ -64,7 +72,7 @@ export default async function CategoriesIndexPage() {
         ]}
       />
       <Header title="دسته‌ها" showBack />
-      <CategoryNavStrip />
+      <CategoryNavStrip initialCategories={menuCategories} />
       <main className="px-2.5 pt-3">
         <PageBreadcrumb className="mb-3 px-1.5" items={breadcrumbItems} />
         <p className="mb-4 wibe-small text-wibe-secondary">

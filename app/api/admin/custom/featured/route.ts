@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/auth/require-permission';
 import { getCurrentFeaturedSlot } from '@/lib/home-featured';
 import { getTrendingScoreForList } from '@/lib/trending/service';
+import { revalidateHomeCache } from '@/lib/public-cache';
 
 /**
  * GET /api/admin/custom/featured
@@ -447,6 +448,9 @@ export async function POST(request: NextRequest) {
         orderIndex: Number(slot.orderIndex),
       },
     };
+
+    // اسلات منتخب هوم عوض شد — کش هوم را تازه کن.
+    revalidateHomeCache();
 
     try {
       return NextResponse.json(slotPayload);

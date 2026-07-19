@@ -7,6 +7,7 @@ import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalList } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
+import { revalidateListDetailCache, revalidateCategoryCache } from '@/lib/public-cache';
 
 export async function PUT(
   request: NextRequest,
@@ -106,6 +107,11 @@ export async function PUT(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    // صفحهٔ لیست (slug جدید و قدیمی) و دستهٔ مربوطه را فوراً تازه کن.
+    revalidateListDetailCache(existingList.slug);
+    revalidateListDetailCache(list.slug);
+    revalidateCategoryCache(existingList.categoryId);
+    revalidateCategoryCache(list.categoryId);
     return NextResponse.json(list);
   } catch (error: any) {
     console.error('Error updating list:', error);
@@ -164,6 +170,8 @@ export async function PATCH(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateListDetailCache(existing.slug);
+    revalidateCategoryCache(existing.categoryId);
     return NextResponse.json(list);
   } catch (error: any) {
     console.error('Error PATCH list:', error);
@@ -219,6 +227,8 @@ export async function DELETE(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateListDetailCache(existingList.slug);
+    revalidateCategoryCache(existingList.categoryId);
     return NextResponse.json({ success: true, message: 'به زباله‌دان منتقل شد' });
   } catch (error: any) {
     console.error('Error soft-deleting list:', error);

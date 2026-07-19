@@ -73,6 +73,7 @@ export default function HomeGridListCard({
             categorySlug={list.categories?.slug}
             listSlug={list.slug}
             listTitle={list.title}
+            sizes="(min-width: 1024px) 240px, 160px"
           />
           <div
             className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/5 lg:via-black/25"

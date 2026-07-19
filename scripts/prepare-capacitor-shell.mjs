@@ -64,11 +64,20 @@ const errorHtml = `<!DOCTYPE html>
       <p>اپ نتوانست سایت را باز کند. اینترنت گوشی را بررسی کنید و دوباره تلاش کنید.</p>
       <button type="button" onclick="retry()">تلاش مجدد</button>
       <p style="margin-top: 1rem"><code>${serverUrl}</code></p>
+      <p id="reason" style="margin-top: 0.75rem; display: none"><code></code></p>
     </div>
     <script>
       function retry() {
         window.location.replace(${JSON.stringify(serverUrl)});
       }
+      (function () {
+        var m = /[?&]reason=([^&]+)/.exec(window.location.search);
+        if (m && m[1]) {
+          var el = document.getElementById('reason');
+          el.style.display = 'block';
+          el.querySelector('code').textContent = decodeURIComponent(m[1]);
+        }
+      })();
     </script>
   </body>
 </html>

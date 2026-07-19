@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useInfiniteQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { MessageSquare, Loader2, ChevronDown, ThumbsUp, ThumbsDown, Flag, Send, MoreVertical } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
@@ -21,8 +25,6 @@ import {
   DEFAULT_SUGGESTION_MAX_LENGTH,
   MIN_COMMENT_LENGTH,
 } from '@/lib/comment-limits';
-
-const INITIAL_VISIBLE = COMMENTS_INITIAL_VISIBLE;
 
 const REACTION_PILLS = [
   { type: 'meh', label: 'معمولی', emoji: '😊' },
@@ -84,11 +86,14 @@ interface VibeCommentSectionProps {
   onOpenSuggestItem?: () => void;
 }
 
-interface VibeCommentsResponse {
+interface VibeCommentsPage {
   comments: Comment[];
   commentsEnabled: boolean;
   maxCommentLength: number;
   suggestionMaxLength: number;
+  totalCount?: number;
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 interface ReactionsResponse {
@@ -96,8 +101,16 @@ interface ReactionsResponse {
   userReaction: string | null;
 }
 
-async function fetchVibeComments(listId: string, sortParam: string): Promise<VibeCommentsResponse> {
-  const res = await fetch(`/api/lists/${listId}/comments?sort=${sortParam}`);
+async function fetchVibeCommentsPage(
+  listId: string,
+  sortParam: string,
+  cursor: string | null
+): Promise<VibeCommentsPage> {
+  // صفحهٔ اول کوچک (initial) و صفحات بعدی بزرگ‌تر (load-more) — کاهش payload اولیه.
+  const limit = cursor ? COMMENTS_LOAD_MORE_STEP : COMMENTS_INITIAL_VISIBLE;
+  const params = new URLSearchParams({ sort: sortParam, limit: String(limit) });
+  if (cursor) params.set('cursor', cursor);
+  const res = await fetch(`/api/lists/${listId}/comments?${params.toString()}`);
   const data = await res.json();
   if (!data.success) {
     return {
@@ -105,6 +118,8 @@ async function fetchVibeComments(listId: string, sortParam: string): Promise<Vib
       commentsEnabled: true,
       maxCommentLength: DEFAULT_LIST_COMMENT_MAX_LENGTH,
       suggestionMaxLength: DEFAULT_SUGGESTION_MAX_LENGTH,
+      nextCursor: null,
+      hasMore: false,
     };
   }
   return {
@@ -112,6 +127,9 @@ async function fetchVibeComments(listId: string, sortParam: string): Promise<Vib
     commentsEnabled: data.commentsEnabled ?? true,
     maxCommentLength: data.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH,
     suggestionMaxLength: data.suggestionMaxLength ?? DEFAULT_SUGGESTION_MAX_LENGTH,
+    totalCount: data.totalCount,
+    nextCursor: data.nextCursor ?? null,
+    hasMore: !!data.hasMore,
   };
 }
 
@@ -547,21 +565,33 @@ export default function VibeCommentSection({
   const [isSuggestionMode, setIsSuggestionMode] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'helpful' | 'newest'>('helpful');
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
 
   const sortParam = sortBy === 'helpful' ? 'popular' : 'newest';
 
-  const { data: commentsData, isLoading, refetch: refetchComments } = useQuery({
+  const {
+    data: commentsData,
+    isLoading,
+    refetch: refetchComments,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['lists', listId, 'vibe-comments', sortParam],
-    queryFn: () => fetchVibeComments(listId, sortParam),
+    queryFn: ({ pageParam }) =>
+      fetchVibeCommentsPage(listId, sortParam, pageParam as string | null),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     enabled: !!listId,
   });
-  const comments = commentsData?.comments ?? [];
-  const commentsEnabled = commentsData?.commentsEnabled ?? true;
-  const maxCommentLength = commentsData?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
-  const suggestionMaxLength = commentsData?.suggestionMaxLength ?? DEFAULT_SUGGESTION_MAX_LENGTH;
+  const comments = commentsData?.pages.flatMap((p) => p.comments) ?? [];
+  const firstPage = commentsData?.pages[0];
+  const commentsEnabled = firstPage?.commentsEnabled ?? true;
+  const maxCommentLength = firstPage?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
+  const suggestionMaxLength = firstPage?.suggestionMaxLength ?? DEFAULT_SUGGESTION_MAX_LENGTH;
+  const totalCount = firstPage?.totalCount ?? comments.length;
 
   const { data: reactionsData } = useQuery({
     queryKey: ['lists', listId, 'reactions'],
@@ -572,10 +602,6 @@ export default function VibeCommentSection({
   const userReaction = reactionsData?.userReaction ?? null;
 
   const [reactionsLoading, setReactionsLoading] = useState(false);
-
-  useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE);
-  }, [listId, sortBy]);
 
   const handleReaction = async (type: string) => {
     if (status !== 'authenticated') return;
@@ -696,9 +722,8 @@ export default function VibeCommentSection({
     setToast({ message: 'ممنون که اطلاع دادی 🙏 بررسیش می‌کنیم', type: 'success' });
   };
 
-  const displayedComments = comments.slice(0, visibleCount);
-  const hasMore = visibleCount < comments.length;
-  const remainingCount = comments.length - visibleCount;
+  const displayedComments = comments;
+  const remainingCount = Math.max(totalCount - comments.length, 0);
   const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
   const hasComments = comments.length > 0;
 
@@ -809,14 +834,24 @@ export default function VibeCommentSection({
                 />
               ))}
             </div>
-            {hasMore && (
+            {hasNextPage && (
               <button
                 type="button"
-                onClick={() => setVisibleCount((v) => v + COMMENTS_LOAD_MORE_STEP)}
-                className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1 disabled:opacity-60"
               >
-                <ChevronDown className="w-4 h-4" />
-                {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر ({remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
+                {isFetchingNextPage ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر
+                    {remainingCount > 0
+                      ? ` (${remainingCount.toLocaleString('fa-IR')} باقی‌مانده)`
+                      : ''}
+                  </>
+                )}
               </button>
             )}
           </>

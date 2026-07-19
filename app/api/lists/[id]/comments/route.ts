@@ -23,6 +23,12 @@ export async function GET(
     const { id: listId } = await params;
     const { searchParams } = new URL(request.url);
     const sort = searchParams.get('sort') || 'newest'; // newest, popular
+    // Pagination: cursor مبتنی بر id + take محدود تا کل thread یک‌جا کشیده نشود.
+    const limitParam = parseInt(searchParams.get('limit') || '10', 10);
+    const limit = Number.isFinite(limitParam)
+      ? Math.min(Math.max(limitParam, 1), 50)
+      : 10;
+    const cursor = searchParams.get('cursor');
 
     const session = await auth();
     const userId = session?.user ? (session.user as { id: string }).id : null;
@@ -60,7 +66,18 @@ export async function GET(
       NOT: { type: 'suggestion', suggestionStatus: 'rejected' },
     };
 
-    const comments = await dbQuery(() =>
+    // id به‌عنوان tiebreaker پایدار برای cursor pagination (createdAt/weightedScore غیریکتا).
+    const orderBy =
+      sort === 'popular' || sort === 'helpful'
+        ? [
+            { weightedScore: 'desc' as const },
+            { createdAt: 'desc' as const },
+            { id: 'desc' as const },
+          ]
+        : [{ createdAt: 'desc' as const }, { id: 'desc' as const }];
+
+    // take: limit+1 برای تشخیص hasMore بدون کوئری اضافه.
+    const commentsPlusOne = await dbQuery(() =>
       prisma.list_comments.findMany({
         where: whereClause,
         include: {
@@ -95,12 +112,23 @@ export async function GET(
             orderBy: { createdAt: 'asc' },
           },
         },
-        orderBy:
-          sort === 'popular' || sort === 'helpful'
-            ? [{ weightedScore: 'desc' }, { createdAt: 'desc' }]
-            : { createdAt: 'desc' },
+        orderBy,
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       })
     );
+
+    const hasMore = commentsPlusOne.length > limit;
+    const comments = hasMore ? commentsPlusOne.slice(0, limit) : commentsPlusOne;
+    const nextCursor = hasMore ? comments[comments.length - 1]?.id ?? null : null;
+
+    // شمارش کل فقط در صفحهٔ اول (بدون cursor) تا هدر «کامنت‌ها (n)» درست بماند.
+    let totalCount: number | undefined;
+    if (!cursor) {
+      totalCount = await dbQuery(() =>
+        prisma.list_comments.count({ where: whereClause })
+      );
+    }
 
     const allCommentIds = [
       ...comments.map((c) => c.id),
@@ -184,6 +212,9 @@ export async function GET(
       success: true,
       data: processedComments,
       commentsEnabled: list.commentsEnabled,
+      totalCount,
+      nextCursor,
+      hasMore,
       maxCommentLength,
       suggestionMaxLength: DEFAULT_SUGGESTION_MAX_LENGTH,
     });

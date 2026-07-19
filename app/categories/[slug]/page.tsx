@@ -16,7 +16,9 @@ import { getCachedCategoryBannerPlacements } from '@/lib/sponsored-placements';
 import { fetchActiveCategoryMenu } from '@/lib/category-menu';
 import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
 
-export const revalidate = 60;
+// داده‌های صفحه با unstable_cache تا ۳۰۰ ثانیه کش می‌شوند؛ revalidate صفحه هم
+// با همان پنجره هماهنگ شد تا پوستهٔ صفحه بی‌جهت هر ۶۰ ثانیه بازتولید نشود.
+export const revalidate = 300;
 
 function isDbError(e: unknown): boolean {
   const err = e as Error & { code?: string };
@@ -59,7 +61,7 @@ export default async function CategoryPage({
     category = await resolveCategoryBySlug(slug);
     if (category) {
       [pageData, menuCategories] = await Promise.all([
-        getCachedCategoryPageData(category.id),
+        getCachedCategoryPageData(category.id, category.slug),
         fetchActiveCategoryMenu(),
       ]);
     }

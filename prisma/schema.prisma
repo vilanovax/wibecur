@@ -31,28 +31,28 @@ model bookmarks {
 }
 
 model categories {
-  id              String            @id
-  name            String
-  slug            String            @unique
-  icon            String
-  color           String            @default("#6366F1")
-  accentColor     String? // برای Category Page 2.0 - رنگ تاکید (مثلاً بنفش فیلم، نارنجی رستوران)
-  description     String?
-  heroImage       String? // تصویر هیرو صفحه دسته
-  layoutType      String? // cinematic | locationBased | editorial | minimal
-  order           Int               @default(0)
-  isActive        Boolean           @default(true)
-  commentsEnabled Boolean           @default(true) // فعال/غیرفعال کردن کامنت برای دسته
-  trendingWeight  Float             @default(1) // ضریب وزن در الگوریتم ترندینگ (0.8 | 1.0 | 1.2 | 1.4)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime
-  deletedAt       DateTime?
-  deletedById     String?
-  deleteReason    String?
-  lists           lists[]
-  suggested_lists suggested_lists[]
+  id                   String                @id
+  name                 String
+  slug                 String                @unique
+  icon                 String
+  color                String                @default("#6366F1")
+  accentColor          String? // برای Category Page 2.0 - رنگ تاکید (مثلاً بنفش فیلم، نارنجی رستوران)
+  description          String?
+  heroImage            String? // تصویر هیرو صفحه دسته
+  layoutType           String? // cinematic | locationBased | editorial | minimal
+  order                Int                   @default(0)
+  isActive             Boolean               @default(true)
+  commentsEnabled      Boolean               @default(true) // فعال/غیرفعال کردن کامنت برای دسته
+  trendingWeight       Float                 @default(1) // ضریب وزن در الگوریتم ترندینگ (0.8 | 1.0 | 1.2 | 1.4)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime
+  deletedAt            DateTime?
+  deletedById          String?
+  deleteReason         String?
+  lists                lists[]
+  suggested_lists      suggested_lists[]
   sponsored_placements sponsored_placement[]
-  deletedBy       users?            @relation("CategoryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedBy            users?                @relation("CategoryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
 }
@@ -103,30 +103,30 @@ model comment_reports {
 }
 
 model comments {
-  id                String              @id @default(cuid())
+  id                String                  @id @default(cuid())
   itemId            String
   userId            String
   content           String
-  isFiltered        Boolean             @default(false)
-  isApproved        Boolean             @default(true)
-  likeCount         Int                 @default(0)
-  helpfulUp         Int                 @default(0)
-  helpfulDown       Int                 @default(0)
-  weightedScore     Float               @default(0)
-  isSeeded          Boolean             @default(false)
+  isFiltered        Boolean                 @default(false)
+  isApproved        Boolean                 @default(true)
+  likeCount         Int                     @default(0)
+  helpfulUp         Int                     @default(0)
+  helpfulDown       Int                     @default(0)
+  weightedScore     Float                   @default(0)
+  isSeeded          Boolean                 @default(false)
   seedCampaignId    String?
-  seedDraftId       String?             @unique
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  seedDraftId       String?                 @unique
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
   deletedAt         DateTime?
   comment_likes     comment_likes[]
   comment_votes     comment_votes[]
   comment_penalties comment_penalties[]
   comment_reports   comment_reports[]
-  items             items               @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  users             users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items             items                   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  users             users                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   seedCampaign      comment_seed_campaigns? @relation(fields: [seedCampaignId], references: [id], onDelete: SetNull)
-  seedDraft         comment_seed_drafts?  @relation("PublishedSeedDraft", fields: [seedDraftId], references: [id], onDelete: SetNull)
+  seedDraft         comment_seed_drafts?    @relation("PublishedSeedDraft", fields: [seedDraftId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -200,18 +200,18 @@ model item_moderation {
 
 /// موجودیت مشترک آیتم — یک فیلم/کتاب/کافه در چند لیست با یک شناسهٔ کاتالوگ
 model catalog_items {
-  id           String          @id
-  title        String
-  description  String?
-  imageUrl     String?
-  externalUrl  String?
-  categorySlug String?
-  metadata     Json?
+  id            String          @id
+  title         String
+  description   String?
+  imageUrl      String?
+  externalUrl   String?
+  categorySlug  String?
+  metadata      Json?
   /// کلید یکتا برای ادغام (مثلاً imdb:tt123 یا title:book:نام-نرمال)
-  externalKey  String?         @unique
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  items        items[]
+  externalKey   String?         @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  items         items[]
   profile_picks profile_picks[]
 
   @@index([title])
@@ -252,38 +252,40 @@ model person_profiles {
 }
 
 model items {
-  id              String           @id
-  title           String
-  description     String?
-  imageUrl        String?
-  externalUrl     String?
-  listId          String
-  catalogItemId   String?
-  listNote        String?
-  order           Int              @default(0)
-  metadata        Json?
-  voteCount       Int              @default(0)
-  rating          Float            @default(0)
-  maxComments     Int? // حداکثر تعداد کامنت
-  commentsEnabled Boolean          @default(true) // فعال/غیرفعال بودن کامنت
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime
-  deletedAt       DateTime?
-  deletedById     String?
-  deleteReason    String?
-  comments        comments[]
+  id                  String                @id
+  title               String
+  description         String?
+  imageUrl            String?
+  externalUrl         String?
+  listId              String
+  catalogItemId       String?
+  listNote            String?
+  order               Int                   @default(0)
+  metadata            Json?
+  voteCount           Int                   @default(0)
+  rating              Float                 @default(0)
+  maxComments         Int? // حداکثر تعداد کامنت
+  commentsEnabled     Boolean               @default(true) // فعال/غیرفعال بودن کامنت
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  deletedAt           DateTime?
+  deletedById         String?
+  deleteReason        String?
+  comments            comments[]
   comment_seed_drafts comment_seed_drafts[]
-  item_votes      item_votes[]
-  item_reports    item_reports[]
-  item_moderation item_moderation?
-  catalog_items   catalog_items?   @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
-  lists           lists            @relation(fields: [listId], references: [id], onDelete: Cascade)
-  deletedBy       users?           @relation("ItemDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  item_votes          item_votes[]
+  item_reports        item_reports[]
+  item_moderation     item_moderation?
+  catalog_items       catalog_items?        @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+  lists               lists                 @relation(fields: [listId], references: [id], onDelete: Cascade)
+  deletedBy           users?                @relation("ItemDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@unique([listId, catalogItemId])
   @@index([listId])
   @@index([catalogItemId])
   @@index([deletedAt])
+  // کوئری داغ صفحهٔ لیست: آیتم‌های یک لیست، غیرحذف‌شده، مرتب بر اساس order
+  @@index([listId, deletedAt, order])
 }
 
 model list_likes {
@@ -297,6 +299,8 @@ model list_likes {
   @@unique([userId, listId])
   @@index([listId])
   @@index([userId])
+  // متریک‌های ۷روزه: groupBy(listId) با فیلتر createdAt >= cutoff
+  @@index([listId, createdAt])
 }
 
 // Quick reactions: one per user per list (💕 عاشقش شدم | 😭 اشکم دراومد | 🌙 مناسب شب بود | 😐 معمولی بود | ➕ یه پیشنهاد دارم)
@@ -315,42 +319,42 @@ model list_reactions {
 }
 
 model lists {
-  id                  String               @id
-  title               String
-  slug                String               @unique
-  description         String?
-  coverImage          String?
-  horizontalImage     String? // بنر افقی — featured و جزئیات لیست
-  categoryId          String?
-  userId              String
-  tags                String[]             @default([]) // برای Similar Lists هوشمند
-  badge               ListBadge?
-  isPublic            Boolean              @default(true)
-  isFeatured          Boolean              @default(false)
-  viewCount           Int                  @default(0)
-  likeCount           Int                  @default(0)
-  saveCount           Int                  @default(0)
-  itemCount           Int                  @default(0)
-  commentsEnabled     Boolean              @default(true)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  isActive            Boolean              @default(true)
-  deletedAt           DateTime?
-  deletedById         String?
-  deleteReason        String?
-  bookmarks           bookmarks[]
-  items               items[]
-  list_likes          list_likes[]
-  list_reactions      list_reactions[]
-  suggested_items     suggested_items[]
-  list_comments       list_comments[]
-  list_reports        list_reports[]
-  categories          categories?          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  users               users                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deletedBy           users?               @relation("ListDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
-  home_featured_slots home_featured_slot[]
+  id                   String                @id
+  title                String
+  slug                 String                @unique
+  description          String?
+  coverImage           String?
+  horizontalImage      String? // بنر افقی — featured و جزئیات لیست
+  categoryId           String?
+  userId               String
+  tags                 String[]              @default([]) // برای Similar Lists هوشمند
+  badge                ListBadge?
+  isPublic             Boolean               @default(true)
+  isFeatured           Boolean               @default(false)
+  viewCount            Int                   @default(0)
+  likeCount            Int                   @default(0)
+  saveCount            Int                   @default(0)
+  itemCount            Int                   @default(0)
+  commentsEnabled      Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  isActive             Boolean               @default(true)
+  deletedAt            DateTime?
+  deletedById          String?
+  deleteReason         String?
+  bookmarks            bookmarks[]
+  items                items[]
+  list_likes           list_likes[]
+  list_reactions       list_reactions[]
+  suggested_items      suggested_items[]
+  list_comments        list_comments[]
+  list_reports         list_reports[]
+  categories           categories?           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  users                users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deletedBy            users?                @relation("ListDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  home_featured_slots  home_featured_slot[]
   sponsored_placements sponsored_placement[] @relation("SponsoredPlacementList")
-  collaborationEnabled Boolean              @default(false)
+  collaborationEnabled Boolean               @default(false)
   list_collaborators   list_collaborators[]
 
   @@index([categoryId])
@@ -455,83 +459,85 @@ model user_violations {
 }
 
 model users {
-  id                         String                     @id
-  name                       String?
-  email                      String                     @unique
-  emailVerified              DateTime?
-  image                      String?
-  password                   String?
-  role                       UserRole                   @default(USER)
-  accountKind                AccountKind                @default(USER)
-  isActive                   Boolean                    @default(true)
-  /** دسترسی‌های سفارشی ادمین — اگر خالی نباشد جایگزین نقش می‌شود */
-  adminPermissions           String[]                   @default([])
-  reputationScore            Int                        @default(0) // +1 comment, +2 suggestion, -3 removed
-  curatorScore               Int                        @default(0)
-  curatorLevel               CuratorLevel               @default(EXPLORER)
-  viralListsCount            Int                        @default(0)
-  totalLikesReceived         Int                        @default(0)
-  approvedItemsCount         Int                        @default(0)
-  bio                        String?
-  username                   String?                    @unique
-  avatarType                 AvatarType                 @default(DEFAULT)
-  avatarId                   String?
-  avatarStatus               AvatarStatus? // برای آپلود شخصی
-  showBadge                  Boolean                    @default(true)
-  allowCommentNotifications        Boolean                    @default(true)
+  id                             String                     @id
+  name                           String?
+  email                          String                     @unique
+  emailVerified                  DateTime?
+  image                          String?
+  password                       String?
+  role                           UserRole                   @default(USER)
+  accountKind                    AccountKind                @default(USER)
+  isActive                       Boolean                    @default(true)
+  /**
+   * دسترسی‌های سفارشی ادمین — اگر خالی نباشد جایگزین نقش می‌شود
+   */
+  adminPermissions               String[]                   @default([])
+  reputationScore                Int                        @default(0) // +1 comment, +2 suggestion, -3 removed
+  curatorScore                   Int                        @default(0)
+  curatorLevel                   CuratorLevel               @default(EXPLORER)
+  viralListsCount                Int                        @default(0)
+  totalLikesReceived             Int                        @default(0)
+  approvedItemsCount             Int                        @default(0)
+  bio                            String?
+  username                       String?                    @unique
+  avatarType                     AvatarType                 @default(DEFAULT)
+  avatarId                       String?
+  avatarStatus                   AvatarStatus? // برای آپلود شخصی
+  showBadge                      Boolean                    @default(true)
+  allowCommentNotifications      Boolean                    @default(true)
   allowBookmarkListNotifications Boolean                    @default(true)
-  commentRestrictedUntil     DateTime?
-  commentBanReason           String?
-  createdAt                  DateTime                   @default(now())
-  updatedAt                  DateTime
-  deletedAt                  DateTime?
-  deletedById                String?
-  deleteReason               String?
-  bookmarks                  bookmarks[]
-  comment_likes              comment_likes[]
-  comment_votes              comment_votes[]
-  comment_penalties          comment_penalties[]
-  comment_reports            comment_reports[]
-  comments                   comments[]
-  item_votes                 item_votes[]
-  item_reports               item_reports[]
-  list_likes                 list_likes[]
-  list_reactions             list_reactions[]
-  list_reports               list_reports[]
-  lists                      lists[]
-  list_collaborators         list_collaborators[]       @relation("ListCollaboratorMember")
-  list_collaborators_invited list_collaborators[]       @relation("ListCollaboratorInviter")
-  profile_picks              profile_picks[]
-  user_violations            user_violations[]
-  suggested_items            suggested_items[]
-  suggested_lists            suggested_lists[]
-  notifications              notifications[]
-  list_comment_likes         list_comment_likes[]
-  list_comment_reports       list_comment_reports[]
-  list_comment_votes         list_comment_votes[]
-  list_comments              list_comments[]
-  followRelationsAsFollower  follows[]                  @relation("FollowsAsFollower")
-  followRelationsAsFollowing follows[]                  @relation("FollowsAsFollowing")
-  user_achievements          user_achievements[]
-  creator_ranking            creator_rankings?
-  user_category_affinity     user_category_affinity[]
-  user_category_preferences  user_category_preference[]
-  user_keyword_preferences   user_keyword_preference[]
-  discovery_spotlight_cache  discovery_spotlight_cache?
-  creator_spotlights         creator_spotlights[]
-  audit_logs                 audit_log[]
-  sponsored_placements_created sponsored_placement[] @relation("SponsoredPlacementCreator")
-  backup_jobs_created        backup_jobs[]              @relation("BackupJobsCreated")
-  book_extract_jobs_created  book_extract_jobs[]        @relation("BookExtractJobsCreated")
-  comment_personas           comment_personas?
-  comment_seed_campaigns     comment_seed_campaigns[]   @relation("CommentSeedCampaignCreator")
-  moderation_cases_assigned  moderation_case[]
-  moderation_notes           moderation_note[]
-  listsDeletedBy             lists[]                    @relation("ListDeletedBy")
-  categoriesDeletedBy        categories[]               @relation("CategoryDeletedBy")
-  itemsDeletedBy             items[]                    @relation("ItemDeletedBy")
-  usersDeletedBy             users[]                    @relation("UserDeletedBy")
-  deletedBy                  users?                     @relation("UserDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  commentRestrictedUntil         DateTime?
+  commentBanReason               String?
+  createdAt                      DateTime                   @default(now())
+  updatedAt                      DateTime
+  deletedAt                      DateTime?
+  deletedById                    String?
+  deleteReason                   String?
+  bookmarks                      bookmarks[]
+  comment_likes                  comment_likes[]
+  comment_votes                  comment_votes[]
+  comment_penalties              comment_penalties[]
+  comment_reports                comment_reports[]
+  comments                       comments[]
+  item_votes                     item_votes[]
+  item_reports                   item_reports[]
+  list_likes                     list_likes[]
+  list_reactions                 list_reactions[]
+  list_reports                   list_reports[]
+  lists                          lists[]
+  list_collaborators             list_collaborators[]       @relation("ListCollaboratorMember")
+  list_collaborators_invited     list_collaborators[]       @relation("ListCollaboratorInviter")
+  profile_picks                  profile_picks[]
+  user_violations                user_violations[]
+  suggested_items                suggested_items[]
+  suggested_lists                suggested_lists[]
+  notifications                  notifications[]
+  list_comment_likes             list_comment_likes[]
+  list_comment_reports           list_comment_reports[]
+  list_comment_votes             list_comment_votes[]
+  list_comments                  list_comments[]
+  followRelationsAsFollower      follows[]                  @relation("FollowsAsFollower")
+  followRelationsAsFollowing     follows[]                  @relation("FollowsAsFollowing")
+  user_achievements              user_achievements[]
+  creator_ranking                creator_rankings?
+  user_category_affinity         user_category_affinity[]
+  user_category_preferences      user_category_preference[]
+  user_keyword_preferences       user_keyword_preference[]
+  discovery_spotlight_cache      discovery_spotlight_cache?
+  creator_spotlights             creator_spotlights[]
+  audit_logs                     audit_log[]
+  sponsored_placements_created   sponsored_placement[]      @relation("SponsoredPlacementCreator")
+  backup_jobs_created            backup_jobs[]              @relation("BackupJobsCreated")
+  book_extract_jobs_created      book_extract_jobs[]        @relation("BookExtractJobsCreated")
+  comment_personas               comment_personas?
+  comment_seed_campaigns         comment_seed_campaigns[]   @relation("CommentSeedCampaignCreator")
+  moderation_cases_assigned      moderation_case[]
+  moderation_notes               moderation_note[]
+  listsDeletedBy                 lists[]                    @relation("ListDeletedBy")
+  categoriesDeletedBy            categories[]               @relation("CategoryDeletedBy")
+  itemsDeletedBy                 items[]                    @relation("ItemDeletedBy")
+  usersDeletedBy                 users[]                    @relation("UserDeletedBy")
+  deletedBy                      users?                     @relation("UserDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
 
   @@index([deletedAt])
   // فیلتر کریتور در کوئری‌های curated (users.role != USER)
@@ -1007,11 +1013,11 @@ model admin_featured_notification_sent {
 
 // --- تبلیغات متنی اسپانسری (دسته / لیست) ---
 model sponsored_placement {
-  id              String   @id @default(cuid())
+  id              String                      @id @default(cuid())
   name            String?
   scopeType       String // CATEGORY_ALL | CATEGORY_SELECTED | LIST
   categoryId      String?
-  listIds         String[] @default([])
+  listIds         String[]                    @default([])
   listId          String?
   surface         String // LIST_BANNER | LIST_SIDEBAR | LIST_AFTER_SIMILAR | CATEGORY_BANNER
   headline        String
@@ -1019,19 +1025,19 @@ model sponsored_placement {
   ctaLabel        String
   destinationUrl  String
   sponsorName     String?
-  disclosureLabel String   @default("تبلیغ")
+  disclosureLabel String                      @default("تبلیغ")
   startAt         DateTime
   endAt           DateTime?
-  isActive        Boolean  @default(true)
-  priority        Int      @default(0)
-  impressions     Int      @default(0)
-  clicks          Int      @default(0)
+  isActive        Boolean                     @default(true)
+  priority        Int                         @default(0)
+  impressions     Int                         @default(0)
+  clicks          Int                         @default(0)
   createdById     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  categories      categories? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  lists           lists?      @relation("SponsoredPlacementList", fields: [listId], references: [id], onDelete: SetNull)
-  createdBy       users?      @relation("SponsoredPlacementCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+  categories      categories?                 @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  lists           lists?                      @relation("SponsoredPlacementList", fields: [listId], references: [id], onDelete: SetNull)
+  createdBy       users?                      @relation("SponsoredPlacementCreator", fields: [createdById], references: [id], onDelete: SetNull)
   events          sponsored_placement_event[]
 
   @@index([categoryId])
@@ -1040,13 +1046,13 @@ model sponsored_placement {
 }
 
 model sponsored_placement_event {
-  id          String   @id @default(cuid())
+  id          String              @id @default(cuid())
   placementId String
   action      String // IMPRESSION | CLICK
   userId      String?
   listId      String?
   categoryId  String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime            @default(now())
   placement   sponsored_placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
 
   @@index([placementId])
@@ -1145,29 +1151,29 @@ model comment_personas {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users              users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users               users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   comment_seed_drafts comment_seed_drafts[]
 
   @@index([isActive])
 }
 
 model comment_seed_campaigns {
-  id              String                    @id @default(cuid())
-  title           String
-  status          CommentSeedCampaignStatus @default(draft)
-  targetType      CommentSeedTargetType
-  targetIds       String[]                  @default([])
-  commentCount    Int                       @default(10)
-  perItemCount    Int?
-  toneMix         Json
-  wordCountMin    Int                       @default(40)
-  wordCountMax    Int                       @default(120)
-  dateFrom        DateTime
-  dateTo          DateTime
-  openaiModel     String?
+  id               String                    @id @default(cuid())
+  title            String
+  status           CommentSeedCampaignStatus @default(draft)
+  targetType       CommentSeedTargetType
+  targetIds        String[]                  @default([])
+  commentCount     Int                       @default(10)
+  perItemCount     Int?
+  toneMix          Json
+  wordCountMin     Int                       @default(40)
+  wordCountMax     Int                       @default(120)
+  dateFrom         DateTime
+  dateTo           DateTime
+  openaiModel      String?
   createdByAdminId String
-  createdAt       DateTime                  @default(now())
-  updatedAt       DateTime                  @updatedAt
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
 
   createdByAdmin users                 @relation("CommentSeedCampaignCreator", fields: [createdByAdminId], references: [id], onDelete: Cascade)
   drafts         comment_seed_drafts[]
@@ -1221,21 +1227,21 @@ model comment_seed_rules {
 }
 
 model book_extract_jobs {
-  id            String                @id @default(cuid())
-  createdById   String
-  status        BookExtractJobStatus  @default(PENDING)
-  mode          BookExtractMode       @default(titles)
-  source        BookExtractSource
-  input         Json
-  options       Json                  @default("{}")
-  targetListId  String?
-  progress      Int                   @default(0)
-  progressMeta  Json?
-  resultItems   Json?
-  itemCount     Int                   @default(0)
-  errorMessage  String?
-  createdAt     DateTime              @default(now())
-  completedAt   DateTime?
+  id           String               @id @default(cuid())
+  createdById  String
+  status       BookExtractJobStatus @default(PENDING)
+  mode         BookExtractMode      @default(titles)
+  source       BookExtractSource
+  input        Json
+  options      Json                 @default("{}")
+  targetListId String?
+  progress     Int                  @default(0)
+  progressMeta Json?
+  resultItems  Json?
+  itemCount    Int                  @default(0)
+  errorMessage String?
+  createdAt    DateTime             @default(now())
+  completedAt  DateTime?
 
   createdBy users @relation("BookExtractJobsCreated", fields: [createdById], references: [id], onDelete: Cascade)
 

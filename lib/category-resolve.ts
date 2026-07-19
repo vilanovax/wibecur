@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
@@ -24,8 +25,13 @@ export type ResolvedCategory = {
   layoutType: string | null;
 };
 
-/** یافتن دسته فعال از slug یا id */
-export async function resolveCategoryBySlug(slug: string): Promise<ResolvedCategory | null> {
+/**
+ * یافتن دسته فعال از slug یا id.
+ * با React cache() تا در یک request فقط یک کوئری بزند (generateMetadata + بدنهٔ صفحه).
+ */
+export const resolveCategoryBySlug = cache(async (
+  slug: string
+): Promise<ResolvedCategory | null> => {
   const raw = (slug || '').trim();
   if (!raw) return null;
 
@@ -52,7 +58,7 @@ export async function resolveCategoryBySlug(slug: string): Promise<ResolvedCateg
   }
 
   return category;
-}
+});
 
 /** یافتن شناسه دسته از slug یا id */
 export async function resolveCategoryId(param: string): Promise<string | null> {

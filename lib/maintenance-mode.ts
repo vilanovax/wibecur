@@ -1,5 +1,6 @@
 import { unstable_cache, revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { invalidateSettingsCache } from '@/lib/settings';
 import { toAbsoluteImageUrl } from '@/lib/seo';
 import {
   DEFAULT_MAINTENANCE_ACCENT,
@@ -133,4 +134,6 @@ export async function updateMaintenanceModeSettings(
 
 export function invalidateMaintenanceModeCache(): void {
   revalidateTag(MAINTENANCE_CACHE_TAG, 'max');
+  // ردیف کامل settings هم در getSettings کش می‌شود؛ برای هم‌خوانی باطلش کن.
+  invalidateSettingsCache();
 }
