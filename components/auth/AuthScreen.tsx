@@ -396,7 +396,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                     />
                   ))}
                 </div>
-                <p className="mt-1 text-[11px] text-gray-500">{passwordStrengthLabel(passwordStrength)}</p>
+                <p className="mt-1 wibe-caption text-gray-500">{passwordStrengthLabel(passwordStrength)}</p>
               </div>
             )}
           </div>
@@ -508,6 +508,7 @@ function AuthField({
   className = '',
   hasError = false,
   hideLabel = false,
+  id,
   ...props
 }: {
   label: string;
@@ -518,22 +519,30 @@ function AuthField({
   hasError?: boolean;
   hideLabel?: boolean;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const fieldId =
+    id ||
+    (label
+      ? `auth-field-${label.replace(/\s+/g, '-').slice(0, 40)}`
+      : undefined);
+
   return (
     <div>
-      {!hideLabel && (
-        <label className="mb-2 block">
-          <span className="text-sm font-medium text-gray-700">{label}</span>
-          {hint && <span className="mt-0.5 block text-[11px] text-gray-400">{hint}</span>}
+      {!hideLabel && label ? (
+        <label htmlFor={fieldId} className="mb-2 block">
+          <span className="wibe-small font-medium text-gray-700">{label}</span>
+          {hint && <span className="mt-0.5 block wibe-caption text-gray-400">{hint}</span>}
         </label>
-      )}
+      ) : null}
       <div className="relative flex items-center">
         {icon && (
           <span className="pointer-events-none absolute start-3.5 text-gray-400">{icon}</span>
         )}
         <input
           {...props}
+          id={fieldId}
+          aria-label={hideLabel && label ? label : props['aria-label']}
           aria-invalid={hasError || undefined}
-          className={`w-full rounded-xl border bg-white py-3.5 text-[0.9375rem] text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/15 ${
+          className={`w-full rounded-xl border bg-white py-3.5 wibe-body text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/15 ${
             icon ? 'ps-11 pe-3' : 'px-3.5'
           } ${
             hasError ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : 'border-gray-200'
