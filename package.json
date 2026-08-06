@@ -18,7 +18,7 @@
     "prestart": "node scripts/prepare-standalone.mjs",
     "prebuild": "node scripts/bump-admin-panel-version.mjs && prisma generate",
     "start": "NODE_OPTIONS='--max-http-header-size=16384' node .next/standalone/server.js",
-    "lint": "next lint",
+    "lint": "eslint app components lib hooks contexts",
     "export:missing-bios": "tsx scripts/export-missing-person-bios.ts",
     "db:push": "prisma db push",
     "db:catalog:backfill": "npx tsx scripts/backfill-catalog-items.ts",

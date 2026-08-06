@@ -45,7 +45,6 @@ export const getSettings = cache(() => getCachedSettings());
 export function invalidateSettingsCache(): void {
   try {
     // lazy require تا import سطح‌ماژول revalidateTag وارد client bundle نشود
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { revalidateTag } = require('next/cache') as typeof import('next/cache');
     revalidateTag(SETTINGS_CACHE_TAG, 'max');
   } catch {
