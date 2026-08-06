@@ -3,11 +3,19 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronDown, ChevronUp, Star } from 'lucide-react';
-import { categories } from '@prisma/client';
-
 export type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
 export type VibeFilter = 'trending' | 'saved' | 'sleep' | 'calm_movie' | 'cafe' | 'family' | 'comedy' | 'drama';
 export type CreatorType = 'all' | 'top' | 'new' | 'viral';
+
+export type FilterCategoryOption = {
+  id: string;
+  name: string;
+  slug?: string | null;
+  icon?: string | null;
+  color?: string | null;
+  isActive?: boolean;
+  order?: number | null;
+};
 
 export interface FilterState {
   categories: Set<string>;
@@ -95,7 +103,7 @@ function AccordionSection({
 interface FilterBottomSheetProProps {
   isOpen: boolean;
   onClose: () => void;
-  categories: categories[];
+  categories: FilterCategoryOption[];
   filterState: FilterState;
   getResultCount: (state: FilterState) => number;
   onApply: (state: FilterState) => void;

@@ -1,7 +1,14 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import SearchOverlay from '@/components/mobile/search/SearchOverlay';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import dynamic from 'next/dynamic';
 
 export type SearchOpenOptions = {
   query?: string;
@@ -17,12 +24,20 @@ type SearchContextValue = {
 
 const SearchContext = createContext<SearchContextValue | null>(null);
 
+/** ~1k LOC overlay — only load after first open (bundle-dynamic-imports). */
+const SearchOverlay = dynamic(
+  () => import('@/components/mobile/search/SearchOverlay'),
+  { ssr: false }
+);
+
 export function SearchProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [overlayMounted, setOverlayMounted] = useState(false);
   const [overlayOptions, setOverlayOptions] = useState<SearchOpenOptions>({});
 
   const openSearch = useCallback((options?: SearchOpenOptions) => {
     setOverlayOptions(options ?? {});
+    setOverlayMounted(true);
     setIsOpen(true);
   }, []);
 
@@ -59,13 +74,15 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   return (
     <SearchContext.Provider value={value}>
       {children}
-      <SearchOverlay
-        isOpen={isOpen}
-        onClose={closeSearch}
-        initialQuery={overlayOptions.query ?? ''}
-        onApplyLocally={overlayOptions.applyLocally}
-        localActionLabel={overlayOptions.localActionLabel}
-      />
+      {overlayMounted ? (
+        <SearchOverlay
+          isOpen={isOpen}
+          onClose={closeSearch}
+          initialQuery={overlayOptions.query ?? ''}
+          onApplyLocally={overlayOptions.applyLocally}
+          localActionLabel={overlayOptions.localActionLabel}
+        />
+      ) : null}
     </SearchContext.Provider>
   );
 }

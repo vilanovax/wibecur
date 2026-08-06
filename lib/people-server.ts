@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { dbQuery } from '@/lib/db';
@@ -18,6 +19,9 @@ import {
   type PersonPageItem,
   type PersonRole,
 } from '@/lib/people';
+
+/** Roles whose metadata is often a JSON array — string_contains misses them. */
+const ARRAYISH_PERSON_ROLES: ReadonlySet<PersonRole> = new Set(['actor']);
 
 function slugToSearchPattern(slug: string): string {
   return slug.replace(/-/g, ' ').trim();
@@ -62,8 +66,8 @@ function itemMatchesPerson(
   return names.some((name) => nameMatchesSlug(name, slug));
 }
 
-/** همان محدودهٔ اسکن discoverPeopleFromItems — actors اغلب JSON array است */
-const PERSON_ITEM_SCAN_LIMIT = 5000;
+/** Fallback scan cap — only for arrayish roles; keep small for TTFB. */
+const PERSON_ITEM_SCAN_LIMIT = 1200;
 
 const personItemSelect = {
   id: true,
@@ -116,9 +120,11 @@ async function findPublicItemsForPerson(
   });
 
   const fastMatches = filtered.filter((row) => itemMatchesPerson(row, role, slug));
-  if (fastMatches.length > 0) return fastMatches;
+  if (fastMatches.length > 0 || !ARRAYISH_PERSON_ROLES.has(role)) {
+    return fastMatches;
+  }
 
-  // fallback: اسکن در حافظه — actors معمولاً آرایه JSON است و Prisma string_contains آن را نمی‌بیند
+  // fallback: اسکن محدود — فقط برای actor که metadata اغلب JSON array است
   const scanned = await client.items.findMany({
     where: {
       ...publicItemWhere,
@@ -200,10 +206,10 @@ export async function resolvePersonPage(
   };
 }
 
-export function getCachedPersonPage(role: PersonRole, slug: string) {
-  return unstable_cache(
+export const getCachedPersonPage = cache((role: PersonRole, slug: string) =>
+  unstable_cache(
     () => dbQuery(() => resolvePersonPage(prisma, role, slug)),
     [`person-page-${role}-${slug}`],
     { revalidate: 120, tags: [personPageCacheTag(role, slug), 'person-pages'] }
-  )();
-}
+  )()
+);

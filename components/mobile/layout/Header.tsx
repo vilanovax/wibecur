@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { ChevronRight } from 'lucide-react';
 import HeaderActions, { type HeaderActionsProfile } from './HeaderActions';
 import HeaderDesktopSearch from './HeaderDesktopSearch';
 import SiteLogo from '@/components/shared/SiteLogo';
+import { useUserHeaderProfile } from '@/lib/hooks/useUserHeaderProfile';
 
 interface HeaderProps {
   /** عنوان صفحه — بدون title لوگوی «وایب» نمایش داده می‌شود */
@@ -39,9 +39,7 @@ export default function Header({
   hideOnDesktop = false,
 }: HeaderProps) {
   const router = useRouter();
-  const { data: session } = useSession();
-
-  const [profile, setProfile] = useState<HeaderActionsProfile | null>(null);
+  const { session, profile } = useUserHeaderProfile();
 
   const sessionProfile = useMemo<HeaderActionsProfile | null>(() => {
     if (!session?.user?.id) return null;
@@ -52,59 +50,6 @@ export default function Header({
       avatarStatus: null,
     };
   }, [session?.user?.id, session?.user?.image]);
-
-  const fetchProfile = useCallback(async () => {
-    if (!session?.user?.id) return;
-    try {
-      const res = await fetch('/api/user/profile');
-      const data = await res.json();
-      if (data?.success && data?.data?.user) {
-        const u = data.data.user;
-        setProfile({
-          image: u.image ?? null,
-          avatarType: u.avatarType ?? null,
-          avatarId: u.avatarId ?? null,
-          avatarStatus: u.avatarStatus ?? null,
-        });
-      }
-    } catch {
-      setProfile(null);
-    }
-  }, [session?.user?.id]);
-
-  useEffect(() => {
-    if (!session?.user?.id) {
-      setProfile(null);
-      return;
-    }
-
-    let cancelled = false;
-    const load = () => {
-      if (!cancelled) void fetchProfile();
-    };
-
-    if (typeof requestIdleCallback === 'function') {
-      const id = requestIdleCallback(load, { timeout: 2500 });
-      return () => {
-        cancelled = true;
-        cancelIdleCallback(id);
-      };
-    }
-
-    const timer = setTimeout(load, 1200);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [session?.user?.id, fetchProfile]);
-
-  useEffect(() => {
-    const onProfileUpdated = () => {
-      void fetchProfile();
-    };
-    window.addEventListener('profile-updated', onProfileUpdated);
-    return () => window.removeEventListener('profile-updated', onProfileUpdated);
-  }, [fetchProfile]);
 
   const displayProfile = profile ?? sessionProfile;
 

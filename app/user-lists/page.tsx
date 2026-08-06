@@ -1,10 +1,10 @@
+import { Suspense, type ReactNode } from 'react';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import CuratedLandingPageClient from '@/components/mobile/curated/CuratedLandingPageClient';
 import ExploreLcpPreload from '@/components/mobile/curated/ExploreLcpPreload';
 import ExploreTrendingServer from '@/components/mobile/curated/ExploreTrendingServer';
 import ExploreCategoriesServer from '@/components/mobile/curated/ExploreCategoriesServer';
-import type { ReactNode } from 'react';
 import {
   EMPTY_EXPLORE_USER_PREFERENCES,
   fetchExploreBasePayload,
@@ -51,11 +51,13 @@ export default async function UserListsPage() {
       <ExploreLcpPreload href={lcpImage} />
       <div className="bg-wibe-surface">
         <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
-        <CuratedLandingPageClient
-          initialData={initialData}
-          trendingSlot={trendingSlot}
-          categoriesSlot={categoriesSlot}
-        />
+        <Suspense fallback={<div className="min-h-[50vh]" aria-hidden />}>
+          <CuratedLandingPageClient
+            initialData={initialData}
+            trendingSlot={trendingSlot}
+            categoriesSlot={categoriesSlot}
+          />
+        </Suspense>
         <BottomNav />
       </div>
     </>

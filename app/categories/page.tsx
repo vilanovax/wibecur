@@ -4,9 +4,11 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
-import { prisma } from '@/lib/prisma';
-import { dbQuery } from '@/lib/db';
-import { fetchActiveCategoryMenu, type CategoryMenuChip } from '@/lib/category-menu';
+import {
+  fetchActiveCategoryIndex,
+  fetchActiveCategoryMenu,
+  type CategoryMenuChip,
+} from '@/lib/category-menu';
 
 export const revalidate = 3600;
 
@@ -35,27 +37,21 @@ export default async function CategoriesIndexPage() {
     color: string | null;
   }[] = [];
 
+  let menuCategories: CategoryMenuChip[] = [];
   try {
-    categories = await dbQuery(() =>
-      prisma.categories.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true, slug: true, icon: true, color: true },
-        orderBy: { order: 'asc' },
-      })
-    );
+    // دسته‌ها و منو مستقل‌اند — موازی + Data Cache (async-parallel / server-cache).
+    const [categoryRows, menuRows] = await Promise.all([
+      fetchActiveCategoryIndex(),
+      fetchActiveCategoryMenu(),
+    ]);
+    categories = categoryRows;
+    menuCategories = menuRows;
   } catch (e) {
     if (isDbError(e) || process.env.NODE_ENV === 'development') {
       console.warn('Categories index: DB unavailable:', (e as Error)?.message);
     } else {
       throw e;
     }
-  }
-
-  let menuCategories: CategoryMenuChip[] = [];
-  try {
-    menuCategories = await fetchActiveCategoryMenu();
-  } catch {
-    // چیپ‌ها اختیاری‌اند؛ در نبود DB خالی می‌مانند.
   }
 
   const breadcrumbItems = [

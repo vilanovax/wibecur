@@ -19,7 +19,7 @@ export default function UmamiAnalytics() {
         data-website-id={websiteId}
         {...(hostUrl ? { 'data-host-url': hostUrl } : {})}
         {...(domains ? { 'data-domains': domains } : {})}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
       <Suspense fallback={null}>
         <UmamiPageTracker />

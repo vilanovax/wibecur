@@ -421,20 +421,21 @@ async function mergeExploreLists(
 
 /** لیست‌ها + دسته‌ها — مستقل از کاربر؛ هر ۵ دقیقه یک‌بار */
 async function fetchExploreBaseData(): Promise<ExploreBasePayload> {
-  const categoriesRaw = await dbQuery(() =>
-    prisma.categories.findMany({
-      where: activeCategoryWhere,
-      select: { id: true, name: true, slug: true, icon: true },
-      orderBy: { order: 'asc' },
-    })
-  );
-
-  const categoryIds = categoriesRaw.map((c) => c.id);
-  const [listsRaw, trendingRaw, risingRaw] = await Promise.all([
-    fetchExploreListsPool(categoryIds),
+  // trending/rising به categoryIds وابسته نیستند — موازی با categories (async-parallel).
+  const [categoriesRaw, trendingRaw, risingRaw] = await Promise.all([
+    dbQuery(() =>
+      prisma.categories.findMany({
+        where: activeCategoryWhere,
+        select: { id: true, name: true, slug: true, icon: true },
+        orderBy: { order: 'asc' },
+      })
+    ),
     getCachedGlobalTrending(),
     getCachedFastRising(),
   ]);
+
+  const categoryIds = categoriesRaw.map((c) => c.id);
+  const listsRaw = await fetchExploreListsPool(categoryIds);
 
   return mergeExploreLists(categoriesRaw, listsRaw, trendingRaw, risingRaw);
 }

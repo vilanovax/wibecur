@@ -2,13 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
 import HeaderDesktopSearch from '@/components/mobile/layout/HeaderDesktopSearch';
-import HeaderActions, { type HeaderActionsProfile } from '@/components/mobile/layout/HeaderActions';
+import HeaderActions from '@/components/mobile/layout/HeaderActions';
 import { CONSUMER_NAV_ITEMS, isNavItemActive } from '@/components/mobile/layout/consumer-nav-config';
 import { DESKTOP_CONTENT_PADDING_CLASS } from '@/lib/layout-tokens';
-import { useRefetchOnVisible } from '@/lib/hooks/useRefetchOnVisible';
-import { useSession } from 'next-auth/react';
+import { useUserHeaderProfile } from '@/lib/hooks/useUserHeaderProfile';
 import SiteLogo from '@/components/shared/SiteLogo';
 
 /** آیتم‌های ناو دسکتاپ — پروفایل از منوی آواتار در دسترس است */
@@ -19,40 +17,7 @@ const DESKTOP_NAV_ITEMS = CONSUMER_NAV_ITEMS.filter((item) => item.href !== '/pr
  */
 export default function DesktopTopNav() {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const [profile, setProfile] = useState<HeaderActionsProfile | null>(null);
-
-  const fetchProfile = useCallback(async () => {
-    if (!session?.user?.id) return;
-    try {
-      const res = await fetch('/api/user/profile');
-      const data = await res.json();
-      if (data?.success && data?.data?.user) {
-        const u = data.data.user;
-        setProfile({
-          image: u.image ?? null,
-          avatarType: u.avatarType ?? null,
-          avatarId: u.avatarId ?? null,
-          avatarStatus: u.avatarStatus ?? null,
-        });
-      }
-    } catch {
-      setProfile(null);
-    }
-  }, [session?.user?.id]);
-
-  useEffect(() => {
-    if (session?.user) fetchProfile();
-    else setProfile(null);
-  }, [session?.user, fetchProfile]);
-
-  useRefetchOnVisible(fetchProfile, Boolean(session?.user?.id));
-
-  useEffect(() => {
-    const onProfileUpdated = () => fetchProfile();
-    window.addEventListener('profile-updated', onProfileUpdated);
-    return () => window.removeEventListener('profile-updated', onProfileUpdated);
-  }, [fetchProfile]);
+  const { profile } = useUserHeaderProfile();
 
   const navLinkClass = (active: boolean) =>
     `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-small font-medium transition-colors whitespace-nowrap ${

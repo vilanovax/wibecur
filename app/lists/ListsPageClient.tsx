@@ -4,8 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { LayoutGrid, List, Filter, Bookmark } from 'lucide-react';
-import { categories } from '@prisma/client';
-import type { ListsBrowseList } from '@/lib/lists-browse';
+import type { ListsBrowseList } from '@/lib/lists-browse-shared';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
 import ListsFeaturedCarousel from '@/components/mobile/lists/ListsFeaturedCarousel';
 import ListsCategorySection from '@/components/mobile/lists/ListsCategorySection';
@@ -39,14 +38,24 @@ import {
   resolveListCardVariant,
   type ListsViewMode,
 } from '@/lib/lists-page-layout';
-import { LISTS_BROWSE_DEFAULT_LIMIT } from '@/lib/lists-browse';
+import { LISTS_BROWSE_DEFAULT_LIMIT } from '@/lib/lists-browse-shared';
 
 type ListWithCategory = ListsBrowseList;
+
+type ListsPageCategory = {
+  id: string;
+  name: string;
+  slug: string | null;
+  icon: string | null;
+  color: string | null;
+  order: number | null;
+  isActive: boolean;
+};
 
 interface ListsPageClientProps {
   lists: ListWithCategory[];
   totalListCount: number;
-  categories: categories[];
+  categories: ListsPageCategory[];
   initialCategory?: string;
   initialSearch?: string;
   initialMode?: string;
@@ -174,7 +183,7 @@ const STICKY_OFFSET = 154;
 
 function resolveCategoryIdFromParam(
   param: string | undefined,
-  categoryList: categories[]
+  categoryList: ListsPageCategory[]
 ): string | null {
   if (!param) return null;
   const byId = categoryList.find((c) => c.id === param);
@@ -254,7 +263,7 @@ export default function ListsPageClient({
           state.vibes.size === 0 ||
           [...state.vibes].some((v) => matchVibe(list, v, bookmarkedIds, trendingIdSet));
         const creatorMatch = matchCreatorType(list, state.creatorType);
-        const itemCountMatch = (list.itemCount ?? list._count?.items ?? 0) >= state.minItemCount;
+        const itemCountMatch = (list.itemCount ?? 0) >= state.minItemCount;
         const ratingMatch = matchMinRating(list, state.minRating);
         return categoryMatch && vibeMatch && creatorMatch && itemCountMatch && ratingMatch;
       });
@@ -451,7 +460,7 @@ export default function ListsPageClient({
         case 'newest':
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         case 'popular':
-          return (b.likeCount ?? b._count?.list_likes ?? 0) - (a.likeCount ?? a._count?.list_likes ?? 0);
+          return (b.likeCount ?? 0) - (a.likeCount ?? 0);
         case 'most_saved':
           return (b.saveCount ?? 0) - (a.saveCount ?? 0);
         case 'rising':
@@ -1106,7 +1115,7 @@ export default function ListsPageClient({
                 title: category.name,
                 icon: category.icon,
                 categoryId: category.id,
-                categorySlug: category.slug,
+                categorySlug: category.slug ?? undefined,
                 lists: sectionLists,
                 viewMode: displayViewMode,
                 isDesktop,

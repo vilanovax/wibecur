@@ -19,10 +19,18 @@ import {
   isMixedListCategory,
   parseEntryKind,
 } from '@/lib/list-entry';
-import { revalidateListDetailCache, revalidateCategoryCache } from '@/lib/public-cache';
+import {
+  revalidateListDetailCache,
+  revalidateCategoryCache,
+  revalidateItemDetailCache,
+} from '@/lib/public-cache';
 
 /** تازه‌سازی کش صفحهٔ لیستِ والدِ یک آیتم (با یک کوئری سبک برای slug). */
-async function revalidateItemParentList(listId: string): Promise<void> {
+async function revalidateItemParentList(
+  listId: string,
+  itemId?: string
+): Promise<void> {
+  if (itemId) revalidateItemDetailCache(itemId);
   const parent = await prisma.lists.findUnique({
     where: { id: listId },
     select: { slug: true, categoryId: true },
@@ -221,7 +229,8 @@ export async function PUT(
       }
     }
 
-    // صفحهٔ لیست (مبدأ و مقصد در صورت جابه‌جایی) و دسته‌ها را تازه کن.
+    // صفحهٔ آیتم، لیست (مبدأ و مقصد در صورت جابه‌جایی) و دسته‌ها را تازه کن.
+    revalidateItemDetailCache(item.id);
     revalidateListDetailCache(existingItem.lists.slug);
     revalidateListDetailCache(item.lists.slug);
     revalidateCategoryCache(existingItem.lists.categoryId);
@@ -256,7 +265,7 @@ export async function PATCH(
     if (tip === null || typeof tip === 'string') {
       await updateItemTip(prisma, id, tip);
       const item = await prisma.items.findUnique({ where: { id } });
-      await revalidateItemParentList(existing.listId);
+      await revalidateItemParentList(existing.listId, id);
       return NextResponse.json(item);
     }
 
@@ -287,7 +296,7 @@ export async function PATCH(
       where: { id },
       data,
     });
-    await revalidateItemParentList(existing.listId);
+    await revalidateItemParentList(existing.listId, id);
     return NextResponse.json(item);
   } catch (error: any) {
     console.error('Error PATCH item:', error);
@@ -326,7 +335,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'حذف انجام نشد' }, { status: 400 });
     }
 
-    await revalidateItemParentList(existingItem.listId);
+    await revalidateItemParentList(existingItem.listId, id);
 
     return NextResponse.json({ message: 'آیتم به زباله‌دان منتقل شد' });
   } catch (error: any) {

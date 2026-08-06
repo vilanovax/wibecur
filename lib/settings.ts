@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { unstable_cache, revalidateTag } from 'next/cache';
+import { unstable_cache } from 'next/cache';
 import { prisma } from './prisma';
 import { encrypt, decrypt } from './encryption';
 
@@ -44,6 +44,9 @@ export const getSettings = cache(() => getCachedSettings());
 /** باطل‌کردن کش تنظیمات — بعد از هر تغییر صدا زده می‌شود. */
 export function invalidateSettingsCache(): void {
   try {
+    // lazy require تا import سطح‌ماژول revalidateTag وارد client bundle نشود
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { revalidateTag } = require('next/cache') as typeof import('next/cache');
     revalidateTag(SETTINGS_CACHE_TAG, 'max');
   } catch {
     // خارج از request scope (مثلاً اسکریپت‌ها) — نادیده بگیر

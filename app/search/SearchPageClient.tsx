@@ -12,17 +12,22 @@ import {
   SEARCH_MIN_LENGTH,
 } from '@/lib/list-search';
 import { trackSearch, trackSearchNoResults } from '@/lib/analytics';
+import type { UnifiedSearchResult } from '@/lib/unified-search';
 
 type Props = {
   initialQuery?: string;
+  initialSearch?: UnifiedSearchResult | null;
 };
 
-export default function SearchPageClient({ initialQuery = '' }: Props) {
+export default function SearchPageClient({
+  initialQuery = '',
+  initialSearch = null,
+}: Props) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const noResultsTracked = useRef('');
 
-  const search = useUnifiedSearchQuery(query);
+  const search = useUnifiedSearchQuery(query, { initialData: initialSearch });
   const { normalized, isActive, loading, hasResults } = search;
 
   useEffect(() => {

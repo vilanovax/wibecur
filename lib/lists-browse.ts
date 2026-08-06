@@ -1,13 +1,30 @@
+import 'server-only';
+
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { withResolvedListCovers } from '@/lib/resolve-list-cover';
 import { publicCuratedListWhere } from '@/lib/public-content-filters';
 import type { Prisma } from '@prisma/client';
+import {
+  LISTS_BROWSE_CACHE_TAG,
+  LISTS_BROWSE_DEFAULT_LIMIT,
+  LISTS_BROWSE_MAX_LIMIT,
+  LISTS_SSR_LIMIT,
+  type ListsBrowseList,
+  type ListsBrowseResult,
+  type ListsBrowseSort,
+} from '@/lib/lists-browse-shared';
 
-export type ListsBrowseSort = 'newest' | 'popular' | 'most_saved' | 'rising';
-
-export const LISTS_BROWSE_DEFAULT_LIMIT = 48;
-export const LISTS_SSR_LIMIT = 120;
+export {
+  LISTS_BROWSE_CACHE_TAG,
+  LISTS_BROWSE_DEFAULT_LIMIT,
+  LISTS_BROWSE_MAX_LIMIT,
+  LISTS_SSR_LIMIT,
+  type ListsBrowseList,
+  type ListsBrowseResult,
+  type ListsBrowseSort,
+};
 
 export const listsBrowseSelect = {
   id: true,
@@ -27,7 +44,15 @@ export const listsBrowseSelect = {
   itemCount: true,
   createdAt: true,
   updatedAt: true,
-  categories: true,
+  categories: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      icon: true,
+      color: true,
+    },
+  },
   users: {
     select: {
       id: true,
@@ -37,19 +62,9 @@ export const listsBrowseSelect = {
       role: true,
     },
   },
-  _count: {
-    select: { items: true, list_likes: true },
-  },
 } satisfies Prisma.listsSelect;
 
 export type ListsBrowseRecord = Prisma.listsGetPayload<{ select: typeof listsBrowseSelect }>;
-
-export type ListsBrowseList = Omit<ListsBrowseRecord, 'createdAt' | 'updatedAt' | 'coverImage'> & {
-  coverImage: string;
-  bannerImage: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 function browseOrderBy(sort: ListsBrowseSort): Prisma.listsOrderByWithRelationInput {
   switch (sort) {
@@ -81,25 +96,12 @@ export type FetchListsBrowseParams = {
   categoryId?: string | null;
 };
 
-export type ListsBrowseResult = {
-  lists: ListsBrowseList[];
-  pagination: {
-    offset: number;
-    limit: number;
-    total: number;
-    hasMore: boolean;
-  };
-};
-
-export async function fetchListsBrowse({
-  offset = 0,
-  limit = LISTS_BROWSE_DEFAULT_LIMIT,
-  sort = 'newest',
-  categoryId = null,
-}: FetchListsBrowseParams = {}): Promise<ListsBrowseResult> {
-  const safeLimit = Math.min(Math.max(limit, 1), LISTS_SSR_LIMIT);
-  const safeOffset = Math.max(offset, 0);
-
+async function loadListsBrowse(
+  safeOffset: number,
+  safeLimit: number,
+  sort: ListsBrowseSort,
+  categoryId: string | null
+): Promise<ListsBrowseResult> {
   const where: Prisma.listsWhereInput = {
     ...publicCuratedListWhere,
     ...(categoryId ? { categoryId } : {}),
@@ -129,4 +131,21 @@ export async function fetchListsBrowse({
       hasMore: safeOffset + lists.length < total,
     },
   };
+}
+
+export async function fetchListsBrowse({
+  offset = 0,
+  limit = LISTS_BROWSE_DEFAULT_LIMIT,
+  sort = 'newest',
+  categoryId = null,
+}: FetchListsBrowseParams = {}): Promise<ListsBrowseResult> {
+  const safeLimit = Math.min(Math.max(limit, 1), LISTS_BROWSE_MAX_LIMIT);
+  const safeOffset = Math.max(offset, 0);
+  const cacheCategoryKey = categoryId ?? 'all';
+
+  return unstable_cache(
+    () => loadListsBrowse(safeOffset, safeLimit, sort, categoryId),
+    ['lists-browse', String(safeOffset), String(safeLimit), sort, cacheCategoryKey],
+    { revalidate: 60, tags: [LISTS_BROWSE_CACHE_TAG] }
+  )();
 }

@@ -1,8 +1,10 @@
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { calculateCuratorResult } from '@/lib/curator';
 import { getActiveSpotlightForUser } from '@/lib/spotlight';
 import { withResolvedListCover, withResolvedListCovers } from '@/lib/resolve-list-cover';
 import { getPublicProfilePicksForUser, type ProfilePickShelfDto } from '@/lib/profile-picks';
+import { publicProfileCacheTag } from '@/lib/public-cache';
 
 export type PublicProfileData = {
   user: {
@@ -313,5 +315,61 @@ export async function fetchPublicProfile(
     likedLists: likedListsFormatted,
     recentActivity,
     profilePicks,
+  };
+}
+
+/** Public slice without viewer-specific isFollowing — Data Cache across requests. */
+export function getCachedPublicProfileBase(username: string) {
+  const raw = (username || '').trim().toLowerCase();
+  return unstable_cache(
+    () => fetchPublicProfile(raw, null),
+    ['public-profile-base', raw],
+    { revalidate: 60, tags: [publicProfileCacheTag(raw), 'public-profiles'] }
+  )();
+}
+
+export async function resolveIsFollowing(
+  viewerId: string,
+  profileUserId: string
+): Promise<boolean> {
+  const row = await prisma.follows.findUnique({
+    where: {
+      followerId_followingId: { followerId: viewerId, followingId: profileUserId },
+    },
+    select: { followerId: true },
+  });
+  return !!row;
+}
+
+/** Client-safe DTO — ISO dates for fields the client reads as strings. */
+export function serializePublicProfile(data: PublicProfileData) {
+  const toIso = (value: unknown) =>
+    value instanceof Date ? value.toISOString() : value;
+
+  return {
+    ...data,
+    user: {
+      ...data.user,
+      spotlightEndDate: data.user.spotlightEndDate
+        ? data.user.spotlightEndDate.toISOString()
+        : null,
+    },
+    publicLists: data.publicLists.map((l) => ({
+      ...l,
+      updatedAt: toIso((l as { updatedAt?: unknown }).updatedAt),
+    })),
+    featuredLists: data.featuredLists.map((l) => ({
+      ...l,
+      updatedAt: toIso((l as { updatedAt?: unknown }).updatedAt),
+    })),
+    likedLists: data.likedLists.map((l) => ({
+      ...l,
+      updatedAt: toIso((l as { updatedAt?: unknown }).updatedAt),
+    })),
+    recentActivity: data.recentActivity.map((a) =>
+      a.type === 'comment'
+        ? { ...a, createdAt: toIso(a.createdAt) as string }
+        : { ...a, updatedAt: toIso(a.updatedAt) as string }
+    ),
   };
 }

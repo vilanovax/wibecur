@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import CommentSection from '@/components/mobile/comments/CommentSection';
-import ItemDiscoverySection from '@/components/mobile/items/ItemDiscoverySection';
+import {
+  CommentSectionLazy,
+  ItemDiscoverySectionLazy,
+} from '@/components/mobile/items/item-detail-lazy-sections';
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
 import {
   isLightweightListItem,
@@ -155,7 +157,7 @@ export default function ItemDetailClient({
 
           <div ref={discoveryRef} className="min-h-[6rem]">
             {discoveryInView ? (
-              <ItemDiscoverySection
+              <ItemDiscoverySectionLazy
                 itemId={item.id}
                 categoryId={categoryId}
                 categorySlug={itemCategorySlug}
@@ -174,7 +176,7 @@ export default function ItemDetailClient({
             className="scroll-mt-16 rounded-2xl border border-wibe/60 bg-wibe-card p-5 shadow-sm lg:border-wibe/60"
           >
             {commentsInView ? (
-              <CommentSection
+              <CommentSectionLazy
                 itemId={item.id}
                 onCommentAdded={onCommentsUpdate}
                 refreshTrigger={commentRefreshTrigger}

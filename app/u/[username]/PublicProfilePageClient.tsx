@@ -56,7 +56,7 @@ interface ProfileData {
     saves: number;
     likes: number;
     items: number;
-    updatedAt: Date;
+    updatedAt: string | Date;
     isFeatured?: boolean;
     categories?: { name: string; icon: string; slug?: string } | null;
   }[];

@@ -86,3 +86,11 @@ export function isMovieLikeCategory(categorySlug?: string | null): boolean {
   const s = categorySlug.toLowerCase();
   return s.includes('movie') || s.includes('film') || s === 'series';
 }
+
+/** دسته‌هایی که کاورشان مستطیلی (پرتره) نمایش داده می‌شود: فیلم، سریال، کتاب و پادکست. */
+export function isPortraitCoverCategory(categorySlug?: string | null): boolean {
+  if (!categorySlug) return false;
+  if (isMovieLikeCategory(categorySlug)) return true;
+  const s = categorySlug.toLowerCase();
+  return s.includes('book') || s.includes('literature') || s.includes('podcast');
+}

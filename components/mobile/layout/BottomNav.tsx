@@ -3,11 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Home, LayoutList, Compass, User } from 'lucide-react';
-import CreateSheet from '@/components/mobile/home/CreateSheet';
 import SiteFooter from '@/components/mobile/layout/SiteFooter';
 import { HOME_CREATE_SHEET_EVENT } from '@/lib/home-create-sheet';
 import { MOBILE_BOTTOM_NAV_SPACER_CLASS } from '@/lib/layout-tokens';
+
+const CreateSheet = dynamic(() => import('@/components/mobile/home/CreateSheet'), {
+  ssr: false,
+});
 
 const NAV_ITEMS = [
   {
@@ -72,7 +76,9 @@ export default function BottomNav() {
           </div>
         </nav>
       </div>
-      <CreateSheet isOpen={createOpen} onClose={() => setCreateOpen(false)} />
+      {createOpen ? (
+        <CreateSheet isOpen={createOpen} onClose={() => setCreateOpen(false)} />
+      ) : null}
     </>
   );
 }

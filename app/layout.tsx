@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-// فونت متغیر (variable): یک فایل به‌ازای هر subset به‌جای ۳ فایل وزن جدا (۴۰۰/۶۰۰/۷۰۰)
-// — کاهش تعداد درخواست فونت با پوشش تمام وزن‌ها. subset با unicode-range و display:swap.
-import '@fontsource-variable/vazirmatn';
+import localFont from 'next/font/local';
 import './globals.css';
 import VercelAnalytics from '@/components/analytics/VercelAnalytics';
 import UmamiAnalytics from '@/components/analytics/UmamiAnalytics';
@@ -15,6 +13,30 @@ import { getSiteBrandingForLayout, getSiteLogoUrl } from '@/lib/site-branding';
 import { serializeJsonLd } from '@/lib/json-ld';
 import { SearchProvider } from '@/contexts/SearchContext';
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from '@/lib/seo';
+
+/** next/font — preload + swap؛ subsetهای arabic/latin از fontsource variable. */
+const vazirmatn = localFont({
+  src: [
+    {
+      path: '../node_modules/@fontsource-variable/vazirmatn/files/vazirmatn-arabic-wght-normal.woff2',
+      weight: '100 900',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/@fontsource-variable/vazirmatn/files/vazirmatn-latin-ext-wght-normal.woff2',
+      weight: '100 900',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/@fontsource-variable/vazirmatn/files/vazirmatn-latin-wght-normal.woff2',
+      weight: '100 900',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-vazirmatn',
+  display: 'swap',
+  preload: true,
+});
 
 const baseUrl = getBaseUrl();
 
@@ -106,7 +128,7 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang="fa" dir="rtl" suppressHydrationWarning>
+    <html lang="fa" dir="rtl" className={vazirmatn.variable} suppressHydrationWarning>
       <body className="antialiased font-sans bg-gray-200" suppressHydrationWarning>
         <script
           type="application/ld+json"

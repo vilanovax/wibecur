@@ -40,7 +40,8 @@ import {
 import {
   PERSON_BIO_JSON_EXAMPLE,
   buildPersonBioJsonSchemaDoc,
-} from '@/lib/person-bio-ai';
+  type PersonBioImportItem,
+} from '@/lib/person-bio-ai-shared';
 import type {
   DiscoveredPerson,
   DiscoverPeoplePagination,
@@ -50,7 +51,6 @@ import type {
 import PersonPreviewModal from '@/components/admin/people/PersonPreviewModal';
 import PersonImportModal from '@/components/admin/people/PersonImportModal';
 import PersonSimilarNamesModal from '@/components/admin/people/PersonSimilarNamesModal';
-import type { PersonBioImportItem } from '@/lib/person-bio-ai';
 
 const PersonImagesSection = lazy(
   () => import('@/components/admin/people/PersonImagesSection')

@@ -17,7 +17,7 @@ import {
   PERSON_BIO_JSON_EXAMPLE,
   tryParsePersonBioImportPayload,
   type PersonBioImportItem,
-} from '@/lib/person-bio-ai';
+} from '@/lib/person-bio-ai-shared';
 
 type Props = {
   initialJson?: string;

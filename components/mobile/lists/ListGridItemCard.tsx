@@ -4,7 +4,7 @@ import { memo } from 'react';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
-import { isMovieLikeCategory } from '@/lib/resolve-item-image';
+import { isMovieLikeCategory, isPortraitCoverCategory } from '@/lib/resolve-item-image';
 
 /** srcset next/image برای گرید ۲–۴ ستونه */
 export const LIST_GRID_IMAGE_SIZES =
@@ -32,6 +32,7 @@ function ListGridItemCard({
   onOpenAt,
 }: ListGridItemCardProps) {
   const isMovieGrid = isMovieLikeCategory(categorySlug);
+  const isPortraitCover = isPortraitCoverCategory(categorySlug);
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
 
   return (
@@ -44,7 +45,7 @@ function ListGridItemCard({
       >
         <div
           className={`relative overflow-hidden ${
-            isMovieGrid
+            isPortraitCover
               ? 'aspect-[2/3] lg:mx-auto lg:max-h-[13.5rem] lg:w-full lg:max-w-[10.5rem]'
               : 'aspect-[4/3] lg:max-h-[10.5rem]'
           }`}

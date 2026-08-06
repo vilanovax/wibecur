@@ -14,6 +14,10 @@ import { withResolvedListDisplay } from '@/lib/list-display-images';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
 import { listDetailCacheTag } from '@/lib/public-cache';
 import { fetchActiveCategoryMenu } from '@/lib/category-menu';
+import {
+  LIST_DETAIL_SSR_ITEM_LIMIT,
+  listDetailItemSelect,
+} from '@/lib/list-detail-items';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
 
@@ -47,20 +51,12 @@ function loadListBySlug(slug: string) {
         },
       },
       users: { select: { id: true, name: true, image: true, username: true, curatorLevel: true, role: true, viralListsCount: true, totalLikesReceived: true } },
+      // فقط پنجرهٔ اول — بقیه از /api/lists/[id]/items (server-serialization)
       items: {
         where: { deletedAt: null },
         orderBy: { order: 'asc' },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          imageUrl: true,
-          externalUrl: true,
-          catalogItemId: true,
-          listNote: true,
-          rating: true,
-          metadata: true,
-        },
+        take: LIST_DETAIL_SSR_ITEM_LIMIT,
+        select: listDetailItemSelect,
       },
       _count: { select: { items: true, list_comments: true } },
     },
@@ -70,12 +66,12 @@ function loadListBySlug(slug: string) {
 /**
  * واکشی لیست بر اساس slug.
  * - `unstable_cache`: کش بین‌درخواستی (Data Cache) با tag `list-slug-{slug}` تا
- *   کوئری سنگین لیست + همهٔ آیتم‌ها روی هر بازدید تکرار نشود. با revalidateTag
+ *   کوئری سنگین لیست + آیتم‌های اولیه روی هر بازدید تکرار نشود. با revalidateTag
  *   هنگام ویرایش لیست فوراً تازه می‌شود.
  * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنهٔ صفحه).
  */
 const getListBySlug = cache((slug: string) =>
-  unstable_cache(() => loadListBySlug(slug), ['list-by-slug', slug], {
+  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v2', slug], {
     revalidate: 300,
     tags: [listDetailCacheTag(slug)],
   })()
@@ -166,7 +162,13 @@ export default async function ListDetailPage({
         activeSlug={list.categories?.slug ?? null}
         initialCategories={menuCategories}
       />
-      <ListDetailClient list={listWithCreator} sponsoredPlacements={sponsoredPlacements} />
+      <ListDetailClient
+        list={listWithCreator}
+        sponsoredPlacements={sponsoredPlacements}
+        itemsHasMore={
+          (list.itemCount ?? list._count.items) > listWithCreator.items.length
+        }
+      />
       <BottomNav />
     </div>
   );

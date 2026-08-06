@@ -45,9 +45,10 @@ interface List {
   users: {
     id: string;
     name: string | null;
-    email: string;
+    email: string | null;
     image: string | null;
-  };
+    role?: string | null;
+  } | null;
 }
 
 interface UserListDetailClientProps {

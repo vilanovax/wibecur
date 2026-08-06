@@ -107,6 +107,8 @@ const nextConfig = {
   },
   // Increase header size limit to handle large cookies
   experimental: {
+    // Tree-shake barrel packages so mobile shell doesn't pull full icon/motion graphs.
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
     serverActions: {
       bodySizeLimit: '2mb',
     },

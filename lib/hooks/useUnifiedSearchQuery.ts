@@ -10,7 +10,12 @@ import {
   type SearchFetchParams,
 } from '@/lib/search-client';
 import { normalizeSearchQuery, SEARCH_DEBOUNCE_MS, SEARCH_MIN_LENGTH } from '@/lib/list-search';
-import type { UnifiedSearchHasMore, UnifiedSearchItem, UnifiedSearchList } from '@/lib/unified-search';
+import type {
+  UnifiedSearchHasMore,
+  UnifiedSearchItem,
+  UnifiedSearchList,
+  UnifiedSearchResult,
+} from '@/lib/unified-search';
 import type { SearchQueryIntent } from '@/lib/search-keywords';
 import type { SearchResultTab } from '@/components/mobile/search/SearchResultsSummary';
 
@@ -25,21 +30,40 @@ type SearchScope = 'items' | 'lists';
 type Options = {
   debounceMs?: number;
   enabled?: boolean;
+  /** SSR / parent seed — skips the first client fetch when query matches. */
+  initialData?: UnifiedSearchResult | null;
 };
 
 export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
   const debounceMs = options?.debounceMs ?? SEARCH_DEBOUNCE_MS;
   const enabled = options?.enabled ?? true;
+  const initialData = options?.initialData ?? null;
 
-  const [directItems, setDirectItems] = useState<UnifiedSearchItem[]>([]);
-  const [indirectItems, setIndirectItems] = useState<UnifiedSearchItem[]>([]);
-  const [topPicks, setTopPicks] = useState<UnifiedSearchItem[]>([]);
-  const [subThemes, setSubThemes] = useState<string[]>([]);
-  const [queryIntent, setQueryIntent] = useState<SearchQueryIntent>('specific');
-  const [similarItems, setSimilarItems] = useState<UnifiedSearchItem[]>([]);
-  const [lists, setLists] = useState<UnifiedSearchList[]>([]);
-  const [totals, setTotals] = useState({ items: 0, lists: 0 });
-  const [hasMore, setHasMore] = useState<UnifiedSearchHasMore>(EMPTY_HAS_MORE);
+  const seededQuery = initialData?.query
+    ? normalizeSearchQuery(initialData.query)
+    : '';
+
+  const [directItems, setDirectItems] = useState<UnifiedSearchItem[]>(
+    () => initialData?.directItems ?? []
+  );
+  const [indirectItems, setIndirectItems] = useState<UnifiedSearchItem[]>(
+    () => initialData?.indirectItems ?? []
+  );
+  const [topPicks, setTopPicks] = useState<UnifiedSearchItem[]>(
+    () => initialData?.topPicks ?? []
+  );
+  const [subThemes, setSubThemes] = useState<string[]>(() => initialData?.subThemes ?? []);
+  const [queryIntent, setQueryIntent] = useState<SearchQueryIntent>(
+    () => initialData?.queryIntent ?? 'specific'
+  );
+  const [similarItems, setSimilarItems] = useState<UnifiedSearchItem[]>(
+    () => initialData?.relatedItems ?? initialData?.similarItems ?? []
+  );
+  const [lists, setLists] = useState<UnifiedSearchList[]>(() => initialData?.lists ?? []);
+  const [totals, setTotals] = useState(() => initialData?.totals ?? { items: 0, lists: 0 });
+  const [hasMore, setHasMore] = useState<UnifiedSearchHasMore>(
+    () => initialData?.hasMore ?? EMPTY_HAS_MORE
+  );
   const [viewTab, setViewTab] = useState<SearchResultTab>('items');
   const [loading, setLoading] = useState(false);
   const [loadingLists, setLoadingLists] = useState(false);
@@ -48,7 +72,10 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
   const listsAbortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<number | null>(null);
   const listsLoadedForRef = useRef('');
-  const queryIntentRef = useRef<SearchQueryIntent>('specific');
+  const queryIntentRef = useRef<SearchQueryIntent>(initialData?.queryIntent ?? 'specific');
+  const skipNextFetchRef = useRef(
+    Boolean(seededQuery && seededQuery === normalizeSearchQuery(rawQuery))
+  );
 
   const normalized = normalizeSearchQuery(rawQuery);
   const isActive = enabled && normalized.length >= SEARCH_MIN_LENGTH;
@@ -188,6 +215,13 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
       return;
     }
 
+    if (skipNextFetchRef.current && q === seededQuery) {
+      skipNextFetchRef.current = false;
+      setLoading(false);
+      return;
+    }
+    skipNextFetchRef.current = false;
+
     setLoading(true);
     debounceRef.current = window.setTimeout(() => {
       void fetchItems(rawQuery);
@@ -196,7 +230,7 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [rawQuery, enabled, debounceMs, fetchItems, resetResults]);
+  }, [rawQuery, enabled, debounceMs, fetchItems, resetResults, seededQuery]);
 
   useEffect(() => {
     if (!isActive || viewTab !== 'lists') return;

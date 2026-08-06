@@ -4,7 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { toLiaraImageSrc } from '@/lib/liara-image-url';
-import { directStorageFallbackSrc } from '@/lib/resilient-image';
+import {
+  IMAGE_LOAD_MAX_RETRIES,
+  isStorageProxySrc,
+  withImageRetryQuery,
+} from '@/lib/resilient-image';
 import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import {
@@ -73,7 +77,10 @@ export default function ItemCoverImage({
   sizes,
 }: ItemCoverImageProps) {
   const [fetchedPoster, setFetchedPoster] = useState<string | null>(null);
-  const [directStorageSrc, setDirectStorageSrc] = useState<string | null>(null);
+  // تلاش مجدد از طریق پراکسی same-origin (نه URL مستقیم parspack که ممکن است
+  // در شبکهٔ کاربر مسدود باشد و ERR_CONNECTION_REFUSED بدهد).
+  const [retrySrc, setRetrySrc] = useState<string | null>(null);
+  const [proxyRetry, setProxyRetry] = useState(0);
   const [loadFailed, setLoadFailed] = useState(false);
   const [posterLoading, setPosterLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -125,7 +132,8 @@ export default function ItemCoverImage({
 
   useEffect(() => {
     setFetchedPoster(null);
-    setDirectStorageSrc(null);
+    setRetrySrc(null);
+    setProxyRetry(0);
     setLoadFailed(false);
     setPosterLoading(false);
     setImageLoaded(false);
@@ -178,7 +186,7 @@ export default function ItemCoverImage({
         : needsPosterEnrich && !fetchedPoster
           ? displayFallback
           : baseResolved || displayFallback);
-  const displaySrc = directStorageSrc ?? toItemDisplaySrc(resolvedSrc);
+  const displaySrc = retrySrc ?? toItemDisplaySrc(resolvedSrc);
   const showFallback = !displaySrc;
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -207,13 +215,16 @@ export default function ItemCoverImage({
   }
 
   const handleImgError = () => {
-    if (!directStorageSrc) {
-      const direct = directStorageFallbackSrc(displaySrc);
-      if (direct) {
-        setDirectStorageSrc(direct);
-        setImageLoaded(false);
-        return;
-      }
+    // برای تصاویر پراکسی same-origin، به‌جای سقوط به URL مستقیم parspack (که در
+    // شبکه‌های فیلترشده ERR_CONNECTION_REFUSED می‌دهد) همان پراکسی را با cache-bust
+    // دوباره تلاش می‌کنیم؛ پس از اتمام تلاش‌ها placeholder نمایش داده می‌شود.
+    const base = toItemDisplaySrc(resolvedSrc);
+    if (isStorageProxySrc(base) && proxyRetry < IMAGE_LOAD_MAX_RETRIES) {
+      const next = proxyRetry + 1;
+      setProxyRetry(next);
+      setRetrySrc(withImageRetryQuery(base, next));
+      setImageLoaded(false);
+      return;
     }
     setImageLoaded(false);
     setLoadFailed(true);
@@ -222,7 +233,7 @@ export default function ItemCoverImage({
   // مسیر بهینه‌شده (next/image) — فقط با opt-in از طریق prop `sizes`.
   // proxy داخلی را به URL اصلی باز می‌کنیم تا next آن را بهینه کند.
   const { src: nextSrc, unoptimized } = sizes
-    ? resolveNextImageSrc(directStorageSrc ?? displaySrc)
+    ? resolveNextImageSrc(displaySrc)
     : { src: displaySrc, unoptimized: false };
 
   return (

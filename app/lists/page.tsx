@@ -3,12 +3,8 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import ListsPageClient from './ListsPageClient';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { activeCategoryWhere, publicCuratedListWhere } from '@/lib/public-content-filters';
-import {
-  fetchListsBrowse,
-  LISTS_SSR_LIMIT,
-  listsBrowseSelect,
-} from '@/lib/lists-browse';
+import { activeCategoryWhere } from '@/lib/public-content-filters';
+import { fetchListsBrowse, LISTS_SSR_LIMIT } from '@/lib/lists-browse';
 
 export const revalidate = 60;
 
@@ -36,7 +32,15 @@ export default async function ListsPage({
   const params = await searchParams;
   let lists: Awaited<ReturnType<typeof fetchListsBrowse>>['lists'] = [];
   let totalListCount = 0;
-  let categories: Awaited<ReturnType<typeof prisma.categories.findMany>> = [];
+  let categories: {
+    id: string;
+    name: string;
+    slug: string | null;
+    icon: string | null;
+    color: string | null;
+    order: number | null;
+    isActive: boolean;
+  }[] = [];
 
   try {
     const [browseResult, categoryRows] = await Promise.all([
@@ -44,6 +48,15 @@ export default async function ListsPage({
       dbQuery(() =>
         prisma.categories.findMany({
           where: activeCategoryWhere,
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+            color: true,
+            order: true,
+            isActive: true,
+          },
           orderBy: { order: 'asc' },
         })
       ),
@@ -66,7 +79,7 @@ export default async function ListsPage({
         <ListsPageClient
           lists={lists}
           totalListCount={totalListCount}
-          categories={JSON.parse(JSON.stringify(categories))}
+          categories={categories}
           initialCategory={params.category}
           initialSearch={params.q || params.tag}
           initialMode={params.mode}

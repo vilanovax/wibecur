@@ -16,53 +16,63 @@ import { getCachedSimilarItems } from '@/lib/item-similar';
 
 export const revalidate = 60;
 
-/**
- * واکشی آیتم — با React cache() تا generateMetadata و بدنه‌ی صفحه در یک request
- * فقط یک‌بار کوئری بزنند (به‌جای دو کوئری جدا برای همان رکورد).
- */
-const getItemById = cache((id: string) =>
-  prisma.items.findUnique({
-    where: { id },
+const itemDetailSelect = {
+  id: true,
+  title: true,
+  description: true,
+  imageUrl: true,
+  externalUrl: true,
+  catalogItemId: true,
+  listNote: true,
+  rating: true,
+  voteCount: true,
+  metadata: true,
+  listId: true,
+  order: true,
+  createdAt: true,
+  _count: {
+    select: { comments: true },
+  },
+  deletedAt: true,
+  item_moderation: { select: { status: true } },
+  lists: {
     select: {
       id: true,
       title: true,
-      description: true,
-      imageUrl: true,
-      externalUrl: true,
-      catalogItemId: true,
-      listNote: true,
-      rating: true,
-      voteCount: true,
-      metadata: true,
-      listId: true,
-      order: true,
-      createdAt: true,
-      _count: {
-        select: { comments: true },
-      },
-      deletedAt: true,
-      item_moderation: { select: { status: true } },
-      lists: {
+      slug: true,
+      saveCount: true,
+      userId: true,
+      itemCount: true,
+      categories: {
         select: {
           id: true,
-          title: true,
+          name: true,
           slug: true,
-          saveCount: true,
-          userId: true,
-          itemCount: true,
-          categories: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              icon: true,
-              color: true,
-            },
-          },
+          icon: true,
+          color: true,
         },
       },
     },
-  })
+  },
+} as const;
+
+function loadItemById(id: string) {
+  return prisma.items.findUnique({
+    where: { id },
+    select: itemDetailSelect,
+  });
+}
+
+/**
+ * واکشی آیتم:
+ * - `unstable_cache`: کش بین‌درخواستی (Data Cache) با tag `item-{id}`
+ * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنه)
+ */
+const getItemById = cache((id: string) =>
+  unstable_cache(() => loadItemById(id), ['item-by-id', id], {
+    revalidate: 60,
+    tags: [`item-${id}`],
+  })()
 );
 
 const PERSONAL_SAVE_COUNT_SECONDS = 300;

@@ -36,3 +36,28 @@ export const fetchActiveCategoryMenu: () => Promise<CategoryMenuChip[]> =
     revalidate: 600,
     tags: [CATEGORY_MENU_CACHE_TAG],
   });
+
+export type CategoryIndexRow = {
+  id: string;
+  name: string;
+  slug: string | null;
+  icon: string | null;
+  color: string | null;
+};
+
+async function loadActiveCategoryIndex(): Promise<CategoryIndexRow[]> {
+  return dbQuery(() =>
+    prisma.categories.findMany({
+      where: activeCategoryWhere,
+      select: { id: true, name: true, slug: true, icon: true, color: true },
+      orderBy: { order: 'asc' },
+    })
+  );
+}
+
+/** ایندکس /categories — همان تگ منو تا با تغییر دسته باطل شود. */
+export const fetchActiveCategoryIndex: () => Promise<CategoryIndexRow[]> =
+  unstable_cache(loadActiveCategoryIndex, ['active-category-index'], {
+    revalidate: 600,
+    tags: [CATEGORY_MENU_CACHE_TAG],
+  });

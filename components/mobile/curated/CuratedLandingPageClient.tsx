@@ -27,7 +27,6 @@ import {
 } from './explore-section-skeletons';
 import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
 import { SEARCH_MIN_LENGTH } from '@/lib/list-search';
-import { MOCK_CATEGORIES, getMockLists } from '@/lib/curated/mock-data';
 import { buildExploreSections } from '@/lib/curated/explore-sections';
 import type { ExplorePayload, ExploreUserPreferences } from '@/lib/curated/explore-data';
 import {
@@ -92,28 +91,8 @@ export default function CuratedLandingPageClient({
     retry: 1,
   });
 
-  const usingMockFallback = isError;
-
-  const allLists = useMemo(() => {
-    if (data?.lists?.length) return data.lists;
-    if (!isLoading) {
-      const mockCats = MOCK_CATEGORIES.filter((c) => c.id !== 'all');
-      return getMockLists().map((list) => {
-        const cat = mockCats.find((c) => c.id === list.categoryId);
-        if (!cat) return list;
-        return {
-          ...list,
-          category: { name: cat.title, icon: cat.icon, slug: cat.slug ?? null },
-        };
-      });
-    }
-    return [];
-  }, [data?.lists, isLoading]);
-
-  const categories = useMemo(() => {
-    if (data?.categories?.length) return data.categories;
-    return MOCK_CATEGORIES;
-  }, [data?.categories]);
+  const allLists = useMemo(() => data?.lists ?? [], [data?.lists]);
+  const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
 
   const activeCategoryIds = useMemo(
     () => categories.filter((c) => c.id !== 'all').map((c) => c.id),
@@ -123,17 +102,16 @@ export default function CuratedLandingPageClient({
   const sections = useMemo(
     () =>
       buildExploreSections(allLists, '', {
-        preferredKeywordIds: usingMockFallback ? undefined : userPrefs?.preferredKeywordIds,
-        preferredCategoryIds: usingMockFallback ? undefined : userPrefs?.preferredCategoryIds,
+        preferredKeywordIds: userPrefs?.preferredKeywordIds,
+        preferredCategoryIds: userPrefs?.preferredCategoryIds,
         activeCategoryIds,
-        excludeListIds: usingMockFallback ? undefined : userPrefs?.bookmarkedListIds,
+        excludeListIds: userPrefs?.bookmarkedListIds,
       }),
     [
       allLists,
       userPrefs?.preferredKeywordIds,
       userPrefs?.preferredCategoryIds,
       userPrefs?.bookmarkedListIds,
-      usingMockFallback,
       activeCategoryIds,
     ]
   );
@@ -183,6 +161,15 @@ export default function CuratedLandingPageClient({
       />
 
       <main className="space-y-0">
+        {isError && !data?.lists?.length ? (
+          <div className="px-2.5 py-6 text-center">
+            <p className="wibe-body text-wibe-secondary">بارگذاری اکسپلور ناموفق بود</p>
+            <p className="mt-1 wibe-caption text-wibe-secondary/80">
+              اتصال را چک کن و صفحه را دوباره باز کن
+            </p>
+          </div>
+        ) : null}
+
         {isSearchActive ? (
           <div className="px-2.5 py-4 lg:px-0 lg:py-5">
             {search.loading && !search.hasResults ? (

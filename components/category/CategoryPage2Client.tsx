@@ -174,7 +174,7 @@ export default function CategoryPage2Client({
           {isRefetching || !trendingSection ? trendingClient : trendingSection}
         </SectionReveal>
 
-        {featuredSpotlight && (
+        {(featuredSpotlight || viralSpotlightSection) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
               {isRefetching || !viralSpotlightSection
@@ -203,7 +203,7 @@ export default function CategoryPage2Client({
           </HomeDeferredMount>
         </SectionReveal>
 
-        {mostSavedItems.length > 0 && (
+        {(mostSavedItemsSection || mostSavedItems.length > 0) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
               {isRefetching || !mostSavedItemsSection
@@ -213,7 +213,7 @@ export default function CategoryPage2Client({
           </SectionReveal>
         )}
 
-        {latestItems.length > 0 && (
+        {(latestItemsSection || latestItems.length > 0) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
               {isRefetching || !latestItemsSection ? latestItemsClient : latestItemsSection}

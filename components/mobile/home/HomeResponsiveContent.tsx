@@ -4,10 +4,15 @@ import type { ReactNode } from 'react';
 import HomeSearchBar from '@/components/mobile/home/HomeSearchBar';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
 import HomePullToRefresh from '@/components/mobile/home/HomePullToRefresh';
-import HomeDesktopView from '@/components/mobile/home/HomeDesktopView';
 import HomeMobileView from '@/components/mobile/home/HomeMobileView';
-import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import HomeDesktopView from '@/components/mobile/home/HomeDesktopView';
 import type { CategoryMenuChip } from '@/lib/category-menu';
+
+/**
+ * هر دو چیدمان با CSS (`lg:`) رندر می‌شوند — نه با useIsDesktop.
+ * HomeDesktopView را static نگه می‌داریم: dynamic+loading اسکلتون کوتاه
+ * می‌کشید و با جایگزینی محتوای واقعی CLS≈0.6 روی دسکتاپ می‌ساخت.
+ */
 
 type HomeResponsiveContentProps = {
   ssrFeaturedId: string | null;
@@ -24,31 +29,28 @@ export default function HomeResponsiveContent({
   heroSpotlightDesktop,
   desktopTrending,
 }: HomeResponsiveContentProps) {
-  const isDesktop = useIsDesktop();
-
   return (
     <>
-      {!isDesktop ? (
-        <div className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 pb-1.5 pt-0.5 backdrop-blur-sm">
-          <HomeSearchBar />
-          <QuickCategoryChips initialCategories={initialCategories} />
-        </div>
-      ) : null}
+      <div className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 pb-1.5 pt-0.5 backdrop-blur-sm lg:hidden">
+        <HomeSearchBar />
+        <QuickCategoryChips initialCategories={initialCategories} />
+      </div>
 
       <HomePullToRefresh>
-        {isDesktop ? (
+        <div className="lg:hidden">
+          <HomeMobileView
+            ssrFeaturedId={ssrFeaturedId}
+            heroSpotlight={heroSpotlightMobile}
+          />
+        </div>
+        <div className="hidden lg:block">
           <HomeDesktopView
             ssrFeaturedId={ssrFeaturedId}
             initialCategories={initialCategories}
             heroSpotlight={heroSpotlightDesktop}
             desktopTrending={desktopTrending}
           />
-        ) : (
-          <HomeMobileView
-            ssrFeaturedId={ssrFeaturedId}
-            heroSpotlight={heroSpotlightMobile}
-          />
-        )}
+        </div>
       </HomePullToRefresh>
     </>
   );

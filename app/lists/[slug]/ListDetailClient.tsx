@@ -98,6 +98,8 @@ function formatCompact(n: number): string {
 interface ListDetailClientProps {
   list: ListDetail;
   sponsoredPlacements?: ListPagePlacements;
+  /** SSR فقط پنجرهٔ اول را می‌فرستد؛ بقیه از /api/lists/[id]/items می‌آید. */
+  itemsHasMore?: boolean;
 }
 
 type ListViewMode = 'grid' | 'map';
@@ -107,6 +109,7 @@ type ItemEntry = { item: Item; originalIndex: number };
 /** رندر پنجره‌ای گرید آیتم‌ها — تعداد اولیه و گام آشکارسازی با اسکرول. */
 const LIST_GRID_WINDOW_INITIAL = 24;
 const LIST_GRID_WINDOW_STEP = 24;
+const LIST_DETAIL_REMOTE_PAGE = 36;
 
 import { calcViralProgress, shouldShowViralProgress } from '@/lib/list-viral-display';
 
@@ -397,11 +400,70 @@ function ListOwnerToolbar({
 const LIST_SECTION_SCROLL_MT = 'scroll-mt-[7.5rem]';
 
 export default function ListDetailClient({
-  list,
+  list: listProp,
   sponsoredPlacements = { banner: [], sidebar: [], afterSimilar: [] },
+  itemsHasMore = false,
 }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const [items, setItems] = useState(listProp.items);
+  const [hasMoreRemote, setHasMoreRemote] = useState(itemsHasMore);
+  const [loadingMoreRemote, setLoadingMoreRemote] = useState(false);
+  const remoteFetchLock = useRef(false);
+  const itemsLenRef = useRef(listProp.items.length);
+  const hasMoreRemoteRef = useRef(itemsHasMore);
+
+  const list = useMemo(() => ({ ...listProp, items }), [listProp, items]);
+
+  useEffect(() => {
+    setItems(listProp.items);
+    setHasMoreRemote(itemsHasMore);
+    itemsLenRef.current = listProp.items.length;
+    hasMoreRemoteRef.current = itemsHasMore;
+  }, [listProp.id, listProp.items, itemsHasMore]);
+
+  const fetchMoreItems = useCallback(async (): Promise<boolean> => {
+    if (remoteFetchLock.current || !hasMoreRemoteRef.current) return false;
+    remoteFetchLock.current = true;
+    setLoadingMoreRemote(true);
+    try {
+      const offset = itemsLenRef.current;
+      const res = await fetch(
+        `/api/lists/${listProp.id}/items?offset=${offset}&limit=${LIST_DETAIL_REMOTE_PAGE}`
+      );
+      const json = (await res.json()) as {
+        success?: boolean;
+        items?: Item[];
+        pagination?: { hasMore?: boolean };
+      };
+      if (!res.ok || !json.success || !Array.isArray(json.items)) return false;
+
+      setItems((prev) => {
+        const seen = new Set(prev.map((i) => i.id));
+        const next = [...prev, ...json.items!.filter((i) => !seen.has(i.id))];
+        itemsLenRef.current = next.length;
+        return next;
+      });
+
+      const more = Boolean(json.pagination?.hasMore);
+      hasMoreRemoteRef.current = more;
+      setHasMoreRemote(more);
+      return more;
+    } catch {
+      return false;
+    } finally {
+      remoteFetchLock.current = false;
+      setLoadingMoreRemote(false);
+    }
+  }, [listProp.id]);
+
+  const ensureAllItemsLoaded = useCallback(async () => {
+    while (hasMoreRemoteRef.current) {
+      const more = await fetchMoreItems();
+      if (!more) break;
+    }
+  }, [fetchMoreItems]);
+
   useListScrollDepth(list.slug, list.categories?.slug);
   useInterestTracking({
     type: 'list_view',
@@ -429,9 +491,7 @@ export default function ListDetailClient({
   const [moreOpen, setMoreOpen] = useState(false);
   const [listReportOpen, setListReportOpen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  // رندر پنجره‌ای گرید: ابتدا فقط تعداد محدودی کارت mount می‌شود و بقیه با اسکرول
-  // آشکار می‌شوند (HTML اولیه و هزینهٔ hydration برای لیست‌های بزرگ کم می‌شود).
-  // دادهٔ کامل آیتم‌ها همچنان در حافظه است تا جستجو/نقشه/preview دست‌نخورده بماند.
+  // رندر پنجره‌ای گرید + صفحه‌بندی سرور برای لیست‌های بزرگ.
   const [visibleCount, setVisibleCount] = useState(LIST_GRID_WINDOW_INITIAL);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [itemSearchQuery, setItemSearchQuery] = useState('');
@@ -522,8 +582,18 @@ export default function ListDetailClient({
   }, [commentsInView]);
 
   const handleSetMap = () => {
-    setViewMode((mode) => (mode === 'map' ? 'grid' : 'map'));
+    setViewMode((mode) => {
+      const next = mode === 'map' ? 'grid' : 'map';
+      if (next === 'map') void ensureAllItemsLoaded();
+      return next;
+    });
   };
+
+  useEffect(() => {
+    if (normalizeSearchQuery(itemSearchQuery).length > 0) {
+      void ensureAllItemsLoaded();
+    }
+  }, [itemSearchQuery, ensureAllItemsLoaded]);
 
   const itemCount = list.itemCount ?? list._count?.items ?? list.items?.length ?? 0;
   const commentCount = list._count?.list_comments ?? 0;
@@ -684,12 +754,13 @@ export default function ListDetailClient({
     return allItemEntries.filter((e) => ids.has(e.item.id));
   }, [allItemEntries, isItemSearchActive, normalizedItemSearch]);
 
-  const showItemSearch = list.items.length >= LIST_INNER_SEARCH_MIN_ITEMS;
+  const showItemSearch = itemCount >= LIST_INNER_SEARCH_MIN_ITEMS;
   const showSimilarLists = !isItemSearchActive;
 
   // پنجره‌سازی فقط برای گرید و حالت غیرجستجو؛ نقشه و نتایج جستجو کامل رندر می‌شوند.
   const gridWindowActive = viewMode === 'grid' && !isItemSearchActive;
-  const hasMoreToReveal = gridWindowActive && visibleCount < allItemEntries.length;
+  const hasMoreToReveal =
+    gridWindowActive && (visibleCount < allItemEntries.length || hasMoreRemote);
   const nonSearchEntries = gridWindowActive
     ? allItemEntries.slice(0, visibleCount)
     : allItemEntries;
@@ -700,17 +771,25 @@ export default function ListDetailClient({
     if (!el || typeof IntersectionObserver === 'undefined') return;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setVisibleCount((c) =>
-            Math.min(c + LIST_GRID_WINDOW_STEP, allItemEntries.length)
-          );
+        if (!entries.some((e) => e.isIntersecting)) return;
+        setVisibleCount((c) => Math.min(c + LIST_GRID_WINDOW_STEP, allItemEntries.length));
+        if (visibleCount + LIST_GRID_WINDOW_STEP >= allItemEntries.length && hasMoreRemote) {
+          void fetchMoreItems().then(() => {
+            setVisibleCount((c) => c + LIST_GRID_WINDOW_STEP);
+          });
         }
       },
       { rootMargin: '800px 0px' }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [hasMoreToReveal, visibleCount, allItemEntries.length]);
+  }, [
+    hasMoreToReveal,
+    visibleCount,
+    allItemEntries.length,
+    hasMoreRemote,
+    fetchMoreItems,
+  ]);
 
   const previewItem: ItemPreviewData | null =
     previewIndex != null && list.items[previewIndex] ? list.items[previewIndex] : null;
@@ -1067,7 +1146,11 @@ export default function ListDetailClient({
                 <>
                   {renderItemEntries(nonSearchEntries)}
                   {hasMoreToReveal ? (
-                    <div ref={loadMoreRef} aria-hidden className="h-6 w-full" />
+                    <div ref={loadMoreRef} className="flex h-10 w-full items-center justify-center">
+                      {loadingMoreRemote ? (
+                        <span className="wibe-caption text-wibe-secondary">در حال بارگذاری…</span>
+                      ) : null}
+                    </div>
                   ) : null}
                 </>
               )}

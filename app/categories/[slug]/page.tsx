@@ -15,6 +15,7 @@ import { getCachedCategoryPageData } from '@/lib/category-page-cached';
 import { getCachedCategoryBannerPlacements } from '@/lib/sponsored-placements';
 import { fetchActiveCategoryMenu } from '@/lib/category-menu';
 import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
+import { toCategoryClientSeed } from '@/lib/category-page-client-seed';
 
 // داده‌های صفحه با unstable_cache تا ۳۰۰ ثانیه کش می‌شوند؛ revalidate صفحه هم
 // با همان پنجره هماهنگ شد تا پوستهٔ صفحه بی‌جهت هر ۶۰ ثانیه بازتولید نشود.
@@ -57,12 +58,18 @@ export default async function CategoryPage({
   let pageData = null;
   let menuCategories: Awaited<ReturnType<typeof fetchActiveCategoryMenu>> = [];
 
+  let sponsoredPlacements: Awaited<
+    ReturnType<typeof getCachedCategoryBannerPlacements>
+  > = [];
+
   try {
     category = await resolveCategoryBySlug(slug);
     if (category) {
-      [pageData, menuCategories] = await Promise.all([
+      // pageData / menu / placements فقط به category.id وابسته‌اند — موازی (async-parallel).
+      [pageData, menuCategories, sponsoredPlacements] = await Promise.all([
         getCachedCategoryPageData(category.id, category.slug),
         fetchActiveCategoryMenu(),
+        getCachedCategoryBannerPlacements(category.id),
       ]);
     }
   } catch (e) {
@@ -75,8 +82,6 @@ export default async function CategoryPage({
   if (!category || !pageData) {
     notFound();
   }
-
-  const sponsoredPlacements = await getCachedCategoryBannerPlacements(category.id);
   const lcpImage = getCategoryHeroDisplayUrl(pageData.category.heroImage, pageData.category.slug);
   const accentColor = pageData.category.accentColor || pageData.category.color;
   const featuredSpotlight =
@@ -96,7 +101,7 @@ export default async function CategoryPage({
         />
         <CategoryPage2Client
           slug={category.slug}
-          initialData={pageData}
+          initialData={toCategoryClientSeed(pageData)}
           sponsoredPlacements={sponsoredPlacements}
           heroSection={
             <CategoryHeroServer category={pageData.category} metrics={pageData.metrics} />
