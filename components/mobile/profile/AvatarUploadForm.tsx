@@ -117,7 +117,7 @@ export default function AvatarUploadForm({
     <BottomSheet isOpen={isOpen} onClose={handleClose} title="تغییر آواتار" maxHeight="85vh">
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6 min-h-0">
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm">
               {error}

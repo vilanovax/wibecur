@@ -2,7 +2,6 @@
 
 import type { ReactNode } from 'react';
 import HomeSearchBar from '@/components/mobile/home/HomeSearchBar';
-import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
 import HomePullToRefresh from '@/components/mobile/home/HomePullToRefresh';
 import HomeMobileView from '@/components/mobile/home/HomeMobileView';
 import HomeDesktopView from '@/components/mobile/home/HomeDesktopView';
@@ -12,6 +11,8 @@ import type { CategoryMenuChip } from '@/lib/category-menu';
  * هر دو چیدمان با CSS (`lg:`) رندر می‌شوند — نه با useIsDesktop.
  * HomeDesktopView را static نگه می‌داریم: dynamic+loading اسکلتون کوتاه
  * می‌کشید و با جایگزینی محتوای واقعی CLS≈0.6 روی دسکتاپ می‌ساخت.
+ *
+ * موبایل: استیکی فقط جستجو — چیپ دسته زیر هیرو تا first viewport خلوت بماند.
  */
 
 type HomeResponsiveContentProps = {
@@ -33,7 +34,6 @@ export default function HomeResponsiveContent({
     <>
       <div className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 pb-1.5 pt-0.5 backdrop-blur-sm lg:hidden">
         <HomeSearchBar />
-        <QuickCategoryChips initialCategories={initialCategories} />
       </div>
 
       <HomePullToRefresh>
@@ -41,6 +41,7 @@ export default function HomeResponsiveContent({
           <HomeMobileView
             ssrFeaturedId={ssrFeaturedId}
             heroSpotlight={heroSpotlightMobile}
+            initialCategories={initialCategories}
           />
         </div>
         <div className="hidden lg:block">

@@ -160,7 +160,7 @@ export default function LightweightEntryRow({
   const hasLink = Boolean(item.externalUrl?.trim());
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
 
-  const shellClass = `rounded-xl border border-wibe bg-wibe-card text-right shadow-sm transition-all ${
+  const shellClass = `rounded-xl border border-wibe bg-wibe-card text-right shadow-sm transition-colors ${
     compact ? 'p-2.5' : hideEntryKindChrome ? 'p-3.5 lg:p-4' : 'p-3 lg:p-3.5'
   } ${onOpen ? 'lg:hover:border-primary/15 lg:hover:shadow-sm' : ''}`;
 
@@ -184,7 +184,7 @@ export default function LightweightEntryRow({
             type="button"
             onClick={onOpen}
             aria-label={itemOpenLabel(index, headline || item.title)}
-            className="flex w-full items-start gap-3 text-right transition-all active:scale-[0.99]"
+            className="flex w-full items-start gap-3 text-right transition-colors active:scale-[0.99]"
           >
             <EntryBody {...bodyProps} />
           </button>

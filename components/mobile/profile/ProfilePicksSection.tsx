@@ -77,7 +77,7 @@ function AddSlotButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-[144px] w-[96px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-primary/35 bg-primary/[0.04] text-primary transition-all hover:border-primary/50 hover:bg-primary/10 active:scale-[0.97]"
+      className="flex h-[144px] w-[96px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-primary/35 bg-primary/[0.04] text-primary transition-colors hover:border-primary/50 hover:bg-primary/10 active:scale-[0.97]"
     >
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15">
         <Plus className="h-4 w-4" />
@@ -107,7 +107,7 @@ function ShelfTabs({
             key={shelf.categorySlug}
             type="button"
             onClick={() => onSelect(shelf.categorySlug)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-all active:scale-[0.98] ${
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-[colors,transform] active:scale-[0.98] ${
               selected
                 ? 'bg-primary text-white shadow-sm'
                 : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'

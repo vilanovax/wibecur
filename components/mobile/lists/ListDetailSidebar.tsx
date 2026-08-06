@@ -70,7 +70,7 @@ export default function ListDetailSidebar({
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
                   <div
-                    className="h-full rounded-full bg-warning transition-all"
+                    className="h-full rounded-full bg-warning transition-colors"
                     style={{ width: `${viralProgress}%` }}
                   />
                 </div>

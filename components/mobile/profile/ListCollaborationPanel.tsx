@@ -141,8 +141,11 @@ export default function ListCollaborationPanel({
         </div>
         <button
           type="button"
+          role="switch"
+          aria-checked={collaborationEnabled}
+          aria-label="همکاری در لیست"
           onClick={toggleCollaboration}
-          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors ${
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
             collaborationEnabled ? 'bg-primary' : 'bg-gray-200'
           }`}
         >

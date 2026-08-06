@@ -162,13 +162,14 @@ function inferBrowseMode(state: FilterState): BrowseMode {
   if (state.vibes.has('trending')) return 'trending';
   if (state.sortBy === 'newest' && state.vibes.size === 0) return 'newest';
   if (state.sortBy === 'most_saved' || state.sortBy === 'popular') return 'popular';
-  return 'newest';
+  return 'trending';
 }
 
+/** پیش‌فرض کاتالوگ: ترند — محور اصلی browse mode است، نه وایب‌چیپ‌ها */
 const DEFAULT_FILTER: FilterState = {
   categories: new Set(),
-  sortBy: 'newest',
-  vibes: new Set(),
+  sortBy: 'rising',
+  vibes: new Set<VibeFilter>(['trending']),
   creatorType: 'all',
   minItemCount: 0,
   minRating: 0,
@@ -429,7 +430,7 @@ export default function ListsPageClient({
     if (q) params.set('q', q);
     else params.delete('q');
 
-    if (browseMode !== 'newest') params.set('mode', browseMode);
+    if (browseMode !== 'trending') params.set('mode', browseMode);
     else params.delete('mode');
 
     if (filterState.categories.size === 1) {
@@ -923,7 +924,7 @@ export default function ListsPageClient({
               type="button"
               data-category-chip="all"
               onClick={handleAllCategoriesClick}
-              className={`h-8 flex-shrink-0 rounded-full px-3 wibe-caption font-medium transition-all active:scale-[0.98] ${
+              className={`h-8 flex-shrink-0 rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${
                 isAllCategoriesSelected
                   ? 'bg-primary text-white shadow-sm'
                   : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -939,7 +940,7 @@ export default function ListsPageClient({
                   type="button"
                   data-category-chip={cat.id}
                   onClick={() => handleCategoryClick(cat.id)}
-                  className={`h-8 flex-shrink-0 whitespace-nowrap rounded-full px-3 wibe-caption font-medium transition-all active:scale-[0.98] ${
+                  className={`h-8 flex-shrink-0 whitespace-nowrap rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${
                     isSelected
                       ? 'bg-primary text-white shadow-sm'
                       : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -959,7 +960,7 @@ export default function ListsPageClient({
                 key={value}
                 type="button"
                 onClick={() => setBrowseMode(value)}
-                className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-all active:scale-[0.98] lg:px-3.5 ${
+                className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:px-3.5 ${
                   browseMode === value
                     ? 'bg-wibe-card font-semibold text-primary shadow-sm'
                     : 'text-wibe-secondary hover:text-foreground'
@@ -970,7 +971,7 @@ export default function ListsPageClient({
             ))}
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <div className="flex rounded-lg border border-wibe bg-wibe-surface p-0.5">
+            <div className="hidden rounded-lg border border-wibe bg-wibe-surface p-0.5 sm:flex">
               <button
                 type="button"
                 onClick={() => setViewMode('compact')}
@@ -997,14 +998,15 @@ export default function ListsPageClient({
             <button
               type="button"
               onClick={() => setFilterSheetOpen(true)}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors active:scale-[0.98] ${
+              className={`flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 transition-colors active:scale-[0.98] ${
                 hasAdvancedFilters
                   ? 'border-primary bg-primary/10 text-primary'
                   : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
               }`}
-              aria-label="فیلتر پیشرفته"
+              aria-label="فیلتر و حال‌وهوا"
             >
               <Filter className="h-4 w-4" />
+              <span className="wibe-caption font-medium sm:hidden">فیلتر</span>
             </button>
           </div>
         </div>

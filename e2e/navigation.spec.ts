@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('ناوبری', () => {
   test('باید به صفحهٔ لیست‌ها برود', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: 'لیست' }).click();
+    await page.getByRole('link', { name: 'لیست‌ها' }).click();
     await expect(page).toHaveURL(/\/lists/);
     await expect(page).toHaveTitle(/لیست/i);
   });

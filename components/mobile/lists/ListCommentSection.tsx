@@ -187,7 +187,7 @@ export default function ListCommentSection({
           {commentsEnabled ? (
             <button
               onClick={() => setIsFormOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors duration-200 shadow-sm hover:shadow-md"
               aria-label="افزودن کامنت جدید"
             >
               <Plus className="w-5 h-5" strokeWidth={2.5} />

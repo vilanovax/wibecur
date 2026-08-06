@@ -22,9 +22,18 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
 
   return (
     <div className="mb-1">
-      <h2 className="mb-3 wibe-h3 lg:mb-4">امروز دنبال چه وایبی هستی؟</h2>
+      <header className="mb-4 lg:mb-5">
+        <p className="mb-1 wibe-caption font-semibold tracking-wide text-primary">اکسپلور</p>
+        <h2 className="text-balance text-[1.7rem] font-bold leading-[1.2] tracking-tight text-foreground lg:text-3xl lg:leading-[1.15]">
+          امروز دنبال چه وایبی هستی؟
+        </h2>
+        <p className="mt-1.5 max-w-md text-pretty wibe-small text-wibe-secondary lg:mt-2 lg:text-base">
+          یک حال‌وهوا انتخاب کن؛ بقیه‌اش را ما جور می‌کنیم
+        </p>
+      </header>
+
       <div
-        className="grid grid-cols-2 gap-2.5 lg:grid-cols-3 lg:gap-3"
+        className="grid grid-cols-2 gap-2.5 lg:grid-cols-3 lg:gap-3.5"
         aria-label="کارت‌های حال و موقعیت"
       >
         {MOOD_EXPLORER_CARDS.map((card) => {
@@ -44,10 +53,10 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
         <button
           type="button"
           onClick={() => setShowAllMobile(true)}
-          className="mt-2.5 flex w-full items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card py-2.5 wibe-caption font-semibold text-primary transition-colors active:scale-[0.99] hover:bg-primary/5 lg:hidden"
+          className="mt-3 flex w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card/90 py-3 wibe-caption font-semibold text-primary shadow-vibe-sm transition-colors hover:bg-primary/5 active:scale-[0.99] lg:hidden"
         >
           مودهای بیشتر ({EXTRA_MOBILE_COUNT.toLocaleString('fa-IR')})
-          <ChevronDown className="h-4 w-4" strokeWidth={2} />
+          <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden />
         </button>
       )}
     </div>

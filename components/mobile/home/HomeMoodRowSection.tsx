@@ -154,8 +154,8 @@ export default function HomeMoodRowSection({
             iconVariant="mood"
             title="بر اساس حال‌وهوا"
             subtitle="انتخاب سریع برای حال امروزت"
-            actionHref="/lists"
-            actionLabel="همه"
+            actionHref="/user-lists"
+            actionLabel="اکسپلور"
             analyticsSection="mood"
           />
           <HorizontalScrollFade
@@ -211,8 +211,8 @@ export default function HomeMoodRowSection({
         iconVariant="mood"
         title="بر اساس حال‌وهوا"
         subtitle="انتخاب سریع برای حال امروزت"
-        actionHref="/lists"
-        actionLabel="همه"
+        actionHref="/user-lists"
+        actionLabel="اکسپلور"
         analyticsSection="mood"
       />
 

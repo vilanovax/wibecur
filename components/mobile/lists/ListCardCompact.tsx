@@ -252,7 +252,7 @@ function ListCardCompact({
 
   if (variant === 'compact') {
     return (
-      <div className="group relative min-h-[76px] rounded-lg border border-wibe bg-wibe-card p-2.5 shadow-sm transition-all active:scale-[0.99] lg:hover:border-primary/30 lg:hover:shadow-md">
+      <div className="group relative min-h-[76px] rounded-lg border border-wibe bg-wibe-card p-2.5 shadow-sm transition-colors active:scale-[0.99] lg:hover:border-primary/30 lg:hover:shadow-md">
         <Link
           href={href}
           onClick={handleSearchResultClick}
@@ -310,7 +310,7 @@ function ListCardCompact({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg">
+    <div className="group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-colors active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg">
       <Link
         href={href}
         onClick={handleSearchResultClick}
@@ -366,7 +366,7 @@ function ListCardCompact({
           onToggle={onBookmarkToggle}
           isLoggedIn={isLoggedIn}
           size="xs"
-          className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-all lg:group-hover:scale-110 lg:group-hover:opacity-100"
+          className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
         />
       ) : null}
     </div>

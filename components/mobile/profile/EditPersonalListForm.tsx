@@ -149,7 +149,7 @@ export default function EditPersonalListForm({
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="ویرایش لیست">
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto p-6 min-h-0">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 min-h-0">
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4">
               {error}

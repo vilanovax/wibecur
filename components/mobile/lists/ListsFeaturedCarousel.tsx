@@ -90,7 +90,7 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
             {lists.map((list, i) => (
               <span
                 key={list.id}
-                className={`h-1.5 rounded-full transition-all ${
+                className={`h-1.5 rounded-full transition-colors ${
                   i === activeIndex ? 'w-4 bg-primary' : 'w-1.5 bg-wibe-secondary/30'
                 }`}
               />
@@ -119,7 +119,7 @@ function FeaturedSlide({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`group relative block aspect-[2/1] min-h-[108px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-all active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[128px] lg:aspect-[3/2] lg:min-h-[180px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
+      className={`group relative block aspect-[2/1] min-h-[108px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-[colors,transform] active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[128px] lg:aspect-[3/2] lg:min-h-[180px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
     >
       <ListCoverImage
         coverImage={list.coverImage}

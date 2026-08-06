@@ -52,7 +52,7 @@ function CreateActionCard({
       href={href}
       onClick={onClose}
       className={`
-        flex items-center gap-3 p-4 rounded-2xl text-right transition-all duration-200
+        flex items-center gap-3 p-4 rounded-2xl text-right transition-colors duration-200
         active:scale-[0.98] active:transition-none
         ${animateOnOpen ? 'origin-center transition-transform duration-300' : ''}
         ${animateOnOpen && !mounted ? 'scale-[0.98] opacity-90' : ''}
@@ -112,7 +112,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
             type="button"
             onClick={() => setExpanded(true)}
             className="
-              flex items-center gap-3 p-4 rounded-2xl text-right transition-all duration-200
+              flex items-center gap-3 p-4 rounded-2xl text-right transition-colors duration-200
               bg-primary/5 hover:bg-primary/10 active:scale-[0.98] w-full
               origin-center transition-transform duration-300
             "
@@ -129,7 +129,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
           <div
             className="
               rounded-2xl border border-primary/15 bg-primary/5 shadow-sm
-              overflow-hidden transition-all duration-200
+              overflow-hidden transition-colors duration-200
             "
           >
             <div className="flex items-center gap-3 p-4 pb-3">
@@ -148,7 +148,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
                     inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
                     bg-white border border-gray-200 text-sm font-medium text-gray-800
                     hover:bg-gray-50 hover:border-primary/30 active:scale-[0.98]
-                    transition-all duration-200
+                    transition-colors duration-200
                   "
                 >
                   <span aria-hidden>{cat.icon}</span>

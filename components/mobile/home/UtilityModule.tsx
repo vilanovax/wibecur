@@ -46,7 +46,7 @@ export default function UtilityModule() {
                 flex items-center gap-3 p-4 rounded-[18px] text-right
                 bg-white/60 hover:bg-white/90 active:scale-[0.98]
                 border border-white/80 shadow-sm
-                transition-all duration-200 hover:shadow-md
+                transition-colors duration-200 hover:shadow-md
               "
             >
               <span className="text-2xl flex-shrink-0" aria-hidden>

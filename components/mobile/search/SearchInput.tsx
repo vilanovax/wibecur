@@ -26,7 +26,7 @@ export default function SearchInput({
   'aria-label': ariaLabel = 'جستجو',
 }: SearchInputProps) {
   return (
-    <div className={`relative flex h-10 items-center rounded-xl border border-wibe bg-wibe-card ${className}`}>
+    <div className={`relative flex h-10 items-center rounded-xl border border-wibe bg-wibe-card transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/20 ${className}`}>
       <Search className="absolute right-3 h-4 w-4 shrink-0 text-wibe-secondary" aria-hidden />
       <input
         id={id}

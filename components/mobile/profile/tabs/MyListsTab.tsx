@@ -252,7 +252,7 @@ export default function MyListsTab({
         <button
           type="button"
           onClick={() => toggleVisibilityFilter('public')}
-          className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-all ${
+          className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-colors ${
             visibilityFilter === 'public'
               ? 'bg-emerald-600 text-white shadow-sm'
               : 'border border-emerald-200 bg-emerald-50/80 text-emerald-800'
@@ -264,7 +264,7 @@ export default function MyListsTab({
         <button
           type="button"
           onClick={() => toggleVisibilityFilter('private')}
-          className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-all ${
+          className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-colors ${
             visibilityFilter === 'private'
               ? 'bg-slate-700 text-white shadow-sm'
               : 'border border-slate-200 bg-slate-50 text-slate-700'
@@ -277,7 +277,7 @@ export default function MyListsTab({
           <button
             type="button"
             onClick={() => toggleVisibilityFilter('shared')}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-all ${
+            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-colors ${
               visibilityFilter === 'shared'
                 ? 'bg-violet-600 text-white shadow-sm'
                 : 'border border-violet-200 bg-violet-50/80 text-violet-800'

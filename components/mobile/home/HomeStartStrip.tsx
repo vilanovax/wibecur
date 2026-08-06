@@ -98,7 +98,7 @@ export default function HomeStartStrip() {
                   key={cat.id}
                   type="button"
                   onClick={() => toggleSlug(cat.slug)}
-                  className={`h-9 rounded-lg border px-3 wibe-small font-medium transition-all ${
+                  className={`h-9 rounded-lg border px-3 wibe-small font-medium transition-colors ${
                     isSelected
                       ? 'border-primary bg-primary text-white'
                       : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30'

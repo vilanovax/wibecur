@@ -51,7 +51,7 @@ export default function GlobalTrendingSection() {
           <Link
             key={t.id}
             href={`/items/${t.id}`}
-            className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md active:opacity-95 transition-all"
+            className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md active:opacity-95 transition-colors"
           >
             <div className="relative aspect-[3/4] w-full bg-gray-100">
               {t.image ? (

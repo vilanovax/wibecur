@@ -55,7 +55,7 @@ export default function ItemSaveButton({
     return (
       <Link
         href={loginHref}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-all ${
+        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
           isHero
             ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
             : 'bg-white border-2 border-gray-300 hover:border-primary hover:bg-primary/5'
@@ -90,7 +90,7 @@ export default function ItemSaveButton({
           e.stopPropagation();
           setIsModalOpen(true);
         }}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-all ${
+        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
           isSaved
             ? isPrivate
               ? 'bg-gray-900 border-2 border-gray-900 hover:bg-black shadow-md'
@@ -108,7 +108,7 @@ export default function ItemSaveButton({
         }
       >
         <Bookmark
-          className={`w-5 h-5 transition-all ${
+          className={`w-5 h-5 transition-colors ${
             isSaved ? 'text-white fill-white' : isHero ? 'text-white' : 'text-gray-600'
           }`}
         />

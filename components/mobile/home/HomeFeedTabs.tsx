@@ -69,7 +69,7 @@ export default function HomeFeedTabs() {
                   }}
                   onPointerEnter={item.id === 'foryou' ? prefetchForYou : undefined}
                   onTouchStart={item.id === 'foryou' ? prefetchForYou : undefined}
-                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-4 wibe-small font-medium transition-all lg:h-8 lg:px-3.5 ${
+                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-4 wibe-small font-medium transition-colors lg:h-8 lg:px-3.5 ${
                     isActive
                       ? 'bg-primary text-white shadow-sm'
                       : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/30'

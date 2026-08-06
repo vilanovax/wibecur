@@ -28,7 +28,7 @@ export default function EnhancedSearch() {
               track('search', { query: searchQuery.trim(), source: 'input' });
             }
           }}
-          className="w-full pr-11 pl-4 py-3 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-primary focus:bg-white transition-all duration-200"
+          className="w-full pr-11 pl-4 py-3 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-primary focus:bg-white transition-colors duration-200"
           aria-label="جستجوی لیست‌ها"
         />
       </div>

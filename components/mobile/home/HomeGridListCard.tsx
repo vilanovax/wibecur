@@ -48,7 +48,7 @@ export default function HomeGridListCard({
       }}
       className="group block w-[10rem] shrink-0 snap-start lg:w-full lg:shrink"
     >
-      <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md">
+      <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card transition-[colors,transform] active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md">
         <div className="relative aspect-[5/4] w-full bg-gray-100 sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[11.5rem]">
           {badge === SAVED_LIST_BADGE ? (
             <span

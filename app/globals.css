@@ -347,6 +347,16 @@ body {
   animation: fadeIn 0.35s ease-out;
 }
 
+/* جلوگیری از تأخیر double-tap zoom روی کنترل‌های تعاملی */
+a,
+button,
+[role='button'],
+[role='switch'],
+summary {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* احترام به تنظیم کاهش حرکت کاربر */
 @media (prefers-reduced-motion: reduce) {
   *,

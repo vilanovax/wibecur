@@ -33,30 +33,40 @@ export default function ExploreSmartHero({
 
   return (
     <section
-      className="border-b border-wibe bg-wibe-surface px-2.5 pb-3 pt-2 lg:border-b-0 lg:px-0 lg:pb-4 lg:pt-0"
+      className="relative overflow-hidden border-b border-wibe/80 bg-gradient-to-b from-primary/[0.07] via-wibe-surface to-wibe-surface px-2.5 pb-4 pt-3 lg:border-b-0 lg:from-primary/[0.05] lg:px-0 lg:pb-5 lg:pt-1"
       aria-label="اکسپلور هوشمند"
     >
-      <p className="mb-1.5 wibe-caption font-medium text-wibe-secondary lg:hidden">جستجو در اکسپلور</p>
-      <button
-        type="button"
-        onClick={openExploreSearch}
-        className="relative mb-3 flex w-full items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 text-right transition-colors hover:border-primary/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:hidden"
-        aria-label="باز کردن جستجو"
-      >
-        <Search
-          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary"
-          aria-hidden
-        />
-        <span
-          className={`block w-full truncate py-0.5 pl-2 pr-8 text-right wibe-small ${hasQuery ? 'text-foreground' : 'text-wibe-secondary'}`}
-        >
-          {hasQuery ? searchQuery : EXPLORE_SEARCH_PLACEHOLDER}
-        </span>
-      </button>
+      <div
+        className="pointer-events-none absolute -left-16 top-0 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-10 top-8 h-32 w-32 rounded-full bg-primary/10 blur-3xl"
+        aria-hidden
+      />
 
-      {showMoodExplorer && !hasQuery && onMoodSelect && (
-        <MoodExplorerHero onMoodSelect={onMoodSelect} />
-      )}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={openExploreSearch}
+          className="relative mb-4 flex w-full items-center rounded-2xl border border-wibe/80 bg-wibe-card/90 px-4 py-3 text-right shadow-vibe-sm backdrop-blur-sm transition-colors hover:border-primary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:hidden"
+          aria-label="باز کردن جستجو"
+        >
+          <Search
+            className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary"
+            aria-hidden
+          />
+          <span
+            className={`block w-full truncate py-0.5 pl-2 pr-9 text-right wibe-small ${hasQuery ? 'text-foreground' : 'text-wibe-secondary'}`}
+          >
+            {hasQuery ? searchQuery : EXPLORE_SEARCH_PLACEHOLDER}
+          </span>
+        </button>
+
+        {showMoodExplorer && !hasQuery && onMoodSelect && (
+          <MoodExplorerHero onMoodSelect={onMoodSelect} />
+        )}
+      </div>
     </section>
   );
 }

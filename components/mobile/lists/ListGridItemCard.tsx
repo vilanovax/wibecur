@@ -36,12 +36,12 @@ function ListGridItemCard({
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-wibe bg-wibe-card text-right shadow-sm transition-all lg:hover:border-primary/20 lg:hover:shadow-md">
+    <div className="flex flex-col overflow-hidden rounded-lg border border-wibe bg-wibe-card text-right shadow-sm transition-colors lg:hover:border-primary/20 lg:hover:shadow-md">
       <button
         type="button"
         onClick={() => onOpenAt(index)}
         aria-label={`رفتن به آیتم ${(index + 1).toLocaleString('fa-IR')}${item.title ? ` — ${item.title}` : ''}`}
-        className="block w-full text-right transition-all active:scale-[0.99]"
+        className="block w-full text-right transition-colors active:scale-[0.99]"
       >
         <div
           className={`relative overflow-hidden ${

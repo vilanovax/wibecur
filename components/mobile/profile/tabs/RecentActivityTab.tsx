@@ -183,7 +183,7 @@ export default function RecentActivityTab({
               <Link
                 href={listHref}
                 className={`
-                  block overflow-hidden rounded-xl transition-all duration-200
+                  block overflow-hidden rounded-xl transition-colors duration-200
                   active:scale-[0.99] active:shadow
                   ${isViral ? 'p-5 lg:p-4' : 'p-4 lg:p-3'}
                   ${isViral

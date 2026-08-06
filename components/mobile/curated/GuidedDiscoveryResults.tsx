@@ -138,7 +138,7 @@ function GuidedListCardLink({
       className="group block h-full transition-transform active:scale-[0.99]"
     >
       <article
-        className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-wibe-card shadow-sm transition-all lg:hover:-translate-y-0.5 lg:hover:shadow-md ${
+        className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-wibe-card shadow-sm transition-colors lg:hover:-translate-y-0.5 lg:hover:shadow-md ${
           featured ? 'border-primary/20 ring-1 ring-primary/10' : 'border-wibe'
         }`}
       >
@@ -203,7 +203,7 @@ function GuidedItemCardRow({
         });
         onNavigate?.();
       }}
-      className="group block rounded-2xl border border-wibe bg-wibe-card p-3.5 text-right transition-all active:scale-[0.99] hover:border-primary/25 hover:bg-primary/[0.03] lg:p-4"
+      className="group block rounded-2xl border border-wibe bg-wibe-card p-3.5 text-right transition-[colors,transform] active:scale-[0.99] hover:border-primary/25 hover:bg-primary/[0.03] lg:p-4"
     >
       <div className="flex items-start gap-3">
         <span

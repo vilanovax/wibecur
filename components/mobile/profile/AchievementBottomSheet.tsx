@@ -150,7 +150,7 @@ export default function AchievementBottomSheet({
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 space-y-6">
           {/* 2️⃣ Hero Badge Section */}
           <div
             className={`flex flex-col items-center py-8 rounded-2xl bg-gradient-to-b ${glowClass}`}

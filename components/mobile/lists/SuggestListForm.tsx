@@ -181,7 +181,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
     <>
       <BottomSheet isOpen={isOpen} onClose={onClose} title="پیشنهاد لیست">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-4">
             {/* Error Message */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">

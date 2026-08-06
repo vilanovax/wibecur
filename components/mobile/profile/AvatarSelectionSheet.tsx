@@ -154,7 +154,7 @@ export default function AvatarSelectionSheet({
             role="tab"
             aria-selected={tab === 'collection'}
             onClick={() => setTab('collection')}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 wibe-caption font-semibold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 wibe-caption font-semibold transition-colors ${
               tab === 'collection'
                 ? 'bg-white text-primary shadow-sm ring-1 ring-primary/10'
                 : 'text-wibe-secondary hover:text-foreground'
@@ -168,7 +168,7 @@ export default function AvatarSelectionSheet({
             role="tab"
             aria-selected={tab === 'upload'}
             onClick={() => setTab('upload')}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 wibe-caption font-semibold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 wibe-caption font-semibold transition-colors ${
               tab === 'upload'
                 ? 'bg-white text-primary shadow-sm ring-1 ring-primary/10'
                 : 'text-wibe-secondary hover:text-foreground'
@@ -196,7 +196,7 @@ export default function AvatarSelectionSheet({
                   onClick={() => handleSelectVibe(avatar)}
                   disabled={!unlocked}
                   aria-label={avatar.label}
-                  className={`group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2.5 transition-all ${
+                  className={`group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2.5 transition-colors ${
                     isActive || selected
                       ? 'border-primary/40 bg-primary/5 shadow-sm'
                       : 'border-transparent hover:border-wibe hover:bg-wibe-surface/70'

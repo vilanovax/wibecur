@@ -23,7 +23,7 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="group block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md"
+      className="group block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-[colors,transform] active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-200 lg:aspect-[16/10] lg:max-h-[200px]">
         <ListCoverImage

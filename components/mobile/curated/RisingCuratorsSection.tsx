@@ -35,7 +35,7 @@ export default function RisingCuratorsSection({ curators }: RisingCuratorsSectio
           <Link
             key={c.id}
             href={`/u/${c.username}`}
-            className="flex-shrink-0 w-[120px] rounded-[18px] bg-white border border-green-100 p-3 shadow-sm hover:shadow-md hover:border-green-200 transition-all"
+            className="flex-shrink-0 w-[120px] rounded-[18px] bg-white border border-green-100 p-3 shadow-sm hover:shadow-md hover:border-green-200 transition-colors"
           >
             <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 mx-auto">
               <ImageWithFallback

@@ -76,7 +76,7 @@ export default function BaseCommentForm({
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title={title} maxHeight="calc(100vh - 100px)">
       <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
-        <div className="flex-1 min-h-0 overflow-y-auto p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6">
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4" role="alert">
               {error}

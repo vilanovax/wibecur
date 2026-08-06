@@ -37,7 +37,7 @@ export default function ExploreSearchResults({ lists, query }: ExploreSearchResu
             <Link
               key={list.id}
               href={`/lists/${list.slug}`}
-              className="group flex flex-row-reverse gap-3 rounded-xl border border-wibe bg-wibe-card p-2.5 shadow-sm transition-all active:scale-[0.99] lg:p-3 lg:hover:shadow-md"
+              className="group flex flex-row-reverse gap-3 rounded-xl border border-wibe bg-wibe-card p-2.5 shadow-sm transition-[colors,transform] active:scale-[0.99] lg:p-3 lg:hover:shadow-md"
             >
               <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-gray-200 lg:h-20 lg:w-20">
                 <ImageWithFallback

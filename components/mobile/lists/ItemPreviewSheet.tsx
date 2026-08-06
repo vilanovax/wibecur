@@ -190,7 +190,7 @@ function PreviewActions({
     <Link
       href={`/items/${item.id}`}
       onClick={onClose}
-      className={`flex min-w-0 items-center justify-center rounded-xl bg-primary py-3 wibe-small font-semibold text-white shadow-sm transition-all hover:bg-primary-dark active:scale-[0.99] ${
+      className={`flex min-w-0 items-center justify-center rounded-xl bg-primary py-3 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark active:scale-[0.99] ${
         layout === 'inline' ? 'flex-1' : 'w-full'
       }`}
     >
@@ -204,7 +204,7 @@ function PreviewActions({
         href={externalUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-all active:scale-[0.99] ${
+        className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-[colors,transform] active:scale-[0.99] ${
           layout === 'inline' ? 'flex-1' : 'w-full'
         }`}
       >

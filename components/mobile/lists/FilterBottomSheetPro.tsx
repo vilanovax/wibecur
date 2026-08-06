@@ -33,15 +33,14 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'rising', label: 'در حال رشد' },
 ];
 
+/** حال‌وهوا — ترند/ذخیره در نوار browse mode هستند، اینجا تکرار نشوند */
 const VIBE_CHIPS: { value: VibeFilter; label: string }[] = [
-  { value: 'trending', label: '🔥 ترند' },
   { value: 'sleep', label: '🌙 قبل خواب' },
   { value: 'comedy', label: '😂 کمدی' },
   { value: 'family', label: '👨‍👩‍👧 خانوادگی' },
   { value: 'drama', label: '🎭 درام' },
   { value: 'calm_movie', label: '🎬 آرامش‌بخش' },
   { value: 'cafe', label: '☕ کافه دنج' },
-  { value: 'saved', label: '⭐ محبوب' },
 ];
 
 const CREATOR_OPTIONS: { value: CreatorType; label: string }[] = [
@@ -52,16 +51,6 @@ const CREATOR_OPTIONS: { value: CreatorType; label: string }[] = [
 ];
 
 const PRESETS: { id: string; label: string; apply: (state: FilterState) => FilterState }[] = [
-  {
-    id: 'popular',
-    label: '🔥 پرطرفدار',
-    apply: (s) => ({ ...s, sortBy: 'popular', vibes: new Set(['trending' as VibeFilter]) }),
-  },
-  {
-    id: 'foryou',
-    label: '✨ برای تو',
-    apply: (s) => ({ ...s, vibes: new Set(['saved' as VibeFilter]) }),
-  },
   {
     id: 'sleep',
     label: '🌙 قبل خواب',
@@ -120,8 +109,8 @@ export default function FilterBottomSheetPro({
   const [localState, setLocalState] = useState<FilterState>(filterState);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     categories: true,
-    sort: true,
-    vibe: true,
+    sort: false,
+    vibe: false,
     creator: false,
     itemCount: false,
     rating: false,
@@ -241,7 +230,7 @@ export default function FilterBottomSheetPro({
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-6 py-4">
           {/* Presets */}
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-5">
             {PRESETS.map((p) => (
@@ -322,7 +311,7 @@ export default function FilterBottomSheetPro({
                   key={value}
                   type="button"
                   onClick={() => toggleVibe(value)}
-                  className={`h-8 px-4 rounded-[20px] text-[13px] font-medium transition-all ${
+                  className={`h-8 px-4 rounded-[20px] text-[13px] font-medium transition-colors ${
                     localState.vibes.has(value)
                       ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
                       : 'bg-gray-50 border border-gray-200 text-gray-600'
@@ -346,7 +335,7 @@ export default function FilterBottomSheetPro({
                   key={opt.value}
                   type="button"
                   onClick={() => setLocalState((s) => ({ ...s, creatorType: opt.value }))}
-                  className={`h-8 px-4 rounded-[20px] text-[13px] font-medium transition-all ${
+                  className={`h-8 px-4 rounded-[20px] text-[13px] font-medium transition-colors ${
                     localState.creatorType === opt.value
                       ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
                       : 'bg-gray-50 border border-gray-200 text-gray-600'

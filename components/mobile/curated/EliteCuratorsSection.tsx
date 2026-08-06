@@ -42,7 +42,7 @@ export default function EliteCuratorsSection({ curators }: EliteCuratorsSectionP
           <Link
             key={c.id}
             href={`/u/${c.username}`}
-            className="flex-shrink-0 w-[140px] rounded-[18px] bg-white border border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-primary/20 transition-all"
+            className="flex-shrink-0 w-[140px] rounded-[18px] bg-white border border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-primary/20 transition-colors"
           >
             <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 mx-auto ring-2 ring-amber-200">
               <ImageWithFallback

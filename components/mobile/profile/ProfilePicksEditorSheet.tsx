@@ -47,7 +47,7 @@ interface ProfilePicksEditorSheetProps {
 }
 
 const CHIP_BASE =
-  'flex items-center gap-1.5 h-9 px-3 rounded-full wibe-caption font-medium whitespace-nowrap flex-shrink-0 transition-all active:scale-[0.98]';
+  'flex items-center gap-1.5 h-9 px-3 rounded-full wibe-caption font-medium whitespace-nowrap flex-shrink-0 transition-[colors,transform] active:scale-[0.98]';
 
 function categoryChipClass(isSelected: boolean) {
   return isSelected
@@ -436,7 +436,7 @@ export default function ProfilePicksEditorSheet({
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  className="h-full rounded-full bg-primary transition-colors duration-300"
                   style={{ width: `${fillPercent}%` }}
                 />
               </div>
@@ -513,7 +513,7 @@ export default function ProfilePicksEditorSheet({
                   {search ? 'نتیجه‌ای یافت نشد' : 'برای جستجو تایپ کن'}
                 </p>
               ) : (
-                <ul className="max-h-[220px] space-y-1.5 overflow-y-auto">
+                <ul className="max-h-[220px] space-y-1.5 overflow-y-auto overscroll-contain">
                   {browseItems.map((item) => {
                     const cid = item.catalogItemId;
                     if (!cid) return null;

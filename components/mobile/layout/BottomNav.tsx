@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Home, LayoutList, Compass, User } from 'lucide-react';
 import SiteFooter from '@/components/mobile/layout/SiteFooter';
+import { isNavItemActive } from '@/components/mobile/layout/consumer-nav-config';
 import { HOME_CREATE_SHEET_EVENT } from '@/lib/home-create-sheet';
 import { MOBILE_BOTTOM_NAV_SPACER_CLASS } from '@/lib/layout-tokens';
 
@@ -21,7 +22,7 @@ const NAV_ITEMS = [
   },
   {
     href: '/lists',
-    label: 'لیست',
+    label: 'لیست‌ها',
     icon: <LayoutList className="h-6 w-6" strokeWidth={2} />,
   },
   {
@@ -57,12 +58,12 @@ export default function BottomNav() {
         >
           <div className="flex items-center justify-around py-3 px-1">
             {NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = isNavItemActive(pathname, item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex min-w-[64px] flex-shrink-0 flex-col items-center justify-center px-2 py-2 ${
+                  className={`flex min-w-[64px] flex-shrink-0 flex-col items-center justify-center px-2 py-2 transition-colors ${
                     isActive ? 'text-primary' : 'text-gray-500'
                   }`}
                   aria-current={isActive ? 'page' : undefined}

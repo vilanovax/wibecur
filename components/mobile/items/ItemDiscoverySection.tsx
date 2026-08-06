@@ -228,7 +228,7 @@ export default function ItemDiscoverySection({
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all active:scale-[0.98] ${
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-[colors,transform] active:scale-[0.98] ${
                   activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE
                 }`}
               >

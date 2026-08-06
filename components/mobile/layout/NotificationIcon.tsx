@@ -359,7 +359,7 @@ export function NotificationSheet({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom,8px)]">
+        <div className="flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom,8px)]">
           {isLoading && notifications.length === 0 ? (
             <NotificationSkeleton />
           ) : notifications.length === 0 ? (

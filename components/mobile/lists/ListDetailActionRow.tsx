@@ -79,7 +79,7 @@ export default function ListDetailActionRow({
       <button
         type="button"
         onClick={onShare}
-        className={`flex shrink-0 items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-card font-semibold text-foreground shadow-sm transition-all hover:border-primary/30 active:scale-[0.99] ${
+        className={`flex shrink-0 items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-card font-semibold text-foreground shadow-sm transition-colors hover:border-primary/30 active:scale-[0.99] ${
           isOwner ? 'w-full py-3 wibe-small lg:min-w-[10rem] lg:w-auto' : 'h-12 w-12 lg:h-11'
         }`}
         aria-label="اشتراک‌گذاری"

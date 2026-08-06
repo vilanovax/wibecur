@@ -725,7 +725,7 @@ export default function SuggestItemSearch({
               return (
                 <li
                   key={item.id}
-                  className={`rounded-xl border bg-wibe-card overflow-hidden transition-all ${
+                  className={`rounded-xl border bg-wibe-card overflow-hidden transition-colors ${
                     isExpanded ? 'border-primary/30 ring-1 ring-primary/10' : 'border-wibe'
                   }`}
                 >

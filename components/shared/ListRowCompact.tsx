@@ -48,7 +48,7 @@ export default function ListRowCompact({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`flex gap-3 rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm transition-all active:scale-[0.99] lg:rounded-2xl lg:p-4 lg:hover:border-primary/20 lg:hover:shadow-md ${className}`}
+      className={`flex gap-3 rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm transition-colors active:scale-[0.99] lg:rounded-2xl lg:p-4 lg:hover:border-primary/20 lg:hover:shadow-md ${className}`}
     >
       <div className={`relative shrink-0 overflow-hidden bg-gray-200 ${thumbClass[thumb]}`}>
         <ListCoverImage

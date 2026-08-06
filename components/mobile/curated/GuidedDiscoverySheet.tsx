@@ -191,7 +191,7 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
                     key={opt.value}
                     type="button"
                     onClick={() => handleAnswer(opt.value)}
-                    className="rounded-2xl border border-wibe bg-wibe-card px-4 py-4 text-right wibe-small font-bold text-foreground transition-all hover:border-primary/35 hover:bg-primary/[0.04] active:scale-[0.99] lg:py-4.5"
+                    className="rounded-2xl border border-wibe bg-wibe-card px-4 py-4 text-right wibe-small font-bold text-foreground transition-colors hover:border-primary/35 hover:bg-primary/[0.04] active:scale-[0.99] lg:py-4.5"
                   >
                     {opt.label}
                   </button>

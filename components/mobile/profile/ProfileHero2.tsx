@@ -219,7 +219,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
             </div>
             <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
               <div
-                className="h-full rounded-full bg-primary transition-all duration-500"
+                className="h-full rounded-full bg-primary transition-colors duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

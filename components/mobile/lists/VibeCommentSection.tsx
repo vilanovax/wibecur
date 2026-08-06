@@ -167,7 +167,7 @@ function ReactionPills({
             disabled={isLoading}
             className={`
               inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-sm font-medium
-              transition-all duration-200 active:scale-[0.97] hover:scale-105
+              transition-colors duration-200 active:scale-[0.97] hover:scale-105
               ${isSelected
                 ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-gray-800'
@@ -498,7 +498,7 @@ function VibeCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
       >
         {placeholders.collapsed}
       </button>
@@ -512,7 +512,7 @@ function VibeCommentInput({
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxLength))}
           placeholder={isSuggestionMode ? placeholders.suggestion : placeholders.comment}
-          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none"
+          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
           rows={2}
           maxLength={maxLength}
           aria-describedby="comment-char-count"
@@ -520,9 +520,10 @@ function VibeCommentInput({
         <button
           type="submit"
           disabled={!canSubmit}
+          aria-label="ارسال نظر"
           className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7C3AED] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4" aria-hidden />
         </button>
       </div>
       <div className="flex items-center justify-between gap-2 px-1">

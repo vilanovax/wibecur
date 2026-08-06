@@ -134,7 +134,7 @@ export default function BookmarkButton({
       return (
         <Link
           href={loginHref}
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-all hover:border-primary hover:bg-primary/5"
+          className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-colors hover:border-primary hover:bg-primary/5"
           aria-label="ورود برای ذخیره لیست"
           title="ورود برای ذخیره لیست"
         >
@@ -146,7 +146,7 @@ export default function BookmarkButton({
     return (
       <Link
         href={loginHref}
-        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 font-semibold text-white shadow-sm transition-all hover:bg-primary-dark"
+        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
       >
         <Bookmark className="h-5 w-5" />
         <span>ورود برای ذخیره لیست</span>
@@ -172,7 +172,7 @@ export default function BookmarkButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all disabled:opacity-50 ${
+        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50 ${
           isBookmarked
             ? 'border-primary bg-primary/10 hover:bg-primary/15'
             : 'border-gray-200 bg-white hover:border-primary hover:bg-primary/5'
@@ -181,7 +181,7 @@ export default function BookmarkButton({
         title={isBookmarked ? 'ذخیره شده' : 'ذخیره لیست'}
       >
         <Bookmark
-          className={`h-5 w-5 transition-all ${
+          className={`h-5 w-5 transition-colors ${
             isBookmarked ? 'fill-primary text-primary' : 'text-gray-500'
           }`}
         />
@@ -195,7 +195,7 @@ export default function BookmarkButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`${sizeClasses[size]} flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 ${
+        className={`${sizeClasses[size]} flex items-center justify-center transition-[colors,transform] hover:scale-110 disabled:opacity-50 ${
           isBookmarked ? 'text-primary' : 'text-gray-600'
         }`}
         aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
@@ -215,7 +215,7 @@ export default function BookmarkButton({
       type="button"
       onClick={handleToggle}
       disabled={isLoading}
-      className={`${buttonSizeClasses[size]} flex w-full items-center justify-center gap-2 rounded-md font-semibold transition-all duration-300 disabled:opacity-50 ${
+      className={`${buttonSizeClasses[size]} flex w-full items-center justify-center gap-2 rounded-md font-semibold transition-colors duration-300 disabled:opacity-50 ${
         isBookmarked
           ? 'animate-saved-pulse border border-success/30 bg-success/10 text-success'
           : unsavedToneClasses

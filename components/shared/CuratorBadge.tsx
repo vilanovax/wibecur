@@ -52,7 +52,7 @@ export default function CuratorBadge({
         ${config.bgClass}
         ${sizeClass}
         ${glow ? config.glowClass : ''}
-        transition-all duration-200
+        transition-colors duration-200
         ${className}
       `}
       title={config.short}

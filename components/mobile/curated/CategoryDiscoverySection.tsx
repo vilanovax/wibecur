@@ -27,7 +27,7 @@ export default function CategoryDiscoverySection({ categories }: CategoryDiscove
           <Link
             key={cat.id}
             href={`/categories/${cat.slug ?? cat.id}`}
-            className="flex h-[72px] w-[88px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card px-2 shadow-sm transition-all active:scale-[0.98] lg:h-auto lg:w-full lg:min-h-[5.5rem] lg:px-3 lg:py-3 lg:hover:border-primary/25 lg:hover:shadow-sm"
+            className="flex h-[72px] w-[88px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card px-2 shadow-sm transition-[colors,transform] active:scale-[0.98] lg:h-auto lg:w-full lg:min-h-[5.5rem] lg:px-3 lg:py-3 lg:hover:border-primary/25 lg:hover:shadow-sm"
           >
             <span className="text-xl leading-none lg:text-2xl" aria-hidden>
               {cat.icon}

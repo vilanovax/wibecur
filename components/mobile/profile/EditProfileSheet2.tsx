@@ -52,7 +52,7 @@ const EDIT_TABS: { id: EditTab; label: string; icon: typeof User }[] = [
 type UsernameCheckStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 const inputClass =
-  'w-full h-11 px-3.5 rounded-xl border border-wibe/90 bg-white wibe-small text-foreground shadow-sm placeholder:text-wibe-secondary/55 focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary/40 transition-all';
+  'w-full h-11 px-3.5 rounded-xl border border-wibe/90 bg-white wibe-small text-foreground shadow-sm placeholder:text-wibe-secondary/55 focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary/40 transition-colors';
 
 function FieldLabel({
   htmlFor,
@@ -157,7 +157,7 @@ function EditTabBar({
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(id)}
-            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 wibe-caption font-semibold transition-all ${
+            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 wibe-caption font-semibold transition-colors ${
               selected
                 ? 'bg-white text-primary shadow-sm ring-1 ring-primary/10'
                 : 'text-wibe-secondary hover:text-foreground'
@@ -643,7 +643,7 @@ export default function EditProfileSheet2({
         type="button"
         onClick={handleSave}
         disabled={!canSave}
-        className="flex h-11 flex-[1.4] items-center justify-center gap-2 rounded-xl bg-primary wibe-small font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary/95 active:scale-[0.99] disabled:opacity-45"
+        className="flex h-11 flex-[1.4] items-center justify-center gap-2 rounded-xl bg-primary wibe-small font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary/95 active:scale-[0.99] disabled:opacity-45"
       >
         {isSaving ? (
           <>
@@ -740,7 +740,7 @@ export default function EditProfileSheet2({
                   <button
                     type="button"
                     onClick={() => setShowAvatarSheet(true)}
-                    className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-xl border border-primary/20 bg-white px-3.5 wibe-caption font-semibold text-primary shadow-sm transition-all hover:border-primary/35 hover:bg-primary/5"
+                    className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-xl border border-primary/20 bg-white px-3.5 wibe-caption font-semibold text-primary shadow-sm transition-colors hover:border-primary/35 hover:bg-primary/5"
                   >
                     <Camera className="h-3.5 w-3.5" />
                     تغییر آواتار
@@ -935,7 +935,7 @@ export default function EditProfileSheet2({
                       !newPassword ||
                       !confirmPassword
                     }
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary wibe-small font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary/95 disabled:opacity-45"
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary wibe-small font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary/95 disabled:opacity-45"
                   >
                     {isChangingPassword ? (
                       <>

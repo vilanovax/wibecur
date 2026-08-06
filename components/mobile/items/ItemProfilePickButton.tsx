@@ -114,7 +114,7 @@ export default function ItemProfilePickButton({
           type="button"
           onClick={handleToggle}
           disabled={loading}
-          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-all disabled:opacity-50 ${
+          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
             isPicked
               ? 'border-2 border-violet-600 bg-violet-600 shadow-md hover:bg-violet-700'
               : isHero
@@ -139,7 +139,7 @@ export default function ItemProfilePickButton({
         type="button"
         onClick={handleToggle}
         disabled={loading}
-        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-caption font-semibold transition-all disabled:opacity-50 active:scale-[0.98] ${
+        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-caption font-semibold transition-colors disabled:opacity-50 active:scale-[0.98] ${
           isPicked
             ? 'bg-violet-600 text-white shadow-sm hover:bg-violet-700'
             : isHero

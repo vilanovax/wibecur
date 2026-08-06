@@ -250,9 +250,13 @@ export default function PersonalListSettingsModal({
                 </p>
               </div>
               <button
+                type="button"
+                role="switch"
+                aria-checked={list.isPublic}
+                aria-label={list.isPublic ? 'خصوصی کردن لیست' : 'عمومی کردن لیست'}
                 onClick={handleTogglePublic}
                 disabled={isToggling}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   list.isPublic ? 'bg-primary' : 'bg-gray-200'
                 } ${isToggling ? 'opacity-50' : ''}`}
               >
