@@ -6,7 +6,6 @@
  * - Vercel Analytics: فقط روی deploy وercel
  */
 
-import { track as vercelTrack } from '@vercel/analytics';
 import { trackUmamiEvent } from '@/lib/umami';
 
 export type AnalyticsEvent =
@@ -58,11 +57,16 @@ export function track(event: AnalyticsEvent, data?: AnalyticsData) {
   trackUmamiEvent(event, data);
 
   if (process.env.NEXT_PUBLIC_VERCEL !== '1') return;
-  try {
-    vercelTrack(event, data);
-  } catch {
-    // ignore
-  }
+  // Lazy — keep @vercel/analytics out of the initial home/shared graph.
+  void import('@vercel/analytics')
+    .then(({ track: vercelTrack }) => {
+      try {
+        vercelTrack(event, data);
+      } catch {
+        // ignore
+      }
+    })
+    .catch(() => {});
 }
 
 export type ListAnalyticsContext = {

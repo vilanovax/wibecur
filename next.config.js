@@ -121,6 +121,13 @@ const sentryConfig = {
   silent: !process.env.CI,
   widenClientFileUpload: true,
   hideSourceMaps: true,
+  // Trim optional Replay capture paths when the integration eventually loads.
+  webpack: {
+    treeshake: {
+      excludeReplayIframe: true,
+      excludeReplayShadowDOM: true,
+    },
+  },
 };
 if (process.env.SENTRY_AUTH_TOKEN) {
   sentryConfig.authToken = process.env.SENTRY_AUTH_TOKEN;

@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useEffect, useState, type ComponentType } from 'react';
 import { Home, LayoutList, Compass, User } from 'lucide-react';
 import SiteFooter from '@/components/mobile/layout/SiteFooter';
 import {
@@ -13,9 +12,10 @@ import {
 import { HOME_CREATE_SHEET_EVENT } from '@/lib/home-create-sheet';
 import { MOBILE_BOTTOM_NAV_SPACER_CLASS } from '@/lib/layout-tokens';
 
-const CreateSheet = dynamic(() => import('@/components/mobile/home/CreateSheet'), {
-  ssr: false,
-});
+type CreateSheetProps = {
+  isOpen: boolean;
+  onClose: () => void;
+};
 
 const NAV_ITEMS = [
   {
@@ -43,12 +43,27 @@ const NAV_ITEMS = [
 export default function BottomNav() {
   const pathname = usePathname();
   const [createOpen, setCreateOpen] = useState(false);
+  const [CreateSheet, setCreateSheet] = useState<ComponentType<CreateSheetProps> | null>(
+    null
+  );
 
   useEffect(() => {
     const open = () => setCreateOpen(true);
     window.addEventListener(HOME_CREATE_SHEET_EVENT, open);
     return () => window.removeEventListener(HOME_CREATE_SHEET_EVENT, open);
   }, []);
+
+  // Import only when opened — avoids next/dynamic prefetch of CreateSheet on home.
+  useEffect(() => {
+    if (!createOpen || CreateSheet) return;
+    let cancelled = false;
+    void import('@/components/mobile/home/CreateSheet').then((mod) => {
+      if (!cancelled) setCreateSheet(() => mod.default);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [createOpen, CreateSheet]);
 
   return (
     <>
@@ -80,7 +95,7 @@ export default function BottomNav() {
           </div>
         </nav>
       </div>
-      {createOpen ? (
+      {createOpen && CreateSheet ? (
         <CreateSheet isOpen={createOpen} onClose={() => setCreateOpen(false)} />
       ) : null}
     </>
