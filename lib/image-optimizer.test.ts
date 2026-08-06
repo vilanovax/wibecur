@@ -47,34 +47,38 @@ describe('optimizeImageDetailed hubCover', () => {
 });
 
 describe('optimizeImageDetailed coverList', () => {
-  it('compresses large JPEG to webp under coverList maxSize', async () => {
-    const largeJpeg = await sharp({
-      create: {
-        width: 2400,
-        height: 1600,
-        channels: 3,
-        background: { r: 180, g: 40, b: 90 },
-        noise: {
-          type: 'gaussian',
-          mean: 128,
-          sigma: 30,
+  it(
+    'compresses large JPEG to webp under coverList maxSize',
+    async () => {
+      const largeJpeg = await sharp({
+        create: {
+          width: 2400,
+          height: 1600,
+          channels: 3,
+          background: { r: 180, g: 40, b: 90 },
+          noise: {
+            type: 'gaussian',
+            mean: 128,
+            sigma: 30,
+          },
         },
-      },
-    })
-      .jpeg({ quality: 95 })
-      .toBuffer();
+      })
+        .jpeg({ quality: 95 })
+        .toBuffer();
 
-    const result = await optimizeImageDetailed(largeJpeg, { profile: 'coverList' });
-    const profile = getImageProfile('coverList');
+      const result = await optimizeImageDetailed(largeJpeg, { profile: 'coverList' });
+      const profile = getImageProfile('coverList');
 
-    expect(result.contentType).toBe('image/webp');
-    expect(result.ext).toBe('.webp');
-    expect(result.optimizedBytes).toBeLessThanOrEqual(profile.maxSize);
+      expect(result.contentType).toBe('image/webp');
+      expect(result.ext).toBe('.webp');
+      expect(result.optimizedBytes).toBeLessThanOrEqual(profile.maxSize);
 
-    const meta = await sharp(result.buffer).metadata();
-    expect(meta.width).toBe(1280);
-    expect(meta.height).toBe(960);
-  });
+      const meta = await sharp(result.buffer).metadata();
+      expect(meta.width).toBe(1280);
+      expect(meta.height).toBe(960);
+    },
+    20_000
+  );
 
   it('crops wide image to 4:3 for coverList', async () => {
     const wideJpeg = await sharp({

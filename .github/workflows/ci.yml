@@ -32,6 +32,9 @@ jobs:
 
       - name: Test
         run: npm run test:run
+        env:
+          # Modules that import prisma at load time need a non-empty URL
+          DATABASE_URL: postgresql://user:pass@localhost:5432/wibecur
 
       - name: Build
         run: npm run build
