@@ -7,7 +7,7 @@ export default function BottomCTASection() {
   return (
     <section className="px-4 pb-12 pt-2" aria-label="ساخت لیست">
       <Link
-        href="/user-lists?openCreate=1"
+        href="/explore?openCreate=1"
         className="block rounded-[24px] overflow-hidden p-6 bg-gradient-to-br from-primary via-primary-light to-secondary text-white shadow-vibe-hero hover:shadow-vibe-floating active:scale-[0.99] transition-colors"
       >
         <p className="text-[18px] font-bold mb-1 flex items-center gap-2">

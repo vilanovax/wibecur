@@ -17,6 +17,9 @@
 
 /* ─── Wibe Design System — CSS Variables (sync with lib/design-tokens.ts) ─ */
 :root {
+  /* Consumer deliberately light-first; .dark tokens reserved */
+  color-scheme: light;
+
   /* Brand */
   /* --font-vazirmatn از next/font/local روی <html> ست می‌شود */
   --primary: #6366F1;
@@ -87,7 +90,7 @@
   --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark mode tokens (when enabled via .dark on html) */
+/* Dark tokens reserved — consumer ships light-only until PRODUCT decision flips */
 .dark {
   --color-bg: #111827;
   --color-surface: #1F2937;

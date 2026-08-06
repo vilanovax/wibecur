@@ -10,7 +10,7 @@ const WIBE_SITE_URL = 'https://wibe.ir';
 const FOOTER_LINKS = [
   { href: '/', label: 'خانه' },
   { href: '/lists', label: 'لیست‌ها' },
-  { href: '/user-lists', label: 'اکسپلور' },
+  { href: '/explore', label: 'اکسپلور' },
   { href: '/categories', label: 'دسته‌ها' },
   { href: '/profile', label: 'پروفایل' },
 ] as const;

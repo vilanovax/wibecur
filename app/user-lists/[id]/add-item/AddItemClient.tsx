@@ -84,7 +84,7 @@ function availabilityChipClass(isSelected: boolean, tone: 'default' | 'success')
 }
 
 const SELECT_CLASS =
-  'px-3 py-2 rounded-md border border-wibe bg-wibe-surface wibe-small text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none';
+  'px-3 py-2 rounded-md border border-wibe bg-wibe-surface wibe-small text-foreground focus-visible:ring-2 focus-visible:ring-primary/20 focus:border-primary outline-none';
 
 function findExistingEntry(
   item: Item,
@@ -476,7 +476,7 @@ export default function AddItemClient({
               placeholder="جستجو در عنوان، توضیح یا لیست مبدأ..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full rounded-lg border border-wibe bg-wibe-surface py-2.5 pe-10 ps-10 wibe-small outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-lg border border-wibe bg-wibe-surface py-2.5 pe-10 ps-10 wibe-small outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
             />
             {searchInput && (
               <button

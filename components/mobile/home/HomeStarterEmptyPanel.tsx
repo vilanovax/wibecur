@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Bookmark, Sparkles } from 'lucide-react';
+import { Bookmark, Sparkles, Pin } from 'lucide-react';
 import type { HomeListData } from '@/types/home-data';
 import HomeGridListCard from './HomeGridListCard';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { openHomeCreateSheet } from '@/lib/home-create-sheet';
+import { ACTIVATION } from '@/lib/activation-copy';
 
 type Props = {
   lists: HomeListData[];
@@ -19,37 +20,41 @@ export default function HomeStarterEmptyPanel({
   variant = 'foryou',
 }: Props) {
   const preview = lists.slice(0, 4);
+  const forYou = ACTIVATION.forYouEmpty;
+  const saved = ACTIVATION.savedEmpty;
 
   const copy =
     variant === 'saved'
       ? {
-          icon: '📌',
-          title: 'هنوز چیزی ذخیره نکردی',
-          description: 'از همین لیست‌های محبوب شروع کن — با یک ذخیره، فیدت شخصی‌تر می‌شود.',
-          primary: 'دیدن لیست‌های ترند',
-          primaryHref: '/lists?mode=trending',
-          secondary: isGuest ? 'ورود برای ذخیره' : 'اولین لیستت را بساز',
+          Icon: Pin,
+          title: saved.title,
+          description: saved.description,
+          primary: saved.primary,
+          primaryHref: saved.primaryHref,
+          secondary: isGuest ? saved.guestSecondary : saved.userSecondary,
         }
       : {
-          icon: '✨',
-          title: isGuest ? 'برای شروع کاوش کن' : 'چند لیست انتخاب کن',
-          description: isGuest
-            ? 'لیست‌های کیوریتد را ببین و بعد از ورود، ذخیره کن تا پیشنهاد شخصی بگیری.'
-            : 'چند لیست ذخیره کن تا پیشنهادات دقیق‌تر بر اساس سلیقه‌ات ببینی.',
-          primary: 'مشاهده همه لیست‌ها',
-          primaryHref: '/lists',
-          secondary: isGuest ? 'ورود' : 'ساخت اولین لیست',
+          Icon: Sparkles,
+          title: isGuest ? forYou.guestTitle : forYou.userTitle,
+          description: isGuest ? forYou.guestDescription : forYou.userDescription,
+          primary: forYou.primary,
+          primaryHref: forYou.primaryHref,
+          secondary: isGuest ? forYou.guestSecondary : forYou.userSecondary,
         };
 
+  const Icon = copy.Icon;
+
   return (
-    <div className="mx-4 rounded-2xl border border-wibe bg-wibe-card p-4 lg:mx-0 lg:p-5">
+    <div className="mx-4 rounded-2xl border border-dashed border-wibe bg-wibe-card/80 p-4 lg:mx-0 lg:p-5">
       <div className="flex items-start gap-3">
-        <span className="text-2xl leading-none" aria-hidden>
-          {copy.icon}
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="wibe-body font-semibold text-foreground">{copy.title}</h3>
-          <p className="mt-1 wibe-small leading-relaxed text-wibe-secondary">{copy.description}</p>
+          <h3 className="text-balance wibe-h3 text-foreground">{copy.title}</h3>
+          <p className="mt-1.5 text-pretty wibe-small leading-relaxed text-wibe-secondary">
+            {copy.description}
+          </p>
         </div>
       </div>
 
@@ -71,15 +76,15 @@ export default function HomeStarterEmptyPanel({
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Link
           href={copy.primaryHref}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 wibe-small font-semibold text-white hover:bg-primary-dark"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
         >
-          <Sparkles className="h-4 w-4" />
+          <Sparkles className="h-4 w-4" aria-hidden />
           {copy.primary}
         </Link>
         {isGuest ? (
           <Link
             href="/login?callbackUrl=%2F&source=home_empty"
-            className="inline-flex items-center rounded-lg border border-wibe px-4 py-2 wibe-small font-medium text-foreground hover:border-primary/30"
+            className="inline-flex items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 wibe-small font-medium text-foreground transition-colors hover:border-primary/30"
           >
             {copy.secondary}
           </Link>
@@ -87,7 +92,7 @@ export default function HomeStarterEmptyPanel({
           <button
             type="button"
             onClick={openHomeCreateSheet}
-            className="inline-flex items-center rounded-lg border border-wibe px-4 py-2 wibe-small font-medium text-foreground hover:border-primary/30"
+            className="inline-flex items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 wibe-small font-medium text-foreground transition-colors hover:border-primary/30"
           >
             {copy.secondary}
           </button>
@@ -96,8 +101,8 @@ export default function HomeStarterEmptyPanel({
 
       {variant === 'saved' ? (
         <p className="mt-3 flex items-center gap-1 wibe-caption text-wibe-secondary">
-          <Bookmark className="h-3.5 w-3.5 text-primary" />
-          ذخیره‌ها در پروفایلت هم قابل دسترسی‌اند
+          <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
+          {saved.footer}
         </p>
       ) : null}
     </div>

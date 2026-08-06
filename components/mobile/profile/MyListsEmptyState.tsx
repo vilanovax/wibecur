@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-import { ListPlus, Sparkles } from 'lucide-react';
+import { ListPlus } from 'lucide-react';
+import WibeEmptyState from '@/components/shared/WibeEmptyState';
 
 interface MyListsEmptyStateProps {
   message: string;
@@ -15,43 +15,26 @@ export default function MyListsEmptyState({
   onCreate,
 }: MyListsEmptyStateProps) {
   return (
-    <div className="rounded-xl border border-dashed border-wibe bg-wibe-card/60 px-4 py-8 text-center lg:mx-auto lg:max-w-md lg:py-6">
-      <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary lg:h-12 lg:w-12">
-        <ListPlus className="h-7 w-7 lg:h-6 lg:w-6" strokeWidth={1.75} />
-      </div>
-      <h3 className="wibe-h3 text-foreground">{message}</h3>
-      <p className="mt-2 wibe-small text-wibe-secondary leading-relaxed max-w-[260px] mx-auto">
-        اولین لیستت رو بساز و آیتم‌های مورد علاقه‌ات رو جمع کن
-      </p>
-      {showCreate && (
-        <div className="mt-5 flex flex-col items-center gap-2.5">
-          {onCreate ? (
-            <button
-              type="button"
-              onClick={onCreate}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-primary text-white rounded-lg wibe-small font-semibold shadow-sm active:scale-[0.98] transition-transform"
-            >
-              <ListPlus className="w-4 h-4" />
-              ایجاد لیست جدید
-            </button>
-          ) : (
-            <Link
-              href="/user-lists?openCreate=1"
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-primary text-white rounded-lg wibe-small font-semibold shadow-sm active:scale-[0.98] transition-transform"
-            >
-              <ListPlus className="w-4 h-4" />
-              ایجاد لیست جدید
-            </Link>
-          )}
-          <Link
-            href="/lists"
-            className="inline-flex items-center gap-1 text-primary wibe-caption font-medium hover:underline"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            الهام از لیست‌های دیگران
-          </Link>
-        </div>
-      )}
-    </div>
+    <WibeEmptyState
+      className="lg:mx-auto lg:max-w-md"
+      icon={<ListPlus strokeWidth={1.75} aria-hidden />}
+      title={message}
+      description="اولین لیستت را بساز و آیتم‌های مورد علاقه‌ات را جمع کن"
+      primaryAction={
+        showCreate
+          ? onCreate
+            ? { label: 'ایجاد لیست جدید', onClick: onCreate }
+            : { label: 'ایجاد لیست جدید', href: '/explore?openCreate=1' }
+          : undefined
+      }
+      secondaryAction={
+        showCreate
+          ? {
+              label: 'الهام از لیست‌های دیگران',
+              href: '/lists',
+            }
+          : undefined
+      }
+    />
   );
 }

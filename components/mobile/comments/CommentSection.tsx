@@ -7,6 +7,7 @@ import { Loader2, ChevronDown, Send } from 'lucide-react';
 import CommentItem from './CommentItem';
 import Toast from '@/components/shared/Toast';
 import CommentReportModal from './CommentReportModal';
+import { usePreferDesktopAutofocus } from '@/lib/hooks/usePreferDesktopAutofocus';
 import {
   COMMENTS_INITIAL_VISIBLE,
   COMMENTS_LOAD_MORE_STEP,
@@ -79,6 +80,7 @@ function ItemCommentInput({
   maxCommentLength: number;
 }) {
   const [content, setContent] = useState('');
+  const preferDesktopAutofocus = usePreferDesktopAutofocus();
   const trimmedLength = content.trim().length;
   const warnThreshold = Math.floor(maxCommentLength * 0.8);
   const isNearLimit = content.length >= warnThreshold;
@@ -98,7 +100,7 @@ function ItemCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
       >
         نظرت درباره این آیتم چیه؟
       </button>
@@ -116,7 +118,7 @@ function ItemCommentInput({
           rows={2}
           maxLength={maxCommentLength}
           aria-describedby="item-comment-char-count"
-          autoFocus
+          autoFocus={preferDesktopAutofocus}
         />
         <button
           type="submit"

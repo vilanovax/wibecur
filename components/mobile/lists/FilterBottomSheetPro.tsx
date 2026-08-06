@@ -81,8 +81,8 @@ function AccordionSection({
         onClick={onToggle}
         className="w-full flex items-center justify-between py-4 text-right"
       >
-        <span className="text-[16px] font-semibold text-gray-900">{title}</span>
-        {open ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+        <span className="wibe-body font-semibold text-foreground">{title}</span>
+        {open ? <ChevronUp className="w-5 h-5 text-wibe-secondary" /> : <ChevronDown className="w-5 h-5 text-wibe-secondary" />}
       </button>
       {open && <div className="pb-4 space-y-3">{children}</div>}
     </div>
@@ -203,18 +203,18 @@ export default function FilterBottomSheetPro({
             className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
             aria-label="بستن"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-wibe-secondary" />
           </button>
           <div className="flex-1 text-center">
-            <h2 className="text-[18px] font-bold text-gray-900">فیلتر لیست‌ها</h2>
-            <p className="text-[13px] text-gray-500 mt-0.5">
+            <h2 className="wibe-h3 font-bold text-foreground">فیلتر لیست‌ها</h2>
+            <p className="wibe-caption text-wibe-secondary mt-0.5">
               {activeCount > 0 ? `${activeCount} فیلتر فعال` : 'بدون فیلتر'}
             </p>
           </div>
           {canReset && (
             <button
               onClick={handleReset}
-              className="text-[13px] font-medium text-primary"
+              className="wibe-caption font-medium text-primary"
             >
               پاک کردن
             </button>
@@ -224,7 +224,7 @@ export default function FilterBottomSheetPro({
 
         {/* Live Result */}
         <div className="px-6 py-3 bg-primary/5 flex-shrink-0">
-          <p className="text-[14px] font-medium text-gray-700">
+          <p className="wibe-small font-medium text-foreground">
             {resultCount} لیست مطابق انتخاب شما
           </p>
         </div>
@@ -238,7 +238,7 @@ export default function FilterBottomSheetPro({
                 key={p.id}
                 type="button"
                 onClick={() => applyPreset(p)}
-                className="flex-shrink-0 h-9 px-4 rounded-[20px] bg-gray-100 text-gray-700 text-[13px] font-medium hover:bg-gray-200 transition-colors"
+                className="flex-shrink-0 h-9 px-4 rounded-[20px] bg-gray-100 text-foreground wibe-caption font-medium hover:bg-gray-200 transition-colors"
               >
                 {p.label}
               </button>
@@ -258,7 +258,7 @@ export default function FilterBottomSheetPro({
                 onChange={() => setLocalState((s) => ({ ...s, categories: new Set() }))}
                 className="w-5 h-5 rounded border-gray-300 text-primary"
               />
-              <span className="text-[14px] text-gray-700">همه دسته‌ها</span>
+              <span className="wibe-small text-foreground">همه دسته‌ها</span>
             </label>
             {activeCategories.map((cat) => (
               <label
@@ -271,7 +271,7 @@ export default function FilterBottomSheetPro({
                   onChange={() => toggleCategory(cat.id)}
                   className="w-5 h-5 rounded border-gray-300 text-primary"
                 />
-                <span className="text-[14px] text-gray-700">{cat.icon} {cat.name}</span>
+                <span className="wibe-small text-foreground">{cat.icon} {cat.name}</span>
               </label>
             ))}
           </AccordionSection>
@@ -294,7 +294,7 @@ export default function FilterBottomSheetPro({
                   onChange={() => setLocalState((s) => ({ ...s, sortBy: opt.value }))}
                   className="w-4 h-4 border-gray-300 text-primary"
                 />
-                <span className="text-[14px] text-gray-700">{opt.label}</span>
+                <span className="wibe-small text-foreground">{opt.label}</span>
               </label>
             ))}
           </AccordionSection>
@@ -311,10 +311,10 @@ export default function FilterBottomSheetPro({
                   key={value}
                   type="button"
                   onClick={() => toggleVibe(value)}
-                  className={`h-8 px-4 rounded-[20px] text-[13px] font-medium transition-colors ${
+                  className={`h-8 px-4 rounded-[20px] wibe-caption font-medium transition-colors ${
                     localState.vibes.has(value)
                       ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
-                      : 'bg-gray-50 border border-gray-200 text-gray-600'
+                      : 'bg-gray-50 border border-gray-200 text-wibe-secondary'
                   }`}
                 >
                   {label}
@@ -335,10 +335,10 @@ export default function FilterBottomSheetPro({
                   key={opt.value}
                   type="button"
                   onClick={() => setLocalState((s) => ({ ...s, creatorType: opt.value }))}
-                  className={`h-8 px-4 rounded-[20px] text-[13px] font-medium transition-colors ${
+                  className={`h-8 px-4 rounded-[20px] wibe-caption font-medium transition-colors ${
                     localState.creatorType === opt.value
                       ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
-                      : 'bg-gray-50 border border-gray-200 text-gray-600'
+                      : 'bg-gray-50 border border-gray-200 text-wibe-secondary'
                   }`}
                 >
                   {opt.label}
@@ -354,7 +354,7 @@ export default function FilterBottomSheetPro({
             onToggle={() => toggleSection('itemCount')}
           >
             <div className="space-y-3">
-              <div className="flex justify-between text-[14px] text-gray-600">
+              <div className="flex justify-between wibe-small text-wibe-secondary">
                 <span>حداقل {localState.minItemCount} آیتم</span>
               </div>
               <input
@@ -367,7 +367,7 @@ export default function FilterBottomSheetPro({
                 }
                 className="w-full h-2 bg-gray-200 rounded-full accent-primary"
               />
-              <div className="flex justify-between text-xs text-gray-400">
+              <div className="flex justify-between text-xs text-wibe-secondary">
                 <span>۰</span>
                 <span>۱۰۰</span>
               </div>
@@ -402,7 +402,7 @@ export default function FilterBottomSheetPro({
                 </button>
               ))}
             </div>
-            <p className="text-[13px] text-gray-500 mt-2">
+            <p className="wibe-caption text-wibe-secondary mt-2">
               {localState.minRating > 0 ? `${localState.minRating}+ ستاره` : 'بدون حد'}
             </p>
           </AccordionSection>
@@ -413,7 +413,7 @@ export default function FilterBottomSheetPro({
           <button
             type="button"
             onClick={handleApply}
-            className="w-full h-14 rounded-[20px] bg-gradient-to-r from-primary to-primary-dark text-white font-semibold text-[16px] flex items-center justify-center shadow-lg hover:opacity-95 transition-opacity"
+            className="w-full h-14 rounded-[20px] bg-gradient-to-r from-primary to-primary-dark text-white font-semibold wibe-body flex items-center justify-center shadow-lg hover:opacity-95 transition-opacity"
           >
             اعمال فیلتر ({resultCount} نتیجه)
           </button>

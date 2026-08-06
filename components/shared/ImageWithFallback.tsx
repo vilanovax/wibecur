@@ -71,6 +71,7 @@ export default function ImageWithFallback({
   className = '',
   fallbackIcon = '📋',
   fallbackClassName = '',
+  placeholderSize = 'cover',
   priority = false,
   categorySlug,
   listSlug,
@@ -220,14 +221,22 @@ export default function ImageWithFallback({
     );
   }
 
+  // ابعاد intrinsic برای کاهش CLS وقتی والد با CSS اندازه می‌دهد.
+  // displaySrc اینجا همیشه truthy است (بالا early-return روی خالی).
+  const intrinsicW = width ?? (placeholderSize === 'square' ? 400 : 600);
+  const intrinsicH = height ?? (placeholderSize === 'square' ? 400 : 400);
+
   return (
     <img
       src={displaySrc}
       alt={alt}
+      width={intrinsicW}
+      height={intrinsicH}
       className={className}
       onError={handleError}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : undefined}
+      decoding="async"
       referrerPolicy="no-referrer"
     />
   );

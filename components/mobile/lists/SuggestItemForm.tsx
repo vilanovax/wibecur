@@ -452,7 +452,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   value={selectedCategoryId}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
                 >
                   <option value="">یک دسته انتخاب کنید</option>
                   {categories.map((category) => (
@@ -484,7 +484,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                     value={formData.listId}
                     onChange={handleListChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
                   >
                     <option value="">یک لیست انتخاب کنید</option>
                     {filteredLists.map((list) => (
@@ -526,7 +526,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
                 placeholder="عنوان آیتم را وارد کنید"
               />
             </div>
@@ -558,7 +558,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none resize-none"
                 placeholder="توضیحات آیتم (اختیاری)"
               />
             </div>
@@ -673,7 +673,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 name="externalUrl"
                 value={formData.externalUrl}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
                 placeholder="https://example.com (اختیاری)"
               />
             </div>

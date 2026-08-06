@@ -52,7 +52,7 @@ const EDIT_TABS: { id: EditTab; label: string; icon: typeof User }[] = [
 type UsernameCheckStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 const inputClass =
-  'w-full h-11 px-3.5 rounded-xl border border-wibe/90 bg-white wibe-small text-foreground shadow-sm placeholder:text-wibe-secondary/55 focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary/40 transition-colors';
+  'w-full h-11 px-3.5 rounded-xl border border-wibe/90 bg-white wibe-small text-foreground shadow-sm placeholder:text-wibe-secondary/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 focus:border-primary/40 transition-colors';
 
 function FieldLabel({
   htmlFor,
@@ -621,10 +621,10 @@ export default function EditProfileSheet2({
 
   const usernameInputBorder =
     usernameStatus === 'taken' || usernameStatus === 'invalid'
-      ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+      ? 'border-red-300 focus:border-red-400 focus-visible:ring-red-200'
       : usernameStatus === 'available'
-        ? 'border-emerald-300 focus:border-emerald-400 focus:ring-emerald-200'
-        : 'border-wibe/90 focus:border-primary/40 focus:ring-primary/15';
+        ? 'border-emerald-300 focus:border-emerald-400 focus-visible:ring-emerald-200'
+        : 'border-wibe/90 focus:border-primary/40 focus-visible:ring-primary/15';
 
   const subtitle =
     activeTab === 'profile'
@@ -860,7 +860,7 @@ export default function EditProfileSheet2({
                     placeholder="چند خط درباره خودت بنویس…"
                     rows={3}
                     dir="rtl"
-                    className="w-full min-h-[96px] resize-none rounded-xl border border-wibe/90 bg-white px-3.5 py-2.5 text-right wibe-small text-foreground shadow-sm placeholder:text-wibe-secondary/55 focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/15"
+                    className="w-full min-h-[96px] resize-none rounded-xl border border-wibe/90 bg-white px-3.5 py-2.5 text-right wibe-small text-foreground shadow-sm placeholder:text-wibe-secondary/55 focus:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
                   />
                   <p className="mt-2 text-right wibe-caption text-wibe-secondary">
                     در پروفایل عمومی نمایش داده می‌شود

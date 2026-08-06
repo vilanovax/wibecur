@@ -138,7 +138,7 @@ export default function CuratedLandingPageClient({
     if (searchParams.get('openCreate') === '1') {
       setIsCreateFormOpen(true);
       if (typeof window !== 'undefined') {
-        window.history.replaceState({}, '', '/user-lists');
+        window.history.replaceState({}, '', '/explore');
       }
     }
   }, [searchParams]);

@@ -6,7 +6,10 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Home, LayoutList, Compass, User } from 'lucide-react';
 import SiteFooter from '@/components/mobile/layout/SiteFooter';
-import { isNavItemActive } from '@/components/mobile/layout/consumer-nav-config';
+import {
+  EXPLORE_HREF,
+  isNavItemActive,
+} from '@/components/mobile/layout/consumer-nav-config';
 import { HOME_CREATE_SHEET_EVENT } from '@/lib/home-create-sheet';
 import { MOBILE_BOTTOM_NAV_SPACER_CLASS } from '@/lib/layout-tokens';
 
@@ -26,7 +29,7 @@ const NAV_ITEMS = [
     icon: <LayoutList className="h-6 w-6" strokeWidth={2} />,
   },
   {
-    href: '/user-lists',
+    href: EXPLORE_HREF,
     label: 'اکسپلور',
     icon: <Compass className="h-6 w-6" strokeWidth={2} />,
   },

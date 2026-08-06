@@ -80,7 +80,7 @@ function PreferenceToggle({
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-5 w-5 shrink-0 rounded border-wibe text-primary focus:ring-primary/30"
+        className="h-5 w-5 shrink-0 rounded border-wibe text-primary focus-visible:ring-primary/30"
       />
     </label>
   );

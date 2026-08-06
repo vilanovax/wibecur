@@ -258,7 +258,7 @@ export default function UserListsPageClient({
             placeholder="جستجو در لیست‌ها..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-3 pr-12 bg-white rounded-2xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 pr-12 bg-white rounded-2xl border border-gray-200 focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 outline-none transition-all"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
             🔍

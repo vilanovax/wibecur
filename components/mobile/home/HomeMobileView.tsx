@@ -20,7 +20,7 @@ type HomeMobileViewProps = {
 
 /**
  * First viewport: start strip (در صورت نیاز) + هیرو.
- * دسته و تیزر اکسپلور زیر fold — مود کامل فقط در /user-lists.
+ * دسته و تیزر اکسپلور زیر fold — مود کامل فقط در /explore.
  */
 export default function HomeMobileView({
   ssrFeaturedId,

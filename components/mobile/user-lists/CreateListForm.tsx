@@ -6,6 +6,7 @@ import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
 import { track } from '@/lib/analytics';
 import { dispatchListsUpdated } from '@/lib/profile-events';
+import { usePreferDesktopAutofocus } from '@/lib/hooks/usePreferDesktopAutofocus';
 
 interface CreateListFormProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
   const [toastMessage, setToastMessage] = useState('');
   const [maxPersonalLists, setMaxPersonalLists] = useState(3);
   const [currentListsCount, setCurrentListsCount] = useState(0);
+  const preferDesktopAutofocus = usePreferDesktopAutofocus();
 
   const atLimit = currentListsCount >= maxPersonalLists;
   const remaining = Math.max(0, maxPersonalLists - currentListsCount);
@@ -170,11 +172,11 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
                   setTitle(e.target.value);
                   setError('');
                 }}
-                className="w-full h-11 px-3 rounded-lg border border-wibe bg-white wibe-small text-foreground placeholder:text-wibe-secondary/70 focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+                className="w-full h-11 px-3 rounded-lg border border-wibe bg-white wibe-small text-foreground placeholder:text-wibe-secondary/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
                 placeholder="مثلاً: فیلم‌های آخر هفته"
                 required
                 disabled={isLoading || atLimit}
-                autoFocus
+                autoFocus={preferDesktopAutofocus}
               />
             </div>
 

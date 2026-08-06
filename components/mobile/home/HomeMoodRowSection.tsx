@@ -154,7 +154,7 @@ export default function HomeMoodRowSection({
             iconVariant="mood"
             title="بر اساس حال‌وهوا"
             subtitle="انتخاب سریع برای حال امروزت"
-            actionHref="/user-lists"
+            actionHref="/explore"
             actionLabel="اکسپلور"
             analyticsSection="mood"
           />
@@ -211,7 +211,7 @@ export default function HomeMoodRowSection({
         iconVariant="mood"
         title="بر اساس حال‌وهوا"
         subtitle="انتخاب سریع برای حال امروزت"
-        actionHref="/user-lists"
+        actionHref="/explore"
         actionLabel="اکسپلور"
         analyticsSection="mood"
       />

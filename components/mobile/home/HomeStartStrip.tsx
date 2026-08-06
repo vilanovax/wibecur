@@ -8,6 +8,7 @@ import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import { openHomeCreateSheet } from '@/lib/home-create-sheet';
 import { forYouQueryKey } from '@/hooks/useForYouRecommendations';
 import { useSession } from 'next-auth/react';
+import { ACTIVATION } from '@/lib/activation-copy';
 
 type CategoryChip = { id: string; slug: string; name: string; icon: string | null };
 
@@ -61,9 +62,11 @@ export default function HomeStartStrip() {
     completeOnboarding();
   };
 
+  const copy = ACTIVATION.startStrip;
+
   return (
     <section
-      className="mx-4 mb-3 rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/8 to-primary/3 p-4 lg:mx-0 lg:mb-0 lg:p-5"
+      className="mx-4 mb-3 rounded-2xl border border-dashed border-primary/25 bg-gradient-to-b from-primary/[0.08] to-wibe-card p-4 lg:mx-0 lg:mb-0 lg:p-5"
       aria-label="شروع در وایب"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
@@ -71,14 +74,14 @@ export default function HomeStartStrip() {
           <div className="flex items-start justify-between gap-3 lg:block">
             <div>
               <p className="flex items-center gap-1.5 wibe-caption font-semibold text-primary">
-                <Sparkles className="h-4 w-4" />
-                شروع سریع
+                <Sparkles className="h-4 w-4" aria-hidden />
+                {copy.eyebrow}
               </p>
-              <h2 className="mt-1 wibe-body font-bold text-foreground lg:text-lg">
-                ۳ تا از علاقه‌مندی‌ات را انتخاب کن
+              <h2 className="mt-1 text-balance wibe-h3 text-foreground">
+                {copy.title}
               </h2>
-              <p className="mt-1 wibe-small text-wibe-secondary">
-                فید «برای تو» بر اساس انتخاب‌هایت پر می‌شود
+              <p className="mt-1.5 text-pretty wibe-small text-wibe-secondary">
+                {copy.description}
               </p>
             </div>
             <button
@@ -86,7 +89,7 @@ export default function HomeStartStrip() {
               onClick={completeOnboarding}
               className="shrink-0 wibe-caption text-wibe-secondary hover:text-foreground lg:hidden"
             >
-              رد کردن
+              {copy.skip}
             </button>
           </div>
 
@@ -98,7 +101,7 @@ export default function HomeStartStrip() {
                   key={cat.id}
                   type="button"
                   onClick={() => toggleSlug(cat.slug)}
-                  className={`h-9 rounded-lg border px-3 wibe-small font-medium transition-colors ${
+                  className={`h-9 rounded-xl border px-3 wibe-small font-medium transition-colors ${
                     isSelected
                       ? 'border-primary bg-primary text-white'
                       : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30'
@@ -118,23 +121,23 @@ export default function HomeStartStrip() {
             onClick={completeOnboarding}
             className="hidden text-right wibe-caption text-wibe-secondary hover:text-foreground lg:block"
           >
-            رد کردن
+            {copy.skip}
           </button>
           <div className="flex flex-wrap items-center gap-2 lg:flex-col lg:items-stretch">
             <button
               type="button"
               onClick={handleContinue}
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 wibe-small font-semibold text-white hover:bg-primary-dark lg:w-full"
+              className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark lg:w-full"
             >
-              {selected.length > 0 ? 'ادامه با انتخاب‌ها' : 'ادامه بدون انتخاب'}
+              {selected.length > 0 ? copy.continueWith : copy.continueWithout}
             </button>
             <button
               type="button"
               onClick={openHomeCreateSheet}
-              className="inline-flex items-center justify-center gap-1 rounded-lg border border-wibe bg-wibe-card px-4 py-2 wibe-small font-medium text-foreground hover:border-primary/30 lg:w-full"
+              className="inline-flex items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 wibe-small font-medium text-foreground transition-colors hover:border-primary/30 lg:w-full"
             >
-              <Plus className="h-4 w-4" />
-              اولین لیستت را بساز
+              <Plus className="h-4 w-4" aria-hidden />
+              {copy.createList}
             </button>
           </div>
         </div>

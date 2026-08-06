@@ -67,8 +67,8 @@ function CreateActionCard({
         {icon}
       </span>
       <div className="flex-1 min-w-0">
-        <span className="font-semibold text-gray-900 block">{title}</span>
-        <span className="text-sm text-gray-500 mt-0.5 block">{description}</span>
+        <span className="font-semibold text-foreground block">{title}</span>
+        <span className="text-sm text-wibe-secondary mt-0.5 block">{description}</span>
       </div>
     </Link>
   );
@@ -93,7 +93,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
   };
 
   const handleCategorySelect = (slug: string) => {
-    router.push(`/user-lists?openCreate=1&category=${slug}`);
+    router.push(`/explore?openCreate=1&category=${slug}`);
     handleClose();
   };
 
@@ -121,8 +121,8 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
               🧩
             </span>
             <div className="flex-1 min-w-0">
-              <span className="font-semibold text-gray-900 block">ساخت لیست جدید</span>
-              <span className="text-sm text-gray-500 mt-0.5 block">لیست شخصی خودتو بساز و منتشر کن</span>
+              <span className="font-semibold text-foreground block">ساخت لیست جدید</span>
+              <span className="text-sm text-wibe-secondary mt-0.5 block">لیست شخصی خودتو بساز و منتشر کن</span>
             </div>
           </button>
         ) : (
@@ -135,7 +135,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
             <div className="flex items-center gap-3 p-4 pb-3">
               <span className="text-2xl flex-shrink-0 leading-none">🧩</span>
               <div className="flex-1 min-w-0">
-                <span className="font-semibold text-gray-900 block">ساخت لیست جدید</span>
+                <span className="font-semibold text-foreground block">ساخت لیست جدید</span>
               </div>
             </div>
             <div className="px-4 pb-4 flex flex-wrap gap-3">
@@ -146,7 +146,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
                   onClick={() => handleCategorySelect(cat.slug)}
                   className="
                     inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
-                    bg-white border border-gray-200 text-sm font-medium text-gray-800
+                    bg-white border border-gray-200 text-sm font-medium text-foreground
                     hover:bg-gray-50 hover:border-primary/30 active:scale-[0.98]
                     transition-colors duration-200
                   "
@@ -160,7 +160,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
         )}
 
         <CreateActionCard
-          href={listSlug ? `/lists/${listSlug}?suggest=1` : '/user-lists'}
+          href={listSlug ? `/lists/${listSlug}?suggest=1` : '/explore'}
           icon="➕"
           title={isOnListDetail ? 'پیشنهاد آیتم به این لیست' : 'اضافه کردن آیتم'}
           description={isOnListDetail ? 'یه آیتم به این لیست پیشنهاد بده' : 'یه فیلم، کتاب یا کافه جدید اضافه کن'}

@@ -3,9 +3,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutGrid, List, Filter, Bookmark } from 'lucide-react';
+import { LayoutGrid, List, Filter, Bookmark, Flame, Search } from 'lucide-react';
 import type { ListsBrowseList } from '@/lib/lists-browse-shared';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
+import WibeEmptyState from '@/components/shared/WibeEmptyState';
 import ListsFeaturedCarousel from '@/components/mobile/lists/ListsFeaturedCarousel';
 import ListsCategorySection from '@/components/mobile/lists/ListsCategorySection';
 import InfiniteScrollSentinel from '@/components/mobile/lists/InfiniteScrollSentinel';
@@ -1070,12 +1071,12 @@ export default function ListsPageClient({
             onBrowsePopular={() => setBrowseMode('popular')}
           />
         ) : publicLists.length === 0 ? (
-          <EmptyState
+          <WibeEmptyState
             icon="📋"
             title="هنوز لیستی اینجا نیست"
-            description="می‌تونی از صفحه خانه چند وایب ذخیره کنی یا اولین لیستت رو خودت بسازی."
-            buttonText="ساخت لیست"
-            buttonHref="/user-lists?openCreate=1"
+            description="از صفحه خانه چند وایب ذخیره کن یا اولین لیستت را خودت بساز."
+            primaryAction={{ label: 'ساخت لیست', href: '/explore?openCreate=1' }}
+            secondaryAction={{ label: 'رفتن به خانه', href: '/' }}
           />
         ) : searchLoading && isSearchActive ? (
           <SearchResultSkeleton rows={5} className="max-lg:px-0" />
@@ -1297,60 +1298,27 @@ function TrendingEmptyState({
   onBrowsePopular: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-wibe bg-wibe-card/60 px-4 py-14 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-warning/10 text-2xl">
-        🔥
-      </div>
-      <h3 className="mb-1 wibe-h3 text-foreground">فعلاً لیست ترندی نیست</h3>
-      <p className="mx-auto mb-5 max-w-xs wibe-small leading-relaxed text-wibe-secondary">
-        هنوز لیستی با برچسب ترند نداریم. جدیدترین‌ها یا محبوب‌ترین‌ها را ببین.
-      </p>
-      <div className="flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={onBrowseNewest}
-          className="inline-flex items-center rounded-lg bg-primary px-5 py-2.5 wibe-small font-semibold text-white transition-transform active:scale-[0.98]"
-        >
-          مشاهده جدیدترین‌ها
-        </button>
-        <button
-          type="button"
-          onClick={onBrowsePopular}
-          className="wibe-caption font-medium text-primary hover:underline"
-        >
-          یا محبوب‌ترین لیست‌ها
-        </button>
-        <Link href="/user-lists" className="mt-1 wibe-caption font-medium text-wibe-secondary hover:underline">
-          رفتن به اکسپلور
-        </Link>
-      </div>
-    </div>
+    <WibeEmptyState
+      icon={<Flame strokeWidth={1.75} aria-hidden />}
+      iconToneClassName="bg-warning/10 text-warning"
+      title="فعلاً لیست ترندی نیست"
+      description="هنوز لیستی با برچسب ترند نداریم. جدیدترین‌ها یا محبوب‌ترین‌ها را ببین."
+      primaryAction={{ label: 'مشاهده جدیدترین‌ها', onClick: onBrowseNewest }}
+      secondaryAction={{ label: 'محبوب‌ترین لیست‌ها', onClick: onBrowsePopular }}
+      tertiaryAction={{ label: 'رفتن به اکسپلور', href: '/explore' }}
+    />
   );
 }
 
 function SavedEmptyState({ onBrowse }: { onBrowse: () => void }) {
   return (
-    <div className="text-center py-14 px-4 rounded-xl border border-dashed border-wibe bg-wibe-card/60">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Bookmark className="w-7 h-7" strokeWidth={1.75} />
-      </div>
-      <h3 className="wibe-h3 text-foreground mb-1">لیست ذخیره‌شده‌ای نداری</h3>
-      <p className="wibe-small text-wibe-secondary max-w-xs mx-auto mb-5 leading-relaxed">
-        لیست‌هایی که دوست داری را bookmark کن تا اینجا ببینی
-      </p>
-      <div className="flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={onBrowse}
-          className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary text-white wibe-small font-semibold active:scale-[0.98] transition-transform"
-        >
-          کشف لیست‌ها
-        </button>
-        <Link href="/login" className="wibe-caption text-primary font-medium hover:underline">
-          ورود برای همگام‌سازی ذخیره‌ها
-        </Link>
-      </div>
-    </div>
+    <WibeEmptyState
+      icon={<Bookmark strokeWidth={1.75} aria-hidden />}
+      title="لیست ذخیره‌شده‌ای نداری"
+      description="لیست‌هایی که دوست داری را ذخیره کن تا اینجا ببینی"
+      primaryAction={{ label: 'کشف لیست‌ها', onClick: onBrowse }}
+      secondaryAction={{ label: 'ورود برای همگام‌سازی ذخیره‌ها', href: '/login' }}
+    />
   );
 }
 
@@ -1367,67 +1335,21 @@ function SearchEmptyState({
 }) {
   const trimmed = normalizeSearchQuery(query);
   return (
-    <div className="rounded-xl border border-dashed border-wibe bg-wibe-card/60 px-4 py-14 text-center">
-      <div className="mx-auto mb-4 text-5xl">🔍</div>
-      <h3 className="mb-1 wibe-h3 text-foreground">
-        {trimmed ? `نتیجه‌ای برای «${trimmed}» نیست` : 'نتیجه‌ای پیدا نشد'}
-      </h3>
-      <p className="mx-auto mb-5 max-w-xs wibe-small leading-relaxed text-wibe-secondary">
-        {hasFilters
+    <WibeEmptyState
+      icon={<Search strokeWidth={1.75} aria-hidden />}
+      title={trimmed ? `نتیجه‌ای برای «${trimmed}» نیست` : 'نتیجه‌ای پیدا نشد'}
+      description={
+        hasFilters
           ? 'فیلترها را کم کن یا عبارت جستجو را عوض کن'
-          : 'عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن'}
-      </p>
-      <div className="flex flex-col items-center gap-2">
-        {trimmed && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="inline-flex items-center rounded-lg bg-primary px-5 py-2.5 wibe-small font-semibold text-white transition-transform active:scale-[0.98]"
-          >
-            پاک کردن جستجو
-          </button>
-        )}
-        {hasFilters && (
-          <button
-            type="button"
-            onClick={onResetFilters}
-            className="wibe-caption font-medium text-primary hover:underline"
-          >
-            پاک کردن فیلترها
-          </button>
-        )}
-        <Link href="/user-lists?openCreate=1" className="mt-1 wibe-caption font-medium text-wibe-secondary hover:underline">
-          ساخت لیست جدید
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({
-  icon,
-  title,
-  description,
-  buttonText,
-  buttonHref,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-  buttonText: string;
-  buttonHref: string;
-}) {
-  return (
-    <div className="text-center py-16 px-4">
-      <div className="text-5xl mb-4">{icon}</div>
-      <h3 className="wibe-h3 text-foreground mb-2">{title}</h3>
-      <p className="wibe-small text-wibe-secondary mb-6 max-w-sm mx-auto">{description}</p>
-      <Link
-        href={buttonHref}
-        className="inline-block bg-primary text-white px-6 py-3 rounded-md wibe-small font-semibold hover:bg-primary-dark transition-colors"
-      >
-        {buttonText}
-      </Link>
-    </div>
+          : 'عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن'
+      }
+      primaryAction={
+        trimmed ? { label: 'پاک کردن جستجو', onClick: onClear } : undefined
+      }
+      secondaryAction={
+        hasFilters ? { label: 'پاک کردن فیلترها', onClick: onResetFilters } : undefined
+      }
+      tertiaryAction={{ label: 'ساخت لیست جدید', href: '/explore?openCreate=1' }}
+    />
   );
 }

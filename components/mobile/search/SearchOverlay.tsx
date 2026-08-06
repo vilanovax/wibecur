@@ -672,7 +672,7 @@ export default function SearchOverlay({
             <div className="border-t border-wibe pt-3 text-center">
               <button
                 type="button"
-                onClick={() => navigateAndClose('/user-lists')}
+                onClick={() => navigateAndClose('/explore')}
                 className="wibe-caption font-medium text-wibe-secondary underline-offset-2 hover:text-primary hover:underline"
               >
                 کشف در اکسپلور

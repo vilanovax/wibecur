@@ -500,7 +500,7 @@ export default function ProfilePicksEditorSheet({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={`جستجو در ${activeCat?.name ?? 'دسته'}...`}
-                  className="w-full rounded-xl border border-wibe bg-wibe-surface py-2.5 pe-3 ps-9 wibe-small outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                  className="w-full rounded-xl border border-wibe bg-wibe-surface py-2.5 pe-3 ps-9 wibe-small outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/15"
                 />
               </div>
 

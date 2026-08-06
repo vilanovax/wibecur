@@ -14,7 +14,7 @@ export default function UtilityModule() {
   const router = useRouter();
 
   const handleQuickAction = (category: string) => {
-    router.push(`/user-lists?openCreate=1&category=${category}`);
+    router.push(`/explore?openCreate=1&category=${category}`);
   };
 
   return (

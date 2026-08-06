@@ -98,7 +98,7 @@ export default function BaseCommentForm({
                 setError('');
               }}
               rows={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
               placeholder="نظر خود را بنویسید..."
               disabled={isLoading}
             />

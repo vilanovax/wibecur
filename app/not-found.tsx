@@ -27,7 +27,7 @@ export default function NotFound() {
             مشاهده لیست‌ها
           </Link>
           <Link
-            href="/user-lists"
+            href="/explore"
             className="inline-flex items-center justify-center rounded-xl border border-wibe px-5 py-2.5 wibe-small font-semibold text-foreground hover:border-primary/40 transition-colors"
           >
             اکسپلور

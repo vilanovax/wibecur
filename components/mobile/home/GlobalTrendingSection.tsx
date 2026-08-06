@@ -21,7 +21,7 @@ export default function GlobalTrendingSection() {
   if (loading && items.length === 0) {
     return (
       <section className="px-4 mb-8">
-        <h2 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+        <h2 className="text-lg font-bold text-foreground mb-2 flex items-center gap-2">
           <span>🔥</span>
           الان وایب روی ایناست
         </h2>
@@ -41,11 +41,11 @@ export default function GlobalTrendingSection() {
 
   return (
     <section className="px-4 mb-8">
-      <h2 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+      <h2 className="text-lg font-bold text-foreground mb-2 flex items-center gap-2">
         <span>🔥</span>
         الان وایب روی ایناست
       </h2>
-      <p className="text-sm text-gray-500 mb-3">محبوب‌ترین‌های این روزها</p>
+      <p className="text-sm text-wibe-secondary mb-3">محبوب‌ترین‌های این روزها</p>
       <div className="grid grid-cols-2 gap-3">
         {items.map((t, idx) => (
           <Link
