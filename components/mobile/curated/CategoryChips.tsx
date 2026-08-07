@@ -10,7 +10,7 @@ interface CategoryChipsProps {
 }
 
 const CHIP_BASE =
-  'flex items-center gap-1.5 h-9 px-3.5 rounded-lg wibe-small font-medium whitespace-nowrap flex-shrink-0 transition-colors active:scale-[0.98]';
+  'flex items-center gap-1.5 h-9 px-3.5 rounded-lg wibe-small font-medium whitespace-nowrap flex-shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98]';
 
 function chipClass(isSelected: boolean) {
   return isSelected

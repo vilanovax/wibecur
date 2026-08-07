@@ -542,10 +542,12 @@ function AuthField({
           id={fieldId}
           aria-label={hideLabel && label ? label : props['aria-label']}
           aria-invalid={hasError || undefined}
-          className={`w-full rounded-xl border bg-white py-3.5 wibe-body text-foreground placeholder:text-wibe-secondary outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/15 ${
+          className={`w-full rounded-xl border bg-white py-3.5 wibe-body text-foreground placeholder:text-wibe-secondary outline-none transition-[border-color,box-shadow] focus:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/15 ${
             icon ? 'ps-11 pe-3' : 'px-3.5'
           } ${
-            hasError ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : 'border-gray-200'
+            hasError
+              ? 'border-red-300 focus:border-red-400 focus-visible:ring-red-100'
+              : 'border-gray-200'
           } ${className}`}
         />
         {trailing}

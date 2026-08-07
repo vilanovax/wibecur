@@ -27,7 +27,7 @@ export default function QuickNowSection({ onSelect, disabled = false }: Props) {
             type="button"
             disabled={disabled}
             onClick={() => onSelect(quickPillToSelection(pill))}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-wibe bg-wibe-card px-3.5 py-2 wibe-caption font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 active:scale-[0.98] disabled:opacity-50 lg:py-2.5 lg:wibe-small"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-wibe bg-wibe-card px-3.5 py-2 wibe-caption font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50 lg:py-2.5 lg:wibe-small"
           >
             <span aria-hidden>{pill.icon}</span>
             {pill.label}

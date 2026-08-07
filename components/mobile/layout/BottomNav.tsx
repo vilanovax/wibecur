@@ -81,8 +81,8 @@ export default function BottomNav() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex min-w-[64px] flex-shrink-0 flex-col items-center justify-center px-2 py-2 transition-colors ${
-                    isActive ? 'text-primary' : 'text-gray-500'
+                  className={`flex min-w-[64px] flex-shrink-0 flex-col items-center justify-center rounded-lg px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+                    isActive ? 'text-primary' : 'text-wibe-secondary'
                   }`}
                   aria-current={isActive ? 'page' : undefined}
                   aria-label={item.label}
