@@ -150,7 +150,7 @@ export default function AvatarUploadForm({
               className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                 uploadMethod === 'file'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
               }`}
             >
               <ImageIcon className="w-4 h-4 inline ml-2" />
@@ -167,7 +167,7 @@ export default function AvatarUploadForm({
               className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                 uploadMethod === 'url'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
               }`}
             >
               <Upload className="w-4 h-4 inline ml-2" />
@@ -177,7 +177,7 @@ export default function AvatarUploadForm({
 
           {uploadMethod === 'file' ? (
             <div>
-              <label htmlFor="fileInput" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="fileInput" className="block text-sm font-medium text-foreground mb-2">
                 انتخاب تصویر از گالری
               </label>
               <input
@@ -191,12 +191,12 @@ export default function AvatarUploadForm({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-gray-600 font-medium"
+                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-wibe-secondary font-medium"
               >
                 <ImageIcon className="w-5 h-5 inline ml-2" />
                 {selectedFile ? selectedFile.name : 'انتخاب فایل'}
               </button>
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-wibe-secondary">
                 فرمت‌های مجاز: JPG, PNG, GIF (حداکثر 5 مگابایت)
               </p>
               {previewUrl && (
@@ -213,7 +213,7 @@ export default function AvatarUploadForm({
             </div>
           ) : (
             <div>
-              <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="imageUrl" className="block text-sm font-medium text-foreground mb-2">
                 آدرس تصویر
               </label>
               <input
@@ -227,7 +227,7 @@ export default function AvatarUploadForm({
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
                 placeholder="https://example.com/avatar.jpg"
               />
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-wibe-secondary">
                 آدرس کامل تصویر آواتار خود را وارد کنید
               </p>
               {imageUrl && (
@@ -252,7 +252,7 @@ export default function AvatarUploadForm({
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
               disabled={isLoading}
             >
               انصراف

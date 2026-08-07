@@ -439,11 +439,11 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
 
             {/* Category Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 دسته‌بندی <span className="text-red-500">*</span>
               </label>
               {isLoadingCategories ? (
-                <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-gray-500">
+                <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-wibe-secondary">
                   در حال بارگذاری دسته‌بندی‌ها...
                 </div>
               ) : (
@@ -467,11 +467,11 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
             {/* List Selection */}
             {selectedCategoryId && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   انتخاب لیست <span className="text-red-500">*</span>
                 </label>
                 {isLoadingLists ? (
-                  <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-gray-500">
+                  <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-wibe-secondary">
                     در حال بارگذاری لیست‌ها...
                   </div>
                 ) : filteredLists.length === 0 ? (
@@ -500,7 +500,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
             {/* Title */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-foreground">
                   عنوان <span className="text-red-500">*</span>
                 </label>
                 {isMovieCategory && (
@@ -534,7 +534,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
             {/* Description */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-foreground">
                   توضیحات
                 </label>
                 {selectedList && (
@@ -579,14 +579,14 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
             {/* Image Upload */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-foreground">
                   تصویر آیتم
                 </label>
                 <button
                   type="button"
                   onClick={() => setImageSearchModalOpen(true)}
                   disabled={!formData.title.trim()}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-foreground bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title={!formData.title.trim() ? 'ابتدا عنوان آیتم را وارد کنید' : 'جستجوی تصویر از Google'}
                 >
                   <Search className="w-3 h-3" />
@@ -610,14 +610,14 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 >
                   {isUploadingImage ? (
                     <>
-                      <Loader2 className="w-8 h-8 text-gray-600 animate-spin" />
-                      <span className="text-sm text-gray-700">در حال آپلود...</span>
+                      <Loader2 className="w-8 h-8 text-wibe-secondary animate-spin" />
+                      <span className="text-sm text-foreground">در حال آپلود...</span>
                     </>
                   ) : (
                     <>
-                      <ImageIcon className="w-8 h-8 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">انتخاب تصویر از گالری</span>
-                      <span className="text-xs text-gray-500">فرمت‌های مجاز: JPG, PNG, GIF (حداکثر 5 مگابایت)</span>
+                      <ImageIcon className="w-8 h-8 text-wibe-secondary" />
+                      <span className="text-sm font-medium text-foreground">انتخاب تصویر از گالری</span>
+                      <span className="text-xs text-wibe-secondary">فرمت‌های مجاز: JPG, PNG, GIF (حداکثر 5 مگابایت)</span>
                     </>
                   )}
                 </button>
@@ -649,13 +649,13 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   >
                     {isUploadingImage ? (
                       <>
-                        <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
-                        <span className="text-sm text-gray-700">در حال آپلود...</span>
+                        <Loader2 className="w-4 h-4 text-wibe-secondary animate-spin" />
+                        <span className="text-sm text-foreground">در حال آپلود...</span>
                       </>
                     ) : (
                       <>
-                        <ImageIcon className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm text-gray-700">تغییر تصویر</span>
+                        <ImageIcon className="w-4 h-4 text-wibe-secondary" />
+                        <span className="text-sm text-foreground">تغییر تصویر</span>
                       </>
                     )}
                   </button>
@@ -665,7 +665,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
 
             {/* External URL */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 لینک خارجی
               </label>
               <input
@@ -686,7 +686,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-foreground hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 انصراف
               </button>

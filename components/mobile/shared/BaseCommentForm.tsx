@@ -86,7 +86,7 @@ export default function BaseCommentForm({
           <div>
             <label
               htmlFor="comment"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-foreground mb-2"
             >
               نظر شما
             </label>
@@ -103,10 +103,10 @@ export default function BaseCommentForm({
               disabled={isLoading}
             />
             <div className="mt-2 flex items-center justify-between">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-wibe-secondary">
                 کامنت‌های نامناسب به صورت خودکار فیلتر می‌شوند
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-wibe-secondary">
                 {content.length} کاراکتر
               </p>
             </div>
@@ -119,7 +119,7 @@ export default function BaseCommentForm({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
               disabled={isLoading}
             >
               انصراف

@@ -207,18 +207,18 @@ export default function PersonalListSettingsModal({
           {/* List Info */}
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">عنوان</h3>
-              <p className="text-lg font-bold text-gray-900">{list.title}</p>
+              <h3 className="text-sm font-medium text-wibe-secondary mb-1">عنوان</h3>
+              <p className="text-lg font-bold text-foreground">{list.title}</p>
             </div>
             {list.description && (
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">توضیحات</h3>
-                <p className="text-gray-700">{list.description}</p>
+                <h3 className="text-sm font-medium text-wibe-secondary mb-1">توضیحات</h3>
+                <p className="text-foreground">{list.description}</p>
               </div>
             )}
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">تعداد آیتم‌ها</h3>
-              <p className="text-gray-700">
+              <h3 className="text-sm font-medium text-wibe-secondary mb-1">تعداد آیتم‌ها</h3>
+              <p className="text-foreground">
                 {list.itemCount} آیتم
                 {!list.isPublic && list.itemCount < settings.minItemsForPublicList && (
                   <span className="block text-sm text-blue-600 mt-1">
@@ -237,13 +237,13 @@ export default function PersonalListSettingsModal({
                   {list.isPublic ? (
                     <Eye className="w-5 h-5 text-green-600" />
                   ) : (
-                    <EyeOff className="w-5 h-5 text-gray-400" />
+                    <EyeOff className="w-5 h-5 text-wibe-secondary" />
                   )}
-                  <h3 className="text-base font-semibold text-gray-900">
+                  <h3 className="text-base font-semibold text-foreground">
                     {list.isPublic ? 'عمومی' : 'خصوصی'}
                   </h3>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-wibe-secondary">
                   {list.isPublic
                     ? 'این لیست برای همه کاربران قابل مشاهده است'
                     : 'این لیست فقط برای شما قابل مشاهده است'}

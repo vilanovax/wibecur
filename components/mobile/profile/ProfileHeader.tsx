@@ -76,10 +76,10 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
 
           {/* Name & email */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold mb-1 text-gray-900">
+            <h1 className="text-2xl font-bold mb-1 text-foreground">
               {user.name || 'کاربر بدون نام'}
             </h1>
-            <p className="text-gray-500 text-sm">{user.email}</p>
+            <p className="text-wibe-secondary text-sm">{user.email}</p>
           </div>
 
           {/* Action buttons */}
@@ -108,7 +108,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
                   {user.stats.listsCreated}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">لیست</p>
+              <p className="text-xs text-wibe-secondary">لیست</p>
             </div>
 
             <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
@@ -117,7 +117,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
                   {user.stats.bookmarks}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">ذخیره</p>
+              <p className="text-xs text-wibe-secondary">ذخیره</p>
             </div>
 
             <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
@@ -126,7 +126,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
                   {user.stats.itemLikes ?? 0}
                 </span>
               </div>
-              <p className="text-xs text-gray-500">لایک</p>
+              <p className="text-xs text-wibe-secondary">لایک</p>
             </div>
           </div>
         </div>

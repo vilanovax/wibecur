@@ -210,7 +210,7 @@ export default function ItemReportModal({
                   >
                     <span
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                        isSelected ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
+                        isSelected ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-wibe-secondary'
                       }`}
                     >
                       <Icon className="h-4 w-4" strokeWidth={2} />
@@ -252,7 +252,7 @@ export default function ItemReportModal({
                   disabled={isSubmitting}
                   className="w-full resize-none rounded-xl border border-wibe bg-gray-50/50 px-3 py-2.5 text-sm transition-colors focus:border-primary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:opacity-50"
                 />
-                <p className="mt-1 text-left text-xs tabular-nums text-gray-400">
+                <p className="mt-1 text-left text-xs tabular-nums text-wibe-secondary">
                   {description.length.toLocaleString('fa-IR')}/
                   {DESCRIPTION_MAX_LENGTH.toLocaleString('fa-IR')}
                 </p>
@@ -282,7 +282,7 @@ export default function ItemReportModal({
                 <span>ارسال گزارش</span>
               )}
             </button>
-            <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+            <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-wibe-secondary">
               <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
               <span>هویت شما برای سازنده آیتم نمایش داده نمی‌شود.</span>
             </div>

@@ -219,8 +219,8 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
               <>
                 <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-3">
                   <div className="min-w-0">
-                    <p className="text-xs text-gray-500">شماره موبایل</p>
-                    <p className="mt-0.5 truncate text-sm font-medium text-gray-900" dir="ltr">
+                    <p className="text-xs text-wibe-secondary">شماره موبایل</p>
+                    <p className="mt-0.5 truncate text-sm font-medium text-foreground" dir="ltr">
                       {displayPhone}
                     </p>
                   </div>
@@ -235,7 +235,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
                 <div>
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="text-sm font-medium text-gray-700">رمز عبور</label>
+                    <label className="text-sm font-medium text-foreground">رمز عبور</label>
                     <button
                       type="button"
                       onClick={() =>
@@ -266,7 +266,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                       <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
-                        className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-wibe-secondary transition-colors hover:bg-gray-100 hover:text-wibe-secondary"
                         aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
                       >
                         {showPassword ? (
@@ -298,7 +298,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
           <p className="mt-4 text-center">
             <Link
               href={guestHref}
-              className="text-sm text-gray-500 transition-colors hover:text-gray-700"
+              className="text-sm text-wibe-secondary transition-colors hover:text-foreground"
             >
               بعداً وارد می‌شوم
             </Link>
@@ -307,7 +307,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
         <AuthLegalNotice mode="login" />
 
-        <p className="mt-4 text-center text-sm text-gray-500">
+        <p className="mt-4 text-center text-sm text-wibe-secondary">
           حساب نداری؟{' '}
           <Link
             href={registerHref}
@@ -373,7 +373,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-wibe-secondary transition-colors hover:bg-gray-100 hover:text-wibe-secondary"
                   aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
                 >
                   {showPassword ? (
@@ -396,7 +396,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                     />
                   ))}
                 </div>
-                <p className="mt-1 wibe-caption text-gray-500">{passwordStrengthLabel(passwordStrength)}</p>
+                <p className="mt-1 wibe-caption text-wibe-secondary">{passwordStrengthLabel(passwordStrength)}</p>
               </div>
             )}
           </div>
@@ -414,7 +414,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
       <AuthLegalNotice mode="register" />
 
-      <p className="mt-4 text-center text-sm text-gray-500">
+      <p className="mt-4 text-center text-sm text-wibe-secondary">
         حساب داری؟{' '}
         <Link
           href={loginHref}
@@ -439,8 +439,8 @@ function AuthBrandHeader({
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary">
         <Bookmark className="h-6 w-6 fill-white text-white" strokeWidth={2.25} />
       </div>
-      <h1 className="mt-4 text-2xl font-bold text-gray-900">{title}</h1>
-      <p className="mt-2 text-sm leading-relaxed text-gray-500">{subtitle}</p>
+      <h1 className="mt-4 text-2xl font-bold text-foreground">{title}</h1>
+      <p className="mt-2 text-sm leading-relaxed text-wibe-secondary">{subtitle}</p>
     </div>
   );
 }
@@ -456,7 +456,7 @@ function AuthFormCard({ children }: { children: React.ReactNode }) {
 function AuthLegalNotice({ mode }: { mode: 'login' | 'register' }) {
   const verb = mode === 'register' ? 'ثبت‌نام' : 'ورود';
   return (
-    <p className="mt-5 text-center text-xs leading-relaxed text-gray-400">
+    <p className="mt-5 text-center text-xs leading-relaxed text-wibe-secondary">
       {verb} یعنی پذیرش قوانین و حریم خصوصی
     </p>
   );
@@ -529,20 +529,20 @@ function AuthField({
     <div>
       {!hideLabel && label ? (
         <label htmlFor={fieldId} className="mb-2 block">
-          <span className="wibe-small font-medium text-gray-700">{label}</span>
-          {hint && <span className="mt-0.5 block wibe-caption text-gray-400">{hint}</span>}
+          <span className="wibe-small font-medium text-foreground">{label}</span>
+          {hint && <span className="mt-0.5 block wibe-caption text-wibe-secondary">{hint}</span>}
         </label>
       ) : null}
       <div className="relative flex items-center">
         {icon && (
-          <span className="pointer-events-none absolute start-3.5 text-gray-400">{icon}</span>
+          <span className="pointer-events-none absolute start-3.5 text-wibe-secondary">{icon}</span>
         )}
         <input
           {...props}
           id={fieldId}
           aria-label={hideLabel && label ? label : props['aria-label']}
           aria-invalid={hasError || undefined}
-          className={`w-full rounded-xl border bg-white py-3.5 wibe-body text-gray-900 placeholder:text-gray-400 outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/15 ${
+          className={`w-full rounded-xl border bg-white py-3.5 wibe-body text-foreground placeholder:text-wibe-secondary outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/15 ${
             icon ? 'ps-11 pe-3' : 'px-3.5'
           } ${
             hasError ? 'border-red-300 focus:border-red-400 focus:ring-red-100' : 'border-gray-200'

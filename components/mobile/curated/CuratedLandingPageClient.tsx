@@ -205,9 +205,7 @@ export default function CuratedLandingPageClient({
           </div>
         ) : (
           <>
-            <div className="hidden lg:block">
-              <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
-            </div>
+            <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
 
             <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
               <RandomSurpriseCardLazy lists={sections.trending} />
@@ -230,7 +228,7 @@ export default function CuratedLandingPageClient({
             )}
 
             <div ref={forYouRef} className="min-h-[1px]">
-              {forYouPending || !forYouInView ? (
+              {!forYouInView ? null : forYouPending ? (
                 <ExploreForYouSectionSkeleton />
               ) : sections.forYou.length > 0 ? (
                 <ForYouSectionLazy

@@ -134,10 +134,10 @@ export default function AchievementBottomSheet({
         {/* 1️⃣ Header Section */}
         <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-4 flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <h2 className="text-[22px] font-bold text-gray-900 leading-tight">
+            <h2 className="text-[22px] font-bold text-foreground leading-tight">
               {achievement.title} {achievement.icon}
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">{impactLabel}</p>
+            <p className="text-sm text-wibe-secondary mt-0.5">{impactLabel}</p>
           </div>
           <button
             type="button"
@@ -145,7 +145,7 @@ export default function AchievementBottomSheet({
             className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors flex-shrink-0"
             aria-label="بستن"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-wibe-secondary" />
           </button>
         </div>
 
@@ -165,8 +165,8 @@ export default function AchievementBottomSheet({
                 {achievement.unlocked ? achievement.icon : (achievement.isSecret ? '?' : '🔒')}
               </span>
             </div>
-            <p className="font-bold text-gray-900 mt-4 text-base">باز شد!</p>
-            <p className="text-sm text-gray-600 mt-0.5 text-center max-w-[280px]">
+            <p className="font-bold text-foreground mt-4 text-base">باز شد!</p>
+            <p className="text-sm text-wibe-secondary mt-0.5 text-center max-w-[280px]">
               {achievement.description}
             </p>
           </div>
@@ -177,10 +177,10 @@ export default function AchievementBottomSheet({
               <div className="grid grid-cols-2 gap-4">
                 {typeof metrics!.views === 'number' && (
                   <div className="flex items-center gap-2">
-                    <Eye className="w-5 h-5 text-gray-500" />
+                    <Eye className="w-5 h-5 text-wibe-secondary" />
                     <div>
-                      <p className="text-lg font-bold text-gray-900">{metrics!.views}</p>
-                      <p className="text-xs text-gray-500">بازدید</p>
+                      <p className="text-lg font-bold text-foreground">{metrics!.views}</p>
+                      <p className="text-xs text-wibe-secondary">بازدید</p>
                     </div>
                   </div>
                 )}
@@ -188,8 +188,8 @@ export default function AchievementBottomSheet({
                   <div className="flex items-center gap-2">
                     <Star className="w-5 h-5 text-amber-500" />
                     <div>
-                      <p className="text-lg font-bold text-gray-900">{metrics!.saves}</p>
-                      <p className="text-xs text-gray-500">ذخیره</p>
+                      <p className="text-lg font-bold text-foreground">{metrics!.saves}</p>
+                      <p className="text-xs text-wibe-secondary">ذخیره</p>
                     </div>
                   </div>
                 )}
@@ -197,8 +197,8 @@ export default function AchievementBottomSheet({
                   <div className="flex items-center gap-2">
                     <Heart className="w-5 h-5 text-rose-500" />
                     <div>
-                      <p className="text-lg font-bold text-gray-900">{metrics!.likes}</p>
-                      <p className="text-xs text-gray-500">لایک</p>
+                      <p className="text-lg font-bold text-foreground">{metrics!.likes}</p>
+                      <p className="text-xs text-wibe-secondary">لایک</p>
                     </div>
                   </div>
                 )}
@@ -206,8 +206,8 @@ export default function AchievementBottomSheet({
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-500" />
                     <div>
-                      <p className="text-lg font-bold text-gray-900">{metrics!.growthPercent}٪</p>
-                      <p className="text-xs text-gray-500">رشد</p>
+                      <p className="text-lg font-bold text-foreground">{metrics!.growthPercent}٪</p>
+                      <p className="text-xs text-wibe-secondary">رشد</p>
                     </div>
                   </div>
                 )}
@@ -217,12 +217,12 @@ export default function AchievementBottomSheet({
 
           {/* 4️⃣ Context Line */}
           {rankingContext && (
-            <p className="text-sm text-gray-500 text-center">{rankingContext}</p>
+            <p className="text-sm text-wibe-secondary text-center">{rankingContext}</p>
           )}
 
           {/* 5️⃣ Unlock Date */}
           {formattedDate && (
-            <p className="text-xs text-gray-400 text-center">باز شده در {formattedDate}</p>
+            <p className="text-xs text-wibe-secondary text-center">باز شده در {formattedDate}</p>
           )}
 
           {/* 6️⃣ CTA Buttons */}
@@ -237,7 +237,7 @@ export default function AchievementBottomSheet({
             <button
               type="button"
               onClick={handleShare}
-              className="w-full py-3 px-5 rounded-[14px] border-2 border-gray-200 text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 px-5 rounded-[14px] border-2 border-gray-200 text-foreground font-medium text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
             >
               <Share2 className="w-4 h-4" />
               اشتراک‌گذاری دستاورد

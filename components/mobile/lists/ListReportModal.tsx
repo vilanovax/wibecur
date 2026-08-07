@@ -172,7 +172,7 @@ export default function ListReportModal({
                   >
                     <span
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                        isSelected ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
+                        isSelected ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-wibe-secondary'
                       }`}
                     >
                       <Icon className="h-4 w-4" strokeWidth={2} />
@@ -234,7 +234,7 @@ export default function ListReportModal({
                 'ارسال گزارش'
               )}
             </button>
-            <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+            <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-wibe-secondary">
               <Lock className="h-3.5 w-3.5" aria-hidden />
               <span>هویت تو برای سازنده لیست نمایش داده نمی‌شود.</span>
             </div>

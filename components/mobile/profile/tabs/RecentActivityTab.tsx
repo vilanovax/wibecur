@@ -211,7 +211,7 @@ export default function RecentActivityTab({
                 </div>
 
                 {/* Title */}
-                <p className="text-base font-bold leading-snug text-gray-900 lg:line-clamp-2 lg:text-sm">
+                <p className="text-base font-bold leading-snug text-foreground lg:line-clamp-2 lg:text-sm">
                   «{activity.title}»
                 </p>
 
@@ -219,9 +219,9 @@ export default function RecentActivityTab({
                 {hasStats && (
                   <div className="mt-3 space-y-0.5">
                     {saveContext && (
-                      <p className="text-xs text-gray-600">{saveContext}</p>
+                      <p className="text-xs text-wibe-secondary">{saveContext}</p>
                     )}
-                    <p className="text-[11px] text-gray-500">{statsText}</p>
+                    <p className="text-[11px] text-wibe-secondary">{statsText}</p>
                   </div>
                 )}
 
@@ -231,7 +231,7 @@ export default function RecentActivityTab({
                     مشاهده لیست
                     <ChevronLeft className="w-4 h-4 rotate-180" />
                   </span>
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-[10px] text-wibe-secondary">
                     {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: faIR })}
                   </span>
                 </div>
@@ -244,7 +244,7 @@ export default function RecentActivityTab({
       {!showAll && activities.length > 8 && (
         <button
           onClick={() => setShowAll(true)}
-          className="mt-2 w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
+          className="mt-2 w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-wibe-secondary transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
         >
           مشاهده بیشتر ({activities.length - 8} مورد دیگر)
         </button>

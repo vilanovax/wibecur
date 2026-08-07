@@ -45,7 +45,7 @@ function CommentMoreMenu({ onReport, onDelete }: { onReport: () => void; onDelet
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-gray-100 transition-colors"
         aria-label="گزینه‌های بیشتر"
       >
         <MoreVertical className="w-4 h-4" />
@@ -146,13 +146,13 @@ export default function CommentItem({
         <div className="flex items-start justify-between gap-1 mb-0.5">
           <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
             {profileUrl ? (
-              <Link href={profileUrl} className="font-medium text-gray-900 text-sm hover:text-primary transition-colors">
+              <Link href={profileUrl} className="font-medium text-foreground text-sm hover:text-primary transition-colors">
                 {comment.user.name}
               </Link>
             ) : (
-              <span className="font-medium text-gray-900 text-sm">{comment.user.name}</span>
+              <span className="font-medium text-foreground text-sm">{comment.user.name}</span>
             )}
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-wibe-secondary">
               {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
             </span>
           </div>
@@ -164,8 +164,8 @@ export default function CommentItem({
 
         <div className="relative">
           <p
-            className={`text-gray-700 text-sm leading-relaxed break-words whitespace-pre-wrap ${
-              comment.isFiltered ? 'text-gray-500 italic' : ''
+            className={`text-foreground text-sm leading-relaxed break-words whitespace-pre-wrap ${
+              comment.isFiltered ? 'text-wibe-secondary italic' : ''
             } ${!expanded && showReadMore ? 'line-clamp-3' : ''}`}
           >
             {comment.content}
@@ -194,7 +194,7 @@ export default function CommentItem({
             disabled={isLoading}
             aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
             className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
-              localVote === 1 ? 'text-green-600 font-medium' : 'text-gray-500 hover:text-green-600'
+              localVote === 1 ? 'text-green-600 font-medium' : 'text-wibe-secondary hover:text-green-600'
             }`}
           >
             <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />
@@ -206,7 +206,7 @@ export default function CommentItem({
             disabled={isLoading}
             aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
             className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
-              localVote === -1 ? 'text-amber-600 font-medium' : 'text-gray-400 hover:text-amber-600'
+              localVote === -1 ? 'text-amber-600 font-medium' : 'text-wibe-secondary hover:text-amber-600'
             }`}
           >
             <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />

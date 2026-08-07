@@ -40,7 +40,7 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-colors ${
                   isActive
                     ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
-                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                    : 'bg-gray-50 text-wibe-secondary hover:bg-gray-100'
                 }`}
               >
                 <Icon className="w-4 h-4" />

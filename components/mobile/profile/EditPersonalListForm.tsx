@@ -160,7 +160,7 @@ export default function EditPersonalListForm({
           <div className="mb-4">
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-foreground mb-2"
             >
               عنوان لیست <span className="text-red-500">*</span>
             </label>
@@ -181,7 +181,7 @@ export default function EditPersonalListForm({
           <div className="mb-4">
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-foreground mb-2"
             >
               توضیحات (اختیاری)
             </label>
@@ -196,14 +196,14 @@ export default function EditPersonalListForm({
               placeholder="توضیحات لیست را وارد کنید..."
               disabled={isLoading}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-wibe-secondary mt-1">
               {formData.description.length} / {MAX_DESCRIPTION_LENGTH} کاراکتر
             </p>
           </div>
 
           {/* Cover Image */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               تصویر کاور (اختیاری)
             </label>
             <input
@@ -237,7 +237,7 @@ export default function EditPersonalListForm({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isUploadingImage}
-                className="w-full px-4 py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-gray-600"
+                className="w-full px-4 py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-wibe-secondary"
               >
                 {isUploadingImage ? (
                   <>
@@ -260,7 +260,7 @@ export default function EditPersonalListForm({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
               disabled={isLoading || isUploadingImage}
             >
               انصراف

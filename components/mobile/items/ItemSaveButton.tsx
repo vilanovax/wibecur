@@ -63,7 +63,7 @@ export default function ItemSaveButton({
         aria-label="ورود برای ذخیره"
         title="ورود برای ذخیره"
       >
-        <Bookmark className={`w-5 h-5 ${isHero ? 'text-white' : 'text-gray-600'}`} />
+        <Bookmark className={`w-5 h-5 ${isHero ? 'text-white' : 'text-wibe-secondary'}`} />
       </Link>
     );
   }
@@ -109,7 +109,7 @@ export default function ItemSaveButton({
       >
         <Bookmark
           className={`w-5 h-5 transition-colors ${
-            isSaved ? 'text-white fill-white' : isHero ? 'text-white' : 'text-gray-600'
+            isSaved ? 'text-white fill-white' : isHero ? 'text-white' : 'text-wibe-secondary'
           }`}
         />
         {savedCount > 0 && (

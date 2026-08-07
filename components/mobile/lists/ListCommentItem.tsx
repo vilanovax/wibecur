@@ -59,13 +59,13 @@ export default function ListCommentItem({
       <div className="flex-1 min-w-0">
         {/* Header */}
         <div className="flex flex-wrap items-center gap-2 mb-1">
-          <span className="font-medium text-gray-900 text-sm">
+          <span className="font-medium text-foreground text-sm">
             {comment.users.name || comment.users.email.split('@')[0]}
           </span>
           {comment.users.curatorLevel && (
             <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
           )}
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-wibe-secondary">
             {formatDistanceToNow(new Date(comment.createdAt), {
               addSuffix: true,
               locale: faIR,
@@ -75,8 +75,8 @@ export default function ListCommentItem({
 
         {/* Comment Text */}
         <p
-          className={`text-gray-700 text-sm mb-2 ${
-            comment.isFiltered ? 'text-gray-500 italic' : ''
+          className={`text-foreground text-sm mb-2 ${
+            comment.isFiltered ? 'text-wibe-secondary italic' : ''
           }`}
         >
           {comment.content}
@@ -90,7 +90,7 @@ export default function ListCommentItem({
             className={`flex items-center gap-1 text-xs transition-colors ${
               localIsLiked
                 ? 'text-red-500'
-                : 'text-gray-500 hover:text-red-500'
+                : 'text-wibe-secondary hover:text-red-500'
             }`}
           >
             <Heart
@@ -102,7 +102,7 @@ export default function ListCommentItem({
           <button
             onClick={() => onReport(comment.id)}
             disabled={isLoading}
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-500 transition-colors"
+            className="flex items-center gap-1 text-xs text-wibe-secondary hover:text-orange-500 transition-colors"
           >
             <Flag className="w-4 h-4" />
             <span>گزارش</span>

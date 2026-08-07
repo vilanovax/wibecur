@@ -90,7 +90,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
           />
         ))}
       </div>
-      <span className="text-xs text-gray-500">مرحله {step} از {total}</span>
+      <span className="text-xs text-wibe-secondary">مرحله {step} از {total}</span>
     </div>
   );
 }
@@ -420,8 +420,8 @@ export default function SuggestItemSearch({
   if (view === 'success') {
     return (
       <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-        <p className="text-xl font-semibold text-gray-800 mb-2">پیشنهادت ثبت شد 👌</p>
-        <p className="text-gray-600 text-sm mb-6">بعد از بررسی اضافه می‌شود.</p>
+        <p className="text-xl font-semibold text-foreground mb-2">پیشنهادت ثبت شد 👌</p>
+        <p className="text-wibe-secondary text-sm mb-6">بعد از بررسی اضافه می‌شود.</p>
         <button
           type="button"
           onClick={handleSuccessClose}
@@ -440,17 +440,17 @@ export default function SuggestItemSearch({
         <button
           type="button"
           onClick={() => setView('step1')}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 mb-2 self-start"
+          className="flex items-center gap-1 text-sm text-wibe-secondary hover:text-foreground mb-2 self-start"
         >
           <ChevronLeft className="w-4 h-4" />
           بازگشت
         </button>
-        <h2 className="text-lg font-semibold text-gray-800 mb-1">جزئیات بیشتر (اختیاری)</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-1">جزئیات بیشتر (اختیاری)</h2>
         <StepProgress step={2} total={2} />
 
         <form onSubmit={handleStep2Submit} className="space-y-4 flex-1 flex flex-col">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">لینک مرتبط (اختیاری)</label>
+            <label className="block text-sm font-medium text-foreground mb-1">لینک مرتبط (اختیاری)</label>
             <input
               type="url"
               value={formData.externalUrl}
@@ -460,7 +460,7 @@ export default function SuggestItemSearch({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">تصویر (اختیاری)</label>
+            <label className="block text-sm font-medium text-foreground mb-1">تصویر (اختیاری)</label>
             <input
               type="url"
               value={formData.imageUrl}
@@ -468,7 +468,7 @@ export default function SuggestItemSearch({
               placeholder="لینک تصویر یا آپلود فایل"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary mb-2"
             />
-            <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-gray-300 text-wibe-secondary text-sm cursor-pointer hover:bg-gray-50">
               <ImageIcon className="w-4 h-4" />
               {imageUploading ? 'در حال آپلود...' : 'انتخاب فایل'}
               <input
@@ -490,7 +490,7 @@ export default function SuggestItemSearch({
               {formSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
               ارسال برای بررسی ✨
             </button>
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-xs text-wibe-secondary text-center">
               بعد از بررسی منتشر می‌شود و اسم تو به عنوان پیشنهاددهنده ثبت می‌شود.
             </p>
           </div>
@@ -506,18 +506,18 @@ export default function SuggestItemSearch({
         <button
           type="button"
           onClick={() => setView('search')}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 mb-2 self-start"
+          className="flex items-center gap-1 text-sm text-wibe-secondary hover:text-foreground mb-2 self-start"
         >
           <ChevronLeft className="w-4 h-4" />
           بازگشت به جستجو
         </button>
-        <h2 className="text-lg font-semibold text-gray-800">افزودن مورد جدید ✨</h2>
-        <p className="text-sm text-gray-500 mb-3">این مورد هنوز تو وایب ثبت نشده</p>
+        <h2 className="text-lg font-semibold text-foreground">افزودن مورد جدید ✨</h2>
+        <p className="text-sm text-wibe-secondary mb-3">این مورد هنوز تو وایب ثبت نشده</p>
         <StepProgress step={1} total={2} />
 
         <form onSubmit={handleStep1Next} className="space-y-4 flex-1 flex flex-col">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">عنوان (اجباری)</label>
+            <label className="block text-sm font-medium text-foreground mb-1">عنوان (اجباری)</label>
             <input
               type="text"
               value={formData.title}
@@ -530,7 +530,7 @@ export default function SuggestItemSearch({
 
           {showCategorySelector && categories.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">دسته (اگر از قبل مشخص نیست)</label>
+              <label className="block text-sm font-medium text-foreground mb-2">دسته (اگر از قبل مشخص نیست)</label>
               <div className="flex flex-wrap gap-2">
                 {categories.map((c) => (
                   <button
@@ -538,7 +538,7 @@ export default function SuggestItemSearch({
                     type="button"
                     onClick={() => setFormData((p) => ({ ...p, categoryId: p.categoryId === c.id ? '' : c.id }))}
                     className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      formData.categoryId === c.id ? 'bg-primary text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      formData.categoryId === c.id ? 'bg-primary text-white' : 'bg-gray-100 text-foreground hover:bg-gray-200'
                     }`}
                   >
                     {c.name}
@@ -549,7 +549,7 @@ export default function SuggestItemSearch({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               توضیح کوتاه (اختیاری)
             </label>
             <textarea
@@ -565,7 +565,7 @@ export default function SuggestItemSearch({
               rows={3}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
             />
-            <p className="text-xs text-gray-400 mt-1 text-start">
+            <p className="text-xs text-wibe-secondary mt-1 text-start">
               {formData.description.length}/{MAX_DESCRIPTION_LENGTH}
             </p>
           </div>

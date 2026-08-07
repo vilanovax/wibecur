@@ -123,7 +123,7 @@ export default function ListCollaborationPanel({
 
   if (isPublic) {
     return (
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-wibe-secondary">
         همکاری فقط برای لیست‌های شخصی فعال است.
       </p>
     );
@@ -135,8 +135,8 @@ export default function ListCollaborationPanel({
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-slate-600" />
           <div>
-            <h3 className="text-base font-semibold text-gray-900">همکاری در لیست</h3>
-            <p className="text-sm text-gray-600">دعوت دیگران برای افزودن آیتم</p>
+            <h3 className="text-base font-semibold text-foreground">همکاری در لیست</h3>
+            <p className="text-sm text-wibe-secondary">دعوت دیگران برای افزودن آیتم</p>
           </div>
         </div>
         <button
@@ -180,9 +180,9 @@ export default function ListCollaborationPanel({
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {loading ? (
-        <p className="text-sm text-gray-500">در حال بارگذاری...</p>
+        <p className="text-sm text-wibe-secondary">در حال بارگذاری...</p>
       ) : members.length === 0 ? (
-        <p className="text-sm text-gray-500">هنوز همکاری دعوت نشده است.</p>
+        <p className="text-sm text-wibe-secondary">هنوز همکاری دعوت نشده است.</p>
       ) : (
         <ul className="space-y-2">
           {members.map((member) => {
@@ -196,13 +196,13 @@ export default function ListCollaborationPanel({
                 <div className="flex min-w-0 items-center gap-2">
                   <UserAvatar src={member.user.image} name={label} size={32} />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-900">{label}</p>
+                    <p className="truncate text-sm font-medium text-foreground">{label}</p>
                     {member.user.username && (
-                      <p className="truncate text-xs text-gray-500" dir="ltr">
+                      <p className="truncate text-xs text-wibe-secondary" dir="ltr">
                         @{member.user.username}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-wibe-secondary">
                       {member.status === 'PENDING'
                         ? isIncomingRequest
                           ? 'درخواست همکاری'
@@ -224,7 +224,7 @@ export default function ListCollaborationPanel({
                       <button
                         type="button"
                         onClick={() => memberAction(member.userId, 'reject')}
-                        className="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600"
+                        className="rounded-md border border-gray-200 px-2 py-1 text-xs text-wibe-secondary"
                       >
                         رد
                       </button>
@@ -234,7 +234,7 @@ export default function ListCollaborationPanel({
                     <button
                       type="button"
                       onClick={() => memberAction(member.userId, 'revoke')}
-                      className="rounded-md p-1 text-gray-500 hover:bg-gray-100"
+                      className="rounded-md p-1 text-wibe-secondary hover:bg-gray-100"
                       aria-label="لغو دسترسی"
                     >
                       <X className="h-4 w-4" />

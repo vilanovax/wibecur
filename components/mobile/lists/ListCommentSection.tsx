@@ -180,7 +180,7 @@ export default function ListCommentSection({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-gray-900">
+            <h3 className="font-bold text-foreground">
               کامنت‌ها ({totalCount})
             </h3>
           </div>
@@ -193,7 +193,7 @@ export default function ListCommentSection({
               <Plus className="w-5 h-5" strokeWidth={2.5} />
             </button>
           ) : (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-wibe-secondary">
               کامنت‌ها برای این لیست غیرفعال است
             </span>
           )}
@@ -207,7 +207,7 @@ export default function ListCommentSection({
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === 'newest'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
               }`}
             >
               <Clock className="w-4 h-4" />
@@ -218,7 +218,7 @@ export default function ListCommentSection({
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === 'popular'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
               }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -234,9 +234,9 @@ export default function ListCommentSection({
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-500">هنوز کامنتی ثبت نشده است</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <MessageSquare className="w-12 h-12 text-wibe-secondary mx-auto mb-2" />
+            <p className="text-wibe-secondary">هنوز کامنتی ثبت نشده است</p>
+            <p className="text-sm text-wibe-secondary mt-1">
               اولین کسی باشید که کامنت می‌گذارد
             </p>
           </div>
@@ -258,7 +258,7 @@ export default function ListCommentSection({
                 <button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-60"
+                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-foreground rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-60"
                 >
                   {isFetchingNextPage ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -266,7 +266,7 @@ export default function ListCommentSection({
                     <>
                       <span>نمایش بیشتر</span>
                       {remainingCount > 0 && (
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-wibe-secondary">
                           ({remainingCount} باقی‌مانده)
                         </span>
                       )}

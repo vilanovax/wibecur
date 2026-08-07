@@ -52,7 +52,7 @@ export default function LikesTab({ userId }: LikesTabProps) {
   if (likes.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl">
-        <p className="text-gray-500">هنوز آیتمی لایک نکرده‌اید</p>
+        <p className="text-wibe-secondary">هنوز آیتمی لایک نکرده‌اید</p>
       </div>
     );
   }
@@ -86,7 +86,7 @@ export default function LikesTab({ userId }: LikesTabProps) {
             <div className="p-3">
               <div className="flex items-center gap-1 mb-2">
                 <span className="text-sm">{like.category.icon}</span>
-                <span className="text-xs text-gray-500 truncate">{like.category.name}</span>
+                <span className="text-xs text-wibe-secondary truncate">{like.category.name}</span>
               </div>
               <h3 className="font-bold text-sm line-clamp-2 leading-tight">{like.title}</h3>
             </div>
@@ -97,7 +97,7 @@ export default function LikesTab({ userId }: LikesTabProps) {
       {!showAll && likes.length > 8 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          className="w-full mt-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
         >
           مشاهده بیشتر ({likes.length - 8} مورد دیگر)
         </button>

@@ -30,8 +30,8 @@ export default function RegisterAvatarPicker({ value, onChange }: RegisterAvatar
             <div className="h-[52px] w-[52px] rounded-full bg-gray-200" />
           )}
           <div className="min-w-0 text-right">
-            <p className="text-sm font-medium text-gray-800">آواتار تو</p>
-            <p className="mt-0.5 truncate text-xs text-gray-500">
+            <p className="text-sm font-medium text-foreground">آواتار تو</p>
+            <p className="mt-0.5 truncate text-xs text-wibe-secondary">
               {selectedAvatar?.label ?? 'پیش‌فرض'}
             </p>
           </div>

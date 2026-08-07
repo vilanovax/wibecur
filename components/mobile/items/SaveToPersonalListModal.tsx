@@ -186,7 +186,7 @@ export default function SaveToPersonalListModal({
           <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
             {authRequired ? (
               <div className="text-center py-12 px-6">
-                <p className="text-gray-600 mb-4">برای ذخیره در لیست شخصی وارد شوید</p>
+                <p className="text-wibe-secondary mb-4">برای ذخیره در لیست شخصی وارد شوید</p>
                 <Link
                   href={`/login?callbackUrl=${encodeURIComponent(`/items/${itemId}`)}&source=item_gate`}
                   className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary text-white font-semibold"
@@ -201,16 +201,16 @@ export default function SaveToPersonalListModal({
             ) : lists.length === 0 ? (
               <div className="text-center py-12 px-6">
                 <div className="text-5xl mb-3">📋</div>
-                <p className="text-gray-600 mb-2">لیست شخصی وجود ندارد</p>
+                <p className="text-wibe-secondary mb-2">لیست شخصی وجود ندارد</p>
                 {canCreateNewList && (
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-wibe-secondary mb-4">
                     با ساخت لیست جدید شروع کنید
                   </p>
                 )}
               </div>
             ) : (
               <div className="px-4 pb-4 space-y-2">
-                <p className="text-sm font-medium text-gray-500 px-1 pb-2">
+                <p className="text-sm font-medium text-wibe-secondary px-1 pb-2">
                   لیست‌های من
                 </p>
                 {lists.map((list) => {
@@ -237,10 +237,10 @@ export default function SaveToPersonalListModal({
 
                       {/* عنوان و آمار */}
                       <div className="flex-1 min-w-0 text-right">
-                        <h3 className="font-bold text-gray-900 truncate">
+                        <h3 className="font-bold text-foreground truncate">
                           {list.title}
                         </h3>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-wibe-secondary mt-0.5">
                           {list._count.items} آیتم
                           <span className="mx-1">•</span>
                           {list.isPublic ? (
@@ -264,7 +264,7 @@ export default function SaveToPersonalListModal({
                             className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium ${
                               justAdded
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-600'
+                                : 'bg-gray-100 text-wibe-secondary'
                             }`}
                           >
                             {justAdded ? (
@@ -312,7 +312,7 @@ export default function SaveToPersonalListModal({
                 ساخت لیست جدید
               </button>
             ) : (
-              <p className="text-center text-sm text-gray-500 py-2">
+              <p className="text-center text-sm text-wibe-secondary py-2">
                 به حداکثر تعداد لیست‌های خصوصی ({maxPersonalLists}) رسیده‌اید
               </p>
             )}

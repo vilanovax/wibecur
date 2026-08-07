@@ -47,7 +47,7 @@ export default function ProfileTabs2({ userId }: ProfileTabs2Props) {
                 ref={(r) => { tabRefs.current[index] = r; }}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 rounded-t-xl whitespace-nowrap transition-colors text-sm font-medium ${
-                  isActive ? 'text-[#7C3AED]' : 'text-gray-500 hover:text-gray-700'
+                  isActive ? 'text-[#7C3AED]' : 'text-wibe-secondary hover:text-foreground'
                 }`}
               >
                 <Icon className="w-4 h-4" />
