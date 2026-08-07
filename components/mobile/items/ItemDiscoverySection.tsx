@@ -31,7 +31,7 @@ function DiscoveryCarouselCard({
   fallbackIcon,
   rating,
   subtitle,
-  className = 'flex-shrink-0 w-[calc(52vw)] max-w-[210px] snap-start lg:w-full lg:max-w-none',
+  className = 'flex-shrink-0 w-[calc(42vw)] max-w-[160px] snap-start lg:w-full lg:max-w-none',
   rank,
 }: {
   href: string;
@@ -50,9 +50,9 @@ function DiscoveryCarouselCard({
   return (
     <Link
       href={href}
-      className={`${className} overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md`}
+      className={`${className} overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.99] lg:hover:shadow-md lg:hover:ring-primary/25`}
     >
-      <div className="relative aspect-[2/3] w-full bg-gray-100 lg:aspect-[16/10] lg:max-h-[9rem]">
+      <div className="relative aspect-[2/3] w-full bg-wibe-surface lg:max-h-[11rem]">
         <LazyItemCoverImage
           itemId={itemId}
           title={title}
@@ -63,31 +63,24 @@ function DiscoveryCarouselCard({
           fallbackClassName="absolute inset-0 h-full w-full"
           coverLayout="grid"
         />
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"
-          aria-hidden
-        />
         {rank != null && rank <= 3 && (
-          <span className="absolute right-2 top-2 wibe-caption rounded-pill bg-warning px-1.5 py-0.5 font-medium text-white shadow-sm">
+          <span className="absolute end-2 top-2 rounded-full bg-warning px-1.5 py-0.5 wibe-caption font-semibold text-white shadow-sm">
             #{rank.toLocaleString('fa-IR')}
           </span>
         )}
-        <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug drop-shadow-sm">
-            {title}
-          </h3>
-          {(ratingLabel || subtitle) && (
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-white/90">
-              {ratingLabel && (
-                <span className="flex items-center gap-0.5">
-                  <span>⭐</span>
-                  <span>{ratingLabel}</span>
-                </span>
-              )}
-              {subtitle && <span className="line-clamp-1 opacity-90">{subtitle}</span>}
-            </div>
-          )}
-        </div>
+        {ratingLabel && (
+          <span className="absolute start-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-black/75 px-1.5 py-0.5 wibe-caption font-bold text-warning backdrop-blur-sm">
+            ⭐ {ratingLabel}
+          </span>
+        )}
+      </div>
+      <div className="space-y-0.5 px-2.5 py-2 text-start">
+        <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-foreground">
+          {title}
+        </h3>
+        {subtitle ? (
+          <p className="line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
+        ) : null}
       </div>
     </Link>
   );
@@ -95,7 +88,7 @@ function DiscoveryCarouselCard({
 
 function CarouselSkeleton({
   count = 4,
-  className = 'min-w-[calc(52vw)] w-[calc(52vw)] max-w-[210px] aspect-[2/3] lg:w-full lg:min-w-0 lg:max-w-none lg:aspect-[16/10]',
+  className = 'min-w-[calc(42vw)] w-[calc(42vw)] max-w-[160px] aspect-[2/3] lg:w-full lg:min-w-0 lg:max-w-none',
 }: {
   count?: number;
   className?: string;
@@ -105,7 +98,7 @@ function CarouselSkeleton({
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className={`${className} flex-shrink-0 animate-pulse rounded-xl bg-gray-200`}
+          className={`${className} flex-shrink-0 animate-pulse rounded-2xl bg-wibe-surface`}
         />
       ))}
     </div>
@@ -206,18 +199,18 @@ export default function ItemDiscoverySection({
   };
 
   return (
-    <section className="pt-1 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 text-right">
+    <section className="pt-2 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
+      <div className="mb-3.5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 text-start">
           <h2 className="wibe-h3 text-foreground">پیشنهاد برای تو</h2>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">
+          <p className="mt-1 wibe-caption text-wibe-secondary">
             {tabDescriptions[activeTab]}
           </p>
         </div>
 
         {availableTabs.length > 1 && (
           <div
-            className="flex shrink-0 gap-1 rounded-xl border border-wibe bg-wibe-surface p-1"
+            className="flex shrink-0 gap-1 rounded-full border border-wibe bg-wibe-surface p-1"
             role="tablist"
             aria-label="نوع پیشنهاد"
           >
@@ -228,7 +221,7 @@ export default function ItemDiscoverySection({
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-[colors,transform] active:scale-[0.98] ${
+                className={`rounded-full px-3 py-1.5 wibe-caption font-semibold transition-[colors,transform] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] ${
                   activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE
                 }`}
               >
@@ -269,7 +262,7 @@ export default function ItemDiscoverySection({
               categorySlug={categorySlug}
               rating={a.rating}
               subtitle={`${a.commonUsersCount.toLocaleString('fa-IR')} نفر همراه`}
-              className="flex-shrink-0 w-[calc(48vw)] max-w-[200px] snap-start lg:w-full lg:max-w-none"
+              className="flex-shrink-0 w-[calc(42vw)] max-w-[160px] snap-start lg:w-full lg:max-w-none"
             />
           ))}
         </div>
@@ -290,7 +283,7 @@ export default function ItemDiscoverySection({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-wibe/80 bg-gray-50 py-6 text-center">
+        <div className="rounded-2xl border border-dashed border-wibe bg-wibe-surface py-6 text-center">
           <p className="wibe-small text-wibe-secondary">فعلاً پیشنهادی برای این بخش نداریم</p>
         </div>
       )}
