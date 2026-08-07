@@ -3,8 +3,13 @@
 import { memo } from 'react';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
+import { getItemCardSubtitle } from '@/lib/item-display-utils';
 import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
-import { isMovieLikeCategory, isPortraitCoverCategory } from '@/lib/resolve-item-image';
+import {
+  isBookLikeCategory,
+  isPortraitCoverCategory,
+  isTitleBelowCoverCategory,
+} from '@/lib/resolve-item-image';
 
 /** srcset next/image برای گرید ۲–۴ ستونه */
 export const LIST_GRID_IMAGE_SIZES =
@@ -14,15 +19,27 @@ type ListGridItemCardProps = {
   item: {
     id: string;
     title: string;
+    description?: string | null;
     imageUrl: string | null;
     displayImageUrl?: string | null;
     metadata?: Record<string, unknown> | null;
+    rating?: number;
   };
   index: number;
   categorySlug?: string | null;
   categoryIcon?: string | null;
   onOpenAt: (index: number) => void;
 };
+
+function bookFormatBadge(title: string, metadata?: Record<string, unknown> | null): string | null {
+  const tip = typeof metadata?.tip === 'string' ? metadata.tip : '';
+  const haystack = `${title} ${tip}`;
+  if (/خلاصه/.test(haystack)) return 'خلاصه';
+  if (/صوتی|audiobook/i.test(haystack)) return 'صوتی';
+  const contentType = metadata?.contentType;
+  if (contentType === 'audiobook') return 'صوتی';
+  return null;
+}
 
 function ListGridItemCard({
   item,
@@ -31,23 +48,31 @@ function ListGridItemCard({
   categoryIcon,
   onOpenAt,
 }: ListGridItemCardProps) {
-  const isMovieGrid = isMovieLikeCategory(categorySlug);
   const isPortraitCover = isPortraitCoverCategory(categorySlug);
+  const titleBelow = isTitleBelowCoverCategory(categorySlug);
+  const isBookGrid = isBookLikeCategory(categorySlug);
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
+  const subtitle = getItemCardSubtitle({
+    description: item.description,
+    rating: item.rating,
+    metadata: item.metadata,
+    categorySlug,
+  });
+  const formatBadge = isBookGrid ? bookFormatBadge(item.title, item.metadata) : null;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-wibe bg-wibe-card text-right shadow-sm transition-colors lg:hover:border-primary/20 lg:hover:shadow-md">
+    <div className="flex flex-col overflow-hidden rounded-2xl bg-wibe-card text-right shadow-sm ring-1 ring-wibe/90 transition-[transform,box-shadow] lg:hover:shadow-md lg:hover:ring-primary/25">
       <button
         type="button"
         onClick={() => onOpenAt(index)}
         aria-label={`رفتن به آیتم ${(index + 1).toLocaleString('fa-IR')}${item.title ? ` — ${item.title}` : ''}`}
-        className="block w-full text-right transition-colors active:scale-[0.99]"
+        className="block w-full text-right transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/35 active:scale-[0.99]"
       >
         <div
-          className={`relative overflow-hidden ${
+          className={`relative overflow-hidden bg-wibe-surface ${
             isPortraitCover
-              ? 'aspect-[2/3] lg:mx-auto lg:max-h-[13.5rem] lg:w-full lg:max-w-[10.5rem]'
-              : 'aspect-[4/3] lg:max-h-[10.5rem]'
+              ? 'aspect-[2/3] lg:mx-auto lg:max-h-[14rem] lg:w-full lg:max-w-[10.5rem]'
+              : 'aspect-[4/3] lg:max-h-[11rem]'
           }`}
         >
           <LazyItemCoverImage
@@ -57,30 +82,45 @@ function ListGridItemCard({
             metadata={item.metadata}
             categorySlug={categorySlug}
             className="h-full w-full object-cover"
-            fallbackIcon={categoryIcon ?? '🎬'}
-            fallbackClassName="flex h-full w-full items-center justify-center text-2xl"
+            fallbackIcon={categoryIcon ?? (isBookGrid ? '📚' : '🎬')}
+            fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
             enrichWhenVisible={false}
             coverLayout="grid"
             sizes={LIST_GRID_IMAGE_SIZES}
           />
           <span
-            className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums"
+            className="absolute end-1.5 top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/20 wibe-caption font-bold text-white tabular-nums backdrop-blur-sm"
             aria-hidden
           >
             {(index + 1).toLocaleString('fa-IR')}
           </span>
-          {!isMovieGrid && (
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2 pb-2 pt-10">
-              <p className="line-clamp-2 text-start text-[11px] font-semibold leading-snug text-white lg:text-xs">
+          {formatBadge ? (
+            <span className="absolute start-1.5 top-1.5 rounded-full bg-warning/95 px-2 py-0.5 wibe-caption font-semibold text-white shadow-sm">
+              {formatBadge}
+            </span>
+          ) : null}
+          {!titleBelow && (
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-2.5 pb-2.5 pt-12">
+              <p className="line-clamp-2 text-start text-caption font-bold leading-snug text-white drop-shadow-sm">
                 {item.title}
               </p>
             </div>
           )}
         </div>
+        {titleBelow && item.title ? (
+          <div className={`border-t border-wibe/50 px-2.5 ${isBookGrid ? 'py-2.5' : 'py-2'}`}>
+            <p className="line-clamp-2 wibe-caption font-semibold leading-snug text-foreground">
+              {item.title}
+            </p>
+            {subtitle ? (
+              <p className="mt-1 line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
+            ) : null}
+          </div>
+        ) : null}
       </button>
       {quickActions.length > 0 && (
-        <div className="border-t border-wibe/60 px-2.5 py-2 lg:px-3">
-          <ListItemQuickActions actions={quickActions} size="sm" />
+        <div className="border-t border-wibe/60 bg-wibe-surface/40 px-2.5 py-2 lg:px-3">
+          <ListItemQuickActions actions={quickActions} size="sm" className="justify-start" />
         </div>
       )}
     </div>

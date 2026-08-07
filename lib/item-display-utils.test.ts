@@ -16,3 +16,17 @@ describe('getItemCardSubtitle cafe', () => {
     expect(subtitle).toContain('جردن');
   });
 });
+
+describe('getItemCardSubtitle book', () => {
+  it('prefers author for book categories', () => {
+    const subtitle = getItemCardSubtitle({
+      categorySlug: 'books',
+      metadata: {
+        author: 'افلاطون',
+        genre: 'فلسفه',
+        year: 380,
+      },
+    });
+    expect(subtitle).toBe('افلاطون');
+  });
+});
