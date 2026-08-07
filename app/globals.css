@@ -90,7 +90,10 @@
   --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark tokens reserved — consumer ships light-only until PRODUCT decision flips */
+/* Dark tokens reserved only.
+ * Do NOT add class "dark" to <html>/<body> — consumer is light-only (PRODUCT.md).
+ * prefers-color-scheme:dark is forced back to light below.
+ */
 .dark {
   --color-bg: #111827;
   --color-surface: #1F2937;

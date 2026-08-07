@@ -97,6 +97,7 @@ Consumer UI is **Operate + Experience**: RTL Persian, Vazirmatn, slate surfaces,
 - **Surfaces** — background white، surface `#F8FAFC`، card white، border slate-200
 - **Text** — foreground slate-900، secondary slate-500
 - Do not use legacy purple/pink for consumer trend accents
+- **Light-only:** never add `.dark` to the document; `.dark { … }` in `globals.css` is reserved/unused until PRODUCT flips the decision. `prefers-color-scheme: dark` is overridden to light.
 
 ## Typography
 

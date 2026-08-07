@@ -96,12 +96,26 @@ function mapListRow(
   };
 }
 
-function listMatchesGuidedTopic(list: GuidedListCard, query: string): boolean {
+const FILM_CATEGORY_SLUGS = new Set([
+  'movie',
+  'movies',
+  'film',
+  'cinema',
+  'film-serial',
+  'series',
+]);
+const BOOK_CATEGORY_SLUGS = new Set(['book', 'books', 'podcast', 'podcasts']);
+const CAFE_CATEGORY_SLUGS = new Set(['cafe', 'coffee', 'restaurant']);
+
+/** Exported for unit tests — keep row-topic filtering in one place. */
+export function listMatchesGuidedTopic(list: GuidedListCard, query: string): boolean {
   const title = list.title;
   const slug = list.slug.toLowerCase();
+  const cat = list.category?.slug?.toLowerCase() ?? '';
 
   switch (query) {
     case 'سریال':
+      if (BOOK_CATEGORY_SLUGS.has(cat) || CAFE_CATEGORY_SLUGS.has(cat)) return false;
       return (
         title.includes('سریال') ||
         slug.includes('series') ||
@@ -109,22 +123,37 @@ function listMatchesGuidedTopic(list: GuidedListCard, query: string): boolean {
         slug.includes('tv-')
       );
     case 'فیلم':
+      if (BOOK_CATEGORY_SLUGS.has(cat) || CAFE_CATEGORY_SLUGS.has(cat)) return false;
       return (
         (title.includes('فیلم') || slug.includes('film') || slug.includes('movie')) &&
         !title.includes('سریال') &&
         !slug.includes('series')
       );
     case 'کتاب':
+      // لیست فیلم/کافه حتی با کلمه «کتاب» در عنوان وارد ردیف کتاب نشود
+      if (FILM_CATEGORY_SLUGS.has(cat) || CAFE_CATEGORY_SLUGS.has(cat)) return false;
       return (
         title.includes('کتاب') ||
         slug.includes('book') ||
-        list.category?.slug === 'book' ||
-        list.category?.slug === 'books'
+        BOOK_CATEGORY_SLUGS.has(cat)
       );
     case 'کافه':
-      return title.includes('کافه') || slug.includes('cafe') || slug.includes('coffee');
+      if (BOOK_CATEGORY_SLUGS.has(cat) || FILM_CATEGORY_SLUGS.has(cat)) return false;
+      return (
+        title.includes('کافه') ||
+        slug.includes('cafe') ||
+        slug.includes('coffee') ||
+        CAFE_CATEGORY_SLUGS.has(cat)
+      );
     case 'رستوران':
-      return title.includes('رستوران') || slug.includes('restaurant') || title.includes('غذا');
+      if (BOOK_CATEGORY_SLUGS.has(cat) || FILM_CATEGORY_SLUGS.has(cat)) return false;
+      return (
+        title.includes('رستوران') ||
+        slug.includes('restaurant') ||
+        title.includes('غذا') ||
+        cat === 'restaurant' ||
+        cat === 'cafe'
+      );
     default:
       return true;
   }
@@ -302,7 +331,12 @@ function trendingToListCards(
     saveCount: t.saveCount,
     itemCount: t.itemCount,
     category: t.categorySlug
-      ? { name: t.categorySlug, slug: t.categorySlug, icon: null }
+      ? {
+          // trending فقط slug دارد — name را خالی بگذار تا بج slug خام نشان ندهد
+          name: '',
+          slug: t.categorySlug,
+          icon: null,
+        }
       : undefined,
   }));
 }
