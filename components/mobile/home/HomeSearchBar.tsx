@@ -6,11 +6,11 @@ export default function HomeSearchBar() {
   const { openSearch } = useSearch();
 
   return (
-    <div className="px-4 pb-2 pt-1 lg:hidden">
+    <div className="px-4 pb-2.5 pt-1 lg:hidden">
       <button
         type="button"
         onClick={() => openSearch()}
-        className="relative flex w-full items-center gap-3 rounded-xl border border-wibe bg-wibe-card px-4 py-3 text-right shadow-sm transition-colors hover:border-primary/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
+        className="relative flex w-full items-center gap-3 rounded-2xl border border-wibe bg-wibe-surface px-4 py-3.5 text-right shadow-sm transition-colors hover:border-primary/30 hover:bg-wibe-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
         aria-label="باز کردن جستجو"
       >
         <svg

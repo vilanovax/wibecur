@@ -30,7 +30,7 @@ export default function HomeMobileView({
   const { isGuest, isLoading: userLoading } = useHomeUserState();
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-0.5 pb-2">
       <HomeStartStrip />
       <HomeHeroSpotlightSlot ssrFeaturedId={ssrFeaturedId}>{heroSpotlight}</HomeHeroSpotlightSlot>
       <QuickCategoryChips initialCategories={initialCategories} />

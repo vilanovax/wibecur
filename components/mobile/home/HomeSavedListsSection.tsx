@@ -69,7 +69,7 @@ export default function HomeSavedListsSection() {
   });
 
   return (
-    <section className="mb-6">
+    <section className="mb-6 border-t border-wibe/50 pt-5">
       <HomeSectionTitle
         iconVariant="bookmark"
         title="ذخیره‌شده‌های تو"
@@ -82,10 +82,10 @@ export default function HomeSavedListsSection() {
       />
 
       {isLoading ? (
-        <div className="mx-4 h-28 animate-pulse rounded-xl bg-gray-100 lg:mx-0" />
+        <div className="mx-4 h-28 animate-pulse rounded-2xl bg-wibe-surface lg:mx-0" />
       ) : showSaved ? (
         <>
-          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:hidden">
             {savedLists.map((list) => (
               <HomeGridListCard
                 key={list.id}
@@ -112,7 +112,7 @@ export default function HomeSavedListsSection() {
         </>
       ) : (
         <>
-          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:hidden">
             {suggestionLists.map((list) => (
               <HomeGridListCard
                 key={list.id}
