@@ -21,10 +21,12 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
   const [showAllMobile, setShowAllMobile] = useState(false);
 
   return (
-    <div className="mb-1">
+    <div className="mb-0.5">
       <header className="mb-4 lg:mb-5">
-        <p className="mb-1 wibe-caption font-semibold tracking-wide text-primary">اکسپلور</p>
-        <h2 className="text-balance text-[1.7rem] font-bold leading-[1.2] tracking-tight text-foreground lg:text-3xl lg:leading-[1.15]">
+        <p className="mb-1.5 inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-semibold text-primary">
+          اکسپلور
+        </p>
+        <h2 className="text-balance text-h1 font-bold tracking-tight text-foreground lg:text-3xl">
           امروز دنبال چه وایبی هستی؟
         </h2>
         <p className="mt-1.5 max-w-md text-pretty wibe-small text-wibe-secondary lg:mt-2 lg:text-base">
@@ -53,7 +55,7 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
         <button
           type="button"
           onClick={() => setShowAllMobile(true)}
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card/90 py-3 wibe-caption font-semibold text-primary shadow-vibe-sm transition-colors hover:bg-primary/5 active:scale-[0.99] lg:hidden"
+          className="mt-3 flex w-full items-center justify-center gap-1 rounded-full border border-wibe bg-wibe-card py-3 wibe-caption font-semibold text-primary transition-colors hover:border-primary/30 hover:bg-primary/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:hidden"
         >
           مودهای بیشتر ({EXTRA_MOBILE_COUNT.toLocaleString('fa-IR')})
           <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden />
