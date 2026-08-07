@@ -74,7 +74,7 @@ function getEngagementBadge(d: UserDetails): { label: string; className: string 
 
   if (lists >= 3 && ratio >= 5) return { label: 'اثر بالا', className: 'bg-emerald-100 text-emerald-800' };
   if (lists >= 1 || bookmarks >= 2) return { label: 'پایدار', className: 'bg-amber-100 text-amber-800' };
-  return { label: 'تعامل کم', className: 'bg-gray-100 text-gray-600' };
+  return { label: 'تعامل کم', className: 'bg-gray-100 text-[var(--color-text-muted)]' };
 }
 
 function getRiskBadge(d: UserDetails): { label: string; className: string } {
@@ -166,7 +166,7 @@ export default function UserDetailModal({
   if (!isOpen) return null;
 
   const roleColors: Record<string, string> = {
-    USER: 'bg-gray-100 text-gray-800',
+    USER: 'bg-gray-100 text-[var(--color-text)]',
     EDITOR: 'bg-blue-100 text-blue-800',
     ADMIN: 'bg-red-100 text-red-800',
     SUPER_ADMIN: 'bg-purple-100 text-purple-800',
@@ -225,7 +225,7 @@ export default function UserDetailModal({
                   </h3>
                   <p className="text-sm text-[var(--color-text-muted)] truncate">{user.email}</p>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-medium ${roleColors[user.role] ?? 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-medium ${roleColors[user.role] ?? 'bg-gray-100 text-[var(--color-text)]'}`}>
                       {getRoleLabel(user.role)}
                     </span>
                     <span

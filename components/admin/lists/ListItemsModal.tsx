@@ -71,14 +71,14 @@ export default function ListItemsModal({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">آیتم‌های لیست</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{listTitle}</p>
+            <h2 className="text-lg font-semibold text-[var(--color-text)]">آیتم‌های لیست</h2>
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{listTitle}</p>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[var(--color-text-muted)]" />
           </button>
         </div>
 
@@ -87,7 +87,7 @@ export default function ListItemsModal({
           {isLoading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-gray-500 mt-4">در حال بارگذاری...</p>
+              <p className="text-[var(--color-text-muted)] mt-4">در حال بارگذاری...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -102,7 +102,7 @@ export default function ListItemsModal({
           ) : items.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-5xl mb-4">📋</div>
-              <p className="text-gray-500">این لیست هنوز آیتمی ندارد</p>
+              <p className="text-[var(--color-text-muted)]">این لیست هنوز آیتمی ندارد</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -118,11 +118,11 @@ export default function ListItemsModal({
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">
+                    <h3 className="text-sm font-medium text-[var(--color-text)] mb-1">
                       {item.title}
                     </h3>
                     {item.description && (
-                      <p className="text-xs text-gray-500 line-clamp-2">
+                      <p className="text-xs text-[var(--color-text-muted)] line-clamp-2">
                         {item.description}
                       </p>
                     )}
@@ -136,7 +136,7 @@ export default function ListItemsModal({
         {/* Footer */}
         {items.length > 0 && (
           <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-xs text-[var(--color-text-muted)] text-center">
               تعداد کل آیتم‌ها: {items.length}
             </p>
           </div>

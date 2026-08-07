@@ -60,8 +60,8 @@ export default function PermissionPicker({ groups, selected, onChange, disabled 
                 className="flex-1 flex items-center justify-between gap-3 px-3 py-2.5 text-right hover:bg-gray-50 dark:hover:bg-gray-800/40 disabled:opacity-60 transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900 dark:text-white text-sm">{group.label}</p>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                  <p className="font-medium text-[var(--color-text)] dark:text-white text-sm">{group.label}</p>
+                  <p className="text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5 truncate">
                     {group.description}
                   </p>
                 </div>
@@ -70,7 +70,7 @@ export default function PermissionPicker({ groups, selected, onChange, disabled 
                     'text-[10px] tabular-nums shrink-0 rounded-md px-1.5 py-0.5 font-medium',
                     allInGroup
                       ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+                      : 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700 dark:text-[var(--color-text-subtle)]',
                   ].join(' ')}
                 >
                   {groupSelected}/{group.permissions.length}
@@ -80,7 +80,7 @@ export default function PermissionPicker({ groups, selected, onChange, disabled 
                 type="button"
                 onClick={() => toggleCollapse(group.id)}
                 aria-label={isCollapsed ? 'باز کردن' : 'بستن'}
-                className="flex items-center justify-center px-2.5 border-r border-gray-100 dark:border-gray-700 text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                className="flex items-center justify-center px-2.5 border-r border-gray-100 dark:border-gray-700 text-[var(--color-text-subtle)] hover:text-[var(--color-text-muted)] hover:bg-gray-50 dark:hover:bg-gray-800/40"
               >
                 {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
               </button>
@@ -97,7 +97,7 @@ export default function PermissionPicker({ groups, selected, onChange, disabled 
                         onChange={() => toggle(perm)}
                         className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                       />
-                      <span className="text-gray-700 dark:text-gray-200 text-xs">
+                      <span className="text-[var(--color-text)] dark:text-gray-200 text-xs">
                         {PERMISSION_LABELS[perm]}
                       </span>
                     </label>

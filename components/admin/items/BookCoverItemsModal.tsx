@@ -644,7 +644,7 @@ export default function BookCoverItemsModal({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-gray-900">
+                <h2 className="text-base sm:text-lg font-bold text-[var(--color-text)]">
                   کاور کتاب — ParsPack
                 </h2>
                 {!loading && items.length > 0 && (
@@ -653,15 +653,15 @@ export default function BookCoverItemsModal({
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 truncate text-sm font-medium text-gray-700">{scopeTitle}</p>
-              <p className="mt-1 text-xs leading-relaxed text-gray-500">
+              <p className="mt-0.5 truncate text-sm font-medium text-[var(--color-text)]">{scopeTitle}</p>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
                 تصاویر خارجی را انتخاب و به ParsPack منتقل کنید، یا کاور را از فیدیبو / کتابراه / طاقچه استخراج کنید.
               </p>
             </div>
             <button
               type="button"
               onClick={handleClose}
-              className="shrink-0 rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+              className="shrink-0 rounded-xl p-2 text-[var(--color-text-subtle)] transition-colors hover:bg-gray-100 hover:text-[var(--color-text)]"
               aria-label="بستن"
             >
               <X className="h-5 w-5" />
@@ -670,7 +670,7 @@ export default function BookCoverItemsModal({
 
           {showProgress && (
             <div className="mt-4 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-medium text-gray-600">
+              <div className="flex items-center justify-between text-[11px] font-medium text-[var(--color-text-muted)]">
                 <span>{isBatchRunning ? 'در حال پردازش…' : 'پیشرفت'}</span>
                 <span>
                   {batchProgress.done.toLocaleString('fa-IR')} موفق
@@ -706,7 +706,7 @@ export default function BookCoverItemsModal({
                 type="button"
                 disabled={isBusy}
                 onClick={toggleSelectAllFiltered}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-emerald-700 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:text-emerald-700 disabled:opacity-50"
               >
                 {allFilteredSelected ? (
                   <CheckSquare className="h-4 w-4 text-emerald-600" />
@@ -729,7 +729,7 @@ export default function BookCoverItemsModal({
                     className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
                       source === s
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-emerald-50'
+                        : 'bg-white text-[var(--color-text-muted)] ring-1 ring-gray-200 hover:bg-emerald-50'
                     }`}
                   >
                     {BOOK_COVER_SOURCE_LABELS[s]}
@@ -739,7 +739,7 @@ export default function BookCoverItemsModal({
             </div>
 
             <div className="relative">
-              <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-subtle)]" />
               <input
                 type="search"
                 value={query}
@@ -754,7 +754,7 @@ export default function BookCoverItemsModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">
           {loading && (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+            <div className="flex flex-col items-center justify-center py-16 text-[var(--color-text-muted)]">
               <Loader2 className="mb-3 h-9 w-9 animate-spin text-emerald-500" />
               <span className="text-sm font-medium">در حال بررسی تصاویر…</span>
             </div>
@@ -769,7 +769,7 @@ export default function BookCoverItemsModal({
           {!loading && !error && items.length === 0 && !isBatchRunning && (
             <div className="mx-1 flex flex-col items-center rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 px-6 py-14 text-center">
               <CheckCircle2 className="mb-3 h-12 w-12 text-emerald-500" />
-              <p className="text-sm font-semibold text-gray-800">
+              <p className="text-sm font-semibold text-[var(--color-text)]">
                 {batchSummary?.success
                   ? `${batchSummary.success.toLocaleString('fa-IR')} کاور با موفقیت آپلود شد`
                   : 'همه تصاویر روی ParsPack هستند'}
@@ -811,7 +811,7 @@ export default function BookCoverItemsModal({
                       type="button"
                       disabled={isBusy || isProcessing}
                       onClick={() => toggleSelect(item.id)}
-                      className="shrink-0 p-0.5 text-gray-400 hover:text-emerald-600 disabled:opacity-40"
+                      className="shrink-0 p-0.5 text-[var(--color-text-subtle)] hover:text-emerald-600 disabled:opacity-40"
                       aria-pressed={isSelected}
                     >
                       {isSelected ? (
@@ -821,7 +821,7 @@ export default function BookCoverItemsModal({
                       )}
                     </button>
 
-                    <span className="w-4 shrink-0 text-center text-[10px] font-mono text-gray-300">
+                    <span className="w-4 shrink-0 text-center text-[10px] font-mono text-[var(--color-text-subtle)]">
                       {(index + 1).toLocaleString('fa-IR')}
                     </span>
 
@@ -835,11 +835,11 @@ export default function BookCoverItemsModal({
                           unoptimized
                         />
                       ) : item.status === 'missing' ? (
-                        <ImageOff className="h-5 w-5 text-gray-400" />
+                        <ImageOff className="h-5 w-5 text-[var(--color-text-subtle)]" />
                       ) : displayUrl ? (
                         <Image src={displayUrl} alt="" fill className="object-cover" unoptimized />
                       ) : (
-                        <ImageOff className="h-5 w-5 text-gray-400" />
+                        <ImageOff className="h-5 w-5 text-[var(--color-text-subtle)]" />
                       )}
                     </div>
 
@@ -873,7 +873,7 @@ export default function BookCoverItemsModal({
                           <button
                             type="button"
                             onClick={cancelEditTitle}
-                            className="rounded-lg border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50"
+                            className="rounded-lg border border-gray-200 p-1.5 text-[var(--color-text-muted)] hover:bg-gray-50"
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
@@ -889,15 +889,15 @@ export default function BookCoverItemsModal({
                           >
                             <p
                               className={`truncate text-sm font-semibold ${
-                                item.isHidden ? 'text-gray-400 line-through' : 'text-gray-900'
+                                item.isHidden ? 'text-[var(--color-text-subtle)] line-through' : 'text-[var(--color-text)]'
                               }`}
                             >
                               {item.title}
                             </p>
-                            <Pencil className="h-3 w-3 shrink-0 text-gray-300 opacity-0 group-hover/title:opacity-100" />
+                            <Pencil className="h-3 w-3 shrink-0 text-[var(--color-text-subtle)] opacity-0 group-hover/title:opacity-100" />
                           </button>
                           {item.isHidden && (
-                            <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold text-gray-600">
+                            <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold text-[var(--color-text-muted)]">
                               غیرفعال
                             </span>
                           )}
@@ -906,7 +906,7 @@ export default function BookCoverItemsModal({
                       )}
 
                       {!isEditing && (
-                        <p className="mt-0.5 text-[11px] text-gray-500">
+                        <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
                           {item.status === 'missing' ? 'بدون تصویر — نیاز به استخراج' : 'تصویر خارجی — قابل تبدیل مستقیم'}
                           {item.detectedSource && (
                             <span className="mr-1 text-emerald-600">
@@ -959,7 +959,7 @@ export default function BookCoverItemsModal({
                             title={item.isHidden ? 'فعال کردن' : 'غیرفعال کردن'}
                             className={`inline-flex items-center justify-center rounded-lg border p-1.5 text-[10px] disabled:opacity-50 ${
                               item.isHidden
-                                ? 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                                ? 'border-gray-300 text-[var(--color-text-muted)] hover:bg-gray-100'
                                 : 'border-red-200 text-red-600 hover:bg-red-50'
                             }`}
                           >
@@ -1000,7 +1000,7 @@ export default function BookCoverItemsModal({
 
         {!loading && (items.length > 0 || batchSummary) && (
           <div className="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3 space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-text-muted)]">
               <span>
                 {selectedIds.size > 0
                   ? `${selectedIds.size.toLocaleString('fa-IR')} انتخاب · ${filteredItems.length.toLocaleString('fa-IR')} نمایش`

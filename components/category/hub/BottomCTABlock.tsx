@@ -24,10 +24,10 @@ export default function BottomCTABlock({
           boxShadow: `0 4px 20px ${accentColor}15`,
         }}
       >
-        <h3 className="text-lg font-bold text-gray-900">
+        <h3 className="text-lg font-bold text-foreground">
           لیست خودت رو بساز و دیده شو
         </h3>
-        <p className="text-sm text-gray-600 mt-2">
+        <p className="text-sm text-wibe-secondary mt-2">
           کیوریتورهای برتر از همین‌جا شروع کردند
         </p>
         <Link

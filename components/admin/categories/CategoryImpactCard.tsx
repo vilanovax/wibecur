@@ -97,7 +97,7 @@ export default function CategoryImpactCard({
     stable: {
       icon: Minus,
       label: 'پایدار',
-      badgeClass: 'bg-gray-100 text-gray-700 border-gray-200',
+      badgeClass: 'bg-gray-100 text-[var(--color-text)] border-gray-200',
     },
   };
 

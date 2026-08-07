@@ -23,7 +23,7 @@ function getStatus(slot: SlotItem, now: Date): 'Scheduled' | 'Active' | 'Expired
 const statusStyles: Record<string, string> = {
   Scheduled: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200',
   Active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
-  Expired: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+  Expired: 'bg-gray-200 text-[var(--color-text-muted)] dark:bg-gray-700 dark:text-[var(--color-text-subtle)]',
 };
 
 const statusLabels: Record<string, string> = {
@@ -52,10 +52,10 @@ export default function UpcomingSlotsGrid({
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                <h3 className="font-medium text-[var(--color-text)] dark:text-white truncate">
                   {s.list.title}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-1">
                   {formatDate(s.startAt)}
                   {s.endAt ? ` – ${formatDate(s.endAt)}` : ' – نامحدود'}
                 </p>
@@ -69,7 +69,7 @@ export default function UpcomingSlotsGrid({
                 <button
                   type="button"
                   onClick={() => onEdit(s)}
-                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   aria-label="ویرایش"
                 >
                   <Pencil className="w-4 h-4" />

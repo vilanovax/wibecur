@@ -90,8 +90,8 @@ export default function ListsPageClient({
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">لیست‌ها</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-3xl font-bold text-[var(--color-text)]">لیست‌ها</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mt-1">
             {filteredLists.length} لیست از {lists.length}
           </p>
         </div>
@@ -106,14 +106,14 @@ export default function ListsPageClient({
       {/* Category Chips Filter */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-700">دسته‌بندی‌ها</h2>
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">دسته‌بندی‌ها</h2>
           <div className="flex items-center gap-3">
             {/* Sort Dropdown */}
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="appearance-none bg-white border border-gray-300 rounded-lg px-8 py-2 pl-4 text-sm font-medium text-gray-700 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-right"
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-8 py-2 pl-4 text-sm font-medium text-[var(--color-text)] hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer text-right"
               >
                 <option value="date_desc">📅 تاریخ (جدیدترین)</option>
                 <option value="date_asc">📅 تاریخ (قدیمی‌ترین)</option>
@@ -125,7 +125,7 @@ export default function ListsPageClient({
                 <option value="bookmarks_asc">⭐ تعداد بوک‌مارک (کمترین)</option>
               </select>
               <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -138,7 +138,7 @@ export default function ListsPageClient({
                 className={`p-2 rounded transition-colors ${
                   viewMode === 'grid'
                     ? 'bg-white shadow-sm text-primary'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
                 }`}
                 title="نمایش گریدی"
               >
@@ -151,7 +151,7 @@ export default function ListsPageClient({
                 className={`p-2 rounded transition-colors ${
                   viewMode === 'list'
                     ? 'bg-white shadow-sm text-primary'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
                 }`}
                 title="نمایش لیستی"
               >
@@ -168,7 +168,7 @@ export default function ListsPageClient({
                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
                   statusFilter === 'all'
                     ? 'bg-gray-900 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-[var(--color-text-muted)] hover:bg-gray-200'
                 }`}
               >
                 همه
@@ -178,7 +178,7 @@ export default function ListsPageClient({
                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
                   statusFilter === 'active'
                     ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-[var(--color-text-muted)] hover:bg-gray-200'
                 }`}
               >
                 فعال
@@ -188,7 +188,7 @@ export default function ListsPageClient({
                 className={`px-3 py-1 text-xs rounded-full transition-colors ${
                   statusFilter === 'inactive'
                     ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-gray-100 text-[var(--color-text-muted)] hover:bg-gray-200'
                 }`}
               >
                 غیرفعال
@@ -204,7 +204,7 @@ export default function ListsPageClient({
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
               selectedCategory === 'all'
                 ? 'bg-primary text-white shadow-md scale-105'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
             }`}
           >
             <span>🎯</span>
@@ -223,7 +223,7 @@ export default function ListsPageClient({
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   selectedCategory === cat.id
                     ? 'text-white shadow-md scale-105'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
                 }`}
                 style={
                   selectedCategory === cat.id
@@ -272,7 +272,7 @@ export default function ListsPageClient({
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{list.categories?.icon || '📋'}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-[var(--color-text-muted)]">
                         {list.categories?.name || 'بدون دسته‌بندی'}
                       </span>
                     </div>
@@ -280,17 +280,17 @@ export default function ListsPageClient({
                       className={`px-2 py-1 rounded-full text-xs ${
                         list.isActive
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                          : 'bg-gray-100 text-[var(--color-text)]'
                       }`}
                     >
                       {list.isActive ? 'فعال' : 'غیرفعال'}
                     </span>
                   </div>
                   <h3 className="font-bold text-lg mb-2">{list.title}</h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  <p className="text-[var(--color-text-muted)] text-sm mb-4 line-clamp-2">
                     {list.description}
                   </p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center gap-4 text-sm text-[var(--color-text-muted)] mb-4">
                     <span>📋 {list?.itemCount ?? 0}</span>
                     <span>❤️ {list?.likeCount ?? 0}</span>
                     <span>⭐ {list?.saveCount ?? 0}</span>
@@ -298,7 +298,7 @@ export default function ListsPageClient({
                   <div className="flex gap-2">
                     <Link
                       href={`/admin/lists/${list.id}/edit`}
-                      className="flex-1 text-center bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                      className="flex-1 text-center bg-gray-100 text-[var(--color-text)] py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                     >
                       ویرایش
                     </Link>
@@ -338,24 +338,24 @@ export default function ListsPageClient({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{list.categories?.icon || '📋'}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-[var(--color-text-muted)]">
                         {list.categories?.name || 'بدون دسته‌بندی'}
                       </span>
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
                           list.isActive
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-gray-100 text-[var(--color-text)]'
                         }`}
                       >
                         {list.isActive ? 'فعال' : 'غیرفعال'}
                       </span>
                     </div>
                     <h3 className="font-bold text-lg mb-1">{list.title}</h3>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-1">
+                    <p className="text-[var(--color-text-muted)] text-sm mb-3 line-clamp-1">
                       {list.description}
                     </p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 text-sm text-[var(--color-text-muted)]">
                       <span>📋 {list?.itemCount ?? 0} آیتم</span>
                       <span>❤️ {list?.likeCount ?? 0} لایک</span>
                       <span>⭐ {list?.saveCount ?? 0} ذخیره</span>
@@ -364,7 +364,7 @@ export default function ListsPageClient({
                   <div className="flex gap-2 flex-shrink-0">
                     <Link
                       href={`/admin/lists/${list.id}/edit`}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
+                      className="px-4 py-2 bg-gray-100 text-[var(--color-text)] rounded-lg hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
                     >
                       ویرایش
                     </Link>
@@ -384,7 +384,7 @@ export default function ListsPageClient({
 
       {sortedLists.length === 0 && (
         <div className="text-center py-12 bg-white rounded-xl">
-          <p className="text-gray-500">
+          <p className="text-[var(--color-text-muted)]">
             {lists.length === 0
               ? 'هنوز لیستی ایجاد نشده است'
               : 'لیستی با فیلترهای انتخابی یافت نشد'}

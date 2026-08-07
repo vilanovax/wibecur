@@ -366,8 +366,8 @@ export default function ItemsPageClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">آیتم‌ها</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-3xl font-bold text-[var(--color-text)] mb-2">آیتم‌ها</h1>
+          <p className="text-sm text-[var(--color-text-muted)]">
             {selectedListId !== 'all' ? (
               <>
                 لیست «{selectedList?.title}» · {totalItems.toLocaleString('fa-IR')} آیتم
@@ -404,7 +404,7 @@ export default function ItemsPageClient({
           </Link>
           <Link
             href="/admin/catalog"
-            className="border border-gray-200 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors font-medium whitespace-nowrap text-sm"
+            className="border border-gray-200 text-[var(--color-text)] px-5 py-2.5 rounded-lg hover:bg-gray-50 transition-colors font-medium whitespace-nowrap text-sm"
           >
             کاتالوگ
           </Link>
@@ -418,7 +418,7 @@ export default function ItemsPageClient({
           )}
           <Link
             href="/admin/items/new"
-            className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
+            className="bg-gray-100 text-[var(--color-text)] px-6 py-2.5 rounded-lg hover:bg-gray-200 transition-colors font-medium whitespace-nowrap"
           >
             + آیتم جدید (همه لیست‌ها)
           </Link>
@@ -427,7 +427,7 @@ export default function ItemsPageClient({
 
       {/* Category Filter (Chips) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-4">
-        <label className="block text-sm font-semibold text-gray-700 mb-4">
+        <label className="block text-sm font-semibold text-[var(--color-text)] mb-4">
           فیلتر بر اساس دسته‌بندی:
         </label>
         <div className="flex flex-wrap gap-2">
@@ -436,7 +436,7 @@ export default function ItemsPageClient({
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
               selectedCategory === 'all'
                 ? 'bg-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
             }`}
           >
             همه دسته‌ها
@@ -453,7 +453,7 @@ export default function ItemsPageClient({
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   selectedCategory === category.id
                     ? 'text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
                 }`}
                 style={
                   selectedCategory === category.id
@@ -474,13 +474,13 @@ export default function ItemsPageClient({
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <label className="block text-sm font-semibold text-[var(--color-text)] mb-3">
               فیلتر بر اساس لیست:
             </label>
             <select
               value={selectedListId}
               onChange={(e) => handleListFilterChange(e.target.value)}
-              className="w-full md:w-96 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-gray-900 font-medium"
+              className="w-full md:w-96 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-[var(--color-text)] font-medium"
             >
               <option value="all">
                 {selectedCategory === 'all'
@@ -523,7 +523,7 @@ export default function ItemsPageClient({
               className={`inline-flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
                 selectionMode
                   ? 'border-violet-300 bg-violet-100 text-violet-800'
-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                  : 'border-gray-200 bg-white text-[var(--color-text)] hover:bg-gray-50'
               }`}
             >
               {selectionMode ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
@@ -586,8 +586,8 @@ export default function ItemsPageClient({
       {/* Results bar */}
       {filteredItems.length > 0 && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 px-1">
-          <p className="text-sm text-gray-600">
-            <span className="font-bold text-gray-900 tabular-nums">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            <span className="font-bold text-[var(--color-text)] tabular-nums">
               {totalItems.toLocaleString('fa-IR')}
             </span>{' '}
             آیتم
@@ -607,7 +607,7 @@ export default function ItemsPageClient({
             )}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">در هر صفحه:</span>
+            <span className="text-xs text-[var(--color-text-muted)]">در هر صفحه:</span>
             {[24, 48, 100].map((size) => (
               <button
                 key={size}
@@ -615,7 +615,7 @@ export default function ItemsPageClient({
                 className={`min-w-[2.5rem] rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
                   currentPerPage === size
                     ? 'bg-primary text-white shadow-sm'
-                    : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50'
+                    : 'bg-white text-[var(--color-text-muted)] ring-1 ring-gray-200 hover:bg-gray-50'
                 }`}
               >
                 {size}
@@ -629,7 +629,7 @@ export default function ItemsPageClient({
       {filteredItems.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
           <div className="text-6xl mb-4">📦</div>
-          <p className="text-gray-600 text-lg font-medium mb-2">
+          <p className="text-[var(--color-text-muted)] text-lg font-medium mb-2">
             {selectedListId === 'all'
               ? 'هنوز آیتمی ایجاد نشده است'
               : 'این لیست هنوز آیتمی ندارد'}
@@ -666,7 +666,7 @@ export default function ItemsPageClient({
 
           {selectionMode && (
             <div className="flex items-center gap-3 mb-3 px-1">
-              <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+              <label className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text)] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={allOnPageSelected}
@@ -704,14 +704,14 @@ export default function ItemsPageClient({
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 ring-1 ring-gray-200 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] ring-1 ring-gray-200 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   قبلی
                 </button>
                 <div className="hidden sm:flex items-center gap-1.5">
                   {buildPageNumbers(currentPage, totalPages).map((page, index) =>
                     page === '...' ? (
-                      <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+                      <span key={`ellipsis-${index}`} className="px-2 text-[var(--color-text-subtle)]">
                         …
                       </span>
                     ) : (
@@ -721,7 +721,7 @@ export default function ItemsPageClient({
                         className={`min-w-[2.5rem] rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
                           currentPage === page
                             ? 'bg-primary text-white shadow-sm'
-                            : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50'
+                            : 'bg-white text-[var(--color-text)] ring-1 ring-gray-200 hover:bg-gray-50'
                         }`}
                       >
                         {page}
@@ -729,13 +729,13 @@ export default function ItemsPageClient({
                     )
                   )}
                 </div>
-                <span className="sm:hidden text-sm font-medium text-gray-600 tabular-nums">
+                <span className="sm:hidden text-sm font-medium text-[var(--color-text-muted)] tabular-nums">
                   {currentPage.toLocaleString('fa-IR')} / {totalPages.toLocaleString('fa-IR')}
                 </span>
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 ring-1 ring-gray-200 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] ring-1 ring-gray-200 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   بعدی
                 </button>

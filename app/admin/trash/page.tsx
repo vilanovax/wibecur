@@ -41,7 +41,7 @@ export default async function AdminTrashPage({ searchParams }: PageProps) {
   const { counts, items } = await loadInitial(tab);
 
   return (
-    <Suspense fallback={<div className="py-12 text-center text-sm text-gray-500">در حال بارگذاری…</div>}>
+    <Suspense fallback={<div className="py-12 text-center text-sm text-[var(--color-text-muted)]">در حال بارگذاری…</div>}>
       <TrashPageClient initialTab={tab} initialCounts={counts} initialItems={items} />
     </Suspense>
   );

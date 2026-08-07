@@ -407,7 +407,7 @@ export default function ListWorkspaceItemsPanel({
             </Link>
             <Link
               href={`/admin/lists?view=catalog&mode=place&listId=${listId}`}
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-gray-200 text-[var(--color-text)] hover:bg-gray-50"
             >
               کاتالوگ
             </Link>

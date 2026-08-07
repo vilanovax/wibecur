@@ -17,11 +17,11 @@ export default function TrendingNowSection({
 
   return (
     <section className="px-4 py-6">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         <span className="animate-pulse">🔥</span>
         داغ‌ترین‌های امروز
       </h2>
-      <p className="text-sm text-gray-500 mt-0.5">
+      <p className="text-sm text-wibe-secondary mt-0.5">
         بر اساس ذخیره در ۲۴ ساعت گذشته
       </p>
       <div className="flex gap-4 mt-4 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory -mx-4 px-4">
@@ -75,11 +75,11 @@ export default function TrendingNowSection({
                       {(list.creator?.name || '?')[0]}
                     </div>
                   )}
-                  <span className="text-xs text-gray-500 truncate">
+                  <span className="text-xs text-wibe-secondary truncate">
                     {list.creator?.name || 'کاربر'}
                   </span>
                 </div>
-                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
+                <h3 className="font-semibold text-foreground text-sm line-clamp-2">
                   {list.title}
                 </h3>
                 <p className="text-sm font-bold text-primary mt-1.5">

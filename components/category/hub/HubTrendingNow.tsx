@@ -18,7 +18,7 @@ export default function HubTrendingNow({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         <span
           className="inline-block animate-pulse"
           style={{ animationDuration: '1.5s' }}
@@ -27,7 +27,7 @@ export default function HubTrendingNow({
         </span>
         داغ‌ترین لیست‌های امروز
       </h2>
-      <p className="text-[11px] text-gray-500">
+      <p className="text-[11px] text-wibe-secondary">
         بر اساس رشد ذخیره در ۲۴ ساعت گذشته
       </p>
 
@@ -81,7 +81,7 @@ export default function HubTrendingNow({
                   )}
                 </div>
                 <div className="p-2.5">
-                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-1">
+                  <h3 className="font-semibold text-foreground text-sm line-clamp-1">
                     {list.title}
                   </h3>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -94,7 +94,7 @@ export default function HubTrendingNow({
                   height={16}
                 />
                     )}
-                    <span className="text-[10px] text-gray-500 truncate flex-1">
+                    <span className="text-[10px] text-wibe-secondary truncate flex-1">
                       {list.creator?.name || 'کیوریتور'}
                     </span>
                     <span className="text-[10px] font-bold" style={{ color: accentColor }}>

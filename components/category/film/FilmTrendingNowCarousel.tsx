@@ -18,11 +18,11 @@ export default function FilmTrendingNowCarousel({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         <span className="inline-block animate-pulse">🔥</span>
         داغ‌ترین‌های امروز
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5">
+      <p className="text-sm text-wibe-secondary mt-0.5">
         بر اساس ذخیره در ۲۴ ساعت گذشته
       </p>
 
@@ -84,11 +84,11 @@ export default function FilmTrendingNowCarousel({
                       {(list.creator?.name || '?')[0]}
                     </div>
                   )}
-                  <span className="text-[11px] text-gray-400 truncate">
+                  <span className="truncate text-[11px] text-white/65">
                     {list.creator?.name || 'کیوریتور'}
                   </span>
                 </div>
-                <h3 className="font-semibold text-gray-100 text-sm line-clamp-2 leading-tight">
+                <h3 className="font-semibold text-white/90 text-sm line-clamp-2 leading-tight">
                   {list.title}
                 </h3>
               </div>

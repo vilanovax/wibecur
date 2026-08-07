@@ -83,7 +83,7 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
                 <div className="flex-1 py-2 rounded-lg bg-[var(--primary)] text-white text-[10px] font-medium text-center">
                   ذخیره کن ⭐
                 </div>
-                <div className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-medium text-center">
+                <div className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] text-[10px] font-medium text-center">
                   مشاهده لیست
                 </div>
               </div>

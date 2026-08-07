@@ -78,7 +78,7 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
             content={
               <div className="text-right">
                 <p className="font-semibold">{displayName}</p>
-                <p className="text-xs text-admin-text-tertiary dark:text-gray-400 mt-0.5">{roleLabel}</p>
+                <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)] mt-0.5">{roleLabel}</p>
                 {user.online !== false && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">● آنلاین</p>}
               </div>
             }
@@ -136,7 +136,7 @@ export default function MiniUserPanel({ collapsed, user }: MiniUserPanelProps) {
           <p className="text-[13px] font-semibold text-admin-text-primary dark:text-white truncate leading-tight">
             {displayName}
           </p>
-          <p className="text-[11px] text-admin-text-tertiary dark:text-gray-400 truncate">
+          <p className="text-[11px] text-admin-text-tertiary dark:text-[var(--color-text-subtle)] truncate">
             {roleLabel}
             {user.online !== false && (
               <span className="text-emerald-600 dark:text-emerald-400"> · آنلاین</span>

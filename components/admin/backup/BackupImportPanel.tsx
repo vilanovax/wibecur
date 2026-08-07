@@ -137,8 +137,8 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
     <div className="space-y-5">
       <AdminCard padding="default" hover={false} className="space-y-4">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">بارگذاری پشتیبان</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+          <h2 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">بارگذاری پشتیبان</h2>
+          <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-1 leading-relaxed">
             فایل ZIP یا JSON خروجی WibeCur را آپلود کنید. پیش از بازیابی، محتوا و تعداد ردیف‌ها
             نمایش داده می‌شود و می‌توانید جداول را انتخاب کنید.
           </p>
@@ -168,12 +168,12 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
           {uploading ? (
             <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
           ) : (
-            <Upload className="h-8 w-8 text-gray-400" />
+            <Upload className="h-8 w-8 text-[var(--color-text-subtle)]" />
           )}
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-text-subtle)]">
             کلیک یا رها کردن فایل .zip / .json
           </span>
-          <span className="text-xs text-gray-400">حداکثر ۸۰ مگابایت</span>
+          <span className="text-xs text-[var(--color-text-subtle)]">حداکثر ۸۰ مگابایت</span>
         </label>
 
         {error && (
@@ -197,10 +197,10 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
               <div className="flex items-start gap-3 min-w-0">
                 <FileArchive className="h-5 w-5 text-violet-600 shrink-0 mt-0.5" />
                 <div>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">
                     پیش‌نمایش: {preview.fileName}
                   </h2>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                     {new Date(preview.manifest.createdAt).toLocaleString('fa-IR')} ·{' '}
                     {preview.totalRows.toLocaleString('fa-IR')} ردیف · {preview.tables.length}{' '}
                     جدول
@@ -217,7 +217,7 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
                   setReport(null);
                   setSuccess(null);
                 }}
-                className="text-xs text-gray-500 hover:text-gray-800"
+                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
               >
                 بستن
               </button>
@@ -232,7 +232,7 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
             )}
 
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-[var(--color-text-muted)]">
                 {selectedTables.length} جدول · {selectedRows.toLocaleString('fa-IR')} ردیف انتخاب‌شده
               </span>
               <div className="flex gap-2">
@@ -248,7 +248,7 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
                 <button
                   type="button"
                   onClick={() => setSelectedTables([])}
-                  className="text-xs text-gray-500 hover:underline"
+                  className="text-xs text-[var(--color-text-muted)] hover:underline"
                 >
                   پاک
                 </button>
@@ -258,7 +258,7 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
             <div className="space-y-4 max-h-[28rem] overflow-y-auto pr-1">
               {grouped.map(([group, tables]) => (
                 <div key={group}>
-                  <h3 className="text-[11px] font-medium text-gray-400 mb-2">
+                  <h3 className="text-[11px] font-medium text-[var(--color-text-subtle)] mb-2">
                     {GROUP_LABELS[group as keyof typeof GROUP_LABELS] ?? group}
                   </h3>
                   <ul className="space-y-2">
@@ -281,21 +281,21 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
                             className="rounded text-violet-600"
                           />
                           <div className="flex-1 min-w-0 text-right">
-                            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            <span className="text-sm font-medium text-[var(--color-text)] dark:text-gray-200">
                               {t.label}
                             </span>
-                            <span className="text-xs text-gray-400 mr-2 font-mono">{t.key}</span>
+                            <span className="text-xs text-[var(--color-text-subtle)] mr-2 font-mono">{t.key}</span>
                           </div>
                           <Badge variant="neutral">{t.rowCount.toLocaleString('fa-IR')}</Badge>
                           {!t.restorable && (
-                            <span className="text-[10px] text-gray-400">فقط نمایش</span>
+                            <span className="text-[10px] text-[var(--color-text-subtle)]">فقط نمایش</span>
                           )}
                           <button
                             type="button"
                             onClick={() =>
                               setExpandedTable(expandedTable === t.key ? null : t.key)
                             }
-                            className="p-1 text-gray-400 hover:text-violet-600"
+                            className="p-1 text-[var(--color-text-subtle)] hover:text-violet-600"
                             aria-label="نمونه داده"
                           >
                             {expandedTable === t.key ? (
@@ -348,7 +348,7 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
                 <button
                   type="button"
                   onClick={() => setConfirmOpen(false)}
-                  className="text-sm text-gray-600 hover:underline"
+                  className="text-sm text-[var(--color-text-muted)] hover:underline"
                 >
                   انصراف
                 </button>
@@ -358,11 +358,11 @@ export default function BackupImportPanel({ injectPreview, onInjectConsumed }: P
 
           {report && (
             <AdminCard padding="compact" hover={false}>
-              <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1">
+              <h3 className="text-xs font-semibold text-[var(--color-text)] dark:text-[var(--color-text-subtle)] mb-2 flex items-center gap-1">
                 <Eye className="h-3.5 w-3.5" />
                 گزارش بازیابی
               </h3>
-              <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+              <ul className="text-xs space-y-1 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
                 {report.tables.map((t) => (
                   <li key={t.table}>
                     <span className="font-mono">{t.table}</span>: {t.upserted} موفق

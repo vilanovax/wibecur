@@ -65,10 +65,10 @@ function StatChip({
         <Icon className="h-4 w-4 text-violet-600" />
       </div>
       <div>
-        <p className="text-lg font-bold tabular-nums text-gray-900 dark:text-white leading-none">
+        <p className="text-lg font-bold tabular-nums text-[var(--color-text)] dark:text-white leading-none">
           {value.toLocaleString('fa-IR')}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+        <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">{label}</p>
       </div>
     </div>
   );
@@ -96,7 +96,7 @@ function AdminRowCard({
         <UserAvatar src={null} name={admin.name} email={admin.email} size={44} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+            <h3 className="font-semibold text-[var(--color-text)] dark:text-white truncate">
               {admin.name || 'بدون نام'}
             </h3>
             <span
@@ -114,11 +114,11 @@ function AdminRowCard({
               {admin.isActive ? 'فعال' : 'غیرفعال'}
             </span>
           </div>
-          <p className="text-xs text-gray-500 font-mono truncate mt-0.5" dir="ltr">
+          <p className="text-xs text-[var(--color-text-muted)] font-mono truncate mt-0.5" dir="ltr">
             {admin.email}
           </p>
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 text-[11px] text-gray-600 dark:text-gray-300">
+            <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
               {hasCustom ? (
                 <>
                   <SlidersHorizontal className="h-3 w-3" />
@@ -131,7 +131,7 @@ function AdminRowCard({
                 </>
               )}
             </span>
-            <span className="text-[11px] text-gray-400">
+            <span className="text-[11px] text-[var(--color-text-subtle)]">
               {formatDistanceToNow(new Date(admin.updatedAt), { addSuffix: true, locale: faIR })}
             </span>
           </div>
@@ -330,9 +330,9 @@ export default function AdminsPageClient() {
         <div>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-violet-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">مدیریت ادمین‌ها</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text)] dark:text-white">مدیریت ادمین‌ها</h1>
           </div>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-xl">
+          <p className="mt-1 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] max-w-xl">
             تعریف ادمین، انتخاب نقش، تنظیم دسترسی بخش‌ها و فعال یا غیرفعال‌سازی حساب
           </p>
         </div>
@@ -373,8 +373,8 @@ export default function AdminsPageClient() {
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 dark:bg-violet-900/30 mb-4">
               <Shield className="h-7 w-7 text-violet-600" />
             </div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">هنوز ادمینی تعریف نشده</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs">
+            <p className="text-sm font-medium text-[var(--color-text)] dark:text-white">هنوز ادمینی تعریف نشده</p>
+            <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-1 max-w-xs">
               اولین ادمین را بسازید و نقش و دسترسی‌هایش را مشخص کنید
             </p>
             <button

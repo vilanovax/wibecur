@@ -99,17 +99,17 @@ export default function ApproveRejectModal({
               </div>
             )}
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white">
                 {action === 'approve' ? 'تایید پیشنهاد' : 'رد پیشنهاد'}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{suggestionTitle}</p>
+              <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-1">{suggestionTitle}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <X className="w-5 h-5 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]" />
           </button>
         </div>
 
@@ -122,7 +122,7 @@ export default function ApproveRejectModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
               پیام به کاربر {action === 'reject' && <span className="text-red-500">*</span>}
             </label>
             <textarea
@@ -138,7 +138,7 @@ export default function ApproveRejectModal({
               required={action === 'reject'}
             />
             {action === 'reject' && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
                 وارد کردن دلیل رد الزامی است
               </p>
             )}
@@ -150,7 +150,7 @@ export default function ApproveRejectModal({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-[var(--color-text)] dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
             >
               انصراف
             </button>

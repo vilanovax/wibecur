@@ -21,10 +21,10 @@ interface GenreGridProps {
 export default function GenreGrid({ categorySlug }: GenreGridProps) {
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         🎬 ژانرها
       </h2>
-      <p className="text-sm text-gray-600 mb-5">
+      <p className="text-sm text-wibe-secondary mb-5">
         کاوش در ژانرهای مختلف فیلم و سریال
       </p>
 
@@ -40,7 +40,7 @@ export default function GenreGrid({ categorySlug }: GenreGridProps) {
             >
               {genre.icon}
             </span>
-            <span className="text-xs font-semibold text-gray-100 text-center leading-tight line-clamp-2">
+            <span className="text-xs font-semibold text-white/90 text-center leading-tight line-clamp-2">
               {genre.label}
             </span>
           </Link>

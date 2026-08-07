@@ -23,7 +23,7 @@ const tabs: { value: CategoryFilterKind; label: string; color: string; title?: s
   {
     value: 'inactive',
     label: 'غیرفعال',
-    color: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
+    color: 'bg-gray-100 dark:bg-gray-700 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]',
   },
 ];
 

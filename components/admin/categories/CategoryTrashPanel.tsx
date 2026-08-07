@@ -69,27 +69,27 @@ export default function CategoryTrashPanel() {
         className="w-full flex items-center justify-between gap-3 px-5 py-4 text-right hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Trash2 className="w-5 h-5 text-gray-500" />
-          <span className="font-semibold text-gray-900 dark:text-white">زباله‌دان دسته‌ها</span>
+          <Trash2 className="w-5 h-5 text-[var(--color-text-muted)]" />
+          <span className="font-semibold text-[var(--color-text)] dark:text-white">زباله‌دان دسته‌ها</span>
           {items.length > 0 && open && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 tabular-nums">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] tabular-nums">
               {items.length.toLocaleString('fa-IR')}
             </span>
           )}
         </div>
         {open ? (
-          <ChevronUp className="w-5 h-5 text-gray-400 shrink-0" />
+          <ChevronUp className="w-5 h-5 text-[var(--color-text-subtle)] shrink-0" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
+          <ChevronDown className="w-5 h-5 text-[var(--color-text-subtle)] shrink-0" />
         )}
       </button>
 
       {open && (
         <div className="px-5 pb-5 border-t border-gray-100 dark:border-gray-700">
           {loading ? (
-            <p className="py-8 text-center text-sm text-gray-500">در حال بارگذاری...</p>
+            <p className="py-8 text-center text-sm text-[var(--color-text-muted)]">در حال بارگذاری...</p>
           ) : items.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="py-8 text-center text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
               زباله‌دان خالی است.
             </p>
           ) : (
@@ -102,11 +102,11 @@ export default function CategoryTrashPanel() {
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-xl">{cat.icon || '📁'}</span>
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white">{cat.name}</p>
-                      <p className="text-xs text-gray-500 font-mono" dir="ltr">
+                      <p className="font-medium text-[var(--color-text)] dark:text-white">{cat.name}</p>
+                      <p className="text-xs text-[var(--color-text-muted)] font-mono" dir="ltr">
                         {cat.slug}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">
                         حذف:{' '}
                         {new Date(cat.deletedAt).toLocaleDateString('fa-IR', {
                           dateStyle: 'medium',
@@ -131,7 +131,7 @@ export default function CategoryTrashPanel() {
             </ul>
           )}
           {message && (
-            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400" role="status">
+            <p className="mt-3 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]" role="status">
               {message}
             </p>
           )}

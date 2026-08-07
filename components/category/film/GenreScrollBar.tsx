@@ -39,12 +39,12 @@ export default function GenreScrollBar({ categorySlug, genres, inset = false }: 
           <Link
             key={`${genre.slug}-${genre.label}`}
             href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(genre.label)}`}
-            className="flex shrink-0 snap-start items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-3.5 py-2 text-sm font-medium text-gray-800 transition-all hover:bg-gray-200 lg:hover:border-primary/30 lg:hover:bg-primary/5"
+            className="flex shrink-0 snap-start items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-3.5 py-2 text-sm font-medium text-foreground transition-all hover:bg-gray-200 lg:hover:border-primary/30 lg:hover:bg-primary/5"
           >
             <span>{genre.icon}</span>
             <span>{genre.label}</span>
             {genre.listCount > 0 && (
-              <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 tabular-nums">
+              <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-wibe-secondary tabular-nums">
                 {genre.listCount.toLocaleString('fa-IR')}
               </span>
             )}

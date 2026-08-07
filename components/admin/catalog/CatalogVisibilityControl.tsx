@@ -67,7 +67,7 @@ export default function CatalogVisibilityControl({
         className={`inline-flex items-center justify-center rounded-lg border p-1.5 transition-colors disabled:opacity-60 ${
           disabled
             ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-            : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            : 'border-gray-200 bg-white text-[var(--color-text-muted)] hover:bg-gray-50 hover:text-[var(--color-text)]'
         } ${className}`}
       >
         {disabled ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -109,10 +109,10 @@ export default function CatalogVisibilityControl({
           <Eye className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
         )}
         <div>
-          <p className="text-sm font-semibold text-gray-900">
+          <p className="text-sm font-semibold text-[var(--color-text)]">
             {disabled ? 'آیتم غیرفعال است' : 'آیتم فعال است'}
           </p>
-          <p className="mt-0.5 text-xs leading-relaxed text-gray-600">
+          <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-text-muted)]">
             {disabled
               ? 'این آیتم در سایت عمومی نمایش داده نمی‌شود.'
               : placementCount > 0

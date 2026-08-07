@@ -123,16 +123,16 @@ export default function CatalogItemPicker({
   return (
     <div className="rounded-2xl border border-violet-100 bg-gradient-to-b from-violet-50/50 to-white shadow-sm overflow-hidden">
       <div className="px-5 py-4 border-b border-violet-100/80 bg-white/60">
-        <p className="text-sm text-gray-600 leading-relaxed">
+        <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
           آیتمی که قبلاً در وایب ثبت شده را پیدا کنید و فقط به لیست مقصد وصل کنید —{' '}
-          <strong className="text-gray-800">بدون کپی</strong> عنوان و تصویر.
+          <strong className="text-[var(--color-text)]">بدون کپی</strong> عنوان و تصویر.
         </p>
       </div>
 
       <div className="p-5 space-y-4">
         {showListSelector && lists.length > 0 && (
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+            <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-1.5">
               لیست مقصد
             </label>
             <select
@@ -150,7 +150,7 @@ export default function CatalogItemPicker({
         )}
 
         <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-subtle)] pointer-events-none" />
           <input
             type="search"
             value={query}
@@ -188,7 +188,7 @@ export default function CatalogItemPicker({
                 </div>
               ) : recent.length > 0 ? (
                 <div className="p-2">
-                  <p className="text-xs font-semibold text-gray-500 px-2 py-2">اخیراً به‌روز شده</p>
+                  <p className="text-xs font-semibold text-[var(--color-text-muted)] px-2 py-2">اخیراً به‌روز شده</p>
                   <ul className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
                     {recent.map((hit) => (
                       <li
@@ -204,8 +204,8 @@ export default function CatalogItemPicker({
                           />
                         </div>
                         <div className="flex-1 min-w-0 text-right">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{hit.title}</p>
-                          <p className="text-xs text-gray-500 mt-0.5 truncate">
+                          <p className="text-sm font-semibold text-[var(--color-text)] truncate">{hit.title}</p>
+                          <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
                             {catalogCategoryLabel(hit.categorySlug)}
                             {hit.listCount > 0 && (
                               <span> · در {hit.listCount.toLocaleString('fa-IR')} لیست</span>
@@ -236,7 +236,7 @@ export default function CatalogItemPicker({
                   <div className="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center">
                     <Search className="w-5 h-5 text-violet-600" />
                   </div>
-                  <p className="text-sm text-gray-600 max-w-xs">
+                  <p className="text-sm text-[var(--color-text-muted)] max-w-xs">
                     عنوان آیتم را تایپ کنید (حداقل ۲ حرف) یا از{' '}
                     <Link href="/admin/lists?view=catalog" className="text-violet-600 font-semibold hover:underline">
                       کاتالوگ
@@ -249,7 +249,7 @@ export default function CatalogItemPicker({
           )}
 
           {queryReady && !loading && results.length === 0 && (
-            <p className="text-sm text-center text-gray-500 py-12 px-4">
+            <p className="text-sm text-center text-[var(--color-text-muted)] py-12 px-4">
               نتیجه‌ای یافت نشد. می‌توانید از تب «آیتم جدید» یک موجودیت تازه بسازید.
             </p>
           )}
@@ -270,15 +270,15 @@ export default function CatalogItemPicker({
                     />
                   </div>
                   <div className="flex-1 min-w-0 text-right">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{hit.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    <p className="text-sm font-semibold text-[var(--color-text)] truncate">{hit.title}</p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
                       {catalogCategoryLabel(hit.categorySlug)}
                       {hit.listCount > 0 && (
                         <span> · در {hit.listCount.toLocaleString('fa-IR')} لیست</span>
                       )}
                     </p>
                     {hit.sampleListTitles[0] && (
-                      <p className="text-[10px] text-gray-400 truncate mt-0.5">
+                      <p className="text-[10px] text-[var(--color-text-subtle)] truncate mt-0.5">
                         مثلاً: {hit.sampleListTitles[0]}
                       </p>
                     )}

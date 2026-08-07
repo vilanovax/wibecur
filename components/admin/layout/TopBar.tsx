@@ -104,7 +104,7 @@ export default function TopBar() {
         {/* Left Section - Search */}
         <div className="flex-1 max-w-2xl">
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-subtle)]" />
             <input
               type="text"
               placeholder="جستجو در پنل مدیریت..."
@@ -121,7 +121,7 @@ export default function TopBar() {
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors duration-200 group"
             >
-              <Bell className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
+              <Bell className="w-5 h-5 text-[var(--color-text-muted)] group-hover:text-[var(--color-text)]" />
               {unreadCount > 0 && (
                 <span className="absolute top-1 left-1 min-w-[8px] h-2 px-1 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -131,7 +131,7 @@ export default function TopBar() {
             {showNotifications && (
               <div className="absolute left-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50 max-h-[400px] flex flex-col">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-gray-900">نوتیفیکیشن‌ها</h3>
+                  <h3 className="font-bold text-[var(--color-text)]">نوتیفیکیشن‌ها</h3>
                   {unreadCount > 0 && (
                     <button
                       type="button"
@@ -144,9 +144,9 @@ export default function TopBar() {
                 </div>
                 <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
                   {notificationsLoading ? (
-                    <p className="text-sm text-gray-500">در حال بارگذاری...</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">در حال بارگذاری...</p>
                   ) : notifications.length === 0 ? (
-                    <p className="text-sm text-gray-500">پیامی نیست.</p>
+                    <p className="text-sm text-[var(--color-text-muted)]">پیامی نیست.</p>
                   ) : (
                     notifications.map((n) => (
                       <div key={n.id}>
@@ -156,9 +156,9 @@ export default function TopBar() {
                             onClick={() => { setShowNotifications(false); if (!n.read) markAsRead(n.id); }}
                             className={`block p-3 rounded-lg text-right ${n.read ? 'bg-gray-50' : 'bg-blue-50 border border-blue-100'}`}
                           >
-                            <p className="text-sm font-medium text-gray-900">{n.title}</p>
-                            <p className="text-xs text-gray-600 mt-1">{n.message}</p>
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="text-sm font-medium text-[var(--color-text)]">{n.title}</p>
+                            <p className="text-xs text-[var(--color-text-muted)] mt-1">{n.message}</p>
+                            <p className="text-xs text-[var(--color-text-subtle)] mt-2">
                               {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
                             </p>
                           </Link>
@@ -170,9 +170,9 @@ export default function TopBar() {
                             onKeyDown={(e) => e.key === 'Enter' && (n.read || markAsRead(n.id))}
                             className={`p-3 rounded-lg text-right cursor-default ${n.read ? 'bg-gray-50' : 'bg-blue-50 border border-blue-100'}`}
                           >
-                            <p className="text-sm font-medium text-gray-900">{n.title}</p>
-                            <p className="text-xs text-gray-600 mt-1">{n.message}</p>
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="text-sm font-medium text-[var(--color-text)]">{n.title}</p>
+                            <p className="text-xs text-[var(--color-text-muted)] mt-1">{n.message}</p>
+                            <p className="text-xs text-[var(--color-text-subtle)] mt-2">
                               {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
                             </p>
                           </div>
@@ -196,24 +196,24 @@ export default function TopBar() {
               </div>
               <div className="text-right flex items-center gap-3">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-[var(--color-text)]">
                     {session?.user?.name || session?.user?.email || 'ادمین'}
                   </p>
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                  <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
                     <span>نقش:</span>
                     <RoleBadge />
                   </p>
                 </div>
               </div>
-              <User className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
+              <User className="w-4 h-4 text-[var(--color-text-subtle)] group-hover:text-[var(--color-text-muted)]" />
             </button>
             {showProfileMenu && (
               <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                <button className="w-full px-4 py-2 text-right text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3 transition-colors">
+                <button className="w-full px-4 py-2 text-right text-sm text-[var(--color-text)] hover:bg-gray-100 flex items-center gap-3 transition-colors">
                   <User className="w-4 h-4" />
                   <span>پروفایل</span>
                 </button>
-                <button className="w-full px-4 py-2 text-right text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3 transition-colors">
+                <button className="w-full px-4 py-2 text-right text-sm text-[var(--color-text)] hover:bg-gray-100 flex items-center gap-3 transition-colors">
                   <Settings className="w-4 h-4" />
                   <span>تنظیمات</span>
                 </button>

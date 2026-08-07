@@ -8,8 +8,8 @@ export default async function AdminKPIPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">داشبورد رشد</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
+        <h1 className="text-2xl font-bold text-[var(--color-text)] dark:text-white">داشبورد رشد</h1>
+        <p className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-1">
           وضعیت سیستم رشد — مانیتورینگ KPI و سلامت وایب
         </p>
       </div>
