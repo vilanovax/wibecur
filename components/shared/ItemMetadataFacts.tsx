@@ -12,12 +12,12 @@ function isInternalHref(href: string): boolean {
 }
 
 function factCellClass(key: string): string {
-  if (key === 'author' || key === 'translator') {
-    return 'col-span-2 bg-primary/5 ring-1 ring-primary/10';
+  if (key === 'author' || key === 'translator' || key === 'director') {
+    return 'col-span-2 bg-primary/[0.04] ring-1 ring-primary/10';
   }
-  if (key === 'actors') return 'col-span-2 bg-gray-50/90';
-  if (key === 'imdbRating') return 'bg-amber-50/80 ring-1 ring-amber-200/60';
-  return 'bg-gray-50/90';
+  if (key === 'actors') return 'col-span-2 bg-wibe-surface';
+  if (key === 'imdbRating') return 'bg-warning/[0.08] ring-1 ring-warning/25';
+  return 'bg-wibe-surface';
 }
 
 function FactValueLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -72,8 +72,8 @@ function FactChip({
   href?: string;
   profileLinks?: MetadataFact['profileLinks'];
 }) {
-  const className = `inline-flex max-w-full items-baseline gap-1 rounded-lg px-2.5 py-1.5 wibe-caption leading-snug ${
-    prominent ? 'bg-primary/8 ring-1 ring-primary/10' : 'bg-gray-100'
+  const className = `inline-flex max-w-full items-baseline gap-1.5 rounded-full px-2.5 py-1.5 wibe-caption leading-snug ${
+    prominent ? 'bg-primary/[0.08] ring-1 ring-primary/15' : 'bg-wibe-surface ring-1 ring-wibe/80'
   }`;
 
   if (profileLinks?.length) {
@@ -132,7 +132,9 @@ export default function ItemMetadataFacts({ facts, className = '', variant = 'gr
             value={fact.value}
             href={fact.href}
             profileLinks={fact.profileLinks}
-            prominent={fact.key === 'author' || fact.key === 'translator'}
+            prominent={
+              fact.key === 'author' || fact.key === 'translator' || fact.key === 'director'
+            }
           />
         ))}
       </div>

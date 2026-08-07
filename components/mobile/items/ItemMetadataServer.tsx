@@ -59,7 +59,7 @@ export default function ItemMetadataServer({ item }: ItemMetadataServerProps) {
     : item.description?.trim() || null;
 
   return (
-    <section className="space-y-4 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
+    <section className="space-y-4 lg:rounded-2xl lg:bg-wibe-card lg:p-5 lg:shadow-sm lg:ring-1 lg:ring-wibe/80">
       {displayMetadataFacts.length > 0 && (
         <>
           <div className="lg:hidden">
