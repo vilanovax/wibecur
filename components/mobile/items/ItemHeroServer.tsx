@@ -123,7 +123,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
     <section className="px-4 pt-2 lg:px-0 lg:pt-1">
       <div className="flex gap-3.5 sm:gap-4 lg:grid lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-6">
         <div
-          className={`relative shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-sm ring-1 ring-black/[0.05] lg:rounded-2xl ${
+          className={`relative shrink-0 overflow-hidden rounded-xl bg-wibe-surface shadow-sm ring-1 ring-black/[0.05] lg:rounded-2xl ${
             isLocationPoster
               ? 'h-[7.25rem] w-[6.5rem] sm:h-32 sm:w-[8.5rem] lg:h-auto lg:w-full lg:aspect-[4/3]'
               : 'h-[10.5rem] w-[7rem] sm:h-[11.5rem] sm:w-[7.75rem] lg:h-auto lg:w-full lg:aspect-[2/3]'
@@ -139,7 +139,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               className={
                 isLocationPoster
                   ? 'object-cover object-center'
-                  : 'object-contain bg-gray-100'
+                  : 'object-contain bg-wibe-surface'
               }
               unoptimized={poster.unoptimized}
             />
@@ -165,7 +165,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
             <span className="truncate">{item.lists.title}</span>
           </Link>
 
-          <h1 className="text-lg font-bold leading-snug text-foreground sm:text-xl lg:text-[1.65rem] lg:leading-snug">
+          <h1 className="text-lg font-bold leading-snug text-foreground sm:text-xl lg:wibe-h1 lg:leading-snug">
             {item.title}
           </h1>
 

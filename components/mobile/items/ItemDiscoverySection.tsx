@@ -52,7 +52,7 @@ function DiscoveryCarouselCard({
       href={href}
       className={`${className} overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md`}
     >
-      <div className="relative aspect-[2/3] w-full bg-gray-100 lg:aspect-[16/10] lg:max-h-[9rem]">
+      <div className="relative aspect-[2/3] w-full bg-wibe-surface lg:aspect-[16/10] lg:max-h-[9rem]">
         <LazyItemCoverImage
           itemId={itemId}
           title={title}
@@ -105,7 +105,7 @@ function CarouselSkeleton({
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className={`${className} flex-shrink-0 animate-pulse rounded-xl bg-gray-200`}
+          className={`${className} flex-shrink-0 animate-pulse rounded-xl bg-wibe-surface`}
         />
       ))}
     </div>
@@ -290,7 +290,7 @@ export default function ItemDiscoverySection({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-wibe/80 bg-gray-50 py-6 text-center">
+        <div className="rounded-xl border border-wibe/80 bg-wibe-surface py-6 text-center">
           <p className="wibe-small text-wibe-secondary">فعلاً پیشنهادی برای این بخش نداریم</p>
         </div>
       )}

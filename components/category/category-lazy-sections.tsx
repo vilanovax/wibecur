@@ -32,5 +32,5 @@ export const CategoryCreateCTALazy = dynamic(() => import('./CategoryCreateCTA')
 });
 
 export const GenreScrollBarLazy = dynamic(() => import('./film/GenreScrollBar'), {
-  loading: () => <div className="h-12 animate-pulse rounded-lg bg-gray-100" aria-hidden />,
+  loading: () => <div className="h-12 animate-pulse rounded-lg bg-wibe-surface" aria-hidden />,
 });

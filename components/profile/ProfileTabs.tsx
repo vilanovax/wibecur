@@ -92,8 +92,8 @@ export default function ProfileTabs({
                 {tab.label}
                 {badge && (
                   <span
-                    className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold leading-none flex items-center justify-center ${
-                      isActive ? 'bg-primary/15 text-primary' : 'bg-gray-100 text-wibe-secondary'
+                    className={`min-w-[18px] h-[18px] px-1 rounded-full wibe-caption font-bold leading-none flex items-center justify-center ${
+                      isActive ? 'bg-primary/15 text-primary' : 'bg-wibe-surface text-wibe-secondary'
                     }`}
                   >
                     {badge}

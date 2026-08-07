@@ -126,7 +126,7 @@ export default function AvatarUploadForm({
 
           {currentAvatar && !previewUrl && (
             <div className="flex justify-center">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 ring-4 ring-gray-100">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-wibe-surface ring-4 ring-gray-100">
                 <img
                   src={currentAvatar}
                   alt="آواتار فعلی"
@@ -150,7 +150,7 @@ export default function AvatarUploadForm({
               className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                 uploadMethod === 'file'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  : 'bg-wibe-surface text-foreground hover:bg-wibe-surface'
               }`}
             >
               <ImageIcon className="w-4 h-4 inline ml-2" />
@@ -167,7 +167,7 @@ export default function AvatarUploadForm({
               className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                 uploadMethod === 'url'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  : 'bg-wibe-surface text-foreground hover:bg-wibe-surface'
               }`}
             >
               <Upload className="w-4 h-4 inline ml-2" />
@@ -191,7 +191,7 @@ export default function AvatarUploadForm({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-wibe-secondary font-medium"
+                className="w-full px-4 py-3 border-2 border-dashed border-wibe rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-wibe-secondary font-medium"
               >
                 <ImageIcon className="w-5 h-5 inline ml-2" />
                 {selectedFile ? selectedFile.name : 'انتخاب فایل'}
@@ -201,7 +201,7 @@ export default function AvatarUploadForm({
               </p>
               {previewUrl && (
                 <div className="mt-4 flex justify-center">
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 ring-4 ring-gray-100">
+                  <div className="w-32 h-32 rounded-full overflow-hidden bg-wibe-surface ring-4 ring-gray-100">
                     <img
                       src={previewUrl}
                       alt="پیش‌نمایش"
@@ -224,7 +224,7 @@ export default function AvatarUploadForm({
                   setImageUrl(e.target.value);
                   setError('');
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+                className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
                 placeholder="https://example.com/avatar.jpg"
               />
               <p className="mt-2 text-xs text-wibe-secondary">
@@ -232,7 +232,7 @@ export default function AvatarUploadForm({
               </p>
               {imageUrl && (
                 <div className="mt-4 flex justify-center">
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 ring-4 ring-gray-100">
+                  <div className="w-32 h-32 rounded-full overflow-hidden bg-wibe-surface ring-4 ring-gray-100">
                     <img
                       src={imageUrl}
                       alt="پیش‌نمایش"
@@ -247,12 +247,12 @@ export default function AvatarUploadForm({
         </div>
 
         {/* Fixed Buttons at Bottom - OUTSIDE scrollable area */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
+        <div className="flex-shrink-0 bg-white border-t border-wibe p-4">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium"
               disabled={isLoading}
             >
               انصراف

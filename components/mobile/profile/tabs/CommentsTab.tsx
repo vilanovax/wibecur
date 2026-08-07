@@ -106,7 +106,7 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
       {displayedComments.map((comment) => (
         <div
           key={comment.id}
-          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+          className="bg-white rounded-xl p-4 shadow-sm border border-wibe"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -143,7 +143,7 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
       {remainingCount > 0 && !showAll && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium mt-4"
+          className="w-full py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium mt-4"
         >
           مشاهده {remainingCount} مورد بیشتر
         </button>

@@ -102,10 +102,10 @@ export default function RecentActivityTab({
     return (
       <div className={`space-y-3 ${embedded ? 'px-4 lg:px-0' : 'px-4'}`}>
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="bg-white rounded-xl p-4 animate-pulse border border-gray-100">
-            <div className="h-4 bg-gray-100 rounded w-1/3 mb-2" />
-            <div className="h-5 bg-gray-100 rounded w-2/3 mb-2" />
-            <div className="h-3 bg-gray-100 rounded w-1/4" />
+          <div key={i} className="bg-white rounded-xl p-4 animate-pulse border border-wibe">
+            <div className="h-4 bg-wibe-surface rounded w-1/3 mb-2" />
+            <div className="h-5 bg-wibe-surface rounded w-2/3 mb-2" />
+            <div className="h-3 bg-wibe-surface rounded w-1/4" />
           </div>
         ))}
       </div>
@@ -145,7 +145,7 @@ export default function RecentActivityTab({
   return (
     <div className={`space-y-0 pb-4 ${embedded ? 'px-4 lg:px-0' : 'px-4'}`}>
       <div className="relative pr-5 lg:grid lg:grid-cols-2 lg:gap-4 lg:pr-0 xl:grid-cols-3">
-        <div className="absolute top-2 bottom-2 right-[9px] w-px bg-gray-200 lg:hidden" aria-hidden />
+        <div className="absolute top-2 bottom-2 right-[9px] w-px bg-wibe-surface lg:hidden" aria-hidden />
         {displayedActivities.map((activity) => {
           const config = TYPE_CONFIG[activity.type] ?? TYPE_CONFIG.list_created;
           const Icon = config.icon;
@@ -188,15 +188,15 @@ export default function RecentActivityTab({
                   ${isViral ? 'p-5 lg:p-4' : 'p-4 lg:p-3'}
                   ${isViral
                     ? 'border bg-white shadow-sm border-orange-200/80 bg-gradient-to-b from-white to-orange-50/30'
-                    : 'border border-gray-100 bg-white shadow-sm hover:shadow-md lg:hover:border-primary/15'}
+                    : 'border border-wibe bg-white shadow-sm hover:shadow-md lg:hover:border-primary/15'}
                 `}
               >
                 {/* Tag pill */}
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <span
                     className={`
-                      inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium
-                      ${isViral ? 'bg-orange-100 text-orange-700' : `bg-gray-100 ${config.accentClass}`}
+                      inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full wibe-caption font-medium
+                      ${isViral ? 'bg-orange-100 text-orange-700' : `bg-wibe-surface ${config.accentClass}`}
                     `}
                   >
                     {isViral ? (
@@ -221,7 +221,7 @@ export default function RecentActivityTab({
                     {saveContext && (
                       <p className="text-xs text-wibe-secondary">{saveContext}</p>
                     )}
-                    <p className="text-[11px] text-wibe-secondary">{statsText}</p>
+                    <p className="wibe-caption text-wibe-secondary">{statsText}</p>
                   </div>
                 )}
 
@@ -231,7 +231,7 @@ export default function RecentActivityTab({
                     مشاهده لیست
                     <ChevronLeft className="w-4 h-4 rotate-180" />
                   </span>
-                  <span className="text-[10px] text-wibe-secondary">
+                  <span className="wibe-caption text-wibe-secondary">
                     {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: faIR })}
                   </span>
                 </div>
@@ -244,7 +244,7 @@ export default function RecentActivityTab({
       {!showAll && activities.length > 8 && (
         <button
           onClick={() => setShowAll(true)}
-          className="mt-2 w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-wibe-secondary transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
+          className="mt-2 w-full rounded-xl border border-wibe py-3 text-sm font-medium text-wibe-secondary transition-colors hover:bg-wibe-surface lg:max-w-xs lg:mx-auto"
         >
           مشاهده بیشتر ({activities.length - 8} مورد دیگر)
         </button>

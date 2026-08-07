@@ -8,7 +8,7 @@ const CommentSection = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="min-h-[8rem] animate-pulse rounded-xl bg-gray-100/80" aria-hidden />
+      <div className="min-h-[8rem] animate-pulse rounded-xl bg-wibe-surface/80" aria-hidden />
     ),
   }
 );
@@ -18,7 +18,7 @@ const ItemDiscoverySection = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="min-h-[6rem] animate-pulse rounded-xl bg-gray-100/80" aria-hidden />
+      <div className="min-h-[6rem] animate-pulse rounded-xl bg-wibe-surface/80" aria-hidden />
     ),
   }
 );

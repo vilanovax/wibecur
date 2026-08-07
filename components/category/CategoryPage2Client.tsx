@@ -75,11 +75,11 @@ export default function CategoryPage2Client({
     return (
       <main className="min-h-[50vh] animate-pulse bg-wibe-surface">
         <div className={CATEGORY_PAGE_SHELL}>
-          <div className="mt-3 aspect-[16/9] rounded-2xl bg-gray-200 lg:mt-4" />
-          <div className="mt-6 h-6 w-48 rounded bg-gray-200" />
+          <div className="mt-3 aspect-[16/9] rounded-2xl bg-wibe-surface lg:mt-4" />
+          <div className="mt-6 h-6 w-48 rounded bg-wibe-surface" />
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[4/3] rounded-xl bg-gray-200" />
+              <div key={i} className="aspect-[4/3] rounded-xl bg-wibe-surface" />
             ))}
           </div>
         </div>

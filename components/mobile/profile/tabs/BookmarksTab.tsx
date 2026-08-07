@@ -93,11 +93,11 @@ export default function BookmarksTab({
       <div className="px-4 lg:px-0">
         <div className="grid grid-cols-2 gap-2 sm:-mx-4 sm:px-0 lg:mx-0 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="rounded-[20px] overflow-hidden bg-gray-100 animate-pulse">
-              <div className="aspect-[16/9] bg-gray-200" />
+            <div key={i} className="rounded-[20px] overflow-hidden bg-wibe-surface animate-pulse">
+              <div className="aspect-[16/9] bg-wibe-surface" />
               <div className="p-4 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-3 bg-gray-100 rounded w-1/2" />
+                <div className="h-4 bg-wibe-surface rounded w-3/4" />
+                <div className="h-3 bg-wibe-surface rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -162,7 +162,7 @@ export default function BookmarksTab({
               href={`/lists/${list.slug}`}
               className="relative block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99] lg:hover:border-primary/15 lg:hover:shadow-md"
             >
-              <div className="relative aspect-[4/3] bg-gray-100 lg:aspect-[16/10] lg:max-h-[9.5rem]">
+              <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10] lg:max-h-[9.5rem]">
                 <ListCoverImage
                   coverImage={list.coverImage}
                   title={list.title}
@@ -170,7 +170,7 @@ export default function BookmarksTab({
                   categorySlug={list.categories?.slug}
                   className="w-full h-full object-cover"
                   fallbackIcon={list.categories?.icon}
-                  fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+                  fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-wibe-surface"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent lg:hidden" />
                 <div className="absolute bottom-2 left-2 right-2 lg:hidden">
@@ -202,7 +202,7 @@ export default function BookmarksTab({
       {!showAll && bookmarks.length > 12 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-wibe-secondary transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
+          className="w-full rounded-xl border border-wibe py-3 text-sm font-medium text-wibe-secondary transition-colors hover:bg-wibe-surface lg:max-w-xs lg:mx-auto"
         >
           مشاهده بیشتر ({bookmarks.length - 12} مورد دیگر)
         </button>
@@ -212,7 +212,7 @@ export default function BookmarksTab({
         <button
           onClick={() => setPage((p) => p + 1)}
           disabled={isLoading}
-          className="w-full py-3 rounded-xl border border-gray-200 text-wibe-secondary hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
+          className="w-full py-3 rounded-xl border border-wibe text-wibe-secondary hover:bg-wibe-surface font-medium text-sm disabled:opacity-50"
         >
           {isLoading ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
         </button>

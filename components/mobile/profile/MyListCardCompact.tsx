@@ -63,7 +63,7 @@ export default function MyListCardCompact({ list, onSettingsClick, hideSettings 
         href={`/user-lists/${list.id}`}
         className="flex min-h-[72px] min-w-0 flex-1 flex-row-reverse gap-2.5 p-2.5 transition-transform active:scale-[0.99]"
       >
-        <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-md bg-gray-200">
+        <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-md bg-wibe-surface">
           <ListCoverImage
             coverImage={list.coverImage}
             title={list.title}
@@ -71,7 +71,7 @@ export default function MyListCardCompact({ list, onSettingsClick, hideSettings 
             categorySlug={categorySlug}
             className="h-full w-full object-cover"
             fallbackIcon={list.categories?.icon ?? '📋'}
-            fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
           />
           <div className="absolute bottom-1 start-1">
             <ListVisibilityBadge variant={visibility} size="sm" />

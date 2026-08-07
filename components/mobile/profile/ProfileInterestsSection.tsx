@@ -202,7 +202,7 @@ export default function ProfileInterestsSection() {
         ) : isLoading ? (
           <div className="flex flex-wrap gap-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-8 w-20 animate-pulse rounded-full bg-gray-200" />
+              <div key={i} className="h-8 w-20 animate-pulse rounded-full bg-wibe-surface" />
             ))}
           </div>
         ) : displayInterests.length === 0 ? (
@@ -235,7 +235,7 @@ export default function ProfileInterestsSection() {
                   <span>{interest.emoji}</span>
                   <span>{interest.label}</span>
                   {interest.pinned ? (
-                    <span className="text-[10px] text-primary">★</span>
+                    <span className="wibe-caption text-primary">★</span>
                   ) : null}
                 </span>
               ))}

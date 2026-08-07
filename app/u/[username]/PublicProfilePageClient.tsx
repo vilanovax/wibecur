@@ -332,7 +332,7 @@ export default function PublicProfilePageClient({
                 <div key={tag.slug} className="flex items-center gap-2">
                   <span className="text-lg">{tag.icon}</span>
                   <span className="wibe-small text-foreground flex-1">{tag.name}</span>
-                  <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="w-20 h-1.5 bg-wibe-surface rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full"
                       style={{ width: `${tag.percent}%` }}
@@ -354,7 +354,7 @@ export default function PublicProfilePageClient({
                 href={`/lists/${list.slug}`}
                 className="block rounded-lg bg-wibe-card overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
               >
-                <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
+                <div className="aspect-[4/3] bg-wibe-surface relative overflow-hidden">
                   <ListCoverImage
                     coverImage={list.coverImage}
                     title={list.title}
@@ -362,7 +362,7 @@ export default function PublicProfilePageClient({
                     categorySlug={list.categories?.slug}
                     className="w-full h-full object-cover"
                     fallbackIcon={list.categories?.icon ?? '📋'}
-                    fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+                    fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-wibe-surface"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
                   {list.isFeatured && (

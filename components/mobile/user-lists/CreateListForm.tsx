@@ -151,7 +151,7 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
                     <span
                       key={i}
                       className={`h-1.5 w-6 rounded-full transition-colors ${
-                        i < currentListsCount ? 'bg-primary' : 'bg-gray-200'
+                        i < currentListsCount ? 'bg-primary' : 'bg-wibe-surface'
                       }`}
                     />
                   ))}

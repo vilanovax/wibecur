@@ -99,7 +99,7 @@ export default function DesktopDialog({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-gray-100"
+                className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-wibe-surface"
                 aria-label="بستن"
               >
                 <X className="h-4 w-4 text-wibe-secondary" />

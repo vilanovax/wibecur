@@ -96,10 +96,10 @@ export default function ProfileAchievements({ creatorStats, className = 'mt-6' }
   if (isLoading && list.length === 0) {
     return (
       <section className={className}>
-        <div className="h-5 w-28 bg-gray-100 rounded mb-3" />
+        <div className="h-5 w-28 bg-wibe-surface rounded mb-3" />
         <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-6 lg:gap-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-[4/5] rounded-lg bg-gray-100 animate-pulse lg:aspect-auto lg:min-h-[72px]" />
+            <div key={i} className="aspect-[4/5] rounded-lg bg-wibe-surface animate-pulse lg:aspect-auto lg:min-h-[72px]" />
           ))}
         </div>
       </section>
@@ -128,10 +128,10 @@ export default function ProfileAchievements({ creatorStats, className = 'mt-6' }
             type="button"
             onClick={() => setSelected(a)}
             title={a.unlocked || !a.isSecret ? a.title : 'دستاورد مخفی'}
-            className={`flex min-h-[88px] flex-col items-center justify-center rounded-lg border p-3 transition-all active:scale-95 lg:min-h-[72px] lg:p-2.5 lg:hover:bg-gray-50 ${
+            className={`flex min-h-[88px] flex-col items-center justify-center rounded-lg border p-3 transition-all active:scale-95 lg:min-h-[72px] lg:p-2.5 lg:hover:bg-wibe-surface ${
               a.unlocked
-                ? 'border-wibe bg-wibe-card hover:bg-gray-50'
-                : 'border-dashed border-wibe bg-gray-50/80'
+                ? 'border-wibe bg-wibe-card hover:bg-wibe-surface'
+                : 'border-dashed border-wibe bg-wibe-surface/80'
             }`}
           >
             <span
@@ -154,7 +154,7 @@ export default function ProfileAchievements({ creatorStats, className = 'mt-6' }
         <button
           type="button"
           onClick={() => setShowAllSheet(true)}
-          className="mt-3 w-full py-2.5 rounded-md border border-wibe text-wibe-secondary wibe-small font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+          className="mt-3 w-full py-2.5 rounded-md border border-wibe text-wibe-secondary wibe-small font-medium hover:bg-wibe-surface transition-colors flex items-center justify-center gap-1"
         >
           مشاهده همه دستاوردها
           <ChevronLeft className="w-4 h-4 rotate-180" />
@@ -197,11 +197,11 @@ function AllAchievementsSheet({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white" dir="rtl">
-      <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-wibe px-4 py-3">
         <button
           type="button"
           onClick={onClose}
-          className="p-2 -m-2 rounded-full hover:bg-gray-100"
+          className="p-2 -m-2 rounded-full hover:bg-wibe-surface"
           aria-label="بستن"
         >
           <ChevronLeft className="w-5 h-5 rotate-180" />
@@ -217,13 +217,13 @@ function AllAchievementsSheet({
               onClick={() => onSelect(a)}
               className={`
                 flex flex-col items-center justify-center p-3 rounded-xl border transition-all active:scale-95
-                ${a.unlocked ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50'}
+                ${a.unlocked ? 'border-wibe bg-white' : 'border-wibe bg-wibe-surface'}
               `}
             >
               <span className={`text-2xl mb-1 ${a.unlocked ? '' : 'grayscale opacity-50'}`}>
                 {a.unlocked ? a.icon : a.isSecret ? '?' : '🔒'}
               </span>
-              <span className={`text-[10px] font-medium text-center line-clamp-2 ${a.unlocked ? 'text-gray-700' : 'text-gray-400'}`}>
+              <span className={`wibe-caption font-medium text-center line-clamp-2 ${a.unlocked ? 'text-foreground' : 'text-wibe-secondary'}`}>
                 {a.unlocked || !a.isSecret ? a.title : '???'}
               </span>
             </button>

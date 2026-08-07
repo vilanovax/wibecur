@@ -221,10 +221,10 @@ export default function SaveToPersonalListModal({
                   return (
                     <div
                       key={list.id}
-                      className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 transition-colors"
+                      className="flex items-center gap-3 p-3 bg-white border border-wibe rounded-xl hover:border-wibe transition-colors"
                     >
                       {/* کاور کوچک */}
-                      <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-wibe-surface">
                         <ImageWithFallback
                           src={list.coverImage ?? ''}
                           alt={list.title}
@@ -264,7 +264,7 @@ export default function SaveToPersonalListModal({
                             className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium ${
                               justAdded
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-wibe-secondary'
+                                : 'bg-wibe-surface text-wibe-secondary'
                             }`}
                           >
                             {justAdded ? (
@@ -302,7 +302,7 @@ export default function SaveToPersonalListModal({
           </div>
 
           {/* CTA ساخت لیست جدید — جدا و شفاف */}
-          <div className="flex-shrink-0 px-4 py-4 border-t border-gray-100">
+          <div className="flex-shrink-0 px-4 py-4 border-t border-wibe">
             {canCreateNewList ? (
               <button
                 onClick={() => setIsCreateListOpen(true)}

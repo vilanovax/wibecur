@@ -19,13 +19,13 @@ export default function HubTrendingNowV2({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         <span className="inline-block animate-pulse" style={{ animationDuration: '1.5s' }}>
           🔥
         </span>
         داغ‌ترین لیست‌های ۲۴ ساعت اخیر
       </h2>
-      <p className="text-[11px] text-gray-500">
+      <p className="wibe-caption text-wibe-secondary">
         بر اساس رشد سریع ذخیره و تعامل
       </p>
 
@@ -69,8 +69,8 @@ function TrendingCard({
       href={`/lists/${list.slug}`}
       className="flex-shrink-0 w-[70vw] max-w-[260px] snap-start"
     >
-      <div ref={ref} className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-xl active:scale-[0.98] transition-transform">
-        <div className="relative aspect-[3/4] bg-gray-100">
+      <div ref={ref} className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-xl active:scale-[0.98] transition-transform">
+        <div className="relative aspect-[3/4] bg-wibe-surface">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
@@ -89,7 +89,7 @@ function TrendingCard({
 
           {growth > 0 && (
             <span
-              className={`absolute top-2 right-2 flex items-center gap-0.5 text-white text-[11px] px-2 py-1 rounded-lg font-bold shadow-lg transition-transform ${
+              className={`absolute top-2 right-2 flex items-center gap-0.5 text-white wibe-caption px-2 py-1 rounded-lg font-bold shadow-lg transition-transform ${
                 inView ? 'animate-pulse' : ''
               }`}
               style={{
@@ -106,7 +106,7 @@ function TrendingCard({
             <h3 className="font-bold text-white text-sm line-clamp-1 drop-shadow">
               {list.title}
             </h3>
-            <div className="flex items-center gap-2 mt-1.5 text-white/90 text-[11px]">
+            <div className="flex items-center gap-2 mt-1.5 text-white/90 wibe-caption">
               <span>❤️ {list.likeCount}</span>
               <span>⭐ {list.saveCount}</span>
               {list.creator?.username && (

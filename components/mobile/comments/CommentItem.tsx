@@ -45,7 +45,7 @@ function CommentMoreMenu({ onReport, onDelete }: { onReport: () => void; onDelet
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-gray-100 transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-wibe-surface transition-colors"
         aria-label="گزینه‌های بیشتر"
       >
         <MoreVertical className="w-4 h-4" />

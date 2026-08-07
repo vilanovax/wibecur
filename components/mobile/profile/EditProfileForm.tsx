@@ -85,7 +85,7 @@ export default function EditProfileForm({
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+            className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
             placeholder="نام خود را وارد کنید"
           />
         </div>
@@ -99,7 +99,7 @@ export default function EditProfileForm({
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+            className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
             placeholder="example@email.com"
             required
           />
@@ -109,7 +109,7 @@ export default function EditProfileForm({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            className="flex-1 px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium"
             disabled={isLoading}
           >
             انصراف

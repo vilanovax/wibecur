@@ -212,7 +212,7 @@ export default function AvatarSelectionSheet({
                     {avatar.label}
                   </span>
                   {!unlocked && avatar.minLevel && (
-                    <span className="flex items-center gap-0.5 text-[10px] text-wibe-secondary">
+                    <span className="flex items-center gap-0.5 wibe-caption text-wibe-secondary">
                       <Lock className="h-3 w-3" />
                       {getAvatarMinLevelLabel(avatar.minLevel)}
                     </span>

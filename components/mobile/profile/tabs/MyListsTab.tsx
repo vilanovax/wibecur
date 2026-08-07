@@ -279,8 +279,8 @@ export default function MyListsTab({
             onClick={() => toggleVisibilityFilter('shared')}
             className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-colors ${
               visibilityFilter === 'shared'
-                ? 'bg-violet-600 text-white shadow-sm'
-                : 'border border-violet-200 bg-violet-50/80 text-violet-800'
+                ? 'bg-primary text-white shadow-sm'
+                : 'border border-primary/20 bg-primary/5 text-primary'
             }`}
           >
             <span>مشترک</span>
@@ -368,7 +368,7 @@ export default function MyListsTab({
       <div className="space-y-3 px-4 lg:px-0">
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-[72px] bg-gray-200 rounded-lg animate-pulse" />
+            <div key={i} className="h-[72px] bg-wibe-surface rounded-lg animate-pulse" />
           ))}
         </div>
       </div>
@@ -462,7 +462,7 @@ export default function MyListsTab({
                       <h2 className="mb-2.5 wibe-h3 text-slate-800">لیست‌های شخصی</h2>
                     )}
                     {visibilityFilter === 'shared' && (
-                      <h2 className="mb-2.5 wibe-h3 text-violet-900">لیست‌های مشترک با من</h2>
+                      <h2 className="mb-2.5 wibe-h3 text-foreground">لیست‌های مشترک با من</h2>
                     )}
                     {!visibilityFilter && topLists.length > 0 && (
                       <h2 className="mb-2.5 wibe-h3">همه لیست‌ها</h2>

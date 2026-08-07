@@ -92,7 +92,7 @@ export default function ItemLikeButton({
         >
           <Heart className="w-5 h-5 text-wibe-secondary" />
           {likeCount > 0 && (
-            <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-wibe-surface0 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+            <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-wibe-surface0 text-white wibe-caption font-bold rounded-full flex items-center justify-center shadow-sm">
               {likeCount > 99 ? '۹۹+' : countLabel}
             </span>
           )}
@@ -135,7 +135,7 @@ export default function ItemLikeButton({
           }`}
         />
         {likeCount > 0 && (
-          <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+          <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-red-500 text-white wibe-caption font-bold rounded-full flex items-center justify-center shadow-sm">
             {likeCount > 99 ? '۹۹+' : countLabel}
           </span>
         )}

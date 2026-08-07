@@ -77,7 +77,7 @@ export default function ConfirmBottomSheet({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="h-11 w-full rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-gray-50 active:scale-[0.99] disabled:opacity-50"
+            className="h-11 w-full rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-wibe-surface active:scale-[0.99] disabled:opacity-50"
           >
             {cancelLabel}
           </button>

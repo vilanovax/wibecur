@@ -119,7 +119,7 @@ function ToggleRow({
         onClick={() => onChange(!checked)}
         dir="ltr"
         className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-          checked ? 'bg-primary shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]' : 'bg-gray-200'
+          checked ? 'bg-primary shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]' : 'bg-wibe-surface'
         }`}
       >
         <span
@@ -224,7 +224,7 @@ function PasswordField({
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
-          className="absolute start-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-wibe-secondary hover:bg-gray-100"
+          className="absolute start-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-wibe-secondary hover:bg-wibe-surface"
           aria-label={visible ? 'مخفی کردن رمز' : 'نمایش رمز'}
         >
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -276,7 +276,7 @@ function AvatarPreview({
         )}
       </div>
       {avatarType === 'UPLOADED' && avatarStatus === 'PENDING' && (
-        <span className="absolute -bottom-1 inset-x-0 mx-auto w-fit whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+        <span className="absolute -bottom-1 inset-x-0 mx-auto w-fit whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 wibe-caption font-medium text-amber-800">
           در انتظار تأیید
         </span>
       )}
@@ -658,7 +658,7 @@ export default function EditProfileSheet2({
         type="button"
         onClick={requestClose}
         disabled={isSaving}
-        className="h-11 flex-1 rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-gray-50 active:scale-[0.99] disabled:opacity-50"
+        className="h-11 flex-1 rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-wibe-surface active:scale-[0.99] disabled:opacity-50"
       >
         انصراف
       </button>
@@ -668,7 +668,7 @@ export default function EditProfileSheet2({
       <button
         type="button"
         onClick={requestClose}
-        className="h-11 w-full rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-gray-50"
+        className="h-11 w-full rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-wibe-surface"
       >
         بستن
       </button>

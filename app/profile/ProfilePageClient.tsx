@@ -93,17 +93,17 @@ export default function ProfilePageClient({
       <div className="space-y-4">
         <ProfileBreadcrumb />
         <div className="overflow-hidden rounded-xl border border-wibe">
-          <div className="h-14 animate-pulse bg-gray-200" />
+          <div className="h-14 animate-pulse bg-wibe-surface" />
           <div className="flex items-start gap-3 px-2.5 pb-2.5 -mt-8">
             <div className="flex-1 space-y-1.5 pt-1.5">
-              <div className="h-4 w-14 rounded-full bg-gray-200" />
-              <div className="h-5 w-28 rounded bg-gray-200" />
-              <div className="h-3 w-16 rounded bg-gray-100" />
+              <div className="h-4 w-14 rounded-full bg-wibe-surface" />
+              <div className="h-5 w-28 rounded bg-wibe-surface" />
+              <div className="h-3 w-16 rounded bg-wibe-surface" />
             </div>
-            <div className="h-[82px] w-[82px] shrink-0 rounded-full border-[3px] border-white bg-gray-200" />
+            <div className="h-[82px] w-[82px] shrink-0 rounded-full border-[3px] border-white bg-wibe-surface" />
           </div>
         </div>
-        <div className="h-10 animate-pulse rounded bg-gray-200" />
+        <div className="h-10 animate-pulse rounded bg-wibe-surface" />
       </div>
     );
   }

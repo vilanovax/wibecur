@@ -107,17 +107,17 @@ function PickEditorCard({
 
   return (
     <div className="flex shrink-0 flex-col w-[92px]">
-      <div className="group relative aspect-[2/3] overflow-hidden rounded-xl bg-gray-100 ring-1 ring-black/5">
+      <div className="group relative aspect-[2/3] overflow-hidden rounded-xl bg-wibe-surface ring-1 ring-black/5">
         {pick.imageUrl ? (
           <ImageWithFallback
             src={pick.imageUrl}
             alt={pick.title}
             className="h-full w-full object-cover"
             fallbackIcon="✨"
-            fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xl">✨</div>
+          <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-xl">✨</div>
         )}
         <span className="absolute start-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/55 wibe-caption font-bold text-white">
           {(idx + 1).toLocaleString('fa-IR')}
@@ -177,7 +177,7 @@ function PickEditorCard({
           type="button"
           disabled={idx === 0 || isBusy}
           onClick={() => onReorder('up')}
-          className="rounded p-0.5 text-wibe-secondary hover:bg-gray-100 disabled:opacity-25"
+          className="rounded p-0.5 text-wibe-secondary hover:bg-wibe-surface disabled:opacity-25"
           aria-label="جابجایی به چپ"
         >
           <ChevronUp className="h-3.5 w-3.5 rotate-90" />
@@ -187,7 +187,7 @@ function PickEditorCard({
           type="button"
           disabled={idx >= total - 1 || isBusy}
           onClick={() => onReorder('down')}
-          className="rounded p-0.5 text-wibe-secondary hover:bg-gray-100 disabled:opacity-25"
+          className="rounded p-0.5 text-wibe-secondary hover:bg-wibe-surface disabled:opacity-25"
           aria-label="جابجایی به راست"
         >
           <ChevronDown className="h-3.5 w-3.5 rotate-90" />
@@ -434,7 +434,7 @@ export default function ProfilePicksEditorSheet({
                   {maxPerCategory.toLocaleString('fa-IR')}
                 </span>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-wibe-surface">
                 <div
                   className="h-full rounded-full bg-primary transition-colors duration-300"
                   style={{ width: `${fillPercent}%` }}
@@ -526,7 +526,7 @@ export default function ProfilePicksEditorSheet({
                           onClick={() => handleAdd(cid)}
                           className="flex w-full items-center gap-3 rounded-xl border border-transparent p-2 text-start transition-colors hover:border-primary/20 hover:bg-primary/5 disabled:opacity-50"
                         >
-                          <div className="h-11 w-8 shrink-0 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-black/5">
+                          <div className="h-11 w-8 shrink-0 overflow-hidden rounded-lg bg-wibe-surface ring-1 ring-black/5">
                             {item.imageUrl ? (
                               <ImageWithFallback
                                 src={item.imageUrl}

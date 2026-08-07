@@ -34,7 +34,7 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
                 href={`/user-lists/${list.id}`}
                 className="block w-[168px] shrink-0 snap-start overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
               >
-                <div className="relative h-[7.75rem] overflow-hidden bg-gray-200">
+                <div className="relative h-[7.75rem] overflow-hidden bg-wibe-surface">
                   <ListCoverImage
                     coverImage={list.coverImage}
                     title={list.title}
@@ -42,7 +42,7 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
                     categorySlug={list.categories?.slug}
                     className="h-full w-full object-cover"
                     fallbackIcon={list.categories?.icon ?? '📋'}
-                    fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
                   />
                   <div
                     className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 via-45% to-black/5"

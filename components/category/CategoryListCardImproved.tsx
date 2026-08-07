@@ -22,7 +22,7 @@ export default function CategoryListCardImproved({
       href={`/lists/${list.slug}`}
       className="flex gap-3 p-3 rounded-lg bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
     >
-      <div className="relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden bg-gray-200">
+      <div className="relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden bg-wibe-surface">
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -30,7 +30,7 @@ export default function CategoryListCardImproved({
           categorySlug={categorySlug}
           className="w-full h-full object-cover"
           fallbackIcon="📋"
-          fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+          fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-wibe-surface"
         />
         {list.badge && (
           <span className="absolute top-1 right-1 wibe-caption font-semibold text-white px-1.5 py-0.5 rounded-pill bg-warning">
@@ -49,7 +49,7 @@ export default function CategoryListCardImproved({
               className="w-5 h-5 rounded-full object-cover flex-shrink-0"
             />
           ) : (
-            <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center wibe-caption flex-shrink-0">
+            <div className="w-5 h-5 rounded-full bg-wibe-surface flex items-center justify-center wibe-caption flex-shrink-0">
               {(list.creator?.name || '?')[0]}
             </div>
           )}
@@ -57,7 +57,7 @@ export default function CategoryListCardImproved({
             {list.creator?.name || 'کاربر'}
           </span>
           {list.cityTag && (
-            <span className="wibe-caption px-1.5 py-0.5 rounded-md bg-gray-100 text-wibe-secondary">
+            <span className="wibe-caption px-1.5 py-0.5 rounded-md bg-wibe-surface text-wibe-secondary">
               {list.cityTag}
             </span>
           )}

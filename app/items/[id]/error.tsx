@@ -20,14 +20,14 @@ export default function ItemDetailError({
       className="min-h-[60vh] flex flex-col items-center justify-center px-4"
       dir="rtl"
     >
-      <div className="max-w-sm w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+      <div className="max-w-sm w-full bg-white rounded-2xl shadow-sm border border-wibe p-6 text-center">
         <div className="flex justify-center mb-4">
           <div className="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center">
             <AlertCircle className="w-7 h-7 text-amber-600" />
           </div>
         </div>
-        <h2 className="text-lg font-bold text-gray-900 mb-1">آیتم لود نشد</h2>
-        <p className="text-gray-500 text-sm mb-5">
+        <h2 className="text-lg font-bold text-foreground mb-1">آیتم لود نشد</h2>
+        <p className="text-wibe-secondary text-sm mb-5">
           احتمالاً مشکل موقتیه، دوباره امتحان کن
         </p>
         <div className="flex flex-col gap-2">

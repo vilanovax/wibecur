@@ -482,7 +482,7 @@ export default function AddItemClient({
               <button
                 type="button"
                 onClick={() => setSearchInput('')}
-                className="absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full hover:bg-gray-100"
+                className="absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full hover:bg-wibe-surface"
                 aria-label="پاک کردن جستجو"
               >
                 <X className="h-4 w-4 text-wibe-secondary" />
@@ -568,7 +568,7 @@ export default function AddItemClient({
               <option value="title-desc">عنوان (ی–الف)</option>
             </select>
 
-            <div className="flex shrink-0 rounded-md border border-wibe bg-gray-100 p-0.5">
+            <div className="flex shrink-0 rounded-md border border-wibe bg-wibe-surface p-0.5">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
@@ -604,7 +604,7 @@ export default function AddItemClient({
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-gray-200" />
+              <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-wibe-surface" />
             ))}
           </div>
         ) : isError ? (
@@ -660,7 +660,7 @@ export default function AddItemClient({
                     }`}
                   >
                     <div
-                      className={`relative bg-gray-200 ${
+                      className={`relative bg-wibe-surface ${
                         viewMode === 'grid'
                           ? 'aspect-[4/3]'
                           : 'h-20 w-20 shrink-0 overflow-hidden rounded-lg'

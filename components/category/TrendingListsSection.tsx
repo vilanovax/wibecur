@@ -34,7 +34,7 @@ function TrendingListCard({
       className="group block active:scale-[0.99] transition-transform lg:hover:-translate-y-0.5"
     >
       <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-card lg:rounded-2xl lg:transition-shadow lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-gray-200">
+        <div className="relative aspect-[4/3] bg-wibe-surface">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
@@ -43,7 +43,7 @@ function TrendingListCard({
             />
           ) : (
             <div
-              className="flex h-full w-full items-center justify-center bg-gray-200 text-4xl opacity-40"
+              className="flex h-full w-full items-center justify-center bg-wibe-surface text-4xl opacity-40"
               style={{ color: accentColor }}
             >
               📋

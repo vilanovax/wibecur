@@ -83,7 +83,7 @@ export default function MobileBottomSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-shrink-0 justify-center pb-1 pt-2.5">
-          <div className="h-1 w-9 rounded-full bg-gray-200" />
+          <div className="h-1 w-9 rounded-full bg-wibe-surface" />
         </div>
 
         {(title || subtitle || headerAction) && (
@@ -99,7 +99,7 @@ export default function MobileBottomSheet({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 active:bg-gray-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
                 aria-label="بستن"
               >
                 <X className="h-4 w-4 text-wibe-secondary" />

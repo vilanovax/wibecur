@@ -330,7 +330,7 @@ export default function UserListDetailClient({
                       type="button"
                       onClick={() => setItemsView('list')}
                       className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                        itemsView === 'list' ? 'bg-primary text-white' : 'text-wibe-secondary hover:bg-gray-50'
+                        itemsView === 'list' ? 'bg-primary text-white' : 'text-wibe-secondary hover:bg-wibe-surface'
                       }`}
                       aria-label="نمایش لیستی"
                       title="لیستی"
@@ -341,7 +341,7 @@ export default function UserListDetailClient({
                       type="button"
                       onClick={() => setItemsView('grid')}
                       className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                        itemsView === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary hover:bg-gray-50'
+                        itemsView === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary hover:bg-wibe-surface'
                       }`}
                       aria-label="نمایش گریدی"
                       title="گریدی"
@@ -405,7 +405,7 @@ export default function UserListDetailClient({
                     </span>
 
                     <Link href={`/items/${item.id}`} className="block">
-                      <div className="relative aspect-[4/3] w-full bg-gray-200">
+                      <div className="relative aspect-[4/3] w-full bg-wibe-surface">
                         {item.imageUrl ? (
                           <ImageWithFallback
                             src={item.imageUrl}
@@ -467,7 +467,7 @@ export default function UserListDetailClient({
                           {index + 1}
                         </div>
                         {item.imageUrl && (
-                          <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-gray-200">
+                          <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-wibe-surface">
                             <ImageWithFallback src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                           </div>
                         )}

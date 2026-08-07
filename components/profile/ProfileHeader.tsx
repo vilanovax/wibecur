@@ -109,7 +109,7 @@ export default function ProfileHeader({
               type="button"
               onClick={onFollowToggle}
               disabled={followLoading}
-              className={`absolute start-2.5 top-2.5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold backdrop-blur-sm transition-all active:scale-[0.97] disabled:opacity-50 ${
+              className={`absolute start-2.5 top-2.5 z-10 inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold backdrop-blur-sm transition-all active:scale-[0.97] disabled:opacity-50 ${
                 isFollowing
                   ? 'border border-white/30 bg-white/20 text-white'
                   : 'border border-white/20 bg-white text-primary shadow-sm'
@@ -136,14 +136,14 @@ export default function ProfileHeader({
           <div className="-mt-8 flex items-start gap-3 lg:-mt-10 lg:items-end lg:gap-5">
             <div className="min-w-0 flex-1 pt-1.5 text-right lg:pb-1 lg:pt-0">
               {isElite && user.showBadge !== false && (
-                <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 ring-1 ring-amber-200/80">
+                <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 wibe-caption font-bold text-amber-800 ring-1 ring-amber-200/80">
                   <span aria-hidden>⭐</span>
                   کیوریتور برتر
                 </span>
               )}
 
               <div className="flex w-full flex-wrap items-center justify-start gap-x-2 gap-y-2 lg:gap-x-3">
-                <h1 className="min-w-0 truncate text-[17px] font-bold leading-snug tracking-tight text-foreground lg:text-xl">
+                <h1 className="min-w-0 truncate wibe-h3 font-bold leading-snug tracking-tight text-foreground lg:text-xl">
                   {user.name || 'کاربر بدون نام'}
                 </h1>
                 {isOwner && (
@@ -151,7 +151,7 @@ export default function ProfileHeader({
                     <button
                       type="button"
                       onClick={openEdit}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-wibe bg-wibe-card px-3 py-2 text-[13px] font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-wibe bg-wibe-card px-3 py-2 wibe-small font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5"
                     >
                       <Edit2 className="h-4 w-4" />
                       ویرایش
@@ -160,7 +160,7 @@ export default function ProfileHeader({
                       type="button"
                       onClick={requestLogout}
                       disabled={isLoggingOut}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[13px] font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 wibe-small font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
                     >
                       {isLoggingOut ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -174,21 +174,21 @@ export default function ProfileHeader({
               </div>
 
               <p
-                className="mt-1 truncate font-mono text-[12px] font-medium text-wibe-secondary"
+                className="mt-1 truncate font-mono wibe-small font-medium text-wibe-secondary"
                 dir="ltr"
               >
                 @{displayUsername}
               </p>
 
               {user.bio?.trim() ? (
-                <p className="mt-2 text-[13px] leading-relaxed text-wibe-secondary line-clamp-3 whitespace-pre-wrap break-words">
+                <p className="mt-2 wibe-small leading-relaxed text-wibe-secondary line-clamp-3 whitespace-pre-wrap break-words">
                   {user.bio.trim()}
                 </p>
               ) : isOwner ? (
                 <button
                   type="button"
                   onClick={openEdit}
-                  className="mt-2 text-[12px] font-medium text-primary/80 transition-colors hover:text-primary"
+                  className="mt-2 wibe-small font-medium text-primary/80 transition-colors hover:text-primary"
                 >
                   افزودن بیو کوتاه
                 </button>
@@ -205,11 +205,11 @@ export default function ProfileHeader({
                     alt={user.name || user.email || 'Avatar'}
                     className="h-full w-full object-cover"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    fallbackClassName="flex h-full w-full items-center justify-center bg-gray-100 text-lg font-semibold text-foreground"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-lg font-semibold text-foreground"
                     priority
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gray-100 text-lg font-semibold text-foreground">
+                  <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-lg font-semibold text-foreground">
                     {(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                   </div>
                 )}
@@ -229,7 +229,7 @@ export default function ProfileHeader({
           </div>
 
           {!isOwner && followersCount != null && (
-            <p className="mt-2.5 px-0 text-[11px] text-wibe-secondary">
+            <p className="mt-2.5 px-0 wibe-caption text-wibe-secondary">
               {followersCount.toLocaleString('fa-IR')} دنبال‌کننده
             </p>
           )}

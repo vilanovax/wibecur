@@ -170,7 +170,7 @@ export default function EditPersonalListForm({
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+              className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
               placeholder="عنوان لیست را وارد کنید..."
               required
               disabled={isLoading}
@@ -192,7 +192,7 @@ export default function EditPersonalListForm({
               onChange={handleChange}
               rows={4}
               maxLength={MAX_DESCRIPTION_LENGTH}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
               placeholder="توضیحات لیست را وارد کنید..."
               disabled={isLoading}
             />
@@ -216,7 +216,7 @@ export default function EditPersonalListForm({
             />
             {formData.coverImage ? (
               <div className="space-y-2">
-                <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                <div className="relative w-full h-48 rounded-lg overflow-hidden border border-wibe">
                   <img
                     src={formData.coverImage}
                     alt="Cover preview"
@@ -237,7 +237,7 @@ export default function EditPersonalListForm({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isUploadingImage}
-                className="w-full px-4 py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-wibe-secondary"
+                className="w-full px-4 py-12 border-2 border-dashed border-wibe rounded-lg hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-wibe-secondary"
               >
                 {isUploadingImage ? (
                   <>
@@ -255,12 +255,12 @@ export default function EditPersonalListForm({
           </div>
         </div>
 
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
+        <div className="flex-shrink-0 bg-white border-t border-wibe p-4">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium"
               disabled={isLoading || isUploadingImage}
             >
               انصراف

@@ -125,6 +125,21 @@ npm run audit:design-tokens
 موج ۲: `components/mobile/{home,lists,curated}` · `app/{lists,explore,curated}`.  
 باقی‌ماندهٔ `bg-gray-900` روی هیروهای تیره عمدی است (لمس نشد).
 
+### بعد از موج ۳ (Profile / Category hub / forms)
+
+| الگو | تقریبی |
+|------|--------|
+| `bg-gray-*` | ~۵۰ (−۱۷۴ از موج ۲) |
+| `border-gray-*` | ~۱۷ |
+| `text-gray-*` | ~۴۶ |
+| `arbitrary-text` | ~۲۷ |
+| `hover:bg-gray-*` | ~۴ |
+| violet/purple | ~۱ (genre horror dark) |
+| فایل دارای نقض | ~۳۶ |
+
+موج ۳: `components/mobile/profile` · `components/profile` · `app/{profile,u,user-lists,items,leaderboard}` · `components/category/hub` + light category roots · forms/sheets leftovers.  
+عمدهٔ باقی‌مانده: `components/category/film/*` → موج ۴.
+
 ---
 
 ## موج‌های مهاجرت
@@ -133,8 +148,8 @@ npm run audit:design-tokens
 |-----|--------|--------|
 | ۰ | توکن + DESIGN.md + /design-system + Impeccable hook | ✅ موجود |
 | ۱ | Doc + audit script + layout/skeletons/shared chrome | ✅ |
-| ۲ | Home / Lists / Explore (+ list detail light surfaces) | ✅ این PR |
-| ۳ | Profile / Category hub light / remaining forms | بعدی |
+| ۲ | Home / Lists / Explore (+ list detail light surfaces) | ✅ |
+| ۳ | Profile / Category hub light / remaining forms | ✅ این PR |
 | ۴ | Film legacy dark sections (با احتیاط contrast) | بعدی |
 | — | Admin | خارج از scope (توکن جدا در `lib/admin/design-system`) |
 
