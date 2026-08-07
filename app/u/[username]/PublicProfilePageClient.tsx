@@ -7,10 +7,13 @@ import ListCoverImage from '@/components/shared/ListCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import CuratorBadge from '@/components/shared/CuratorBadge';
-import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
 import Toast from '@/components/shared/Toast';
 import PublicProfileBreadcrumb from '@/components/profile/PublicProfileBreadcrumb';
+import ProfilePicksSection from '@/components/mobile/profile/ProfilePicksSection';
+import type { ProfilePickShelfDto } from '@/lib/profile-picks-types';
 
 interface PublicProfilePageClientProps {
   username: string;
@@ -53,12 +56,13 @@ interface ProfileData {
     saves: number;
     likes: number;
     items: number;
-    updatedAt: Date;
+    updatedAt: string | Date;
     isFeatured?: boolean;
     categories?: { name: string; icon: string; slug?: string } | null;
   }[];
   likedLists: unknown[];
   recentActivity: unknown[];
+  profilePicks?: ProfilePickShelfDto[];
 }
 
 export default function PublicProfilePageClient({
@@ -166,7 +170,7 @@ export default function PublicProfilePageClient({
   const levelConfig = getLevelConfig(levelKey);
   const vibeAvatar =
     data.user.avatarType === 'DEFAULT' && data.user.avatarId
-      ? VIBE_AVATARS.find((a) => a.id === data.user.avatarId)
+      ? resolveVibeAvatar(data.user.avatarId)
       : null;
 
   const statItems = [
@@ -206,9 +210,7 @@ export default function PublicProfilePageClient({
               <div className={`absolute -inset-2 rounded-full blur-lg ${levelConfig.glowClass} opacity-40`} />
               <div className="relative w-24 h-24 rounded-full border-4 border-wibe-card overflow-hidden bg-wibe-card shadow-sm">
                 {vibeAvatar ? (
-                  <div className={`w-full h-full flex items-center justify-center text-4xl ${vibeAvatar.bgClass}`}>
-                    {vibeAvatar.emoji}
-                  </div>
+                  <VibeAvatarDisplay avatar={vibeAvatar} size={96} className="h-full w-full" />
                 ) : data.user.image ? (
                   <ImageWithFallback
                     src={data.user.image}
@@ -311,6 +313,16 @@ export default function PublicProfilePageClient({
             ))}
           </div>
         </div>
+
+        {data.profilePicks && data.profilePicks.length > 0 && (
+          <div className="mt-6 px-4 lg:px-0">
+            <ProfilePicksSection
+              userId={data.user.id}
+              isOwner={isOwnProfile}
+              publicShelves={data.profilePicks}
+            />
+          </div>
+        )}
 
         {data.topTags.length > 0 && (
           <section className="mt-6 px-4 lg:px-0">

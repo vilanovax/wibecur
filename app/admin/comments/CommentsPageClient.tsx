@@ -20,6 +20,7 @@ import type { CommentRowData } from '@/components/admin/comments/CommentRow';
 import type { CommentsIntelligenceData } from '@/lib/admin/comments-intelligence';
 import type { CommentSortKind } from '@/lib/admin/comments-intelligence';
 import type { CommentFilterKind } from '@/lib/admin/comments-filter-utils';
+import type { CommentOriginKind } from '@/lib/admin/comments-scope-utils';
 
 interface Comment extends CommentRowData {
   updatedAt?: string;
@@ -34,6 +35,9 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
   const router = useRouter();
   const [localComments, setLocalComments] = useState<Comment[]>(data.comments);
   const [filter, setFilter] = useState<CommentFilterKind>(data.filter);
+  const [origin, setOrigin] = useState<CommentOriginKind>(data.origin);
+  const [categoryId, setCategoryId] = useState(data.categoryId);
+  const [listId, setListId] = useState(data.listId);
   const [sort, setSort] = useState<CommentSortKind>(data.sort);
   const [search, setSearch] = useState(data.search);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -63,6 +67,9 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
   useEffect(() => {
     setLocalComments(data.comments);
     setFilter(data.filter);
+    setOrigin(data.origin);
+    setCategoryId(data.categoryId);
+    setListId(data.listId);
     setSort(data.sort);
     setSearch(data.search);
     setSelectedId((prev) => {
@@ -76,25 +83,34 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
   const syncUrl = useCallback(
     (opts: {
       filter?: CommentFilterKind;
+      origin?: CommentOriginKind;
+      categoryId?: string;
+      listId?: string;
       search?: string;
       sort?: CommentSortKind;
       page?: string;
     }) => {
       const params = new URLSearchParams();
       const nextFilter = opts.filter ?? filter;
+      const nextOrigin = opts.origin ?? origin;
+      const nextCategoryId = opts.categoryId ?? categoryId;
+      const nextListId = opts.listId ?? listId;
       const nextSearch = opts.search ?? search;
       const nextSort = opts.sort ?? sort;
 
       if (nextFilter !== 'pending') params.set('filter', nextFilter);
       if (nextSearch.trim()) params.set('search', nextSearch.trim());
       if (nextSort !== 'created_desc') params.set('sort', nextSort);
+      if (nextOrigin !== 'all') params.set('origin', nextOrigin);
+      if (nextCategoryId) params.set('categoryId', nextCategoryId);
+      if (nextListId) params.set('listId', nextListId);
       if (opts.page && opts.page !== '1') params.set('page', opts.page);
       if (pageSize !== 10) params.set('pageSize', String(pageSize));
 
       const qs = params.toString();
       router.push(qs ? `/admin/comments/all?${qs}` : '/admin/comments/all');
     },
-    [filter, search, sort, pageSize, router]
+    [filter, origin, categoryId, listId, search, sort, pageSize, router]
   );
 
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
@@ -132,6 +148,40 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
   const handleSearchChange = (value: string) => {
     setSearch(value);
     syncUrl({ search: value, page: '1' });
+  };
+
+  const handleOriginChange = (next: CommentOriginKind) => {
+    setOrigin(next);
+    syncUrl({ origin: next, page: '1' });
+  };
+
+  const handleCategoryChange = (next: string) => {
+    setCategoryId(next);
+    setListId('');
+    syncUrl({ categoryId: next, listId: '', page: '1' });
+  };
+
+  const handleListChange = (next: string) => {
+    setListId(next);
+    syncUrl({ listId: next, page: '1' });
+  };
+
+  const hasActiveScope =
+    origin !== 'all' || !!categoryId || !!listId;
+  const hasActiveFilters =
+    filter !== 'pending' ||
+    search ||
+    sort !== 'created_desc' ||
+    hasActiveScope;
+
+  const clearAllFilters = () => {
+    setFilter('pending');
+    setOrigin('all');
+    setCategoryId('');
+    setListId('');
+    setSort('created_desc');
+    setSearch('');
+    router.push('/admin/comments/all?filter=pending');
   };
 
   const panelComment =
@@ -438,11 +488,17 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
         currentFilter={filter}
         currentSearch={search}
         currentSort={sort}
+        currentOrigin={origin}
+        currentCategoryId={categoryId}
+        currentListId={listId}
         totalCount={totalCount}
         pulse={pulse}
         onFilterChange={handleFilterChange}
         onSortChange={handleSortChange}
         onSearchChange={handleSearchChange}
+        onOriginChange={handleOriginChange}
+        onCategoryChange={handleCategoryChange}
+        onListChange={handleListChange}
         onRefresh={refresh}
       />
 
@@ -458,15 +514,10 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
           <p className="text-sm text-[var(--color-text-muted)]">
             فیلترها یا عبارت جستجو را تغییر دهید.
           </p>
-          {(filter !== 'pending' || search || sort !== 'created_desc') && (
+          {(hasActiveFilters) && (
             <button
               type="button"
-              onClick={() => {
-                setFilter('pending');
-                setSort('created_desc');
-                setSearch('');
-                router.push('/admin/comments/all?filter=pending');
-              }}
+              onClick={clearAllFilters}
               className="mt-4 text-sm font-medium text-[var(--primary)] hover:underline"
             >
               پاک کردن فیلترها

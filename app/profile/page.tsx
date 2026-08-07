@@ -4,7 +4,7 @@ import { requireAuth } from '@/lib/auth';
 import { fetchUserLists, type UserListRecord } from '@/lib/user-lists';
 import { fetchProfileUser } from '@/lib/profile-server';
 import { fetchUserBookmarks } from '@/lib/user-bookmarks';
-import { fetchUserActivities, type UserActivityItem } from '@/lib/user-activity';
+import { getProfilePicksForUser } from '@/lib/profile-picks';
 import type { ProfileUser } from '@/components/profile/types';
 import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
 import ProfilePageClient from './ProfilePageClient';
@@ -37,14 +37,6 @@ function serializeBookmarks(
   };
 }
 
-function serializeActivities(activities: UserActivityItem[]) {
-  return activities.map((a) => ({
-    ...a,
-    createdAt:
-      a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt),
-  }));
-}
-
 export default async function ProfilePage() {
   const session = await requireAuth();
   const userId = session.user.id;
@@ -52,15 +44,15 @@ export default async function ProfilePage() {
   let initialUser: ProfileUser | null = null;
   let initialLists: UserListRecord[] = [];
   let initialListsTotal = 0;
+  let initialVisibilityCounts = { public: 0, personal: 0 };
   let initialBookmarks: ProfileBookmarkSSR[] = [];
   let initialBookmarksTotal = 0;
-  let initialActivities: ReturnType<typeof serializeActivities> = [];
-
-  const [profileResult, listsResult, bookmarksResult, activitiesResult] = await Promise.allSettled([
+  let initialProfilePicks = null;
+  const [profileResult, listsResult, bookmarksResult, picksResult] = await Promise.allSettled([
     fetchProfileUser(userId),
     fetchUserLists(userId, { page: 1, limit: 20, filter: 'all' }),
     fetchUserBookmarks(userId, { page: 1, limit: 50 }),
-    fetchUserActivities(userId, { type: 'all', limit: 20 }),
+    getProfilePicksForUser(userId),
   ]);
 
   if (profileResult.status === 'fulfilled' && profileResult.value) {
@@ -72,6 +64,9 @@ export default async function ProfilePage() {
   if (listsResult.status === 'fulfilled') {
     initialLists = listsResult.value.lists;
     initialListsTotal = listsResult.value.pagination.total;
+    if (listsResult.value.counts) {
+      initialVisibilityCounts = listsResult.value.counts;
+    }
   } else {
     console.warn('Profile SSR lists fetch failed:', listsResult.reason);
   }
@@ -84,14 +79,14 @@ export default async function ProfilePage() {
     console.warn('Profile SSR bookmarks fetch failed:', bookmarksResult.reason);
   }
 
-  if (activitiesResult.status === 'fulfilled') {
-    initialActivities = serializeActivities(activitiesResult.value.activities);
+  if (picksResult.status === 'fulfilled') {
+    initialProfilePicks = picksResult.value;
   } else {
-    console.warn('Profile SSR activity fetch failed:', activitiesResult.reason);
+    console.warn('Profile SSR picks fetch failed:', picksResult.reason);
   }
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="flex min-h-screen flex-col bg-wibe-card">
       <Header title="پروفایل" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
       <main className="px-4 pt-2 lg:px-0 lg:pt-0">
         <ProfilePageClient
@@ -99,9 +94,10 @@ export default async function ProfilePage() {
           initialUser={initialUser}
           initialLists={initialLists}
           initialListsTotal={initialListsTotal}
+          initialVisibilityCounts={initialVisibilityCounts}
           initialBookmarks={initialBookmarks}
           initialBookmarksTotal={initialBookmarksTotal}
-          initialActivities={initialActivities}
+          initialProfilePicks={initialProfilePicks}
         />
       </main>
       <BottomNav />

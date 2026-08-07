@@ -5,6 +5,19 @@ const globalForPrisma = globalThis as unknown as {
   prismaConnectPromise?: Promise<void>;
 };
 
+/**
+ * حدِ پیش‌فرض connection pool.
+ * صفحهٔ دسته چند کوئری موازی (fan-out) می‌زند؛ با ۸ کانکشن این‌ها پشتِ هم صف می‌شوند.
+ * پیش‌فرض prod را به ۱۶ رساندیم و با env قابل تنظیم است تا با max_connections دیتابیس
+ * (و تعداد نمونه‌های اپ) هماهنگ شود. اگر PgBouncer/pooler دارید، آن را جلو بگذارید و
+ * connection_limit را متناسب کم کنید.
+ */
+function resolveConnectionLimit(): string {
+  const fromEnv = process.env.DB_CONNECTION_LIMIT?.trim();
+  if (fromEnv && /^\d+$/.test(fromEnv) && Number(fromEnv) > 0) return fromEnv;
+  return process.env.NODE_ENV === 'development' ? '5' : '16';
+}
+
 /** پارامترهای pool برای دیتابیس راه‌دور — جلوگیری از timeout */
 function getDatabaseUrl(): string | undefined {
   const raw = process.env.DATABASE_URL;
@@ -13,8 +26,9 @@ function getDatabaseUrl(): string | undefined {
     const url = new URL(raw);
     if (!url.searchParams.has('connect_timeout')) url.searchParams.set('connect_timeout', '20');
     if (!url.searchParams.has('pool_timeout')) url.searchParams.set('pool_timeout', '45');
-    const limit = process.env.NODE_ENV === 'development' ? '3' : '8';
-    if (!url.searchParams.has('connection_limit')) url.searchParams.set('connection_limit', limit);
+    if (!url.searchParams.has('connection_limit')) {
+      url.searchParams.set('connection_limit', resolveConnectionLimit());
+    }
     return url.toString();
   } catch {
     return raw;

@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
+import { isBookCategorySlug } from '@/lib/book-cover-search';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import ItemTipField from '@/components/admin/items/ItemTipField';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
@@ -14,6 +15,8 @@ import {
   ChevronDown,
   ChevronUp,
   ArrowRight,
+  Eye,
+  EyeOff,
   Lock,
   Info,
   ExternalLink,
@@ -44,6 +47,10 @@ function isFilmCategory(slug?: string | null) {
   return slug === 'movie' || slug === 'film' || slug === 'movies';
 }
 
+function isBookCategory(slug?: string | null) {
+  return isBookCategorySlug(slug);
+}
+
 export default function EditItemForm({ item, lists }: EditItemFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -57,6 +64,8 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
   const [imageSearchModalOpen, setImageSearchModalOpen] = useState(false);
   const [mediaTab, setMediaTab] = useState<ImageUploadDisplayMode>('upload');
   const [metadataOpen, setMetadataOpen] = useState(true);
+  const [isHidden, setIsHidden] = useState(item.item_moderation?.status === 'HIDDEN');
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [entryKind, setEntryKind] = useState<EntryKind>(() =>
     resolveEntryKind({
       catalogItemId: item.catalogItemId,
@@ -93,6 +102,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
 
   const categorySlug = selectedList?.categories?.slug;
   const isFilm = isFilmCategory(categorySlug);
+  const isBook = isBookCategory(categorySlug);
   const isMixedList = isMixedListCategory(categorySlug);
   const hasCatalog = Boolean(item.catalogItemId);
   const isLightweightMode =
@@ -186,20 +196,27 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
 
     if (movie.posterUrl) {
       try {
-        const uploadRes = await fetch('/api/admin/items/upload-movie-poster', {
+        const uploadRes = await fetch('/api/admin/items/import-image-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ posterUrl: movie.posterUrl }),
+          body: JSON.stringify({
+            imageUrl: movie.posterUrl,
+            folder: 'items',
+            metadata: { imdbId: movie.imdbID, imdbID: movie.imdbID },
+          }),
         });
 
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
-          if (uploadData.uploadedUrl) {
-            finalPosterUrl = uploadData.uploadedUrl;
+          if (uploadData.url) {
+            finalPosterUrl = uploadData.url;
           }
+        } else {
+          const errData = await uploadRes.json().catch(() => ({}));
+          setError(errData.error || 'خطا در آپلود تصویر به استوریج');
         }
       } catch {
-        // keep original
+        setError('خطا در آپلود تصویر به استوریج');
       }
     }
 
@@ -236,6 +253,12 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
         body: JSON.stringify({
           title: formData.title,
           categorySlug,
+          categoryName: selectedList?.categories?.name ?? item.lists?.categories?.name,
+          listTitle: selectedList?.title ?? item.lists?.title,
+          listDescription: selectedList?.description ?? item.lists?.description,
+          entryKind,
+          listNote: formData.listNote || undefined,
+          externalUrl: formData.externalUrl || undefined,
           metadata: formData.metadata,
           plot: moviePlot || undefined,
         }),
@@ -253,6 +276,30 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
       setError(err.message);
     } finally {
       setGeneratingDesc(false);
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    setTogglingVisibility(true);
+    setError('');
+
+    try {
+      const action = isHidden ? 'show' : 'hide';
+      const res = await fetch('/api/admin/items/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemIds: [item.id], action }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در تغییر وضعیت آیتم');
+      }
+      setIsHidden(!isHidden);
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'خطا در تغییر وضعیت آیتم');
+    } finally {
+      setTogglingVisibility(false);
     }
   };
 
@@ -351,6 +398,45 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
             پیش‌نمایش عمومی
           </Link>
         </div>
+      </div>
+
+      <div
+        className={`mb-6 flex flex-col gap-3 rounded-2xl border px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between ${
+          isHidden
+            ? 'border-amber-200 bg-amber-50'
+            : 'border-emerald-200 bg-emerald-50'
+        }`}
+        dir="rtl"
+      >
+        <div className="flex items-start gap-3">
+          {isHidden ? (
+            <EyeOff className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+          ) : (
+            <Eye className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+          )}
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              {isHidden ? 'آیتم غیرفعال است' : 'آیتم فعال است'}
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-gray-600">
+              {isHidden
+                ? 'این آیتم در سایت عمومی نمایش داده نمی‌شود.'
+                : 'این آیتم برای کاربران در سایت قابل مشاهده است.'}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleToggleVisibility}
+          disabled={togglingVisibility}
+          className={`inline-flex shrink-0 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+            isHidden
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+              : 'bg-amber-600 text-white hover:bg-amber-700'
+          }`}
+        >
+          {togglingVisibility ? 'در حال ذخیره…' : isHidden ? 'فعال کردن آیتم' : 'غیرفعال کردن آیتم'}
+        </button>
       </div>
 
       {item.catalogItemId && item.catalog_items && (
@@ -734,8 +820,10 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
               displayMode={mediaTab}
               previewVariant="poster"
               enableMoviePosterSources={isFilm}
+              enableBookCoverSources={isBook}
               metadata={(formData.metadata as Record<string, unknown>) ?? null}
               categorySlug={selectedList?.categories?.slug}
+              onSwitchToUrlTab={() => setMediaTab('url')}
             />
           </section>
           )}

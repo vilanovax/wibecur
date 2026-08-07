@@ -1,15 +1,42 @@
 import type { Metadata, Viewport } from 'next';
-import '@fontsource/vazirmatn/400.css';
-import '@fontsource/vazirmatn/600.css';
-import '@fontsource/vazirmatn/700.css';
+import localFont from 'next/font/local';
 import './globals.css';
 import VercelAnalytics from '@/components/analytics/VercelAnalytics';
+import UmamiAnalytics from '@/components/analytics/UmamiAnalytics';
 import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import PWAProvider from '@/components/providers/PWAProvider';
+import CapacitorProvider from '@/components/providers/CapacitorProvider';
 import MainContainer from '@/components/providers/MainContainer';
+import { SiteBrandingProvider } from '@/contexts/SiteBrandingContext';
+import { getSiteBrandingForLayout, getSiteLogoUrl } from '@/lib/site-branding';
+import { serializeJsonLd } from '@/lib/json-ld';
 import { SearchProvider } from '@/contexts/SearchContext';
 import { getBaseUrl, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from '@/lib/seo';
+
+/** next/font — preload + swap؛ subsetهای arabic/latin از fontsource variable. */
+const vazirmatn = localFont({
+  src: [
+    {
+      path: '../node_modules/@fontsource-variable/vazirmatn/files/vazirmatn-arabic-wght-normal.woff2',
+      weight: '100 900',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/@fontsource-variable/vazirmatn/files/vazirmatn-latin-ext-wght-normal.woff2',
+      weight: '100 900',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/@fontsource-variable/vazirmatn/files/vazirmatn-latin-wght-normal.woff2',
+      weight: '100 900',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-vazirmatn',
+  display: 'swap',
+  preload: true,
+});
 
 const baseUrl = getBaseUrl();
 
@@ -55,15 +82,24 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
   themeColor: '#6366F1',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // نکته: عمداً از auth() اینجا استفاده نمی‌شود تا کل درخت static/ISR بماند.
+  // سشن سمت کلاینت در SessionProvider از /api/auth/session خوانده می‌شود و
+  // اعمال حالت تعمیر (maintenance) در middleware انجام می‌گیرد.
+  const [{ logoUrl, logoDisplayUrl }, siteLogoForMeta] = await Promise.all([
+    getSiteBrandingForLayout(),
+    getSiteLogoUrl(),
+  ]);
+
+  const orgLogoUrl = siteLogoForMeta ?? `${baseUrl}/icon-512.png`;
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -76,7 +112,7 @@ export default function RootLayout({
         inLanguage: 'fa-IR',
         potentialAction: {
           '@type': 'SearchAction',
-          target: { '@type': 'EntryPoint', urlTemplate: `${baseUrl}/lists?q={search_term_string}` },
+          target: { '@type': 'EntryPoint', urlTemplate: `${baseUrl}/search?q={search_term_string}` },
           'query-input': 'required name=search_term_string',
         },
       },
@@ -85,31 +121,36 @@ export default function RootLayout({
         '@id': `${baseUrl}/#organization`,
         name: SITE_NAME,
         url: baseUrl,
-        logo: { '@type': 'ImageObject', url: `${baseUrl}/icon-512.png` },
+        logo: { '@type': 'ImageObject', url: orgLogoUrl },
       },
     ],
   };
 
   return (
-    <html lang="fa" dir="rtl" suppressHydrationWarning>
+    <html lang="fa" dir="rtl" className={vazirmatn.variable} suppressHydrationWarning>
       <body className="antialiased font-sans bg-gray-200" suppressHydrationWarning>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
         <a href="#main" className="skip-link">
           رفتن به محتوای اصلی
         </a>
         <SessionProvider>
           <QueryProvider>
-            <SearchProvider>
-              <PWAProvider>
-                <MainContainer>{children}</MainContainer>
-              </PWAProvider>
-            </SearchProvider>
+            <SiteBrandingProvider logoUrl={logoUrl} logoDisplayUrl={logoDisplayUrl}>
+              <SearchProvider>
+                <PWAProvider>
+                  <CapacitorProvider>
+                    <MainContainer>{children}</MainContainer>
+                  </CapacitorProvider>
+                </PWAProvider>
+              </SearchProvider>
+            </SiteBrandingProvider>
           </QueryProvider>
         </SessionProvider>
         <VercelAnalytics />
+        <UmamiAnalytics />
       </body>
     </html>
   );

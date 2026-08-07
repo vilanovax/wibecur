@@ -1,7 +1,12 @@
 import { prisma } from './prisma';
 import type { Prisma } from '@prisma/client';
 
-export type UserListFilter = 'all' | 'public' | 'private' | 'draft';
+export type UserListFilter = 'all' | 'public' | 'private' | 'personal' | 'draft';
+
+export type UserListVisibilityCounts = {
+  public: number;
+  personal: number;
+};
 
 export const USER_LIST_SELECT = {
   id: true,
@@ -43,22 +48,42 @@ export const USER_LIST_SELECT = {
 
 export type UserListRecord = Prisma.listsGetPayload<{ select: typeof USER_LIST_SELECT }>;
 
-export function buildUserListsWhere(userId: string, filter: UserListFilter = 'all') {
-  const where: {
-    userId: string;
-    deletedAt: null;
-    isPublic?: boolean;
-    isActive?: boolean;
-  } = {
+export function buildUserListsWhere(
+  userId: string,
+  filter: UserListFilter = 'all'
+): Prisma.listsWhereInput {
+  const base: Prisma.listsWhereInput = {
     userId,
     deletedAt: null,
   };
 
-  if (filter === 'public') where.isPublic = true;
-  else if (filter === 'private') where.isPublic = false;
-  else if (filter === 'draft') where.isActive = false;
+  if (filter === 'public') {
+    return { ...base, isPublic: true, isActive: { not: false } };
+  }
+  if (filter === 'private') {
+    return { ...base, isPublic: false };
+  }
+  if (filter === 'personal') {
+    return {
+      ...base,
+      OR: [{ isPublic: false }, { isActive: false }],
+    };
+  }
+  if (filter === 'draft') {
+    return { ...base, isActive: false };
+  }
 
-  return where;
+  return base;
+}
+
+export async function fetchUserListVisibilityCounts(
+  userId: string
+): Promise<UserListVisibilityCounts> {
+  const [publicCount, personalCount] = await Promise.all([
+    prisma.lists.count({ where: buildUserListsWhere(userId, 'public') }),
+    prisma.lists.count({ where: buildUserListsWhere(userId, 'personal') }),
+  ]);
+  return { public: publicCount, personal: personalCount };
 }
 
 export async function fetchUserLists(
@@ -71,7 +96,7 @@ export async function fetchUserLists(
   const skip = (page - 1) * limit;
   const where = buildUserListsWhere(userId, filter);
 
-  const [lists, total] = await Promise.all([
+  const [lists, total, counts] = await Promise.all([
     prisma.lists.findMany({
       where,
       skip,
@@ -80,6 +105,7 @@ export async function fetchUserLists(
       select: USER_LIST_SELECT,
     }),
     prisma.lists.count({ where }),
+    page === 1 ? fetchUserListVisibilityCounts(userId) : Promise.resolve(undefined),
   ]);
 
   return {
@@ -90,5 +116,6 @@ export async function fetchUserLists(
       total,
       totalPages: Math.ceil(total / limit),
     },
+    ...(counts ? { counts } : {}),
   };
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/auth/require-permission';
+import { revalidateHomeCache } from '@/lib/public-cache';
 
 /**
  * PATCH /api/admin/custom/featured/[slotId]
@@ -94,6 +95,8 @@ export async function PATCH(
       },
     });
 
+    revalidateHomeCache();
+
     return NextResponse.json({
       success: true,
       slot: {
@@ -141,6 +144,8 @@ export async function DELETE(
     await prisma.home_featured_slot.delete({
       where: { id: slotId },
     });
+
+    revalidateHomeCache();
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

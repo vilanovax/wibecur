@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -105,7 +106,7 @@ export async function GET(
   } catch (error: any) {
     console.error('Error checking saved status:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در بررسی وضعیت ذخیره' },
+      { error: getClientErrorMessage(error, 'خطا در بررسی وضعیت ذخیره') },
       { status: 500 }
     );
   }

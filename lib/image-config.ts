@@ -12,6 +12,7 @@ export type ImageProfile =
   | 'itemImage'
   | 'itemThumbnail'
   | 'hubCover'
+  | 'siteLogo'
   | 'default';
 
 export interface ImageProfileConfig {
@@ -21,6 +22,16 @@ export interface ImageProfileConfig {
   maxSize: number; // in bytes
   skipOptimizationIfSmallerThan: number; // in bytes
   format: 'webp' | 'jpeg' | 'png';
+  /** نسبت عرض به ارتفاع — مثلاً 4/3 یا 21/9 */
+  aspectRatio?: number;
+  /** cover = برش مرکزی به نسبت هدف؛ inside = حفظ نسبت داخل قاب */
+  resizeFit?: 'inside' | 'cover';
+  /** همیشه بهینه‌سازی شود (مثلاً لوگو) */
+  forceOptimize?: boolean;
+  /** برش حاشیه شفاف قبل از resize */
+  trimTransparent?: boolean;
+  /** حفظ آلفا در WebP */
+  preserveAlpha?: boolean;
 }
 
 /**
@@ -48,10 +59,12 @@ export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
     format: 'webp',
   },
 
-  /** کاور لیست — کارت، جزئیات، بنر featured (رتینا ۲x روی ~۶۴۰px) */
+  /** کاور لیست — کارت، جزئیات (۴:۳) */
   coverList: {
     maxWidth: 1280,
     maxHeight: 960,
+    aspectRatio: 4 / 3,
+    resizeFit: 'cover',
     quality: 78,
     maxSize: 180 * 1024, // 180KB — هدف لود سریع موبایل
     skipOptimizationIfSmallerThan: 80 * 1024, // 80KB
@@ -61,7 +74,9 @@ export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
   /** بنر افقی لیست — featured carousel، هدر جزئیات (۲۱:۹) */
   coverListHorizontal: {
     maxWidth: 1600,
-    maxHeight: 900,
+    maxHeight: 686,
+    aspectRatio: 21 / 9,
+    resizeFit: 'cover',
     quality: 78,
     maxSize: 220 * 1024, // 220KB
     skipOptimizationIfSmallerThan: 100 * 1024,
@@ -98,6 +113,20 @@ export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
     format: 'webp',
   },
 
+  /** لوگوی سایت — هدر و ناوبری (نسبت افقی، شفافیت حفظ می‌شود) */
+  siteLogo: {
+    maxWidth: 480,
+    maxHeight: 120,
+    resizeFit: 'inside',
+    quality: 88,
+    maxSize: 120 * 1024, // 120KB
+    skipOptimizationIfSmallerThan: 0,
+    format: 'webp',
+    forceOptimize: true,
+    trimTransparent: true,
+    preserveAlpha: true,
+  },
+
   /** پیش‌فرض (fallback) */
   default: {
     maxWidth: 1000,
@@ -132,10 +161,12 @@ export const MAX_RAW_UPLOAD_SIZE = MAX_UPLOAD_SIZE;
 /** راهنمای نمایش در فرم‌های آپلود */
 export const IMAGE_UPLOAD_HINTS = {
   listCover:
-    'JPG/PNG/WebP تا ۱۰MB — پس از آپلود به WebP (حداکثر ۱۲۸۰px، ~۱۸۰KB) تبدیل و در ParsPack ذخیره می‌شود',
+    'JPG/PNG/WebP تا ۱۰MB — برش ۴:۳، WebP ۱۲۸۰×۹۶۰ (~۱۸۰KB) و ذخیره در ParsPack',
   listHorizontal:
-    'JPG/PNG/WebP تا ۱۰MB — بنر افقی ۲۱:۹ · WebP (حداکثر ۱۶۰۰×۹۰۰، ~۲۲۰KB)',
+    'JPG/PNG/WebP تا ۱۰MB — برش ۲۱:۹، WebP ۱۶۰۰×۶۸۶ (~۲۲۰KB) و ذخیره در ParsPack',
   categoryHero:
     'JPG/PNG/WebP تا ۱۰MB — در ParsPack (hubs) · WebP ۱۶۰۰×۹۰۰ (~۳۲۰KB)',
+  siteLogo:
+    'PNG/WebP با پس‌زمینه شفاف · خروجی WebP حداکثر ۴۸۰×۱۲۰px (~۱۲۰KB) — مناسب هدر سایت',
   avatar: 'JPG/PNG/WebP تا ۱۰MB — به WebP ۴۰۰×۴۰۰ (~۵۰۰KB) بهینه می‌شود',
 } as const;

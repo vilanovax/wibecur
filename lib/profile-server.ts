@@ -10,6 +10,7 @@ export type ApiProfileUser = ProfileUser & {
   createdAt: Date;
   updatedAt: Date;
   allowCommentNotifications: boolean;
+  allowBookmarkListNotifications: boolean;
 };
 
 /** پروفایل کامل کاربر — برای SSR و API */
@@ -35,6 +36,7 @@ export async function fetchApiProfileUser(userId: string): Promise<ApiProfileUse
       avatarStatus?: string | null;
       showBadge?: boolean;
       allowCommentNotifications?: boolean;
+      allowBookmarkListNotifications?: boolean;
     } | null;
 
     try {
@@ -55,6 +57,7 @@ export async function fetchApiProfileUser(userId: string): Promise<ApiProfileUse
           avatarStatus: true,
           showBadge: true,
           allowCommentNotifications: true,
+          allowBookmarkListNotifications: true,
         },
       });
     } catch (dbError: unknown) {
@@ -83,6 +86,7 @@ export async function fetchApiProfileUser(userId: string): Promise<ApiProfileUse
           username: null,
           showBadge: true,
           allowCommentNotifications: true,
+          allowBookmarkListNotifications: true,
           avatarType: 'DEFAULT',
           avatarId: null,
           avatarStatus: null,
@@ -166,6 +170,7 @@ export async function fetchApiProfileUser(userId: string): Promise<ApiProfileUse
         : null) as ProfileUser['avatarStatus'],
       showBadge: user.showBadge ?? true,
       allowCommentNotifications: user.allowCommentNotifications ?? true,
+      allowBookmarkListNotifications: user.allowBookmarkListNotifications ?? true,
       stats: {
         listsCreated: listsCount,
         bookmarks: bookmarksCount,
@@ -176,6 +181,7 @@ export async function fetchApiProfileUser(userId: string): Promise<ApiProfileUse
         viralListsCount,
         popularListsCount,
         totalLikesReceived,
+        totalSavesReceived: savedCount,
         profileViews,
         totalItemsCurated,
       },

@@ -139,7 +139,7 @@ export default function ListReportModal({
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-1">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-1">
             <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50/70 px-3 py-2.5">
               <Shield className="mt-0.5 h-4 w-4 shrink-0 text-red-500" aria-hidden />
               <p className="text-xs leading-relaxed text-wibe-secondary">
@@ -164,7 +164,7 @@ export default function ListReportModal({
                       if (reason.id !== 'other') setDescription('');
                     }}
                     disabled={isSubmitting}
-                    className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-right transition-all disabled:opacity-50 ${
+                    className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-right transition-colors disabled:opacity-50 ${
                       isSelected
                         ? 'border-primary bg-primary/5 shadow-sm'
                         : 'border-wibe bg-wibe-card hover:border-gray-300'
@@ -206,7 +206,7 @@ export default function ListReportModal({
                   rows={3}
                   placeholder="مثلاً: عنوان لیست با آیتم‌ها مطابقت ندارد..."
                   disabled={isSubmitting}
-                  className="w-full resize-none rounded-xl border border-wibe bg-gray-50/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                  className="w-full resize-none rounded-xl border border-wibe bg-gray-50/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:opacity-50"
                 />
               </div>
             )}

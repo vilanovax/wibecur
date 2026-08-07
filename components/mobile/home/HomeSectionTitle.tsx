@@ -1,12 +1,20 @@
-import Link from 'next/link';
+'use client';
+
+import WibeSection from '@/components/ui/WibeSection';
+import type { SectionIconVariant } from '@/components/shared/SectionIcon';
+import { trackHomeSectionClick, type HomeSectionId } from '@/lib/analytics';
 
 interface HomeSectionTitleProps {
   title: string;
   subtitle?: string;
+  /** @deprecated use iconVariant */
   icon?: string;
+  iconVariant?: SectionIconVariant;
   id?: string;
   actionHref?: string;
   actionLabel?: string;
+  /** برای analytics — کلیک «همه» */
+  analyticsSection?: HomeSectionId;
 }
 
 /** عنوان یکسان بخش‌های Home — Wibe Design System */
@@ -14,27 +22,26 @@ export default function HomeSectionTitle({
   title,
   subtitle,
   icon,
+  iconVariant,
   id,
   actionHref,
   actionLabel = 'همه',
+  analyticsSection,
 }: HomeSectionTitleProps) {
   return (
-    <div className="mb-3 flex items-start justify-between gap-2 px-4 lg:px-0" id={id}>
-      <div className="min-w-0">
-        <h2 className="flex items-center gap-2 wibe-h3">
-          {icon ? <span aria-hidden>{icon}</span> : null}
-          {title}
-        </h2>
-        {subtitle ? <p className="mt-0.5 wibe-small text-wibe-secondary">{subtitle}</p> : null}
-      </div>
-      {actionHref ? (
-        <Link
-          href={actionHref}
-          className="shrink-0 pt-1 wibe-caption font-medium text-primary hover:underline"
-        >
-          {actionLabel}
-        </Link>
-      ) : null}
-    </div>
+    <WibeSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      iconVariant={iconVariant}
+      id={id}
+      actionHref={actionHref}
+      actionLabel={actionLabel}
+      onActionClick={() => {
+        if (analyticsSection) {
+          trackHomeSectionClick(analyticsSection, { target: 'see_all' });
+        }
+      }}
+    />
   );
 }

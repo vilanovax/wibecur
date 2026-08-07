@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -27,12 +26,22 @@ const toastStyles = {
   info: 'bg-blue-500 text-white',
 };
 
+/**
+ * CSS transition enter — avoids pulling framer-motion into shared/prefetched routes.
+ */
 export default function Toast({
   message,
   type = 'success',
   duration = 5000,
   onClose,
 }: ToastProps) {
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(() => {
@@ -46,26 +55,22 @@ export default function Toast({
   const Icon = toastIcons[type];
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 50, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className={`fixed bottom-6 left-4 right-4 mx-auto z-[100] max-w-md ${toastStyles[type]} rounded-xl shadow-2xl flex items-center gap-3 p-4`}
-        style={{ marginLeft: 'auto', marginRight: 'auto' }}
+    <div
+      role="status"
+      className={`fixed bottom-6 left-4 right-4 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-xl p-4 shadow-2xl transition duration-300 ease-out motion-reduce:transition-none ${toastStyles[type]} ${
+        entered ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-5 scale-95 opacity-0'
+      }`}
+    >
+      <Icon className="h-6 w-6 flex-shrink-0" />
+      <p className="flex-1 pr-2 text-sm font-medium">{message}</p>
+      <button
+        type="button"
+        onClick={onClose}
+        className="flex-shrink-0 rounded-lg p-1 transition-colors hover:bg-white/20"
+        aria-label="بستن"
       >
-        <Icon className="w-6 h-6 flex-shrink-0" />
-        <p className="flex-1 text-sm font-medium pr-2">{message}</p>
-        <button
-          onClick={onClose}
-          className="flex-shrink-0 p-1 hover:bg-white/20 rounded-lg transition-colors"
-          aria-label="بستن"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </motion.div>
-    </AnimatePresence>
+        <X className="h-4 w-4" />
+      </button>
+    </div>
   );
 }
-

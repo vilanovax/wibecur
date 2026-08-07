@@ -86,7 +86,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
           <div className="flex justify-center gap-3 mb-8">
             <button
               onClick={() => setShowEditForm(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-xl shadow-sm hover:shadow-md transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-xl shadow-sm hover:shadow-md transition-colors"
             >
               <Edit2 className="w-4 h-4" />
               <span className="text-sm font-medium">ویرایش پروفایل</span>
@@ -94,7 +94,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2.5 text-red-500 bg-white rounded-xl shadow-sm hover:shadow-md hover:bg-red-50 transition-all disabled:opacity-50"
+              className="p-2.5 text-red-500 bg-white rounded-xl shadow-sm hover:shadow-md hover:bg-red-50 transition-colors disabled:opacity-50"
             >
               <LogOut className="w-5 h-5" />
             </button>

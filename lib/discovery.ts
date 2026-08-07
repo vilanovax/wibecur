@@ -66,12 +66,15 @@ export async function computeAndUpsertUserCategoryAffinity(
   await prisma.user_category_affinity.deleteMany({ where: { userId } });
   if (total === 0) return;
 
-  for (const [slug, count] of countBySlug) {
-    const weight = count / total;
-    await prisma.user_category_affinity.create({
-      data: { userId, categorySlug: slug, weight },
-    });
-  }
+  // یک createMany به‌جای N بار create (حذف write-amplification)
+  await prisma.user_category_affinity.createMany({
+    data: [...countBySlug].map(([slug, count]) => ({
+      userId,
+      categorySlug: slug,
+      weight: count / total,
+    })),
+    skipDuplicates: true,
+  });
 }
 
 /** واکشی وزن دسته‌های کاربر از جدول */
@@ -288,20 +291,26 @@ export async function getRecommendedCreators(
   withDiversity.sort((a, b) => b.score - a.score);
   const topIds = withDiversity.slice(0, limit).map((s) => s.userId);
 
+  // واکشی دسته‌های همهٔ کریتورهای منتخب در یک کوئری (حذف N+1)
+  const topListsRows = await prisma.lists.findMany({
+    where: { userId: { in: topIds }, isPublic: true, isActive: true },
+    select: { userId: true, categories: { select: { slug: true, name: true, icon: true } } },
+  });
+  const catsByUser = new Map<string, Map<string, { name: string; icon: string }>>();
+  for (const l of topListsRows) {
+    const c = l.categories;
+    if (!c) continue;
+    if (!catsByUser.has(l.userId)) catsByUser.set(l.userId, new Map());
+    const m = catsByUser.get(l.userId)!;
+    if (!m.has(c.slug)) m.set(c.slug, { name: c.name, icon: c.icon });
+  }
+
   const result: RecommendedCreator[] = [];
   for (const cid of topIds) {
     const u = userMap.get(cid);
     if (!u) continue;
     const stats = statsMap.get(cid);
-    const lists = await prisma.lists.findMany({
-      where: { userId: cid, isPublic: true, isActive: true },
-      select: { categoryId: true, categories: { select: { slug: true, name: true, icon: true } } },
-    });
-    const catCount = new Map<string, { name: string; icon: string }>();
-    for (const l of lists) {
-      const c = l.categories;
-      if (c && !catCount.has(c.slug)) catCount.set(c.slug, { name: c.name, icon: c.icon });
-    }
+    const catCount = catsByUser.get(cid) ?? new Map<string, { name: string; icon: string }>();
     const topCategories = [...catCount.entries()]
       .slice(0, 3)
       .map(([slug, o]) => ({ slug, name: o.name, icon: o.icon }));

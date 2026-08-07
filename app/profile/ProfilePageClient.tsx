@@ -2,22 +2,23 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
-import ProfileStats from '@/components/profile/ProfileStats';
-import ProfileTabs from '@/components/profile/ProfileTabs';
+import ProfileTabs, { type ProfileTabId } from '@/components/profile/ProfileTabs';
 import type { ProfileUser } from '@/components/profile/types';
 import type { ListWithCategory } from '@/components/mobile/profile/tabs/MyListsTab';
 import { LISTS_UPDATED_EVENT, PROFILE_UPDATED_EVENT } from '@/lib/profile-events';
-import type { ProfileActivitySSR, ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
+import type { UserListVisibilityCounts } from '@/lib/user-lists';
+import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
+import type { ProfilePicksResponse } from '@/lib/profile-picks-types';
 import ProfileBreadcrumb from '@/components/profile/ProfileBreadcrumb';
-
 interface ProfilePageClientProps {
   userId: string;
   initialUser?: ProfileUser | null;
   initialLists?: ListWithCategory[];
   initialListsTotal?: number;
+  initialVisibilityCounts?: UserListVisibilityCounts;
   initialBookmarks?: ProfileBookmarkSSR[];
   initialBookmarksTotal?: number;
-  initialActivities?: ProfileActivitySSR[];
+  initialProfilePicks?: ProfilePicksResponse | null;
 }
 
 export default function ProfilePageClient({
@@ -25,9 +26,10 @@ export default function ProfilePageClient({
   initialUser = null,
   initialLists = [],
   initialListsTotal = 0,
+  initialVisibilityCounts,
   initialBookmarks = [],
   initialBookmarksTotal = 0,
-  initialActivities = [],
+  initialProfilePicks: _initialProfilePicks = null,
 }: ProfilePageClientProps) {
   const [user, setUser] = useState<ProfileUser | null>(initialUser);
   const [isLoading, setIsLoading] = useState(!initialUser);
@@ -35,6 +37,7 @@ export default function ProfilePageClient({
   const [listsTotal, setListsTotal] = useState(
     initialListsTotal || initialUser?.stats?.listsCreated || 0
   );
+  const [activeTab, setActiveTab] = useState<ProfileTabId>('my-lists');
 
   const fetchProfile = useCallback(async (silent = false) => {
     if (!silent) {
@@ -97,13 +100,7 @@ export default function ProfilePageClient({
               <div className="h-5 w-28 rounded bg-gray-200" />
               <div className="h-3 w-16 rounded bg-gray-100" />
             </div>
-            <div className="h-[68px] w-[68px] shrink-0 rounded-full border-[3px] border-white bg-gray-200" />
-          </div>
-          <div className="mx-2.5 mb-2.5 h-11 rounded-xl bg-gray-100" />
-          <div className="grid grid-cols-4 gap-1.5 border-t border-gray-100 bg-wibe-surface/30 px-2.5 py-2.5">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-[52px] animate-pulse rounded-lg bg-gray-200" />
-            ))}
+            <div className="h-[82px] w-[82px] shrink-0 rounded-full border-[3px] border-white bg-gray-200" />
           </div>
         </div>
         <div className="h-10 animate-pulse rounded bg-gray-200" />
@@ -140,14 +137,6 @@ export default function ProfilePageClient({
     );
   }
 
-  const creatorStats = user.creatorStats ?? {
-    viralListsCount: 0,
-    popularListsCount: 0,
-    totalLikesReceived: 0,
-    profileViews: 0,
-    totalItemsCurated: 0,
-  };
-
   return (
     <div className="space-y-0 pb-4 lg:pb-2">
       <ProfileBreadcrumb
@@ -156,20 +145,17 @@ export default function ProfilePageClient({
       <h1 className="mb-3 hidden text-xl font-bold text-foreground lg:block">پروفایل</h1>
       <div className="mb-4 overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:mb-5">
         <ProfileHeader user={user} isOwner onUpdate={() => fetchProfile(true)} />
-        <div className="border-t border-wibe/50 bg-wibe-surface/40 px-2.5 py-2.5 lg:px-4 lg:py-3">
-          <ProfileStats creatorStats={creatorStats} listsCreated={listsTotal} />
-        </div>
       </div>
 
       <ProfileTabs
         userId={userId}
-        user={user}
-        creatorStats={creatorStats}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         initialLists={initialLists}
         listsCount={listsTotal}
+        initialVisibilityCounts={initialVisibilityCounts}
         initialBookmarks={initialBookmarks}
         initialBookmarksTotal={initialBookmarksTotal}
-        initialActivities={initialActivities}
       />
     </div>
   );

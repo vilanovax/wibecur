@@ -23,7 +23,7 @@ export default function CafeWeeklyTrending({
       <CategorySectionTitle
         title={`داغ‌ترین لیست‌های هفته در ${categoryName}`}
         subtitle="بر اساس ذخیره"
-        icon="🔥"
+        iconVariant="trending"
       />
       <div className="grid grid-cols-2 gap-3">
         {lists.slice(0, 6).map((list) => (

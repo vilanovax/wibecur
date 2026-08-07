@@ -1,6 +1,7 @@
 import { isDisplayableDescription } from '@/lib/lists-card-utils';
 import { normalizeSearchQuery } from '@/lib/list-search';
 import { isLocationCategorySlug } from '@/lib/category-layout';
+import { buildItemSearchHaystack } from '@/lib/search-keywords';
 
 type ItemMeta = Record<string, unknown> | null | undefined;
 
@@ -100,32 +101,6 @@ export function getItemCardSubtitle(item: {
   return null;
 }
 
-function itemSearchHaystack(item: {
-  title: string;
-  description?: string | null;
-  metadata?: ItemMeta;
-}): string {
-  const meta = item.metadata ?? {};
-  const parts = [
-    item.title,
-    item.description ?? '',
-    meta.genre,
-    meta.director,
-    meta.author,
-    meta.country,
-    meta.actors,
-    meta.year,
-    meta.imdbRating,
-    meta.cuisine,
-    meta.address,
-    meta.priceRange,
-  ]
-    .filter((v) => v != null && String(v).trim())
-    .map((v) => String(v));
-
-  return parts.join(' ').toLowerCase();
-}
-
 /** فیلتر آیتم‌های یک لیست — client-side */
 export function filterItemsByQuery<
   T extends {
@@ -137,7 +112,13 @@ export function filterItemsByQuery<
   const q = normalizeSearchQuery(query).toLowerCase();
   if (!q) return items;
 
-  return items.filter((item) => itemSearchHaystack(item).includes(q));
+  return items.filter((item) =>
+    buildItemSearchHaystack({
+      title: item.title,
+      description: item.description,
+      metadata: item.metadata,
+    }).includes(q)
+  );
 }
 
 /** حداقل تعداد آیتم برای نمایش جستجوی درون‌لیستی */

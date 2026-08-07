@@ -2,11 +2,14 @@ import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCachedListsIntelligenceData } from '@/lib/admin/lists-intelligence-cached';
-import { getContentHubStats } from '@/lib/admin/content-hub-stats';
+import { getCachedContentHubStats } from '@/lib/admin/content-hub-stats';
 import { loadCatalogPageData } from '@/lib/admin/catalog-page-data';
 import { isCatalogClientReady } from '@/lib/catalog-items';
 import AdminDatabaseUnavailable from '@/components/admin/shared/AdminDatabaseUnavailable';
 import ContentHubClient, { type ContentHubView } from './ContentHubClient';
+import { loadListDescriptionsPageData } from '@/lib/admin/list-descriptions-data';
+import { loadItemTipsPageData } from '@/lib/admin/item-tips-data';
+import { parseListFilterParam } from '@/lib/admin/list-list-utils';
 
 async function resolveCategoryId(categoryParam: string | undefined): Promise<string> {
   if (!categoryParam || categoryParam === 'all') return 'all';
@@ -24,7 +27,7 @@ async function resolveCategoryId(categoryParam: string | undefined): Promise<str
 
 function resolveView(raw?: string, trash?: boolean): ContentHubView {
   if (trash) return 'lists';
-  if (raw === 'catalog' || raw === 'import') return raw;
+  if (raw === 'catalog' || raw === 'import' || raw === 'people' || raw === 'descriptions' || raw === 'item-tips') return raw;
   return 'lists';
 }
 
@@ -42,6 +45,10 @@ export default async function AdminListsPage({
     multiList?: string;
     categoryId?: string;
     mode?: string;
+    tipsCategory?: string;
+    tipsList?: string;
+    filter?: string;
+    externalImages?: string;
   }>;
 }) {
   await requireAdmin();
@@ -52,7 +59,32 @@ export default async function AdminListsPage({
   const initialCategoryId = trash ? 'all' : await resolveCategoryId(params.category);
   const currentPage = Math.max(1, parseInt(params.page ?? '1', 10) || 1);
 
-  const hubStats = await getContentHubStats();
+  const hubStats = await getCachedContentHubStats();
+
+  if (view === 'people') {
+    return <ContentHubClient view="people" hubStats={hubStats} />;
+  }
+
+  if (view === 'descriptions') {
+    const descriptionsData = await loadListDescriptionsPageData();
+    return (
+      <ContentHubClient view="descriptions" hubStats={hubStats} descriptionsData={descriptionsData} />
+    );
+  }
+
+  if (view === 'item-tips') {
+    const tipsCategoryId =
+      params.tipsCategory && params.tipsCategory !== 'all'
+        ? await resolveCategoryId(params.tipsCategory)
+        : '';
+    const itemTipsData = await loadItemTipsPageData({
+      categoryId: tipsCategoryId === 'all' ? '' : tipsCategoryId,
+      listId: params.tipsList,
+    });
+    return (
+      <ContentHubClient view="item-tips" hubStats={hubStats} itemTipsData={itemTipsData} />
+    );
+  }
 
   if (view === 'import') {
     const [categories, lists] = await Promise.all([
@@ -110,6 +142,7 @@ export default async function AdminListsPage({
       listId: params.listId,
       multiList: params.multiList,
       mode: params.mode,
+      externalImages: params.externalImages,
     });
 
     const createLists =
@@ -130,6 +163,7 @@ export default async function AdminListsPage({
           createLists ? JSON.parse(JSON.stringify(createLists)) : undefined
         }
         initialCreateListId={params.listId}
+        catalogMode={params.mode}
       />
     );
   }
@@ -138,7 +172,9 @@ export default async function AdminListsPage({
     trash,
     page: currentPage,
     categoryId: initialCategoryId,
+    q: trash ? undefined : params.q,
   });
+  const initialFilter = trash ? 'all' : parseListFilterParam(params.filter);
 
   return (
     <ContentHubClient
@@ -147,6 +183,8 @@ export default async function AdminListsPage({
       listsData={listsData}
       trash={trash}
       initialCategoryId={initialCategoryId}
+      initialSearch={params.q ?? ''}
+      initialFilter={initialFilter}
     />
   );
 }

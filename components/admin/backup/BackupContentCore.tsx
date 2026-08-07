@@ -44,15 +44,20 @@ export default function BackupContentCore({
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">هسته محتوا</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            داده‌های اصلی WibeCur — حداقل یکی را انتخاب کنید
+            داده‌های اصلی — دسته ← لیست ← آیتم
           </p>
         </div>
         <button
           type="button"
           onClick={onSelectAll}
-          className="text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline"
+          className={clsx(
+            'text-xs font-medium rounded-lg px-2.5 py-1 transition-colors',
+            allSelected
+              ? 'text-violet-700 bg-violet-50 dark:bg-violet-900/30 dark:text-violet-300'
+              : 'text-violet-600 dark:text-violet-400 hover:underline'
+          )}
         >
-          {allSelected ? 'همه انتخاب شده' : 'انتخاب هر سه'}
+          {allSelected ? '✓ هر سه انتخاب شده' : 'انتخاب هر سه (توصیه)'}
         </button>
       </div>
 

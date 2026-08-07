@@ -110,7 +110,7 @@ export default function ProfileAchievementsSection({ creatorStats }: ProfileAchi
             onClick={() => setSelected(a)}
             title={a.unlocked || !a.isSecret ? a.title : 'قفل'}
             className={`
-              flex flex-col items-center justify-center p-2 rounded-xl border transition-all
+              flex flex-col items-center justify-center p-2 rounded-xl border transition-colors
               active:scale-95
               ${a.unlocked
                 ? 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'

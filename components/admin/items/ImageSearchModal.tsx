@@ -54,6 +54,7 @@ export default function ImageSearchModal({
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!searchQuery.trim()) {
       setError('لطفاً عبارت جستجو را وارد کنید');

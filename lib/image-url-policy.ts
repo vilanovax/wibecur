@@ -91,11 +91,11 @@ const GENERIC_WIKIMEDIA_COVER_FRAGMENTS = [
 
 /** بنرهای پیش‌فرض دسته — همه لیست‌ها اگر همین را داشته باشند، variant می‌گیرند */
 const DEFAULT_BANNER_BASENAMES = new Set([
-  'movies.jpg',
-  'books.jpg',
-  'cafe.jpg',
-  'restaurant.jpg',
-  'default.jpg',
+  'movies.webp',
+  'books.webp',
+  'cafe.webp',
+  'restaurant.webp',
+  'default.webp',
 ]);
 
 function isDefaultLocalBannerPath(url: string): boolean {

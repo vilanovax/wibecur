@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
@@ -71,7 +71,16 @@ function eventSummary(item: ActivityItem): string {
   }
 }
 
-function EventRow({ item, isNew }: { item: ActivityItem; isNew: boolean }) {
+// memo: با short-circuit در applyActivity، tickهای SSE که چیزی عوض نمی‌کنند
+// هیچ ردیفی را re-render نمی‌کنند. prop `tick` فقط برای تازه‌کردن زمان نسبی هر دقیقه است.
+const EventRow = memo(function EventRow({
+  item,
+  isNew,
+}: {
+  item: ActivityItem;
+  isNew: boolean;
+  tick?: number;
+}) {
   const timeAgo = formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: faIR });
   const badge = BADGE[item.type];
   const href = getAdminHref(item);
@@ -106,7 +115,7 @@ function EventRow({ item, isNew }: { item: ActivityItem; isNew: boolean }) {
     );
   }
   return <div className={className}>{inner}</div>;
-}
+});
 
 export default function AdminLiveFeed() {
   const [items, setItems] = useState<ActivityItem[]>([]);
@@ -116,19 +125,31 @@ export default function AdminLiveFeed() {
   const [filter, setFilter] = useState<'all' | ActivityType>('all');
   const [paused, setPaused] = useState(false);
   const [connectionMode, setConnectionMode] = useState<ConnectionMode>('sse');
+  const [tick, setTick] = useState(0);
   const prevIdsRef = useRef<Set<string>>(new Set());
+
+  // هر دقیقه یک tick تا زمان‌های نسبی تازه شوند حتی اگر لیست عوض نشده باشد
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const applyActivity = useCallback((next: ActivityItem[]) => {
     const nextIdSet = new Set(next.map(getEventId));
+    const prev = prevIdsRef.current;
     const added = new Set<string>();
     nextIdSet.forEach((id) => {
-      if (!prevIdsRef.current.has(id)) added.add(id);
+      if (!prev.has(id)) added.add(id);
     });
+    const unchanged = added.size === 0 && nextIdSet.size === prev.size;
     prevIdsRef.current = nextIdSet;
-    setNewIds(added);
-    setItems(next);
+    // این دو وقتی مقدارشان عوض نشود، React از re-render صرف‌نظر می‌کند
     setError(false);
     setLoading(false);
+    // هیچ رویداد جدید/حذف‌شده‌ای نیست → از به‌روزرسانی لیست (و re-render) صرف‌نظر کن
+    if (unchanged) return;
+    setItems(next);
+    setNewIds(added);
     if (added.size > 0) {
       window.setTimeout(() => setNewIds(new Set()), 2000);
     }
@@ -169,8 +190,12 @@ export default function AdminLiveFeed() {
         }
       };
       es.onerror = () => {
-        es.close();
-        setConnectionMode('poll');
+        // CONNECTING (0): مرورگر خودش در حال اتصال مجدد است — رهایش کن.
+        // CLOSED (2): واقعاً بسته شده → افت به poll.
+        if (es.readyState === EventSource.CLOSED) {
+          es.close();
+          setConnectionMode('poll');
+        }
       };
       return () => es.close();
     }
@@ -260,7 +285,12 @@ export default function AdminLiveFeed() {
         ) : (
           <div className="divide-y divide-admin-border/60 dark:divide-gray-700/60">
             {filtered.map((item) => (
-              <EventRow key={getEventId(item)} item={item} isNew={newIds.has(getEventId(item))} />
+              <EventRow
+                key={getEventId(item)}
+                item={item}
+                isNew={newIds.has(getEventId(item))}
+                tick={tick}
+              />
             ))}
           </div>
         )}

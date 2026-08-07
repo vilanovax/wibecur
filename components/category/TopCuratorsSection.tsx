@@ -25,7 +25,7 @@ export default function TopCuratorsSection({
 
   return (
     <section className="px-4 py-6">
-      <CategorySectionTitle title={`کیوریتورهای برتر ${categoryName}`} icon="🏆" />
+      <CategorySectionTitle title={`کیوریتورهای برتر ${categoryName}`} iconVariant="curators" />
       <div className="grid grid-cols-2 gap-3">
         {curators.map((c, index) => (
           <Link
@@ -38,6 +38,8 @@ export default function TopCuratorsSection({
                 <ImageWithFallback
                   src={c.image}
                   alt={c.name || 'کاربر'}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-full object-cover"
                 />
               ) : (

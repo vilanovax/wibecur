@@ -354,7 +354,7 @@ async function main() {
     },
     {
       categoryId: cafeCategoryId,
-      title: 'کافه‌های با view زیبا',
+      title: 'کافه‌های با منظره زیبا',
       slug: 'cafes-with-great-views',
       description: 'کافه‌هایی با چشم‌انداز فوق‌العاده',
       coverImage: '/images/placeholder-cover.svg',

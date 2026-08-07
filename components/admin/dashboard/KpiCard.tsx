@@ -24,25 +24,24 @@ export default function KpiCard({ item }: KpiCardProps) {
         <p className="text-[28px] sm:text-[32px] font-bold text-[var(--color-text)] tabular-nums">
           {typeof value === 'number' ? value.toLocaleString('fa-IR') : value}
         </p>
-        {delta !== undefined && (
+        {/* فقط وقتی تغییری وجود دارد chip نشان بده — جلوگیری از pill خالی با فلش */}
+        {delta !== undefined && delta !== 0 && (
           <span
             className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-xs font-medium ${
               deltaUp
-                ? 'bg-emerald-100 text-emerald-700'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
                 : deltaDown
-                  ? 'bg-red-100 text-red-700'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
                   : 'bg-[var(--gray-100)] text-[var(--color-text-muted)]'
             }`}
           >
             {deltaUp && <ArrowUp className="w-3 h-3" />}
             {deltaDown && <ArrowDown className="w-3 h-3" />}
             {trend === 'neutral' && <Minus className="w-3 h-3" />}
-            {delta !== 0 && (
-              <span>
-                {delta > 0 ? '+' : ''}
-                {delta.toLocaleString('fa-IR')}٪
-              </span>
-            )}
+            <span>
+              {delta > 0 ? '+' : ''}
+              {delta.toLocaleString('fa-IR')}٪
+            </span>
           </span>
         )}
       </div>

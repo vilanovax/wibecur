@@ -41,6 +41,27 @@ export default function ViolationsPageClient({
   const router = useRouter();
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [drawerUserId, setDrawerUserId] = useState<string | null>(null);
+  const [liftingUserId, setLiftingUserId] = useState<string | null>(null);
+
+  const handleUnrestrict = async (userId: string) => {
+    setLiftingUserId(userId);
+    try {
+      const res = await fetch(`/api/admin/comments/violations/user/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unrestrict' }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در رفع محدودیت');
+      }
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLiftingUserId(null);
+    }
+  };
 
   const buildUrl = useCallback(
     (patch: { search?: string; status?: ViolationStatusFilter }) => {
@@ -170,6 +191,8 @@ export default function ViolationsPageClient({
         <ViolationsTable
           violations={violations}
           onViewDetails={(userId) => setDrawerUserId(userId)}
+          onUnrestrict={handleUnrestrict}
+          liftingUserId={liftingUserId}
         />
       )}
 

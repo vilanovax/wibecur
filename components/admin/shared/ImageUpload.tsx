@@ -4,7 +4,9 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Upload, X, Link as LinkIcon, Search } from 'lucide-react';
 import ImageSearchModal from '@/components/admin/items/ImageSearchModal';
+import BookCoverSearchModal from '@/components/admin/items/BookCoverSearchModal';
 import MoviePosterSearchModal from '@/components/admin/items/MoviePosterSearchModal';
+import type { BookCoverSearchSource } from '@/lib/book-cover-search';
 import type { MoviePosterSearchSource } from '@/lib/movie-poster-search';
 import {
   buildGoogleImageSearchQuery,
@@ -26,9 +28,13 @@ interface ImageUploadProps {
   previewVariant?: 'default' | 'poster';
   /** دکمه‌های جستجو در IMDb و TMDb (برای آیتم فیلم) */
   enableMoviePosterSources?: boolean;
+  /** دکمه‌های جستجو در فیدیبو، کتابراه و طاقچه (برای آیتم کتاب) */
+  enableBookCoverSources?: boolean;
   metadata?: Record<string, unknown> | null;
   /** slug دسته — برای ساخت عبارت Google */
   categorySlug?: string | null;
+  /** پس از انتخاب از جستجو، تب لینک فعال شود */
+  onSwitchToUrlTab?: () => void;
 }
 
 export default function ImageUpload({
@@ -41,14 +47,18 @@ export default function ImageUpload({
   displayMode = 'all',
   previewVariant = 'default',
   enableMoviePosterSources = false,
+  enableBookCoverSources = false,
   metadata = null,
   categorySlug = null,
+  onSwitchToUrlTab,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(displayMode === 'url');
   const [urlInput, setUrlInput] = useState('');
   const [showImageSearch, setShowImageSearch] = useState(false);
   const [moviePosterSource, setMoviePosterSource] = useState<MoviePosterSearchSource | null>(null);
+  const [bookCoverSource, setBookCoverSource] = useState<BookCoverSearchSource | null>(null);
+  const [pendingImportMeta, setPendingImportMeta] = useState<Record<string, unknown>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showUpload = displayMode === 'all' || displayMode === 'upload';
@@ -100,10 +110,45 @@ export default function ImageUpload({
     }
   };
 
-  const handleUrlSubmit = () => {
-    if (urlInput.trim()) {
-      onChange(urlInput.trim());
-      setUrlInput('');
+  const importExternalImage = async (imageUrl: string): Promise<string | null> => {
+    setUploading(true);
+    const mergedMeta = { ...(metadata ?? {}), ...pendingImportMeta };
+    try {
+      const res = await fetch('/api/admin/items/import-image-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          folder: 'items',
+          metadata: mergedMeta,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && typeof data.url === 'string' && data.url.trim()) {
+        setPendingImportMeta({});
+        return data.url.trim();
+      }
+
+      throw new Error(data.error || 'خطا در آپلود تصویر به استوریج');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'خطا در آپلود تصویر';
+      alert(message);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUrlSubmit = async () => {
+    const raw = urlInput.trim();
+    if (!raw) return;
+
+    const storedUrl = await importExternalImage(raw);
+    if (!storedUrl) return;
+
+    onChange(storedUrl);
+    setUrlInput('');
+    if (displayMode === 'all') {
       setShowUrlInput(false);
     }
   };
@@ -112,38 +157,60 @@ export default function ImageUpload({
     onChange('');
   };
 
+  const placeSearchResultInUrlField = (
+    imageUrl: string,
+    extraMeta?: Record<string, unknown>
+  ) => {
+    const trimmed = imageUrl.trim();
+    if (!trimmed) return;
+    setUrlInput(trimmed);
+    setShowUrlInput(true);
+    if (extraMeta && Object.keys(extraMeta).length > 0) {
+      setPendingImportMeta(extraMeta);
+    }
+    onSwitchToUrlTab?.();
+  };
+
   const handleImageSelected = (imageUrl: string) => {
     setShowImageSearch(false);
     onModalOpenChange?.(false);
-    setTimeout(() => {
-      onChange(imageUrl);
-    }, 100);
+    placeSearchResultInUrlField(imageUrl);
   };
 
-  const handlePosterFromMovieSource = async (posterUrl: string) => {
+  const handlePosterFromMovieSource = (
+    posterUrl: string,
+    context?: { imdbId?: string; tmdbId?: string }
+  ) => {
     setMoviePosterSource(null);
     onModalOpenChange?.(false);
-
-    let finalUrl = posterUrl;
-    try {
-      const uploadRes = await fetch('/api/admin/items/upload-movie-poster', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ posterUrl }),
-      });
-      if (uploadRes.ok) {
-        const uploadData = await uploadRes.json();
-        if (uploadData.uploadedUrl) finalUrl = uploadData.uploadedUrl;
-      }
-    } catch {
-      // keep original poster URL
+    const extraMeta: Record<string, unknown> = {};
+    if (context?.imdbId) {
+      extraMeta.imdbId = context.imdbId;
+      extraMeta.imdbID = context.imdbId;
     }
+    if (context?.tmdbId) extraMeta.tmdbId = context.tmdbId;
+    placeSearchResultInUrlField(posterUrl, extraMeta);
+  };
 
-    setTimeout(() => onChange(finalUrl), 100);
+  const handleCoverFromBookSource = (
+    coverUrl: string,
+    context?: { source?: BookCoverSearchSource; sourceId?: string; bookUrl?: string }
+  ) => {
+    setBookCoverSource(null);
+    onModalOpenChange?.(false);
+    const extraMeta: Record<string, unknown> = {};
+    if (context?.source) extraMeta.source = context.source;
+    if (context?.sourceId) extraMeta.sourceId = context.sourceId;
+    placeSearchResultInUrlField(coverUrl, extraMeta);
   };
 
   const openMoviePosterSearch = (source: MoviePosterSearchSource) => {
     setMoviePosterSource(source);
+    onModalOpenChange?.(true);
+  };
+
+  const openBookCoverSearch = (source: BookCoverSearchSource) => {
+    setBookCoverSource(source);
     onModalOpenChange?.(true);
   };
 
@@ -178,6 +245,18 @@ export default function ImageUpload({
           initialQuery={moviePosterSearchQuery}
           metadata={metadata}
           year={metadata?.year as number | string | null | undefined}
+        />
+      )}
+      {bookCoverSource && (
+        <BookCoverSearchModal
+          isOpen={Boolean(bookCoverSource)}
+          source={bookCoverSource}
+          onClose={() => {
+            setBookCoverSource(null);
+            onModalOpenChange?.(false);
+          }}
+          onSelectCover={handleCoverFromBookSource}
+          initialQuery={title}
         />
       )}
       {label && (
@@ -268,7 +347,14 @@ export default function ImageUpload({
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleUrlSubmit(); } }}
                 />
-                <button type="button" onClick={handleUrlSubmit} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">تأیید</button>
+                <button
+                  type="button"
+                  onClick={handleUrlSubmit}
+                  disabled={uploading}
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? 'در حال آپلود...' : 'تأیید'}
+                </button>
                 {displayMode === 'all' && (
                   <button type="button" onClick={() => { setShowUrlInput(false); setUrlInput(''); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">انصراف</button>
                 )}
@@ -325,6 +411,46 @@ export default function ImageUpload({
                   >
                     <span className="font-bold text-xs bg-sky-500 text-white px-1.5 py-0.5 rounded">TMDb</span>
                     جستجوی poster
+                  </button>
+                </div>
+              )}
+              {enableBookCoverSources && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openBookCoverSearch('fidibo');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors text-sm font-medium text-emerald-900 dark:text-emerald-200"
+                  >
+                    <span className="font-bold text-xs bg-emerald-500 text-white px-1.5 py-0.5 rounded">فیدیبو</span>
+                    جستجوی کاور
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openBookCoverSearch('ketabrah');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors text-sm font-medium text-orange-900 dark:text-orange-200"
+                  >
+                    <span className="font-bold text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded">کتابراه</span>
+                    جستجوی کاور
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openBookCoverSearch('taaghche');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-violet-200 bg-violet-50 dark:bg-violet-950/30 dark:border-violet-800 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-950/50 transition-colors text-sm font-medium text-violet-900 dark:text-violet-200"
+                  >
+                    <span className="font-bold text-xs bg-violet-500 text-white px-1.5 py-0.5 rounded">طاقچه</span>
+                    جستجوی کاور
                   </button>
                 </div>
               )}

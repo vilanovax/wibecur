@@ -6,6 +6,8 @@ import { Prisma, type PrismaClient } from '@prisma/client';
 import { dbQuery } from '@/lib/db';
 import { getHomeRecommendationsForUser } from '@/lib/home-recommendations';
 import { getGlobalTrending } from '@/lib/trending/service';
+import { getCachedGlobalTrending } from '@/lib/trending/cached';
+import { buildPublicListSearchWhere } from '@/lib/public-list-search';
 import { publicCuratedListWhere } from '@/lib/public-content-filters';
 import { withResolvedListCovers } from '@/lib/resolve-list-cover';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
@@ -94,6 +96,78 @@ function mapListRow(
   };
 }
 
+function listMatchesGuidedTopic(list: GuidedListCard, query: string): boolean {
+  const title = list.title;
+  const slug = list.slug.toLowerCase();
+
+  switch (query) {
+    case 'سریال':
+      return (
+        title.includes('سریال') ||
+        slug.includes('series') ||
+        slug.includes('serial') ||
+        slug.includes('tv-')
+      );
+    case 'فیلم':
+      return (
+        (title.includes('فیلم') || slug.includes('film') || slug.includes('movie')) &&
+        !title.includes('سریال') &&
+        !slug.includes('series')
+      );
+    case 'کتاب':
+      return (
+        title.includes('کتاب') ||
+        slug.includes('book') ||
+        list.category?.slug === 'book' ||
+        list.category?.slug === 'books'
+      );
+    case 'کافه':
+      return title.includes('کافه') || slug.includes('cafe') || slug.includes('coffee');
+    case 'رستوران':
+      return title.includes('رستوران') || slug.includes('restaurant') || title.includes('غذا');
+    default:
+      return true;
+  }
+}
+
+function refineListsForGuidedQuery(query: string, lists: GuidedListCard[]): GuidedListCard[] {
+  return lists.filter((list) => listMatchesGuidedTopic(list, query));
+}
+
+const GUIDED_CATEGORY_SLUGS: Record<string, string[]> = {
+  کتاب: ['book', 'books', 'podcast', 'podcasts'],
+  کافه: ['cafe', 'coffee'],
+  رستوران: ['restaurant', 'cafe'],
+  فیلم: ['movie', 'movies', 'film', 'cinema', 'film-serial'],
+  سریال: ['movie', 'movies', 'film', 'series', 'film-serial'],
+};
+
+async function fetchListsByCategorySlugs(
+  prisma: PrismaClient,
+  slugs: string[],
+  limit: number,
+  excludeIds: Set<string>,
+  query: string
+): Promise<GuidedListCard[]> {
+  const lists = await dbQuery(() =>
+    prisma.lists.findMany({
+      where: {
+        ...publicCuratedListWhere,
+        categories: { slug: { in: slugs } },
+        id: excludeIds.size > 0 ? { notIn: [...excludeIds] } : undefined,
+      },
+      select: LIST_SELECT,
+      orderBy: [{ saveCount: 'desc' }, { createdAt: 'desc' }],
+      take: limit * 3,
+    })
+  );
+
+  return refineListsForGuidedQuery(
+    query,
+    withResolvedListCovers(lists).map(mapListRow)
+  ).slice(0, limit);
+}
+
 async function searchListsByQuery(
   prisma: PrismaClient,
   query: string,
@@ -104,19 +178,8 @@ async function searchListsByQuery(
   if (q.length < SEARCH_MIN_LENGTH) return [];
 
   const searchWhere: Prisma.listsWhereInput = {
-    ...publicCuratedListWhere,
+    ...buildPublicListSearchWhere(q),
     id: excludeIds.size > 0 ? { notIn: [...excludeIds] } : undefined,
-    OR: [
-      { title: { contains: q, mode: 'insensitive' } },
-      { description: { contains: q, mode: 'insensitive' } },
-      {
-        categories: {
-          isActive: true,
-          deletedAt: null,
-          name: { contains: q, mode: 'insensitive' },
-        },
-      },
-    ],
   };
 
   const lists = await dbQuery(() =>
@@ -124,11 +187,22 @@ async function searchListsByQuery(
       where: searchWhere,
       select: LIST_SELECT,
       orderBy: [{ saveCount: 'desc' }, { createdAt: 'desc' }],
-      take: limit,
+      take: limit * 3,
     })
   );
 
-  return withResolvedListCovers(lists).map(mapListRow);
+  const refined = refineListsForGuidedQuery(
+    query,
+    withResolvedListCovers(lists).map(mapListRow)
+  );
+  if (refined.length > 0) return refined.slice(0, limit);
+
+  const slugs = GUIDED_CATEGORY_SLUGS[query];
+  if (slugs?.length) {
+    return fetchListsByCategorySlugs(prisma, slugs, limit, excludeIds, query);
+  }
+
+  return [];
 }
 
 async function fetchShortLists(
@@ -307,7 +381,8 @@ export async function getGuidedDiscoveryResults(
   }
 
   if (plan.includeTrending) {
-    const trending = await getGlobalTrending(prisma, 6);
+    // از نسخهٔ کش‌شده استفاده کن (۶۰۰ ثانیه) تا fan-out سنگین per-category تکرار نشود
+    const trending = await getCachedGlobalTrending(6);
     const mapped = trendingToListCards(trending).filter((l) => !usedListIds.has(l.id));
     if (mapped.length > 0) {
       rows.push({

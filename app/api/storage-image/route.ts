@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getObjectByStorageKey } from '@/lib/object-storage';
-import { extractStorageObjectKeyFromUrl } from '@/lib/storage-image-url';
+import {
+  buildLegacyLiaraPublicUrl,
+  extractStorageObjectKeyFromUrl,
+} from '@/lib/storage-image-url';
 import { isLegacyLiaraStorageUrl } from '@/lib/object-storage-config';
+import { avatarPlaceholderResponse, isAvatarStorageKey } from '@/lib/storage-image-fallback';
 
 function contentTypeFromKey(key: string, fallback?: string): string {
   if (fallback) return fallback;
@@ -33,12 +37,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid storage key' }, { status: 400 });
   }
 
-  const result = await getObjectByStorageKey(key);
+  const legacySourceUrl =
+    urlParam?.trim() && isLegacyLiaraStorageUrl(urlParam.trim())
+      ? urlParam.trim()
+      : buildLegacyLiaraPublicUrl(key);
+
+  const result = await getObjectByStorageKey(key, { legacyUrl: legacySourceUrl });
   if (!result) {
+    if (isAvatarStorageKey(key)) {
+      return avatarPlaceholderResponse();
+    }
     return NextResponse.json(
       {
-        error: 'Image not found in ParsPack',
-        hint: 'فایل ممکن است migrate نشده باشد — آواتار را دوباره آپلود کنید',
+        error: 'Image not found in storage',
+        hint: 'فایل migrate نشده یا منبع قدیمی Liara در دسترس نیست',
       },
       { status: 404 }
     );

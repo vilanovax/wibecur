@@ -58,18 +58,18 @@ export default function PenaltyModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 امتیاز منفی برای کاربر
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 کامنت {actionLabels[action]} شد
               </p>
             </div>
@@ -79,23 +79,23 @@ export default function PenaltyModal({
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             disabled={isLoading}
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
 
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {commentContent && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-2">متن کامنت:</p>
-              <p className="text-sm text-gray-900 line-clamp-3">
+            <div className="bg-gray-50 dark:bg-gray-800/60 rounded-lg p-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">متن کامنت:</p>
+              <p className="text-sm text-gray-900 dark:text-white line-clamp-3">
                 {commentContent}
               </p>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-4">
               امتیاز منفی (۰ تا ۵):
             </label>
             <div className="flex gap-3 justify-center">
@@ -107,7 +107,7 @@ export default function PenaltyModal({
                   className={`w-12 h-12 rounded-full font-bold text-lg transition-all ${
                     selectedScore === score
                       ? 'bg-red-600 text-white scale-110 shadow-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 hover:bg-gray-200'
                   }`}
                   disabled={isLoading}
                 >
@@ -116,7 +116,7 @@ export default function PenaltyModal({
               ))}
             </div>
             <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 {selectedScore === 0 && 'بدون امتیاز منفی'}
                 {selectedScore === 1 && 'امتیاز منفی خفیف'}
                 {selectedScore === 2 && 'امتیاز منفی متوسط'}
@@ -128,8 +128,8 @@ export default function PenaltyModal({
           </div>
 
           {/* Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/60 rounded-lg p-4">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
               💡 این امتیاز برای تعیین پنالتی کاربر استفاده می‌شود. امتیازهای
               منفی کاربران در بخش &quot;کاربران خاطی&quot; قابل مشاهده است.
             </p>
@@ -141,7 +141,7 @@ export default function PenaltyModal({
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+              className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
             >
               انصراف
             </button>

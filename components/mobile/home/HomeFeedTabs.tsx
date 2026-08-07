@@ -3,52 +3,49 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useSession } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
 import TrendingThisWeekCarousel from './TrendingThisWeekCarousel';
-import ForYouSection from './ForYouSection';
-import NewAndRisingSection from './NewAndRisingSection';
+import { HomeFeedSectionSkeleton } from './home-section-skeletons';
 import {
   fetchForYouRecommendations,
   forYouQueryKey,
 } from '@/hooks/useForYouRecommendations';
+import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
+import { useHomeUserState } from '@/hooks/useHomeUserState';
+import { trackHomeTabSwitch } from '@/lib/analytics';
 
-type FeedTab = 'trending' | 'foryou' | 'rising';
+const ForYouSection = dynamic(() => import('./ForYouSection'), {
+  loading: () => <HomeFeedSectionSkeleton titleWidth="w-32" />,
+});
+
+type FeedTab = 'trending' | 'foryou';
 
 const TABS: { id: FeedTab; label: string; ariaLabel: string }[] = [
   { id: 'trending', label: 'ترند', ariaLabel: 'ترند این هفته' },
   { id: 'foryou', label: 'برای تو', ariaLabel: 'پیشنهاد برای تو' },
-  { id: 'rising', label: 'اوج', ariaLabel: 'در حال اوج گرفتن' },
 ];
 
-const TAB_META: Record<FeedTab, { subtitle: string; seeAllHref: string }> = {
-  trending: {
-    subtitle: 'بر اساس ذخیره و تعامل',
-    seeAllHref: '/lists?mode=trending',
-  },
-  foryou: {
-    subtitle: 'لیست‌های پیشنهادی',
-    seeAllHref: '/lists',
-  },
-  rising: {
-    subtitle: 'رشد سریع ذخیره در ۲۴ ساعت اخیر',
-    seeAllHref: '/lists?mode=popular',
-  },
+const TAB_SEE_ALL: Record<FeedTab, string> = {
+  trending: '/lists?mode=trending',
+  foryou: '/lists',
 };
 
 export default function HomeFeedTabs() {
   const [tab, setTab] = useState<FeedTab>('trending');
   const { data: session } = useSession();
+  const { interests, shouldShowStartStrip } = useHomeOnboardingInterests();
+  const { isNewUser, isGuest } = useHomeUserState();
   const queryClient = useQueryClient();
-  const meta = TAB_META[tab];
 
   const prefetchForYou = useCallback(() => {
     void queryClient.prefetchQuery({
-      queryKey: forYouQueryKey(session?.user?.id),
-      queryFn: fetchForYouRecommendations,
+      queryKey: forYouQueryKey(session?.user?.id, interests),
+      queryFn: () => fetchForYouRecommendations(interests),
       staleTime: 2 * 60 * 1000,
     });
-  }, [queryClient, session?.user?.id]);
+  }, [queryClient, session?.user?.id, interests]);
 
   return (
     <section className="mb-4 lg:mb-0" aria-label="فید کشف">
@@ -66,25 +63,36 @@ export default function HomeFeedTabs() {
                   aria-selected={isActive}
                   aria-controls={`feed-panel-${item.id}`}
                   aria-label={item.ariaLabel}
-                  onClick={() => setTab(item.id)}
+                  onClick={() => {
+                    if (!isActive) trackHomeTabSwitch(item.id);
+                    setTab(item.id);
+                  }}
                   onPointerEnter={item.id === 'foryou' ? prefetchForYou : undefined}
                   onTouchStart={item.id === 'foryou' ? prefetchForYou : undefined}
-                  className={`h-9 shrink-0 rounded-lg px-4 wibe-small font-medium transition-all lg:h-8 lg:px-3.5 ${
+                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-4 wibe-small font-medium transition-colors lg:h-8 lg:px-3.5 ${
                     isActive
                       ? 'bg-primary text-white shadow-sm'
                       : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/30'
                   }`}
                 >
+                  {item.id === 'trending' && isNewUser && !isGuest ? (
+                    <span
+                      className={`rounded-pill px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-amber-400/20 text-amber-700'
+                      }`}
+                    >
+                      شروع
+                    </span>
+                  ) : null}
                   {item.label}
                 </button>
               );
             })}
           </div>
 
-          <div className="flex min-w-0 flex-1 items-center justify-between gap-3 lg:justify-end lg:gap-4">
-            <p className="wibe-small font-medium text-foreground">{meta.subtitle}</p>
+          <div className="flex min-w-0 flex-1 justify-end lg:gap-4">
             <Link
-              href={meta.seeAllHref}
+              href={TAB_SEE_ALL[tab]}
               className="inline-flex shrink-0 items-center gap-0.5 wibe-caption font-semibold text-primary hover:underline"
             >
               مشاهده همه
@@ -94,13 +102,21 @@ export default function HomeFeedTabs() {
         </div>
       </div>
 
-      {tab === 'foryou' && !session?.user && (
+      {tab === 'foryou' && isGuest && !shouldShowStartStrip && (
         <div className="mx-4 mb-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 lg:mx-0">
           <p className="wibe-caption text-wibe-secondary">
             برای پیشنهادهای شخصی‌تر{' '}
-            <Link href="/login?callbackUrl=/" className="font-semibold text-primary hover:underline">
+            <Link href="/login?callbackUrl=%2F&source=login_banner" className="font-semibold text-primary hover:underline">
               وارد شو
             </Link>
+          </p>
+        </div>
+      )}
+
+      {tab === 'foryou' && isNewUser && !isGuest && (
+        <div className="mx-4 mb-3 rounded-xl border border-wibe bg-wibe-surface px-3 py-2.5 lg:mx-0">
+          <p className="wibe-caption text-wibe-secondary">
+            از تب ترند چند لیست ذخیره کن — پیشنهادهای این بخش دقیق‌تر می‌شوند.
           </p>
         </div>
       )}
@@ -112,8 +128,7 @@ export default function HomeFeedTabs() {
         className="lg:px-5 lg:pb-5 lg:pt-1"
       >
         {tab === 'trending' && <TrendingThisWeekCarousel embedded />}
-        {tab === 'foryou' && <ForYouSection embedded />}
-        {tab === 'rising' && <NewAndRisingSection embedded />}
+        {tab === 'foryou' && <ForYouSection embedded fetchEnabled />}
       </div>
     </section>
   );

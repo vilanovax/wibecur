@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { dbQuery } from '@/lib/db';
 import { getTrendingByCategory } from '@/lib/trending/service';
+import { resolveCategoryId } from '@/lib/category-resolve';
 
 const CACHE_SECONDS = 600;
-
-function isLikelyCuid(param: string): boolean {
-  return param.length >= 20 && param.length <= 30 && /^[a-z0-9]+$/i.test(param);
-}
 
 export async function GET(
   _req: Request,
@@ -23,19 +19,9 @@ export async function GET(
       );
     }
 
-    const category = await dbQuery(() =>
-      isLikelyCuid(slug)
-        ? prisma.categories.findUnique({
-            where: { id: slug, isActive: true },
-            select: { id: true },
-          })
-        : prisma.categories.findUnique({
-            where: { slug, isActive: true },
-            select: { id: true },
-          })
-    );
+    const categoryId = await resolveCategoryId(slug);
 
-    if (!category) {
+    if (!categoryId) {
       return NextResponse.json(
         { success: false, error: 'دسته یافت نشد' },
         { status: 404 }
@@ -43,9 +29,9 @@ export async function GET(
     }
 
     const getCached = unstable_cache(
-      () => getTrendingByCategory(prisma, category.id, 10),
-      [`trending-category-${category.id}`],
-      { revalidate: CACHE_SECONDS, tags: ['trending', `trending-${category.id}`] }
+      () => getTrendingByCategory(prisma, categoryId, 10),
+      [`trending-category-${categoryId}`],
+      { revalidate: CACHE_SECONDS, tags: ['trending', `trending-${categoryId}`] }
     );
     const data = await getCached();
 

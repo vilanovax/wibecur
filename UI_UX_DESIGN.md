@@ -1,40 +1,60 @@
 # طراحی UI/UX
 
+> **پیاده‌سازی Consumer (فازهای ۱–۴):** [`docs/UI_POLISH_PHASES.md`](docs/UI_POLISH_PHASES.md)  
+> **مرجع زنده:** `/design-system` — **توکن‌های کد:** `lib/design-tokens.ts`, `app/globals.css`
+
 ## 🎨 Design System
 
 ### رنگ‌بندی (Color Palette)
 
 #### Primary Colors
-- **Primary**: `#6366F1` (Indigo) - برای دکمه‌های اصلی و لینک‌ها
-- **Primary Dark**: `#4F46E5` - برای hover states
-- **Primary Light**: `#818CF8` - برای backgrounds
+- **Primary**: `#6366F1` (Indigo) — CTA، دکمه اصلی، «ویژه»
+- **Primary Dark**: `#4F46E5` — hover states
+- **Primary Light**: `#818CF8` — backgrounds
 
-#### Secondary Colors
-- **Secondary**: `#8B5CF6` (Purple) - برای accent elements
-- **Accent**: `#EC4899` (Pink) - برای highlights
+#### Secondary Colors (Legacy — کم‌کاربرد در Consumer)
+- **Secondary**: `#8B5CF6` (Purple) — legacy؛ در UI consumer برای ترند استفاده نشود
+- **Accent**: `#EC4899` (Pink) — highlights
 
-#### Neutral Colors
-- **Background**: `#FFFFFF` (Light) / `#0F172A` (Dark)
-- **Surface**: `#F8FAFC` (Light) / `#1E293B` (Dark)
-- **Text Primary**: `#0F172A` (Light) / `#F8FAFC` (Dark)
-- **Text Secondary**: `#64748B` (Light) / `#94A3B8` (Dark)
-- **Border**: `#E2E8F0` (Light) / `#334155` (Dark)
+#### Consumer semantic (Wibe)
+- **Surface**: `#F8FAFC` — `bg-wibe-surface`
+- **Card**: `#FFFFFF` — `bg-wibe-card`
+- **Border**: `#E2E8F0` — `border-wibe`
+- **Text secondary**: `#64748B` — `text-wibe-secondary`
 
 #### Semantic Colors
-- **Success**: `#10B981` (Green)
-- **Warning**: `#F59E0B` (Amber)
+- **Success**: `#10B981` (Green) — badge «جدید»
+- **Warning / Hot**: `#F59E0B` (Amber) — ترند، وایرال، داغ
 - **Error**: `#EF4444` (Red)
 - **Info**: `#3B82F6` (Blue)
+
+#### قانون accent (فاز ۱)
+| معنا | رنگ |
+|------|-----|
+| ترند / وایرال / داغ | `warning` / `hot` |
+| CTA / ویژه / primary action | `primary` |
+| metadata / fact type | `gray` / `wibe-secondary` |
 
 ---
 
 ### تایپوگرافی (Typography)
 
-#### Font Family
-- **Primary**: `Inter` یا `Vazir` (برای فارسی)
-- **Secondary**: `Poppins` (برای انگلیسی)
+**Consumer — کلاس‌های آماده** (`app/globals.css`):
 
-#### Font Sizes
+| کلاس | کاربرد |
+|------|--------|
+| `wibe-display` | Hero بزرگ |
+| `wibe-h1` … `wibe-h3` | عناوین |
+| `wibe-body` | پاراگراف |
+| `wibe-small` | توضیح ثانویه |
+| `wibe-caption` | متادیتا، آمار |
+
+فونت: **Vazirmatn** (`--font-vazirmatn`). از `text-sm` / `text-gray-500` خام در کد جدید پرهیز شود.
+
+#### Font Family (مرجع)
+- **Primary**: Vazirmatn / Vazir (RTL)
+
+#### Font Sizes (legacy doc — مقادیر Tailwind در `lib/design-tokens.ts`)
 - **H1**: 32px / 2rem (Mobile) | 48px / 3rem (Desktop)
 - **H2**: 24px / 1.5rem (Mobile) | 36px / 2.25rem (Desktop)
 - **H3**: 20px / 1.25rem (Mobile) | 24px / 1.5rem (Desktop)
@@ -333,6 +353,20 @@ box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 ---
 
 ## 🎭 کامپوننت‌های UI
+
+### Consumer primitives (فاز ۱–۳)
+
+| کامپوننت | مسیر |
+|----------|------|
+| `WibeButton` | `components/ui/WibeButton.tsx` |
+| `WibeSection` | `components/ui/WibeSection.tsx` |
+| `WibeCard` | `components/ui/WibeCard.tsx` |
+| `ListRowCompact` | `components/shared/ListRowCompact.tsx` |
+| `HorizontalScrollFade` | `components/shared/HorizontalScrollFade.tsx` |
+| `SectionIcon` | `components/shared/SectionIcon.tsx` |
+| List badges | `lib/list-badge-styles.ts` |
+
+کلاس chip: `wibe-chip`, `wibe-chip-active`, `wibe-chip-inactive`
 
 ### Button
 

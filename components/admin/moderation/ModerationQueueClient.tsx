@@ -110,7 +110,7 @@ export default function ModerationQueueClient() {
     }
   }, []);
 
-  const fetchList = useCallback(async () => {
+  const fetchList = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     const params = new URLSearchParams();
     if (filters.type) params.set('type', filters.type);
@@ -123,7 +123,7 @@ export default function ModerationQueueClient() {
     if (filters.search) params.set('search', filters.search);
     params.set('page', String(page));
     try {
-      const res = await fetch(`/api/admin/moderation?${params}`);
+      const res = await fetch(`/api/admin/moderation?${params}`, { signal });
       const json = await res.json();
       if (res.ok) {
         setItems(json.items ?? []);
@@ -131,8 +131,10 @@ export default function ModerationQueueClient() {
         setTotalPages(json.totalPages ?? 0);
         setLastUpdatedAt(new Date());
       }
+    } catch (e) {
+      if ((e as Error)?.name === 'AbortError') return; // پاسخ قدیمی لغو شد
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, [filters.type, filters.entityType, filters.status, filters.severity, filters.assigneeFilter, filters.dateFrom, filters.dateTo, filters.search, page]);
 
@@ -163,7 +165,11 @@ export default function ModerationQueueClient() {
   }, []);
 
   useEffect(() => { fetchSummary(); }, [fetchSummary]);
-  useEffect(() => { fetchList(); }, [fetchList]);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    void fetchList(ctrl.signal);
+    return () => ctrl.abort();
+  }, [fetchList]);
   useEffect(() => {
     if (selectedId) fetchDetail(selectedId);
     else setDetail(null);

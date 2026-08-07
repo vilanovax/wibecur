@@ -21,7 +21,8 @@ export function saveImportSession(sessionId: string, bundle: ParsedBackupBundle)
   const dir = sessionDir(sessionId);
   fs.mkdirSync(dir, { recursive: true });
   const bundlePath = path.join(dir, 'bundle.json');
-  fs.writeFileSync(bundlePath, JSON.stringify(bundle, null, 2), 'utf-8');
+  // فایل داخلیِ ماشین‌خوان — JSON فشرده (نه pretty) برای صرفه‌جویی دیسک/CPU
+  fs.writeFileSync(bundlePath, JSON.stringify(bundle), 'utf-8');
   fs.writeFileSync(
     path.join(dir, 'meta.json'),
     JSON.stringify({

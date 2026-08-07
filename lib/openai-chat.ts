@@ -90,3 +90,35 @@ export function formatOpenAIError(error: unknown): string {
   }
   return 'خطا در اتصال به OpenAI';
 }
+
+/** استخراج متن از completion — خطای واضح برای refusal، فیلتر، یا پاسخ خالی */
+export function extractChatCompletionText(
+  completion: OpenAI.Chat.Completions.ChatCompletion,
+  options?: { minLength?: number; emptyMessage?: string }
+): string {
+  const minLength = options?.minLength ?? 1;
+  const choice = completion.choices[0];
+  const message = choice?.message;
+  const content = message?.content?.trim() ?? '';
+
+  if (content.length >= minLength) return content;
+
+  const refusal = message?.refusal?.trim();
+  if (refusal) {
+    throw new Error(`هوش مصنوعی از تولید متن خودداری کرد: ${refusal}`);
+  }
+
+  if (choice?.finish_reason === 'length') {
+    throw new Error('پاسخ هوش مصنوعی به‌خاطر محدودیت طول کامل نشد — دوباره امتحان کنید');
+  }
+
+  if (choice?.finish_reason === 'content_filter') {
+    throw new Error('هوش مصنوعی این درخواست را فیلتر کرد — bio را دستی بنویسید یا JSON import کنید');
+  }
+
+  if (options?.emptyMessage) {
+    throw new Error(options.emptyMessage);
+  }
+
+  return content;
+}

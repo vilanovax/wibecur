@@ -1,10 +1,11 @@
 import type { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { uploadImageFromUrlDetailed } from '@/lib/object-storage';
+import { importExternalImageToStorage } from '@/lib/admin/import-external-image-to-storage';
 import {
   getItemEffectiveImageUrl,
-  isExternalDirectImageUrl,
   isAppObjectStorageImageUrl,
+  needsS3MigrationImageUrl,
+  resolveUrlForS3Migration,
 } from '@/lib/item-image-storage';
 import { checkObjectStorageReady } from '@/lib/object-storage-readiness';
 import { backfillCatalogForItem, syncPlacementsFromCatalog } from '@/lib/catalog-items';
@@ -57,7 +58,7 @@ export async function migrateItemExternalImageToLiara(
     return { itemId, status: 'no_image', error: 'تصویری برای این آیتم یافت نشد' };
   }
 
-  if (!isExternalDirectImageUrl(effectiveUrl)) {
+  if (!needsS3MigrationImageUrl(effectiveUrl)) {
     return {
       itemId,
       status: 'already_on_storage',
@@ -66,7 +67,8 @@ export async function migrateItemExternalImageToLiara(
     };
   }
 
-  const upload = await uploadImageFromUrlDetailed(effectiveUrl, 'items');
+  const downloadUrl = resolveUrlForS3Migration(effectiveUrl);
+  const upload = await importExternalImageToStorage(downloadUrl, 'items');
 
   if (!upload.ok) {
     return {
@@ -74,7 +76,12 @@ export async function migrateItemExternalImageToLiara(
       status: 'failed',
       previousUrl: effectiveUrl,
       error: upload.error,
-      errorCode: upload.code,
+      errorCode:
+        upload.code === 'storage_not_configured'
+          ? 'storage_not_configured'
+          : upload.code === 'download_failed'
+            ? 'download_failed'
+            : 'upload_failed',
     };
   }
 

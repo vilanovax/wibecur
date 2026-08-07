@@ -80,7 +80,7 @@ export default function TrendingPosterGrid({
         <CategorySectionTitle
           title="داغ‌ترین لیست‌های هفته"
           subtitle="بر اساس تعامل ۷ روزه"
-          icon="🔥"
+          iconVariant="trending"
           className="mb-0"
         />
         <Link

@@ -66,7 +66,7 @@ export default function LikesTab({ userId }: LikesTabProps) {
           <Link
             key={like.id}
             href={`/items/${like.itemId || like.id}`}
-            className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
+            className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-colors"
           >
             {like.image ? (
               <div className="relative h-40 bg-gradient-to-br from-purple-100 to-blue-100">

@@ -43,6 +43,8 @@ export const gray = {
 export const semantic = {
   success: '#10B981',
   warning: '#F59E0B',
+  /** Hot / trending / viral — same family as warning in consumer UI */
+  hot: '#F59E0B',
   danger: '#EF4444',
   info: '#3B82F6',
 } as const;
@@ -203,6 +205,7 @@ export function getCssVariableDefinitions(): Record<string, string> {
     '--color-text-subtle': surfaceLight.textSubtle,
     '--color-success': semantic.success,
     '--color-warning': semantic.warning,
+    '--color-hot': semantic.hot,
     '--color-danger': semantic.danger,
     '--color-info': semantic.info,
     '--shadow-sm': shadows.sm,

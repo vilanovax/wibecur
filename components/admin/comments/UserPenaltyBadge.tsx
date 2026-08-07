@@ -15,10 +15,10 @@ export function UserPenaltyBadge({
   if (totalPenaltyScore <= 0 && status === 'allowed') return null;
 
   const statusStyles: Record<CommentPermissionStatus, string> = {
-    allowed: 'bg-slate-100 text-slate-600',
-    warn: 'bg-amber-100 text-amber-800',
-    restricted: 'bg-orange-100 text-orange-800',
-    banned: 'bg-rose-100 text-rose-800',
+    allowed: 'bg-slate-100 dark:bg-gray-700/50 text-slate-600 dark:text-gray-300',
+    warn: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300',
+    restricted: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
+    banned: 'bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300',
   };
 
   return (
@@ -38,10 +38,10 @@ export function CommentRestrictionStatusBadge({
   status: CommentPermissionStatus;
 }) {
   const styles: Record<CommentPermissionStatus, string> = {
-    allowed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    warn: 'bg-amber-50 text-amber-800 border-amber-200',
-    restricted: 'bg-orange-50 text-orange-800 border-orange-200',
-    banned: 'bg-rose-50 text-rose-800 border-rose-200',
+    allowed: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60',
+    warn: 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60',
+    restricted: 'bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800/60',
+    banned: 'bg-rose-50 dark:bg-rose-900/20 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800/60',
   };
 
   return (

@@ -2,14 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
-import CreateSheet from '@/components/mobile/home/CreateSheet';
 import HeaderDesktopSearch from '@/components/mobile/layout/HeaderDesktopSearch';
-import HeaderActions, { type HeaderActionsProfile } from '@/components/mobile/layout/HeaderActions';
+import HeaderActions from '@/components/mobile/layout/HeaderActions';
 import { CONSUMER_NAV_ITEMS, isNavItemActive } from '@/components/mobile/layout/consumer-nav-config';
 import { DESKTOP_CONTENT_PADDING_CLASS } from '@/lib/layout-tokens';
-import { useRefetchOnVisible } from '@/lib/hooks/useRefetchOnVisible';
-import { useSession } from 'next-auth/react';
+import { useUserHeaderProfile } from '@/lib/hooks/useUserHeaderProfile';
+import SiteLogo from '@/components/shared/SiteLogo';
 
 /** آیتم‌های ناو دسکتاپ — پروفایل از منوی آواتار در دسترس است */
 const DESKTOP_NAV_ITEMS = CONSUMER_NAV_ITEMS.filter((item) => item.href !== '/profile');
@@ -19,41 +17,7 @@ const DESKTOP_NAV_ITEMS = CONSUMER_NAV_ITEMS.filter((item) => item.href !== '/pr
  */
 export default function DesktopTopNav() {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [profile, setProfile] = useState<HeaderActionsProfile | null>(null);
-
-  const fetchProfile = useCallback(async () => {
-    if (!session?.user?.id) return;
-    try {
-      const res = await fetch('/api/user/profile');
-      const data = await res.json();
-      if (data?.success && data?.data?.user) {
-        const u = data.data.user;
-        setProfile({
-          image: u.image ?? null,
-          avatarType: u.avatarType ?? null,
-          avatarId: u.avatarId ?? null,
-          avatarStatus: u.avatarStatus ?? null,
-        });
-      }
-    } catch {
-      setProfile(null);
-    }
-  }, [session?.user?.id]);
-
-  useEffect(() => {
-    if (session?.user) fetchProfile();
-    else setProfile(null);
-  }, [session?.user, fetchProfile]);
-
-  useRefetchOnVisible(fetchProfile, Boolean(session?.user?.id));
-
-  useEffect(() => {
-    const onProfileUpdated = () => fetchProfile();
-    window.addEventListener('profile-updated', onProfileUpdated);
-    return () => window.removeEventListener('profile-updated', onProfileUpdated);
-  }, [fetchProfile]);
+  const { profile } = useUserHeaderProfile();
 
   const navLinkClass = (active: boolean) =>
     `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-small font-medium transition-colors whitespace-nowrap ${
@@ -71,41 +35,23 @@ export default function DesktopTopNav() {
         <div className={`flex h-[3.5rem] w-full min-w-0 items-center gap-3 ${DESKTOP_CONTENT_PADDING_CLASS}`}>
           {/* راست: لوگو + ناو — چسبیده به هم */}
           <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
-            <Link href="/" className="shrink-0 text-right leading-none" aria-label="وایب — خانه">
-              <span className="text-lg font-bold text-primary">وایب</span>
-            </Link>
+            <SiteLogo variant="nav" href="/" />
 
             <nav
               className="flex min-w-0 items-center justify-start gap-0.5 overflow-x-auto scrollbar-hide"
               aria-label="منوی اصلی"
             >
               {DESKTOP_NAV_ITEMS.map((item) => {
-                if (item.isButton) {
-                  return (
-                    <button
-                      key="create"
-                      type="button"
-                      onClick={() => setCreateOpen(true)}
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-sm transition-colors hover:bg-primary-dark"
-                      aria-label="ساخت لیست یا آیتم"
-                      title="ساخت"
-                    >
-                      {item.icon}
-                    </button>
-                  );
-                }
-                const active = item.href ? isNavItemActive(pathname, item.href) : false;
+                const active = isNavItemActive(pathname, item.href);
                 return (
                   <Link
                     key={item.href}
-                    href={item.href!}
-                    className={`${navLinkClass(active)} ${item.iconOnly ? 'px-2.5' : ''}`}
+                    href={item.href}
+                    className={navLinkClass(active)}
                     aria-current={active ? 'page' : undefined}
-                    aria-label={item.iconOnly ? item.label : undefined}
-                    title={item.iconOnly ? item.label : undefined}
                   >
                     {item.icon}
-                    {!item.iconOnly ? item.label : null}
+                    {item.label}
                   </Link>
                 );
               })}
@@ -125,8 +71,6 @@ export default function DesktopTopNav() {
           </div>
         </div>
       </header>
-
-      <CreateSheet isOpen={createOpen} onClose={() => setCreateOpen(false)} />
     </>
   );
 }

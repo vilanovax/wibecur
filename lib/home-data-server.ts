@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCachedGlobalTrending, getCachedFastRising } from '@/lib/trending/cached';
@@ -10,12 +11,12 @@ import type {
   HomeListData,
   RisingListData,
 } from '@/types/home-data';
-import { EMPTY_HOME_DATA } from '@/types/home-data';
 import {
   filterListsInActiveCategories,
   publicCuratedListWhere,
   isListVisibleInPublicFeed,
 } from '@/lib/public-content-filters';
+import { dedupeListsById } from '@/lib/dedupe-lists';
 
 export type HomeApiPayload = {
   featured: FeaturedListData | null;
@@ -25,16 +26,13 @@ export type HomeApiPayload = {
   recommendations: HomeListData[];
 };
 
-export async function fetchHomePageData(): Promise<HomeData> {
-  try {
-  let slotResult: Awaited<ReturnType<typeof getCurrentFeaturedSlot>> = null;
-  try {
-    slotResult = await dbQuery(() => getCurrentFeaturedSlot(prisma));
-  } catch (slotErr) {
-    console.warn('getCurrentFeaturedSlot failed, using fallback:', slotErr);
-  }
-
-  const [lists, trendingResults, risingResults] = await Promise.all([
+async function computeHomePageData(): Promise<HomeData> {
+  // همهٔ کوئری‌های مستقل موازی — featured-slot دیگر بقیه را بلاک نمی‌کند.
+  const [slotResult, lists, trendingResults, risingResults] = await Promise.all([
+    dbQuery(() => getCurrentFeaturedSlot(prisma)).catch((slotErr) => {
+      console.warn('getCurrentFeaturedSlot failed, using fallback:', slotErr);
+      return null;
+    }),
     dbQuery(() =>
       prisma.lists.findMany({
         where: publicCuratedListWhere,
@@ -55,15 +53,15 @@ export async function fetchHomePageData(): Promise<HomeData> {
             select: { id: true, name: true, slug: true, icon: true, isActive: true },
           },
           users: {
-            select: { id: true, name: true, username: true },
+            select: { id: true, name: true, username: true, image: true },
           },
         },
         orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
         take: 10,
       })
     ),
-    getCachedGlobalTrending(6),
-    getCachedFastRising(6),
+    getCachedGlobalTrending(10),
+    getCachedFastRising(10),
   ]);
 
   const visibleLists = filterListsInActiveCategories(lists);
@@ -109,22 +107,31 @@ export async function fetchHomePageData(): Promise<HomeData> {
       categorySlug: l.categories?.slug,
     });
     return {
-    id: l.id,
-    title: l.title,
-    slug: l.slug,
-    description: l.description ?? '',
-    coverImage: images.coverImage,
-    bannerImage: images.bannerImage,
-    saveCount: l.saveCount ?? 0,
-    itemCount: l.itemCount ?? 0,
-    likes: l.likeCount ?? 0,
-    badge: (l.isFeatured ? 'featured' : (l.badge?.toLowerCase() ?? undefined)) as
-      | 'trending'
-      | 'new'
-      | 'featured'
-      | undefined,
-    categories: l.categories,
-  };
+      id: l.id,
+      title: l.title,
+      slug: l.slug,
+      description: l.description ?? '',
+      coverImage: images.coverImage,
+      horizontalImage: l.horizontalImage,
+      bannerImage: images.bannerImage,
+      saveCount: l.saveCount ?? 0,
+      itemCount: l.itemCount ?? 0,
+      likes: l.likeCount ?? 0,
+      badge: (l.isFeatured ? 'featured' : (l.badge?.toLowerCase() ?? undefined)) as
+        | 'trending'
+        | 'new'
+        | 'featured'
+        | undefined,
+      categories: l.categories,
+      creator: l.users
+        ? {
+            id: l.users.id,
+            name: l.users.name,
+            username: l.users.username,
+            image: l.users.image,
+          }
+        : null,
+    };
   };
 
   const mapTrending = (t: (typeof trendingResults)[0]): HomeListData => {
@@ -136,24 +143,35 @@ export async function fetchHomePageData(): Promise<HomeData> {
       categorySlug: t.categorySlug,
     });
     return {
-    id: t.listId,
-    title: t.title,
-    slug: t.slug,
-    description: '',
-    coverImage: images.coverImage,
-    bannerImage: images.bannerImage,
-    saveCount: t.saveCount,
-    itemCount: t.itemCount,
-    likes: t.likeCount,
-    badge: (t.badge === 'viral' ? 'trending' : t.badge === 'hot' ? 'trending' : undefined) as
-      | 'trending'
-      | 'new'
-      | 'featured'
-      | undefined,
-    categories: t.categorySlug
-      ? { slug: t.categorySlug, name: '', id: '', icon: '' }
-      : undefined,
-  };
+      id: t.listId,
+      title: t.title,
+      slug: t.slug,
+      description: '',
+      coverImage: images.coverImage,
+      horizontalImage: t.horizontalImage,
+      bannerImage: images.bannerImage,
+      saveCount: t.saveCount,
+      itemCount: t.itemCount,
+      likes: t.likeCount,
+      weeklySaves: t.weeklySaves,
+      badge: (t.badge === 'viral' ? 'trending' : t.badge === 'hot' ? 'trending' : undefined) as
+        | 'trending'
+        | 'new'
+        | 'featured'
+        | undefined,
+      categories: t.categorySlug
+        ? { slug: t.categorySlug, name: '', id: '', icon: '' }
+        : undefined,
+      creator: t.creator
+        ? {
+            id: t.creator.id,
+            name: t.creator.name,
+            username: t.creator.username,
+            image: t.creator.image,
+            curatorLevel: t.creator.curatorLevel ?? null,
+          }
+        : null,
+    };
   };
 
   const mapRising = (r: (typeof risingResults)[0]): RisingListData => {
@@ -165,40 +183,54 @@ export async function fetchHomePageData(): Promise<HomeData> {
       categorySlug: r.categorySlug,
     });
     return {
-    id: r.listId,
-    title: r.title,
-    slug: r.slug,
-    description: '',
-    coverImage: images.coverImage,
-    bannerImage: images.bannerImage,
-    saveCount: r.saveCount,
-    itemCount: r.itemCount,
-    likes: r.likeCount,
-    isFastRising: r.isFastRising ?? false,
-    categories: r.categorySlug
-      ? { slug: r.categorySlug, name: '', id: '', icon: '' }
-      : undefined,
-  };
+      id: r.listId,
+      title: r.title,
+      slug: r.slug,
+      description: '',
+      coverImage: images.coverImage,
+      horizontalImage: r.horizontalImage,
+      bannerImage: images.bannerImage,
+      saveCount: r.saveCount,
+      itemCount: r.itemCount,
+      likes: r.likeCount,
+      weeklySaves: r.weeklySaves,
+      isFastRising: r.isFastRising ?? false,
+      categories: r.categorySlug
+        ? { slug: r.categorySlug, name: '', id: '', icon: '' }
+        : undefined,
+      creator: r.creator
+        ? {
+            id: r.creator.id,
+            name: r.creator.name,
+            username: r.creator.username,
+            image: r.creator.image,
+            curatorLevel: r.creator.curatorLevel ?? null,
+          }
+        : null,
+    };
   };
 
   const mapFeatured: FeaturedListData | null = featured
     ? {
         ...mapList(featured as (typeof lists)[0]),
-        creator: featured.users
-          ? { name: featured.users.name, username: featured.users.username }
-          : null,
       }
     : null;
 
   return {
     featured: mapFeatured,
     featuredSlotId: slotList ? slotResult?.slotId ?? null : null,
-    trending: trendingResults.map(mapTrending),
-    rising: risingResults.map(mapRising),
+    trending: dedupeListsById(trendingResults.map(mapTrending)),
+    rising: dedupeListsById(risingResults.map(mapRising)),
     recommendations: visibleLists.slice(0, 4).map(mapList),
   };
-  } catch (err) {
-    console.warn('fetchHomePageData failed:', err);
-    return EMPTY_HOME_DATA;
-  }
 }
+
+/**
+ * دادهٔ صفحهٔ اول — کش بین‌درخواستی (Data Cache) با tag `home`.
+ * خطاها کش نمی‌شوند؛ صفحه/API خودشان fallback دارند.
+ */
+export const fetchHomePageData: () => Promise<HomeData> = unstable_cache(
+  computeHomePageData,
+  ['home-page-data'],
+  { revalidate: 60, tags: ['home', 'trending'] }
+);

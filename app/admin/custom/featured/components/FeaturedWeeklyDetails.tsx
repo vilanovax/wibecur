@@ -101,7 +101,7 @@ export default function FeaturedWeeklyDetails({
             </div>
           )}
           {error && (
-            <p className="text-sm text-red-600 py-4">
+            <p className="text-sm text-red-600 dark:text-red-400 py-4">
               {error}
               <button type="button" onClick={load} className="block mt-2 text-[var(--primary)]">
                 تلاش مجدد
@@ -111,12 +111,12 @@ export default function FeaturedWeeklyDetails({
           {report && (
             <>
               {report.bestPerformer && report.totalSlots > 0 && (
-                <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/60 p-4">
-                  <h3 className="text-sm font-semibold text-emerald-800">برترین عملکرد هفته</h3>
-                  <p className="text-base font-bold text-emerald-900 mt-1">
+                <div className="rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-900/20 p-4">
+                  <h3 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">برترین عملکرد هفته</h3>
+                  <p className="text-base font-bold text-emerald-900 dark:text-emerald-200 mt-1">
                     {report.bestPerformer.listTitle}
                   </p>
-                  <p className="text-sm text-emerald-700 mt-0.5">
+                  <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-0.5">
                     Save Lift: +{report.bestPerformer.saveLiftPercent.toFixed(1)}٪
                   </p>
                 </div>
@@ -219,21 +219,21 @@ export default function FeaturedWeeklyDetails({
 
               {(report.recommendations.length > 0 ||
                 (insights?.recommendations?.length ?? 0) > 0) && (
-                <div className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4">
-                  <div className="flex items-center gap-2 text-amber-900 font-medium mb-2 text-sm">
+                <div className="rounded-xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-900/20 p-4">
+                  <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-medium mb-2 text-sm">
                     <Lightbulb className="w-4 h-4" />
                     پیشنهادات برنامه‌ریزی
                   </div>
-                  <ul className="space-y-1.5 text-sm text-amber-900/90">
+                  <ul className="space-y-1.5 text-sm text-amber-900/90 dark:text-amber-200">
                     {report.recommendations.map((text, i) => (
                       <li key={`w-${i}`} className="flex gap-2">
-                        <span className="text-amber-600">•</span>
+                        <span className="text-amber-600 dark:text-amber-400">•</span>
                         {text}
                       </li>
                     ))}
                     {insights?.recommendations?.map((text, i) => (
                       <li key={`c-${i}`} className="flex gap-2">
-                        <span className="text-amber-600">•</span>
+                        <span className="text-amber-600 dark:text-amber-400">•</span>
                         {text}
                       </li>
                     ))}

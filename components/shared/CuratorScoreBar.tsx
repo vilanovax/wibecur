@@ -61,7 +61,7 @@ export default function CuratorScoreBar({
       </div>
       <div className="h-2 rounded-full bg-white/20 overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-white/90 to-white/70 transition-all duration-700 ease-out"
+          className="h-full rounded-full bg-gradient-to-r from-white/90 to-white/70 transition-colors duration-700 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>

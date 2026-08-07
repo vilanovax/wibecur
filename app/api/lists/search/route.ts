@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { tryApiDbFallback } from '@/lib/api-db';
 import { normalizeSearchQuery, SEARCH_MIN_LENGTH } from '@/lib/list-search';
 import { withResolvedListCovers } from '@/lib/resolve-list-cover';
-import { publicCuratedListWhere } from '@/lib/public-content-filters';
+import { buildPublicListSearchWhere } from '@/lib/public-list-search';
 
 /** GET /api/lists/search?q=...&limit=8 — جستجوی سریع لیست‌ها */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const q = normalizeSearchQuery(searchParams.get('q') ?? '');
-    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '8', 10) || 8, 1), 24);
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '8', 10) || 8, 1), 200);
 
     if (q.length < SEARCH_MIN_LENGTH) {
       return NextResponse.json({
@@ -21,20 +21,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const searchWhere: Prisma.listsWhereInput = {
-      ...publicCuratedListWhere,
-      OR: [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-        {
-          categories: {
-            isActive: true,
-            deletedAt: null,
-            name: { contains: q, mode: 'insensitive' },
-          },
-        },
-      ],
-    };
+    const searchWhere = buildPublicListSearchWhere(q);
 
     const lists = await dbQuery(() =>
       prisma.lists.findMany({
@@ -77,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     console.error('Error searching lists:', error);
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message || 'خطا در جستجو' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در جستجو') },
       { status: 500 }
     );
   }

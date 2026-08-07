@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
       data: { available: false, username, reason: 'taken' as const },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
+    const message = getClientErrorMessage(error, 'Internal server error');
     console.error('Error checking username:', message);
 
     if (isDbUnavailableError(error)) {

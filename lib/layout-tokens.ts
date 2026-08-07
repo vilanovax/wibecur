@@ -27,9 +27,9 @@ export const DESKTOP_SITE_SHELL_CLASS =
 /** @deprecated از DESKTOP_PAGE_MAX_WIDTH_CLASS استفاده کنید */
 export const DESKTOP_CONTENT_MAX_WIDTH_CLASS = DESKTOP_PAGE_MAX_WIDTH_CLASS;
 
-/** گرید فید صفحهٔ خانه — ۳ ستون lg، ۴ ستون xl */
+/** گرید فید صفحهٔ خانه — ۴ ستون از lg برای چیدمان یکنواخت دسکتاپ */
 export const HOME_FEED_GRID_CLASS =
-  'lg:grid lg:grid-cols-3 lg:gap-3 xl:grid-cols-4 xl:gap-4';
+  'lg:grid lg:grid-cols-4 lg:gap-3 xl:gap-4';
 
 /** @deprecated سایدبار دسکتاپ حذف شد — از چیدمان magazine استفاده کنید */
 export const HOME_DESKTOP_LAYOUT_CLASS =

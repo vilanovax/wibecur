@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { fetchHomePageData } from '@/lib/home-data-server';
 import { tryApiDbFallback } from '@/lib/api-db';
 
@@ -29,7 +30,7 @@ export async function GET() {
     }
     console.error('Error fetching home lists:', error);
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message ?? 'خطا در دریافت لیست‌ها' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت لیست‌ها') },
       { status: 500 }
     );
   }

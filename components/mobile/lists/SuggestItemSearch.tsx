@@ -456,7 +456,7 @@ export default function SuggestItemSearch({
               value={formData.externalUrl}
               onChange={(e) => setFormData((p) => ({ ...p, externalUrl: e.target.value }))}
               placeholder="لینک سایت، اینستاگرام یا صفحه معرفی"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
             />
           </div>
           <div>
@@ -466,7 +466,7 @@ export default function SuggestItemSearch({
               value={formData.imageUrl}
               onChange={(e) => setFormData((p) => ({ ...p, imageUrl: e.target.value }))}
               placeholder="لینک تصویر یا آپلود فایل"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary mb-2"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary mb-2"
             />
             <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm cursor-pointer hover:bg-gray-50">
               <ImageIcon className="w-4 h-4" />
@@ -523,7 +523,7 @@ export default function SuggestItemSearch({
               value={formData.title}
               onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
               placeholder={getTitlePlaceholder(categorySlug)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
               required
             />
           </div>
@@ -563,7 +563,7 @@ export default function SuggestItemSearch({
               placeholder="یک توضیح کوتاه بنویس که چرا ارزش اضافه شدن دارد..."
               maxLength={MAX_DESCRIPTION_LENGTH}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
             />
             <p className="text-xs text-gray-400 mt-1 text-start">
               {formData.description.length}/{MAX_DESCRIPTION_LENGTH}
@@ -725,7 +725,7 @@ export default function SuggestItemSearch({
               return (
                 <li
                   key={item.id}
-                  className={`rounded-xl border bg-wibe-card overflow-hidden transition-all ${
+                  className={`rounded-xl border bg-wibe-card overflow-hidden transition-colors ${
                     isExpanded ? 'border-primary/30 ring-1 ring-primary/10' : 'border-wibe'
                   }`}
                 >
@@ -792,7 +792,7 @@ export default function SuggestItemSearch({
                               onChange={(e) => setOptionalNote(e.target.value)}
                               placeholder="چرا این آیتم به لیست اضافه شود؟"
                               rows={2}
-                              className="w-full px-3 py-2 rounded-xl border border-wibe wibe-small resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              className="w-full px-3 py-2 rounded-xl border border-wibe wibe-small resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                             />
                           )}
                         </>

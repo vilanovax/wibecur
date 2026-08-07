@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { requireAdminUser } from '@/lib/auth/require-permission';
+import { softDeleteItems } from '@/lib/admin/item-trash';
+import { updateItemTip } from '@/lib/admin/item-tips-server';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 import { ensureImageInLiara } from '@/lib/object-storage';
@@ -16,6 +19,27 @@ import {
   isMixedListCategory,
   parseEntryKind,
 } from '@/lib/list-entry';
+import {
+  revalidateListDetailCache,
+  revalidateCategoryCache,
+  revalidateItemDetailCache,
+} from '@/lib/public-cache';
+
+/** تازه‌سازی کش صفحهٔ لیستِ والدِ یک آیتم (با یک کوئری سبک برای slug). */
+async function revalidateItemParentList(
+  listId: string,
+  itemId?: string
+): Promise<void> {
+  if (itemId) revalidateItemDetailCache(itemId);
+  const parent = await prisma.lists.findUnique({
+    where: { id: listId },
+    select: { slug: true, categoryId: true },
+  });
+  if (parent) {
+    revalidateListDetailCache(parent.slug);
+    revalidateCategoryCache(parent.categoryId);
+  }
+}
 
 // GET /api/admin/items/[id] - Get single item
 export async function GET(
@@ -198,13 +222,19 @@ export async function PUT(
       });
 
       if (newList) {
-        notifyListBookmarkers(
-          listId,
-          item.title,
-          newList.title || 'لیست'
-        ).catch(console.error);
+        notifyListBookmarkers(listId, {
+          itemCount: 1,
+          listTitle: newList.title || 'لیست',
+        }).catch(console.error);
       }
     }
+
+    // صفحهٔ آیتم، لیست (مبدأ و مقصد در صورت جابه‌جایی) و دسته‌ها را تازه کن.
+    revalidateItemDetailCache(item.id);
+    revalidateListDetailCache(existingItem.lists.slug);
+    revalidateListDetailCache(item.lists.slug);
+    revalidateCategoryCache(existingItem.lists.categoryId);
+    revalidateCategoryCache(item.lists.categoryId);
 
     return NextResponse.json(item);
   } catch (error: any) {
@@ -216,7 +246,7 @@ export async function PUT(
   }
 }
 
-// PATCH /api/admin/items/[id] - فقط به‌روزرسانی order (برای جابه‌جایی در لیست)
+// PATCH /api/admin/items/[id] — order، title، tip (ویرایش سریع)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -225,21 +255,48 @@ export async function PATCH(
     await requireAdmin();
     const { id } = await params;
     const body = await request.json();
-    const { order } = body;
+    const { order, title, tip } = body;
 
     const existing = await prisma.items.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: 'آیتم یافت نشد' }, { status: 404 });
     }
 
-    if (typeof order !== 'number') {
-      return NextResponse.json({ error: 'order الزامی است' }, { status: 400 });
+    if (tip === null || typeof tip === 'string') {
+      await updateItemTip(prisma, id, tip);
+      const item = await prisma.items.findUnique({ where: { id } });
+      await revalidateItemParentList(existing.listId, id);
+      return NextResponse.json(item);
+    }
+
+    const data: { order?: number; title?: string; updatedAt: Date } = {
+      updatedAt: new Date(),
+    };
+
+    if (typeof order === 'number') {
+      data.order = order;
+    }
+
+    if (typeof title === 'string') {
+      const trimmed = title.trim();
+      if (!trimmed) {
+        return NextResponse.json({ error: 'عنوان نمی‌تواند خالی باشد' }, { status: 400 });
+      }
+      data.title = trimmed;
+    }
+
+    if (data.order === undefined && data.title === undefined) {
+      return NextResponse.json(
+        { error: 'حداقل یکی از order، title یا tip الزامی است' },
+        { status: 400 }
+      );
     }
 
     const item = await prisma.items.update({
       where: { id },
-      data: { order },
+      data,
     });
+    await revalidateItemParentList(existing.listId, id);
     return NextResponse.json(item);
   } catch (error: any) {
     console.error('Error PATCH item:', error);
@@ -256,35 +313,31 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    const userOrRes = await requireAdminUser();
+    if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
 
     // Check if item exists
     const existingItem = await prisma.items.findUnique({
       where: { id },
-      select: { id: true, listId: true },
+      select: { id: true, listId: true, deletedAt: true },
     });
 
     if (!existingItem) {
       return NextResponse.json({ error: 'آیتم یافت نشد' }, { status: 404 });
     }
+    if (existingItem.deletedAt) {
+      return NextResponse.json({ error: 'این آیتم در زباله‌دان است' }, { status: 400 });
+    }
 
-    // Delete item
-    await prisma.items.delete({
-      where: { id },
-    });
+    const processed = await softDeleteItems(prisma, [id], userOrRes.id);
+    if (processed === 0) {
+      return NextResponse.json({ error: 'حذف انجام نشد' }, { status: 400 });
+    }
 
-    // Update list itemCount
-    await prisma.lists.update({
-      where: { id: existingItem.listId },
-      data: {
-        itemCount: {
-          decrement: 1,
-        },
-      },
-    });
+    await revalidateItemParentList(existingItem.listId, id);
 
-    return NextResponse.json({ message: 'آیتم با موفقیت حذف شد' });
+    return NextResponse.json({ message: 'آیتم به زباله‌دان منتقل شد' });
   } catch (error: any) {
     console.error('Error deleting item:', error);
     return NextResponse.json(

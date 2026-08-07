@@ -1,7 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query';
 import { MessageSquare, Plus, Loader2, TrendingUp, Clock } from 'lucide-react';
 import ListCommentItem from './ListCommentItem';
 import ListCommentForm from './ListCommentForm';
@@ -24,28 +28,50 @@ interface Comment {
 
 interface ListCommentSectionProps {
   listId: string;
+  listSlug?: string;
+  categorySlug?: string | null;
 }
 
 const COMMENTS_PER_PAGE = 10;
 
-interface ListCommentsResponse {
+interface ListCommentsPage {
   comments: Comment[];
   commentsEnabled: boolean;
+  totalCount?: number;
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
-async function fetchListComments(listId: string, sortBy: string): Promise<ListCommentsResponse> {
-  const res = await fetch(`/api/lists/${listId}/comments?sort=${sortBy}`);
+async function fetchListCommentsPage(
+  listId: string,
+  sortBy: string,
+  cursor: string | null
+): Promise<ListCommentsPage> {
+  const params = new URLSearchParams({
+    sort: sortBy,
+    limit: String(COMMENTS_PER_PAGE),
+  });
+  if (cursor) params.set('cursor', cursor);
+  const res = await fetch(`/api/lists/${listId}/comments?${params.toString()}`);
   const data = await res.json();
-  if (!data.success) return { comments: [], commentsEnabled: true };
+  if (!data.success) {
+    return { comments: [], commentsEnabled: true, nextCursor: null, hasMore: false };
+  }
   return {
     comments: data.data ?? [],
     commentsEnabled: data.commentsEnabled ?? true,
+    totalCount: data.totalCount,
+    nextCursor: data.nextCursor ?? null,
+    hasMore: !!data.hasMore,
   };
 }
 
-export default function ListCommentSection({ listId }: ListCommentSectionProps) {
+export default function ListCommentSection({
+  listId,
+  listSlug,
+  categorySlug,
+}: ListCommentSectionProps) {
   const queryClient = useQueryClient();
-  const [visibleCount, setVisibleCount] = useState(COMMENTS_PER_PAGE);
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('newest');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -53,18 +79,28 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
-  const { data, isLoading, refetch } = useQuery({
+  const {
+    data,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['lists', listId, 'comments', sortBy],
-    queryFn: () => fetchListComments(listId, sortBy),
+    queryFn: ({ pageParam }) =>
+      fetchListCommentsPage(listId, sortBy, pageParam as string | null),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     enabled: !!listId,
   });
-  const comments = data?.comments ?? [];
-  const commentsEnabled = data?.commentsEnabled ?? true;
-  const displayedComments = comments.slice(0, visibleCount);
 
-  useEffect(() => {
-    setVisibleCount(COMMENTS_PER_PAGE);
-  }, [listId, sortBy]);
+  const comments = data?.pages.flatMap((p) => p.comments) ?? [];
+  const commentsEnabled = data?.pages[0]?.commentsEnabled ?? true;
+  const totalCount = data?.pages[0]?.totalCount ?? comments.length;
+  const remainingCount = Math.max(totalCount - comments.length, 0);
+  const displayedComments = comments;
 
   const handleLike = async (commentId: string) => {
     setIsActionLoading(true);
@@ -75,17 +111,24 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
       const resData = await response.json();
 
       if (resData.success) {
-        queryClient.setQueryData<ListCommentsResponse>(
+        queryClient.setQueryData<InfiniteData<ListCommentsPage>>(
           ['lists', listId, 'comments', sortBy],
           (prev) =>
             prev
               ? {
                   ...prev,
-                  comments: prev.comments.map((c) =>
-                    c.id === commentId
-                      ? { ...c, userLiked: resData.data.isLiked, likeCount: resData.data.likeCount }
-                      : c
-                  ),
+                  pages: prev.pages.map((page) => ({
+                    ...page,
+                    comments: page.comments.map((c) =>
+                      c.id === commentId
+                        ? {
+                            ...c,
+                            userLiked: resData.data.isLiked,
+                            likeCount: resData.data.likeCount,
+                          }
+                        : c
+                    ),
+                  })),
                 }
               : prev
         );
@@ -138,13 +181,13 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-primary" />
             <h3 className="font-bold text-gray-900">
-              کامنت‌ها ({comments.length})
+              کامنت‌ها ({totalCount})
             </h3>
           </div>
           {commentsEnabled ? (
             <button
               onClick={() => setIsFormOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors duration-200 shadow-sm hover:shadow-md"
               aria-label="افزودن کامنت جدید"
             >
               <Plus className="w-5 h-5" strokeWidth={2.5} />
@@ -210,16 +253,25 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
                 />
               ))}
             </div>
-            {comments.length > visibleCount && (
+            {hasNextPage && (
               <div className="flex justify-center mt-4">
                 <button
-                  onClick={() => setVisibleCount((prev) => prev + COMMENTS_PER_PAGE)}
-                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center gap-2"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-60"
                 >
-                  <span>نمایش بیشتر</span>
-                  <span className="text-sm text-gray-500">
-                    ({comments.length - visibleCount} باقی‌مانده)
-                  </span>
+                  {isFetchingNextPage ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <span>نمایش بیشتر</span>
+                      {remainingCount > 0 && (
+                        <span className="text-sm text-gray-500">
+                          ({remainingCount} باقی‌مانده)
+                        </span>
+                      )}
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -232,6 +284,8 @@ export default function ListCommentSection({ listId }: ListCommentSectionProps) 
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         listId={listId}
+        listSlug={listSlug}
+        categorySlug={categorySlug}
         onSubmit={refetch}
       />
 

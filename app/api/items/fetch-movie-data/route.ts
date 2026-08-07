@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 
 import { getDecryptedSettings } from '@/lib/settings';
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error fetching movie data:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در دریافت اطلاعات فیلم' },
+      { error: getClientErrorMessage(error, 'خطا در دریافت اطلاعات فیلم') },
       { status: 500 }
     );
   }

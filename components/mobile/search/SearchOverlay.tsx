@@ -15,28 +15,37 @@ import {
   SEARCH_SUGGESTIONS,
   suggestionLabelForQuery,
 } from '@/lib/list-search';
-import { trackSearch } from '@/lib/analytics';
+import { trackSearch, trackSearchNoResults, trackSearchResultClick } from '@/lib/analytics';
 import { withResolvedListCover } from '@/lib/resolve-list-cover';
 import { DESKTOP_PAGE_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
 import {
   SearchChipButton,
   SearchChipScroller,
+  SearchItemRow,
   SearchListRow,
   type SearchListRowData,
 } from '@/components/mobile/search/SearchOverlayParts';
+import SearchResultsSummary, {
+  type SearchResultTab,
+} from '@/components/mobile/search/SearchResultsSummary';
+import {
+  fetchUnifiedSearch,
+  SEARCH_ITEMS_ONLY_LIMITS,
+  SEARCH_LISTS_ONLY_LIMITS,
+} from '@/lib/search-client';
+import type { UnifiedSearchItem } from '@/lib/unified-search';
+import type { SearchQueryIntent } from '@/lib/search-keywords';
 
 type TrendingQueryItem = { query: string; count: number };
 
-type SearchListResult = {
-  id: string;
-  title: string;
-  slug: string;
+type SearchListResult = SearchListRowData & {
   description?: string | null;
-  coverImage: string | null;
-  saveCount?: number;
-  itemCount?: number;
   categories?: { name: string; icon: string | null; slug?: string | null } | null;
 };
+
+type NavigableResult =
+  | { kind: 'item'; item: UnifiedSearchItem }
+  | { kind: 'list'; list: SearchListResult };
 
 type TrendingListPreview = {
   listId: string;
@@ -69,9 +78,18 @@ export default function SearchOverlay({
   const inputRef = useRef<HTMLInputElement>(null);
   const resultRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState<SearchListResult[]>([]);
-  const [total, setTotal] = useState(0);
+  const [directItems, setDirectItems] = useState<UnifiedSearchItem[]>([]);
+  const [indirectItems, setIndirectItems] = useState<UnifiedSearchItem[]>([]);
+  const [topPicks, setTopPicks] = useState<UnifiedSearchItem[]>([]);
+  const [subThemes, setSubThemes] = useState<string[]>([]);
+  const [queryIntent, setQueryIntent] = useState<SearchQueryIntent>('specific');
+  const [directLists, setDirectLists] = useState<SearchListResult[]>([]);
+  const [indirectLists, setIndirectLists] = useState<SearchListResult[]>([]);
+  const [similarItems, setSimilarItems] = useState<UnifiedSearchItem[]>([]);
+  const [totals, setTotals] = useState({ items: 0, lists: 0 });
+  const [searchViewTab, setSearchViewTab] = useState<SearchResultTab>('items');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingLists, setIsLoadingLists] = useState(false);
   const [recent, setRecent] = useState<string[]>([]);
   const [trendingQueries, setTrendingQueries] = useState<TrendingQueryItem[]>([]);
   const [trendingSource, setTrendingSource] = useState<'analytics' | 'fallback'>('fallback');
@@ -79,6 +97,11 @@ export default function SearchOverlay({
   const [featuredLoading, setFeaturedLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const requestSeq = useRef(0);
+  const listsRequestSeq = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const listsAbortRef = useRef<AbortController | null>(null);
+  const listsLoadedForRef = useRef('');
+  const noResultsTracked = useRef('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -142,50 +165,172 @@ export default function SearchOverlay({
     };
   }, [isOpen, initialQuery]);
 
-  const runSearch = useCallback(async (raw: string) => {
+  const fetchOverlayItems = useCallback(async (raw: string) => {
     const q = normalizeSearchQuery(raw);
     if (q.length < SEARCH_MIN_LENGTH) {
-      setResults([]);
-      setTotal(0);
+      setDirectItems([]);
+      setIndirectItems([]);
+      setTopPicks([]);
+      setSubThemes([]);
+      setQueryIntent('specific');
+      setDirectLists([]);
+      setIndirectLists([]);
+      setSimilarItems([]);
+      setTotals({ items: 0, lists: 0 });
+      setSearchViewTab('items');
       setIsLoading(false);
+      listsLoadedForRef.current = '';
       return;
     }
 
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     const seq = ++requestSeq.current;
     setIsLoading(true);
+    listsLoadedForRef.current = '';
 
     try {
-      const res = await fetch(`/api/lists/search?q=${encodeURIComponent(q)}&limit=8`);
-      const json = await res.json();
-      if (seq !== requestSeq.current) return;
+      const data = await fetchUnifiedSearch(
+        { q, ...SEARCH_ITEMS_ONLY_LIMITS },
+        { signal: controller.signal }
+      );
+      if (seq !== requestSeq.current || controller.signal.aborted) return;
 
-      if (json.success) {
-        setResults(json.data.lists ?? []);
-        setTotal(json.data.total ?? 0);
+      if (data) {
+        setDirectItems(data.directItems);
+        setIndirectItems(data.indirectItems);
+        setTopPicks(data.topPicks ?? []);
+        setSubThemes(data.subThemes ?? []);
+        setQueryIntent(data.queryIntent ?? 'specific');
+        setSimilarItems(data.relatedItems ?? data.similarItems ?? []);
+        setDirectLists([]);
+        setIndirectLists([]);
+        setTotals((prev) => ({ items: data.totals.items, lists: prev.lists || 0 }));
       } else {
-        setResults([]);
-        setTotal(0);
+        setDirectItems([]);
+        setIndirectItems([]);
+        setTopPicks([]);
+        setSubThemes([]);
+        setDirectLists([]);
+        setIndirectLists([]);
+        setSimilarItems([]);
+        setTotals({ items: 0, lists: 0 });
       }
-    } catch {
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
       if (seq !== requestSeq.current) return;
-      setResults([]);
-      setTotal(0);
+      setDirectItems([]);
+      setIndirectItems([]);
+      setTopPicks([]);
+      setSubThemes([]);
+      setQueryIntent('specific');
+      setDirectLists([]);
+      setIndirectLists([]);
+      setSimilarItems([]);
+      setTotals({ items: 0, lists: 0 });
     } finally {
-      if (seq === requestSeq.current) setIsLoading(false);
+      if (seq === requestSeq.current && !controller.signal.aborted) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
+  const fetchOverlayLists = useCallback(async (raw: string) => {
+    const q = normalizeSearchQuery(raw);
+    if (q.length < SEARCH_MIN_LENGTH) return;
+    if (listsLoadedForRef.current === q) return;
+
+    listsAbortRef.current?.abort();
+    const controller = new AbortController();
+    listsAbortRef.current = controller;
+    const seq = ++listsRequestSeq.current;
+    setIsLoadingLists(true);
+
+    try {
+      const data = await fetchUnifiedSearch(
+        { q, ...SEARCH_LISTS_ONLY_LIMITS },
+        { signal: controller.signal }
+      );
+      if (seq !== listsRequestSeq.current || controller.signal.aborted) return;
+      if (!data) return;
+
+      setDirectLists(data.directLists ?? data.lists);
+      setIndirectLists(data.indirectLists ?? []);
+      listsLoadedForRef.current = q;
+      setTotals((prev) => ({ items: prev.items, lists: data.totals.lists }));
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
+    } finally {
+      if (seq === listsRequestSeq.current && !controller.signal.aborted) {
+        setIsLoadingLists(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      abortRef.current?.abort();
+      listsAbortRef.current?.abort();
+      return;
+    }
     const timer = window.setTimeout(() => {
-      void runSearch(query);
+      void fetchOverlayItems(query);
     }, SEARCH_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [query, isOpen, runSearch]);
+    return () => {
+      window.clearTimeout(timer);
+      abortRef.current?.abort();
+    };
+  }, [query, isOpen, fetchOverlayItems]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSearchViewTab('items');
+    listsLoadedForRef.current = '';
+  }, [query, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || searchViewTab !== 'lists') return;
+    void fetchOverlayLists(query);
+  }, [isOpen, searchViewTab, query, fetchOverlayLists]);
+
+  const isBroad = queryIntent === 'broad';
+  const shownOverlayItems = isBroad
+    ? directItems.length + topPicks.length + similarItems.length
+    : directItems.length + indirectItems.length + similarItems.length;
+  const shownOverlayLists = directLists.length + indirectLists.length;
 
   useEffect(() => {
     setActiveIndex(-1);
-  }, [results]);
+  }, [directItems, indirectItems, topPicks, directLists, indirectLists, searchViewTab]);
+
+  const navigableResults = useMemo<NavigableResult[]>(() => {
+    const rows: NavigableResult[] = [];
+    const showItems = searchViewTab === 'items';
+    const showLists = searchViewTab === 'lists';
+    if (showItems) {
+      if (isBroad) {
+        for (const item of directItems) rows.push({ kind: 'item', item });
+        for (const item of topPicks) rows.push({ kind: 'item', item });
+      } else {
+        for (const item of directItems) rows.push({ kind: 'item', item });
+        for (const item of indirectItems) rows.push({ kind: 'item', item });
+      }
+    } else if (showLists) {
+      for (const list of directLists) rows.push({ kind: 'list', list });
+      for (const list of indirectLists) rows.push({ kind: 'list', list });
+    }
+    return rows;
+  }, [directItems, indirectItems, topPicks, directLists, indirectLists, searchViewTab, isBroad]);
+
+  const resultCount = totals.items + totals.lists;
+  const hasAnyResults =
+    directItems.length > 0 ||
+    indirectItems.length > 0 ||
+    topPicks.length > 0 ||
+    directLists.length > 0 ||
+    indirectLists.length > 0 ||
+    similarItems.length > 0;
 
   useEffect(() => {
     if (activeIndex >= 0) {
@@ -207,7 +352,7 @@ export default function SearchOverlay({
       }
 
       onClose();
-      router.push(`/lists?q=${encodeURIComponent(q)}`);
+      router.push(`/search?q=${encodeURIComponent(q)}`);
     },
     [onApplyLocally, onClose, router]
   );
@@ -236,6 +381,18 @@ export default function SearchOverlay({
 
   const normalized = normalizeSearchQuery(query);
   const showResults = normalized.length >= SEARCH_MIN_LENGTH;
+  const showItemResults = searchViewTab === 'items';
+  const showListResults = searchViewTab === 'lists';
+  const listNavOffset = showItemResults ? directItems.length + indirectItems.length : 0;
+
+  useEffect(() => {
+    if (!showResults || isLoading || hasAnyResults || normalized.length < SEARCH_MIN_LENGTH) {
+      return;
+    }
+    if (noResultsTracked.current === normalized) return;
+    noResultsTracked.current = normalized;
+    trackSearchNoResults(normalized, 'overlay');
+  }, [showResults, isLoading, hasAnyResults, normalized]);
 
   const analyticsQueries =
     trendingSource === 'analytics'
@@ -310,33 +467,52 @@ export default function SearchOverlay({
         return;
       }
 
-      if (results.length === 0) return;
+      if (navigableResults.length === 0) return;
 
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveIndex((prev) => (prev + 1) % results.length);
+        setActiveIndex((prev) => (prev + 1) % navigableResults.length);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setActiveIndex((prev) => (prev <= 0 ? results.length - 1 : prev - 1));
+        setActiveIndex((prev) => (prev <= 0 ? navigableResults.length - 1 : prev - 1));
       } else if (e.key === 'Enter' && activeIndex >= 0) {
         e.preventDefault();
-        const list = results[activeIndex];
-        if (list) {
-          pushRecentSearch(normalized);
-          trackSearch(normalized, 'overlay_keyboard');
+        const row = navigableResults[activeIndex];
+        if (!row) return;
+        pushRecentSearch(normalized);
+        if (row.kind === 'item') {
+          trackSearchResultClick({
+            query: normalized,
+            source: 'overlay_keyboard',
+            result_type: 'item',
+            result_slug: row.item.id,
+            category_slug: row.item.categorySlug ?? undefined,
+            position: activeIndex + 1,
+          });
           onClose();
-          router.push(`/lists/${list.slug}`);
+          router.push(`/items/${row.item.id}`);
+        } else {
+          trackSearchResultClick({
+            query: normalized,
+            source: 'overlay_keyboard',
+            result_type: 'list',
+            result_slug: row.list.slug,
+            category_slug: row.list.categories?.slug ?? undefined,
+            position: activeIndex + 1,
+          });
+          onClose();
+          router.push(`/lists/${row.list.slug}`);
         }
       }
     };
 
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose, results, activeIndex, router, normalized]);
+  }, [isOpen, onClose, navigableResults, activeIndex, router, normalized]);
 
   const allResultsLabel = onApplyLocally
     ? localActionLabel ?? 'اعمال فیلتر در این صفحه'
-    : `مشاهده همه ${total.toLocaleString('fa-IR')} نتیجه در لیست‌ها`;
+    : `مشاهده همه ${resultCount.toLocaleString('fa-IR')} نتیجه`;
 
   if (!isOpen || typeof document === 'undefined') return null;
 
@@ -379,7 +555,9 @@ export default function SearchOverlay({
           <p className="px-1 wibe-caption text-wibe-secondary">
             {isLoading
               ? 'در حال جستجو…'
-              : `${total.toLocaleString('fa-IR')} نتیجه${results.length > 0 ? ' · ↑↓' : ''}`}
+              : `${resultCount.toLocaleString('fa-IR')} نتیجه${
+                  navigableResults.length > 0 ? ' · ↑↓' : ''
+                }`}
           </p>
         )}
       </div>
@@ -494,7 +672,7 @@ export default function SearchOverlay({
             <div className="border-t border-wibe pt-3 text-center">
               <button
                 type="button"
-                onClick={() => navigateAndClose('/user-lists')}
+                onClick={() => navigateAndClose('/explore')}
                 className="wibe-caption font-medium text-wibe-secondary underline-offset-2 hover:text-primary hover:underline"
               >
                 کشف در اکسپلور
@@ -503,7 +681,7 @@ export default function SearchOverlay({
           </div>
         )}
 
-        {showResults && isLoading && results.length === 0 && (
+        {showResults && isLoading && !hasAnyResults && (
           <div className="space-y-2.5">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
@@ -517,45 +695,364 @@ export default function SearchOverlay({
           </div>
         )}
 
-        {showResults && !isLoading && results.length === 0 && (
+        {showResults && !isLoading && !hasAnyResults && !(searchViewTab === 'lists' && isLoadingLists) && (
           <div className="py-16 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
               <Search className="h-7 w-7 text-wibe-secondary/70" strokeWidth={1.75} />
             </div>
-            <p className="wibe-body font-medium text-foreground">لیستی پیدا نشد</p>
+            <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
             <p className="mt-1 wibe-caption text-wibe-secondary">
-              عبارت دیگری امتحان کن یا در همه لیست‌ها بگرد
+              عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن
             </p>
             <button
               type="button"
               onClick={() => goToLists(query)}
               className="mt-4 rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white"
             >
-              جستجو در همه لیست‌ها
+              جستجو در همه نتایج
             </button>
           </div>
         )}
 
-        {showResults && results.length > 0 && (
-          <div className="space-y-2">
-            {results.map((list, index) => (
-              <SearchListRow
-                key={list.id}
-                list={list as SearchListRowData}
-                highlightQuery={normalized}
-                isActive={activeIndex === index}
-                innerRef={(el) => {
-                  resultRefs.current[index] = el;
-                }}
-                onClick={() => {
-                  pushRecentSearch(normalized);
-                  trackSearch(normalized, 'overlay_result');
-                  onClose();
-                }}
-              />
-            ))}
+        {showResults && (hasAnyResults || (searchViewTab === 'lists' && isLoadingLists)) && (
+          <div className="space-y-4">
+            <SearchResultsSummary
+              query={normalized}
+              totals={totals}
+              shownItems={shownOverlayItems}
+              shownLists={shownOverlayLists}
+              shownTopPicks={topPicks.length}
+              queryIntent={queryIntent}
+              activeTab={searchViewTab}
+              onTabChange={setSearchViewTab}
+            />
 
-            {total > results.length && (
+            {isBroad && subThemes.length > 0 && (
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                {subThemes.map((theme) => (
+                  <button
+                    key={theme}
+                    type="button"
+                    onClick={() => fillQueryFromChip(theme)}
+                    className="h-8 shrink-0 rounded-full border border-wibe bg-wibe-card px-3.5 wibe-caption font-medium text-foreground"
+                  >
+                    {theme}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {showListResults && isLoadingLists && directLists.length + indirectLists.length === 0 && (
+              <div className="space-y-2.5">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
+                    <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-gray-200" />
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showListResults && (directLists.length > 0 || indirectLists.length > 0) && (
+              <section>
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                  {isBroad ? 'لیست‌های پیشنهادی' : 'لیست‌ها'}
+                  {totals.lists > directLists.length + indirectLists.length && (
+                    <span className="mr-1 tabular-nums">
+                      ({totals.lists.toLocaleString('fa-IR')})
+                    </span>
+                  )}
+                </h3>
+                <div className="space-y-2">
+                  {directLists.map((list, index) => {
+                    const navIndex = isBroad ? index : listNavOffset + index;
+                    return (
+                      <SearchListRow
+                        key={list.id}
+                        list={list as SearchListRowData}
+                        highlightQuery={normalized}
+                        isActive={activeIndex === navIndex}
+                        innerRef={(el) => {
+                          resultRefs.current[navIndex] = el;
+                        }}
+                        onClick={() => {
+                          pushRecentSearch(normalized);
+                          trackSearchResultClick({
+                            query: normalized,
+                            source: 'overlay_result',
+                            result_type: 'list',
+                            result_slug: list.slug,
+                            category_slug: list.categories?.slug ?? undefined,
+                            position: navIndex + 1,
+                          });
+                          onClose();
+                        }}
+                      />
+                    );
+                  })}
+                  {indirectLists.map((list, index) => {
+                    const navIndex = isBroad
+                      ? directLists.length + index
+                      : listNavOffset + directLists.length + index;
+                    return (
+                      <SearchListRow
+                        key={list.id}
+                        list={list as SearchListRowData}
+                        highlightQuery={normalized}
+                        isActive={activeIndex === navIndex}
+                        innerRef={(el) => {
+                          resultRefs.current[navIndex] = el;
+                        }}
+                        onClick={() => {
+                          pushRecentSearch(normalized);
+                          trackSearchResultClick({
+                            query: normalized,
+                            source: 'overlay_indirect',
+                            result_type: 'list',
+                            result_slug: list.slug,
+                            category_slug: list.categories?.slug ?? undefined,
+                            position: navIndex + 1,
+                          });
+                          onClose();
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {showItemResults && directItems.length > 0 && (
+              <section>
+                <div className="space-y-2">
+                  {directItems.map((item, index) => {
+                    const navIndex = isBroad
+                      ? directLists.length + indirectLists.length + index
+                      : index;
+                    return (
+                    <SearchItemRow
+                      key={item.id}
+                      item={item}
+                      highlightQuery={normalized}
+                      variant="direct"
+                      isActive={activeIndex === navIndex}
+                      innerRef={(el) => {
+                        resultRefs.current[navIndex] = el;
+                      }}
+                      onClick={() => {
+                        pushRecentSearch(normalized);
+                        trackSearchResultClick({
+                          query: normalized,
+                          source: 'overlay_result',
+                          result_type: 'item',
+                          result_slug: item.id,
+                          category_slug: item.categorySlug ?? undefined,
+                          position: navIndex + 1,
+                        });
+                        onClose();
+                      }}
+                    />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {showItemResults && isBroad && topPicks.length > 0 && (
+              <section>
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                  پیشنهادهای برتر
+                </h3>
+                <div className="space-y-2">
+                  {topPicks.map((item, index) => {
+                    const navIndex =
+                      directLists.length + indirectLists.length + directItems.length + index;
+                    return (
+                      <SearchItemRow
+                        key={item.id}
+                        item={item}
+                        highlightQuery={normalized}
+                        variant="suggestion"
+                        isActive={activeIndex === navIndex}
+                        innerRef={(el) => {
+                          resultRefs.current[navIndex] = el;
+                        }}
+                        onClick={() => {
+                          pushRecentSearch(normalized);
+                          trackSearchResultClick({
+                            query: normalized,
+                            source: 'overlay_result',
+                            result_type: 'item',
+                            result_slug: item.id,
+                            category_slug: item.categorySlug ?? undefined,
+                            position: navIndex + 1,
+                          });
+                          onClose();
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {showItemResults && !isBroad && indirectItems.length > 0 && (
+              <section>
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                  مرتبط با جستجو
+                </h3>
+                <div className="space-y-2">
+                  {indirectItems.map((item, index) => {
+                    const navIndex = directItems.length + index;
+                    return (
+                      <SearchItemRow
+                        key={item.id}
+                        item={item}
+                        highlightQuery={normalized}
+                        isActive={activeIndex === navIndex}
+                        innerRef={(el) => {
+                          resultRefs.current[navIndex] = el;
+                        }}
+                        onClick={() => {
+                          pushRecentSearch(normalized);
+                          trackSearchResultClick({
+                            query: normalized,
+                            source: 'overlay_indirect',
+                            result_type: 'item',
+                            result_slug: item.id,
+                            category_slug: item.categorySlug ?? undefined,
+                            position: navIndex + 1,
+                          });
+                          onClose();
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {showListResults && !isBroad && (directLists.length > 0 || indirectLists.length > 0) && (
+              <section>
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                  لیست‌ها
+                  {totals.lists > directLists.length + indirectLists.length && (
+                    <span className="mr-1 tabular-nums">
+                      ({totals.lists.toLocaleString('fa-IR')})
+                    </span>
+                  )}
+                </h3>
+                <div className="space-y-2">
+                  {directLists.map((list, index) => {
+                    const navIndex = listNavOffset + index;
+                    return (
+                      <SearchListRow
+                        key={list.id}
+                        list={list as SearchListRowData}
+                        highlightQuery={normalized}
+                        isActive={activeIndex === navIndex}
+                        innerRef={(el) => {
+                          resultRefs.current[navIndex] = el;
+                        }}
+                        onClick={() => {
+                          pushRecentSearch(normalized);
+                          trackSearchResultClick({
+                            query: normalized,
+                            source: 'overlay_result',
+                            result_type: 'list',
+                            result_slug: list.slug,
+                            category_slug: list.categories?.slug ?? undefined,
+                            position: navIndex + 1,
+                          });
+                          onClose();
+                        }}
+                      />
+                    );
+                  })}
+                  {indirectLists.map((list, index) => {
+                    const navIndex = listNavOffset + directLists.length + index;
+                    return (
+                      <SearchListRow
+                        key={list.id}
+                        list={list as SearchListRowData}
+                        highlightQuery={normalized}
+                        isActive={activeIndex === navIndex}
+                        innerRef={(el) => {
+                          resultRefs.current[navIndex] = el;
+                        }}
+                        onClick={() => {
+                          pushRecentSearch(normalized);
+                          trackSearchResultClick({
+                            query: normalized,
+                            source: 'overlay_indirect',
+                            result_type: 'list',
+                            result_slug: list.slug,
+                            category_slug: list.categories?.slug ?? undefined,
+                            position: navIndex + 1,
+                          });
+                          onClose();
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {showItemResults && !isBroad && similarItems.length > 0 && (
+              <section>
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                  پیشنهاد مرتبط
+                </h3>
+                <div className="space-y-2">
+                  {similarItems.map((item) => (
+                    <SearchItemRow
+                      key={`sim-${item.id}`}
+                      item={item}
+                      compact
+                      onClick={() => {
+                        pushRecentSearch(normalized);
+                        trackSearchResultClick({
+                          query: normalized,
+                          source: 'overlay_similar',
+                          result_type: 'item',
+                          result_slug: item.id,
+                          category_slug: item.categorySlug ?? undefined,
+                        });
+                        onClose();
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {showItemResults &&
+              totals.items > directItems.length + (isBroad ? topPicks.length : indirectItems.length) &&
+              showItemResults && (
+                <p className="text-center wibe-caption text-wibe-secondary">
+                  {isBroad ? (
+                    <>
+                      +{(
+                        totals.items - directItems.length - topPicks.length
+                      ).toLocaleString('fa-IR')}{' '}
+                      مورد دیگر — از لیست‌ها یا جستجوی دقیق‌تر کاوش کن
+                    </>
+                  ) : (
+                    <>
+                      {(totals.items - directItems.length - indirectItems.length).toLocaleString(
+                        'fa-IR'
+                      )}{' '}
+                      آیتم دیگر — جستجو را دقیق‌تر کنید
+                    </>
+                  )}
+                </p>
+              )}
+
+            {resultCount > navigableResults.length && (
               <button
                 type="button"
                 onClick={() => goToLists(query)}

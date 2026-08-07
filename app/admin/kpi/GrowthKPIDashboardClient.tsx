@@ -169,11 +169,13 @@ export default function GrowthKPIDashboard() {
   const [activityOpen, setActivityOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/api/admin/kpi/growth')
+    const ctrl = new AbortController();
+    fetch('/api/admin/kpi/growth', { signal: ctrl.signal })
       .then((r) => r.json())
       .then((json) => { if (json.data) setData(json.data); })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch((e) => { if ((e as Error)?.name !== 'AbortError') console.error(e); })
+      .finally(() => { if (!ctrl.signal.aborted) setLoading(false); });
+    return () => ctrl.abort();
   }, []);
 
   const categoriesWithBadge = useMemo(() => {
@@ -251,11 +253,11 @@ export default function GrowthKPIDashboard() {
       {/* 2. Pulse — compact */}
       <section className="rounded-xl border border-admin-border dark:border-gray-600 bg-gradient-to-br from-violet-500/90 via-purple-500/85 to-indigo-600/90 dark:from-violet-600/80 dark:to-indigo-700/80 p-4 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/10 text-2xl font-bold tabular-nums text-white">
               {pulseOutOf10} <span className="text-sm font-normal text-white/70">/ 10</span>
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-base font-semibold flex items-center gap-2 text-white">
                 <Zap className="h-4 w-4 text-amber-200/90" />
                 Pulse Score
@@ -271,7 +273,7 @@ export default function GrowthKPIDashboard() {
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-2 flex-1 md:max-w-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1 min-w-0 md:max-w-sm">
             {[
               { label: 'Engagement', value: breakdown.engagement },
               { label: 'Retention', value: breakdown.retention },
@@ -405,10 +407,10 @@ export default function GrowthKPIDashboard() {
             </div>
             <ul className="divide-y divide-admin-border dark:divide-gray-600">
               {(data.fastestGrowingCategories ?? []).slice(0, 8).map((cat, i) => (
-                <li key={cat.id} className="flex items-center gap-3 py-3 px-4 hover:bg-admin-muted/50 dark:hover:bg-gray-700/30 transition-colors">
+                <li key={cat.id} className="flex items-center gap-3 py-3 px-4 min-w-0 hover:bg-admin-muted/50 dark:hover:bg-gray-700/30 transition-colors">
                   <span className="text-admin-text-tertiary dark:text-gray-500 text-xs font-medium w-6 tabular-nums">{i + 1}</span>
                   <span className="text-base">{cat.icon}</span>
-                  <span className="font-medium text-admin-text-primary dark:text-white truncate flex-1">{cat.name}</span>
+                  <span className="font-medium text-admin-text-primary dark:text-white truncate flex-1 min-w-0">{cat.name}</span>
                   <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded">+{cat.growth}%</span>
                 </li>
               ))}

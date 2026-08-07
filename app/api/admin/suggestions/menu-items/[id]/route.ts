@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { createNotification } from '@/lib/utils/notifications';
+import { createNotification, notifyListBookmarkers } from '@/lib/utils/notifications';
 import {
   addCatalogItemToList,
   createCatalogItem,
@@ -111,6 +111,13 @@ export async function PUT(
           `با تشکر از پیشنهاد شما! «${newItem.title}» به لیست «${comment.lists.title}» اضافه شد.`,
         `/lists/${comment.lists.slug}`
       );
+
+      notifyListBookmarkers(comment.listId, {
+        itemCount: 1,
+        categorySlug: comment.lists.categories?.slug,
+        listTitle: comment.lists.title,
+        excludeUserIds: [comment.userId],
+      }).catch(console.error);
 
       return NextResponse.json({
         success: true,

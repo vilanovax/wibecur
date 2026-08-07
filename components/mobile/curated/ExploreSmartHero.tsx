@@ -2,123 +2,71 @@
 
 import { Search } from 'lucide-react';
 import { useSearchOptional } from '@/contexts/SearchContext';
-import SearchInput from '@/components/mobile/search/SearchInput';
-import GuidedDiscoveryChips from './GuidedDiscoveryChips';
-import type { GuidedScenario } from '@/lib/discovery/guided-intent';
+import MoodExplorerHero from './MoodExplorerHero';
+import type { MoodExplorerCard } from '@/lib/discovery/mood-explorer-config';
+
+const EXPLORE_SEARCH_PLACEHOLDER = 'جستجو در وایب‌ها، مودها و لیست‌ها…';
 
 interface ExploreSmartHeroProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  onModeScroll: (id: string) => void;
-  onGuidedScenarioSelect?: (scenario: GuidedScenario) => void;
+  onMoodSelect?: (card: MoodExplorerCard) => void;
+  showMoodExplorer?: boolean;
 }
-
-const EXPLORE_MODES = [
-  { id: 'trending', label: 'ترند', icon: '🔥' },
-  { id: 'foryou', label: 'برای تو', icon: '🎯' },
-  { id: 'rising', label: 'در حال رشد', icon: '🌱' },
-  { id: 'more', label: 'بیشتر', icon: '✨' },
-] as const;
 
 export default function ExploreSmartHero({
   searchQuery,
   onSearchChange,
-  onModeScroll,
-  onGuidedScenarioSelect,
+  onMoodSelect,
+  showMoodExplorer = true,
 }: ExploreSmartHeroProps) {
   const search = useSearchOptional();
   const hasQuery = Boolean(searchQuery.trim());
 
-  const openGlobalSearch = () => {
+  const openExploreSearch = () => {
     search?.openSearch({
       query: searchQuery,
       applyLocally: onSearchChange,
-      localActionLabel: 'فیلتر در اکسپلور',
+      localActionLabel: 'جستجو در اکسپلور',
     });
   };
 
   return (
     <section
-      className="border-b border-wibe bg-wibe-surface px-2.5 pb-3 pt-2 lg:border-b-0 lg:px-0 lg:pb-4 lg:pt-0"
+      className="relative overflow-hidden border-b border-wibe/80 bg-gradient-to-b from-primary/[0.07] via-wibe-surface to-wibe-surface px-2.5 pb-4 pt-3 lg:border-b-0 lg:from-primary/[0.05] lg:px-0 lg:pb-5 lg:pt-1"
       aria-label="اکسپلور هوشمند"
     >
-      <h2 className="mb-2 wibe-h3 lg:mb-3">امروز چی کشف می‌کنی؟</h2>
+      <div
+        className="pointer-events-none absolute -left-16 top-0 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-10 top-8 h-32 w-32 rounded-full bg-primary/10 blur-3xl"
+        aria-hidden
+      />
 
-      {/* موبایل: دکمه → مودال | دسکتاپ: فیلد مستقیم (بدون جستجوی تکراری در هدر) */}
-      <div className="mb-2.5 hidden lg:block">
-        <div className="flex items-center gap-2">
-          <div className="min-w-0 flex-1">
-            <SearchInput
-              value={searchQuery}
-              onChange={onSearchChange}
-              placeholder="فیلم آرامش‌بخش، کافه دنج، سریال دهه ۹۰…"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={openGlobalSearch}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary"
-            aria-label="جستجو در کل وایب"
-            title="جستجو در کل وایب"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={openGlobalSearch}
-        className="relative mb-2.5 flex w-full items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 text-right transition-colors hover:border-primary/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:hidden"
-        aria-label="باز کردن جستجو"
-      >
-        <Search
-          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary"
-          aria-hidden
-        />
-        <span
-          className={`block w-full truncate py-0.5 pl-2 pr-8 text-right wibe-small ${hasQuery ? 'text-foreground' : 'text-wibe-secondary'}`}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={openExploreSearch}
+          className="relative mb-4 flex w-full items-center rounded-2xl border border-wibe/80 bg-wibe-card/90 px-4 py-3 text-right shadow-vibe-sm backdrop-blur-sm transition-colors hover:border-primary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:hidden"
+          aria-label="باز کردن جستجو"
         >
-          {hasQuery ? searchQuery : 'فیلم آرامش‌بخش، کافه دنج، سریال دهه ۹۰…'}
-        </span>
-      </button>
-
-      {hasQuery && (
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => onSearchChange('')}
-            className="wibe-caption font-medium text-primary"
+          <Search
+            className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary"
+            aria-hidden
+          />
+          <span
+            className={`block w-full truncate py-0.5 pl-2 pr-9 text-right wibe-small ${hasQuery ? 'text-foreground' : 'text-wibe-secondary'}`}
           >
-            پاک کردن فیلتر
-          </button>
-          <p className="truncate wibe-caption text-wibe-secondary">فیلتر: «{searchQuery.trim()}»</p>
-        </div>
-      )}
+            {hasQuery ? searchQuery : EXPLORE_SEARCH_PLACEHOLDER}
+          </span>
+        </button>
 
-      {!hasQuery && onGuidedScenarioSelect && (
-        <div className="mb-2.5">
-          <p className="mb-2 wibe-caption font-medium text-wibe-secondary">دستیار کشف</p>
-          <GuidedDiscoveryChips onSelect={onGuidedScenarioSelect} />
-        </div>
-      )}
-
-      {!hasQuery && (
-        <div className="scrollbar-hide -mx-2.5 flex gap-1.5 overflow-x-auto px-2.5 pb-0.5 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
-          {EXPLORE_MODES.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => onModeScroll(m.id)}
-              className="flex shrink-0 items-center gap-1 rounded-full border border-wibe bg-wibe-card px-3 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/30 lg:py-2 lg:wibe-small"
-              aria-label={`رفتن به ${m.label}`}
-            >
-              <span aria-hidden>{m.icon}</span>
-              {m.label}
-            </button>
-          ))}
-        </div>
-      )}
+        {showMoodExplorer && !hasQuery && onMoodSelect && (
+          <MoodExplorerHero onMoodSelect={onMoodSelect} />
+        )}
+      </div>
     </section>
   );
 }

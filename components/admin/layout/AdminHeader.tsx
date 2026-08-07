@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Bell, User, Settings, LogOut, ChevronLeft, Menu, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Bell, User, Settings, LogOut, ChevronLeft, Menu, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { signOut, useSession } from 'next-auth/react';
 import RoleBadge from '@/components/auth/RoleBadge';
+import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
 import { BREADCRUMB_MAP } from '@/lib/admin/breadcrumb-labels';
@@ -136,6 +137,7 @@ export default function AdminHeader() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [trashCount, setTrashCount] = useState(0);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
@@ -160,6 +162,24 @@ export default function AdminHeader() {
   useEffect(() => {
     if (showNotifications) fetchNotifications();
   }, [showNotifications, fetchNotifications]);
+
+  const fetchTrashCount = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/trash?countsOnly=1');
+      const json = await res.json();
+      if (json.success && json.counts) {
+        setTrashCount(json.counts.total ?? 0);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTrashCount();
+    const t = setInterval(fetchTrashCount, 60_000);
+    return () => clearInterval(t);
+  }, [fetchTrashCount]);
 
   const markAsRead = useCallback(async (id: string) => {
     try {
@@ -244,24 +264,38 @@ export default function AdminHeader() {
         </div>
       </div>
 
-      {/* Center: Search */}
-      <div className="flex-1 flex justify-center px-4">
-        <div className="relative w-full max-w-[420px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-admin-text-tertiary dark:text-gray-500" />
-          <input
-            type="search"
-            placeholder="جستجو در لیست‌ها، کاربران، آیتم‌ها…"
-            className="w-full h-10 pl-4 pr-10 rounded-lg bg-admin-muted dark:bg-gray-700 border border-transparent focus:border-admin-border dark:focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-admin-border dark:focus:ring-gray-600 text-sm text-admin-text-primary dark:text-white placeholder:text-admin-text-tertiary dark:placeholder:text-gray-500 transition-colors"
-          />
-        </div>
-      </div>
+      {/* Spacer — سرچِ تزئینیِ غیرفعال حذف شد (handler/state نداشت و در داشبورد
+          با سرچ کاربردیِ AdminTopBar تکراری می‌شد). */}
+      <div className="flex-1" />
 
-      {/* Left: Profile + Notifications + Role */}
+      {/* Left: Version + Trash + Profile + Notifications + Role */}
       <div className="flex items-center gap-3 shrink-0">
+        <span
+          className="text-[11px] font-medium tabular-nums text-gray-400/90 dark:text-gray-500 select-none"
+          title="Admin panel build version"
+        >
+          v{ADMIN_PANEL_VERSION}
+        </span>
+
+        <Link
+          href="/admin/trash"
+          aria-label={trashCount > 0 ? `زباله‌دان (${trashCount} مورد)` : 'زباله‌دان'}
+          className="relative w-10 h-10 rounded-lg bg-admin-muted dark:bg-gray-700 hover:bg-admin-hover dark:hover:bg-gray-600 flex items-center justify-center transition-colors text-gray-600 dark:text-gray-300"
+        >
+          <Trash2 className="h-5 w-5" />
+          {trashCount > 0 && (
+            <span className="absolute top-1 left-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gray-500 text-[10px] text-white flex items-center justify-center">
+              {trashCount > 99 ? '99+' : trashCount}
+            </span>
+          )}
+        </Link>
+
         <div className="relative" ref={notificationsRef}>
           <button
             type="button"
             onClick={() => setShowNotifications(!showNotifications)}
+            aria-label={unreadCount > 0 ? `اعلان‌ها (${unreadCount} خوانده‌نشده)` : 'اعلان‌ها'}
+            aria-expanded={showNotifications}
             className="relative w-10 h-10 rounded-lg bg-admin-muted dark:bg-gray-700 hover:bg-admin-hover dark:hover:bg-gray-600 flex items-center justify-center transition-colors text-gray-600 dark:text-gray-300"
           >
             <Bell className="h-5 w-5" />
@@ -302,19 +336,18 @@ export default function AdminHeader() {
                           </p>
                         </Link>
                       ) : (
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => !n.read && markAsRead(n.id)}
-                          onKeyDown={(e) => e.key === 'Enter' && !n.read && markAsRead(n.id)}
-                          className={`p-3 rounded-lg text-right cursor-default ${n.read ? 'bg-admin-muted dark:bg-gray-700/50' : 'bg-violet-50 dark:bg-violet-900/20'}`}
+                        <button
+                          type="button"
+                          disabled={n.read}
+                          onClick={() => markAsRead(n.id)}
+                          className={`block w-full p-3 rounded-lg text-right disabled:cursor-default ${n.read ? 'bg-admin-muted dark:bg-gray-700/50' : 'bg-violet-50 dark:bg-violet-900/20'}`}
                         >
                           <p className="text-sm font-medium text-admin-text-primary dark:text-white">{n.title}</p>
                           <p className="text-xs text-admin-text-secondary dark:text-gray-400 mt-1">{n.message}</p>
                           <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-2">
                             {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
                           </p>
-                        </div>
+                        </button>
                       )}
                     </div>
                   ))

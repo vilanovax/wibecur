@@ -18,6 +18,9 @@ import {
   ClipboardList,
   Database,
   Star,
+  Megaphone,
+  Trash2,
+  Shield,
   PanelRightClose,
   PanelRightOpen,
   Sparkles,
@@ -28,6 +31,8 @@ import MiniUserPanel from './MiniUserPanel';
 import { useSidebar } from './SidebarContext';
 import { useSidebarBadges } from '@/hooks/useSidebarBadges';
 import clsx from 'clsx';
+import SiteLogo from '@/components/shared/SiteLogo';
+import { useSiteBranding } from '@/contexts/SiteBrandingContext';
 
 const PRIMARY: NavItem[] = [
   { href: '/admin/dashboard', label: 'داشبورد', icon: LayoutDashboard, permission: 'view_dashboard' },
@@ -39,9 +44,19 @@ const PRIMARY: NavItem[] = [
     label: 'لیست‌ها',
     icon: List,
     permission: 'manage_lists',
-    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items'],
+    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items', '/admin/books'],
   },
-  { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
+  {
+    href: '/admin/users',
+    label: 'کاربران',
+    icon: Users,
+    permission: 'manage_users',
+    matchPrefixes: ['/admin/users', '/admin/admins'],
+    submenu: [
+      { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
+      { href: '/admin/admins', label: 'ادمین‌ها', icon: Shield, permission: 'manage_roles' },
+    ],
+  },
 ];
 
 const INTELLIGENCE: NavItem[] = [
@@ -50,14 +65,23 @@ const INTELLIGENCE: NavItem[] = [
     href: '/admin/suggestions',
     label: 'پیشنهادها',
     icon: Lightbulb,
-    permission: 'manage_lists',
+    permission: 'manage_suggestions',
     badgeKey: 'suggestionsPending',
   },
   { href: '/admin/custom/featured', label: 'منتخب هوم', icon: Star, permission: 'manage_lists' },
+  { href: '/admin/custom/sponsored', label: 'تبلیغات اسپانسری', icon: Megaphone, permission: 'manage_lists' },
 ];
 
 const MODERATION: NavItem[] = [
   { href: '/admin/moderation', label: 'صف بررسی', icon: AlertTriangle, permission: 'view_moderation' },
+  {
+    href: '/admin/trash',
+    label: 'زباله‌دان',
+    icon: Trash2,
+    permission: 'view_dashboard',
+    badgeKey: 'trashTotal',
+    badgeTone: 'muted',
+  },
   {
     href: '/admin/comments',
     label: 'کامنت‌ها',
@@ -90,6 +114,7 @@ function SidebarBrand({
   onClose?: () => void;
 }) {
   const showText = !collapsed || isMobileDrawer;
+  const { logoDisplayUrl } = useSiteBranding();
 
   return (
     <Link
@@ -100,14 +125,25 @@ function SidebarBrand({
         showText ? 'gap-2 flex-1' : 'justify-center'
       )}
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white shadow-sm shadow-violet-600/20">
-        <Sparkles className="h-4 w-4" />
-      </div>
+      {logoDisplayUrl ? (
+        <SiteLogo
+          variant={showText ? 'admin' : 'adminCompact'}
+          linked={false}
+          showFallbackText={false}
+          fallbackText="WibeCur"
+        />
+      ) : (
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white shadow-sm shadow-violet-600/20">
+          <Sparkles className="h-4 w-4" />
+        </div>
+      )}
       {showText && (
         <div className="min-w-0 text-right leading-tight">
-          <h2 className="text-sm font-bold text-[var(--color-text)] dark:text-white truncate">
-            WibeCur
-          </h2>
+          {!logoDisplayUrl && (
+            <h2 className="text-sm font-bold text-[var(--color-text)] dark:text-white truncate">
+              WibeCur
+            </h2>
+          )}
           <p className="text-[10px] text-[var(--color-text-muted)] dark:text-gray-400 truncate">
             پنل مدیریت
           </p>

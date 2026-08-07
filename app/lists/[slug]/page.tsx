@@ -3,22 +3,26 @@ import { unstable_cache } from 'next/cache';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
-import { getTopSimilarLists, type ListForSimilarity } from '@/lib/listSimilarity';
+import { prepareListDetailForClient } from '@/lib/list-detail-serialize';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import ListDetailClient from './ListDetailClient';
+import { getCachedListPagePlacements } from '@/lib/sponsored-placements';
+import HomeLcpPreload from '@/components/mobile/home/HomeLcpPreload';
 import { withResolvedItemImages } from '@/lib/resolve-item-image';
 import { withResolvedListDisplay } from '@/lib/list-display-images';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
+import { listDetailCacheTag } from '@/lib/public-cache';
+import { fetchActiveCategoryMenu } from '@/lib/category-menu';
+import {
+  LIST_DETAIL_SSR_ITEM_LIMIT,
+  listDetailItemSelect,
+} from '@/lib/list-detail-items';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
 
-/**
- * واکشی لیست بر اساس slug — با React cache() تا generateMetadata و بدنه‌ی صفحه
- * در یک request فقط یک‌بار کوئری بزنند (به‌جای دو کوئری جدا).
- */
-const getListBySlug = cache((slug: string) =>
-  prisma.lists.findUnique({
+function loadListBySlug(slug: string) {
+  return prisma.lists.findUnique({
     where: { slug },
     select: {
       id: true,
@@ -47,36 +51,31 @@ const getListBySlug = cache((slug: string) =>
         },
       },
       users: { select: { id: true, name: true, image: true, username: true, curatorLevel: true, role: true, viralListsCount: true, totalLikesReceived: true } },
+      // فقط پنجرهٔ اول — بقیه از /api/lists/[id]/items (server-serialization)
       items: {
+        where: { deletedAt: null },
         orderBy: { order: 'asc' },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          imageUrl: true,
-          externalUrl: true,
-          catalogItemId: true,
-          listNote: true,
-          rating: true,
-          metadata: true,
-        },
+        take: LIST_DETAIL_SSR_ITEM_LIMIT,
+        select: listDetailItemSelect,
       },
       _count: { select: { items: true, list_comments: true } },
     },
-  })
-);
+  });
+}
 
 /**
- * لیست‌های مشابه — در unstable_cache تا مستقل از rebuild صفحه و فقط هر ۵ دقیقه
- * یک‌بار کوئری‌های سنگین رفتاری (bookmarks) اجرا شوند.
+ * واکشی لیست بر اساس slug.
+ * - `unstable_cache`: کش بین‌درخواستی (Data Cache) با tag `list-slug-{slug}` تا
+ *   کوئری سنگین لیست + آیتم‌های اولیه روی هر بازدید تکرار نشود. با revalidateTag
+ *   هنگام ویرایش لیست فوراً تازه می‌شود.
+ * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنهٔ صفحه).
  */
-function getCachedSimilarLists(listId: string, input: ListForSimilarity) {
-  return unstable_cache(
-    () => getTopSimilarLists(prisma, input),
-    [`list-similar-${listId}`],
-    { revalidate: 300, tags: [`list-similar-${listId}`] }
-  )();
-}
+const getListBySlug = cache((slug: string) =>
+  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v2', slug], {
+    revalidate: 300,
+    tags: [listDetailCacheTag(slug)],
+  })()
+);
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -127,38 +126,48 @@ export default async function ListDetailPage({
 
   if (list.users?.role === 'USER') notFound();
 
-  prisma.lists
-    .update({ where: { id: list.id }, data: { viewCount: { increment: 1 } } })
-    .catch(() => {});
+  // شمارش بازدید از مسیر رندر جدا شد (beacon کلاینت → POST /api/lists/[id]/view)
+  // تا صفحه static/ISR بماند و write روی هر revalidation انجام نشود.
 
-  const currentForSimilarity: ListForSimilarity = {
-    id: list.id,
-    categoryId: list.categoryId,
-    saveCount: list.saveCount,
-    tags: list.tags ?? [],
-    items: list.items.map((i) => ({ title: i.title })),
-  };
-  const relatedLists = await getCachedSimilarLists(list.id, currentForSimilarity);
+  const [sponsoredPlacements, menuCategories] = await Promise.all([
+    getCachedListPagePlacements(list.id, list.categoryId),
+    fetchActiveCategoryMenu(),
+  ]);
 
-  const listWithCreator = withResolvedListDisplay({
-    ...list,
-    categorySlug: list.categories?.slug ?? null,
-    items: withResolvedItemImages(
-      list.items.map((item) => ({
-        ...item,
-        metadata: item.metadata as Record<string, unknown> | null,
-      })),
-      list.categories?.slug ?? null
-    ),
-  });
+  const listWithCreator = prepareListDetailForClient(
+    withResolvedListDisplay({
+      ...list,
+      categorySlug: list.categories?.slug ?? null,
+      items: withResolvedItemImages(
+        list.items.map((item) => ({
+          ...item,
+          metadata: item.metadata as Record<string, unknown> | null,
+        })),
+        list.categories?.slug ?? null
+      ),
+    })
+  );
+
+  const heroLcpImage =
+    listWithCreator.bannerImage ||
+    listWithCreator.horizontalImage ||
+    listWithCreator.coverImage ||
+    '';
 
   return (
     <div className="bg-wibe-surface lg:pt-1">
+      <HomeLcpPreload href={heroLcpImage} />
       <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
-      <CategoryNavStrip activeSlug={list.categories?.slug ?? null} />
+      <CategoryNavStrip
+        activeSlug={list.categories?.slug ?? null}
+        initialCategories={menuCategories}
+      />
       <ListDetailClient
-        list={JSON.parse(JSON.stringify(listWithCreator))}
-        relatedLists={JSON.parse(JSON.stringify(relatedLists))}
+        list={listWithCreator}
+        sponsoredPlacements={sponsoredPlacements}
+        itemsHasMore={
+          (list.itemCount ?? list._count.items) > listWithCreator.items.length
+        }
       />
       <BottomNav />
     </div>

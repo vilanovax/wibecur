@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { ChevronRight } from 'lucide-react';
 import HeaderActions, { type HeaderActionsProfile } from './HeaderActions';
 import HeaderDesktopSearch from './HeaderDesktopSearch';
+import SiteLogo from '@/components/shared/SiteLogo';
+import { useUserHeaderProfile } from '@/lib/hooks/useUserHeaderProfile';
 
 interface HeaderProps {
   /** عنوان صفحه — بدون title لوگوی «وایب» نمایش داده می‌شود */
@@ -38,39 +39,19 @@ export default function Header({
   hideOnDesktop = false,
 }: HeaderProps) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { session, profile } = useUserHeaderProfile();
 
-  const [profile, setProfile] = useState<HeaderActionsProfile | null>(null);
+  const sessionProfile = useMemo<HeaderActionsProfile | null>(() => {
+    if (!session?.user?.id) return null;
+    return {
+      image: session.user.image ?? null,
+      avatarType: null,
+      avatarId: null,
+      avatarStatus: null,
+    };
+  }, [session?.user?.id, session?.user?.image]);
 
-  const fetchProfile = useCallback(async () => {
-    if (!session?.user?.id) return;
-    try {
-      const res = await fetch('/api/user/profile');
-      const data = await res.json();
-      if (data?.success && data?.data?.user) {
-        const u = data.data.user;
-        setProfile({
-          image: u.image ?? null,
-          avatarType: u.avatarType ?? null,
-          avatarId: u.avatarId ?? null,
-          avatarStatus: u.avatarStatus ?? null,
-        });
-      }
-    } catch {
-      setProfile(null);
-    }
-  }, [session?.user?.id]);
-
-  useEffect(() => {
-    if (session?.user) fetchProfile();
-    else setProfile(null);
-  }, [session?.user, fetchProfile]);
-
-  useEffect(() => {
-    const onProfileUpdated = () => fetchProfile();
-    window.addEventListener('profile-updated', onProfileUpdated);
-    return () => window.removeEventListener('profile-updated', onProfileUpdated);
-  }, [fetchProfile]);
+  const displayProfile = profile ?? sessionProfile;
 
   const isDark = variant === 'dark';
   const headerClass = isDark
@@ -110,11 +91,7 @@ export default function Header({
               {title}
             </h1>
           ) : (
-            <h1
-              className={`text-xl font-bold lg:hidden ${isDark ? 'text-violet-400' : 'text-primary'}`}
-            >
-              وایب
-            </h1>
+            <SiteLogo variant="header" href="/" className="lg:hidden" />
           )}
         </div>
         {showDesktopSearch && (
@@ -124,7 +101,7 @@ export default function Header({
         )}
         <div className="shrink-0 lg:hidden">
           <HeaderActions
-            profile={profile}
+            profile={displayProfile}
             hideNotifications={hideNotifications}
             variant={variant}
           />

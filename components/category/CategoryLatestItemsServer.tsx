@@ -1,0 +1,37 @@
+import CategorySectionTitle from './CategorySectionTitle';
+import CategoryItemChipLink from './CategoryItemChipLink';
+import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
+import { CATEGORY_SECTION } from '@/lib/category-layout';
+import type { CategoryItemCard } from '@/types/category-page';
+
+type CategoryLatestItemsServerProps = {
+  items: CategoryItemCard[];
+  accentColor?: string;
+  inset?: boolean;
+};
+
+export default function CategoryLatestItemsServer({
+  items,
+  accentColor = '#EA580C',
+  inset = false,
+}: CategoryLatestItemsServerProps) {
+  if (items.length === 0) return null;
+
+  const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
+
+  return (
+    <section className={sectionClass}>
+      <CategorySectionTitle
+        title="آخرین آیتم‌ها"
+        subtitle="تازه‌ترین آیتم‌های اضافه‌شده به لیست‌ها"
+        iconVariant="new"
+      />
+
+      <HorizontalScrollFade surface="surface" innerClassName="-mx-1 flex gap-3 pb-1">
+        {items.map((item) => (
+          <CategoryItemChipLink key={item.id} item={item} accentColor={accentColor} />
+        ))}
+      </HorizontalScrollFade>
+    </section>
+  );
+}

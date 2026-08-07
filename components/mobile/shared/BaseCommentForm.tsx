@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
-import { track } from '@/lib/analytics';
+import { track, type AnalyticsData } from '@/lib/analytics';
+import { signOutIfStaleSession } from '@/lib/session-client';
 
 interface BaseCommentFormProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface BaseCommentFormProps {
   apiUrl: string;
   onSubmit: () => void;
   title?: string;
+  analytics?: AnalyticsData;
 }
 
 export default function BaseCommentForm({
@@ -19,6 +21,7 @@ export default function BaseCommentForm({
   apiUrl,
   onSubmit,
   title = 'ثبت کامنت',
+  analytics,
 }: BaseCommentFormProps) {
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +49,10 @@ export default function BaseCommentForm({
 
       const data = await response.json().catch(() => ({}));
 
+      if (await signOutIfStaleSession(response, data)) {
+        return;
+      }
+
       if (!response.ok) {
         const message = data?.error || (response.status === 429 ? 'لطفاً چند دقیقه صبر کنید و دوباره امتحان کنید.' : 'خطا در ثبت کامنت');
         throw new Error(message);
@@ -55,7 +62,7 @@ export default function BaseCommentForm({
       }
 
       setContent('');
-      track('comment_submit');
+      track('comment_submit', analytics);
       onClose();
       onSubmit();
     } catch (err: unknown) {
@@ -69,7 +76,7 @@ export default function BaseCommentForm({
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title={title} maxHeight="calc(100vh - 100px)">
       <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
-        <div className="flex-1 min-h-0 overflow-y-auto p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6">
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4" role="alert">
               {error}
@@ -91,7 +98,7 @@ export default function BaseCommentForm({
                 setError('');
               }}
               rows={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
               placeholder="نظر خود را بنویسید..."
               disabled={isLoading}
             />

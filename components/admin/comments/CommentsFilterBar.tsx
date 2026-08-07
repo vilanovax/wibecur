@@ -17,6 +17,8 @@ import {
   COMMENT_SORT_OPTIONS,
   type CommentSortKind,
 } from '@/lib/admin/comments-intelligence';
+import type { CommentOriginKind } from '@/lib/admin/comments-scope-utils';
+import CommentsScopeFilters from '@/components/admin/comments/CommentsScopeFilters';
 
 const FILTERS: {
   id: CommentFilterKind;
@@ -37,11 +39,17 @@ type Props = {
   currentFilter: CommentFilterKind;
   currentSearch: string;
   currentSort: CommentSortKind;
+  currentOrigin: CommentOriginKind;
+  currentCategoryId: string;
+  currentListId: string;
   totalCount: number;
   pulse?: CommentsPulseSummary;
   onFilterChange: (filter: CommentFilterKind) => void;
   onSortChange: (sort: CommentSortKind) => void;
   onSearchChange: (search: string) => void;
+  onOriginChange: (origin: CommentOriginKind) => void;
+  onCategoryChange: (categoryId: string) => void;
+  onListChange: (listId: string) => void;
   onRefresh: () => void;
 };
 
@@ -49,11 +57,17 @@ export default function CommentsFilterBar({
   currentFilter,
   currentSearch,
   currentSort,
+  currentOrigin,
+  currentCategoryId,
+  currentListId,
   totalCount,
   pulse,
   onFilterChange,
   onSortChange,
   onSearchChange,
+  onOriginChange,
+  onCategoryChange,
+  onListChange,
   onRefresh,
 }: Props) {
   const [searchInput, setSearchInput] = useState(currentSearch);
@@ -148,7 +162,7 @@ export default function CommentsFilterBar({
               {count != null && count > 0 && (
                 <span
                   className={`min-w-[1.1rem] px-1 rounded-full text-[10px] font-bold tabular-nums ${
-                    active ? 'bg-white/25' : 'bg-rose-500 text-white'
+                    active ? 'bg-white/25 dark:bg-gray-800' : 'bg-rose-500 text-white'
                   }`}
                 >
                   {count.toLocaleString('fa-IR')}
@@ -158,6 +172,16 @@ export default function CommentsFilterBar({
           );
         })}
       </div>
+
+      <CommentsScopeFilters
+        origin={currentOrigin}
+        categoryId={currentCategoryId}
+        listId={currentListId}
+        onOriginChange={onOriginChange}
+        onCategoryChange={onCategoryChange}
+        onListChange={onListChange}
+      />
+
       <p className="text-[10px] text-[var(--color-text-subtle)] hidden sm:block">
         میانبر: <kbd className="px-1 rounded bg-[var(--color-bg)]">J</kbd>/<kbd className="px-1 rounded bg-[var(--color-bg)]">K</kbd> ردیف · <kbd className="px-1 rounded bg-[var(--color-bg)]">A</kbd> تایید · <kbd className="px-1 rounded bg-[var(--color-bg)]">R</kbd> رد
       </p>

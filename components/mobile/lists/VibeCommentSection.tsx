@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useInfiniteQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { MessageSquare, Loader2, ChevronDown, ThumbsUp, ThumbsDown, Flag, Send, MoreVertical } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { faIR } from 'date-fns/locale';
@@ -12,6 +16,7 @@ import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import CommentReportModal from '@/components/mobile/comments/CommentReportModal';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import CommentAvatar from '@/components/shared/CommentAvatar';
+import { track } from '@/lib/analytics';
 import {
   COMMENT_CLAMP_CHAR_THRESHOLD,
   COMMENTS_INITIAL_VISIBLE,
@@ -20,8 +25,6 @@ import {
   DEFAULT_SUGGESTION_MAX_LENGTH,
   MIN_COMMENT_LENGTH,
 } from '@/lib/comment-limits';
-
-const INITIAL_VISIBLE = COMMENTS_INITIAL_VISIBLE;
 
 const REACTION_PILLS = [
   { type: 'meh', label: 'معمولی', emoji: '😊' },
@@ -76,17 +79,21 @@ interface VibeCommentSectionProps {
   /** داخل ستون sticky دسکتاپ — بدون border بالایی اضافه */
   embeddedInSidebar?: boolean;
   listId: string;
+  listSlug?: string;
   isOwner: boolean;
   categorySlug?: string | null;
   /** وقتی کاربر روی «پیشنهاد» کلیک می‌کند، این فراخوانی می‌شود (مثلاً برای باز کردن مودال جستجو-محور) */
   onOpenSuggestItem?: () => void;
 }
 
-interface VibeCommentsResponse {
+interface VibeCommentsPage {
   comments: Comment[];
   commentsEnabled: boolean;
   maxCommentLength: number;
   suggestionMaxLength: number;
+  totalCount?: number;
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 interface ReactionsResponse {
@@ -94,8 +101,16 @@ interface ReactionsResponse {
   userReaction: string | null;
 }
 
-async function fetchVibeComments(listId: string, sortParam: string): Promise<VibeCommentsResponse> {
-  const res = await fetch(`/api/lists/${listId}/comments?sort=${sortParam}`);
+async function fetchVibeCommentsPage(
+  listId: string,
+  sortParam: string,
+  cursor: string | null
+): Promise<VibeCommentsPage> {
+  // صفحهٔ اول کوچک (initial) و صفحات بعدی بزرگ‌تر (load-more) — کاهش payload اولیه.
+  const limit = cursor ? COMMENTS_LOAD_MORE_STEP : COMMENTS_INITIAL_VISIBLE;
+  const params = new URLSearchParams({ sort: sortParam, limit: String(limit) });
+  if (cursor) params.set('cursor', cursor);
+  const res = await fetch(`/api/lists/${listId}/comments?${params.toString()}`);
   const data = await res.json();
   if (!data.success) {
     return {
@@ -103,6 +118,8 @@ async function fetchVibeComments(listId: string, sortParam: string): Promise<Vib
       commentsEnabled: true,
       maxCommentLength: DEFAULT_LIST_COMMENT_MAX_LENGTH,
       suggestionMaxLength: DEFAULT_SUGGESTION_MAX_LENGTH,
+      nextCursor: null,
+      hasMore: false,
     };
   }
   return {
@@ -110,6 +127,9 @@ async function fetchVibeComments(listId: string, sortParam: string): Promise<Vib
     commentsEnabled: data.commentsEnabled ?? true,
     maxCommentLength: data.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH,
     suggestionMaxLength: data.suggestionMaxLength ?? DEFAULT_SUGGESTION_MAX_LENGTH,
+    totalCount: data.totalCount,
+    nextCursor: data.nextCursor ?? null,
+    hasMore: !!data.hasMore,
   };
 }
 
@@ -147,7 +167,7 @@ function ReactionPills({
             disabled={isLoading}
             className={`
               inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-sm font-medium
-              transition-all duration-200 active:scale-[0.97] hover:scale-105
+              transition-colors duration-200 active:scale-[0.97] hover:scale-105
               ${isSelected
                 ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-gray-800'
@@ -478,7 +498,7 @@ function VibeCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/20"
       >
         {placeholders.collapsed}
       </button>
@@ -492,7 +512,7 @@ function VibeCommentInput({
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxLength))}
           placeholder={isSuggestionMode ? placeholders.suggestion : placeholders.comment}
-          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none"
+          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
           rows={2}
           maxLength={maxLength}
           aria-describedby="comment-char-count"
@@ -500,9 +520,10 @@ function VibeCommentInput({
         <button
           type="submit"
           disabled={!canSubmit}
+          aria-label="ارسال نظر"
           className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7C3AED] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4" aria-hidden />
         </button>
       </div>
       <div className="flex items-center justify-between gap-2 px-1">
@@ -533,6 +554,7 @@ function VibeCommentInput({
 
 export default function VibeCommentSection({
   listId,
+  listSlug,
   isOwner,
   categorySlug,
   onOpenSuggestItem,
@@ -544,21 +566,33 @@ export default function VibeCommentSection({
   const [isSuggestionMode, setIsSuggestionMode] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'helpful' | 'newest'>('helpful');
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
 
   const sortParam = sortBy === 'helpful' ? 'popular' : 'newest';
 
-  const { data: commentsData, isLoading, refetch: refetchComments } = useQuery({
+  const {
+    data: commentsData,
+    isLoading,
+    refetch: refetchComments,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['lists', listId, 'vibe-comments', sortParam],
-    queryFn: () => fetchVibeComments(listId, sortParam),
+    queryFn: ({ pageParam }) =>
+      fetchVibeCommentsPage(listId, sortParam, pageParam as string | null),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.nextCursor : undefined,
     enabled: !!listId,
   });
-  const comments = commentsData?.comments ?? [];
-  const commentsEnabled = commentsData?.commentsEnabled ?? true;
-  const maxCommentLength = commentsData?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
-  const suggestionMaxLength = commentsData?.suggestionMaxLength ?? DEFAULT_SUGGESTION_MAX_LENGTH;
+  const comments = commentsData?.pages.flatMap((p) => p.comments) ?? [];
+  const firstPage = commentsData?.pages[0];
+  const commentsEnabled = firstPage?.commentsEnabled ?? true;
+  const maxCommentLength = firstPage?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
+  const suggestionMaxLength = firstPage?.suggestionMaxLength ?? DEFAULT_SUGGESTION_MAX_LENGTH;
+  const totalCount = firstPage?.totalCount ?? comments.length;
 
   const { data: reactionsData } = useQuery({
     queryKey: ['lists', listId, 'reactions'],
@@ -569,10 +603,6 @@ export default function VibeCommentSection({
   const userReaction = reactionsData?.userReaction ?? null;
 
   const [reactionsLoading, setReactionsLoading] = useState(false);
-
-  useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE);
-  }, [listId, sortBy]);
 
   const handleReaction = async (type: string) => {
     if (status !== 'authenticated') return;
@@ -619,6 +649,12 @@ export default function VibeCommentSection({
         setIsFormExpanded(false);
         setIsSuggestionMode(false);
         setToast({ message: data.message || 'نظرت به لیست اضافه شد ✨', type: 'success' });
+        track('comment_submit', {
+          list_id: listId,
+          ...(listSlug ? { list_slug: listSlug } : {}),
+          ...(categorySlug ? { category_slug: categorySlug } : {}),
+          type,
+        });
         return true;
       }
       setToast({
@@ -687,13 +723,9 @@ export default function VibeCommentSection({
     setToast({ message: 'ممنون که اطلاع دادی 🙏 بررسیش می‌کنیم', type: 'success' });
   };
 
-  const displayedComments = comments.slice(0, visibleCount);
-  const hasMore = visibleCount < comments.length;
-  const remainingCount = comments.length - visibleCount;
+  const displayedComments = comments;
+  const remainingCount = Math.max(totalCount - comments.length, 0);
   const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
-  const commentCount = comments.filter((c) => c.type === 'comment').length;
-  const suggestionCount = comments.filter((c) => c.type === 'suggestion').length;
-
   const hasComments = comments.length > 0;
 
   return (
@@ -702,10 +734,7 @@ export default function VibeCommentSection({
         embeddedInSidebar ? 'mt-0 border-t-0 pt-0' : 'mt-8 border-t pt-6'
       }`}
     >
-      <h2 className="wibe-h3 text-foreground mb-0.5">نظرات</h2>
-      <p className="wibe-caption text-wibe-secondary mb-3">
-        {commentCount.toLocaleString('fa-IR')} نظر · {suggestionCount.toLocaleString('fa-IR')} پیشنهاد
-      </p>
+      <h2 className="mb-3 wibe-h3 text-foreground">نظرات</h2>
 
       {/* Spacing: Header→Reaction 12, Reaction→Input 12, Input→Suggest 16, Suggest→Empty 20 */}
       <div className="space-y-3">
@@ -806,14 +835,24 @@ export default function VibeCommentSection({
                 />
               ))}
             </div>
-            {hasMore && (
+            {hasNextPage && (
               <button
                 type="button"
-                onClick={() => setVisibleCount((v) => v + COMMENTS_LOAD_MORE_STEP)}
-                className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1 disabled:opacity-60"
               >
-                <ChevronDown className="w-4 h-4" />
-                {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر ({remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
+                {isFetchingNextPage ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر
+                    {remainingCount > 0
+                      ? ` (${remainingCount.toLocaleString('fa-IR')} باقی‌مانده)`
+                      : ''}
+                  </>
+                )}
               </button>
             )}
           </>

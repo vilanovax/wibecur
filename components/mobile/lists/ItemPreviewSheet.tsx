@@ -1,23 +1,24 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ExternalLink, Star } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
-import ItemCoverPlaceholder from '@/components/shared/ItemCoverPlaceholder';
+import ItemCoverImage from '@/components/shared/ItemCoverImage';
 import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
 import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
-import { resolveImageDisplaySrc } from '@/lib/image-url-policy';
-import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 import {
   buildItemMetadataChips,
   buildLightweightDisplayBody,
   extractItemTip,
+  resolveImdbRatingDisplay,
   shouldShowSeparateTipCard,
 } from '@/lib/item-metadata-display';
 import ItemTipCard from '@/components/shared/ItemTipCard';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
+import { trackItemPreviewOpen } from '@/lib/analytics';
 import {
   entryKindBadgeLabel,
   entryKindIcon,
@@ -68,86 +69,81 @@ function PreviewPoster({
   categoryIcon?: string | null;
   className?: string;
 }) {
-  const imgRef = useRef<HTMLImageElement>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
+  return (
+    <ItemCoverImage
+      itemId={item.id}
+      imageUrl={item.displayImageUrl ?? item.imageUrl}
+      title={item.title}
+      metadata={item.metadata}
+      categorySlug={categorySlug}
+      priority
+      sizes="(min-width: 1024px) 12rem, 72vw"
+      fallbackIcon={categoryIcon ?? '🎬'}
+      coverLayout="grid"
+      className={`h-full w-full ${className}`}
+    />
+  );
+}
 
-  const posterSrc = useMemo(() => {
-    const resolved = resolveItemDisplayImage({
-      id: item.id,
-      imageUrl: item.displayImageUrl ?? item.imageUrl,
-      title: item.title,
-      metadata: item.metadata,
-      categorySlug,
-    });
-    return resolveImageDisplaySrc(resolved) || resolved;
-  }, [item, categorySlug]);
-
-  useEffect(() => {
-    setLoaded(false);
-    setFailed(false);
-  }, [posterSrc, item.id]);
-
-  useEffect(() => {
-    const img = imgRef.current;
-    if (img?.complete && img.naturalWidth > 0) {
-      setLoaded(true);
-    }
-  }, [posterSrc]);
-
-  if (!posterSrc || failed) {
+function MetadataChip({
+  label,
+  value,
+  href,
+  profileLinks,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+  profileLinks?: Array<{ name: string; href: string }>;
+}) {
+  if (profileLinks?.length) {
     return (
-      <ItemCoverPlaceholder
-        title={item.title}
-        categorySlug={categorySlug}
-        fallbackIcon={categoryIcon ?? '🎬'}
-        state="empty"
-        layout="grid"
-        className={`h-full w-full ${className}`}
-        ariaLabel={item.title}
-      />
+      <span className="inline-flex max-w-full flex-wrap items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
+        <span className="shrink-0 font-medium text-foreground/55">{label}</span>
+        <span className="min-w-0 font-semibold text-foreground">
+          {profileLinks.map((link, index) => (
+            <span key={link.href}>
+              {index > 0 ? <span className="text-foreground/40"> · </span> : null}
+              <Link href={link.href} className="text-primary hover:underline">
+                {link.name}
+              </Link>
+            </span>
+          ))}
+        </span>
+      </span>
+    );
+  }
+
+  const content = (
+    <>
+      <span className="shrink-0 font-medium text-foreground/55">{label}</span>
+      <span className={`min-w-0 font-semibold ${href ? 'text-primary' : 'text-foreground'}`}>{value}</span>
+    </>
+  );
+
+  if (href) {
+    if (href.startsWith('/')) {
+      return (
+        <Link href={href} className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
+          {content}
+        </Link>
+      );
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right"
+      >
+        {content}
+      </a>
     );
   }
 
   return (
-    <div className={`relative h-full w-full overflow-hidden bg-gray-100 ${className}`}>
-      {!loaded && (
-        <ItemCoverPlaceholder
-          title={item.title}
-          categorySlug={categorySlug}
-          fallbackIcon={categoryIcon ?? '🎬'}
-          state="loading"
-          layout="grid"
-          className="absolute inset-0 h-full w-full"
-          ariaLabel={`در حال بارگذاری ${item.title}`}
-        />
-      )}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={imgRef}
-        src={posterSrc}
-        alt={item.title}
-        className={`h-full w-full object-cover transition-opacity duration-300 ${
-          loaded ? 'opacity-100' : 'opacity-0'
-        }`}
-        loading="eager"
-        fetchPriority="high"
-        referrerPolicy="no-referrer"
-        onLoad={() => setLoaded(true)}
-        onError={() => {
-          setLoaded(false);
-          setFailed(true);
-        }}
-      />
-    </div>
-  );
-}
-
-function MetadataChip({ label, value }: { label: string; value: string }) {
-  return (
     <span className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
-      <span className="shrink-0 font-medium text-foreground/55">{label}</span>
-      <span className="min-w-0 font-semibold text-foreground">{value}</span>
+      {content}
     </span>
   );
 }
@@ -180,11 +176,12 @@ function PreviewActions({
 
   const actionButtons = (
     <>
-      <ItemSaveButton itemId={item.id} />
+      <ItemSaveButton itemId={item.id} deferViewerState />
       <ItemLikeButton
         itemId={item.id}
         initialLikeCount={item.voteCount ?? 0}
         variant="compact"
+        deferViewerState
       />
     </>
   );
@@ -193,11 +190,11 @@ function PreviewActions({
     <Link
       href={`/items/${item.id}`}
       onClick={onClose}
-      className={`flex min-w-0 items-center justify-center rounded-xl bg-primary py-3 wibe-small font-semibold text-white shadow-sm transition-all hover:bg-primary-dark active:scale-[0.99] ${
+      className={`flex min-w-0 items-center justify-center rounded-xl bg-primary py-3 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark active:scale-[0.99] ${
         layout === 'inline' ? 'flex-1' : 'w-full'
       }`}
     >
-      مشاهده صفحه کامل
+      مشاهده
     </Link>
   );
 
@@ -207,12 +204,12 @@ function PreviewActions({
         href={externalUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-all active:scale-[0.99] ${
+        className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-[colors,transform] active:scale-[0.99] ${
           layout === 'inline' ? 'flex-1' : 'w-full'
         }`}
       >
         <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
-        باز کردن لینک
+        منبع
       </a>
     ) : null;
 
@@ -246,11 +243,36 @@ export default function ItemPreviewSheet({
   onClose,
   item,
   itemIndex,
-  totalItems,
   categorySlug,
   categoryIcon,
-  categoryName,
+  listSlug,
+  onPrev,
+  onNext,
 }: ItemPreviewSheetProps) {
+  const router = useRouter();
+  const previewTrackedId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !item) return;
+    router.prefetch(`/items/${item.id}`);
+  }, [isOpen, item, router]);
+
+  useEffect(() => {
+    if (!isOpen || !item) return;
+    if (previewTrackedId.current === item.id) return;
+    previewTrackedId.current = item.id;
+    trackItemPreviewOpen({
+      item_id: item.id,
+      list_slug: listSlug,
+      category_slug: categorySlug ?? undefined,
+      position: itemIndex != null ? itemIndex + 1 : undefined,
+    });
+  }, [isOpen, item, listSlug, categorySlug, itemIndex]);
+
+  useEffect(() => {
+    if (!isOpen) previewTrackedId.current = null;
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -281,12 +303,7 @@ export default function ItemPreviewSheet({
     isLightweight &&
     !isLifestyle &&
     shouldShowSeparateTipCard(item, { lifestyleMode: false });
-  const imdbRating =
-    meta.imdbRating != null && String(meta.imdbRating).trim()
-      ? String(meta.imdbRating)
-      : item.rating != null && Number(item.rating) > 0
-        ? String(item.rating)
-        : null;
+  const imdbRating = resolveImdbRatingDisplay(item.metadata, item.rating);
 
   const factTypeRaw = meta.factType;
   const factLabel =
@@ -294,12 +311,6 @@ export default function ItemPreviewSheet({
       ? FACT_TYPE_LABELS[factTypeRaw as FactType] ?? factTypeRaw
       : null;
 
-  const rankLabel =
-    itemIndex != null && totalItems != null
-      ? `${(itemIndex + 1).toLocaleString('fa-IR')} از ${totalItems.toLocaleString('fa-IR')}`
-      : null;
-
-  const headerSubtitle = [rankLabel, categoryName].filter(Boolean).join(' · ');
   const sheetTitle = item.title?.trim() || (isLightweight ? entryKindBadgeLabel(entryKind) : item.title);
 
   return (
@@ -307,7 +318,6 @@ export default function ItemPreviewSheet({
       isOpen={isOpen}
       onClose={onClose}
       title={sheetTitle}
-      subtitle={headerSubtitle || undefined}
       maxHeight="92vh"
       desktopMaxWidth="lg"
     >
@@ -326,7 +336,7 @@ export default function ItemPreviewSheet({
                         {entryKindBadgeLabel(entryKind)}
                       </span>
                       {factLabel && (
-                        <span className="inline-flex rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-semibold text-violet-700">
+                        <span className="inline-flex rounded-md bg-gray-100 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary">
                           {factLabel}
                         </span>
                       )}
@@ -354,7 +364,7 @@ export default function ItemPreviewSheet({
                 <ItemTipCard tip={listNote} className="text-right" />
               )}
               {showSeparateTip && itemTip && (
-                <ItemTipCard tip={itemTip} className="text-right" />
+                <ItemTipCard tip={itemTip} variant="highlight" className="text-right" />
               )}
 
               <div className="max-lg:hidden">
@@ -379,9 +389,9 @@ export default function ItemPreviewSheet({
                   </div>
                 </div>
                 {imdbRating && (
-                  <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-lg bg-black/70 px-2 py-1 wibe-caption font-bold text-white backdrop-blur-sm">
-                    <Star className="h-3 w-3 fill-warning text-warning" aria-hidden />
-                    {imdbRating}
+                  <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-lg bg-black/75 px-2 py-1 wibe-caption font-bold backdrop-blur-sm">
+                    <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
+                    <span className="text-amber-400 tabular-nums">{imdbRating}</span>
                   </span>
                 )}
               </div>
@@ -389,13 +399,19 @@ export default function ItemPreviewSheet({
               <div className="flex min-w-0 flex-1 flex-col gap-3.5 lg:gap-4 lg:pt-1">
                 {chips.length > 0 && (
                   <div className="flex flex-wrap justify-start gap-1.5">
-                    {chips.map(({ key, label, value }) => (
-                      <MetadataChip key={key} label={label} value={value} />
+                    {chips.map(({ key, label, value, href, profileLinks }) => (
+                      <MetadataChip
+                        key={key}
+                        label={label}
+                        value={value}
+                        href={href}
+                        profileLinks={profileLinks}
+                      />
                     ))}
                   </div>
                 )}
 
-                {itemTip && <ItemTipCard tip={itemTip} className="text-right" />}
+                {itemTip && <ItemTipCard tip={itemTip} variant="highlight" className="text-right" />}
                 {listNote && <ItemTipCard tip={listNote} className="text-right" />}
 
                 {desc ? (

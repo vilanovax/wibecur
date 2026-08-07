@@ -42,7 +42,7 @@ function SegmentedControl<T extends string>({
   onChange: (id: T) => void;
 }) {
   return (
-    <div className="inline-flex max-w-full overflow-x-auto rounded-xl bg-gray-100 p-1 scrollbar-hide">
+    <div className="inline-flex max-w-full overflow-x-auto rounded-xl bg-gray-100 dark:bg-gray-700/50 p-1 scrollbar-hide">
       {options.map((opt) => {
         const active = value === opt.id;
         return (
@@ -52,8 +52,8 @@ function SegmentedControl<T extends string>({
             onClick={() => onChange(opt.id)}
             className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
               active
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'
             }`}
           >
             {opt.label}
@@ -105,10 +105,10 @@ export default function SuggestionsPageClient({
   const resolvedStatus = status === 'all' ? undefined : status;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm" dir="rtl">
-      <div className="space-y-3 border-b border-gray-100 px-4 py-4 md:px-5">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm" dir="rtl">
+      <div className="space-y-3 border-b border-gray-100 dark:border-gray-700 px-4 py-4 md:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex self-start rounded-xl bg-gray-100 p-1">
+          <div className="inline-flex self-start rounded-xl bg-gray-100 dark:bg-gray-700/50 p-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -119,8 +119,8 @@ export default function SuggestionsPageClient({
                   onClick={() => switchTab(tab.id)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
                     active
-                      ? 'bg-white text-violet-700 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white dark:bg-gray-800 text-violet-700 dark:text-violet-300 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -142,7 +142,7 @@ export default function SuggestionsPageClient({
 
         {activeTab === 'items' && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-gray-500">منبع:</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">منبع:</span>
             <SegmentedControl
               value={source}
               options={sourceFilters}

@@ -10,6 +10,7 @@ import type { CommentFilterKind } from '@/lib/admin/comments-filter-utils';
 
 const MORE_FILTERS: { id: CommentFilterKind; label: string }[] = [
   { id: 'all', label: 'همه' },
+  { id: 'seeded', label: 'ساختگی' },
   { id: 'filtered', label: 'کلمات بد' },
   { id: 'rejected', label: 'رد شده' },
 ];
@@ -53,7 +54,7 @@ export default function CommentsToolbar({
     [onSearchChange, searchTimeout]
   );
 
-  const isSecondaryFilter = ['all', 'filtered', 'rejected'].includes(currentFilter);
+  const isSecondaryFilter = ['all', 'seeded', 'filtered', 'rejected'].includes(currentFilter);
 
   return (
     <div

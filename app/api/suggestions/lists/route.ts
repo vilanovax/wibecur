@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error creating suggested list:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در ثبت پیشنهاد' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در ثبت پیشنهاد') },
       { status: 500 }
     );
   }

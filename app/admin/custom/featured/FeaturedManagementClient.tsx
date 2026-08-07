@@ -371,7 +371,7 @@ function FeaturedManagementInner() {
   if (error) {
     return (
       <div
-        className="rounded-2xl bg-red-50 border border-red-200 p-6 text-red-800"
+        className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 p-6 text-red-800 dark:text-red-300"
         dir="rtl"
       >
         {error}
@@ -538,7 +538,7 @@ function FeaturedManagementInner() {
                   />
                 </div>
               </div>
-              {editError && <p className="text-sm text-red-600">{editError}</p>}
+              {editError && <p className="text-sm text-red-600 dark:text-red-400">{editError}</p>}
               <div className="flex gap-2 justify-end">
                 <button
                   type="button"

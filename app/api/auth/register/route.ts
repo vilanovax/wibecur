@@ -9,18 +9,36 @@ import {
   validateAuthPassword,
   validatePhoneInput,
 } from '@/lib/phone-auth';
-import { DEFAULT_PACK_AVATARS } from '@/lib/vibe-avatars';
+import { DEFAULT_PACK_AVATARS, resolveVibeAvatarId } from '@/lib/vibe-avatars';
+import { checkActionRateLimit } from '@/lib/rate-limit';
 
 const DEFAULT_AVATAR_IDS = new Set(DEFAULT_PACK_AVATARS.map((a) => a.id));
 
+function getClientIp(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return request.headers.get('x-real-ip') ?? 'unknown';
+}
+
 export async function POST(request: Request) {
   try {
+    // ضد-اتوماسیون: حداکثر ۵ ثبت‌نام در ساعت به‌ازای هر IP (جلوگیری از ساخت انبوه حساب).
+    const ip = getClientIp(request);
+    const { success } = await checkActionRateLimit(`register:${ip}`, 5, '1 h');
+    if (!success) {
+      return NextResponse.json(
+        { success: false, error: 'تعداد تلاش‌ها زیاد است. کمی بعد دوباره امتحان کن.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const phoneRaw = String(body?.phone ?? '');
     const password = String(body?.password ?? '');
     const name = typeof body?.name === 'string' ? body.name.trim() : '';
     const avatarRaw = typeof body?.avatarId === 'string' ? body.avatarId.trim() : 'vibe';
-    const avatarId = DEFAULT_AVATAR_IDS.has(avatarRaw) ? avatarRaw : 'vibe';
+    const resolvedAvatarId = resolveVibeAvatarId(avatarRaw) ?? 'vibe';
+    const avatarId = DEFAULT_AVATAR_IDS.has(resolvedAvatarId) ? resolvedAvatarId : 'vibe';
 
     const phoneError = validatePhoneInput(phoneRaw);
     if (phoneError) {
@@ -49,7 +67,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = bcrypt.hashSync(password, 12);
     const baseUsername = `u${normalizedPhone.slice(-8)}`;
 
     let username = baseUsername;

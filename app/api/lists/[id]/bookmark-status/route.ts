@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
@@ -41,7 +42,7 @@ export async function GET(
   } catch (error: any) {
     console.error('Error checking bookmark status:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در بررسی وضعیت بوک‌مارک' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در بررسی وضعیت بوک‌مارک') },
       { status: 500 }
     );
   }

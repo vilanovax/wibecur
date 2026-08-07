@@ -1,25 +1,62 @@
 'use client';
 
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { Bookmark } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeGridListCard from './HomeGridListCard';
+import HomeStarterEmptyPanel from './HomeStarterEmptyPanel';
+import HomeFeedGrid from './HomeFeedGrid';
 import {
   useForYouRecommendations,
   getForYouReasonLabel,
 } from '@/hooks/useForYouRecommendations';
+import { useHomeData } from '@/contexts/HomeDataContext';
+import { useHomeUserState } from '@/hooks/useHomeUserState';
+import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
+import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
+import { trackHomeSectionClick } from '@/lib/analytics';
+import { useLazyInView } from '@/hooks/useLazyInView';
 
-export default function ForYouSection({ embedded = false }: { embedded?: boolean }) {
-  const { data: session } = useSession();
-  const { lists, isPersonalized, isLoading } = useForYouRecommendations();
-  const displayLists = lists.slice(0, 8);
+type ForYouSectionProps = {
+  embedded?: boolean;
+  /** وقتی embedded است، والد تعیین می‌کند API چه موقع fetch شود */
+  fetchEnabled?: boolean;
+};
+
+export default function ForYouSection({ embedded = false, fetchEnabled: fetchEnabledProp }: ForYouSectionProps) {
+  const { ref, inView } = useLazyInView({ rootMargin: '240px' });
+  const shouldFetch = embedded ? (fetchEnabledProp ?? false) : inView;
+
+  const { isGuest } = useHomeUserState();
+  const { interests } = useHomeOnboardingInterests();
+  const { data: homeData } = useHomeData();
+  const { lists, isPersonalized, isLoading } = useForYouRecommendations({ enabled: shouldFetch });
+
+  const trendingFallback = (homeData?.trending ?? []).filter(
+    (l) => l.id !== homeData?.featured?.id
+  );
+  const displayLists = (lists.length > 0 ? lists : trendingFallback).slice(0, 8);
+  const desktopCells = buildDesktopFeedCells(displayLists, {
+    maxLists: 8,
+    seeAll: {
+      href: '/lists',
+      label: 'مشاهده همه',
+      description: 'پیشنهادهای بیشتر',
+    },
+  });
+  const usingFallback = !isPersonalized && lists.length === 0 && displayLists.length > 0;
+  const trulyEmpty = displayLists.length === 0;
+
+  const subtitle = isPersonalized
+    ? 'بر اساس ذخیره‌ها و علایق تو'
+    : interests.length > 0
+      ? 'بر اساس علاقه‌مندی‌های انتخاب‌شده'
+      : 'لیست‌های پیشنهادی برای شروع';
 
   if (isLoading && displayLists.length === 0) {
     return (
-      <section className={embedded ? '' : 'mb-6'}>
+      <section ref={ref} className={embedded ? '' : 'mb-6'}>
         {!embedded && (
           <div className="mb-3 px-4">
             <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
@@ -35,22 +72,28 @@ export default function ForYouSection({ embedded = false }: { embedded?: boolean
   }
 
   return (
-    <section className={embedded ? '' : 'mb-6'}>
+    <section ref={ref} className={embedded ? '' : 'mb-6'}>
       {!embedded && (
         <HomeSectionTitle
-          icon="✨"
-          title="برای تو"
-          subtitle={
-            isPersonalized
-              ? 'بر اساس ذخیره‌ها و علایق تو'
-              : 'لیست‌های پیشنهادی برای شروع'
-          }
+          iconVariant="forYou"
+          title={isPersonalized ? 'برای تو' : 'پیشنهاد برای شروع'}
+          subtitle={subtitle}
           actionHref="/lists"
           actionLabel="همه"
+          analyticsSection="for_you"
         />
       )}
-      {displayLists.length > 0 ? (
+
+      {trulyEmpty ? (
+        <HomeStarterEmptyPanel lists={trendingFallback.slice(0, 4)} isGuest={isGuest} />
+      ) : (
         <>
+          {usingFallback && !embedded ? (
+            <p className="mb-3 px-4 wibe-caption text-wibe-secondary lg:px-0">
+              هنوز ذخیره‌ای نداری — این لیست‌های محبوب را امتحان کن
+            </p>
+          ) : null}
+
           <div className="space-y-2 px-4 lg:hidden">
             {displayLists.map((list) => {
               const reason = getForYouReasonLabel(list, isPersonalized);
@@ -58,6 +101,13 @@ export default function ForYouSection({ embedded = false }: { embedded?: boolean
                 <Link
                   key={list.id}
                   href={`/lists/${list.slug}`}
+                  onClick={() =>
+                    trackHomeSectionClick('for_you', {
+                      list_slug: list.slug,
+                      category_slug: list.categories?.slug,
+                      target: 'card',
+                    })
+                  }
                   className="flex min-h-[120px] flex-row-reverse gap-4 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
                 >
                   <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-gray-200">
@@ -83,46 +133,34 @@ export default function ForYouSection({ embedded = false }: { embedded?: boolean
                     <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
                       {list.title}
                     </h3>
-                    <p className="mt-1.5 flex items-center gap-1 wibe-caption text-wibe-secondary">
-                      <Bookmark className="h-3.5 w-3.5 text-primary" />
-                      {list.saveCount.toLocaleString('fa-IR')} ذخیره · {list.itemCount} آیتم
-                    </p>
+                    {list.itemCount > 0 ? (
+                      <p className="mt-1.5 wibe-caption text-wibe-secondary">
+                        {list.itemCount.toLocaleString('fa-IR')} آیتم
+                      </p>
+                    ) : null}
                   </div>
                 </Link>
               );
             })}
           </div>
 
-      <div
-        className={`hidden lg:grid lg:overflow-visible lg:snap-none lg:px-0 ${HOME_FEED_GRID_CLASS}`}
-      >
-            {displayLists.map((list) => {
-              const reason = getForYouReasonLabel(list, isPersonalized);
-              return (
-                <HomeGridListCard
-                  key={list.id}
-                  list={list}
-                  badge={reason || null}
-                  badgeClassName="bg-primary/90 text-white"
-                />
-              );
-            })}
+          <div
+            className={`hidden lg:grid lg:overflow-visible lg:snap-none lg:px-0 ${HOME_FEED_GRID_CLASS}`}
+          >
+            <HomeFeedGrid
+              cells={desktopCells}
+              getBadge={(list) => {
+                const full = lists.find((l) => l.id === list.id) ?? list;
+                return (
+                  getForYouReasonLabel(full as Parameters<typeof getForYouReasonLabel>[0], isPersonalized) ||
+                  (usingFallback ? 'پیشنهاد شروع' : null)
+                );
+              }}
+              badgeClassName="bg-primary/90 text-white"
+              homeSection="for_you"
+            />
           </div>
         </>
-      ) : (
-        <div className="mx-4 rounded-lg border border-wibe bg-wibe-card py-8 text-center lg:mx-0">
-          <p className="wibe-small text-wibe-secondary">
-            {session?.user
-              ? 'چند لیست ذخیره کن تا پیشنهادات شخصی‌تر ببینی'
-              : 'وارد شو تا پیشنهادات شخصی ببینی'}
-          </p>
-          <Link
-            href={session?.user ? '/lists' : '/login?callbackUrl=/'}
-            className="mt-2 inline-block wibe-small font-medium text-primary"
-          >
-            {session?.user ? 'دیدن لیست‌ها' : 'ورود'}
-          </Link>
-        </div>
       )}
     </section>
   );

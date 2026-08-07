@@ -55,6 +55,8 @@ export interface CuratedList {
   growthPercent24h?: number;
   /** امتیاز کیوریتور (۱–۵) */
   rating?: number;
+  /** tags برای matching علایق keyword */
+  tags?: string[];
 }
 
 /** Category for filter chips */

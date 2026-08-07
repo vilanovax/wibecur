@@ -30,7 +30,7 @@ export default function HubCurators({
       <CategorySectionTitle
         title={`کیوریتورهای برتر ${categoryName}`}
         subtitle="برترین کیوریتورها در این دسته"
-        icon="👑"
+        iconVariant="curators"
       />
 
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory -mx-4 px-4">

@@ -35,7 +35,7 @@ export default function RejectCommentDialog({
         aria-labelledby="reject-comment-title"
         dir="rtl"
       >
-        <div className="flex items-center gap-2 text-rose-600 mb-2">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 mb-2">
           <XCircle className="w-5 h-5" />
           <h3 id="reject-comment-title" className="font-semibold text-[var(--color-text)]">
             {title}

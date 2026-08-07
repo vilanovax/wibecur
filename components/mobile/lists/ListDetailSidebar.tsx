@@ -3,27 +3,20 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Lightbulb, Plus, Settings, Share2 } from 'lucide-react';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import ListDetailActionRow from '@/components/mobile/lists/ListDetailActionRow';
+import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
+import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 import { DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS } from '@/lib/layout-tokens';
-
-type ListUser = {
-  name: string | null;
-  image: string | null;
-  username: string | null;
-} | null;
+import { shouldShowViralProgress } from '@/lib/list-viral-display';
 
 interface ListDetailSidebarProps {
   listId: string;
   saveCount: number;
   isOwner: boolean;
-  isViral: boolean;
   viralProgress: number;
-  curator: ListUser;
-  categoryName?: string | null;
-  categoryIcon?: string | null;
+  sidebarAds?: SponsoredPlacementPublic[];
+  sidebarAdListId?: string;
+  sidebarAdCategoryId?: string;
   tags?: string[];
-  onBookmarkToggle?: (saved: boolean) => void;
   onShare: () => void;
   onManage: () => void;
   onSuggestItem: () => void;
@@ -34,13 +27,11 @@ export default function ListDetailSidebar({
   listId,
   saveCount,
   isOwner,
-  isViral,
   viralProgress,
-  curator,
-  categoryName,
-  categoryIcon,
+  sidebarAds = [],
+  sidebarAdListId,
+  sidebarAdCategoryId,
   tags = [],
-  onBookmarkToggle,
   onShare,
   onManage,
   onSuggestItem,
@@ -69,7 +60,7 @@ export default function ListDetailSidebar({
               <Share2 className="h-4 w-4 text-wibe-secondary" />
               اشتراک‌گذاری
             </button>
-            {saveCount < 100 && (
+            {shouldShowViralProgress(saveCount) && (
               <div>
                 <div className="mb-1 flex items-center justify-between wibe-caption text-wibe-secondary">
                   <span>پیشرفت وایرال</span>
@@ -79,47 +70,23 @@ export default function ListDetailSidebar({
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
                   <div
-                    className="h-full rounded-full bg-warning transition-all"
+                    className="h-full rounded-full bg-warning transition-colors"
                     style={{ width: `${viralProgress}%` }}
                   />
                 </div>
               </div>
             )}
           </div>
-        ) : (
-          <ListDetailActionRow
-            listId={listId}
-            saveCount={saveCount}
-            isOwner={false}
-            onBookmarkToggle={onBookmarkToggle}
-            onShare={onShare}
-          />
-        )}
+        ) : null}
 
-        {curator?.name && (
-          <div className="rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm">
-            <p className="mb-2 wibe-caption font-medium text-wibe-secondary">کیوریتور</p>
-            {curator.username ? (
-              <Link
-                href={`/u/${encodeURIComponent(curator.username)}`}
-                className="flex items-center gap-3 rounded-lg transition-colors hover:bg-gray-50"
-              >
-                <CuratorAvatar curator={curator} />
-                <span className="wibe-small font-semibold text-foreground">{curator.name}</span>
-              </Link>
-            ) : (
-              <div className="flex items-center gap-3">
-                <CuratorAvatar curator={curator} />
-                <span className="wibe-small font-semibold text-foreground">{curator.name}</span>
-              </div>
-            )}
-            {categoryName && (
-              <p className="mt-2 wibe-caption text-wibe-secondary">
-                {categoryIcon} {categoryName}
-              </p>
-            )}
-          </div>
-        )}
+        {sidebarAds.length > 0 ? (
+          <SponsoredPlacementStack
+            placements={sidebarAds}
+            listId={sidebarAdListId}
+            categoryId={sidebarAdCategoryId}
+            variant="sidebar"
+          />
+        ) : null}
 
         {tags.length > 0 && (
           <div className="rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm">
@@ -134,12 +101,6 @@ export default function ListDetailSidebar({
                 </span>
               ))}
             </div>
-          </div>
-        )}
-
-        {isViral && !isOwner && (
-          <div className="rounded-xl border border-warning/25 bg-warning/10 px-4 py-3 wibe-caption font-medium text-foreground">
-            🔥 لیست وایرال
           </div>
         )}
 
@@ -165,22 +126,5 @@ export default function ListDetailSidebar({
         )}
       </div>
     </aside>
-  );
-}
-
-function CuratorAvatar({ curator }: { curator: NonNullable<ListUser> }) {
-  if (curator.image) {
-    return (
-      <ImageWithFallback
-        src={curator.image}
-        alt=""
-        className="h-10 w-10 shrink-0 rounded-full object-cover"
-      />
-    );
-  }
-  return (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-      {(curator.name?.[0] || '?').toUpperCase()}
-    </span>
   );
 }

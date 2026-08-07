@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UserPulseSummary from '@/components/admin/users/UserPulseSummary';
 import SmartFilterBar from '@/components/admin/users/SmartFilterBar';
@@ -26,6 +26,7 @@ interface UsersPageClientProps {
 export default function UsersPageClient({ data }: UsersPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isNavigating, startNavigation] = useTransition();
 
   const [search, setSearch] = useState(data.search || '');
   const [filterKind, setFilterKind] = useState<UserFilterKind>(data.filter);
@@ -35,6 +36,7 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [liftingCommentId, setLiftingCommentId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [toggleTarget, setToggleTarget] = useState<{
     id: string;
@@ -83,7 +85,8 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
         else params.set('page', opts.page);
       }
 
-      router.push(params.toString() ? `/admin/users?${params.toString()}` : '/admin/users');
+      const url = params.toString() ? `/admin/users?${params.toString()}` : '/admin/users';
+      startNavigation(() => router.push(url));
     },
     [searchParams, filterKind, hideBots, search, sort, router]
   );
@@ -119,7 +122,8 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
     setSort('created_desc');
     const params = new URLSearchParams();
     if (!hideBots) params.set('hideBots', 'false');
-    router.push(params.toString() ? `/admin/users?${params.toString()}` : '/admin/users');
+    const url = params.toString() ? `/admin/users?${params.toString()}` : '/admin/users';
+    startNavigation(() => router.push(url));
   };
 
   const handleUserClick = (user: UserIntelligenceRow) => {
@@ -179,6 +183,35 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
     }
   };
 
+  const handleUnrestrictComment = async (user: UserIntelligenceRow) => {
+    setLiftingCommentId(user.id);
+    try {
+      const res = await fetch(`/api/admin/comments/violations/user/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unrestrict' }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در رفع محدودیت کامنت');
+      }
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id ? { ...u, commentStatus: 'allowed' as const } : u
+        )
+      );
+      setToast({ message: 'محدودیت کامنت برداشته شد', type: 'success' });
+      router.refresh();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'خطا در رفع محدودیت کامنت';
+      setToast({ message, type: 'error' });
+    } finally {
+      setLiftingCommentId(null);
+    }
+  };
+
   const hasActiveFilters =
     filterKind !== 'all' || !!search.trim() || sort !== 'created_desc';
 
@@ -220,7 +253,7 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
           </p>
         </div>
 
-        <UserPulseSummary data={data.pulse} onFilterClick={handlePulseFilter} />
+        <UserPulseSummary data={data.pulse} onFilterClick={handlePulseFilter} activeFilter={filterKind} />
 
         <SmartFilterBar
           value={filterKind}
@@ -237,15 +270,20 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
           onClearFilters={handleClearFilters}
         />
 
-        <UsersIntelligenceTable
-          users={users}
-          onToggleActiveRequest={requestToggleActive}
-          togglingId={togglingId}
-          onUserClick={handleUserClick}
-          emptyBecauseFilter={users.length === 0 && data.totalCount === 0 && filterKind !== 'all'}
-          filterLabel={USER_FILTER_PILLS.find((p) => p.value === filterKind)?.label}
-          hasSearch={!!data.search.trim()}
-        />
+        {/* حین ناوبری سرور (فیلتر/جستجو/مرتب) جدول کم‌رنگ و غیرفعال می‌شود تا فریزِ بی‌بازخورد نباشد */}
+        <div className={`transition-opacity ${isNavigating ? 'opacity-50 pointer-events-none' : ''}`} aria-busy={isNavigating}>
+          <UsersIntelligenceTable
+            users={users}
+            onToggleActiveRequest={requestToggleActive}
+            onUnrestrictCommentRequest={handleUnrestrictComment}
+            togglingId={togglingId}
+            liftingCommentId={liftingCommentId}
+            onUserClick={handleUserClick}
+            emptyBecauseFilter={users.length === 0 && data.totalCount === 0 && filterKind !== 'all'}
+            filterLabel={USER_FILTER_PILLS.find((p) => p.value === filterKind)?.label}
+            hasSearch={!!data.search.trim()}
+          />
+        </div>
 
         {data.totalPages > 1 && (
           <div className="mt-6">
@@ -268,6 +306,16 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
             setSelectedUserId(null);
           }}
           onToggleActiveRequest={requestToggleActive}
+          onCommentRestrictionLifted={() => {
+            setUsers((prev) =>
+              selectedUserId
+                ? prev.map((u) =>
+                    u.id === selectedUserId ? { ...u, commentStatus: 'allowed' as const } : u
+                  )
+                : prev
+            );
+            router.refresh();
+          }}
         />
       )}
 

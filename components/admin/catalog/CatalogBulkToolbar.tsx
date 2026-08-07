@@ -11,6 +11,7 @@ import {
   ListPlus,
   X,
   ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import {
@@ -75,6 +76,7 @@ export default function CatalogBulkToolbar({
   const [sourceListId, setSourceListId] = useState(activeListId);
   const [targetListId, setTargetListId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [enrichLoading, setEnrichLoading] = useState(false);
 
   const count = selectedIds.length;
   const previewTitle = useMemo(() => {
@@ -136,6 +138,28 @@ export default function CatalogBulkToolbar({
     }
   };
 
+  const handleEnrichSearch = async () => {
+    setMenuOpen(false);
+    setEnrichLoading(true);
+    try {
+      const res = await fetch('/api/admin/catalog-items/enrich-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ catalogIds: selectedIds }),
+      });
+      const data = await res.json();
+      if (!res.ok || (!data.success && data.updated === 0)) {
+        throw new Error(data.error || 'غنی‌سازی ناموفق بود');
+      }
+      onDone(data.message || 'پروفایل جستجو ساخته شد');
+      onClear();
+    } catch (e: unknown) {
+      onError(e instanceof Error ? e.message : 'خطا');
+    } finally {
+      setEnrichLoading(false);
+    }
+  };
+
   const meta = pending ? CATALOG_BULK_ACTION_LABELS[pending.action] : null;
 
   const actions: CatalogBulkAction[] = [
@@ -161,7 +185,8 @@ export default function CatalogBulkToolbar({
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
-              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
+              disabled={enrichLoading}
+              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-50"
             >
               عملیات گروهی
               <ChevronDown className="w-4 h-4" />
@@ -174,6 +199,14 @@ export default function CatalogBulkToolbar({
                   aria-hidden
                 />
                 <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => void handleEnrichSearch()}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-right hover:bg-gray-50 text-violet-800 border-b border-gray-100"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    غنی‌سازی جستجو (AI)
+                  </button>
                   {actions.map((action) => {
                     const item = CATALOG_BULK_ACTION_LABELS[action];
                     return (

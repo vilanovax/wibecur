@@ -16,7 +16,26 @@ import type {
   CuratorIntelligenceRow,
   RiskItem,
   ActionQueueItem,
+  ActivityEvent,
 } from './types';
+
+/** یک رویداد برای هر عنوان+نوع — جلوگیری از تکرار «لیست X» در جریان فعالیت */
+function dedupeDashboardActivities(events: ActivityEvent[]): ActivityEvent[] {
+  const byKey = new Map<string, ActivityEvent>();
+  for (const event of events) {
+    const dedupeKey =
+      event.type === 'list_created' || event.type === 'item_added'
+        ? `${event.type}:${(event.description ?? event.title).trim()}`
+        : event.id;
+    const prev = byKey.get(dedupeKey);
+    if (!prev || event.timestamp > prev.timestamp) {
+      byKey.set(dedupeKey, event);
+    }
+  }
+  return [...byKey.values()].sort(
+    (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+  );
+}
 
 const persianMonths = [
   'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
@@ -39,6 +58,7 @@ export async function getDashboardData(
   const [
     userCount,
     listCount,
+    itemCount,
     periodUsers,
     prevPeriodUsers,
     periodLists,
@@ -66,6 +86,7 @@ export async function getDashboardData(
   ] = await Promise.all([
     dbQuery(() => prisma.users.count()),
     dbQuery(() => prisma.lists.count({ where: { isActive: true } })),
+    dbQuery(() => prisma.items.count({ where: { deletedAt: null } })),
     dbQuery(() => prisma.users.count({ where: { createdAt: { gte: periodStart } } })),
     dbQuery(() =>
       prisma.users.count({
@@ -266,11 +287,6 @@ export async function getDashboardData(
   const saveRate = totalViews > 0 ? ((totalSaves / totalViews) * 100).toFixed(1) : '۰';
   const pendingItemReports = commentsHub.itemReportsOpen;
   const pendingCommentReports = commentsHub.commentReports.open;
-  const pendingReports =
-    pendingItemReports +
-    pendingCommentReports +
-    pendingSuggestedLists +
-    commentsHub.comments.pending;
 
   const commentsModeration = {
     pending: commentsHub.comments.pending,
@@ -285,13 +301,6 @@ export async function getDashboardData(
 
   const delta = (curr: number, prev: number) =>
     prev > 0 ? Math.round(((curr - prev) / prev) * 100) : curr > 0 ? 100 : 0;
-
-  const velocityDelta =
-    prevPeriodBookmarks > 0
-      ? delta(periodBookmarks, prevPeriodBookmarks)
-      : periodBookmarks > 0
-        ? 100
-        : 0;
 
   const actionQueue: ActionQueueItem[] = [
     ...(commentsHub.comments.pending > 0
@@ -352,36 +361,49 @@ export async function getDashboardData(
     createdAt: s.createdAt,
   }));
 
+  const usersDelta = delta(periodUsers, prevPeriodUsers);
+  const listsDelta = delta(periodLists, prevPeriodLists);
+  const savesDelta = delta(periodBookmarks, prevPeriodBookmarks);
+
+  const contentOverview = {
+    categories: categoriesWithCount.length,
+    lists: listCount,
+    items: itemCount,
+    users: userCount,
+    totalViews,
+    totalSaves,
+    saveRate: `${saveRate}٪`,
+  };
+
+  const periodSnapshot = {
+    label: periodLabel,
+    range: rangeInput,
+    newUsers: periodUsers,
+    newLists: periodLists,
+    saves: periodBookmarks,
+    usersDelta,
+    listsDelta,
+    savesDelta,
+  };
+
   const kpis: KpiItem[] = [
     {
       label: `کاربران جدید (${periodLabel})`,
       value: periodUsers,
-      delta: delta(periodUsers, prevPeriodUsers),
+      delta: usersDelta,
       trend: periodUsers >= prevPeriodUsers ? 'up' : 'down',
     },
     {
       label: `لیست‌های جدید (${periodLabel})`,
       value: periodLists,
-      delta: delta(periodLists, prevPeriodLists),
+      delta: listsDelta,
       trend: periodLists >= prevPeriodLists ? 'up' : 'down',
     },
     {
       label: `ذخیره (${periodLabel})`,
       value: periodBookmarks,
-      delta: delta(periodBookmarks, prevPeriodBookmarks),
+      delta: savesDelta,
       trend: periodBookmarks >= prevPeriodBookmarks ? 'up' : 'down',
-    },
-    {
-      label: 'نرخ ذخیره',
-      value: `${saveRate}٪`,
-      delta: 0,
-      trend: 'neutral',
-    },
-    {
-      label: 'ریپورت‌های در انتظار',
-      value: pendingReports,
-      delta: 0,
-      trend: pendingReports > 0 ? 'up' : 'neutral',
     },
   ];
 
@@ -457,8 +479,9 @@ export async function getDashboardData(
       href: i.lists ? `/lists/${i.lists.slug}` : undefined,
     })),
   ]
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-    .slice(0, 12);
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+  const dedupedActivities = dedupeDashboardActivities(activities).slice(0, 12);
 
   const count24hByList = new Map(bookmarks24hByList.map((b) => [b.listId, b._count]));
   const count7dByList = new Map(bookmarks7dByList.map((b) => [b.listId, b._count]));
@@ -468,23 +491,6 @@ export async function getDashboardData(
 
   const systemPulse: SystemPulseCard[] = [
     {
-      id: 'save_velocity',
-      label: 'سرعت ذخیره',
-      value: periodBookmarks,
-      deltaPercent: velocityDelta,
-      trend:
-        velocityDelta > 0 ? 'up' : velocityDelta < 0 ? 'down' : 'neutral',
-      sparkline: [
-        prevPeriodBookmarks,
-        periodBookmarks,
-        periodBookmarks,
-        periodBookmarks,
-        periodBookmarks,
-      ],
-      semanticColor: velocityDelta >= 0 ? 'emerald' : 'red',
-      tooltip: `ذخیره‌های ${periodLabel} نسبت به دوره قبل.`,
-    },
-    {
       id: 'trending_momentum',
       label: 'شاخص ترند',
       value: trendingListsDb.length,
@@ -492,27 +498,17 @@ export async function getDashboardData(
       trend: 'up',
       sparkline: [3, 5, 4, 6, trendingListsDb.length].slice(0, 5),
       semanticColor: 'blue',
-      tooltip: 'وضعیت کلی لیست‌های درگیر؛ هرچه بیشتر سالم‌تر.',
+      tooltip: 'تعداد لیست‌های برتر در رادار ترند.',
     },
     {
       id: 'active_lists_ratio',
-      label: 'نسبت لیست‌های فعال',
+      label: 'لیست‌های فعال ۷ روز',
       value: listCount > 0 ? `${Math.round((activeLists7d / listCount) * 100)}٪` : '۰٪',
-      deltaPercent: 0,
-      trend: 'neutral',
+      deltaPercent: activeLists7d,
+      trend: activeLists7d > 0 ? 'up' : 'neutral',
       sparkline: [40, 50, 55, 60, Math.round((activeLists7d / Math.max(1, listCount)) * 100)],
       semanticColor: 'amber',
       tooltip: 'سهم لیست‌هایی که در ۷ روز اخیر حداقل یک ذخیره داشته‌اند.',
-    },
-    {
-      id: 'risk_alerts',
-      label: 'هشدار ریسک',
-      value: pendingReports,
-      deltaPercent: 0,
-      trend: pendingReports > 0 ? 'up' : 'neutral',
-      sparkline: [0, pendingItemReports, pendingCommentReports, pendingSuggestedLists, pendingReports].filter((n) => n !== undefined) as number[],
-      semanticColor: pendingReports > 0 ? 'red' : 'emerald',
-      tooltip: 'ریپورت‌های حل‌نشده و لیست‌های در انتظار بررسی.',
     },
   ];
 
@@ -546,7 +542,9 @@ export async function getDashboardData(
       listSlug: l.slug,
       category: l.categories?.name ?? '—',
       categoryId: l.categoryId ?? undefined,
+      viewCount: l.viewCount,
       saves24h,
+      saveCount: l.saveCount,
       growth7dPercent,
       trendingScore,
       trend,
@@ -682,6 +680,8 @@ export async function getDashboardData(
 
   return {
     kpis,
+    contentOverview,
+    periodSnapshot,
     moderationAlerts: [
       {
         id: 'reports',
@@ -723,7 +723,7 @@ export async function getDashboardData(
             ? 'medium'
             : 'low',
     })),
-    activities,
+    activities: dedupedActivities,
     userGrowthData: userGrowth,
     listsByCategory,
     itemDistribution,

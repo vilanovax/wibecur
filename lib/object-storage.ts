@@ -1,4 +1,4 @@
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import axios from 'axios';
 import {
@@ -8,7 +8,8 @@ import {
   isOurStorageUrl,
 } from './object-storage-config';
 import crypto from 'crypto';
-import { optimizeImage } from './image-optimizer';
+import { optimizeImageDetailed } from './image-optimizer';
+import { buildImageDownloadHeaders } from './image-download-headers';
 import { profileForStorageFolder } from './upload-profiles';
 import type { ImageProfile } from './image-config';
 import {
@@ -16,6 +17,12 @@ import {
   normalizeImageUrlForStorage,
 } from './image-url-sanitize';
 import { isTmdbImageUrl } from './image-url-policy';
+import {
+  isPublicHttpUrl,
+  ssrfSafeHttpAgent,
+  ssrfSafeHttpsAgent,
+} from './ssrf-guard';
+import { toNodeBuffer } from './to-node-buffer';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -82,16 +89,22 @@ async function uploadBufferToStorage(
   contentType: string,
   folder: string,
   profile: ImageProfile
-): Promise<string | null> {
+): Promise<{ url: string; optimization: Awaited<ReturnType<typeof optimizeImageDetailed>> } | null> {
   const client = await getS3Client();
   const config = await getObjectStorageConfig();
   if (!client || !config) return null;
 
-  const optimized = await optimizeImage(buffer, { profile });
+  const optimized = await optimizeImageDetailed(buffer, { profile });
   const filename = `${crypto.randomUUID()}${optimized.ext}`;
   const key = buildStorageObjectKey(folder, filename);
 
-  if (isDev) console.log('Uploading to ParsPack:', key);
+  if (isDev) {
+    console.log('Uploading to ParsPack:', key, {
+      profile,
+      bytes: optimized.optimizedBytes,
+      dimensions: `${optimized.width ?? '?'}x${optimized.height ?? '?'}`,
+    });
+  }
 
   const uploadParams = {
     Bucket: config.bucketName,
@@ -114,7 +127,10 @@ async function uploadBufferToStorage(
     }
   });
 
-  return buildStoragePublicUrl(config, key);
+  return {
+    url: buildStoragePublicUrl(config, key),
+    optimization: optimized,
+  };
 }
 
 export type UploadImageFromUrlResult =
@@ -129,10 +145,15 @@ function profileForFolder(folder: string) {
   return profileForStorageFolder(folder);
 }
 
+export type UploadImageFromUrlOptions = {
+  timeoutMs?: number;
+};
+
 export async function uploadImageFromUrlDetailed(
   imageUrl: string,
   folder: string = 'images',
-  profile?: ImageProfile
+  profile?: ImageProfile,
+  options?: UploadImageFromUrlOptions
 ): Promise<UploadImageFromUrlResult> {
   try {
     const client = await getS3Client();
@@ -148,18 +169,30 @@ export async function uploadImageFromUrlDetailed(
       };
     }
 
+    // محافظ SSRF — قبل از هر fetch سمت سرور آدرس را اعتبارسنجی کن.
+    if (!isPublicHttpUrl(imageUrl)) {
+      return {
+        ok: false,
+        code: 'download_failed',
+        error: 'آدرس تصویر نامعتبر یا غیرمجاز است',
+      };
+    }
+
     if (isDev) console.log('Downloading image from:', imageUrl);
+
+    const timeoutMs = options?.timeoutMs ?? 30000;
 
     let response;
     try {
       response = await axios.get(imageUrl, {
         responseType: 'arraybuffer',
-        timeout: 30000,
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          Accept: 'image/webp,image/apng,image/*,*/*;q=0.8',
-        },
+        timeout: timeoutMs,
+        // اعتبارسنجی IP مقصد در هر اتصال/redirect توسط lookup سفارشی
+        httpAgent: ssrfSafeHttpAgent,
+        httpsAgent: ssrfSafeHttpsAgent,
+        maxRedirects: 3,
+        maxContentLength: 25 * 1024 * 1024, // سقف ۲۵MB
+        headers: buildImageDownloadHeaders(imageUrl),
         validateStatus: (s) => s >= 200 && s < 400,
       });
     } catch (downloadErr: unknown) {
@@ -174,7 +207,7 @@ export async function uploadImageFromUrlDetailed(
       };
     }
 
-    const imageBuffer = Buffer.from(response.data);
+    const imageBuffer = toNodeBuffer(response.data as Uint8Array);
     if (!imageBuffer.length) {
       return { ok: false, code: 'download_failed', error: 'فایل تصویر خالی است' };
     }
@@ -194,8 +227,8 @@ export async function uploadImageFromUrlDetailed(
       };
     }
 
-    if (isDev) console.log('Image uploaded:', publicUrl);
-    return { ok: true, url: publicUrl };
+    if (isDev) console.log('Image uploaded:', publicUrl.url);
+    return { ok: true, url: publicUrl.url };
   } catch (error: unknown) {
     console.error('Error uploading image:', error);
     return {
@@ -222,6 +255,26 @@ export async function uploadImageBuffer(
   profile?: ImageProfile
 ): Promise<string | null> {
   try {
+    const result = await uploadBufferToStorage(
+      buffer,
+      contentType,
+      folder,
+      profile ?? profileForFolder(folder)
+    );
+    return result?.url ?? null;
+  } catch (error: unknown) {
+    console.error('Error uploading image:', formatStorageUploadError(error));
+    return null;
+  }
+}
+
+export async function uploadImageBufferDetailed(
+  buffer: Buffer,
+  contentType: string = 'image/jpeg',
+  folder: string = 'images',
+  profile?: ImageProfile
+) {
+  try {
     return await uploadBufferToStorage(
       buffer,
       contentType,
@@ -234,7 +287,42 @@ export async function uploadImageBuffer(
   }
 }
 
-export type ImageFolder = 'items' | 'avatars' | 'covers' | 'lists' | 'hubs';
+export type ImageFolder = 'items' | 'avatars' | 'covers' | 'lists' | 'hubs' | 'site';
+
+function parseStorageUrlParts(publicUrl: string): { bucket: string; key: string } | null {
+  try {
+    const u = new URL(publicUrl);
+    const pathname = decodeURIComponent(u.pathname);
+    const pathParts = pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    if (pathParts.length < 2) return null;
+    return { bucket: pathParts[0], key: pathParts.slice(1).join('/') };
+  } catch {
+    return null;
+  }
+}
+
+/** اندازه و نوع فایل از استوریج — بدون دانلود کامل */
+export async function headObjectByPublicUrl(
+  publicUrl: string
+): Promise<{ bytes: number; contentType?: string } | null> {
+  if (!isOurStorageUrl(publicUrl)) return null;
+
+  const parts = parseStorageUrlParts(publicUrl);
+  if (!parts) return null;
+
+  try {
+    const client = await getS3Client();
+    if (!client) return null;
+    const res = await client.send(
+      new HeadObjectCommand({ Bucket: parts.bucket, Key: parts.key })
+    );
+    if (res.ContentLength == null) return null;
+    return { bytes: res.ContentLength, contentType: res.ContentType ?? undefined };
+  } catch (e) {
+    console.error('headObjectByPublicUrl error:', (e as Error).message);
+    return null;
+  }
+}
 
 export async function getObjectByPublicUrl(
   publicUrl: string
@@ -246,21 +334,16 @@ export async function getObjectByPublicUrl(
     const client = await getS3Client();
     if (!config || !client) return null;
 
-    const u = new URL(publicUrl);
-    const pathname = decodeURIComponent(u.pathname);
-    const pathParts = pathname.replace(/^\/+/, '').split('/').filter(Boolean);
-    if (pathParts.length < 2) return null;
-    const bucketFromUrl = pathParts[0];
-    const key = pathParts.slice(1).join('/');
-    if (!key) return null;
+    const parts = parseStorageUrlParts(publicUrl);
+    if (!parts) return null;
 
-    const cmd = new GetObjectCommand({ Bucket: bucketFromUrl, Key: key });
+    const cmd = new GetObjectCommand({ Bucket: parts.bucket, Key: parts.key });
     const res = await client.send(cmd);
     const body = res.Body;
     if (!body) return null;
 
     const bytes = await body.transformToByteArray();
-    return { buffer: Buffer.from(bytes), contentType: res.ContentType ?? undefined };
+    return { buffer: toNodeBuffer(bytes), contentType: res.ContentType ?? undefined };
   };
 
   const tryDirectFetch = async (): Promise<{ buffer: Buffer; contentType?: string } | null> => {
@@ -273,11 +356,16 @@ export async function getObjectByPublicUrl(
           'User-Agent': 'WibeImageProxy/1.0',
         },
         validateStatus: (s) => s === 200,
+        // امنیت SSRF: اعتبارسنجی IP مقصد در هر اتصال/ریدایرکت + سقف حجم.
+        httpAgent: ssrfSafeHttpAgent,
+        httpsAgent: ssrfSafeHttpsAgent,
+        maxRedirects: 2,
+        maxContentLength: 25 * 1024 * 1024,
       });
       if (!res.data) return null;
       const contentType = res.headers['content-type'];
       return {
-        buffer: Buffer.from(res.data),
+        buffer: toNodeBuffer(res.data as Uint8Array),
         contentType: typeof contentType === 'string' ? contentType : undefined,
       };
     } catch {
@@ -295,9 +383,16 @@ export async function getObjectByPublicUrl(
   }
 }
 
+function buildStorageKeyCandidates(bucketName: string, objectKey: string): string[] {
+  const key = objectKey.replace(/^\/+/, '');
+  const bucket = bucketName.replace(/^\/+|\/+$/g, '');
+  return [...new Set([key, `${bucket}/${key}`])];
+}
+
 /** خواندن فایل از ParsPack با کلید S3 — برای URLهای قدیمی Liara */
 export async function getObjectByStorageKey(
-  objectKey: string
+  objectKey: string,
+  options?: { legacyUrl?: string }
 ): Promise<{ buffer: Buffer; contentType?: string } | null> {
   const key = objectKey.replace(/^\/+/, '');
   if (!key.startsWith('wibe/')) return null;
@@ -305,44 +400,77 @@ export async function getObjectByStorageKey(
   try {
     const config = await getObjectStorageConfig();
     const client = await getS3Client();
-    if (!config || !client) return null;
+    if (config && client) {
+      for (const candidate of buildStorageKeyCandidates(config.bucketName, key)) {
+        try {
+          const cmd = new GetObjectCommand({ Bucket: config.bucketName, Key: candidate });
+          const res = await client.send(cmd);
+          const body = res.Body;
+          if (!body) continue;
 
-    const cmd = new GetObjectCommand({ Bucket: config.bucketName, Key: key });
-    const res = await client.send(cmd);
-    const body = res.Body;
-    if (!body) return null;
+          const bytes = await body.transformToByteArray();
+          return { buffer: toNodeBuffer(bytes), contentType: res.ContentType ?? undefined };
+        } catch {
+          /* کلید بعدی */
+        }
+      }
 
-    const bytes = await body.transformToByteArray();
-    return { buffer: Buffer.from(bytes), contentType: res.ContentType ?? undefined };
+      const fromPublic = await getObjectByPublicUrl(buildStoragePublicUrl(config, key));
+      if (fromPublic) return fromPublic;
+    }
   } catch (e) {
     console.error('getObjectByStorageKey error:', (e as Error).message);
   }
 
   // فایل هنوز migrate نشده — تلاش از Liara قدیمی (سرور، نه مرورگر)
-  try {
-    const legacyUrl = `https://storage.c2.liara.space/${key}`;
-    const res = await axios.get(legacyUrl, {
-      responseType: 'arraybuffer',
-      timeout: 12000,
-      headers: { Accept: 'image/*' },
-      validateStatus: (s) => s === 200,
-    });
-    if (!res.data) return null;
-    const contentType = res.headers['content-type'];
-    return {
-      buffer: Buffer.from(res.data),
-      contentType: typeof contentType === 'string' ? contentType : undefined,
-    };
-  } catch {
-    return null;
+  const legacyCandidates = [
+    options?.legacyUrl?.trim(),
+    `https://storage.c2.liara.space/${key}`,
+    `https://storage.iran.liara.space/${key}`,
+  ].filter((u): u is string => !!u);
+
+  for (const legacyUrl of [...new Set(legacyCandidates)]) {
+    try {
+      const res = await axios.get(legacyUrl, {
+        responseType: 'arraybuffer',
+        timeout: 12000,
+        headers: { Accept: 'image/*' },
+        validateStatus: (s) => s === 200,
+        httpAgent: ssrfSafeHttpAgent,
+        httpsAgent: ssrfSafeHttpsAgent,
+        maxRedirects: 2,
+        maxContentLength: 25 * 1024 * 1024,
+      });
+      if (!res.data) continue;
+      const contentType = res.headers['content-type'];
+      void ensureImageInLiara(legacyUrl, folderFromStorageKey(key)).catch(() => {});
+      return {
+        buffer: toNodeBuffer(res.data as Uint8Array),
+        contentType: typeof contentType === 'string' ? contentType : undefined,
+      };
+    } catch {
+      /* candidate بعدی */
+    }
   }
+
+  return null;
+}
+
+function folderFromStorageKey(key: string): ImageFolder {
+  const segment = key.split('/')[1];
+  if (segment === 'avatars') return 'avatars';
+  if (segment === 'covers') return 'covers';
+  if (segment === 'items') return 'items';
+  if (segment === 'hubs') return 'hubs';
+  if (segment === 'site') return 'site';
+  return 'covers';
 }
 
 /** اگر URL خارج از ParsPack باشد، آپلود می‌کند */
 export async function ensureImageInLiara(
   url: string | null | undefined,
   folder: ImageFolder,
-  options?: { profile?: ImageProfile }
+  options?: { profile?: ImageProfile; forceOptimize?: boolean }
 ): Promise<string | null> {
   if (!url || typeof url !== 'string') return null;
 
@@ -351,11 +479,27 @@ export async function ensureImageInLiara(
     return null;
   }
 
-  if (isOurStorageUrl(normalized)) {
+  const profile = options?.profile ?? profileForStorageFolder(folder);
+
+  if (isOurStorageUrl(normalized) && !options?.forceOptimize) {
     return normalized;
   }
 
-  const uploaded = await uploadImageFromUrl(normalized, folder, options?.profile);
+  if (isOurStorageUrl(normalized) && options?.forceOptimize) {
+    const existing = await getObjectByPublicUrl(normalized);
+    if (existing?.buffer?.length) {
+      const reuploaded = await uploadBufferToStorage(
+        existing.buffer,
+        existing.contentType || 'image/png',
+        folder,
+        profile
+      );
+      return reuploaded?.url ?? normalized;
+    }
+    return normalized;
+  }
+
+  const uploaded = await uploadImageFromUrl(normalized, folder, profile);
   if (uploaded) return uploaded;
 
   // TMDB و URLهای مسدود را ذخیره نکن

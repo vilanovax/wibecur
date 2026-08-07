@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
@@ -30,6 +31,14 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: 'کامنت یافت نشد' },
         { status: 404 }
+      );
+    }
+
+    // امنیت: لایک‌کردن نظر خود مجاز نیست (جلوگیری از دستکاری امتیاز/رتبه).
+    if (comment.userId === userId) {
+      return NextResponse.json(
+        { success: false, error: 'نمی‌توانید نظر خودتان را لایک کنید' },
+        { status: 403 }
       );
     }
 
@@ -91,7 +100,7 @@ export async function POST(
   } catch (error: any) {
     console.error('Error toggling comment like:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: getClientErrorMessage(error, 'Internal server error') },
       { status: 500 }
     );
   }

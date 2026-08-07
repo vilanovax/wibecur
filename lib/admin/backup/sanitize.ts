@@ -1,5 +1,6 @@
 const SETTINGS_SECRET_KEYS = [
   'openaiApiKey',
+  'deepseekApiKey',
   'tmdbApiKey',
   'omdbApiKey',
   'googleApiKey',

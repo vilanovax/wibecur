@@ -84,11 +84,7 @@ LIARA_SECRET_KEY=
 
 ## ۵. Rate limiting
 
-برای محدود کردن سوءاستفاده از API، Upstash Redis توصیه می‌شود:
-
-- [ ] در [Upstash Console](https://console.upstash.com) یک Redis ساخته شده
-- [ ] `UPSTASH_REDIS_REST_URL` و `UPSTASH_REDIS_REST_TOKEN` در env تنظیم شده
-- [ ] بدون این متغیرها rate limiting غیرفعال است (۶۰ درخواست/دقیقه به ازای هر IP)
+Rate limiting مبتنی بر Redis/Upstash **غیرفعال** است. محدودیت کامنت از طریق دیتابیس و تنظیمات ادمین اعمال می‌شود.
 
 ---
 

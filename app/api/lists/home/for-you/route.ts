@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -7,17 +8,28 @@ import { tryApiDbFallback } from '@/lib/api-db';
 
 const EMPTY = { lists: [] as unknown[], isPersonalized: false };
 
+function parseInterestSlugs(request: NextRequest): string[] {
+  const raw = request.nextUrl.searchParams.get('interests');
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
 /**
  * GET /api/lists/home/for-you
  * پیشنهادهای شخصی‌سازی‌شده برای تب «برای تو»
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     const userId = session?.user?.id ?? null;
+    const interestSlugs = parseInterestSlugs(request);
 
     const result = await dbQuery(() =>
-      getHomeRecommendationsForUser(prisma, userId, 6)
+      getHomeRecommendationsForUser(prisma, userId, 8, interestSlugs)
     );
 
     const response = NextResponse.json({
@@ -37,7 +49,7 @@ export async function GET() {
     if (fb) return fb;
     console.error('Home for-you error:', error);
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message ?? 'خطا در دریافت پیشنهادها' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت پیشنهادها') },
       { status: 500 }
     );
   }

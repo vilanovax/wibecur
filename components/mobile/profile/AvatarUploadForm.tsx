@@ -117,7 +117,7 @@ export default function AvatarUploadForm({
     <BottomSheet isOpen={isOpen} onClose={handleClose} title="تغییر آواتار" maxHeight="85vh">
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-6 min-h-0">
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm">
               {error}
@@ -224,7 +224,7 @@ export default function AvatarUploadForm({
                   setImageUrl(e.target.value);
                   setError('');
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
                 placeholder="https://example.com/avatar.jpg"
               />
               <p className="mt-2 text-xs text-gray-500">

@@ -5,6 +5,8 @@ import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalUser } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
+import { isAdminRole } from '@/lib/auth/roles';
+import { assertCanModifyAdmin } from '@/lib/auth/admin-guards';
 
 /** POST: انتقال به زباله‌دان (soft delete) — کاربر از دید عموم مخفی می‌شود */
 export async function POST(
@@ -27,6 +29,23 @@ export async function POST(
     }
     if (existing.id === userOrRes.id) {
       return NextResponse.json({ error: 'امکان حذف خودتان وجود ندارد' }, { status: 400 });
+    }
+
+    // امنیت: حذفِ کاربرِ ادمین نیازمند manage_roles + رعایت سلسله‌مراتب نقش است
+    // (جلوگیری از قفل‌کردن SUPER_ADMIN توسط نقش پایین‌تری که فقط suspend_user دارد).
+    if (isAdminRole(existing.role)) {
+      const roleManager = await requirePermission('manage_roles');
+      if (roleManager instanceof NextResponse) return roleManager;
+      const guardError = await assertCanModifyAdmin(
+        roleManager.id,
+        roleManager.role,
+        existing.id,
+        existing.role,
+        false
+      );
+      if (guardError) {
+        return NextResponse.json({ error: guardError }, { status: 403 });
+      }
     }
 
     const now = new Date();

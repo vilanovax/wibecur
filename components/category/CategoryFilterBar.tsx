@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 
 export type CategoryFilter = 'newest' | 'viral' | 'saves' | 'nearby' | 'cheap' | 'luxury' | 'outdoor';
 
@@ -31,23 +32,22 @@ export default function CategoryFilterBar({
   };
 
   return (
-    <div className="sticky top-[57px] z-10 bg-gray-50 pb-2 -mx-4 px-4 border-b border-gray-100">
-      <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide -mx-1">
+    <div className="sticky top-[57px] z-10 -mx-4 border-b border-wibe bg-wibe-surface px-4 pb-2">
+      <HorizontalScrollFade
+        surface="surface"
+        innerClassName="flex gap-2 py-3 -mx-1"
+      >
         {FILTERS.map((f) => (
           <button
             key={f.id}
             type="button"
             onClick={() => handleClick(f.id)}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              current === f.id
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-200 hover:border-primary/30'
-            }`}
+            className={`wibe-chip ${current === f.id ? 'wibe-chip-active' : 'wibe-chip-inactive'}`}
           >
             {f.label}
           </button>
         ))}
-      </div>
+      </HorizontalScrollFade>
     </div>
   );
 }

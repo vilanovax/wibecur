@@ -3,16 +3,20 @@ import { test, expect } from '@playwright/test';
 test.describe('صفحهٔ اصلی', () => {
   test('باید بارگذاری شود و المان‌های اصلی را نشان دهد', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/وایب|WibeCur/i);
+    // عنوان صفحهٔ خانه metadata محلی است («خانه»)، نه فقط برند
+    await expect(page).toHaveTitle(/خانه|وایب|WibeCur/i);
+    await expect(page.getByRole('navigation', { name: 'منوی اصلی' })).toBeVisible();
   });
 
-  test('باید نوار جستجو را نمایش دهد', async ({ page }) => {
+  test('باید کنترل جستجو را نمایش دهد', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByPlaceholder(/فیلم|جستجو/i)).toBeVisible();
+    // دسکتاپ: HeaderDesktopSearch — موبایل: HomeSearchBar (هر دو aria-label یکسان)
+    await expect(page.getByRole('button', { name: 'باز کردن جستجو' }).first()).toBeVisible();
   });
 
-  test('باید ناوبری پایین را نمایش دهد', async ({ page }) => {
+  test('باید ناوبری اصلی را نمایش دهد', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('navigation')).toBeVisible();
+    // Desktop Chrome: DesktopTopNav — bottom nav روی lg مخفی است
+    await expect(page.getByRole('navigation', { name: 'منوی اصلی' })).toBeVisible();
   });
 });

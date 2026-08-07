@@ -39,22 +39,49 @@ export function tryApiDbFallback<T>(
   return apiDbOk(data);
 }
 
-/** userId از session — با fallback ایمیل */
+export const SESSION_USER_NOT_FOUND_CODE = 'SESSION_USER_NOT_FOUND';
+
+export function sessionUserNotFoundResponse() {
+  return NextResponse.json(
+    {
+      success: false,
+      error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید',
+      code: SESSION_USER_NOT_FOUND_CODE,
+    },
+    { status: 401 }
+  );
+}
+
+/** userId از session — با اعتبارسنجی DB و fallback ایمیل */
 export async function resolveSessionUserId(session: Session): Promise<string | null> {
-  const direct = session.user?.id;
-  if (direct) return String(direct);
+  const select = { id: true, deletedAt: true } as const;
+
+  const directId = session.user?.id;
+  if (directId) {
+    try {
+      const byId = await dbQuery(() =>
+        prisma.users.findUnique({
+          where: { id: String(directId) },
+          select,
+        })
+      );
+      if (byId && !byId.deletedAt) return byId.id;
+    } catch {
+      /* fallback to email */
+    }
+  }
 
   const email = session.user?.email;
   if (!email) return null;
 
   try {
-    const row = await dbQuery(() =>
+    const byEmail = await dbQuery(() =>
       prisma.users.findUnique({
         where: { email },
-        select: { id: true },
+        select,
       })
     );
-    return row?.id ?? null;
+    return byEmail && !byEmail.deletedAt ? byEmail.id : null;
   } catch {
     return null;
   }
@@ -83,11 +110,13 @@ export function buildSessionProfileFallback(session: Session) {
     avatarStatus: null,
     showBadge: true,
     allowCommentNotifications: true,
+    allowBookmarkListNotifications: true,
     stats: { listsCreated: 0, bookmarks: 0, likes: 0, itemLikes: 0 },
     creatorStats: {
       viralListsCount: 0,
       popularListsCount: 0,
       totalLikesReceived: 0,
+      totalSavesReceived: 0,
       profileViews: 0,
       totalItemsCurated: 0,
     },

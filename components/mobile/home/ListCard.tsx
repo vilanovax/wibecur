@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
+import { LIST_BADGE_LABELS, listBadgeSolidStyles } from '@/lib/list-badge-styles';
 
 export interface ListCardProps {
   id: string;
@@ -21,17 +22,8 @@ export interface ListCardProps {
   listTitle?: string | null;
 }
 
-const badgeStyles: Record<NonNullable<ListCardProps['badge']>, string> = {
-  trending: 'bg-warning text-white',
-  new: 'bg-success text-white',
-  featured: 'bg-primary text-white',
-};
-
-const badgeLabels: Record<NonNullable<ListCardProps['badge']>, string> = {
-  trending: 'ترند',
-  new: 'جدید',
-  featured: 'ویژه',
-};
+const badgeStyles = listBadgeSolidStyles;
+const badgeLabels = LIST_BADGE_LABELS;
 
 export default function ListCard({
   id,
@@ -66,6 +58,7 @@ export default function ListCard({
               categorySlug={categorySlug}
               listSlug={resolvedListSlug}
               listTitle={listTitle ?? title}
+              sizes="96px"
             />
           </div>
           <div className="flex-1 flex flex-col justify-center p-3 min-w-0">
@@ -94,6 +87,7 @@ export default function ListCard({
             categorySlug={categorySlug}
             listSlug={resolvedListSlug}
             listTitle={listTitle ?? title}
+            sizes="(min-width: 1024px) 50vw, 100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           {badge && (

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
@@ -95,7 +96,7 @@ export async function DELETE(
   } catch (error: any) {
     console.error('Error deleting item from list:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در حذف آیتم' },
+      { error: getClientErrorMessage(error, 'خطا در حذف آیتم') },
       { status: 500 }
     );
   }

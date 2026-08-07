@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { dbQuery } from '@/lib/db';
-import { listCatalogExternalImageItems } from '@/lib/catalog-items';
+import {
+  listCatalogExternalImageItems,
+  listCatalogMissingPosterItems,
+} from '@/lib/catalog-items';
 import { checkObjectStorageReady } from '@/lib/object-storage-readiness';
 import { catalogCategoryLabel } from '@/lib/catalog-display';
 
@@ -15,9 +18,14 @@ export async function GET(request: NextRequest) {
     const listId = request.nextUrl.searchParams.get('listId')?.trim() || undefined;
     const multiListOnly = request.nextUrl.searchParams.get('multiList') === '1';
 
-    const [items, storage, list] = await dbQuery(() =>
+    const [items, missingPosters, storage, list] = await dbQuery(() =>
       Promise.all([
         listCatalogExternalImageItems(prisma, {
+          categorySlug,
+          listId,
+          multiListOnly,
+        }),
+        listCatalogMissingPosterItems(prisma, {
           categorySlug,
           listId,
           multiListOnly,
@@ -41,6 +49,7 @@ export async function GET(request: NextRequest) {
       imageUrl: item.imageUrl,
       host: item.host,
       listCount: item.listCount,
+      isHidden: item.isHidden,
     }));
 
     return NextResponse.json({
@@ -56,6 +65,17 @@ export async function GET(request: NextRequest) {
       },
       items: mappedItems,
       total: mappedItems.length,
+      missingPosters: missingPosters.map((item, index) => ({
+        id: item.id,
+        title: item.title,
+        imdbId: item.imdbId,
+        order: index,
+        listTitle:
+          item.listCount > 0 ? `${item.listCount.toLocaleString('fa-IR')} لیست` : '—',
+        listCount: item.listCount,
+        isHidden: item.isHidden,
+      })),
+      missingPosterTotal: missingPosters.length,
       storage,
       liara: storage,
     });

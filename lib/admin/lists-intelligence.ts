@@ -35,6 +35,7 @@ export interface ListIntelligenceRow {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  horizontalImage: string | null;
   categoryId: string | null;
   categoryName: string;
   categorySlug: string | null;
@@ -125,6 +126,7 @@ const listSelectCore = {
   title: true,
   slug: true,
   coverImage: true,
+  horizontalImage: true,
   categoryId: true,
   isFeatured: true,
   isActive: true,
@@ -237,6 +239,7 @@ function buildIntelligenceRows(
       slug: l.slug,
       description: trash ? (l as ListRowTrash).description ?? null : null,
       coverImage: l.coverImage ?? null,
+      horizontalImage: l.horizontalImage ?? null,
       categoryId: l.categoryId,
       categoryName: l.categories?.name ?? '—',
       categorySlug: l.categories?.slug ?? null,
@@ -277,7 +280,7 @@ function buildIntelligenceRows(
 
 export async function getListsIntelligenceData(
   trash: boolean = false,
-  options?: { page?: number; pageSize?: number; categoryId?: string }
+  options?: { page?: number; pageSize?: number; categoryId?: string; q?: string }
 ): Promise<ListsIntelligenceData> {
   const now = Date.now();
   const last24h = new Date(now - 24 * 60 * 60 * 1000);
@@ -289,10 +292,13 @@ export async function getListsIntelligenceData(
   const skip = (page - 1) * pageSize;
   const categoryId =
     options?.categoryId && options.categoryId !== 'all' ? options.categoryId : undefined;
+  const q = options?.q?.trim() || undefined;
 
   const listWhere = {
     ...(trash ? { deletedAt: { not: null } } : { deletedAt: null }),
     ...(categoryId ? { categoryId } : {}),
+    // جستجوی سرور-ساید روی عنوان (در همهٔ صفحات، نه فقط صفحهٔ جاری)
+    ...(q ? { title: { contains: q, mode: 'insensitive' as const } } : {}),
   };
 
   const select = listSelectFor(trash);

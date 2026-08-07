@@ -5,6 +5,7 @@ import { getCachedCommentsHubStats } from '@/lib/admin/comments-hub-stats-cached
 import { buildCommentsNavStats } from '@/lib/admin/comments-nav-stats';
 import { parseCommentSort } from '@/lib/admin/comments-intelligence';
 import { parseCommentFilter } from '@/lib/admin/comments-filter-utils';
+import { parseCommentOrigin, parseScopeId } from '@/lib/admin/comments-scope-utils';
 import { parseCommentsPageSize } from '@/lib/admin/comments-page-size';
 import CommentsPaginationBar from '@/components/admin/comments/CommentsPaginationBar';
 import CommentsPageClient from '../CommentsPageClient';
@@ -18,6 +19,9 @@ export default async function CommentsAllPage({
     search?: string;
     sort?: string;
     pageSize?: string;
+    origin?: string;
+    categoryId?: string;
+    listId?: string;
   }>;
 }) {
   await requireAdmin();
@@ -28,11 +32,18 @@ export default async function CommentsAllPage({
     search = '',
     sort: sortParam = '',
     pageSize: pageSizeParam,
+    origin: originParam,
+    categoryId: categoryIdParam,
+    listId: listIdParam,
   } = await searchParams;
 
-  const filter = filterParam
+  const filterParsed = filterParam
     ? parseCommentFilter(filterParam)
     : 'pending';
+  const filter = filterParsed === 'seeded' ? 'all' : filterParsed;
+  const origin = parseCommentOrigin(originParam, filterParam);
+  const categoryId = parseScopeId(categoryIdParam);
+  const listId = parseScopeId(listIdParam);
   const pageSize = parseCommentsPageSize(pageSizeParam);
 
   const [data, hubStats] = await Promise.all([
@@ -42,6 +53,9 @@ export default async function CommentsAllPage({
       filter,
       search,
       sort: parseCommentSort(sortParam),
+      origin,
+      categoryId,
+      listId,
     }),
     getCachedCommentsHubStats(),
   ]);
@@ -51,6 +65,9 @@ export default async function CommentsAllPage({
   if (data.search) paginationParams.search = data.search;
   if (data.sort !== 'created_desc') paginationParams.sort = data.sort;
   if (data.pageSize !== 10) paginationParams.pageSize = String(data.pageSize);
+  if (data.origin !== 'all') paginationParams.origin = data.origin;
+  if (data.categoryId) paginationParams.categoryId = data.categoryId;
+  if (data.listId) paginationParams.listId = data.listId;
 
   const navStats = buildCommentsNavStats(hubStats);
 

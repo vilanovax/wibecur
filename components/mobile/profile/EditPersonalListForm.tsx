@@ -149,7 +149,7 @@ export default function EditPersonalListForm({
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="ویرایش لیست">
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto p-6 min-h-0">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 min-h-0">
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4">
               {error}
@@ -170,7 +170,7 @@ export default function EditPersonalListForm({
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
               placeholder="عنوان لیست را وارد کنید..."
               required
               disabled={isLoading}
@@ -192,7 +192,7 @@ export default function EditPersonalListForm({
               onChange={handleChange}
               rows={4}
               maxLength={MAX_DESCRIPTION_LENGTH}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
               placeholder="توضیحات لیست را وارد کنید..."
               disabled={isLoading}
             />

@@ -1,5 +1,8 @@
 import type { PrismaClient } from '@prisma/client';
 import { addCatalogItemToList, isCatalogInList } from '@/lib/catalog-items';
+import { softDeleteItems } from '@/lib/admin/item-trash';
+import { setCatalogAdminDisabledFlags } from '@/lib/admin/catalog-visibility';
+import { notifyListBookmarkers } from '@/lib/utils/notifications';
 
 export type CatalogBulkAction =
   | 'remove-from-list'
@@ -25,35 +28,15 @@ type BulkInput = {
   targetListId?: string;
 };
 
-async function decrementListCounts(
-  prisma: PrismaClient,
-  counts: Map<string, number>
-) {
-  for (const [listId, count] of counts) {
-    if (count <= 0) continue;
-    await prisma.lists.update({
-      where: { id: listId },
-      data: { itemCount: { decrement: count } },
-    });
-  }
-}
-
 async function deletePlacements(
   prisma: PrismaClient,
   placements: { id: string; listId: string }[]
 ): Promise<number> {
   if (placements.length === 0) return 0;
-
-  const listCounts = new Map<string, number>();
-  for (const p of placements) {
-    listCounts.set(p.listId, (listCounts.get(p.listId) ?? 0) + 1);
-  }
-
-  await prisma.items.deleteMany({
-    where: { id: { in: placements.map((p) => p.id) } },
-  });
-  await decrementListCounts(prisma, listCounts);
-  return placements.length;
+  return softDeleteItems(
+    prisma,
+    placements.map((p) => p.id)
+  );
 }
 
 async function setModerationStatus(
@@ -145,10 +128,12 @@ export async function executeCatalogBulkAction(
 
     case 'hide':
       processed = await setModerationStatus(prisma, catalogIds, 'HIDDEN');
+      await setCatalogAdminDisabledFlags(prisma, catalogIds, true);
       break;
 
     case 'show':
       processed = await setModerationStatus(prisma, catalogIds, 'NORMAL');
+      await setCatalogAdminDisabledFlags(prisma, catalogIds, false);
       break;
 
     case 'move-to-list': {
@@ -235,6 +220,10 @@ export async function executeCatalogBulkAction(
       return { processed: 0, skipped: 0, errors: ['عملیات نامعتبر'], message: '' };
   }
 
+  if (input.action === 'add-to-list' && processed > 0 && input.targetListId) {
+    notifyListBookmarkers(input.targetListId, { itemCount: processed }).catch(console.error);
+  }
+
   const message = buildBulkMessage(input.action, processed, skipped, errors.length);
   return { processed, skipped, errors: errors.slice(0, 8), message };
 }
@@ -287,13 +276,13 @@ export const CATALOG_BULK_ACTION_LABELS: Record<
     variant: 'default',
   },
   hide: {
-    label: 'مخفی کردن',
-    description: 'آیتم برای کاربران عادی مخفی می‌شود (فقط ادمین می‌بیند).',
+    label: 'غیرفعال کردن',
+    description: 'آیتم برای کاربران عادی نمایش داده نمی‌شود (فقط ادمین می‌بیند).',
     variant: 'default',
   },
   show: {
-    label: 'نمایش مجدد',
-    description: 'وضعیت نمایش به حالت عادی برمی‌گردد.',
+    label: 'فعال کردن',
+    description: 'آیتم دوباره برای کاربران قابل مشاهده می‌شود.',
     variant: 'primary',
   },
   'move-to-list': {

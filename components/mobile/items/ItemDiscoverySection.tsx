@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
 
@@ -112,24 +113,58 @@ function CarouselSkeleton({
 }
 
 interface ItemDiscoverySectionProps {
+  itemId: string;
+  categoryId: string | null;
   categorySlug?: string | null;
-  similarItems: SimilarItem[];
-  similarLoading: boolean;
-  alsoLikedItems: AlsoLikedItem[];
-  alsoLikedLoading: boolean;
-  trendingItems: TrendingItem[];
-  trendingLoading: boolean;
+  fetchEnabled?: boolean;
+  initialSimilarItems?: SimilarItem[];
 }
 
 export default function ItemDiscoverySection({
+  itemId,
+  categoryId,
   categorySlug,
-  similarItems,
-  similarLoading,
-  alsoLikedItems,
-  alsoLikedLoading,
-  trendingItems,
-  trendingLoading,
+  fetchEnabled = true,
+  initialSimilarItems,
 }: ItemDiscoverySectionProps) {
+  const [activeTab, setActiveTab] = useState<DiscoveryTab>('similar');
+
+  const { data: similarItems = initialSimilarItems ?? [], isLoading: similarLoading } = useQuery({
+    queryKey: ['items', itemId, 'similar'],
+    queryFn: async (): Promise<SimilarItem[]> => {
+      const res = await fetch(`/api/items/${itemId}/similar`);
+      const json = await res.json();
+      return json.data && Array.isArray(json.data) ? json.data : [];
+    },
+    enabled: fetchEnabled && activeTab === 'similar',
+    initialData: initialSimilarItems,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: alsoLikedItems = [], isLoading: alsoLikedLoading } = useQuery({
+    queryKey: ['items', itemId, 'also-liked'],
+    queryFn: async (): Promise<AlsoLikedItem[]> => {
+      const res = await fetch(`/api/items/${itemId}/also-liked`);
+      const json = await res.json();
+      return json.data && Array.isArray(json.data) ? json.data : [];
+    },
+    enabled: fetchEnabled && activeTab === 'saves',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: trendingRaw = [], isLoading: trendingLoading } = useQuery({
+    queryKey: ['categories', categoryId, 'trending'],
+    queryFn: async (): Promise<TrendingItem[]> => {
+      const res = await fetch(`/api/categories/${categoryId}/trending`);
+      const json = await res.json();
+      const list = json.data && Array.isArray(json.data) ? (json.data as TrendingItem[]) : [];
+      return list.filter((t) => t.id !== itemId);
+    },
+    enabled: fetchEnabled && activeTab === 'trending' && !!categoryId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const trendingItems = trendingRaw;
+
   const hasSimilar = similarItems.length >= 2;
   const hasSaves = alsoLikedItems.length > 0;
   const hasTrending = trendingItems.length > 0;
@@ -137,12 +172,10 @@ export default function ItemDiscoverySection({
   const availableTabs = useMemo(() => {
     const tabs: { id: DiscoveryTab; label: string }[] = [];
     if (hasSimilar || similarLoading) tabs.push({ id: 'similar', label: 'مشابه' });
-    if (hasSaves) tabs.push({ id: 'saves', label: 'بر اساس ذخیره' });
+    if (hasSaves || alsoLikedLoading) tabs.push({ id: 'saves', label: 'بر اساس ذخیره' });
     if (hasTrending || trendingLoading) tabs.push({ id: 'trending', label: 'داغ' });
     return tabs;
-  }, [hasSimilar, hasSaves, hasTrending, similarLoading, trendingLoading]);
-
-  const [activeTab, setActiveTab] = useState<DiscoveryTab>('similar');
+  }, [hasSimilar, hasSaves, hasTrending, similarLoading, alsoLikedLoading, trendingLoading]);
 
   useEffect(() => {
     if (availableTabs.length === 0) return;
@@ -156,12 +189,13 @@ export default function ItemDiscoverySection({
     (activeTab === 'trending' && trendingLoading);
 
   const showSection =
-    similarLoading ||
-    alsoLikedLoading ||
-    trendingLoading ||
-    hasSimilar ||
-    hasSaves ||
-    hasTrending;
+    fetchEnabled &&
+    (similarLoading ||
+      alsoLikedLoading ||
+      trendingLoading ||
+      hasSimilar ||
+      hasSaves ||
+      hasTrending);
 
   if (!showSection) return null;
 
@@ -194,7 +228,7 @@ export default function ItemDiscoverySection({
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all active:scale-[0.98] ${
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-[colors,transform] active:scale-[0.98] ${
                   activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE
                 }`}
               >

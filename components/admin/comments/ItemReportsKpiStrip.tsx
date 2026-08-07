@@ -22,7 +22,7 @@ export default function ItemReportsKpiStrip({
       label: 'باز (حل‌نشده)',
       value: open,
       icon: Flag,
-      accent: 'from-rose-500/10 to-rose-600/5 border-rose-200/60',
+      accent: 'from-rose-500/10 to-rose-600/5 border-rose-200/60 dark:border-rose-800/60',
       resolvedParam: 'false' as const,
     },
     {
@@ -30,7 +30,7 @@ export default function ItemReportsKpiStrip({
       label: 'حل‌شده',
       value: resolved,
       icon: CheckCircle,
-      accent: 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/60',
+      accent: 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/60 dark:border-emerald-800/60',
       resolvedParam: 'true' as const,
     },
     {
@@ -38,7 +38,7 @@ export default function ItemReportsKpiStrip({
       label: 'همه گزارش‌ها',
       value: total,
       icon: List,
-      accent: 'from-slate-500/10 to-slate-600/5 border-slate-200/60',
+      accent: 'from-slate-500/10 to-slate-600/5 border-slate-200/60 dark:border-gray-700',
       resolvedParam: undefined,
     },
   ];

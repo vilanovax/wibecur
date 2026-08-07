@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 
 import { getDecryptedSettings } from '@/lib/settings';
+import { checkActionRateLimit } from '@/lib/rate-limit';
+import { logServerError } from '@/lib/api-error';
 import axios from 'axios';
+
+const MAX_QUERY_LEN = 120;
 
 // POST /api/images/search - جستجوی تصاویر از Google (برای کاربران لاگین شده)
 export async function POST(request: NextRequest) {
@@ -16,12 +20,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // محدودیت به‌ازای کاربر — endpoint به Google CSE پولی متصل است.
+    const { success } = await checkActionRateLimit(
+      `images-search:${session.user.id ?? session.user.email}`,
+      20,
+      '1 m'
+    );
+    if (!success) {
+      return NextResponse.json(
+        { success: false, error: 'درخواست‌های زیاد — کمی صبر کنید.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { query } = body;
 
-    if (!query || !query.trim()) {
+    if (!query || typeof query !== 'string' || !query.trim()) {
       return NextResponse.json(
         { success: false, error: 'عبارت جستجو الزامی است' },
+        { status: 400 }
+      );
+    }
+
+    if (query.length > MAX_QUERY_LEN) {
+      return NextResponse.json(
+        { success: false, error: 'عبارت جستجو بیش از حد طولانی است' },
         { status: 400 }
       );
     }
@@ -76,10 +100,10 @@ export async function POST(request: NextRequest) {
       throw new Error('خطا در جستجوی Google Images');
     }
 
-    } catch (error: any) {
-      console.error('Error searching images:', error);
+    } catch (error: unknown) {
+      logServerError('images/search', error);
       return NextResponse.json(
-        { success: false, error: error.message || 'خطا در جستجوی تصاویر' },
+        { success: false, error: 'خطا در جستجوی تصاویر' },
         { status: 500 }
       );
     }

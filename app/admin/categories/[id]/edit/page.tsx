@@ -50,7 +50,7 @@ export default async function EditCategoryPage({
   const growth = growthMap.get(id) ?? { percent: 0, recent: 0, previous: 0 };
 
   const analytics = {
-    listCount: category._count.lists,
+    listCount: category.lists.length,
     uniqueItemCount: uniqueItemMap.get(id) ?? 0,
     saveGrowthPercent: growth.percent,
     saveGrowthRecent: growth.recent,
@@ -61,7 +61,8 @@ export default async function EditCategoryPage({
 
   const session = await auth();
   const canEditWeight =
-    !!session?.user?.role && hasPermission(session.user.role, 'set_category_weight');
+    !!session?.user?.role &&
+    hasPermission(session.user.role, 'set_category_weight', session.user.adminPermissions);
 
   return (
     <div className="max-w-5xl">

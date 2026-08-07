@@ -17,6 +17,7 @@ import {
   isMixedListCategory,
   parseEntryKind,
 } from '@/lib/list-entry';
+import { revalidateListDetailCache, revalidateCategoryCache } from '@/lib/public-cache';
 
 // GET /api/admin/items - Get items (optionally filtered by listId)
 export async function GET(request: NextRequest) {
@@ -25,8 +26,19 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const listId = searchParams.get('listId');
+    const idsParam = searchParams.get('ids');
+    const q = searchParams.get('q')?.trim();
 
-    const where = listId ? { listId } : {};
+    const where: Prisma.itemsWhereInput = { deletedAt: null };
+    if (idsParam) {
+      const ids = idsParam.split(',').map((s) => s.trim()).filter(Boolean);
+      if (ids.length > 0) where.id = { in: ids };
+    } else if (listId) {
+      where.listId = listId;
+    }
+    if (q) {
+      where.title = { contains: q, mode: 'insensitive' };
+    }
 
     const items = await prisma.items.findMany({
       where,
@@ -85,7 +97,14 @@ export async function POST(request: NextRequest) {
       });
       const list = item.lists;
       if (list) {
-        notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
+        notifyListBookmarkers(listId, {
+          itemCount: 1,
+          categorySlug: list.categories?.slug,
+          categoryName: list.categories?.name,
+          listTitle: list.title,
+        }).catch(console.error);
+        revalidateListDetailCache(list.slug);
+        revalidateCategoryCache(list.categoryId);
       }
       return NextResponse.json(item, { status: 201 });
     }
@@ -154,7 +173,14 @@ export async function POST(request: NextRequest) {
         entryKind,
       });
 
-      notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
+      notifyListBookmarkers(listId, {
+        itemCount: 1,
+        categorySlug: list.categories?.slug,
+        categoryName: list.categories?.name,
+        listTitle: list.title,
+      }).catch(console.error);
+      revalidateListDetailCache(list.slug);
+      revalidateCategoryCache(list.categoryId);
       return NextResponse.json(item, { status: 201 });
     }
 
@@ -211,7 +237,15 @@ export async function POST(request: NextRequest) {
     });
 
     // Notify users who bookmarked this list
-    notifyListBookmarkers(listId, item.title, list.title).catch(console.error);
+    notifyListBookmarkers(listId, {
+      itemCount: 1,
+      categorySlug: list.categories?.slug,
+      categoryName: list.categories?.name,
+      listTitle: list.title,
+    }).catch(console.error);
+
+    revalidateListDetailCache(list.slug);
+    revalidateCategoryCache(list.categoryId);
 
     return NextResponse.json(item, { status: 201 });
   } catch (error: any) {

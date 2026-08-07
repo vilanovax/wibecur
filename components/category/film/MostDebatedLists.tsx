@@ -74,7 +74,7 @@ export default function MostDebatedLists({ lists }: MostDebatedListsProps) {
       <CategorySectionTitle
         title="پربحث‌ترین لیست‌ها"
         subtitle="بیشترین گفتگو در ۷ روز گذشته"
-        icon="💬"
+        iconVariant="debate"
       />
 
       <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">

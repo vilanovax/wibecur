@@ -1,5 +1,7 @@
-import sharp from 'sharp';
+import type { Metadata, Sharp } from 'sharp';
 import { ImageProfile, getImageProfile } from './image-config';
+import { getSharp } from './get-sharp';
+import { toNodeBuffer } from './to-node-buffer';
 
 export interface OptimizeImageOptions {
   profile?: ImageProfile;
@@ -16,6 +18,8 @@ export interface OptimizeImageResult {
   originalBytes: number;
   optimizedBytes: number;
   skipped: boolean;
+  width?: number;
+  height?: number;
 }
 
 function buildResult(
@@ -23,15 +27,19 @@ function buildResult(
   contentType: string,
   ext: string,
   originalBytes: number,
-  skipped = false
+  skipped = false,
+  dimensions?: { width?: number; height?: number }
 ): OptimizeImageResult {
+  const safe = toNodeBuffer(buffer);
   return {
-    buffer,
+    buffer: safe,
     contentType,
     ext,
     originalBytes,
-    optimizedBytes: buffer.length,
+    optimizedBytes: safe.length,
     skipped,
+    width: dimensions?.width,
+    height: dimensions?.height,
   };
 }
 
@@ -44,14 +52,34 @@ function formatMeta(format: string | undefined): {
   return { ext: '.jpg', contentType: 'image/jpeg' };
 }
 
+function resolveTargetDimensions(
+  maxWidth: number,
+  maxHeight: number,
+  aspectRatio?: number
+): { width: number; height: number } {
+  if (!aspectRatio || aspectRatio <= 0) {
+    return { width: maxWidth, height: maxHeight };
+  }
+
+  let width = maxWidth;
+  let height = Math.round(width / aspectRatio);
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = Math.round(height * aspectRatio);
+  }
+  return { width, height };
+}
+
 function shouldSkipOptimization(
-  metadata: sharp.Metadata,
+  metadata: Metadata,
   originalSize: number,
   profileConfig: ReturnType<typeof getImageProfile> | null,
   maxWidth: number,
   maxHeight: number
 ): boolean {
   if (!profileConfig) return false;
+  if (profileConfig.forceOptimize) return false;
+  if (profileConfig.resizeFit === 'cover') return false;
 
   const width = metadata.width || 0;
   const height = metadata.height || 0;
@@ -65,6 +93,28 @@ function shouldSkipOptimization(
   return withinDimensions && withinSkipSize && withinMaxSize && matchingFormat;
 }
 
+async function preparePipeline(
+  buffer: Buffer,
+  profileConfig: ReturnType<typeof getImageProfile> | null
+): Promise<Sharp> {
+  const sharp = await getSharp();
+  let pipeline = sharp(toNodeBuffer(buffer)).rotate();
+
+  if (profileConfig?.trimTransparent) {
+    try {
+      pipeline = pipeline.trim({ threshold: 10 });
+    } catch {
+      /* trim optional */
+    }
+  }
+
+  if (profileConfig?.preserveAlpha) {
+    pipeline = pipeline.ensureAlpha();
+  }
+
+  return pipeline;
+}
+
 async function encodeImage(
   buffer: Buffer,
   opts: {
@@ -72,41 +122,75 @@ async function encodeImage(
     maxHeight: number;
     quality: number;
     format: 'webp' | 'jpeg' | 'png';
-  }
-): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
-  let pipeline = sharp(buffer).rotate().resize(opts.maxWidth, opts.maxHeight, {
-    fit: 'inside',
-    withoutEnlargement: true,
-  });
+    resizeFit?: 'inside' | 'cover';
+    aspectRatio?: number;
+    preserveAlpha?: boolean;
+    trimTransparent?: boolean;
+  },
+  profileConfig: ReturnType<typeof getImageProfile> | null
+): Promise<{ buffer: Buffer; contentType: string; ext: string; width?: number; height?: number }> {
+  let pipeline = await preparePipeline(toNodeBuffer(buffer), profileConfig);
 
+  if (opts.resizeFit === 'cover' && opts.aspectRatio) {
+    const { width, height } = resolveTargetDimensions(
+      opts.maxWidth,
+      opts.maxHeight,
+      opts.aspectRatio
+    );
+    pipeline = pipeline.resize(width, height, {
+      fit: 'cover',
+      position: 'centre',
+      withoutEnlargement: false,
+    });
+  } else {
+    pipeline = pipeline.resize(opts.maxWidth, opts.maxHeight, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    });
+  }
+
+  let optimizedBuffer: Buffer;
   if (opts.format === 'webp') {
-    const optimizedBuffer = await pipeline
-      .webp({
-        quality: opts.quality,
-        effort: 6,
-        smartSubsample: true,
-      })
-      .toBuffer();
-    return { buffer: optimizedBuffer, contentType: 'image/webp', ext: '.webp' };
+    optimizedBuffer = toNodeBuffer(
+      await pipeline
+        .webp({
+          quality: opts.quality,
+          effort: 6,
+          smartSubsample: true,
+          alphaQuality: opts.preserveAlpha ? 90 : undefined,
+        })
+        .toBuffer()
+    );
+  } else if (opts.format === 'jpeg') {
+    optimizedBuffer = toNodeBuffer(
+      await pipeline
+        .jpeg({
+          quality: opts.quality,
+          mozjpeg: true,
+        })
+        .toBuffer()
+    );
+  } else {
+    optimizedBuffer = toNodeBuffer(
+      await pipeline
+        .png({
+          quality: opts.quality,
+          compressionLevel: 9,
+        })
+        .toBuffer()
+    );
   }
 
-  if (opts.format === 'jpeg') {
-    const optimizedBuffer = await pipeline
-      .jpeg({
-        quality: opts.quality,
-        mozjpeg: true,
-      })
-      .toBuffer();
-    return { buffer: optimizedBuffer, contentType: 'image/jpeg', ext: '.jpg' };
-  }
-
-  const optimizedBuffer = await pipeline
-    .png({
-      quality: opts.quality,
-      compressionLevel: 9,
-    })
-    .toBuffer();
-  return { buffer: optimizedBuffer, contentType: 'image/png', ext: '.png' };
+  const sharp = await getSharp();
+  const meta = await sharp(optimizedBuffer).metadata();
+  const { contentType, ext } = formatMeta(opts.format);
+  return {
+    buffer: optimizedBuffer,
+    contentType,
+    ext,
+    width: meta.width,
+    height: meta.height,
+  };
 }
 
 async function compressToTargetSize(
@@ -117,28 +201,48 @@ async function compressToTargetSize(
     quality: number;
     format: 'webp' | 'jpeg' | 'png';
     maxSize: number;
-  }
-): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
+    resizeFit?: 'inside' | 'cover';
+    aspectRatio?: number;
+    preserveAlpha?: boolean;
+    trimTransparent?: boolean;
+  },
+  profileConfig: ReturnType<typeof getImageProfile> | null
+): Promise<{ buffer: Buffer; contentType: string; ext: string; width?: number; height?: number }> {
   let quality = opts.quality;
   let width = opts.maxWidth;
   let height = opts.maxHeight;
-  let lastResult = await encodeImage(buffer, { ...opts, maxWidth: width, maxHeight: height, quality });
+  const minWidth = Math.max(Math.round(opts.maxWidth * 0.45), 120);
+  const minHeight = Math.max(Math.round(opts.maxHeight * 0.45), 32);
 
-  for (let attempt = 0; attempt < 10 && lastResult.buffer.length > opts.maxSize; attempt++) {
-    if (quality > 52) {
+  let lastResult = await encodeImage(
+    buffer,
+    { ...opts, maxWidth: width, maxHeight: height, quality },
+    profileConfig
+  );
+
+  for (let attempt = 0; attempt < 12 && lastResult.buffer.length > opts.maxSize; attempt++) {
+    if (quality > 48) {
       quality -= 8;
+    } else if (opts.resizeFit === 'cover' && opts.aspectRatio) {
+      const scaled = resolveTargetDimensions(
+        Math.max(Math.round(width * 0.88), minWidth),
+        Math.max(Math.round(height * 0.88), minHeight),
+        opts.aspectRatio
+      );
+      width = scaled.width;
+      height = scaled.height;
+      quality = Math.max(opts.quality - 18, 52);
     } else {
-      width = Math.max(Math.round(width * 0.88), 480);
-      height = Math.max(Math.round(height * 0.88), 360);
-      quality = Math.max(opts.quality - 18, 58);
+      width = Math.max(Math.round(width * 0.88), minWidth);
+      height = Math.max(Math.round(height * 0.88), minHeight);
+      quality = Math.max(opts.quality - 18, 52);
     }
 
-    lastResult = await encodeImage(buffer, {
-      ...opts,
-      maxWidth: width,
-      maxHeight: height,
-      quality,
-    });
+    lastResult = await encodeImage(
+      buffer,
+      { ...opts, maxWidth: width, maxHeight: height, quality },
+      profileConfig
+    );
   }
 
   return lastResult;
@@ -146,9 +250,6 @@ async function compressToTargetSize(
 
 /**
  * Optimize image buffer for web delivery
- * - Resize to max dimensions
- * - Convert to WebP for better compression
- * - Enforce profile maxSize with iterative quality/scale reduction
  */
 export async function optimizeImage(
   buffer: Buffer,
@@ -166,6 +267,7 @@ export async function optimizeImageDetailed(
   buffer: Buffer,
   options: OptimizeImageOptions = {}
 ): Promise<OptimizeImageResult> {
+  const normalized = toNodeBuffer(buffer);
   const profileConfig = options.profile ? getImageProfile(options.profile) : null;
 
   const maxWidth = options.maxWidth ?? profileConfig?.maxWidth ?? 1200;
@@ -173,56 +275,99 @@ export async function optimizeImageDetailed(
   const quality = options.quality ?? profileConfig?.quality ?? 80;
   const format = options.format ?? profileConfig?.format ?? 'webp';
   const maxSize = profileConfig?.maxSize;
-  const originalSize = buffer.length;
+  const resizeFit = profileConfig?.resizeFit;
+  const aspectRatio = profileConfig?.aspectRatio;
+  const preserveAlpha = profileConfig?.preserveAlpha;
+  const trimTransparent = profileConfig?.trimTransparent;
+  const originalSize = normalized.length;
+
+  const encodeOpts = {
+    maxWidth,
+    maxHeight,
+    quality,
+    format,
+    resizeFit,
+    aspectRatio,
+    preserveAlpha,
+    trimTransparent,
+  };
 
   try {
-    const metadata = await sharp(buffer).metadata();
+    const sharp = await getSharp();
+    const metadata = await sharp(normalized).metadata();
     const width = metadata.width || 0;
     const height = metadata.height || 0;
 
     if (shouldSkipOptimization(metadata, originalSize, profileConfig, maxWidth, maxHeight)) {
       const { ext, contentType } = formatMeta(metadata.format);
-      return buildResult(buffer, contentType, ext, originalSize, true);
+      return buildResult(
+        normalized,
+        contentType,
+        ext,
+        originalSize,
+        true,
+        { width, height }
+      );
     }
 
-    let encoded = await encodeImage(buffer, { maxWidth, maxHeight, quality, format });
+    let encoded = await encodeImage(normalized, encodeOpts, profileConfig);
 
     if (maxSize && encoded.buffer.length > maxSize) {
-      encoded = await compressToTargetSize(buffer, {
-        maxWidth,
-        maxHeight,
-        quality,
-        format,
-        maxSize,
-      });
+      encoded = await compressToTargetSize(
+        normalized,
+        { ...encodeOpts, maxSize },
+        profileConfig
+      );
     }
 
-    return buildResult(encoded.buffer, encoded.contentType, encoded.ext, originalSize);
+    return buildResult(
+      encoded.buffer,
+      encoded.contentType,
+      encoded.ext,
+      originalSize,
+      false,
+      { width: encoded.width, height: encoded.height }
+    );
   } catch (error: unknown) {
     console.error('⚠️ Optimization failed:', (error as Error).message);
 
     try {
-      const fallback = await encodeImage(buffer, {
-        maxWidth,
-        maxHeight,
-        quality: Math.max(quality - 20, 50),
-        format: 'webp',
-      });
-      return buildResult(fallback.buffer, fallback.contentType, fallback.ext, originalSize);
+      const fallback = await encodeImage(
+        normalized,
+        {
+          maxWidth,
+          maxHeight,
+          quality: Math.max(quality - 20, 50),
+          format: 'webp',
+          preserveAlpha,
+          trimTransparent,
+        },
+        profileConfig
+      );
+      return buildResult(
+        fallback.buffer,
+        fallback.contentType,
+        fallback.ext,
+        originalSize,
+        false,
+        { width: fallback.width, height: fallback.height }
+      );
     } catch {
-      const metadata = await sharp(buffer).metadata().catch(() => null);
+      const sharp = await getSharp();
+      const metadata = await sharp(normalized).metadata().catch(() => null);
       const { ext, contentType } = formatMeta(metadata?.format);
-      return buildResult(buffer, contentType, ext, originalSize, true);
+      return buildResult(normalized, contentType, ext, originalSize, true, {
+        width: metadata?.width,
+        height: metadata?.height,
+      });
     }
   }
 }
 
-/**
- * Detect if buffer is an image and get its type
- */
 export async function detectImageType(buffer: Buffer): Promise<string | null> {
   try {
-    const metadata = await sharp(buffer).metadata();
+    const sharp = await getSharp();
+    const metadata = await sharp(toNodeBuffer(buffer)).metadata();
     return metadata.format || null;
   } catch {
     return null;

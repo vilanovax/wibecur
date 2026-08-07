@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { softDeleteItems } from '@/lib/admin/item-trash';
 
 export type ItemBulkAction =
   | 'delete'
@@ -19,35 +20,17 @@ type BulkInput = {
   action: ItemBulkAction;
 };
 
-async function decrementListCounts(
-  prisma: PrismaClient,
-  counts: Map<string, number>
-) {
-  for (const [listId, count] of counts) {
-    if (count <= 0) continue;
-    await prisma.lists.update({
-      where: { id: listId },
-      data: { itemCount: { decrement: count } },
-    });
-  }
-}
-
 async function deletePlacements(
   prisma: PrismaClient,
-  placements: { id: string; listId: string }[]
+  placements: { id: string; listId: string }[],
+  deletedById?: string | null
 ): Promise<number> {
   if (placements.length === 0) return 0;
-
-  const listCounts = new Map<string, number>();
-  for (const p of placements) {
-    listCounts.set(p.listId, (listCounts.get(p.listId) ?? 0) + 1);
-  }
-
-  await prisma.items.deleteMany({
-    where: { id: { in: placements.map((p) => p.id) } },
-  });
-  await decrementListCounts(prisma, listCounts);
-  return placements.length;
+  return softDeleteItems(
+    prisma,
+    placements.map((p) => p.id),
+    deletedById
+  );
 }
 
 async function setItemsModerationStatus(
@@ -162,9 +145,9 @@ export const ITEM_BULK_ACTION_LABELS: Record<
   { label: string; description: string; variant: 'danger' | 'default' | 'primary' }
 > = {
   delete: {
-    label: 'حذف از لیست',
+    label: 'انتقال به زباله‌دان',
     description:
-      'آیتم‌های انتخاب‌شده از لیست حذف می‌شوند. اگر در لیست‌های دیگر هم باشند، آن‌ها باقی می‌مانند.',
+      'آیتم‌های انتخاب‌شده به زباله‌دان منتقل می‌شوند و از نمایش عمومی حذف می‌شوند. قابل بازگردانی است.',
     variant: 'danger',
   },
   hide: {

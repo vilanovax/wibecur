@@ -45,19 +45,26 @@ interface List {
   users: {
     id: string;
     name: string | null;
-    email: string;
+    email: string | null;
     image: string | null;
-  };
+    role?: string | null;
+  } | null;
 }
 
 interface UserListDetailClientProps {
   list: List;
   currentUserId: string | null;
+  isOwner?: boolean;
+  canAddItems?: boolean;
+  pendingCollaboration?: { listId: string; invitedBy: string } | null;
 }
 
 export default function UserListDetailClient({
   list,
   currentUserId,
+  isOwner: isOwnerProp,
+  canAddItems: canAddItemsProp,
+  pendingCollaboration = null,
 }: UserListDetailClientProps) {
   const [items, setItems] = useState(list.items);
   const [showSettings, setShowSettings] = useState(false);
@@ -68,10 +75,13 @@ export default function UserListDetailClient({
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [itemsView, setItemsView] = useState<'list' | 'grid'>('list');
 
-  const isOwner = currentUserId === list.userId;
+  const [collabActionLoading, setCollabActionLoading] = useState(false);
+
+  const isOwner = isOwnerProp ?? currentUserId === list.userId;
+  const canAddItems = canAddItemsProp ?? isOwner;
   const categorySlug = list.categories?.slug ?? null;
   const categoryIcon = list.categories?.icon ?? '📋';
-  const headerSrc = (list.coverImage && list.coverImage.trim()) ? list.coverImage : '/images/banners/default.jpg';
+  const headerSrc = (list.coverImage && list.coverImage.trim()) ? list.coverImage : '/images/banners/default.webp';
 
   const categoryMeta = useMemo(() => {
     const map = new Map<string, number>();
@@ -159,8 +169,36 @@ export default function UserListDetailClient({
   };
 
   const handleSettingsUpdate = () => {
-    // Refresh page or update list data
     window.location.reload();
+  };
+
+  const handleCollaborationResponse = async (action: 'accept' | 'reject') => {
+    if (!currentUserId || !pendingCollaboration) return;
+    setCollabActionLoading(true);
+    try {
+      const res = await fetch(
+        `/api/user/lists/${pendingCollaboration.listId}/collaborators/${currentUserId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در پاسخ به دعوت');
+      }
+      setToastMessage(action === 'accept' ? 'همکاری پذیرفته شد' : 'دعوت رد شد');
+      setToastType('success');
+      setShowToast(true);
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error: unknown) {
+      setToastMessage(error instanceof Error ? error.message : 'خطا در پاسخ به دعوت');
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setCollabActionLoading(false);
+    }
   };
 
   return (
@@ -193,6 +231,32 @@ export default function UserListDetailClient({
           </section>
 
           <div className="space-y-4 px-4">
+            {pendingCollaboration && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <p className="wibe-small text-foreground">
+                  برای مشارکت در تکمیل این لیست شخصی دعوت شده‌اید.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={collabActionLoading}
+                    onClick={() => handleCollaborationResponse('accept')}
+                    className="flex-1 rounded-lg bg-primary px-4 py-2.5 wibe-small font-semibold text-white disabled:opacity-50"
+                  >
+                    پذیرش همکاری
+                  </button>
+                  <button
+                    type="button"
+                    disabled={collabActionLoading}
+                    onClick={() => handleCollaborationResponse('reject')}
+                    className="rounded-lg border border-wibe bg-wibe-card px-4 py-2.5 wibe-small font-semibold text-wibe-secondary disabled:opacity-50"
+                  >
+                    رد
+                  </button>
+                </div>
+              </div>
+            )}
+
             {list.categories && (
               <Link
                 href={`/categories/${list.categories.slug}`}
@@ -287,7 +351,7 @@ export default function UserListDetailClient({
                   </div>
                 )}
 
-                {isOwner && items.length > 0 && (
+                {canAddItems && items.length > 0 && (
                   <Link
                     href={`/user-lists/${list.id}/add-item`}
                     className="px-4 py-2 bg-primary text-white rounded-md wibe-small font-medium hover:bg-primary-dark transition-colors"
@@ -304,7 +368,7 @@ export default function UserListDetailClient({
                 <p className="mt-2 wibe-caption text-wibe-secondary">
                   اولین آیتم را اضافه کن تا این لیست جان بگیرد
                 </p>
-                {isOwner && (
+                {canAddItems && (
                   <Link
                     href={`/user-lists/${list.id}/add-item`}
                     className="mt-4 inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl wibe-small font-semibold active:scale-[0.99] transition-transform"

@@ -1,0 +1,43 @@
+# dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# next.js
+.next
+out
+
+# testing / dev
+coverage
+.playwright
+test-results
+playwright-report
+
+# env (inject at runtime via compose / orchestrator)
+.env
+.env.*
+!.env.example
+
+# git / editor
+.git
+.gitignore
+.cursor
+.vscode
+*.md
+!README.md
+
+# docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# legacy bundled sub-project (Vite app + Express "kavosh-backend") — not used by
+# the Next app. Excluded so its source and committed .env secrets never enter the
+# build context or get traced into .next/standalone.
+wibe/
+
+# misc
+.DS_Store
+*.pem
+agent-transcripts

@@ -8,6 +8,7 @@ const MAX_WIDTH_CLASS = {
   sm: 'max-w-md',
   md: 'max-w-lg',
   lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
 } as const;
 
 interface DesktopDialogProps {
@@ -17,6 +18,7 @@ interface DesktopDialogProps {
   subtitle?: string;
   headerAction?: React.ReactNode;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   maxWidth?: keyof typeof MAX_WIDTH_CLASS;
   zIndex?: number;
   escapeToClose?: boolean;
@@ -30,6 +32,7 @@ export default function DesktopDialog({
   subtitle,
   headerAction,
   children,
+  footer,
   maxWidth = 'md',
   zIndex = 60,
   escapeToClose = true,
@@ -70,7 +73,7 @@ export default function DesktopDialog({
       }}
       role="presentation"
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" />
+      <div className="absolute inset-0 bg-black/50 animate-in fade-in duration-200" />
       <div
         role="dialog"
         aria-modal="true"
@@ -107,6 +110,12 @@ export default function DesktopDialog({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 lg:p-5">
           {children}
         </div>
+
+        {footer && (
+          <div className="flex-shrink-0 border-t border-wibe bg-wibe-card px-4 py-3 lg:px-5">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

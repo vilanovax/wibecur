@@ -1,16 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { TrendingUp, Bookmark } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { useHomeData } from '@/contexts/HomeDataContext';
+import { selectHomeRisingLists } from '@/lib/home-list-selectors';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
+import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
+import { trackHomeSectionClick } from '@/lib/analytics';
 import HomeSectionTitle from './HomeSectionTitle';
-import HomeGridListCard from './HomeGridListCard';
+import HomeFeedGrid from './HomeFeedGrid';
 
 export default function NewAndRisingSection({ embedded = false }: { embedded?: boolean }) {
   const { data, isLoading } = useHomeData();
-  const lists = (data?.rising ?? []).slice(0, 8);
+  const lists = selectHomeRisingLists({ rising: data?.rising ?? [] }, { limit: 8 });
+  const desktopCells = buildDesktopFeedCells(lists, {
+    maxLists: 8,
+    seeAll: {
+      href: '/lists?mode=popular',
+      label: 'مشاهده همه',
+      description: 'لیست‌های در حال اوج',
+    },
+  });
 
   if (isLoading && lists.length === 0) {
     return (
@@ -41,11 +52,12 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
     <section className={embedded ? '' : 'mb-6'}>
       {!embedded && (
         <HomeSectionTitle
-          icon="🚀"
+          iconVariant="rising"
           title="در حال اوج گرفتن"
           subtitle="رشد سریع ذخیره در ۲۴ ساعت اخیر"
           actionHref="/lists?mode=popular"
           actionLabel="همه"
+          analyticsSection="rising"
         />
       )}
 
@@ -54,6 +66,13 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
+            onClick={() =>
+              trackHomeSectionClick('rising', {
+                list_slug: list.slug,
+                category_slug: list.categories?.slug,
+                target: 'card',
+              })
+            }
             className="flex flex-row-reverse gap-3 overflow-hidden rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm transition-transform active:scale-[0.99]"
           >
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-200">
@@ -77,10 +96,11 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
               <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
                 {list.title}
               </h3>
-              <p className="mt-1 flex items-center gap-1 wibe-caption text-wibe-secondary">
-                <Bookmark className="h-3.5 w-3.5 text-primary" />
-                {list.saveCount.toLocaleString('fa-IR')} ذخیره · {list.itemCount} آیتم
-              </p>
+              {list.itemCount > 0 ? (
+                <p className="mt-1 wibe-caption text-wibe-secondary">
+                  {list.itemCount.toLocaleString('fa-IR')} آیتم
+                </p>
+              ) : null}
             </div>
           </Link>
         ))}
@@ -89,14 +109,14 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
       <div
         className={`hidden lg:grid lg:overflow-visible lg:snap-none lg:px-0 ${HOME_FEED_GRID_CLASS}`}
       >
-        {lists.map((list) => (
-          <HomeGridListCard
-            key={list.id}
-            list={list}
-            badge={(list as { isFastRising?: boolean }).isFastRising ? 'سریع' : null}
-            badgeClassName="bg-success text-white"
-          />
-        ))}
+        <HomeFeedGrid
+          cells={desktopCells}
+          getBadge={(list) =>
+            (list as { isFastRising?: boolean }).isFastRising ? 'سریع' : null
+          }
+          badgeClassName="bg-success text-white"
+          homeSection="rising"
+        />
       </div>
     </section>
   );

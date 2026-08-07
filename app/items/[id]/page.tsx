@@ -1,67 +1,96 @@
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { dbQuery } from '@/lib/db';
 import ItemDetailClient from './ItemDetailClient';
+import ItemLcpPreload from '@/components/mobile/items/ItemLcpPreload';
+import ItemPageBreadcrumb from '@/components/mobile/items/ItemPageBreadcrumb';
+import ItemHeroServer from '@/components/mobile/items/ItemHeroServer';
+import ItemMetadataServer from '@/components/mobile/items/ItemMetadataServer';
 import { toAbsoluteImageUrl } from '@/lib/seo';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
+import { getCachedSimilarItems } from '@/lib/item-similar';
 
 export const revalidate = 60;
 
-/**
- * واکشی آیتم — با React cache() تا generateMetadata و بدنه‌ی صفحه در یک request
- * فقط یک‌بار کوئری بزنند (به‌جای دو کوئری جدا برای همان رکورد).
- */
-const getItemById = cache((id: string) =>
-  prisma.items.findUnique({
-    where: { id },
+const itemDetailSelect = {
+  id: true,
+  title: true,
+  description: true,
+  imageUrl: true,
+  externalUrl: true,
+  catalogItemId: true,
+  listNote: true,
+  rating: true,
+  voteCount: true,
+  metadata: true,
+  listId: true,
+  order: true,
+  createdAt: true,
+  _count: {
+    select: { comments: true },
+  },
+  deletedAt: true,
+  item_moderation: { select: { status: true } },
+  lists: {
     select: {
       id: true,
       title: true,
-      description: true,
-      imageUrl: true,
-      externalUrl: true,
-      catalogItemId: true,
-      listNote: true,
-      rating: true,
-      voteCount: true,
-      metadata: true,
-      listId: true,
-      order: true,
-      createdAt: true,
-      _count: {
-        select: { comments: true },
-      },
-      item_moderation: { select: { status: true } },
-      lists: {
+      slug: true,
+      saveCount: true,
+      userId: true,
+      itemCount: true,
+      categories: {
         select: {
           id: true,
-          title: true,
+          name: true,
           slug: true,
-          saveCount: true,
-          userId: true,
-          itemCount: true,
-          categories: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              icon: true,
-              color: true,
-            },
-          },
-          users: {
-            select: {
-              name: true,
-            },
-          },
+          icon: true,
+          color: true,
         },
       },
     },
-  })
+  },
+} as const;
+
+function loadItemById(id: string) {
+  return prisma.items.findUnique({
+    where: { id },
+    select: itemDetailSelect,
+  });
+}
+
+/**
+ * واکشی آیتم:
+ * - `unstable_cache`: کش بین‌درخواستی (Data Cache) با tag `item-{id}`
+ * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنه)
+ */
+const getItemById = cache((id: string) =>
+  unstable_cache(() => loadItemById(id), ['item-by-id', id], {
+    revalidate: 60,
+    tags: [`item-${id}`],
+  })()
 );
+
+const PERSONAL_SAVE_COUNT_SECONDS = 300;
+
+function getCachedPersonalSaveCount(itemId: string, title: string, listId: string) {
+  return unstable_cache(
+    () =>
+      prisma.items.count({
+        where: {
+          title: { equals: title, mode: 'insensitive' },
+          listId: { not: listId },
+          lists: { isActive: true },
+        },
+      }),
+    ['item-personal-save-count', itemId],
+    { revalidate: PERSONAL_SAVE_COUNT_SECONDS, tags: [`item-${itemId}`] }
+  )();
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -103,7 +132,7 @@ export default async function ItemDetailPage({
 
   const item = await getItemById(id);
 
-  if (!item) {
+  if (!item || item.deletedAt) {
     notFound();
   }
 
@@ -114,32 +143,35 @@ export default async function ItemDetailPage({
   let listRank: number | null = null;
   let listItemCount = 0;
   let personalSaveCount = 0;
+  let similarItemsResult: Awaited<ReturnType<typeof getCachedSimilarItems>> = null;
 
   try {
-    [listRank, listItemCount, personalSaveCount] = await dbQuery(async () => {
-      // رتبه با count محاسبه می‌شود (index-only) به‌جای کشیدن همه‌ی آیتم‌های لیست.
-      // ترتیب معادلِ orderBy [order asc, createdAt asc] است.
-      const [priorCount, totalCount, saveCount] = await Promise.all([
-        prisma.items.count({
-          where: {
-            listId: item.listId,
-            OR: [
-              { order: { lt: item.order } },
-              { order: item.order, createdAt: { lt: item.createdAt } },
-            ],
-          },
-        }),
-        prisma.items.count({ where: { listId: item.listId } }),
-        prisma.items.count({
-          where: {
-            title: { equals: item.title, mode: 'insensitive' },
-            listId: { not: item.listId },
-            lists: { isActive: true },
-          },
-        }),
-      ]);
-      return [totalCount > 0 ? priorCount + 1 : null, totalCount, saveCount] as const;
-    });
+    const [rankResult, personalSaveCountResult, similarResult] = await Promise.all([
+      dbQuery(async () => {
+        const [priorCount, totalCount] = await Promise.all([
+          prisma.items.count({
+            where: {
+              listId: item.listId,
+              OR: [
+                { order: { lt: item.order } },
+                { order: item.order, createdAt: { lt: item.createdAt } },
+              ],
+            },
+          }),
+          prisma.items.count({ where: { listId: item.listId } }),
+        ]);
+        return {
+          listRank: totalCount > 0 ? priorCount + 1 : null,
+          listItemCount: totalCount,
+        } as const;
+      }),
+      getCachedPersonalSaveCount(item.id, item.title, item.listId),
+      getCachedSimilarItems(item.id),
+    ]);
+    listRank = rankResult.listRank;
+    listItemCount = rankResult.listItemCount;
+    personalSaveCount = personalSaveCountResult;
+    similarItemsResult = similarResult;
   } catch (error) {
     console.warn('[ItemDetailPage] secondary query failed:', error);
   }
@@ -180,17 +212,27 @@ export default async function ItemDetailPage({
       saveCount: item.lists.saveCount ?? 0,
       categories: item.lists.categories,
     },
-    users: item.lists.users
-      ? {
-          name: item.lists.users.name,
-        }
-      : null,
   };
+
+  const initialSimilarItems =
+    similarItemsResult && similarItemsResult.length >= 2 ? similarItemsResult : undefined;
 
   return (
     <div className="bg-wibe-surface">
+      <ItemLcpPreload href={serializedItem.displayImageUrl} />
       <Header showBack hideTitleOnDesktop showDesktopSearch={false} />
-      <ItemDetailClient item={serializedItem} />
+      <ItemPageBreadcrumb
+        category={item.lists.categories}
+        listTitle={item.lists.title}
+        listSlug={item.lists.slug}
+        itemTitle={item.title}
+      />
+      <ItemHeroServer item={serializedItem} />
+      <ItemDetailClient
+        item={serializedItem}
+        initialSimilarItems={initialSimilarItems}
+        metadataSection={<ItemMetadataServer item={serializedItem} />}
+      />
       <BottomNav />
     </div>
   );

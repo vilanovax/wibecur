@@ -13,6 +13,7 @@ import type {
   UserIntelligenceRow,
   UserPulseSummary,
 } from '@/lib/admin/users-types';
+import { getUsersCommentModerationMeta } from '@/lib/comment-permission';
 
 export const USERS_PAGE_SIZE = 20;
 const MS_DAY = 24 * 60 * 60 * 1000;
@@ -157,9 +158,6 @@ function filterWhereClause(filter: UserFilterKind): Prisma.usersWhereInput | nul
       };
     case 'new':
       return { createdAt: { gte: thirtyDaysAgo } };
-    case 'growing':
-      // resolved dynamically via growing user ids
-      return null;
     default:
       return null;
   }
@@ -404,6 +402,17 @@ function rowToIntelligence(
   };
 }
 
+async function enrichRowsWithCommentStatus(
+  rows: UserIntelligenceRow[]
+): Promise<UserIntelligenceRow[]> {
+  if (rows.length === 0) return rows;
+  const meta = await getUsersCommentModerationMeta(rows.map((r) => r.id));
+  return rows.map((row) => ({
+    ...row,
+    commentStatus: meta.get(row.id)?.status ?? 'allowed',
+  }));
+}
+
 function prismaOrderBy(sort: UserSortKind): Prisma.usersOrderByWithRelationInput {
   switch (sort) {
     case 'created_asc':
@@ -465,7 +474,8 @@ async function fetchPageUsers(
     users.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
 
     const pageGrowth = await fetchBookmarkGrowthMaps(sortedIds, last7d, last14d);
-    return users.map((u) => rowToIntelligence(u, pageGrowth.get(u.id)));
+    const rows = users.map((u) => rowToIntelligence(u, pageGrowth.get(u.id)));
+    return enrichRowsWithCommentStatus(rows);
   }
 
   const users = await dbQuery(() =>
@@ -483,7 +493,8 @@ async function fetchPageUsers(
     last7d,
     last14d
   );
-  return users.map((u) => rowToIntelligence(u, growthMap.get(u.id)));
+  const rows = users.map((u) => rowToIntelligence(u, growthMap.get(u.id)));
+  return enrichRowsWithCommentStatus(rows);
 }
 
 async function fetchFilterCounts(

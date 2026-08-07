@@ -317,7 +317,7 @@ export default function AddSlotWizardModal({
                   </div>
                 )}
                 {hasConflict && conflict?.conflictingSlot && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 flex gap-2 text-sm text-red-800">
+                  <div className="rounded-xl border border-red-200 dark:border-red-800/60 bg-red-50 dark:bg-red-900/20 p-3 flex gap-2 text-sm text-red-800 dark:text-red-300">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <div>
                       تداخل با «{conflict.conflictingSlot.title}»
@@ -330,7 +330,7 @@ export default function AddSlotWizardModal({
                     </div>
                   </div>
                 )}
-                {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+                {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
               </form>
             )}
           </div>

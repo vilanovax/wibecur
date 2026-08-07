@@ -1,7 +1,10 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { Check } from 'lucide-react';
-import { DEFAULT_PACK_AVATARS, type VibeAvatarOption } from '@/lib/vibe-avatars';
+import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
+import { DEFAULT_PACK_AVATARS, resolveVibeAvatar, type VibeAvatarOption } from '@/lib/vibe-avatars';
 
 interface RegisterAvatarPickerProps {
   value: string;
@@ -9,23 +12,59 @@ interface RegisterAvatarPickerProps {
 }
 
 export default function RegisterAvatarPicker({ value, onChange }: RegisterAvatarPickerProps) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const selectedAvatar = useMemo(() => resolveVibeAvatar(value), [value]);
+
+  const handleSelect = (avatarId: string) => {
+    onChange(avatarId);
+    setSheetOpen(false);
+  };
+
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-white/80">آواتار تو</p>
-        <span className="text-xs text-white/45">یکی انتخاب کن</span>
+    <>
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {selectedAvatar ? (
+            <VibeAvatarDisplay avatar={selectedAvatar} size={52} />
+          ) : (
+            <div className="h-[52px] w-[52px] rounded-full bg-gray-200" />
+          )}
+          <div className="min-w-0 text-right">
+            <p className="text-sm font-medium text-gray-800">آواتار تو</p>
+            <p className="mt-0.5 truncate text-xs text-gray-500">
+              {selectedAvatar?.label ?? 'پیش‌فرض'}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="shrink-0 text-xs font-medium text-primary transition-colors hover:text-primary-dark"
+        >
+          تغییر آواتار
+        </button>
       </div>
-      <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory -mx-1 px-1">
-        {DEFAULT_PACK_AVATARS.map((avatar) => (
-          <AvatarChip
-            key={avatar.id}
-            avatar={avatar}
-            selected={value === avatar.id}
-            onSelect={() => onChange(avatar.id)}
-          />
-        ))}
-      </div>
-    </div>
+
+      <BottomSheet
+        isOpen={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title="انتخاب آواتار"
+        subtitle="یکی انتخاب کن"
+        desktopMaxWidth="sm"
+        constrainToMobileShell={false}
+      >
+        <div className="grid grid-cols-4 gap-2 px-1 pb-2">
+          {DEFAULT_PACK_AVATARS.map((avatar) => (
+            <AvatarChip
+              key={avatar.id}
+              avatar={avatar}
+              selected={value === avatar.id}
+              onSelect={() => handleSelect(avatar.id)}
+            />
+          ))}
+        </div>
+      </BottomSheet>
+    </>
   );
 }
 
@@ -44,22 +83,15 @@ function AvatarChip({
       onClick={onSelect}
       aria-pressed={selected}
       aria-label={avatar.label}
-      className={`relative flex shrink-0 snap-start flex-col items-center gap-1.5 rounded-2xl border-2 p-2.5 transition-all active:scale-95 ${
+      className={`relative flex items-center justify-center rounded-2xl border-2 p-2 transition-all active:scale-95 ${
         selected
-          ? 'border-white bg-white/15 shadow-[0_0_0_2px_rgba(255,255,255,0.25)]'
-          : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10'
+          ? 'border-primary bg-primary/5 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
       }`}
     >
-      <div
-        className={`flex h-14 w-14 items-center justify-center rounded-full text-2xl ${avatar.bgClass}`}
-      >
-        {avatar.emoji}
-      </div>
-      <span className="max-w-[72px] truncate text-[11px] font-medium text-white/75">
-        {avatar.label}
-      </span>
+      <VibeAvatarDisplay avatar={avatar} size={48} selected={selected} />
       {selected && (
-        <span className="absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-primary shadow-md">
+        <span className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow-md">
           <Check className="h-3 w-3" strokeWidth={3} />
         </span>
       )}
@@ -72,5 +104,5 @@ export function getDefaultRegisterAvatarId(): string {
 }
 
 export function getRegisterAvatarById(id: string): VibeAvatarOption | undefined {
-  return DEFAULT_PACK_AVATARS.find((a) => a.id === id);
+  return resolveVibeAvatar(id);
 }

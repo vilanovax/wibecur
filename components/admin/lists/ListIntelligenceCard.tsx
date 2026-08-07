@@ -172,10 +172,7 @@ export default function ListIntelligenceCard({
         </div>
       </Link>
 
-      <div
-        className="flex items-center gap-1.5 px-3 py-2 border-t border-[var(--color-border-muted)] bg-[var(--color-bg)]/40"
-        onClick={(e) => e.preventDefault()}
-      >
+      <div className="flex items-center gap-1.5 px-3 py-2 border-t border-[var(--color-border-muted)] bg-[var(--color-bg)]/40">
         {isTrashView ? (
           <>
             {row.deletedAt && (
@@ -205,6 +202,8 @@ export default function ListIntelligenceCard({
           <>
             <Link
               href={editHref}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-white hover:opacity-90"
             >
               <Pencil className="w-3 h-3" />
@@ -214,10 +213,11 @@ export default function ListIntelligenceCard({
               href={`/lists/${row.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
-              title="مشاهده در اپ"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+              title="نمایش در سایت"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3 h-3" />
+              سایت
             </Link>
             <div className="mr-auto">
               <ListCardMoreMenu

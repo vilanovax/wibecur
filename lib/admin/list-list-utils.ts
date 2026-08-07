@@ -1,5 +1,29 @@
 import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
 import type { ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
+import { isGenericListCover } from '@/lib/image-url-policy';
+
+export const LIST_FILTER_KINDS: ListFilterKind[] = [
+  'all',
+  'rising',
+  'trending_top',
+  'low_engagement',
+  'suspicious',
+  'needs_review',
+  'zero_save',
+  'featured',
+  'no_cover',
+];
+
+export function parseListFilterParam(raw?: string | null): ListFilterKind {
+  if (raw && LIST_FILTER_KINDS.includes(raw as ListFilterKind)) {
+    return raw as ListFilterKind;
+  }
+  return 'all';
+}
+
+export function listHasMissingCover(list: { coverImage: string | null }): boolean {
+  return isGenericListCover(list.coverImage);
+}
 
 export function searchLists(lists: ListIntelligenceRow[], query: string): ListIntelligenceRow[] {
   const q = query.trim().toLowerCase();
@@ -36,6 +60,8 @@ export function countListsForFilter(
       return lists.filter((l) => l.saveCount === 0).length;
     case 'featured':
       return lists.filter((l) => l.isFeatured).length;
+    case 'no_cover':
+      return lists.filter((l) => listHasMissingCover(l)).length;
     default:
       return lists.length;
   }

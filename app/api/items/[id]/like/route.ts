@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
+import { resolveSessionUserId, sessionUserNotFoundResponse } from '@/lib/api-db';
 
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -12,7 +14,7 @@ export async function POST(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json(
         { success: false, error: 'احراز هویت نشده است' },
         { status: 401 }
@@ -21,28 +23,9 @@ export async function POST(
 
     const { id: itemId } = await params;
 
-    // Get user (session.user is guaranteed to exist after the check above)
-    const userEmail = session.user.email;
-    if (!userEmail) {
-      return NextResponse.json(
-        { success: false, error: 'احراز هویت نشده است' },
-        { status: 401 }
-      );
-    }
-    const user = await dbQuery(() =>
-      prisma.users.findUnique({
-        where: { email: userEmail },
-        select: { id: true },
-      })
-    );
-
-    if (!user) {
-      // سشن معتبر است اما رکورد کاربر در دیتابیس وجود ندارد (سشن یتیم/منقضی).
-      // 401 برمی‌گردانیم تا کلاینت بتواند کاربر را خارج/هدایت کند، نه 404 گنگ.
-      return NextResponse.json(
-        { success: false, error: 'نشست نامعتبر است؛ لطفاً دوباره وارد شوید', code: 'SESSION_USER_NOT_FOUND' },
-        { status: 401 }
-      );
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
+      return sessionUserNotFoundResponse();
     }
 
     // Check if item exists
@@ -65,7 +48,7 @@ export async function POST(
       prisma.item_votes.findUnique({
         where: {
           userId_itemId: {
-            userId: user.id,
+            userId,
             itemId: itemId,
           },
         },
@@ -79,7 +62,7 @@ export async function POST(
           await tx.item_votes.delete({
             where: {
               userId_itemId: {
-                userId: user.id,
+                userId: userId,
                 itemId: itemId,
               },
             },
@@ -103,7 +86,7 @@ export async function POST(
           await tx.item_votes.create({
             data: {
               id: nanoid(),
-              userId: user.id,
+              userId: userId,
               itemId: itemId,
               value: 1, // 1 for like
             },
@@ -138,7 +121,7 @@ export async function POST(
 
     console.log('Item like toggled:', {
       itemId,
-      userId: user.id,
+      userId: userId,
       wasLiked: !!existingVote,
       nowLiked: currentVoteStatus,
       likeCount: finalLikeCount,
@@ -156,7 +139,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'خطا در لایک کردن آیتم',
+        error: getClientErrorMessage(error, 'خطا در لایک کردن آیتم'),
       },
       { status: 500 }
     );
@@ -189,29 +172,20 @@ export async function GET(
 
     let isLiked = false;
     const session = await auth();
-    const userEmail = session?.user?.email;
+    const userId = session?.user ? await resolveSessionUserId(session) : null;
 
-    if (userEmail) {
-      const user = await dbQuery(() =>
-        prisma.users.findUnique({
-          where: { email: userEmail },
-          select: { id: true },
+    if (userId) {
+      const existingVote = await dbQuery(() =>
+        prisma.item_votes.findUnique({
+          where: {
+            userId_itemId: {
+              userId,
+              itemId: itemId,
+            },
+          },
         })
       );
-
-      if (user) {
-        const existingVote = await dbQuery(() =>
-          prisma.item_votes.findUnique({
-            where: {
-              userId_itemId: {
-                userId: user.id,
-                itemId: itemId,
-              },
-            },
-          })
-        );
-        isLiked = !!existingVote;
-      }
+      isLiked = !!existingVote;
     }
 
     return NextResponse.json({
@@ -226,7 +200,7 @@ export async function GET(
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'خطا در دریافت وضعیت لایک',
+        error: getClientErrorMessage(error, 'خطا در دریافت وضعیت لایک'),
       },
       { status: 500 }
     );

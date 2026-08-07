@@ -36,12 +36,12 @@ function SuggestionSkeleton() {
   return (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse rounded-xl border border-gray-100 p-4">
+        <div key={i} className="animate-pulse rounded-xl border border-gray-100 dark:border-gray-700 p-4">
           <div className="flex gap-3">
-            <div className="h-14 w-11 rounded-lg bg-gray-200" />
+            <div className="h-14 w-11 rounded-lg bg-gray-200 dark:bg-gray-700" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-2/3 rounded bg-gray-200" />
-              <div className="h-3 w-1/2 rounded bg-gray-100" />
+              <div className="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-3 w-1/2 rounded bg-gray-100 dark:bg-gray-700/50" />
             </div>
           </div>
         </div>
@@ -77,7 +77,10 @@ export default function ItemSuggestionsTable({
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetchSuggestions();
+    const ctrl = new AbortController();
+    void fetchSuggestions(ctrl.signal);
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, source, currentPage, sortOrder]);
 
   useEffect(() => {
@@ -179,7 +182,7 @@ export default function ItemSuggestionsTable({
     }
   };
 
-  const fetchSuggestions = async () => {
+  const fetchSuggestions = async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -190,7 +193,7 @@ export default function ItemSuggestionsTable({
       if (status) params.set('status', status);
       if (source) params.set('source', source);
 
-      const res = await fetch(`/api/admin/suggestions/items?${params.toString()}`);
+      const res = await fetch(`/api/admin/suggestions/items?${params.toString()}`, { signal });
       const data = await res.json();
 
       if (data.success) {
@@ -199,9 +202,10 @@ export default function ItemSuggestionsTable({
         setTotal(data.data.pagination.total || 0);
       }
     } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return; // پاسخ قدیمی لغو شد
       console.error('Error fetching suggestions:', error);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
@@ -276,11 +280,11 @@ export default function ItemSuggestionsTable({
   if (suggestions.length === 0) {
     return (
       <div className="py-12 text-center">
-        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
-          <Package className="h-7 w-7 text-gray-400" />
+        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700/50">
+          <Package className="h-7 w-7 text-gray-400 dark:text-gray-500" />
         </div>
-        <h3 className="font-semibold text-gray-900">{emptyMessage.title}</h3>
-        <p className="mt-1 text-sm text-gray-500">{emptyMessage.subtitle}</p>
+        <h3 className="font-semibold text-gray-900 dark:text-white">{emptyMessage.title}</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{emptyMessage.subtitle}</p>
       </div>
     );
   }
@@ -294,15 +298,15 @@ export default function ItemSuggestionsTable({
       )}
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-gray-500">
-          <span className="font-semibold text-gray-800">{total.toLocaleString('fa-IR')}</span> پیشنهاد
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="font-semibold text-gray-800 dark:text-gray-100">{total.toLocaleString('fa-IR')}</span> پیشنهاد
         </p>
         <div className="flex items-center gap-2">
           {suggestions.length > 1 && (
             <button
               type="button"
               onClick={() => setSortOrder((s) => (s === 'newest' ? 'oldest' : 'newest'))}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+              className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50"
             >
               {sortOrder === 'newest' ? 'جدیدترین ↑' : 'قدیمی‌ترین ↓'}
             </button>
@@ -315,8 +319,8 @@ export default function ItemSuggestionsTable({
             }}
             className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
               bulkMode
-                ? 'border-violet-300 bg-violet-50 text-violet-700'
-                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                ? 'border-violet-300 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
+                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
             }`}
           >
             {bulkMode ? 'لغو انتخاب' : 'انتخاب چندتایی'}
@@ -325,12 +329,12 @@ export default function ItemSuggestionsTable({
       </div>
 
       {bulkMode && selectedIds.size > 0 && (
-        <div className="mb-3 flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-800">
+        <div className="mb-3 flex items-center gap-2 rounded-lg bg-violet-50 dark:bg-violet-900/20 px-3 py-2 text-sm text-violet-800 dark:text-violet-300">
           <input
             ref={selectAllRef}
             type="checkbox"
             onChange={selectAll}
-            className="rounded border-gray-300 text-violet-600"
+            className="rounded border-gray-300 dark:border-gray-600 text-violet-600 dark:text-violet-400"
             aria-label="انتخاب همه"
           />
           <span>{selectedIds.size.toLocaleString('fa-IR')} انتخاب شده</span>

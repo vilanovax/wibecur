@@ -7,6 +7,7 @@ export interface CreatorStats {
   viralListsCount: number;
   popularListsCount: number;
   totalLikesReceived: number;
+  totalSavesReceived: number;
   profileViews: number;
   totalItemsCurated: number;
 }

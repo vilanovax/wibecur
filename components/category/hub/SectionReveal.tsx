@@ -1,23 +1,35 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { type ReactNode } from 'react';
+import { useLazyInView } from '@/hooks/useLazyInView';
 
-interface SectionRevealProps {
-  children: React.ReactNode;
+type SectionRevealProps = {
+  children: ReactNode;
   className?: string;
-}
+  /** Mount children only when near viewport (for lazy sections). */
+  defer?: boolean;
+};
 
-/** انیمیشن ظاهر شدن ملایم هنگام اسکرول */
-export default function SectionReveal({ children, className = '' }: SectionRevealProps) {
+/** Lightweight scroll reveal — no framer-motion. */
+export default function SectionReveal({
+  children,
+  className = '',
+  defer = false,
+}: SectionRevealProps) {
+  const { ref, inView } = useLazyInView<HTMLDivElement>({ rootMargin: '240px', once: true });
+
+  if (defer && !inView) {
+    return <div ref={ref} className={`min-h-[6rem] ${className}`} aria-hidden />;
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
-      className={className}
+    <div
+      ref={ref}
+      className={`${className} transition-all duration-300 ease-out motion-reduce:transition-none ${
+        inView ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
+      }`}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

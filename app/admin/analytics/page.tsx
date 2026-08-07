@@ -1,12 +1,11 @@
 import { requireAdmin } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { getAnalyticsOverview } from '@/lib/admin/analytics-metrics';
+import { getCachedAnalyticsOverview } from '@/lib/admin/analytics-metrics-cached';
 import AnalyticsDashboard from '@/components/admin/analytics/AnalyticsDashboard';
 
 export default async function AdminAnalyticsPage() {
   await requireAdmin();
 
-  const overview = await getAnalyticsOverview(prisma);
+  const overview = await getCachedAnalyticsOverview();
 
   return (
     <div className="max-w-5xl">

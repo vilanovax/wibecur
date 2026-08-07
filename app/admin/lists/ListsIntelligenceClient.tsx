@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus, Sparkles, ChevronDown, ChevronUp, BarChart3, FileJson } from 'lucide-react';
@@ -10,9 +10,10 @@ import ListPulseSummary from '@/components/admin/lists/ListPulseSummary';
 import ListSmartFilterBar, { type ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
 import ListIntelligenceCard from '@/components/admin/lists/ListIntelligenceCard';
 import ListIntelligenceTable from '@/components/admin/lists/ListIntelligenceTable';
+import ListCoversGallery, { type ListAdminViewMode } from '@/components/admin/lists/ListCoversGallery';
 import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
 import Pagination from '@/components/admin/shared/Pagination';
-import { searchLists, countListsForFilter } from '@/lib/admin/list-list-utils';
+import { searchLists, countListsForFilter, listHasMissingCover } from '@/lib/admin/list-list-utils';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 
 type SortKey =
@@ -44,6 +45,8 @@ function filterLists(lists: ListIntelligenceRow[], filter: ListFilterKind): List
       return lists.filter((l) => l.saveCount === 0);
     case 'featured':
       return lists.filter((l) => l.isFeatured);
+    case 'no_cover':
+      return lists.filter((l) => listHasMissingCover(l));
     default:
       return lists;
   }
@@ -87,28 +90,35 @@ const EMPTY_COUNTS: Record<ListFilterKind, number> = {
   needs_review: 0,
   zero_save: 0,
   featured: 0,
+  no_cover: 0,
 };
 
 export default function ListsIntelligenceClient({
   data,
   trash: isTrashView,
   initialCategoryId = 'all',
+  initialSearch = '',
+  initialFilter = 'all',
   embedded = false,
 }: {
   data: ListsIntelligenceData;
   trash: boolean;
   initialCategoryId?: string;
+  initialSearch?: string;
+  initialFilter?: ListFilterKind;
   embedded?: boolean;
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<ListFilterKind>('all');
+  const [filter, setFilter] = useState<ListFilterKind>(initialFilter);
   const [categoryId, setCategoryId] = useState(initialCategoryId);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>('score_desc');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<ListAdminViewMode>('table');
   const [kpiCollapsed, setKpiCollapsed] = useState(true);
   const [lists, setLists] = useState<ListIntelligenceRow[]>(data.lists);
   const [moveToTrashRow, setMoveToTrashRow] = useState<ListIntelligenceRow | null>(null);
+  const [coverAuditOpen, setCoverAuditOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   useEffect(() => {
@@ -116,15 +126,34 @@ export default function ListsIntelligenceClient({
     setCategoryId(initialCategoryId);
   }, [data.lists, initialCategoryId]);
 
+  // همگام‌سازی با URL (back/forward یا بعد از ناوبریِ جستجو)
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
+
+  useEffect(() => {
+    setFilter(initialFilter);
+  }, [initialFilter]);
+
+  useEffect(
+    () => () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    },
+    []
+  );
+
   useEffect(() => {
     const storedView = localStorage.getItem(VIEW_MODE_KEY);
-    if (storedView === 'grid' || storedView === 'table') setViewMode(storedView);
+    if (storedView === 'grid' || storedView === 'table' || storedView === 'covers') {
+      setViewMode(storedView);
+    }
     const storedKpi = localStorage.getItem(KPI_COLLAPSED_KEY);
     if (storedKpi === '0') setKpiCollapsed(false);
   }, []);
 
   useEffect(() => {
     localStorage.setItem(VIEW_MODE_KEY, viewMode);
+    if (viewMode !== 'covers') setCoverAuditOpen(false);
   }, [viewMode]);
 
   useEffect(() => {
@@ -141,6 +170,7 @@ export default function ListsIntelligenceClient({
       'needs_review',
       'zero_save',
       'featured',
+      'no_cover',
     ];
     const counts = { ...EMPTY_COUNTS };
     for (const k of keys) {
@@ -152,6 +182,19 @@ export default function ListsIntelligenceClient({
   const filteredByTab = useMemo(() => filterLists(lists, filter), [lists, filter]);
   const searched = useMemo(() => searchLists(filteredByTab, search), [filteredByTab, search]);
   const sorted = useMemo(() => sortLists(searched, sortBy), [searched, sortBy]);
+
+  const handleFilterChange = useCallback(
+    (next: ListFilterKind) => {
+      setFilter(next);
+      const params = new URLSearchParams(window.location.search);
+      if (next === 'all') params.delete('filter');
+      else params.set('filter', next);
+      params.delete('page');
+      const qs = params.toString();
+      router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+    },
+    [router]
+  );
 
   const handleCategoryChange = useCallback(
     (nextCategoryId: string) => {
@@ -170,11 +213,38 @@ export default function ListsIntelligenceClient({
     [data.categories, router]
   );
 
+  // جستجوی سرور-ساید: ورودی فوراً به‌روز می‌شود (واکنش‌گرا) و با debounce به URL
+  // ناوبری می‌شود تا سرور روی همهٔ صفحات جستجو کند (نه فقط صفحهٔ جاری).
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = setTimeout(() => {
+        const params = new URLSearchParams(window.location.search);
+        const trimmed = value.trim();
+        if (trimmed) params.set('q', trimmed);
+        else params.delete('q');
+        params.delete('page');
+        const qs = params.toString();
+        router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+      }, 400);
+    },
+    [router]
+  );
+
   const handleClearFilters = useCallback(() => {
     setFilter('all');
     setSearch('');
-    if (categoryId !== 'all') handleCategoryChange('all');
-  }, [categoryId, handleCategoryChange]);
+    setCategoryId('all');
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    const params = new URLSearchParams(window.location.search);
+    params.delete('q');
+    params.delete('category');
+    params.delete('filter');
+    params.delete('page');
+    const qs = params.toString();
+    router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+  }, [router]);
 
   const handleMoveToTrash = async (id: string, reason?: string) => {
     const res = await fetch(`/api/admin/lists/${id}/trash`, {
@@ -223,10 +293,10 @@ export default function ListsIntelligenceClient({
 
   const filterBarProps = {
     value: filter,
-    onChange: setFilter,
+    onChange: handleFilterChange,
     counts: filterCounts,
     search,
-    onSearchChange: setSearch,
+    onSearchChange: handleSearchChange,
     sortBy,
     onSortChange: (v: string) => setSortBy(v as SortKey),
     viewMode,
@@ -238,6 +308,8 @@ export default function ListsIntelligenceClient({
     onCategoryChange: handleCategoryChange,
     onClearFilters: handleClearFilters,
     hasActiveFilters,
+    onOpenCoverAudit:
+      viewMode === 'covers' && !isTrashView ? () => setCoverAuditOpen(true) : undefined,
   };
 
   const tabClass = (active: boolean) =>
@@ -355,7 +427,7 @@ export default function ListsIntelligenceClient({
               <ListPulseSummary
                 pulse={data.pulse}
                 activeFilter={filter}
-                onFilterClick={(f) => setFilter(f)}
+                onFilterClick={handleFilterChange}
               />
             </div>
           )}
@@ -421,6 +493,16 @@ export default function ListsIntelligenceClient({
                 />
               ))}
             </div>
+          ) : viewMode === 'covers' && !isTrashView ? (
+            <ListCoversGallery
+              rows={sorted}
+              auditOpen={coverAuditOpen}
+              onAuditOpenChange={setCoverAuditOpen}
+              onFeatureToggle={handleFeatureToggle}
+              onDisableToggle={handleDisableToggle}
+              onMoveToTrash={(row) => setMoveToTrashRow(row)}
+              onOptimized={() => router.refresh()}
+            />
           ) : (
             <ListIntelligenceTable
               rows={sorted}
@@ -442,6 +524,7 @@ export default function ListsIntelligenceClient({
           searchParams={{
             ...(isTrashView ? { trash: 'true' } : {}),
             ...(categoryId !== 'all' && activeCategory ? { category: activeCategory.slug } : {}),
+            ...(search.trim() ? { q: search.trim() } : {}),
           }}
         />
       )}

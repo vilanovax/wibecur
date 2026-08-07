@@ -11,9 +11,10 @@ interface ResponsiveOverlayProps {
   subtitle?: string;
   headerAction?: React.ReactNode;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   maxHeight?: string;
   /** عرض دیالوگ دسکتاپ */
-  desktopMaxWidth?: 'sm' | 'md' | 'lg';
+  desktopMaxWidth?: 'sm' | 'md' | 'lg' | 'xl';
   zIndex?: number;
   escapeToClose?: boolean;
   closeOnBackdrop?: boolean;
@@ -35,6 +36,7 @@ export default function ResponsiveOverlay({
   subtitle,
   headerAction,
   children,
+  footer,
   maxHeight = '85vh',
   desktopMaxWidth = 'md',
   zIndex = 60,
@@ -51,12 +53,13 @@ export default function ResponsiveOverlay({
         title={title}
         subtitle={subtitle}
         headerAction={headerAction}
+        footer={footer}
         maxWidth={desktopMaxWidth}
         zIndex={zIndex}
         escapeToClose={escapeToClose}
         closeOnBackdrop={closeOnBackdrop}
       >
-        <div className="min-h-0">{children}</div>
+        {children}
       </DesktopDialog>
     );
   }
@@ -68,6 +71,7 @@ export default function ResponsiveOverlay({
       title={title}
       subtitle={subtitle}
       headerAction={headerAction}
+      footer={footer}
       maxHeight={maxHeight}
       zIndex={zIndex}
       escapeToClose={escapeToClose}

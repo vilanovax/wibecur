@@ -1,5 +1,6 @@
-import sharp from 'sharp';
 import { ALLOWED_IMAGE_FORMATS, MAX_UPLOAD_SIZE, ImageProfile, getImageProfile } from './image-config';
+import { getSharp } from './get-sharp';
+import { toNodeBuffer } from './to-node-buffer';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -24,8 +25,9 @@ export async function validateImage(
   profile: ImageProfile = 'default'
 ): Promise<ValidationResult> {
   try {
+    const normalized = toNodeBuffer(buffer);
     // Check file size
-    if (buffer.length > MAX_UPLOAD_SIZE) {
+    if (normalized.length > MAX_UPLOAD_SIZE) {
       return {
         isValid: false,
         error: `حجم فایل نباید بیشتر از ${MAX_UPLOAD_SIZE / (1024 * 1024)}MB باشد`,
@@ -35,7 +37,8 @@ export async function validateImage(
     // Check if it's a valid image
     let metadata;
     try {
-      metadata = await sharp(buffer).metadata();
+      const sharp = await getSharp();
+      metadata = await sharp(normalized).metadata();
     } catch (error) {
       return {
         isValid: false,
@@ -85,7 +88,7 @@ export async function validateImage(
         width,
         height,
         format,
-        size: buffer.length,
+        size: normalized.length,
       },
     };
   } catch (error: any) {

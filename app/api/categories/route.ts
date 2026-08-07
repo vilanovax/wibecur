@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { tryApiDbFallback } from '@/lib/api-db';
@@ -31,7 +32,7 @@ export async function GET(_request: NextRequest) {
     }
     console.error('Error fetching categories:', error);
     return NextResponse.json(
-      { success: false, error: (error as Error)?.message || 'خطا در دریافت دسته‌بندی‌ها' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت دسته‌بندی‌ها') },
       { status: 500 }
     );
   }

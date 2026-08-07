@@ -3,6 +3,11 @@
 import Link from 'next/link';
 import { Bookmark } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import type { HomeListCreator } from '@/types/home-data';
+import { trackHomeSectionClick, type HomeSectionId } from '@/lib/analytics';
+
+/** نشانگر ذخیره — به‌جای متن «ذخیره‌شده» آیکون بوکمارک سبز */
+export const SAVED_LIST_BADGE = '__saved_list_bookmark__';
 
 export interface HomeGridListCardList {
   id: string;
@@ -10,14 +15,16 @@ export interface HomeGridListCardList {
   slug: string;
   coverImage: string;
   saveCount: number;
+  weeklySaves?: number;
   categories?: { slug?: string; icon?: string | null } | null;
+  creator?: HomeListCreator | null;
 }
 
 interface HomeGridListCardProps {
   list: HomeGridListCardList;
-  /** بدون badge پیش‌فرض — فقط وقتی معنای اضافه دارد */
   badge?: string | null;
   badgeClassName?: string;
+  homeSection?: HomeSectionId;
 }
 
 /** کارت گرید Home — موبایل اسکرول افقی، دسکتاپ landscape فشرده */
@@ -25,15 +32,32 @@ export default function HomeGridListCard({
   list,
   badge,
   badgeClassName = 'bg-primary/90 text-white',
+  homeSection,
 }: HomeGridListCardProps) {
   return (
     <Link
       href={`/lists/${list.slug}`}
+      onClick={() => {
+        if (homeSection) {
+          trackHomeSectionClick(homeSection, {
+            list_slug: list.slug,
+            category_slug: list.categories?.slug,
+            target: 'card',
+          });
+        }
+      }}
       className="group block w-[10rem] shrink-0 snap-start lg:w-full lg:shrink"
     >
-      <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card transition-all active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md">
+      <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card transition-[colors,transform] active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md">
         <div className="relative aspect-[5/4] w-full bg-gray-100 sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[11.5rem]">
-          {badge ? (
+          {badge === SAVED_LIST_BADGE ? (
+            <span
+              className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600/90 text-white shadow-sm"
+              aria-label="ذخیره‌شده"
+            >
+              <Bookmark className="h-3.5 w-3.5 fill-current" strokeWidth={1.75} aria-hidden />
+            </span>
+          ) : badge ? (
             <span
               className={`absolute right-2 top-2 z-10 rounded-pill px-2 py-0.5 wibe-caption font-semibold shadow-sm ${badgeClassName}`}
             >
@@ -49,6 +73,7 @@ export default function HomeGridListCard({
             categorySlug={list.categories?.slug}
             listSlug={list.slug}
             listTitle={list.title}
+            sizes="(min-width: 1024px) 240px, 160px"
           />
           <div
             className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/5 lg:via-black/25"
@@ -58,10 +83,6 @@ export default function HomeGridListCard({
             <h3 className="line-clamp-2 wibe-small font-semibold text-white drop-shadow-sm lg:text-[0.8125rem] lg:leading-snug">
               {list.title}
             </h3>
-            <p className="mt-1 flex items-center justify-end gap-1 wibe-caption text-white/90">
-              <Bookmark className="h-3 w-3 shrink-0" aria-hidden />
-              {list.saveCount.toLocaleString('fa-IR')} ذخیره
-            </p>
           </div>
         </div>
       </div>

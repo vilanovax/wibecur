@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -31,7 +32,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, coverImage, categoryId, isPublic, commentsEnabled } = body;
+    const { title, description, coverImage, categoryId, isPublic, commentsEnabled, collaborationEnabled } = body;
 
     // Check if list exists and belongs to user
     const existingList = await dbQuery(() =>
@@ -181,6 +182,9 @@ export async function PUT(
     }
     // Don't allow changing categoryId for personal lists (they should remain null)
     if (commentsEnabled !== undefined) updateData.commentsEnabled = commentsEnabled;
+    if (collaborationEnabled !== undefined && !newIsPublic) {
+      updateData.collaborationEnabled = Boolean(collaborationEnabled);
+    }
     updateData.isPublic = newIsPublic;
     updateData.slug = slug;
     // Personal lists remain active when private, only check when public
@@ -226,7 +230,7 @@ export async function PUT(
   } catch (error: any) {
     console.error('Error updating user list:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در به‌روزرسانی لیست' },
+      { error: getClientErrorMessage(error, 'خطا در به‌روزرسانی لیست') },
       { status: 500 }
     );
   }
@@ -291,7 +295,7 @@ export async function DELETE(
   } catch (error: any) {
     console.error('Error deleting user list:', error);
     return NextResponse.json(
-      { error: error.message || 'خطا در حذف لیست' },
+      { error: getClientErrorMessage(error, 'خطا در حذف لیست') },
       { status: 500 }
     );
   }

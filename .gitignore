@@ -11,6 +11,7 @@
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/.lighthouseci/
 
 # next.js
 /.next/
@@ -21,6 +22,7 @@
 
 # misc
 .DS_Store
+/exports/
 *.pem
 
 # debug
@@ -56,3 +58,13 @@ next-env.d.ts
 
 # YoYo AI version control directory
 .yoyo/
+
+# Capacitor / Android build artifacts
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/captures/
+android/.idea/
+*.apk
+*.aab

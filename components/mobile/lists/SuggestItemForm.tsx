@@ -429,7 +429,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
 
       <BottomSheet isOpen={isOpen} onClose={onClose} title="پیشنهاد آیتم">
         <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-4 min-h-0">
             {/* Error Message */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -452,7 +452,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   value={selectedCategoryId}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
                 >
                   <option value="">یک دسته انتخاب کنید</option>
                   {categories.map((category) => (
@@ -484,7 +484,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                     value={formData.listId}
                     onChange={handleListChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
                   >
                     <option value="">یک لیست انتخاب کنید</option>
                     {filteredLists.map((list) => (
@@ -508,7 +508,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                     type="button"
                     onClick={handleFetchFromImdb}
                     disabled={fetchingFromImdb || !formData.title.trim()}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="جستجو از TMDb/IMDb"
                   >
                     {fetchingFromImdb ? (
@@ -526,7 +526,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
                 placeholder="عنوان آیتم را وارد کنید"
               />
             </div>
@@ -542,7 +542,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                     type="button"
                     onClick={handleGenerateDescription}
                     disabled={generatingDesc || !formData.title.trim()}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {generatingDesc ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
@@ -558,7 +558,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none resize-none"
                 placeholder="توضیحات آیتم (اختیاری)"
               />
             </div>
@@ -586,7 +586,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   type="button"
                   onClick={() => setImageSearchModalOpen(true)}
                   disabled={!formData.title.trim()}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title={!formData.title.trim() ? 'ابتدا عنوان آیتم را وارد کنید' : 'جستجوی تصویر از Google'}
                 >
                   <Search className="w-3 h-3" />
@@ -673,7 +673,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 name="externalUrl"
                 value={formData.externalUrl}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
                 placeholder="https://example.com (اختیاری)"
               />
             </div>

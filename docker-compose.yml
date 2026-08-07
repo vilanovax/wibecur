@@ -1,10 +1,58 @@
-# PostgreSQL لوکال با داکر — اختیاری؛ اپ از این استفاده نمی‌کند.
-# همهٔ اتصال‌ها از .env به سرور pgsql.feedban.ir (دیتابیس wibe) هستند.
-# استفاده: فقط در صورت نیاز به پستگرس لوکال جداگانه → docker-compose up -d
+# وایب — Docker Compose
+#
+# ایمیج‌های Docker Hub از میرور لیارا کشیده می‌شوند:
+# https://liara.ir/mirrors/docker/
+#
+# فقط اپ (با دیتابیس خارجی از .env):
+#   docker compose up -d app
+#
+# اپ + PostgreSQL لوکال (برای توسعه):
+#   docker compose --profile local-db up -d
+#   DATABASE_URL=postgresql://wibecur:wibecur_local_secret@postgres:5432/wibecur
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_MIRROR: ${DOCKER_MIRROR:-docker-mirror.liara.ir}
+        NPM_LOGLEVEL: ${NPM_LOGLEVEL:-verbose}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-docker-build-placeholder}
+        ENCRYPTION_KEY: ${ENCRYPTION_KEY:-docker-build-placeholder}
+        DATABASE_URL: ${DATABASE_URL:-postgresql://build:build@localhost:5432/build}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_LIARA_IMAGE_MODE: ${NEXT_PUBLIC_LIARA_IMAGE_MODE:-same-origin}
+        NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${NEXT_PUBLIC_UMAMI_WEBSITE_ID:-}
+        NEXT_PUBLIC_UMAMI_SCRIPT_URL: ${NEXT_PUBLIC_UMAMI_SCRIPT_URL:-}
+        NEXT_PUBLIC_UMAMI_HOST_URL: ${NEXT_PUBLIC_UMAMI_HOST_URL:-}
+        NEXT_PUBLIC_UMAMI_DOMAINS: ${NEXT_PUBLIC_UMAMI_DOMAINS:-}
+        BUILD_ID: ${BUILD_ID:-build-docker}
+    image: wibecur:latest
+    container_name: wibecur-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      # در صورت استفاده از پروفایل local-db این‌ها override می‌شوند
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL:-${DATABASE_URL}}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+
   postgres:
-    image: postgres:16-alpine
+    profiles:
+      - local-db
+    image: ${DOCKER_MIRROR:-docker-mirror.liara.ir}/library/postgres:16-alpine
     container_name: wibecur-postgres
     restart: unless-stopped
     environment:
@@ -12,7 +60,7 @@ services:
       POSTGRES_PASSWORD: wibecur_local_secret
       POSTGRES_DB: wibecur
     ports:
-      - "5433:5432"   # پورت 5433 روی host تا با PostgreSQL محلی تداخل نداشته باشد
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

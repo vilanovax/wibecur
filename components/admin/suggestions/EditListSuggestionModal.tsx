@@ -163,41 +163,41 @@ export default function EditListSuggestionModal({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full my-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full my-8">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">ویرایش پیشنهاد لیست</h2>
-              <p className="text-sm text-gray-500 mt-1">{suggestion.title}</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">ویرایش پیشنهاد لیست</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{suggestion.title}</p>
             </div>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
           {/* Content */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 rounded-lg text-red-700 dark:text-red-300 text-sm">
                 {error}
               </div>
             )}
 
             {/* User Info */}
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-lg">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">کاربر:</span>
-                  <span className="font-medium text-gray-900 mr-2">
+                  <span className="text-gray-500 dark:text-gray-400">کاربر:</span>
+                  <span className="font-medium text-gray-900 dark:text-white mr-2">
                     {suggestion.users.name || suggestion.users.email}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">تاریخ:</span>
-                  <span className="font-medium text-gray-900 mr-2">
+                  <span className="text-gray-500 dark:text-gray-400">تاریخ:</span>
+                  <span className="font-medium text-gray-900 dark:text-white mr-2">
                     {formatDistanceToNow(new Date(suggestion.createdAt), {
                       addSuffix: true,
                       locale: faIR,
@@ -205,14 +205,14 @@ export default function EditListSuggestionModal({
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">وضعیت:</span>
+                  <span className="text-gray-500 dark:text-gray-400">وضعیت:</span>
                   <span
                     className={`font-medium mr-2 ${
                       suggestion.status === 'pending'
                         ? 'text-yellow-600'
                         : suggestion.status === 'approved'
-                        ? 'text-green-600'
-                        : 'text-red-600'
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
                     }`}
                   >
                     {suggestion.status === 'pending'
@@ -227,7 +227,7 @@ export default function EditListSuggestionModal({
 
             {/* Form Fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 عنوان <span className="text-red-500">*</span>
               </label>
               <input
@@ -235,35 +235,35 @@ export default function EditListSuggestionModal({
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 توضیحات
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 دسته‌بندی
               </label>
               {loadingCategories ? (
-                <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">
+                <div className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800/60">
                   در حال بارگذاری...
                 </div>
               ) : (
                 <select
                   value={formData.categoryId}
                   onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                 >
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -275,7 +275,7 @@ export default function EditListSuggestionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 تصویر کاور
               </label>
               <input
@@ -291,24 +291,24 @@ export default function EditListSuggestionModal({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingImage}
-                  className="w-full px-4 py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-12 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUploadingImage ? (
                     <>
-                      <Loader2 className="w-8 h-8 text-gray-600 animate-spin" />
-                      <span className="text-sm text-gray-700">در حال آپلود...</span>
+                      <Loader2 className="w-8 h-8 text-gray-600 dark:text-gray-300 animate-spin" />
+                      <span className="text-sm text-gray-700 dark:text-gray-200">در حال آپلود...</span>
                     </>
                   ) : (
                     <>
-                      <ImageIcon className="w-8 h-8 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">انتخاب تصویر از گالری</span>
-                      <span className="text-xs text-gray-500">فرمت‌های مجاز: JPG, PNG, GIF (حداکثر 5 مگابایت)</span>
+                      <ImageIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">انتخاب تصویر از گالری</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">فرمت‌های مجاز: JPG, PNG, GIF (حداکثر 5 مگابایت)</span>
                     </>
                   )}
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 group">
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group">
                     <img
                       src={formData.coverImage}
                       alt="Cover"
@@ -330,17 +330,17 @@ export default function EditListSuggestionModal({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingImage}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUploadingImage ? (
                       <>
-                        <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
-                        <span className="text-sm text-gray-700">در حال آپلود...</span>
+                        <Loader2 className="w-4 h-4 text-gray-600 dark:text-gray-300 animate-spin" />
+                        <span className="text-sm text-gray-700 dark:text-gray-200">در حال آپلود...</span>
                       </>
                     ) : (
                       <>
-                        <ImageIcon className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm text-gray-700">تغییر تصویر</span>
+                        <ImageIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                        <span className="text-sm text-gray-700 dark:text-gray-200">تغییر تصویر</span>
                       </>
                     )}
                   </button>
@@ -350,14 +350,14 @@ export default function EditListSuggestionModal({
 
             {/* Admin Notes */}
             {suggestion.adminNotes && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/60 rounded-lg">
                 <p className="text-sm font-medium text-blue-900 mb-1">یادداشت ادمین:</p>
-                <p className="text-sm text-blue-700">{suggestion.adminNotes}</p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">{suggestion.adminNotes}</p>
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex gap-2">
                 {suggestion.status === 'pending' && (
                   <>
@@ -367,7 +367,7 @@ export default function EditListSuggestionModal({
                         setModalAction('approve');
                         setIsApproveRejectModalOpen(true);
                       }}
-                      className="px-4 py-2 text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-2"
+                      className="px-4 py-2 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-2"
                     >
                       <CheckCircle className="w-4 h-4" />
                       تایید
@@ -378,7 +378,7 @@ export default function EditListSuggestionModal({
                         setModalAction('reject');
                         setIsApproveRejectModalOpen(true);
                       }}
-                      className="px-4 py-2 text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors flex items-center gap-2"
+                      className="px-4 py-2 text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 rounded-lg transition-colors flex items-center gap-2"
                     >
                       <XCircle className="w-4 h-4" />
                       رد
@@ -386,7 +386,7 @@ export default function EditListSuggestionModal({
                     <button
                       type="button"
                       onClick={() => setIsDeleteModalOpen(true)}
-                      className="px-4 py-2 text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-2"
+                      className="px-4 py-2 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-2"
                     >
                       <Trash2 className="w-4 h-4" />
                       حذف
@@ -399,7 +399,7 @@ export default function EditListSuggestionModal({
                   type="button"
                   onClick={onClose}
                   disabled={loading}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
                 >
                   انصراف
                 </button>

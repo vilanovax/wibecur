@@ -1,10 +1,12 @@
 /** نرمال‌سازی و اعتبارسنجی شماره موبایل ایران برای احراز هویت */
 
+import { persianToEnglish } from '@/lib/utils/number-converter';
+
 const PHONE_EMAIL_DOMAIN = 'phone.wibe';
 
 /** 989XXXXXXXXX */
 export function normalizeIranPhone(input: string): string | null {
-  const digits = input.replace(/\D/g, '');
+  const digits = persianToEnglish(input).replace(/\D/g, '');
 
   if (digits.length === 11 && digits.startsWith('09')) {
     return `98${digits.slice(1)}`;
@@ -39,6 +41,10 @@ export function isPhoneAuthEmail(email: string): boolean {
 export function validateAuthPassword(password: string): string | null {
   if (!password || password.length < 6) {
     return 'رمز عبور باید حداقل ۶ کاراکتر باشد';
+  }
+  // bcrypt ورودی بیش از ۷۲ بایت را بی‌صدا کوتاه می‌کند؛ صریحاً محدود می‌کنیم.
+  if (password.length > 64) {
+    return 'رمز عبور نباید بیش از ۶۴ کاراکتر باشد';
   }
   return null;
 }

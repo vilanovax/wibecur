@@ -1,9 +1,19 @@
+export interface HomeListCreator {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image?: string | null;
+  curatorLevel?: string | null;
+}
+
 export interface HomeListData {
   id: string;
   title: string;
   slug: string;
   description: string;
   coverImage: string;
+  /** کاور افقی خام از DB */
+  horizontalImage?: string | null;
   /** URL نهایی برای بنر/هیرو افقی */
   bannerImage?: string;
   saveCount: number;
@@ -11,11 +21,13 @@ export interface HomeListData {
   likes: number;
   badge?: 'trending' | 'new' | 'featured';
   categories?: { id: string; name: string; slug: string; icon: string } | null;
+  creator?: HomeListCreator | null;
+  /** ذخیره در ۷ روز اخیر — برای social proof */
+  weeklySaves?: number;
 }
 
 export interface FeaturedListData extends HomeListData {
   badge?: 'trending' | 'new' | 'featured';
-  creator?: { name: string | null; username: string | null } | null;
 }
 
 export interface RisingListData extends HomeListData {

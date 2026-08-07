@@ -2,6 +2,7 @@
 /**
  * دانلود بنرهای دسته از Wikimedia Commons به public/images/banners/
  * اجرا: node scripts/download-category-banners.mjs
+ * سپس: node scripts/optimize-banner-images.mjs
  */
 import fs from 'fs';
 import path from 'path';

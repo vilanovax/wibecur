@@ -4,7 +4,7 @@ import ResponsiveOverlay from './ResponsiveOverlay';
 import type { MobileBottomSheetProps } from './MobileBottomSheet';
 
 export type BottomSheetProps = MobileBottomSheetProps & {
-  desktopMaxWidth?: 'sm' | 'md' | 'lg';
+  desktopMaxWidth?: 'sm' | 'md' | 'lg' | 'xl';
 };
 
 /**

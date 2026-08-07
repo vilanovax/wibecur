@@ -19,13 +19,13 @@ export default function BadWordsStatsBar({
       label: 'کلمهٔ فعال (با فیلتر)',
       value: activeWords,
       icon: Zap,
-      accent: 'text-amber-600',
+      accent: 'text-amber-600 dark:text-amber-400',
     },
     {
       label: 'کامنت فیلترشده',
       value: totalFiltered,
       icon: Filter,
-      accent: 'text-rose-600',
+      accent: 'text-rose-600 dark:text-rose-400',
     },
   ];
 

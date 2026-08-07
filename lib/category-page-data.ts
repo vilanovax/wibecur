@@ -11,11 +11,13 @@ import type {
   CategoryItemCard,
   CityBreakdown,
 } from '@/types/category-page';
-import { getTrendingByCategory, getListMetrics7d } from '@/lib/trending/service';
+import { getTrendingByCategory } from '@/lib/trending/service';
+import { isFilmCategorySlug, isLocationCategorySlug } from '@/lib/category-layout';
 import { resolveListCover } from '@/lib/resolve-list-cover';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
 import { buildFilmGenreChips } from '@/lib/film-genres';
+import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
 function mapListCover(
   item: { coverImage?: string | null; slug: string; title: string },
@@ -75,6 +77,33 @@ const TOP_SAVED_LIMIT = 6;
 const TRENDING_24H_LIMIT = 10;
 const MOST_DEBATED_LIMIT = 6;
 const MOST_SAVED_ITEMS_LIMIT = 5;
+const LATEST_ITEMS_LIMIT = 5;
+
+type CategoryItemRow = {
+  id: string;
+  title: string;
+  imageUrl?: string | null;
+  metadata?: Record<string, unknown> | null;
+  listSlug: string;
+  listTitle: string;
+};
+
+function mapCategoryItemCards(items: CategoryItemRow[], categorySlug: string): CategoryItemCard[] {
+  return items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    imageUrl: item.imageUrl,
+    displayImageUrl: resolveItemDisplayImage({
+      id: item.id,
+      imageUrl: item.imageUrl,
+      title: item.title,
+      metadata: item.metadata ?? null,
+      categorySlug,
+    }),
+    listSlug: item.listSlug,
+    listTitle: item.listTitle,
+  }));
+}
 
 /** استخراج شهر از عنوان یا تگ‌ها */
 function extractCity(title: string, tags: string[] = []): string | null {
@@ -119,7 +148,7 @@ async function getCategoryAndMetrics(
     lists: { categoryId, isActive: true, isPublic: true },
   };
 
-  const [category, listCount, itemCount, weeklySaves, viralCount, curatorCount, lastWeekSaves, uniqueTags] =
+  const [category, listCount, itemCount, weeklySaves, viralCount, curatorCount, lastWeekSaves] =
     await Promise.all([
     prisma.categories.findUniqueOrThrow({
       where: { id: categoryId, isActive: true },
@@ -166,18 +195,6 @@ async function getCategoryAndMetrics(
         createdAt: { gte: lastWeekStart, lt: cutoff },
       },
     }),
-    prisma.lists.findMany({
-      where: { categoryId, isActive: true, isPublic: true },
-      select: { tags: true },
-    }).then((lists) => {
-      const allTags = new Set<string>();
-      for (const l of lists) {
-        for (const t of l.tags ?? []) {
-          if (t && typeof t === 'string') allTags.add(t.trim());
-        }
-      }
-      return allTags.size;
-    }),
   ]);
 
   const weeklyGrowthPercent =
@@ -196,7 +213,7 @@ async function getCategoryAndMetrics(
       viralCount,
       totalCuratorsCount: curatorCount,
       weeklyGrowthPercent,
-      genreCount: uniqueTags > 0 ? uniqueTags : 14,
+      genreCount: 14,
     },
   };
 }
@@ -207,7 +224,9 @@ async function getTrendingAndViralLists(
 ): Promise<{ trending: CategoryListCard[]; viral: CategoryListCard | null }> {
   const results = await getTrendingByCategory(prisma, categoryId, TRENDING_LIMIT + 5);
   const listIds = results.map((r) => r.listId);
-  const [listsWithTags, commentCounts, metricsMap] = listIds.length > 0
+  // متریک‌های ۷روزه قبلاً داخل getTrendingByCategory محاسبه شده و در r.weeklySaves هست؛
+  // این‌جا دوباره getListMetrics7d صدا زده نمی‌شود.
+  const [listsWithTags, commentCounts] = listIds.length > 0
     ? await Promise.all([
         prisma.lists.findMany({
           where: { id: { in: listIds } },
@@ -218,14 +237,12 @@ async function getTrendingAndViralLists(
           where: { listId: { in: listIds } },
           _count: { listId: true },
         }),
-        getListMetrics7d(prisma, listIds),
       ])
-    : [[], [], new Map()];
+    : [[], []];
   const tagsMap = Object.fromEntries(listsWithTags.map((l) => [l.id, l.tags ?? []]));
   const commentMap = Object.fromEntries(commentCounts.map((c) => [c.listId, c._count.listId]));
   const toCard = (r: (typeof results)[0]): CategoryListCard => {
     const tags = tagsMap[r.listId] ?? [];
-    const metrics = metricsMap.get(r.listId);
     return {
       id: r.listId,
       title: r.title,
@@ -251,7 +268,7 @@ async function getTrendingAndViralLists(
       tags: tags.length > 0 ? tags : undefined,
       cityTag: extractCity(r.title, tags),
       commentCount: commentMap[r.listId],
-      saves7d: metrics?.S7 ?? 0,
+      saves7d: r.weeklySaves ?? 0,
     };
   };
   const trending = results.slice(0, TRENDING_LIMIT).map(toCard);
@@ -626,43 +643,74 @@ async function getMostDebatedLists(
     }));
 }
 
+async function getLatestItems(
+  prisma: PrismaClient,
+  categoryId: string
+): Promise<CategoryItemRow[]> {
+  const rows = await prisma.items.findMany({
+    where: {
+      deletedAt: null,
+      lists: {
+        categoryId,
+        isActive: true,
+        isPublic: true,
+        users: { role: { not: 'USER' } },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: LATEST_ITEMS_LIMIT,
+    select: {
+      id: true,
+      title: true,
+      imageUrl: true,
+      metadata: true,
+      lists: { select: { slug: true, title: true } },
+    },
+  });
+
+  return rows.map((item) => ({
+    id: item.id,
+    title: item.title,
+    imageUrl: item.imageUrl,
+    metadata: item.metadata as Record<string, unknown> | null,
+    listSlug: item.lists.slug,
+    listTitle: item.lists.title,
+  }));
+}
+
 async function getMostSavedItems(
   prisma: PrismaClient,
   categoryId: string
-): Promise<CategoryItemCard[]> {
-  const topLists = await prisma.lists.findMany({
+): Promise<CategoryItemRow[]> {
+  const rows = await prisma.items.findMany({
     where: {
-      categoryId,
-      isActive: true,
-      isPublic: true,
-      items: { some: {} },
-    },
-    orderBy: { saveCount: 'desc' },
-    take: 6,
-    select: {
-      slug: true,
-      title: true,
-      items: {
-        orderBy: { order: 'asc' },
-        take: 1,
-        select: { id: true, title: true, imageUrl: true },
+      deletedAt: null,
+      lists: {
+        categoryId,
+        isActive: true,
+        isPublic: true,
+        users: { role: { not: 'USER' } },
       },
     },
+    orderBy: [{ voteCount: 'desc' }, { rating: 'desc' }, { createdAt: 'desc' }],
+    take: MOST_SAVED_ITEMS_LIMIT,
+    select: {
+      id: true,
+      title: true,
+      imageUrl: true,
+      metadata: true,
+      lists: { select: { slug: true, title: true } },
+    },
   });
-  const result: CategoryItemCard[] = [];
-  for (const list of topLists) {
-    const item = list.items[0];
-    if (item && result.length < MOST_SAVED_ITEMS_LIMIT) {
-      result.push({
-        id: item.id,
-        title: item.title,
-        imageUrl: item.imageUrl,
-        listSlug: list.slug,
-        listTitle: list.title,
-      });
-    }
-  }
-  return result;
+
+  return rows.map((item) => ({
+    id: item.id,
+    title: item.title,
+    imageUrl: item.imageUrl,
+    metadata: item.metadata as Record<string, unknown> | null,
+    listSlug: item.lists.slug,
+    listTitle: item.lists.title,
+  }));
 }
 
 async function getFilmGenres(
@@ -755,55 +803,54 @@ async function getNewLists(
 
 export async function getCategoryPageData(
   prisma: PrismaClient,
-  categoryId: string
+  categoryId: string,
+  categorySlug?: string | null
 ): Promise<CategoryPageData> {
+  const slug = categorySlug ?? '';
+  const isFilm = isFilmCategorySlug(slug);
+  const isLocation = isLocationCategorySlug(slug);
+
+  // getCityBreakdown و getFilmGenres هرکدام همهٔ لیست‌های دسته را اسکن می‌کنند.
+  // - City breakdown برای فیلم بی‌ربط است و برای دسته‌های location هم نمایش داده نمی‌شود.
+  // - Film genres فقط برای دستهٔ فیلم لازم است.
+  const shouldScanCities = slug ? !isFilm && !isLocation : true;
+  const shouldScanGenres = slug ? isFilm : true;
+
   const [
     { category, metrics },
     { trending, viral },
-    topCurators,
     newLists,
-    trending24h,
-    topCuratorSpotlight,
-    popularAllTime,
-    topSavedThisWeek,
     cityBreakdown,
-    mostDebatedLists,
-    mostSavedItems,
+    mostSavedItemsRaw,
+    latestItemsRaw,
     filmGenres,
   ] = await Promise.all([
     getCategoryAndMetrics(prisma, categoryId),
     getTrendingAndViralLists(prisma, categoryId),
-    getTopCurators(prisma, categoryId),
     getNewLists(prisma, categoryId),
-    getTrending24h(prisma, categoryId),
-    getTopCuratorWithLists(prisma, categoryId),
-    getPopularAllTime(prisma, categoryId, 6),
-    getTopSavedThisWeek(prisma, categoryId, TOP_SAVED_LIMIT),
-    getCityBreakdown(prisma, categoryId),
-    getMostDebatedLists(prisma, categoryId),
+    shouldScanCities
+      ? getCityBreakdown(prisma, categoryId)
+      : Promise.resolve([] as CityBreakdown[]),
     getMostSavedItems(prisma, categoryId),
-    getFilmGenres(prisma, categoryId),
+    getLatestItems(prisma, categoryId),
+    shouldScanGenres
+      ? getFilmGenres(prisma, categoryId)
+      : Promise.resolve([] as Awaited<ReturnType<typeof getFilmGenres>>),
   ]);
+
+  const resolvedGenreCount =
+    filmGenres.length > 0 ? filmGenres.length : metrics.genreCount;
 
   return {
     category,
-    metrics,
+    metrics: { ...metrics, genreCount: resolvedGenreCount },
     trendingLists: applyListCovers(trending, category.slug),
-    trendingNow24h: applyListCovers(trending24h, category.slug),
-    topSavedThisWeek: applyListCovers(topSavedThisWeek, category.slug),
     viralSpotlight: applyListCover(viral, category.slug),
-    topCurators,
-    topCuratorSpotlight: topCuratorSpotlight
-      ? {
-          ...topCuratorSpotlight,
-          topLists: applyListCovers(topCuratorSpotlight.topLists ?? [], category.slug),
-        }
-      : null,
+    topCurators: [],
     newLists: applyListCovers(newLists, category.slug),
-    popularAllTime: applyListCovers(popularAllTime, category.slug),
     cityBreakdown,
-    mostDebatedLists: applyListCovers(mostDebatedLists, category.slug),
-    mostSavedItems,
+    mostSavedItems: mapCategoryItemCards(mostSavedItemsRaw, category.slug),
+    latestItems: mapCategoryItemCards(latestItemsRaw, category.slug),
     filmGenres,
   };
 }

@@ -12,6 +12,11 @@ import {
   normalizeOptionalUrl,
 } from '@/lib/admin/category-form-constants';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
+import { revalidateCategoryCache } from '@/lib/public-cache';
+import {
+  formatCategoryTrashMessage,
+  trashCategoryWithContents,
+} from '@/lib/admin/category-trash';
 import { finalizeCategoryHeroImage } from '@/lib/admin/finalize-category-hero-image';
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
@@ -69,7 +74,7 @@ export async function PUT(
 
     const existingWeight = existingCategory.trendingWeight ?? 1;
     const wantsWeight = trendingWeight !== undefined ? normalizeTrendingWeight(trendingWeight) : existingWeight;
-    if (trendingWeight !== undefined && wantsWeight !== existingWeight && !hasPermission(userOrRes.role, 'set_category_weight')) {
+    if (trendingWeight !== undefined && wantsWeight !== existingWeight && !hasPermission(userOrRes.role, 'set_category_weight', userOrRes.adminPermissions)) {
       return NextResponse.json(
         { error: 'فقط نقش مدیر با دسترسی «تنظیم وزن دسته» می‌تواند وزن الگوریتم را تغییر دهد.' },
         { status: 403 }
@@ -131,6 +136,7 @@ export async function PUT(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateCategoryCache(id);
     return NextResponse.json(category);
   } catch (error: any) {
     console.error('Error updating category:', error);
@@ -184,7 +190,7 @@ export async function PATCH(
       const existingWeight = existingCategory.trendingWeight ?? 1;
       if (
         wantsWeight !== existingWeight &&
-        !hasPermission(userOrRes.role, 'set_category_weight')
+        !hasPermission(userOrRes.role, 'set_category_weight', userOrRes.adminPermissions)
       ) {
         return NextResponse.json(
           { error: 'فقط نقش مدیر با دسترسی «تنظیم وزن دسته» می‌تواند وزن الگوریتم را تغییر دهد.' },
@@ -217,6 +223,7 @@ export async function PATCH(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateCategoryCache(id);
     return NextResponse.json(category);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'خطا در به‌روزرسانی';
@@ -237,7 +244,13 @@ export async function DELETE(
 
     const existingCategory = await prisma.categories.findUnique({
       where: { id },
-      include: { _count: { select: { lists: true } } },
+      include: {
+        _count: {
+          select: {
+            lists: { where: { deletedAt: null } },
+          },
+        },
+      },
     });
     if (!existingCategory) {
       return NextResponse.json({ error: 'دسته‌بندی یافت نشد' }, { status: 404 });
@@ -246,15 +259,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'این دسته قبلاً به زباله‌دان منتقل شده' }, { status: 400 });
     }
 
-    const now = new Date();
-    const updated = await prisma.categories.update({
-      where: { id },
-      data: {
-        deletedAt: now,
-        deletedById: userOrRes.id,
-        deleteReason: null,
-      },
-    });
+    const cascade = await trashCategoryWithContents(prisma, id, userOrRes.id);
+
+    const updated = await prisma.categories.findUnique({ where: { id } });
+    if (!updated) {
+      return NextResponse.json({ error: 'دسته‌بندی یافت نشد' }, { status: 404 });
+    }
 
     const meta = getRequestMeta(request);
     await logAudit({
@@ -264,13 +274,23 @@ export async function DELETE(
       entityType: 'CATEGORY',
       entityId: id,
       before: minimalCategory(existingCategory),
-      after: minimalCategory(updated),
+      after: {
+        ...minimalCategory(updated),
+        listsTrashed: cascade.listsTrashed,
+        itemsTrashed: cascade.itemsTrashed,
+      },
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
     });
 
     revalidateAdminListsAndCategoriesCache();
-    return NextResponse.json({ success: true, message: 'به زباله‌دان منتقل شد' });
+    revalidateCategoryCache(id);
+    return NextResponse.json({
+      success: true,
+      message: formatCategoryTrashMessage(cascade),
+      listsTrashed: cascade.listsTrashed,
+      itemsTrashed: cascade.itemsTrashed,
+    });
   } catch (error: any) {
     console.error('Error soft-deleting category:', error);
     return NextResponse.json(

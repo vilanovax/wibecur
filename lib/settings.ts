@@ -1,24 +1,97 @@
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
+import type { settings as SettingsRow } from '@prisma/client';
 import { prisma } from './prisma';
 import { encrypt, decrypt } from './encryption';
+import { isDatabaseConnectionError } from './admin/is-database-error';
+
+export const SETTINGS_CACHE_TAG = 'settings';
+
+/** Defaults when DB is unreachable (CI build / offline prerender). */
+function defaultSettingsFallback(): SettingsRow {
+  const now = new Date();
+  return {
+    id: 'settings',
+    openaiApiKey: null,
+    openaiModel: 'gpt-4o-mini',
+    deepseekApiKey: null,
+    deepseekModel: 'deepseek-chat',
+    tmdbApiKey: null,
+    liaraBucketName: null,
+    liaraEndpoint: null,
+    liaraAccessKey: null,
+    liaraSecretKey: null,
+    updatedAt: now,
+    createdAt: now,
+    omdbApiKey: null,
+    googleApiKey: null,
+    googleSearchEngineId: null,
+    minItemsForPublicList: 5,
+    maxPersonalLists: 3,
+    personalListPublicInstructions: null,
+    siteLogoUrl: null,
+    maintenanceModeEnabled: false,
+    maintenanceTitle: 'در حال به‌روزرسانی',
+    maintenanceSubtitle: null,
+    maintenanceMessage: null,
+    maintenanceShowLogo: true,
+    maintenanceAccentColor: '#6366F1',
+    maintenanceAllowAdminBrowse: true,
+  };
+}
 
 /**
- * Get or create settings (singleton)
+ * Get or create settings (singleton) — بدون کش
  */
-export async function getSettings() {
-  let settings = await prisma.settings.findUnique({
-    where: { id: 'settings' },
-  });
-
-  if (!settings) {
-    settings = await prisma.settings.create({
-      data: { 
-        id: 'settings',
-        updatedAt: new Date(),
-      },
+async function loadSettings() {
+  try {
+    let settings = await prisma.settings.findUnique({
+      where: { id: 'settings' },
     });
-  }
 
-  return settings;
+    if (!settings) {
+      settings = await prisma.settings.create({
+        data: {
+          id: 'settings',
+          updatedAt: new Date(),
+        },
+      });
+    }
+
+    return settings;
+  } catch (error) {
+    if (isDatabaseConnectionError(error)) {
+      return defaultSettingsFallback();
+    }
+    throw error;
+  }
+}
+
+/**
+ * کش بین‌درخواستی (Data Cache) — تنظیمات سایت تقریباً ثابت‌اند.
+ * با revalidateTag('settings') هنگام هر تغییر تازه می‌شود.
+ */
+const getCachedSettings = unstable_cache(loadSettings, ['site-settings'], {
+  revalidate: 300,
+  tags: [SETTINGS_CACHE_TAG],
+});
+
+/**
+ * Get or create settings (singleton).
+ * - `cache()` React: dedupe داخل یک request (مثلاً چند صدا در layout).
+ * - `unstable_cache`: dedupe بین request‌ها تا کوئری DB از مسیر بحرانی حذف شود.
+ */
+export const getSettings = cache(() => getCachedSettings());
+
+/** باطل‌کردن کش تنظیمات — بعد از هر تغییر صدا زده می‌شود. */
+export function invalidateSettingsCache(): void {
+  try {
+    // lazy require تا import سطح‌ماژول revalidateTag وارد client bundle نشود
+    const { revalidateTag } = require('next/cache') as typeof import('next/cache');
+    revalidateTag(SETTINGS_CACHE_TAG, 'max');
+  } catch {
+    // خارج از request scope (مثلاً اسکریپت‌ها) — نادیده بگیر
+  }
 }
 
 /**
@@ -32,6 +105,10 @@ export async function getDecryptedSettings() {
       ? decrypt(settings.openaiApiKey) || null
       : null,
     openaiModel: settings.openaiModel ?? null,
+    deepseekApiKey: settings.deepseekApiKey
+      ? decrypt(settings.deepseekApiKey) || null
+      : null,
+    deepseekModel: settings.deepseekModel ?? null,
     tmdbApiKey: settings.tmdbApiKey ? decrypt(settings.tmdbApiKey) || null : null,
     omdbApiKey: settings.omdbApiKey ? decrypt(settings.omdbApiKey) || null : null,
     googleApiKey: settings.googleApiKey ? decrypt(settings.googleApiKey) || null : null,
@@ -54,6 +131,8 @@ export async function getDecryptedSettings() {
 export async function updateSettings(data: {
   openaiApiKey?: string;
   openaiModel?: string | null;
+  deepseekApiKey?: string;
+  deepseekModel?: string | null;
   tmdbApiKey?: string;
   omdbApiKey?: string;
   googleApiKey?: string;
@@ -65,6 +144,7 @@ export async function updateSettings(data: {
   minItemsForPublicList?: number;
   maxPersonalLists?: number;
   personalListPublicInstructions?: string | null;
+  siteLogoUrl?: string | null;
 }) {
   const updateData: any = {};
 
@@ -76,6 +156,16 @@ export async function updateSettings(data: {
 
   if (data.openaiModel !== undefined) {
     updateData.openaiModel = data.openaiModel?.trim() || null;
+  }
+
+  if (data.deepseekApiKey !== undefined) {
+    updateData.deepseekApiKey = data.deepseekApiKey
+      ? encrypt(data.deepseekApiKey)
+      : null;
+  }
+
+  if (data.deepseekModel !== undefined) {
+    updateData.deepseekModel = data.deepseekModel?.trim() || null;
   }
 
   if (data.tmdbApiKey !== undefined) {
@@ -126,10 +216,18 @@ export async function updateSettings(data: {
     updateData.personalListPublicInstructions = data.personalListPublicInstructions || null;
   }
 
-  return await prisma.settings.update({
+  if (data.siteLogoUrl !== undefined) {
+    updateData.siteLogoUrl = data.siteLogoUrl?.trim() || null;
+  }
+
+  const updated = await prisma.settings.update({
     where: { id: 'settings' },
     data: updateData,
   });
+
+  invalidateSettingsCache();
+
+  return updated;
 }
 
 /**

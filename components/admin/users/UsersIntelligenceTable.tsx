@@ -1,10 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import {
-  MoreVertical,
-  BarChart3,
-  Power,
   ArrowUp,
   ArrowDown,
   Minus,
@@ -18,23 +14,37 @@ import {
   USER_GROWTH_7D_LABEL,
 } from '@/lib/admin/users-types';
 import UserAvatar from '@/components/shared/UserAvatar';
+import UserRowActionMenu from '@/components/admin/users/UserRowActionMenu';
 
 const qualityClass: Record<Row['quality'], string> = {
-  high_impact: 'bg-emerald-100 text-emerald-700',
-  stable: 'bg-amber-100 text-amber-700',
-  low_engagement: 'bg-gray-100 text-gray-600',
+  high_impact: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  stable: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  low_engagement: 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300',
 };
 
 const roleColors: Record<string, string> = {
-  USER: 'bg-gray-100 text-gray-800',
-  EDITOR: 'bg-blue-100 text-blue-800',
-  ADMIN: 'bg-red-100 text-red-800',
+  USER: 'bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-200',
+  EDITOR: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };
+
+/** ماسک ایمیل برای نمای فهرست — جلوگیری از نمایش انبوه PII (ایمیل کامل در مدال جزئیات) */
+function maskEmail(email: string): string {
+  const at = email.indexOf('@');
+  if (at <= 0) return email;
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const shown = local.slice(0, 2);
+  const dots = '•'.repeat(Math.max(1, Math.min(local.length - shown.length, 4)));
+  return `${shown}${dots}@${domain}`;
+}
 
 interface UsersIntelligenceTableProps {
   users: Row[];
   onToggleActiveRequest: (user: Row) => void;
+  onUnrestrictCommentRequest?: (user: Row) => void;
   togglingId: string | null;
+  liftingCommentId?: string | null;
   onUserClick: (user: Row) => void;
   emptyBecauseFilter?: boolean;
   filterLabel?: string;
@@ -44,16 +54,16 @@ interface UsersIntelligenceTableProps {
 export default function UsersIntelligenceTable({
   users,
   onToggleActiveRequest,
+  onUnrestrictCommentRequest,
   togglingId,
+  liftingCommentId = null,
   onUserClick,
   emptyBecauseFilter = false,
   filterLabel,
   hasSearch = false,
 }: UsersIntelligenceTableProps) {
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[960px]">
           <thead className="bg-[var(--color-bg)] sticky top-0 z-10">
@@ -121,7 +131,7 @@ export default function UsersIntelligenceTable({
                           {user.name || 'بدون نام'}
                         </p>
                         {user.isBot && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-medium">
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 text-[10px] font-medium">
                             <Bot className="w-3 h-3" />
                             بات
                           </span>
@@ -130,9 +140,9 @@ export default function UsersIntelligenceTable({
                       <p className="text-xs text-[var(--color-text-muted)] truncate">
                         {user.username ? `@${user.username}` : user.email}
                       </p>
-                      {user.username && (
-                        <p className="text-[11px] text-[var(--color-text-subtle)] truncate">
-                          {user.email}
+                      {user.username && user.email && (
+                        <p className="text-[11px] text-[var(--color-text-subtle)] truncate" title="ایمیل کامل در جزئیات کاربر">
+                          {maskEmail(user.email)}
                         </p>
                       )}
                     </div>
@@ -142,8 +152,8 @@ export default function UsersIntelligenceTable({
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${
                       user.isActive
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-gray-100 text-gray-600'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300'
                     }`}
                   >
                     {user.isActive ? 'فعال' : 'غیرفعال'}
@@ -211,52 +221,23 @@ export default function UsersIntelligenceTable({
                       {USER_RISK_LABELS.clean}
                     </span>
                   ) : (
-                    <span className="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium bg-red-100 text-red-700">
+                    <span className="inline-flex px-2 py-0.5 rounded-lg text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
                       {user.riskLabel ?? USER_RISK_LABELS[user.risk]}
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
-                      className="p-2 rounded-lg hover:bg-[var(--color-bg)] transition-colors"
-                      aria-label="منوی عملیات"
-                    >
-                      <MoreVertical className="w-4 h-4 text-[var(--color-text-muted)]" />
-                    </button>
-                    {openMenuId === user.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-10"
-                          onClick={() => setOpenMenuId(null)}
-                        />
-                        <div className="absolute right-0 top-full mt-1 z-20 min-w-[200px] rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-lg py-1">
-                          <Link
-                            href={`/admin/analytics?user=${user.id}`}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
-                            onClick={() => setOpenMenuId(null)}
-                          >
-                            <BarChart3 className="w-4 h-4" />
-                            آنالیتیکس
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onToggleActiveRequest(user);
-                              setOpenMenuId(null);
-                            }}
-                            disabled={togglingId === user.id}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 disabled:opacity-50"
-                          >
-                            <Power className="w-4 h-4" />
-                            {user.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                <td
+                  className="px-4 py-3"
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <UserRowActionMenu
+                    user={user}
+                    onToggleActiveRequest={onToggleActiveRequest}
+                    onUnrestrictCommentRequest={onUnrestrictCommentRequest}
+                    togglingId={togglingId}
+                    liftingCommentId={liftingCommentId}
+                  />
                 </td>
               </tr>
             ))}

@@ -22,12 +22,12 @@ function SuggestionSkeleton() {
   return (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse rounded-xl border border-gray-100 p-4">
+        <div key={i} className="animate-pulse rounded-xl border border-gray-100 dark:border-gray-700 p-4">
           <div className="flex gap-3">
-            <div className="h-14 w-11 rounded-lg bg-gray-200" />
+            <div className="h-14 w-11 rounded-lg bg-gray-200 dark:bg-gray-700" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-2/3 rounded bg-gray-200" />
-              <div className="h-3 w-1/2 rounded bg-gray-100" />
+              <div className="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-3 w-1/2 rounded bg-gray-100 dark:bg-gray-700/50" />
             </div>
           </div>
         </div>
@@ -55,10 +55,13 @@ export default function ListSuggestionsTable({
   const [processing, setProcessing] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSuggestions();
+    const ctrl = new AbortController();
+    void fetchSuggestions(ctrl.signal);
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, currentPage]);
 
-  const fetchSuggestions = async () => {
+  const fetchSuggestions = async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -67,7 +70,7 @@ export default function ListSuggestionsTable({
       });
       if (status) params.set('status', status);
 
-      const res = await fetch(`/api/admin/suggestions/lists?${params.toString()}`);
+      const res = await fetch(`/api/admin/suggestions/lists?${params.toString()}`, { signal });
       const data = await res.json();
 
       if (data.success) {
@@ -76,9 +79,10 @@ export default function ListSuggestionsTable({
         setTotal(data.data.pagination.total || 0);
       }
     } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return; // پاسخ قدیمی لغو شد
       console.error('Error fetching suggestions:', error);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
@@ -98,17 +102,17 @@ export default function ListSuggestionsTable({
 
     return (
       <div className="py-12 text-center">
-        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
-          <ListIcon className="h-7 w-7 text-gray-400" />
+        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700/50">
+          <ListIcon className="h-7 w-7 text-gray-400 dark:text-gray-500" />
         </div>
-        <h3 className="font-semibold text-gray-900">
+        <h3 className="font-semibold text-gray-900 dark:text-white">
           {isPendingFilter
             ? 'پیشنهاد لیستی در انتظار نیست'
             : isAllFilter
               ? 'هنوز پیشنهاد لیستی ثبت نشده'
               : 'پیشنهادی یافت نشد'}
         </h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {itemPendingCount > 0
             ? `${itemPendingCount.toLocaleString('fa-IR')} پیشنهاد آیتم (فرم و منو) در انتظار بررسی است`
             : 'فیلتر دیگری امتحان کنید یا تب آیتم را ببینید'}
@@ -128,8 +132,8 @@ export default function ListSuggestionsTable({
 
   return (
     <>
-      <p className="mb-3 text-sm text-gray-500">
-        <span className="font-semibold text-gray-800">{total.toLocaleString('fa-IR')}</span> پیشنهاد
+      <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+        <span className="font-semibold text-gray-800 dark:text-gray-100">{total.toLocaleString('fa-IR')}</span> پیشنهاد
         لیست
       </p>
 

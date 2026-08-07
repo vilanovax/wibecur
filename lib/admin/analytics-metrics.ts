@@ -183,18 +183,24 @@ export async function getTrendingHealth(
 ): Promise<TrendingHealth> {
   const { cutoff7, cutoff14 } = getCutoffs();
 
-  const listIdsWithSavesThisWeek = await prisma.bookmarks.groupBy({
-    by: ['listId'],
-    where: { createdAt: { gte: cutoff7 } },
-  }).then((r) => r.map((x) => x.listId));
+  // سه کوئریِ مستقل را موازی اجرا کن (قبلاً سریال بودند) و کوئریِ «listIds این هفته»
+  // را در همان savesPerList7d ادغام کن (همان where؛ یکی زیرمجموعهٔ دیگری بود).
+  const [savesPerList7d, listIdsWithSavesLastWeekOnly, totalSaves7d] = await Promise.all([
+    prisma.bookmarks.groupBy({
+      by: ['listId'],
+      where: { createdAt: { gte: cutoff7 } },
+      _count: { listId: true },
+    }),
+    prisma.bookmarks
+      .groupBy({
+        by: ['listId'],
+        where: { createdAt: { gte: cutoff14, lt: cutoff7 } },
+      })
+      .then((r) => r.map((x) => x.listId)),
+    prisma.bookmarks.count({ where: { createdAt: { gte: cutoff7 } } }),
+  ]);
 
-  const listIdsWithSavesLastWeekOnly = await prisma.bookmarks.groupBy({
-    by: ['listId'],
-    where: {
-      createdAt: { gte: cutoff14, lt: cutoff7 },
-    },
-  }).then((r) => r.map((x) => x.listId));
-
+  const listIdsWithSavesThisWeek = savesPerList7d.map((x) => x.listId);
   const listIdsThis = new Set(listIdsWithSavesThisWeek);
   const decliningListIds = new Set(
     listIdsWithSavesLastWeekOnly.filter((id) => !listIdsThis.has(id))
@@ -202,15 +208,7 @@ export async function getTrendingHealth(
 
   const listIds = listIdsWithSavesThisWeek.slice(0, 500);
 
-  const totalSaves7d = await prisma.bookmarks.count({
-    where: { createdAt: { gte: cutoff7 } },
-  });
-  const savesPerList7d = await prisma.bookmarks.groupBy({
-    by: ['listId'],
-    where: { createdAt: { gte: cutoff7 } },
-    _count: { listId: true },
-  });
-  const sortedBySaves = savesPerList7d.sort((a, b) => b._count.listId - a._count.listId);
+  const sortedBySaves = [...savesPerList7d].sort((a, b) => b._count.listId - a._count.listId);
   const top10Saves = sortedBySaves.slice(0, 10).reduce((s, r) => s + r._count.listId, 0);
   const trendDistributionIndex =
     totalSaves7d > 0
@@ -297,17 +295,17 @@ export async function getChart30d(
   try {
     [savesByDay, listsByDay] = await Promise.all([
       prisma.$queryRaw<SaveRow[]>`
-        SELECT DATE(created_at) as date, COUNT(*)::int as count, COUNT(DISTINCT user_id)::int as distinct_users
+        SELECT DATE("createdAt") as date, COUNT(*)::int as count, COUNT(DISTINCT "userId")::int as distinct_users
         FROM bookmarks
-        WHERE created_at >= ${cutoff30}
-        GROUP BY DATE(created_at)
+        WHERE "createdAt" >= ${cutoff30}
+        GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
       prisma.$queryRaw<ListRow[]>`
-        SELECT DATE(created_at) as date, COUNT(*)::int as count
+        SELECT DATE("createdAt") as date, COUNT(*)::int as count
         FROM lists
-        WHERE created_at >= ${cutoff30} AND deleted_at IS NULL
-        GROUP BY DATE(created_at)
+        WHERE "createdAt" >= ${cutoff30} AND "deletedAt" IS NULL
+        GROUP BY DATE("createdAt")
         ORDER BY date ASC
       `,
     ]);

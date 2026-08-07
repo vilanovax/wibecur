@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ImageUpload, { type ImageUploadDisplayMode } from '@/components/admin/shared/ImageUpload';
+import { isBookCategorySlug } from '@/lib/book-cover-search';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import ItemTipField from '@/components/admin/items/ItemTipField';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
@@ -27,6 +28,7 @@ import {
 export type NewItemFormList = {
   id: string;
   title: string;
+  description?: string | null;
   categories: { id: string; name: string; slug: string; icon: string | null } | null;
 };
 
@@ -83,6 +85,7 @@ export default function NewItemForm({
     selectedList?.categories?.slug === 'movie' ||
     selectedList?.categories?.slug === 'film' ||
     selectedList?.categories?.slug === 'movies';
+  const isBookCategory = isBookCategorySlug(selectedList?.categories?.slug);
   const isMixedList = isMixedListCategory(selectedList?.categories?.slug);
   const isLightweightMode = isMixedList && isLightweightEntryKind(entryKind);
 
@@ -160,17 +163,24 @@ export default function NewItemForm({
     let finalPosterUrl = movie.posterUrl;
     if (movie.posterUrl) {
       try {
-        const uploadRes = await fetch('/api/admin/items/upload-movie-poster', {
+        const uploadRes = await fetch('/api/admin/items/import-image-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ posterUrl: movie.posterUrl }),
+          body: JSON.stringify({
+            imageUrl: movie.posterUrl,
+            folder: 'items',
+            metadata: { imdbId: movie.imdbID, imdbID: movie.imdbID },
+          }),
         });
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
-          if (uploadData.uploadedUrl) finalPosterUrl = uploadData.uploadedUrl;
+          if (uploadData.url) finalPosterUrl = uploadData.url;
+        } else {
+          const errData = await uploadRes.json().catch(() => ({}));
+          setError(errData.error || 'خطا در آپلود تصویر به استوریج');
         }
       } catch {
-        // keep original
+        setError('خطا در آپلود تصویر به استوریج');
       }
     }
     if (movie.plot) setMoviePlot(movie.plot);
@@ -203,6 +213,13 @@ export default function NewItemForm({
         body: JSON.stringify({
           title: formData.title,
           categorySlug: selectedList?.categories?.slug,
+          categoryName: selectedList?.categories?.name,
+          listTitle: selectedList?.title,
+          listDescription: selectedList?.description ?? undefined,
+          entryKind,
+          listNote:
+            String((formData.metadata as Record<string, unknown>)?.tip ?? '').trim() || undefined,
+          externalUrl: formData.externalUrl || undefined,
           metadata: formData.metadata,
           plot: moviePlot || undefined,
         }),
@@ -534,8 +551,10 @@ export default function NewItemForm({
               displayMode={mediaTab}
               previewVariant="poster"
               enableMoviePosterSources={isFilmCategory}
+              enableBookCoverSources={isBookCategory}
               metadata={(formData.metadata as Record<string, unknown>) ?? null}
               categorySlug={selectedList?.categories?.slug}
+              onSwitchToUrlTab={() => setMediaTab('url')}
             />
         </section>
         )}

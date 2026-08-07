@@ -24,13 +24,13 @@ export default function ViolationsStatsBar({
       label: 'مجموع تخلف',
       value: totalViolations,
       icon: AlertTriangle,
-      accent: 'text-rose-600',
+      accent: 'text-rose-600 dark:text-rose-400',
     },
     {
       label: 'امتیاز منفی کل',
       value: totalPenalty,
       icon: TrendingDown,
-      accent: 'text-amber-600',
+      accent: 'text-amber-600 dark:text-amber-400',
     },
   ];
 

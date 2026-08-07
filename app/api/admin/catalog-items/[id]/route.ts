@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getCatalogItemDetail, updateCatalogItem } from '@/lib/catalog-items';
@@ -32,12 +33,13 @@ export async function PUT(
     await requireAdmin();
     const { id } = await params;
     const body = await request.json();
-    const { title, description, imageUrl, externalUrl, categorySlug } = body as {
+    const { title, description, imageUrl, externalUrl, categorySlug, metadata } = body as {
       title?: string;
       description?: string;
       imageUrl?: string;
       externalUrl?: string;
       categorySlug?: string | null;
+      metadata?: Record<string, unknown> | null;
     };
 
     if (!title?.trim()) {
@@ -55,9 +57,35 @@ export async function PUT(
       description,
       externalUrl,
       categorySlug: categorySlug.trim(),
+      ...(metadata !== undefined && {
+        metadata: (metadata ?? {}) as Prisma.InputJsonValue,
+      }),
       ...(finalImage !== undefined && { imageUrl: finalImage }),
     });
 
+    return NextResponse.json(updated);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'خطا';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/** PATCH /api/admin/catalog-items/[id] — ویرایش سریع عنوان */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdmin();
+    const { id } = await params;
+    const body = await request.json();
+    const { title } = body as { title?: string };
+
+    if (typeof title !== 'string' || !title.trim()) {
+      return NextResponse.json({ error: 'عنوان الزامی است' }, { status: 400 });
+    }
+
+    const updated = await updateCatalogItem(prisma, id, { title: title.trim() });
     return NextResponse.json(updated);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'خطا';

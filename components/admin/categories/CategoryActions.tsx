@@ -132,6 +132,8 @@ export default function CategoryActions({
 
   const btnPrimary =
     'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-[var(--primary)] text-white hover:opacity-90 transition-opacity disabled:opacity-50';
+  const btnActivate =
+    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50';
   const btnSecondary =
     'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg)] transition-colors';
 
@@ -143,7 +145,7 @@ export default function CategoryActions({
             type="button"
             disabled={loading}
             onClick={handleActivate}
-            className={btnPrimary}
+            className={btnActivate}
           >
             <Power className="w-4 h-4" />
             فعال‌سازی

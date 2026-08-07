@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, LayoutGrid, Table2, SlidersHorizontal, X } from 'lucide-react';
+import { Search, LayoutGrid, Table2, SlidersHorizontal, X, Images, Sparkles } from 'lucide-react';
 import type { ListCategoryOption } from '@/lib/admin/lists-intelligence';
+import type { ListAdminViewMode } from './ListCoversGallery';
 
 export type ListFilterKind =
   | 'all'
@@ -12,7 +13,8 @@ export type ListFilterKind =
   | 'suspicious'
   | 'needs_review'
   | 'zero_save'
-  | 'featured';
+  | 'featured'
+  | 'no_cover';
 
 const FILTER_LABELS: Record<ListFilterKind, string> = {
   all: 'همه',
@@ -23,12 +25,14 @@ const FILTER_LABELS: Record<ListFilterKind, string> = {
   needs_review: 'نیازمند بررسی',
   zero_save: 'بدون ذخیره',
   featured: 'Featured',
+  no_cover: 'بدون کاور',
 };
 
 const secondaryPills: { value: ListFilterKind; label: string }[] = [
   { value: 'trending_top', label: '۱۰ برتر' },
   { value: 'needs_review', label: 'نیازمند بررسی' },
   { value: 'zero_save', label: 'بدون ذخیره' },
+  { value: 'no_cover', label: 'بدون کاور' },
 ];
 
 interface ListSmartFilterBarProps {
@@ -39,8 +43,8 @@ interface ListSmartFilterBarProps {
   onSearchChange: (value: string) => void;
   sortBy: string;
   onSortChange: (value: string) => void;
-  viewMode: 'grid' | 'table';
-  onViewModeChange: (mode: 'grid' | 'table') => void;
+  viewMode: ListAdminViewMode;
+  onViewModeChange: (mode: ListAdminViewMode) => void;
   resultCount: number;
   totalCount?: number;
   categories: ListCategoryOption[];
@@ -48,6 +52,8 @@ interface ListSmartFilterBarProps {
   onCategoryChange: (categoryId: string) => void;
   onClearFilters?: () => void;
   hasActiveFilters?: boolean;
+  /** باز کردن ممیزی تصاویر استوریج (فقط در نمای کاورها) */
+  onOpenCoverAudit?: () => void;
   /** فشرده برای نوار sticky */
   compact?: boolean;
 }
@@ -68,6 +74,7 @@ export default function ListSmartFilterBar({
   onCategoryChange,
   onClearFilters,
   hasActiveFilters,
+  onOpenCoverAudit,
   compact = false,
 }: ListSmartFilterBarProps) {
   const [showSecondary, setShowSecondary] = useState(false);
@@ -100,22 +107,20 @@ export default function ListSmartFilterBar({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-          {!compact && (
-            <select
-              value={categoryId}
-              onChange={(e) => onCategoryChange(e.target.value)}
-              className="px-2.5 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm max-w-[140px] truncate"
-              title="دسته"
-            >
-              <option value="all">همه دسته‌ها</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.icon ? `${c.icon} ` : ''}
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            value={categoryId}
+            onChange={(e) => onCategoryChange(e.target.value)}
+            className={`px-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm max-w-[180px] truncate ${compact ? 'py-1.5' : 'py-2'}`}
+            title="دسته‌بندی"
+          >
+            <option value="all">همه دسته‌ها</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.icon ? `${c.icon} ` : ''}
+                {c.name} ({c.listCount.toLocaleString('fa-IR')})
+              </option>
+            ))}
+          </select>
 
           <select
             value={sortBy}
@@ -137,6 +142,19 @@ export default function ListSmartFilterBar({
           <div className="flex rounded-xl border border-[var(--color-border)] overflow-hidden">
             <button
               type="button"
+              onClick={() => onViewModeChange('covers')}
+              title="نمایش کاور ۱ و ۲"
+              className={`inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium ${
+                viewMode === 'covers'
+                  ? 'bg-[var(--primary)] text-white'
+                  : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+              }`}
+            >
+              <Images className="w-4 h-4 shrink-0" />
+              <span className="hidden lg:inline">کاورها</span>
+            </button>
+            <button
+              type="button"
               onClick={() => onViewModeChange('grid')}
               title="گرید"
               className={`p-1.5 ${viewMode === 'grid' ? 'bg-[var(--primary)] text-white' : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'}`}
@@ -152,6 +170,18 @@ export default function ListSmartFilterBar({
               <Table2 className="w-4 h-4" />
             </button>
           </div>
+
+          {viewMode === 'covers' && onOpenCoverAudit ? (
+            <button
+              type="button"
+              onClick={onOpenCoverAudit}
+              title="بررسی حجم و بهینه‌سازی کاورها در ParsPack"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-violet-300 bg-violet-50 text-violet-800 text-xs font-medium hover:bg-violet-100 transition-colors"
+            >
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">ممیزی استوریج</span>
+            </button>
+          ) : null}
 
           {!compact && (
             <button

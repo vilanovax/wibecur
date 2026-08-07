@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
+import { resolveSessionUserId, sessionUserNotFoundResponse } from '@/lib/api-db';
 
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -11,6 +12,7 @@ import {
   applyAutoRestrictionAfterPenalty,
   getUserPenaltyScore,
 } from '@/lib/comment-permission';
+import { filterSeededCommentsForPublic } from '@/lib/comment-seed/visibility';
 import { DEFAULT_LIST_COMMENT_MAX_LENGTH } from '@/lib/comment-limits';
 
 // GET /api/items/[id]/comments - دریافت کامنت‌های یک آیتم
@@ -24,7 +26,7 @@ export async function GET(
     const sort = searchParams.get('sort') || 'newest'; // newest, popular
 
     const session = await auth();
-    const userId = session?.user ? session.user.id : null;
+    const userId = session?.user ? await resolveSessionUserId(session) : null;
 
     // موازی‌سازی کوئری‌های مستقل
     const [badWordsList, comments, item, globalSettings] = await Promise.all([
@@ -44,7 +46,6 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                email: true,
                 username: true,
                 image: true,
                 avatarType: true,
@@ -105,8 +106,16 @@ export async function GET(
     const likedCommentIds = new Set(userLikes.map((l) => l.commentId));
     const userVoteByCommentId = new Map(userVotes.map((v) => [v.commentId, v.value]));
 
+    const itemScope = {
+      itemId,
+      listId: item?.listId ?? null,
+      categoryId: item?.lists?.categoryId ?? category?.id ?? null,
+    };
+
+    const visibleComments = await filterSeededCommentsForPublic(comments, itemScope);
+
     // Format comments
-    const formattedComments = comments.map((comment) => {
+    const formattedComments = visibleComments.map((comment) => {
       // Filter bad words from content if isFiltered
       let displayContent = comment.content;
       if (comment.isFiltered && badWordsList.length > 0) {
@@ -140,7 +149,6 @@ export async function GET(
         user: {
           id: comment.users.id,
           name: comment.users.name || 'کاربر ناشناس',
-          email: comment.users.email,
           username: comment.users.username ?? null,
           image: comment.users.image,
           avatarType: comment.users.avatarType ?? 'DEFAULT',
@@ -186,7 +194,10 @@ export async function POST(
       );
     }
 
-    const userId = session.user.id;
+    const userId = await resolveSessionUserId(session);
+    if (!userId) {
+      return sessionUserNotFoundResponse();
+    }
     const { id: itemId } = await params;
 
     const commentPermission = await getCommentPermission(userId);
@@ -384,7 +395,6 @@ export async function POST(
             select: {
               id: true,
               name: true,
-              email: true,
               image: true,
             },
           },
@@ -432,7 +442,6 @@ export async function POST(
           user: {
             id: comment.users.id,
             name: comment.users.name || 'کاربر ناشناس',
-            email: comment.users.email,
             image: comment.users.image,
           },
           isLiked: false,

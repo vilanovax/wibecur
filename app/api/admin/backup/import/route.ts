@@ -6,6 +6,7 @@ import {
   saveImportSession,
 } from '@/lib/admin/backup/import-storage';
 import { buildImportPreview } from '@/lib/admin/backup/build-preview';
+import { toNodeBuffer } from '@/lib/to-node-buffer';
 
 const MAX_BYTES = 80 * 1024 * 1024;
 
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'حداکثر حجم فایل ۸۰ مگابایت' }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = toNodeBuffer(await file.arrayBuffer());
     const bundle = await parseBackupFile(buffer, file.name);
     const sessionId = createImportSessionId();
     saveImportSession(sessionId, bundle);

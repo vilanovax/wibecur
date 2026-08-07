@@ -32,6 +32,11 @@ type Props = {
   hideEntryKindChrome?: boolean;
 };
 
+function itemOpenLabel(index: number, title?: string | null): string {
+  const n = (index + 1).toLocaleString('fa-IR');
+  return title?.trim() ? `رفتن به آیتم ${n} — ${title.trim()}` : `رفتن به آیتم ${n}`;
+}
+
 function factTypeLabel(metadata?: Record<string, unknown> | null): string | null {
   const raw = metadata?.factType;
   if (typeof raw !== 'string') return null;
@@ -67,6 +72,7 @@ function EntryBody({
             ? 'mt-0.5 h-6 w-6 text-[0.6875rem] lg:h-7 lg:w-7'
             : 'h-7 w-7 lg:h-8 lg:w-8'
         }`}
+        aria-hidden
       >
         {(index + 1).toLocaleString('fa-IR')}
       </div>
@@ -89,7 +95,7 @@ function EntryBody({
               {entryKindBadgeLabel(entryKind)}
             </span>
             {factLabel && (
-              <span className="inline-flex items-center rounded-md bg-violet-50 px-2 py-0.5 wibe-caption font-medium text-violet-700">
+              <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 wibe-caption font-medium text-wibe-secondary">
                 {factLabel}
               </span>
             )}
@@ -154,7 +160,7 @@ export default function LightweightEntryRow({
   const hasLink = Boolean(item.externalUrl?.trim());
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
 
-  const shellClass = `rounded-xl border border-wibe bg-wibe-card text-right shadow-sm transition-all ${
+  const shellClass = `rounded-xl border border-wibe bg-wibe-card text-right shadow-sm transition-colors ${
     compact ? 'p-2.5' : hideEntryKindChrome ? 'p-3.5 lg:p-4' : 'p-3 lg:p-3.5'
   } ${onOpen ? 'lg:hover:border-primary/15 lg:hover:shadow-sm' : ''}`;
 
@@ -177,7 +183,8 @@ export default function LightweightEntryRow({
           <button
             type="button"
             onClick={onOpen}
-            className="flex w-full items-start gap-3 text-right transition-all active:scale-[0.99]"
+            aria-label={itemOpenLabel(index, headline || item.title)}
+            className="flex w-full items-start gap-3 text-right transition-colors active:scale-[0.99]"
           >
             <EntryBody {...bodyProps} />
           </button>
@@ -198,6 +205,7 @@ export default function LightweightEntryRow({
       <button
         type="button"
         onClick={onOpen}
+        aria-label={itemOpenLabel(index, headline || item.title)}
         className={`flex w-full items-start gap-3 ${shellClass} active:scale-[0.99]`}
       >
         <EntryBody {...bodyProps} />

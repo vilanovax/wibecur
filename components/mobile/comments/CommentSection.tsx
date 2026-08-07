@@ -7,6 +7,7 @@ import { Loader2, ChevronDown, Send } from 'lucide-react';
 import CommentItem from './CommentItem';
 import Toast from '@/components/shared/Toast';
 import CommentReportModal from './CommentReportModal';
+import { usePreferDesktopAutofocus } from '@/lib/hooks/usePreferDesktopAutofocus';
 import {
   COMMENTS_INITIAL_VISIBLE,
   COMMENTS_LOAD_MORE_STEP,
@@ -48,6 +49,8 @@ interface CommentSectionProps {
   refreshTrigger?: number;
   /** داخل کارت پایین صفحه (دسکتاپ) — بدون border بالای تکراری */
   embeddedInPanel?: boolean;
+  /** وقتی false است تا ورود به viewport درخواست نمی‌زند */
+  fetchEnabled?: boolean;
 }
 
 async function fetchItemComments(itemId: string, sortBy: string): Promise<CommentsResponse> {
@@ -77,6 +80,7 @@ function ItemCommentInput({
   maxCommentLength: number;
 }) {
   const [content, setContent] = useState('');
+  const preferDesktopAutofocus = usePreferDesktopAutofocus();
   const trimmedLength = content.trim().length;
   const warnThreshold = Math.floor(maxCommentLength * 0.8);
   const isNearLimit = content.length >= warnThreshold;
@@ -96,7 +100,7 @@ function ItemCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
       >
         نظرت درباره این آیتم چیه؟
       </button>
@@ -110,18 +114,19 @@ function ItemCommentInput({
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxCommentLength))}
           placeholder="نظرت درباره این آیتم چیه؟"
-          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none"
+          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
           rows={2}
           maxLength={maxCommentLength}
           aria-describedby="item-comment-char-count"
-          autoFocus
+          autoFocus={preferDesktopAutofocus}
         />
         <button
           type="submit"
           disabled={!canSubmit}
+          aria-label="ارسال نظر"
           className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4" aria-hidden />
         </button>
       </div>
       <div className="flex items-center justify-between gap-2 px-1">
@@ -155,6 +160,7 @@ export default function CommentSection({
   onCommentAdded,
   refreshTrigger,
   embeddedInPanel = false,
+  fetchEnabled = true,
 }: CommentSectionProps) {
   const { data: session, status } = useSession();
   const queryClient = useQueryClient();
@@ -169,7 +175,7 @@ export default function CommentSection({
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
     queryFn: () => fetchItemComments(itemId, sortBy),
-    enabled: !!itemId,
+    enabled: fetchEnabled && !!itemId,
   });
   const comments = data?.comments ?? [];
   const commentsEnabled = data?.commentsEnabled ?? true;
@@ -305,11 +311,9 @@ export default function CommentSection({
         embeddedInPanel ? 'mt-0 border-t-0 pt-0' : 'mt-2 border-t border-wibe pt-5'
       }`}
     >
-      <h2 className="wibe-h3 text-foreground mb-0.5">نظرات</h2>
-      <p className="wibe-caption text-wibe-secondary mb-3">
-        {comments.length.toLocaleString('fa-IR')} نظر
-        {!commentsEnabled && ' · نظرها غیرفعال است'}
-      </p>
+      {!commentsEnabled && (
+        <p className="wibe-caption text-wibe-secondary mb-3">نظرها غیرفعال است</p>
+      )}
 
       <div className="space-y-3">
         {commentsEnabled && status === 'authenticated' && (
@@ -323,9 +327,8 @@ export default function CommentSection({
         )}
 
         {!isLoading && comments.length > 0 && (
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex gap-2 mb-4">
-              <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
+          <div className="flex gap-2 pb-1">
+            <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
               <button
                 type="button"
                 onClick={() => setSortBy('popular')}
@@ -345,7 +348,6 @@ export default function CommentSection({
                 جدیدترین
               </button>
             </div>
-          </div>
         )}
 
         <div className={hasComments ? 'mt-2' : 'mt-1'}>

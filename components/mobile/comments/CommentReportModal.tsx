@@ -179,7 +179,7 @@ export default function CommentReportModal({
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-1">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-3 pt-1">
             <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50/70 px-3 py-2.5">
               <Shield className="mt-0.5 h-4 w-4 shrink-0 text-red-500" aria-hidden />
               <p className="text-xs leading-relaxed text-wibe-secondary">
@@ -201,7 +201,7 @@ export default function CommentReportModal({
                     aria-checked={isSelected}
                     onClick={() => handleSelectReason(reason.id)}
                     disabled={isSubmitting}
-                    className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-right transition-all duration-150 disabled:opacity-50 ${
+                    className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-right transition-colors duration-150 disabled:opacity-50 ${
                       isSelected
                         ? 'border-primary bg-primary/5 shadow-sm'
                         : 'border-wibe bg-wibe-card hover:border-gray-300'
@@ -247,7 +247,7 @@ export default function CommentReportModal({
                   rows={3}
                   placeholder="مثلاً: شامل توهین مستقیم به کاربران است..."
                   disabled={isSubmitting}
-                  className="w-full resize-none rounded-xl border border-wibe bg-gray-50/50 px-3 py-2.5 text-sm transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                  className="w-full resize-none rounded-xl border border-wibe bg-gray-50/50 px-3 py-2.5 text-sm transition-colors focus:border-primary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:opacity-50"
                 />
                 <p className="mt-1 text-left text-xs tabular-nums text-gray-400">
                   {description.length.toLocaleString('fa-IR')}/
@@ -268,7 +268,7 @@ export default function CommentReportModal({
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

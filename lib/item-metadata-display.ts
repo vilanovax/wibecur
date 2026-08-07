@@ -3,6 +3,7 @@ import {
   displayWebsiteHost,
   phoneToTelHref,
 } from '@/lib/cafe-metadata';
+import { parseActorNames, personPagePath, type PersonRole } from '@/lib/people';
 export const INTERNAL_METADATA_KEYS = new Set([
   'imdbId',
   'imdbID',
@@ -38,6 +39,7 @@ export function parseTipAsMetadataFact(tip: string | null): MetadataFact | null 
     label: 'مترجم',
     value: match[1].trim(),
     icon: '📖',
+    href: personPagePath('translator', match[1].trim()),
   };
 }
 
@@ -83,7 +85,11 @@ export type MetadataFact = {
   value: string;
   icon: string;
   href?: string;
+  /** لینک‌های داخلی — مثلاً هر بازیگر جدا */
+  profileLinks?: Array<{ name: string; href: string }>;
 };
+
+const PERSON_LINK_KEYS = new Set<string>(['director', 'author', 'translator']);
 
 const FACT_LABELS: Record<string, { label: string; icon: string }> = {
   director: { label: 'کارگردان', icon: '🎬' },
@@ -170,6 +176,21 @@ function formatImdbRating(value: unknown): string | null {
   return n.toLocaleString('fa-IR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
+/** امتیاز IMDb برای badge روی پوستر — metadata اول، سپس item.rating */
+export function resolveImdbRatingDisplay(
+  metadata: Record<string, unknown> | null | undefined,
+  itemRating?: number | null
+): string | null {
+  const meta = metadata ?? {};
+  if (meta.imdbRating != null && String(meta.imdbRating).trim()) {
+    return formatImdbRating(meta.imdbRating);
+  }
+  if (itemRating != null && Number(itemRating) > 0) {
+    return formatImdbRating(itemRating);
+  }
+  return null;
+}
+
 function formatFactValue(key: string, value: unknown): string | null {
   if (value == null || value === '') return null;
   if (key === 'imdbRating') return formatImdbRating(value);
@@ -197,11 +218,53 @@ function pushFact(
   key: string,
   metadata: Record<string, unknown>
 ): void {
+  if (key === 'actors') {
+    pushActorFact(facts, metadata);
+    return;
+  }
+
   const formatted = formatFactValue(key, metadata[key]);
   if (!formatted) return;
   const meta = FACT_LABELS[key] ?? { label: key, icon: '📋' };
-  const href = factHref(key, metadata[key]);
-  facts.push({ key, label: meta.label, value: formatted, icon: meta.icon, href });
+  const externalHref = factHref(key, metadata[key]);
+  const personHref =
+    !externalHref && PERSON_LINK_KEYS.has(key)
+      ? personPagePath(key as PersonRole, formatted)
+      : undefined;
+  facts.push({
+    key,
+    label: meta.label,
+    value: formatted,
+    icon: meta.icon,
+    href: externalHref ?? personHref,
+  });
+}
+
+function pushActorFact(facts: MetadataFact[], metadata: Record<string, unknown>): void {
+  const names = parseActorNames(metadata.actors).slice(0, 6);
+  if (names.length === 0) return;
+
+  if (names.length === 1) {
+    facts.push({
+      key: 'actors',
+      label: 'بازیگر',
+      value: names[0],
+      icon: '🎭',
+      href: personPagePath('actor', names[0]),
+    });
+    return;
+  }
+
+  facts.push({
+    key: 'actors',
+    label: FACT_LABELS.actors.label,
+    value: names.join(' · '),
+    icon: FACT_LABELS.actors.icon,
+    profileLinks: names.map((name) => ({
+      name,
+      href: personPagePath('actor', name),
+    })),
+  });
 }
 
 /** فکت‌های قابل نمایش برای UI جزئیات آیتم */
@@ -256,10 +319,14 @@ export function buildItemMetadataChips(
   metadata: Record<string, unknown> | null | undefined,
   categorySlug?: string | null,
   options?: { fallbackImdbRating?: unknown }
-): Array<{ key: string; label: string; value: string }> {
-  return buildItemMetadataFacts(metadata, categorySlug, options).map(({ key, label, value }) => ({
-    key,
-    label,
-    value,
-  }));
+): Array<{ key: string; label: string; value: string; href?: string; profileLinks?: MetadataFact['profileLinks'] }> {
+  return buildItemMetadataFacts(metadata, categorySlug, options).map(
+    ({ key, label, value, href, profileLinks }) => ({
+      key,
+      label,
+      value,
+      href,
+      profileLinks,
+    })
+  );
 }

@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import { isSameCategorySlug } from '@/lib/category-slug-aliases';
+import { trackCategoryChipClick } from '@/lib/analytics';
+import type { CategoryMenuChip } from '@/lib/category-menu';
 
-type CategoryChip = { id: string; slug: string; name: string; icon: string | null };
-
-async function fetchActiveCategories(): Promise<CategoryChip[]> {
+async function fetchActiveCategories(): Promise<CategoryMenuChip[]> {
   const res = await fetch('/api/categories');
   const json = await res.json();
   if (!res.ok || !json.success) return [];
@@ -21,16 +22,23 @@ function isActiveCategorySlug(chipSlug: string, activeSlug?: string | null): boo
 interface QuickCategoryChipsProps {
   activeSlug?: string | null;
   variant?: 'default' | 'nav';
+  /** از SSR — بدون fetch اولیه */
+  initialCategories?: CategoryMenuChip[];
 }
 
 export default function QuickCategoryChips({
   activeSlug = null,
   variant = 'default',
+  initialCategories,
 }: QuickCategoryChipsProps) {
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = initialCategories ?? [], isLoading } = useQuery({
     queryKey: ['categories', 'active', 'menu'],
     queryFn: fetchActiveCategories,
+    initialData: initialCategories,
+    initialDataUpdatedAt: initialCategories ? Date.now() : undefined,
     staleTime: 10 * 60 * 1000,
+    refetchOnMount: initialCategories ? false : undefined,
+    enabled: initialCategories === undefined,
   });
 
   if (!isLoading && categories.length === 0) {
@@ -48,9 +56,11 @@ export default function QuickCategoryChips({
       }
       aria-label="دسته‌های سریع"
     >
-      <div
+      <HorizontalScrollFade
         dir="rtl"
-        className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 lg:mx-0 lg:flex-wrap lg:justify-start lg:gap-2 lg:overflow-visible"
+        surface="surface"
+        fadeClassName="lg:hidden"
+        innerClassName="flex gap-2 snap-x snap-mandatory -mx-1 lg:mx-0 lg:flex-wrap lg:justify-start lg:gap-2 lg:overflow-visible"
       >
         {isLoading ? (
           <>
@@ -68,8 +78,9 @@ export default function QuickCategoryChips({
               <Link
                 key={cat.id}
                 href={`/categories/${cat.slug}`}
+                onClick={() => trackCategoryChipClick(cat.slug, cat.name)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-3.5 wibe-small font-medium shadow-sm transition-all active:scale-[0.98] lg:h-8 lg:px-3 lg:wibe-caption ${
+                className={`flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-3.5 wibe-small font-medium shadow-sm transition-colors active:scale-[0.98] lg:h-8 lg:px-3 lg:wibe-caption ${
                   isActive
                     ? 'border-primary bg-primary text-white shadow-sm hover:bg-primary-dark'
                     : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30 lg:bg-wibe-surface'
@@ -81,7 +92,7 @@ export default function QuickCategoryChips({
             );
           })
         )}
-      </div>
+      </HorizontalScrollFade>
     </section>
   );
 }

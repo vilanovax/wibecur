@@ -18,6 +18,8 @@ export interface ListCoverImageProps {
   priority?: boolean;
   /** card = کاور عمودی | banner = بنر افقی */
   variant?: 'card' | 'banner';
+  /** opt-in بهینه‌سازی next/image (والد باید relative+sized باشد). */
+  sizes?: string;
 }
 
 /** کاور لیست — card عمودی یا banner افقی */
@@ -33,6 +35,7 @@ export default function ListCoverImage({
   fallbackClassName = '',
   priority = false,
   variant = 'card',
+  sizes,
 }: ListCoverImageProps) {
   const src =
     variant === 'banner'
@@ -57,6 +60,7 @@ export default function ListCoverImage({
       listSlug={slug ?? undefined}
       listTitle={title}
       priority={priority}
+      sizes={sizes}
     />
   );
 }

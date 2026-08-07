@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Bookmark, Check } from 'lucide-react';
-import { track } from '@/lib/analytics';
+import { track, listAnalyticsPayload, trackFirstBookmark, type ListAnalyticsContext } from '@/lib/analytics';
 
 interface BookmarkButtonProps {
   listId: string;
@@ -19,6 +19,9 @@ interface BookmarkButtonProps {
   labelSaved?: string;
   onToggle?: (isBookmarked: boolean) => void;
   className?: string;
+  analytics?: ListAnalyticsContext;
+  /** نمایش تعداد ذخیره کنار دکمه (پیش‌فرض: true) */
+  showCount?: boolean;
 }
 
 export default function BookmarkButton({
@@ -32,6 +35,8 @@ export default function BookmarkButton({
   labelSaved = 'ذخیره شده',
   onToggle,
   className = '',
+  analytics,
+  showCount = true,
 }: BookmarkButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -80,7 +85,18 @@ export default function BookmarkButton({
         setIsBookmarked(data.data.isBookmarked);
         setBookmarkCount(data.data.bookmarkCount);
         onToggle?.(data.data.isBookmarked);
-        track(data.data.isBookmarked ? 'list_bookmark' : 'list_unbookmark', { listId });
+        const payload = listAnalyticsPayload({ listId, ...analytics });
+        track(
+          data.data.isBookmarked ? 'list_bookmark' : 'list_unbookmark',
+          payload
+        );
+        if (data.data.isBookmarked && data.data.isFirstBookmark) {
+          trackFirstBookmark({
+            list_slug: analytics?.listSlug ?? undefined,
+            category_slug: analytics?.categorySlug ?? undefined,
+            source: analytics?.source,
+          });
+        }
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
@@ -118,7 +134,7 @@ export default function BookmarkButton({
       return (
         <Link
           href={loginHref}
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-all hover:border-primary hover:bg-primary/5"
+          className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-colors hover:border-primary hover:bg-primary/5"
           aria-label="ورود برای ذخیره لیست"
           title="ورود برای ذخیره لیست"
         >
@@ -130,7 +146,7 @@ export default function BookmarkButton({
     return (
       <Link
         href={loginHref}
-        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 font-semibold text-white shadow-sm transition-all hover:bg-primary-dark"
+        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
       >
         <Bookmark className="h-5 w-5" />
         <span>ورود برای ذخیره لیست</span>
@@ -156,7 +172,7 @@ export default function BookmarkButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all disabled:opacity-50 ${
+        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50 ${
           isBookmarked
             ? 'border-primary bg-primary/10 hover:bg-primary/15'
             : 'border-gray-200 bg-white hover:border-primary hover:bg-primary/5'
@@ -165,7 +181,7 @@ export default function BookmarkButton({
         title={isBookmarked ? 'ذخیره شده' : 'ذخیره لیست'}
       >
         <Bookmark
-          className={`h-5 w-5 transition-all ${
+          className={`h-5 w-5 transition-colors ${
             isBookmarked ? 'fill-primary text-primary' : 'text-gray-500'
           }`}
         />
@@ -179,7 +195,7 @@ export default function BookmarkButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`${sizeClasses[size]} flex items-center justify-center transition-all hover:scale-110 disabled:opacity-50 ${
+        className={`${sizeClasses[size]} flex items-center justify-center transition-[colors,transform] hover:scale-110 disabled:opacity-50 ${
           isBookmarked ? 'text-primary' : 'text-gray-600'
         }`}
         aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
@@ -199,7 +215,7 @@ export default function BookmarkButton({
       type="button"
       onClick={handleToggle}
       disabled={isLoading}
-      className={`${buttonSizeClasses[size]} flex w-full items-center justify-center gap-2 rounded-md font-semibold transition-all duration-300 disabled:opacity-50 ${
+      className={`${buttonSizeClasses[size]} flex w-full items-center justify-center gap-2 rounded-md font-semibold transition-colors duration-300 disabled:opacity-50 ${
         isBookmarked
           ? 'animate-saved-pulse border border-success/30 bg-success/10 text-success'
           : unsavedToneClasses
@@ -212,7 +228,7 @@ export default function BookmarkButton({
         <Bookmark className={sizeClasses[size === 'lg' ? 'md' : 'sm']} />
       )}
       <span>{isBookmarked ? labelSaved : labelSave}</span>
-      {bookmarkCount > 0 && (
+      {showCount && bookmarkCount > 0 && (
         <span className="wibe-caption opacity-80">({bookmarkCount.toLocaleString('fa-IR')})</span>
       )}
     </button>

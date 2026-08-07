@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -6,6 +7,8 @@ import { nanoid } from 'nanoid';
 import { validateMetadata } from '@/lib/schemas/item-metadata';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { resolveSessionUserId } from '@/lib/api-db';
+import { getListAccessForUser } from '@/lib/list-collaboration';
+import { notifyListBookmarkers } from '@/lib/utils/notifications';
 import {
   addCatalogItemToList,
   backfillCatalogForItem,
@@ -65,8 +68,9 @@ export async function POST(
       );
     }
 
-    // Check ownership
-    if (list.userId !== userId) {
+    // Check ownership or collaborator add permission
+    const access = await getListAccessForUser(list, userId);
+    if (!access.canAddItems) {
       return NextResponse.json(
         { success: false, error: 'شما اجازه افزودن آیتم به این لیست را ندارید' },
         { status: 403 }
@@ -93,12 +97,35 @@ export async function POST(
         prisma.items.findUnique({
           where: { id: itemId },
           include: {
-            lists: { select: { categories: { select: { slug: true } } } },
+            lists: {
+              select: {
+                categories: { select: { slug: true } },
+                isPublic: true,
+                isActive: true,
+                deletedAt: true,
+                userId: true,
+              },
+            },
           },
         })
       );
 
       if (!existingItem) {
+        return NextResponse.json(
+          { success: false, error: 'آیتم یافت نشد' },
+          { status: 404 }
+        );
+      }
+
+      // امنیت (IDOR): فقط می‌توان از آیتم‌هایی کپی کرد که در لیست عمومی و فعال‌اند
+      // یا متعلق به خود کاربرند. در غیر این صورت محتوای لیست خصوصی دیگران افشا می‌شود.
+      const sourceList = existingItem.lists;
+      const sourceVisible =
+        !!sourceList &&
+        !sourceList.deletedAt &&
+        ((sourceList.isPublic && sourceList.isActive) ||
+          sourceList.userId === userId);
+      if (!sourceVisible) {
         return NextResponse.json(
           { success: false, error: 'آیتم یافت نشد' },
           { status: 404 }
@@ -265,6 +292,14 @@ export async function POST(
       );
     }
 
+    notifyListBookmarkers(listId, {
+      itemCount: 1,
+      categorySlug: list.categories?.slug ?? categorySlug,
+      categoryName: list.categories?.name,
+      listTitle: list.title,
+      excludeUserIds: [userId],
+    }).catch(console.error);
+
     return NextResponse.json({
       success: true,
       data: newItem,
@@ -273,7 +308,7 @@ export async function POST(
   } catch (error: any) {
     console.error('Error adding item to user list:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در افزودن آیتم' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در افزودن آیتم') },
       { status: 500 }
     );
   }

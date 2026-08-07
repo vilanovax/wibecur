@@ -117,8 +117,8 @@ export default function ListIntelligenceTable({
                   </th>
                 </>
               )}
-              <th className="sticky top-0 left-0 z-30 bg-[var(--color-bg)] text-center py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)] w-[88px] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
-                ···
+              <th className="sticky top-0 left-0 z-30 bg-[var(--color-bg)] text-center py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)] w-[140px] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
+                عملیات
               </th>
             </tr>
           </thead>
@@ -137,8 +137,11 @@ export default function ListIntelligenceTable({
               return (
                 <tr
                   key={row.id}
-                  onClick={() => {
-                    if (!isTrashView) router.push(`/admin/lists/${row.id}`);
+                  onClick={(e) => {
+                    if (isTrashView) return;
+                    const target = e.target as HTMLElement;
+                    if (target.closest('[data-list-ops]')) return;
+                    router.push(`/admin/lists/${row.id}`);
                   }}
                   className={`border-b border-[var(--color-border-muted)] transition-colors hover:bg-[var(--color-bg)]/60 ${bg} ${
                     !row.isActive && !isTrashView ? 'opacity-65' : ''
@@ -246,8 +249,13 @@ export default function ListIntelligenceTable({
                     </>
                   )}
 
-                  <td className={`sticky left-0 z-10 overflow-visible py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`} onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-center gap-0.5">
+                  <td
+                    data-list-ops=""
+                    className={`sticky left-0 z-20 overflow-visible py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="relative z-20 flex items-center justify-center gap-1 flex-wrap">
                       {isTrashView ? (
                         onRestore && (
                           <button
@@ -270,19 +278,25 @@ export default function ListIntelligenceTable({
                         <>
                           <Link
                             href={`/admin/lists/${row.id}/edit`}
-                            className="p-1.5 rounded-lg hover:bg-[var(--color-bg)] text-[var(--color-text-muted)]"
-                            title="ویرایش"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-list-ops=""
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-[var(--primary)] text-white hover:opacity-90"
+                            title="ویرایش در تب جدید"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <Pencil className="w-3 h-3" />
+                            ویرایش
                           </Link>
                           <Link
                             href={`/lists/${row.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg hover:bg-[var(--color-bg)] text-[var(--color-text-muted)]"
-                            title="اپ"
+                            data-list-ops=""
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                            title="نمایش در سایت"
                           >
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <ExternalLink className="w-3 h-3" />
+                            سایت
                           </Link>
                           <ListCardMoreMenu
                             row={row}

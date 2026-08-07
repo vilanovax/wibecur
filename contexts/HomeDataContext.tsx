@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useMemo,
   type ReactNode,
 } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -27,11 +28,21 @@ function mapApiItem(l: {
   slug: string;
   description?: string;
   coverImage?: string;
+  horizontalImage?: string | null;
+  bannerImage?: string;
   saveCount?: number;
   itemCount?: number;
   likes?: number;
+  weeklySaves?: number;
   badge?: string;
   categories?: { id: string; name: string; slug: string; icon: string };
+  creator?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    image?: string | null;
+    curatorLevel?: string | null;
+  } | null;
 }): HomeListData {
   return {
     id: l.id,
@@ -39,11 +50,15 @@ function mapApiItem(l: {
     slug: l.slug,
     description: l.description ?? '',
     coverImage: l.coverImage ?? '',
+    horizontalImage: l.horizontalImage ?? null,
+    bannerImage: l.bannerImage,
     saveCount: l.saveCount ?? 0,
     itemCount: l.itemCount ?? 0,
     likes: l.likes ?? 0,
+    weeklySaves: l.weeklySaves,
     badge: (l.badge?.toLowerCase() as 'trending' | 'new' | 'featured') ?? undefined,
     categories: l.categories,
+    creator: l.creator ?? null,
   };
 }
 
@@ -82,16 +97,22 @@ export function HomeDataProvider({
     queryKey: ['home', 'lists'],
     queryFn: fetchHomeData,
     initialData: initialData ?? undefined,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
     staleTime: 5 * 60 * 1000,
+    refetchOnMount: initialData ? false : undefined,
   });
 
-  const value: HomeDataContextValue = {
-    data: data ?? null,
-    isLoading: initialData ? false : isLoading,
-    isRefetching: isFetching && !isLoading,
-    error: error instanceof Error ? error : null,
-    refetch,
-  };
+  // memo تا مصرف‌کننده‌ها با هر render والد دوباره render نشوند.
+  const value = useMemo<HomeDataContextValue>(
+    () => ({
+      data: data ?? null,
+      isLoading: initialData ? false : isLoading,
+      isRefetching: isFetching && !isLoading,
+      error: error instanceof Error ? error : null,
+      refetch,
+    }),
+    [data, initialData, isLoading, isFetching, error, refetch]
+  );
 
   return (
     <HomeDataContext.Provider value={value}>

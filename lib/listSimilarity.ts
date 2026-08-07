@@ -42,6 +42,9 @@ export type BehaviorOverlapResult = {
 
 const CANDIDATES_LIMIT = 30;
 const TOP_N = 4;
+// سقف عنوان آیتم واکشی‌شده به‌ازای هر کاندید — بونوس overlap آیتم‌ها حداکثر ۳ تاست،
+// پس نیازی به کشیدن صدها عنوان به‌ازای هر لیست کاندید نیست (کاهش هزینهٔ cold).
+const CANDIDATE_ITEM_TITLE_LIMIT = 80;
 const MIN_SAVES_FOR_BEHAVIOR = 5;
 const BEHAVIOR_WEIGHT = 0.6;
 const TAG_WEIGHT = 0.4;
@@ -222,7 +225,7 @@ export async function fetchCandidates(
         categoryId: true,
         tags: true,
         categories: { select: { id: true, name: true, slug: true, icon: true } },
-        items: { select: { title: true } },
+        items: { select: { title: true }, take: CANDIDATE_ITEM_TITLE_LIMIT },
       },
       take: CANDIDATES_LIMIT,
     });
@@ -249,7 +252,7 @@ export async function fetchCandidates(
       categoryId: true,
       tags: true,
       categories: { select: { id: true, name: true, slug: true, icon: true } },
-      items: { select: { title: true } },
+      items: { select: { title: true }, take: CANDIDATE_ITEM_TITLE_LIMIT },
     },
     take: CANDIDATES_LIMIT,
   });
@@ -387,7 +390,7 @@ export async function getTopSimilarLists(
         categoryId: true,
         tags: true,
         categories: { select: { id: true, name: true, slug: true, icon: true } },
-        items: { select: { title: true } },
+        items: { select: { title: true }, take: CANDIDATE_ITEM_TITLE_LIMIT },
       },
     });
 

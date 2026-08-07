@@ -77,23 +77,23 @@ const STATUS_CONFIG: Record<
   stable: {
     label: 'پایدار',
     icon: CheckCircle,
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-800',
-    border: 'border-emerald-200',
+    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    text: 'text-emerald-800 dark:text-emerald-300',
+    border: 'border-emerald-200 dark:border-emerald-800/60',
   },
   attention: {
     label: 'نیاز به توجه',
     icon: AlertTriangle,
-    bg: 'bg-amber-50',
-    text: 'text-amber-800',
-    border: 'border-amber-200',
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    text: 'text-amber-800 dark:text-amber-300',
+    border: 'border-amber-200 dark:border-amber-800/60',
   },
   risk: {
     label: 'ریسک الگوریتم',
     icon: XCircle,
-    bg: 'bg-rose-50',
-    text: 'text-rose-800',
-    border: 'border-rose-200',
+    bg: 'bg-rose-50 dark:bg-rose-900/20',
+    text: 'text-rose-800 dark:text-rose-300',
+    border: 'border-rose-200 dark:border-rose-800/60',
   },
 };
 
@@ -108,13 +108,13 @@ export default function SystemStatusBar({
 
   return (
     <section
-      className="rounded-2xl shadow-sm border border-slate-200 bg-white p-6"
+      className="rounded-2xl shadow-sm border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6"
       style={{ direction: 'rtl' }}
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800">وضعیت کلی سیستم</h2>
-          <p className="text-sm text-slate-600 mt-1">{summary}</p>
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-gray-100">وضعیت کلی سیستم</h2>
+          <p className="text-sm text-slate-600 dark:text-gray-300 mt-1">{summary}</p>
         </div>
         <div className="flex-shrink-0">
           <span

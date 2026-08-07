@@ -2,7 +2,11 @@
 
 import { Users, TrendingUp, Brain, AlertTriangle } from 'lucide-react';
 import type { UserPulseSummary as UserPulseSummaryType } from '@/lib/admin/users-types';
-import type { UserPulseFilterKey } from '@/lib/admin/user-filter-utils';
+import {
+  PULSE_TO_FILTER,
+  type UserPulseFilterKey,
+  type UserFilterKind,
+} from '@/lib/admin/user-filter-utils';
 
 const cards: {
   key: UserPulseFilterKey;
@@ -39,21 +43,26 @@ const cards: {
 interface UserPulseSummaryProps {
   data: UserPulseSummaryType;
   onFilterClick?: (key: UserPulseFilterKey) => void;
+  activeFilter?: UserFilterKind;
 }
 
-export default function UserPulseSummary({ data, onFilterClick }: UserPulseSummaryProps) {
+export default function UserPulseSummary({ data, onFilterClick, activeFilter }: UserPulseSummaryProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {cards.map(({ key, label, icon: Icon, bg }) => {
         const value = data[key] as number;
         const clickable = !!onFilterClick;
+        const isSelected = activeFilter != null && PULSE_TO_FILTER[key] === activeFilter;
         return (
           <button
             key={key}
             type="button"
             onClick={() => onFilterClick?.(key)}
             disabled={!clickable}
+            aria-pressed={clickable ? isSelected : undefined}
             className={`rounded-2xl border bg-gradient-to-br ${bg} p-4 shadow-sm text-right transition-all ${
+              isSelected ? 'ring-2 ring-[var(--primary)] shadow-md' : ''
+            } ${
               clickable
                 ? 'hover:shadow-md hover:scale-[1.01] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--primary)]'
                 : 'cursor-default'
@@ -78,8 +87,8 @@ export default function UserPulseSummary({ data, onFilterClick }: UserPulseSumma
               </p>
             )}
             {clickable && (
-              <p className="text-[11px] text-[var(--primary)] mt-2 opacity-80">
-                کلیک برای فیلتر
+              <p className={`text-[11px] mt-2 ${isSelected ? 'text-[var(--primary)] font-medium' : 'text-[var(--primary)] opacity-80'}`}>
+                {isSelected ? '✓ فیلتر فعال' : 'کلیک برای فیلتر'}
               </p>
             )}
           </button>

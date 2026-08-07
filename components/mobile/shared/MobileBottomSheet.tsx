@@ -12,6 +12,7 @@ export interface MobileBottomSheetProps {
   subtitle?: string;
   headerAction?: React.ReactNode;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   maxHeight?: string;
   constrainToMobileShell?: boolean;
   zIndex?: number;
@@ -26,6 +27,7 @@ export default function MobileBottomSheet({
   subtitle,
   headerAction,
   children,
+  footer,
   maxHeight = '85vh',
   constrainToMobileShell = true,
   zIndex = 60,
@@ -109,6 +111,12 @@ export default function MobileBottomSheet({
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
           {children}
         </div>
+
+        {footer && (
+          <div className="flex-shrink-0 border-t border-wibe bg-wibe-card pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

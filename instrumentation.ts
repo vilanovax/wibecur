@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/nextjs';
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     await import('./sentry.server.config');
+
     const { ensurePrismaConnection } = await import('./lib/prisma');
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {

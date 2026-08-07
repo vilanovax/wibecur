@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureImageInLiara, type ImageFolder } from '@/lib/object-storage';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
+import { isPublicHttpUrl } from '@/lib/ssrf-guard';
+import { checkActionRateLimit } from '@/lib/rate-limit';
+
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return req.headers.get('x-real-ip') || 'unknown';
+}
 
 const VALID_FOLDERS: ImageFolder[] = ['items', 'avatars', 'covers', 'lists'];
 
@@ -29,12 +37,23 @@ export async function GET(request: NextRequest) {
     url = url.trim();
   }
 
-  if (!url.startsWith('http')) {
+  // محافظ SSRF — فقط http(s) عمومی؛ آدرس‌های داخلی/خصوصی رد می‌شوند.
+  if (!isPublicHttpUrl(url)) {
     return NextResponse.json({ error: 'Invalid url' }, { status: 400 });
   }
 
   if (isOurStorageUrl(url)) {
     return NextResponse.redirect(url, 302);
+  }
+
+  // Rate limit اختصاصی برای fetch خارجی (endpoint بدون احراز هویت و گران).
+  const { success } = await checkActionRateLimit(
+    `image-resolve:${getClientIp(request)}`,
+    30,
+    '1 m'
+  );
+  if (!success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   const cached = resolveCache.get(url);

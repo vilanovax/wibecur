@@ -13,27 +13,27 @@ const eventTags: Record<
 > = {
   list_created: {
     label: 'لیست',
-    className: 'bg-blue-100 text-blue-700',
+    className: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
     icon: FileText,
   },
   item_added: {
     label: 'آیتم',
-    className: 'bg-emerald-100 text-emerald-700',
+    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
     icon: Plus,
   },
   report_submitted: {
     label: 'ریپورت',
-    className: 'bg-amber-100 text-amber-700',
+    className: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
     icon: Shield,
   },
   curator_featured: {
     label: 'کیوریتور',
-    className: 'bg-purple-100 text-purple-700',
+    className: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
     icon: Star,
   },
   user_joined: {
     label: 'کاربر',
-    className: 'bg-gray-100 text-gray-700',
+    className: 'bg-gray-100 text-gray-700 dark:bg-gray-500/15 dark:text-gray-300',
     icon: User,
   },
 };
@@ -112,7 +112,7 @@ export default function ActivityStream({ events }: ActivityStreamProps) {
                   {event.href && (
                     <Link
                       href={event.href}
-                      className="shrink-0 text-xs text-[var(--primary)] hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="shrink-0 text-xs text-[var(--primary)] hover:underline opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                     >
                       باز کردن
                     </Link>

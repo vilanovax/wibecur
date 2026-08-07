@@ -77,7 +77,9 @@ export default function QuickCreateFab() {
   if (
     pathname?.startsWith('/admin/settings') ||
     pathname?.startsWith('/admin/pulse') ||
-    pathname?.startsWith('/admin/system')
+    pathname?.startsWith('/admin/system') ||
+    pathname?.startsWith('/admin/trash') ||
+    pathname?.startsWith('/admin/admins')
   ) {
     return null;
   }

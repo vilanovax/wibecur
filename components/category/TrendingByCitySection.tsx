@@ -28,7 +28,7 @@ export default function TrendingByCitySection({
 
   return (
     <section className="px-4 py-6">
-      <CategorySectionTitle title="ترند بر اساس شهر" icon="📍" />
+      <CategorySectionTitle title="ترند بر اساس شهر" iconVariant="location" />
 
       <div className="flex gap-2 mt-1 overflow-x-auto pb-2 scrollbar-hide">
         {LOCATION_CITIES.map((city) => (

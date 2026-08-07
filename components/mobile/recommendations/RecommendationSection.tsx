@@ -51,8 +51,8 @@ export default function RecommendationSection() {
       ) : (
         <EmptyState
           icon="✨"
-          title="هنوز چیزی ذخیره نکردی 🙂"
-          description="چند تا لیست انتخاب کن تا وایبت رو بشناسیم"
+          title="هنوز چیزی ذخیره نکردی"
+          description="چند لیست انتخاب کن تا وایبت را بشناسیم"
           buttonText="دیدن لیست‌های پیشنهادی"
           buttonHref="/lists"
         />

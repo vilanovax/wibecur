@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -57,7 +58,7 @@ export async function GET(
   } catch (error: any) {
     console.error('Error fetching list reactions:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در دریافت واکنش‌ها' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در دریافت واکنش‌ها') },
       { status: 500 }
     );
   }
@@ -156,7 +157,7 @@ export async function POST(
   } catch (error: any) {
     console.error('Error setting list reaction:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'خطا در ثبت واکنش' },
+      { success: false, error: getClientErrorMessage(error, 'خطا در ثبت واکنش') },
       { status: 500 }
     );
   }

@@ -5,6 +5,7 @@ import { MessageSquare, ExternalLink, ShieldBan } from 'lucide-react';
 import type { CommentSettingsState } from '@/lib/admin/settings-types';
 import SettingsSectionCard from './SettingsSectionCard';
 import SettingsSaveButton from './SettingsSaveButton';
+import CommentAiProviderRadio from './CommentAiProviderRadio';
 
 type Props = {
   value: CommentSettingsState;
@@ -36,6 +37,24 @@ export default function CommentSettingsPanel({
           <ExternalLink className="w-3 h-3" />
         </Link>
       </div>
+
+      <SettingsSectionCard
+        title="کامنت هوشمند (AI)"
+        description="انتخاب سرویس تولید کامنت ساختگی"
+        icon={<MessageSquare className="w-5 h-5 text-violet-600" />}
+        footer={
+          <SettingsSaveButton
+            onClick={onSave}
+            loading={saving}
+            label="ذخیره تنظیمات کامنت"
+          />
+        }
+      >
+        <CommentAiProviderRadio
+          value={value.commentAiProvider}
+          onChange={(commentAiProvider) => onChange({ commentAiProvider })}
+        />
+      </SettingsSectionCard>
 
       <SettingsSectionCard
         title="تنظیمات کامنت"

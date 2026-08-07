@@ -33,7 +33,7 @@ export default function BulkConfirmDialog({
       >
         <div
           className={`flex items-center gap-2 mb-2 ${
-            isApprove ? 'text-emerald-600' : 'text-rose-600'
+            isApprove ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
           }`}
         >
           <Icon className="w-5 h-5" />

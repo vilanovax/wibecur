@@ -26,10 +26,12 @@ function AdminPanelShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div
-        className="admin-panel min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir overflow-x-auto"
+        className="admin-panel min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
         dir="rtl"
       >
-        <div className="min-w-0 lg:min-w-[1240px] flex min-h-screen">
+        {/* بدون min-width ثابت — محتوا واکنش‌گرا reflow می‌شود و کل صفحه اسکرول افقی نمی‌خورد.
+            اجزای عریض (مثل جدول رادار) overflow داخلی خودشان را دارند. */}
+        <div className="min-w-0 flex min-h-screen">
           <Sidebar />
           <div className="flex-1 min-w-0 flex flex-col">
             <AdminHeader />

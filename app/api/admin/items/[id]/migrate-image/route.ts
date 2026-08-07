@@ -27,9 +27,11 @@ export async function POST(
           ? 404
           : result.errorCode === 'storage_not_configured'
             ? 503
-            : isConnectionError
+            : result.errorCode === 'download_failed'
               ? 502
-              : 500;
+              : isConnectionError
+                ? 502
+                : 500;
       return NextResponse.json(
         { error: result.error || 'خطا در مهاجرت تصویر', ...result },
         { status }

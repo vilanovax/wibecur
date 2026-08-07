@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 
 import { prisma } from '@/lib/prisma';
@@ -136,7 +137,7 @@ export async function POST(
   } catch (error: unknown) {
     console.error('Error reporting item:', error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
+      { success: false, error: getClientErrorMessage(error, 'Internal server error') },
       { status: 500 }
     );
   }

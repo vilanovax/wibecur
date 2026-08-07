@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Bookmark } from 'lucide-react';
-import { isDisplayableDescription } from '@/lib/lists-card-utils';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 
 export type FeaturedListItem = {
@@ -23,7 +21,7 @@ interface ListsFeaturedCarouselProps {
 }
 
 const SLIDE_CLASS =
-  'w-[min(92vw,340px)] shrink-0 snap-start max-lg:snap-center lg:w-full lg:max-w-none lg:shrink';
+  'w-[min(88vw,300px)] shrink-0 snap-start max-lg:snap-center lg:w-full lg:max-w-none lg:shrink';
 
 export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -53,8 +51,8 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
   if (lists.length === 0) return null;
 
   return (
-    <section className="mb-4 lg:mb-5" aria-label="منتخب">
-      <div className="mb-2.5 flex items-center justify-between gap-2">
+    <section className="mb-3 w-full min-w-0 lg:mb-5" aria-label="منتخب">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <h2 className="wibe-h3 flex items-center gap-1.5">
           <span aria-hidden>⭐</span>
           <span>منتخب</span>
@@ -72,7 +70,7 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
         <>
           <div
             ref={scrollRef}
-            className="flex w-full snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-4 lg:overflow-visible lg:snap-none"
+            className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-2.5 max-lg:overflow-x-auto max-lg:pb-1 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
             role="list"
             aria-label="لیست‌های منتخب"
           >
@@ -92,7 +90,7 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
             {lists.map((list, i) => (
               <span
                 key={list.id}
-                className={`h-1.5 rounded-full transition-all ${
+                className={`h-1.5 rounded-full transition-colors ${
                   i === activeIndex ? 'w-4 bg-primary' : 'w-1.5 bg-wibe-secondary/30'
                 }`}
               />
@@ -121,7 +119,7 @@ function FeaturedSlide({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`group relative block aspect-[16/10] min-h-[132px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-all active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[148px] lg:aspect-[3/2] lg:min-h-[180px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
+      className={`group relative block aspect-[2/1] min-h-[108px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-[colors,transform] active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[128px] lg:aspect-[3/2] lg:min-h-[180px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
     >
       <ListCoverImage
         coverImage={list.coverImage}
@@ -144,15 +142,6 @@ function FeaturedSlide({
       )}
       <div className="absolute inset-0 flex flex-col justify-end p-3 text-right lg:p-4">
         <h3 className="line-clamp-2 wibe-small font-bold text-white lg:text-lg">{list.title}</h3>
-        {list.description?.trim() && isDisplayableDescription(list.description) && (
-          <p className="mt-0.5 line-clamp-2 wibe-caption text-white/85 lg:line-clamp-2 lg:text-sm">
-            {list.description.trim()}
-          </p>
-        )}
-        <p className="mt-1 flex items-center justify-end gap-1 wibe-caption text-white/75 lg:text-sm">
-          <Bookmark className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
-          {(list.saveCount ?? 0).toLocaleString('fa-IR')} ذخیره
-        </p>
       </div>
     </Link>
   );

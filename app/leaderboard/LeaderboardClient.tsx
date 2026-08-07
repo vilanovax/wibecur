@@ -6,11 +6,13 @@ import { Trophy, TrendingUp, Globe, Film, Calendar, Bookmark } from 'lucide-reac
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
-import { VIBE_AVATARS } from '@/lib/vibe-avatars';
+import { resolveVibeAvatar } from '@/lib/vibe-avatars';
+import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import type { LeaderboardRow, LeaderboardCategoryOption } from '@/lib/leaderboard';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
+import { trackCreatorProfileView } from '@/lib/analytics';
 
 type TabType = 'global' | 'rising' | 'category' | 'monthly';
 
@@ -71,9 +73,10 @@ function AvatarWithGlow({
   const levelConfig = getLevelConfig(levelKey);
   const vibeAvatar =
     row.avatarType === 'DEFAULT' && row.avatarId
-      ? VIBE_AVATARS.find((a) => a.id === row.avatarId)
+      ? resolveVibeAvatar(row.avatarId)
       : null;
   const sizeClass = size === 'sm' ? 'w-10 h-10' : size === 'lg' ? 'w-16 h-16' : 'w-12 h-12';
+  const avatarSize = size === 'sm' ? 40 : size === 'lg' ? 64 : 48;
 
   return (
     <div className="relative flex-shrink-0">
@@ -82,9 +85,7 @@ function AvatarWithGlow({
       )}
       <div className={`relative ${sizeClass} rounded-full overflow-hidden border-2 border-wibe-card bg-gray-200 shadow-sm`}>
         {vibeAvatar ? (
-          <div className={`w-full h-full flex items-center justify-center text-2xl ${vibeAvatar.bgClass}`}>
-            {vibeAvatar.emoji}
-          </div>
+          <VibeAvatarDisplay avatar={vibeAvatar} size={avatarSize} className="h-full w-full" />
         ) : row.image ? (
           <ImageWithFallback
             src={row.image}
@@ -239,6 +240,9 @@ export default function LeaderboardClient({
                   <Link
                     key={row.userId}
                     href={row.username ? `/u/${encodeURIComponent(row.username)}` : '#'}
+                    onClick={() => {
+                      if (row.username) trackCreatorProfileView(row.username, 'leaderboard');
+                    }}
                     className={`relative rounded-lg border bg-wibe-card p-3 flex flex-col items-center text-center active:scale-[0.98] transition-transform ${style.card}`}
                   >
                     <span className={`inline-flex w-7 h-7 items-center justify-center rounded-full wibe-caption font-bold ${style.medal}`}>
@@ -276,6 +280,9 @@ export default function LeaderboardClient({
               <li key={row.userId}>
                 <Link
                   href={row.username ? `/u/${encodeURIComponent(row.username)}` : '#'}
+                  onClick={() => {
+                    if (row.username) trackCreatorProfileView(row.username, 'leaderboard');
+                  }}
                   className="flex items-center gap-3 p-3 rounded-lg bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
                 >
                   <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center wibe-small font-bold text-wibe-secondary">

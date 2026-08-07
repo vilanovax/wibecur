@@ -11,7 +11,10 @@ export async function GET(request: NextRequest) {
     if (userOrRes instanceof NextResponse) return userOrRes;
 
     const { searchParams } = new URL(request.url);
-    const actorId = searchParams.get('actorId') ?? undefined;
+    const actorQuery =
+      searchParams.get('actorQuery') ??
+      searchParams.get('actorId') ??
+      undefined;
     const action = searchParams.get('action') ?? undefined;
     const entityType = searchParams.get('entityType') ?? undefined;
     const dateFrom = searchParams.get('dateFrom') ?? searchParams.get('from') ?? undefined;
@@ -20,12 +23,31 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(searchParams.get('pageSize') ?? String(DEFAULT_PAGE_SIZE), 10)));
 
     const where: {
-      actorId?: string;
+      actorId?: string | { in: string[] };
       action?: string;
       entityType?: string;
       createdAt?: { gte?: Date; lte?: Date };
     } = {};
-    if (actorId) where.actorId = actorId;
+
+    if (actorQuery?.trim()) {
+      const q = actorQuery.trim();
+      const matchedActors = await prisma.users.findMany({
+        where: {
+          OR: [
+            { id: q },
+            { name: { contains: q, mode: 'insensitive' } },
+            { email: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
+        take: 25,
+      });
+      if (matchedActors.length > 0) {
+        where.actorId = { in: matchedActors.map((u) => u.id) };
+      } else {
+        where.actorId = q;
+      }
+    }
     if (action) where.action = action;
     if (entityType) where.entityType = entityType;
     if (dateFrom || dateTo) {

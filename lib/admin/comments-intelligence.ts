@@ -3,6 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { parseCommentFilter, type CommentFilterKind } from '@/lib/admin/comments-filter-utils';
 import {
+  parseCommentOrigin,
+  parseScopeId,
+  type CommentOriginKind,
+} from '@/lib/admin/comments-scope-utils';
+import {
   getCommentsPulse,
   type CommentsPulseSummary,
 } from '@/lib/admin/comments-pulse';
@@ -40,6 +45,9 @@ export type CommentsIntelligenceQuery = {
   filter: CommentFilterKind;
   search: string;
   sort: CommentSortKind;
+  origin?: CommentOriginKind;
+  categoryId?: string;
+  listId?: string;
 };
 
 export type CommentListRow = {
@@ -47,6 +55,9 @@ export type CommentListRow = {
   content: string;
   isFiltered: boolean;
   isApproved: boolean;
+  isSeeded: boolean;
+  seedCampaignId: string | null;
+  seedCampaign: { id: string; title: string } | null;
   likeCount: number;
   createdAt: string;
   updatedAt: string;
@@ -82,6 +93,9 @@ export type CommentsIntelligenceData = {
   filter: CommentFilterKind;
   search: string;
   sort: CommentSortKind;
+  origin: CommentOriginKind;
+  categoryId: string;
+  listId: string;
 };
 
 const commentInclude = {
@@ -104,6 +118,12 @@ const commentInclude = {
       comment_reports: true,
     },
   },
+  seedCampaign: {
+    select: {
+      id: true,
+      title: true,
+    },
+  },
 } as const;
 
 export function parseCommentSort(value: string | undefined): CommentSortKind {
@@ -114,32 +134,54 @@ export function parseCommentSort(value: string | undefined): CommentSortKind {
 
 export function buildCommentsWhere(
   filter: CommentFilterKind,
-  search: string
+  search: string,
+  scope?: {
+    origin?: CommentOriginKind;
+    categoryId?: string;
+    listId?: string;
+  }
 ): Prisma.commentsWhereInput {
   const where: Prisma.commentsWhereInput = {};
+  const origin =
+    scope?.origin ?? (filter === 'seeded' ? 'seeded' : 'all');
+  const statusFilter = filter === 'seeded' ? 'all' : filter;
 
-  if (filter === 'approved') {
+  if (statusFilter === 'approved') {
     where.deletedAt = null;
     where.isApproved = true;
-  } else if (filter === 'pending') {
+  } else if (statusFilter === 'pending') {
     where.deletedAt = null;
     where.isApproved = false;
-  } else if (filter === 'rejected') {
+  } else if (statusFilter === 'rejected') {
     where.deletedAt = { not: null };
-  } else if (filter === 'flagged') {
+  } else if (statusFilter === 'flagged') {
     where.deletedAt = null;
     where.OR = [
       { isFiltered: true },
       { comment_reports: { some: { resolved: false } } },
     ];
-  } else if (filter === 'filtered') {
+  } else if (statusFilter === 'filtered') {
     where.deletedAt = null;
     where.isFiltered = true;
-  } else if (filter === 'reported') {
+  } else if (statusFilter === 'reported') {
     where.deletedAt = null;
     where.comment_reports = { some: { resolved: false } };
   } else {
     where.deletedAt = null;
+  }
+
+  if (origin === 'user') {
+    where.isSeeded = false;
+  } else if (origin === 'seeded') {
+    where.isSeeded = true;
+  }
+
+  const listId = parseScopeId(scope?.listId);
+  const categoryId = parseScopeId(scope?.categoryId);
+  if (listId) {
+    where.items = { listId };
+  } else if (categoryId) {
+    where.items = { lists: { categoryId } };
   }
 
   if (search.trim()) {
@@ -179,6 +221,9 @@ function serializeComment(
     content: c.content,
     isFiltered: c.isFiltered,
     isApproved: c.isApproved,
+    isSeeded: c.isSeeded,
+    seedCampaignId: c.seedCampaignId,
+    seedCampaign: c.seedCampaign,
     likeCount: c.likeCount,
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
@@ -199,7 +244,10 @@ export async function getCommentsIntelligenceData(
     raw.pageSize != null ? String(raw.pageSize) : undefined
   );
   const search = raw.search ?? '';
-  const where = buildCommentsWhere(filter, search);
+  const origin = parseCommentOrigin(raw.origin, filter);
+  const categoryId = parseScopeId(raw.categoryId);
+  const listId = parseScopeId(raw.listId);
+  const where = buildCommentsWhere(filter, search, { origin, categoryId, listId });
   const orderBy = buildCommentsOrderBy(sort);
   const skip = (page - 1) * pageSize;
 
@@ -248,5 +296,8 @@ export async function getCommentsIntelligenceData(
     filter,
     search,
     sort,
+    origin,
+    categoryId,
+    listId,
   };
 }

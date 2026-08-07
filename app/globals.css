@@ -17,8 +17,11 @@
 
 /* ─── Wibe Design System — CSS Variables (sync with lib/design-tokens.ts) ─ */
 :root {
+  /* Consumer deliberately light-first; .dark tokens reserved */
+  color-scheme: light;
+
   /* Brand */
-  --font-vazirmatn: 'Vazirmatn', 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* --font-vazirmatn از next/font/local روی <html> ست می‌شود */
   --primary: #6366F1;
   --primary-dark: #4F46E5;
   --primary-light: #818CF8;
@@ -53,6 +56,7 @@
   /* Semantic state */
   --color-success: #10B981;
   --color-warning: #F59E0B;
+  --color-hot: #F59E0B;
   --color-danger: #EF4444;
   --color-info: #3B82F6;
 
@@ -86,7 +90,7 @@
   --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark mode tokens (when enabled via .dark on html) */
+/* Dark tokens reserved — consumer ships light-only until PRODUCT decision flips */
 .dark {
   --color-bg: #111827;
   --color-surface: #1F2937;
@@ -177,6 +181,15 @@
   .wibe-card-surface {
     @apply bg-wibe-card border border-wibe rounded-lg shadow-card;
   }
+  .wibe-chip {
+    @apply flex-shrink-0 rounded-pill border px-4 py-2 wibe-small font-medium transition-colors active:scale-[0.98];
+  }
+  .wibe-chip-active {
+    @apply border-primary bg-primary text-white shadow-sm;
+  }
+  .wibe-chip-inactive {
+    @apply border-wibe bg-wibe-card text-wibe-secondary hover:border-primary/30;
+  }
 }
 
 * {
@@ -266,7 +279,7 @@ a {
   }
 }
 
-/* Font Family — self-hosted via @fontsource/vazirmatn (no SSR inline font styles) */
+/* Font Family — next/font/local Vazirmatn variable (--font-vazirmatn) */
 body {
   font-family: var(--font-vazirmatn), 'Vazirmatn', 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -335,6 +348,16 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.35s ease-out;
+}
+
+/* جلوگیری از تأخیر double-tap zoom روی کنترل‌های تعاملی */
+a,
+button,
+[role='button'],
+[role='switch'],
+summary {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* احترام به تنظیم کاهش حرکت کاربر */

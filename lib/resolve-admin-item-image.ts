@@ -1,4 +1,5 @@
 import { isPlaceholderCoverPath, isTmdbImageUrl } from './image-url-policy';
+import { isParsPackStorageUrl } from './object-storage-config';
 import {
   isCorruptImageUrl,
   isValidHttpImageUrl,
@@ -37,20 +38,32 @@ export function parseItemMetadata(
 
 /** نرمال‌سازی URL ذخیره‌شده — پوشش حالت‌های رایج DB */
 export function normalizeAdminImageUrl(raw: string): string | null {
-  if (isCorruptImageUrl(raw)) {
-    const fixed = normalizeImageUrlForStorage(raw);
+  let t = raw.trim();
+  if (!t || isPlaceholderCoverPath(t)) return null;
+
+  // Markdown / proxy wrappers — unwrap first, then keep going for host-without-scheme
+  if (isCorruptImageUrl(t)) {
+    const fixed = normalizeImageUrlForStorage(t);
     if (isValidHttpImageUrl(fixed)) return fixed;
-    return null;
+    if (!fixed) return null;
+    t = fixed.trim();
+    if (!t || isPlaceholderCoverPath(t)) return null;
   }
 
-  const t = raw.trim();
-  if (!t || isPlaceholderCoverPath(t)) return null;
   if (isValidHttpImageUrl(t)) return t;
   if (t.startsWith('//')) return `https:${t}`;
   if (t.startsWith('/')) return t;
   if (/^storage\.[a-z0-9.-]+\.liara\.space\//i.test(t) || /^[a-z0-9.-]*\.liara\.space\//i.test(t)) {
     return `https://${t.replace(/^\/+/, '')}`;
   }
+  const withHttps = t.startsWith('http') ? t : `https://${t.replace(/^\/+/, '')}`;
+  if (isParsPackStorageUrl(withHttps)) return withHttps;
+
+  const fromStorageNormalizer = normalizeImageUrlForStorage(t);
+  if (fromStorageNormalizer && (fromStorageNormalizer.startsWith('/') || isValidHttpImageUrl(fromStorageNormalizer))) {
+    return fromStorageNormalizer;
+  }
+
   return null;
 }
 

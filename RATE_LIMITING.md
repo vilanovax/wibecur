@@ -1,36 +1,12 @@
 # Rate Limiting
 
-محدودیت تعداد درخواست‌ها برای APIها با **Upstash Redis** پیاده‌سازی شده است.
+محدودیت IP/API مبتنی بر Redis/Upstash **در حال حاضر غیرفعال** است (`lib/rate-limit.ts` همیشه allow می‌کند).
 
-## پیکربندی
+## محدودیت‌های فعال
 
-۱. در [Upstash Console](https://console.upstash.com) یک Redis بساز  
-۲. متغیرهای زیر را به `.env` اضافه کن:
+- **کامنت:** فاصله زمانی بین کامنت‌ها از تنظیمات ادمین (`rateLimitMinutes`) و دیتابیس
+- **ضداسپم کامنت:** `lib/comment-antispan.ts` (بدون Redis)
 
-```
-UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
-UPSTASH_REDIS_REST_TOKEN=xxx
-```
+## فعال‌سازی مجدد (اختیاری)
 
-## محدودیت فعلی
-
-- **۶۰ درخواست در دقیقه** به ازای هر IP برای همهٔ مسیرهای `/api/*`
-- در صورت عدم تنظیم متغیرها، rate limiting **غیرفعال** است (اپ بدون محدودیت کار می‌کند)
-
-## پاسخ ۴۲۹
-
-در صورت عبور از حد مجاز:
-
-```json
-{
-  "error": "تعداد درخواست‌ها زیاد است. لطفاً کمی صبر کنید."
-}
-```
-
-## تغییر محدودیت
-
-مقدارها در `lib/rate-limit.ts` قابل تنظیم هستند:
-
-```ts
-Ratelimit.slidingWindow(60, '1 m')  // 60 درخواست در 1 دقیقه
-```
+برای rate limit سراسری API در آینده می‌توان Upstash یا Redis لیارا را دوباره وصل کرد.

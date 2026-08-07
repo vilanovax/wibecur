@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/auth/require-permission';
 import { getCurrentFeaturedSlot } from '@/lib/home-featured';
 import { getTrendingScoreForList } from '@/lib/trending/service';
+import { revalidateHomeCache } from '@/lib/public-cache';
 
 /**
  * GET /api/admin/custom/featured
@@ -107,7 +108,7 @@ export async function GET() {
     let eventCounts: { slotId: string; action: string; _count: { id: number } }[] = [];
 
     try {
-      [upcomingSlots, pastSlots, eventCounts] = await Promise.all([
+      [upcomingSlots, pastSlots] = await Promise.all([
         prisma.home_featured_slot.findMany({
           where: { startAt: { gt: now } },
           orderBy: { startAt: 'asc' },
@@ -147,11 +148,26 @@ export async function GET() {
             },
           },
         }),
-        prisma.home_featured_event.groupBy({
-          by: ['slotId', 'action'],
-          _count: { id: true },
-        }),
       ]);
+
+      // فقط رویدادهای اسلات‌های مرتبط (current + upcoming + past) را گروه‌بندی کن —
+      // نه اسکن کل جدولِ نامحدودِ home_featured_event در هر لود.
+      const relevantSlotIds = [
+        currentSlotResult?.slotId,
+        ...upcomingSlots.map((s) => s.id),
+        ...pastSlots.map((s) => s.id),
+      ].filter((id): id is string => Boolean(id));
+
+      if (relevantSlotIds.length > 0) {
+        const [scopedCounts] = await Promise.all([
+          prisma.home_featured_event.groupBy({
+            by: ['slotId', 'action'],
+            where: { slotId: { in: relevantSlotIds } },
+            _count: { id: true },
+          }),
+        ]);
+        eventCounts = scopedCounts;
+      }
     } catch (queryErr) {
       console.error('Admin featured slots/events query error:', queryErr);
     }
@@ -432,6 +448,9 @@ export async function POST(request: NextRequest) {
         orderIndex: Number(slot.orderIndex),
       },
     };
+
+    // اسلات منتخب هوم عوض شد — کش هوم را تازه کن.
+    revalidateHomeCache();
 
     try {
       return NextResponse.json(slotPayload);

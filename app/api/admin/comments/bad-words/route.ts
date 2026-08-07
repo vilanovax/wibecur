@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { nanoid } from 'nanoid';
+import { revalidateAdminCommentsCache } from '@/lib/admin/admin-cache';
 
 // GET /api/admin/comments/bad-words - لیست کلمات بد
 export async function GET(request: NextRequest) {
@@ -87,6 +88,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidateAdminCommentsCache();
     return NextResponse.json({
       success: true,
       data: { word: badWord },
@@ -122,6 +124,7 @@ export async function DELETE(request: NextRequest) {
       where: { id },
     });
 
+    revalidateAdminCommentsCache();
     return NextResponse.json({
       success: true,
       message: 'کلمه با موفقیت حذف شد',

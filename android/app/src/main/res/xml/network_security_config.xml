@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+      Let's Encrypt از ۲۰۲۶ زنجیرهٔ YR1 → Root YR (cross-sign به ISRG Root X1) استفاده می‌کند.
+      خیلی از system imageهای امولاتور/WebView هنوز Root YR را ندارند → SSL_UNTRUSTED (کد ۳).
+      این trust-anchorها فقط برای دامنه‌های وایب اضافه می‌شوند؛ بقیهٔ ترافیک همان system است.
+    -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">wibe.ir</domain>
+        <trust-anchors>
+            <certificates src="@raw/isrg_root_yr" />
+            <certificates src="@raw/letsencrypt_yr1" />
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- dev: Next.js روی امولاتور (10.0.2.2) یا localhost -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

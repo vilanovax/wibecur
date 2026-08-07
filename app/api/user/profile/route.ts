@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { AvatarType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -45,7 +46,7 @@ export async function GET(_request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
+    const message = getClientErrorMessage(error, 'Internal server error');
     console.error('Error fetching user profile:', message);
 
     if (session?.user) {
@@ -82,6 +83,7 @@ export async function PUT(request: NextRequest) {
       bio,
       showBadge,
       allowCommentNotifications,
+      allowBookmarkListNotifications,
       avatarType,
       avatarId,
     } = body;
@@ -129,6 +131,7 @@ export async function PUT(request: NextRequest) {
       bio?: string | null;
       showBadge?: boolean;
       allowCommentNotifications?: boolean;
+      allowBookmarkListNotifications?: boolean;
       avatarType?: 'DEFAULT' | 'UPLOADED';
       avatarId?: string | null;
       avatarStatus?: 'APPROVED' | 'PENDING' | 'REJECTED' | null;
@@ -140,6 +143,9 @@ export async function PUT(request: NextRequest) {
     if (bio !== undefined) updateData.bio = bio === '' ? null : String(bio).slice(0, 160);
     if (typeof showBadge === 'boolean') updateData.showBadge = showBadge;
     if (typeof allowCommentNotifications === 'boolean') updateData.allowCommentNotifications = allowCommentNotifications;
+    if (typeof allowBookmarkListNotifications === 'boolean') {
+      updateData.allowBookmarkListNotifications = allowBookmarkListNotifications;
+    }
     const wantVibeAvatar = (String(avatarType ?? '').toUpperCase() === 'DEFAULT' && avatarId && String(avatarId).trim());
     const avatarIdVal = wantVibeAvatar ? String(avatarId).trim() : null;
 
@@ -192,6 +198,7 @@ export async function PUT(request: NextRequest) {
             avatarStatus: true,
             showBadge: true,
             allowCommentNotifications: true,
+            allowBookmarkListNotifications: true,
           },
         })
       );
@@ -200,6 +207,7 @@ export async function PUT(request: NextRequest) {
         data: { user: updatedUser },
       });
     } catch (updateErr: unknown) {
+      // پیام خام فقط برای تشخیص داخلیِ ناسازگاری اسکیما — به کلاینت ارسال نمی‌شود.
       const msg = updateErr instanceof Error ? updateErr.message : '';
       const isUnknownField = (updateErr as { name?: string }).name === 'PrismaClientValidationError' || msg.includes('Unknown field') || msg.includes('column');
       // وقتی کلاینت Prisma با اسکیما همگام نیست (مثلاً prisma generate نشده)، فقط فیلدهای پایه آپدیت می‌شوند
@@ -227,6 +235,7 @@ export async function PUT(request: NextRequest) {
                 avatarStatus: null,
                 showBadge: true,
                 allowCommentNotifications: true,
+            allowBookmarkListNotifications: true,
               },
             },
           });
@@ -252,6 +261,7 @@ export async function PUT(request: NextRequest) {
                   avatarStatus: null,
                   showBadge: true,
                   allowCommentNotifications: true,
+            allowBookmarkListNotifications: true,
                 },
               },
             });
@@ -263,7 +273,7 @@ export async function PUT(request: NextRequest) {
       throw updateErr;
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
+    const message = getClientErrorMessage(error, 'Internal server error');
     console.error('Error updating user profile:', error);
     if (isDbUnavailableError(error)) {
       return NextResponse.json(

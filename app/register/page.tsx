@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import AuthScreen from '@/components/auth/AuthScreen';
+import AuthScreen, { resolveSignupSource } from '@/components/auth/AuthScreen';
 
 function safeCallbackUrl(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/';
@@ -12,15 +12,16 @@ function safeCallbackUrl(raw: string | null): string {
 function RegisterContent() {
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'));
-  return <AuthScreen mode="register" callbackUrl={callbackUrl} />;
+  const signupSource = resolveSignupSource(searchParams.get('source'));
+  return <AuthScreen mode="register" callbackUrl={callbackUrl} signupSource={signupSource} />;
 }
 
 export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#0f172a]">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+        <div className="flex min-h-screen items-center justify-center bg-[#f7f8fa]">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
         </div>
       }
     >

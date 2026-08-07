@@ -3,17 +3,24 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { List, Library, FileJson, Plus, Sparkles } from 'lucide-react';
+import { List, Library, FileJson, Plus, UserRound, AlignLeft, Lightbulb, ImageIcon } from 'lucide-react';
 import type { ContentHubStats } from '@/lib/admin/content-hub-stats';
 import type { ListsIntelligenceData } from '@/lib/admin/lists-intelligence';
 import type { CatalogPageData } from '@/lib/admin/catalog-page-data';
 import ContentHubStatsBar from '@/components/admin/lists/ContentHubStatsBar';
+import ContentHubToolsMenu from '@/components/admin/lists/ContentHubToolsMenu';
 import ListsIntelligenceClient from './ListsIntelligenceClient';
 import CatalogPageClient from '../catalog/CatalogPageClient';
 import type { NewItemFormList } from '../items/new/NewItemForm';
 import BulkImportClient from '../items/import/BulkImportClient';
+import PeoplePageClient from '@/components/admin/people/PeoplePageClient';
+import ListDescriptionsClient from '@/components/admin/lists/ListDescriptionsClient';
+import ItemTipsClient from '@/components/admin/lists/ItemTipsClient';
+import type { ListDescriptionsPageData } from '@/lib/admin/list-description-import';
+import type { ItemTipsPageData } from '@/lib/admin/item-tip-import';
+import type { ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
 
-export type ContentHubView = 'lists' | 'catalog' | 'import';
+export type ContentHubView = 'lists' | 'catalog' | 'import' | 'people' | 'descriptions' | 'item-tips';
 
 type ImportListOption = {
   id: string;
@@ -39,6 +46,8 @@ interface ContentHubClientProps {
   listsData?: ListsIntelligenceData;
   trash?: boolean;
   initialCategoryId?: string;
+  initialSearch?: string;
+  initialFilter?: ListFilterKind;
   catalogData?: CatalogPageData;
   importCategories?: ImportCategoryOption[];
   importLists?: ImportListOption[];
@@ -46,6 +55,9 @@ interface ContentHubClientProps {
   initialImportCategoryId?: string;
   createLists?: NewItemFormList[];
   initialCreateListId?: string;
+  catalogMode?: string;
+  descriptionsData?: ListDescriptionsPageData;
+  itemTipsData?: ItemTipsPageData;
 }
 
 const STATS_COLLAPSED_KEY = 'admin-content-hub-stats-collapsed';
@@ -64,6 +76,8 @@ export default function ContentHubClient({
   listsData,
   trash = false,
   initialCategoryId = 'all',
+  initialSearch = '',
+  initialFilter = 'all',
   catalogData,
   importCategories = [],
   importLists = [],
@@ -71,9 +85,12 @@ export default function ContentHubClient({
   initialImportCategoryId,
   createLists,
   initialCreateListId,
+  catalogMode,
+  descriptionsData,
+  itemTipsData,
 }: ContentHubClientProps) {
   const router = useRouter();
-  const [statsCollapsed, setStatsCollapsed] = useState(true);
+  const [statsCollapsed, setStatsCollapsed] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STATS_COLLAPSED_KEY);
@@ -92,48 +109,50 @@ export default function ContentHubClient({
     router.push(qs ? `/admin/lists?${qs}` : '/admin/lists');
   };
 
+  const showHubTools = view !== 'import' && view !== 'people' && !trash;
+  const primaryAction =
+    view === 'lists' ? (
+      <Link
+        href="/admin/lists/new"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+        style={{ backgroundColor: 'var(--primary)' }}
+      >
+        <Plus className="w-4 h-4" />
+        لیست جدید
+      </Link>
+    ) : view === 'catalog' && catalogMode !== 'create' ? (
+      <Link
+        href="/admin/lists?view=catalog&mode=create"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-colors"
+      >
+        <Plus className="w-4 h-4" />
+        آیتم جدید
+      </Link>
+    ) : null;
+
   return (
     <div className="space-y-4" dir="rtl">
-      {/* هدر یکپارچه */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها و محتوا</h1>
-          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-            لیست · کاتالوگ · import — یک مرکز مدیریت
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {view !== 'import' && !trash && (
-            <>
+        <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها و محتوا</h1>
+        {showHubTools && (
+          <div className="flex flex-wrap items-center gap-2">
+            {view === 'catalog' && catalogMode !== 'create' && (
               <Link
-                href="/admin/lists?view=import"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-violet-200 text-violet-700 bg-violet-50/80 hover:bg-violet-100 transition-colors"
+                href="/admin/catalog/storage-images"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors"
+                title="جستجوی Google و آپلود تصویر روی ParsPack"
               >
-                <FileJson className="w-4 h-4" />
-                <span className="hidden md:inline">import گروهی</span>
+                <ImageIcon className="w-4 h-4" />
+                تصاویر
               </Link>
-              <Link
-                href="/admin/custom/featured"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm border border-amber-200 text-amber-800 bg-amber-50/80 hover:bg-amber-100 transition-colors"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden md:inline">Featured</span>
-              </Link>
-              <Link
-                href="/admin/lists/new"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium text-white hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: 'var(--primary)' }}
-              >
-                <Plus className="w-4 h-4" />
-                لیست جدید
-              </Link>
-            </>
-          )}
-        </div>
+            )}
+            {primaryAction}
+            <ContentHubToolsMenu showNewList={view !== 'lists'} />
+          </div>
+        )}
       </header>
 
-      {/* KPI */}
-      {view !== 'import' && (
+      {view !== 'import' && view !== 'people' && (
         <ContentHubStatsBar
           stats={hubStats}
           view={view}
@@ -152,6 +171,26 @@ export default function ContentHubClient({
           <Library className="w-4 h-4" />
           کاتالوگ
         </button>
+        <button type="button" onClick={() => switchView('people')} className={tabClass(view === 'people')}>
+          <UserRound className="w-4 h-4" />
+          اشخاص
+        </button>
+        <button
+          type="button"
+          onClick={() => switchView('descriptions')}
+          className={tabClass(view === 'descriptions')}
+        >
+          <AlignLeft className="w-4 h-4" />
+          توضیحات
+        </button>
+        <button
+          type="button"
+          onClick={() => switchView('item-tips')}
+          className={tabClass(view === 'item-tips')}
+        >
+          <Lightbulb className="w-4 h-4" />
+          tip
+        </button>
         <button type="button" onClick={() => switchView('import')} className={tabClass(view === 'import')}>
           <FileJson className="w-4 h-4" />
           import
@@ -164,6 +203,8 @@ export default function ContentHubClient({
           data={listsData}
           trash={trash}
           initialCategoryId={initialCategoryId}
+          initialSearch={initialSearch}
+          initialFilter={initialFilter}
           embedded
         />
       )}
@@ -187,6 +228,16 @@ export default function ContentHubClient({
           initialCategoryId={initialImportCategoryId}
           embedded
         />
+      )}
+
+      {view === 'people' && <PeoplePageClient embedded />}
+
+      {view === 'descriptions' && descriptionsData && (
+        <ListDescriptionsClient data={descriptionsData} embedded />
+      )}
+
+      {view === 'item-tips' && itemTipsData && (
+        <ItemTipsClient data={itemTipsData} embedded />
       )}
     </div>
   );

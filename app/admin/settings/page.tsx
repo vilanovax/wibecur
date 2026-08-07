@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function AdminSettingsPage() {
   const session = await requireAdmin();
-  if (!hasPermission(session.user.role, 'manage_settings')) {
+  if (!hasPermission(session.user.role, 'manage_settings', session.user.adminPermissions)) {
     redirect('/admin/access-denied?from=/admin/settings&perm=manage_settings');
   }
 

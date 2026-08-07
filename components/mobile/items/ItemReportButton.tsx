@@ -29,7 +29,7 @@ export default function ItemReportButton({ itemId }: ItemReportButtonProps) {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-all hover:border-red-300 hover:bg-red-50"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-colors hover:border-red-300 hover:bg-red-50"
         aria-label="گزارش آیتم"
         title="گزارش آیتم"
       >

@@ -1,85 +1,98 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft } from 'lucide-react';
-import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 import ExploreSmartHero from './ExploreSmartHero';
-import GuidedDiscoverySheet from './GuidedDiscoverySheet';
-import type { GuidedScenario } from '@/lib/discovery/guided-intent';
-import TrendingNowSection from './TrendingNowSection';
-import RisingListsSection from './RisingListsSection';
-import ForYouSection from './ForYouSection';
-import CategoryDiscoverySection from './CategoryDiscoverySection';
-import CuratedGrid from './CuratedGrid';
-import ExploreBottomCTA from './ExploreBottomCTA';
-import ExploreSearchResults from './ExploreSearchResults';
-import ExploreSectionTitle from './ExploreSectionTitle';
+import QuickNowSection from './QuickNowSection';
 import { ExplorePageSkeleton } from './ExplorePageSkeleton';
-import { MOCK_CATEGORIES, getMockLists } from '@/lib/curated/mock-data';
+import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
+import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
+import {
+  CreateListFormLazy,
+  GuidedDiscoverySheetLazy,
+  SearchResultsPanelLazy,
+  RandomSurpriseCardLazy,
+  TrendingNowSectionLazy,
+  CategoryDiscoverySectionLazy,
+  ForYouSectionLazy,
+} from './explore-lazy-sections';
+import {
+  ExploreCategorySectionSkeleton,
+  ExploreForYouSectionSkeleton,
+  ExploreSurpriseSectionSkeleton,
+  ExploreTrendingSectionSkeleton,
+} from './explore-section-skeletons';
+import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
+import { SEARCH_MIN_LENGTH } from '@/lib/list-search';
 import { buildExploreSections } from '@/lib/curated/explore-sections';
-import type { ExplorePayload } from '@/lib/curated/explore-data';
+import type { ExplorePayload, ExploreUserPreferences } from '@/lib/curated/explore-data';
+import {
+  moodCardToSelection,
+  type MoodExplorerCard,
+  type MoodExplorerSelection,
+} from '@/lib/discovery/mood-explorer-config';
+import { trackMoodExplorerClick } from '@/lib/analytics';
+import { useLazyInView } from '@/hooks/useLazyInView';
 
-const SECTION_IDS: Record<string, string> = {
-  trending: 'trending',
-  foryou: 'foryou',
-  rising: 'rising',
-  categories: 'categories',
-  more: 'more',
-};
-
-async function fetchExplore(): Promise<ExplorePayload> {
-  const res = await fetch('/api/explore');
+async function fetchExploreBase(): Promise<ExplorePayload> {
+  const res = await fetch('/api/explore/base');
   const json = await res.json();
   if (!json.success) throw new Error(json.error ?? 'خطا در دریافت اکسپلور');
   return json.data as ExplorePayload;
 }
 
+async function fetchExplorePreferences(): Promise<ExploreUserPreferences> {
+  const res = await fetch('/api/explore/preferences');
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error ?? 'خطا در دریافت ترجیحات');
+  return json.data as ExploreUserPreferences;
+}
+
 export default function CuratedLandingPageClient({
   initialData,
+  trendingSlot,
+  categoriesSlot,
 }: {
   initialData?: ExplorePayload;
+  trendingSlot?: ReactNode;
+  categoriesSlot?: ReactNode;
 }) {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState('');
+  const searchEnabled = searchQuery.trim().length >= SEARCH_MIN_LENGTH;
+  const search = useUnifiedSearchQuery(searchQuery, { enabled: searchEnabled });
+  const isSearchActive = search.isActive;
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
-  const [guidedScenario, setGuidedScenario] = useState<GuidedScenario | null>(null);
+  const [moodSelection, setMoodSelection] = useState<MoodExplorerSelection | null>(null);
   const [guidedOpen, setGuidedOpen] = useState(false);
+  const { ref: forYouRef, inView: forYouInView } = useLazyInView<HTMLDivElement>({
+    rootMargin: '320px',
+    once: true,
+  });
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['explore'],
-    queryFn: fetchExplore,
+    queryKey: ['explore-base'],
+    queryFn: fetchExploreBase,
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    // داده‌ی SSR — از first paint بدون skeleton و بدون round-trip اضافه استفاده می‌شود
     initialData,
   });
 
-  /** فقط در خطای API — خالی بودن دادهٔ واقعی نباید mock با دستهٔ کتاب نشان دهد */
-  const usingMockFallback = isError;
+  const isLoggedIn = Boolean(session?.user?.id);
+  const { data: userPrefs, isLoading: prefsLoading } = useQuery({
+    queryKey: ['explore-preferences'],
+    queryFn: fetchExplorePreferences,
+    enabled: isLoggedIn && forYouInView,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
 
-  const allLists = useMemo(() => {
-    if (data?.lists?.length) return data.lists;
-    if (!isLoading) {
-      const mockCats = MOCK_CATEGORIES.filter((c) => c.id !== 'all');
-      return getMockLists().map((list) => {
-        const cat = mockCats.find((c) => c.id === list.categoryId);
-        if (!cat) return list;
-        return {
-          ...list,
-          category: { name: cat.title, icon: cat.icon, slug: cat.slug ?? null },
-        };
-      });
-    }
-    return [];
-  }, [data?.lists, isLoading]);
-
-  const categories = useMemo(() => {
-    if (data?.categories?.length) return data.categories;
-    return MOCK_CATEGORIES;
-  }, [data?.categories]);
+  const allLists = useMemo(() => data?.lists ?? [], [data?.lists]);
+  const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
 
   const activeCategoryIds = useMemo(
     () => categories.filter((c) => c.id !== 'all').map((c) => c.id),
@@ -88,33 +101,33 @@ export default function CuratedLandingPageClient({
 
   const sections = useMemo(
     () =>
-      buildExploreSections(allLists, searchQuery, {
-        preferredCategoryIds: usingMockFallback ? undefined : data?.preferredCategoryIds,
+      buildExploreSections(allLists, '', {
+        preferredKeywordIds: userPrefs?.preferredKeywordIds,
+        preferredCategoryIds: userPrefs?.preferredCategoryIds,
         activeCategoryIds,
-        excludeListIds: usingMockFallback ? undefined : data?.bookmarkedListIds,
+        excludeListIds: userPrefs?.bookmarkedListIds,
       }),
     [
       allLists,
-      searchQuery,
-      data?.preferredCategoryIds,
-      data?.bookmarkedListIds,
-      usingMockFallback,
+      userPrefs?.preferredKeywordIds,
+      userPrefs?.preferredCategoryIds,
+      userPrefs?.bookmarkedListIds,
       activeCategoryIds,
     ]
   );
 
-  const handleGuidedScenarioSelect = useCallback((scenario: GuidedScenario) => {
-    setGuidedScenario(scenario);
+  const openMoodSelection = useCallback((selection: MoodExplorerSelection, source: 'card' | 'quick_now') => {
+    trackMoodExplorerClick(selection.moodId, source);
+    setMoodSelection(selection);
     setGuidedOpen(true);
   }, []);
 
-  const handleModeScroll = useCallback((id: string) => {
-    const sectionId = SECTION_IDS[id] ?? id;
-    const el = document.getElementById(sectionId);
-    if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 120;
-    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-  }, []);
+  const handleMoodCardSelect = useCallback(
+    (card: MoodExplorerCard) => {
+      openMoodSelection(moodCardToSelection(card), 'card');
+    },
+    [openMoodSelection]
+  );
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -125,7 +138,7 @@ export default function CuratedLandingPageClient({
     if (searchParams.get('openCreate') === '1') {
       setIsCreateFormOpen(true);
       if (typeof window !== 'undefined') {
-        window.history.replaceState({}, '', '/user-lists');
+        window.history.replaceState({}, '', '/explore');
       }
     }
   }, [searchParams]);
@@ -134,48 +147,99 @@ export default function CuratedLandingPageClient({
     return <ExplorePageSkeleton />;
   }
 
-  const showDiscovery = !sections.isSearching;
+  const showDiscovery = !isSearchActive;
+  const showPersonalizedForYou = isLoggedIn && Boolean(userPrefs);
+  const forYouPending = isLoggedIn && forYouInView && prefsLoading && !userPrefs;
 
   return (
     <div className="bg-wibe-surface">
       <ExploreSmartHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onModeScroll={handleModeScroll}
-        onGuidedScenarioSelect={showDiscovery ? handleGuidedScenarioSelect : undefined}
+        onMoodSelect={showDiscovery ? handleMoodCardSelect : undefined}
+        showMoodExplorer={showDiscovery}
       />
 
       <main className="space-y-0">
-        {sections.isSearching ? (
-          <ExploreSearchResults lists={sections.filtered} query={searchQuery.trim()} />
+        {isError && !data?.lists?.length ? (
+          <div className="px-2.5 py-6 text-center">
+            <p className="wibe-body text-wibe-secondary">بارگذاری اکسپلور ناموفق بود</p>
+            <p className="mt-1 wibe-caption text-wibe-secondary/80">
+              اتصال را چک کن و صفحه را دوباره باز کن
+            </p>
+          </div>
+        ) : null}
+
+        {isSearchActive ? (
+          <div className="px-2.5 py-4 lg:px-0 lg:py-5">
+            {search.loading && !search.hasResults ? (
+              <SearchResultSkeleton rows={5} />
+            ) : !search.loading &&
+              !search.hasResults &&
+              !(search.viewTab === 'lists' && search.loadingMore) ? (
+              <div className="py-10 text-center">
+                <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
+                <p className="mt-1 wibe-caption text-wibe-secondary">
+                  عبارت دیگری امتحان کن یا از کلمات کلیدی ژانر استفاده کن
+                </p>
+              </div>
+            ) : (
+              <SearchResultsPanelLazy
+                query={search.normalized}
+                queryIntent={search.queryIntent}
+                directItems={search.directItems}
+                indirectItems={search.indirectItems}
+                topPicks={search.topPicks}
+                subThemes={search.subThemes}
+                similarItems={search.similarItems}
+                lists={search.lists}
+                totals={search.totals}
+                hasMore={search.hasMore}
+                viewTab={search.viewTab}
+                onTabChange={search.setViewTab}
+                onSubThemeClick={setSearchQuery}
+                loadingMore={search.viewTab === 'lists' && search.loadingMore}
+                highlightQuery={search.normalized}
+              />
+            )}
+          </div>
         ) : (
           <>
-            <CategoryDiscoverySection categories={categories} />
-            {sections.trending.length > 0 && <TrendingNowSection lists={sections.trending} />}
-            {sections.forYou.length > 0 && (
-              <ForYouSection lists={sections.forYou} personalized={sections.isPersonalized} />
-            )}
-            {sections.rising.length > 0 && <RisingListsSection lists={sections.rising} />}
+            <div className="hidden lg:block">
+              <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
+            </div>
 
-            {sections.more.length > 0 && (
-              <section className="border-t border-wibe/60 px-2.5 py-4 lg:px-0 lg:py-5" id="more">
-                <ExploreSectionTitle
-                  title="بیشتر ببین"
-                  subtitle="لیست‌های کیوریت‌شده"
-                  icon="✨"
-                />
-                <CuratedGrid lists={sections.more} showSponsoredAfter={99} />
-                {sections.moreTotal > sections.more.length && (
-                  <Link
-                    href="/lists"
-                    className="mt-3 flex items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card py-2.5 wibe-small font-semibold text-primary transition-colors active:scale-[0.99] lg:mx-auto lg:max-w-sm lg:hover:bg-primary/5"
-                  >
-                    مشاهده همه ({sections.moreTotal.toLocaleString('fa-IR')} لیست)
-                    <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden />
-                  </Link>
-                )}
-              </section>
+            <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
+              <RandomSurpriseCardLazy lists={sections.trending} />
+            </HomeDeferredMount>
+
+            {trendingSlot ??
+              (sections.trending.length > 0 ? (
+                <HomeDeferredMount fallback={<ExploreTrendingSectionSkeleton />}>
+                  <TrendingNowSectionLazy
+                    lists={sections.trending}
+                    subtitle="محبوب‌ترین‌ها همین الان"
+                  />
+                </HomeDeferredMount>
+              ) : null)}
+
+            {categoriesSlot ?? (
+              <HomeDeferredMount fallback={<ExploreCategorySectionSkeleton />}>
+                <CategoryDiscoverySectionLazy categories={categories} />
+              </HomeDeferredMount>
             )}
+
+            <div ref={forYouRef} className="min-h-[1px]">
+              {forYouPending || !forYouInView ? (
+                <ExploreForYouSectionSkeleton />
+              ) : sections.forYou.length > 0 ? (
+                <ForYouSectionLazy
+                  lists={sections.forYou}
+                  personalized={showPersonalizedForYou && sections.isPersonalized}
+                  diverseCategories={sections.diverseCategories}
+                />
+              ) : null}
+            </div>
 
             {sections.filtered.length === 0 && (
               <div className="px-2.5 py-12 text-center">
@@ -193,23 +257,25 @@ export default function CuratedLandingPageClient({
             )}
           </>
         )}
-
-        {showDiscovery && <ExploreBottomCTA onOpenCreate={() => setIsCreateFormOpen(true)} />}
       </main>
 
-      <CreateListForm
-        isOpen={isCreateFormOpen}
-        onClose={() => setIsCreateFormOpen(false)}
-      />
+      {isCreateFormOpen && (
+        <CreateListFormLazy
+          isOpen={isCreateFormOpen}
+          onClose={() => setIsCreateFormOpen(false)}
+        />
+      )}
 
-      <GuidedDiscoverySheet
-        scenario={guidedScenario}
-        isOpen={guidedOpen}
-        onClose={() => {
-          setGuidedOpen(false);
-          setGuidedScenario(null);
-        }}
-      />
+      {guidedOpen && (
+        <GuidedDiscoverySheetLazy
+          selection={moodSelection}
+          isOpen={guidedOpen}
+          onClose={() => {
+            setGuidedOpen(false);
+            setMoodSelection(null);
+          }}
+        />
+      )}
     </div>
   );
 }

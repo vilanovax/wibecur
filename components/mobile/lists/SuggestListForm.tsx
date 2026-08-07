@@ -181,7 +181,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
     <>
       <BottomSheet isOpen={isOpen} onClose={onClose} title="پیشنهاد لیست">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-4">
             {/* Error Message */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -200,7 +200,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
                 placeholder="عنوان لیست را وارد کنید"
               />
             </div>
@@ -225,7 +225,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                 onChange={handleChange}
                 rows={4}
                 maxLength={MAX_DESCRIPTION_LENGTH}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none resize-none"
                 placeholder="توضیحات لیست (حداکثر 300 کاراکتر)"
               />
             </div>
@@ -245,7 +245,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                   value={formData.categoryId}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
                 >
                   <option value="">یک دسته‌بندی انتخاب کنید</option>
                   {categories.map((category) => (

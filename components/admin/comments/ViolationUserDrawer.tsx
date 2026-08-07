@@ -135,7 +135,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
           )}
 
           {error && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-900/20 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
               {error}
             </div>
           )}
@@ -158,7 +158,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <CommentRestrictionStatusBadge status={status} />
-                    <span className="rounded-lg bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-800 tabular-nums">
+                    <span className="rounded-lg bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 text-xs font-bold text-orange-800 dark:text-orange-300 tabular-nums">
                       امتیاز منفی: {detail.totalPenaltyScore.toLocaleString('fa-IR')}
                     </span>
                     <span className="text-xs text-[var(--color-text-muted)]">
@@ -195,7 +195,23 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
+                {(status === 'restricted' || status === 'banned') && (
+                  <button
+                    type="button"
+                    disabled={actionLoading != null}
+                    onClick={() => runAction('unrestrict')}
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {actionLoading === 'unrestrict' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="h-4 w-4" />
+                    )}
+                    رفع محدودیت کامنت
+                  </button>
+                )}
+                <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={actionLoading != null}
@@ -222,6 +238,8 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                   )}
                   مسدود کامل
                 </button>
+                </div>
+                {(status === 'restricted' || status === 'banned') ? null : (
                 <button
                   type="button"
                   disabled={actionLoading != null}
@@ -235,6 +253,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                   )}
                   رفع محدودیت
                 </button>
+                )}
               </div>
 
               <section>
@@ -251,7 +270,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                         className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg)] px-3 py-2 text-xs"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-rose-700 tabular-nums">
+                          <span className="font-bold text-rose-700 dark:text-rose-300 tabular-nums">
                             -{p.penaltyScore}
                           </span>
                           <span className="text-[var(--color-text-muted)]">{p.action}</span>

@@ -4,9 +4,14 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Bookmark } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useDeferReady } from '@/hooks/useDeferReady';
+import {
+  invalidateItemViewerState,
+  useItemViewerState,
+} from '@/hooks/useItemViewerState';
 
 const SaveToPersonalListModal = dynamic(() => import('./SaveToPersonalListModal'), { ssr: false });
 
@@ -14,47 +19,33 @@ interface ItemSaveButtonProps {
   itemId: string;
   /** hero = روی پس‌زمینه تیره hero */
   variant?: 'default' | 'hero';
+  /** Defer viewer-state fetch until idle (modal preview). */
+  deferViewerState?: boolean;
 }
 
-interface SavedStatus {
-  savedInPrivateList: boolean;
-  savedInPublicList: boolean;
-  lists: Array<{
-    id: string;
-    title: string;
-    isPublic: boolean;
-  }>;
-}
-
-const EMPTY_SAVED_STATUS: SavedStatus = {
-  savedInPrivateList: false,
-  savedInPublicList: false,
-  lists: [],
-};
-
-export default function ItemSaveButton({ itemId, variant = 'default' }: ItemSaveButtonProps) {
+export default function ItemSaveButton({
+  itemId,
+  variant = 'default',
+  deferViewerState = false,
+}: ItemSaveButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const deferReady = useDeferReady(deferViewerState);
 
-  // وضعیت ذخیره با react-query کش می‌شود تا ناوبری بین آیتم‌ها درخواست تکراری نزند.
-  const { data: savedStatus = EMPTY_SAVED_STATUS } = useQuery<SavedStatus>({
-    queryKey: ['item-saved-status', itemId],
-    queryFn: async () => {
-      const res = await fetch(`/api/items/${itemId}/saved-status`);
-      if (!res.ok) throw new Error('saved-status fetch failed');
-      return (await res.json()) as SavedStatus;
-    },
-    enabled: status === 'authenticated' && !!session?.user,
-    staleTime: 60 * 1000,
-    retry: false,
+  const { data: viewerState, isLoading: viewerLoading } = useItemViewerState(itemId, {
+    enabled: deferReady && status === 'authenticated' && !!session?.user,
   });
+  const savedStatus = viewerState?.saved ?? {
+    savedInPrivateList: false,
+    savedInPublicList: false,
+    lists: [],
+  };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    // پس از تغییرِ احتمالی در مودال، وضعیت تازه‌سازی شود.
-    queryClient.invalidateQueries({ queryKey: ['item-saved-status', itemId] });
+    invalidateItemViewerState(queryClient, itemId);
   };
 
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;
@@ -64,7 +55,7 @@ export default function ItemSaveButton({ itemId, variant = 'default' }: ItemSave
     return (
       <Link
         href={loginHref}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-all ${
+        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
           isHero
             ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
             : 'bg-white border-2 border-gray-300 hover:border-primary hover:bg-primary/5'
@@ -77,7 +68,7 @@ export default function ItemSaveButton({ itemId, variant = 'default' }: ItemSave
     );
   }
 
-  if (status === 'loading') {
+  if (status === 'loading' || (status === 'authenticated' && deferReady && viewerLoading)) {
     return (
       <div
         className={`w-10 h-10 rounded-full animate-pulse ${isHero ? 'bg-white/20' : 'bg-gray-200'}`}
@@ -99,7 +90,7 @@ export default function ItemSaveButton({ itemId, variant = 'default' }: ItemSave
           e.stopPropagation();
           setIsModalOpen(true);
         }}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-all ${
+        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
           isSaved
             ? isPrivate
               ? 'bg-gray-900 border-2 border-gray-900 hover:bg-black shadow-md'
@@ -117,7 +108,7 @@ export default function ItemSaveButton({ itemId, variant = 'default' }: ItemSave
         }
       >
         <Bookmark
-          className={`w-5 h-5 transition-all ${
+          className={`w-5 h-5 transition-colors ${
             isSaved ? 'text-white fill-white' : isHero ? 'text-white' : 'text-gray-600'
           }`}
         />

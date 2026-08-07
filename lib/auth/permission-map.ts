@@ -1,6 +1,5 @@
 /**
- * نقش → مجموعهٔ دسترسی‌ها
- * فقط رول‌های ادمین اینجا تعریف می‌شوند.
+ * permission-map.ts — به‌روزرسانی نقش‌ها
  */
 
 import type { AdminRole } from './roles';
@@ -16,6 +15,9 @@ const SUPER_ADMIN: Permission[] = [
   'soft_delete_list',
   'manage_categories',
   'set_category_weight',
+  'manage_suggestions',
+  'edit_item_metadata',
+  'edit_list_media',
   'manage_users',
   'suspend_user',
   'shadow_ban_user',
@@ -40,12 +42,16 @@ const ADMIN: Permission[] = [
   'soft_delete_list',
   'manage_categories',
   'set_category_weight',
+  'manage_suggestions',
+  'edit_item_metadata',
+  'edit_list_media',
   'manage_users',
   'suspend_user',
   'shadow_ban_user',
   'moderate_comments',
   'view_reports',
   'resolve_reports',
+  'manage_roles',
   'view_audit',
   'view_moderation',
   'assign_moderation',
@@ -59,6 +65,8 @@ const MODERATOR: Permission[] = [
   'moderate_comments',
   'view_reports',
   'resolve_reports',
+  'manage_users',
+  'suspend_user',
   'view_audit',
   'view_moderation',
   'assign_moderation',
@@ -80,11 +88,12 @@ const EDITOR: Permission[] = [
   'view_pulse',
   'manage_lists',
   'manage_categories',
+  'manage_suggestions',
+  'edit_item_metadata',
+  'edit_list_media',
+  'soft_delete_list',
 ];
 
-/**
- * ماتریس نقش → دسترسی‌ها (ثابت در کد، منبع حقیقت)
- */
 export const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
   SUPER_ADMIN,
   ADMIN,
@@ -106,4 +115,14 @@ function getSet(role: AdminRole): Set<Permission> {
 
 export function getPermissionsForRole(role: AdminRole): Set<Permission> {
   return getSet(role);
+}
+
+export function resolveEffectivePermissions(
+  role: AdminRole,
+  customPermissions?: Permission[] | null
+): Permission[] {
+  if (customPermissions && customPermissions.length > 0) {
+    return [...new Set(customPermissions)];
+  }
+  return [...(ROLE_PERMISSIONS[role] ?? [])];
 }

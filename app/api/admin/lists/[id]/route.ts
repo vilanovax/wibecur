@@ -7,6 +7,7 @@ import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalList } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
+import { revalidateListDetailCache, revalidateCategoryCache } from '@/lib/public-cache';
 
 export async function PUT(
   request: NextRequest,
@@ -106,6 +107,11 @@ export async function PUT(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    // صفحهٔ لیست (slug جدید و قدیمی) و دستهٔ مربوطه را فوراً تازه کن.
+    revalidateListDetailCache(existingList.slug);
+    revalidateListDetailCache(list.slug);
+    revalidateCategoryCache(existingList.categoryId);
+    revalidateCategoryCache(list.categoryId);
     return NextResponse.json(list);
   } catch (error: any) {
     console.error('Error updating list:', error);
@@ -116,7 +122,7 @@ export async function PUT(
   }
 }
 
-/** PATCH: فقط به‌روزرسانی isFeatured / isActive برای پنل ادمین */
+/** PATCH: به‌روزرسانی سریع isFeatured / isActive / description برای پنل ادمین */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -126,16 +132,19 @@ export async function PATCH(
     if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
     const body = await request.json();
-    const { isFeatured, isActive } = body;
+    const { isFeatured, isActive, description } = body;
 
     const existing = await prisma.lists.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: 'لیست یافت نشد' }, { status: 404 });
     }
 
-    const data: { isFeatured?: boolean; isActive?: boolean } = {};
+    const data: { isFeatured?: boolean; isActive?: boolean; description?: string | null } = {};
     if (typeof isFeatured === 'boolean') data.isFeatured = isFeatured;
     if (typeof isActive === 'boolean') data.isActive = isActive;
+    if (description === null || typeof description === 'string') {
+      data.description = description === null ? null : description.trim() || null;
+    }
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json(existing);
@@ -161,6 +170,8 @@ export async function PATCH(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateListDetailCache(existing.slug);
+    revalidateCategoryCache(existing.categoryId);
     return NextResponse.json(list);
   } catch (error: any) {
     console.error('Error PATCH list:', error);
@@ -216,6 +227,8 @@ export async function DELETE(
     });
 
     revalidateAdminListsAndCategoriesCache();
+    revalidateListDetailCache(existingList.slug);
+    revalidateCategoryCache(existingList.categoryId);
     return NextResponse.json({ success: true, message: 'به زباله‌دان منتقل شد' });
   } catch (error: any) {
     console.error('Error soft-deleting list:', error);

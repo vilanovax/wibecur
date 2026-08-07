@@ -3,10 +3,10 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import ListsPageClient from './ListsPageClient';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { withResolvedListCovers } from '@/lib/resolve-list-cover';
-import { activeCategoryWhere, publicCuratedListWhere } from '@/lib/public-content-filters';
+import { activeCategoryWhere } from '@/lib/public-content-filters';
+import { fetchListsBrowse, LISTS_SSR_LIMIT } from '@/lib/lists-browse';
 
-export const revalidate = 60; // ISR: به‌روزرسانی هر ۶۰ ثانیه
+export const revalidate = 60;
 
 export const metadata = {
   title: 'لیست‌ها | WibeCur',
@@ -24,65 +24,46 @@ function isDbError(e: unknown): boolean {
   );
 }
 
-const listsQuery = () =>
-  dbQuery(() =>
-    prisma.lists.findMany({
-      where: publicCuratedListWhere,
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        description: true,
-        coverImage: true,
-        horizontalImage: true,
-        categoryId: true,
-        badge: true,
-        isPublic: true,
-        isFeatured: true,
-        isActive: true,
-        viewCount: true,
-        likeCount: true,
-        saveCount: true,
-        itemCount: true,
-        createdAt: true,
-        updatedAt: true,
-        categories: true,
-        users: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-            role: true,
-          },
-        },
-        _count: {
-          select: { items: true, list_likes: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-  );
-
 export default async function ListsPage({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string; tag?: string; q?: string; mode?: string }>;
 }) {
   const params = await searchParams;
-  let lists: Awaited<ReturnType<typeof listsQuery>> = [];
-  let categories: Awaited<ReturnType<typeof prisma.categories.findMany>> = [];
+  let lists: Awaited<ReturnType<typeof fetchListsBrowse>>['lists'] = [];
+  let totalListCount = 0;
+  let categories: {
+    id: string;
+    name: string;
+    slug: string | null;
+    icon: string | null;
+    color: string | null;
+    order: number | null;
+    isActive: boolean;
+  }[] = [];
 
   try {
-    [lists, categories] = await Promise.all([
-      listsQuery(),
+    const [browseResult, categoryRows] = await Promise.all([
+      fetchListsBrowse({ offset: 0, limit: LISTS_SSR_LIMIT, sort: 'newest' }),
       dbQuery(() =>
         prisma.categories.findMany({
           where: activeCategoryWhere,
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+            color: true,
+            order: true,
+            isActive: true,
+          },
           orderBy: { order: 'asc' },
         })
       ),
     ]);
+    lists = browseResult.lists;
+    totalListCount = browseResult.pagination.total;
+    categories = categoryRows;
   } catch (e) {
     if (isDbError(e) || process.env.NODE_ENV === 'development') {
       console.warn('Lists page: DB unavailable, showing empty:', (e as Error)?.message);
@@ -92,12 +73,13 @@ export default async function ListsPage({
   }
 
   return (
-    <div className="flex flex-col lg:bg-transparent">
+    <div className="flex min-h-screen flex-col bg-wibe-card">
       <Header title="لیست‌ها" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
       <main className="min-w-0 flex-1 pt-2 lg:pt-0">
-        <ListsPageClient 
-          lists={JSON.parse(JSON.stringify(withResolvedListCovers(lists)))} 
-          categories={JSON.parse(JSON.stringify(categories))} 
+        <ListsPageClient
+          lists={lists}
+          totalListCount={totalListCount}
+          categories={categories}
           initialCategory={params.category}
           initialSearch={params.q || params.tag}
           initialMode={params.mode}
@@ -107,4 +89,3 @@ export default async function ListsPage({
     </div>
   );
 }
-

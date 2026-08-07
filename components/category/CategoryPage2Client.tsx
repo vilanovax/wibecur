@@ -1,26 +1,42 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useInterestTracking } from '@/hooks/useInterestTracking';
 import type { CategoryPageData } from '@/types/category-page';
 import {
   CATEGORY_PAGE_SHELL,
   isFilmCategorySlug,
   isLocationCategorySlug,
 } from '@/lib/category-layout';
-import CategoryStandardHero from './CategoryStandardHero';
-import TrendingListsSection from './TrendingListsSection';
-import ViralSpotlightSection from './ViralSpotlightSection';
-import NewListsSection from './NewListsSection';
-import CategoryCreateCTA from './CategoryCreateCTA';
+import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
-import { ExploreByCityPills, MostSavedItemsCafe, SectionReveal } from './hub';
-import { GenreScrollBar } from './film';
+import { SectionReveal } from './hub';
+import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
+import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
+import { CategorySectionSkeleton } from './category-section-skeletons';
+import {
+  TrendingListsSectionLazy,
+  ViralSpotlightSectionLazy,
+  NewListsSectionLazy,
+  ExploreByCityPillsLazy,
+  MostSavedItemsCafeLazy,
+  LatestItemsSectionLazy,
+  GenreScrollBarLazy,
+} from './category-lazy-sections';
 
 interface CategoryPage2ClientProps {
   slug: string;
   initialData?: CategoryPageData | null;
+  sponsoredPlacements?: SponsoredPlacementPublic[];
+  heroSection?: ReactNode;
+  trendingSection?: ReactNode;
+  newListsSection?: ReactNode;
+  viralSpotlightSection?: ReactNode;
+  mostSavedItemsSection?: ReactNode;
+  latestItemsSection?: ReactNode;
 }
 
 async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
@@ -30,14 +46,30 @@ async function fetchCategoryPageData(slug: string): Promise<CategoryPageData> {
   return json.data;
 }
 
-export default function CategoryPage2Client({ slug, initialData = null }: CategoryPage2ClientProps) {
-  const { data, isLoading, error } = useQuery({
+export default function CategoryPage2Client({
+  slug,
+  initialData = null,
+  sponsoredPlacements = [],
+  heroSection = null,
+  trendingSection = null,
+  newListsSection = null,
+  viralSpotlightSection = null,
+  mostSavedItemsSection = null,
+  latestItemsSection = null,
+}: CategoryPage2ClientProps) {
+  useInterestTracking({ type: 'category_view', categorySlug: slug });
+
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ['category-page', slug],
     queryFn: () => fetchCategoryPageData(slug),
     enabled: !!slug,
     initialData: initialData ?? undefined,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
     staleTime: 3 * 60 * 1000,
+    refetchOnMount: initialData ? false : undefined,
   });
+
+  const isRefetching = isFetching && !isLoading && !!data;
 
   if (isLoading && !data) {
     return (
@@ -65,23 +97,54 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
 
   const {
     category,
-    metrics,
     trendingLists,
     viralSpotlight,
     newLists,
     cityBreakdown = [],
     filmGenres = [],
     mostSavedItems = [],
+    latestItems = [],
   } = data;
 
   const accentColor = category.accentColor || category.color;
   const cityCounts = Object.fromEntries(cityBreakdown.map((c) => [c.city, c.listCount]));
   const showCityExplorer =
-    isLocationCategorySlug(category.slug) || cityBreakdown.some((c) => c.listCount > 0);
+    !isLocationCategorySlug(category.slug) &&
+    cityBreakdown.some((c) => c.listCount > 0);
   const showGenreBar = isFilmCategorySlug(category.slug);
 
   const featuredSpotlight =
     viralSpotlight && viralSpotlight.id !== trendingLists[0]?.id ? viralSpotlight : null;
+
+  const trendingTitle = 'داغ‌ترین‌ها';
+  const trendingClient = (
+    <TrendingListsSectionLazy
+      inset
+      title={trendingTitle}
+      lists={trendingLists}
+      categoryName={category.name}
+      categorySlug={category.slug}
+      accentColor={accentColor}
+    />
+  );
+
+  const newListsClient = (
+    <NewListsSectionLazy inset lists={newLists} categoryName={category.name} />
+  );
+
+  const viralSpotlightClient = featuredSpotlight ? (
+    <ViralSpotlightSectionLazy list={featuredSpotlight} accentColor={accentColor} inset />
+  ) : null;
+
+  const mostSavedItemsClient =
+    mostSavedItems.length > 0 ? (
+      <MostSavedItemsCafeLazy items={mostSavedItems} accentColor={accentColor} inset />
+    ) : null;
+
+  const latestItemsClient =
+    latestItems.length > 0 ? (
+      <LatestItemsSectionLazy items={latestItems} accentColor={accentColor} inset />
+    ) : null;
 
   const breadcrumbItems = [
     { label: 'خانه', href: '/' },
@@ -95,56 +158,68 @@ export default function CategoryPage2Client({ slug, initialData = null }: Catego
         <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
         <PageBreadcrumb className="mb-2 mt-3 lg:mb-3" items={breadcrumbItems} />
 
-        <CategoryStandardHero category={category} metrics={metrics} />
+        {heroSection}
+
+        {sponsoredPlacements.length > 0 ? (
+          <SponsoredPlacementStack placements={sponsoredPlacements} categoryId={category.id} />
+        ) : null}
 
         {showGenreBar && (
           <SectionReveal>
-            <GenreScrollBar categorySlug={category.slug} genres={filmGenres} inset />
+            <GenreScrollBarLazy categorySlug={category.slug} genres={filmGenres} inset />
           </SectionReveal>
         )}
 
         <SectionReveal>
-          <TrendingListsSection
-            inset
-            title={`داغ‌ترین لیست‌های هفته در ${category.name}`}
-            subtitle="بر اساس ذخیره و engagement"
-            lists={trendingLists}
-            categoryName={category.name}
-            categorySlug={category.slug}
-            accentColor={accentColor}
-          />
+          {isRefetching || !trendingSection ? trendingClient : trendingSection}
         </SectionReveal>
 
-        {featuredSpotlight && (
-          <SectionReveal>
-            <ViralSpotlightSection list={featuredSpotlight} accentColor={accentColor} inset />
+        {(featuredSpotlight || viralSpotlightSection) && (
+          <SectionReveal defer>
+            <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
+              {isRefetching || !viralSpotlightSection
+                ? viralSpotlightClient
+                : viralSpotlightSection}
+            </HomeDeferredMount>
           </SectionReveal>
         )}
 
         {showCityExplorer && (
-          <SectionReveal>
-            <ExploreByCityPills
-              inset
-              categorySlug={category.slug}
-              cityCounts={cityCounts}
-              accentColor={accentColor}
-            />
+          <SectionReveal defer>
+            <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
+              <ExploreByCityPillsLazy
+                inset
+                categorySlug={category.slug}
+                cityCounts={cityCounts}
+                accentColor={accentColor}
+              />
+            </HomeDeferredMount>
           </SectionReveal>
         )}
 
-        <SectionReveal>
-          <NewListsSection inset lists={newLists} categoryName={category.name} />
+        <SectionReveal defer>
+          <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
+            {isRefetching || !newListsSection ? newListsClient : newListsSection}
+          </HomeDeferredMount>
         </SectionReveal>
 
-        {mostSavedItems.length > 0 && (
-          <SectionReveal>
-            <MostSavedItemsCafe items={mostSavedItems} accentColor={accentColor} inset />
+        {(mostSavedItemsSection || mostSavedItems.length > 0) && (
+          <SectionReveal defer>
+            <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
+              {isRefetching || !mostSavedItemsSection
+                ? mostSavedItemsClient
+                : mostSavedItemsSection}
+            </HomeDeferredMount>
           </SectionReveal>
         )}
 
-        <SectionReveal>
-          <CategoryCreateCTA categorySlug={category.slug} categoryName={category.name} />
-        </SectionReveal>
+        {(latestItemsSection || latestItems.length > 0) && (
+          <SectionReveal defer>
+            <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
+              {isRefetching || !latestItemsSection ? latestItemsClient : latestItemsSection}
+            </HomeDeferredMount>
+          </SectionReveal>
+        )}
       </div>
     </main>
   );
