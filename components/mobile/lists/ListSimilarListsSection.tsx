@@ -17,30 +17,39 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
     slug: rel.slug,
     categorySlug: rel.categories?.slug,
   });
-
   return (
     <Link
       href={`/lists/${rel.slug}`}
-      className="w-[calc(55vw)] max-w-[220px] shrink-0 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-[colors,transform] active:scale-[0.99] lg:w-full lg:max-w-none lg:hover:border-primary/20 lg:hover:shadow-md"
+      className="w-[calc(58vw)] max-w-[230px] shrink-0 overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90 transition-[colors,transform,box-shadow] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.99] lg:w-full lg:max-w-none lg:hover:shadow-md lg:hover:ring-primary/25"
     >
-      <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10] lg:max-h-[7.25rem]">
+      <div className="relative aspect-[16/10] bg-wibe-surface lg:max-h-[7.5rem]">
         <ImageWithFallback
           src={rel.coverImage ?? ''}
           alt={title}
           className="h-full w-full object-cover"
           fallbackIcon={rel.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
           categorySlug={rel.categories?.slug}
           listSlug={rel.slug}
           listTitle={rel.title}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-2 text-right lg:p-2.5">
-          <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:hidden">{title}</h3>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        {rel.categories?.name ? (
+          <span className="absolute start-2 top-2 inline-flex max-w-[85%] truncate rounded-full bg-black/45 px-2 py-0.5 wibe-caption font-medium text-white/95 backdrop-blur-sm">
+            {rel.categories.icon ? `${rel.categories.icon} ` : ''}
+            {rel.categories.name}
+          </span>
+        ) : null}
       </div>
-      <div className="hidden min-w-0 p-2 lg:block">
-        <h3 className="line-clamp-2 wibe-caption font-semibold text-foreground">{title}</h3>
+      <div className="min-w-0 space-y-0.5 px-2.5 py-2.5 text-start">
+        <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-foreground">
+          {title}
+        </h3>
+        {rel.itemCount > 0 ? (
+          <p className="wibe-caption tabular-nums text-wibe-secondary">
+            {rel.itemCount.toLocaleString('fa-IR')} آیتم
+          </p>
+        ) : null}
       </div>
     </Link>
   );
@@ -72,13 +81,16 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
       <section
         ref={ref}
         id="list-similar-section"
-        className={`${LIST_SECTION_SCROLL_MT} mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
+        className={`${LIST_SECTION_SCROLL_MT} mt-2 border-t border-wibe/80 pt-5 lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
         aria-hidden
       >
-        <div className="mb-3 h-6 w-36 animate-pulse rounded bg-gray-100" />
+        <div className="mb-3 h-6 w-36 animate-pulse rounded-lg bg-wibe-surface" />
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 w-[55vw] max-w-[220px] shrink-0 animate-pulse rounded-lg bg-gray-100 lg:h-32 lg:w-full" />
+            <div
+              key={i}
+              className="h-36 w-[58vw] max-w-[230px] shrink-0 animate-pulse rounded-2xl bg-wibe-surface lg:h-40 lg:w-full"
+            />
           ))}
         </div>
       </section>
@@ -90,14 +102,17 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
       <section
         ref={ref}
         id="list-similar-section"
-        className={`${LIST_SECTION_SCROLL_MT} mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
+        className={`${LIST_SECTION_SCROLL_MT} mt-2 border-t border-wibe/80 pt-5 lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
         aria-busy
         aria-label="در حال بارگذاری لیست‌های مشابه"
       >
-        <div className="mb-3 h-6 w-36 animate-pulse rounded bg-gray-100" />
+        <div className="mb-3 h-6 w-36 animate-pulse rounded-lg bg-wibe-surface" />
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 w-[55vw] max-w-[220px] shrink-0 animate-pulse rounded-lg bg-gray-100 lg:h-32 lg:w-full" />
+            <div
+              key={i}
+              className="h-36 w-[58vw] max-w-[230px] shrink-0 animate-pulse rounded-2xl bg-wibe-surface lg:h-40 lg:w-full"
+            />
           ))}
         </div>
       </section>
@@ -110,13 +125,11 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
     <section
       ref={ref}
       id="list-similar-section"
-      className={`${LIST_SECTION_SCROLL_MT} mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
+      className={`${LIST_SECTION_SCROLL_MT} mt-2 border-t border-wibe/80 pt-5 lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
     >
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <div>
-          <h3 className="wibe-h3 text-foreground">لیست‌های مشابه</h3>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">ممکنه این‌ها هم به کارت بیان</p>
-        </div>
+      <div className="mb-3.5">
+        <h3 className="wibe-h3 text-foreground">لیست‌های مشابه</h3>
+        <p className="mt-1 wibe-caption text-wibe-secondary">ممکنه این‌ها هم به کارت بیان</p>
       </div>
       <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:px-0 xl:grid-cols-5 2xl:grid-cols-6">
         {relatedLists.map((rel) => (

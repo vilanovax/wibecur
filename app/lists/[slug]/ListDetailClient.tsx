@@ -1040,7 +1040,7 @@ export default function ListDetailClient({
       <main className="relative z-10 px-4 pt-2 lg:px-0 lg:pt-3">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_19rem] xl:gap-8">
           <div className="min-w-0 space-y-4 lg:space-y-5">
-            <div className="space-y-3 lg:hidden">
+            <div className="space-y-3.5 lg:hidden">
               {isOwner ? (
                 <ListOwnerToolbar
                   viralProgress={viralProgress}
@@ -1185,9 +1185,10 @@ export default function ListDetailClient({
                 />
               ) : (
                 <div className="space-y-3" aria-hidden>
-                  <div className="h-11 animate-pulse rounded-xl bg-gray-100" />
-                  <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
-                  <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="mb-1 h-5 w-24 animate-pulse rounded-md bg-wibe-surface" />
+                  <div className="h-11 animate-pulse rounded-xl bg-wibe-surface" />
+                  <div className="h-20 animate-pulse rounded-xl bg-wibe-surface" />
+                  <div className="h-20 animate-pulse rounded-xl bg-wibe-surface" />
                 </div>
               )}
             </div>

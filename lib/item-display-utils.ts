@@ -60,6 +60,16 @@ export function getItemCardSubtitle(item: {
   }
 
   const parts: string[] = [];
+  const isBook =
+    slug.includes('book') || slug.includes('literature') || slug.includes('podcast');
+
+  // کتاب: نویسنده اول — سال/ژانر در گرید شلوغ می‌کند
+  if (isBook) {
+    const author = metaString(meta, 'author');
+    if (author) return author;
+    const genre = metaString(meta, 'genre');
+    if (genre) return genre;
+  }
 
   const year = metaYear(meta);
   if (year) parts.push(year);
