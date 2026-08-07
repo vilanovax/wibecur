@@ -309,8 +309,10 @@ function ListCardCompact({
     );
   }
 
+  const itemCount = list.itemCount ?? list._count?.items ?? 0;
+
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-colors active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg">
+    <div className="group relative overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90 transition-[transform,box-shadow] active:scale-[0.99] lg:hover:shadow-lg lg:hover:ring-primary/25">
       <Link
         href={href}
         onClick={handleSearchResultClick}
@@ -318,7 +320,7 @@ function ListCardCompact({
         aria-label={displayTitle}
       />
       {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
-      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-gray-200 max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
+      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-wibe-surface max-lg:min-h-[128px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -327,33 +329,44 @@ function ListCardCompact({
           sizes="(min-width: 1024px) 25vw, 50vw"
           className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl lg:text-4xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-3xl lg:text-4xl"
         />
         {badges.length > 0 && (
-          <div className="absolute right-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-end gap-1 lg:right-2 lg:top-2">
+          <div className="absolute end-1.5 top-1.5 flex max-w-[75%] flex-wrap justify-end gap-1 lg:end-2 lg:top-2">
             {badges.map((b) => (
               <span
                 key={b.label}
-                className={`rounded px-1.5 py-0.5 wibe-caption font-medium backdrop-blur-sm lg:px-2 lg:py-1 lg:text-xs ${b.className}`}
+                className={`inline-flex items-center rounded-md px-1.5 py-0.5 wibe-caption font-semibold backdrop-blur-sm lg:px-2 lg:py-1 ${b.className}`}
               >
+                {b.label === 'ترند' && <Flame className="ms-0.5 h-3 w-3" />}
+                {b.label === 'منتخب' && <Sparkles className="ms-0.5 h-3 w-3" />}
                 {b.label}
               </span>
             ))}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/10 transition-opacity duration-300 max-lg:via-black/60 lg:group-hover:from-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/45 to-transparent transition-opacity duration-300 lg:group-hover:from-black/88" />
         <div
-          className="absolute inset-0 hidden items-center justify-center bg-black/25 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
+          className="absolute inset-0 hidden items-center justify-center bg-black/20 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
           aria-hidden
         >
           <span className="rounded-full bg-white/95 px-4 py-2 wibe-small font-semibold text-foreground shadow-md">
             مشاهده لیست
           </span>
         </div>
-        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-right max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-11 lg:pe-12' : ''}`}>
-          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] max-lg:text-[0.8125rem] lg:text-base lg:font-bold">
+        <div
+          className={`absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3 ${
+            showBookmark ? 'pe-11 lg:pe-12' : ''
+          }`}
+        >
+          <h3 className="line-clamp-2 wibe-small font-bold leading-snug text-white drop-shadow-sm lg:text-base">
             {renderTitle('')}
           </h3>
+          {itemCount > 0 && (
+            <p className="mt-0.5 wibe-caption font-medium text-white/75 tabular-nums">
+              {itemCount.toLocaleString('fa-IR')} آیتم
+            </p>
+          )}
         </div>
       </div>
       {showBookmark ? (
