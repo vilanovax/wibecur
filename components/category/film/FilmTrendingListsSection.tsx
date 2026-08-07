@@ -20,10 +20,10 @@ export default function FilmTrendingListsSection({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🔥 داغ‌ترین لیست‌های هفته در {categoryName}
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         بر اساس ذخیره و engagement
       </p>
 
@@ -42,7 +42,8 @@ export default function FilmTrendingListsSection({
                     alt={list.title}
                     className="w-full h-full object-cover"
                     placeholderSize="square"
-                  />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center text-5xl opacity-50"
@@ -63,16 +64,18 @@ export default function FilmTrendingListsSection({
                 )}
               </div>
               <div className="p-2.5">
-                <h3 className="font-semibold text-gray-100 text-sm line-clamp-2">
+                <h3 className="font-semibold text-white/90 text-sm line-clamp-2">
                   {list.title}
                 </h3>
-                <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-white/65">
                   {list.creator?.image && (
                     <ImageWithFallback
                       src={list.creator.image}
                       alt=""
                       className="w-4 h-4 rounded-full object-cover"
-                    />
+                  width={16}
+                  height={16}
+                />
                   )}
                   <span className="truncate">{list.creator?.name || 'کیوریتور'}</span>
                   <span>•</span>

@@ -19,13 +19,13 @@ export default function HubTrendingNowV2({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         <span className="inline-block animate-pulse" style={{ animationDuration: '1.5s' }}>
           🔥
         </span>
         داغ‌ترین لیست‌های ۲۴ ساعت اخیر
       </h2>
-      <p className="text-[11px] text-gray-500">
+      <p className="text-[11px] text-wibe-secondary">
         بر اساس رشد سریع ذخیره و تعامل
       </p>
 
@@ -77,6 +77,7 @@ function TrendingCard({
               alt={list.title}
               className="w-full h-full object-cover"
               placeholderSize="cover"
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
             />
           ) : (
             <div
@@ -119,8 +120,10 @@ function TrendingCard({
                     <ImageWithFallback
                       src={list.creator.image}
                       alt=""
-                      className="w-3.5 h-3.5 rounded-full object-cover"
-                    />
+                      className="h-3.5 w-3.5 rounded-full object-cover"
+                  width={14}
+                  height={14}
+                />
                   )}
                   <span className="truncate">👤 {list.creator?.name || 'کیوریتور'}</span>
                 </Link>

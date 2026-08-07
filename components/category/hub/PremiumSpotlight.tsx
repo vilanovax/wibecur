@@ -18,10 +18,10 @@ export default function PremiumSpotlight({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         💎 انتخاب ویژه
       </h2>
-      <p className="text-[11px] text-gray-500">
+      <p className="text-[11px] text-wibe-secondary">
         پیشنهاد این ماه
       </p>
 
@@ -43,6 +43,7 @@ export default function PremiumSpotlight({
               alt={list.title}
               className="w-full h-full object-cover"
               placeholderSize="cover"
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
             />
           ) : (
             <div
@@ -55,8 +56,8 @@ export default function PremiumSpotlight({
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         </div>
         <div className="p-4 bg-white">
-          <h3 className="font-bold text-gray-900 text-base">{list.title}</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="font-bold text-foreground text-base">{list.title}</h3>
+          <p className="text-sm text-wibe-secondary mt-1">
             {list.creator?.name || 'کیوریتور'}
           </p>
           <p className="text-sm font-semibold mt-2" style={{ color: accentColor }}>

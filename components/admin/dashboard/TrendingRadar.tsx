@@ -99,7 +99,7 @@ function TrendStatusBadge({ trend }: { trend: TrendingRadarRowType['trend'] }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 text-gray-600 border border-gray-200/80 px-2 py-0.5 text-xs font-medium">
+    <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 text-[var(--color-text-muted)] border border-gray-200/80 px-2 py-0.5 text-xs font-medium">
       <Minus className="w-3.5 h-3.5" />
       ثابت
     </span>
@@ -455,7 +455,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                                 key={i}
                                 className="flex justify-between gap-4 py-0.5"
                               >
-                                <span className="text-gray-400">{b.label}</span>
+                                <span className="text-[var(--color-text-subtle)]">{b.label}</span>
                                 <span className="tabular-nums">
                                   {b.value.toLocaleString('fa-IR')}
                                 </span>

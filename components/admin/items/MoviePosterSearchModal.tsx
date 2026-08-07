@@ -129,10 +129,10 @@ export default function MoviePosterSearchModal({
         dir="rtl"
       >
         <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white">
             جستجوی poster در {label}
           </h2>
-          <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button type="button" onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -166,7 +166,7 @@ export default function MoviePosterSearchModal({
 
         <div className="flex-1 overflow-y-auto p-5">
           {isSearching ? (
-            <div className="flex flex-col items-center py-12 text-gray-500">
+            <div className="flex flex-col items-center py-12 text-[var(--color-text-muted)]">
               <Loader2 className="w-10 h-10 animate-spin mb-3" />
               در حال جستجو در {label}...
             </div>
@@ -195,13 +195,13 @@ export default function MoviePosterSearchModal({
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <Film className="w-10 h-10 text-gray-400" />
+                        <Film className="w-10 h-10 text-[var(--color-text-subtle)]" />
                       </div>
                     )}
                   </div>
                   <div className="p-2 bg-white dark:bg-gray-800">
                     <p className="text-xs font-semibold line-clamp-2">{item.title}</p>
-                    <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
+                    <div className="flex items-center gap-2 mt-1 text-[10px] text-[var(--color-text-muted)]">
                       {item.year && <span>{item.year}</span>}
                       {item.rating != null && (
                         <span className="flex items-center gap-0.5">
@@ -216,7 +216,7 @@ export default function MoviePosterSearchModal({
             </div>
           ) : (
             !error && (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-[var(--color-text-muted)]">
                 <Film className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>عنوان فیلم را جستجو کنید</p>
               </div>
@@ -232,7 +232,7 @@ export default function MoviePosterSearchModal({
               </div>
               <div className="min-w-0">
                 <p className="font-medium text-sm truncate">{selected.title}</p>
-                <p className="text-xs text-gray-500">منبع: {label}</p>
+                <p className="text-xs text-[var(--color-text-muted)]">منبع: {label}</p>
               </div>
             </div>
             <div className="flex gap-2 shrink-0">

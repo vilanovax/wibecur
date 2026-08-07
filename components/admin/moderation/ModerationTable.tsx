@@ -32,14 +32,14 @@ function ModerationTableInner({
       <table className="w-full text-sm text-right" dir="rtl">
         <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700/80 shadow-sm">
           <tr>
-            <th className="p-3 font-medium text-gray-600 dark:text-gray-300">Time</th>
-            <th className="p-3 font-medium text-gray-600 dark:text-gray-300">Type</th>
-            <th className="p-3 font-medium text-gray-600 dark:text-gray-300">Entity</th>
-            <th className="p-3 font-medium text-gray-600 dark:text-gray-300">Reason</th>
-            <th className="p-3 font-medium text-gray-600 dark:text-gray-300">Severity</th>
-            <th className="p-3 font-medium text-gray-600 dark:text-gray-300">Status</th>
-            <th className="p-3 font-medium text-gray-600 dark:text-gray-300">Assignee</th>
-            <th className="p-3 font-medium text-gray-600 dark:text-gray-300 w-28">Actions</th>
+            <th className="p-3 font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">Time</th>
+            <th className="p-3 font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">Type</th>
+            <th className="p-3 font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">Entity</th>
+            <th className="p-3 font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">Reason</th>
+            <th className="p-3 font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">Severity</th>
+            <th className="p-3 font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">Status</th>
+            <th className="p-3 font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">Assignee</th>
+            <th className="p-3 font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] w-28">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -55,7 +55,7 @@ function ModerationTableInner({
                 {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true, locale: faIR })}
               </td>
               <td className="p-3">
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_BADGE_CLASS[row.type] ?? 'bg-gray-100 text-gray-700'}`}>
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_BADGE_CLASS[row.type] ?? 'bg-gray-100 text-[var(--color-text)]'}`}>
                   {TYPE_LABELS[row.type] ?? row.type}
                 </span>
               </td>
@@ -64,14 +64,14 @@ function ModerationTableInner({
                   <>
                     <span className="font-medium truncate block">{row.entityPreview?.title ?? row.entityId}</span>
                     {row.entityPreview?.categoryName && (
-                      <span className="text-xs text-gray-500 rounded-full bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5">{row.entityPreview.categoryName}</span>
+                      <span className="text-xs text-[var(--color-text-muted)] rounded-full bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5">{row.entityPreview.categoryName}</span>
                     )}
                   </>
                 )}
                 {row.entityType === 'USER' && (
                   <>
                     <span className="font-medium truncate block">{row.entityPreview?.name ?? row.entityPreview?.email ?? row.entityId}</span>
-                    {row.entityPreview?.role && <span className="text-xs text-gray-500 rounded-full bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5">{row.entityPreview.role}</span>}
+                    {row.entityPreview?.role && <span className="text-xs text-[var(--color-text-muted)] rounded-full bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5">{row.entityPreview.role}</span>}
                   </>
                 )}
                 {row.entityType === 'COMMENT' && (
@@ -88,7 +88,7 @@ function ModerationTableInner({
               </td>
               <td className="p-3 max-w-[160px] truncate" title={row.reason}>{row.reason}</td>
               <td className="p-3">
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${SEVERITY_BADGE_CLASS[row.severity as 1 | 2 | 3] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300'}`}>
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${SEVERITY_BADGE_CLASS[row.severity as 1 | 2 | 3] ?? 'bg-gray-100 text-[var(--color-text)] dark:bg-gray-600 dark:text-[var(--color-text-subtle)]'}`}>
                   {SEVERITY_LABELS[row.severity] ?? row.severity}
                 </span>
               </td>
@@ -109,7 +109,7 @@ function ModerationTableInner({
                     <span className="truncate max-w-[80px]">{row.users.name ?? row.users.email}</span>
                   </span>
                 ) : (
-                  <span className="text-xs text-gray-500 rounded-full bg-gray-100 dark:bg-gray-600 px-2 py-0.5">Unassigned</span>
+                  <span className="text-xs text-[var(--color-text-muted)] rounded-full bg-gray-100 dark:bg-gray-600 px-2 py-0.5">Unassigned</span>
                 )}
               </td>
               <td className="p-3" onClick={(e) => e.stopPropagation()}>

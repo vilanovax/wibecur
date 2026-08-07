@@ -12,7 +12,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   danger:
     'bg-red-500/15 text-red-700 dark:text-red-300 border-red-300/50 dark:border-red-500/30',
   neutral:
-    'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600',
+    'bg-gray-100 dark:bg-gray-700/50 text-[var(--color-text)] dark:text-[var(--color-text-subtle)] border-gray-200 dark:border-gray-600',
   trending:
     'bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-300/50 dark:border-violet-500/30',
 };

@@ -44,7 +44,7 @@ export default function DebugTable<T extends Record<string, unknown>>({
                 <th
                   key={col.key}
                   className={[
-                    'text-start py-3 px-4 font-semibold text-gray-700 dark:text-gray-300',
+                    'text-start py-3 px-4 font-semibold text-[var(--color-text)] dark:text-[var(--color-text-subtle)]',
                     col.className ?? '',
                   ].join(' ')}
                 >
@@ -58,7 +58,7 @@ export default function DebugTable<T extends Record<string, unknown>>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="py-8 text-center text-gray-500 dark:text-gray-400"
+                  className="py-8 text-center text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]"
                 >
                   {emptyMessage}
                 </td>
@@ -73,7 +73,7 @@ export default function DebugTable<T extends Record<string, unknown>>({
                     <td
                       key={col.key}
                       className={[
-                        'py-3 px-4 text-gray-700 dark:text-gray-300',
+                        'py-3 px-4 text-[var(--color-text)] dark:text-[var(--color-text-subtle)]',
                         col.className ?? '',
                       ].join(' ')}
                     >

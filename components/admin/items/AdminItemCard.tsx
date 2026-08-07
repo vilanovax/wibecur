@@ -61,7 +61,7 @@ function MovieMetaChips({ metadata }: { metadata: ItemMetadata }) {
         </span>
       )}
       {year != null && year !== '' && (
-        <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+        <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-[var(--color-text)]">
           {String(year)}
         </span>
       )}
@@ -153,7 +153,7 @@ export default function AdminItemCard({
         </div>
 
         <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all group-hover:bg-black/25 group-hover:opacity-100">
-          <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/95 px-3 py-2 text-xs font-bold text-gray-900 shadow-lg">
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/95 px-3 py-2 text-xs font-bold text-[var(--color-text)] shadow-lg">
             <Pencil className="h-3.5 w-3.5" />
             ویرایش
           </span>
@@ -162,7 +162,7 @@ export default function AdminItemCard({
 
       <div className="flex flex-1 flex-col gap-2.5 p-3">
         {showListContext && (
-          <div className="flex min-w-0 items-center gap-1.5 text-xs text-gray-500">
+          <div className="flex min-w-0 items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
             <span>{fallbackIcon}</span>
             <span className="truncate font-medium">{item.lists.title}</span>
           </div>
@@ -173,7 +173,7 @@ export default function AdminItemCard({
         )}
 
         {item.description && (
-          <p className="line-clamp-2 text-xs leading-relaxed text-gray-500">
+          <p className="line-clamp-2 text-xs leading-relaxed text-[var(--color-text-muted)]">
             {item.description}
           </p>
         )}
@@ -192,7 +192,7 @@ export default function AdminItemCard({
               href={item.externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition-colors hover:bg-gray-50"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-[var(--color-text-muted)] transition-colors hover:bg-gray-50"
               title="اطلاعات بیشتر"
               onClick={(e) => e.stopPropagation()}
             >

@@ -20,10 +20,10 @@ export default function PopularAllTimeSection({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         ⭐ محبوب‌ترین لیست‌های تاریخ
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         بر اساس مجموع ذخیره‌ها در {categoryName}
       </p>
 
@@ -41,7 +41,8 @@ export default function PopularAllTimeSection({
                   alt={list.title}
                   className="w-full h-full object-cover"
                   placeholderSize="cover"
-                />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-4xl opacity-50"
@@ -56,10 +57,10 @@ export default function PopularAllTimeSection({
               </span>
             </div>
             <div className="p-3">
-              <h3 className="font-semibold text-gray-100 text-sm line-clamp-2">
+              <h3 className="font-semibold text-white/90 text-sm line-clamp-2">
                 {list.title}
               </h3>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-white/60">
                 {list.creator?.name || 'کیوریتور'}
               </p>
             </div>

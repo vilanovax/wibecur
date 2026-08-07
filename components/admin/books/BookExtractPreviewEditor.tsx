@@ -64,8 +64,8 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-sm font-medium text-gray-800">پیش‌نمایش و ویرایش ({items.length})</h4>
-        <p className="text-xs text-gray-500">قبل از import می‌توانید فیلدها را اصلاح کنید</p>
+        <h4 className="text-sm font-medium text-[var(--color-text)]">پیش‌نمایش و ویرایش ({items.length})</h4>
+        <p className="text-xs text-[var(--color-text-muted)]">قبل از import می‌توانید فیلدها را اصلاح کنید</p>
       </div>
 
       <div className="space-y-2 max-h-[32rem] overflow-y-auto pr-1">
@@ -88,7 +88,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">
+                    <div className="w-full h-full flex items-center justify-center text-[10px] text-[var(--color-text-subtle)]">
                       بدون تصویر
                     </div>
                   )}
@@ -105,7 +105,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
                     <button
                       type="button"
                       onClick={() => toggle(index)}
-                      className="shrink-0 p-2 rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                      className="shrink-0 p-2 rounded-lg border border-gray-200 bg-white text-[var(--color-text-muted)] hover:bg-gray-50"
                       title={isOpen ? 'جمع کردن' : 'باز کردن'}
                     >
                       <ChevronDown className={`w-4 h-4 transition ${isOpen ? 'rotate-180' : ''}`} />
@@ -122,7 +122,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <div>
-                      <label className="text-[10px] font-medium text-gray-500">نویسنده</label>
+                      <label className="text-[10px] font-medium text-[var(--color-text-muted)]">نویسنده</label>
                       <input
                         value={meta.author ?? ''}
                         onChange={(e) => updateMetadata(index, { author: e.target.value || undefined })}
@@ -130,7 +130,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-medium text-gray-500">ژانر</label>
+                      <label className="text-[10px] font-medium text-[var(--color-text-muted)]">ژانر</label>
                       <select
                         value={meta.genre ?? ''}
                         onChange={(e) => updateMetadata(index, { genre: e.target.value || undefined })}
@@ -145,7 +145,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-medium text-gray-500">نوع</label>
+                      <label className="text-[10px] font-medium text-[var(--color-text-muted)]">نوع</label>
                       <select
                         value={meta.contentType ?? ''}
                         onChange={(e) =>
@@ -169,7 +169,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
               {isOpen && (
                 <div className="px-3 pb-3 pt-0 space-y-2 border-t border-gray-100 bg-white">
                   <div>
-                    <label className="text-[10px] font-medium text-gray-500">توضیحات</label>
+                    <label className="text-[10px] font-medium text-[var(--color-text-muted)]">توضیحات</label>
                     <textarea
                       value={item.description ?? ''}
                       onChange={(e) => updateItem(index, { description: e.target.value || undefined })}
@@ -184,7 +184,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-medium text-gray-500">ISBN</label>
+                      <label className="text-[10px] font-medium text-[var(--color-text-muted)]">ISBN</label>
                       <input
                         dir="ltr"
                         value={meta.isbn ?? ''}
@@ -193,7 +193,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-medium text-gray-500">لینک تصویر</label>
+                      <label className="text-[10px] font-medium text-[var(--color-text-muted)]">لینک تصویر</label>
                       <input
                         dir="ltr"
                         value={item.imageUrl ?? ''}
@@ -203,7 +203,7 @@ export default function BookExtractPreviewEditor({ items, onChange }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-medium text-gray-500">لینک منبع</label>
+                    <label className="text-[10px] font-medium text-[var(--color-text-muted)]">لینک منبع</label>
                     <div className="flex gap-2">
                       <input
                         dir="ltr"

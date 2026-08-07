@@ -61,14 +61,14 @@ export default function MovieSearchModal({
       <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-[var(--color-text)]">
             {showPreview ? 'تأیید انتخاب فیلم' : 'انتخاب فیلم'}
           </h2>
           <button
             onClick={handleClose}
             className="w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors"
           >
-            <X className="w-6 h-6 text-gray-600" />
+            <X className="w-6 h-6 text-[var(--color-text-muted)]" />
           </button>
         </div>
 
@@ -77,7 +77,7 @@ export default function MovieSearchModal({
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-              <p className="text-gray-600">در حال جستجو...</p>
+              <p className="text-[var(--color-text-muted)]">در حال جستجو...</p>
             </div>
           ) : showPreview && selectedMovie ? (
             // Preview Mode
@@ -96,26 +96,26 @@ export default function MovieSearchModal({
                       />
                     ) : (
                       <div className="w-[300px] h-[450px] bg-gray-300 rounded-lg flex items-center justify-center">
-                        <Film className="w-24 h-24 text-gray-500" />
+                        <Film className="w-24 h-24 text-[var(--color-text-muted)]" />
                       </div>
                     )}
                   </div>
 
                   {/* Details */}
                   <div className="flex-1">
-                    <h3 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-3xl font-bold text-[var(--color-text)] mb-2">
                       {selectedMovie.title}
                     </h3>
                     {selectedMovie.originalTitle &&
                       selectedMovie.originalTitle !== selectedMovie.title && (
-                        <p className="text-lg text-gray-600 mb-4">
+                        <p className="text-lg text-[var(--color-text-muted)] mb-4">
                           {selectedMovie.originalTitle}
                         </p>
                       )}
 
                     <div className="flex flex-wrap gap-4 mb-6">
                       {selectedMovie.year && (
-                        <div className="flex items-center gap-2 text-gray-700">
+                        <div className="flex items-center gap-2 text-[var(--color-text)]">
                           <Calendar className="w-5 h-5" />
                           <span className="font-medium">{selectedMovie.year}</span>
                         </div>
@@ -126,7 +126,7 @@ export default function MovieSearchModal({
                         </div>
                       )}
                       {selectedMovie.rating && (
-                        <div className="flex items-center gap-2 text-gray-700">
+                        <div className="flex items-center gap-2 text-[var(--color-text)]">
                           <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
                           <span className="font-medium">{selectedMovie.rating}</span>
                         </div>
@@ -135,8 +135,8 @@ export default function MovieSearchModal({
 
                     {selectedMovie.plot && (
                       <div className="bg-white rounded-lg p-4 mb-6">
-                        <h4 className="font-semibold text-gray-900 mb-2">خلاصه داستان:</h4>
-                        <p className="text-gray-700 leading-relaxed">
+                        <h4 className="font-semibold text-[var(--color-text)] mb-2">خلاصه داستان:</h4>
+                        <p className="text-[var(--color-text)] leading-relaxed">
                           {selectedMovie.plot}
                         </p>
                       </div>
@@ -162,7 +162,7 @@ export default function MovieSearchModal({
           ) : (
             // Search Results Grid
             <div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-[var(--color-text-muted)] mb-4">
                 {searchResults.length} فیلم یافت شد. فیلم مورد نظر خود را انتخاب کنید:
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -185,25 +185,25 @@ export default function MovieSearchModal({
                           />
                         ) : (
                           <div className="w-20 h-[120px] bg-gray-200 rounded-lg flex items-center justify-center">
-                            <Film className="w-8 h-8 text-gray-400" />
+                            <Film className="w-8 h-8 text-[var(--color-text-subtle)]" />
                           </div>
                         )}
                       </div>
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                        <h3 className="font-semibold text-[var(--color-text)] mb-1 group-hover:text-primary transition-colors line-clamp-2">
                           {movie.title}
                         </h3>
                         {movie.originalTitle && movie.originalTitle !== movie.title && (
-                          <p className="text-xs text-gray-500 mb-2 line-clamp-1">
+                          <p className="text-xs text-[var(--color-text-muted)] mb-2 line-clamp-1">
                             {movie.originalTitle}
                           </p>
                         )}
 
                         <div className="flex flex-wrap gap-2 mt-2">
                           {movie.year && (
-                            <span className="text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                            <span className="text-xs px-2 py-1 bg-gray-100 rounded-full text-[var(--color-text-muted)]">
                               {movie.year}
                             </span>
                           )}
@@ -216,7 +216,7 @@ export default function MovieSearchModal({
                         </div>
 
                         {movie.genre && (
-                          <p className="text-xs text-gray-500 mt-2">{movie.genre}</p>
+                          <p className="text-xs text-[var(--color-text-muted)] mt-2">{movie.genre}</p>
                         )}
                       </div>
                     </div>

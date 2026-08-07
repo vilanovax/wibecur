@@ -372,20 +372,20 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
       <div className="mb-6" dir="rtl">
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-violet-700 mb-3"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-muted)] hover:text-violet-700 mb-3"
         >
           <ArrowRight className="w-4 h-4" />
           بازگشت به آیتم‌ها
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">ویرایش آیتم</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text)] dark:text-white">ویرایش آیتم</h1>
             {selectedList && (
-              <p className="text-sm text-gray-500 mt-2 flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 px-2.5 py-1 font-medium text-gray-700 dark:text-gray-200">
+              <p className="text-sm text-[var(--color-text-muted)] mt-2 flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 px-2.5 py-1 font-medium text-[var(--color-text)] dark:text-gray-200">
                   {selectedList.categories?.icon || '📋'} {selectedList.title}
                 </span>
-                <span className="text-xs text-gray-400">#{formData.order}</span>
+                <span className="text-xs text-[var(--color-text-subtle)]">#{formData.order}</span>
               </p>
             )}
           </div>
@@ -415,10 +415,10 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
             <Eye className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
           )}
           <div>
-            <p className="text-sm font-semibold text-gray-900">
+            <p className="text-sm font-semibold text-[var(--color-text)]">
               {isHidden ? 'آیتم غیرفعال است' : 'آیتم فعال است'}
             </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-gray-600">
+            <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-text-muted)]">
               {isHidden
                 ? 'این آیتم در سایت عمومی نمایش داده نمی‌شود.'
                 : 'این آیتم برای کاربران در سایت قابل مشاهده است.'}
@@ -496,7 +496,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
       >
         {/* لیست — فقط نمایش */}
         <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-5">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-admin-text-tertiary dark:text-gray-400 mb-3">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-admin-text-tertiary dark:text-[var(--color-text-subtle)] mb-3">
             <Lock className="w-3.5 h-3.5" />
             محل قرارگیری
           </div>
@@ -507,12 +507,12 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                 <p className="font-semibold text-admin-text-primary dark:text-white truncate">
                   {selectedList?.title || '—'}
                 </p>
-                <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-0.5">
+                <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-muted)] mt-0.5">
                   {selectedList?.categories?.name || 'بدون دسته'}
                 </p>
               </div>
             </div>
-            <p className="text-xs text-gray-500 shrink-0">
+            <p className="text-xs text-[var(--color-text-muted)] shrink-0">
               برای جابه‌جایی به لیست دیگر،{' '}
               <Link
                 href={`/admin/lists?view=catalog&mode=create&listId=${formData.listId}`}
@@ -734,13 +734,13 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                   className={inputClass}
                   placeholder="https://example.com"
                 />
-                <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-1">
+                <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-muted)] mt-1">
                   برای اطلاعات بیشتر، خرید، دانلود و...
                 </p>
               </div>
 
               <div className="rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 p-4 space-y-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">کامنت‌ها</p>
+                <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">کامنت‌ها</p>
                 <div className="flex items-start gap-3">
                   <input
                     type="checkbox"
@@ -755,7 +755,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                     <label htmlFor="commentsEnabled" className="text-sm font-medium text-admin-text-primary dark:text-white">
                       فعال بودن کامنت‌ها برای این آیتم
                     </label>
-                    <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-1">
+                    <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-muted)] mt-1">
                       اولویت بالاتر از تنظیمات دسته‌بندی
                     </p>
                   </div>
@@ -801,7 +801,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                       mediaTab === tab.id
                         ? 'bg-violet-600 text-white'
-                        : 'bg-admin-muted dark:bg-gray-700 text-admin-text-secondary dark:text-gray-400 hover:bg-admin-hover dark:hover:bg-gray-600'
+                        : 'bg-admin-muted dark:bg-gray-700 text-admin-text-secondary dark:text-[var(--color-text-subtle)] hover:bg-admin-hover dark:hover:bg-gray-600'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -844,7 +844,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           >
             {loading ? 'در حال ذخیره…' : 'ذخیره تغییرات'}
           </button>
-          <Link href={backHref} className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900">
+          <Link href={backHref} className="px-5 py-2.5 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
             انصراف
           </Link>
         </div>

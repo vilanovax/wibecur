@@ -270,18 +270,18 @@ export default function ModerationQueueClient() {
     <div className="space-y-8" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Moderation Queue</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-[var(--color-text)] dark:text-white">Moderation Queue</h1>
+          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
             آخرین بروزرسانی: {lastUpdatedAt ? formatDistanceToNow(lastUpdatedAt, { addSuffix: true, locale: faIR }) : '—'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" onClick={handleRefresh} disabled={loading} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 shadow-sm">
+          <button type="button" onClick={handleRefresh} disabled={loading} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 shadow-sm">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             بروزرسانی
           </button>
           <div className="relative">
-            <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-subtle)]" />
             <input type="text" placeholder="جستجو (entityId / عنوان / کاربر)" className="rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm pl-3 pr-9 py-2 w-56 shadow-sm" value={filters.search} onChange={(e) => setFiltersAndSync((prev) => ({ ...prev, search: e.target.value, page: '1' }))} onKeyDown={(e) => e.key === 'Enter' && setFiltersAndSync((prev) => ({ ...prev, page: '1' }))} />
           </div>
         </div>
@@ -309,11 +309,11 @@ export default function ModerationQueueClient() {
             <ModerationFilters filters={filters} onChange={setFiltersAndSync} totalCount={total} />
             {loading ? (
               <div className="p-12 flex justify-center">
-                <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+                <RefreshCw className="w-8 h-8 animate-spin text-[var(--color-text-subtle)]" />
               </div>
             ) : items.length === 0 ? (
               <div className="p-16 text-center">
-                <p className="text-lg text-gray-600 dark:text-gray-400">🎉 هیچ مورد باز برای بررسی وجود ندارد</p>
+                <p className="text-lg text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">🎉 هیچ مورد باز برای بررسی وجود ندارد</p>
               </div>
             ) : (
               <ModerationTable

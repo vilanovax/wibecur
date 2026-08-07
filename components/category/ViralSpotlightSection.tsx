@@ -30,8 +30,8 @@ export default function ViralSpotlightSection({
                 src={list.bannerImage ?? list.coverImage ?? ''}
                 alt={list.title}
                 className="w-full h-full object-cover"
-                sizes="(min-width: 1024px) 50vw, 100vw"
-              />
+              sizes="(min-width: 1024px) 25vw, 50vw"
+            />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-5xl opacity-40 bg-gray-200">
                 📋

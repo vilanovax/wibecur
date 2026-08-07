@@ -31,8 +31,8 @@ export default function FilmCategoryHero({
           className="absolute inset-0 w-full h-full object-cover"
           priority
           placeholderSize="cover"
-          sizes="100vw"
-        />
+        sizes="100vw"
+      />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
 

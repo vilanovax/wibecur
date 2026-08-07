@@ -90,7 +90,7 @@ const linkBase =
 function activeStyles(active: boolean) {
   return active
     ? 'bg-violet-50 dark:bg-violet-900/25 text-violet-700 dark:text-violet-300 shadow-sm border-s-2 border-violet-600 dark:border-violet-500'
-    : 'text-[var(--color-text)] dark:text-gray-300 hover:bg-[var(--color-bg)] dark:hover:bg-gray-700/50 border-s-2 border-transparent';
+    : 'text-[var(--color-text)] dark:text-[var(--color-text-subtle)] hover:bg-[var(--color-bg)] dark:hover:bg-gray-700/50 border-s-2 border-transparent';
 }
 
 export function NavItemLink({
@@ -189,7 +189,7 @@ export default function SidebarNavSection({
   return (
     <div className="space-y-0.5">
       {title && !collapsed && (
-        <p className="px-2 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] dark:text-gray-500">
+        <p className="px-2 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
           {title}
         </p>
       )}

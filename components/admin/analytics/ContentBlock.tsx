@@ -32,7 +32,7 @@ export default function ContentBlock({ data }: ContentBlockProps) {
       <div className="p-6">
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <List className="w-5 h-5 text-slate-500 dark:text-gray-400" />
+            <List className="w-5 h-5 text-slate-500 dark:text-[var(--color-text-subtle)]" />
             <h2 className="font-semibold text-slate-800 dark:text-gray-100">موتور محتوا</h2>
           </div>
           {showWarning && (
@@ -45,26 +45,26 @@ export default function ContentBlock({ data }: ContentBlockProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">
-            <p className="text-sm text-slate-500 dark:text-gray-400 mb-1">📦 لیست‌های جدید (۷ روز)</p>
+            <p className="text-sm text-slate-500 dark:text-[var(--color-text-subtle)] mb-1">📦 لیست‌های جدید (۷ روز)</p>
             <p className="text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
               {data.newLists7d.toLocaleString('fa-IR')}
             </p>
           </div>
           <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">میانگین لیست به ازای کاربر فعال</p>
+              <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mb-0.5">میانگین لیست به ازای کاربر فعال</p>
               <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.listsPerActiveUser.toLocaleString('fa-IR')}
               </p>
             </div>
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">میانگین ذخیره به ازای لیست</p>
+              <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mb-0.5">میانگین ذخیره به ازای لیست</p>
               <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.avgSavesPerList7d.toLocaleString('fa-IR')}
               </p>
             </div>
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">٪ لیست‌های بدون ذخیره</p>
+              <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mb-0.5">٪ لیست‌های بدون ذخیره</p>
               <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.percentListsZeroSaves}٪
               </p>
@@ -72,7 +72,7 @@ export default function ContentBlock({ data }: ContentBlockProps) {
           </div>
         </div>
 
-        <p className="text-sm text-slate-600 dark:text-gray-300 mt-3">{buildInsight(data)}</p>
+        <p className="text-sm text-slate-600 dark:text-[var(--color-text-subtle)] mt-3">{buildInsight(data)}</p>
       </div>
     </section>
   );

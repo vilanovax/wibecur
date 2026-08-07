@@ -212,7 +212,7 @@ export default function CommentDetailModal({
         />
         <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 z-10">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">امتیاز منفی برای کاربر</h2>
+            <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white">امتیاز منفی برای کاربر</h2>
             <button
               onClick={() => {
                 setShowPenaltyModal(false);
@@ -225,12 +225,12 @@ export default function CommentDetailModal({
             </button>
           </div>
           
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mb-4">
             لطفاً میزان امتیاز منفی (۰ تا ۵) را برای کاربری که این کامنت را ارسال کرده است، انتخاب کنید.
           </p>
           
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">
+            <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-3">
               امتیاز منفی (۰ تا ۵):
             </label>
             <div className="flex gap-3 justify-center">
@@ -242,7 +242,7 @@ export default function CommentDetailModal({
                   className={`w-12 h-12 rounded-full font-bold text-lg transition-all ${
                     penaltyScore === score
                       ? 'bg-red-600 text-white scale-110 shadow-lg'
-                      : 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-700/50 text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-200'
                   }`}
                   disabled={isLoading}
                 >
@@ -250,7 +250,7 @@ export default function CommentDetailModal({
                 </button>
               ))}
             </div>
-            <div className="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-3 text-center text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
               {penaltyScore === 0 && 'بدون امتیاز منفی'}
               {penaltyScore === 1 && 'امتیاز منفی کم: اخطار خفیف'}
               {penaltyScore === 2 && 'امتیاز منفی متوسط: اخطار جدی'}
@@ -267,7 +267,7 @@ export default function CommentDetailModal({
                 setPenaltyScore(0);
             setPenaltyAction('edit');
               }}
-              className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700/50 text-[var(--color-text)] dark:text-gray-200 rounded-lg hover:bg-gray-200 transition-colors"
               disabled={isLoading}
             >
               انصراف
@@ -297,13 +297,13 @@ export default function CommentDetailModal({
       <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">جزئیات کامنت</h2>
+          <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white">جزئیات کامنت</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             disabled={isLoading}
           >
-            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <X className="w-5 h-5 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]" />
           </button>
         </div>
 
@@ -318,11 +318,11 @@ export default function CommentDetailModal({
               size={64}
             />
             <div>
-              <p className="font-bold text-gray-900 dark:text-white">
+              <p className="font-bold text-[var(--color-text)] dark:text-white">
                 {comment.users.name || 'بدون نام'}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{comment.users.email}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">{comment.users.email}</p>
+              <p className="text-xs text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)] mt-1">
                 {formatDistanceToNow(new Date(comment.createdAt), {
                   addSuffix: true,
                   locale: faIR,
@@ -333,13 +333,13 @@ export default function CommentDetailModal({
 
           {/* Item Info */}
           <div className="bg-gray-50 dark:bg-gray-800/60 rounded-lg p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">آیتم:</p>
-            <p className="font-medium text-gray-900 dark:text-white">{comment.items.title}</p>
+            <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mb-1">آیتم:</p>
+            <p className="font-medium text-[var(--color-text)] dark:text-white">{comment.items.title}</p>
           </div>
 
           {/* Comment Content */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+            <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
               متن کامنت:
             </label>
             {isEditing ? (
@@ -352,7 +352,7 @@ export default function CommentDetailModal({
               />
             ) : (
               <div className="bg-gray-50 dark:bg-gray-800/60 rounded-lg p-4">
-                <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
+                <p className="text-[var(--color-text)] dark:text-white whitespace-pre-wrap">
                   {highlightBadWords(comment.content)}
                 </p>
               </div>
@@ -362,12 +362,12 @@ export default function CommentDetailModal({
           {/* Stats */}
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-gray-500 dark:text-gray-400">لایک:</span>
-              <span className="font-medium text-gray-900 dark:text-white">❤️ {comment.likeCount}</span>
+              <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">لایک:</span>
+              <span className="font-medium text-[var(--color-text)] dark:text-white">❤️ {comment.likeCount}</span>
             </div>
             {comment._count.comment_reports > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-400">ریپورت:</span>
+                <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">ریپورت:</span>
                 <span className="font-medium text-red-600 dark:text-red-400">
                   🚩 {comment._count.comment_reports}
                 </span>
@@ -393,7 +393,7 @@ export default function CommentDetailModal({
                     setEditedContent('');
                   }}
                   disabled={isSaving}
-                  className="px-4 py-3 bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  className="px-4 py-3 bg-gray-100 dark:bg-gray-700/50 text-[var(--color-text)] dark:text-gray-200 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   <XCircle className="w-5 h-5" />
                 </button>

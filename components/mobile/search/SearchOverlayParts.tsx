@@ -166,7 +166,7 @@ export function SearchItemRow({
       }`}
     >
       <div
-        className={`shrink-0 overflow-hidden rounded-lg bg-gray-100 ${
+        className={`relative shrink-0 overflow-hidden rounded-lg bg-gray-100 ${
           compact ? 'h-14 w-14' : 'h-16 w-16 sm:h-[72px] sm:w-[72px]'
         }`}
       >
@@ -176,6 +176,7 @@ export function SearchItemRow({
           className="h-full w-full object-cover"
           fallbackIcon={fallbackIcon}
           fallbackClassName="flex h-full w-full items-center justify-center text-lg"
+          sizes="72px"
         />
       </div>
       <div className="min-w-0 flex-1 text-right">

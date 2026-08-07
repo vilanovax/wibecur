@@ -66,8 +66,8 @@ export default function CatalogSearchProfilePanel({
     <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold text-gray-900">پروفایل جستجو</h3>
-          <p className="text-xs text-gray-600 mt-1">
+          <h3 className="text-sm font-bold text-[var(--color-text)]">پروفایل جستجو</h3>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
             برای جستجوی هوشمند (ژانر فرعی، تم، کلیدواژه) — با AI تولید می‌شود.
           </p>
         </div>
@@ -102,7 +102,7 @@ export default function CatalogSearchProfilePanel({
               ))}
           </div>
           {profile.enrichedAt && (
-            <p className="text-[10px] text-gray-500">
+            <p className="text-[10px] text-[var(--color-text-muted)]">
               آخرین به‌روزرسانی:{' '}
               {new Date(profile.enrichedAt).toLocaleDateString('fa-IR', {
                 year: 'numeric',

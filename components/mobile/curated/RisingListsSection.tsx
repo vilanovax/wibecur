@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
+import { IMAGE_SIZES } from '@/lib/image-sizes';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import type { CuratedList } from '@/types/curated';
 
@@ -39,6 +40,7 @@ export default function RisingListsSection({ lists }: RisingListsSectionProps) {
                 className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
                 fallbackIcon="📋"
                 fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
+                sizes={IMAGE_SIZES.listGridCard}
               />
               <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 wibe-caption font-semibold text-white">
                 در حال رشد

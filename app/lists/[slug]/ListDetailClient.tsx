@@ -932,6 +932,7 @@ export default function ListDetailClient({
                 listSlug={list.slug}
                 listTitle={list.title}
                 priority
+                sizes="(min-width: 1280px) 18rem, (min-width: 1024px) 17.5rem, 100vw"
               />
               <button
                 type="button"
@@ -944,7 +945,7 @@ export default function ListDetailClient({
             </div>
 
             <div className="min-w-0 py-1">
-              <h1 className="text-[1.5rem] font-bold leading-snug text-foreground line-clamp-2 xl:text-[1.65rem]">
+              <h1 className="wibe-h2 line-clamp-2 leading-snug xl:text-h1">
                 {displayTitle}
               </h1>
               {listDescription && (
@@ -967,6 +968,7 @@ export default function ListDetailClient({
               listSlug={list.slug}
               listTitle={list.title}
               priority
+              sizes="100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
             <div className="absolute top-4 right-4 z-10">

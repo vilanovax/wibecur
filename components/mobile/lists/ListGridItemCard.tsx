@@ -5,10 +5,10 @@ import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
 import { isMovieLikeCategory, isPortraitCoverCategory } from '@/lib/resolve-item-image';
+import { IMAGE_SIZES } from '@/lib/image-sizes';
 
 /** srcset next/image برای گرید ۲–۴ ستونه */
-export const LIST_GRID_IMAGE_SIZES =
-  '(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw';
+export const LIST_GRID_IMAGE_SIZES = IMAGE_SIZES.listGridCard;
 
 type ListGridItemCardProps = {
   item: {

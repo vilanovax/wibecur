@@ -23,10 +23,10 @@ export default function WeeklyViralSection({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🔥 لیست‌های وایرال هفته
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5">
+      <p className="text-sm text-wibe-secondary mt-0.5">
         بر اساس trend_score هفتگی در {categoryName}
       </p>
 
@@ -45,7 +45,8 @@ export default function WeeklyViralSection({
                     alt={list.title}
                     className="w-full h-full object-cover"
                     placeholderSize="cover"
-                  />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center text-5xl opacity-50"
@@ -74,7 +75,9 @@ export default function WeeklyViralSection({
                         src={list.creator.image}
                         alt=""
                         className="w-6 h-6 rounded-full object-cover ring-1 ring-white/50"
-                      />
+                  width={24}
+                  height={24}
+                />
                     )}
                     <span className="truncate">{list.creator?.name || 'کیوریتور'}</span>
                     <span>•</span>

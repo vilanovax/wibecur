@@ -120,6 +120,7 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
                       categorySlug={list.categories?.slug}
                       listSlug={list.slug}
                       listTitle={list.title}
+                      sizes="112px"
                     />
                     <div
                       className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"

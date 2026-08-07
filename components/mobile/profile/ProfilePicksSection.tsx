@@ -42,6 +42,7 @@ function PickCard({ pick, accentColor }: { pick: ProfilePickItemDto; accentColor
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           fallbackIcon="🎬"
           fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+          sizes="96px"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-2xl">
@@ -49,12 +50,12 @@ function PickCard({ pick, accentColor }: { pick: ProfilePickItemDto; accentColor
         </div>
       )}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-1.5 pb-1.5 pt-8">
-        <p className="line-clamp-2 text-start text-[11px] font-semibold leading-snug text-white">
+        <p className="line-clamp-2 text-start wibe-caption font-semibold leading-snug text-white">
           {pick.title}
         </p>
       </div>
       {pick.note && (
-        <span className="absolute start-1.5 top-1.5 rounded-full bg-black/50 px-1 py-0.5 text-[10px] text-white backdrop-blur-sm">
+        <span className="absolute start-1.5 top-1.5 rounded-full bg-black/50 px-1 py-0.5 wibe-caption text-white backdrop-blur-sm">
           💬
         </span>
       )}
@@ -82,7 +83,7 @@ function AddSlotButton({ onClick }: { onClick: () => void }) {
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15">
         <Plus className="h-4 w-4" />
       </span>
-      <span className="text-[11px] font-medium">افزودن</span>
+      <span className="wibe-caption font-medium">افزودن</span>
     </button>
   );
 }
@@ -107,7 +108,7 @@ function ShelfTabs({
             key={shelf.categorySlug}
             type="button"
             onClick={() => onSelect(shelf.categorySlug)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-[colors,transform] active:scale-[0.98] ${
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 wibe-small font-medium transition-[colors,transform] active:scale-[0.98] ${
               selected
                 ? 'bg-primary text-white shadow-sm'
                 : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -116,7 +117,7 @@ function ShelfTabs({
             <span>{shelf.categoryIcon}</span>
             <span className="max-w-[88px] truncate">{shelf.categoryName}</span>
             <span
-              className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+              className={`rounded-full px-1.5 py-0.5 wibe-caption font-bold leading-none ${
                 selected ? 'bg-white/25' : 'bg-primary/10 text-primary'
               }`}
             >
@@ -149,7 +150,7 @@ function ActiveShelfPanel({
           <button
             type="button"
             onClick={() => onEditCategory(shelf.categorySlug)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-medium text-primary hover:bg-primary/10"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-small font-medium text-primary hover:bg-primary/10"
           >
             <Plus className="h-4 w-4" />
             افزودن به {shelf.categoryName}

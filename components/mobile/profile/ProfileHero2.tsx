@@ -100,7 +100,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
         <div
           className="h-[260px] w-full rounded-b-2xl"
           style={{
-            background: 'linear-gradient(135deg, #7C5CFF 0%, #8B5CF6 50%, #9333EA 100%)',
+            background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-light, #818CF8) 50%, var(--primary-dark) 100%)',
           }}
         />
         <div className="absolute inset-x-0 top-0 z-10 px-4 pt-6 pb-8">
@@ -117,6 +117,8 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                     className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                     fallbackClassName="w-full h-full bg-gray-100 text-wibe-secondary text-2xl font-semibold flex items-center justify-center"
+                    width={96}
+                    height={96}
                     priority
                   />
                 ) : user.image ? (
@@ -126,6 +128,8 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                     className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                     fallbackClassName="w-full h-full bg-gray-100 text-wibe-secondary text-2xl font-semibold flex items-center justify-center"
+                    width={96}
+                    height={96}
                     priority
                   />
                 ) : (
@@ -143,7 +147,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
               </button>
             </div>
             {isElite && user.showBadge !== false && (
-              <span className="mt-1.5 text-[10px] font-medium text-white/90">Elite Curator</span>
+              <span className="mt-1.5 wibe-caption font-medium text-white/90">Elite Curator</span>
             )}
             <h1 className="mt-2 text-lg font-bold text-white">
               {user.name || 'کاربر بدون نام'}
@@ -224,12 +228,12 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
               />
             </div>
             {nextLabel != null && toNext != null && toNext > 0 && (
-              <p className="text-[11px] text-wibe-secondary mt-1.5">
+              <p className="wibe-caption text-wibe-secondary mt-1.5">
                 {toNext} امتیاز تا {nextLabel}
               </p>
             )}
             {nextTier === null && (
-              <p className="text-[11px] text-wibe-secondary mt-1.5">بالاترین سطح</p>
+              <p className="wibe-caption text-wibe-secondary mt-1.5">بالاترین سطح</p>
             )}
           </div>
         </div>

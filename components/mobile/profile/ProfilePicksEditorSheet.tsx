@@ -115,6 +115,7 @@ function PickEditorCard({
             className="h-full w-full object-cover"
             fallbackIcon="✨"
             fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200"
+            sizes="96px"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xl">✨</div>
@@ -534,6 +535,7 @@ export default function ProfilePicksEditorSheet({
                                 className="h-full w-full object-cover"
                                 fallbackIcon="✨"
                                 fallbackClassName="flex h-full w-full items-center justify-center text-xs"
+                                sizes="48px"
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-xs">✨</div>

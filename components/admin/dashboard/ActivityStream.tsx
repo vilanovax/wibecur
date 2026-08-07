@@ -33,7 +33,7 @@ const eventTags: Record<
   },
   user_joined: {
     label: 'کاربر',
-    className: 'bg-gray-100 text-gray-700 dark:bg-gray-500/15 dark:text-gray-300',
+    className: 'bg-gray-100 text-[var(--color-text)] dark:bg-gray-500/15 dark:text-[var(--color-text-subtle)]',
     icon: User,
   },
 };

@@ -403,11 +403,11 @@ export default function BookExtractClient({ lists }: Props) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-[var(--color-text)] flex items-center gap-2">
             <BookOpen className="w-7 h-7 text-violet-600" />
             استخراج داده کتاب
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-[var(--color-text-muted)] mt-1">
             استخراج از طاقچه، فیدیبو یا کتابراه — لیست عنوان یا لینک دسته
           </p>
         </div>
@@ -422,7 +422,7 @@ export default function BookExtractClient({ lists }: Props) {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-1 space-y-4">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
-            <h2 className="font-semibold text-gray-900">استخراج جدید</h2>
+            <h2 className="font-semibold text-[var(--color-text)]">استخراج جدید</h2>
 
             <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
               {(['titles', 'category'] as const).map((m) => (
@@ -431,7 +431,7 @@ export default function BookExtractClient({ lists }: Props) {
                   type="button"
                   onClick={() => setMode(m)}
                   className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                    mode === m ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-600'
+                    mode === m ? 'bg-white text-violet-700 shadow-sm' : 'text-[var(--color-text-muted)]'
                   }`}
                 >
                   {MODE_LABELS[m]}
@@ -440,7 +440,7 @@ export default function BookExtractClient({ lists }: Props) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">منبع</label>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">منبع</label>
               <div className="flex gap-2 flex-wrap">
                 {(['fidibo', 'taaghche', 'ketabrah'] as const).map((s) => (
                   <button
@@ -450,7 +450,7 @@ export default function BookExtractClient({ lists }: Props) {
                     className={`flex-1 min-w-[80px] rounded-xl border px-3 py-2 text-sm font-medium transition ${
                       source === s
                         ? 'border-violet-500 bg-violet-50 text-violet-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        : 'border-gray-200 text-[var(--color-text-muted)] hover:bg-gray-50'
                     }`}
                   >
                     {SOURCE_LABELS[s]}
@@ -461,7 +461,7 @@ export default function BookExtractClient({ lists }: Props) {
 
             {mode === 'titles' ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
                   عناوین کتاب (هر خط یک عنوان)
                 </label>
                 <textarea
@@ -475,7 +475,7 @@ export default function BookExtractClient({ lists }: Props) {
             ) : (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">لینک دسته</label>
+                  <label className="block text-sm font-medium text-[var(--color-text)] mb-1">لینک دسته</label>
                   <input
                     type="url"
                     value={categoryUrl}
@@ -486,7 +486,7 @@ export default function BookExtractClient({ lists }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
                     تعداد کتاب
                   </label>
                   <input
@@ -502,7 +502,7 @@ export default function BookExtractClient({ lists }: Props) {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">لیست مقصد (اختیاری)</label>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">لیست مقصد (اختیاری)</label>
               <select
                 value={targetListId}
                 onChange={(e) => setTargetListId(e.target.value)}
@@ -519,7 +519,7 @@ export default function BookExtractClient({ lists }: Props) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">نوع محتوا</label>
+              <label className="block text-sm font-medium text-[var(--color-text)] mb-1">نوع محتوا</label>
               <select
                 value={contentTypeFilter}
                 onChange={(e) =>
@@ -545,7 +545,7 @@ export default function BookExtractClient({ lists }: Props) {
                 />
                 import خودکار پس از استخراج
                 {!targetListId && (
-                  <span className="text-xs text-gray-400">(لیست مقصد لازم است)</span>
+                  <span className="text-xs text-[var(--color-text-subtle)]">(لیست مقصد لازم است)</span>
                 )}
               </label>
             </div>
@@ -568,7 +568,7 @@ export default function BookExtractClient({ lists }: Props) {
                 fast mode (فقط نتایج جستجو)
               </label>
               {fastMode && (
-                <details className="rounded-xl border border-violet-100 bg-violet-50/50 p-3 text-xs text-gray-600">
+                <details className="rounded-xl border border-violet-100 bg-violet-50/50 p-3 text-xs text-[var(--color-text-muted)]">
                   <summary className="cursor-pointer font-medium text-violet-800">
                     فرمت خروجی JSON (مطابق import گروهی)
                   </summary>
@@ -598,7 +598,7 @@ export default function BookExtractClient({ lists }: Props) {
                   dir="ltr"
                 />
               </label>
-              <p className="text-xs text-gray-400 pr-6">
+              <p className="text-xs text-[var(--color-text-subtle)] pr-6">
                 بین هر صفحه لیست و هر جزئیات کتاب؛ برای جلوگیری از بلاک فیدیبو ۱۲۰۰+ پیشنهاد می‌شود.
               </p>
               <label className="flex items-center gap-2 justify-between">
@@ -640,18 +640,18 @@ export default function BookExtractClient({ lists }: Props) {
               <button
                 type="button"
                 onClick={() => setHistoryOpen((v) => !v)}
-                className="flex min-w-0 flex-1 items-center gap-2 text-right font-semibold text-gray-900 hover:text-violet-700 transition-colors"
+                className="flex min-w-0 flex-1 items-center gap-2 text-right font-semibold text-[var(--color-text)] hover:text-violet-700 transition-colors"
                 aria-expanded={historyOpen}
               >
                 {historyOpen ? (
-                  <ChevronUp className="w-4 h-4 shrink-0 text-gray-400" />
+                  <ChevronUp className="w-4 h-4 shrink-0 text-[var(--color-text-subtle)]" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 shrink-0 text-gray-400" />
+                  <ChevronDown className="w-4 h-4 shrink-0 text-[var(--color-text-subtle)]" />
                 )}
                 <History className="w-5 h-5 shrink-0" />
                 <span>تاریخچه</span>
                 {!historyOpen && totalJobs > 0 && (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-[var(--color-text-muted)]">
                     {totalJobs.toLocaleString('fa-IR')}
                   </span>
                 )}
@@ -659,7 +659,7 @@ export default function BookExtractClient({ lists }: Props) {
               <button
                 type="button"
                 onClick={() => void loadJobs()}
-                className="shrink-0 text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1"
+                className="shrink-0 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] flex items-center gap-1"
               >
                 <RefreshCw className="w-4 h-4" />
                 بروزرسانی
@@ -670,7 +670,7 @@ export default function BookExtractClient({ lists }: Props) {
             <div className="p-5 pt-4 overflow-x-auto space-y-4">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-right text-gray-500 border-b">
+                  <tr className="text-right text-[var(--color-text-muted)] border-b">
                     <th className="py-2 pr-2">وضعیت</th>
                     <th className="py-2">mode</th>
                     <th className="py-2">منبع</th>
@@ -683,7 +683,7 @@ export default function BookExtractClient({ lists }: Props) {
                 <tbody>
                   {recentJobs.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-6 text-center text-gray-400">
+                      <td colSpan={7} className="py-6 text-center text-[var(--color-text-subtle)]">
                         هنوز jobی ثبت نشده
                       </td>
                     </tr>
@@ -705,23 +705,23 @@ export default function BookExtractClient({ lists }: Props) {
                   <button
                     type="button"
                     onClick={() => setArchiveOpen((v) => !v)}
-                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-sm font-medium text-[var(--color-text)] hover:bg-gray-50"
                     aria-expanded={archiveOpen}
                   >
                     <span>
                       آرشیو ({archivedCount.toLocaleString('fa-IR')} مورد قدیمی‌تر)
                     </span>
                     {archiveOpen ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
+                      <ChevronUp className="w-4 h-4 text-[var(--color-text-subtle)]" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                      <ChevronDown className="w-4 h-4 text-[var(--color-text-subtle)]" />
                     )}
                   </button>
 
                   {archiveOpen && (
                     <div className="mt-2">
                       {archiveLoading ? (
-                        <div className="flex items-center justify-center gap-2 py-6 text-sm text-gray-500">
+                        <div className="flex items-center justify-center gap-2 py-6 text-sm text-[var(--color-text-muted)]">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           در حال بارگذاری آرشیو...
                         </div>
@@ -730,7 +730,7 @@ export default function BookExtractClient({ lists }: Props) {
                           <tbody>
                             {archivedJobs.length === 0 && (
                               <tr>
-                                <td colSpan={7} className="py-4 text-center text-gray-400">
+                                <td colSpan={7} className="py-4 text-center text-[var(--color-text-subtle)]">
                                   موردی در آرشیو نیست
                                 </td>
                               </tr>
@@ -759,9 +759,9 @@ export default function BookExtractClient({ lists }: Props) {
           {activeJob && (
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <h3 className="font-semibold text-[var(--color-text)] flex items-center gap-2">
                   جزئیات job
-                  {loadingJobDetail && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                  {loadingJobDetail && <Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-subtle)]" />}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {activeJob.status === 'FAILED' &&
@@ -788,7 +788,7 @@ export default function BookExtractClient({ lists }: Props) {
                         <button
                           type="button"
                           onClick={handleResetPreview}
-                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-[var(--color-text-muted)] hover:bg-gray-50"
                         >
                           <RotateCcw className="w-4 h-4" />
                           بازنشانی
@@ -873,7 +873,7 @@ export default function BookExtractClient({ lists }: Props) {
                       {activeJob.progress}%
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 px-1">
+                  <p className="text-xs text-[var(--color-text-muted)] px-1">
                     اگر بیش از ۱ دقیقه ماند، احتمالاً سایت منبع از سرور در دسترس نیست — fast mode را
                     امتحان کنید یا منبع دیگر انتخاب کنید.
                   </p>
@@ -903,7 +903,7 @@ export default function BookExtractClient({ lists }: Props) {
               {activeJob.progressMeta && (
                 <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                   <div className="rounded-xl bg-gray-50 p-3">
-                    <div className="text-gray-500">موفق</div>
+                    <div className="text-[var(--color-text-muted)]">موفق</div>
                     <div className="text-lg font-semibold">{activeJob.itemCount}</div>
                   </div>
                   <div className="rounded-xl bg-emerald-50 p-3">
@@ -947,8 +947,8 @@ export default function BookExtractClient({ lists }: Props) {
 
               {activeJob.progressMeta?.fromDatabase?.length ? (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">از دیتابیس (بدون استخراج):</h4>
-                  <p className="text-sm text-gray-500">
+                  <h4 className="text-sm font-medium text-[var(--color-text)] mb-1">از دیتابیس (بدون استخراج):</h4>
+                  <p className="text-sm text-[var(--color-text-muted)]">
                     {activeJob.progressMeta.fromDatabase.join('، ')}
                   </p>
                 </div>
@@ -975,7 +975,7 @@ export default function BookExtractClient({ lists }: Props) {
                   <ul className="space-y-2 text-sm">
                     {activeJob.progressMeta!.errors!.map((err, i) => (
                       <li key={i} className="rounded-lg bg-white border border-red-100 px-3 py-2">
-                        <div className="font-medium text-gray-900">{err.title}</div>
+                        <div className="font-medium text-[var(--color-text)]">{err.title}</div>
                         <div className="text-red-700 text-xs mt-1 leading-relaxed">{err.message}</div>
                       </li>
                     ))}
@@ -1062,7 +1062,7 @@ function NotFoundTitlesPanel({
           </button>
         </div>
       </div>
-      <ol className="max-h-56 space-y-1.5 overflow-y-auto rounded-lg border border-amber-100 bg-white px-3 py-2.5 text-sm text-gray-700">
+      <ol className="max-h-56 space-y-1.5 overflow-y-auto rounded-lg border border-amber-100 bg-white px-3 py-2.5 text-sm text-[var(--color-text)]">
         {titles.map((title, index) => (
           <li key={`${index}-${title}`} className="flex gap-2 leading-relaxed">
             <span className="shrink-0 tabular-nums text-xs text-amber-700/70">{index + 1}.</span>
@@ -1090,7 +1090,7 @@ function JobHistoryRow({
   return (
     <tr
       className={`border-b border-gray-50 cursor-pointer hover:bg-gray-50 ${
-        selected ? 'bg-violet-50' : muted ? 'text-gray-600' : ''
+        selected ? 'bg-violet-50' : muted ? 'text-[var(--color-text-muted)]' : ''
       }`}
       onClick={onSelect}
     >
@@ -1101,7 +1101,7 @@ function JobHistoryRow({
       <td className="py-2">{SOURCE_LABELS[job.source] ?? job.source}</td>
       <td className="py-2">{job.itemCount}</td>
       <td className="py-2">{job.progress}%</td>
-      <td className="py-2 text-gray-500 text-xs">
+      <td className="py-2 text-[var(--color-text-muted)] text-xs">
         {new Date(job.createdAt).toLocaleString('fa-IR')}
       </td>
       <td className="py-2 pl-2">
@@ -1111,7 +1111,7 @@ function JobHistoryRow({
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1 text-gray-400 hover:text-red-600"
+          className="p-1 text-[var(--color-text-subtle)] hover:text-red-600"
           title="حذف"
         >
           <Trash2 className="w-4 h-4" />
@@ -1130,7 +1130,7 @@ function StatusBadge({ status }: { status: string }) {
         ? 'bg-red-100 text-red-700'
         : status === 'RUNNING'
           ? 'bg-blue-100 text-blue-700'
-          : 'bg-gray-100 text-gray-600';
+          : 'bg-gray-100 text-[var(--color-text-muted)]';
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>
       {status === 'COMPLETED' && <CheckCircle2 className="w-3 h-3" />}

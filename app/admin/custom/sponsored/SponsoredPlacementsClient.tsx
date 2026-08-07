@@ -623,8 +623,8 @@ export default function SponsoredPlacementsClient() {
                           p.isLive
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300'
                             : p.isExpired
-                              ? 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400'
-                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400'
+                              ? 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700/50 dark:text-[var(--color-text-subtle)]'
+                              : 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700/50 dark:text-[var(--color-text-subtle)]'
                         }`}
                       >
                         {p.isLive ? 'فعال' : p.isExpired ? 'منقضی' : 'غیرفعال'}
