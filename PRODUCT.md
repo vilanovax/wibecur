@@ -64,3 +64,7 @@ Wibe (وایپ/وایپ‌کور) یک PWA موبایل‌اول برای **کش
 
 - Consumer **light-only** تا اطلاع بعدی: `color-scheme: light`؛ کلاس `.dark` و توکن‌های dark فقط رزرو برای آینده
 - مسیر رسمی اکسپلور: `/explore` (لندینگ `/user-lists` فقط redirect)
+
+## Progress log
+
+کارهای انجام‌شدهٔ consumer UX (تا تکرار نشود): [`docs/CONSUMER_UX_PROGRESS.md`](./docs/CONSUMER_UX_PROGRESS.md)
