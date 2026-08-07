@@ -350,7 +350,7 @@ export default function ItemPreviewSheet({
 
               {desc ? (
                 <p
-                  className={`text-right text-[0.9375rem] leading-[1.85] text-foreground/80 whitespace-pre-line ${
+                  className={`text-right wibe-body leading-relaxed text-foreground/80 whitespace-pre-line ${
                     isLifestyle ? 'pt-0.5' : ''
                   }`}
                 >
@@ -415,7 +415,7 @@ export default function ItemPreviewSheet({
                 {listNote && <ItemTipCard tip={listNote} className="text-right" />}
 
                 {desc ? (
-                  <p className="text-right text-[0.9375rem] leading-[1.8] text-foreground/75">{desc}</p>
+                  <p className="text-right wibe-body leading-relaxed text-foreground/75">{desc}</p>
                 ) : (
                   <p className="wibe-caption text-wibe-secondary text-right">توضیحی ثبت نشده</p>
                 )}

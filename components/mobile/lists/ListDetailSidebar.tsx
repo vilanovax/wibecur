@@ -68,7 +68,7 @@ export default function ListDetailSidebar({
                     {Math.round(viralProgress).toLocaleString('fa-IR')}٪
                   </span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
+                <div className="h-1.5 overflow-hidden rounded-full bg-wibe-surface">
                   <div
                     className="h-full rounded-full bg-warning transition-colors"
                     style={{ width: `${viralProgress}%` }}
@@ -95,7 +95,7 @@ export default function ListDetailSidebar({
               {tags.slice(0, 6).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex rounded-md bg-gray-100 px-2.5 py-1 wibe-caption text-wibe-secondary"
+                  className="inline-flex rounded-md bg-wibe-surface px-2.5 py-1 wibe-caption text-wibe-secondary"
                 >
                   {tag}
                 </span>

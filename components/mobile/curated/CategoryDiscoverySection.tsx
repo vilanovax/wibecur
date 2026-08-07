@@ -32,7 +32,7 @@ export default function CategoryDiscoverySection({ categories }: CategoryDiscove
             <span className="text-xl leading-none lg:text-2xl" aria-hidden>
               {cat.icon}
             </span>
-            <span className="line-clamp-2 text-center text-[10px] font-medium leading-tight text-foreground lg:wibe-small">
+            <span className="line-clamp-2 text-center wibe-caption font-medium leading-tight text-foreground lg:wibe-small">
               {cat.title}
             </span>
           </Link>

@@ -32,13 +32,13 @@ export default function RisingListsSection({ lists }: RisingListsSectionProps) {
             href={`/lists/${list.slug}`}
             className="group block overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-[colors,transform] active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md"
           >
-            <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10] lg:max-h-[190px]">
+            <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10] lg:max-h-[190px]">
               <ImageWithFallback
                 src={list.coverUrl ?? ''}
                 alt={list.title}
                 className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
                 fallbackIcon="📋"
-                fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
               />
               <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 wibe-caption font-semibold text-white">
                 در حال رشد

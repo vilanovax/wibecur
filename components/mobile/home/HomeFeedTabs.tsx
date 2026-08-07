@@ -77,7 +77,7 @@ export default function HomeFeedTabs() {
                 >
                   {item.id === 'trending' && isNewUser && !isGuest ? (
                     <span
-                      className={`rounded-pill px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                      className={`rounded-pill px-1.5 py-0.5 wibe-caption font-bold leading-none ${
                         isActive ? 'bg-white/20 text-white' : 'bg-amber-400/20 text-amber-700'
                       }`}
                     >

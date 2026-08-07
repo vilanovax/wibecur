@@ -59,7 +59,7 @@ function ExploreTrendingCard({
       className="group block transition-transform active:scale-[0.99] lg:hover:scale-[1.01]"
     >
       <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:rounded-xl lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10]">
+        <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10]">
           {cover ? (
             <Image
               src={cover.src}
@@ -71,7 +71,7 @@ function ExploreTrendingCard({
               unoptimized={cover.unoptimized}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-2xl">
+            <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl">
               {list.category?.icon ?? '📋'}
             </div>
           )}

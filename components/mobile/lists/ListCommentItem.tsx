@@ -44,7 +44,7 @@ export default function ListCommentItem({
   };
 
   return (
-    <div className="flex gap-3 p-4 bg-white rounded-xl border border-gray-100">
+    <div className="flex gap-3 p-4 bg-white rounded-xl border border-wibe">
       {/* Avatar */}
       <div className="flex-shrink-0">
         <CommentAvatar

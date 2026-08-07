@@ -52,7 +52,7 @@ export default function HomeRisingSectionServer({ lists }: HomeRisingSectionServ
             href={`/lists/${list.slug}`}
             className="flex flex-row-reverse gap-3 overflow-hidden rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm transition-transform active:scale-[0.99]"
           >
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-200">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-wibe-surface">
               {cover ? (
                 <Image
                   src={cover.src}
@@ -63,7 +63,7 @@ export default function HomeRisingSectionServer({ lists }: HomeRisingSectionServ
                   unoptimized={cover.unoptimized}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gray-200 text-lg">
+                <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-lg">
                   {list.categories?.icon ?? '📋'}
                 </div>
               )}
@@ -98,7 +98,7 @@ export default function HomeRisingSectionServer({ lists }: HomeRisingSectionServ
                 className="group block lg:h-full lg:w-full lg:shrink"
               >
                 <div className="flex aspect-[5/4] h-full max-h-[11.5rem] flex-col items-center justify-center rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-center transition-colors hover:border-primary/45 hover:bg-primary/10 sm:aspect-[4/3] lg:aspect-auto lg:min-h-[8.5rem] lg:max-h-[11.5rem] lg:rounded-xl lg:px-4 lg:py-3">
-                  <span className="wibe-small font-semibold text-primary lg:text-[0.8125rem]">
+                  <span className="wibe-small font-semibold text-primary">
                     {cell.label}
                   </span>
                 </div>

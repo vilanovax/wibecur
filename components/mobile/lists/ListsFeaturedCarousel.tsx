@@ -131,7 +131,7 @@ function FeaturedSlide({
         variant="banner"
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
         fallbackIcon={list.categories?.icon ?? '📋'}
-        fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-4xl"
+        fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-4xl"
         priority={priority}
       />
       <div className="absolute inset-0 bg-gradient-to-l from-black/85 via-black/50 to-black/20" />

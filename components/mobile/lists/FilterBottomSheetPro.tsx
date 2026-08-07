@@ -75,7 +75,7 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-gray-100">
+    <div className="border-b border-wibe">
       <button
         type="button"
         onClick={onToggle}
@@ -193,14 +193,14 @@ export default function FilterBottomSheetPro({
       >
         {/* Drag Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-gray-200 rounded-full" />
+          <div className="w-10 h-1 bg-wibe-surface rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 border-b border-wibe">
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
+            className="w-10 h-10 rounded-full hover:bg-wibe-surface flex items-center justify-center"
             aria-label="بستن"
           >
             <X className="w-5 h-5 text-wibe-secondary" />
@@ -238,7 +238,7 @@ export default function FilterBottomSheetPro({
                 key={p.id}
                 type="button"
                 onClick={() => applyPreset(p)}
-                className="flex-shrink-0 h-9 px-4 rounded-[20px] bg-gray-100 text-foreground wibe-caption font-medium hover:bg-gray-200 transition-colors"
+                className="flex-shrink-0 h-9 px-4 rounded-[20px] bg-wibe-surface text-foreground wibe-caption font-medium hover:bg-wibe-surface transition-colors"
               >
                 {p.label}
               </button>
@@ -256,7 +256,7 @@ export default function FilterBottomSheetPro({
                 type="checkbox"
                 checked={localState.categories.size === 0}
                 onChange={() => setLocalState((s) => ({ ...s, categories: new Set() }))}
-                className="w-5 h-5 rounded border-gray-300 text-primary"
+                className="w-5 h-5 rounded border-wibe text-primary"
               />
               <span className="wibe-small text-foreground">همه دسته‌ها</span>
             </label>
@@ -269,7 +269,7 @@ export default function FilterBottomSheetPro({
                   type="checkbox"
                   checked={localState.categories.has(cat.id)}
                   onChange={() => toggleCategory(cat.id)}
-                  className="w-5 h-5 rounded border-gray-300 text-primary"
+                  className="w-5 h-5 rounded border-wibe text-primary"
                 />
                 <span className="wibe-small text-foreground">{cat.icon} {cat.name}</span>
               </label>
@@ -292,7 +292,7 @@ export default function FilterBottomSheetPro({
                   name="sort"
                   checked={localState.sortBy === opt.value}
                   onChange={() => setLocalState((s) => ({ ...s, sortBy: opt.value }))}
-                  className="w-4 h-4 border-gray-300 text-primary"
+                  className="w-4 h-4 border-wibe text-primary"
                 />
                 <span className="wibe-small text-foreground">{opt.label}</span>
               </label>
@@ -314,7 +314,7 @@ export default function FilterBottomSheetPro({
                   className={`h-8 px-4 rounded-[20px] wibe-caption font-medium transition-colors ${
                     localState.vibes.has(value)
                       ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
-                      : 'bg-gray-50 border border-gray-200 text-wibe-secondary'
+                      : 'bg-wibe-surface border border-wibe text-wibe-secondary'
                   }`}
                 >
                   {label}
@@ -338,7 +338,7 @@ export default function FilterBottomSheetPro({
                   className={`h-8 px-4 rounded-[20px] wibe-caption font-medium transition-colors ${
                     localState.creatorType === opt.value
                       ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
-                      : 'bg-gray-50 border border-gray-200 text-wibe-secondary'
+                      : 'bg-wibe-surface border border-wibe text-wibe-secondary'
                   }`}
                 >
                   {opt.label}
@@ -365,7 +365,7 @@ export default function FilterBottomSheetPro({
                 onChange={(e) =>
                   setLocalState((s) => ({ ...s, minItemCount: parseInt(e.target.value, 10) }))
                 }
-                className="w-full h-2 bg-gray-200 rounded-full accent-primary"
+                className="w-full h-2 bg-wibe-surface rounded-full accent-primary"
               />
               <div className="flex justify-between text-xs text-wibe-secondary">
                 <span>۰</span>
@@ -391,7 +391,7 @@ export default function FilterBottomSheetPro({
                       minRating: s.minRating === n ? 0 : n,
                     }))
                   }
-                  className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="p-2 rounded-lg hover:bg-wibe-surface transition-colors"
                   aria-label={`${n} ستاره`}
                 >
                   <Star
@@ -409,7 +409,7 @@ export default function FilterBottomSheetPro({
         </div>
 
         {/* Sticky Bottom CTA */}
-        <div className="p-6 pt-4 flex-shrink-0 border-t border-gray-100">
+        <div className="p-6 pt-4 flex-shrink-0 border-t border-wibe">
           <button
             type="button"
             onClick={handleApply}

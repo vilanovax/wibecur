@@ -16,7 +16,7 @@ export default function MoodMissionCard({ card, onSelect }: Props) {
       className={`group relative flex w-full min-h-[8.25rem] flex-col overflow-hidden rounded-2xl border bg-gradient-to-br p-3.5 text-right shadow-vibe-sm transition-[colors,transform,box-shadow] hover:-translate-y-1 hover:shadow-vibe-card active:scale-[0.98] lg:min-h-[10rem] lg:p-5 ${card.gradient}`}
     >
       <span
-        className="pointer-events-none absolute -bottom-3 -left-2 select-none text-[5rem] leading-none opacity-[0.12] transition-transform duration-300 group-hover:scale-110"
+        className="pointer-events-none absolute -bottom-3 -left-2 select-none text-6xl leading-none opacity-[0.12] transition-transform duration-300 group-hover:scale-110"
         aria-hidden
       >
         {card.icon}
@@ -27,7 +27,7 @@ export default function MoodMissionCard({ card, onSelect }: Props) {
       />
 
       <span
-        className={`relative mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl shadow-sm ring-1 ring-black/[0.04] lg:mb-3 lg:h-12 lg:w-12 lg:rounded-2xl lg:text-[1.75rem] ${card.accent}`}
+        className={`relative mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl shadow-sm ring-1 ring-black/[0.04] lg:mb-3 lg:h-12 lg:w-12 lg:rounded-2xl lg:text-2xl ${card.accent}`}
         aria-hidden
       >
         {card.icon}

@@ -85,7 +85,7 @@ function StepProgress({ step, total }: { step: number; total: number }) {
           <span
             key={i}
             className={`inline-block w-2 h-2 rounded-full transition-colors ${
-              i + 1 <= step ? 'bg-primary' : 'bg-gray-200'
+              i + 1 <= step ? 'bg-primary' : 'bg-wibe-surface'
             }`}
           />
         ))}
@@ -105,7 +105,7 @@ function ItemPoster({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 ${className}`}>
+    <div className={`rounded-lg overflow-hidden bg-wibe-surface flex-shrink-0 ${className}`}>
       <ImageWithFallback
         src={src ?? ''}
         alt={title}
@@ -456,7 +456,7 @@ export default function SuggestItemSearch({
               value={formData.externalUrl}
               onChange={(e) => setFormData((p) => ({ ...p, externalUrl: e.target.value }))}
               placeholder="لینک سایت، اینستاگرام یا صفحه معرفی"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
+              className="w-full px-4 py-3 rounded-xl border border-wibe bg-wibe-surface/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
             />
           </div>
           <div>
@@ -466,9 +466,9 @@ export default function SuggestItemSearch({
               value={formData.imageUrl}
               onChange={(e) => setFormData((p) => ({ ...p, imageUrl: e.target.value }))}
               placeholder="لینک تصویر یا آپلود فایل"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary mb-2"
+              className="w-full px-4 py-3 rounded-xl border border-wibe bg-wibe-surface/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary mb-2"
             />
-            <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-gray-300 text-wibe-secondary text-sm cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-wibe text-wibe-secondary text-sm cursor-pointer hover:bg-wibe-surface">
               <ImageIcon className="w-4 h-4" />
               {imageUploading ? 'در حال آپلود...' : 'انتخاب فایل'}
               <input
@@ -523,7 +523,7 @@ export default function SuggestItemSearch({
               value={formData.title}
               onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
               placeholder={getTitlePlaceholder(categorySlug)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
+              className="w-full px-4 py-3 rounded-xl border border-wibe bg-wibe-surface/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
               required
             />
           </div>
@@ -538,7 +538,7 @@ export default function SuggestItemSearch({
                     type="button"
                     onClick={() => setFormData((p) => ({ ...p, categoryId: p.categoryId === c.id ? '' : c.id }))}
                     className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      formData.categoryId === c.id ? 'bg-primary text-white' : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                      formData.categoryId === c.id ? 'bg-primary text-white' : 'bg-wibe-surface text-foreground hover:bg-wibe-surface'
                     }`}
                   >
                     {c.name}
@@ -563,7 +563,7 @@ export default function SuggestItemSearch({
               placeholder="یک توضیح کوتاه بنویس که چرا ارزش اضافه شدن دارد..."
               maxLength={MAX_DESCRIPTION_LENGTH}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
+              className="w-full px-4 py-3 rounded-xl border border-wibe bg-wibe-surface/50 text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
             />
             <p className="text-xs text-wibe-secondary mt-1 text-start">
               {formData.description.length}/{MAX_DESCRIPTION_LENGTH}
@@ -678,7 +678,7 @@ export default function SuggestItemSearch({
                 return (
                   <li
                     key={item.id}
-                    className="flex items-center gap-3 rounded-xl border border-wibe bg-gray-50/80 p-2.5"
+                    className="flex items-center gap-3 rounded-xl border border-wibe bg-wibe-surface/80 p-2.5"
                   >
                     <ItemPoster src={item.imageUrl} title={item.title} />
                     <div className="min-w-0 flex-1">
@@ -745,7 +745,7 @@ export default function SuggestItemSearch({
                   </button>
 
                   {isExpanded && (
-                    <div className="border-t border-wibe px-3 pb-3 pt-2 space-y-3 bg-gray-50/40">
+                    <div className="border-t border-wibe px-3 pb-3 pt-2 space-y-3 bg-wibe-surface/40">
                       <div>
                         <p className="wibe-small font-semibold text-foreground">
                           {emoji} {item.title}
@@ -811,7 +811,7 @@ export default function SuggestItemSearch({
           <button
             type="button"
             onClick={goToCreate}
-            className="w-full py-2.5 rounded-xl border border-dashed border-wibe wibe-small font-medium text-wibe-secondary hover:bg-gray-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-xl border border-dashed border-wibe wibe-small font-medium text-wibe-secondary hover:bg-wibe-surface flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             مورد جدید ثبت نشده؟ خودت اضافه کن
@@ -824,7 +824,7 @@ export default function SuggestItemSearch({
           <button
             type="button"
             onClick={goToCreate}
-            className="w-full py-2.5 rounded-xl border border-dashed border-wibe wibe-small font-medium text-wibe-secondary hover:bg-gray-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-xl border border-dashed border-wibe wibe-small font-medium text-wibe-secondary hover:bg-wibe-surface flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             افزودن مورد جدید

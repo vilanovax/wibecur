@@ -59,12 +59,12 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
       <section ref={ref} className={embedded ? '' : 'mb-6'}>
         {!embedded && (
           <div className="mb-3 px-4">
-            <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
+            <div className="h-6 w-32 animate-pulse rounded bg-wibe-surface" />
           </div>
         )}
         <div className="space-y-3 px-4 lg:px-0">
           {[1, 2].map((i) => (
-            <div key={i} className="h-[120px] animate-pulse rounded-lg bg-gray-100 lg:h-36" />
+            <div key={i} className="h-[120px] animate-pulse rounded-lg bg-wibe-surface lg:h-36" />
           ))}
         </div>
       </section>
@@ -110,13 +110,13 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
                   }
                   className="flex min-h-[120px] flex-row-reverse gap-4 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
                 >
-                  <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-gray-200">
+                  <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-wibe-surface">
                     <ImageWithFallback
                       src={list.coverImage}
                       alt={list.title}
                       className="h-full w-full object-cover"
                       fallbackIcon={list.categories?.icon ?? '📋'}
-                      fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200"
+                      fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface"
                       categorySlug={list.categories?.slug}
                       listSlug={list.slug}
                       listTitle={list.title}

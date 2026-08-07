@@ -392,7 +392,7 @@ function VibeCommentItem({
         )}
         {/* Replies */}
         {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-3 pr-4 border-r-2 border-gray-100 space-y-2">
+          <div className="mt-3 pr-4 border-r-2 border-wibe space-y-2">
             {comment.replies.map((reply) => {
               const replyProfileUrl = reply.users.username ? `/u/${encodeURIComponent(reply.users.username)}` : null;
               return (
@@ -778,7 +778,7 @@ export default function VibeCommentSection({
 
         {/* Sort + Comments */}
         {!isLoading && comments.length > 0 && (
-          <div className="pt-4 border-t border-gray-100">
+          <div className="pt-4 border-t border-wibe">
             <div className="flex gap-2 mb-4">
               <span className="text-xs text-wibe-secondary py-1.5">مرتب‌سازی:</span>
               <button

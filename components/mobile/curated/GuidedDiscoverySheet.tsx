@@ -44,7 +44,7 @@ function MoodSheetHeader({ icon, subtitle }: { icon?: string; subtitle?: string 
         </span>
       )}
       {subtitle && (
-        <p className="flex-1 pt-0.5 text-right wibe-small leading-relaxed text-wibe-secondary lg:text-[0.9375rem]">
+        <p className="flex-1 pt-0.5 text-right wibe-small leading-relaxed text-wibe-secondary">
           {subtitle}
         </p>
       )}
@@ -220,12 +220,12 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
             <div className="space-y-4 px-1">
               {[1, 2].map((row) => (
                 <div key={row} className="space-y-3">
-                  <div className="h-5 w-28 animate-pulse rounded-lg bg-gray-200" />
+                  <div className="h-5 w-28 animate-pulse rounded-lg bg-wibe-surface" />
                   <div className="flex gap-3 overflow-hidden">
                     {[1, 2, 3].map((card) => (
                       <div
                         key={card}
-                        className="h-36 w-[58%] max-w-[220px] shrink-0 animate-pulse rounded-2xl bg-gray-200 lg:w-full lg:max-w-none"
+                        className="h-36 w-[58%] max-w-[220px] shrink-0 animate-pulse rounded-2xl bg-wibe-surface lg:w-full lg:max-w-none"
                       />
                     ))}
                   </div>

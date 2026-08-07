@@ -25,14 +25,14 @@ export default function RandomSurpriseCard({ lists }: Props) {
       <button
         type="button"
         onClick={handleSurprise}
-        className="group relative w-full overflow-hidden rounded-3xl border-2 border-primary/25 bg-gradient-to-bl from-violet-100/90 via-primary/[0.08] to-amber-50/80 p-5 text-right shadow-sm transition-colors hover:border-primary/40 hover:shadow-md active:scale-[0.99] lg:mx-auto lg:max-w-2xl lg:p-7"
+        className="group relative w-full overflow-hidden rounded-3xl border-2 border-primary/25 bg-gradient-to-bl from-primary/[0.08] via-primary/[0.04] to-warning/10 p-5 text-right shadow-sm transition-colors hover:border-primary/40 hover:shadow-md active:scale-[0.99] lg:mx-auto lg:max-w-2xl lg:p-7"
       >
         <span
           className="pointer-events-none absolute -left-4 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"
           aria-hidden
         />
         <span
-          className="pointer-events-none absolute -bottom-6 -right-4 text-[7rem] opacity-[0.07] select-none"
+          className="pointer-events-none absolute -bottom-6 -right-4 text-7xl opacity-[0.07] select-none"
           aria-hidden
         >
           ✨

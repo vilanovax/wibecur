@@ -47,13 +47,13 @@ export default function ListCard({
     return (
       <Link href={listHref} className="block active:scale-[0.99] transition-transform">
         <div className="bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm flex flex-row-reverse">
-          <div className="relative w-24 h-24 flex-shrink-0 bg-gray-200 overflow-hidden">
+          <div className="relative w-24 h-24 flex-shrink-0 bg-wibe-surface overflow-hidden">
             <ImageWithFallback
               src={coverImage}
               alt={title}
               className="w-full h-full object-cover"
               fallbackIcon="📋"
-              fallbackClassName="w-full h-full bg-gray-200"
+              fallbackClassName="w-full h-full bg-wibe-surface"
               priority={priority}
               categorySlug={categorySlug}
               listSlug={resolvedListSlug}
@@ -76,13 +76,13 @@ export default function ListCard({
   return (
     <Link href={listHref} className="block active:scale-[0.99] transition-transform">
       <article className="bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-card">
-        <div className="relative h-40 bg-gray-200 overflow-hidden">
+        <div className="relative h-40 bg-wibe-surface overflow-hidden">
           <ImageWithFallback
             src={coverImage}
             alt={title}
             className="w-full h-full object-cover"
             fallbackIcon="📋"
-            fallbackClassName="w-full h-full bg-gray-200"
+            fallbackClassName="w-full h-full bg-wibe-surface"
             priority={priority}
             categorySlug={categorySlug}
             listSlug={resolvedListSlug}

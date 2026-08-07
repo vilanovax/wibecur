@@ -23,9 +23,9 @@ export default function HomeSavedListsSection() {
     return (
       <section className="mb-6">
         <div className="mb-3 px-4 lg:px-0">
-          <div className="h-6 w-36 animate-pulse rounded bg-gray-200" />
+          <div className="h-6 w-36 animate-pulse rounded bg-wibe-surface" />
         </div>
-        <div className="mx-4 h-28 animate-pulse rounded-xl bg-gray-100 lg:mx-0" />
+        <div className="mx-4 h-28 animate-pulse rounded-xl bg-wibe-surface lg:mx-0" />
       </section>
     );
   }
@@ -82,7 +82,7 @@ export default function HomeSavedListsSection() {
       />
 
       {isLoading ? (
-        <div className="mx-4 h-28 animate-pulse rounded-xl bg-gray-100 lg:mx-0" />
+        <div className="mx-4 h-28 animate-pulse rounded-xl bg-wibe-surface lg:mx-0" />
       ) : showSaved ? (
         <>
           <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">

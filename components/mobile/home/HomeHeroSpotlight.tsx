@@ -38,7 +38,7 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
         aria-hidden
       >
         <div
-          className={`animate-pulse rounded-2xl bg-gray-200 shadow-vibe-hero lg:rounded-[1.35rem] ${
+          className={`animate-pulse rounded-2xl bg-wibe-surface shadow-vibe-hero lg:rounded-[1.35rem] ${
             fillHeight
               ? 'h-[220px] sm:h-[230px] xl:h-full xl:min-h-[20rem]'
               : 'h-[220px] sm:h-[230px] lg:h-[21rem] xl:h-[22.5rem]'
@@ -113,7 +113,7 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
             منتخب هفته
           </span>
 
-          <h2 className="line-clamp-2 text-balance text-[1.65rem] font-bold leading-[1.15] tracking-tight text-white sm:text-3xl lg:text-4xl lg:leading-[1.1] xl:text-[2.65rem]">
+          <h2 className="line-clamp-2 text-balance text-h1 font-bold leading-[1.15] tracking-tight text-white sm:text-3xl lg:text-4xl lg:leading-[1.1] xl:text-h1">
             {list.title}
           </h2>
 

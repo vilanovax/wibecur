@@ -23,13 +23,13 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
       href={`/lists/${rel.slug}`}
       className="w-[calc(55vw)] max-w-[220px] shrink-0 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-[colors,transform] active:scale-[0.99] lg:w-full lg:max-w-none lg:hover:border-primary/20 lg:hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10] lg:max-h-[7.25rem]">
+      <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10] lg:max-h-[7.25rem]">
         <ImageWithFallback
           src={rel.coverImage ?? ''}
           alt={title}
           className="h-full w-full object-cover"
           fallbackIcon={rel.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
           categorySlug={rel.categories?.slug}
           listSlug={rel.slug}
           listTitle={rel.title}
@@ -75,10 +75,10 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
         className={`${LIST_SECTION_SCROLL_MT} mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
         aria-hidden
       >
-        <div className="mb-3 h-6 w-36 animate-pulse rounded bg-gray-100" />
+        <div className="mb-3 h-6 w-36 animate-pulse rounded bg-wibe-surface" />
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 w-[55vw] max-w-[220px] shrink-0 animate-pulse rounded-lg bg-gray-100 lg:h-32 lg:w-full" />
+            <div key={i} className="h-28 w-[55vw] max-w-[220px] shrink-0 animate-pulse rounded-lg bg-wibe-surface lg:h-32 lg:w-full" />
           ))}
         </div>
       </section>
@@ -94,10 +94,10 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
         aria-busy
         aria-label="در حال بارگذاری لیست‌های مشابه"
       >
-        <div className="mb-3 h-6 w-36 animate-pulse rounded bg-gray-100" />
+        <div className="mb-3 h-6 w-36 animate-pulse rounded bg-wibe-surface" />
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 w-[55vw] max-w-[220px] shrink-0 animate-pulse rounded-lg bg-gray-100 lg:h-32 lg:w-full" />
+            <div key={i} className="h-28 w-[55vw] max-w-[220px] shrink-0 animate-pulse rounded-lg bg-wibe-surface lg:h-32 lg:w-full" />
           ))}
         </div>
       </section>

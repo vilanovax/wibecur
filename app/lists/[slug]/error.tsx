@@ -15,8 +15,8 @@ export default function ListDetailError({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4" dir="rtl">
-      <p className="text-xl font-bold text-gray-800 mb-2">لیست لود نشد</p>
+    <div className="min-h-screen bg-wibe-surface flex flex-col items-center justify-center px-4" dir="rtl">
+      <p className="text-xl font-bold text-foreground mb-2">لیست لود نشد</p>
       <button
         type="button"
         onClick={reset}

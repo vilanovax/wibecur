@@ -71,7 +71,7 @@ function ListGridItemCard({
           </span>
           {!isMovieGrid && (
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2 pb-2 pt-10">
-              <p className="line-clamp-2 text-start text-[11px] font-semibold leading-snug text-white lg:text-xs">
+              <p className="line-clamp-2 text-start wibe-caption font-semibold leading-snug text-white lg:text-xs">
                 {item.title}
               </p>
             </div>

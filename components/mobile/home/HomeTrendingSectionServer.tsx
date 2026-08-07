@@ -58,7 +58,7 @@ export default function HomeTrendingSectionServer({ lists }: HomeTrendingSection
                 className="group block lg:h-full lg:w-full lg:shrink"
               >
                 <div className="flex aspect-[5/4] h-full max-h-[11.5rem] flex-col items-center justify-center rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-center transition-colors hover:border-primary/45 hover:bg-primary/10 sm:aspect-[4/3] lg:aspect-auto lg:min-h-[8.5rem] lg:max-h-[11.5rem] lg:rounded-xl lg:px-4 lg:py-3">
-                  <span className="wibe-small font-semibold text-primary lg:text-[0.8125rem]">
+                  <span className="wibe-small font-semibold text-primary">
                     {cell.label}
                   </span>
                   {cell.description ? (

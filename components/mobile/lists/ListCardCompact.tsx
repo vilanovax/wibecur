@@ -215,7 +215,7 @@ function ListCardCompact({
           aria-label={displayTitle}
         />
         <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-gray-200 lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-wibe-surface lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
@@ -224,7 +224,7 @@ function ListCardCompact({
               sizes="56px"
               className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-lg"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-lg"
             />
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
@@ -260,7 +260,7 @@ function ListCardCompact({
           aria-label={displayTitle}
         />
         <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2.5">
-          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-gray-200 lg:h-[72px] lg:w-[72px]">
+          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-wibe-surface lg:h-[72px] lg:w-[72px]">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
@@ -269,7 +269,7 @@ function ListCardCompact({
               sizes="72px"
               className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
             />
           </div>
           <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-9 lg:pe-10' : ''}`}>
@@ -318,7 +318,7 @@ function ListCardCompact({
         aria-label={displayTitle}
       />
       {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
-      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-gray-200 max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
+      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-wibe-surface max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -327,7 +327,7 @@ function ListCardCompact({
           sizes="(min-width: 1024px) 25vw, 50vw"
           className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl lg:text-4xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-3xl lg:text-4xl"
         />
         {badges.length > 0 && (
           <div className="absolute right-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-end gap-1 lg:right-2 lg:top-2">
@@ -351,7 +351,7 @@ function ListCardCompact({
           </span>
         </div>
         <div className={`absolute inset-x-0 bottom-0 p-2.5 text-right max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-11 lg:pe-12' : ''}`}>
-          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] max-lg:text-[0.8125rem] lg:text-base lg:font-bold">
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] lg:text-base lg:font-bold">
             {renderTitle('')}
           </h3>
         </div>

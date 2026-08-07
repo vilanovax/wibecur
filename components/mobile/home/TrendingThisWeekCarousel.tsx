@@ -50,14 +50,14 @@ export default function TrendingThisWeekCarousel({ embedded = false }: TrendingT
       <section className={embedded ? '' : 'mb-6'}>
         {!embedded && (
           <div className="mb-3 px-4 lg:px-0">
-            <div className="h-5 w-40 animate-pulse rounded bg-gray-200" />
+            <div className="h-5 w-40 animate-pulse rounded bg-wibe-surface" />
           </div>
         )}
         <div className={`flex gap-2.5 overflow-hidden px-4 lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
-              className="shrink-0 animate-pulse rounded-lg bg-gray-100 lg:w-full"
+              className="shrink-0 animate-pulse rounded-lg bg-wibe-surface lg:w-full"
               style={{ width: MOBILE_CARD_WIDTH, height: MOBILE_CARD_HEIGHT }}
             />
           ))}

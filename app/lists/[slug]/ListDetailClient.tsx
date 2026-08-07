@@ -240,7 +240,7 @@ function ListCompactStatsBar({
     const verticalClass = isBookmarked
       ? 'rounded-lg bg-primary/[0.1] px-2 py-1.5 ring-1 ring-inset ring-primary/20'
       : saveInteractive
-        ? 'rounded-lg px-1 py-0.5 hover:bg-gray-50'
+        ? 'rounded-lg px-1 py-0.5 hover:bg-wibe-surface'
         : 'px-1 py-0.5';
 
     if (layout === 'vertical') {
@@ -300,7 +300,7 @@ function ListCompactStatsBar({
                   key={key}
                   type="button"
                   onClick={onClick}
-                  className="flex w-full items-center justify-between rounded-lg px-1 py-0.5 transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center justify-between rounded-lg px-1 py-0.5 transition-colors hover:bg-wibe-surface"
                 >
                   {row}
                 </button>
@@ -335,7 +335,7 @@ function ListCompactStatsBar({
               key={key}
               type="button"
               onClick={onClick}
-              className="px-1 py-2.5 text-center transition-colors hover:bg-gray-50 active:bg-gray-100"
+              className="px-1 py-2.5 text-center transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
             >
               {inner}
             </button>
@@ -385,7 +385,7 @@ function ListOwnerToolbar({
       </button>
       {showViral && (
         <div className="mr-auto flex min-w-[8.5rem] flex-1 items-center gap-2 sm:flex-none">
-          <div className="h-1.5 min-w-[4.5rem] flex-1 overflow-hidden rounded-full bg-gray-200 sm:w-20 sm:flex-none">
+          <div className="h-1.5 min-w-[4.5rem] flex-1 overflow-hidden rounded-full bg-wibe-surface sm:w-20 sm:flex-none">
             <div className="h-full rounded-full bg-warning transition-all" style={{ width: `${viralProgress}%` }} />
           </div>
           <span className="shrink-0 wibe-caption tabular-nums text-wibe-secondary">
@@ -892,13 +892,13 @@ export default function ListDetailClient({
       {list.categories && (
         <Link
           href={`/categories/${list.categories.slug}`}
-          className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2.5 py-1 wibe-caption font-medium text-foreground transition-colors hover:bg-gray-200 lg:bg-wibe-surface lg:ring-1 lg:ring-wibe/80"
+          className="inline-flex items-center gap-1 rounded-md bg-wibe-surface px-2.5 py-1 wibe-caption font-medium text-foreground transition-colors hover:bg-wibe-surface lg:bg-wibe-surface lg:ring-1 lg:ring-wibe/80"
         >
           {list.categories.icon} {list.categories.name}
         </Link>
       )}
       {badgeLabel && (
-        <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-gray-100 text-foreground'}`}>
+        <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-wibe-surface text-foreground'}`}>
           {badgeLabel}
         </span>
       )}
@@ -921,13 +921,13 @@ export default function ListDetailClient({
       <section ref={heroBannerRef} className="lg:mt-1">
         {isDesktop ? (
           <div className="grid grid-cols-[minmax(13rem,17.5rem)_minmax(0,1fr)] items-center gap-5 xl:grid-cols-[18rem_minmax(0,1fr)] xl:gap-6">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-200 shadow-sm ring-1 ring-black/[0.04] xl:aspect-[16/10]">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-wibe-surface shadow-sm ring-1 ring-black/[0.04] xl:aspect-[16/10]">
               <ImageWithFallback
                 src={heroImage}
                 alt={displayTitle}
                 className="h-full w-full object-cover object-center"
                 fallbackIcon={categoryIcon ?? '📋'}
-                fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-5xl"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-5xl"
                 categorySlug={categorySlug}
                 listSlug={list.slug}
                 listTitle={list.title}
@@ -944,7 +944,7 @@ export default function ListDetailClient({
             </div>
 
             <div className="min-w-0 py-1">
-              <h1 className="text-[1.5rem] font-bold leading-snug text-foreground line-clamp-2 xl:text-[1.65rem]">
+              <h1 className="text-h1 font-bold leading-snug text-foreground line-clamp-2 xl:text-h1">
                 {displayTitle}
               </h1>
               {listDescription && (
@@ -962,7 +962,7 @@ export default function ListDetailClient({
               alt={displayTitle}
               className="absolute inset-0 h-full w-full object-cover object-center"
               fallbackIcon={categoryIcon ?? '📋'}
-              fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-gray-200 text-6xl"
+              fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-wibe-surface text-6xl"
               categorySlug={categorySlug}
               listSlug={list.slug}
               listTitle={list.title}
@@ -1053,7 +1053,7 @@ export default function ListDetailClient({
                   {list.tags.slice(0, 5).map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex rounded-md bg-gray-100 px-3 py-1 wibe-caption font-medium text-wibe-secondary"
+                      className="inline-flex rounded-md bg-wibe-surface px-3 py-1 wibe-caption font-medium text-wibe-secondary"
                     >
                       {tag}
                     </span>
@@ -1183,9 +1183,9 @@ export default function ListDetailClient({
                 />
               ) : (
                 <div className="space-y-3" aria-hidden>
-                  <div className="h-11 animate-pulse rounded-xl bg-gray-100" />
-                  <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
-                  <div className="h-20 animate-pulse rounded-xl bg-gray-100" />
+                  <div className="h-11 animate-pulse rounded-xl bg-wibe-surface" />
+                  <div className="h-20 animate-pulse rounded-xl bg-wibe-surface" />
+                  <div className="h-20 animate-pulse rounded-xl bg-wibe-surface" />
                 </div>
               )}
             </div>
@@ -1263,7 +1263,7 @@ export default function ListDetailClient({
             onClick={() => setManageOpen(false)}
             className="flex items-center gap-3 rounded-xl border border-wibe bg-wibe-card p-3.5 wibe-small font-medium text-foreground active:scale-[0.99]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-wibe-secondary">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-wibe-surface text-wibe-secondary">
               <Settings className="h-4 w-4" />
             </span>
             تنظیمات و ویرایش لیست
@@ -1276,7 +1276,7 @@ export default function ListDetailClient({
             }}
             className="flex w-full items-center gap-3 rounded-xl border border-wibe bg-wibe-card p-3.5 wibe-small font-medium text-foreground active:scale-[0.99]"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-wibe-secondary">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-wibe-surface text-wibe-secondary">
               <Share2 className="h-4 w-4" />
             </span>
             اشتراک‌گذاری لیست
@@ -1292,7 +1292,7 @@ export default function ListDetailClient({
               type="button"
               disabled={bookmarkSaving}
               onClick={() => handleToggleBookmark(true)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-wibe-surface active:bg-wibe-surface disabled:opacity-60"
             >
               {isBookmarked ? (
                 <Check className="h-4 w-4 text-success" />
@@ -1305,7 +1305,7 @@ export default function ListDetailClient({
           <button
             type="button"
             onClick={handleShare}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-gray-50 active:bg-gray-100"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-wibe-surface active:bg-wibe-surface"
           >
             <Share2 className="h-4 w-4 text-wibe-secondary" />
             اشتراک‌گذاری
@@ -1317,7 +1317,7 @@ export default function ListDetailClient({
               setToast({ message: 'لینک کپی شد', type: 'success' });
               setMoreOpen(false);
             }}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-gray-50 active:bg-gray-100"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-wibe-surface active:bg-wibe-surface"
           >
             <Link2 className="h-4 w-4 text-wibe-secondary" />
             کپی لینک
@@ -1328,7 +1328,7 @@ export default function ListDetailClient({
           <button
             type="button"
             onClick={handleOpenSuggestFromMenu}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-gray-50 active:bg-gray-100"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 wibe-small font-medium text-foreground hover:bg-wibe-surface active:bg-wibe-surface"
           >
             {isOwner ? (
               <Plus className="h-4 w-4 text-primary" />

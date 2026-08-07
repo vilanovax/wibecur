@@ -51,13 +51,13 @@ export default function ForYouSection({
                   : 'border-wibe bg-wibe-card'
               }`}
             >
-              <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-gray-200 lg:h-20 lg:w-20">
+              <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-wibe-surface lg:h-20 lg:w-20">
                 <ImageWithFallback
                   src={list.coverUrl ?? ''}
                   alt={list.title}
                   className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-105"
                   fallbackIcon="📋"
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
                   width={80}
                   height={80}
                   priority={index === 0}

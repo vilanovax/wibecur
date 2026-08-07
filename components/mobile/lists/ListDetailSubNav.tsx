@@ -46,7 +46,7 @@ export default function ListDetailSubNav({
             key={tab.key}
             type="button"
             onClick={tab.onClick}
-            className="shrink-0 rounded-lg px-3.5 py-2 wibe-caption font-medium text-wibe-secondary transition-colors hover:bg-gray-100 hover:text-foreground active:scale-[0.98]"
+            className="shrink-0 rounded-lg px-3.5 py-2 wibe-caption font-medium text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-foreground active:scale-[0.98]"
           >
             {tab.label}
           </button>

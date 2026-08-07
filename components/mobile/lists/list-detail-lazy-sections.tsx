@@ -33,8 +33,8 @@ export const ListSimilarListsSectionLazy = dynamic(() => import('./ListSimilarLi
   ssr: false,
   loading: () => (
     <section className="mt-1 border-t border-wibe pt-4" aria-hidden>
-      <div className="mb-3 h-6 w-36 animate-pulse rounded bg-gray-100" />
-      <div className="h-28 animate-pulse rounded-lg bg-gray-100" />
+      <div className="mb-3 h-6 w-36 animate-pulse rounded bg-wibe-surface" />
+      <div className="h-28 animate-pulse rounded-lg bg-wibe-surface" />
     </section>
   ),
 });
@@ -43,7 +43,7 @@ export const ListDetailSidebarLazy = dynamic(() => import('./ListDetailSidebar')
   ssr: false,
   loading: () => (
     <aside className="hidden lg:block">
-      <div className="h-64 animate-pulse rounded-xl bg-gray-100" />
+      <div className="h-64 animate-pulse rounded-xl bg-wibe-surface" />
     </aside>
   ),
 });

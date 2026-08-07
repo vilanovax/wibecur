@@ -59,7 +59,7 @@ function CreateActionCard({
         ${disabled ? 'pointer-events-none opacity-50' : ''}
         ${isPrimary
           ? 'bg-primary/5 hover:bg-primary/10'
-          : 'bg-gray-50/80 hover:bg-gray-100'
+          : 'bg-wibe-surface/80 hover:bg-wibe-surface'
         }
       `}
     >
@@ -146,8 +146,8 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
                   onClick={() => handleCategorySelect(cat.slug)}
                   className="
                     inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
-                    bg-white border border-gray-200 text-sm font-medium text-foreground
-                    hover:bg-gray-50 hover:border-primary/30 active:scale-[0.98]
+                    bg-white border border-wibe text-sm font-medium text-foreground
+                    hover:bg-wibe-surface hover:border-primary/30 active:scale-[0.98]
                     transition-colors duration-200
                   "
                 >

@@ -108,7 +108,7 @@ export default function BookmarkButton({
   if (status === 'loading') {
     return (
       <div
-        className={`animate-pulse rounded-full bg-gray-200 ${
+        className={`animate-pulse rounded-full bg-wibe-surface ${
           isCompact || variant === 'icon' ? 'h-10 w-10' : 'h-12 w-full'
         }`}
         aria-hidden
@@ -134,7 +134,7 @@ export default function BookmarkButton({
       return (
         <Link
           href={loginHref}
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-colors hover:border-primary hover:bg-primary/5"
+          className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-wibe bg-white transition-colors hover:border-primary hover:bg-primary/5"
           aria-label="ورود برای ذخیره لیست"
           title="ورود برای ذخیره لیست"
         >
@@ -175,7 +175,7 @@ export default function BookmarkButton({
         className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50 ${
           isBookmarked
             ? 'border-primary bg-primary/10 hover:bg-primary/15'
-            : 'border-gray-200 bg-white hover:border-primary hover:bg-primary/5'
+            : 'border-wibe bg-white hover:border-primary hover:bg-primary/5'
         }`}
         aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
         title={isBookmarked ? 'ذخیره شده' : 'ذخیره لیست'}
@@ -207,7 +207,7 @@ export default function BookmarkButton({
 
   const unsavedToneClasses =
     tone === 'secondary'
-      ? 'border border-wibe bg-wibe-surface text-foreground shadow-none hover:bg-gray-50 active:scale-[0.99]'
+      ? 'border border-wibe bg-wibe-surface text-foreground shadow-none hover:bg-wibe-surface active:scale-[0.99]'
       : 'bg-primary text-white shadow-sm hover:bg-primary-dark active:scale-[0.99]';
 
   return (

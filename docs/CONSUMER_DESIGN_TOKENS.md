@@ -99,7 +99,7 @@ npm run audit:design-tokens
 | violet/purple | ~۳۲ |
 | فایل دارای نقض | ~۱۸۳ |
 
-### بعد از موج ۱ (همین PR)
+### بعد از موج ۱
 
 | الگو | تقریبی |
 |------|--------|
@@ -109,7 +109,21 @@ npm run audit:design-tokens
 | violet/purple | ~۲۱ |
 | فایل دارای نقض | ~۱۶۵ |
 
-موج ۱ شامل: layout (Header/BottomNav/Notification) · اسکلتون‌ها · Search overlay · ConfirmDialog · Comment sections · Item action buttons.
+موج ۱: layout · اسکلتون‌ها · Search · ConfirmDialog · Comments · Item actions.
+
+### بعد از موج ۲ (Home / Lists / Explore)
+
+| الگو | تقریبی |
+|------|--------|
+| `bg-gray-*` | ~۲۲۴ (−۱۴۸ از موج ۱) |
+| `border-gray-*` | ~۷۰ |
+| `arbitrary-text` | ~۸۳ |
+| `hover:bg-gray-*` | ~۳۸ |
+| violet/purple | ~۱۸ |
+| فایل دارای نقض | ~۱۲۵ |
+
+موج ۲: `components/mobile/{home,lists,curated}` · `app/{lists,explore,curated}`.  
+باقی‌ماندهٔ `bg-gray-900` روی هیروهای تیره عمدی است (لمس نشد).
 
 ---
 
@@ -118,9 +132,9 @@ npm run audit:design-tokens
 | موج | محدوده | وضعیت |
 |-----|--------|--------|
 | ۰ | توکن + DESIGN.md + /design-system + Impeccable hook | ✅ موجود |
-| ۱ | Doc + audit script + layout/skeletons/shared chrome | این PR |
-| ۲ | Home / Lists / Explore / Category hub (light) | بعدی |
-| ۳ | Item / Profile / Comments / Suggest forms | بعدی |
+| ۱ | Doc + audit script + layout/skeletons/shared chrome | ✅ |
+| ۲ | Home / Lists / Explore (+ list detail light surfaces) | ✅ این PR |
+| ۳ | Profile / Category hub light / remaining forms | بعدی |
 | ۴ | Film legacy dark sections (با احتیاط contrast) | بعدی |
 | — | Admin | خارج از scope (توکن جدا در `lib/admin/design-system`) |
 
