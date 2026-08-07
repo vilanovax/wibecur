@@ -23,7 +23,7 @@ export default function DesktopTopNav() {
     `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-small font-medium transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
       active
         ? 'bg-primary/10 text-primary'
-        : 'text-foreground hover:bg-gray-50 hover:text-primary'
+        : 'text-foreground hover:bg-wibe-surface hover:text-primary'
     }`;
 
   return (

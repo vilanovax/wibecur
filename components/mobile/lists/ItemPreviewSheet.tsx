@@ -98,7 +98,7 @@ function MetadataChip({
 }) {
   if (profileLinks?.length) {
     return (
-      <span className="inline-flex max-w-full flex-wrap items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
+      <span className="inline-flex max-w-full flex-wrap items-baseline gap-1 rounded-lg bg-wibe-surface px-2.5 py-1.5 wibe-caption leading-snug text-right">
         <span className="shrink-0 font-medium text-foreground/55">{label}</span>
         <span className="min-w-0 font-semibold text-foreground">
           {profileLinks.map((link, index) => (
@@ -124,7 +124,7 @@ function MetadataChip({
   if (href) {
     if (href.startsWith('/')) {
       return (
-        <Link href={href} className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
+        <Link href={href} className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-wibe-surface px-2.5 py-1.5 wibe-caption leading-snug text-right">
           {content}
         </Link>
       );
@@ -134,7 +134,7 @@ function MetadataChip({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right"
+        className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-wibe-surface px-2.5 py-1.5 wibe-caption leading-snug text-right"
       >
         {content}
       </a>
@@ -142,7 +142,7 @@ function MetadataChip({
   }
 
   return (
-    <span className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 wibe-caption leading-snug text-right">
+    <span className="inline-flex max-w-full items-baseline gap-1 rounded-lg bg-wibe-surface px-2.5 py-1.5 wibe-caption leading-snug text-right">
       {content}
     </span>
   );
@@ -336,7 +336,7 @@ export default function ItemPreviewSheet({
                         {entryKindBadgeLabel(entryKind)}
                       </span>
                       {factLabel && (
-                        <span className="inline-flex rounded-md bg-gray-100 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary">
+                        <span className="inline-flex rounded-md bg-wibe-surface px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary">
                           {factLabel}
                         </span>
                       )}
@@ -379,7 +379,7 @@ export default function ItemPreviewSheet({
           ) : (
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-7">
               <div className="relative mx-auto shrink-0 lg:mx-0">
-                <div className="overflow-hidden rounded-2xl bg-gray-100 shadow-lg ring-1 ring-black/5">
+                <div className="overflow-hidden rounded-2xl bg-wibe-surface shadow-lg ring-1 ring-black/5">
                   <div className="aspect-[2/3] w-[min(72vw,220px)] lg:aspect-[3/4] lg:w-[11.5rem] xl:w-[12.5rem]">
                     <PreviewPoster
                       item={item}

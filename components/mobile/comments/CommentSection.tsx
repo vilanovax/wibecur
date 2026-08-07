@@ -100,7 +100,7 @@ function ItemCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-wibe bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-primary/40 hover:bg-wibe-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
       >
         نظرت درباره این آیتم چیه؟
       </button>
@@ -109,7 +109,7 @@ function ItemCommentInput({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-2 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex items-end gap-2 p-3 rounded-2xl border border-wibe bg-white shadow-sm">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxCommentLength))}
@@ -333,7 +333,7 @@ export default function CommentSection({
                 type="button"
                 onClick={() => setSortBy('popular')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === 'popular' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'
+                  sortBy === 'popular' ? 'bg-primary text-white shadow-sm' : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'
                 }`}
               >
                 مفیدترین
@@ -342,7 +342,7 @@ export default function CommentSection({
                 type="button"
                 onClick={() => setSortBy('newest')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'
+                  sortBy === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'
                 }`}
               >
                 جدیدترین

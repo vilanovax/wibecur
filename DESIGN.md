@@ -90,6 +90,8 @@ components:
 
 Consumer UI is **Operate + Experience**: RTL Persian, Vazirmatn, slate surfaces, indigo primary, amber for hot/trend. Atmosphere comes from list imagery and mood cards — not purple/pink decorative gradients. Source of truth in code: `lib/design-tokens.ts`, `app/globals.css`, presets `wibe-*`.
 
+**Contract for new work + migration:** [`docs/CONSUMER_DESIGN_TOKENS.md`](docs/CONSUMER_DESIGN_TOKENS.md) · audit: `npm run audit:design-tokens`
+
 ## Colors
 
 - **Primary (indigo)** — CTA، ویژه، لینک فعال

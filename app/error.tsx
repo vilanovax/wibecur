@@ -19,7 +19,7 @@ export default function Error({
 
   return (
     <div
-      className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 pb-24"
+      className="min-h-screen bg-wibe-surface flex flex-col items-center justify-center px-4 pb-24"
       dir="rtl"
     >
       <div className="max-w-sm w-full bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -28,10 +28,10 @@ export default function Error({
             <AlertCircle className="w-8 h-8 text-red-500" />
           </div>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">
+        <h1 className="text-xl font-bold text-foreground mb-2">
           اوپس! یه چیزی درست پیش نرفت
         </h1>
-        <p className="text-gray-600 text-sm mb-6">
+        <p className="text-wibe-secondary text-sm mb-6">
           لطفاً دوباره امتحان کن یا به صفحه اصلی برو
         </p>
         <div className="flex flex-col gap-3">
@@ -45,7 +45,7 @@ export default function Error({
           </button>
           <Link
             href="/"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-wibe text-foreground font-medium hover:bg-wibe-surface transition-colors"
           >
             <Home className="w-5 h-5" />
             بازگشت به خانه

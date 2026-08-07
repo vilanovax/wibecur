@@ -58,7 +58,7 @@ export default function ItemSaveButton({
         className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
           isHero
             ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
-            : 'bg-white border-2 border-gray-300 hover:border-primary hover:bg-primary/5'
+            : 'bg-white border border-wibe hover:border-primary hover:bg-primary/5'
         }`}
         aria-label="ورود برای ذخیره"
         title="ورود برای ذخیره"
@@ -71,7 +71,7 @@ export default function ItemSaveButton({
   if (status === 'loading' || (status === 'authenticated' && deferReady && viewerLoading)) {
     return (
       <div
-        className={`w-10 h-10 rounded-full animate-pulse ${isHero ? 'bg-white/20' : 'bg-gray-200'}`}
+        className={`w-10 h-10 rounded-full animate-pulse ${isHero ? 'bg-white/20' : 'bg-wibe-surface'}`}
         aria-hidden
       />
     );
@@ -97,7 +97,7 @@ export default function ItemSaveButton({
               : 'bg-blue-600 border-2 border-blue-600 hover:bg-blue-700 shadow-md'
             : isHero
               ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
-              : 'bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+              : 'bg-white border border-wibe hover:border-blue-500 hover:bg-blue-50'
         }`}
         aria-label={
           isSaved

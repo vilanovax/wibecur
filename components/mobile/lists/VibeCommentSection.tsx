@@ -170,7 +170,7 @@ function ReactionPills({
               transition-colors duration-200 active:scale-[0.97] hover:scale-105
               ${isSelected
                 ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
-                : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200/80 hover:text-foreground'
+                : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface/80 hover:text-foreground'
               }
             `}
           >
@@ -206,7 +206,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-gray-100 transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-wibe-surface transition-colors"
         aria-label="گزینه‌های بیشتر"
         aria-expanded={open}
       >
@@ -498,7 +498,7 @@ function VibeCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-wibe bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-[#7C3AED]/40 hover:bg-wibe-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/20"
       >
         {placeholders.collapsed}
       </button>
@@ -507,7 +507,7 @@ function VibeCommentInput({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-2 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex items-end gap-2 p-3 rounded-2xl border border-wibe bg-white shadow-sm">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxLength))}
@@ -784,14 +784,14 @@ export default function VibeCommentSection({
               <button
                 type="button"
                 onClick={() => setSortBy('helpful')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'helpful' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'helpful' ? 'bg-[#7C3AED] text-white' : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'}`}
               >
                 مفیدترین
               </button>
               <button
                 type="button"
                 onClick={() => setSortBy('newest')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'}`}
               >
                 جدیدترین
               </button>

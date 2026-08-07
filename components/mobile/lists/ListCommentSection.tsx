@@ -207,7 +207,7 @@ export default function ListCommentSection({
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === 'newest'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  : 'bg-wibe-surface text-foreground hover:bg-wibe-surface'
               }`}
             >
               <Clock className="w-4 h-4" />
@@ -218,7 +218,7 @@ export default function ListCommentSection({
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === 'popular'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  : 'bg-wibe-surface text-foreground hover:bg-wibe-surface'
               }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -258,7 +258,7 @@ export default function ListCommentSection({
                 <button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-foreground rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-60"
+                  className="px-6 py-3 bg-wibe-surface hover:bg-wibe-surface text-foreground rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-60"
                 >
                   {isFetchingNextPage ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

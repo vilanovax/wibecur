@@ -301,7 +301,7 @@ npm run build
 
 ## کارهای پیشنهادی بعدی (خارج از scope این ۴ فاز)
 
-- مهاجرت بقیه سکشن‌های legacy (`text-gray-*`) به `wibe-*`
+- مهاجرت بقیه سکشن‌های legacy (`text-gray-*`) به `wibe-*` — قرارداد و موج‌ها: [`docs/CONSUMER_DESIGN_TOKENS.md`](./CONSUMER_DESIGN_TOKENS.md)
 - حذف کامل emoji از عنوان سکشن‌ها در film hub قدیمی
 - استفاده گسترده‌تر از `WibeButton` / `WibeCard` در List/Profile
 - همگام‌سازی `UI_UX_DESIGN.md` با مقادیر واقعی `design-tokens.ts`

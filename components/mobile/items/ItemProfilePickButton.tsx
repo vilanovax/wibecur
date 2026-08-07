@@ -61,7 +61,7 @@ export default function ItemProfilePickButton({
   if (status === 'loading' || (status === 'authenticated' && viewerLoading && !viewerState)) {
     return (
       <div
-        className={`animate-pulse rounded-lg bg-gray-200 ${isCompact ? 'h-9 w-9' : 'h-9 w-28'}`}
+        className={`animate-pulse rounded-lg bg-wibe-surface ${isCompact ? 'h-9 w-9' : 'h-9 w-28'}`}
         aria-hidden
       />
     );
@@ -116,10 +116,10 @@ export default function ItemProfilePickButton({
           disabled={loading}
           className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
             isPicked
-              ? 'border-2 border-violet-600 bg-violet-600 shadow-md hover:bg-violet-700'
+              ? 'border-2 border-primary bg-primary shadow-md hover:bg-primary-dark'
               : isHero
                 ? 'border border-white/30 bg-white/15 backdrop-blur-sm hover:bg-white/25'
-                : 'border-2 border-gray-300 bg-white hover:border-violet-500 hover:bg-violet-50'
+                : 'border border-wibe bg-white hover:border-primary/40 hover:bg-primary/5'
           }`}
           aria-label={isPicked ? 'حذف از منتخب‌های پروفایل' : 'افزودن به منتخب‌های پروفایل'}
           title={isPicked ? 'در منتخب‌های پروفایل' : 'افزودن به منتخب‌های پروفایل'}
@@ -141,10 +141,10 @@ export default function ItemProfilePickButton({
         disabled={loading}
         className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-caption font-semibold transition-colors disabled:opacity-50 active:scale-[0.98] ${
           isPicked
-            ? 'bg-violet-600 text-white shadow-sm hover:bg-violet-700'
+            ? 'bg-primary text-white shadow-sm hover:bg-primary-dark'
             : isHero
               ? 'bg-white/15 text-white border border-white/30 hover:bg-white/25'
-              : 'border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'
+              : 'border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'
         }`}
       >
         <Sparkles className={`h-4 w-4 ${isPicked ? 'fill-current' : ''}`} />
