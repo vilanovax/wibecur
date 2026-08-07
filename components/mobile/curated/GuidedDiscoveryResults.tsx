@@ -12,6 +12,7 @@ import type {
 } from '@/lib/discovery/guided-recommendations';
 import type { GuidedScenario } from '@/lib/discovery/guided-intent';
 import { trackGuidedDiscoveryEvent } from '@/lib/discovery/guided-client';
+import { pickCategoryCoverGradient } from '@/lib/category-cover-images';
 
 type Props = {
   data: GuidedDiscoveryPayload;
@@ -82,6 +83,7 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
                         list={list}
                         scenario={scenario}
                         rowId={row.id}
+                        rowTitle={row.title}
                         onNavigate={onItemClick}
                         featured={index === 0}
                       />
@@ -111,19 +113,48 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
   );
 }
 
+function categoryMatchesRow(categoryName: string | undefined, rowTitle: string): boolean {
+  if (!categoryName) return false;
+  const cat = categoryName.trim();
+  const row = rowTitle.trim();
+  if (!cat || !row) return false;
+  // ردیف موضوعی (فیلم/کتاب/…) — بج فقط وقتی هم‌خانواده است
+  if (row.includes('کتاب') || row.includes('پادکست')) {
+    return cat.includes('کتاب') || cat.includes('پادکست');
+  }
+  if (row.includes('سریال')) {
+    return cat.includes('سریال') || cat.includes('فیلم');
+  }
+  if (row.includes('فیلم')) {
+    return cat.includes('فیلم') || cat.includes('سریال');
+  }
+  if (row.includes('کافه') || row.includes('رستوران')) {
+    return cat.includes('کافه') || cat.includes('رستوران');
+  }
+  return true;
+}
+
 function GuidedListCardLink({
   list,
   scenario,
   rowId,
+  rowTitle,
   onNavigate,
   featured = false,
 }: {
   list: GuidedListCardData;
   scenario: GuidedScenario;
   rowId: string;
+  rowTitle: string;
   onNavigate?: () => void;
   featured?: boolean;
 }) {
+  const coverGradient = pickCategoryCoverGradient(
+    list.category?.slug,
+    list.slug || list.title
+  );
+  const showCategoryBadge = categoryMatchesRow(list.category?.name, rowTitle);
+
   return (
     <Link
       href={`/lists/${list.slug}`}
@@ -142,7 +173,9 @@ function GuidedListCardLink({
           featured ? 'border-primary/20 ring-1 ring-primary/10' : 'border-wibe'
         }`}
       >
-        <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-gray-200">
+        <div
+          className={`relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-gradient-to-br ${coverGradient}`}
+        >
           <ImageWithFallback
             src={list.coverImage}
             alt={list.title}
@@ -155,18 +188,18 @@ function GuidedListCardLink({
             fallbackClassName="absolute inset-0 flex items-center justify-center text-3xl"
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-          {list.category?.name && (
+          {showCategoryBadge && list.category?.name ? (
             <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 wibe-caption font-medium text-white backdrop-blur-sm">
               {list.category.icon ? `${list.category.icon} ` : ''}
               {list.category.name}
             </span>
-          )}
+          ) : null}
           <span className="absolute bottom-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-wibe-secondary opacity-0 shadow-sm transition-opacity group-hover:opacity-100 lg:opacity-100">
             <ChevronLeft className="h-4 w-4" aria-hidden />
           </span>
         </div>
         <div className="flex min-h-[4.25rem] flex-1 flex-col p-3 text-right">
-          <h4 className="line-clamp-2 wibe-small font-bold leading-snug text-foreground lg:text-[0.9375rem]">
+          <h4 className="line-clamp-2 wibe-small font-bold leading-snug text-foreground lg:wibe-body">
             {list.title}
           </h4>
           <ListCardStats

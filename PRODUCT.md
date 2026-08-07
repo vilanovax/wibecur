@@ -35,7 +35,7 @@ Wibe (وایپ/وایپ‌کور) یک PWA موبایل‌اول برای **کش
 
 - RTL + فارسی (Vazirmatn)
 - Mobile-first؛ شل دسکتاپ ~1200px
-- Consumer فعلاً light-first (`color-scheme` / توکن dark موجود اما فعال نیست به‌صورت پیش‌فرض)
+- Consumer **light-only** (نه dark toggle): `color-scheme: light` اجباری؛ کلاس `.dark` روی `<html>` ست نمی‌شود
 - مسیر قدیمی `/user-lists` (لندینگ) به `/explore` redirect می‌شود؛ جزئیات لیست شخصی روی `/user-lists/[id]` می‌ماند
 
 ## Terminology
