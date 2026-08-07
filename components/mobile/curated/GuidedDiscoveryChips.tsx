@@ -16,7 +16,7 @@ export default function GuidedDiscoveryChips({ onSelect, disabled = false }: Pro
           type="button"
           disabled={disabled}
           onClick={() => onSelect(scenario.id)}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-2 wibe-caption font-semibold text-primary transition-colors hover:border-primary/35 hover:bg-primary/10 active:scale-[0.98] disabled:opacity-50 lg:py-2.5 lg:wibe-small"
+          className="flex shrink-0 items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-2 wibe-caption font-semibold text-primary transition-colors hover:border-primary/35 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50 lg:py-2.5 lg:wibe-small"
         >
           <span aria-hidden>{scenario.icon}</span>
           {scenario.label}

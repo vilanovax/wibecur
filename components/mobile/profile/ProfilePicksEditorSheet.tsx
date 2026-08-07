@@ -143,7 +143,7 @@ function PickEditorCard({
             onChange={(e) => onNoteDraftChange(e.target.value)}
             maxLength={120}
             placeholder="یادداشت..."
-            className="w-full rounded-md border border-wibe px-1.5 py-1 wibe-caption outline-none focus:border-primary"
+            className="w-full rounded-md border border-wibe px-1.5 py-1 wibe-caption outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           />
           <div className="flex gap-1">
             <button
@@ -411,7 +411,7 @@ export default function ProfilePicksEditorSheet({
                   <span>{cat.name}</span>
                   {count > 0 && (
                     <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                      className={`rounded-full px-1.5 py-0.5 wibe-caption font-bold leading-none ${
                         selected ? 'bg-white/25 text-white' : 'bg-primary/10 text-primary'
                       }`}
                     >

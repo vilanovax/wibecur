@@ -164,7 +164,7 @@ export default function HeaderActions({
     isDark ? 'bg-gray-800 ring-1 ring-gray-700' : 'bg-gray-200'
   }`;
 
-  const avatarButtonClass = `relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-colors ${
+  const avatarButtonClass = `relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${
     isDark ? 'hover:bg-gray-800/60' : 'hover:bg-gray-300/60'
   }`;
 
