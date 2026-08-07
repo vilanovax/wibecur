@@ -240,7 +240,7 @@ function ListCompactStatsBar({
     const verticalClass = isBookmarked
       ? 'rounded-lg bg-primary/[0.1] px-2 py-1.5 ring-1 ring-inset ring-primary/20'
       : saveInteractive
-        ? 'rounded-lg px-1 py-0.5 hover:bg-gray-50'
+        ? 'rounded-lg px-1 py-0.5 hover:bg-wibe-surface'
         : 'px-1 py-0.5';
 
     if (layout === 'vertical') {
@@ -271,19 +271,19 @@ function ListCompactStatsBar({
           disabled={bookmarkSaving}
           aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره لیست'}
           aria-pressed={isBookmarked}
-          className={`px-1 py-2.5 text-center transition-colors disabled:opacity-60 ${horizontalClass}`}
+          className={`px-1 py-3 text-center transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30 ${horizontalClass}`}
         >
           {horizontalInner}
         </button>
       );
     }
 
-    return <div className={`px-1 py-2.5 text-center ${horizontalClass}`}>{horizontalInner}</div>;
+    return <div className={`px-1 py-3 text-center ${horizontalClass}`}>{horizontalInner}</div>;
   };
 
   if (variant === 'vertical') {
     return (
-      <div className="rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm">
+      <div className="rounded-2xl border border-wibe bg-wibe-card p-3 shadow-sm ring-1 ring-wibe/40">
         <div className="space-y-2">
           {renderSaveCell('vertical')}
           {metricCells.map(({ key, label, value, onClick }) => {
@@ -300,7 +300,7 @@ function ListCompactStatsBar({
                   key={key}
                   type="button"
                   onClick={onClick}
-                  className="flex w-full items-center justify-between rounded-lg px-1 py-0.5 transition-colors hover:bg-gray-50"
+                  className="flex w-full items-center justify-between rounded-lg px-1 py-0.5 transition-colors hover:bg-wibe-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30"
                 >
                   {row}
                 </button>
@@ -319,13 +319,13 @@ function ListCompactStatsBar({
   }
 
   return (
-    <div className="grid grid-cols-4 divide-x divide-x-reverse divide-wibe overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:py-0.5">
+    <div className="grid grid-cols-4 divide-x divide-x-reverse divide-wibe/80 overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90 lg:py-0.5">
       {renderSaveCell('horizontal')}
       {metricCells.map(({ key, label, value, onClick }) => {
         const inner = (
           <>
             <p className="wibe-small font-bold tabular-nums leading-none text-foreground">{value}</p>
-            <p className="mt-0.5 wibe-caption text-wibe-secondary">{label}</p>
+            <p className="mt-1 wibe-caption text-wibe-secondary">{label}</p>
           </>
         );
 
@@ -335,7 +335,7 @@ function ListCompactStatsBar({
               key={key}
               type="button"
               onClick={onClick}
-              className="px-1 py-2.5 text-center transition-colors hover:bg-gray-50 active:bg-gray-100"
+              className="px-1 py-3 text-center transition-colors hover:bg-wibe-surface active:bg-wibe-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30"
             >
               {inner}
             </button>
@@ -343,7 +343,7 @@ function ListCompactStatsBar({
         }
 
         return (
-          <div key={key} className="px-1 py-2.5 text-center">
+          <div key={key} className="px-1 py-3 text-center">
             {inner}
           </div>
         );
@@ -366,11 +366,11 @@ function ListOwnerToolbar({
   const showViral = shouldShowViralProgress(saveCount);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/15 bg-primary/[0.04] px-3 py-2.5">
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-primary/15 bg-primary/[0.04] px-3 py-2.5">
       <button
         type="button"
         onClick={onManage}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 wibe-caption font-semibold text-white transition-colors hover:bg-primary-dark active:scale-[0.98]"
+        className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 wibe-caption font-semibold text-white transition-colors hover:bg-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98]"
       >
         <Settings className="h-3.5 w-3.5" />
         مدیریت
@@ -378,14 +378,14 @@ function ListOwnerToolbar({
       <button
         type="button"
         onClick={onShare}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-wibe bg-wibe-card px-3 py-2 wibe-caption font-semibold text-foreground transition-colors hover:border-primary/25 active:scale-[0.98]"
+        className="inline-flex items-center gap-1.5 rounded-full border border-wibe bg-wibe-card px-3.5 py-2 wibe-caption font-semibold text-foreground transition-colors hover:border-primary/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98]"
       >
         <Share2 className="h-3.5 w-3.5 text-wibe-secondary" />
         اشتراک
       </button>
       {showViral && (
-        <div className="mr-auto flex min-w-[8.5rem] flex-1 items-center gap-2 sm:flex-none">
-          <div className="h-1.5 min-w-[4.5rem] flex-1 overflow-hidden rounded-full bg-gray-200 sm:w-20 sm:flex-none">
+        <div className="me-auto flex min-w-[8.5rem] flex-1 items-center gap-2 sm:flex-none">
+          <div className="h-1.5 min-w-[4.5rem] flex-1 overflow-hidden rounded-full bg-wibe-surface sm:w-20 sm:flex-none">
             <div className="h-full rounded-full bg-warning transition-all" style={{ width: `${viralProgress}%` }} />
           </div>
           <span className="shrink-0 wibe-caption tabular-nums text-wibe-secondary">
@@ -921,13 +921,13 @@ export default function ListDetailClient({
       <section ref={heroBannerRef} className="lg:mt-1">
         {isDesktop ? (
           <div className="grid grid-cols-[minmax(13rem,17.5rem)_minmax(0,1fr)] items-center gap-5 xl:grid-cols-[18rem_minmax(0,1fr)] xl:gap-6">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-200 shadow-sm ring-1 ring-black/[0.04] xl:aspect-[16/10]">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-wibe-surface shadow-sm ring-1 ring-wibe/90 xl:aspect-[16/10]">
               <ImageWithFallback
                 src={heroImage}
                 alt={displayTitle}
                 className="h-full w-full object-cover object-center"
                 fallbackIcon={categoryIcon ?? '📋'}
-                fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-5xl"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-5xl"
                 categorySlug={categorySlug}
                 listSlug={list.slug}
                 listTitle={list.title}
@@ -936,7 +936,7 @@ export default function ListDetailClient({
               <button
                 type="button"
                 onClick={() => setMoreOpen(true)}
-                className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform hover:scale-105 active:scale-95"
+                className="absolute end-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-95"
                 aria-label="بیشتر"
               >
                 <MoreVertical className="h-4 w-4" />
@@ -944,7 +944,7 @@ export default function ListDetailClient({
             </div>
 
             <div className="min-w-0 py-1">
-              <h1 className="text-[1.5rem] font-bold leading-snug text-foreground line-clamp-2 xl:text-[1.65rem]">
+              <h1 className="wibe-h1 line-clamp-2 leading-snug">
                 {displayTitle}
               </h1>
               {listDescription && (
@@ -956,62 +956,64 @@ export default function ListDetailClient({
             </div>
           </div>
         ) : (
-          <div className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-900 sm:h-[240px]">
-            <ImageWithFallback
-              src={heroImage}
-              alt={displayTitle}
-              className="absolute inset-0 h-full w-full object-cover object-center"
-              fallbackIcon={categoryIcon ?? '📋'}
-              fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-gray-200 text-6xl"
-              categorySlug={categorySlug}
-              listSlug={list.slug}
-              listTitle={list.title}
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
-            <div className="absolute top-4 right-4 z-10">
-              <button
-                type="button"
-                onClick={() => setMoreOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform active:scale-95"
-                aria-label="بیشتر"
-              >
-                <MoreVertical className="h-5 w-5" />
-              </button>
-            </div>
-            {isViral && (
-              <div className="absolute top-4 left-4 z-10">
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-white">
-                  <Flame className="w-3.5 h-3.5" /> وایرال
-                </span>
+          <div className="px-4">
+            <div className="relative h-[210px] overflow-hidden rounded-2xl bg-wibe-surface shadow-vibe-hero ring-1 ring-black/5 sm:h-[240px]">
+              <ImageWithFallback
+                src={heroImage}
+                alt={displayTitle}
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                fallbackIcon={categoryIcon ?? '📋'}
+                fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-wibe-surface text-6xl"
+                categorySlug={categorySlug}
+                listSlug={list.slug}
+                listTitle={list.title}
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+              <div className="absolute end-3 top-3 z-10">
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen(true)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-95"
+                  aria-label="بیشتر"
+                >
+                  <MoreVertical className="h-5 w-5" />
+                </button>
               </div>
-            )}
-            <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-right">
-              <h1 className="text-h1 font-bold leading-tight text-white line-clamp-2">{displayTitle}</h1>
-              {listDescription && (
-                <p className="mt-1 line-clamp-2 wibe-small leading-relaxed text-white/85">{listDescription}</p>
-              )}
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {list.categories && (
-                  <Link
-                    href={`/categories/${list.categories.slug}`}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
-                  >
-                    {list.categories.icon} {list.categories.name}
-                  </Link>
-                )}
-                {badgeLabel && (
-                  <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-white/20 text-white'}`}>
-                    {badgeLabel}
+              {isViral && (
+                <div className="absolute start-3 top-3 z-10">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-warning px-2.5 py-1 wibe-caption font-semibold text-white shadow-sm">
+                    <Flame className="h-3.5 w-3.5" /> وایرال
                   </span>
+                </div>
+              )}
+              <div className="absolute inset-x-0 bottom-0 z-10 p-4 text-start">
+                <h1 className="text-h1 font-bold leading-tight text-white line-clamp-2 drop-shadow-sm">{displayTitle}</h1>
+                {listDescription && (
+                  <p className="mt-1.5 line-clamp-2 wibe-small leading-relaxed text-white/88">{listDescription}</p>
                 )}
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  {list.categories && (
+                    <Link
+                      href={`/categories/${list.categories.slug}`}
+                      className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 wibe-caption font-medium text-white/95 backdrop-blur transition-colors hover:bg-white/25"
+                    >
+                      {list.categories.icon} {list.categories.name}
+                    </Link>
+                  )}
+                  {badgeLabel && (
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 wibe-caption font-semibold ${badgeClass ?? 'bg-white/20 text-white'}`}>
+                      {badgeLabel}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
       </section>
 
-      <div className="relative z-20 -mt-4 px-4 lg:hidden">
+      <div className="relative z-20 -mt-5 px-4 lg:hidden">
         <ListCompactStatsBar
           saveCount={displaySaveCount}
           itemCount={itemCount}
@@ -1053,7 +1055,7 @@ export default function ListDetailClient({
                   {list.tags.slice(0, 5).map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex rounded-md bg-gray-100 px-3 py-1 wibe-caption font-medium text-wibe-secondary"
+                      className="inline-flex rounded-full bg-wibe-surface px-3 py-1 wibe-caption font-medium text-wibe-secondary ring-1 ring-wibe/80"
                     >
                       {tag}
                     </span>
@@ -1069,7 +1071,7 @@ export default function ListDetailClient({
               className={`${LIST_SECTION_SCROLL_MT} lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card lg:p-5 lg:shadow-sm`}
             >
               {(showItemSearch || showMapView) && (
-                <div className="mb-3 flex items-start gap-2 lg:mb-4">
+                <div className="mb-3 flex items-stretch gap-2 lg:mb-4">
                   {showItemSearch ? (
                     <div className="min-w-0 flex-1">
                       <SearchInput
@@ -1095,10 +1097,10 @@ export default function ListDetailClient({
                       title={viewMode === 'map' ? 'نمایش شبکه‌ای' : 'نمایش نقشه'}
                       aria-label={viewMode === 'map' ? 'نمایش شبکه‌ای' : 'نمایش نقشه'}
                       aria-pressed={viewMode === 'map'}
-                      className={`flex shrink-0 items-center gap-1 rounded-lg border px-3 py-2.5 wibe-caption transition-colors ${
+                      className={`flex h-11 shrink-0 items-center gap-1.5 rounded-xl border px-3.5 wibe-caption font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
                         viewMode === 'map'
                           ? 'border-primary/30 bg-primary/10 text-primary'
-                          : 'border-wibe bg-wibe-card text-wibe-secondary'
+                          : 'border-wibe bg-wibe-card text-wibe-secondary hover:border-primary/25'
                       }`}
                     >
                       {viewMode === 'map' ? (
@@ -1113,7 +1115,7 @@ export default function ListDetailClient({
               )}
 
               {!list.items?.length ? (
-                <div className="text-center py-10 bg-wibe-card rounded-lg border border-wibe">
+                <div className="rounded-2xl border border-dashed border-wibe bg-wibe-card py-10 text-center">
                   <p className="wibe-body text-wibe-secondary">این لیست هنوز آیتمی ندارد</p>
                   {isOwner && (
                     <button
