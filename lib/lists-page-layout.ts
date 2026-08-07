@@ -17,19 +17,20 @@ export function readStoredListsViewMode(isDesktop: boolean): ListsViewMode {
 
 export function resolveListCardVariant(
   viewMode: ListsViewMode,
-  isDesktop: boolean
+  _isDesktop: boolean
 ): 'grid' | 'compact' | 'mini' {
   if (viewMode === 'compact') return 'compact';
-  return isDesktop ? 'grid' : 'mini';
+  // کاور تصویری برای گرید موبایل و دسکتاپ — mini فقط برای ردیف‌های فشردهٔ جدا
+  return 'grid';
 }
 
 /** گرید واکنش‌گرا — بدون سلول خالی در RTL وقتی آیتم کم است */
 export function listsResultsGridClass(viewMode: ListsViewMode, isDesktop: boolean): string {
   if (viewMode === 'compact') {
-    return 'grid grid-cols-1 gap-2 lg:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] lg:gap-3';
+    return 'grid grid-cols-1 gap-2.5 lg:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] lg:gap-3';
   }
   if (!isDesktop) {
-    return 'grid grid-cols-2 gap-2';
+    return 'grid grid-cols-2 gap-2.5 sm:gap-3';
   }
   return 'grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 xl:grid-cols-[repeat(auto-fill,minmax(240px,1fr))] xl:gap-4';
 }
