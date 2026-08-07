@@ -105,7 +105,7 @@ function ListItemsGrid({
   const hasMore = useBatching && visibleCount < entries.length;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
       {visibleEntries.map(({ item, originalIndex }) => {
         const entryKind = resolveEntryKind(item);
         const slug = itemCategorySlug(item, listCategorySlug);
