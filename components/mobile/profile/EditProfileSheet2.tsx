@@ -268,6 +268,8 @@ function AvatarPreview({
             className="h-full w-full object-cover"
             fallbackIcon={(displayName?.[0] || '?').toUpperCase()}
             fallbackClassName="flex h-full w-full items-center justify-center bg-primary/10 text-lg font-bold text-primary"
+            width={80}
+            height={80}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-primary/10 text-xl font-bold text-primary">
@@ -276,7 +278,7 @@ function AvatarPreview({
         )}
       </div>
       {avatarType === 'UPLOADED' && avatarStatus === 'PENDING' && (
-        <span className="absolute -bottom-1 inset-x-0 mx-auto w-fit whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+        <span className="absolute -bottom-1 inset-x-0 mx-auto w-fit whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 wibe-caption font-medium text-amber-800">
           در انتظار تأیید
         </span>
       )}

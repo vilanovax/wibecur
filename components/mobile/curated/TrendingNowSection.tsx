@@ -4,6 +4,7 @@ import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
+import { IMAGE_SIZES } from '@/lib/image-sizes';
 import type { CuratedList } from '@/types/curated';
 
 interface TrendingNowSectionProps {
@@ -60,7 +61,7 @@ function TrendingCard({ list, priority = false }: { list: CuratedList; priority?
             className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
             fallbackIcon="📋"
             fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
-            sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 78vw"
+            sizes={IMAGE_SIZES.trendingCarousel}
             priority={priority}
           />
           <span className="absolute right-2 top-2 rounded-full bg-warning px-2 py-0.5 wibe-caption font-semibold text-white lg:text-xs">

@@ -51,7 +51,8 @@ export default function DiscoverByCity({
                 alt={city}
                 className="w-full h-full object-cover"
                 placeholderSize="cover"
-              />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="font-bold text-white text-base">{city}</p>

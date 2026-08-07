@@ -43,6 +43,7 @@ export default function PremiumSpotlight({
               alt={list.title}
               className="w-full h-full object-cover"
               placeholderSize="cover"
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
             />
           ) : (
             <div

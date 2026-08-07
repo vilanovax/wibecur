@@ -85,6 +85,7 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
                 categorySlug={list.categories?.slug}
                 listSlug={list.slug}
                 listTitle={list.title}
+                sizes="64px"
               />
               {(list as { isFastRising?: boolean }).isFastRising && (
                 <span className="absolute right-1 top-1 flex items-center gap-0.5 rounded-pill bg-success px-1.5 py-0.5 wibe-caption font-semibold text-white">

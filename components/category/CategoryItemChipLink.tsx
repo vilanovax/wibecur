@@ -20,13 +20,14 @@ export default function CategoryItemChipLink({
       href={`/items/${item.id}`}
       className="w-24 shrink-0 transition-transform active:scale-[0.97]"
     >
-      <div className="aspect-square overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm">
+      <div className="relative aspect-square overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm">
         {imageSrc ? (
           <ImageWithFallback
             src={imageSrc}
             alt={item.title}
             className="h-full w-full object-cover"
             placeholderSize="square"
+            sizes="96px"
           />
         ) : (
           <div

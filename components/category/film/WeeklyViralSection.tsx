@@ -45,7 +45,8 @@ export default function WeeklyViralSection({
                     alt={list.title}
                     className="w-full h-full object-cover"
                     placeholderSize="cover"
-                  />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center text-5xl opacity-50"
@@ -74,7 +75,9 @@ export default function WeeklyViralSection({
                         src={list.creator.image}
                         alt=""
                         className="w-6 h-6 rounded-full object-cover ring-1 ring-white/50"
-                      />
+                  width={24}
+                  height={24}
+                />
                     )}
                     <span className="truncate">{list.creator?.name || 'کیوریتور'}</span>
                     <span>•</span>

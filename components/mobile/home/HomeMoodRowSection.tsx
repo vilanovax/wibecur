@@ -44,6 +44,7 @@ function MoodListLink({ moodId, list, compact }: MoodListLinkProps) {
             categorySlug={list.categories?.slug}
             listSlug={list.slug}
             listTitle={list.title}
+            sizes="40px"
           />
         </div>
       ) : (

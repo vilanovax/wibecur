@@ -77,6 +77,7 @@ function TrendingCard({
               alt={list.title}
               className="w-full h-full object-cover"
               placeholderSize="cover"
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
             />
           ) : (
             <div
@@ -119,7 +120,9 @@ function TrendingCard({
                     <ImageWithFallback
                       src={list.creator.image}
                       alt=""
-                      className="w-3.5 h-3.5 rounded-full object-cover"
+                      className="h-3.5 w-3.5 rounded-full object-cover"
+                      width={14}
+                      height={14}
                     />
                   )}
                   <span className="truncate">👤 {list.creator?.name || 'کیوریتور'}</span>

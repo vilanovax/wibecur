@@ -42,7 +42,8 @@ export default function FilmTrendingListsSection({
                     alt={list.title}
                     className="w-full h-full object-cover"
                     placeholderSize="square"
-                  />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center text-5xl opacity-50"
@@ -72,7 +73,9 @@ export default function FilmTrendingListsSection({
                       src={list.creator.image}
                       alt=""
                       className="w-4 h-4 rounded-full object-cover"
-                    />
+                  width={16}
+                  height={16}
+                />
                   )}
                   <span className="truncate">{list.creator?.name || 'کیوریتور'}</span>
                   <span>•</span>

@@ -44,10 +44,10 @@ export default function CategoryListCardImproved({
             <ImageWithFallback
               src={list.creator.image}
               alt={list.creator.name || ''}
-              width={20}
-              height={20}
               className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-            />
+                  width={20}
+                  height={20}
+                />
           ) : (
             <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center wibe-caption flex-shrink-0">
               {(list.creator?.name || '?')[0]}

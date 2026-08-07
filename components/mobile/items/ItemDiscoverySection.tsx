@@ -62,6 +62,7 @@ function DiscoveryCarouselCard({
           className="absolute inset-0 h-full w-full object-cover"
           fallbackClassName="absolute inset-0 h-full w-full"
           coverLayout="grid"
+          sizes="(min-width: 1024px) 20vw, 42vw"
         />
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"

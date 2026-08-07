@@ -34,13 +34,14 @@ export default function FilmNewListsSection({
             href={`/lists/${list.slug}`}
             className="flex gap-4 p-4 rounded-2xl bg-gray-900 border border-gray-800 active:scale-[0.99] transition-transform"
           >
-            <div className="w-20 h-28 rounded-xl bg-gray-800 flex-shrink-0 overflow-hidden">
+            <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-800">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
                   alt={list.title}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                   placeholderSize="cover"
+                  sizes="80px"
                 />
               ) : (
                 <div

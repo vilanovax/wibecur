@@ -52,6 +52,8 @@ export default function TopFilmCurators({
                   src={topCurator.image}
                   alt={topCurator.name || 'کیوریتور'}
                   className="w-24 h-24 rounded-full object-cover ring-4 ring-white/20"
+                  width={96}
+                  height={96}
                 />
               ) : (
                 <div
@@ -94,12 +96,15 @@ export default function TopFilmCurators({
                   className="flex-shrink-0 w-20 rounded-xl overflow-hidden border border-gray-700 group"
                 >
                   {list.coverImage ? (
-                    <ImageWithFallback
-                      src={list.coverImage}
-                      alt={list.title}
-                      className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform"
-                      placeholderSize="square"
-                    />
+                    <div className="relative aspect-[3/4] w-full overflow-hidden">
+                      <ImageWithFallback
+                        src={list.coverImage}
+                        alt={list.title}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        placeholderSize="square"
+              sizes="80px"
+                      />
+                    </div>
                   ) : (
                     <div
                       className="w-full aspect-[3/4] flex items-center justify-center text-2xl"
@@ -131,6 +136,8 @@ export default function TopFilmCurators({
                   src={c.image}
                   alt={c.name || ''}
                   className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  width={32}
+                  height={32}
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs text-white flex-shrink-0">

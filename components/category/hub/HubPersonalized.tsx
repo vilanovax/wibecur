@@ -103,7 +103,8 @@ export default function HubPersonalized({
                   alt={list.title}
                   className="w-full h-full object-cover"
                   placeholderSize="square"
-                />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-2xl opacity-40"

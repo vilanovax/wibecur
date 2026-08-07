@@ -48,7 +48,8 @@ export default function HubTrendingNow({
                       alt={list.title}
                       className="w-full h-full object-cover"
                       placeholderSize="cover"
-                    />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
                   ) : (
                     <div
                       className="w-full h-full flex items-center justify-center text-4xl opacity-40"
@@ -89,7 +90,9 @@ export default function HubTrendingNow({
                         src={list.creator.image}
                         alt=""
                         className="w-4 h-4 rounded-full object-cover"
-                      />
+                  width={16}
+                  height={16}
+                />
                     )}
                     <span className="text-[10px] text-gray-500 truncate flex-1">
                       {list.creator?.name || 'کیوریتور'}

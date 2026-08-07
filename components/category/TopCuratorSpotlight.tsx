@@ -38,10 +38,10 @@ export default function TopCuratorSpotlight({
               <ImageWithFallback
                 src={curator.image}
                 alt={curator.name || 'کیوریتور'}
-                width={80}
-                height={80}
                 className="w-20 h-20 rounded-full object-cover border-4 border-amber-200"
-              />
+                  width={80}
+                  height={80}
+                />
             ) : (
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl font-bold text-white border-4 border-amber-200">
                 {(curator.name || '?')[0]}
@@ -73,13 +73,16 @@ export default function TopCuratorSpotlight({
                 className="flex-shrink-0 w-24 rounded-xl overflow-hidden border border-gray-100"
               >
                 {list.coverImage ? (
-                  <ImageWithFallback
-                    src={list.coverImage}
-                    alt={list.title}
-                    className="w-full aspect-[3/4] object-cover"
-                  />
+                  <div className="relative aspect-[3/4] w-full overflow-hidden">
+                    <ImageWithFallback
+                      src={list.coverImage}
+                      alt={list.title}
+                      className="h-full w-full object-cover"
+                      sizes="96px"
+                    />
+                  </div>
                 ) : (
-                  <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-2xl">
+                  <div className="flex aspect-[3/4] w-full items-center justify-center bg-gray-200 text-2xl">
                     📋
                   </div>
                 )}

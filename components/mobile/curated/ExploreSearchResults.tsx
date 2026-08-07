@@ -39,13 +39,14 @@ export default function ExploreSearchResults({ lists, query }: ExploreSearchResu
               href={`/lists/${list.slug}`}
               className="group flex flex-row-reverse gap-3 rounded-xl border border-wibe bg-wibe-card p-2.5 shadow-sm transition-[colors,transform] active:scale-[0.99] lg:p-3 lg:hover:shadow-md"
             >
-              <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-gray-200 lg:h-20 lg:w-20">
+              <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-gray-200 lg:h-20 lg:w-20">
                 <ImageWithFallback
                   src={list.coverUrl ?? ''}
                   alt={list.title}
                   className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-105"
                   fallbackIcon="📋"
                   fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+                  sizes="80px"
                 />
               </div>
               <div className="min-w-0 flex-1 text-right">

@@ -38,8 +38,8 @@ export default function TrendingNowSection({
                     src={list.coverImage}
                     alt={list.title}
                     className="w-full h-full object-cover"
-                    sizes="(min-width: 768px) 280px, 75vw"
-                  />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center text-4xl opacity-40"
@@ -66,10 +66,10 @@ export default function TrendingNowSection({
                     <ImageWithFallback
                       src={list.creator.image}
                       alt={list.creator.name || ''}
-                      width={24}
-                      height={24}
                       className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                    />
+                  width={24}
+                  height={24}
+                />
                   ) : (
                     <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs flex-shrink-0">
                       {(list.creator?.name || '?')[0]}

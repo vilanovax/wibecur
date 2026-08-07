@@ -49,7 +49,9 @@ export default function TopFilmCuratorsVIP({
                 src={topCurator.image}
                 alt={topCurator.name || 'کیوریتور'}
                 className="w-20 h-20 rounded-full object-cover ring-2 ring-amber-300"
-              />
+                  width={80}
+                  height={80}
+                />
             ) : (
               <div
                 className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white"
@@ -87,7 +89,9 @@ export default function TopFilmCuratorsVIP({
                 src={c.image}
                 alt={c.name || ''}
                 className="w-14 h-14 rounded-full object-cover"
-              />
+                  width={56}
+                  height={56}
+                />
             ) : (
               <div className="w-14 h-14 rounded-full bg-gray-700 flex items-center justify-center text-lg font-bold text-white">
                 {(c.name || '?')[0]}

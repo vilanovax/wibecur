@@ -38,13 +38,14 @@ export default function EditorsPicks({
             href={`/lists/${list.slug}`}
             className="flex gap-3 p-3 rounded-xl bg-white/90 border border-amber-200/60 shadow-sm active:scale-[0.99] transition-transform"
           >
-            <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
+            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
                   alt={list.title}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                   placeholderSize="square"
+                  sizes="64px"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-2xl opacity-50 bg-amber-100">

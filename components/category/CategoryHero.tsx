@@ -34,6 +34,7 @@ export default function CategoryHero({
         alt={category.name}
         className="absolute inset-0 w-full h-full object-cover"
         priority
+        sizes="100vw"
       />
       <div
         className={`absolute inset-0 ${

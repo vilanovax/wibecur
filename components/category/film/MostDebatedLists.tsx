@@ -27,6 +27,7 @@ function DebatedListCard({ list }: { list: CategoryListCard }) {
               alt={list.title}
               className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-[1.03]"
               placeholderSize="square"
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gray-800 text-3xl opacity-60">
