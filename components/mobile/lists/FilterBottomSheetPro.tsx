@@ -396,7 +396,7 @@ export default function FilterBottomSheetPro({
                 >
                   <Star
                     className={`w-8 h-8 ${
-                      n <= localState.minRating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'
+                      n <= localState.minRating ? 'fill-amber-400 text-amber-400' : 'text-wibe-secondary/40'
                     }`}
                   />
                 </button>

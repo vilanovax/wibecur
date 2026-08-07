@@ -116,7 +116,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                     alt={user.name || user.email || 'Avatar'}
                     className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gray-100 text-gray-500 text-2xl font-semibold flex items-center justify-center"
+                    fallbackClassName="w-full h-full bg-gray-100 text-wibe-secondary text-2xl font-semibold flex items-center justify-center"
                     priority
                   />
                 ) : user.image ? (
@@ -125,11 +125,11 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                     alt={user.name || user.email || 'Avatar'}
                     className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gray-100 text-gray-500 text-2xl font-semibold flex items-center justify-center"
+                    fallbackClassName="w-full h-full bg-gray-100 text-wibe-secondary text-2xl font-semibold flex items-center justify-center"
                     priority
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 text-2xl font-semibold">
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-wibe-secondary text-2xl font-semibold">
                     {(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                   </div>
                 )}
@@ -139,7 +139,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                 className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200"
                 aria-label="تغییر آواتار"
               >
-                <Camera className="w-3.5 h-3.5 text-gray-600" />
+                <Camera className="w-3.5 h-3.5 text-wibe-secondary" />
               </button>
             </div>
             {isElite && user.showBadge !== false && (
@@ -168,7 +168,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 rounded-xl border border-gray-200 text-wibe-secondary hover:bg-gray-50 disabled:opacity-50 transition-colors"
               aria-label="خروج"
             >
               <LogOut className="w-5 h-5" />
@@ -181,7 +181,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
               {expertise.slice(0, 4).map((e) => (
                 <span
                   key={e.slug}
-                  className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 text-xs"
+                  className="px-2.5 py-1 rounded-lg bg-gray-100 text-wibe-secondary text-xs"
                 >
                   {e.icon} {e.name}
                 </span>
@@ -192,30 +192,30 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
           {/* Stats: single horizontal row, no cards */}
           <div className="grid grid-cols-4 gap-2 mb-5">
             <div className="text-center py-2">
-              <p className="text-base font-bold text-gray-900">{creatorStats.popularListsCount}</p>
-              <p className="text-xs text-gray-500">لیست محبوب</p>
+              <p className="text-base font-bold text-foreground">{creatorStats.popularListsCount}</p>
+              <p className="text-xs text-wibe-secondary">لیست محبوب</p>
             </div>
             <div className="text-center py-2">
-              <p className="text-base font-bold text-gray-900">{formatStat(creatorStats.profileViews)}</p>
-              <p className="text-xs text-gray-500">بازدید</p>
+              <p className="text-base font-bold text-foreground">{formatStat(creatorStats.profileViews)}</p>
+              <p className="text-xs text-wibe-secondary">بازدید</p>
             </div>
             <div className="text-center py-2">
-              <p className="text-base font-bold text-gray-900">{formatStat(creatorStats.totalLikesReceived)}</p>
-              <p className="text-xs text-gray-500">لایک</p>
+              <p className="text-base font-bold text-foreground">{formatStat(creatorStats.totalLikesReceived)}</p>
+              <p className="text-xs text-wibe-secondary">لایک</p>
             </div>
             <div className="text-center py-2">
-              <p className="text-base font-bold text-gray-900">{creatorStats.viralListsCount}</p>
-              <p className="text-xs text-gray-500">وایرال</p>
+              <p className="text-base font-bold text-foreground">{creatorStats.viralListsCount}</p>
+              <p className="text-xs text-wibe-secondary">وایرال</p>
             </div>
           </div>
 
           {/* Level: compact progress */}
           <div className="rounded-xl bg-gray-50 border border-gray-100 p-3">
             <div className="flex justify-between items-center mb-1.5">
-              <span className="text-xs font-medium text-gray-600">
+              <span className="text-xs font-medium text-wibe-secondary">
                 سطح {currentTier.short}
               </span>
-              <span className="text-xs font-bold text-gray-800">{curatorScore}</span>
+              <span className="text-xs font-bold text-foreground">{curatorScore}</span>
             </div>
             <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
               <div
@@ -224,12 +224,12 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
               />
             </div>
             {nextLabel != null && toNext != null && toNext > 0 && (
-              <p className="text-[11px] text-gray-500 mt-1.5">
+              <p className="text-[11px] text-wibe-secondary mt-1.5">
                 {toNext} امتیاز تا {nextLabel}
               </p>
             )}
             {nextTier === null && (
-              <p className="text-[11px] text-gray-500 mt-1.5">بالاترین سطح</p>
+              <p className="text-[11px] text-wibe-secondary mt-1.5">بالاترین سطح</p>
             )}
           </div>
         </div>

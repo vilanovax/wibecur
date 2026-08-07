@@ -28,7 +28,7 @@ export default function SuggestModal({ isOpen, onClose }: SuggestModalProps) {
     return (
       <BottomSheet isOpen={isOpen} onClose={handleClose} title="پیشنهاد محتوا">
         <div className="p-6 space-y-4">
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-wibe-secondary text-center mb-6">
             چه چیزی می‌خواهید پیشنهاد دهید؟
           </p>
 
@@ -40,8 +40,8 @@ export default function SuggestModal({ isOpen, onClose }: SuggestModalProps) {
               <List className="w-6 h-6 text-blue-600" />
             </div>
             <div className="flex-1 text-right">
-              <h3 className="font-bold text-lg text-gray-900">پیشنهاد لیست</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="font-bold text-lg text-foreground">پیشنهاد لیست</h3>
+              <p className="text-sm text-wibe-secondary mt-1">
                 یک لیست جدید برای اضافه شدن به مجموعه پیشنهاد دهید
               </p>
             </div>
@@ -55,8 +55,8 @@ export default function SuggestModal({ isOpen, onClose }: SuggestModalProps) {
               <Package className="w-6 h-6 text-purple-600" />
             </div>
             <div className="flex-1 text-right">
-              <h3 className="font-bold text-lg text-gray-900">پیشنهاد آیتم</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="font-bold text-lg text-foreground">پیشنهاد آیتم</h3>
+              <p className="text-sm text-wibe-secondary mt-1">
                 یک آیتم جدید به یک لیست موجود اضافه کنید
               </p>
             </div>

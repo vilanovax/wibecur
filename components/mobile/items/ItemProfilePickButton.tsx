@@ -125,7 +125,7 @@ export default function ItemProfilePickButton({
           title={isPicked ? 'در منتخب‌های پروفایل' : 'افزودن به منتخب‌های پروفایل'}
         >
           <Sparkles
-            className={`h-5 w-5 ${isPicked ? 'fill-white text-white' : isHero ? 'text-white' : 'text-gray-600'}`}
+            className={`h-5 w-5 ${isPicked ? 'fill-white text-white' : isHero ? 'text-white' : 'text-wibe-secondary'}`}
           />
         </button>
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

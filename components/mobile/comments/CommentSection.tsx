@@ -100,7 +100,7 @@ function ItemCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
       >
         نظرت درباره این آیتم چیه؟
       </button>
@@ -134,7 +134,7 @@ function ItemCommentInput({
           <button
             type="button"
             onClick={() => setContent('')}
-            className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+            className="px-3 py-1.5 text-xs text-wibe-secondary hover:text-foreground"
           >
             انصراف
           </button>
@@ -145,7 +145,7 @@ function ItemCommentInput({
         <span
           id="item-comment-char-count"
           className={`text-xs tabular-nums ${
-            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-gray-400'
+            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-wibe-secondary'
           }`}
         >
           {content.length.toLocaleString('fa-IR')}/{maxCommentLength.toLocaleString('fa-IR')}
@@ -328,12 +328,12 @@ export default function CommentSection({
 
         {!isLoading && comments.length > 0 && (
           <div className="flex gap-2 pb-1">
-            <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
+            <span className="text-xs text-wibe-secondary py-1.5">مرتب‌سازی:</span>
               <button
                 type="button"
                 onClick={() => setSortBy('popular')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === 'popular' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  sortBy === 'popular' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'
                 }`}
               >
                 مفیدترین
@@ -342,7 +342,7 @@ export default function CommentSection({
                 type="button"
                 onClick={() => setSortBy('newest')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  sortBy === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'
                 }`}
               >
                 جدیدترین

@@ -92,9 +92,9 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
   if (comments.length === 0) {
     return (
       <div className="text-center py-12 bg-white rounded-xl">
-        <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-600 mb-2">هنوز کامنتی نگذاشته‌اید</p>
-        <p className="text-sm text-gray-500">
+        <MessageSquare className="w-16 h-16 text-wibe-secondary mx-auto mb-4" />
+        <p className="text-wibe-secondary mb-2">هنوز کامنتی نگذاشته‌اید</p>
+        <p className="text-sm text-wibe-secondary">
           کامنت‌های خود را در صفحات لیست‌ها مشاهده خواهید کرد
         </p>
       </div>
@@ -111,8 +111,8 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <p
-                className={`text-gray-900 mb-2 ${
-                  comment.isFiltered ? 'text-gray-500 italic' : ''
+                className={`text-foreground mb-2 ${
+                  comment.isFiltered ? 'text-wibe-secondary italic' : ''
                 }`}
               >
                 {comment.content}
@@ -123,7 +123,7 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
               >
                 در: {comment.items.title}
               </Link>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-wibe-secondary mt-2">
                 {formatDistanceToNow(new Date(comment.createdAt), {
                   addSuffix: true,
                   locale: faIR,
@@ -143,7 +143,7 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
       {remainingCount > 0 && !showAll && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium mt-4"
+          className="w-full py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium mt-4"
         >
           مشاهده {remainingCount} مورد بیشتر
         </button>

@@ -98,7 +98,7 @@ export default function ProfileAchievementsSection({ creatorStats }: ProfileAchi
 
   return (
     <section className="px-4 mt-6">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800 mb-3">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
         <Trophy className="w-4 h-4 text-amber-500" />
         دستاوردها
       </h2>
@@ -124,7 +124,7 @@ export default function ProfileAchievementsSection({ creatorStats }: ProfileAchi
             >
               {a.unlocked ? a.icon : (a.isSecret ? '?' : '🔒')}
             </span>
-            <span className={`text-[9px] font-medium text-center line-clamp-1 max-w-full ${a.unlocked ? 'text-gray-600' : 'text-gray-400'}`}>
+            <span className={`text-[9px] font-medium text-center line-clamp-1 max-w-full ${a.unlocked ? 'text-wibe-secondary' : 'text-wibe-secondary'}`}>
               {a.unlocked || !a.isSecret ? a.title : '???'}
             </span>
           </button>

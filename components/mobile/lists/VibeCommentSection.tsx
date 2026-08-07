@@ -170,7 +170,7 @@ function ReactionPills({
               transition-colors duration-200 active:scale-[0.97] hover:scale-105
               ${isSelected
                 ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200/80 hover:text-gray-800'
+                : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200/80 hover:text-foreground'
               }
             `}
           >
@@ -206,7 +206,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-gray-100 transition-colors"
         aria-label="گزینه‌های بیشتر"
         aria-expanded={open}
       >
@@ -299,15 +299,15 @@ function VibeCommentItem({
         <div className="flex items-start justify-between gap-1 mb-0.5">
           <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
             {profileUrl ? (
-              <Link href={profileUrl} className="font-medium text-gray-900 text-sm hover:text-primary transition-colors">
+              <Link href={profileUrl} className="font-medium text-foreground text-sm hover:text-primary transition-colors">
                 {comment.users.name || comment.users.email?.split('@')[0] || 'کاربر'}
               </Link>
             ) : (
-              <span className="font-medium text-gray-900 text-sm">
+              <span className="font-medium text-foreground text-sm">
                 {comment.users.name || comment.users.email?.split('@')[0] || 'کاربر'}
               </span>
             )}
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-wibe-secondary">
               {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
             </span>
             {comment.users.curatorLevel && (
@@ -321,7 +321,7 @@ function VibeCommentItem({
         </div>
         <div className="relative">
           <p
-            className={`text-gray-700 text-sm leading-relaxed break-words whitespace-pre-wrap ${
+            className={`text-foreground text-sm leading-relaxed break-words whitespace-pre-wrap ${
               !expanded && showReadMore ? 'line-clamp-3' : ''
             }`}
           >
@@ -354,7 +354,7 @@ function VibeCommentItem({
               type="button"
               onClick={() => handleVote(1)}
               aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
-              className={`flex items-center gap-1 text-xs transition-colors ${localVote === 1 ? 'text-green-600 font-medium' : 'text-gray-500 hover:text-green-600'}`}
+              className={`flex items-center gap-1 text-xs transition-colors ${localVote === 1 ? 'text-green-600 font-medium' : 'text-wibe-secondary hover:text-green-600'}`}
               title="مفید بود"
             >
               <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />
@@ -364,7 +364,7 @@ function VibeCommentItem({
               type="button"
               onClick={() => handleVote(-1)}
               aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
-              className={`flex items-center gap-1 text-xs transition-colors ${localVote === -1 ? 'text-amber-600 font-medium' : 'text-gray-400 hover:text-amber-600'}`}
+              className={`flex items-center gap-1 text-xs transition-colors ${localVote === -1 ? 'text-amber-600 font-medium' : 'text-wibe-secondary hover:text-amber-600'}`}
               title="مفید نبود"
             >
               <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />
@@ -422,11 +422,11 @@ function VibeCommentItem({
                 )}
                 <div>
                   {replyProfileUrl ? (
-                    <Link href={replyProfileUrl} className="font-medium text-gray-800 text-xs hover:text-primary">
+                    <Link href={replyProfileUrl} className="font-medium text-foreground text-xs hover:text-primary">
                       {reply.users.name || reply.users.email?.split('@')[0]}
                     </Link>
                   ) : (
-                    <span className="font-medium text-gray-800 text-xs">
+                    <span className="font-medium text-foreground text-xs">
                       {reply.users.name || reply.users.email?.split('@')[0]}
                     </span>
                   )}
@@ -435,8 +435,8 @@ function VibeCommentItem({
                       <CuratorBadge level={reply.users.curatorLevel} size="small" glow={false} />
                     </span>
                   )}
-                  <span className="text-gray-600 text-xs mr-1">—</span>
-                  <span className="text-gray-600 text-xs">{reply.content}</span>
+                  <span className="text-wibe-secondary text-xs mr-1">—</span>
+                  <span className="text-wibe-secondary text-xs">{reply.content}</span>
                 </div>
               </div>
             );
@@ -498,7 +498,7 @@ function VibeCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-gray-500 text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/20"
+        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/20"
       >
         {placeholders.collapsed}
       </button>
@@ -531,7 +531,7 @@ function VibeCommentInput({
           <button
             type="button"
             onClick={() => setContent('')}
-            className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+            className="px-3 py-1.5 text-xs text-wibe-secondary hover:text-foreground"
           >
             انصراف
           </button>
@@ -542,7 +542,7 @@ function VibeCommentInput({
         <span
           id="comment-char-count"
           className={`text-xs tabular-nums ${
-            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-gray-400'
+            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-wibe-secondary'
           }`}
         >
           {content.length.toLocaleString('fa-IR')}/{maxLength.toLocaleString('fa-IR')}
@@ -764,34 +764,34 @@ export default function VibeCommentSection({
             <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#7C3AED]/15 flex items-center justify-center text-[#7C3AED] text-xs font-bold">
               +
             </span>
-            <span className="text-sm font-medium text-gray-700">پیشنهاد آیتم جدید</span>
+            <span className="text-sm font-medium text-foreground">پیشنهاد آیتم جدید</span>
           </button>
         )}
 
         {!commentsEnabled && (
-          <p className="text-sm text-gray-500 py-4">کامنت‌ها برای این لیست غیرفعال است</p>
+          <p className="text-sm text-wibe-secondary py-4">کامنت‌ها برای این لیست غیرفعال است</p>
         )}
 
         {status === 'unauthenticated' && (
-          <p className="text-sm text-gray-500 py-4">برای ثبت نظر وارد شو</p>
+          <p className="text-sm text-wibe-secondary py-4">برای ثبت نظر وارد شو</p>
         )}
 
         {/* Sort + Comments */}
         {!isLoading && comments.length > 0 && (
           <div className="pt-4 border-t border-gray-100">
             <div className="flex gap-2 mb-4">
-              <span className="text-xs text-gray-500 py-1.5">مرتب‌سازی:</span>
+              <span className="text-xs text-wibe-secondary py-1.5">مرتب‌سازی:</span>
               <button
                 type="button"
                 onClick={() => setSortBy('helpful')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'helpful' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'helpful' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'}`}
               >
                 مفیدترین
               </button>
               <button
                 type="button"
                 onClick={() => setSortBy('newest')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'}`}
               >
                 جدیدترین
               </button>

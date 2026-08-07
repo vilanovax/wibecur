@@ -191,7 +191,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
 
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 عنوان <span className="text-red-500">*</span>
               </label>
               <input
@@ -208,13 +208,13 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
             {/* Description */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-foreground">
                   توضیحات
                 </label>
                 <span className={`text-xs ${
                   formData.description.length > MAX_DESCRIPTION_LENGTH
                     ? 'text-red-500'
-                    : 'text-gray-500'
+                    : 'text-wibe-secondary'
                 }`}>
                   {formData.description.length} / {MAX_DESCRIPTION_LENGTH}
                 </span>
@@ -232,11 +232,11 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
 
             {/* Category Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 انتخاب دسته‌بندی <span className="text-red-500">*</span>
               </label>
               {isLoadingCategories ? (
-                <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-gray-500">
+                <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-wibe-secondary">
                   در حال بارگذاری دسته‌بندی‌ها...
                 </div>
               ) : (
@@ -259,7 +259,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
 
             {/* Cover Image */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 تصویر کاور
               </label>
               <input
@@ -279,14 +279,14 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                 >
                   {isUploadingImage ? (
                     <>
-                      <Loader2 className="w-8 h-8 text-gray-600 animate-spin" />
-                      <span className="text-sm text-gray-700">در حال آپلود...</span>
+                      <Loader2 className="w-8 h-8 text-wibe-secondary animate-spin" />
+                      <span className="text-sm text-foreground">در حال آپلود...</span>
                     </>
                   ) : (
                     <>
-                      <ImageIcon className="w-8 h-8 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">انتخاب تصویر از گالری</span>
-                      <span className="text-xs text-gray-500">فرمت‌های مجاز: JPG, PNG, GIF (حداکثر 5 مگابایت)</span>
+                      <ImageIcon className="w-8 h-8 text-wibe-secondary" />
+                      <span className="text-sm font-medium text-foreground">انتخاب تصویر از گالری</span>
+                      <span className="text-xs text-wibe-secondary">فرمت‌های مجاز: JPG, PNG, GIF (حداکثر 5 مگابایت)</span>
                     </>
                   )}
                 </button>
@@ -318,13 +318,13 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                   >
                     {isUploadingImage ? (
                       <>
-                        <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
-                        <span className="text-sm text-gray-700">در حال آپلود...</span>
+                        <Loader2 className="w-4 h-4 text-wibe-secondary animate-spin" />
+                        <span className="text-sm text-foreground">در حال آپلود...</span>
                       </>
                     ) : (
                       <>
-                        <ImageIcon className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm text-gray-700">تغییر تصویر</span>
+                        <ImageIcon className="w-4 h-4 text-wibe-secondary" />
+                        <span className="text-sm text-foreground">تغییر تصویر</span>
                       </>
                     )}
                   </button>
@@ -340,7 +340,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-foreground hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 انصراف
               </button>

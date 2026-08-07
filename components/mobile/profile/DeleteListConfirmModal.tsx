@@ -71,10 +71,10 @@ export default function DeleteListConfirmModal({
 
           {/* Warning Message */}
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-bold text-gray-900">
+            <h3 className="text-lg font-bold text-foreground">
               آیا مطمئن هستید؟
             </h3>
-            <p className="text-gray-600">
+            <p className="text-wibe-secondary">
               لیست <span className="font-semibold">&quot;{listTitle}&quot;</span> به همراه تمام آیتم‌های آن حذف خواهد شد و این عمل قابل بازگشت نیست.
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function DeleteListConfirmModal({
             <button
               onClick={onClose}
               disabled={isDeleting}
-              className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+              className="w-full px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
             >
               انصراف
             </button>

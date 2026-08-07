@@ -90,7 +90,7 @@ export default function ItemLikeButton({
           className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white border-2 border-gray-200 hover:border-red-300 hover:bg-red-50 transition-colors"
           aria-label="ورود برای پسندیدن"
         >
-          <Heart className="w-5 h-5 text-gray-500" />
+          <Heart className="w-5 h-5 text-wibe-secondary" />
           {likeCount > 0 && (
             <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-gray-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
               {likeCount > 99 ? '۹۹+' : countLabel}
@@ -106,11 +106,11 @@ export default function ItemLikeButton({
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${
           isHero
             ? 'bg-white/15 text-white border border-white/20 hover:bg-white/25 backdrop-blur-sm'
-            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+            : 'bg-gray-50 text-wibe-secondary hover:bg-gray-100'
         }`}
         aria-label="ورود برای پسندیدن"
       >
-        <Heart className={`w-4 h-4 ${isHero ? 'text-white/90' : 'text-gray-400'}`} />
+        <Heart className={`w-4 h-4 ${isHero ? 'text-white/90' : 'text-wibe-secondary'}`} />
         {countLabel && !isCompact && <span className="text-sm font-medium">{countLabel}</span>}
       </Link>
     );
@@ -131,7 +131,7 @@ export default function ItemLikeButton({
       >
         <Heart
           className={`w-5 h-5 transition-colors ${
-            isLiked ? 'fill-red-500 text-red-500' : 'text-gray-500'
+            isLiked ? 'fill-red-500 text-red-500' : 'text-wibe-secondary'
           }`}
         />
         {likeCount > 0 && (
@@ -155,7 +155,7 @@ export default function ItemLikeButton({
             : 'bg-red-50 text-red-600 hover:bg-red-100'
           : isHero
             ? 'bg-white/15 text-white border border-white/20 hover:bg-white/25 backdrop-blur-sm'
-            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+            : 'bg-gray-50 text-wibe-secondary hover:bg-gray-100'
       }`}
       aria-label={isLiked ? 'حذف لایک' : 'لایک'}
     >
@@ -167,7 +167,7 @@ export default function ItemLikeButton({
               : 'fill-red-500 text-red-500'
             : isHero
               ? 'text-white/90'
-              : 'text-gray-400'
+              : 'text-wibe-secondary'
         }`}
       />
       {countLabel && (

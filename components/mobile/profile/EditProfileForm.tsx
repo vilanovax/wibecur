@@ -77,7 +77,7 @@ export default function EditProfileForm({
         )}
 
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
             نام
           </label>
           <input
@@ -91,7 +91,7 @@ export default function EditProfileForm({
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
             ایمیل
           </label>
           <input
@@ -109,7 +109,7 @@ export default function EditProfileForm({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
             disabled={isLoading}
           >
             انصراف

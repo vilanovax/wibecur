@@ -6,11 +6,11 @@ import HomePullToRefresh from '@/components/mobile/home/HomePullToRefresh';
 import HomeMobileView from '@/components/mobile/home/HomeMobileView';
 import HomeDesktopView from '@/components/mobile/home/HomeDesktopView';
 import type { CategoryMenuChip } from '@/lib/category-menu';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 
 /**
- * هر دو چیدمان با CSS (`lg:`) رندر می‌شوند — نه با useIsDesktop.
- * HomeDesktopView را static نگه می‌داریم: dynamic+loading اسکلتون کوتاه
- * می‌کشید و با جایگزینی محتوای واقعی CLS≈0.6 روی دسکتاپ می‌ساخت.
+ * هر دو چیدمان با CSS (`lg:`) رندر می‌شوند — نه mount شرطی با useIsDesktop
+ * (برای جلوگیری از CLS). فقط aria-hidden از breakpoint برای AT جدا می‌شود.
  *
  * موبایل: استیکی فقط جستجو — چیپ دسته زیر هیرو تا first viewport خلوت بماند.
  */
@@ -30,21 +30,26 @@ export default function HomeResponsiveContent({
   heroSpotlightDesktop,
   desktopTrending,
 }: HomeResponsiveContentProps) {
+  const isDesktop = useIsDesktop();
+
   return (
     <>
-      <div className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 pb-1.5 pt-0.5 backdrop-blur-sm lg:hidden">
+      <div
+        className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 pb-1.5 pt-0.5 backdrop-blur-sm lg:hidden"
+        aria-hidden={isDesktop || undefined}
+      >
         <HomeSearchBar />
       </div>
 
       <HomePullToRefresh>
-        <div className="lg:hidden">
+        <div className="lg:hidden" aria-hidden={isDesktop || undefined}>
           <HomeMobileView
             ssrFeaturedId={ssrFeaturedId}
             heroSpotlight={heroSpotlightMobile}
             initialCategories={initialCategories}
           />
         </div>
-        <div className="hidden lg:block">
+        <div className="hidden lg:block" aria-hidden={!isDesktop || undefined}>
           <HomeDesktopView
             ssrFeaturedId={ssrFeaturedId}
             initialCategories={initialCategories}

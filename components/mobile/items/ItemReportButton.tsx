@@ -33,7 +33,7 @@ export default function ItemReportButton({ itemId }: ItemReportButtonProps) {
         aria-label="گزارش آیتم"
         title="گزارش آیتم"
       >
-        <Flag className="h-4 w-4 text-gray-500 transition-colors hover:text-red-600" />
+        <Flag className="h-4 w-4 text-wibe-secondary transition-colors hover:text-red-600" />
       </button>
 
       <ItemReportModal

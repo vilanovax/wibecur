@@ -121,7 +121,7 @@ export default function BookmarkButton({
       return (
         <Link
           href={loginHref}
-          className="flex h-full w-full items-center justify-center text-gray-600 transition-colors hover:text-primary"
+          className="flex h-full w-full items-center justify-center text-wibe-secondary transition-colors hover:text-primary"
           aria-label="ورود برای ذخیره لیست"
           title="ورود برای ذخیره لیست"
         >
@@ -138,7 +138,7 @@ export default function BookmarkButton({
           aria-label="ورود برای ذخیره لیست"
           title="ورود برای ذخیره لیست"
         >
-          <Bookmark className="h-5 w-5 text-gray-500" />
+          <Bookmark className="h-5 w-5 text-wibe-secondary" />
         </Link>
       );
     }
@@ -182,7 +182,7 @@ export default function BookmarkButton({
       >
         <Bookmark
           className={`h-5 w-5 transition-colors ${
-            isBookmarked ? 'fill-primary text-primary' : 'text-gray-500'
+            isBookmarked ? 'fill-primary text-primary' : 'text-wibe-secondary'
           }`}
         />
       </button>
@@ -196,7 +196,7 @@ export default function BookmarkButton({
         onClick={handleToggle}
         disabled={isLoading}
         className={`${sizeClasses[size]} flex items-center justify-center transition-[colors,transform] hover:scale-110 disabled:opacity-50 ${
-          isBookmarked ? 'text-primary' : 'text-gray-600'
+          isBookmarked ? 'text-primary' : 'text-wibe-secondary'
         }`}
         aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
       >

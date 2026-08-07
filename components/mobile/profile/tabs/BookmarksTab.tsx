@@ -202,7 +202,7 @@ export default function BookmarksTab({
       {!showAll && bookmarks.length > 12 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
+          className="w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-wibe-secondary transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
         >
           مشاهده بیشتر ({bookmarks.length - 12} مورد دیگر)
         </button>
@@ -212,7 +212,7 @@ export default function BookmarksTab({
         <button
           onClick={() => setPage((p) => p + 1)}
           disabled={isLoading}
-          className="w-full py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
+          className="w-full py-3 rounded-xl border border-gray-200 text-wibe-secondary hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
         >
           {isLoading ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
         </button>
