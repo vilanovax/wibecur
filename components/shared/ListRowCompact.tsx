@@ -27,8 +27,8 @@ type ListRowCompactProps = {
 };
 
 const thumbClass: Record<NonNullable<ListRowCompactProps['thumb']>, string> = {
-  square: 'h-16 w-16 rounded-md lg:h-[4.5rem] lg:w-[4.5rem]',
-  poster: 'h-[4.5rem] w-14 rounded-lg lg:h-[6.5rem] lg:w-[4.5rem]',
+  square: 'h-16 w-16 rounded-xl lg:h-[4.5rem] lg:w-[4.5rem]',
+  poster: 'h-[4.75rem] w-[3.35rem] rounded-lg lg:h-[5.75rem] lg:w-16',
 };
 
 /** ردیف فشرده لیست — برای سکشن‌های sparse (لیست‌های جدید، هاب و …) */
@@ -48,9 +48,9 @@ export default function ListRowCompact({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`flex gap-3 rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm transition-colors active:scale-[0.99] lg:rounded-2xl lg:p-4 lg:hover:border-primary/20 lg:hover:shadow-md ${className}`}
+      className={`flex items-center gap-3 rounded-2xl bg-wibe-card p-2.5 pe-3 shadow-sm ring-1 ring-wibe/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.99] lg:p-3 lg:pe-4 lg:hover:ring-primary/25 lg:hover:shadow-md ${className}`}
     >
-      <div className={`relative shrink-0 overflow-hidden bg-gray-200 ${thumbClass[thumb]}`}>
+      <div className={`relative shrink-0 overflow-hidden bg-wibe-surface ${thumbClass[thumb]}`}>
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -59,15 +59,15 @@ export default function ListRowCompact({
           sizes="72px"
           className="h-full w-full object-cover"
           fallbackIcon={fallbackIcon}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl opacity-50"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl opacity-50"
         />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:text-[15px]">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+        <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground">
           {list.title}
         </h3>
         {showCreator ? (
-          <p className="mt-0.5 wibe-caption text-wibe-secondary lg:mt-1">
+          <p className="wibe-caption text-wibe-secondary">
             {list.creator?.name || 'کیوریتور'}
           </p>
         ) : null}
@@ -76,7 +76,7 @@ export default function ListRowCompact({
             saves={saveCount}
             itemCount={itemCount}
             variant={showSaveCount ? 'compact' : 'items-only'}
-            className="mt-1"
+            className="mt-0.5"
           />
         ) : null}
       </div>
