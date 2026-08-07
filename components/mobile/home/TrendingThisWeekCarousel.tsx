@@ -9,8 +9,8 @@ import HomeGridListCard from './HomeGridListCard';
 import HomeFeedGrid from './HomeFeedGrid';
 import type { HomeSectionId } from '@/lib/analytics';
 
-const MOBILE_CARD_WIDTH = 160;
-const MOBILE_CARD_HEIGHT = Math.round(MOBILE_CARD_WIDTH * (183 / 136));
+const MOBILE_CARD_WIDTH = 172;
+const MOBILE_CARD_HEIGHT = Math.round(MOBILE_CARD_WIDTH * (5 / 4));
 
 interface TrendingThisWeekCarouselProps {
   embedded?: boolean;
@@ -53,11 +53,11 @@ export default function TrendingThisWeekCarousel({ embedded = false }: TrendingT
             <div className="h-5 w-40 animate-pulse rounded bg-gray-200" />
           </div>
         )}
-        <div className={`flex gap-2.5 overflow-hidden px-4 lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
+        <div className={`flex gap-3 overflow-hidden px-4 lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
               key={i}
-              className="shrink-0 animate-pulse rounded-lg bg-gray-100 lg:w-full"
+              className="shrink-0 animate-pulse rounded-2xl bg-wibe-surface lg:w-full"
               style={{ width: MOBILE_CARD_WIDTH, height: MOBILE_CARD_HEIGHT }}
             />
           ))}
@@ -92,7 +92,7 @@ export default function TrendingThisWeekCarousel({ embedded = false }: TrendingT
       )}
 
       <div
-        className={`flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden ${HOME_FEED_GRID_CLASS}`}
+        className={`flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:hidden ${HOME_FEED_GRID_CLASS}`}
       >
         {lists.map(renderCard)}
       </div>

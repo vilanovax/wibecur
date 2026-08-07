@@ -34,11 +34,11 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
     if (!isLoading && !list) return null;
     return (
       <section
-        className={`mb-4 mt-1 px-4 lg:mb-0 lg:mt-0 lg:px-0 ${fillHeight ? 'xl:flex xl:h-full xl:min-h-0 xl:flex-col' : ''}`}
+        className={`mb-3.5 mt-1 px-4 lg:mb-0 lg:mt-0 lg:px-0 ${fillHeight ? 'xl:flex xl:h-full xl:min-h-0 xl:flex-col' : ''}`}
         aria-hidden
       >
         <div
-          className={`animate-pulse rounded-2xl bg-gray-200 shadow-vibe-hero lg:rounded-[1.35rem] ${
+          className={`animate-pulse rounded-2xl bg-wibe-surface shadow-vibe-hero lg:rounded-[1.35rem] ${
             fillHeight
               ? 'h-[220px] sm:h-[230px] xl:h-full xl:min-h-[20rem]'
               : 'h-[220px] sm:h-[230px] lg:h-[21rem] xl:h-[22.5rem]'
@@ -58,7 +58,7 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
 
   return (
     <section
-      className={`mb-4 mt-1 px-4 lg:mb-0 lg:mt-0 lg:px-0 ${fillHeight ? 'xl:flex xl:h-full xl:min-h-0 xl:flex-col' : ''}`}
+      className={`mb-3.5 mt-1 px-4 lg:mb-0 lg:mt-0 lg:px-0 ${fillHeight ? 'xl:flex xl:h-full xl:min-h-0 xl:flex-col' : ''}`}
       aria-label="منتخب هفته"
     >
       <HomeHeroBannerLink
@@ -66,7 +66,7 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
         listId={list.id}
         slotId={featuredSlotId}
         ariaLabel={`مشاهده لیست ${list.title}`}
-        className={`group relative block overflow-hidden rounded-2xl bg-gray-900 shadow-vibe-hero ring-1 ring-black/5 sm:h-[230px] lg:rounded-[1.35rem] lg:shadow-vibe-floating ${
+        className={`group relative block overflow-hidden rounded-2xl bg-foreground shadow-vibe-hero ring-1 ring-black/5 sm:h-[230px] lg:rounded-[1.35rem] lg:shadow-vibe-floating ${
           fillHeight
             ? 'h-[220px] xl:h-full xl:min-h-[20rem]'
             : 'h-[220px] lg:h-[21rem] xl:h-[22.5rem]'
@@ -99,10 +99,6 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent"
           aria-hidden
         />
-        <div
-          className="pointer-events-none absolute -right-8 bottom-0 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl"
-          aria-hidden
-        />
 
         <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 lg:max-w-[min(100%,36rem)] lg:p-8 lg:pb-9 xl:max-w-[min(100%,40rem)] xl:p-10 xl:pb-11">
           <span
@@ -113,7 +109,7 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
             منتخب هفته
           </span>
 
-          <h2 className="line-clamp-2 text-balance text-[1.65rem] font-bold leading-[1.15] tracking-tight text-white sm:text-3xl lg:text-4xl lg:leading-[1.1] xl:text-[2.65rem]">
+          <h2 className="line-clamp-2 text-balance text-h1 font-bold tracking-tight text-white lg:text-4xl xl:text-5xl">
             {list.title}
           </h2>
 
@@ -127,16 +123,20 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
             <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 wibe-caption text-white/65 tabular-nums lg:mt-3 lg:text-sm">
               {metaParts.map((part, i) => (
                 <span key={part} className="inline-flex items-center gap-2">
-                  {i > 0 ? <span aria-hidden className="text-white/35">·</span> : null}
+                  {i > 0 ? (
+                    <span aria-hidden className="text-white/35">
+                      ·
+                    </span>
+                  ) : null}
                   {part}
                 </span>
               ))}
             </p>
           ) : null}
 
-          <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-full bg-white/12 px-3 py-1.5 wibe-caption font-semibold text-white backdrop-blur-sm transition-colors group-hover:bg-white/20 lg:mt-4 lg:px-3.5 lg:py-2 lg:text-sm">
+          <span className="mt-3.5 inline-flex w-fit items-center gap-1 rounded-full bg-white px-3.5 py-2 wibe-caption font-bold text-foreground shadow-sm transition-transform group-hover:scale-[1.02] lg:mt-4 lg:px-4 lg:py-2.5 lg:text-sm">
             مشاهده لیست
-            <ChevronLeft className="h-3.5 w-3.5 rotate-180 lg:h-4 lg:w-4" aria-hidden />
+            <ChevronLeft className="h-3.5 w-3.5 lg:h-4 lg:w-4" aria-hidden />
           </span>
         </div>
       </HomeHeroBannerLink>

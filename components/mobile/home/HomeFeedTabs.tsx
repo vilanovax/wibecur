@@ -48,10 +48,14 @@ export default function HomeFeedTabs() {
   }, [queryClient, session?.user?.id, interests]);
 
   return (
-    <section className="mb-4 lg:mb-0" aria-label="فید کشف">
-      <div className="mb-3 space-y-2.5 px-4 lg:mb-0 lg:border-b lg:border-wibe/60 lg:px-5 lg:pb-4 lg:pt-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-          <div className="flex min-w-0 flex-wrap gap-2 lg:shrink-0" role="tablist" aria-label="نوع فید">
+    <section className="mb-5 lg:mb-0" aria-label="فید کشف">
+      <div className="mb-3.5 space-y-2 px-4 lg:mb-0 lg:border-b lg:border-wibe/60 lg:px-5 lg:pb-4 lg:pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <div
+            className="inline-flex min-w-0 rounded-full border border-wibe bg-wibe-surface p-0.5"
+            role="tablist"
+            aria-label="نوع فید"
+          >
             {TABS.map((item) => {
               const isActive = tab === item.id;
               return (
@@ -69,15 +73,15 @@ export default function HomeFeedTabs() {
                   }}
                   onPointerEnter={item.id === 'foryou' ? prefetchForYou : undefined}
                   onTouchStart={item.id === 'foryou' ? prefetchForYou : undefined}
-                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-4 wibe-small font-medium transition-colors lg:h-8 lg:px-3.5 ${
+                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 wibe-small font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
                     isActive
                       ? 'bg-primary text-white shadow-sm'
-                      : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/30'
+                      : 'text-wibe-secondary hover:text-foreground'
                   }`}
                 >
                   {item.id === 'trending' && isNewUser && !isGuest ? (
                     <span
-                      className={`rounded-pill px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                      className={`rounded-full px-1.5 py-0.5 text-xs font-bold leading-none ${
                         isActive ? 'bg-white/20 text-white' : 'bg-amber-400/20 text-amber-700'
                       }`}
                     >
@@ -90,15 +94,13 @@ export default function HomeFeedTabs() {
             })}
           </div>
 
-          <div className="flex min-w-0 flex-1 justify-end lg:gap-4">
-            <Link
-              href={TAB_SEE_ALL[tab]}
-              className="inline-flex shrink-0 items-center gap-0.5 wibe-caption font-semibold text-primary hover:underline"
-            >
-              مشاهده همه
-              <ChevronLeft className="h-3.5 w-3.5 rotate-180" aria-hidden />
-            </Link>
-          </div>
+          <Link
+            href={TAB_SEE_ALL[tab]}
+            className="inline-flex shrink-0 items-center gap-0.5 wibe-caption font-semibold text-primary transition-colors hover:text-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          >
+            مشاهده همه
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
+          </Link>
         </div>
       </div>
 
@@ -106,7 +108,10 @@ export default function HomeFeedTabs() {
         <div className="mx-4 mb-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 lg:mx-0">
           <p className="wibe-caption text-wibe-secondary">
             برای پیشنهادهای شخصی‌تر{' '}
-            <Link href="/login?callbackUrl=%2F&source=login_banner" className="font-semibold text-primary hover:underline">
+            <Link
+              href="/login?callbackUrl=%2F&source=login_banner"
+              className="font-semibold text-primary hover:underline"
+            >
               وارد شو
             </Link>
           </p>
