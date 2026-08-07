@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { Sparkles, ChevronLeft } from 'lucide-react';
 import type { CuratedList } from '@/types/curated';
 import { trackMoodExplorerClick } from '@/lib/analytics';
 
@@ -21,40 +21,29 @@ export default function RandomSurpriseCard({ lists }: Props) {
   };
 
   return (
-    <section className="px-2.5 py-3 lg:px-0 lg:py-4" aria-labelledby="surprise-title">
+    <section className="px-3.5 py-2 lg:px-0 lg:py-3" aria-labelledby="surprise-title">
       <button
         type="button"
         onClick={handleSurprise}
-        className="group relative w-full overflow-hidden rounded-3xl border-2 border-primary/25 bg-gradient-to-bl from-violet-100/90 via-primary/[0.08] to-amber-50/80 p-5 text-right shadow-sm transition-colors hover:border-primary/40 hover:shadow-md active:scale-[0.99] lg:mx-auto lg:max-w-2xl lg:p-7"
+        className="group relative w-full overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-l from-primary/[0.08] via-wibe-card to-amber-50/60 p-4 text-right shadow-sm transition-colors hover:border-primary/35 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:mx-auto lg:max-w-2xl lg:p-6"
       >
-        <span
-          className="pointer-events-none absolute -left-4 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"
-          aria-hidden
-        />
-        <span
-          className="pointer-events-none absolute -bottom-6 -right-4 text-[7rem] opacity-[0.07] select-none"
-          aria-hidden
-        >
-          ✨
-        </span>
-
-        <div className="relative flex items-start gap-4">
-          <div className="min-w-0 flex-1">
-            <h2 id="surprise-title" className="wibe-h3 font-bold text-foreground lg:text-xl">
-              نمی‌دونی چی می‌خوای؟
-            </h2>
-            <p className="mt-1.5 wibe-body text-wibe-secondary lg:mt-2">
-              بذار Wibe یه چیز خوب پیشنهاد بده
-            </p>
-            <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 wibe-small font-bold text-white shadow-sm transition-transform group-hover:scale-[1.02]">
-              <Sparkles className="h-4 w-4" strokeWidth={2.5} />
-              سورپرایزم کن
-              <ArrowLeft className="h-4 w-4 rotate-180" strokeWidth={2.5} />
-            </span>
-          </div>
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-3xl shadow-sm backdrop-blur-sm lg:h-[4.5rem] lg:w-[4.5rem] lg:text-4xl">
+        <div className="relative flex items-center gap-3.5">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-wibe-card text-3xl shadow-sm ring-1 ring-wibe/80 lg:h-16 lg:w-16 lg:text-4xl">
             🎲
           </span>
+          <div className="min-w-0 flex-1">
+            <h2 id="surprise-title" className="wibe-h3 font-bold text-foreground">
+              نمی‌دونی چی می‌خوای؟
+            </h2>
+            <p className="mt-1 wibe-caption text-wibe-secondary lg:wibe-small">
+              بذار Wibe یه چیز خوب پیشنهاد بده
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 wibe-caption font-bold text-white shadow-sm transition-transform group-hover:scale-[1.02] lg:wibe-small">
+              <Sparkles className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+              سورپرایزم کن
+              <ChevronLeft className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+            </span>
+          </div>
         </div>
       </button>
     </section>

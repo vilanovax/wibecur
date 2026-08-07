@@ -152,7 +152,7 @@ export default function CuratedLandingPageClient({
   const forYouPending = isLoggedIn && forYouInView && prefsLoading && !userPrefs;
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-wibe-surface pb-2">
       <ExploreSmartHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -162,7 +162,7 @@ export default function CuratedLandingPageClient({
 
       <main className="space-y-0">
         {isError && !data?.lists?.length ? (
-          <div className="px-2.5 py-6 text-center">
+          <div className="px-3.5 py-6 text-center">
             <p className="wibe-body text-wibe-secondary">بارگذاری اکسپلور ناموفق بود</p>
             <p className="mt-1 wibe-caption text-wibe-secondary/80">
               اتصال را چک کن و صفحه را دوباره باز کن
@@ -171,7 +171,7 @@ export default function CuratedLandingPageClient({
         ) : null}
 
         {isSearchActive ? (
-          <div className="px-2.5 py-4 lg:px-0 lg:py-5">
+          <div className="px-3.5 py-4 lg:px-0 lg:py-5">
             {search.loading && !search.hasResults ? (
               <SearchResultSkeleton rows={5} />
             ) : !search.loading &&
@@ -240,14 +240,14 @@ export default function CuratedLandingPageClient({
             </div>
 
             {sections.filtered.length === 0 && (
-              <div className="px-2.5 py-12 text-center">
+              <div className="px-3.5 py-12 text-center">
                 <p className="wibe-body text-wibe-secondary">لیستی یافت نشد</p>
                 <p className="mt-2 wibe-caption text-wibe-secondary/80">
                   اولین لیستت را بساز یا در صفحهٔ لیست‌ها جستجو کن
                 </p>
                 <Link
                   href="/lists"
-                  className="mt-4 inline-block rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white"
+                  className="mt-4 inline-block rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 >
                   رفتن به لیست‌ها
                 </Link>
