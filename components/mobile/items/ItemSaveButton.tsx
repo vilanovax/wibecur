@@ -55,15 +55,15 @@ export default function ItemSaveButton({
     return (
       <Link
         href={loginHref}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+        className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
           isHero
             ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
-            : 'bg-white border-2 border-gray-300 hover:border-primary hover:bg-primary/5'
+            : 'border border-wibe bg-wibe-surface hover:border-primary/35 hover:bg-primary/[0.04]'
         }`}
         aria-label="ورود برای ذخیره"
         title="ورود برای ذخیره"
       >
-        <Bookmark className={`w-5 h-5 ${isHero ? 'text-white' : 'text-wibe-secondary'}`} />
+        <Bookmark className={`h-5 w-5 ${isHero ? 'text-white' : 'text-wibe-secondary'}`} />
       </Link>
     );
   }
@@ -71,7 +71,7 @@ export default function ItemSaveButton({
   if (status === 'loading' || (status === 'authenticated' && deferReady && viewerLoading)) {
     return (
       <div
-        className={`w-10 h-10 rounded-full animate-pulse ${isHero ? 'bg-white/20' : 'bg-gray-200'}`}
+        className={`h-11 w-11 rounded-full animate-pulse ${isHero ? 'bg-white/20' : 'bg-wibe-surface'}`}
         aria-hidden
       />
     );
@@ -90,14 +90,14 @@ export default function ItemSaveButton({
           e.stopPropagation();
           setIsModalOpen(true);
         }}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+        className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
           isSaved
             ? isPrivate
-              ? 'bg-gray-900 border-2 border-gray-900 hover:bg-black shadow-md'
-              : 'bg-blue-600 border-2 border-blue-600 hover:bg-blue-700 shadow-md'
+              ? 'border-2 border-foreground bg-foreground shadow-sm hover:opacity-90'
+              : 'border-2 border-primary bg-primary shadow-sm hover:bg-primary-dark'
             : isHero
-              ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
-              : 'bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+              ? 'border border-white/30 bg-white/15 backdrop-blur-sm hover:bg-white/25'
+              : 'border border-wibe bg-wibe-surface hover:border-primary/35 hover:bg-primary/[0.04]'
         }`}
         aria-label={
           isSaved
@@ -108,13 +108,13 @@ export default function ItemSaveButton({
         }
       >
         <Bookmark
-          className={`w-5 h-5 transition-colors ${
-            isSaved ? 'text-white fill-white' : isHero ? 'text-white' : 'text-wibe-secondary'
+          className={`h-5 w-5 transition-colors ${
+            isSaved ? 'fill-white text-white' : isHero ? 'text-white' : 'text-wibe-secondary'
           }`}
         />
         {savedCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md">
-            {savedCount}
+          <span className="absolute -end-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-0.5 text-xs font-bold text-white shadow-sm tabular-nums">
+            {savedCount.toLocaleString('fa-IR')}
           </span>
         )}
       </button>
