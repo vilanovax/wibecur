@@ -9,7 +9,7 @@ import ListCardStats from '@/components/shared/ListCardStats';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import { resolveVibeAvatar } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
-import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
+import { type CuratorLevelKey } from '@/lib/curator';
 import Toast from '@/components/shared/Toast';
 import PublicProfileBreadcrumb from '@/components/profile/PublicProfileBreadcrumb';
 import ProfilePicksSection from '@/components/mobile/profile/ProfilePicksSection';
@@ -167,7 +167,6 @@ export default function PublicProfilePageClient({
 
   const isOwnProfile = currentUserId === data.user.id;
   const levelKey = (data.user.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
-  const levelConfig = getLevelConfig(levelKey);
   const vibeAvatar =
     data.user.avatarType === 'DEFAULT' && data.user.avatarId
       ? resolveVibeAvatar(data.user.avatarId)
@@ -203,186 +202,222 @@ export default function PublicProfilePageClient({
   return (
     <>
       <PublicProfileBreadcrumb username={username} displayName={data.user.name} />
-      <div className="min-h-screen bg-wibe-surface">
-        <div className="relative overflow-hidden rounded-b-lg bg-primary px-4 pb-6 pt-8 lg:rounded-xl lg:mx-0 lg:px-8 lg:pb-8 lg:pt-10">
-          <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center lg:max-w-none lg:flex-row lg:items-end lg:justify-center lg:gap-8">
-            <div className="relative">
-              <div className={`absolute -inset-2 rounded-full blur-lg ${levelConfig.glowClass} opacity-40`} />
-              <div className="relative w-24 h-24 rounded-full border-4 border-wibe-card overflow-hidden bg-wibe-card shadow-sm">
-                {vibeAvatar ? (
-                  <VibeAvatarDisplay avatar={vibeAvatar} size={96} className="h-full w-full" />
-                ) : data.user.image ? (
-                  <ImageWithFallback
-                    src={data.user.image}
-                    alt={data.user.name || ''}
-                    className="w-full h-full object-cover"
-                    fallbackIcon={(data.user.name?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-primary text-white text-2xl font-bold flex items-center justify-center"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-primary text-white text-2xl font-bold">
-                    {(data.user.name?.[0] || '?').toUpperCase()}
-                  </div>
-                )}
+      <div className="min-h-screen bg-wibe-surface pb-4">
+        <div className="px-4 pt-2 lg:px-0 lg:pt-3">
+          <section className="relative overflow-hidden rounded-2xl bg-primary px-4 pb-8 pt-6 shadow-vibe-hero ring-1 ring-black/5 sm:px-6 sm:pb-9 sm:pt-7 lg:px-8 lg:pb-10 lg:pt-8">
+            <div
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_0%,rgba(255,255,255,0.16),transparent_55%)]"
+              aria-hidden
+            />
+            <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center lg:max-w-none lg:flex-row lg:items-end lg:gap-7">
+              <div className="relative shrink-0">
+                <div className="h-[5.5rem] w-[5.5rem] overflow-hidden rounded-full bg-wibe-card shadow-md ring-4 ring-white/90 sm:h-24 sm:w-24">
+                  {vibeAvatar ? (
+                    <VibeAvatarDisplay avatar={vibeAvatar} size={96} className="h-full w-full" />
+                  ) : data.user.image ? (
+                    <ImageWithFallback
+                      src={data.user.image}
+                      alt={data.user.name || ''}
+                      className="h-full w-full object-cover"
+                      fallbackIcon={(data.user.name?.[0] || '?').toUpperCase()}
+                      fallbackClassName="flex h-full w-full items-center justify-center bg-primary-dark text-2xl font-bold text-white"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-primary-dark text-2xl font-bold text-white">
+                      {(data.user.name?.[0] || '?').toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-3.5 flex w-full flex-col items-center text-center lg:mt-0 lg:flex-1 lg:items-start lg:text-start">
+                <h1 className="wibe-h1 text-white drop-shadow-sm">{data.user.name || 'کاربر'}</h1>
+                <p className="mt-1 wibe-caption font-medium text-white/80" dir="ltr">
+                  @{data.user.username}
+                </p>
+                {data.user.bio ? (
+                  <p className="mt-2.5 line-clamp-2 max-w-md wibe-small leading-relaxed text-white/90 lg:max-w-xl lg:line-clamp-3">
+                    {data.user.bio}
+                  </p>
+                ) : null}
+
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 lg:justify-start">
+                  {data.user.showBadge !== false && (
+                    <CuratorBadge
+                      level={levelKey}
+                      size="small"
+                      showIcon
+                      showLabel
+                      className="border border-white/25 bg-white/15 text-white"
+                    />
+                  )}
+                  {data.user.globalRank != null && data.user.globalRank <= 50 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-warning px-2.5 py-1 wibe-caption font-semibold text-white">
+                      Top {data.user.globalRank <= 10 ? 10 : 50}
+                    </span>
+                  )}
+                  {data.user.monthlyRank != null && data.user.monthlyRank <= 10 && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/15 px-2.5 py-1 wibe-caption font-semibold text-white">
+                      برتر ماه
+                    </span>
+                  )}
+                  {data.user.spotlightActive && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-warning px-2.5 py-1 wibe-caption font-semibold text-white">
+                      Spotlight
+                      {data.user.spotlightEndDate &&
+                        ` · ${new Date(data.user.spotlightEndDate).toLocaleDateString('fa-IR', { month: 'long', year: 'numeric' })}`}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-4 flex w-full max-w-xs flex-col gap-2 sm:max-w-none sm:flex-row sm:justify-center lg:justify-start">
+                  {isOwnProfile ? (
+                    <Link
+                      href="/profile"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-wibe-card px-6 py-2.5 wibe-small font-semibold text-primary shadow-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                    >
+                      ویرایش پروفایل
+                    </Link>
+                  ) : currentUserId ? (
+                    <button
+                      type="button"
+                      onClick={handleFollowToggle}
+                      disabled={followLoading}
+                      className={`inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 wibe-small font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 active:scale-[0.98] disabled:opacity-50 ${
+                        isFollowing
+                          ? 'border border-white/40 bg-white/15 text-white'
+                          : 'bg-wibe-card text-primary shadow-sm hover:bg-white'
+                      }`}
+                    >
+                      {followLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : isFollowing ? (
+                        <>
+                          <Check className="h-4 w-4" />
+                          دنبال می‌کنی
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-4 w-4" />
+                          دنبال کردن
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/login?callbackUrl=${encodeURIComponent(`/u/${username}`)}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-wibe-card px-6 py-2.5 wibe-small font-semibold text-primary shadow-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      ورود برای دنبال کردن
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="mt-4 flex flex-col items-center text-center lg:mt-0 lg:flex-1 lg:items-start lg:text-right">
-            <h1 className="wibe-h2 text-white lg:wibe-h1">{data.user.name || 'کاربر'}</h1>
-            <p className="wibe-small text-white/85">@{data.user.username}</p>
-            {data.user.bio && (
-              <p className="mt-2 line-clamp-3 max-w-md wibe-small text-white/90 lg:max-w-xl">{data.user.bio}</p>
-            )}
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-              {data.user.showBadge !== false && (
-                <CuratorBadge
-                  level={levelKey}
-                  size="small"
-                  showIcon
-                  showLabel
-                  className="bg-white/15 text-white border border-white/25"
-                />
-              )}
-              {data.user.globalRank != null && data.user.globalRank <= 50 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-warning text-white wibe-caption font-semibold">
-                  Top {data.user.globalRank <= 10 ? 10 : 50}
-                </span>
-              )}
-              {data.user.monthlyRank != null && data.user.monthlyRank <= 10 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-wibe-card/20 text-white wibe-caption font-semibold border border-white/30">
-                  برتر ماه
-                </span>
-              )}
-              {data.user.spotlightActive && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-warning text-white wibe-caption font-semibold">
-                  Spotlight
-                  {data.user.spotlightEndDate &&
-                    ` · ${new Date(data.user.spotlightEndDate).toLocaleDateString('fa-IR', { month: 'long', year: 'numeric' })}`}
-                </span>
-              )}
-            </div>
-
-            <div className="mt-4 flex gap-3 lg:justify-start">
-              {isOwnProfile ? (
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 px-6 py-2.5 bg-wibe-card rounded-md shadow-sm text-primary wibe-small font-semibold"
-                >
-                  ویرایش پروفایل
-                </Link>
-              ) : currentUserId ? (
-                <button
-                  type="button"
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-md wibe-small font-semibold transition-all active:scale-[0.98] disabled:opacity-50 ${
-                    isFollowing
-                      ? 'bg-white/20 text-white border border-white/50'
-                      : 'bg-wibe-card text-primary shadow-sm'
-                  }`}
-                >
-                  {followLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : isFollowing ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      دنبال می‌کنی
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      دنبال کردن
-                    </>
-                  )}
-                </button>
-              ) : null}
-            </div>
-            </div>
-          </div>
+          </section>
         </div>
 
-        <div className="px-4 pt-4 lg:px-0">
-          <div className="grid grid-cols-4 gap-2 rounded-lg border border-wibe bg-wibe-card p-4 shadow-sm lg:grid-cols-4 lg:gap-4">
+        <div className="relative z-20 -mt-4 px-4 lg:px-0">
+          <div className="grid grid-cols-4 divide-x divide-x-reverse divide-wibe/80 overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90">
             {statItems.map(({ icon: Icon, value, label, highlight }) => (
-              <div key={label} className="flex flex-col items-center">
-                <Icon className={`w-5 h-5 mb-1 ${highlight ? 'text-primary' : 'text-wibe-secondary'}`} />
-                <span className={`text-h3 font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>
+              <div key={label} className="flex flex-col items-center px-1 py-3.5 text-center">
+                <Icon
+                  className={`mb-1.5 h-4 w-4 ${highlight ? 'text-primary' : 'text-wibe-secondary'}`}
+                  aria-hidden
+                />
+                <span
+                  className={`wibe-small font-bold tabular-nums leading-none ${
+                    highlight ? 'text-primary' : 'text-foreground'
+                  }`}
+                >
                   {value.toLocaleString('fa-IR')}
                 </span>
-                <span className="wibe-caption text-wibe-secondary">{label}</span>
+                <span className="mt-1 wibe-caption text-wibe-secondary">{label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {data.profilePicks && data.profilePicks.length > 0 && (
-          <div className="mt-6 px-4 lg:px-0">
+        {data.profilePicks && data.profilePicks.length > 0 ? (
+          <div className="mt-5 px-4 lg:px-0">
             <ProfilePicksSection
               userId={data.user.id}
               isOwner={isOwnProfile}
               publicShelves={data.profilePicks}
             />
           </div>
-        )}
+        ) : null}
 
-        {data.topTags.length > 0 && (
-          <section className="mt-6 px-4 lg:px-0">
-            <h2 className="wibe-h3 mb-3">سلیقه</h2>
-            <div className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe space-y-2">
+        {data.topTags.length > 0 ? (
+          <section className="mt-5 px-4 lg:px-0">
+            <h2 className="mb-3 wibe-h3 text-foreground">سلیقه</h2>
+            <div className="space-y-2.5 rounded-2xl bg-wibe-card p-4 shadow-sm ring-1 ring-wibe/90">
               {data.topTags.map((tag) => (
-                <div key={tag.slug} className="flex items-center gap-2">
-                  <span className="text-lg">{tag.icon}</span>
-                  <span className="wibe-small text-foreground flex-1">{tag.name}</span>
-                  <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div key={tag.slug} className="flex items-center gap-2.5">
+                  <span className="text-lg" aria-hidden>
+                    {tag.icon}
+                  </span>
+                  <span className="min-w-0 flex-1 wibe-small font-medium text-foreground">
+                    {tag.name}
+                  </span>
+                  <div className="h-1.5 w-20 overflow-hidden rounded-full bg-wibe-surface">
                     <div
-                      className="h-full bg-primary rounded-full"
+                      className="h-full rounded-full bg-primary"
                       style={{ width: `${tag.percent}%` }}
                     />
                   </div>
-                  <span className="wibe-caption text-wibe-secondary w-8">{tag.percent}%</span>
+                  <span className="w-8 wibe-caption tabular-nums text-wibe-secondary">
+                    {tag.percent.toLocaleString('fa-IR')}٪
+                  </span>
                 </div>
               ))}
             </div>
           </section>
-        )}
+        ) : null}
 
-        <section className="mt-6 px-4 pb-8 lg:px-0">
-          <h2 className="wibe-h3 mb-3">لیست‌های عمومی</h2>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+        <section className="mt-5 px-4 pb-8 lg:px-0">
+          <h2 className="mb-3 wibe-h3 text-foreground">لیست‌های عمومی</h2>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
             {data.publicLists.map((list) => (
               <Link
                 key={list.id}
                 href={`/lists/${list.slug}`}
-                className="block rounded-lg bg-wibe-card overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+                className="block overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.99] lg:hover:shadow-md lg:hover:ring-primary/25"
               >
-                <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
+                <div className="relative aspect-[4/3] overflow-hidden bg-wibe-surface">
                   <ListCoverImage
                     coverImage={list.coverImage}
                     title={list.title}
                     slug={list.slug}
                     categorySlug={list.categories?.slug}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                     fallbackIcon={list.categories?.icon ?? '📋'}
-                    fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-                  {list.isFeatured && (
-                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-pill bg-warning text-white wibe-caption font-semibold">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                  {list.isFeatured ? (
+                    <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 wibe-caption font-semibold text-white">
                       ویژه
                     </span>
-                  )}
-                  <div className="absolute bottom-0 left-0 right-0 p-2">
+                  ) : null}
+                  <div className="absolute inset-x-0 bottom-0 p-2">
                     <ListCardStats saves={list.saves} itemCount={list.items} variant="overlay" />
                   </div>
                 </div>
-                <div className="p-2.5">
-                  <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
+                <div className="px-2.5 py-2.5 text-start">
+                  <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-foreground">
+                    {list.title}
+                  </h3>
                 </div>
               </Link>
             ))}
           </div>
-          {data.publicLists.length === 0 && (
-            <p className="text-center wibe-small text-wibe-secondary py-8">هنوز لیست عمومی ندارد</p>
-          )}
+          {data.publicLists.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-wibe bg-wibe-card py-10 text-center">
+              <p className="wibe-small text-wibe-secondary">هنوز لیست عمومی ندارد</p>
+            </div>
+          ) : null}
         </section>
       </div>
 

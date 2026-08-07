@@ -16,7 +16,8 @@ export default function PublicProfileBreadcrumb({
   className = 'px-4 pt-2 lg:px-0',
 }: PublicProfileBreadcrumbProps) {
   const handle = `@${username}`;
-  const currentLabel = displayName?.trim() ? `${displayName.trim()} (${handle})` : handle;
+  // برچسب کوتاه — نام کامل در هیرو هست
+  const currentLabel = displayName?.trim() || handle;
 
   const items = [
     { label: 'خانه', href: '/' },
