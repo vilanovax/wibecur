@@ -15,13 +15,13 @@ export default function CuratorCTABlock({ categorySlug }: CuratorCTABlockProps) 
           <h2 className="text-xl font-bold text-white lg:text-2xl">
             🎬 منتقد بعدی وایب تویی؟
           </h2>
-          <p className="text-gray-300 mt-2 text-sm lg:mt-2.5 lg:text-base">
+          <p className="text-white/80 mt-2 text-sm lg:mt-2.5 lg:text-base">
             لیست فیلم بساز، امتیاز بگیر، رشد کن.
           </p>
         </div>
         <Link
           href={`/lists?category=${categorySlug}&create=1`}
-          className="mt-5 inline-flex items-center justify-center w-full max-w-xs py-3.5 px-6 rounded-xl font-bold text-base bg-amber-400 hover:bg-amber-500 text-gray-900 shadow-md transition-all active:scale-[0.98] lg:mt-0 lg:w-auto lg:shrink-0 lg:min-w-[180px]"
+          className="mt-5 inline-flex items-center justify-center w-full max-w-xs py-3.5 px-6 rounded-xl font-bold text-base bg-amber-400 hover:bg-amber-500 text-foreground shadow-md transition-all active:scale-[0.98] lg:mt-0 lg:w-auto lg:shrink-0 lg:min-w-[180px]"
         >
           ساخت لیست
         </Link>

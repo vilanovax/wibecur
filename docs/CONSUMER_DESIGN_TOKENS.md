@@ -140,6 +140,20 @@ npm run audit:design-tokens
 موج ۳: `components/mobile/profile` · `components/profile` · `app/{profile,u,user-lists,items,leaderboard}` · `components/category/hub` + light category roots · forms/sheets leftovers.  
 عمدهٔ باقی‌مانده: `components/category/film/*` → موج ۴.
 
+### بعد از موج ۴ (Film dark hub)
+
+| الگو | تقریبی |
+|------|--------|
+| `bg-gray-*` | ~۴۸ (عمدتاً `800/900` تیرهٔ عمدی) |
+| `border-gray-*` | ~۱۵ (عمدتاً `border-gray-800` کارت سینمایی) |
+| `text-gray-*` | ~۳ |
+| `arbitrary-text` | ~۱۴ |
+| `hover:bg-gray-*` | ~۳ |
+| violet/purple | ~۰ |
+| فایل دارای نقض | ~۲۰ |
+
+موج ۴: `components/category/film/*` — عناوین روشن → `foreground` / `wibe-secondary`؛ متن روی کارت تیره → `text-white/*`؛ `bg/border-gray-700–900` عمداً حفظ شد.
+
 ---
 
 ## موج‌های مهاجرت
@@ -149,8 +163,8 @@ npm run audit:design-tokens
 | ۰ | توکن + DESIGN.md + /design-system + Impeccable hook | ✅ موجود |
 | ۱ | Doc + audit script + layout/skeletons/shared chrome | ✅ |
 | ۲ | Home / Lists / Explore (+ list detail light surfaces) | ✅ |
-| ۳ | Profile / Category hub light / remaining forms | ✅ این PR |
-| ۴ | Film legacy dark sections (با احتیاط contrast) | بعدی |
+| ۳ | Profile / Category hub light / remaining forms | ✅ |
+| ۴ | Film legacy dark sections (با احتیاط contrast) | ✅ این PR |
 | — | Admin | خارج از scope (توکن جدا در `lib/admin/design-system`) |
 
 ---

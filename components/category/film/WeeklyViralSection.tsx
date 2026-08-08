@@ -23,10 +23,10 @@ export default function WeeklyViralSection({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🔥 لیست‌های وایرال هفته
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5">
+      <p className="text-sm text-wibe-secondary mt-0.5">
         بر اساس trend_score هفتگی در {categoryName}
       </p>
 

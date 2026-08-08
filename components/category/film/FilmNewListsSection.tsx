@@ -20,10 +20,10 @@ export default function FilmNewListsSection({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🆕 لیست‌های جدید
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         تازه‌ترین لیست‌های {categoryName}
       </p>
 
@@ -52,13 +52,13 @@ export default function FilmNewListsSection({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-gray-100 text-base line-clamp-2">
+              <h3 className="font-semibold text-white/90 text-base line-clamp-2">
                 {list.title}
               </h3>
               {list.creator?.name && (
-                <p className="text-sm text-gray-400 mt-1">{list.creator.name}</p>
+                <p className="text-sm text-white/65 mt-1">{list.creator.name}</p>
               )}
-              <div className="flex gap-3 mt-2 text-sm text-gray-500">
+              <div className="flex gap-3 mt-2 text-sm text-wibe-secondary">
                 <span>⭐ {list.saveCount}</span>
                 <span>•</span>
                 <span>❤️ {list.likeCount}</span>

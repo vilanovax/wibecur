@@ -31,10 +31,10 @@ export default function TopFilmCuratorsVIP({
 
   return (
     <section className={FILM_SECTION}>
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🏆 کیوریتورهای برتر فیلم
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         برترین کیوریتورهای {categoryName}
       </p>
 
@@ -58,17 +58,17 @@ export default function TopFilmCuratorsVIP({
                 {(topCurator.name || '?')[0]}
               </div>
             )}
-            <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center text-sm bg-amber-400 text-gray-900 font-bold">
+            <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center text-sm bg-amber-400 text-foreground font-bold">
               🎬
             </span>
           </div>
-          <span className="text-[10px] font-bold text-amber-600 mt-2 px-2 py-0.5 rounded bg-amber-100">
+          <span className="wibe-caption font-bold text-amber-600 mt-2 px-2 py-0.5 rounded bg-amber-100">
             Pro Critic
           </span>
-          <span className="font-bold text-gray-900 text-sm mt-1 truncate max-w-full">
+          <span className="font-bold text-foreground text-sm mt-1 truncate max-w-full">
             {topCurator.name || 'کاربر'}
           </span>
-          <span className="text-xs text-gray-600 mt-0.5">
+          <span className="text-xs text-wibe-secondary mt-0.5">
             🔥 {topCurator.listCount} لیست وایرال
           </span>
           <span className="text-xs text-amber-600 mt-1">
@@ -80,7 +80,7 @@ export default function TopFilmCuratorsVIP({
           <Link
             key={c.id}
             href={c.username ? `/u/${c.username}` : '#'}
-            className="flex-shrink-0 flex flex-col items-center p-4 rounded-2xl bg-white border border-gray-200 shadow-sm min-w-[100px]"
+            className="flex-shrink-0 flex flex-col items-center p-4 rounded-2xl bg-white border border-wibe shadow-sm min-w-[100px]"
           >
             {c.image ? (
               <ImageWithFallback
@@ -93,11 +93,11 @@ export default function TopFilmCuratorsVIP({
                 {(c.name || '?')[0]}
               </div>
             )}
-            <span className="text-[10px] text-amber-600 mt-1.5">🎬 Pro</span>
-            <span className="text-xs font-medium text-gray-900 mt-0.5 truncate max-w-full">
+            <span className="wibe-caption text-amber-600 mt-1.5">🎬 Pro</span>
+            <span className="text-xs font-medium text-foreground mt-0.5 truncate max-w-full">
               {c.name || 'کاربر'}
             </span>
-            <span className="text-[10px] text-gray-500 mt-0.5">#{i + 2}</span>
+            <span className="wibe-caption text-wibe-secondary mt-0.5">#{i + 2}</span>
           </Link>
         ))}
       </div>
