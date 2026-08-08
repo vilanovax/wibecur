@@ -32,6 +32,7 @@ import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import {
+  LISTS_SECTION_PREVIEW_DESKTOP,
   LISTS_VIEW_MODE_DESKTOP_KEY,
   LISTS_VIEW_MODE_MOBILE_KEY,
   listsResultsGridClass,
@@ -179,8 +180,6 @@ const DEFAULT_FILTER: FilterState = {
 const VIEW_MODE_KEY = 'listsPage_viewMode'; // legacy — migrated on read
 const PAGE_SIZE = 24;
 /** پیش‌نمایش هر دسته در نمای سکشن‌بندی‌شده */
-const SECTION_PREVIEW_MOBILE = 4;
-const SECTION_PREVIEW_DESKTOP = 8;
 const STICKY_OFFSET = 154;
 
 function resolveCategoryIdFromParam(
@@ -248,7 +247,8 @@ export default function ListsPageClient({
   const isScrollingToCategory = useRef(false);
   const viewModeHydrated = useRef(false);
   const isDesktop = useIsDesktop();
-  const sectionPreviewCount = isDesktop ? SECTION_PREVIEW_DESKTOP : SECTION_PREVIEW_MOBILE;
+  // Always desktop preview count — mobile extras hidden via CSS in ListsCategorySection (avoids CLS).
+  const sectionPreviewCount = LISTS_SECTION_PREVIEW_DESKTOP;
 
   const publicLists = allLists.filter((l) => l.isActive && l.isPublic);
   const activeCategories = categories.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -869,7 +869,7 @@ export default function ListsPageClient({
   const trendingBrowseEmpty =
     browseMode === 'trending' && trendingLoaded && sortedLists.length === 0 && publicLists.length > 0;
 
-  const showContextBar = !isSearchActive && isDesktop && !useSectionLayout;
+  const showContextBar = !isSearchActive && !useSectionLayout;
 
   return (
     <div className="w-full min-w-0 space-y-0 pb-6 lg:pb-4">
@@ -1121,7 +1121,6 @@ export default function ListsPageClient({
                 categorySlug: category.slug ?? undefined,
                 lists: sectionLists,
                 viewMode: displayViewMode,
-                isDesktop,
                 previewCount: sectionPreviewCount,
                 bookmarkedIds,
                 onBookmarkToggle: handleBookmarkToggle,
@@ -1209,7 +1208,6 @@ export default function ListsPageClient({
                 <FlatListResults
                   lists={visibleFlatLists}
                   viewMode={displayViewMode}
-                  isDesktop={isDesktop}
                   bookmarkedIds={bookmarkedIds}
                   onBookmarkToggle={handleBookmarkToggle}
                 />
@@ -1248,22 +1246,20 @@ export default function ListsPageClient({
 function FlatListResults({
   lists,
   viewMode,
-  isDesktop,
   bookmarkedIds,
   onBookmarkToggle,
   highlightQuery,
 }: {
   lists: ListWithCategory[];
   viewMode: ViewMode;
-  isDesktop: boolean;
   bookmarkedIds?: Set<string>;
   onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   highlightQuery?: string;
 }) {
-  const cardVariant = resolveListCardVariant(viewMode, isDesktop);
+  const cardVariant = resolveListCardVariant(viewMode);
 
   return (
-    <div className={listsResultsGridClass(viewMode, isDesktop)}>
+    <div className={listsResultsGridClass(viewMode)}>
       {lists.map((list, index) => (
         <ListCardCompact
           key={list.id}

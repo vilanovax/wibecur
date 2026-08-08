@@ -19,7 +19,7 @@ interface SiteFooterProps {
   variant?: 'desktop' | 'mobile';
 }
 
-/** لینک واحد برند: کپی‌رایت + wibe.ir */
+/** لینک واحد برند: کپی‌رایت + wibe.ir — بدون toLocaleString تا هیدریشن/CLS نشکند */
 function WibeBrandLink({ className = '' }: { className?: string }) {
   const year = new Date().getFullYear();
 
@@ -32,7 +32,7 @@ function WibeBrandLink({ className = '' }: { className?: string }) {
       aria-label={`© ${year} وایب — wibe.ir`}
     >
       <span>
-        © {year.toLocaleString('fa-IR')} وایب
+        © <span suppressHydrationWarning>{year}</span> وایب
         <span className="mx-1.5 text-wibe-secondary/35" aria-hidden>
           ·
         </span>
@@ -66,7 +66,7 @@ export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
 
   return (
     <footer
-      className={`mt-auto hidden border-t border-wibe bg-wibe-card lg:block ${DESKTOP_CONTENT_PADDING_CLASS}`}
+      className={`mt-auto hidden min-h-[11.5rem] border-t border-wibe bg-wibe-card lg:block ${DESKTOP_CONTENT_PADDING_CLASS}`}
       role="contentinfo"
     >
       <div className="py-8 xl:py-10">

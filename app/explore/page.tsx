@@ -14,6 +14,7 @@ import {
   selectExploreLcpImageUrl,
   selectExploreTrendingLists,
 } from '@/lib/curated/explore-sections';
+import { ExplorePageSkeleton } from '@/components/mobile/curated/ExplorePageSkeleton';
 
 export const revalidate = 60;
 
@@ -62,7 +63,7 @@ export default async function ExplorePage() {
       <ExploreLcpPreload href={lcpImage} />
       <div className="bg-wibe-surface">
         <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
-        <Suspense fallback={<div className="min-h-[50vh]" aria-hidden />}>
+        <Suspense fallback={<ExplorePageSkeleton />}>
           <CuratedLandingPageClient
             initialData={initialData}
             trendingSlot={trendingSlot}
