@@ -1,6 +1,7 @@
 import {
   getListTopicCoverUrl,
   inferCategorySlugFromTitle,
+  isBannerCompatibleWithCategory,
   normalizeCategorySlug,
   pickCategoryCoverVariant,
 } from '@/lib/category-cover-images';
@@ -27,7 +28,7 @@ function isUsableCoverUrl(cover: string): boolean {
 
 /**
  * کاور بنر/لیست
- * ۱. تصویر واقعی DB/استوریج (اگر placeholder نباشد)
+ * ۱. تصویر واقعی DB/استوریج (اگر placeholder نباشد و با دسته جور باشد)
  * ۲. کاور موضوعی اختصاصی slug
  * ۳. variant متنوع بر اساس دسته + slug
  */
@@ -43,13 +44,19 @@ export function resolveCoverImage(input: ResolveCoverImageInput): string {
     categorySlug ||
     'default';
 
-  // کاور اختصاصی — فقط اگر generic/placeholder نباشد
-  if (!isGenericListCover(cover) && isUsableCoverUrl(cover)) {
+  // کاور اختصاصی — فقط اگر generic/placeholder نباشد و بنر اشتباه دسته نباشد
+  if (
+    !isGenericListCover(cover) &&
+    isUsableCoverUrl(cover) &&
+    isBannerCompatibleWithCategory(cover, categorySlug)
+  ) {
     return cover;
   }
 
   const topicCover = getListTopicCoverUrl(listSlug, categorySlug, input.listTitle);
-  if (topicCover) return topicCover;
+  if (topicCover && isBannerCompatibleWithCategory(topicCover, categorySlug)) {
+    return topicCover;
+  }
 
   if (categorySlug) {
     return pickCategoryCoverVariant(categorySlug, seed);

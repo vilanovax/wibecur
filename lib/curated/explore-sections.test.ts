@@ -147,3 +147,63 @@ describe('scoreListForForYou', () => {
     expect(cafeScore).toBeGreaterThan(movieScore);
   });
 });
+
+describe('buildExploreSections cover trust', () => {
+  it('avoids duplicate cover assets across forYou when alternatives exist', () => {
+    const shared = '/images/banners/cafe-2.webp';
+    const lists = [
+      makeList({
+        id: 'cafe-a',
+        title: 'کافه صبحانه',
+        categoryId: 'cat-cafe',
+        coverUrl: shared,
+        savesCount: 80,
+        trendScore: 9,
+        badges: ['featured'],
+      }),
+      makeList({
+        id: 'cafe-b',
+        title: 'کافه فضای باز',
+        categoryId: 'cat-cafe',
+        coverUrl: shared,
+        savesCount: 70,
+        trendScore: 8,
+      }),
+      makeList({
+        id: 'cafe-c',
+        title: 'کافه دنج',
+        categoryId: 'cat-cafe',
+        coverUrl: '/images/banners/cafe-3.webp',
+        savesCount: 60,
+        trendScore: 7,
+      }),
+      makeList({
+        id: 'movie-1',
+        title: 'فیلم‌های اکشن',
+        categoryId: 'cat-movie',
+        coverUrl: '/images/banners/movies.webp',
+        savesCount: 50,
+        trendScore: 6,
+      }),
+      makeList({
+        id: 'book-1',
+        title: 'رمان‌ها',
+        categoryId: 'cat-book',
+        coverUrl: '/images/banners/books.webp',
+        savesCount: 40,
+        trendScore: 5,
+      }),
+    ];
+
+    const sections = buildExploreSections(lists, '', {
+      activeCategoryIds: ['cat-cafe', 'cat-movie', 'cat-book'],
+    });
+
+    const forYouCovers = sections.forYou
+      .map((l) => l.coverUrl)
+      .filter((url): url is string => Boolean(url));
+    const unique = new Set(forYouCovers);
+    expect(unique.size).toBe(forYouCovers.length);
+    expect(sections.forYou.some((l) => l.id === 'cafe-c')).toBe(true);
+  });
+});

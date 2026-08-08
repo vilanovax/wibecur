@@ -23,7 +23,6 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
   return (
     <div className="mb-1">
       <header className="mb-4 lg:mb-5">
-        <p className="mb-1 wibe-caption font-semibold tracking-wide text-primary">اکسپلور</p>
         <h2 className="text-balance wibe-h1 leading-snug tracking-tight lg:text-3xl lg:leading-[1.15]">
           امروز دنبال چه وایبی هستی؟
         </h2>

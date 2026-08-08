@@ -45,7 +45,7 @@ export default function ForYouSection({
             <Link
               key={list.id}
               href={`/lists/${list.slug}`}
-              className={`group flex flex-row-reverse gap-2.5 rounded-xl border p-2.5 shadow-sm transition-[colors,transform] active:scale-[0.99] lg:gap-3 lg:p-3 lg:hover:shadow-md ${
+              className={`group flex flex-row-reverse gap-2.5 rounded-xl border p-2.5 shadow-sm transition-[colors,transform] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:gap-3 lg:p-3 lg:hover:shadow-md ${
                 index === 0
                   ? 'border-primary/25 bg-primary/[0.04]'
                   : 'border-wibe bg-wibe-card'

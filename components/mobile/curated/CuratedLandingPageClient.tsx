@@ -205,11 +205,8 @@ export default function CuratedLandingPageClient({
           </div>
         ) : (
           <>
+            {/* Mood → قیدها → داغ → ForYou → دسته‌ها → سورپرایز (ریکاوری آخر) */}
             <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
-
-            <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
-              <RandomSurpriseCardLazy lists={sections.trending} />
-            </HomeDeferredMount>
 
             {trendingSlot ??
               (sections.trending.length > 0 ? (
@@ -220,12 +217,6 @@ export default function CuratedLandingPageClient({
                   />
                 </HomeDeferredMount>
               ) : null)}
-
-            {categoriesSlot ?? (
-              <HomeDeferredMount fallback={<ExploreCategorySectionSkeleton />}>
-                <CategoryDiscoverySectionLazy categories={categories} />
-              </HomeDeferredMount>
-            )}
 
             <div ref={forYouRef} className="min-h-[1px]">
               {!forYouInView ? null : forYouPending ? (
@@ -238,6 +229,24 @@ export default function CuratedLandingPageClient({
                 />
               ) : null}
             </div>
+
+            {categoriesSlot ?? (
+              <HomeDeferredMount fallback={<ExploreCategorySectionSkeleton />}>
+                <CategoryDiscoverySectionLazy categories={categories} />
+              </HomeDeferredMount>
+            )}
+
+            <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
+              <RandomSurpriseCardLazy
+                lists={
+                  sections.forYou.length > 0
+                    ? sections.forYou
+                    : sections.trending.length > 0
+                      ? sections.trending
+                      : sections.filtered.slice(0, 12)
+                }
+              />
+            </HomeDeferredMount>
 
             {sections.filtered.length === 0 && (
               <div className="px-2.5 py-12 text-center">

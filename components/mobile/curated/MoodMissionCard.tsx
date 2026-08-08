@@ -13,7 +13,7 @@ export default function MoodMissionCard({ card, onSelect }: Props) {
     <button
       type="button"
       onClick={() => onSelect(card)}
-      className={`group relative flex w-full min-h-[8.25rem] flex-col overflow-hidden rounded-2xl border bg-gradient-to-br p-3.5 text-right shadow-vibe-sm transition-[colors,transform,box-shadow] hover:-translate-y-1 hover:shadow-vibe-card active:scale-[0.98] lg:min-h-[10rem] lg:p-5 ${card.gradient}`}
+      className={`group relative flex w-full min-h-[8.25rem] flex-col overflow-hidden rounded-2xl border bg-gradient-to-br p-3.5 text-right shadow-vibe-sm transition-[colors,transform,box-shadow] hover:-translate-y-1 hover:shadow-vibe-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] lg:min-h-[10rem] lg:p-5 ${card.gradient}`}
     >
       <span
         className="pointer-events-none absolute -bottom-3 -left-2 select-none text-6xl leading-none opacity-[0.12] transition-transform duration-300 group-hover:scale-110"

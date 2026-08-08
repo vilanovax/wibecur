@@ -17,9 +17,12 @@ export default function QuickNowSection({ onSelect, disabled = false }: Props) {
       className="border-t border-wibe/60 px-2.5 py-4 lg:px-0 lg:py-5"
       aria-labelledby="quick-now-title"
     >
-      <h2 id="quick-now-title" className="mb-2.5 wibe-body font-bold text-foreground">
-        برای همین الان
+      <h2 id="quick-now-title" className="mb-1 wibe-body font-bold text-foreground">
+        قید زمان و مکان
       </h2>
+      <p className="mb-2.5 wibe-caption text-wibe-secondary">
+        حال‌وهوا را از بالا بزن؛ اینجا فقط زمان و جا را تنگ‌تر کن
+      </p>
       <div className="scrollbar-hide -mx-2.5 flex gap-2 overflow-x-auto px-2.5 pb-0.5 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
         {QUICK_NOW_PILLS.map((pill) => (
           <button
