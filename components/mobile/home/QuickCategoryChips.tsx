@@ -80,7 +80,7 @@ export default function QuickCategoryChips({
                 href={`/categories/${cat.slug}`}
                 onClick={() => trackCategoryChipClick(cat.slug, cat.name)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-3.5 wibe-small font-medium shadow-sm transition-colors active:scale-[0.98] lg:h-8 lg:px-3 lg:wibe-caption ${
+                className={`flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-3.5 wibe-small font-medium shadow-sm transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:h-8 lg:px-3 lg:wibe-caption ${
                   isActive
                     ? 'border-primary bg-primary text-white shadow-sm hover:bg-primary-dark'
                     : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30 lg:bg-wibe-surface'

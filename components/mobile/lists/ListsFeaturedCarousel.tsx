@@ -58,7 +58,10 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
           <span>منتخب</span>
         </h2>
         {lists.length > 1 && (
-          <span className="wibe-caption text-wibe-secondary tabular-nums">
+          <span
+            className="wibe-caption text-wibe-secondary tabular-nums"
+            aria-live="polite"
+          >
             {(activeIndex + 1).toLocaleString('fa-IR')}/{lists.length.toLocaleString('fa-IR')}
           </span>
         )}
@@ -67,36 +70,25 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
       {lists.length === 1 ? (
         <FeaturedSlide list={lists[0]} priority className="w-full max-w-2xl lg:max-w-none" />
       ) : (
-        <>
-          <div
-            ref={scrollRef}
-            className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-2.5 max-lg:overflow-x-auto max-lg:pb-1 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
-            role="list"
-            aria-label="لیست‌های منتخب"
-          >
-            {lists.map((list, i) => (
-              <div
-                key={list.id}
-                role="listitem"
-                data-featured-slide
-                data-index={i}
-                className={SLIDE_CLASS}
-              >
-                <FeaturedSlide list={list} priority={i === 0} className="w-full" />
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 flex justify-center gap-1.5 lg:hidden" aria-hidden>
-            {lists.map((list, i) => (
-              <span
-                key={list.id}
-                className={`h-1.5 rounded-full transition-colors ${
-                  i === activeIndex ? 'w-4 bg-primary' : 'w-1.5 bg-wibe-secondary/30'
-                }`}
-              />
-            ))}
-          </div>
-        </>
+        <div
+          ref={scrollRef}
+          className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-2.5 max-lg:overflow-x-auto max-lg:pb-1 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
+          role="list"
+          aria-label="لیست‌های منتخب"
+        >
+          {lists.map((list, i) => (
+            <div
+              key={list.id}
+              role="listitem"
+              data-featured-slide
+              data-index={i}
+              className={SLIDE_CLASS}
+              aria-current={i === activeIndex ? 'true' : undefined}
+            >
+              <FeaturedSlide list={list} priority={i === 0} className="w-full" />
+            </div>
+          ))}
+        </div>
       )}
     </section>
   );

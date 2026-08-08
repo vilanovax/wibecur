@@ -29,7 +29,7 @@ interface ListsCategorySectionProps {
   onShowAllCategory?: (categoryId: string, categorySlug?: string) => void;
 }
 
-const SCROLL_MT = 'scroll-mt-[154px]';
+const SCROLL_MT = 'scroll-mt-[136px]';
 
 export default function ListsCategorySection({
   title,
@@ -73,7 +73,7 @@ export default function ListsCategorySection({
           {icon ? <span aria-hidden>{icon}</span> : null}
           <span className="truncate">{title}</span>
           <span className="shrink-0 wibe-caption font-normal text-wibe-secondary tabular-nums">
-            {lists.length.toLocaleString('fa-IR')}
+            {lists.length.toLocaleString('fa-IR')} لیست
           </span>
         </h2>
         {hasMore && !expanded && (
@@ -81,14 +81,14 @@ export default function ListsCategorySection({
             <button
               type="button"
               onClick={() => onShowAllCategory(categoryId, categorySlug)}
-              className="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98]"
+              className="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               همه
             </button>
           ) : (
             <Link
               href={filterHref}
-              className="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10"
+              className="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               همه
             </Link>

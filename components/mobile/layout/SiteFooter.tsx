@@ -28,7 +28,7 @@ function WibeBrandLink({ className = '' }: { className?: string }) {
       href={WIBE_SITE_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className={`group inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 wibe-caption text-wibe-secondary transition-colors hover:text-primary ${className}`}
+      className={`group inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 wibe-caption text-wibe-secondary transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${className}`}
       aria-label={`© ${year} وایب — wibe.ir`}
     >
       <span>
@@ -50,14 +50,10 @@ export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
   if (variant === 'mobile') {
     return (
       <footer
-        className="border-t border-wibe bg-wibe-card px-4 py-6 lg:hidden"
+        className="border-t border-wibe/70 bg-wibe-card px-4 py-3 lg:hidden"
         role="contentinfo"
       >
-        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-center">
-          <SiteLogo variant="header" href="/" className="justify-center" />
-          <p className="max-w-[280px] wibe-caption leading-relaxed text-wibe-secondary">
-            لیست‌های کیوریتد لایف‌استایل
-          </p>
+        <div className="mx-auto flex max-w-sm flex-col items-center gap-1.5 text-center">
           <WibeBrandLink />
         </div>
       </footer>

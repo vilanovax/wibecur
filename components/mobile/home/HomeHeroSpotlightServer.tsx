@@ -1,6 +1,7 @@
 import { Sparkles, ChevronLeft } from 'lucide-react';
 import HomeHeroImpressionTracker from '@/components/mobile/home/HomeHeroClientActions';
 import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
+import HomeHeroSaveButton from '@/components/mobile/home/HomeHeroSaveButton';
 import HeroCoverImage from '@/components/shared/HeroCoverImage';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import type { FeaturedListData } from '@/types/home-data';
@@ -48,6 +49,7 @@ export default function HomeHeroSpotlightServer({
       className={`mb-4 mt-1 px-4 lg:mb-0 lg:mt-0 lg:px-0 ${fillHeight ? 'xl:flex xl:h-full xl:min-h-0 xl:flex-col' : ''}`}
       aria-label="منتخب هفته"
     >
+      <div className={`relative ${fillHeight ? 'xl:flex xl:h-full xl:min-h-0 xl:flex-col' : ''}`}>
       <HomeHeroBannerLink
         href={`/lists/${list.slug}`}
         listId={list.id}
@@ -102,16 +104,16 @@ export default function HomeHeroSpotlightServer({
           </h2>
 
           {description ? (
-            <p className="mt-2 line-clamp-2 max-w-xl text-pretty wibe-small leading-relaxed text-white/78 lg:mt-2.5 lg:text-base">
+            <p className="mt-2 line-clamp-2 max-w-xl text-pretty wibe-small leading-relaxed text-white/90 lg:mt-2.5 lg:text-base">
               {description}
             </p>
           ) : null}
 
           {metaParts.length > 0 ? (
-            <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 wibe-caption text-white/65 tabular-nums lg:mt-3 lg:text-sm">
+            <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 wibe-caption text-white/80 tabular-nums lg:mt-3 lg:text-sm">
               {metaParts.map((part, i) => (
                 <span key={part} className="inline-flex items-center gap-2">
-                  {i > 0 ? <span aria-hidden className="text-white/35">·</span> : null}
+                  {i > 0 ? <span aria-hidden className="text-white/45">·</span> : null}
                   {part}
                 </span>
               ))}
@@ -126,6 +128,13 @@ export default function HomeHeroSpotlightServer({
           <HomeHeroImpressionTracker slotId={slotId} />
         </div>
       </HomeHeroBannerLink>
+      <HomeHeroSaveButton
+        listId={list.id}
+        listSlug={list.slug}
+        categorySlug={categorySlug}
+        saveCount={list.saveCount}
+      />
+      </div>
     </section>
   );
 }

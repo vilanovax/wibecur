@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutGrid, List, Filter, Bookmark, Flame, Search } from 'lucide-react';
+import { LayoutGrid, List, Filter, Bookmark, Flame, Search, Globe } from 'lucide-react';
 import type { ListsBrowseList } from '@/lib/lists-browse-shared';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
 import WibeEmptyState from '@/components/shared/WibeEmptyState';
@@ -31,6 +31,7 @@ import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import { useHomeUserState } from '@/hooks/useHomeUserState';
 import {
   LISTS_SECTION_PREVIEW_DESKTOP,
   LISTS_VIEW_MODE_DESKTOP_KEY,
@@ -180,8 +181,6 @@ const DEFAULT_FILTER: FilterState = {
 const VIEW_MODE_KEY = 'listsPage_viewMode'; // legacy — migrated on read
 const PAGE_SIZE = 24;
 /** پیش‌نمایش هر دسته در نمای سکشن‌بندی‌شده */
-const STICKY_OFFSET = 154;
-
 function resolveCategoryIdFromParam(
   param: string | undefined,
   categoryList: ListsPageCategory[]
@@ -194,14 +193,6 @@ function resolveCategoryIdFromParam(
 }
 
 /** فقط نوار افقی چیپ‌ها را اسکرول می‌کند — بدون جابجایی صفحه */
-function scrollChipIntoHorizontalView(container: HTMLElement, chip: HTMLElement) {
-  const containerRect = container.getBoundingClientRect();
-  const chipRect = chip.getBoundingClientRect();
-  const chipCenter = chipRect.left + chipRect.width / 2;
-  const containerCenter = containerRect.left + containerRect.width / 2;
-  container.scrollBy({ left: chipCenter - containerCenter, behavior: 'smooth' });
-}
-
 export default function ListsPageClient({
   lists: initialLists,
   totalListCount,
@@ -213,6 +204,7 @@ export default function ListsPageClient({
   const router = useRouter();
   const pathname = usePathname();
   const { openSearch } = useSearch();
+  const { isGuest } = useHomeUserState();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const initialModeApplied = useRef(false);
 
@@ -235,7 +227,6 @@ export default function ListsPageClient({
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [bookmarksLoaded, setBookmarksLoaded] = useState(false);
-  const [highlightCategoryId, setHighlightCategoryId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [trendingListIds, setTrendingListIds] = useState<string[]>([]);
   const [trendingLoaded, setTrendingLoaded] = useState(false);
@@ -243,8 +234,6 @@ export default function ListsPageClient({
   const [hasMoreRemote, setHasMoreRemote] = useState(totalListCount > initialLists.length);
   const [isLoadingRemote, setIsLoadingRemote] = useState(false);
   const remoteFetchLock = useRef(false);
-  const categoryChipsRef = useRef<HTMLDivElement>(null);
-  const isScrollingToCategory = useRef(false);
   const viewModeHydrated = useRef(false);
   const isDesktop = useIsDesktop();
   // Always desktop preview count — mobile extras hidden via CSS in ListsCategorySection (avoids CLS).
@@ -345,7 +334,6 @@ export default function ListsPageClient({
       ...prev,
       categories: categoryId ? new Set([categoryId]) : new Set(),
     }));
-    setHighlightCategoryId(null);
   }, [initialCategory, categories]);
 
   useEffect(() => {
@@ -399,7 +387,7 @@ export default function ListsPageClient({
   useEffect(() => {
     const needsBookmarks =
       browseMode === 'saved' || [...filterState.vibes].includes('saved');
-    if (!needsBookmarks || bookmarksLoaded) return;
+    if (!needsBookmarks || bookmarksLoaded || isGuest) return;
 
     fetch('/api/user/bookmarks?limit=500')
       .then((res) => res.json())
@@ -415,7 +403,7 @@ export default function ListsPageClient({
       })
       .catch(() => {})
       .finally(() => setBookmarksLoaded(true));
-  }, [browseMode, filterState.vibes, bookmarksLoaded]);
+  }, [browseMode, filterState.vibes, bookmarksLoaded, isGuest]);
 
   useEffect(() => {
     if (initialSearch) {
@@ -502,7 +490,6 @@ export default function ListsPageClient({
       sortBy,
       vibes,
     }));
-    setHighlightCategoryId(null);
   };
 
   const handleBookmarkToggle = useCallback((listId: string, isBookmarked: boolean) => {
@@ -514,20 +501,6 @@ export default function ListsPageClient({
     });
   }, []);
 
-  const scrollToCategory = useCallback((categoryId: string) => {
-    isScrollingToCategory.current = true;
-    setHighlightCategoryId(categoryId);
-    requestAnimationFrame(() => {
-      const el = document.getElementById(`lists-category-${categoryId}`);
-      if (el) {
-        const y = el.getBoundingClientRect().top + window.scrollY - STICKY_OFFSET;
-        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-      }
-      window.setTimeout(() => {
-        isScrollingToCategory.current = false;
-      }, 700);
-    });
-  }, []);
 
   const hasAdvancedFilters =
     [...filterState.vibes].some((v) => v !== 'trending' && v !== 'saved') ||
@@ -544,9 +517,6 @@ export default function ListsPageClient({
     !singleCategoryFilter &&
     (browseMode === 'newest' || browseMode === 'popular' || browseMode === 'trending');
 
-  useEffect(() => {
-    if (!useSectionLayout) setHighlightCategoryId(null);
-  }, [useSectionLayout]);
 
   useEffect(() => {
     setAllLists(initialLists);
@@ -709,43 +679,7 @@ export default function ListsPageClient({
     return pickSimilarLists(anchor, sortedLists, excludeIds, 4);
   }, [useSectionLayout, sortedLists, featuredLists, categorySections, sectionPreviewCount]);
 
-  useEffect(() => {
-    if (!useSectionLayout || categorySections.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (isScrollingToCategory.current) return;
-
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible?.target?.id?.startsWith('lists-category-')) {
-          setHighlightCategoryId(visible.target.id.replace('lists-category-', ''));
-        }
-      },
-      { rootMargin: `-${STICKY_OFFSET}px 0px -55% 0px`, threshold: [0.15, 0.4, 0.7] }
-    );
-
-    categorySections.forEach(({ category }) => {
-      const el = document.getElementById(`lists-category-${category.id}`);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, [useSectionLayout, categorySections]);
-
-  useEffect(() => {
-    if (!useSectionLayout) return;
-
-    const onScroll = () => {
-      if (window.scrollY < 180) {
-        setHighlightCategoryId(null);
-      }
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [useSectionLayout]);
 
   const visibleFlatLists = sortedLists.slice(0, visibleCount);
   const hasMoreFlat =
@@ -779,11 +713,9 @@ export default function ListsPageClient({
   }, [useSectionLayout, sortedLists, visibleCount]);
 
   const selectedCategory =
-    useSectionLayout && highlightCategoryId
-      ? activeCategories.find((c) => c.id === highlightCategoryId)
-      : filterState.categories.size === 1
-        ? activeCategories.find((c) => filterState.categories.has(c.id))
-        : null;
+    filterState.categories.size === 1
+      ? activeCategories.find((c) => filterState.categories.has(c.id))
+      : null;
 
   const breadcrumbCategory =
     selectedCategory ?? categories.find((c) => c.slug === initialCategory) ?? null;
@@ -800,33 +732,23 @@ export default function ListsPageClient({
   const showBrowseToolbar = !isSearchActive && !singleCategoryFilter;
   const displayViewMode: ViewMode = singleCategoryFilter ? 'grid' : viewMode;
 
-  const isAllCategoriesSelected = useSectionLayout
-    ? highlightCategoryId === null && filterState.categories.size === 0
-    : filterState.categories.size === 0;
-
-  const isCategorySelected = (catId: string) =>
-    useSectionLayout
-      ? highlightCategoryId === catId
-      : filterState.categories.has(catId);
+  /** چیپ دسته = فیلتر کاتالوگ (نه اسکرول به سکشن) */
+  const isAllCategoriesSelected = filterState.categories.size === 0;
+  const isCategorySelected = (catId: string) => filterState.categories.has(catId);
 
   const handleAllCategoriesClick = () => {
-    if (useSectionLayout) {
-      setHighlightCategoryId(null);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
     setFilterState((s) => ({ ...s, categories: new Set() }));
     const params = new URLSearchParams(window.location.search);
     params.delete('category');
     router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname, {
       scroll: false,
     });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleShowAllCategory = useCallback(
     (categoryId: string, categorySlug?: string) => {
       setFilterState((s) => ({ ...s, categories: new Set([categoryId]) }));
-      setHighlightCategoryId(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       const params = new URLSearchParams(window.location.search);
       if (categorySlug) params.set('category', categorySlug);
@@ -837,15 +759,6 @@ export default function ListsPageClient({
   );
 
   const handleCategoryClick = (catId: string) => {
-    if (useSectionLayout) {
-      scrollToCategory(catId);
-      requestAnimationFrame(() => {
-        const container = categoryChipsRef.current;
-        const chip = container?.querySelector<HTMLElement>(`[data-category-chip="${catId}"]`);
-        if (container && chip) scrollChipIntoHorizontalView(container, chip);
-      });
-      return;
-    }
     setFilterState((s) => ({ ...s, categories: new Set([catId]) }));
     const cat = activeCategories.find((c) => c.id === catId);
     const params = new URLSearchParams(window.location.search);
@@ -865,67 +778,136 @@ export default function ListsPageClient({
         : 'همه دسته‌ها',
   ];
 
-  const savedBrowseEmpty = browseMode === 'saved' && bookmarksLoaded && sortedLists.length === 0;
+  const guestSavedGate = browseMode === 'saved' && isGuest;
+  const savedBrowseEmpty =
+    browseMode === 'saved' && !isGuest && bookmarksLoaded && sortedLists.length === 0;
   const trendingBrowseEmpty =
     browseMode === 'trending' && trendingLoaded && sortedLists.length === 0 && publicLists.length > 0;
 
-  const showContextBar = !isSearchActive && !useSectionLayout;
+  const showContextBar = !isSearchActive;
+  const showFeaturedEarly = useSectionLayout && featuredLists.length > 0;
+
+  const toolbarBtnFocus =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
 
   return (
     <div className="w-full min-w-0 space-y-0 pb-6 lg:pb-4">
       <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
-      <div className="mb-2 max-lg:px-4 lg:mb-3">
+      <div className="mb-2 hidden max-lg:px-4 lg:mb-3 lg:block">
         <PageBreadcrumb items={breadcrumbItems} />
       </div>
       <h1 className="mb-2 hidden wibe-h3 font-bold text-foreground lg:block">لیست‌ها</h1>
-      {/* جستجو در همین صفحه — هدر دسکتاپ جستجو ندارد تا تکراری نشود */}
       <div className="pb-2 pt-1 max-lg:px-4 lg:pb-2 lg:pt-0 lg:px-0">
-        <div>
-          <div className="flex items-center gap-1.5">
-            <div className="min-w-0 flex-1">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                onSubmit={() => {
-                  const q = normalizeSearchQuery(searchQuery);
-                  if (q) {
-                    pushRecentSearch(q);
-                    trackSearch(q, 'lists_input');
-                  }
-                }}
-                placeholder="جستجو در لیست‌ها و آیتم‌ها…"
-                inputRef={searchInputRef}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => openSearch({ query: searchQuery })}
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 lg:w-9 ${
-                isSearchActive ? 'hidden' : ''
-              }`}
-              aria-label="جستجوی سراسری"
-              title="جستجو در کل وایب"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-            </button>
+        <div className="flex items-center gap-1.5">
+          <div className="min-w-0 flex-1">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSubmit={() => {
+                const q = normalizeSearchQuery(searchQuery);
+                if (q) {
+                  pushRecentSearch(q);
+                  trackSearch(q, 'lists_input');
+                }
+              }}
+              placeholder="جستجو در لیست‌ها و آیتم‌ها…"
+              inputRef={searchInputRef}
+            />
           </div>
+          <button
+            type="button"
+            onClick={() => openSearch({ query: searchQuery })}
+            className={`flex h-10 shrink-0 items-center gap-1 rounded-xl border border-wibe bg-wibe-card px-2.5 text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 ${toolbarBtnFocus} ${
+              isSearchActive ? 'hidden' : ''
+            }`}
+            aria-label="جستجو در کل وایب"
+            title="جستجو در کل وایب"
+          >
+            <Globe className="h-4 w-4" strokeWidth={2} aria-hidden />
+            <span className="wibe-caption font-medium text-foreground/80">همه</span>
+          </button>
         </div>
       </div>
 
-      {/* Sticky: دسته + مرتب‌سازی + نمای/فیلتر — مخفی در نمای تک‌دسته */}
+      {showFeaturedEarly ? (
+        <div className="mb-1 max-lg:px-3 lg:mb-2 lg:px-0">
+          <ListsFeaturedCarousel lists={featuredLists} />
+        </div>
+      ) : null}
+
       {showBrowseToolbar && (
       <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
+        <div className="flex items-center gap-1.5 px-3 py-2 lg:gap-2 lg:px-0">
           <div
-            ref={categoryChipsRef}
-            className="flex gap-1.5 overflow-x-auto border-b border-wibe/40 px-3 py-2 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-2.5"
+            className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide"
+            role="group"
+            aria-label="مرتب‌سازی کاتالوگ"
+          >
+            {BROWSE_MODES.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setBrowseMode(value)}
+                className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:px-3.5 ${toolbarBtnFocus} ${
+                  browseMode === value
+                    ? 'bg-wibe-card font-semibold text-primary shadow-sm'
+                    : 'text-wibe-secondary hover:text-foreground'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <div className="flex rounded-lg border border-wibe bg-wibe-surface p-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode('compact')}
+                aria-label="نمایش لیستی"
+                aria-pressed={viewMode === 'compact'}
+                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
+                  viewMode === 'compact' ? 'bg-primary text-white' : 'text-wibe-secondary'
+                }`}
+              >
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                aria-label="نمایش گریدی"
+                aria-pressed={viewMode === 'grid'}
+                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
+                  viewMode === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary'
+                }`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFilterSheetOpen(true)}
+              className={`flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
+                hasAdvancedFilters
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
+              }`}
+              aria-label="فیلتر و حال‌وهوا"
+            >
+              <Filter className="h-4 w-4" />
+              <span className="wibe-caption font-medium sm:hidden">فیلتر</span>
+            </button>
+          </div>
+        </div>
+
+          <div
+            className="flex gap-1.5 overflow-x-auto border-t border-wibe/40 px-3 py-2 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-2"
+            aria-label="فیلتر دسته"
           >
             <button
               type="button"
               data-category-chip="all"
               onClick={handleAllCategoriesClick}
-              className={`h-8 flex-shrink-0 rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${
+              className={`h-8 flex-shrink-0 rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
                 isAllCategoriesSelected
                   ? 'bg-primary text-white shadow-sm'
                   : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -941,7 +923,8 @@ export default function ListsPageClient({
                   type="button"
                   data-category-chip={cat.id}
                   onClick={() => handleCategoryClick(cat.id)}
-                  className={`h-8 flex-shrink-0 whitespace-nowrap rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${
+                  aria-pressed={isSelected}
+                  className={`h-8 flex-shrink-0 whitespace-nowrap rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
                     isSelected
                       ? 'bg-primary text-white shadow-sm'
                       : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -953,64 +936,6 @@ export default function ListsPageClient({
               );
             })}
           </div>
-
-        <div className="flex items-center gap-1.5 px-3 py-2 lg:gap-2 lg:px-0">
-          <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide">
-            {BROWSE_MODES.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setBrowseMode(value)}
-                className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:px-3.5 ${
-                  browseMode === value
-                    ? 'bg-wibe-card font-semibold text-primary shadow-sm'
-                    : 'text-wibe-secondary hover:text-foreground'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <div className="hidden rounded-lg border border-wibe bg-wibe-surface p-0.5 sm:flex">
-              <button
-                type="button"
-                onClick={() => setViewMode('compact')}
-                aria-label="نمایش لیستی"
-                aria-pressed={viewMode === 'compact'}
-                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${
-                  viewMode === 'compact' ? 'bg-primary text-white' : 'text-wibe-secondary'
-                }`}
-              >
-                <List className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                aria-label="نمایش گریدی"
-                aria-pressed={viewMode === 'grid'}
-                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${
-                  viewMode === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary'
-                }`}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setFilterSheetOpen(true)}
-              className={`flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 transition-colors active:scale-[0.98] ${
-                hasAdvancedFilters
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
-              }`}
-              aria-label="فیلتر و حال‌وهوا"
-            >
-              <Filter className="h-4 w-4" />
-              <span className="wibe-caption font-medium sm:hidden">فیلتر</span>
-            </button>
-          </div>
-        </div>
 
         {hasAdvancedFilters && (
           <div className="flex flex-wrap items-center gap-1.5 border-t border-wibe/40 px-3 py-2 lg:px-0">
@@ -1045,7 +970,7 @@ export default function ListsPageClient({
                   minRating: 0,
                 }))
               }
-              className="ms-auto wibe-caption font-medium text-primary hover:underline"
+              className={`ms-auto wibe-caption font-medium text-primary hover:underline ${toolbarBtnFocus}`}
             >
               پاک فیلتر
             </button>
@@ -1053,7 +978,7 @@ export default function ListsPageClient({
         )}
 
         {showContextBar && (
-          <p className="hidden border-t border-wibe/40 px-0 py-2 wibe-caption text-wibe-secondary lg:block">
+          <p className="border-t border-wibe/40 px-3 py-1.5 wibe-caption text-wibe-secondary lg:px-0">
             {contextParts.join(' · ')}
           </p>
         )}
@@ -1061,7 +986,9 @@ export default function ListsPageClient({
       )}
 
       <div className="mt-2 w-full min-w-0 max-lg:px-3 lg:mt-4 lg:px-0">
-        {browseMode === 'saved' && !bookmarksLoaded ? (
+        {guestSavedGate ? (
+          <GuestSavedEmptyState />
+        ) : browseMode === 'saved' && !bookmarksLoaded ? (
           <SavedBookmarksSkeleton />
         ) : savedBrowseEmpty ? (
           <SavedEmptyState onBrowse={() => setBrowseMode('newest')} />
@@ -1112,7 +1039,6 @@ export default function ListsPageClient({
           />
         ) : useSectionLayout ? (
           <>
-            {featuredLists.length > 0 && <ListsFeaturedCarousel lists={featuredLists} />}
             {categorySections.map(({ category, lists: sectionLists }, index) => {
               const sectionProps = {
                 title: category.name,
@@ -1306,6 +1232,21 @@ function TrendingEmptyState({
   );
 }
 
+function GuestSavedEmptyState() {
+  return (
+    <WibeEmptyState
+      icon={<Bookmark strokeWidth={1.75} aria-hidden />}
+      title="ذخیره‌ها بعد از ورود"
+      description="وارد شو تا لیست‌هایی که ذخیره کردی اینجا ببینی و بین دستگاه‌ها همگام شوند."
+      primaryAction={{
+        label: 'ورود',
+        href: '/login?callbackUrl=%2Flists%3Fmode%3Dsaved&source=lists_saved_gate',
+      }}
+      secondaryAction={{ label: 'مشاهده ترندها', href: '/lists?mode=trending' }}
+    />
+  );
+}
+
 function SavedEmptyState({ onBrowse }: { onBrowse: () => void }) {
   return (
     <WibeEmptyState
@@ -1313,7 +1254,7 @@ function SavedEmptyState({ onBrowse }: { onBrowse: () => void }) {
       title="لیست ذخیره‌شده‌ای نداری"
       description="لیست‌هایی که دوست داری را ذخیره کن تا اینجا ببینی"
       primaryAction={{ label: 'کشف لیست‌ها', onClick: onBrowse }}
-      secondaryAction={{ label: 'ورود برای همگام‌سازی ذخیره‌ها', href: '/login' }}
+      secondaryAction={{ label: 'رفتن به اکسپلور', href: '/explore' }}
     />
   );
 }
