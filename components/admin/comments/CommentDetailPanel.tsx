@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { CheckCircle, XCircle, ExternalLink, FileText, Flag, FlagOff } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentStatusBadge from './CommentStatusBadge';
 import UserAvatar from '@/components/shared/UserAvatar';
 import { UserPenaltyBadge, CommentRestrictionStatusBadge } from './UserPenaltyBadge';
@@ -172,10 +171,7 @@ export default function CommentDetailPanel({
             </Link>
           </p>
           <p>
-            {formatDistanceToNow(new Date(comment.createdAt), {
-              addSuffix: true,
-              locale: faIR,
-            })}
+            {formatRelativeTime(comment.createdAt)}
           </p>
         </div>
 
@@ -194,10 +190,7 @@ export default function CommentDetailPanel({
                   <p className="text-[var(--color-text)]">{r.reason || 'بدون دلیل'}</p>
                   <p className="text-[var(--color-text-muted)] mt-0.5">
                     {r.users.name || r.users.email} ·{' '}
-                    {formatDistanceToNow(new Date(r.createdAt), {
-                      addSuffix: true,
-                      locale: faIR,
-                    })}
+                    {formatRelativeTime(r.createdAt)}
                     {r.resolved && (
                       <span className="mr-1 text-emerald-600 dark:text-emerald-400">· حل‌شده</span>
                     )}

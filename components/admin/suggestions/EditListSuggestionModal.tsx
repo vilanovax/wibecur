@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, Save, CheckCircle, XCircle, Trash2, Loader2, Image as ImageIcon } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import DeleteSuggestionModal from './DeleteSuggestionModal';
 import ApproveRejectModal from './ApproveRejectModal';
 import type { AdminSuggestedListSuggestion } from './AdminSuggestedListCard';
@@ -198,10 +197,7 @@ export default function EditListSuggestionModal({
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">تاریخ:</span>
                   <span className="font-medium text-gray-900 dark:text-white mr-2">
-                    {formatDistanceToNow(new Date(suggestion.createdAt), {
-                      addSuffix: true,
-                      locale: faIR,
-                    })}
+                    {formatRelativeTime(suggestion.createdAt)}
                   </span>
                 </div>
                 <div>

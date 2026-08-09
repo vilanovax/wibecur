@@ -62,17 +62,15 @@ const LightweightGridCard = memo(function LightweightGridCard({
   hideEntryKindChrome?: boolean;
 }) {
   return (
-    <div className={hideEntryKindChrome ? 'col-span-2' : 'col-span-2 sm:col-span-1'}>
-      <LightweightEntryRow
-        item={item}
-        index={index}
-        entryKind={entryKind}
-        categorySlug={categorySlug}
-        onOpen={() => onOpenAt(index)}
-        compact={!hideEntryKindChrome}
-        hideEntryKindChrome={hideEntryKindChrome}
-      />
-    </div>
+    <LightweightEntryRow
+      item={item}
+      index={index}
+      entryKind={entryKind}
+      categorySlug={categorySlug}
+      onOpen={() => onOpenAt(index)}
+      compact={!hideEntryKindChrome}
+      hideEntryKindChrome={hideEntryKindChrome}
+    />
   );
 });
 
@@ -109,30 +107,38 @@ function ListItemsGrid({
       {visibleEntries.map(({ item, originalIndex }) => {
         const entryKind = resolveEntryKind(item);
         const slug = itemCategorySlug(item, listCategorySlug);
+        // Skip paint for offscreen cards; pair with windowing in ListDetailClient.
+        const paintClass =
+          '[content-visibility:auto] [contain-intrinsic-size:auto_17.5rem]';
 
         if (isLightweightListItem(item)) {
+          const spanClass = isLifestyleList
+            ? 'col-span-2'
+            : 'col-span-2 sm:col-span-1';
           return (
-            <LightweightGridCard
-              key={item.id}
-              item={item}
-              index={originalIndex}
-              entryKind={entryKind}
-              categorySlug={slug}
-              onOpenAt={onOpenAt}
-              hideEntryKindChrome={isLifestyleList}
-            />
+            <div key={item.id} className={`${spanClass} ${paintClass}`}>
+              <LightweightGridCard
+                item={item}
+                index={originalIndex}
+                entryKind={entryKind}
+                categorySlug={slug}
+                onOpenAt={onOpenAt}
+                hideEntryKindChrome={isLifestyleList}
+              />
+            </div>
           );
         }
 
         return (
-          <ListGridItemCard
-            key={item.id}
-            item={item}
-            index={originalIndex}
-            categorySlug={slug}
-            categoryIcon={categoryIcon}
-            onOpenAt={onOpenAt}
-          />
+          <div key={item.id} className={paintClass}>
+            <ListGridItemCard
+              item={item}
+              index={originalIndex}
+              categorySlug={slug}
+              categoryIcon={categoryIcon}
+              onOpenAt={onOpenAt}
+            />
+          </div>
         );
       })}
       {hasMore ? (

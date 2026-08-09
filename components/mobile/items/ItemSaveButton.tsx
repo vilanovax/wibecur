@@ -21,12 +21,15 @@ interface ItemSaveButtonProps {
   variant?: 'default' | 'hero';
   /** Defer viewer-state fetch until idle (modal preview). */
   deferViewerState?: boolean;
+  /** بج تعداد لیست‌ها — در پیش‌نمایش شلوغ است؛ پیش‌فرض روشن */
+  showCountBadge?: boolean;
 }
 
 export default function ItemSaveButton({
   itemId,
   variant = 'default',
   deferViewerState = false,
+  showCountBadge = true,
 }: ItemSaveButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -112,11 +115,11 @@ export default function ItemSaveButton({
             isSaved ? 'text-white fill-white' : isHero ? 'text-white' : 'text-wibe-secondary'
           }`}
         />
-        {savedCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md">
-            {savedCount}
+        {showCountBadge && savedCount > 0 ? (
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 wibe-caption font-bold leading-none text-white shadow-sm">
+            {savedCount.toLocaleString('fa-IR')}
           </span>
-        )}
+        ) : null}
       </button>
 
       {isModalOpen && (

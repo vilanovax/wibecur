@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import {
   ChevronLeft,
   Loader2,
@@ -157,7 +156,7 @@ export default function ModerationDrawer({
                 {detail.notes?.length ? detail.notes.map((n) => (
                   <div key={n.id} className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-700/50 text-sm shadow-sm">
                     <p>{n.body}</p>
-                    <p className="text-xs text-gray-500 mt-1">{n.users?.name ?? n.users?.email} — {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}</p>
+                    <p className="text-xs text-gray-500 mt-1">{n.users?.name ?? n.users?.email} — {formatRelativeTime(n.createdAt)}</p>
                   </div>
                 )) : <p className="text-sm text-gray-500">یادداشتی نیست.</p>}
               </div>

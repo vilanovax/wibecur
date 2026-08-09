@@ -178,17 +178,17 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               </>
             )}
           </div>
-
-          <div className="mt-3 hidden lg:block">
-            <ItemDetailTopActions
-              itemId={item.id}
-              likeCount={likeCount}
-              catalogItemId={item.catalogItemId}
-              shareTitle={item.title}
-              variant="inline"
-            />
-          </div>
         </div>
+      </div>
+
+      <div className="mt-3.5 lg:mt-4 lg:max-w-md">
+        <ItemDetailTopActions
+          itemId={item.id}
+          likeCount={likeCount}
+          catalogItemId={item.catalogItemId}
+          shareTitle={item.title}
+          variant="inline"
+        />
       </div>
     </section>
   );

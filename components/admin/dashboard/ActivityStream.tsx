@@ -2,8 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Clock, Plus, FileText, Shield, Star, User, Filter } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import Link from 'next/link';
 import type { ActivityEvent } from '@/lib/admin/types';
 
@@ -105,7 +104,7 @@ export default function ActivityStream({ events }: ActivityStreamProps) {
                       )}
                     </p>
                     <p className="text-[11px] text-[var(--color-text-subtle)]">
-                      {formatDistanceToNow(ts, { addSuffix: true, locale: faIR })}
+                      {formatRelativeTime(ts)}
                       {event.actor && ` · ${event.actor}`}
                     </p>
                   </div>

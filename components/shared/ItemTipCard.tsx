@@ -15,28 +15,28 @@ export default function ItemTipCard({
 
   const styles =
     variant === 'highlight'
-      ? 'border-amber-200/80 bg-amber-50/70'
+      ? 'border-wibe bg-wibe-surface/80'
       : 'border-wibe bg-wibe-card';
 
   const iconBg =
     variant === 'highlight'
-      ? 'bg-amber-100/90'
-      : 'bg-gray-100';
+      ? 'bg-amber-50 text-amber-700'
+      : 'bg-wibe-surface text-wibe-secondary';
 
   const textColor =
     variant === 'highlight'
-      ? 'text-amber-950/90'
+      ? 'text-foreground/85'
       : 'text-foreground/85';
 
   return (
     <div
-      className={`rounded-xl border px-3.5 py-3 ${styles} ${className}`}
+      className={`rounded-xl border px-3 py-2.5 ${styles} ${className}`}
       role="note"
       aria-label="نکته"
     >
       <div className="flex items-start gap-2.5 text-right" dir="rtl">
         <span
-          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${iconBg}`}
+          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg wibe-caption ${iconBg}`}
           aria-hidden
         >
           {variant === 'highlight' ? '💡' : '📝'}

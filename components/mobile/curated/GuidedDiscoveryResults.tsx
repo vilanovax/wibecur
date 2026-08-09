@@ -30,7 +30,10 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
   if (data.rows.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
-        <span className="text-4xl" aria-hidden>
+        <span
+          className="flex h-14 w-14 items-center justify-center rounded-2xl bg-wibe-surface text-2xl ring-1 ring-wibe"
+          aria-hidden
+        >
           🔍
         </span>
         <p className="wibe-body font-medium text-foreground">فعلاً پیشنهادی پیدا نشد</p>
@@ -42,7 +45,7 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
   }
 
   return (
-    <div className="space-y-6 pb-1 lg:space-y-7" dir="rtl">
+    <div className="space-y-7 pb-1 lg:space-y-8" dir="rtl">
       {data.rows.map((row) => {
         const query = rowQueryFromId(row.id);
         const rowIcon = rowIconForRowId(row.id, query);
@@ -54,46 +57,38 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3
                 id={`guided-row-${row.id}`}
-                className="flex items-center gap-2 text-right wibe-small font-bold text-foreground lg:text-base"
+                className="flex items-center gap-2 text-right wibe-body font-bold text-foreground"
               >
                 <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-lg"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-wibe-surface text-lg ring-1 ring-wibe"
                   aria-hidden
                 >
                   {rowIcon}
                 </span>
                 {row.title}
               </h3>
-              {visibleLists.length > 2 && (
-                <span className="hidden shrink-0 wibe-caption text-wibe-secondary lg:inline">
-                  {visibleLists.length.toLocaleString('fa-IR')} لیست
+              {visibleLists.length > 0 ? (
+                <span className="shrink-0 wibe-caption tabular-nums text-wibe-secondary">
+                  {visibleLists.length.toLocaleString('fa-IR')}
                 </span>
-              )}
+              ) : null}
             </div>
 
-            {row.type === 'lists' && visibleLists.length > 0 && (
-              <div className="lg:grid lg:grid-cols-2 lg:gap-3 xl:grid-cols-3">
-                <div className="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 lg:contents lg:overflow-visible lg:p-0">
-                  {visibleLists.map((list, index) => (
-                    <div
-                      key={list.id}
-                      className="h-full w-[72%] max-w-[240px] shrink-0 snap-start sm:w-[58%] lg:w-auto lg:max-w-none lg:min-w-0"
-                    >
-                      <GuidedListCardLink
-                        list={list}
-                        scenario={scenario}
-                        rowId={row.id}
-                        rowTitle={row.title}
-                        onNavigate={onItemClick}
-                        featured={index === 0}
-                      />
-                    </div>
-                  ))}
-                </div>
+            {row.type === 'lists' && visibleLists.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2.5 lg:gap-3 xl:grid-cols-3">
+                {visibleLists.map((list) => (
+                  <GuidedListCardLink
+                    key={list.id}
+                    list={list}
+                    scenario={scenario}
+                    rowId={row.id}
+                    onNavigate={onItemClick}
+                  />
+                ))}
               </div>
-            )}
+            ) : null}
 
-            {row.type === 'items' && row.items && row.items.length > 0 && (
+            {row.type === 'items' && row.items && row.items.length > 0 ? (
               <div className="space-y-2">
                 {row.items.map((item) => (
                   <GuidedItemCardRow
@@ -105,7 +100,7 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
                   />
                 ))}
               </div>
-            )}
+            ) : null}
           </section>
         );
       })}
@@ -113,47 +108,21 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
   );
 }
 
-function categoryMatchesRow(categoryName: string | undefined, rowTitle: string): boolean {
-  if (!categoryName) return false;
-  const cat = categoryName.trim();
-  const row = rowTitle.trim();
-  if (!cat || !row) return false;
-  // ردیف موضوعی (فیلم/کتاب/…) — بج فقط وقتی هم‌خانواده است
-  if (row.includes('کتاب') || row.includes('پادکست')) {
-    return cat.includes('کتاب') || cat.includes('پادکست');
-  }
-  if (row.includes('سریال')) {
-    return cat.includes('سریال') || cat.includes('فیلم');
-  }
-  if (row.includes('فیلم')) {
-    return cat.includes('فیلم') || cat.includes('سریال');
-  }
-  if (row.includes('کافه') || row.includes('رستوران')) {
-    return cat.includes('کافه') || cat.includes('رستوران');
-  }
-  return true;
-}
-
 function GuidedListCardLink({
   list,
   scenario,
   rowId,
-  rowTitle,
   onNavigate,
-  featured = false,
 }: {
   list: GuidedListCardData;
   scenario: GuidedScenario;
   rowId: string;
-  rowTitle: string;
   onNavigate?: () => void;
-  featured?: boolean;
 }) {
   const coverGradient = pickCategoryCoverGradient(
     list.category?.slug,
     list.slug || list.title
   );
-  const showCategoryBadge = categoryMatchesRow(list.category?.name, rowTitle);
 
   return (
     <Link
@@ -166,47 +135,37 @@ function GuidedListCardLink({
         });
         onNavigate?.();
       }}
-      className="group block h-full transition-transform active:scale-[0.99]"
+      className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2"
     >
-      <article
-        className={`flex h-full flex-col overflow-hidden rounded-2xl border bg-wibe-card shadow-sm transition-colors lg:hover:-translate-y-0.5 lg:hover:shadow-md ${
-          featured ? 'border-primary/20 ring-1 ring-primary/10' : 'border-wibe'
-        }`}
-      >
+      <article className="flex h-full flex-col overflow-hidden rounded-xl border border-wibe bg-wibe-card transition-colors active:scale-[0.99] lg:hover:border-primary/25 lg:hover:shadow-sm">
         <div
-          className={`relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-gradient-to-br ${coverGradient}`}
+          className={`relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-gradient-to-br ${coverGradient}`}
         >
           <ImageWithFallback
             src={list.coverImage}
             alt={list.title}
-            sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, 72vw"
+            sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, 45vw"
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             categorySlug={list.category?.slug}
             listSlug={list.slug}
             listTitle={list.title}
             fallbackIcon={list.category?.icon ?? '📋'}
-            fallbackClassName="absolute inset-0 flex items-center justify-center text-3xl"
+            fallbackClassName="absolute inset-0 flex items-center justify-center text-2xl"
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-          {showCategoryBadge && list.category?.name ? (
-            <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 wibe-caption font-medium text-white backdrop-blur-sm">
-              {list.category.icon ? `${list.category.icon} ` : ''}
-              {list.category.name}
-            </span>
-          ) : null}
-          <span className="absolute bottom-2 left-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-wibe-secondary opacity-0 shadow-sm transition-opacity group-hover:opacity-100 lg:opacity-100">
-            <ChevronLeft className="h-4 w-4" aria-hidden />
-          </span>
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"
+            aria-hidden
+          />
         </div>
-        <div className="flex min-h-[4.25rem] flex-1 flex-col p-3 text-right">
-          <h4 className="line-clamp-2 wibe-small font-bold leading-snug text-foreground lg:wibe-body">
+        <div className="flex min-h-[3.75rem] flex-1 flex-col gap-1 p-2.5 text-right lg:p-3">
+          <h4 className="line-clamp-2 wibe-caption font-bold leading-snug text-foreground lg:wibe-small">
             {list.title}
           </h4>
           <ListCardStats
             saves={list.saveCount}
             itemCount={list.itemCount}
             variant="minimal"
-            className="mt-2"
+            className="mt-auto"
           />
         </div>
       </article>
@@ -236,27 +195,25 @@ function GuidedItemCardRow({
         });
         onNavigate?.();
       }}
-      className="group block rounded-2xl border border-wibe bg-wibe-card p-3.5 text-right transition-[colors,transform] active:scale-[0.99] hover:border-primary/25 hover:bg-primary/[0.03] lg:p-4"
+      className="group flex items-start gap-3 rounded-xl border border-wibe bg-wibe-card p-3 text-right transition-colors hover:border-primary/25 hover:bg-primary/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:p-3.5"
     >
-      <div className="flex items-start gap-3">
-        <span
-          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-lg"
-          aria-hidden
-        >
-          💡
+      <span
+        className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-wibe-surface text-lg ring-1 ring-wibe"
+        aria-hidden
+      >
+        💡
+      </span>
+      <div className="min-w-0 flex-1">
+        <h4 className="wibe-small font-bold text-foreground">{item.title}</h4>
+        {item.description ? (
+          <p className="mt-1 line-clamp-2 wibe-caption leading-relaxed text-wibe-secondary">
+            {item.description}
+          </p>
+        ) : null}
+        <span className="mt-1.5 inline-flex items-center gap-1 wibe-caption font-medium text-primary">
+          از لیست {item.listTitle}
+          <ChevronLeft className="h-3.5 w-3.5 opacity-70" aria-hidden />
         </span>
-        <div className="min-w-0 flex-1">
-          <h4 className="wibe-small font-bold text-foreground">{item.title}</h4>
-          {item.description && (
-            <p className="mt-1 line-clamp-2 wibe-caption leading-relaxed text-wibe-secondary">
-              {item.description}
-            </p>
-          )}
-          <span className="mt-2 inline-flex items-center gap-1 wibe-caption font-medium text-primary/80">
-            از لیست {item.listTitle}
-            <ChevronLeft className="h-3.5 w-3.5 opacity-70" aria-hidden />
-          </span>
-        </div>
       </div>
     </Link>
   );

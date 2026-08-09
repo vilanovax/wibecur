@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { AlertTriangle, ExternalLink, Eye, ShieldCheck } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import UserAvatar from '@/components/shared/UserAvatar';
 import { CommentRestrictionStatusBadge } from './UserPenaltyBadge';
 import type { CommentPermissionStatus } from '@/lib/comment-permission';
@@ -119,16 +118,10 @@ export default function ViolationsTable({
                   <CommentRestrictionStatusBadge status={v.commentStatus} />
                 </td>
                 <td className="px-3 py-2.5 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
-                  {formatDistanceToNow(new Date(v.lastViolationDate), {
-                    addSuffix: true,
-                    locale: faIR,
-                  })}
+                  {formatRelativeTime(v.lastViolationDate)}
                 </td>
                 <td className="px-3 py-2.5 text-xs text-[var(--color-text-muted)] whitespace-nowrap hidden sm:table-cell">
-                  {formatDistanceToNow(new Date(v.user.createdAt), {
-                    addSuffix: true,
-                    locale: faIR,
-                  })}
+                  {formatRelativeTime(v.user.createdAt)}
                 </td>
                 <td className="px-3 py-2.5">
                   <div className="flex items-center gap-0.5">

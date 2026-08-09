@@ -4,7 +4,7 @@ import { memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Flame, Sparkles, Bookmark } from 'lucide-react';
+import { Sparkles, Bookmark } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import UserAvatar from '@/components/shared/UserAvatar';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
@@ -46,6 +46,8 @@ interface ListCardCompactProps {
   isLoggedIn?: boolean;
   /** نمایش دکمهٔ ذخیره روی کارت — پیش‌فرض خاموش برای UI خلوت‌تر */
   showBookmark?: boolean;
+  /** پر کردن ارتفاع والد (چیدمان trio / row-span) */
+  fillHeight?: boolean;
 }
 
 const NEW_LIST_DAYS = 14;
@@ -58,7 +60,11 @@ function getListBadges(list: ListWithCreator): { label: string; className: strin
     badges.push({ label: 'منتخب', className: 'bg-primary/10 text-primary' });
   }
   if (badgeNorm === 'TRENDING' || list.badge?.toString().toLowerCase() === 'trending') {
-    badges.push({ label: 'ترند', className: 'bg-warning/10 text-warning' });
+    // آروم — با mode «ترند» برخورد معنایی نداشته باشد
+    badges.push({
+      label: 'داغ',
+      className: 'bg-black/45 text-white/95 backdrop-blur-sm',
+    });
   }
   if (list.createdAt) {
     const days = (Date.now() - new Date(list.createdAt).getTime()) / (24 * 60 * 60 * 1000);
@@ -174,6 +180,7 @@ function ListCardCompact({
   searchResultIndex,
   isLoggedIn,
   showBookmark = false,
+  fillHeight = false,
 }: ListCardCompactProps) {
   const saveCount = list.saveCount ?? 0;
   const categorySlug = list.categories?.slug ?? null;
@@ -280,7 +287,6 @@ function ListCardCompact({
                     key={b.label}
                     className={`inline-flex items-center rounded px-1.5 py-0.5 wibe-caption font-medium ${b.className}`}
                   >
-                    {b.label === 'ترند' && <Flame className="ml-0.5 h-3 w-3" />}
                     {b.label === 'منتخب' && <Sparkles className="ml-0.5 h-3 w-3" />}
                     {b.label}
                   </span>
@@ -310,7 +316,11 @@ function ListCardCompact({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-colors active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg">
+    <div
+      className={`group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-colors active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg ${
+        fillHeight ? 'h-full' : ''
+      }`}
+    >
       <Link
         href={href}
         onClick={handleSearchResultClick}
@@ -318,7 +328,13 @@ function ListCardCompact({
         aria-label={displayTitle}
       />
       {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
-      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-wibe-surface max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
+      <div
+        className={
+          fillHeight
+            ? 'pointer-events-none relative z-[1] h-full min-h-[240px] w-full overflow-hidden bg-wibe-surface lg:min-h-[280px]'
+            : 'pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-wibe-surface max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]'
+        }
+      >
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}

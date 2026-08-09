@@ -25,11 +25,10 @@ export const metadata = {
 };
 
 /**
- * مسیر رسمی اکسپلور (کشف mood-first).
- * /user-lists فقط لندینگ قدیمی است و به اینجا redirect می‌شود؛
- * جزئیات لیست شخصی همچنان روی /user-lists/[id] می‌ماند.
+ * دادهٔ اکسپلور داخل Suspense await می‌شود تا shell (Header/BottomNav)
+ * بلافاصله استریم شود و کاربر منتظر کل payload نماند.
  */
-export default async function ExplorePage() {
+async function ExploreContent() {
   let initialData: ExplorePayload | undefined;
   let trendingSlot: ReactNode = null;
   let categoriesSlot: ReactNode = null;
@@ -61,17 +60,28 @@ export default async function ExplorePage() {
   return (
     <>
       <ExploreLcpPreload href={lcpImage} />
-      <div className="bg-wibe-surface">
-        <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
-        <Suspense fallback={<ExplorePageSkeleton />}>
-          <CuratedLandingPageClient
-            initialData={initialData}
-            trendingSlot={trendingSlot}
-            categoriesSlot={categoriesSlot}
-          />
-        </Suspense>
-        <BottomNav />
-      </div>
+      <CuratedLandingPageClient
+        initialData={initialData}
+        trendingSlot={trendingSlot}
+        categoriesSlot={categoriesSlot}
+      />
     </>
+  );
+}
+
+/**
+ * مسیر رسمی اکسپلور (کشف mood-first).
+ * /user-lists فقط لندینگ قدیمی است و به اینجا redirect می‌شود؛
+ * جزئیات لیست شخصی همچنان روی /user-lists/[id] می‌ماند.
+ */
+export default function ExplorePage() {
+  return (
+    <div className="bg-wibe-surface">
+      <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
+      <Suspense fallback={<ExplorePageSkeleton />}>
+        <ExploreContent />
+      </Suspense>
+      <BottomNav />
+    </div>
   );
 }

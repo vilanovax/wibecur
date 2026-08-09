@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { List, Library, FileJson, Plus, UserRound, AlignLeft, Lightbulb, ImageIcon } from 'lucide-react';
@@ -10,15 +11,40 @@ import type { CatalogPageData } from '@/lib/admin/catalog-page-data';
 import ContentHubStatsBar from '@/components/admin/lists/ContentHubStatsBar';
 import ContentHubToolsMenu from '@/components/admin/lists/ContentHubToolsMenu';
 import ListsIntelligenceClient from './ListsIntelligenceClient';
-import CatalogPageClient from '../catalog/CatalogPageClient';
 import type { NewItemFormList } from '../items/new/NewItemForm';
-import BulkImportClient from '../items/import/BulkImportClient';
-import PeoplePageClient from '@/components/admin/people/PeoplePageClient';
-import ListDescriptionsClient from '@/components/admin/lists/ListDescriptionsClient';
-import ItemTipsClient from '@/components/admin/lists/ItemTipsClient';
 import type { ListDescriptionsPageData } from '@/lib/admin/list-description-import';
 import type { ItemTipsPageData } from '@/lib/admin/item-tip-import';
 import type { ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
+
+function ViewFallback() {
+  return (
+    <div
+      className="py-16 text-center text-sm text-[var(--color-text-muted)] animate-pulse"
+      dir="rtl"
+    >
+      در حال بارگذاری…
+    </div>
+  );
+}
+
+const CatalogPageClient = dynamic(() => import('../catalog/CatalogPageClient'), {
+  loading: () => <ViewFallback />,
+});
+const BulkImportClient = dynamic(() => import('../items/import/BulkImportClient'), {
+  loading: () => <ViewFallback />,
+});
+const PeoplePageClient = dynamic(
+  () => import('@/components/admin/people/PeoplePageClient'),
+  { loading: () => <ViewFallback /> }
+);
+const ListDescriptionsClient = dynamic(
+  () => import('@/components/admin/lists/ListDescriptionsClient'),
+  { loading: () => <ViewFallback /> }
+);
+const ItemTipsClient = dynamic(
+  () => import('@/components/admin/lists/ItemTipsClient'),
+  { loading: () => <ViewFallback /> }
+);
 
 export type ContentHubView = 'lists' | 'catalog' | 'import' | 'people' | 'descriptions' | 'item-tips';
 

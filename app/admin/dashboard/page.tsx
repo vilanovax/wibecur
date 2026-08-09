@@ -1,8 +1,15 @@
 import { Suspense } from 'react';
+import nextDynamic from 'next/dynamic';
 import { requireAdmin } from '@/lib/auth';
 import { getCachedDashboardData } from '@/lib/admin/dashboard-data-cached';
 import { parseDashboardRange } from '@/lib/admin/dashboard-range';
-import DashboardContent from '@/components/admin/dashboard/DashboardContent';
+
+const DashboardContent = nextDynamic(
+  () => import('@/components/admin/dashboard/DashboardContent'),
+  {
+    loading: () => <DashboardSkeleton />,
+  }
+);
 
 function DashboardSkeleton() {
   return (

@@ -1,7 +1,16 @@
+import nextDynamic from 'next/dynamic';
 import { requireAdmin } from '@/lib/auth';
-import GrowthKPIDashboard from './GrowthKPIDashboardClient';
 
 export const dynamic = 'force-dynamic';
+
+const GrowthKPIDashboard = nextDynamic(() => import('./GrowthKPIDashboardClient'), {
+  loading: () => (
+    <div
+      className="h-[28rem] animate-pulse rounded-2xl bg-[var(--color-border-muted)]"
+      aria-hidden
+    />
+  ),
+});
 
 export default async function AdminKPIPage() {
   await requireAdmin();

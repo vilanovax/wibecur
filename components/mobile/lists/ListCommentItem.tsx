@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { Heart, Flag } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentAvatar from '@/components/shared/CommentAvatar';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 
@@ -66,10 +65,7 @@ export default function ListCommentItem({
             <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
           )}
           <span className="text-xs text-wibe-secondary">
-            {formatDistanceToNow(new Date(comment.createdAt), {
-              addSuffix: true,
-              locale: faIR,
-            })}
+            {formatRelativeTime(comment.createdAt)}
           </span>
         </div>
 

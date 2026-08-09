@@ -4,8 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, CheckCheck, RefreshCw, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { useRefetchOnVisible } from '@/lib/hooks/useRefetchOnVisible';
 
@@ -432,10 +431,7 @@ export function NotificationSheet({
                               {notification.message}
                             </p>
                             <p className="mt-1.5 wibe-caption text-wibe-secondary/70">
-                              {formatDistanceToNow(new Date(notification.createdAt), {
-                                addSuffix: true,
-                                locale: faIR,
-                              })}
+                              {formatRelativeTime(notification.createdAt)}
                             </p>
                           </div>
                         </button>

@@ -11,29 +11,35 @@ type Props = {
   disabled?: boolean;
 };
 
+/** برچسب کوتاه برای چیپ‌ها */
+const SHORT_LABEL: Record<string, string> = {
+  quick_30min: '۳۰ دقیقه',
+  quick_tonight: 'امشب',
+  quick_out: 'بیرون',
+};
+
 export default function QuickNowSection({ onSelect, disabled = false }: Props) {
   return (
     <section
-      className="border-t border-wibe/60 px-2.5 py-4 lg:px-0 lg:py-5"
+      className="border-t border-wibe/60 px-2.5 py-3 lg:px-0 lg:py-4"
       aria-labelledby="quick-now-title"
     >
-      <h2 id="quick-now-title" className="mb-1 wibe-body font-bold text-foreground">
-        قید زمان و مکان
-      </h2>
-      <p className="mb-2.5 wibe-caption text-wibe-secondary">
-        حال‌وهوا را از بالا بزن؛ اینجا فقط زمان و جا را تنگ‌تر کن
-      </p>
-      <div className="scrollbar-hide -mx-2.5 flex gap-2 overflow-x-auto px-2.5 pb-0.5 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h2 id="quick-now-title" className="wibe-small font-bold text-foreground">
+          زمان و جا
+        </h2>
+      </div>
+      <div className="flex flex-wrap gap-2">
         {QUICK_NOW_PILLS.map((pill) => (
           <button
             key={pill.id}
             type="button"
             disabled={disabled}
             onClick={() => onSelect(quickPillToSelection(pill))}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-wibe bg-wibe-card px-3.5 py-2 wibe-caption font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50 lg:py-2.5 lg:wibe-small"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-wibe bg-wibe-card px-3 py-2 wibe-caption font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50"
           >
             <span aria-hidden>{pill.icon}</span>
-            {pill.label}
+            {SHORT_LABEL[pill.id] ?? pill.label}
           </button>
         ))}
       </div>

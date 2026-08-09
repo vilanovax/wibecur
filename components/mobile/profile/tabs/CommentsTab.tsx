@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MessageSquare, Trash2, Loader2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
-
+import { formatRelativeTime } from '@/lib/format-relative-time';
 interface Comment {
   id: string;
   content: string;
@@ -124,10 +122,7 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
                 در: {comment.items.title}
               </Link>
               <p className="text-xs text-wibe-secondary mt-2">
-                {formatDistanceToNow(new Date(comment.createdAt), {
-                  addSuffix: true,
-                  locale: faIR,
-                })}
+                {formatRelativeTime(comment.createdAt)}
               </p>
             </div>
             <button

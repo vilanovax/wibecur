@@ -18,7 +18,7 @@ export default function HomeDeferredMount({
   const { ref, inView } = useLazyInView<HTMLDivElement>({ rootMargin, once: true });
 
   return (
-    <div ref={ref} className="min-h-[1px]">
+    <div ref={ref} className="min-h-[12rem] lg:min-h-[14rem]">
       {inView ? children : fallback}
     </div>
   );

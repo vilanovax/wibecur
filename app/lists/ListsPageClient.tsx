@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { LayoutGrid, List, Filter, Bookmark, Flame, Search, Globe } from 'lucide-react';
+import { Filter, Bookmark, Flame, Search, Globe } from 'lucide-react';
 import type { ListsBrowseList } from '@/lib/lists-browse-shared';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
 import WibeEmptyState from '@/components/shared/WibeEmptyState';
@@ -32,6 +32,7 @@ import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
+import { dedupeListsByDisplayTitle } from '@/lib/dedupe-lists';
 import {
   LISTS_SECTION_PREVIEW_DESKTOP,
   LISTS_VIEW_MODE_DESKTOP_KEY,
@@ -634,20 +635,20 @@ export default function ListsPageClient({
 
   const featuredLists = useMemo(() => {
     if (!useSectionLayout || sortedLists.length === 0) return [];
-    const featured = sortedLists.filter((l) => l.isFeatured);
+    const featured = dedupeListsByDisplayTitle(sortedLists.filter((l) => l.isFeatured));
     const picks: ListWithCategory[] = [];
     for (const list of featured) {
       if (picks.length >= 3) break;
       picks.push(list);
     }
     if (picks.length < 2) {
-      for (const list of sortedLists) {
+      for (const list of dedupeListsByDisplayTitle(sortedLists)) {
         if (picks.some((p) => p.id === list.id)) continue;
         if (picks.length >= 3) break;
         if ((list.saveCount ?? 0) >= 5 || picks.length === 0) picks.push(list);
       }
     }
-    return picks.slice(0, 3);
+    return dedupeListsByDisplayTitle(picks).slice(0, 3);
   }, [useSectionLayout, sortedLists]);
 
   const featuredIds = useMemo(() => new Set(featuredLists.map((l) => l.id)), [featuredLists]);
@@ -661,7 +662,9 @@ export default function ListsPageClient({
     return activeCategories
       .map((cat) => ({
         category: cat,
-        lists: listsForSections.filter((l) => l.categoryId === cat.id),
+        lists: dedupeListsByDisplayTitle(
+          listsForSections.filter((l) => l.categoryId === cat.id)
+        ),
       }))
       .filter((s) => s.lists.length > 0);
   }, [useSectionLayout, activeCategories, listsForSections]);
@@ -681,14 +684,18 @@ export default function ListsPageClient({
 
 
 
-  const visibleFlatLists = sortedLists.slice(0, visibleCount);
+  const dedupedSortedLists = useMemo(
+    () => dedupeListsByDisplayTitle(sortedLists),
+    [sortedLists]
+  );
+  const visibleFlatLists = dedupedSortedLists.slice(0, visibleCount);
   const hasMoreFlat =
     !useSectionLayout &&
-    (visibleCount < sortedLists.length || (canRemotePaginate && hasMoreRemote));
+    (visibleCount < dedupedSortedLists.length || (canRemotePaginate && hasMoreRemote));
 
   const loadMoreFlat = useCallback(async () => {
-    if (visibleCount < sortedLists.length) {
-      setVisibleCount((n) => Math.min(n + PAGE_SIZE, sortedLists.length));
+    if (visibleCount < dedupedSortedLists.length) {
+      setVisibleCount((n) => Math.min(n + PAGE_SIZE, dedupedSortedLists.length));
       return;
     }
     if (!canRemotePaginate || !hasMoreRemote || isLoadingRemote) return;
@@ -696,7 +703,7 @@ export default function ListsPageClient({
     setVisibleCount((n) => n + PAGE_SIZE);
   }, [
     visibleCount,
-    sortedLists.length,
+    dedupedSortedLists.length,
     canRemotePaginate,
     hasMoreRemote,
     isLoadingRemote,
@@ -704,13 +711,13 @@ export default function ListsPageClient({
   ]);
 
   const flatSimilarLists = useMemo(() => {
-    if (useSectionLayout || sortedLists.length < 5) return [];
-    const visible = sortedLists.slice(0, visibleCount);
+    if (useSectionLayout || dedupedSortedLists.length < 5) return [];
+    const visible = dedupedSortedLists.slice(0, visibleCount);
     if (visible.length === 0) return [];
     const anchor = visible[0];
     const excludeIds = new Set(visible.map((l) => l.id));
-    return pickSimilarLists(anchor, sortedLists, excludeIds, 4);
-  }, [useSectionLayout, sortedLists, visibleCount]);
+    return pickSimilarLists(anchor, dedupedSortedLists, excludeIds, 4);
+  }, [useSectionLayout, dedupedSortedLists, visibleCount]);
 
   const selectedCategory =
     filterState.categories.size === 1
@@ -836,71 +843,47 @@ export default function ListsPageClient({
       ) : null}
 
       {showBrowseToolbar && (
-      <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
-        <div className="flex items-center gap-1.5 px-3 py-2 lg:gap-2 lg:px-0">
-          <div
-            className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide"
-            role="group"
-            aria-label="مرتب‌سازی کاتالوگ"
-          >
-            {BROWSE_MODES.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setBrowseMode(value)}
-                className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:px-3.5 ${toolbarBtnFocus} ${
-                  browseMode === value
-                    ? 'bg-wibe-card font-semibold text-primary shadow-sm'
-                    : 'text-wibe-secondary hover:text-foreground'
-                }`}
+        <>
+          <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
+            <div className="flex items-center gap-1.5 px-3 py-2 lg:gap-2 lg:px-0">
+              <div
+                className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide"
+                role="group"
+                aria-label="مرتب‌سازی کاتالوگ"
               >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <div className="flex rounded-lg border border-wibe bg-wibe-surface p-0.5">
-              <button
-                type="button"
-                onClick={() => setViewMode('compact')}
-                aria-label="نمایش لیستی"
-                aria-pressed={viewMode === 'compact'}
-                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
-                  viewMode === 'compact' ? 'bg-primary text-white' : 'text-wibe-secondary'
-                }`}
-              >
-                <List className="h-4 w-4" />
-              </button>
+                {BROWSE_MODES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setBrowseMode(value)}
+                    className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:px-3.5 ${toolbarBtnFocus} ${
+                      browseMode === value
+                        ? 'bg-wibe-card font-semibold text-primary shadow-sm'
+                        : 'text-wibe-secondary hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
-                onClick={() => setViewMode('grid')}
-                aria-label="نمایش گریدی"
-                aria-pressed={viewMode === 'grid'}
-                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
-                  viewMode === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary'
+                onClick={() => setFilterSheetOpen(true)}
+                className={`flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-2.5 transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
+                  hasAdvancedFilters
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
                 }`}
+                aria-label="فیلتر، نمایش و حال‌وهوا"
               >
-                <LayoutGrid className="h-4 w-4" />
+                <Filter className="h-4 w-4" />
+                <span className="wibe-caption font-medium">فیلتر</span>
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setFilterSheetOpen(true)}
-              className={`flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
-                hasAdvancedFilters
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
-              }`}
-              aria-label="فیلتر و حال‌وهوا"
-            >
-              <Filter className="h-4 w-4" />
-              <span className="wibe-caption font-medium sm:hidden">فیلتر</span>
-            </button>
           </div>
-        </div>
 
           <div
-            className="flex gap-1.5 overflow-x-auto border-t border-wibe/40 px-3 py-2 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-2"
+            className="flex gap-1.5 overflow-x-auto px-3 py-2 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0"
             aria-label="فیلتر دسته"
           >
             <button
@@ -937,52 +920,52 @@ export default function ListsPageClient({
             })}
           </div>
 
-        {hasAdvancedFilters && (
-          <div className="flex flex-wrap items-center gap-1.5 border-t border-wibe/40 px-3 py-2 lg:px-0">
-            {[...filterState.vibes]
-              .filter((v) => v !== 'trending' && v !== 'saved')
-              .map((v) => {
-                const label = VIBE_CHIPS.find((c) => c.value === v)?.label ?? v;
-                return (
-                  <span
-                    key={v}
-                    className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-medium text-primary"
-                  >
-                    {label}
-                  </span>
-                );
-              })}
-            {filterState.creatorType !== 'all' && (
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-medium text-primary">
-                {filterState.creatorType === 'top' && 'کیوریتور برتر'}
-                {filterState.creatorType === 'new' && 'تازه‌وارد'}
-                {filterState.creatorType === 'viral' && 'وایرال'}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() =>
-                setFilterState((s) => ({
-                  ...s,
-                  ...browseModeToFilter(browseMode),
-                  creatorType: 'all',
-                  minItemCount: 0,
-                  minRating: 0,
-                }))
-              }
-              className={`ms-auto wibe-caption font-medium text-primary hover:underline ${toolbarBtnFocus}`}
-            >
-              پاک فیلتر
-            </button>
-          </div>
-        )}
+          {hasAdvancedFilters && (
+            <div className="flex flex-wrap items-center gap-1.5 px-3 pb-2 lg:px-0">
+              {[...filterState.vibes]
+                .filter((v) => v !== 'trending' && v !== 'saved')
+                .map((v) => {
+                  const label = VIBE_CHIPS.find((c) => c.value === v)?.label ?? v;
+                  return (
+                    <span
+                      key={v}
+                      className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-medium text-primary"
+                    >
+                      {label}
+                    </span>
+                  );
+                })}
+              {filterState.creatorType !== 'all' && (
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-medium text-primary">
+                  {filterState.creatorType === 'top' && 'کیوریتور برتر'}
+                  {filterState.creatorType === 'new' && 'تازه‌وارد'}
+                  {filterState.creatorType === 'viral' && 'وایرال'}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() =>
+                  setFilterState((s) => ({
+                    ...s,
+                    ...browseModeToFilter(browseMode),
+                    creatorType: 'all',
+                    minItemCount: 0,
+                    minRating: 0,
+                  }))
+                }
+                className={`ms-auto wibe-caption font-medium text-primary hover:underline ${toolbarBtnFocus}`}
+              >
+                پاک فیلتر
+              </button>
+            </div>
+          )}
 
-        {showContextBar && (
-          <p className="border-t border-wibe/40 px-3 py-1.5 wibe-caption text-wibe-secondary lg:px-0">
-            {contextParts.join(' · ')}
-          </p>
-        )}
-      </div>
+          {showContextBar && (
+            <p className="px-3 pb-1.5 wibe-caption text-wibe-secondary lg:px-0">
+              {contextParts.join(' · ')}
+            </p>
+          )}
+        </>
       )}
 
       <div className="mt-2 w-full min-w-0 max-lg:px-3 lg:mt-4 lg:px-0">
@@ -1075,6 +1058,13 @@ export default function ListsPageClient({
                 </HomeDeferredMount>
               );
             })}
+            {canRemotePaginate && hasMoreRemote ? (
+              <InfiniteScrollSentinel
+                hasMore={hasMoreRemote}
+                onLoadMore={fetchMoreRemoteLists}
+                loading={isLoadingRemote}
+              />
+            ) : null}
             {pageSimilarLists.length > 0 && (
               <ListsSimilarRow
                 lists={pageSimilarLists}
@@ -1082,12 +1072,6 @@ export default function ListsPageClient({
                 onBookmarkToggle={handleBookmarkToggle}
               />
             )}
-            {canRemotePaginate && hasMoreRemote ? (
-              <InfiniteScrollSentinel
-                hasMore={hasMoreRemote}
-                onLoadMore={fetchMoreRemoteLists}
-              />
-            ) : null}
           </>
         ) : (
           <>
@@ -1137,7 +1121,11 @@ export default function ListsPageClient({
                   bookmarkedIds={bookmarkedIds}
                   onBookmarkToggle={handleBookmarkToggle}
                 />
-                <InfiniteScrollSentinel hasMore={hasMoreFlat} onLoadMore={loadMoreFlat} />
+                <InfiniteScrollSentinel
+                  hasMore={hasMoreFlat}
+                  onLoadMore={loadMoreFlat}
+                  loading={isLoadingRemote}
+                />
 
                 {!hasMoreFlat && flatSimilarLists.length > 0 && (
                   <ListsSimilarRow
@@ -1159,6 +1147,8 @@ export default function ListsPageClient({
           categories={activeCategories}
           filterState={filterState}
           getResultCount={getResultCount}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
           onApply={(state) => {
             setFilterState(state);
             setFilterSheetOpen(false);

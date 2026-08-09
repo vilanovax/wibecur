@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useHomeData } from '@/contexts/HomeDataContext';
 
 type HomeSectionRefreshSlotProps = {
@@ -8,12 +8,21 @@ type HomeSectionRefreshSlotProps = {
   fallback: ReactNode;
 };
 
-/** Keep SSR section until pull-to-refresh; then swap to interactive client section. */
+/**
+ * Keep SSR section on first paint. After the first pull-to-refresh cycle starts,
+ * swap once to the client section (avoids isRefetching flash every refetch).
+ */
 export default function HomeSectionRefreshSlot({
   children,
   fallback,
 }: HomeSectionRefreshSlotProps) {
   const { isRefetching } = useHomeData();
-  if (isRefetching) return fallback;
+  const [useClient, setUseClient] = useState(false);
+
+  useEffect(() => {
+    if (isRefetching) setUseClient(true);
+  }, [isRefetching]);
+
+  if (useClient) return <>{fallback}</>;
   return <>{children}</>;
 }

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Star, LayoutGrid, List } from 'lucide-react';
+import type { ListsViewMode } from '@/lib/lists-page-layout';
 export type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
 export type VibeFilter = 'trending' | 'saved' | 'sleep' | 'calm_movie' | 'cafe' | 'family' | 'comedy' | 'drama';
 export type CreatorType = 'all' | 'top' | 'new' | 'viral';
@@ -96,6 +97,8 @@ interface FilterBottomSheetProProps {
   filterState: FilterState;
   getResultCount: (state: FilterState) => number;
   onApply: (state: FilterState) => void;
+  viewMode?: ListsViewMode;
+  onViewModeChange?: (mode: ListsViewMode) => void;
 }
 
 export default function FilterBottomSheetPro({
@@ -105,6 +108,8 @@ export default function FilterBottomSheetPro({
   filterState,
   getResultCount,
   onApply,
+  viewMode = 'grid',
+  onViewModeChange,
 }: FilterBottomSheetProProps) {
   const [localState, setLocalState] = useState<FilterState>(filterState);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -244,6 +249,40 @@ export default function FilterBottomSheetPro({
               </button>
             ))}
           </div>
+
+          {onViewModeChange ? (
+            <div className="mb-5 border-b border-wibe pb-5">
+              <p className="mb-3 wibe-body font-semibold text-foreground">نمایش</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => onViewModeChange('grid')}
+                  aria-pressed={viewMode === 'grid'}
+                  className={`inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border wibe-caption font-medium transition-colors ${
+                    viewMode === 'grid'
+                      ? 'border-primary bg-primary/10 font-semibold text-primary'
+                      : 'border-wibe bg-wibe-surface text-wibe-secondary'
+                  }`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  گرید
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onViewModeChange('compact')}
+                  aria-pressed={viewMode === 'compact'}
+                  className={`inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border wibe-caption font-medium transition-colors ${
+                    viewMode === 'compact'
+                      ? 'border-primary bg-primary/10 font-semibold text-primary'
+                      : 'border-wibe bg-wibe-surface text-wibe-secondary'
+                  }`}
+                >
+                  <List className="h-4 w-4" />
+                  لیستی
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {/* Categories */}
           <AccordionSection

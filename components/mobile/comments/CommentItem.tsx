@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ThumbsUp, ThumbsDown, Flag, Trash2, MoreVertical } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentAvatar from '@/components/shared/CommentAvatar';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { COMMENT_CLAMP_CHAR_THRESHOLD } from '@/lib/comment-limits';
@@ -153,7 +152,7 @@ export default function CommentItem({
               <span className="font-medium text-foreground text-sm">{comment.user.name}</span>
             )}
             <span className="text-xs text-wibe-secondary">
-              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
+              {formatRelativeTime(comment.createdAt)}
             </span>
           </div>
           <CommentMoreMenu

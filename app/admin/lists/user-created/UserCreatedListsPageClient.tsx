@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2, Edit, CheckCircle, XCircle, AlertTriangle, Eye } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import Link from 'next/link';
 import Image from 'next/image';
 import Pagination from '@/components/admin/shared/Pagination';

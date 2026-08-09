@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { RefreshCw, Search } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import Toast from '@/components/shared/Toast';
@@ -272,7 +271,7 @@ export default function ModerationQueueClient() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Moderation Queue</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            آخرین بروزرسانی: {lastUpdatedAt ? formatDistanceToNow(lastUpdatedAt, { addSuffix: true, locale: faIR }) : '—'}
+            آخرین بروزرسانی: {lastUpdatedAt ? formatRelativeTime(lastUpdatedAt) : '—'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

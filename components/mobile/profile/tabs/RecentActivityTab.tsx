@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { Bookmark, Heart, Flame, FileText, ChevronLeft, RefreshCw } from 'lucide-react';
 
 const VIRAL_LIKE_THRESHOLD = 50;
@@ -232,7 +231,7 @@ export default function RecentActivityTab({
                     <ChevronLeft className="w-4 h-4 rotate-180" />
                   </span>
                   <span className="wibe-caption text-wibe-secondary">
-                    {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true, locale: faIR })}
+                    {formatRelativeTime(activity.createdAt)}
                   </span>
                 </div>
               </Link>

@@ -30,26 +30,15 @@ function needsQuestion(
   return true;
 }
 
-function MoodSheetHeader({ icon, subtitle }: { icon?: string; subtitle?: string }) {
-  if (!icon && !subtitle) return null;
-
-  return (
-    <div className="mb-4 flex items-start gap-3 rounded-2xl border border-primary/15 bg-primary/[0.04] p-3.5 lg:mb-5 lg:p-4">
-      {icon && (
-        <span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm"
-          aria-hidden
-        >
-          {icon}
-        </span>
-      )}
-      {subtitle && (
-        <p className="flex-1 pt-0.5 text-right wibe-small leading-relaxed text-wibe-secondary">
-          {subtitle}
-        </p>
-      )}
-    </div>
-  );
+function optionVisual(questionId: 'location' | 'timeBudget', value: string): string {
+  if (questionId === 'location') {
+    if (value === 'out') return '🚶';
+    if (value === 'home') return '🏠';
+  }
+  if (value === '5') return '⚡';
+  if (value === '30') return '⏱️';
+  if (value === 'free') return '🌙';
+  return '✨';
 }
 
 export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Props) {
@@ -162,72 +151,103 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
 
   const moodMeta = selection.moodMeta;
   const moodIcon = moodMeta.icon;
-  const sheetSubtitle =
-    step === 'results' || step === 'loading' ? moodMeta.subtitle : undefined;
+  const isQuestion =
+    step === 'question' && config.question && needsQuestion(scenario, { location, timeBudget });
 
-  const title =
-    step === 'loading' ? 'در حال آماده‌سازی…' : moodMeta.title;
+  const title = step === 'loading' ? 'در حال آماده‌سازی…' : moodMeta.title;
+  const subtitle = step === 'results' ? moodMeta.subtitle : undefined;
 
   return (
     <BottomSheet
       isOpen={isOpen}
       onClose={handleClose}
       title={title}
-      subtitle={sheetSubtitle}
+      subtitle={subtitle}
       maxHeight="92vh"
       desktopMaxWidth="xl"
     >
-      <div className="px-4 pb-5 pt-1 lg:px-0 lg:pb-6" dir="rtl">
-        {step === 'question' && config.question && needsQuestion(scenario, { location, timeBudget }) && (
+      <div className="px-4 pb-6 pt-1 lg:px-0 lg:pb-7" dir="rtl">
+        {isQuestion && config.question && (
           <div className="space-y-5">
-            <MoodSheetHeader icon={moodIcon} subtitle={moodMeta.subtitle} />
+            {(moodIcon || moodMeta.subtitle) && (
+              <div className="flex items-center gap-3">
+                {moodIcon ? (
+                  <span
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-wibe-surface text-2xl ring-1 ring-wibe"
+                    aria-hidden
+                  >
+                    {moodIcon}
+                  </span>
+                ) : null}
+                {moodMeta.subtitle ? (
+                  <p className="min-w-0 flex-1 text-right wibe-small leading-relaxed text-wibe-secondary">
+                    {moodMeta.subtitle}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
             <div>
-              <p className="mb-3 text-right wibe-body font-semibold text-foreground">
+              <p className="mb-3 text-right wibe-body font-bold text-foreground">
                 {config.question.prompt}
               </p>
-              <div className="grid gap-2.5 sm:grid-cols-2">
-                {config.question.options.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => handleAnswer(opt.value)}
-                    className="rounded-2xl border border-wibe bg-wibe-card px-4 py-4 text-right wibe-small font-bold text-foreground transition-colors hover:border-primary/35 hover:bg-primary/[0.04] active:scale-[0.99] lg:py-4.5"
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              <div
+                className={
+                  config.question.options.length === 2
+                    ? 'grid grid-cols-2 gap-2.5'
+                    : 'grid gap-2.5'
+                }
+              >
+                {config.question.options.map((opt) => {
+                  const visual = optionVisual(config.question!.id, opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => handleAnswer(opt.value)}
+                      className="flex items-center gap-3 rounded-2xl border border-wibe bg-wibe-card px-3.5 py-3.5 text-right transition-colors hover:border-primary/30 hover:bg-primary/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:py-4"
+                    >
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-wibe-surface text-xl"
+                        aria-hidden
+                      >
+                        {visual}
+                      </span>
+                      <span className="min-w-0 flex-1 wibe-small font-bold text-foreground">
+                        {opt.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            {error && (
+
+            {error ? (
               <p className="rounded-xl bg-red-50 px-3 py-2 text-center wibe-caption text-red-600">
                 {error}
               </p>
-            )}
+            ) : null}
           </div>
         )}
 
         {step === 'loading' && (
-          <div className="space-y-6 py-6 lg:py-10">
-            <div className="flex flex-col items-center gap-4">
-              {moodIcon && (
-                <span className="flex h-16 w-16 animate-pulse items-center justify-center rounded-3xl bg-primary/10 text-4xl">
+          <div className="space-y-5 py-4 lg:py-6">
+            <div className="flex flex-col items-center gap-3">
+              {moodIcon ? (
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-wibe-surface text-3xl ring-1 ring-wibe">
                   {moodIcon}
                 </span>
-              )}
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              ) : null}
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               <p className="text-center wibe-small text-wibe-secondary">پیشنهادها رو جمع می‌کنیم…</p>
             </div>
-            <div className="space-y-4 px-1">
-              {[1, 2].map((row) => (
-                <div key={row} className="space-y-3">
-                  <div className="h-5 w-28 animate-pulse rounded-lg bg-wibe-surface" />
-                  <div className="flex gap-3 overflow-hidden">
-                    {[1, 2, 3].map((card) => (
-                      <div
-                        key={card}
-                        className="h-36 w-[58%] max-w-[220px] shrink-0 animate-pulse rounded-2xl bg-wibe-surface lg:w-full lg:max-w-none"
-                      />
-                    ))}
+            <div className="grid grid-cols-2 gap-2.5">
+              {[1, 2, 3, 4].map((card) => (
+                <div key={card} className="overflow-hidden rounded-xl border border-wibe">
+                  <div className="aspect-[16/10] animate-pulse bg-wibe-surface" />
+                  <div className="space-y-2 p-2.5">
+                    <div className="h-3.5 w-4/5 animate-pulse rounded bg-wibe-surface" />
+                    <div className="h-3 w-2/5 animate-pulse rounded bg-wibe-surface" />
                   </div>
                 </div>
               ))}
@@ -235,9 +255,9 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
           </div>
         )}
 
-        {step === 'results' && data && (
+        {step === 'results' && data ? (
           <GuidedDiscoveryResults data={data} scenario={scenario} onItemClick={handleClose} />
-        )}
+        ) : null}
       </div>
     </BottomSheet>
   );

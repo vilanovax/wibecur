@@ -100,7 +100,7 @@ function ItemCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-wibe bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-primary/40 hover:bg-wibe-surface/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+        className="flex h-11 w-full items-center rounded-xl border border-wibe bg-wibe-surface/60 px-4 text-right wibe-small text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-wibe-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
       >
         نظرت درباره این آیتم چیه؟
       </button>
@@ -302,7 +302,7 @@ export default function CommentSection({
   const hasMore = visibleCount < comments.length;
   const remainingCount = comments.length - visibleCount;
   const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
-  const hasComments = comments.length > 0;
+  const showSort = !isLoading && comments.length > 1;
 
   return (
     <section
@@ -311,64 +311,53 @@ export default function CommentSection({
         embeddedInPanel ? 'mt-0 border-t-0 pt-0' : 'mt-2 border-t border-wibe pt-5'
       }`}
     >
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="wibe-h3 text-foreground">نظرات</h2>
+        {showSort ? (
+          <div className="flex items-center gap-1" role="group" aria-label="مرتب‌سازی نظرات">
+            <button
+              type="button"
+              onClick={() => setSortBy('popular')}
+              className={`rounded-full px-2.5 py-1 wibe-caption font-medium transition-colors ${
+                sortBy === 'popular'
+                  ? 'bg-primary text-white'
+                  : 'text-wibe-secondary hover:bg-wibe-surface hover:text-foreground'
+              }`}
+            >
+              مفیدترین
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortBy('newest')}
+              className={`rounded-full px-2.5 py-1 wibe-caption font-medium transition-colors ${
+                sortBy === 'newest'
+                  ? 'bg-primary text-white'
+                  : 'text-wibe-secondary hover:bg-wibe-surface hover:text-foreground'
+              }`}
+            >
+              جدیدترین
+            </button>
+          </div>
+        ) : null}
+      </div>
+
       {!commentsEnabled && (
-        <p className="wibe-caption text-wibe-secondary mb-3">نظرها غیرفعال است</p>
+        <p className="mb-3 wibe-caption text-wibe-secondary">نظرها غیرفعال است</p>
       )}
 
-      <div className="space-y-3">
-        {commentsEnabled && status === 'authenticated' && (
-          <ItemCommentInput
-            isExpanded={isFormExpanded}
-            onExpand={() => setIsFormExpanded(true)}
-            onSubmit={handleSubmit}
-            isLoading={submitLoading}
-            maxCommentLength={maxCommentLength}
-          />
-        )}
-
-        {!isLoading && comments.length > 0 && (
-          <div className="flex gap-2 pb-1">
-            <span className="text-xs text-wibe-secondary py-1.5">مرتب‌سازی:</span>
-              <button
-                type="button"
-                onClick={() => setSortBy('popular')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === 'popular' ? 'bg-primary text-white shadow-sm' : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'
-                }`}
-              >
-                مفیدترین
-              </button>
-              <button
-                type="button"
-                onClick={() => setSortBy('newest')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'
-                }`}
-              >
-                جدیدترین
-              </button>
-            </div>
-        )}
-
-        <div className={hasComments ? 'mt-2' : 'mt-1'}>
+      <div className="space-y-4">
+        {/* Thread اول — social proof قبل از کامپوزر */}
+        <div>
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : comments.length === 0 ? (
             <p className="py-2 text-center wibe-caption text-wibe-secondary">
-              هنوز گفتگویی نیست —{' '}
-              {status === 'authenticated' && commentsEnabled ? (
-                <button
-                  type="button"
-                  onClick={() => setIsFormExpanded(true)}
-                  className="font-medium text-primary hover:underline"
-                >
-                  اولین نظر رو بذار
-                </button>
-              ) : (
-                'اولین نظر رو بذار'
-              )}
+              هنوز گفتگویی نیست
+              {status === 'authenticated' && commentsEnabled
+                ? ' — اولین نظر را پایین بنویس'
+                : null}
             </p>
           ) : (
             <>
@@ -384,19 +373,32 @@ export default function CommentSection({
                   />
                 ))}
               </div>
-              {hasMore && (
+              {hasMore ? (
                 <button
                   type="button"
                   onClick={() => setVisibleCount((v) => v + COMMENTS_LOAD_MORE_STEP)}
-                  className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1"
+                  className="mt-4 flex w-full items-center justify-center gap-1 rounded-xl py-3 wibe-small font-medium text-primary transition-colors hover:bg-primary/5"
                 >
-                  <ChevronDown className="w-4 h-4" />
-                  {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر ({remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
+                  <ChevronDown className="h-4 w-4" aria-hidden />
+                  {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر (
+                  {remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
                 </button>
-              )}
+              ) : null}
             </>
           )}
         </div>
+
+        {commentsEnabled && status === 'authenticated' ? (
+          <div className="space-y-2 border-t border-wibe/60 pt-3">
+            <ItemCommentInput
+              isExpanded={isFormExpanded}
+              onExpand={() => setIsFormExpanded(true)}
+              onSubmit={handleSubmit}
+              isLoading={submitLoading}
+              maxCommentLength={maxCommentLength}
+            />
+          </div>
+        ) : null}
       </div>
 
       {toast && (

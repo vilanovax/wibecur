@@ -36,10 +36,14 @@ export function getListVisibilityVariant(list: {
 export default function ListVisibilityBadge({
   variant,
   size = 'sm',
+  /** وقتی فیلتر/زمینه «عمومی» است، بج عمومی را مخفی کن تا تکرار نشود */
+  hideWhenPublic = false,
 }: {
   variant: Variant;
   size?: 'sm' | 'md';
+  hideWhenPublic?: boolean;
 }) {
+  if (hideWhenPublic && variant === 'public') return null;
   const { label, icon: Icon, className } = CONFIG[variant];
   return (
     <span

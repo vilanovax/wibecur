@@ -63,6 +63,10 @@ export default function ListsCategorySection({
   const moreMobile = Math.max(0, lists.length - LISTS_SECTION_PREVIEW_MOBILE);
   const moreDesktop = Math.max(0, lists.length - desktopPreview);
 
+  /** ۳ کارت در گرید ۲ستونه → چیدمان ۱ بلند + ۲ کوتاه (بدون خانهٔ خالی) */
+  const useTrioLayout =
+    viewMode === 'grid' && !expanded && visible.length === 3;
+
   return (
     <section
       id={`lists-category-${categoryId}`}
@@ -83,37 +87,63 @@ export default function ListsCategorySection({
               onClick={() => onShowAllCategory(categoryId, categorySlug)}
               className="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
-              همه
+              مشاهده دسته
             </button>
           ) : (
             <Link
               href={filterHref}
               className="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
-              همه
+              مشاهده دسته
             </Link>
           )
         )}
       </div>
 
-      <div className={gridClass}>
-        {visible.map((list, index) => (
-          <div
-            key={list.id}
-            className={
-              !expanded && index >= LISTS_SECTION_PREVIEW_MOBILE ? 'max-lg:hidden' : undefined
-            }
-          >
+      {useTrioLayout ? (
+        <div className="grid grid-cols-2 grid-rows-2 gap-2 lg:gap-3">
+          <div className="row-span-2 min-h-0">
             <ListCardCompact
-              list={list}
+              list={visible[0]!}
               variant={cardVariant}
               showCreator={false}
-              isBookmarked={bookmarkedIds?.has(list.id)}
+              isBookmarked={bookmarkedIds?.has(visible[0]!.id)}
               onBookmarkToggle={onBookmarkToggle}
+              fillHeight
             />
           </div>
-        ))}
-      </div>
+          {visible.slice(1).map((list) => (
+            <div key={list.id} className="min-h-0">
+              <ListCardCompact
+                list={list}
+                variant={cardVariant}
+                showCreator={false}
+                isBookmarked={bookmarkedIds?.has(list.id)}
+                onBookmarkToggle={onBookmarkToggle}
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={gridClass}>
+          {visible.map((list, index) => (
+            <div
+              key={list.id}
+              className={
+                !expanded && index >= LISTS_SECTION_PREVIEW_MOBILE ? 'max-lg:hidden' : undefined
+              }
+            >
+              <ListCardCompact
+                list={list}
+                variant={cardVariant}
+                showCreator={false}
+                isBookmarked={bookmarkedIds?.has(list.id)}
+                onBookmarkToggle={onBookmarkToggle}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {hasMore && (
         <div className="mt-3 flex justify-center">

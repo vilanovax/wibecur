@@ -31,7 +31,7 @@ function DiscoveryCarouselCard({
   fallbackIcon,
   rating,
   subtitle,
-  className = 'flex-shrink-0 w-[calc(52vw)] max-w-[210px] snap-start lg:w-full lg:max-w-none',
+  className = 'flex-shrink-0 w-[calc(38vw)] max-w-[148px] snap-start lg:w-full lg:max-w-none',
   rank,
 }: {
   href: string;
@@ -50,7 +50,7 @@ function DiscoveryCarouselCard({
   return (
     <Link
       href={href}
-      className={`${className} overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md`}
+      className={`${className} overflow-hidden rounded-xl border border-wibe bg-wibe-card transition-transform active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-sm`}
     >
       <div className="relative aspect-[2/3] w-full bg-wibe-surface lg:aspect-[16/10] lg:max-h-[9rem]">
         <LazyItemCoverImage
@@ -64,27 +64,22 @@ function DiscoveryCarouselCard({
           coverLayout="grid"
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent"
           aria-hidden
         />
         {rank != null && rank <= 3 && (
-          <span className="absolute right-2 top-2 wibe-caption rounded-pill bg-warning px-1.5 py-0.5 font-medium text-white shadow-sm">
+          <span className="absolute right-2 top-2 wibe-caption rounded-pill bg-warning/90 px-1.5 py-0.5 font-medium text-white">
             #{rank.toLocaleString('fa-IR')}
           </span>
         )}
-        <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug drop-shadow-sm">
+        <div className="absolute inset-x-0 bottom-0 p-2 text-white">
+          <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug drop-shadow-sm">
             {title}
           </h3>
-          {(ratingLabel || subtitle) && (
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-white/90">
-              {ratingLabel && (
-                <span className="flex items-center gap-0.5">
-                  <span>⭐</span>
-                  <span>{ratingLabel}</span>
-                </span>
-              )}
-              {subtitle && <span className="line-clamp-1 opacity-90">{subtitle}</span>}
+          {ratingLabel && (
+            <div className="mt-0.5 flex items-center gap-0.5 wibe-caption text-white/85">
+              <span aria-hidden>⭐</span>
+              <span>{ratingLabel}</span>
             </div>
           )}
         </div>
@@ -95,7 +90,7 @@ function DiscoveryCarouselCard({
 
 function CarouselSkeleton({
   count = 4,
-  className = 'min-w-[calc(52vw)] w-[calc(52vw)] max-w-[210px] aspect-[2/3] lg:w-full lg:min-w-0 lg:max-w-none lg:aspect-[16/10]',
+  className = 'min-w-[calc(38vw)] w-[calc(38vw)] max-w-[148px] aspect-[2/3] lg:w-full lg:min-w-0 lg:max-w-none lg:aspect-[16/10]',
 }: {
   count?: number;
   className?: string;

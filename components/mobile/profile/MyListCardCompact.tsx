@@ -33,11 +33,18 @@ interface MyListCardCompactProps {
   list: MyListCardData;
   onSettingsClick: (e: React.MouseEvent) => void;
   hideSettings?: boolean;
+  /** بج «عمومی» را نشان نده (وقتی فیلتر/سکشن عمومی است) */
+  hidePublicBadge?: boolean;
 }
 
 const VIRAL_LIKE_THRESHOLD = 50;
 
-export default function MyListCardCompact({ list, onSettingsClick, hideSettings }: MyListCardCompactProps) {
+export default function MyListCardCompact({
+  list,
+  onSettingsClick,
+  hideSettings,
+  hidePublicBadge = true,
+}: MyListCardCompactProps) {
   const itemCount = getListItemCount(list);
   const saveCount = list.saveCount ?? list._count?.bookmarks ?? 0;
   const likes = list.likeCount ?? list._count?.list_likes ?? 0;
@@ -47,23 +54,16 @@ export default function MyListCardCompact({ list, onSettingsClick, hideSettings 
   const isFeatured = list.isFeatured || badge === 'featured';
   const visibility = getListVisibilityVariant(list);
   const isEmptyPublic = visibility === 'public' && itemCount === 0;
-
-  const accentClass =
-    visibility === 'public'
-      ? 'border-s-[3px] border-s-emerald-500'
-      : visibility === 'draft'
-        ? 'border-s-[3px] border-s-amber-400'
-        : 'border-s-[3px] border-s-slate-300';
+  const showVisibilityOnCover =
+    visibility !== 'public' || (!hidePublicBadge && visibility === 'public');
 
   return (
-    <div
-      className={`flex flex-row-reverse items-stretch gap-1.5 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm ${accentClass}`}
-    >
+    <div className="flex flex-row-reverse items-stretch gap-1 overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm">
       <Link
         href={`/user-lists/${list.id}`}
-        className="flex min-h-[72px] min-w-0 flex-1 flex-row-reverse gap-2.5 p-2.5 transition-transform active:scale-[0.99]"
+        className="flex min-h-[76px] min-w-0 flex-1 flex-row-reverse gap-2.5 p-2.5 transition-colors hover:bg-wibe-surface/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30 active:scale-[0.99]"
       >
-        <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-md bg-wibe-surface">
+        <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-wibe-surface">
           <ListCoverImage
             coverImage={list.coverImage}
             title={list.title}
@@ -73,30 +73,36 @@ export default function MyListCardCompact({ list, onSettingsClick, hideSettings 
             fallbackIcon={list.categories?.icon ?? '📋'}
             fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
           />
-          <div className="absolute bottom-1 start-1">
-            <ListVisibilityBadge variant={visibility} size="sm" />
-          </div>
+          {showVisibilityOnCover ? (
+            <div className="absolute bottom-1 start-1">
+              <ListVisibilityBadge
+                variant={visibility}
+                size="sm"
+                hideWhenPublic={hidePublicBadge}
+              />
+            </div>
+          ) : null}
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
           <div className="mb-0.5 flex flex-wrap items-center gap-1">
             {isViral && (
-              <span className="inline-flex items-center gap-0.5 rounded bg-warning/10 px-1.5 py-0.5 wibe-caption font-medium text-warning">
-                <Flame className="h-3 w-3" />
+              <span className="inline-flex items-center gap-0.5 rounded-md bg-warning/10 px-1.5 py-0.5 wibe-caption font-medium text-warning">
+                <Flame className="h-3 w-3" aria-hidden />
                 وایرال
               </span>
             )}
             {isFeatured && (
-              <span className="rounded bg-primary/10 px-1.5 py-0.5 wibe-caption font-medium text-primary">
+              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 wibe-caption font-medium text-primary">
                 منتخب
               </span>
             )}
             {badge === 'trending' && (
-              <span className="rounded bg-success/10 px-1.5 py-0.5 wibe-caption font-medium text-success">
+              <span className="rounded-md bg-success/10 px-1.5 py-0.5 wibe-caption font-medium text-success">
                 ترند
               </span>
             )}
             {isEmptyPublic && (
-              <span className="rounded bg-orange-50 px-1.5 py-0.5 wibe-caption font-medium text-orange-700 ring-1 ring-orange-200/80">
+              <span className="rounded-md bg-orange-50 px-1.5 py-0.5 wibe-caption font-medium text-orange-700 ring-1 ring-orange-200/80">
                 خالی
               </span>
             )}
@@ -114,14 +120,16 @@ export default function MyListCardCompact({ list, onSettingsClick, hideSettings 
         </div>
       </Link>
       {!hideSettings && (
-      <button
-        type="button"
-        onClick={onSettingsClick}
-        className="mx-1.5 flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-md border border-wibe bg-wibe-surface text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary"
-        aria-label="تنظیمات لیست"
-      >
-        <Settings className="h-4 w-4" />
-      </button>
+        <button
+          type="button"
+          onClick={onSettingsClick}
+          className="my-2 me-2 flex shrink-0 flex-col items-center justify-center gap-0.5 self-stretch rounded-lg px-2.5 text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          aria-label="مدیریت لیست"
+          title="مدیریت"
+        >
+          <Settings className="h-4 w-4" aria-hidden />
+          <span className="wibe-caption font-semibold leading-none">مدیریت</span>
+        </button>
       )}
     </div>
   );

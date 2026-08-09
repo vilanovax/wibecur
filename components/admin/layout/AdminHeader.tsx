@@ -8,8 +8,7 @@ import { useSidebar } from './SidebarContext';
 import { signOut, useSession } from 'next-auth/react';
 import RoleBadge from '@/components/auth/RoleBadge';
 import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { BREADCRUMB_MAP } from '@/lib/admin/breadcrumb-labels';
 
 /** سگمنت‌های مسیر که نباید به‌عنوان «جزئیات» (شناسه) نمایش داده شوند */
@@ -332,7 +331,7 @@ export default function AdminHeader() {
                           <p className="text-sm font-medium text-admin-text-primary dark:text-white">{n.title}</p>
                           <p className="text-xs text-admin-text-secondary dark:text-gray-400 mt-1">{n.message}</p>
                           <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-2">
-                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
+                            {formatRelativeTime(n.createdAt)}
                           </p>
                         </Link>
                       ) : (
@@ -345,7 +344,7 @@ export default function AdminHeader() {
                           <p className="text-sm font-medium text-admin-text-primary dark:text-white">{n.title}</p>
                           <p className="text-xs text-admin-text-secondary dark:text-gray-400 mt-1">{n.message}</p>
                           <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-2">
-                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
+                            {formatRelativeTime(n.createdAt)}
                           </p>
                         </button>
                       )}

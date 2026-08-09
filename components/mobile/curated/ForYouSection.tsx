@@ -12,11 +12,23 @@ interface ForYouSectionProps {
   diverseCategories?: boolean;
 }
 
-function resolveForYouSubtitle(personalized: boolean, diverseCategories: boolean): string {
-  if (personalized && diverseCategories) return 'علایق تو · از هر دسته';
-  if (diverseCategories) return 'از هر دسته یک پیشنهاد';
-  if (personalized) return 'بر اساس علایق تو';
-  return 'برترین لیست‌های منتخب';
+/** حداکثر نمایش — بعد از ترند نباید دیوار لیست تکراری بسازد */
+const FOR_YOU_DISPLAY_MAX = 6;
+
+function resolveForYouCopy(personalized: boolean, diverseCategories: boolean): {
+  title: string;
+  subtitle: string;
+} {
+  if (personalized && diverseCategories) {
+    return { title: 'برای تو', subtitle: 'از هر دسته یکی' };
+  }
+  if (personalized) {
+    return { title: 'برای تو', subtitle: 'بر اساس علایق تو' };
+  }
+  if (diverseCategories) {
+    return { title: 'از هر موضوع', subtitle: 'یک پیشنهاد از هر دسته' };
+  }
+  return { title: 'پیشنهاد وایب', subtitle: 'منتخب برای شروع' };
 }
 
 export default function ForYouSection({
@@ -26,21 +38,21 @@ export default function ForYouSection({
 }: ForYouSectionProps) {
   if (lists.length === 0) return null;
 
+  const visible = lists.slice(0, FOR_YOU_DISPLAY_MAX);
+  const { title, subtitle } = resolveForYouCopy(personalized, diverseCategories);
+
   return (
     <section
       id="foryou"
       className="border-t border-wibe/60 px-2.5 py-4 lg:px-0 lg:py-5"
       aria-labelledby="foryou-title"
     >
-      <ExploreSectionTitle
-        id="foryou-title"
-        title="پیشنهاد وایب"
-        subtitle={resolveForYouSubtitle(personalized, diverseCategories)}
-        icon="✨"
-      />
+      <ExploreSectionTitle id="foryou-title" title={title} subtitle={subtitle} icon="✨" />
       <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
-        {lists.map((list, index) => {
-          const subtitle = getListCardSubtitle(list);
+        {visible.map((list, index) => {
+          const categoryLabel = list.category?.name
+            ? `${list.category.icon ? `${list.category.icon} ` : ''}${list.category.name}`
+            : getListCardSubtitle(list);
           return (
             <Link
               key={list.id}
@@ -61,17 +73,20 @@ export default function ForYouSection({
                   width={80}
                   height={80}
                   priority={index === 0}
+                  categorySlug={list.category?.slug}
+                  listSlug={list.slug}
+                  listTitle={list.title}
                 />
               </div>
               <div className="min-w-0 flex-1 text-right">
                 <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:text-base">
                   {list.title}
                 </h3>
-                {subtitle && (
-                  <p className="mt-0.5 line-clamp-2 wibe-caption text-wibe-secondary lg:line-clamp-1 lg:text-sm">
-                    {subtitle}
+                {categoryLabel ? (
+                  <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary lg:text-sm">
+                    {categoryLabel}
                   </p>
-                )}
+                ) : null}
               </div>
             </Link>
           );

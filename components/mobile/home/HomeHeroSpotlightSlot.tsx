@@ -10,17 +10,17 @@ type HomeHeroSpotlightSlotProps = {
   fillHeight?: boolean;
 };
 
-/** SSR hero by default; client hero after pull-to-refresh when featured changes. */
+/** SSR hero by default; client hero only when featured id changes after refresh. */
 export default function HomeHeroSpotlightSlot({
   children,
   ssrFeaturedId,
   fillHeight = false,
 }: HomeHeroSpotlightSlotProps) {
-  const { data, isRefetching } = useHomeData();
+  const { data } = useHomeData();
   const featuredId = data?.featured?.id ?? null;
 
   const useClientHero =
-    isRefetching || (ssrFeaturedId !== null && featuredId !== ssrFeaturedId);
+    ssrFeaturedId !== null && featuredId !== null && featuredId !== ssrFeaturedId;
 
   if (useClientHero) {
     return <HomeHeroSpotlight fillHeight={fillHeight} />;

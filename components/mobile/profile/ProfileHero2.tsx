@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { Edit2, Camera, LogOut } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
-import { getLevelByScore, getNextLevelByScore, pointsToNextLevel } from '@/lib/curator';
+import {
+  getLevelByScore,
+  getNextLevelByScore,
+  pointsToNextLevel,
+  type CuratorLevelKey,
+} from '@/lib/curator';
 import { isUserEliteLevel, resolveVibeAvatar } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
-import EditProfileSheet2 from './EditProfileSheet2';
 
 export interface CreatorStats {
   viralListsCount: number;
@@ -39,6 +42,14 @@ export interface ProfileUser {
   curatorPointsToNext?: number | null;
 }
 
+type EditProfileSheet2Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  user: ProfileUser;
+  userLevel: CuratorLevelKey;
+  onUpdate: () => void;
+};
+
 interface ProfileHero2Props {
   user: ProfileUser;
   onUpdate: () => void;
@@ -52,6 +63,20 @@ function formatStat(n: number): string {
 export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [EditProfileSheet2, setEditProfileSheet2] = useState<ComponentType<
+    EditProfileSheet2Props
+  > | null>(null);
+
+  useEffect(() => {
+    if (!showEditSheet || EditProfileSheet2) return;
+    let cancelled = false;
+    void import('./EditProfileSheet2').then((mod) => {
+      if (!cancelled) setEditProfileSheet2(() => mod.default);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [showEditSheet, EditProfileSheet2]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -60,7 +85,6 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
   };
 
   const levelKey = (user.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
-  const levelConfig = getLevelConfig(levelKey);
   const creatorStats = user.creatorStats ?? {
     viralListsCount: 0,
     popularListsCount: 0,
@@ -95,12 +119,13 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
 
   return (
     <>
-      {/* Hero: gradient only top 260px, then white */}
+      {/* Hero: gradient only top 260px, then white — indigo tokens from DESIGN.md */}
       <div className="relative -mx-4">
         <div
           className="h-[260px] w-full rounded-b-2xl"
           style={{
-            background: 'linear-gradient(135deg, #7C5CFF 0%, #8B5CF6 50%, #9333EA 100%)',
+            background:
+              'linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 50%, var(--primary-dark) 100%)',
           }}
         />
         <div className="absolute inset-x-0 top-0 z-10 px-4 pt-6 pb-8">
@@ -235,13 +260,15 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
         </div>
       </div>
 
-      <EditProfileSheet2
-        isOpen={showEditSheet}
-        onClose={() => setShowEditSheet(false)}
-        user={user}
-        userLevel={levelKey}
-        onUpdate={onUpdate}
-      />
+      {showEditSheet && EditProfileSheet2 ? (
+        <EditProfileSheet2
+          isOpen={showEditSheet}
+          onClose={() => setShowEditSheet(false)}
+          user={user}
+          userLevel={levelKey}
+          onUpdate={onUpdate}
+        />
+      ) : null}
     </>
   );
 }

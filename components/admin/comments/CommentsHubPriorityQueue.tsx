@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { Clock, Flag, Package, ArrowLeft, ListTodo, ShieldBan } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import type { HubPriorityItem } from '@/lib/admin/comments-hub-priority';
 
 const typeMeta: Record<
@@ -88,10 +87,7 @@ export default function CommentsHubPriorityQueue({
                   </p>
                 </div>
                 <span className="text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap shrink-0">
-                  {formatDistanceToNow(new Date(item.createdAt), {
-                    addSuffix: true,
-                    locale: faIR,
-                  })}
+                  {formatRelativeTime(item.createdAt)}
                 </span>
               </Link>
             </li>

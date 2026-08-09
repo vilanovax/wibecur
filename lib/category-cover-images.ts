@@ -287,13 +287,22 @@ function getListTopicCoverFromTitle(
   return null;
 }
 
+/** کاور پین‌شدهٔ seed — همیشه بر DB/آپلود اشتباه اولویت دارد */
+export function getPinnedListTopicCover(listSlug?: string | null): string | null {
+  const key = normalizeCategorySlug(listSlug);
+  if (!key) return null;
+  return LIST_TOPIC_COVER_IMAGES[key] ?? null;
+}
+
 export function getListTopicCoverUrl(
   listSlug?: string | null,
   categorySlug?: string | null,
   listTitle?: string | null
 ): string | null {
+  const pinned = getPinnedListTopicCover(listSlug);
+  if (pinned) return pinned;
+
   const key = normalizeCategorySlug(listSlug);
-  if (key && LIST_TOPIC_COVER_IMAGES[key]) return LIST_TOPIC_COVER_IMAGES[key];
 
   const seed = key ?? listTitle?.trim() ?? '';
 

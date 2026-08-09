@@ -117,20 +117,8 @@ export default function ItemDetailClient({
 
   return (
     <main className="pb-2" dir="rtl">
-      {!isLightweight && (
-        <div className="lg:hidden">
-          <ItemDetailTopActions
-            itemId={item.id}
-            likeCount={likeCount}
-            catalogItemId={item.catalogItemId}
-            shareTitle={item.title}
-            variant="bar"
-          />
-        </div>
-      )}
-
-      <div className="relative z-10 mt-4 flex flex-col gap-5 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
+      <div className="relative z-10 mt-3 flex flex-col gap-4 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
           {isLightweight && (
             <div className="rounded-2xl border border-wibe/70 bg-wibe-card px-3 py-2.5 shadow-sm">
               <ItemDetailTopActions

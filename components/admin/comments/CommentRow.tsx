@@ -3,8 +3,7 @@
 import { memo } from 'react';
 import Link from 'next/link';
 import { Eye, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentStatusBadge from './CommentStatusBadge';
 import UserAvatar from '@/components/shared/UserAvatar';
 import { UserPenaltyBadge } from './UserPenaltyBadge';
@@ -158,10 +157,7 @@ function CommentRow({
         </Link>
       </td>
       <td className="px-4 py-3 text-sm text-slate-500 dark:text-gray-400 whitespace-nowrap">
-        {formatDistanceToNow(new Date(comment.createdAt), {
-          addSuffix: true,
-          locale: faIR,
-        })}
+        {formatRelativeTime(comment.createdAt)}
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-wrap items-center gap-1.5">
