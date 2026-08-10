@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, ChevronUp, Star, LayoutGrid, List } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react';
 import type { ListsViewMode } from '@/lib/lists-page-layout';
 export type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
 /** Browse-mode vibes stay in FilterState for URL/mode sync; mood vibes are Explore-only */
@@ -21,32 +21,33 @@ export type FilterCategoryOption = {
 
 export interface FilterState {
   categories: Set<string>;
+  /** Owned by browse modes on Lists — sheet must not offer a second sort control */
   sortBy: SortOption;
   vibes: Set<VibeFilter>;
   creatorType: CreatorType;
   minItemCount: number;
+  /**
+   * Index into save-count thresholds [0,5,10,20,50] (1–5), not star ratings.
+   * Kept as `minRating` for persisted filterState compatibility.
+   */
   minRating: number;
 }
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'newest', label: 'جدیدترین' },
-  { value: 'popular', label: 'محبوب‌ترین' },
-  { value: 'most_saved', label: 'بیشترین ذخیره' },
-  { value: 'rising', label: 'در حال رشد' },
-];
+/** saveCount floors for minRating levels 1–5 — UI must say ذخیره, never امتیاز */
+export const MIN_SAVE_THRESHOLDS = [0, 5, 10, 20, 50] as const;
 
 const CREATOR_OPTIONS: { value: CreatorType; label: string }[] = [
   { value: 'all', label: 'همه' },
-  { value: 'top', label: '⭐ کیوریتورهای برتر' },
-  { value: 'new', label: '🆕 تازه‌وارد' },
-  { value: 'viral', label: '🔥 وایرال شده' },
+  { value: 'top', label: 'کیوریتورهای برتر' },
+  { value: 'new', label: 'تازه‌وارد' },
+  { value: 'viral', label: 'وایرال شده' },
 ];
 
 /** Catalog presets only — mood/vibe presets belong on Explore */
 const PRESETS: { id: string; label: string; apply: (state: FilterState) => FilterState }[] = [
   {
     id: 'top',
-    label: '⭐ فقط برترین‌ها',
+    label: 'فقط پرذخیره (≥۲۰)',
     apply: (s) => ({ ...s, minRating: 4, creatorType: 'top' as CreatorType }),
   },
 ];
@@ -115,10 +116,9 @@ export default function FilterBottomSheetPro({
   const [localState, setLocalState] = useState<FilterState>(filterState);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     categories: true,
-    sort: false,
     creator: false,
     itemCount: false,
-    rating: false,
+    saves: false,
   });
 
   useEffect(() => {
@@ -299,28 +299,7 @@ export default function FilterBottomSheetPro({
             ))}
           </AccordionSection>
 
-          {/* Sort */}
-          <AccordionSection
-            title="مرتب‌سازی"
-            open={openSections.sort}
-            onToggle={() => toggleSection('sort')}
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex items-center gap-3 py-2 cursor-pointer"
-              >
-                <input
-                  type="radio"
-                  name="sort"
-                  checked={localState.sortBy === opt.value}
-                  onChange={() => setLocalState((s) => ({ ...s, sortBy: opt.value }))}
-                  className="w-4 h-4 border-wibe text-primary"
-                />
-                <span className="wibe-small text-foreground">{opt.label}</span>
-              </label>
-            ))}
-          </AccordionSection>
+          {/* Sort lives on browse modes (ترند/جدید/محبوب) — no second control here */}
 
           {/* Creator Type */}
           <AccordionSection
@@ -373,38 +352,56 @@ export default function FilterBottomSheetPro({
             </div>
           </AccordionSection>
 
-          {/* Min Rating */}
+          {/* Min saves (not ratings) — thresholds match ListsPageClient.matchMinRating */}
           <AccordionSection
-            title="حداقل امتیاز"
-            open={openSections.rating}
-            onToggle={() => toggleSection('rating')}
+            title="حداقل ذخیره"
+            open={openSections.saves}
+            onToggle={() => toggleSection('saves')}
           >
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() =>
-                    setLocalState((s) => ({
-                      ...s,
-                      minRating: s.minRating === n ? 0 : n,
-                    }))
-                  }
-                  className="p-2 rounded-lg hover:bg-wibe-surface transition-colors"
-                  aria-label={`${n.toLocaleString('fa-IR')} ستاره`}
-                >
-                  <Star
-                    className={`w-8 h-8 ${
-                      n <= localState.minRating ? 'fill-amber-400 text-amber-400' : 'text-wibe-secondary/40'
+            <p className="wibe-caption text-wibe-secondary mb-3">
+              بر اساس تعداد ذخیره‌ها — امتیاز ستاره‌ای نیست
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setLocalState((s) => ({ ...s, minRating: 0 }))}
+                className={`h-9 px-3 rounded-xl border wibe-caption font-medium transition-colors ${
+                  localState.minRating === 0
+                    ? 'border-primary bg-primary/10 font-semibold text-primary'
+                    : 'border-wibe bg-wibe-surface text-wibe-secondary'
+                }`}
+              >
+                همه
+              </button>
+              {MIN_SAVE_THRESHOLDS.map((threshold, idx) => {
+                const level = idx + 1;
+                if (threshold === 0) return null;
+                return (
+                  <button
+                    key={threshold}
+                    type="button"
+                    onClick={() =>
+                      setLocalState((s) => ({
+                        ...s,
+                        minRating: s.minRating === level ? 0 : level,
+                      }))
+                    }
+                    aria-pressed={localState.minRating === level}
+                    className={`h-9 px-3 rounded-xl border wibe-caption font-medium tabular-nums transition-colors ${
+                      localState.minRating === level
+                        ? 'border-primary bg-primary/10 font-semibold text-primary'
+                        : 'border-wibe bg-wibe-surface text-wibe-secondary'
                     }`}
-                  />
-                </button>
-              ))}
+                  >
+                    ≥{threshold.toLocaleString('fa-IR')}
+                  </button>
+                );
+              })}
             </div>
             <p className="wibe-caption text-wibe-secondary mt-2">
               {localState.minRating > 0
-                ? `${localState.minRating.toLocaleString('fa-IR')}+ ستاره`
-                : 'بدون حد'}
+                ? `حداقل ${(MIN_SAVE_THRESHOLDS[localState.minRating - 1] ?? 0).toLocaleString('fa-IR')} ذخیره`
+                : 'بدون حد ذخیره'}
             </p>
           </AccordionSection>
         </div>

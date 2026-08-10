@@ -107,9 +107,9 @@ const BANNERS = [
     url: 'https://upload.wikimedia.org/wikipedia/commons/6/61/Latte_macchiato_with_coffee_beans.jpg',
   },
   {
-    // قبلی: Wey Coffee 02 (خودرو) — اشتباه؛ هم‌تراز cozy (میز مطالعه + قهوه)
+    // منظره/تراس کافه — متمایز از cozy (میز مطالعه)؛ برای cafes-with-great-views
     name: 'cafe-3',
-    url: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Journaling_over_coffee_%28Unsplash%29.jpg',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/0/09/Sm%C3%BAz_Caf%C3%A9_outdoor_terrace%2C_Hungarian_Parliament_view.jpg',
   },
   {
     name: 'restaurant-2',

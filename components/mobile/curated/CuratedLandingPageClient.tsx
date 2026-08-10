@@ -223,20 +223,36 @@ export default function CuratedLandingPageClient({
         ) : (
           <>
             {/*
-              Distill: mood owns first viewport → میانبر آرام → داغ (ریکاوری)
-              → برای تو → لینک دسته در لیست‌ها → سورپرایز
+              Mood owns the first viewport on mobile — spacer + deferred mount keep
+              QuickNow / داغ from peeking under the 2×2 fold (critique P1).
             */}
-            <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
+            <div
+              className="h-[min(18vh,7.5rem)] max-h-32 min-h-8 lg:h-4"
+              aria-hidden
+            />
 
-            {trendingSlot ??
-              (sections.trending.length > 0 ? (
-                <HomeDeferredMount fallback={<ExploreTrendingSectionSkeleton />}>
+            <HomeDeferredMount
+              rootMargin="0px"
+              className="min-h-0"
+              fallback={null}
+            >
+              <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
+            </HomeDeferredMount>
+
+            {trendingSlot || sections.trending.length > 0 ? (
+              <HomeDeferredMount
+                rootMargin="40px"
+                className="min-h-[8rem] lg:min-h-[10rem]"
+                fallback={<ExploreTrendingSectionSkeleton />}
+              >
+                {trendingSlot ?? (
                   <TrendingNowSectionLazy
                     lists={sections.trending}
                     subtitle="محبوب‌ترین‌ها همین الان"
                   />
-                </HomeDeferredMount>
-              ) : null)}
+                )}
+              </HomeDeferredMount>
+            ) : null}
 
             <div ref={forYouRef} className="min-h-[1px]">
               {!forYouInView ? null : forYouPending ? (

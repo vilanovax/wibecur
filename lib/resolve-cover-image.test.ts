@@ -53,4 +53,14 @@ describe('resolveCoverImage — cafe cover trust', () => {
     });
     expect(url).toBe('/images/banners/cafe-2.webp');
   });
+
+  it('pins view cafes to cafe-3 terrace banner, not cozy desk flatlay', () => {
+    const url = resolveCoverImage({
+      coverImage: '/images/banners/cozy.webp',
+      listSlug: 'cafes-with-great-views',
+      listTitle: 'کافه‌های با منظره زیبا',
+      categorySlug: 'cafe',
+    });
+    expect(url).toBe('/images/banners/cafe-3.webp');
+  });
 });

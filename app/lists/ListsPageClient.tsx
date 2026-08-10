@@ -144,6 +144,7 @@ function matchCreatorType(list: ListWithCategory, creatorType: FilterState['crea
 function matchMinRating(list: ListWithCategory, minRating: number): boolean {
   if (minRating <= 0) return true;
   const saveCount = list.saveCount ?? 0;
+  // Keep in sync with FilterBottomSheetPro MIN_SAVE_THRESHOLDS (save floors, not stars)
   const thresholds = [0, 5, 10, 20, 50];
   return saveCount >= (thresholds[minRating - 1] ?? 0);
 }
@@ -1162,7 +1163,12 @@ export default function ListsPageClient({
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onApply={(state) => {
-            setFilterState(state);
+            // Modes own sort/vibes — ignore any stale sheet sort mutations
+            setFilterState((prev) => ({
+              ...state,
+              sortBy: prev.sortBy,
+              vibes: prev.vibes,
+            }));
             setFilterSheetOpen(false);
           }}
         />
