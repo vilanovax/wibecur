@@ -100,15 +100,15 @@ export const LIST_TOPIC_COVER_IMAGES: Record<string, string> = {
   'family-comedy-movies': B.movies6,
   // کافه و رستوران — هر slug کاور یکتا (بدون تکرار cafe-2 روی دو لیست)
   'great-breakfast-cafes': B.cafe2,
-  'cozy-cafes-for-studying': B.cafe3,
+  'cozy-cafes-for-studying': B.cozy,
   'instagrammable-cafes': B.cafe,
   'traditional-iranian-restaurants': B.restaurant2,
   'seafood-restaurants': B.restaurant3,
   'vegan-vegetarian-restaurants-tehran': B.restaurant,
-  'cafes-with-great-views': B.cozy,
+  'cafes-with-great-views': B.cafe3,
   'quality-fast-food-restaurants': B.restaurant2,
-  'authentic-italian-restaurants': B.lifestyle,
-  'best-outdoor-cafes-tehran': B.travel,
+  'authentic-italian-restaurants': B.restaurant3,
+  'best-outdoor-cafes-tehran': B.cafe2,
 };
 
 /** نگاشت id دسته در mock explore */
@@ -150,6 +150,8 @@ export function pickCategoryCoverVariant(
 /** basename بنر محلی → دسته‌هایی که آن تصویر برایشان قابل‌اعتماد است */
 const BANNER_BASENAME_CATEGORIES: Record<string, readonly string[]> = {
   'car.webp': ['car', 'tech'],
+  // نام‌های اشتباه تاریخی (خودرو به‌جای کافه) — فقط car/tech
+  'wey_coffee_02': ['car', 'tech'],
   'cafe.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
   'cafe-2.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
   'cafe-3.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
@@ -267,7 +269,7 @@ function getListTopicCoverFromTitle(
 
   // کافه و رستوران
   if (/صبحانه|breakfast/.test(t)) return B.cafe2;
-  if (/دنج|درس|studying|cozy/.test(t)) return B.cafe3;
+  if (/دنج|درس|studying|مطالعه|cozy/.test(t)) return B.cozy;
   if (/اینستاگرام|instagram/.test(t)) return B.cafe;
   if (/سنتی|traditional|ایرانی/.test(t)) return B.restaurant2;
   if (/دریایی|seafood|ماهی/.test(t)) return B.restaurant3;

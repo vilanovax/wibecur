@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   MOBILE_FEATURED_MOOD_IDS,
   MOOD_EXPLORER_CARDS,
@@ -21,8 +21,8 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
   const [showAll, setShowAll] = useState(false);
 
   return (
-    <div className="mb-1">
-      <header className="mb-4 lg:mb-5">
+    <div className="mb-0">
+      <header className="mb-3.5 lg:mb-4">
         <h2 className="text-balance wibe-h1 leading-snug tracking-tight lg:text-3xl lg:leading-[1.15]">
           امروز دنبال چه وایبی هستی؟
         </h2>
@@ -49,14 +49,24 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
         })}
       </div>
 
-      {!showAll && EXTRA_COUNT > 0 && (
+      {EXTRA_COUNT > 0 && (
         <button
           type="button"
-          onClick={() => setShowAll(true)}
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card py-3 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
+          onClick={() => setShowAll((v) => !v)}
+          aria-expanded={showAll}
+          className="mt-2.5 flex w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card py-2.5 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
         >
-          مودهای بیشتر ({EXTRA_COUNT.toLocaleString('fa-IR')})
-          <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+          {showAll ? (
+            <>
+              بستن مودها
+              <ChevronUp className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </>
+          ) : (
+            <>
+              مودهای بیشتر ({EXTRA_COUNT.toLocaleString('fa-IR')})
+              <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </>
+          )}
         </button>
       )}
     </div>

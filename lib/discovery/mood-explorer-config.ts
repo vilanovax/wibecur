@@ -127,24 +127,24 @@ export const QUICK_NOW_PILLS: QuickNowPill[] = [
   },
   {
     id: 'quick_tonight',
-    label: 'امشب می‌خوام ببینم',
+    label: 'فیلم در خانه',
     icon: '🎬',
     guidedScenario: 'staying_in',
     guidedPreset: { location: 'home' },
     moodMeta: {
-      title: 'امشب می‌خوام ببینم',
-      subtitle: 'فیلم، سریال و چیزهای خوب برای امشب',
+      title: 'فیلم در خانه',
+      subtitle: 'فیلم و سریال برای دیدن در خانه — میانبر مسیر راهنما',
     },
   },
   {
     id: 'quick_out',
-    label: 'بیرون می‌خوام برم',
+    label: 'بیرون رفتن',
     icon: '🚶',
     guidedScenario: 'going_out',
     guidedPreset: { location: 'out' },
     moodMeta: {
-      title: 'بیرون می‌خوام برم',
-      subtitle: 'کافه، رستوران و جاهای بیرون',
+      title: 'بیرون رفتن',
+      subtitle: 'کافه، رستوران و جاهای بیرون — میانبر مسیر راهنما',
     },
   },
 ];

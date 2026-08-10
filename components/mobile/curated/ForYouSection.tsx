@@ -4,6 +4,7 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
+import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import type { CuratedList } from '@/types/curated';
 
 interface ForYouSectionProps {
@@ -53,6 +54,12 @@ export default function ForYouSection({
           const categoryLabel = list.category?.name
             ? `${list.category.icon ? `${list.category.icon} ` : ''}${list.category.name}`
             : getListCardSubtitle(list);
+          const trustedCover = resolveCoverImage({
+            coverImage: list.coverUrl,
+            categorySlug: list.category?.slug,
+            listSlug: list.slug,
+            listTitle: list.title,
+          });
           return (
             <Link
               key={list.id}
@@ -65,7 +72,7 @@ export default function ForYouSection({
             >
               <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-wibe-surface lg:h-20 lg:w-20">
                 <ImageWithFallback
-                  src={list.coverUrl ?? ''}
+                  src={trustedCover}
                   alt={list.title}
                   className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-105"
                   fallbackIcon="📋"

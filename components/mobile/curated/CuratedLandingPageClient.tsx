@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import ExploreSmartHero from './ExploreSmartHero';
 import QuickNowSection from './QuickNowSection';
+import ExploreCategoriesBrowseLink from './ExploreCategoriesBrowseLink';
 import { ExplorePageSkeleton } from './ExplorePageSkeleton';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
@@ -16,11 +17,9 @@ import {
   SearchResultsPanelLazy,
   RandomSurpriseCardLazy,
   TrendingNowSectionLazy,
-  CategoryDiscoverySectionLazy,
   ForYouSectionLazy,
 } from './explore-lazy-sections';
 import {
-  ExploreCategorySectionSkeleton,
   ExploreForYouSectionSkeleton,
   ExploreSurpriseSectionSkeleton,
   ExploreTrendingSectionSkeleton,
@@ -54,10 +53,10 @@ async function fetchExplorePreferences(): Promise<ExploreUserPreferences> {
 export default function CuratedLandingPageClient({
   initialData,
   trendingSlot,
-  categoriesSlot,
 }: {
   initialData?: ExplorePayload;
   trendingSlot?: ReactNode;
+  /** @deprecated دسته‌ها به لینک آرام /lists منتقل شدند */
   categoriesSlot?: ReactNode;
 }) {
   const searchParams = useSearchParams();
@@ -67,6 +66,7 @@ export default function CuratedLandingPageClient({
   const search = useUnifiedSearchQuery(searchQuery, { enabled: searchEnabled });
   const isSearchActive = search.isActive;
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [createCategoryHint, setCreateCategoryHint] = useState<string | null>(null);
   const [moodSelection, setMoodSelection] = useState<MoodExplorerSelection | null>(null);
   const [guidedOpen, setGuidedOpen] = useState(false);
   const { ref: forYouRef, inView: forYouInView } = useLazyInView<HTMLDivElement>({
@@ -137,14 +137,31 @@ export default function CuratedLandingPageClient({
   useEffect(() => {
     if (searchParams.get('openCreate') === '1') {
       setIsCreateFormOpen(true);
+      setCreateCategoryHint(searchParams.get('category'));
       if (typeof window !== 'undefined') {
         window.history.replaceState({}, '', '/explore');
       }
     }
   }, [searchParams]);
 
+  const createForm = isCreateFormOpen ? (
+    <CreateListFormLazy
+      isOpen={isCreateFormOpen}
+      onClose={() => {
+        setIsCreateFormOpen(false);
+        setCreateCategoryHint(null);
+      }}
+      categoryHint={createCategoryHint}
+    />
+  ) : null;
+
   if (isLoading) {
-    return <ExplorePageSkeleton />;
+    return (
+      <>
+        <ExplorePageSkeleton />
+        {createForm}
+      </>
+    );
   }
 
   const showDiscovery = !isSearchActive;
@@ -205,7 +222,10 @@ export default function CuratedLandingPageClient({
           </div>
         ) : (
           <>
-            {/* Mood → قیدها → داغ → ForYou → دسته‌ها → سورپرایز (ریکاوری آخر) */}
+            {/*
+              Distill: mood owns first viewport → میانبر آرام → داغ (ریکاوری)
+              → برای تو → لینک دسته در لیست‌ها → سورپرایز
+            */}
             <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
 
             {trendingSlot ??
@@ -230,11 +250,7 @@ export default function CuratedLandingPageClient({
               ) : null}
             </div>
 
-            {categoriesSlot ?? (
-              <HomeDeferredMount fallback={<ExploreCategorySectionSkeleton />}>
-                <CategoryDiscoverySectionLazy categories={categories} />
-              </HomeDeferredMount>
-            )}
+            <ExploreCategoriesBrowseLink />
 
             <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
               <RandomSurpriseCardLazy
@@ -266,12 +282,7 @@ export default function CuratedLandingPageClient({
         )}
       </main>
 
-      {isCreateFormOpen && (
-        <CreateListFormLazy
-          isOpen={isCreateFormOpen}
-          onClose={() => setIsCreateFormOpen(false)}
-        />
-      )}
+      {createForm}
 
       {guidedOpen && (
         <GuidedDiscoverySheetLazy

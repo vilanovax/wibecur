@@ -10,10 +10,12 @@ import {
   isAllowedExternalImageUrl,
   isGenericListCover,
 } from '@/lib/image-url-policy';
-import { isOurStorageUrl } from '@/lib/object-storage-config';
+import { isLegacyLiaraStorageUrl, isOurStorageUrl } from '@/lib/object-storage-config';
 
 export interface ResolveCoverImageInput {
   coverImage?: string | null;
+  /** بنر افقی — فقط وقتی کاور عمودی نامعتبر است به‌عنوان جایگزین */
+  horizontalImage?: string | null;
   categorySlug?: string | null;
   listSlug?: string | null;
   listTitle?: string | null;
@@ -22,20 +24,39 @@ export interface ResolveCoverImageInput {
 function isUsableCoverUrl(cover: string): boolean {
   return (
     isOurStorageUrl(cover) ||
+    isLegacyLiaraStorageUrl(cover) ||
     cover.startsWith('/') ||
     isAllowedExternalImageUrl(cover)
   );
 }
 
-function coverLooksLikeCar(cover: string): boolean {
+/** بنر/کاور ماشین — حتی با نام گمراه‌کننده مثل Wey Coffee 02 */
+export function coverLooksLikeCar(cover: string): boolean {
   const t = cover.toLowerCase();
   return (
     t.includes('/car.webp') ||
     t.includes('car.webp') ||
     t.includes('abandoned_car') ||
     t.includes('/cars/') ||
+    t.includes('wey_coffee') ||
+    t.includes('coffee_02') ||
+    t.includes('iaa_2021') ||
     /[/_-]car[/_-]/.test(t)
   );
+}
+
+function isTrustedFieldCover(
+  cover: string,
+  coverCategory: string | null
+): boolean {
+  if (!cover.trim() || isGenericListCover(cover) || !isUsableCoverUrl(cover)) {
+    return false;
+  }
+  if (!isBannerCompatibleWithCategory(cover, coverCategory)) return false;
+  if (coverLooksLikeCar(cover) && coverCategory && !['car', 'tech'].includes(coverCategory)) {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -69,25 +90,36 @@ export function resolveCoverImage(input: ResolveCoverImageInput): string {
 
   // seedهای شناخته‌شده: همیشه topic پین — حتی اگر DB عکس اشتباه داشته باشد
   const pinned = getPinnedListTopicCover(listSlug);
-  if (pinned) return pinned;
+  if (pinned && !coverLooksLikeCar(pinned)) return pinned;
 
-  const coverTrusted =
-    !isGenericListCover(cover) &&
-    isUsableCoverUrl(cover) &&
-    isBannerCompatibleWithCategory(cover, coverCategory) &&
-    !(coverLooksLikeCar(cover) && coverCategory && !['car', 'tech'].includes(coverCategory));
-
-  if (coverTrusted) {
+  // ۱) کاور عمودی معتبر ۲) horizontal معتبر ۳) topic/variant
+  if (isTrustedFieldCover(cover, coverCategory)) {
     return cover;
   }
 
+  const horizontal = input.horizontalImage?.trim() ?? '';
+  if (horizontal && isTrustedFieldCover(horizontal, coverCategory)) {
+    return horizontal;
+  }
+
   const topicCover = getListTopicCoverUrl(listSlug, coverCategory, input.listTitle);
-  if (topicCover && isBannerCompatibleWithCategory(topicCover, coverCategory)) {
+  if (
+    topicCover &&
+    !coverLooksLikeCar(topicCover) &&
+    isBannerCompatibleWithCategory(topicCover, coverCategory)
+  ) {
     return topicCover;
   }
 
   if (coverCategory) {
-    return pickCategoryCoverVariant(coverCategory, seed);
+    const variant = pickCategoryCoverVariant(coverCategory, seed);
+    if (!coverLooksLikeCar(variant) || ['car', 'tech'].includes(coverCategory)) {
+      return variant;
+    }
+    return pickCategoryCoverVariant(
+      coverCategory === 'car' || coverCategory === 'tech' ? coverCategory : 'cafe',
+      seed
+    );
   }
 
   return pickCategoryCoverVariant('default', seed);

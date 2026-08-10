@@ -122,6 +122,8 @@ Avoid raw `text-sm` / `text-gray-*` on consumer surfaces.
 - Bottom nav: خانه · لیست‌ها · اکسپلور · پروفایل
 - Safe-area on fixed chrome; sheets use `overscroll-contain`
 - First viewport on home: search sticky + hero + one trending lane; For You deferred below saved for logged-in; category chips demoted (mood stays on `/explore`)
+- Lists (`/lists`): catalog — browse modes + category chips first; featured «منتخب» demoted below; no mood/vibe filters in Lists sheet (Explore owns mood)
+- Explore (`/explore`): mood-first 2×2; one recovery lane (داغ); categories via quiet link to Lists — not a full catalog grid on Explore
 
 ## Elevation & Depth
 

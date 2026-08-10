@@ -33,7 +33,7 @@ export default function ExploreSmartHero({
 
   return (
     <section
-      className="relative border-b border-wibe/80 bg-gradient-to-b from-primary/[0.07] via-wibe-surface to-wibe-surface px-2.5 pb-4 pt-3 lg:border-b-0 lg:from-primary/[0.05] lg:px-0 lg:pb-5 lg:pt-1"
+      className="relative border-b border-wibe/60 bg-gradient-to-b from-primary/[0.07] via-wibe-surface to-wibe-surface px-2.5 pb-3 pt-3 lg:border-b-0 lg:from-primary/[0.05] lg:px-0 lg:pb-4 lg:pt-1"
       aria-label="اکسپلور هوشمند"
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
@@ -45,7 +45,7 @@ export default function ExploreSmartHero({
         <button
           type="button"
           onClick={openExploreSearch}
-          className="sticky top-[52px] z-10 mb-4 flex w-full items-center rounded-2xl border border-wibe/80 bg-wibe-card/95 px-4 py-3 text-right shadow-vibe-sm backdrop-blur-md transition-colors hover:border-primary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:static lg:hidden"
+          className="sticky top-[52px] z-10 mb-3 flex w-full items-center rounded-2xl border border-wibe/80 bg-wibe-card/95 px-4 py-3 text-right shadow-vibe-sm backdrop-blur-md transition-colors hover:border-primary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 active:scale-[0.99] lg:static lg:hidden"
           aria-label="باز کردن جستجو"
         >
           <Search

@@ -107,8 +107,9 @@ const BANNERS = [
     url: 'https://upload.wikimedia.org/wikipedia/commons/6/61/Latte_macchiato_with_coffee_beans.jpg',
   },
   {
+    // قبلی: Wey Coffee 02 (خودرو) — اشتباه؛ هم‌تراز cozy (میز مطالعه + قهوه)
     name: 'cafe-3',
-    url: 'https://upload.wikimedia.org/wikipedia/commons/1/18/Wey_Coffee_02_IAA_2021_1X7A0099.jpg',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Journaling_over_coffee_%28Unsplash%29.jpg',
   },
   {
     name: 'restaurant-2',

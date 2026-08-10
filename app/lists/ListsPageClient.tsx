@@ -309,18 +309,28 @@ export default function ListsPageClient({
           vibes?: VibeFilter[];
         };
         if (parsed) {
-          setFilterState((prev) => ({
-            ...prev,
-            sortBy: parsed.sortBy ?? prev.sortBy,
-            vibes: Array.isArray(parsed.vibes) ? new Set(parsed.vibes) : prev.vibes,
-            creatorType: parsed.creatorType ?? prev.creatorType,
-            minItemCount: typeof parsed.minItemCount === 'number'
-              ? parsed.minItemCount === 5
-                ? 0
-                : parsed.minItemCount
-              : prev.minItemCount,
-            minRating: typeof parsed.minRating === 'number' ? parsed.minRating : prev.minRating,
-          }));
+          setFilterState((prev) => {
+            // Strip Explore mood vibes — Lists is catalog browse only
+            const restoredVibes = Array.isArray(parsed.vibes)
+              ? new Set(
+                  (parsed.vibes as VibeFilter[]).filter(
+                    (v) => v === 'trending' || v === 'saved'
+                  )
+                )
+              : prev.vibes;
+            return {
+              ...prev,
+              sortBy: parsed.sortBy ?? prev.sortBy,
+              vibes: restoredVibes.size > 0 ? restoredVibes : prev.vibes,
+              creatorType: parsed.creatorType ?? prev.creatorType,
+              minItemCount: typeof parsed.minItemCount === 'number'
+                ? parsed.minItemCount === 5
+                  ? 0
+                  : parsed.minItemCount
+                : prev.minItemCount,
+              minRating: typeof parsed.minRating === 'number' ? parsed.minRating : prev.minRating,
+            };
+          });
         }
       } catch {
         // ignore
@@ -792,7 +802,8 @@ export default function ListsPageClient({
     browseMode === 'trending' && trendingLoaded && sortedLists.length === 0 && publicLists.length > 0;
 
   const showContextBar = !isSearchActive;
-  const showFeaturedEarly = useSectionLayout && featuredLists.length > 0;
+  /** Featured lives below mode+category sticky chrome so browse controls own the first viewport */
+  const showFeatured = useSectionLayout && featuredLists.length > 0;
 
   const toolbarBtnFocus =
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
@@ -827,20 +838,14 @@ export default function ListsPageClient({
             className={`flex h-10 shrink-0 items-center gap-1 rounded-xl border border-wibe bg-wibe-card px-2.5 text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 ${toolbarBtnFocus} ${
               isSearchActive ? 'hidden' : ''
             }`}
-            aria-label="جستجو در کل وایب"
-            title="جستجو در کل وایب"
+            aria-label="جستجوی سراسری در وایب"
+            title="جستجوی سراسری در وایب"
           >
             <Globe className="h-4 w-4" strokeWidth={2} aria-hidden />
-            <span className="wibe-caption font-medium text-foreground/80">همه</span>
+            <span className="wibe-caption font-medium text-foreground/80">سراسری</span>
           </button>
         </div>
       </div>
-
-      {showFeaturedEarly ? (
-        <div className="mb-1 max-lg:px-3 lg:mb-2 lg:px-0">
-          <ListsFeaturedCarousel lists={featuredLists} />
-        </div>
-      ) : null}
 
       {showBrowseToolbar && (
         <>
@@ -874,7 +879,7 @@ export default function ListsPageClient({
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
                 }`}
-                aria-label="فیلتر، نمایش و حال‌وهوا"
+                aria-label="فیلتر نمایش و مرتب‌سازی"
               >
                 <Filter className="h-4 w-4" />
                 <span className="wibe-caption font-medium">فیلتر</span>
@@ -967,6 +972,13 @@ export default function ListsPageClient({
           )}
         </>
       )}
+
+      {/* منتخب demoted: after mode+category chrome so catalog chips win first viewport */}
+      {showFeatured ? (
+        <div className="mb-1 max-lg:px-3 lg:mb-2 lg:px-0">
+          <ListsFeaturedCarousel lists={featuredLists} />
+        </div>
+      ) : null}
 
       <div className="mt-2 w-full min-w-0 max-lg:px-3 lg:mt-4 lg:px-0">
         {guestSavedGate ? (

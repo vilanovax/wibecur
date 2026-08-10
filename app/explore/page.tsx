@@ -4,7 +4,6 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import CuratedLandingPageClient from '@/components/mobile/curated/CuratedLandingPageClient';
 import ExploreLcpPreload from '@/components/mobile/curated/ExploreLcpPreload';
 import ExploreTrendingServer from '@/components/mobile/curated/ExploreTrendingServer';
-import ExploreCategoriesServer from '@/components/mobile/curated/ExploreCategoriesServer';
 import {
   EMPTY_EXPLORE_USER_PREFERENCES,
   fetchExploreBasePayload,
@@ -21,7 +20,7 @@ export const revalidate = 60;
 export const metadata = {
   title: 'اکسپلور',
   description:
-    'کشف لیست‌ها بر اساس حال‌وهوا، ترندها و دسته‌ها — نقطه شروع کشف در وایب',
+    'کشف لیست‌ها بر اساس حال‌وهوا و ترندها — نقطه شروع کشف mood-first در وایب',
 };
 
 /**
@@ -31,7 +30,6 @@ export const metadata = {
 async function ExploreContent() {
   let initialData: ExplorePayload | undefined;
   let trendingSlot: ReactNode = null;
-  let categoriesSlot: ReactNode = null;
   let lcpImage: string | null = null;
 
   try {
@@ -49,10 +47,6 @@ async function ExploreContent() {
         <ExploreTrendingServer lists={trendingLists} subtitle="محبوب‌ترین‌ها همین الان" />
       );
     }
-
-    if (base.categories.length > 0) {
-      categoriesSlot = <ExploreCategoriesServer categories={base.categories} />;
-    }
   } catch (err) {
     console.warn('[ExplorePage] SSR explore fetch failed, falling back to client fetch:', err);
   }
@@ -60,11 +54,7 @@ async function ExploreContent() {
   return (
     <>
       <ExploreLcpPreload href={lcpImage} />
-      <CuratedLandingPageClient
-        initialData={initialData}
-        trendingSlot={trendingSlot}
-        categoriesSlot={categoriesSlot}
-      />
+      <CuratedLandingPageClient initialData={initialData} trendingSlot={trendingSlot} />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, ChevronDown, ChevronUp, Star, LayoutGrid, List } from 'lucide-react';
 import type { ListsViewMode } from '@/lib/lists-page-layout';
 export type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
+/** Browse-mode vibes stay in FilterState for URL/mode sync; mood vibes are Explore-only */
 export type VibeFilter = 'trending' | 'saved' | 'sleep' | 'calm_movie' | 'cafe' | 'family' | 'comedy' | 'drama';
 export type CreatorType = 'all' | 'top' | 'new' | 'viral';
 
@@ -34,16 +35,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'rising', label: 'در حال رشد' },
 ];
 
-/** حال‌وهوا — ترند/ذخیره در نوار browse mode هستند، اینجا تکرار نشوند */
-const VIBE_CHIPS: { value: VibeFilter; label: string }[] = [
-  { value: 'sleep', label: '🌙 قبل خواب' },
-  { value: 'comedy', label: '😂 کمدی' },
-  { value: 'family', label: '👨‍👩‍👧 خانوادگی' },
-  { value: 'drama', label: '🎭 درام' },
-  { value: 'calm_movie', label: '🎬 آرامش‌بخش' },
-  { value: 'cafe', label: '☕ کافه دنج' },
-];
-
 const CREATOR_OPTIONS: { value: CreatorType; label: string }[] = [
   { value: 'all', label: 'همه' },
   { value: 'top', label: '⭐ کیوریتورهای برتر' },
@@ -51,18 +42,28 @@ const CREATOR_OPTIONS: { value: CreatorType; label: string }[] = [
   { value: 'viral', label: '🔥 وایرال شده' },
 ];
 
+/** Catalog presets only — mood/vibe presets belong on Explore */
 const PRESETS: { id: string; label: string; apply: (state: FilterState) => FilterState }[] = [
-  {
-    id: 'sleep',
-    label: '🌙 قبل خواب',
-    apply: (s) => ({ ...s, vibes: new Set(['sleep' as VibeFilter]) }),
-  },
   {
     id: 'top',
     label: '⭐ فقط برترین‌ها',
     apply: (s) => ({ ...s, minRating: 4, creatorType: 'top' as CreatorType }),
   },
 ];
+
+/** Browse-mode vibes (ترند/ذخیره) are not “active filters” — modes own them */
+const BROWSE_MODE_VIBES = new Set<VibeFilter>(['trending', 'saved']);
+
+function countAdvancedFilters(state: FilterState): number {
+  const advancedVibes = [...state.vibes].filter((v) => !BROWSE_MODE_VIBES.has(v)).length;
+  return (
+    state.categories.size +
+    advancedVibes +
+    (state.creatorType !== 'all' ? 1 : 0) +
+    (state.minItemCount > 0 ? 1 : 0) +
+    (state.minRating > 0 ? 1 : 0)
+  );
+}
 
 function AccordionSection({
   title,
@@ -115,7 +116,6 @@ export default function FilterBottomSheetPro({
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     categories: true,
     sort: false,
-    vibe: false,
     creator: false,
     itemCount: false,
     rating: false,
@@ -127,15 +127,7 @@ export default function FilterBottomSheetPro({
 
   const resultCount = getResultCount(localState);
 
-  const activeCount =
-    localState.categories.size +
-    (localState.sortBy !== 'newest' ? 1 : 0) +
-    localState.vibes.size +
-    (localState.creatorType !== 'all' ? 1 : 0) +
-    (localState.minItemCount > 0 ? 1 : 0) +
-    (localState.minRating > 0 ? 1 : 0);
-
-  const hasChanges = JSON.stringify(localState) !== JSON.stringify(filterState);
+  const activeCount = countAdvancedFilters(localState);
   const canReset = activeCount > 0;
 
   const toggleSection = (key: string) => {
@@ -151,24 +143,16 @@ export default function FilterBottomSheetPro({
     });
   };
 
-  const toggleVibe = (v: VibeFilter) => {
-    setLocalState((s) => {
-      const next = new Set(s.vibes);
-      if (next.has(v)) next.delete(v);
-      else next.add(v);
-      return { ...s, vibes: next };
-    });
-  };
-
   const handleReset = () => {
-    setLocalState({
+    // Keep browse-mode vibes/sort; clear only advanced filters + categories
+    setLocalState((s) => ({
+      ...s,
       categories: new Set(),
-      sortBy: 'newest',
-      vibes: new Set(),
+      vibes: new Set([...s.vibes].filter((v) => BROWSE_MODE_VIBES.has(v))),
       creatorType: 'all',
       minItemCount: 0,
       minRating: 0,
-    });
+    }));
   };
 
   const handleApply = () => {
@@ -213,7 +197,7 @@ export default function FilterBottomSheetPro({
           <div className="flex-1 text-center">
             <h2 className="wibe-h3 font-bold text-foreground">فیلتر لیست‌ها</h2>
             <p className="wibe-caption text-wibe-secondary mt-0.5">
-              {activeCount > 0 ? `${activeCount} فیلتر فعال` : 'بدون فیلتر'}
+              {activeCount > 0 ? `${activeCount.toLocaleString('fa-IR')} فیلتر فعال` : 'بدون فیلتر'}
             </p>
           </div>
           {canReset && (
@@ -230,7 +214,7 @@ export default function FilterBottomSheetPro({
         {/* Live Result */}
         <div className="px-6 py-3 bg-primary/5 flex-shrink-0">
           <p className="wibe-small font-medium text-foreground">
-            {resultCount} لیست مطابق انتخاب شما
+            {resultCount.toLocaleString('fa-IR')} لیست مطابق انتخاب شما
           </p>
         </div>
 
@@ -338,30 +322,6 @@ export default function FilterBottomSheetPro({
             ))}
           </AccordionSection>
 
-          {/* Vibe */}
-          <AccordionSection
-            title="وایب / حال‌وهوا"
-            open={openSections.vibe}
-            onToggle={() => toggleSection('vibe')}
-          >
-            <div className="flex flex-wrap gap-2">
-              {VIBE_CHIPS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => toggleVibe(value)}
-                  className={`h-8 px-4 rounded-[20px] wibe-caption font-medium transition-colors ${
-                    localState.vibes.has(value)
-                      ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
-                      : 'bg-wibe-surface border border-wibe text-wibe-secondary'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </AccordionSection>
-
           {/* Creator Type */}
           <AccordionSection
             title="نوع سازنده"
@@ -394,7 +354,7 @@ export default function FilterBottomSheetPro({
           >
             <div className="space-y-3">
               <div className="flex justify-between wibe-small text-wibe-secondary">
-                <span>حداقل {localState.minItemCount} آیتم</span>
+                <span>حداقل {localState.minItemCount.toLocaleString('fa-IR')} آیتم</span>
               </div>
               <input
                 type="range"
@@ -431,7 +391,7 @@ export default function FilterBottomSheetPro({
                     }))
                   }
                   className="p-2 rounded-lg hover:bg-wibe-surface transition-colors"
-                  aria-label={`${n} ستاره`}
+                  aria-label={`${n.toLocaleString('fa-IR')} ستاره`}
                 >
                   <Star
                     className={`w-8 h-8 ${
@@ -442,7 +402,9 @@ export default function FilterBottomSheetPro({
               ))}
             </div>
             <p className="wibe-caption text-wibe-secondary mt-2">
-              {localState.minRating > 0 ? `${localState.minRating}+ ستاره` : 'بدون حد'}
+              {localState.minRating > 0
+                ? `${localState.minRating.toLocaleString('fa-IR')}+ ستاره`
+                : 'بدون حد'}
             </p>
           </AccordionSection>
         </div>
@@ -454,7 +416,7 @@ export default function FilterBottomSheetPro({
             onClick={handleApply}
             className="w-full h-14 rounded-[20px] bg-gradient-to-r from-primary to-primary-dark text-white font-semibold wibe-body flex items-center justify-center shadow-lg hover:opacity-95 transition-opacity"
           >
-            اعمال فیلتر ({resultCount} نتیجه)
+            اعمال فیلتر ({resultCount.toLocaleString('fa-IR')} نتیجه)
           </button>
         </div>
       </div>

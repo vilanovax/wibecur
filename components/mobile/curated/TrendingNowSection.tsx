@@ -4,6 +4,7 @@ import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
+import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import type { CuratedList } from '@/types/curated';
 
 interface TrendingNowSectionProps {
@@ -54,6 +55,12 @@ function TrendingCard({
   showBadge?: boolean;
 }) {
   const href = `/lists/${list.slug}`;
+  const trustedCover = resolveCoverImage({
+    coverImage: list.coverUrl,
+    categorySlug: list.category?.slug,
+    listSlug: list.slug,
+    listTitle: list.title,
+  });
 
   return (
     <ExploreTrendingPrefetchLink
@@ -63,7 +70,7 @@ function TrendingCard({
       <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:rounded-xl lg:group-hover:shadow-md">
         <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10]">
           <ImageWithFallback
-            src={list.coverUrl ?? ''}
+            src={trustedCover}
             alt={list.title}
             className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
             fallbackIcon="📋"

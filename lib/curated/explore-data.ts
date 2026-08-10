@@ -36,6 +36,7 @@ const exploreListSelect = {
   slug: true,
   description: true,
   coverImage: true,
+  horizontalImage: true,
   categoryId: true,
   badge: true,
   tags: true,
@@ -95,6 +96,7 @@ type DbListRow = {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  horizontalImage: string | null;
   categoryId: string | null;
   isFeatured: boolean;
   badge: string | null;
@@ -193,6 +195,7 @@ function mapDbListToCurated(
     category: mapCategoryMeta(row.categories),
     coverUrl: resolveListCover({
       coverImage: row.coverImage,
+      horizontalImage: row.horizontalImage,
       slug: row.slug,
       title: row.title,
       categories: row.categories,
@@ -228,6 +231,7 @@ function mapTrendingToCurated(t: TrendingListResult, rising = false): CuratedLis
     categoryId: t.categoryId ?? 'unknown',
     coverUrl: resolveListCover({
       coverImage: t.coverImage,
+      horizontalImage: t.horizontalImage,
       slug: t.slug,
       title: t.title,
       categorySlug: t.categorySlug,

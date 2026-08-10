@@ -13,6 +13,7 @@ export type ListCoverSource = {
 export function resolveListCover(list: ListCoverSource): string {
   return resolveCoverImage({
     coverImage: list.coverImage,
+    horizontalImage: list.horizontalImage,
     listSlug: list.slug,
     listTitle: list.title,
     categorySlug: list.categorySlug ?? list.categories?.slug ?? null,

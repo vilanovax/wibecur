@@ -32,7 +32,7 @@ export default function RandomSurpriseCard({ lists }: Props) {
 
   return (
     <section
-      className="border-t border-wibe/40 px-2.5 py-3 lg:px-0 lg:py-4"
+      className="border-t border-wibe/30 px-2.5 py-2.5 lg:px-0 lg:py-3"
       aria-labelledby="surprise-title"
     >
       {!preview ? (
