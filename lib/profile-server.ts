@@ -1,9 +1,12 @@
+import { cache } from 'react';
+import { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 import { dbQuery } from './db';
 import { calculateCuratorResult } from './curator';
 import type { ProfileUser } from '@/components/profile/types';
 
 const VIRAL_LIKE_THRESHOLD = 50;
+const POPULAR_SAVE_THRESHOLD = 10;
 
 export type ApiProfileUser = ProfileUser & {
   role: unknown;
@@ -13,13 +16,38 @@ export type ApiProfileUser = ProfileUser & {
   allowBookmarkListNotifications: boolean;
 };
 
-/** پروفایل کامل کاربر — برای SSR و API */
-export async function fetchProfileUser(userId: string): Promise<ProfileUser | null> {
-  const api = await fetchApiProfileUser(userId);
-  return api;
-}
+type ListAggRow = {
+  lists_count: number;
+  total_likes: number;
+  profile_views: number;
+  total_items: number;
+  saved_count: number;
+  viral_count: number;
+  popular_count: number;
+};
 
-export async function fetchApiProfileUser(userId: string): Promise<ApiProfileUser | null> {
+type ExpertiseRow = {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  count: number;
+};
+
+/** پروفایل کامل کاربر — برای SSR و API (per-request dedupe) */
+export const fetchProfileUser = cache(
+  async (userId: string): Promise<ProfileUser | null> => {
+    return fetchApiProfileUser(userId);
+  }
+);
+
+/**
+ * Perf: SQL aggregates instead of loading every list row into Node
+ * for viral/popular/expertise stats (async-parallel counts).
+ */
+export async function fetchApiProfileUser(
+  userId: string
+): Promise<ApiProfileUser | null> {
   return dbQuery(async () => {
     let user: {
       id: string;
@@ -96,48 +124,67 @@ export async function fetchApiProfileUser(userId: string): Promise<ApiProfileUse
 
     if (!user) return null;
 
-    const [listsCount, bookmarksCount, likesCount, itemLikesCount, userLists, approvedItemsCount] =
-      await Promise.all([
-        prisma.lists.count({ where: { userId, isActive: true, deletedAt: null } }),
-        prisma.bookmarks.count({ where: { userId } }),
-        prisma.list_likes.count({ where: { userId } }),
-        prisma.item_votes.count({ where: { userId } }),
-        prisma.lists.findMany({
-          where: { userId, isActive: true, deletedAt: null },
-          select: {
-            likeCount: true,
-            viewCount: true,
-            saveCount: true,
-            itemCount: true,
-            categoryId: true,
-            categories: { select: { id: true, name: true, slug: true, icon: true } },
-          },
-        }),
-        prisma.suggested_items.count({ where: { userId, status: 'approved' } }),
-      ]);
+    const [
+      listAggRows,
+      expertiseRows,
+      bookmarksCount,
+      likesCount,
+      itemLikesCount,
+      approvedItemsCount,
+    ] = await Promise.all([
+      prisma.$queryRaw<ListAggRow[]>(Prisma.sql`
+        SELECT
+          COUNT(*)::int AS lists_count,
+          COALESCE(SUM(l."likeCount"), 0)::int AS total_likes,
+          COALESCE(SUM(l."viewCount"), 0)::int AS profile_views,
+          COALESCE(SUM(l."itemCount"), 0)::int AS total_items,
+          COALESCE(SUM(l."saveCount"), 0)::int AS saved_count,
+          COUNT(*) FILTER (WHERE l."likeCount" >= ${VIRAL_LIKE_THRESHOLD})::int AS viral_count,
+          COUNT(*) FILTER (WHERE l."saveCount" >= ${POPULAR_SAVE_THRESHOLD})::int AS popular_count
+        FROM lists l
+        WHERE l."userId" = ${userId}
+          AND l."isActive" = true
+          AND l."deletedAt" IS NULL
+      `),
+      prisma.$queryRaw<ExpertiseRow[]>(Prisma.sql`
+        SELECT
+          c.id,
+          c.name,
+          c.slug,
+          c.icon,
+          COUNT(*)::int AS count
+        FROM lists l
+        INNER JOIN categories c ON c.id = l."categoryId"
+        WHERE l."userId" = ${userId}
+          AND l."isActive" = true
+          AND l."deletedAt" IS NULL
+          AND l."categoryId" IS NOT NULL
+        GROUP BY c.id, c.name, c.slug, c.icon
+        ORDER BY count DESC
+        LIMIT 5
+      `),
+      prisma.bookmarks.count({ where: { userId } }),
+      prisma.list_likes.count({ where: { userId } }),
+      prisma.item_votes.count({ where: { userId } }),
+      prisma.suggested_items.count({ where: { userId, status: 'approved' } }),
+    ]);
 
-    const totalLikesReceived = userLists.reduce((s, l) => s + (l.likeCount ?? 0), 0);
-    const profileViews = userLists.reduce((s, l) => s + (l.viewCount ?? 0), 0);
-    const totalItemsCurated = userLists.reduce((s, l) => s + (l.itemCount ?? 0), 0);
-    const viralListsCount = userLists.filter((l) => (l.likeCount ?? 0) >= VIRAL_LIKE_THRESHOLD).length;
-    const popularListsCount = userLists.filter((l) => (l.saveCount ?? 0) >= 10).length;
-    const savedCount = userLists.reduce((s, l) => s + (l.saveCount ?? 0), 0);
+    const agg = listAggRows[0];
+    const listsCount = agg?.lists_count ?? 0;
+    const totalLikesReceived = agg?.total_likes ?? 0;
+    const profileViews = agg?.profile_views ?? 0;
+    const totalItemsCurated = agg?.total_items ?? 0;
+    const savedCount = agg?.saved_count ?? 0;
+    const viralListsCount = agg?.viral_count ?? 0;
+    const popularListsCount = agg?.popular_count ?? 0;
     const avgLikesPerList = listsCount > 0 ? totalLikesReceived / listsCount : 0;
 
-    const categoryCounts: Record<string, { name: string; slug: string; icon: string; count: number }> =
-      {};
-    for (const list of userLists) {
-      const cat = list.categories;
-      if (cat) {
-        if (!categoryCounts[cat.id]) {
-          categoryCounts[cat.id] = { name: cat.name, slug: cat.slug, icon: cat.icon, count: 0 };
-        }
-        categoryCounts[cat.id].count++;
-      }
-    }
-    const expertise = Object.values(categoryCounts)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+    const expertise = (expertiseRows as ExpertiseRow[]).map((row: ExpertiseRow) => ({
+      name: row.name,
+      slug: row.slug,
+      icon: row.icon,
+      count: Number(row.count) || 0,
+    }));
 
     const curatorResult = calculateCuratorResult({
       listsCount,

@@ -78,6 +78,8 @@ export default function BookmarksTab({
           },
         }
       : undefined,
+    initialDataUpdatedAt: hasInitial ? Date.now() : undefined,
+    refetchOnMount: hasInitial ? false : undefined,
   });
   const bookmarks = data?.bookmarks ?? [];
   const hasMore = (data?.pagination?.page ?? 1) < (data?.pagination?.totalPages ?? 1);

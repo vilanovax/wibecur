@@ -60,16 +60,16 @@ function slimFeaturedStub(list: FeaturedListData): FeaturedListData {
 }
 
 /**
- * When RSC already renders hero (+ desktop trending), don't also ship full featured
- * / hero image fields into the client provider seed (server-dedup-props).
- * Keep slim trending/rising/recommendations for mobile carousels + mood.
+ * When RSC already renders hero + mobile/desktop trending, don't also ship full
+ * featured / hero image fields into the client provider seed (server-dedup-props).
+ * Keep slim trending/rising for saved/for-you fallbacks + mood; cap payload size.
  */
 export function toHomeClientSeed(data: HomeData): HomeData {
   return {
     featured: data.featured ? slimFeaturedStub(data.featured) : null,
     featuredSlotId: data.featuredSlotId,
-    trending: data.trending.map(slimListCard),
-    rising: data.rising.map(slimRisingCard),
-    recommendations: data.recommendations.map(slimListCard),
+    trending: data.trending.slice(0, 8).map(slimListCard),
+    rising: data.rising.slice(0, 6).map(slimRisingCard),
+    recommendations: data.recommendations.slice(0, 4).map(slimListCard),
   };
 }

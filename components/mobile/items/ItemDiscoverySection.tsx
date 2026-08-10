@@ -124,6 +124,8 @@ export default function ItemDiscoverySection({
 }: ItemDiscoverySectionProps) {
   const [activeTab, setActiveTab] = useState<DiscoveryTab>('similar');
 
+  const hasSimilarSeed = Boolean(initialSimilarItems?.length);
+
   const { data: similarItems = initialSimilarItems ?? [], isLoading: similarLoading } = useQuery({
     queryKey: ['items', itemId, 'similar'],
     queryFn: async (): Promise<SimilarItem[]> => {
@@ -133,6 +135,8 @@ export default function ItemDiscoverySection({
     },
     enabled: fetchEnabled && activeTab === 'similar',
     initialData: initialSimilarItems,
+    initialDataUpdatedAt: hasSimilarSeed ? Date.now() : undefined,
+    refetchOnMount: hasSimilarSeed ? false : undefined,
     staleTime: 5 * 60 * 1000,
   });
 

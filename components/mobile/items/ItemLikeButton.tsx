@@ -37,7 +37,8 @@ export default function ItemLikeButton({
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || `/items/${itemId}`)}`;
 
   const { data: viewerState, isLoading: viewerLoading } = useItemViewerState(itemId, {
-    enabled: deferReady,
+    // Guests use SSR likeCount — skip viewer-state round-trip
+    enabled: deferReady && status === 'authenticated',
     initialLikeCount,
   });
 

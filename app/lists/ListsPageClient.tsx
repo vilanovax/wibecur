@@ -42,7 +42,10 @@ import {
   resolveListCardVariant,
   type ListsViewMode,
 } from '@/lib/lists-page-layout';
-import { LISTS_BROWSE_DEFAULT_LIMIT } from '@/lib/lists-browse-shared';
+import {
+  LISTS_BROWSE_DEFAULT_LIMIT,
+  type ListsBrowseSort,
+} from '@/lib/lists-browse-shared';
 
 type ListWithCategory = ListsBrowseList;
 
@@ -63,6 +66,10 @@ interface ListsPageClientProps {
   initialCategory?: string;
   initialSearch?: string;
   initialMode?: string;
+  /** Sort used for SSR browse payload — skip client refetch when still matching */
+  initialSort?: ListsBrowseSort;
+  initialCategoryId?: string | null;
+  initialTrendingIds?: string[];
 }
 
 type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
@@ -202,24 +209,33 @@ export default function ListsPageClient({
   initialCategory,
   initialSearch,
   initialMode,
+  initialSort = 'rising',
+  initialCategoryId = null,
+  initialTrendingIds = [],
 }: ListsPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { openSearch } = useSearch();
   const { isGuest } = useHomeUserState();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const initialModeApplied = useRef(false);
+  const initialModeApplied = useRef(Boolean(initialMode));
 
   const categoryById = categories.find((c) => c.id === initialCategory);
   const categoryBySlug = categories.find((c) => 'slug' in c && (c as { slug: string }).slug === initialCategory);
   const resolvedCategoryId =
+    initialCategoryId ??
     resolveCategoryIdFromParam(initialCategory, categories) ??
     categoryById?.id ??
     categoryBySlug?.id ??
     null;
 
+  const ssrBrowseMode = (initialMode as BrowseMode | undefined) ?? 'trending';
+  const ssrFilterSeed = browseModeToFilter(ssrBrowseMode);
+
   const [filterState, setFilterState] = useState<FilterState>(() => ({
     ...DEFAULT_FILTER,
+    sortBy: initialSort ?? ssrFilterSeed.sortBy,
+    vibes: ssrFilterSeed.vibes,
     categories: resolvedCategoryId ? new Set([resolvedCategoryId]) : new Set(),
   }));
   const [searchQuery, setSearchQuery] = useState(initialSearch ?? '');
@@ -230,8 +246,8 @@ export default function ListsPageClient({
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
   const [bookmarksLoaded, setBookmarksLoaded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [trendingListIds, setTrendingListIds] = useState<string[]>([]);
-  const [trendingLoaded, setTrendingLoaded] = useState(false);
+  const [trendingListIds, setTrendingListIds] = useState<string[]>(initialTrendingIds);
+  const [trendingLoaded, setTrendingLoaded] = useState(initialTrendingIds.length > 0);
   const [allLists, setAllLists] = useState(initialLists);
   const [hasMoreRemote, setHasMoreRemote] = useState(totalListCount > initialLists.length);
   const [isLoadingRemote, setIsLoadingRemote] = useState(false);
@@ -381,7 +397,7 @@ export default function ListsPageClient({
       browseMode === 'trending' || [...filterState.vibes].includes('trending');
     if (!needsTrending || trendingLoaded) return;
 
-    fetch('/api/trending/global')
+    fetch('/api/trending/global?limit=24')
       .then((res) => res.json())
       .then((json) => {
         if (json?.success && Array.isArray(json.data)) {
@@ -584,15 +600,17 @@ export default function ListsPageClient({
   }, [filterState.sortBy, serverBrowseCategoryId, browseMode]);
 
   useEffect(() => {
-    const isDefaultBrowse =
-      filterState.sortBy === 'newest' &&
-      !serverBrowseCategoryId &&
-      browseMode !== 'trending' &&
-      browseMode !== 'saved';
+    // SSR already loaded matching sort/category — avoid refetching 120 rows on first paint
+    const ssrMatches =
+      browseMode !== 'saved' &&
+      filterState.sortBy === initialSort &&
+      (serverBrowseCategoryId ?? null) === (initialCategoryId ?? null);
 
-    if (isDefaultBrowse) {
+    if (ssrMatches) {
       setAllLists(initialLists);
       setHasMoreRemote(totalListCount > initialLists.length);
+      setIsLoadingRemote(false);
+      remoteFetchLock.current = false;
       return;
     }
 
@@ -602,7 +620,7 @@ export default function ListsPageClient({
 
     const params = new URLSearchParams({
       offset: '0',
-      limit: '120',
+      limit: String(LISTS_BROWSE_DEFAULT_LIMIT),
       sort: filterState.sortBy,
     });
     if (serverBrowseCategoryId) {
@@ -633,6 +651,8 @@ export default function ListsPageClient({
     browseMode,
     initialLists,
     totalListCount,
+    initialSort,
+    initialCategoryId,
   ]);
 
   useEffect(() => {

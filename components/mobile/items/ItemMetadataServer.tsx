@@ -19,7 +19,6 @@ export type ItemMetadataServerItem = ItemHeroServerItem & {
   description: string | null;
   listNote?: string | null;
   externalUrl: string | null;
-  personalSaveCount: number;
 };
 
 type ItemMetadataServerProps = {

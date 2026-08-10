@@ -48,7 +48,8 @@ export function useItemViewerState(
   return useQuery({
     queryKey: itemViewerStateQueryKey(itemId),
     queryFn: () => fetchItemViewerState(itemId),
-    enabled: enabled && status !== 'loading',
+    // Only authenticated users need like/save/pick state from API
+    enabled: enabled && status === 'authenticated',
     staleTime: 60_000,
     retry: false,
     placeholderData: (prev) =>

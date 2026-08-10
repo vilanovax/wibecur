@@ -34,7 +34,7 @@ import {
   SEARCH_LISTS_ONLY_LIMITS,
 } from '@/lib/search-client';
 import type { UnifiedSearchItem } from '@/lib/unified-search';
-import type { SearchQueryIntent } from '@/lib/search-keywords';
+import { meaningfulSearchTokens, type SearchQueryIntent } from '@/lib/search-keywords';
 
 type TrendingQueryItem = { query: string; count: number };
 
@@ -381,6 +381,7 @@ export default function SearchOverlay({
 
   const normalized = normalizeSearchQuery(query);
   const showResults = normalized.length >= SEARCH_MIN_LENGTH;
+  const multiTokenEmpty = meaningfulSearchTokens(normalized).length >= 2;
   const showItemResults = searchViewTab === 'items';
   const showListResults = searchViewTab === 'lists';
   const listNavOffset = showItemResults ? directItems.length + indirectItems.length : 0;
@@ -700,9 +701,15 @@ export default function SearchOverlay({
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-wibe-surface">
               <Search className="h-7 w-7 text-wibe-secondary/70" strokeWidth={1.75} />
             </div>
-            <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
+            <p className="wibe-body font-medium text-foreground">
+              {multiTokenEmpty
+                ? `نتیجه‌ای برای «${normalized}» نیست`
+                : 'نتیجه‌ای پیدا نشد'}
+            </p>
             <p className="mt-1 wibe-caption text-wibe-secondary">
-              عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن
+              {multiTokenEmpty
+                ? 'همهٔ کلمات باید در نتیجه باشند — مکان یا نام دقیق‌تری امتحان کن'
+                : 'عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن'}
             </p>
             <button
               type="button"

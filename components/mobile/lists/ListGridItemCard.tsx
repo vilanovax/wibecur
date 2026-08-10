@@ -5,6 +5,7 @@ import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
 import { isMovieLikeCategory, isPortraitCoverCategory } from '@/lib/resolve-item-image';
+import { preloadItemPreviewSheet } from '@/components/mobile/lists/list-detail-lazy-sections';
 
 /** srcset next/image برای گرید ۲–۴ ستونه */
 export const LIST_GRID_IMAGE_SIZES =
@@ -39,6 +40,7 @@ function ListGridItemCard({
     <div className="flex flex-col overflow-hidden rounded-lg border border-wibe bg-wibe-card text-right shadow-sm transition-colors lg:hover:border-primary/20 lg:hover:shadow-md">
       <button
         type="button"
+        onPointerDown={() => preloadItemPreviewSheet()}
         onClick={() => onOpenAt(index)}
         aria-label={`رفتن به آیتم ${(index + 1).toLocaleString('fa-IR')}${item.title ? ` — ${item.title}` : ''}`}
         className="block w-full text-right transition-colors active:scale-[0.99]"
@@ -62,6 +64,7 @@ function ListGridItemCard({
             enrichWhenVisible={false}
             coverLayout="grid"
             sizes={LIST_GRID_IMAGE_SIZES}
+            priority={index < 8}
           />
           <span
             className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums"

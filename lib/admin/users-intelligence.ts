@@ -1,64 +1,41 @@
 /**
- * User Intelligence — داده پنل مدیریت کاربران (فیلتر/مرتب‌سازی سرور، رشد ۷ روزه)
+ * User Intelligence — server data for admin users panel.
+ *
+ * Perf (vercel-react-best-practices):
+ * - Growing / most-active via SQL (no full-table JS groupBy + all user ids)
+ * - Bookmark+list growth windows in one SQL
+ * - Growth sort: one scored query, no double growth fetch
+ * - Types/sort UI constants live in users-types.ts (client-safe)
  */
 
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { computeSaveGrowthPercent } from '@/lib/admin/category-intelligence';
+import { computeSaveGrowthPercent } from '@/lib/admin/category-intelligence-shared';
 import { botExclusionWhere, isBotUser } from '@/lib/admin/user-bot-utils';
 import type { UserFilterKind } from '@/lib/admin/user-filter-utils';
 import { USER_FILTER_PILLS } from '@/lib/admin/user-filter-utils';
 import type {
   UserIntelligenceRow,
   UserPulseSummary,
+  UserSortKind,
+  UsersIntelligenceData,
+  UsersIntelligenceQuery,
 } from '@/lib/admin/users-types';
 import { getUsersCommentModerationMeta } from '@/lib/comment-permission';
 
+export type {
+  UserSortKind,
+  UsersIntelligenceQuery,
+  UsersIntelligenceData,
+} from '@/lib/admin/users-types';
+export {
+  USER_SORT_OPTIONS,
+  parseUserSort,
+} from '@/lib/admin/users-types';
+
 export const USERS_PAGE_SIZE = 20;
 const MS_DAY = 24 * 60 * 60 * 1000;
-
-export type UserSortKind =
-  | 'created_desc'
-  | 'created_asc'
-  | 'growth_desc'
-  | 'growth_asc'
-  | 'bookmarks_desc'
-  | 'lists_desc'
-  | 'curator_desc';
-
-export const USER_SORT_OPTIONS: { value: UserSortKind; label: string }[] = [
-  { value: 'created_desc', label: 'جدیدترین عضویت' },
-  { value: 'created_asc', label: 'قدیمی‌ترین عضویت' },
-  { value: 'growth_desc', label: 'بیشترین رشد ۷ روزه' },
-  { value: 'growth_asc', label: 'کمترین رشد ۷ روزه' },
-  { value: 'bookmarks_desc', label: 'بیشترین ذخیره' },
-  { value: 'lists_desc', label: 'بیشترین لیست' },
-  { value: 'curator_desc', label: 'امتیاز کیوریتور' },
-];
-
-export type UsersIntelligenceQuery = {
-  page: number;
-  search: string;
-  filter: UserFilterKind;
-  hideBots: boolean;
-  sort: UserSortKind;
-  trash?: boolean;
-};
-
-export type UsersIntelligenceData = {
-  pulse: UserPulseSummary;
-  users: UserIntelligenceRow[];
-  filterCounts: Record<UserFilterKind, number>;
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
-  totalCount: number;
-  filter: UserFilterKind;
-  sort: UserSortKind;
-  search: string;
-  hideBots: boolean;
-};
 
 const userSelect = {
   id: true,
@@ -91,7 +68,8 @@ function deriveQuality(
   bookmarksCount: number,
   curatorScore: number
 ): UserIntelligenceRow['quality'] {
-  if (curatorScore > 5 || (listsCount >= 3 && bookmarksCount >= 10)) return 'high_impact';
+  if (curatorScore > 5 || (listsCount >= 3 && bookmarksCount >= 10))
+    return 'high_impact';
   if (listsCount >= 1 || bookmarksCount >= 2) return 'stable';
   return 'low_engagement';
 }
@@ -105,12 +83,6 @@ function deriveRisk(
   if (userViolations > 0 || commentReports > 0)
     return { risk: 'spike', riskLabel: 'نیاز به بررسی' };
   return { risk: 'clean' };
-}
-
-export function parseUserSort(value: string | undefined): UserSortKind {
-  const valid = new Set(USER_SORT_OPTIONS.map((o) => o.value));
-  if (value && valid.has(value as UserSortKind)) return value as UserSortKind;
-  return 'created_desc';
 }
 
 export function buildBaseUsersWhere(query: {
@@ -138,23 +110,28 @@ export function buildBaseUsersWhere(query: {
   return { AND: parts };
 }
 
-function filterWhereClause(filter: UserFilterKind): Prisma.usersWhereInput | null {
+function filterWhereClause(
+  filter: UserFilterKind
+): Prisma.usersWhereInput | null {
   const thirtyDaysAgo = new Date(Date.now() - 30 * MS_DAY);
 
   switch (filter) {
     case 'most_active':
-      // resolved via mostActiveIds (groupBy)
-      return null;
     case 'growing':
-      // resolved via growingIds
       return null;
     case 'curators':
       return {
-        OR: [{ curatorLevel: { not: 'EXPLORER' } }, { curatorScore: { gt: 0 } }],
+        OR: [
+          { curatorLevel: { not: 'EXPLORER' } },
+          { curatorScore: { gt: 0 } },
+        ],
       };
     case 'suspicious':
       return {
-        OR: [{ user_violations: { some: {} } }, { comment_reports: { some: {} } }],
+        OR: [
+          { user_violations: { some: {} } },
+          { comment_reports: { some: {} } },
+        ],
       };
     case 'new':
       return { createdAt: { gte: thirtyDaysAgo } };
@@ -189,177 +166,135 @@ export function mergeUsersWhere(
 
 type ActivityGrowth = { recent: number; previous: number; percent: number };
 
-async function fetchBookmarkGrowthMaps(
+/** One SQL for bookmark+list activity windows (replaces 4× groupBy) */
+async function fetchActivityGrowthMaps(
   userIds: string[],
   last7d: Date,
   last14d: Date
 ): Promise<Map<string, ActivityGrowth>> {
-  if (userIds.length === 0) return new Map();
-
-  const [bookRecent, bookPrev, listRecent, listPrev] = await Promise.all([
-    dbQuery(() =>
-      prisma.bookmarks.groupBy({
-        by: ['userId'],
-        where: { userId: { in: userIds }, createdAt: { gte: last7d } },
-        _count: { _all: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.bookmarks.groupBy({
-        by: ['userId'],
-        where: {
-          userId: { in: userIds },
-          createdAt: { gte: last14d, lt: last7d },
-        },
-        _count: { _all: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.lists.groupBy({
-        by: ['userId'],
-        where: { userId: { in: userIds }, createdAt: { gte: last7d } },
-        _count: { _all: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.lists.groupBy({
-        by: ['userId'],
-        where: {
-          userId: { in: userIds },
-          createdAt: { gte: last14d, lt: last7d },
-        },
-        _count: { _all: true },
-      })
-    ),
-  ]);
-
-  const map = new Map<string, { recent: number; previous: number }>();
-
-  const bump = (userId: string, field: 'recent' | 'previous', n: number) => {
-    const cur = map.get(userId) ?? { recent: 0, previous: 0 };
-    cur[field] += n;
-    map.set(userId, cur);
-  };
-
-  for (const row of bookRecent) bump(row.userId, 'recent', row._count._all);
-  for (const row of bookPrev) bump(row.userId, 'previous', row._count._all);
-  for (const row of listRecent) bump(row.userId, 'recent', row._count._all);
-  for (const row of listPrev) bump(row.userId, 'previous', row._count._all);
-
   const out = new Map<string, ActivityGrowth>();
-  for (const [userId, { recent, previous }] of map) {
-    out.set(userId, {
-      recent,
-      previous,
-      percent: computeSaveGrowthPercent(recent, previous),
+  if (userIds.length === 0) return out;
+
+  const rows = await dbQuery(() =>
+    prisma.$queryRaw<{ userId: string; recent: number; previous: number }[]>(
+      Prisma.sql`
+        SELECT t."userId" AS "userId",
+               SUM(t.recent)::int AS recent,
+               SUM(t.previous)::int AS previous
+        FROM (
+          SELECT b."userId" AS "userId",
+                 COUNT(*) FILTER (WHERE b."createdAt" >= ${last7d})::int AS recent,
+                 COUNT(*) FILTER (
+                   WHERE b."createdAt" >= ${last14d} AND b."createdAt" < ${last7d}
+                 )::int AS previous
+          FROM bookmarks b
+          WHERE b."userId" IN (${Prisma.join(userIds)})
+            AND b."createdAt" >= ${last14d}
+          GROUP BY b."userId"
+          UNION ALL
+          SELECT l."userId" AS "userId",
+                 COUNT(*) FILTER (WHERE l."createdAt" >= ${last7d})::int AS recent,
+                 COUNT(*) FILTER (
+                   WHERE l."createdAt" >= ${last14d} AND l."createdAt" < ${last7d}
+                 )::int AS previous
+          FROM lists l
+          WHERE l."userId" IN (${Prisma.join(userIds)})
+            AND l."createdAt" >= ${last14d}
+          GROUP BY l."userId"
+        ) t
+        GROUP BY t."userId"
+      `
+    )
+  );
+
+  for (const row of rows) {
+    out.set(row.userId, {
+      recent: row.recent,
+      previous: row.previous,
+      percent: computeSaveGrowthPercent(row.recent, row.previous),
     });
   }
   return out;
 }
 
-/** ≥۲ لیست یا ≥۵ بوکمارک */
+/**
+ * Most-active: ≥2 lists OR ≥5 bookmarks — SQL union (no load-all-user-ids).
+ * Then intersect with baseWhere via Prisma.
+ */
 async function fetchMostActiveUserIds(
   baseWhere: Prisma.usersWhereInput
 ): Promise<string[]> {
-  const baseUsers = await dbQuery(() =>
-    prisma.users.findMany({ where: baseWhere, select: { id: true } })
+  const candidateRows = await dbQuery(() =>
+    prisma.$queryRaw<{ userId: string }[]>(Prisma.sql`
+      SELECT "userId" FROM (
+        SELECT "userId" FROM lists GROUP BY "userId" HAVING COUNT(*) >= 2
+        UNION
+        SELECT "userId" FROM bookmarks GROUP BY "userId" HAVING COUNT(*) >= 5
+      ) t
+    `)
   );
-  const baseIds = new Set(baseUsers.map((u) => u.id));
-  if (baseIds.size === 0) return [];
+  const candidateIds = candidateRows.map((r) => r.userId);
+  if (candidateIds.length === 0) return [];
 
-  const [listAgg, bookAgg] = await Promise.all([
-    dbQuery(() =>
-      prisma.lists.groupBy({
-        by: ['userId'],
-        _count: { _all: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.bookmarks.groupBy({
-        by: ['userId'],
-        _count: { _all: true },
-      })
-    ),
-  ]);
-
-  const active = new Set<string>();
-  for (const row of listAgg) {
-    if (baseIds.has(row.userId) && row._count._all >= 2) active.add(row.userId);
-  }
-  for (const row of bookAgg) {
-    if (baseIds.has(row.userId) && row._count._all >= 5) active.add(row.userId);
-  }
-  return [...active];
-}
-
-/** شناسه کاربران با رشد فعالیت ۷ روزه (بوکمارک + لیست جدید) */
-async function fetchGrowingUserIds(baseWhere: Prisma.usersWhereInput): Promise<string[]> {
-  const last7d = new Date(Date.now() - 7 * MS_DAY);
-  const last14d = new Date(Date.now() - 14 * MS_DAY);
-
-  const baseUsers = await dbQuery(() =>
+  const matched = await dbQuery(() =>
     prisma.users.findMany({
-      where: baseWhere,
+      where: { AND: [baseWhere, { id: { in: candidateIds } }] },
       select: { id: true },
     })
   );
-  const baseIds = new Set(baseUsers.map((u) => u.id));
-  if (baseIds.size === 0) return [];
+  return matched.map((u) => u.id);
+}
 
-  const [bookRecent, bookPrev, listRecent, listPrev] = await Promise.all([
-    dbQuery(() =>
-      prisma.bookmarks.groupBy({
-        by: ['userId'],
-        where: { createdAt: { gte: last7d } },
-        _count: { _all: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.bookmarks.groupBy({
-        by: ['userId'],
-        where: { createdAt: { gte: last14d, lt: last7d } },
-        _count: { _all: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.lists.groupBy({
-        by: ['userId'],
-        where: { createdAt: { gte: last7d } },
-        _count: { _all: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.lists.groupBy({
-        by: ['userId'],
-        where: { createdAt: { gte: last14d, lt: last7d } },
-        _count: { _all: true },
-      })
-    ),
-  ]);
+/**
+ * Growing: recent activity (7d) > previous window — scoped to last 14d only.
+ */
+async function fetchGrowingUserIds(
+  baseWhere: Prisma.usersWhereInput
+): Promise<string[]> {
+  const last7d = new Date(Date.now() - 7 * MS_DAY);
+  const last14d = new Date(Date.now() - 14 * MS_DAY);
 
-  const activity = new Map<string, { recent: number; previous: number }>();
-  const add = (rows: { userId: string; _count: { _all: number } }[], field: 'recent' | 'previous') => {
-    for (const row of rows) {
-      if (!baseIds.has(row.userId)) continue;
-      const cur = activity.get(row.userId) ?? { recent: 0, previous: 0 };
-      cur[field] += row._count._all;
-      activity.set(row.userId, cur);
-    }
-  };
+  const rows = await dbQuery(() =>
+    prisma.$queryRaw<{ userId: string; recent: number; previous: number }[]>(
+      Prisma.sql`
+        SELECT t."userId" AS "userId",
+               SUM(t.recent)::int AS recent,
+               SUM(t.previous)::int AS previous
+        FROM (
+          SELECT b."userId" AS "userId",
+                 COUNT(*) FILTER (WHERE b."createdAt" >= ${last7d})::int AS recent,
+                 COUNT(*) FILTER (
+                   WHERE b."createdAt" >= ${last14d} AND b."createdAt" < ${last7d}
+                 )::int AS previous
+          FROM bookmarks b
+          WHERE b."createdAt" >= ${last14d}
+          GROUP BY b."userId"
+          UNION ALL
+          SELECT l."userId" AS "userId",
+                 COUNT(*) FILTER (WHERE l."createdAt" >= ${last7d})::int AS recent,
+                 COUNT(*) FILTER (
+                   WHERE l."createdAt" >= ${last14d} AND l."createdAt" < ${last7d}
+                 )::int AS previous
+          FROM lists l
+          WHERE l."createdAt" >= ${last14d}
+          GROUP BY l."userId"
+        ) t
+        GROUP BY t."userId"
+        HAVING SUM(t.recent) > SUM(t.previous)
+      `
+    )
+  );
 
-  add(bookRecent, 'recent');
-  add(bookPrev, 'previous');
-  add(listRecent, 'recent');
-  add(listPrev, 'previous');
+  const growingIds = rows.map((r) => r.userId);
+  if (growingIds.length === 0) return [];
 
-  const growing: string[] = [];
-  for (const [userId, counts] of activity) {
-    const percent = computeSaveGrowthPercent(counts.recent, counts.previous);
-    if (percent > 0 || (counts.recent > 0 && counts.previous === 0)) {
-      growing.push(userId);
-    }
-  }
-  return growing;
+  const matched = await dbQuery(() =>
+    prisma.users.findMany({
+      where: { AND: [baseWhere, { id: { in: growingIds } }] },
+      select: { id: true },
+    })
+  );
+  return matched.map((u) => u.id);
 }
 
 function rowToIntelligence(
@@ -393,7 +328,8 @@ function rowToIntelligence(
     growth7dPrevious: g.previous,
     risk,
     riskLabel,
-    avgSavesPerList: listsCount > 0 ? Math.round(bookmarksCount / listsCount) : 0,
+    avgSavesPerList:
+      listsCount > 0 ? Math.round(bookmarksCount / listsCount) : 0,
     userViolationsCount: u._count.user_violations,
     commentReportsCount: u._count.comment_reports,
     curatorScore: u.curatorScore,
@@ -413,7 +349,9 @@ async function enrichRowsWithCommentStatus(
   }));
 }
 
-function prismaOrderBy(sort: UserSortKind): Prisma.usersOrderByWithRelationInput {
+function prismaOrderBy(
+  sort: UserSortKind
+): Prisma.usersOrderByWithRelationInput {
   switch (sort) {
     case 'created_asc':
       return { createdAt: 'asc' };
@@ -439,15 +377,13 @@ async function fetchPageUsers(
   const last14d = new Date(Date.now() - 14 * MS_DAY);
 
   if (sort === 'growth_desc' || sort === 'growth_asc') {
+    // Score only users matching where — growth from 14d activity SQL, then page slice
     const ids = await dbQuery(() =>
-      prisma.users.findMany({
-        where,
-        select: { id: true },
-      })
+      prisma.users.findMany({ where, select: { id: true } })
     );
     if (ids.length === 0) return [];
 
-    const growthMap = await fetchBookmarkGrowthMaps(
+    const growthMap = await fetchActivityGrowthMaps(
       ids.map((i) => i.id),
       last7d,
       last14d
@@ -471,10 +407,12 @@ async function fetchPageUsers(
       })
     );
     const orderMap = new Map(sortedIds.map((id, idx) => [id, idx]));
-    users.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+    users.sort(
+      (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
+    );
 
-    const pageGrowth = await fetchBookmarkGrowthMaps(sortedIds, last7d, last14d);
-    const rows = users.map((u) => rowToIntelligence(u, pageGrowth.get(u.id)));
+    // Reuse growthMap — no second fetch
+    const rows = users.map((u) => rowToIntelligence(u, growthMap.get(u.id)));
     return enrichRowsWithCommentStatus(rows);
   }
 
@@ -488,7 +426,7 @@ async function fetchPageUsers(
     })
   );
 
-  const growthMap = await fetchBookmarkGrowthMaps(
+  const growthMap = await fetchActivityGrowthMaps(
     users.map((u) => u.id),
     last7d,
     last14d
@@ -503,8 +441,18 @@ async function fetchFilterCounts(
 ): Promise<Record<UserFilterKind, number>> {
   const counts = {} as Record<UserFilterKind, number>;
 
+  // Cheap: most_active / growing from id set sizes after base intersect (already done)
+  // Still need count for each pill under baseWhere — parallel counts
   await Promise.all(
     USER_FILTER_PILLS.map(async (pill) => {
+      if (pill.value === 'growing') {
+        counts.growing = idSets.growingIds.length;
+        return;
+      }
+      if (pill.value === 'most_active') {
+        counts.most_active = idSets.mostActiveIds.length;
+        return;
+      }
       const where = mergeUsersWhere(baseWhere, pill.value, idSets);
       counts[pill.value] = await dbQuery(() => prisma.users.count({ where }));
     })
@@ -523,33 +471,30 @@ async function fetchPulse(
   const [
     activeUserIds7d,
     prevPeriodActiveCount,
-    highGrowthCount,
     curatorCandidatesCount,
     suspiciousCount,
   ] = await Promise.all([
     dbQuery(async () => {
-      const rows = await prisma.bookmarks.findMany({
+      // COUNT(DISTINCT) via groupBy — avoids loading every bookmark row
+      const rows = await prisma.bookmarks.groupBy({
+        by: ['userId'],
         where: {
           createdAt: { gte: last7d },
           users: baseWhere,
         },
-        select: { userId: true },
-        distinct: ['userId'],
       });
       return rows.length;
     }),
     dbQuery(async () => {
-      const rows = await prisma.bookmarks.findMany({
+      const rows = await prisma.bookmarks.groupBy({
+        by: ['userId'],
         where: {
           createdAt: { gte: last14d, lt: last7d },
           users: baseWhere,
         },
-        select: { userId: true },
-        distinct: ['userId'],
       });
       return rows.length;
     }),
-    Promise.resolve(growingIds.length),
     dbQuery(() =>
       prisma.users.count({
         where: mergeUsersWhere(baseWhere, 'curators', {}),
@@ -567,10 +512,12 @@ async function fetchPulse(
     activeUsers7dDelta:
       prevPeriodActiveCount > 0
         ? Math.round(
-            ((activeUserIds7d - prevPeriodActiveCount) / prevPeriodActiveCount) * 100
+            ((activeUserIds7d - prevPeriodActiveCount) /
+              prevPeriodActiveCount) *
+              100
           )
         : undefined,
-    highGrowthCount,
+    highGrowthCount: growingIds.length,
     curatorCandidatesCount,
     suspiciousCount,
   };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -26,6 +26,7 @@ import {
   SuggestItemSearchLazy,
   ListSimilarListsSectionLazy,
   ListDetailSidebarLazy,
+  preloadItemPreviewSheet,
   type ItemPreviewData,
 } from '@/components/mobile/lists/list-detail-lazy-sections';
 import SearchInput from '@/components/mobile/search/SearchInput';
@@ -49,6 +50,7 @@ type Item = {
   catalogItemId?: string | null;
   listNote?: string | null;
   rating: number;
+  voteCount?: number | null;
   metadata?: Record<string, unknown> | null;
 };
 
@@ -867,26 +869,30 @@ export default function ListDetailClient({
     : list.items.length;
 
   const goPreviewPrev = useCallback(() => {
-    setPreviewIndex((current) => {
-      if (current == null) return current;
-      if (previewNavIndices) {
-        const pos = previewNavIndices.indexOf(current);
-        return pos > 0 ? previewNavIndices[pos - 1] : current;
-      }
-      return current > 0 ? current - 1 : current;
+    startTransition(() => {
+      setPreviewIndex((current) => {
+        if (current == null) return current;
+        if (previewNavIndices) {
+          const pos = previewNavIndices.indexOf(current);
+          return pos > 0 ? previewNavIndices[pos - 1] : current;
+        }
+        return current > 0 ? current - 1 : current;
+      });
     });
   }, [previewNavIndices]);
 
   const goPreviewNext = useCallback(() => {
-    setPreviewIndex((current) => {
-      if (current == null) return current;
-      if (previewNavIndices) {
-        const pos = previewNavIndices.indexOf(current);
-        return pos >= 0 && pos < previewNavIndices.length - 1
-          ? previewNavIndices[pos + 1]
-          : current;
-      }
-      return current < list.items.length - 1 ? current + 1 : current;
+    startTransition(() => {
+      setPreviewIndex((current) => {
+        if (current == null) return current;
+        if (previewNavIndices) {
+          const pos = previewNavIndices.indexOf(current);
+          return pos >= 0 && pos < previewNavIndices.length - 1
+            ? previewNavIndices[pos + 1]
+            : current;
+        }
+        return current < list.items.length - 1 ? current + 1 : current;
+      });
     });
   }, [previewNavIndices, list.items.length]);
 
@@ -919,16 +925,43 @@ export default function ListDetailClient({
   const handleTonightRandom = useCallback(() => {
     if (list.items.length === 0) return;
     const idx = Math.floor(Math.random() * list.items.length);
-    setPreviewIndex(idx);
+    preloadItemPreviewSheet();
+    startTransition(() => {
+      setPreviewIndex(idx);
+    });
   }, [list.items.length]);
 
   const openItemPreview = useCallback((index: number) => {
-    setPreviewIndex(index);
+    preloadItemPreviewSheet();
+    startTransition(() => {
+      setPreviewIndex(index);
+    });
   }, []);
 
   const closeItemPreview = useCallback(() => {
     setPreviewIndex(null);
   }, []);
+
+  const previewAdjacentImageUrls = useMemo(() => {
+    if (previewIndex == null) return undefined;
+    const urls: Array<string | null | undefined> = [];
+    const pushAt = (idx: number) => {
+      const row = list.items[idx];
+      if (!row) return;
+      urls.push(row.displayImageUrl ?? row.imageUrl);
+    };
+    if (previewNavIndices) {
+      const pos = previewNavIndices.indexOf(previewIndex);
+      if (pos > 0) pushAt(previewNavIndices[pos - 1]);
+      if (pos >= 0 && pos < previewNavIndices.length - 1) {
+        pushAt(previewNavIndices[pos + 1]);
+      }
+    } else {
+      if (previewIndex > 0) pushAt(previewIndex - 1);
+      if (previewIndex < list.items.length - 1) pushAt(previewIndex + 1);
+    }
+    return urls.length ? urls : undefined;
+  }, [previewIndex, previewNavIndices, list.items]);
 
   const renderItemEntries = (entries: ItemEntry[]) => {
     if (viewMode === 'map') {
@@ -1351,6 +1384,7 @@ export default function ListDetailClient({
           listSlug={list.slug}
           onPrev={canPreviewPrev ? goPreviewPrev : undefined}
           onNext={canPreviewNext ? goPreviewNext : undefined}
+          adjacentImageUrls={previewAdjacentImageUrls}
         />
       ) : null}
 

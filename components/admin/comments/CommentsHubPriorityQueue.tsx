@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import { Clock, Flag, Package, ArrowLeft, ListTodo, ShieldBan } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/format-relative-time';
@@ -22,7 +20,8 @@ const typeMeta: Record<
   item_report: {
     icon: Package,
     label: 'ریپورت آیتم',
-    color: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20',
+    color:
+      'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20',
   },
   user_penalty: {
     icon: ShieldBan,
@@ -86,7 +85,7 @@ export default function CommentsHubPriorityQueue({
                     {item.subtitle}
                   </p>
                 </div>
-                <span className="text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap shrink-0">
+                <span className="text-xs text-[var(--color-text-subtle)] whitespace-nowrap shrink-0">
                   {formatRelativeTime(item.createdAt)}
                 </span>
               </Link>

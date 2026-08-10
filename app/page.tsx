@@ -4,6 +4,8 @@ import HomeResponsiveContent from '@/components/mobile/home/HomeResponsiveConten
 import HomeLcpPreload from '@/components/mobile/home/HomeLcpPreload';
 import HomeHeroSpotlightServer from '@/components/mobile/home/HomeHeroSpotlightServer';
 import HomeTrendingSectionServer from '@/components/mobile/home/HomeTrendingSectionServer';
+import HomeFeedTabs from '@/components/mobile/home/HomeFeedTabs';
+import HomeTrendingCarouselServer from '@/components/mobile/home/HomeTrendingCarouselServer';
 import { HomePageSkeleton } from '@/components/mobile/home/HomePageSkeleton';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { HomeDataProvider } from '@/contexts/HomeDataContext';
@@ -13,6 +15,7 @@ import { fetchActiveCategoryMenu, type CategoryMenuChip } from '@/lib/category-m
 import {
   selectHomeLcpImageUrl,
   selectHomeTrendingDesktopLists,
+  selectHomeTrendingLists,
 } from '@/lib/home-list-selectors';
 import { EMPTY_HOME_DATA } from '@/types/home-data';
 import { toHomeClientSeed } from '@/lib/home-page-client-seed';
@@ -45,6 +48,10 @@ async function HomeContent() {
   const ssrFeaturedId = initialHomeData.featured?.id ?? null;
   const lcpImage = selectHomeLcpImageUrl(initialHomeData);
   const desktopTrendingLists = selectHomeTrendingDesktopLists(initialHomeData);
+  const mobileTrendingLists = selectHomeTrendingLists(initialHomeData, {
+    limit: 12,
+    excludeFeatured: true,
+  });
 
   const heroSpotlightMobile: ReactNode =
     initialHomeData.featured != null ? (
@@ -63,6 +70,12 @@ async function HomeContent() {
       />
     ) : null;
 
+  const mobileFeed: ReactNode = (
+    <HomeFeedTabs
+      carousel={<HomeTrendingCarouselServer lists={mobileTrendingLists} />}
+    />
+  );
+
   return (
     <>
       <HomeLcpPreload href={lcpImage} />
@@ -73,6 +86,7 @@ async function HomeContent() {
             initialCategories={menuCategories}
             heroSpotlightMobile={heroSpotlightMobile}
             heroSpotlightDesktop={heroSpotlightDesktop}
+            mobileFeed={mobileFeed}
             desktopTrending={
               <HomeTrendingSectionServer lists={desktopTrendingLists} />
             }

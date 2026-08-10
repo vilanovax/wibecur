@@ -25,6 +25,8 @@ interface MyListsTabProps {
   initialLists?: UserListRecord[];
   initialTotal?: number;
   initialVisibilityCounts?: UserListVisibilityCounts;
+  /** Chip count from SSR; full shared lists load only when filter is active */
+  initialSharedCount?: number;
 }
 
 interface MyListsResponse {
@@ -109,6 +111,7 @@ export default function MyListsTab({
   initialLists,
   initialTotal,
   initialVisibilityCounts,
+  initialSharedCount = 0,
 }: MyListsTabProps) {
   const [search, setSearch] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>(null);
@@ -118,16 +121,21 @@ export default function MyListsTab({
   const queryClient = useQueryClient();
 
   const apiFilter = visibilityFilter === 'shared' ? 'all' : toApiFilter(visibilityFilter);
-  const hasInitial = Boolean(initialLists?.length) && apiFilter === 'all' && visibilityFilter !== 'shared';
+  const hasInitial =
+    Boolean(initialLists?.length) &&
+    apiFilter === 'all' &&
+    visibilityFilter !== 'shared';
 
+  // Full shared rows only when filter is active (chip uses SSR count)
   const { data: sharedData, isLoading: isSharedLoading } = useQuery({
     queryKey: ['user', userId, 'shared-lists'],
     queryFn: fetchSharedLists,
     staleTime: 30_000,
+    enabled: visibilityFilter === 'shared',
   });
 
   const sharedLists = sharedData?.lists ?? [];
-  const sharedCount = sharedData?.total ?? 0;
+  const sharedCount = sharedData?.total ?? initialSharedCount;
 
   const {
     data,
@@ -147,23 +155,25 @@ export default function MyListsTab({
       lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
         : undefined,
-    initialData:
-      hasInitial
-        ? {
-            pages: [
-              {
-                lists: initialLists!,
-                pagination: {
-                  page: 1,
-                  totalPages: Math.ceil((initialTotal ?? initialLists!.length) / 20) || 1,
-                  total: initialTotal ?? initialLists!.length,
-                },
-                counts: initialVisibilityCounts,
+    initialData: hasInitial
+      ? {
+          pages: [
+            {
+              lists: initialLists!,
+              pagination: {
+                page: 1,
+                totalPages:
+                  Math.ceil((initialTotal ?? initialLists!.length) / 20) || 1,
+                total: initialTotal ?? initialLists!.length,
               },
-            ],
-            pageParams: [1],
-          }
-        : undefined,
+              counts: initialVisibilityCounts,
+            },
+          ],
+          pageParams: [1],
+        }
+      : undefined,
+    initialDataUpdatedAt: hasInitial ? Date.now() : undefined,
+    refetchOnMount: hasInitial ? false : undefined,
     staleTime: 30_000,
   });
 

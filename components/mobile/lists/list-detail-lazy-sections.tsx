@@ -10,6 +10,11 @@ export const ItemPreviewSheetLazy = dynamic(() => import('./ItemPreviewSheet'), 
   loading: () => null,
 });
 
+/** Warm the preview sheet chunk before first open (pointerdown / hover). */
+export function preloadItemPreviewSheet() {
+  void import('./ItemPreviewSheet');
+}
+
 export const ListItemsMapViewLazy = dynamic(() => import('./ListItemsMapView'), {
   ssr: false,
   loading: () => (

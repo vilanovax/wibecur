@@ -17,6 +17,11 @@ export const GuidedDiscoverySheetLazy = dynamic(() => import('./GuidedDiscoveryS
   ssr: false,
 });
 
+/** Warm mood-sheet chunk before first open */
+export function preloadGuidedDiscoverySheet() {
+  void import('./GuidedDiscoverySheet');
+}
+
 export const SearchResultsPanelLazy = dynamic(
   () => import('@/components/mobile/search/SearchResultsPanel'),
   { loading: () => <SearchResultSkeleton rows={5} /> }

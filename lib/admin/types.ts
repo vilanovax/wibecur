@@ -198,3 +198,39 @@ export interface DashboardData {
   actionQueue: ActionQueueItem[];
   suggestionPreviews: SuggestionPreview[];
 }
+
+/** Fields actually consumed by the dashboard client tree (smaller RSC payload). */
+export type DashboardClientPayload = Pick<
+  DashboardData,
+  | 'contentOverview'
+  | 'periodSnapshot'
+  | 'systemPulse'
+  | 'trendingRadar'
+  | 'categoryIntelligence'
+  | 'topLists'
+  | 'topCategories'
+  | 'riskAlerts'
+  | 'commentsModeration'
+  | 'activities'
+  | 'actionQueue'
+  | 'suggestionPreviews'
+>;
+
+export function toDashboardClientPayload(
+  data: DashboardData
+): DashboardClientPayload {
+  return {
+    contentOverview: data.contentOverview,
+    periodSnapshot: data.periodSnapshot,
+    systemPulse: data.systemPulse,
+    trendingRadar: data.trendingRadar,
+    categoryIntelligence: data.categoryIntelligence,
+    topLists: data.topLists,
+    topCategories: data.topCategories,
+    riskAlerts: data.riskAlerts,
+    commentsModeration: data.commentsModeration,
+    activities: data.activities,
+    actionQueue: data.actionQueue,
+    suggestionPreviews: data.suggestionPreviews,
+  };
+}

@@ -1,3 +1,8 @@
+/**
+ * Priority queue for comments hub dashboard.
+ * Perf: start penalty thresholds in parallel with list fetches (async-parallel).
+ */
+
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getPenaltyThresholds } from '@/lib/comment-permission';
@@ -14,65 +19,73 @@ export type HubPriorityItem = {
 export async function getCommentsHubPriorityItems(
   limit = 5
 ): Promise<HubPriorityItem[]> {
-  const thresholds = await getPenaltyThresholds();
-
-  const [pendingComments, openCommentReports, openItemReports, highPenaltyUsers] =
-    await Promise.all([
-      dbQuery(() =>
-        prisma.comments.findMany({
-          where: { deletedAt: null, isApproved: false },
-          orderBy: { createdAt: 'desc' },
-          take: 3,
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            users: { select: { name: true, email: true } },
-            items: { select: { title: true } },
-          },
-        })
-      ),
-      dbQuery(() =>
-        prisma.comment_reports.findMany({
-          where: { resolved: false, comments: { deletedAt: null } },
-          orderBy: { createdAt: 'desc' },
-          take: 2,
-          select: {
-            id: true,
-            reason: true,
-            createdAt: true,
-            comments: {
-              select: {
-                id: true,
-                content: true,
-                items: { select: { title: true } },
-              },
+  const [
+    pendingComments,
+    openCommentReports,
+    openItemReports,
+    highPenaltyUsers,
+  ] = await Promise.all([
+    dbQuery(() =>
+      prisma.comments.findMany({
+        where: { deletedAt: null, isApproved: false },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          users: { select: { name: true, email: true } },
+          items: { select: { title: true } },
+        },
+      })
+    ),
+    dbQuery(() =>
+      prisma.comment_reports.findMany({
+        where: { resolved: false, comments: { deletedAt: null } },
+        orderBy: { createdAt: 'desc' },
+        take: 2,
+        select: {
+          id: true,
+          reason: true,
+          createdAt: true,
+          comments: {
+            select: {
+              id: true,
+              content: true,
+              items: { select: { title: true } },
             },
-            users: { select: { name: true, email: true } },
           },
-        })
-      ),
-      dbQuery(() =>
-        prisma.item_reports.findMany({
-          where: { resolved: false },
-          orderBy: { createdAt: 'desc' },
-          take: 2,
-          select: {
-            id: true,
-            reason: true,
-            createdAt: true,
-            items: { select: { title: true } },
-            users: { select: { name: true, email: true } },
-          },
-        })
-      ),
-      dbQuery(() =>
+          users: { select: { name: true, email: true } },
+        },
+      })
+    ),
+    dbQuery(() =>
+      prisma.item_reports.findMany({
+        where: { resolved: false },
+        orderBy: { createdAt: 'desc' },
+        take: 2,
+        select: {
+          id: true,
+          reason: true,
+          createdAt: true,
+          items: { select: { title: true } },
+          users: { select: { name: true, email: true } },
+        },
+      })
+    ),
+    // Thresholds resolved inside this branch — runs parallel with the three finds
+    (async () => {
+      const thresholds = await getPenaltyThresholds();
+      return dbQuery(() =>
         prisma.user_violations.findMany({
           where: {
             totalPenaltyScore: { gte: thresholds.restrict },
             users: { isActive: true },
           },
-          orderBy: [{ totalPenaltyScore: 'desc' }, { lastViolationDate: 'desc' }],
+          orderBy: [
+            { totalPenaltyScore: 'desc' },
+            { lastViolationDate: 'desc' },
+          ],
           take: 2,
           select: {
             id: true,
@@ -83,8 +96,9 @@ export async function getCommentsHubPriorityItems(
             },
           },
         })
-      ),
-    ]);
+      );
+    })(),
+  ]);
 
   const items: HubPriorityItem[] = [
     ...pendingComments.map((c) => ({
@@ -98,7 +112,9 @@ export async function getCommentsHubPriorityItems(
     ...openCommentReports.map((r) => ({
       id: `cr-${r.id}`,
       type: 'comment_report' as const,
-      title: r.comments.content.slice(0, 72) + (r.comments.content.length > 72 ? '…' : ''),
+      title:
+        r.comments.content.slice(0, 72) +
+        (r.comments.content.length > 72 ? '…' : ''),
       subtitle: `ریپورت: ${r.reason ?? '—'} · ${r.comments.items.title}`,
       href: '/admin/comments/reports?resolved=false',
       createdAt: r.createdAt.toISOString(),
@@ -122,7 +138,8 @@ export async function getCommentsHubPriorityItems(
   ];
 
   items.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   return items.slice(0, limit);

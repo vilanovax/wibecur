@@ -1,4 +1,4 @@
-/** فیلدهای metadata لازم برای UI لیست — بقیه در payload کلاینت نمی‌آید */
+/** فیلدهای metadata لازم برای کارت لیست + مودال پیش‌نمایش آیتم */
 const CLIENT_ITEM_METADATA_KEYS = [
   'director',
   'year',
@@ -6,17 +6,28 @@ const CLIENT_ITEM_METADATA_KEYS = [
   'actors',
   'country',
   'author',
+  'translator',
   'address',
   'cuisine',
   'priceRange',
   'phone',
   'mapsUrl',
   'instagram',
+  'website',
   'posterUrl',
   'poster',
   'imageUrl',
   'coverUrl',
   'searchProfile',
+  // فیلتر دسته‌بندی در /user-lists/[id]
+  'sourceCategorySlug',
+  'categorySlug',
+  // مودال پیش‌نمایش (ItemPreviewSheet)
+  'entryKind',
+  'factType',
+  'imdbRating',
+  'tip',
+  'duration',
 ] as const;
 
 const MAX_ITEM_DESCRIPTION_CHARS = 320;

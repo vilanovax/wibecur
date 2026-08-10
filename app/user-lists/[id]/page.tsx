@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { prisma } from '@/lib/prisma';
@@ -5,79 +6,22 @@ import { notFound } from 'next/navigation';
 import { after } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { dbQuery } from '@/lib/db';
-import { getListAccessForUser, getCollaboratorRecord } from '@/lib/list-collaboration';
+import { getListAccessForUser } from '@/lib/list-collaboration';
+import {
+  getUserListById,
+  prepareUserListForClient,
+} from '@/lib/user-list-detail';
 import UserListDetailClient from './UserListDetailClient';
+import UserListDetailSkeleton from '@/components/mobile/user-lists/UserListDetailSkeleton';
 
-function loadUserListById(id: string) {
-  return dbQuery(() =>
-    prisma.lists.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        description: true,
-        coverImage: true,
-        isPublic: true,
-        isActive: true,
-        viewCount: true,
-        likeCount: true,
-        saveCount: true,
-        itemCount: true,
-        commentsEnabled: true,
-        createdAt: true,
-        updatedAt: true,
-        userId: true,
-        categoryId: true,
-        categories: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            icon: true,
-            color: true,
-          },
-        },
-        items: {
-          orderBy: { order: 'asc' },
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            imageUrl: true,
-            externalUrl: true,
-            metadata: true,
-          },
-        },
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            role: true,
-          },
-        },
-        _count: {
-          select: {
-            items: true,
-            list_likes: true,
-          },
-        },
-      },
-    })
-  );
-}
-
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   try {
     const { id } = await params;
-    const list = await dbQuery(() =>
-      prisma.lists.findUnique({
-        where: { id },
-        select: { title: true, description: true },
-      })
-    );
+    const list = await getUserListById(id);
 
     if (!list) {
       return { title: 'لیست یافت نشد' };
@@ -92,16 +36,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function UserListDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+async function UserListDetailContent({ id }: { id: string }) {
   try {
-    const { id } = await params;
-
-    // auth + list in parallel (async-parallel) — email fallback only if needed.
-    const [session, list] = await Promise.all([auth(), loadUserListById(id)]);
+    // auth + list in parallel (async-parallel)
+    const [session, list] = await Promise.all([auth(), getUserListById(id)]);
 
     let currentUserId = session?.user?.id ?? null;
     if (!currentUserId && session?.user?.email) {
@@ -114,7 +52,7 @@ export default async function UserListDetailPage({
       currentUserId = userFromEmail?.id ?? null;
     }
 
-    if (!list || !list.isActive) {
+    if (!list || !list.isActive || list.deletedAt) {
       notFound();
     }
 
@@ -130,6 +68,7 @@ export default async function UserListDetailPage({
       notFound();
     }
 
+    // Owner short-circuit inside getListAccessForUser (no collab query)
     const listAccess = currentUserId
       ? await dbQuery(() => getListAccessForUser(list, currentUserId))
       : null;
@@ -137,11 +76,6 @@ export default async function UserListDetailPage({
     if (!list.isPublic && !listAccess?.canView) {
       notFound();
     }
-
-    const pendingCollab =
-      currentUserId && listAccess && !listAccess.isOwner
-        ? await dbQuery(() => getCollaboratorRecord(list.id, currentUserId))
-        : null;
 
     if (list.isPublic) {
       after(() => {
@@ -154,24 +88,50 @@ export default async function UserListDetailPage({
       });
     }
 
+    const totalItems = list.itemCount ?? list._count.items;
+    const prepared = prepareUserListForClient(list);
+    // Drop unused owner fields from client payload (server-serialization)
+    const { users: _users, deletedAt: _deletedAt, ...listForClient } = prepared;
+
     return (
-      <div className="bg-wibe-surface">
+      <>
         <Header title={list.title} showBack />
         <UserListDetailClient
-          list={list}
+          list={listForClient}
           currentUserId={currentUserId}
           canAddItems={listAccess?.canAddItems ?? false}
           isOwner={listAccess?.isOwner ?? isOwner}
-          pendingCollaboration={
-            pendingCollab?.status === 'PENDING' && pendingCollab.invitedBy
-              ? { listId: list.id, invitedBy: pendingCollab.invitedBy }
-              : null
-          }
+          itemsHasMore={totalItems > listForClient.items.length}
+          itemsTotal={totalItems}
+          pendingCollaboration={listAccess?.pendingCollaboration ?? null}
         />
-        <BottomNav />
-      </div>
+      </>
     );
   } catch {
     notFound();
   }
+}
+
+export default async function UserListDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  return (
+    <div className="bg-wibe-surface">
+      <Suspense
+        fallback={
+          <>
+            <Header title="لیست" showBack />
+            <UserListDetailSkeleton />
+          </>
+        }
+      >
+        <UserListDetailContent id={id} />
+      </Suspense>
+      <BottomNav />
+    </div>
+  );
 }

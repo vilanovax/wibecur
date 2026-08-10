@@ -1,11 +1,29 @@
-import { requireAdmin } from '@/lib/auth';
 import { Suspense } from 'react';
+import { requireAdmin } from '@/lib/auth';
 import UsersPageClient from './UsersPageClient';
 import { getCachedUsersIntelligenceData } from '@/lib/admin/users-intelligence-cached';
-import { parseUserSort } from '@/lib/admin/users-intelligence';
+import { parseUserSort } from '@/lib/admin/users-types';
 import { parseUserFilter } from '@/lib/admin/user-filter-utils';
 
-export default async function AdminUsersPage({
+function UsersSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse" dir="rtl">
+      <div className="h-16 rounded-2xl bg-[var(--color-border-muted)]" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-24 rounded-2xl bg-[var(--color-border-muted)]"
+          />
+        ))}
+      </div>
+      <div className="h-12 rounded-xl bg-[var(--color-border-muted)]" />
+      <div className="h-[420px] rounded-2xl bg-[var(--color-border-muted)]" />
+    </div>
+  );
+}
+
+async function UsersDataSection({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -17,8 +35,6 @@ export default async function AdminUsersPage({
     sort?: string;
   }>;
 }) {
-  await requireAdmin();
-
   const {
     page = '1',
     search = '',
@@ -37,15 +53,26 @@ export default async function AdminUsersPage({
     trash: trashParam === 'true',
   });
 
+  return <UsersPageClient data={data} />;
+}
+
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    trash?: string;
+    hideBots?: string;
+    filter?: string;
+    sort?: string;
+  }>;
+}) {
+  await requireAdmin();
+
   return (
-    <Suspense
-      fallback={
-        <div className="py-12 text-center text-sm text-[var(--color-text-muted)] animate-pulse">
-          در حال بارگذاری کاربران…
-        </div>
-      }
-    >
-      <UsersPageClient data={data} />
+    <Suspense fallback={<UsersSkeleton />}>
+      <UsersDataSection searchParams={searchParams} />
     </Suspense>
   );
 }

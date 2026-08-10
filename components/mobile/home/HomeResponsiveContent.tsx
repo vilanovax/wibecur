@@ -21,6 +21,7 @@ type HomeResponsiveContentProps = {
   initialCategories?: CategoryMenuChip[];
   heroSpotlightMobile: ReactNode;
   heroSpotlightDesktop: ReactNode;
+  mobileFeed: ReactNode;
   desktopTrending: ReactNode;
 };
 
@@ -29,6 +30,7 @@ export default function HomeResponsiveContent({
   initialCategories,
   heroSpotlightMobile,
   heroSpotlightDesktop,
+  mobileFeed,
   desktopTrending,
 }: HomeResponsiveContentProps) {
   const isDesktop = useIsDesktop();
@@ -83,6 +85,7 @@ export default function HomeResponsiveContent({
           <HomeMobileView
             ssrFeaturedId={ssrFeaturedId}
             heroSpotlight={heroSpotlightMobile}
+            mobileFeed={mobileFeed}
             initialCategories={initialCategories}
           />
         </div>

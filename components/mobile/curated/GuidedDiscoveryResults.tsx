@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
@@ -44,6 +45,8 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
     );
   }
 
+  let listCardIndex = 0;
+
   return (
     <div className="space-y-7 pb-1 lg:space-y-8" dir="rtl">
       {data.rows.map((row) => {
@@ -76,15 +79,20 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
 
             {row.type === 'lists' && visibleLists.length > 0 ? (
               <div className="grid grid-cols-2 gap-2.5 lg:gap-3 xl:grid-cols-3">
-                {visibleLists.map((list) => (
-                  <GuidedListCardLink
-                    key={list.id}
-                    list={list}
-                    scenario={scenario}
-                    rowId={row.id}
-                    onNavigate={onItemClick}
-                  />
-                ))}
+                {visibleLists.map((list) => {
+                  const priority = listCardIndex < 2;
+                  listCardIndex += 1;
+                  return (
+                    <GuidedListCardLink
+                      key={list.id}
+                      list={list}
+                      scenario={scenario}
+                      rowId={row.id}
+                      onNavigate={onItemClick}
+                      priority={priority}
+                    />
+                  );
+                })}
               </div>
             ) : null}
 
@@ -108,16 +116,18 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
   );
 }
 
-function GuidedListCardLink({
+const GuidedListCardLink = memo(function GuidedListCardLink({
   list,
   scenario,
   rowId,
   onNavigate,
+  priority = false,
 }: {
   list: GuidedListCardData;
   scenario: GuidedScenario;
   rowId: string;
   onNavigate?: () => void;
+  priority?: boolean;
 }) {
   const coverGradient = pickCategoryCoverGradient(
     list.category?.slug,
@@ -145,6 +155,7 @@ function GuidedListCardLink({
             src={list.coverImage}
             alt={list.title}
             sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, 45vw"
+            priority={priority}
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             categorySlug={list.category?.slug}
             listSlug={list.slug}
@@ -171,9 +182,9 @@ function GuidedListCardLink({
       </article>
     </Link>
   );
-}
+});
 
-function GuidedItemCardRow({
+const GuidedItemCardRow = memo(function GuidedItemCardRow({
   item,
   scenario,
   rowId,
@@ -217,4 +228,4 @@ function GuidedItemCardRow({
       </div>
     </Link>
   );
-}
+});

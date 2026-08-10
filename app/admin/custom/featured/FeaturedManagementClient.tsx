@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { Loader2, X } from 'lucide-react';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import DatePicker, { DateObject } from 'react-multi-date-picker';
@@ -9,31 +10,38 @@ import persian_fa from 'react-date-object/locales/persian_fa';
 import FeaturedHeroHeader from './components/FeaturedHeroHeader';
 import FeaturedStatsBar from './components/FeaturedStatsBar';
 import FeaturedWeeklyDetails from './components/FeaturedWeeklyDetails';
-import AddSlotWizardModal from './components/AddSlotWizardModal';
 import DeleteSlotDialog from './components/DeleteSlotDialog';
 import type { ConflictResult, DurationPreset, ListOption } from './components/AddSlotCard';
 import type { PreviewList } from './components/FeaturedMobilePreview';
 import FeaturedSchedulerTab from './components/FeaturedSchedulerTab';
+import type {
+  FeaturedManagementData,
+  FeaturedListOption,
+  FeaturedSlotItem,
+  FeaturedSlotPerformance,
+  FeaturedWeeklyReportPayload,
+} from '@/lib/admin/featured-management-types';
+import type { WeeklyReport } from './components/featured-weekly-types';
+
+const AddSlotWizardModal = dynamic(
+  () => import('./components/AddSlotWizardModal'),
+  { ssr: false }
+);
 
 export type { ListOption };
 
-export type SlotItem = {
-  id: string;
-  listId: string;
-  list: ListOption;
-  startAt: string;
-  endAt: string | null;
-  orderIndex: number;
-  viewListCount: number;
-  quickSaveCount: number;
-};
+export type SlotItem = FeaturedSlotItem;
 
 type Data = {
   current: SlotItem | null;
   fallbackList: { id: string; title: string; slug: string } | null;
+  fallbackListDetail: FeaturedListOption | null;
   upcoming: SlotItem[];
   past: SlotItem[];
   lists: ListOption[];
+  weeklyReport: FeaturedWeeklyReportPayload | null;
+  currentPerformance: FeaturedSlotPerformance | null;
+  currentRecommendations: string[];
 };
 
 const DEBOUNCE_MS = 400;
@@ -61,9 +69,29 @@ function listToPreview(l: ListOption): PreviewList {
   };
 }
 
-function FeaturedManagementInner() {
-  const [data, setData] = useState<Data | null>(null);
-  const [loading, setLoading] = useState(true);
+function toClientData(payload: FeaturedManagementData, prevLists?: ListOption[]): Data {
+  return {
+    current: payload.current,
+    fallbackList: payload.fallbackList,
+    fallbackListDetail: payload.fallbackListDetail,
+    upcoming: payload.upcoming,
+    past: payload.past,
+    lists: prevLists && prevLists.length > 0 ? prevLists : payload.lists,
+    weeklyReport: payload.weeklyReport,
+    currentPerformance: payload.currentPerformance,
+    currentRecommendations: payload.currentRecommendations,
+  };
+}
+
+function FeaturedManagementInner({
+  initialData,
+}: {
+  initialData?: FeaturedManagementData | null;
+}) {
+  const [data, setData] = useState<Data | null>(() =>
+    initialData ? toClientData(initialData) : null
+  );
+  const [loading, setLoading] = useState(!initialData);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [formCategorySlug, setFormCategorySlug] = useState('');
@@ -83,10 +111,29 @@ function FeaturedManagementInner() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const conflictTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listsLoadedRef = useRef(
+    Boolean(initialData?.lists && initialData.lists.length > 0)
+  );
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const ensureListsLoaded = useCallback(async () => {
+    if (listsLoadedRef.current) return;
+    try {
+      const listRes = await fetch(`/api/admin/custom/featured/lists?t=${Date.now()}`);
+      const listJson = await listRes.json();
+      if (listRes.ok && Array.isArray(listJson.lists)) {
+        listsLoadedRef.current = true;
+        setData((prev) =>
+          prev ? { ...prev, lists: listJson.lists as ListOption[] } : prev
+        );
+      }
+    } catch {
+      /* ignore — wizard can retry via refresh */
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -94,24 +141,10 @@ function FeaturedManagementInner() {
     try {
       const res = await fetch(`/api/admin/custom/featured?t=${Date.now()}`);
       const json = await res.json();
-      let lists: ListOption[] = Array.isArray(json.lists) ? json.lists : [];
       if (!res.ok) throw new Error(json.error || json.details || 'خطا در دریافت');
-      if (lists.length === 0) {
-        try {
-          const listRes = await fetch(`/api/admin/custom/featured/lists?t=${Date.now()}`);
-          const listJson = await listRes.json();
-          if (listRes.ok && Array.isArray(listJson.lists)) lists = listJson.lists;
-        } catch {
-          /* ignore */
-        }
-      }
-      setData({
-        current: json.current ?? null,
-        fallbackList: json.fallbackList ?? null,
-        upcoming: Array.isArray(json.upcoming) ? json.upcoming : [],
-        past: Array.isArray(json.past) ? json.past : [],
-        lists,
-      });
+      setData((prev) =>
+        toClientData(json as FeaturedManagementData, prev?.lists)
+      );
       setStatsRefreshKey((k) => k + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'خطا');
@@ -121,8 +154,10 @@ function FeaturedManagementInner() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!initialData) {
+      void fetchData();
+    }
+  }, [initialData, fetchData]);
 
   const checkConflict = useCallback(async (startAt: string, endAt: string | null, excludeId?: string) => {
     const end = endAt || new Date('2099-12-31T23:59:59Z').toISOString();
@@ -246,10 +281,14 @@ function FeaturedManagementInner() {
     }
   };
 
-  const openAddModal = useCallback((listId?: string) => {
-    if (listId) setFormListId(listId);
-    setAddModalOpen(true);
-  }, []);
+  const openAddModal = useCallback(
+    (listId?: string) => {
+      if (listId) setFormListId(listId);
+      setAddModalOpen(true);
+      void ensureListsLoaded();
+    },
+    [ensureListsLoaded]
+  );
 
   const openEditModal = (slot: SlotItem) => {
     setEditingSlot(slot);
@@ -385,6 +424,9 @@ function FeaturedManagementInner() {
   if (data.current?.list) {
     previewList = listToPreview(data.current.list as ListOption);
     previewMode = 'live';
+  } else if (data.fallbackListDetail) {
+    previewList = listToPreview(data.fallbackListDetail as ListOption);
+    previewMode = 'fallback';
   } else if (data.fallbackList) {
     const full = data.lists.find((l) => l.id === data.fallbackList!.id);
     previewList = full
@@ -408,6 +450,7 @@ function FeaturedManagementInner() {
         upcomingCount={data.upcoming.length}
         pastCount={data.past.length}
         refreshKey={statsRefreshKey}
+        initialReport={data.weeklyReport as WeeklyReport | null}
       />
 
       <FeaturedSchedulerTab
@@ -432,11 +475,14 @@ function FeaturedManagementInner() {
             (data.current?.id === id ? data.current : null);
           requestDelete(id, slot?.list.title ?? 'اسلات');
         }}
+        initialPerformance={data.currentPerformance}
+        initialRecommendations={data.currentRecommendations}
       />
 
       <FeaturedWeeklyDetails
         onAddSlot={() => openAddModal()}
         refreshKey={statsRefreshKey}
+        initialReport={data.weeklyReport as WeeklyReport | null}
       />
 
       <AddSlotWizardModal
@@ -564,7 +610,11 @@ function FeaturedManagementInner() {
   );
 }
 
-export default function FeaturedManagementClient() {
+export default function FeaturedManagementClient({
+  initialData = null,
+}: {
+  initialData?: FeaturedManagementData | null;
+}) {
   return (
     <Suspense
       fallback={
@@ -573,7 +623,7 @@ export default function FeaturedManagementClient() {
         </div>
       }
     >
-      <FeaturedManagementInner />
+      <FeaturedManagementInner initialData={initialData} />
     </Suspense>
   );
 }

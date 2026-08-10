@@ -5,7 +5,8 @@ import { fetchSearchPageSeed } from '@/lib/search-ssr';
 import { normalizeSearchQuery } from '@/lib/list-search';
 
 export const metadata = {
-  title: 'جستجو | WibeCur',
+  // layout template already appends `| WibeCur`
+  title: 'جستجو',
   description: 'جستجو در آیتم‌ها و لیست‌های WibeCur',
 };
 

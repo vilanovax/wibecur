@@ -19,10 +19,11 @@ export const DESKTOP_PAGE_MAX_WIDTH_PX = 1200;
 export const DESKTOP_PAGE_MAX_WIDTH_CLASS = 'lg:max-w-[1200px]';
 
 /**
- * فریم واحد سایت (موبایل ۴۲۸px | دسکتاپ ۱۲۰۰px) — نوار، محتوا، فوتر
+ * فریم واحد سایت (موبایل تمام‌عرض | دسکتاپ ۱۲۰۰px وسط‌چین)
+ * وسط‌چین با mx-auto / margin-inline — نه flex justify (در RTL می‌چسبد به راست)
  */
 export const DESKTOP_SITE_SHELL_CLASS =
-  'wibe-desktop-shell mx-auto flex w-full min-w-0 flex-col overflow-x-hidden lg:min-h-screen lg:w-[min(100%,1200px)] lg:max-w-[1200px] lg:shrink-0 lg:bg-white lg:shadow-[0_1px_3px_rgba(0,0,0,0.08),0_12px_40px_rgba(0,0,0,0.06)] lg:ring-1 lg:ring-black/[0.04]';
+  'wibe-desktop-shell mx-auto flex w-full min-w-0 max-w-full flex-col overflow-x-clip lg:min-h-screen lg:max-w-[1200px] lg:bg-white lg:shadow-[0_1px_3px_rgba(0,0,0,0.08),0_12px_40px_rgba(0,0,0,0.06)] lg:ring-1 lg:ring-black/[0.04]';
 
 /** @deprecated از DESKTOP_PAGE_MAX_WIDTH_CLASS استفاده کنید */
 export const DESKTOP_CONTENT_MAX_WIDTH_CLASS = DESKTOP_PAGE_MAX_WIDTH_CLASS;

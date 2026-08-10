@@ -9,6 +9,7 @@ import {
   fetchExploreBasePayload,
   type ExplorePayload,
 } from '@/lib/curated/explore-data';
+import { toExploreClientSeed } from '@/lib/curated/explore-client-seed';
 import {
   selectExploreLcpImageUrl,
   selectExploreTrendingLists,
@@ -34,7 +35,7 @@ async function ExploreContent() {
 
   try {
     const base = await fetchExploreBasePayload();
-    initialData = { ...base, ...EMPTY_EXPLORE_USER_PREFERENCES };
+    const full: ExplorePayload = { ...base, ...EMPTY_EXPLORE_USER_PREFERENCES };
 
     const activeCategoryIds = base.categories
       .filter((c) => c.id !== 'all')
@@ -47,6 +48,9 @@ async function ExploreContent() {
         <ExploreTrendingServer lists={trendingLists} subtitle="محبوب‌ترین‌ها همین الان" />
       );
     }
+
+    // Slim seed — trending already in RSC slot (server-dedup-props)
+    initialData = toExploreClientSeed(full);
   } catch (err) {
     console.warn('[ExplorePage] SSR explore fetch failed, falling back to client fetch:', err);
   }

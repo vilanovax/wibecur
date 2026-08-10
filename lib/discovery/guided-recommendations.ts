@@ -2,6 +2,7 @@
  * Orchestrator دستیار کشف — ترکیب trending، for-you، جستجو، tip لایف‌استایل
  */
 
+import { unstable_cache } from 'next/cache';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { dbQuery } from '@/lib/db';
 import { getHomeRecommendationsForUser } from '@/lib/home-recommendations';
@@ -25,6 +26,7 @@ export type GuidedListCard = {
   id: string;
   slug: string;
   title: string;
+  /** Kept empty — UI cards don't render list description (server-serialization) */
   description: string;
   coverImage: string;
   saveCount: number;
@@ -58,7 +60,6 @@ const LIST_SELECT = {
   id: true,
   title: true,
   slug: true,
-  description: true,
   coverImage: true,
   saveCount: true,
   itemCount: true,
@@ -72,7 +73,6 @@ function mapListRow(
     id: string;
     title: string;
     slug: string;
-    description: string | null;
     coverImage: string | null;
     saveCount: number | null;
     itemCount: number | null;
@@ -83,7 +83,7 @@ function mapListRow(
     id: list.id,
     slug: list.slug,
     title: list.title,
-    description: list.description ?? '',
+    description: '',
     coverImage: resolveCoverImage({
       coverImage: list.coverImage,
       categorySlug: list.categories?.slug,
@@ -154,6 +154,15 @@ export function listMatchesGuidedTopic(list: GuidedListCard, query: string): boo
         cat === 'restaurant' ||
         cat === 'cafe'
       );
+    case 'سفر':
+      if (FILM_CATEGORY_SLUGS.has(cat) || BOOK_CATEGORY_SLUGS.has(cat)) return false;
+      return (
+        title.includes('سفر') ||
+        title.includes('گردش') ||
+        slug.includes('travel') ||
+        cat === 'travel' ||
+        cat.includes('travel')
+      );
     default:
       return true;
   }
@@ -169,7 +178,11 @@ const GUIDED_CATEGORY_SLUGS: Record<string, string[]> = {
   رستوران: ['restaurant', 'cafe'],
   فیلم: ['movie', 'movies', 'film', 'cinema', 'film-serial'],
   سریال: ['movie', 'movies', 'film', 'series', 'film-serial'],
+  سفر: ['travel'],
 };
+
+/** Topics where indexed category lookup beats full-text search (going_out / with_friend). */
+const CATEGORY_FIRST_QUERIES = new Set(Object.keys(GUIDED_CATEGORY_SLUGS));
 
 async function fetchListsByCategorySlugs(
   prisma: PrismaClient,
@@ -197,14 +210,14 @@ async function fetchListsByCategorySlugs(
   ).slice(0, limit);
 }
 
-async function searchListsByQuery(
+async function searchListsByText(
   prisma: PrismaClient,
   query: string,
   limit: number,
   excludeIds: Set<string>
 ): Promise<GuidedListCard[]> {
   const q = normalizeSearchQuery(query);
-  if (q.length < SEARCH_MIN_LENGTH) return [];
+  if (q.length < SEARCH_MIN_LENGTH || limit <= 0) return [];
 
   const searchWhere: Prisma.listsWhereInput = {
     ...buildPublicListSearchWhere(q),
@@ -216,17 +229,51 @@ async function searchListsByQuery(
       where: searchWhere,
       select: LIST_SELECT,
       orderBy: [{ saveCount: 'desc' }, { createdAt: 'desc' }],
-      take: limit * 3,
+      take: Math.max(limit * 3, 6),
     })
   );
 
-  const refined = refineListsForGuidedQuery(
+  return refineListsForGuidedQuery(
     query,
     withResolvedListCovers(lists).map(mapListRow)
-  );
-  if (refined.length > 0) return refined.slice(0, limit);
+  ).slice(0, limit);
+}
 
+/**
+ * Prefer category index for کافه/رستوران/فیلم/… (critical for «با دوستی؟» / going_out),
+ * then top up with text search only if the category window is thin.
+ */
+async function searchListsByQuery(
+  prisma: PrismaClient,
+  query: string,
+  limit: number,
+  excludeIds: Set<string>
+): Promise<GuidedListCard[]> {
   const slugs = GUIDED_CATEGORY_SLUGS[query];
+
+  if (slugs?.length && CATEGORY_FIRST_QUERIES.has(query)) {
+    const byCategory = await fetchListsByCategorySlugs(
+      prisma,
+      slugs,
+      limit,
+      excludeIds,
+      query
+    );
+    if (byCategory.length >= limit) return byCategory;
+
+    const used = new Set<string>([...excludeIds, ...byCategory.map((l) => l.id)]);
+    const filler = await searchListsByText(
+      prisma,
+      query,
+      limit - byCategory.length,
+      used
+    );
+    return [...byCategory, ...filler].slice(0, limit);
+  }
+
+  const fromText = await searchListsByText(prisma, query, limit, excludeIds);
+  if (fromText.length > 0) return fromText;
+
   if (slugs?.length) {
     return fetchListsByCategorySlugs(prisma, slugs, limit, excludeIds, query);
   }
@@ -301,10 +348,11 @@ async function fetchLifestyleTipItems(
     const body = buildLightweightDisplayBody(item, { lifestyleMode: true });
     const title = row.title?.trim() || body.slice(0, 60);
     if (!title) continue;
+    const desc = (body || row.description || '').trim();
     picked.push({
       id: row.id,
       title,
-      description: body || row.description,
+      description: desc ? (desc.length > 160 ? `${desc.slice(0, 160)}…` : desc) : null,
       listSlug: row.lists.slug,
       listTitle: row.lists.title,
     });
@@ -321,7 +369,7 @@ function trendingToListCards(
     id: t.listId,
     slug: t.slug,
     title: t.title,
-    description: t.description ?? '',
+    description: '',
     coverImage: resolveCoverImage({
       coverImage: t.coverImage,
       categorySlug: t.categorySlug,
@@ -341,12 +389,38 @@ function trendingToListCards(
   }));
 }
 
+/**
+ * Parallel fan-out (async-parallel) then assemble rows with dedupe.
+ * Previously each query awaited sequentially → multi-second mood modal open.
+ */
 export async function getGuidedDiscoveryResults(
   prisma: PrismaClient,
   ctx: GuidedContext,
   userId: string | null
 ): Promise<GuidedDiscoveryPayload> {
   const plan = buildGuidedSearchPlan(ctx);
+
+  const [tips, queryBuckets, shortLists, forYouResult, trending] = await Promise.all([
+    plan.includeLifestyleTips && plan.lifestyleTipLimit > 0
+      ? fetchLifestyleTipItems(prisma, plan.lifestyleTipLimit)
+      : Promise.resolve([] as GuidedItemCard[]),
+    Promise.all(
+      plan.listQueries.map(async (query) => ({
+        query,
+        lists: await searchListsByQuery(prisma, query, 6, new Set()),
+      }))
+    ),
+    plan.preferShortLists && plan.shortListMaxItems
+      ? fetchShortLists(prisma, 6, plan.shortListMaxItems, new Set())
+      : Promise.resolve([] as GuidedListCard[]),
+    plan.includeForYou
+      ? getHomeRecommendationsForUser(prisma, userId, 6)
+      : Promise.resolve({ lists: [], isPersonalized: false }),
+    plan.includeTrending
+      ? getCachedGlobalTrending(6)
+      : Promise.resolve([] as Awaited<ReturnType<typeof getCachedGlobalTrending>>),
+  ]);
+
   const usedListIds = new Set<string>();
   const rows: GuidedResultRow[] = [];
 
@@ -360,38 +434,32 @@ export async function getGuidedDiscoveryResults(
     rows.push({ id: rowId, title, type: 'lists', lists: fresh });
   };
 
-  if (plan.includeLifestyleTips && plan.lifestyleTipLimit > 0) {
-    const tips = await fetchLifestyleTipItems(prisma, plan.lifestyleTipLimit);
-    if (tips.length > 0) {
-      rows.push({
-        id: 'quick',
-        title: ctx.scenario === 'bored' && ctx.timeBudget === '5' ? 'همین الان' : 'نکات سریع',
-        type: 'items',
-        items: tips,
-      });
-    }
+  if (tips.length > 0) {
+    rows.push({
+      id: 'quick',
+      title: ctx.scenario === 'bored' && ctx.timeBudget === '5' ? 'همین الان' : 'نکات سریع',
+      type: 'items',
+      items: tips,
+    });
   }
 
-  for (const query of plan.listQueries) {
-    const lists = await searchListsByQuery(prisma, query, 6, usedListIds);
+  for (const { query, lists } of queryBuckets) {
     takeLists(lists, `search-${query}`, rowTitleForQuery(query));
   }
 
-  if (plan.preferShortLists && plan.shortListMaxItems) {
-    const shortLists = await fetchShortLists(prisma, 6, plan.shortListMaxItems, usedListIds);
+  if (shortLists.length > 0) {
     takeLists(shortLists, 'short', 'لیست‌های کوتاه');
   }
 
-  if (plan.includeForYou) {
-    const { lists, isPersonalized } = await getHomeRecommendationsForUser(prisma, userId, 6);
-    const mapped = lists
+  if (forYouResult.lists.length > 0) {
+    const mapped = forYouResult.lists
       .filter((l) => !usedListIds.has(l.id))
       .slice(0, 6)
       .map((l) => ({
         id: l.id,
         slug: l.slug,
         title: l.title,
-        description: l.description,
+        description: '',
         coverImage: l.coverImage,
         saveCount: l.saveCount,
         itemCount: l.itemCount,
@@ -407,16 +475,14 @@ export async function getGuidedDiscoveryResults(
     if (mapped.length > 0) {
       rows.push({
         id: 'foryou',
-        title: isPersonalized ? 'برای تو' : 'محبوب در وایب',
+        title: forYouResult.isPersonalized ? 'برای تو' : 'محبوب در وایب',
         type: 'lists',
         lists: mapped,
       });
     }
   }
 
-  if (plan.includeTrending) {
-    // از نسخهٔ کش‌شده استفاده کن (۶۰۰ ثانیه) تا fan-out سنگین per-category تکرار نشود
-    const trending = await getCachedGlobalTrending(6);
+  if (trending.length > 0) {
     const mapped = trendingToListCards(trending).filter((l) => !usedListIds.has(l.id));
     if (mapped.length > 0) {
       rows.push({
@@ -433,4 +499,26 @@ export async function getGuidedDiscoveryResults(
     scenario: ctx.scenario,
     rows,
   };
+}
+
+/** Guest results — cross-request cache (personalized path stays uncached). */
+export function getCachedGuidedDiscoveryResults(
+  prisma: PrismaClient,
+  ctx: GuidedContext,
+  userId: string | null
+): Promise<GuidedDiscoveryPayload> {
+  if (userId) {
+    return getGuidedDiscoveryResults(prisma, ctx, userId);
+  }
+
+  return unstable_cache(
+    () => getGuidedDiscoveryResults(prisma, ctx, null),
+    [
+      'guided-discovery-v2',
+      ctx.scenario,
+      ctx.location ?? '',
+      ctx.timeBudget ?? '',
+    ],
+    { revalidate: 120, tags: ['guided-discovery'] }
+  )();
 }

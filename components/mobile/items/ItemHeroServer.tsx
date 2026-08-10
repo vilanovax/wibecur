@@ -25,8 +25,6 @@ export type ItemHeroServerItem = {
   rating: number | null;
   voteCount: number | null;
   metadata: Record<string, unknown> | null;
-  listRank: number | null;
-  listItemCount: number;
   lists: {
     title: string;
     slug: string;

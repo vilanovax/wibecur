@@ -5,6 +5,8 @@ import {
   type MoodExplorerSelection,
   quickPillToSelection,
 } from '@/lib/discovery/mood-explorer-config';
+import { prefetchGuidedDiscovery } from '@/lib/discovery/guided-client';
+import { preloadGuidedDiscoverySheet } from './explore-lazy-sections';
 
 type Props = {
   onSelect: (selection: MoodExplorerSelection) => void;
@@ -20,6 +22,16 @@ const SHORT_LABEL: Record<string, string> = {
   quick_tonight: 'فیلم در خانه',
   quick_out: 'بیرون رفتن',
 };
+
+function warmQuickPill(pill: (typeof QUICK_NOW_PILLS)[number]) {
+  preloadGuidedDiscoverySheet();
+  const selection = quickPillToSelection(pill);
+  prefetchGuidedDiscovery({
+    scenario: selection.scenario,
+    location: selection.preset?.location,
+    timeBudget: selection.preset?.timeBudget,
+  });
+}
 
 export default function QuickNowSection({ onSelect, disabled = false }: Props) {
   return (
@@ -41,6 +53,7 @@ export default function QuickNowSection({ onSelect, disabled = false }: Props) {
             key={pill.id}
             type="button"
             disabled={disabled}
+            onPointerDown={() => warmQuickPill(pill)}
             onClick={() => onSelect(quickPillToSelection(pill))}
             className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-wibe/80 bg-transparent px-2.5 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-wibe hover:bg-wibe-card hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50"
           >

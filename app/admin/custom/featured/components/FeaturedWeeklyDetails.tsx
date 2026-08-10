@@ -21,30 +21,39 @@ type Props = {
   onAddSlot?: () => void;
   refreshKey?: number;
   defaultOpen?: boolean;
+  initialReport?: WeeklyReport | null;
 };
 
 export default function FeaturedWeeklyDetails({
   onAddSlot,
   refreshKey = 0,
   defaultOpen = false,
+  initialReport = null,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
-  const [report, setReport] = useState<WeeklyReport | null>(null);
+  const [report, setReport] = useState<WeeklyReport | null>(initialReport);
   const [insights, setInsights] = useState<CategoryInsights | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [weekStart, setWeekStart] = useState('');
-
-  useEffect(() => {
-    setWeekStart((prev) => prev || getMonday(new Date()).toISOString().slice(0, 10));
-  }, []);
+  const [weekStart, setWeekStart] = useState(() =>
+    getMonday(new Date()).toISOString().slice(0, 10)
+  );
 
   const load = useCallback(() => {
     if (!weekStart || !open) return;
     setLoading(true);
     setError(null);
+    const reportPromise =
+      initialReport &&
+      weekStart === initialReport.weekStart.slice(0, 10) &&
+      refreshKey === 0
+        ? Promise.resolve({ ok: true as const, json: async () => initialReport })
+        : fetch(
+            `/api/admin/custom/featured/weekly-report?weekStart=${encodeURIComponent(weekStart)}`
+          );
+
     Promise.all([
-      fetch(`/api/admin/custom/featured/weekly-report?weekStart=${encodeURIComponent(weekStart)}`),
+      reportPromise,
       fetch('/api/admin/custom/featured/category-insights?range=last30days'),
     ])
       .then(async ([resReport, resInsights]) => {
@@ -63,7 +72,7 @@ export default function FeaturedWeeklyDetails({
         setReport(null);
       })
       .finally(() => setLoading(false));
-  }, [weekStart, open]);
+  }, [weekStart, open, initialReport, refreshKey]);
 
   useEffect(() => {
     load();

@@ -1,18 +1,19 @@
+/**
+ * Content hub KPI strip stats for /admin/lists.
+ *
+ * Perf: replace full-table JS scans (catalog/items/covers) with SQL aggregates.
+ * Previous path loaded up to 8k catalog rows + all item metadata into Node.
+ */
+
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
-import type { PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import {
   CatalogNotReadyError,
-  countMultiListCatalogItems,
-  findDuplicateCatalogGroups,
   isCatalogClientReady,
 } from '@/lib/catalog-items';
-import { getSuggestionsStats } from '@/lib/admin/suggestions-stats';
-import { resolveStoredItemTip } from '@/lib/admin/item-tip-import';
-import { isGenericListCover } from '@/lib/image-url-policy';
-import { needsS3MigrationImageUrl } from '@/lib/item-image-storage';
-import { catalogMissingPosterImage } from '@/lib/missing-image-utils';
 import { ADMIN_LISTS_CACHE_SECONDS, ADMIN_CACHE_TAGS } from '@/lib/admin/admin-cache';
 
 export type ContentHubStats = {
@@ -31,61 +32,133 @@ export type ContentHubStats = {
   insightLine: string;
 };
 
-function asMetaRecord(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
+async function countSuggestionsPending(client: PrismaClient): Promise<number> {
+  const [listPending, itemPending, menuPending] = await Promise.all([
+    client.suggested_lists.count({ where: { status: 'pending' } }),
+    client.suggested_items.count({ where: { status: 'pending' } }),
+    client.list_comments.count({
+      where: {
+        type: 'suggestion',
+        deletedAt: null,
+        suggestionStatus: 'pending',
+      },
+    }),
+  ]);
+  return listPending + itemPending + menuPending;
 }
 
-async function countCatalogImageHealth(client: PrismaClient): Promise<{
-  externalImages: number;
-  missingPosters: number;
-}> {
-  const rows = await client.catalog_items.findMany({
-    select: { imageUrl: true },
-  });
-
-  let externalImages = 0;
-  let missingPosters = 0;
-  for (const row of rows) {
-    if (catalogMissingPosterImage(row.imageUrl)) {
-      missingPosters += 1;
-    } else if (needsS3MigrationImageUrl(row.imageUrl)) {
-      externalImages += 1;
-    }
-  }
-
-  return { externalImages, missingPosters };
+/** Approximate isGenericListCover via SQL predicates (hub badge only). */
+async function countListsMissingCoverSql(
+  client: PrismaClient
+): Promise<number> {
+  const rows = await client.$queryRaw<{ count: number }[]>(Prisma.sql`
+    SELECT COUNT(*)::int AS count
+    FROM lists
+    WHERE "deletedAt" IS NULL
+      AND "isActive" = true
+      AND (
+        "coverImage" IS NULL
+        OR btrim("coverImage") = ''
+        OR "coverImage" ILIKE '%placeholder-cover%'
+        OR "coverImage" ILIKE '%upload.wikimedia.org/wikipedia/commons/%'
+        OR (
+          "coverImage" ILIKE '%parspack%'
+          AND "coverImage" ILIKE '%/covers/%'
+        )
+        OR "coverImage" ~* '/images/banners/(movies|books|cafe|restaurant|default)\\.webp$'
+      )
+  `);
+  return rows[0]?.count ?? 0;
 }
 
-async function countListsMissingCover(client: PrismaClient): Promise<number> {
-  const rows = await client.lists.findMany({
-    where: { deletedAt: null, isActive: true },
-    select: { coverImage: true },
-  });
-  return rows.filter((row) => isGenericListCover(row.coverImage)).length;
+async function countCatalogImageHealthSql(
+  client: PrismaClient
+): Promise<{ externalImages: number; missingPosters: number }> {
+  const rows = await client.$queryRaw<
+    { missing: number; external: number }[]
+  >(Prisma.sql`
+    SELECT
+      COUNT(*) FILTER (
+        WHERE "imageUrl" IS NULL
+          OR btrim("imageUrl") = ''
+          OR "imageUrl" ILIKE '%placeholder-cover%'
+          OR "imageUrl" ILIKE '%placeholder-item%'
+      )::int AS missing,
+      COUNT(*) FILTER (
+        WHERE "imageUrl" IS NOT NULL
+          AND btrim("imageUrl") <> ''
+          AND "imageUrl" NOT ILIKE '%placeholder-cover%'
+          AND "imageUrl" NOT ILIKE '%placeholder-item%'
+          AND "imageUrl" NOT ILIKE '%parspack%'
+          AND (
+            "imageUrl" ~* 'banners?'
+            OR "imageUrl" ~* '^https?://'
+            OR "imageUrl" LIKE '//%'
+            OR "imageUrl" LIKE '/%'
+          )
+      )::int AS external
+    FROM catalog_items
+  `);
+  return {
+    missingPosters: rows[0]?.missing ?? 0,
+    externalImages: rows[0]?.external ?? 0,
+  };
 }
 
-async function countItemsMissingTip(client: PrismaClient): Promise<number> {
-  const rows = await client.items.findMany({
-    where: {
-      deletedAt: null,
-      lists: { deletedAt: null, isActive: true },
-    },
-    select: {
-      metadata: true,
-      catalog_items: { select: { metadata: true } },
-    },
-  });
+/** Tip key in metadata JSON — matches ITEM_TIP_METADATA_KEY = 'tip' */
+async function countItemsMissingTipSql(client: PrismaClient): Promise<number> {
+  const rows = await client.$queryRaw<{ count: number }[]>(Prisma.sql`
+    SELECT COUNT(*)::int AS count
+    FROM items i
+    INNER JOIN lists l ON i."listId" = l.id
+    LEFT JOIN catalog_items c ON i."catalogItemId" = c.id
+    WHERE i."deletedAt" IS NULL
+      AND l."deletedAt" IS NULL
+      AND l."isActive" = true
+      AND (
+        i.metadata IS NULL
+        OR NOT (i.metadata ? 'tip')
+        OR NULLIF(btrim(i.metadata->>'tip'), '') IS NULL
+      )
+      AND (
+        c.id IS NULL
+        OR c.metadata IS NULL
+        OR NOT (c.metadata ? 'tip')
+        OR NULLIF(btrim(c.metadata->>'tip'), '') IS NULL
+      )
+  `);
+  return rows[0]?.count ?? 0;
+}
 
-  let missing = 0;
-  for (const row of rows) {
-    const tip = resolveStoredItemTip(
-      asMetaRecord(row.metadata),
-      asMetaRecord(row.catalog_items?.metadata)
-    );
-    if (!tip) missing += 1;
-  }
-  return missing;
+async function countMultiListCatalogSql(client: PrismaClient): Promise<number> {
+  const rows = await client.$queryRaw<{ count: number }[]>(Prisma.sql`
+    SELECT COUNT(*)::int AS count
+    FROM (
+      SELECT i."catalogItemId"
+      FROM items i
+      WHERE i."catalogItemId" IS NOT NULL
+        AND i."deletedAt" IS NULL
+      GROUP BY i."catalogItemId"
+      HAVING COUNT(*) > 1
+    ) t
+  `);
+  return rows[0]?.count ?? 0;
+}
+
+/** Approximate duplicate groups by categorySlug + lower(trim(title)) */
+async function countDuplicateCatalogGroupsSql(
+  client: PrismaClient
+): Promise<number> {
+  const rows = await client.$queryRaw<{ count: number }[]>(Prisma.sql`
+    SELECT COUNT(*)::int AS count
+    FROM (
+      SELECT 1
+      FROM catalog_items
+      GROUP BY "categorySlug", lower(btrim(title))
+      HAVING COUNT(*) >= 2
+    ) t
+  `);
+  return rows[0]?.count ?? 0;
 }
 
 export async function getContentHubStats(): Promise<ContentHubStats> {
@@ -94,11 +167,11 @@ export async function getContentHubStats(): Promise<ContentHubStats> {
   const [
     activeLists,
     placements,
-    suggestions,
+    suggestionsPending,
     lowEngagementLists,
     catalogEntities,
     multiListCatalog,
-    duplicateGroups,
+    duplicateCatalogGroups,
     listsMissingCover,
     listsMissingDescription,
     itemsMissingTip,
@@ -109,7 +182,7 @@ export async function getContentHubStats(): Promise<ContentHubStats> {
       prisma.items.count({
         where: { lists: { deletedAt: null, isActive: true } },
       }),
-      getSuggestionsStats(),
+      countSuggestionsPending(prisma),
       prisma.lists.count({
         where: {
           deletedAt: null,
@@ -119,11 +192,11 @@ export async function getContentHubStats(): Promise<ContentHubStats> {
         },
       }),
       catalogReady ? prisma.catalog_items.count() : Promise.resolve(0),
-      catalogReady ? countMultiListCatalogItems(prisma) : Promise.resolve(0),
+      catalogReady ? countMultiListCatalogSql(prisma) : Promise.resolve(0),
       catalogReady
-        ? findDuplicateCatalogGroups(prisma, { limit: 100 })
-        : Promise.resolve([]),
-      countListsMissingCover(prisma),
+        ? countDuplicateCatalogGroupsSql(prisma)
+        : Promise.resolve(0),
+      countListsMissingCoverSql(prisma),
       prisma.lists.count({
         where: {
           deletedAt: null,
@@ -131,14 +204,13 @@ export async function getContentHubStats(): Promise<ContentHubStats> {
           OR: [{ description: null }, { description: '' }],
         },
       }),
-      countItemsMissingTip(prisma),
+      countItemsMissingTipSql(prisma),
       catalogReady
-        ? countCatalogImageHealth(prisma)
+        ? countCatalogImageHealthSql(prisma)
         : Promise.resolve({ externalImages: 0, missingPosters: 0 }),
     ])
   );
 
-  const dupCount = duplicateGroups.length;
   const { externalImages: catalogExternalImages, missingPosters: catalogMissingPosters } =
     catalogImageHealth;
 
@@ -148,8 +220,8 @@ export async function getContentHubStats(): Promise<ContentHubStats> {
     { label: 'توضیح لیست خالی', count: listsMissingDescription },
     { label: 'لیست بدون کاور', count: listsMissingCover },
     { label: 'کاتالوگ بدون تصویر', count: catalogMissingPosters },
-    { label: 'تکراری کاتالوگ', count: dupCount },
-    { label: 'پیشنهاد در انتظار', count: suggestions.totalPending },
+    { label: 'تکراری کاتالوگ', count: duplicateCatalogGroups },
+    { label: 'پیشنهاد در انتظار', count: suggestionsPending },
   ].filter((item) => item.count > 0);
 
   const parts = healthIssues.map(
@@ -161,9 +233,9 @@ export async function getContentHubStats(): Promise<ContentHubStats> {
     catalogEntities,
     placements,
     multiListCatalog,
-    duplicateCatalogGroups: dupCount,
+    duplicateCatalogGroups,
     lowEngagementLists,
-    suggestionsPending: suggestions.totalPending,
+    suggestionsPending,
     listsMissingCover,
     listsMissingDescription,
     catalogExternalImages,
@@ -174,15 +246,17 @@ export async function getContentHubStats(): Promise<ContentHubStats> {
   };
 }
 
-/**
- * نسخهٔ کش‌شده — getContentHubStats روی هر لود صفحهٔ لیست‌ها ~۷ کوئری (شامل
- * count کل‌جدولِ catalog_items و اسکن گروه‌های تکراری) می‌زد و کشِ دادهٔ لیست‌ها
- * را خنثی می‌کرد. با tag `admin-lists` پس از mutation ابطال می‌شود.
- */
-export const getCachedContentHubStats = unstable_cache(
-  getContentHubStats,
-  ['admin-content-hub-stats'],
-  { revalidate: ADMIN_LISTS_CACHE_SECONDS, tags: [ADMIN_CACHE_TAGS.lists] }
+function getCrossRequestCachedContentHubStats() {
+  return unstable_cache(
+    getContentHubStats,
+    ['admin-content-hub-stats'],
+    { revalidate: ADMIN_LISTS_CACHE_SECONDS, tags: [ADMIN_CACHE_TAGS.lists] }
+  )();
+}
+
+/** Per-request dedupe + short TTL cross-request cache */
+export const getCachedContentHubStats = cache(() =>
+  getCrossRequestCachedContentHubStats()
 );
 
 export { CatalogNotReadyError };

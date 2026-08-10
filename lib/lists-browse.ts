@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -133,7 +134,7 @@ async function loadListsBrowse(
   };
 }
 
-export async function fetchListsBrowse({
+async function fetchListsBrowseUncached({
   offset = 0,
   limit = LISTS_BROWSE_DEFAULT_LIMIT,
   sort = 'newest',
@@ -149,3 +150,9 @@ export async function fetchListsBrowse({
     { revalidate: 60, tags: [LISTS_BROWSE_CACHE_TAG] }
   )();
 }
+
+/** Cross-request cache + per-request React.cache dedupe */
+export const fetchListsBrowse = cache(
+  (params: FetchListsBrowseParams = {}): Promise<ListsBrowseResult> =>
+    fetchListsBrowseUncached(params)
+);

@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 import HomeStartStrip from '@/components/mobile/home/HomeStartStrip';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
-import HomeFeedTabs from '@/components/mobile/home/HomeFeedTabs';
 import HomeHeroSpotlightSlot from '@/components/mobile/home/HomeHeroSpotlightSlot';
 import {
   ForYouSectionLazy,
@@ -15,18 +14,20 @@ import type { CategoryMenuChip } from '@/lib/category-menu';
 type HomeMobileViewProps = {
   ssrFeaturedId: string | null;
   heroSpotlight: ReactNode;
+  /** RSC feed section (header + SSR trending carousel) */
+  mobileFeed: ReactNode;
   initialCategories?: CategoryMenuChip[];
 };
 
 /**
  * Distilled + hardened home IA (Operate / save-first):
  * start → hero → trending lane → saved → for you → chips.
- * Personal sections mount eagerly (code-split still via dynamic) so returners
- * never sit on forever-pulse shells. Mood stays on /explore.
+ * Trending is streamed as RSC children; personal sections stay dynamic.
  */
 export default function HomeMobileView({
   ssrFeaturedId,
   heroSpotlight,
+  mobileFeed,
   initialCategories,
 }: HomeMobileViewProps) {
   const { isGuest, isLoading: userLoading } = useHomeUserState();
@@ -34,9 +35,11 @@ export default function HomeMobileView({
 
   return (
     <div className="flex flex-col">
-      <HomeStartStrip />
-      <HomeHeroSpotlightSlot ssrFeaturedId={ssrFeaturedId}>{heroSpotlight}</HomeHeroSpotlightSlot>
-      <HomeFeedTabs />
+      <HomeStartStrip initialCategories={initialCategories} />
+      <HomeHeroSpotlightSlot ssrFeaturedId={ssrFeaturedId}>
+        {heroSpotlight}
+      </HomeHeroSpotlightSlot>
+      {mobileFeed}
       {showPersonal ? <HomeSavedListsSectionLazy /> : null}
       {showPersonal ? <ForYouSectionLazy fetchEnabled /> : null}
       <QuickCategoryChips

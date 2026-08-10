@@ -6,11 +6,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { List, Library, FileJson, Plus, UserRound, AlignLeft, Lightbulb, ImageIcon } from 'lucide-react';
 import type { ContentHubStats } from '@/lib/admin/content-hub-stats';
-import type { ListsIntelligenceData } from '@/lib/admin/lists-intelligence';
+import type { ListsIntelligenceData } from '@/lib/admin/lists-types';
 import type { CatalogPageData } from '@/lib/admin/catalog-page-data';
 import ContentHubStatsBar from '@/components/admin/lists/ContentHubStatsBar';
 import ContentHubToolsMenu from '@/components/admin/lists/ContentHubToolsMenu';
-import ListsIntelligenceClient from './ListsIntelligenceClient';
 import type { NewItemFormList } from '../items/new/NewItemForm';
 import type { ListDescriptionsPageData } from '@/lib/admin/list-description-import';
 import type { ItemTipsPageData } from '@/lib/admin/item-tip-import';
@@ -27,6 +26,9 @@ function ViewFallback() {
   );
 }
 
+const ListsIntelligenceClient = dynamic(() => import('./ListsIntelligenceClient'), {
+  loading: () => <ViewFallback />,
+});
 const CatalogPageClient = dynamic(() => import('../catalog/CatalogPageClient'), {
   loading: () => <ViewFallback />,
 });

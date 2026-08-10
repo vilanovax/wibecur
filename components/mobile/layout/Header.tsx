@@ -83,13 +83,14 @@ export default function Header({
             </button>
           )}
           {title ? (
-            <h1
+            // Page body owns the real <h1>; sticky chrome stays a label to avoid duplicate headings.
+            <p
               className={`truncate text-lg font-bold lg:text-xl ${textClass} ${
                 hideTitleOnDesktop ? 'lg:sr-only' : ''
               }`}
             >
               {title}
-            </h1>
+            </p>
           ) : (
             <SiteLogo variant="header" href="/" className="lg:hidden" />
           )}

@@ -1,16 +1,40 @@
 'use client';
 
-import type { MoodExplorerCard } from '@/lib/discovery/mood-explorer-config';
+import {
+  moodCardToSelection,
+  type MoodExplorerCard,
+} from '@/lib/discovery/mood-explorer-config';
+import { prefetchGuidedDiscovery } from '@/lib/discovery/guided-client';
+import { preloadGuidedDiscoverySheet } from './explore-lazy-sections';
 
 type Props = {
   card: MoodExplorerCard;
   onSelect: (card: MoodExplorerCard) => void;
 };
 
+function warmMoodOpen(card: MoodExplorerCard) {
+  preloadGuidedDiscoverySheet();
+  const selection = moodCardToSelection(card);
+  // Skip prefetch when a question is still required (bored without timeBudget)
+  if (selection.scenario === 'bored' && !selection.preset?.timeBudget) {
+    return;
+  }
+  if (selection.scenario === 'weekend' && !selection.preset?.location) {
+    return;
+  }
+  // going_out («با دوستی؟») always has location=out via preset — prefetch hits guest cache
+  prefetchGuidedDiscovery({
+    scenario: selection.scenario,
+    location: selection.preset?.location,
+    timeBudget: selection.preset?.timeBudget,
+  });
+}
+
 export default function MoodMissionCard({ card, onSelect }: Props) {
   return (
     <button
       type="button"
+      onPointerDown={() => warmMoodOpen(card)}
       onClick={() => onSelect(card)}
       className={`group relative flex w-full min-h-[7.5rem] flex-col overflow-hidden rounded-2xl border bg-gradient-to-br p-3.5 text-right shadow-vibe-sm transition-[colors,transform] hover:-translate-y-0.5 hover:shadow-vibe-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] lg:min-h-[8.5rem] lg:p-4 ${card.gradient}`}
     >

@@ -7,21 +7,28 @@ export function HomePageSkeleton() {
         <div className="h-11 animate-pulse rounded-xl bg-wibe-surface" />
       </div>
 
-      {/* Mobile first viewport */}
-      <div className="px-4 pt-2 lg:hidden">
-        <div className="h-[220px] animate-pulse rounded-2xl bg-wibe-surface sm:h-[230px]" />
-        <div className="mt-4 mb-3 flex gap-2">
-          <div className="h-9 w-20 animate-pulse rounded-full bg-wibe-surface" />
-          <div className="h-9 w-24 animate-pulse rounded-full bg-wibe-surface" />
-        </div>
-        <div className="mb-3 h-5 w-36 animate-pulse rounded bg-wibe-surface" />
-        <div className="flex gap-3 overflow-hidden">
+      {/* Mobile first viewport — chips then hero (matches HomeMobileView) */}
+      <div className="lg:hidden">
+        <div className="flex gap-2 px-4 py-2 pb-3">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-[183px] w-[160px] shrink-0 animate-pulse rounded-xl bg-wibe-surface"
-            />
+            <div key={i} className="h-9 w-28 shrink-0 animate-pulse rounded-lg bg-wibe-surface" />
           ))}
+        </div>
+        <div className="px-4 pt-0.5">
+          <div className="h-[220px] animate-pulse rounded-2xl bg-wibe-surface sm:h-[230px]" />
+          <div className="mt-4 mb-3 flex gap-2">
+            <div className="h-9 w-20 animate-pulse rounded-full bg-wibe-surface" />
+            <div className="h-9 w-24 animate-pulse rounded-full bg-wibe-surface" />
+          </div>
+          <div className="mb-3 h-5 w-36 animate-pulse rounded bg-wibe-surface" />
+          <div className="flex gap-3 overflow-hidden">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-[183px] w-[160px] shrink-0 animate-pulse rounded-xl bg-wibe-surface"
+              />
+            ))}
+          </div>
         </div>
       </div>
 

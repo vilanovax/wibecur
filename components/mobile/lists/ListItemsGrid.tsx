@@ -107,9 +107,12 @@ function ListItemsGrid({
       {visibleEntries.map(({ item, originalIndex }) => {
         const entryKind = resolveEntryKind(item);
         const slug = itemCategorySlug(item, listCategorySlug);
-        // Skip paint for offscreen cards; pair with windowing in ListDetailClient.
+        // Skip paint for offscreen cards; keep first row eager so posters aren't stuck
+        // behind content-visibility + IntersectionObserver races.
         const paintClass =
-          '[content-visibility:auto] [contain-intrinsic-size:auto_17.5rem]';
+          originalIndex < 8
+            ? ''
+            : '[content-visibility:auto] [contain-intrinsic-size:auto_17.5rem]';
 
         if (isLightweightListItem(item)) {
           const spanClass = isLifestyleList

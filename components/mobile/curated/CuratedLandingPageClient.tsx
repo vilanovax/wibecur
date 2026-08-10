@@ -80,6 +80,8 @@ export default function CuratedLandingPageClient({
     staleTime: 5 * 60 * 1000,
     retry: 1,
     initialData,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
+    refetchOnMount: initialData ? false : undefined,
   });
 
   const isLoggedIn = Boolean(session?.user?.id);

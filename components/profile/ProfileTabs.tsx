@@ -23,6 +23,7 @@ interface ProfileTabsProps {
   initialLists?: ListWithCategory[];
   listsCount?: number;
   initialVisibilityCounts?: UserListVisibilityCounts;
+  initialSharedCount?: number;
   initialBookmarks?: ProfileBookmarkSSR[];
   initialBookmarksTotal?: number;
 }
@@ -34,6 +35,7 @@ export default function ProfileTabs({
   initialLists,
   listsCount,
   initialVisibilityCounts,
+  initialSharedCount = 0,
   initialBookmarks,
   initialBookmarksTotal,
 }: ProfileTabsProps) {
@@ -123,6 +125,7 @@ export default function ProfileTabs({
             initialLists={initialLists}
             initialTotal={listsCount ?? initialLists?.length}
             initialVisibilityCounts={initialVisibilityCounts}
+            initialSharedCount={initialSharedCount}
           />
         )}
         {visibleTab === 'bookmarks' && (

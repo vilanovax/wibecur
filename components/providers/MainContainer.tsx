@@ -44,13 +44,13 @@ export default function MainContainer({
   }
 
   return (
-    <div className="w-full bg-wibe-surface lg:flex lg:min-h-screen lg:justify-center lg:bg-[#e8eaef]">
+    <div className="w-full min-w-0 overflow-x-clip bg-wibe-surface lg:min-h-screen lg:bg-[#e8eaef]">
       <div className={DESKTOP_SITE_SHELL_CLASS}>
         <DesktopTopNav />
         <div
           id="main"
           role="main"
-          className={`flex min-w-0 flex-col max-lg:bg-wibe-surface lg:flex-1 lg:bg-white ${DESKTOP_CONTENT_PADDING_CLASS} ${DESKTOP_CONTENT_PADDING_TOP_CLASS} ${CONSUMER_PAGE_PADDING_BOTTOM_CLASS}`}
+          className={`flex min-w-0 flex-1 flex-col max-lg:bg-wibe-surface lg:bg-white ${DESKTOP_CONTENT_PADDING_CLASS} ${DESKTOP_CONTENT_PADDING_TOP_CLASS} ${CONSUMER_PAGE_PADDING_BOTTOM_CLASS}`}
         >
           {children}
           <DesktopSiteFooter />

@@ -19,7 +19,11 @@ async function fetchActiveCategories(): Promise<CategoryChip[]> {
   return json.data ?? [];
 }
 
-export default function HomeStartStrip() {
+export default function HomeStartStrip({
+  initialCategories,
+}: {
+  initialCategories?: CategoryChip[];
+}) {
   const { isNewUser, isLoading: userLoading } = useHomeUserState();
   const { shouldShowStartStrip, interests, saveInterests, completeOnboarding, hydrated } =
     useHomeOnboardingInterests();
@@ -33,11 +37,20 @@ export default function HomeStartStrip() {
     }
   }, [interests]);
 
-  const { data: categories = [] } = useQuery({
+  const needsOnboarding = hydrated && shouldShowStartStrip && isNewUser;
+  const { data: categories = initialCategories ?? [] } = useQuery({
     queryKey: ['categories', 'active', 'onboarding'],
     queryFn: fetchActiveCategories,
     staleTime: 10 * 60 * 1000,
-    enabled: hydrated && shouldShowStartStrip && isNewUser,
+    initialData:
+      initialCategories && initialCategories.length > 0
+        ? initialCategories
+        : undefined,
+    initialDataUpdatedAt:
+      initialCategories && initialCategories.length > 0 ? Date.now() : undefined,
+    enabled:
+      needsOnboarding &&
+      !(initialCategories && initialCategories.length > 0),
   });
 
   if (userLoading || !hydrated || !shouldShowStartStrip || !isNewUser) {

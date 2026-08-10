@@ -189,6 +189,8 @@ export function buildGuidedSearchPlan(ctx: GuidedContext): GuidedSearchPlan {
       };
 
     case 'going_out':
+      // Social outing («با دوستی؟») — category-indexed rows first; skip tips.
+      // forYou stays for personalization but runs in parallel with category rows.
       return {
         ...base,
         listQueries: ['کافه', 'رستوران', 'سفر'],

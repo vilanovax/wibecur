@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 import { isSeeAllCell } from '@/lib/home-feed-grid';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';

@@ -1,14 +1,16 @@
-'use client';
-
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import TrendingThisWeekCarousel from './TrendingThisWeekCarousel';
+
+type HomeFeedTabsProps = {
+  carousel: ReactNode;
+};
 
 /**
+ * RSC header + injected carousel (SSR trending cards).
  * Single discovery lane on Home: trending catalog.
- * Mood → /explore (bottom nav); full catalog → /lists.
  */
-export default function HomeFeedTabs() {
+export default function HomeFeedTabs({ carousel }: HomeFeedTabsProps) {
   return (
     <section className="mb-3 lg:mb-0" aria-label="فید کشف">
       <div className="mb-2.5 flex items-start justify-between gap-3 px-4 lg:mb-0 lg:border-b lg:border-wibe/60 lg:px-5 lg:pb-4 lg:pt-4">
@@ -33,9 +35,7 @@ export default function HomeFeedTabs() {
         </Link>
       </div>
 
-      <div className="lg:px-5 lg:pb-5 lg:pt-1">
-        <TrendingThisWeekCarousel embedded />
-      </div>
+      <div className="lg:px-5 lg:pb-5 lg:pt-1">{carousel}</div>
     </section>
   );
 }

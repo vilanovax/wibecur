@@ -43,13 +43,21 @@ export type CategoryIndexRow = {
   slug: string | null;
   icon: string | null;
   color: string | null;
+  order: number | null;
 };
 
 async function loadActiveCategoryIndex(): Promise<CategoryIndexRow[]> {
   return dbQuery(() =>
     prisma.categories.findMany({
       where: activeCategoryWhere,
-      select: { id: true, name: true, slug: true, icon: true, color: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        icon: true,
+        color: true,
+        order: true,
+      },
       orderBy: { order: 'asc' },
     })
   );

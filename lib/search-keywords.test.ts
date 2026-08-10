@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildItemSearchHaystack,
   buildCatalogItemSearchFilter,
+  buildItemSearchWhere,
   detectBroadQuery,
   expandSearchTerms,
   meaningfulSearchTokens,
@@ -91,6 +92,30 @@ describe('scoreItemForSearch', () => {
     );
     expect(result.matchTier).toBe('indirect');
     expect(result.matchHint).toContain('ژانر');
+  });
+
+  it('zeros score when multi-token location query misses a token', () => {
+    const cafeOnly = scoreItemForSearch(
+      { title: 'کافه رمان', metadata: { neighborhood: 'جردن' } },
+      'کافه ولیعصر'
+    );
+    const both = scoreItemForSearch(
+      { title: 'کافه ولیعصر', metadata: { neighborhood: 'ولیعصر' } },
+      'کافه ولیعصر'
+    );
+    expect(cafeOnly.score).toBe(0);
+    expect(both.score).toBeGreaterThan(0);
+  });
+});
+
+describe('buildItemSearchWhere', () => {
+  it('ANDs meaningful tokens for location-style queries', () => {
+    const where = buildItemSearchWhere('کافه ولیعصر', { isPublic: true });
+    expect(where).toHaveProperty('AND');
+    const and = (where as { AND: unknown[] }).AND;
+    expect(Array.isArray(and)).toBe(true);
+    // moderation clause + one clause per meaningful token
+    expect(and.length).toBeGreaterThanOrEqual(3);
   });
 });
 
