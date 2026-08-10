@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import {
   Loader2,
   Plus,
@@ -132,7 +131,7 @@ function AdminRowCard({
               )}
             </span>
             <span className="text-[11px] text-gray-400">
-              {formatDistanceToNow(new Date(admin.updatedAt), { addSuffix: true, locale: faIR })}
+              {formatRelativeTime(admin.updatedAt)}
             </span>
           </div>
         </div>

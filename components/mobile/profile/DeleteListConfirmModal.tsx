@@ -107,7 +107,7 @@ export default function DeleteListConfirmModal({
             <button
               onClick={onClose}
               disabled={isDeleting}
-              className="w-full px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+              className="w-full px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium disabled:opacity-50"
             >
               انصراف
             </button>

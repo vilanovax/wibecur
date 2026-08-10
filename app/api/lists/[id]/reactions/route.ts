@@ -14,17 +14,26 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: listId } = await params;
-    const session = await auth();
+    const [{ id: listId }, session] = await Promise.all([params, auth()]);
     const userId = session?.user ? (session.user as { id: string }).id : null;
 
-    const counts = await dbQuery(() =>
-      prisma.list_reactions.groupBy({
-        by: ['reactionType'],
-        where: { listId },
-        _count: { id: true },
-      })
-    );
+    const [counts, userRow] = await Promise.all([
+      dbQuery(() =>
+        prisma.list_reactions.groupBy({
+          by: ['reactionType'],
+          where: { listId },
+          _count: { id: true },
+        })
+      ),
+      userId
+        ? dbQuery(() =>
+            prisma.list_reactions.findUnique({
+              where: { userId_listId: { userId, listId } },
+              select: { reactionType: true },
+            })
+          )
+        : Promise.resolve(null),
+    ]);
 
     const reactionCounts: Record<string, number> = {
       love: 0,
@@ -36,17 +45,7 @@ export async function GET(
     counts.forEach((c) => {
       reactionCounts[c.reactionType] = c._count.id;
     });
-
-    let userReaction: string | null = null;
-    if (userId) {
-      const user = await dbQuery(() =>
-        prisma.list_reactions.findUnique({
-          where: { userId_listId: { userId, listId } },
-          select: { reactionType: true },
-        })
-      );
-      userReaction = user?.reactionType ?? null;
-    }
+    const userReaction = userRow?.reactionType ?? null;
 
     return NextResponse.json({
       success: true,

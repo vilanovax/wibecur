@@ -13,11 +13,11 @@ export default function RecommendationSection() {
     return (
       <section className="mb-8">
         <div className="px-4 mb-3">
-          <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
+          <div className="h-6 w-40 bg-wibe-surface rounded animate-pulse" />
         </div>
         <div className="grid grid-cols-2 gap-3 px-4">
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-2xl h-40 bg-gray-100 animate-pulse" />
+            <div key={i} className="rounded-2xl h-40 bg-wibe-surface animate-pulse" />
           ))}
         </div>
       </section>
@@ -27,8 +27,8 @@ export default function RecommendationSection() {
   return (
     <section className="mb-8">
       <div className="px-4 mb-3">
-        <h2 className="text-lg font-bold text-gray-900">برای تو ✨</h2>
-        <p className="text-gray-500 text-sm mt-0.5">بر اساس ذخیره‌های اخیرت</p>
+        <h2 className="text-lg font-bold text-foreground">برای تو ✨</h2>
+        <p className="text-wibe-secondary text-sm mt-0.5">بر اساس ذخیره‌های اخیرت</p>
       </div>
       {hasRecommendations ? (
         <div className="grid grid-cols-2 gap-3 px-4">

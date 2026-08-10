@@ -167,12 +167,12 @@ export default function ListReportModal({
                     className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-right transition-colors disabled:opacity-50 ${
                       isSelected
                         ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-wibe bg-wibe-card hover:border-gray-300'
+                        : 'border-wibe bg-wibe-card hover:border-wibe'
                     }`}
                   >
                     <span
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                        isSelected ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-wibe-secondary'
+                        isSelected ? 'bg-primary/10 text-primary' : 'bg-wibe-surface text-wibe-secondary'
                       }`}
                     >
                       <Icon className="h-4 w-4" strokeWidth={2} />
@@ -183,7 +183,7 @@ export default function ListReportModal({
                     </div>
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                        isSelected ? 'border-primary bg-primary' : 'border-gray-300 bg-white'
+                        isSelected ? 'border-primary bg-primary' : 'border-wibe bg-white'
                       }`}
                     >
                       {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
@@ -206,7 +206,7 @@ export default function ListReportModal({
                   rows={3}
                   placeholder="مثلاً: عنوان لیست با آیتم‌ها مطابقت ندارد..."
                   disabled={isSubmitting}
-                  className="w-full resize-none rounded-xl border border-wibe bg-gray-50/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:opacity-50"
+                  className="w-full resize-none rounded-xl border border-wibe bg-wibe-surface/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:opacity-50"
                 />
               </div>
             )}

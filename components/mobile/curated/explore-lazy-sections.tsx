@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 import {
-  ExploreCategorySectionSkeleton,
   ExploreForYouSectionSkeleton,
   ExploreSurpriseSectionSkeleton,
   ExploreTrendingSectionSkeleton,
@@ -18,6 +17,11 @@ export const GuidedDiscoverySheetLazy = dynamic(() => import('./GuidedDiscoveryS
   ssr: false,
 });
 
+/** Warm mood-sheet chunk before first open */
+export function preloadGuidedDiscoverySheet() {
+  void import('./GuidedDiscoverySheet');
+}
+
 export const SearchResultsPanelLazy = dynamic(
   () => import('@/components/mobile/search/SearchResultsPanel'),
   { loading: () => <SearchResultSkeleton rows={5} /> }
@@ -29,10 +33,6 @@ export const RandomSurpriseCardLazy = dynamic(() => import('./RandomSurpriseCard
 
 export const TrendingNowSectionLazy = dynamic(() => import('./TrendingNowSection'), {
   loading: () => <ExploreTrendingSectionSkeleton />,
-});
-
-export const CategoryDiscoverySectionLazy = dynamic(() => import('./CategoryDiscoverySection'), {
-  loading: () => <ExploreCategorySectionSkeleton />,
 });
 
 export const ForYouSectionLazy = dynamic(() => import('./ForYouSection'), {

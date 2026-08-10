@@ -11,36 +11,11 @@ import {
   ItemDiscoverySectionLazy,
 } from '@/components/mobile/items/item-detail-lazy-sections';
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
-import {
-  isLightweightListItem,
-  sourceCategorySlugFromItem,
-} from '@/lib/list-entry';
+import type { ItemDetailClientSeed } from '@/lib/item-detail-types';
 import type { SimilarItem } from '@/types/items';
 
 interface ItemDetailClientProps {
-  item: {
-    id: string;
-    title: string;
-    catalogItemId?: string | null;
-    metadata: Record<string, unknown> | null;
-    voteCount: number | null;
-    personalSaveCount: number;
-    listRank: number | null;
-    listItemCount: number;
-    lists: {
-      id: string;
-      title: string;
-      slug: string;
-      saveCount: number;
-      categories: {
-        id: string;
-        name: string;
-        slug: string;
-        icon: string;
-        color: string;
-      } | null;
-    };
-  };
+  item: ItemDetailClientSeed;
   metadataSection: ReactNode;
   initialSimilarItems?: SimilarItem[];
 }
@@ -83,14 +58,8 @@ export default function ItemDetailClient({
   });
 
   const categoryId = item.lists.categories?.id ?? null;
-  const listCategorySlug = item.lists.categories?.slug ?? null;
-  const itemCategorySlug =
-    sourceCategorySlugFromItem({
-      metadata: item.metadata,
-      catalogItemId: item.catalogItemId,
-    }) ?? listCategorySlug;
-  const isLightweight = isLightweightListItem(item);
   const likeCount = item.voteCount ?? 0;
+  const hasSimilarSeed = Boolean(initialSimilarItems?.length);
 
   const listContextCard = (
     <ItemSidebarPanel>
@@ -117,21 +86,9 @@ export default function ItemDetailClient({
 
   return (
     <main className="pb-2" dir="rtl">
-      {!isLightweight && (
-        <div className="lg:hidden">
-          <ItemDetailTopActions
-            itemId={item.id}
-            likeCount={likeCount}
-            catalogItemId={item.catalogItemId}
-            shareTitle={item.title}
-            variant="bar"
-          />
-        </div>
-      )}
-
-      <div className="relative z-10 mt-4 flex flex-col gap-5 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
-          {isLightweight && (
+      <div className="relative z-10 mt-3 flex flex-col gap-4 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
+          {item.isLightweight && (
             <div className="rounded-2xl border border-wibe/70 bg-wibe-card px-3 py-2.5 shadow-sm">
               <ItemDetailTopActions
                 itemId={item.id}
@@ -156,11 +113,11 @@ export default function ItemDetailClient({
           {metadataSection}
 
           <div ref={discoveryRef} className="min-h-[6rem]">
-            {discoveryInView ? (
+            {discoveryInView || hasSimilarSeed ? (
               <ItemDiscoverySectionLazy
                 itemId={item.id}
                 categoryId={categoryId}
-                categorySlug={itemCategorySlug}
+                categorySlug={item.itemCategorySlug}
                 fetchEnabled
                 initialSimilarItems={initialSimilarItems}
               />
@@ -184,7 +141,10 @@ export default function ItemDetailClient({
                 fetchEnabled
               />
             ) : (
-              <div className="min-h-[8rem] animate-pulse rounded-xl bg-gray-100/80" aria-hidden />
+              <div
+                className="min-h-[8rem] animate-pulse rounded-xl bg-wibe-surface/80"
+                aria-hidden
+              />
             )}
           </section>
         </aside>

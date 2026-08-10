@@ -43,7 +43,7 @@ export default function TopCuratorsSection({
                   className="w-12 h-12 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg">
+                <div className="w-12 h-12 rounded-full bg-wibe-surface flex items-center justify-center text-lg">
                   {(c.name || '?')[0]}
                 </div>
               )}

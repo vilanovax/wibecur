@@ -23,6 +23,7 @@ interface ProfileTabsProps {
   initialLists?: ListWithCategory[];
   listsCount?: number;
   initialVisibilityCounts?: UserListVisibilityCounts;
+  initialSharedCount?: number;
   initialBookmarks?: ProfileBookmarkSSR[];
   initialBookmarksTotal?: number;
 }
@@ -34,6 +35,7 @@ export default function ProfileTabs({
   initialLists,
   listsCount,
   initialVisibilityCounts,
+  initialSharedCount = 0,
   initialBookmarks,
   initialBookmarksTotal,
 }: ProfileTabsProps) {
@@ -92,8 +94,12 @@ export default function ProfileTabs({
                 {tab.label}
                 {badge && (
                   <span
-                    className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold leading-none flex items-center justify-center ${
-                      isActive ? 'bg-primary/15 text-primary' : 'bg-gray-100 text-wibe-secondary'
+                    className={`flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 wibe-caption font-bold leading-none ${
+                      isActive
+                        ? 'bg-primary/15 text-primary'
+                        : tab.id === 'bookmarks'
+                          ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
+                          : 'bg-wibe-surface text-wibe-secondary'
                     }`}
                   >
                     {badge}
@@ -119,6 +125,7 @@ export default function ProfileTabs({
             initialLists={initialLists}
             initialTotal={listsCount ?? initialLists?.length}
             initialVisibilityCounts={initialVisibilityCounts}
+            initialSharedCount={initialSharedCount}
           />
         )}
         {visibleTab === 'bookmarks' && (

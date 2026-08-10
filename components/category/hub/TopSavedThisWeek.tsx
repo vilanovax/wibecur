@@ -18,10 +18,10 @@ export default function TopSavedThisWeek({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         📈 محبوب‌ترین‌های این هفته
       </h2>
-      <p className="text-[11px] text-gray-500">
+      <p className="wibe-caption text-wibe-secondary">
         بر اساس ذخیره در ۷ روز گذشته — محبوبیت پایدار
       </p>
 
@@ -30,9 +30,9 @@ export default function TopSavedThisWeek({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm active:scale-[0.98] transition-transform"
+            className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-sm active:scale-[0.98] transition-transform"
           >
-            <div className="relative aspect-[4/3] bg-gray-100">
+            <div className="relative aspect-[4/3] bg-wibe-surface">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
@@ -48,15 +48,15 @@ export default function TopSavedThisWeek({
                   📋
                 </div>
               )}
-              <div className="absolute bottom-1 right-1 text-white/95 text-[10px] font-bold bg-black/50 px-1.5 py-0.5 rounded">
+              <div className="absolute bottom-1 right-1 text-white/95 wibe-caption font-bold bg-black/50 px-1.5 py-0.5 rounded">
                 ⭐ {list.saveCount}
               </div>
             </div>
             <div className="p-2.5">
-              <h3 className="font-semibold text-gray-900 text-xs line-clamp-2">
+              <h3 className="font-semibold text-foreground text-xs line-clamp-2">
                 {list.title}
               </h3>
-              <p className="text-[10px] text-gray-500 mt-0.5">
+              <p className="wibe-caption text-wibe-secondary mt-0.5">
                 {list.creator?.name || 'کیوریتور'}
               </p>
             </div>

@@ -10,6 +10,7 @@ interface ToastProps {
   type?: ToastType;
   duration?: number;
   onClose: () => void;
+  className?: string;
 }
 
 const toastIcons = {
@@ -34,6 +35,7 @@ export default function Toast({
   type = 'success',
   duration = 5000,
   onClose,
+  className = '',
 }: ToastProps) {
   const [entered, setEntered] = useState(false);
 
@@ -59,7 +61,7 @@ export default function Toast({
       role="status"
       className={`fixed bottom-6 left-4 right-4 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-xl p-4 shadow-2xl transition duration-300 ease-out motion-reduce:transition-none ${toastStyles[type]} ${
         entered ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-5 scale-95 opacity-0'
-      }`}
+      } ${className}`}
     >
       <Icon className="h-6 w-6 flex-shrink-0" />
       <p className="flex-1 pr-2 text-sm font-medium">{message}</p>

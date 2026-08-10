@@ -36,15 +36,19 @@ export function getListVisibilityVariant(list: {
 export default function ListVisibilityBadge({
   variant,
   size = 'sm',
+  /** وقتی فیلتر/زمینه «عمومی» است، بج عمومی را مخفی کن تا تکرار نشود */
+  hideWhenPublic = false,
 }: {
   variant: Variant;
   size?: 'sm' | 'md';
+  hideWhenPublic?: boolean;
 }) {
+  if (hideWhenPublic && variant === 'public') return null;
   const { label, icon: Icon, className } = CONFIG[variant];
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full font-semibold ring-1 ${className} ${
-        size === 'md' ? 'px-2.5 py-1 text-xs' : 'px-2 py-0.5 text-[10px]'
+        size === 'md' ? 'px-2.5 py-1 text-xs' : 'px-2 py-0.5 wibe-caption'
       }`}
     >
       <Icon className={size === 'md' ? 'h-3.5 w-3.5' : 'h-3 w-3'} aria-hidden />

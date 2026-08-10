@@ -24,7 +24,7 @@ export default function TopCuratorSpotlight({
 
   return (
     <section className="px-4 py-6">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         <span>🥇</span>
         کیوریتور برتر این هفته
       </h2>
@@ -52,13 +52,13 @@ export default function TopCuratorSpotlight({
             </span>
           </div>
           <div>
-            <p className="font-bold text-lg text-gray-900">
+            <p className="font-bold text-lg text-foreground">
               {curator.name || 'کاربر'}
             </p>
             <p className="text-sm text-amber-700 font-medium">
               {LEVEL_LABELS[curator.curatorLevel] || curator.curatorLevel}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-wibe-secondary mt-1">
               {curator.followersCount} دنبال‌کننده • {curator.listCount} لیست
             </p>
           </div>
@@ -70,7 +70,7 @@ export default function TopCuratorSpotlight({
                 key={list.id}
                 href={`/lists/${list.slug}`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex-shrink-0 w-24 rounded-xl overflow-hidden border border-gray-100"
+                className="flex-shrink-0 w-24 rounded-xl overflow-hidden border border-wibe"
               >
                 {list.coverImage ? (
                   <ImageWithFallback
@@ -79,11 +79,11 @@ export default function TopCuratorSpotlight({
                     className="w-full aspect-[3/4] object-cover"
                   />
                 ) : (
-                  <div className="w-full aspect-[3/4] bg-gray-200 flex items-center justify-center text-2xl">
+                  <div className="w-full aspect-[3/4] bg-wibe-surface flex items-center justify-center text-2xl">
                     📋
                   </div>
                 )}
-                <p className="text-[10px] font-medium text-gray-700 px-1 py-0.5 truncate">
+                <p className="wibe-caption font-medium text-foreground px-1 py-0.5 truncate">
                   {list.title}
                 </p>
               </Link>

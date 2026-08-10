@@ -2,21 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { BarChart3, Save, TrendingUp, Lightbulb } from 'lucide-react';
+import type { FeaturedSlotPerformance } from '@/lib/admin/featured-management-types';
 
-type Performance = {
-  impressions: number;
-  clicks: number;
-  ctr: number;
-  savesDuring: number;
-  baselineSaves: number | null;
-  saveLiftPercent: number | null;
-  baselineScore: number | null;
-  peakScore: number | null;
-  scoreLiftPercent: number | null;
-};
+type Performance = FeaturedSlotPerformance;
 
 type Props = {
   slotId: string;
+  initialPerformance?: Performance | null;
+  initialRecommendations?: string[];
   onRefresh?: () => void;
 };
 
@@ -38,13 +31,29 @@ function liftColor(lift: number | null): string {
   return 'text-red-600 dark:text-red-400';
 }
 
-export default function FeaturedPerformanceSection({ slotId }: Props) {
-  const [performance, setPerformance] = useState<Performance | null>(null);
-  const [recommendations, setRecommendations] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function FeaturedPerformanceSection({
+  slotId,
+  initialPerformance = null,
+  initialRecommendations = [],
+}: Props) {
+  const [performance, setPerformance] = useState<Performance | null>(
+    initialPerformance
+  );
+  const [recommendations, setRecommendations] = useState<string[]>(
+    initialRecommendations
+  );
+  const [loading, setLoading] = useState(!initialPerformance);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialPerformance) {
+      setPerformance(initialPerformance);
+      setRecommendations(initialRecommendations);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -57,7 +66,9 @@ export default function FeaturedPerformanceSection({ slotId }: Props) {
           return;
         }
         setPerformance(json.performance ?? null);
-        setRecommendations(Array.isArray(json.recommendations) ? json.recommendations : []);
+        setRecommendations(
+          Array.isArray(json.recommendations) ? json.recommendations : []
+        );
       })
       .catch(() => {
         if (!cancelled) setError('خطا در دریافت آمار');
@@ -68,12 +79,17 @@ export default function FeaturedPerformanceSection({ slotId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [slotId]);
+  }, [slotId, initialPerformance, initialRecommendations]);
 
   if (loading) {
     return (
-      <section className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm" dir="rtl">
-        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">عملکرد اسلات فعال</h2>
+      <section
+        className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        dir="rtl"
+      >
+        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">
+          عملکرد اسلات فعال
+        </h2>
         <p className="text-sm text-gray-500">در حال بارگذاری…</p>
       </section>
     );
@@ -81,9 +97,16 @@ export default function FeaturedPerformanceSection({ slotId }: Props) {
 
   if (error || !performance) {
     return (
-      <section className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm" dir="rtl">
-        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">عملکرد اسلات فعال</h2>
-        <p className="text-sm text-red-600 dark:text-red-400">{error || 'داده‌ای یافت نشد'}</p>
+      <section
+        className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        dir="rtl"
+      >
+        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">
+          عملکرد اسلات فعال
+        </h2>
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {error || 'داده‌ای یافت نشد'}
+        </p>
       </section>
     );
   }
@@ -102,9 +125,13 @@ export default function FeaturedPerformanceSection({ slotId }: Props) {
             <BarChart3 className="w-5 h-5" />
             <span className="text-sm font-medium">تعامل</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatNum(performance.impressions)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            {formatNum(performance.impressions)}
+          </p>
           <p className="text-xs text-gray-500 mt-1">نمایش (Impressions)</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{formatNum(performance.clicks)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+            {formatNum(performance.clicks)}
+          </p>
           <p className="text-xs text-gray-500 mt-1">کلیک</p>
           <p className={`text-lg font-semibold mt-2 ${ctrColor(ctr)}`}>
             CTR: {(ctr * 100).toFixed(2)}%
@@ -116,11 +143,18 @@ export default function FeaturedPerformanceSection({ slotId }: Props) {
             <Save className="w-5 h-5" />
             <span className="text-sm font-medium">رشد ذخیره</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatNum(performance.savesDuring)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            {formatNum(performance.savesDuring)}
+          </p>
           <p className="text-xs text-gray-500 mt-1">ذخیره در بازه اسلات</p>
-          <p className="text-xs text-gray-500 mt-1">baseline: {formatNum(performance.baselineSaves)}</p>
-          <p className={`text-lg font-semibold mt-2 ${liftColor(saveLiftPercent)}`}>
-            Save Lift: {saveLiftPercent != null ? `${saveLiftPercent.toFixed(1)}%` : '—'}
+          <p className="text-xs text-gray-500 mt-1">
+            baseline: {formatNum(performance.baselineSaves)}
+          </p>
+          <p
+            className={`text-lg font-semibold mt-2 ${liftColor(saveLiftPercent)}`}
+          >
+            Save Lift:{' '}
+            {saveLiftPercent != null ? `${saveLiftPercent.toFixed(1)}%` : '—'}
           </p>
         </div>
 
@@ -129,10 +163,17 @@ export default function FeaturedPerformanceSection({ slotId }: Props) {
             <TrendingUp className="w-5 h-5" />
             <span className="text-sm font-medium">تأثیر ترند</span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Baseline: {formatNum(performance.baselineScore)}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Peak: {formatNum(performance.peakScore)}</p>
-          <p className={`text-lg font-semibold mt-2 ${liftColor(scoreLiftPercent)}`}>
-            Score Lift: {scoreLiftPercent != null ? `${scoreLiftPercent.toFixed(1)}%` : '—'}
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Baseline: {formatNum(performance.baselineScore)}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Peak: {formatNum(performance.peakScore)}
+          </p>
+          <p
+            className={`text-lg font-semibold mt-2 ${liftColor(scoreLiftPercent)}`}
+          >
+            Score Lift:{' '}
+            {scoreLiftPercent != null ? `${scoreLiftPercent.toFixed(1)}%` : '—'}
           </p>
         </div>
       </div>

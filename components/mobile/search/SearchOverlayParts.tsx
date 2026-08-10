@@ -166,7 +166,7 @@ export function SearchItemRow({
       }`}
     >
       <div
-        className={`shrink-0 overflow-hidden rounded-lg bg-gray-100 ${
+        className={`shrink-0 overflow-hidden rounded-lg bg-wibe-surface ${
           compact ? 'h-14 w-14' : 'h-16 w-16 sm:h-[72px] sm:w-[72px]'
         }`}
       >

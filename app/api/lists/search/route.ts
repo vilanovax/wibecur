@@ -23,28 +23,29 @@ export async function GET(request: NextRequest) {
 
     const searchWhere = buildPublicListSearchWhere(q);
 
-    const lists = await dbQuery(() =>
-      prisma.lists.findMany({
-        where: searchWhere,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          coverImage: true,
-          saveCount: true,
-          itemCount: true,
-          badge: true,
-          categories: {
-            select: { name: true, icon: true, slug: true },
+    const [lists, total] = await Promise.all([
+      dbQuery(() =>
+        prisma.lists.findMany({
+          where: searchWhere,
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            coverImage: true,
+            saveCount: true,
+            itemCount: true,
+            badge: true,
+            categories: {
+              select: { name: true, icon: true, slug: true },
+            },
           },
-        },
-        orderBy: [{ saveCount: 'desc' }, { createdAt: 'desc' }],
-        take: limit,
-      })
-    );
-
-    const total = await dbQuery(() => prisma.lists.count({ where: searchWhere }));
+          orderBy: [{ saveCount: 'desc' }, { createdAt: 'desc' }],
+          take: limit,
+        })
+      ),
+      dbQuery(() => prisma.lists.count({ where: searchWhere })),
+    ]);
 
     const resolved = withResolvedListCovers(lists);
 

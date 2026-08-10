@@ -37,7 +37,7 @@ export default function ItemDescriptionBlock({
   return (
     <div className="text-start">
       <h2 className="mb-2 wibe-small font-semibold text-foreground">درباره</h2>
-      <p className="text-[0.9375rem] leading-[1.85] text-foreground/80 whitespace-pre-line">
+      <p className="wibe-small leading-[1.85] text-foreground/80 whitespace-pre-line">
         {shortDescription}
       </p>
       <div className="mt-3 flex flex-wrap items-center justify-start gap-3">

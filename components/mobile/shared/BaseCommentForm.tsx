@@ -98,7 +98,7 @@ export default function BaseCommentForm({
                 setError('');
               }}
               rows={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
               placeholder="نظر خود را بنویسید..."
               disabled={isLoading}
             />
@@ -114,12 +114,12 @@ export default function BaseCommentForm({
         </div>
 
         {/* نوار دکمه‌ها — شیت با maxHeight calc(100vh - 100px) تمام می‌شود پس دکمه‌ها بالای ناو می‌مانند */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
+        <div className="flex-shrink-0 bg-white border-t border-wibe p-4">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex-1 px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium"
               disabled={isLoading}
             >
               انصراف

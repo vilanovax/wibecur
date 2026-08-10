@@ -20,10 +20,10 @@ export default function FilmTrendingListsSection({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🔥 داغ‌ترین لیست‌های هفته در {categoryName}
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         بر اساس ذخیره و engagement
       </p>
 
@@ -54,7 +54,7 @@ export default function FilmTrendingListsSection({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 {(list.badge === 'viral' || list.badge === 'hot' || i < 3) && (
                   <span
-                    className={`absolute top-2 right-2 text-white text-[10px] px-2 py-0.5 rounded font-bold ${
+                    className={`absolute top-2 right-2 text-white wibe-caption px-2 py-0.5 rounded font-bold ${
                       list.badge === 'viral' ? 'bg-red-500/90' : 'bg-orange-500/90'
                     }`}
                   >
@@ -63,10 +63,10 @@ export default function FilmTrendingListsSection({
                 )}
               </div>
               <div className="p-2.5">
-                <h3 className="font-semibold text-gray-100 text-sm line-clamp-2">
+                <h3 className="font-semibold text-white/90 text-sm line-clamp-2">
                   {list.title}
                 </h3>
-                <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
+                <div className="flex items-center gap-1.5 mt-1 text-xs text-wibe-secondary">
                   {list.creator?.image && (
                     <ImageWithFallback
                       src={list.creator.image}

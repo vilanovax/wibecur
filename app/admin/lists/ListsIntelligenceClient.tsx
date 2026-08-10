@@ -1,20 +1,53 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+  useDeferredValue,
+} from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus, Sparkles, ChevronDown, ChevronUp, BarChart3, FileJson } from 'lucide-react';
-import type { ListsIntelligenceData, ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
-import { LISTS_PULSE_SAMPLE } from '@/lib/admin/lists-intelligence';
+import type {
+  ListsIntelligenceData,
+  ListIntelligenceRow,
+} from '@/lib/admin/lists-types';
+import { LISTS_PULSE_SAMPLE } from '@/lib/admin/lists-types';
 import ListPulseSummary from '@/components/admin/lists/ListPulseSummary';
 import ListSmartFilterBar, { type ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
-import ListIntelligenceCard from '@/components/admin/lists/ListIntelligenceCard';
-import ListIntelligenceTable from '@/components/admin/lists/ListIntelligenceTable';
-import ListCoversGallery, { type ListAdminViewMode } from '@/components/admin/lists/ListCoversGallery';
-import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
+import type { ListAdminViewMode } from '@/components/admin/lists/ListCoversGallery';
 import Pagination from '@/components/admin/shared/Pagination';
-import { searchLists, countListsForFilter, listHasMissingCover } from '@/lib/admin/list-list-utils';
+import {
+  searchLists,
+  countAllListFilters,
+  listHasMissingCover,
+} from '@/lib/admin/list-list-utils';
 import Toast, { type ToastType } from '@/components/shared/Toast';
+
+const viewFallback = (
+  <div className="min-h-[280px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+);
+
+const ListIntelligenceTable = dynamic(
+  () => import('@/components/admin/lists/ListIntelligenceTable'),
+  { loading: () => viewFallback }
+);
+const ListIntelligenceCard = dynamic(
+  () => import('@/components/admin/lists/ListIntelligenceCard'),
+  { loading: () => viewFallback }
+);
+const ListCoversGallery = dynamic(
+  () => import('@/components/admin/lists/ListCoversGallery'),
+  { loading: () => viewFallback }
+);
+const MoveToTrashModal = dynamic(
+  () => import('@/components/admin/lists/MoveToTrashModal'),
+  { loading: () => null }
+);
 
 type SortKey =
   | 'score_desc'
@@ -160,27 +193,17 @@ export default function ListsIntelligenceClient({
     localStorage.setItem(KPI_COLLAPSED_KEY, kpiCollapsed ? '1' : '0');
   }, [kpiCollapsed]);
 
-  const filterCounts = useMemo(() => {
-    const keys: ListFilterKind[] = [
-      'all',
-      'rising',
-      'trending_top',
-      'low_engagement',
-      'suspicious',
-      'needs_review',
-      'zero_save',
-      'featured',
-      'no_cover',
-    ];
-    const counts = { ...EMPTY_COUNTS };
-    for (const k of keys) {
-      counts[k] = countListsForFilter(lists, k);
-    }
-    return counts;
-  }, [lists]);
+  const filterCounts = useMemo(
+    () => (lists.length === 0 ? EMPTY_COUNTS : countAllListFilters(lists)),
+    [lists]
+  );
 
+  const deferredSearch = useDeferredValue(search);
   const filteredByTab = useMemo(() => filterLists(lists, filter), [lists, filter]);
-  const searched = useMemo(() => searchLists(filteredByTab, search), [filteredByTab, search]);
+  const searched = useMemo(
+    () => searchLists(filteredByTab, deferredSearch),
+    [filteredByTab, deferredSearch]
+  );
   const sorted = useMemo(() => sortLists(searched, sortBy), [searched, sortBy]);
 
   const handleFilterChange = useCallback(
@@ -338,7 +361,7 @@ export default function ListsIntelligenceClient({
             )}
           </div>
           {data.pulseFromSample && !isTrashView && (
-            <p className="text-[11px] text-[var(--color-text-muted)]">
+            <p className="text-xs text-[var(--color-text-muted)]">
               KPI از {LISTS_PULSE_SAMPLE.toLocaleString('fa-IR')} لیست برتر
             </p>
           )}

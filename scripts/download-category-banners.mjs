@@ -107,8 +107,9 @@ const BANNERS = [
     url: 'https://upload.wikimedia.org/wikipedia/commons/6/61/Latte_macchiato_with_coffee_beans.jpg',
   },
   {
+    // منظره/تراس کافه — متمایز از cozy (میز مطالعه)؛ برای cafes-with-great-views
     name: 'cafe-3',
-    url: 'https://upload.wikimedia.org/wikipedia/commons/1/18/Wey_Coffee_02_IAA_2021_1X7A0099.jpg',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/0/09/Sm%C3%BAz_Caf%C3%A9_outdoor_terrace%2C_Hungarian_Parliament_view.jpg',
   },
   {
     name: 'restaurant-2',

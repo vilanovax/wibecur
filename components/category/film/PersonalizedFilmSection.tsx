@@ -41,10 +41,10 @@ export default function PersonalizedFilmSection({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🎯 برای تو انتخاب شده
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         بر اساس ژانرها و فیلم‌های ذخیره‌شده‌ات
       </p>
 
@@ -75,7 +75,7 @@ export default function PersonalizedFilmSection({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               </div>
               <div className="p-2">
-                <h3 className="font-semibold text-gray-100 text-xs line-clamp-2">
+                <h3 className="font-semibold text-white/90 text-xs line-clamp-2">
                   {list.title}
                 </h3>
               </div>

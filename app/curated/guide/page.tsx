@@ -3,17 +3,17 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 
 export default function CuratedGuidePage() {
   return (
-    <div className="bg-gray-50">
+    <div className="bg-wibe-surface">
       <Header title="چگونه کیوریتور شویم؟" showBack />
       <div className="p-4 max-w-[428px] mx-auto">
-        <h1 className="font-bold text-[18px] text-gray-900 mb-4">
+        <h1 className="font-bold wibe-caption text-foreground mb-4">
           چگونه کیوریتور شویم؟
         </h1>
-        <p className="text-[14px] text-gray-600 leading-relaxed">
+        <p className="wibe-caption text-wibe-secondary leading-relaxed">
           کیوریتور بودن یعنی لیست‌هایی با سلیقه و تخصص بسازی که دیگران از آن‌ها
           لذت ببرند. برای شروع:
         </p>
-        <ul className="mt-4 space-y-2 text-[14px] text-gray-600">
+        <ul className="mt-4 space-y-2 wibe-caption text-wibe-secondary">
           <li className="flex gap-2">
             <span className="text-primary">۱.</span>
             لیست‌های موضوعی و حرفه‌ای بساز
@@ -27,7 +27,7 @@ export default function CuratedGuidePage() {
             با مخاطبانت تعامل کن
           </li>
         </ul>
-        <p className="mt-6 text-[13px] text-gray-500">
+        <p className="mt-6 wibe-small text-wibe-secondary">
           به زودی راهنمای کامل کیوریتورها اینجا قرار می‌گیرد.
         </p>
       </div>

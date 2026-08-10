@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { Search, Bell, User, Settings, LogOut } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import RoleBadge from '@/components/auth/RoleBadge';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
-
+import { formatRelativeTime } from '@/lib/format-relative-time';
 type NotificationItem = {
   id: string;
   type: string;
@@ -159,7 +157,7 @@ export default function TopBar() {
                             <p className="text-sm font-medium text-gray-900">{n.title}</p>
                             <p className="text-xs text-gray-600 mt-1">{n.message}</p>
                             <p className="text-xs text-gray-400 mt-2">
-                              {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
+                              {formatRelativeTime(n.createdAt)}
                             </p>
                           </Link>
                         ) : (
@@ -173,7 +171,7 @@ export default function TopBar() {
                             <p className="text-sm font-medium text-gray-900">{n.title}</p>
                             <p className="text-xs text-gray-600 mt-1">{n.message}</p>
                             <p className="text-xs text-gray-400 mt-2">
-                              {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
+                              {formatRelativeTime(n.createdAt)}
                             </p>
                           </div>
                         )}

@@ -28,12 +28,12 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
       <section className={embedded ? '' : 'mb-6'}>
         {!embedded && (
           <div className="mb-3 px-4">
-            <div className="h-5 w-40 animate-pulse rounded bg-gray-200" />
+            <div className="h-5 w-40 animate-pulse rounded bg-wibe-surface" />
           </div>
         )}
         <div className="space-y-3 px-4 lg:px-0">
           {[1, 2].map((i) => (
-            <div key={i} className="h-20 animate-pulse rounded-lg bg-gray-100 lg:h-36" />
+            <div key={i} className="h-20 animate-pulse rounded-lg bg-wibe-surface lg:h-36" />
           ))}
         </div>
       </section>
@@ -75,19 +75,19 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
             }
             className="flex flex-row-reverse gap-3 overflow-hidden rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm transition-transform active:scale-[0.99]"
           >
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-200">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-wibe-surface">
               <ImageWithFallback
                 src={list.coverImage}
                 alt={list.title}
                 className="h-full w-full object-cover"
                 fallbackIcon={list.categories?.icon ?? '📋'}
-                fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface"
                 categorySlug={list.categories?.slug}
                 listSlug={list.slug}
                 listTitle={list.title}
               />
               {(list as { isFastRising?: boolean }).isFastRising && (
-                <span className="absolute right-1 top-1 flex items-center gap-0.5 rounded-pill bg-success px-1.5 py-0.5 wibe-caption font-semibold text-white">
+                <span className="absolute right-1 top-1 flex items-center gap-0.5 rounded-pill bg-amber-500 px-1.5 py-0.5 wibe-caption font-semibold text-white">
                   <TrendingUp className="h-2.5 w-2.5" />
                 </span>
               )}
@@ -114,7 +114,7 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
           getBadge={(list) =>
             (list as { isFastRising?: boolean }).isFastRising ? 'سریع' : null
           }
-          badgeClassName="bg-success text-white"
+          badgeClassName="bg-amber-500 text-white"
           homeSection="rising"
         />
       </div>

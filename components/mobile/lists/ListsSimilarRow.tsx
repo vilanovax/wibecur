@@ -1,7 +1,6 @@
 'use client';
 
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
-import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 
 type ListItem = Parameters<typeof ListCardCompact>[0]['list'];
 
@@ -18,10 +17,7 @@ export default function ListsSimilarRow({
   bookmarkedIds,
   onBookmarkToggle,
 }: ListsSimilarRowProps) {
-  const isDesktop = useIsDesktop();
   if (lists.length === 0) return null;
-
-  const cardVariant = isDesktop ? 'compact' : 'mini';
 
   return (
     <section className="mt-2 border-t border-wibe pt-4 lg:pt-5" aria-label={title}>
@@ -34,7 +30,7 @@ export default function ListsSimilarRow({
           <div key={list.id} className="w-[min(220px,72vw)] shrink-0 snap-start lg:w-full lg:max-w-none">
             <ListCardCompact
               list={list}
-              variant={cardVariant}
+              variant="compact"
               isBookmarked={bookmarkedIds?.has(list.id)}
               onBookmarkToggle={onBookmarkToggle}
             />

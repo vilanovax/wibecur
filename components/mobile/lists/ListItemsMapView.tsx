@@ -64,7 +64,7 @@ export default function ListItemsMapView({
 
   return (
     <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-stretch">
-      <div className="relative aspect-[4/3] min-h-[220px] bg-gray-100 lg:aspect-auto lg:min-h-[320px]">
+      <div className="relative aspect-[4/3] min-h-[220px] bg-wibe-surface lg:aspect-auto lg:min-h-[320px]">
         {embedUrl ? (
           <iframe
             title={`نقشه — ${selectedEntry?.item.title ?? ''}`}
@@ -96,7 +96,7 @@ export default function ListItemsMapView({
               <li key={item.id}>
                 <div
                   className={`flex items-stretch gap-2 px-2 py-2 transition-colors ${
-                    isSelected ? 'bg-primary/5' : 'hover:bg-gray-50'
+                    isSelected ? 'bg-primary/5' : 'hover:bg-wibe-surface'
                   }`}
                 >
                   <button
@@ -109,7 +109,7 @@ export default function ListItemsMapView({
                         className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full wibe-caption font-semibold tabular-nums ${
                           isSelected
                             ? 'bg-primary text-white'
-                            : 'bg-gray-100 text-wibe-secondary'
+                            : 'bg-wibe-surface text-wibe-secondary'
                         }`}
                       >
                         {(originalIndex + 1).toLocaleString('fa-IR')}

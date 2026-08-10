@@ -1,4 +1,4 @@
-import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
 import type { ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
 import { isGenericListCover } from '@/lib/image-url-policy';
 
@@ -65,4 +65,34 @@ export function countListsForFilter(
     default:
       return lists.length;
   }
+}
+
+/** Single-pass filter tab counts (js-combine-iterations) */
+export function countAllListFilters(
+  lists: ListIntelligenceRow[]
+): Record<ListFilterKind, number> {
+  const counts: Record<ListFilterKind, number> = {
+    all: lists.length,
+    rising: 0,
+    trending_top: 0,
+    low_engagement: 0,
+    suspicious: 0,
+    needs_review: 0,
+    zero_save: 0,
+    featured: 0,
+    no_cover: 0,
+  };
+
+  for (const l of lists) {
+    if (l.status === 'rising') counts.rising += 1;
+    if (l.rank <= 10) counts.trending_top += 1;
+    if (l.lowEngagement) counts.low_engagement += 1;
+    if (l.riskLevel === 'medium' || l.riskLevel === 'high') counts.suspicious += 1;
+    if (l.needsReview) counts.needs_review += 1;
+    if (l.saveCount === 0) counts.zero_save += 1;
+    if (l.isFeatured) counts.featured += 1;
+    if (listHasMissingCover(l)) counts.no_cover += 1;
+  }
+
+  return counts;
 }

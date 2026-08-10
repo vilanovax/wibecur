@@ -42,42 +42,51 @@ export default function ListDetailSidebar({
       <div className={`${DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS} space-y-4`}>
         {statsBar}
 
-        {isOwner ? (
-          <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/[0.04] p-4">
+        <div className="space-y-2 rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm">
+          <button
+            type="button"
+            onClick={onShare}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 wibe-small font-semibold text-white transition-colors hover:bg-primary-dark"
+          >
+            <Share2 className="h-4 w-4" />
+            اشتراک‌گذاری
+          </button>
+          {isOwner ? (
             <button
               type="button"
               onClick={onManage}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 wibe-small font-semibold text-white transition-colors hover:bg-primary-dark"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-surface py-2.5 wibe-small font-medium text-wibe-secondary transition-colors hover:border-primary/25 hover:text-foreground"
             >
               <Settings className="h-4 w-4" />
               مدیریت لیست
             </button>
+          ) : (
             <button
               type="button"
-              onClick={onShare}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-card py-2.5 wibe-small font-semibold text-foreground hover:border-primary/25"
+              onClick={onSuggestItem}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-surface py-2.5 wibe-small font-medium text-foreground transition-colors hover:border-primary/25"
             >
-              <Share2 className="h-4 w-4 text-wibe-secondary" />
-              اشتراک‌گذاری
+              <Lightbulb className="h-4 w-4 text-primary" />
+              پیشنهاد آیتم
             </button>
-            {shouldShowViralProgress(saveCount) && (
-              <div>
-                <div className="mb-1 flex items-center justify-between wibe-caption text-wibe-secondary">
-                  <span>پیشرفت وایرال</span>
-                  <span className="font-semibold tabular-nums">
-                    {Math.round(viralProgress).toLocaleString('fa-IR')}٪
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full rounded-full bg-warning transition-colors"
-                    style={{ width: `${viralProgress}%` }}
-                  />
-                </div>
+          )}
+          {isOwner && shouldShowViralProgress(saveCount) ? (
+            <div>
+              <div className="mb-1 flex items-center justify-between wibe-caption text-wibe-secondary">
+                <span>پیشرفت وایرال</span>
+                <span className="font-semibold tabular-nums">
+                  {Math.round(viralProgress).toLocaleString('fa-IR')}٪
+                </span>
               </div>
-            )}
-          </div>
-        ) : null}
+              <div className="h-1.5 overflow-hidden rounded-full bg-wibe-surface">
+                <div
+                  className="h-full rounded-full bg-warning transition-colors"
+                  style={{ width: `${viralProgress}%` }}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         {sidebarAds.length > 0 ? (
           <SponsoredPlacementStack
@@ -95,7 +104,7 @@ export default function ListDetailSidebar({
               {tags.slice(0, 6).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex rounded-md bg-gray-100 px-2.5 py-1 wibe-caption text-wibe-secondary"
+                  className="inline-flex rounded-md bg-wibe-surface px-2.5 py-1 wibe-caption text-wibe-secondary"
                 >
                   {tag}
                 </span>
@@ -104,18 +113,7 @@ export default function ListDetailSidebar({
           </div>
         )}
 
-        {!isOwner && (
-          <button
-            type="button"
-            onClick={onSuggestItem}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/35 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-colors hover:bg-primary/10"
-          >
-            <Lightbulb className="h-4 w-4" />
-            پیشنهاد آیتم
-          </button>
-        )}
-
-        {isOwner && (
+        {isOwner ? (
           <Link
             href={`/user-lists/${listId}/add-item`}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/35 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-colors hover:bg-primary/10"
@@ -123,7 +121,7 @@ export default function ListDetailSidebar({
             <Plus className="h-4 w-4" />
             افزودن آیتم
           </Link>
-        )}
+        ) : null}
       </div>
     </aside>
   );

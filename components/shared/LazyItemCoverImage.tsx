@@ -1,6 +1,6 @@
 'use client';
 
-import type { RefObject } from 'react';
+import { useEffect, useState } from 'react';
 import ItemCoverImage, { type ItemCoverImageProps } from '@/components/shared/ItemCoverImage';
 import ItemCoverPlaceholder from '@/components/shared/ItemCoverPlaceholder';
 import { useLazyInView } from '@/hooks/useLazyInView';
@@ -11,8 +11,12 @@ type LazyItemCoverImageProps = ItemCoverImageProps & {
   enrichWhenVisible?: boolean;
 };
 
+/**
+ * Lazy cover that still paints above-the-fold images when
+ * `content-visibility: auto` parents make IntersectionObserver flaky.
+ */
 export default function LazyItemCoverImage({
-  rootMargin = '180px',
+  rootMargin = '280px',
   enrichWhenVisible = true,
   title,
   categorySlug,
@@ -22,15 +26,48 @@ export default function LazyItemCoverImage({
   enrichPoster,
   imageUrl,
   coverLayout = 'default',
+  priority = false,
   ...rest
 }: LazyItemCoverImageProps) {
-  const { ref, inView } = useLazyInView({ rootMargin, once: true });
+  const { ref, inView, elementRef } = useLazyInView<HTMLDivElement>({
+    rootMargin,
+    once: true,
+  });
+  const [geometryVisible, setGeometryVisible] = useState(priority);
+
+  useEffect(() => {
+    if (priority || inView) {
+      setGeometryVisible(true);
+      return;
+    }
+
+    const el = elementRef.current;
+    if (!el || typeof window === 'undefined') return;
+
+    const check = () => {
+      const rect = el.getBoundingClientRect();
+      const margin = 280;
+      const vh = window.innerHeight || 0;
+      if (rect.top < vh + margin && rect.bottom > -margin) {
+        setGeometryVisible(true);
+      }
+    };
+
+    // content-visibility parents can delay IO callbacks; geometry is the backup.
+    const raf = window.requestAnimationFrame(check);
+    const timer = window.setTimeout(check, 160);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
+  }, [priority, inView, elementRef]);
 
   const shouldEnrich = enrichWhenVisible && (enrichPoster ?? true);
+  const showImage = priority || inView || geometryVisible;
 
   return (
-    <div ref={ref as RefObject<HTMLDivElement>} className="h-full w-full">
-      {inView ? (
+    <div ref={ref} className="h-full w-full">
+      {showImage ? (
         <ItemCoverImage
           title={title}
           categorySlug={categorySlug}
@@ -40,6 +77,7 @@ export default function LazyItemCoverImage({
           imageUrl={imageUrl}
           enrichPoster={shouldEnrich}
           coverLayout={coverLayout}
+          priority={priority}
           {...rest}
         />
       ) : (

@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import ExploreSmartHero from './ExploreSmartHero';
 import QuickNowSection from './QuickNowSection';
+import ExploreCategoriesBrowseLink from './ExploreCategoriesBrowseLink';
 import { ExplorePageSkeleton } from './ExplorePageSkeleton';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
@@ -16,11 +17,9 @@ import {
   SearchResultsPanelLazy,
   RandomSurpriseCardLazy,
   TrendingNowSectionLazy,
-  CategoryDiscoverySectionLazy,
   ForYouSectionLazy,
 } from './explore-lazy-sections';
 import {
-  ExploreCategorySectionSkeleton,
   ExploreForYouSectionSkeleton,
   ExploreSurpriseSectionSkeleton,
   ExploreTrendingSectionSkeleton,
@@ -54,10 +53,10 @@ async function fetchExplorePreferences(): Promise<ExploreUserPreferences> {
 export default function CuratedLandingPageClient({
   initialData,
   trendingSlot,
-  categoriesSlot,
 }: {
   initialData?: ExplorePayload;
   trendingSlot?: ReactNode;
+  /** @deprecated دسته‌ها به لینک آرام /lists منتقل شدند */
   categoriesSlot?: ReactNode;
 }) {
   const searchParams = useSearchParams();
@@ -67,6 +66,7 @@ export default function CuratedLandingPageClient({
   const search = useUnifiedSearchQuery(searchQuery, { enabled: searchEnabled });
   const isSearchActive = search.isActive;
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [createCategoryHint, setCreateCategoryHint] = useState<string | null>(null);
   const [moodSelection, setMoodSelection] = useState<MoodExplorerSelection | null>(null);
   const [guidedOpen, setGuidedOpen] = useState(false);
   const { ref: forYouRef, inView: forYouInView } = useLazyInView<HTMLDivElement>({
@@ -80,6 +80,8 @@ export default function CuratedLandingPageClient({
     staleTime: 5 * 60 * 1000,
     retry: 1,
     initialData,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
+    refetchOnMount: initialData ? false : undefined,
   });
 
   const isLoggedIn = Boolean(session?.user?.id);
@@ -137,14 +139,31 @@ export default function CuratedLandingPageClient({
   useEffect(() => {
     if (searchParams.get('openCreate') === '1') {
       setIsCreateFormOpen(true);
+      setCreateCategoryHint(searchParams.get('category'));
       if (typeof window !== 'undefined') {
         window.history.replaceState({}, '', '/explore');
       }
     }
   }, [searchParams]);
 
+  const createForm = isCreateFormOpen ? (
+    <CreateListFormLazy
+      isOpen={isCreateFormOpen}
+      onClose={() => {
+        setIsCreateFormOpen(false);
+        setCreateCategoryHint(null);
+      }}
+      categoryHint={createCategoryHint}
+    />
+  ) : null;
+
   if (isLoading) {
-    return <ExplorePageSkeleton />;
+    return (
+      <>
+        <ExplorePageSkeleton />
+        {createForm}
+      </>
+    );
   }
 
   const showDiscovery = !isSearchActive;
@@ -205,27 +224,37 @@ export default function CuratedLandingPageClient({
           </div>
         ) : (
           <>
-            <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
+            {/*
+              Mood owns the first viewport on mobile — spacer + deferred mount keep
+              QuickNow / داغ from peeking under the 2×2 fold (critique P1).
+            */}
+            <div
+              className="h-[min(18vh,7.5rem)] max-h-32 min-h-8 lg:h-4"
+              aria-hidden
+            />
 
-            <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
-              <RandomSurpriseCardLazy lists={sections.trending} />
+            <HomeDeferredMount
+              rootMargin="0px"
+              className="min-h-0"
+              fallback={null}
+            >
+              <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
             </HomeDeferredMount>
 
-            {trendingSlot ??
-              (sections.trending.length > 0 ? (
-                <HomeDeferredMount fallback={<ExploreTrendingSectionSkeleton />}>
+            {trendingSlot || sections.trending.length > 0 ? (
+              <HomeDeferredMount
+                rootMargin="40px"
+                className="min-h-[8rem] lg:min-h-[10rem]"
+                fallback={<ExploreTrendingSectionSkeleton />}
+              >
+                {trendingSlot ?? (
                   <TrendingNowSectionLazy
                     lists={sections.trending}
                     subtitle="محبوب‌ترین‌ها همین الان"
                   />
-                </HomeDeferredMount>
-              ) : null)}
-
-            {categoriesSlot ?? (
-              <HomeDeferredMount fallback={<ExploreCategorySectionSkeleton />}>
-                <CategoryDiscoverySectionLazy categories={categories} />
+                )}
               </HomeDeferredMount>
-            )}
+            ) : null}
 
             <div ref={forYouRef} className="min-h-[1px]">
               {!forYouInView ? null : forYouPending ? (
@@ -238,6 +267,20 @@ export default function CuratedLandingPageClient({
                 />
               ) : null}
             </div>
+
+            <ExploreCategoriesBrowseLink />
+
+            <HomeDeferredMount fallback={<ExploreSurpriseSectionSkeleton />}>
+              <RandomSurpriseCardLazy
+                lists={
+                  sections.forYou.length > 0
+                    ? sections.forYou
+                    : sections.trending.length > 0
+                      ? sections.trending
+                      : sections.filtered.slice(0, 12)
+                }
+              />
+            </HomeDeferredMount>
 
             {sections.filtered.length === 0 && (
               <div className="px-2.5 py-12 text-center">
@@ -257,12 +300,7 @@ export default function CuratedLandingPageClient({
         )}
       </main>
 
-      {isCreateFormOpen && (
-        <CreateListFormLazy
-          isOpen={isCreateFormOpen}
-          onClose={() => setIsCreateFormOpen(false)}
-        />
-      )}
+      {createForm}
 
       {guidedOpen && (
         <GuidedDiscoverySheetLazy

@@ -21,7 +21,7 @@ interface ListsFeaturedCarouselProps {
 }
 
 const SLIDE_CLASS =
-  'w-[min(88vw,300px)] shrink-0 snap-start max-lg:snap-center lg:w-full lg:max-w-none lg:shrink';
+  'w-[min(72vw,240px)] shrink-0 snap-start max-lg:snap-center lg:w-full lg:max-w-none lg:shrink';
 
 export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -51,14 +51,17 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
   if (lists.length === 0) return null;
 
   return (
-    <section className="mb-3 w-full min-w-0 lg:mb-5" aria-label="منتخب">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="wibe-h3 flex items-center gap-1.5">
+    <section className="mb-2 w-full min-w-0 lg:mb-5" aria-label="منتخب">
+      <div className="mb-1.5 flex items-center justify-between gap-2 lg:mb-2">
+        <h2 className="flex items-center gap-1.5 wibe-small font-semibold text-foreground lg:wibe-h3">
           <span aria-hidden>⭐</span>
           <span>منتخب</span>
         </h2>
         {lists.length > 1 && (
-          <span className="wibe-caption text-wibe-secondary tabular-nums">
+          <span
+            className="wibe-caption text-wibe-secondary tabular-nums"
+            aria-live="polite"
+          >
             {(activeIndex + 1).toLocaleString('fa-IR')}/{lists.length.toLocaleString('fa-IR')}
           </span>
         )}
@@ -67,36 +70,25 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
       {lists.length === 1 ? (
         <FeaturedSlide list={lists[0]} priority className="w-full max-w-2xl lg:max-w-none" />
       ) : (
-        <>
-          <div
-            ref={scrollRef}
-            className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-2.5 max-lg:overflow-x-auto max-lg:pb-1 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
-            role="list"
-            aria-label="لیست‌های منتخب"
-          >
-            {lists.map((list, i) => (
-              <div
-                key={list.id}
-                role="listitem"
-                data-featured-slide
-                data-index={i}
-                className={SLIDE_CLASS}
-              >
-                <FeaturedSlide list={list} priority={i === 0} className="w-full" />
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 flex justify-center gap-1.5 lg:hidden" aria-hidden>
-            {lists.map((list, i) => (
-              <span
-                key={list.id}
-                className={`h-1.5 rounded-full transition-colors ${
-                  i === activeIndex ? 'w-4 bg-primary' : 'w-1.5 bg-wibe-secondary/30'
-                }`}
-              />
-            ))}
-          </div>
-        </>
+        <div
+          ref={scrollRef}
+          className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-2 max-lg:overflow-x-auto max-lg:pb-0.5 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
+          role="list"
+          aria-label="لیست‌های منتخب"
+        >
+          {lists.map((list, i) => (
+            <div
+              key={list.id}
+              role="listitem"
+              data-featured-slide
+              data-index={i}
+              className={SLIDE_CLASS}
+              aria-current={i === activeIndex ? 'true' : undefined}
+            >
+              <FeaturedSlide list={list} priority={i === 0} className="w-full" />
+            </div>
+          ))}
+        </div>
       )}
     </section>
   );
@@ -119,7 +111,7 @@ function FeaturedSlide({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`group relative block aspect-[2/1] min-h-[108px] overflow-hidden rounded-xl border border-wibe shadow-sm transition-[colors,transform] active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[128px] lg:aspect-[3/2] lg:min-h-[180px] lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
+      className={`group relative block aspect-[5/2] min-h-[72px] overflow-hidden rounded-lg border border-wibe shadow-sm transition-[colors,transform] active:scale-[0.99] sm:aspect-[5/3] sm:min-h-[110px] lg:aspect-[3/2] lg:min-h-[180px] lg:rounded-xl lg:hover:border-primary/30 lg:hover:shadow-lg xl:min-h-[200px] ${className}`}
     >
       <ListCoverImage
         coverImage={list.coverImage}
@@ -131,17 +123,19 @@ function FeaturedSlide({
         variant="banner"
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
         fallbackIcon={list.categories?.icon ?? '📋'}
-        fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-4xl"
+        fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-3xl lg:text-4xl"
         priority={priority}
       />
       <div className="absolute inset-0 bg-gradient-to-l from-black/85 via-black/50 to-black/20" />
       {categoryLabel && (
-        <span className="absolute top-2.5 right-2.5 rounded-md bg-black/45 px-2 py-0.5 wibe-caption text-white/95 backdrop-blur-sm">
+        <span className="absolute top-1.5 right-1.5 rounded-md bg-black/45 px-1.5 py-0.5 wibe-caption text-white/95 backdrop-blur-sm lg:top-2.5 lg:right-2.5 lg:px-2">
           {categoryLabel}
         </span>
       )}
-      <div className="absolute inset-0 flex flex-col justify-end p-3 text-right lg:p-4">
-        <h3 className="line-clamp-2 wibe-small font-bold text-white lg:text-lg">{list.title}</h3>
+      <div className="absolute inset-0 flex flex-col justify-end p-2 text-right lg:p-4">
+        <h3 className="line-clamp-2 wibe-caption font-bold text-white lg:wibe-small lg:text-lg">
+          {list.title}
+        </h3>
       </div>
     </Link>
   );

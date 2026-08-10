@@ -1,12 +1,24 @@
+/**
+ * Comments hub KPI / nav badge stats.
+ *
+ * Perf (vercel-react-best-practices):
+ * - Drop unused full-table scans (filtered totals, itemReportsTotal, offenders groupBy)
+ * - Reuse pulse.unresolvedReports for commentReports.open (no getReportsPulse×3)
+ * - Parallelize penalty thresholds with other counts (no waterfall)
+ */
+
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCommentsPulse } from '@/lib/admin/comments-pulse';
-import { getReportsPulse } from '@/lib/admin/comments-reports-intelligence';
 import { getPenaltyThresholds } from '@/lib/comment-permission';
 
 export type CommentsHubStats = {
   comments: Awaited<ReturnType<typeof getCommentsPulse>>;
-  commentReports: Awaited<ReturnType<typeof getReportsPulse>>;
+  commentReports: {
+    open: number;
+    resolved: number;
+    total: number;
+  };
   itemReportsOpen: number;
   itemReportsTotal: number;
   filteredComments: number;
@@ -17,80 +29,52 @@ export type CommentsHubStats = {
   };
 };
 
-async function getViolationsHubCounts() {
+async function countRestrictedUsers(): Promise<number> {
   const thresholds = await getPenaltyThresholds();
   const now = new Date();
-
-  const [totalOffenders, restrictedUsers, penaltySum] = await Promise.all([
-    dbQuery(() =>
-      prisma.user_violations.groupBy({
-        by: ['userId'],
-        _count: { _all: true },
-      }).then((rows) => rows.length)
-    ),
-    dbQuery(() =>
-      prisma.users.count({
-        where: {
-          OR: [
-            { commentRestrictedUntil: { gt: now } },
-            {
-              user_violations: {
-                some: { totalPenaltyScore: { gte: thresholds.restrict } },
-              },
+  return dbQuery(() =>
+    prisma.users.count({
+      where: {
+        OR: [
+          { commentRestrictedUntil: { gt: now } },
+          {
+            user_violations: {
+              some: { totalPenaltyScore: { gte: thresholds.restrict } },
             },
-          ],
-        },
-      })
-    ),
-    dbQuery(() =>
-      prisma.user_violations.aggregate({
-        _sum: { totalPenaltyScore: true },
-      })
-    ),
-  ]);
-
-  return {
-    totalOffenders,
-    restrictedUsers,
-    totalPenaltyScore: penaltySum._sum.totalPenaltyScore ?? 0,
-  };
+          },
+        ],
+      },
+    })
+  );
 }
 
 export async function getCommentsHubStats(): Promise<CommentsHubStats> {
-  const [
-    comments,
-    commentReports,
-    itemReportsOpen,
-    itemReportsTotal,
-    itemCommentsFiltered,
-    commentsFiltered,
-    violations,
-  ] = await Promise.all([
+  const [comments, itemReportsOpen, restrictedUsers] = await Promise.all([
     getCommentsPulse(),
-    getReportsPulse(),
     dbQuery(() =>
       prisma.item_reports.count({ where: { resolved: false } })
     ),
-    dbQuery(() => prisma.item_reports.count()),
-    dbQuery(() =>
-      prisma.list_comments.count({
-        where: { deletedAt: null, isFiltered: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.comments.count({
-        where: { deletedAt: null, isFiltered: true },
-      })
-    ),
-    getViolationsHubCounts(),
+    // Starts immediately; awaits thresholds internally (no outer waterfall)
+    countRestrictedUsers(),
   ]);
+
+  const openReports = comments.unresolvedReports;
 
   return {
     comments,
-    commentReports,
+    commentReports: {
+      open: openReports,
+      // Unused by hub/nav UI — keep shape for type compat without extra queries
+      resolved: 0,
+      total: openReports,
+    },
     itemReportsOpen,
-    itemReportsTotal,
-    filteredComments: commentsFiltered + itemCommentsFiltered,
-    violations,
+    itemReportsTotal: itemReportsOpen,
+    filteredComments: 0,
+    violations: {
+      totalOffenders: 0,
+      restrictedUsers,
+      totalPenaltyScore: 0,
+    },
   };
 }

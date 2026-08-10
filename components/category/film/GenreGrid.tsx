@@ -6,7 +6,7 @@ const FILM_GENRES = [
   { slug: 'action', label: 'اکشن', icon: '🎬', gradient: 'from-red-600 to-orange-600' },
   { slug: 'drama', label: 'درام', icon: '💔', gradient: 'from-blue-700 to-indigo-700' },
   { slug: 'comedy', label: 'کمدی', icon: '😂', gradient: 'from-yellow-500 to-amber-500' },
-  { slug: 'horror', label: 'ترسناک', icon: '👻', gradient: 'from-purple-900 to-gray-900' },
+  { slug: 'horror', label: 'ترسناک', icon: '👻', gradient: 'from-slate-900 to-gray-900' },
   { slug: 'scifi', label: 'علمی‌تخیلی', icon: '🚀', gradient: 'from-cyan-600 to-blue-700' },
   { slug: 'romance', label: 'عاشقانه', icon: '❤️', gradient: 'from-pink-500 to-rose-600' },
   { slug: 'animation', label: 'انیمیشن', icon: '🌈', gradient: 'from-green-500 to-emerald-600' },
@@ -21,10 +21,10 @@ interface GenreGridProps {
 export default function GenreGrid({ categorySlug }: GenreGridProps) {
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         🎬 ژانرها
       </h2>
-      <p className="text-sm text-gray-600 mb-5">
+      <p className="text-sm text-wibe-secondary mb-5">
         کاوش در ژانرهای مختلف فیلم و سریال
       </p>
 
@@ -40,7 +40,7 @@ export default function GenreGrid({ categorySlug }: GenreGridProps) {
             >
               {genre.icon}
             </span>
-            <span className="text-xs font-semibold text-gray-100 text-center leading-tight line-clamp-2">
+            <span className="text-xs font-semibold text-white/90 text-center leading-tight line-clamp-2">
               {genre.label}
             </span>
           </Link>

@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ThumbsUp, ThumbsDown, Flag, Trash2, MoreVertical } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentAvatar from '@/components/shared/CommentAvatar';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { COMMENT_CLAMP_CHAR_THRESHOLD } from '@/lib/comment-limits';
@@ -45,7 +44,7 @@ function CommentMoreMenu({ onReport, onDelete }: { onReport: () => void; onDelet
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-gray-100 transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-wibe-surface transition-colors"
         aria-label="گزینه‌های بیشتر"
       >
         <MoreVertical className="w-4 h-4" />
@@ -153,7 +152,7 @@ export default function CommentItem({
               <span className="font-medium text-foreground text-sm">{comment.user.name}</span>
             )}
             <span className="text-xs text-wibe-secondary">
-              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
+              {formatRelativeTime(comment.createdAt)}
             </span>
           </div>
           <CommentMoreMenu

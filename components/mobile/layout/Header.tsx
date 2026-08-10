@@ -56,12 +56,12 @@ export default function Header({
   const isDark = variant === 'dark';
   const headerClass = isDark
     ? 'sticky top-0 z-50 border-b border-gray-800 bg-gray-950/95 backdrop-blur-sm'
-    : 'sticky top-0 z-50 border-b border-gray-100 bg-white shadow-sm';
-  const textClass = isDark ? 'text-white' : 'text-gray-900';
-  const iconClass = isDark ? 'text-gray-300' : 'text-gray-600';
+    : 'sticky top-0 z-50 border-b border-wibe bg-white shadow-sm';
+  const textClass = isDark ? 'text-white' : 'text-foreground';
+  const iconClass = isDark ? 'text-gray-300' : 'text-wibe-secondary';
   const buttonClass = isDark
     ? 'bg-gray-800 hover:bg-gray-700'
-    : 'bg-gray-100 hover:bg-gray-200';
+    : 'bg-wibe-surface hover:bg-wibe-surface';
 
   return (
     <header
@@ -83,13 +83,14 @@ export default function Header({
             </button>
           )}
           {title ? (
-            <h1
+            // Page body owns the real <h1>; sticky chrome stays a label to avoid duplicate headings.
+            <p
               className={`truncate text-lg font-bold lg:text-xl ${textClass} ${
                 hideTitleOnDesktop ? 'lg:sr-only' : ''
               }`}
             >
               {title}
-            </h1>
+            </p>
           ) : (
             <SiteLogo variant="header" href="/" className="lg:hidden" />
           )}

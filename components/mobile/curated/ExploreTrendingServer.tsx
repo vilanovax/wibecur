@@ -2,6 +2,7 @@ import Image from 'next/image';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
+import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import type { CuratedList } from '@/types/curated';
 
 type ExploreTrendingServerProps = {
@@ -34,7 +35,7 @@ export default function ExploreTrendingServer({
             key={list.id}
             className="w-[78%] max-w-[280px] shrink-0 snap-start sm:w-[46%] md:w-[38%] lg:w-[calc(25%-0.5625rem)] lg:max-w-none xl:w-[calc(20%-0.6rem)]"
           >
-            <ExploreTrendingCard list={list} priority={index < 2} />
+            <ExploreTrendingCard list={list} priority={index < 2} showBadge={index === 0} />
           </div>
         ))}
       </div>
@@ -45,12 +46,20 @@ export default function ExploreTrendingServer({
 function ExploreTrendingCard({
   list,
   priority = false,
+  showBadge = false,
 }: {
   list: CuratedList;
   priority?: boolean;
+  showBadge?: boolean;
 }) {
   const href = `/lists/${list.slug}`;
-  const coverSrc = isRenderableCover(list.coverUrl) ? list.coverUrl : null;
+  const trustedCover = resolveCoverImage({
+    coverImage: list.coverUrl,
+    categorySlug: list.category?.slug,
+    listSlug: list.slug,
+    listTitle: list.title,
+  });
+  const coverSrc = isRenderableCover(trustedCover) ? trustedCover : null;
   const cover = coverSrc ? resolveNextImageSrc(coverSrc) : null;
 
   return (
@@ -59,7 +68,7 @@ function ExploreTrendingCard({
       className="group block transition-transform active:scale-[0.99] lg:hover:scale-[1.01]"
     >
       <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:rounded-xl lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10]">
+        <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10]">
           {cover ? (
             <Image
               src={cover.src}
@@ -71,13 +80,15 @@ function ExploreTrendingCard({
               unoptimized={cover.unoptimized}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-2xl">
+            <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl">
               {list.category?.icon ?? '📋'}
             </div>
           )}
-          <span className="absolute right-2 top-2 z-10 rounded-full bg-warning px-2 py-0.5 wibe-caption font-semibold text-white lg:text-xs">
-            ترند
-          </span>
+          {showBadge ? (
+            <span className="absolute right-2 top-2 z-10 rounded-md bg-black/50 px-1.5 py-0.5 wibe-caption font-medium text-white/95 backdrop-blur-sm">
+              داغ
+            </span>
+          ) : null}
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent lg:from-black/85" />
           <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
             <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:text-base lg:font-bold lg:leading-snug">

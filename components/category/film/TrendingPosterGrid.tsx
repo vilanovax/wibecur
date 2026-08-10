@@ -43,12 +43,12 @@ function TrendingPosterCard({ list }: { list: CategoryListCard }) {
             </span>
           )}
           {weeklySaves != null && weeklySaves > 0 && (
-            <span className="absolute left-2 top-2 rounded-lg bg-orange-500/90 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+            <span className="absolute left-2 top-2 rounded-lg bg-orange-500/90 px-2 py-0.5 wibe-caption font-bold text-white shadow-sm">
               +{weeklySaves.toLocaleString('fa-IR')}
             </span>
           )}
           <div className="absolute bottom-2 left-2 right-2 lg:bottom-3 lg:left-3 lg:right-3">
-            <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:text-[15px] lg:leading-snug">
+            <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:wibe-body lg:leading-snug">
               {list.title}
             </h3>
             <ListCardStats

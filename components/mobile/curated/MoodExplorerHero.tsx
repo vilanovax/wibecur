@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   MOBILE_FEATURED_MOOD_IDS,
   MOOD_EXPLORER_CARDS,
@@ -15,16 +15,15 @@ type Props = {
 };
 
 const FEATURED_SET = new Set<string>(MOBILE_FEATURED_MOOD_IDS);
-const EXTRA_MOBILE_COUNT = MOOD_EXPLORER_CARDS.length - MOBILE_FEATURED_MOOD_IDS.length;
+const EXTRA_COUNT = MOOD_EXPLORER_CARDS.length - MOBILE_FEATURED_MOOD_IDS.length;
 
 export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Props) {
-  const [showAllMobile, setShowAllMobile] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   return (
-    <div className="mb-1">
-      <header className="mb-4 lg:mb-5">
-        <p className="mb-1 wibe-caption font-semibold tracking-wide text-primary">اکسپلور</p>
-        <h2 className="text-balance text-[1.7rem] font-bold leading-[1.2] tracking-tight text-foreground lg:text-3xl lg:leading-[1.15]">
+    <div className="mb-0">
+      <header className="mb-3.5 lg:mb-4">
+        <h2 className="text-balance wibe-h1 leading-snug tracking-tight lg:text-3xl lg:leading-[1.15]">
           امروز دنبال چه وایبی هستی؟
         </h2>
         <p className="mt-1.5 max-w-md text-pretty wibe-small text-wibe-secondary lg:mt-2 lg:text-base">
@@ -33,15 +32,16 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
       </header>
 
       <div
-        className="grid grid-cols-2 gap-2.5 lg:grid-cols-3 lg:gap-3.5"
+        className="grid grid-cols-2 gap-2.5 lg:grid-cols-2 lg:gap-3 xl:grid-cols-4"
         aria-label="کارت‌های حال و موقعیت"
       >
         {MOOD_EXPLORER_CARDS.map((card) => {
-          const hiddenOnMobile = !showAllMobile && !FEATURED_SET.has(card.id);
+          const hidden = !showAll && !FEATURED_SET.has(card.id);
+          if (hidden) return null;
           return (
             <div
               key={card.id}
-              className={`${hiddenOnMobile ? 'hidden lg:block' : ''} ${disabled ? 'pointer-events-none opacity-50' : ''}`}
+              className={disabled ? 'pointer-events-none opacity-50' : undefined}
             >
               <MoodMissionCard card={card} onSelect={onMoodSelect} />
             </div>
@@ -49,14 +49,24 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
         })}
       </div>
 
-      {!showAllMobile && EXTRA_MOBILE_COUNT > 0 && (
+      {EXTRA_COUNT > 0 && (
         <button
           type="button"
-          onClick={() => setShowAllMobile(true)}
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card/90 py-3 wibe-caption font-semibold text-primary shadow-vibe-sm transition-colors hover:bg-primary/5 active:scale-[0.99] lg:hidden"
+          onClick={() => setShowAll((v) => !v)}
+          aria-expanded={showAll}
+          className="mt-2.5 flex w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card py-2.5 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
         >
-          مودهای بیشتر ({EXTRA_MOBILE_COUNT.toLocaleString('fa-IR')})
-          <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+          {showAll ? (
+            <>
+              بستن مودها
+              <ChevronUp className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </>
+          ) : (
+            <>
+              مودهای بیشتر ({EXTRA_COUNT.toLocaleString('fa-IR')})
+              <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </>
+          )}
         </button>
       )}
     </div>

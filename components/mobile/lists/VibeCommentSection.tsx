@@ -9,8 +9,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { MessageSquare, Loader2, ChevronDown, ThumbsUp, ThumbsDown, Flag, Send, MoreVertical } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import Toast from '@/components/shared/Toast';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import CommentReportModal from '@/components/mobile/comments/CommentReportModal';
@@ -170,7 +169,7 @@ function ReactionPills({
               transition-colors duration-200 active:scale-[0.97] hover:scale-105
               ${isSelected
                 ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
-                : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200/80 hover:text-foreground'
+                : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface/80 hover:text-foreground'
               }
             `}
           >
@@ -206,7 +205,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-gray-100 transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-wibe-surface transition-colors"
         aria-label="گزینه‌های بیشتر"
         aria-expanded={open}
       >
@@ -308,7 +307,7 @@ function VibeCommentItem({
               </span>
             )}
             <span className="text-xs text-wibe-secondary">
-              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
+              {formatRelativeTime(comment.createdAt)}
             </span>
             {comment.users.curatorLevel && (
               <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
@@ -392,7 +391,7 @@ function VibeCommentItem({
         )}
         {/* Replies */}
         {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-3 pr-4 border-r-2 border-gray-100 space-y-2">
+          <div className="mt-3 pr-4 border-r-2 border-wibe space-y-2">
             {comment.replies.map((reply) => {
               const replyProfileUrl = reply.users.username ? `/u/${encodeURIComponent(reply.users.username)}` : null;
               return (
@@ -448,11 +447,11 @@ function VibeCommentItem({
   );
 }
 
-function getPlaceholders(categorySlug?: string | null) {
+function getPlaceholders(_categorySlug?: string | null) {
   return {
-    collapsed: 'نظرت درباره این لیست چیه؟ پیشنهادی داری؟',
-    comment: 'نظرت درباره این لیست چیه؟ پیشنهادی داری؟',
-    suggestion: 'اسم آیتم پیشنهادی‌تو بنویس...',
+    collapsed: 'نظرت درباره این لیست چیه؟',
+    comment: 'نظرت درباره این لیست چیه؟',
+    suggestion: 'اسم آیتم پیشنهادی‌تو بنویس…',
   };
 }
 
@@ -498,7 +497,7 @@ function VibeCommentInput({
       <button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/20"
+        className="flex h-11 w-full items-center rounded-xl border border-wibe bg-wibe-card px-3.5 text-right wibe-small text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-wibe-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
       >
         {placeholders.collapsed}
       </button>
@@ -507,12 +506,12 @@ function VibeCommentInput({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-2 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex items-end gap-2 rounded-xl border border-wibe bg-wibe-card p-2.5 shadow-sm">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxLength))}
           placeholder={isSuggestionMode ? placeholders.suggestion : placeholders.comment}
-          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
+          className="min-h-[40px] flex-1 resize-none border-0 bg-transparent px-0 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
           rows={2}
           maxLength={maxLength}
           aria-describedby="comment-char-count"
@@ -521,9 +520,9 @@ function VibeCommentInput({
           type="submit"
           disabled={!canSubmit}
           aria-label="ارسال نظر"
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7C3AED] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Send className="w-4 h-4" aria-hidden />
+          <Send className="h-4 w-4" aria-hidden />
         </button>
       </div>
       <div className="flex items-center justify-between gap-2 px-1">
@@ -726,7 +725,8 @@ export default function VibeCommentSection({
   const displayedComments = comments;
   const remainingCount = Math.max(totalCount - comments.length, 0);
   const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
-  const hasComments = comments.length > 0;
+
+  const showSort = !isLoading && totalCount > 1;
 
   return (
     <section
@@ -734,13 +734,94 @@ export default function VibeCommentSection({
         embeddedInSidebar ? 'mt-0 border-t-0 pt-0' : 'mt-8 border-t pt-6'
       }`}
     >
-      <h2 className="mb-3 wibe-h3 text-foreground">نظرات</h2>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="wibe-h3 text-foreground">نظرات</h2>
+        {showSort ? (
+          <div className="flex items-center gap-1" role="group" aria-label="مرتب‌سازی نظرات">
+            <button
+              type="button"
+              onClick={() => setSortBy('helpful')}
+              className={`rounded-full px-2.5 py-1 wibe-caption font-medium transition-colors ${
+                sortBy === 'helpful'
+                  ? 'bg-primary text-white'
+                  : 'text-wibe-secondary hover:bg-wibe-surface hover:text-foreground'
+              }`}
+            >
+              مفیدترین
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortBy('newest')}
+              className={`rounded-full px-2.5 py-1 wibe-caption font-medium transition-colors ${
+                sortBy === 'newest'
+                  ? 'bg-primary text-white'
+                  : 'text-wibe-secondary hover:bg-wibe-surface hover:text-foreground'
+              }`}
+            >
+              جدیدترین
+            </button>
+          </div>
+        ) : null}
+      </div>
 
-      {/* Spacing: Header→Reaction 12, Reaction→Input 12, Input→Suggest 16, Suggest→Empty 20 */}
-      <div className="space-y-3">
-        {/* Comment Input — Primary */}
-        {commentsEnabled && status === 'authenticated' && (
-          <div>
+      <div className="space-y-4">
+        {!commentsEnabled && (
+          <p className="wibe-small text-wibe-secondary">کامنت‌ها برای این لیست غیرفعال است</p>
+        )}
+
+        {/* Thread اول — social proof قبل از کامپوزر */}
+        <div>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="py-2 text-center wibe-caption text-wibe-secondary">
+              هنوز گفتگویی نیست
+              {status === 'authenticated' && commentsEnabled ? ' — اولین نظر را پایین بنویس' : null}
+            </p>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {displayedComments.map((c) => (
+                  <VibeCommentItem
+                    key={c.id}
+                    comment={c}
+                    isOwner={isOwner}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                    onVote={handleVote}
+                    onReport={handleOpenReport}
+                  />
+                ))}
+              </div>
+              {hasNextPage ? (
+                <button
+                  type="button"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="mt-4 flex w-full items-center justify-center gap-1 rounded-xl py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/5 disabled:opacity-60"
+                >
+                  {isFetchingNextPage ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر
+                      {remainingCount > 0
+                        ? ` (${remainingCount.toLocaleString('fa-IR')} باقی‌مانده)`
+                        : ''}
+                    </>
+                  )}
+                </button>
+              ) : null}
+            </>
+          )}
+        </div>
+
+        {/* کامپوزر جمع‌وجور پایین thread */}
+        {commentsEnabled && status === 'authenticated' ? (
+          <div className="space-y-2 border-t border-wibe/60 pt-3">
             <VibeCommentInput
               isExpanded={isFormExpanded}
               onExpand={() => setIsFormExpanded(true)}
@@ -751,113 +832,26 @@ export default function VibeCommentSection({
               maxCommentLength={maxCommentLength}
               suggestionMaxLength={suggestionMaxLength}
             />
-          </div>
-        )}
-
-        {/* Suggest Item — فقط بعد از اولین کامنت، Secondary CTA — Input→Suggest 16px */}
-        {status === 'authenticated' && onOpenSuggestItem && hasComments && (
-          <button
-            type="button"
-            onClick={handleSuggestionClick}
-            className="w-full flex items-center gap-3 py-2 px-3 mt-1 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 hover:bg-[#7C3AED]/8 transition-colors text-right"
-          >
-            <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#7C3AED]/15 flex items-center justify-center text-[#7C3AED] text-xs font-bold">
-              +
-            </span>
-            <span className="text-sm font-medium text-foreground">پیشنهاد آیتم جدید</span>
-          </button>
-        )}
-
-        {!commentsEnabled && (
-          <p className="text-sm text-wibe-secondary py-4">کامنت‌ها برای این لیست غیرفعال است</p>
-        )}
-
-        {status === 'unauthenticated' && (
-          <p className="text-sm text-wibe-secondary py-4">برای ثبت نظر وارد شو</p>
-        )}
-
-        {/* Sort + Comments */}
-        {!isLoading && comments.length > 0 && (
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex gap-2 mb-4">
-              <span className="text-xs text-wibe-secondary py-1.5">مرتب‌سازی:</span>
+            {onOpenSuggestItem ? (
               <button
                 type="button"
-                onClick={() => setSortBy('helpful')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'helpful' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'}`}
+                onClick={handleSuggestionClick}
+                className="inline-flex items-center gap-1 px-1 wibe-caption font-medium text-primary hover:underline"
               >
-                مفیدترین
+                + پیشنهاد آیتم
               </button>
-              <button
-                type="button"
-                onClick={() => setSortBy('newest')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'}`}
-              >
-                جدیدترین
-              </button>
-            </div>
+            ) : null}
           </div>
-        )}
+        ) : null}
 
-        {/* Comments List / Empty State — Suggest→Empty 20px */}
-        <div className={hasComments ? 'mt-2' : 'mt-1'}>
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" />
-          </div>
-        ) : comments.length === 0 ? (
-          <p className="py-4 text-center wibe-caption text-wibe-secondary">
-            هنوز گفتگویی نیست —{' '}
-            {status === 'authenticated' && commentsEnabled ? (
-              <button
-                type="button"
-                onClick={() => setIsFormExpanded(true)}
-                className="font-medium text-primary hover:underline"
-              >
-                اولین نظر رو بذار
-              </button>
-            ) : (
-              'اولین نظر رو بذار'
-            )}
+        {status === 'unauthenticated' && commentsEnabled ? (
+          <p className="border-t border-wibe/60 pt-3 wibe-caption text-wibe-secondary">
+            برای ثبت نظر{' '}
+            <Link href="/login" className="font-medium text-primary hover:underline">
+              وارد شو
+            </Link>
           </p>
-        ) : (
-          <>
-            <div className="space-y-4">
-              {displayedComments.map((c) => (
-                <VibeCommentItem
-                  key={c.id}
-                  comment={c}
-                  isOwner={isOwner}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onVote={handleVote}
-                  onReport={handleOpenReport}
-                />
-              ))}
-            </div>
-            {hasNextPage && (
-              <button
-                type="button"
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-                className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1 disabled:opacity-60"
-              >
-                {isFetchingNextPage ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4" />
-                    {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر
-                    {remainingCount > 0
-                      ? ` (${remainingCount.toLocaleString('fa-IR')} باقی‌مانده)`
-                      : ''}
-                  </>
-                )}
-              </button>
-            )}
-          </>
-        )}
-        </div>
+        ) : null}
       </div>
 
       {toast && (

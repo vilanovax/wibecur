@@ -35,14 +35,14 @@ function DebatedListCard({ list }: { list: CategoryListCard }) {
           )}
         </div>
         {(list.commentCount ?? 0) > 0 && (
-          <span className="absolute left-1 top-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
+          <span className="absolute left-1 top-1 rounded-md bg-black/70 px-1.5 py-0.5 wibe-caption font-bold text-white">
             💬 {(list.commentCount ?? 0).toLocaleString('fa-IR')}
           </span>
         )}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col justify-center text-right">
-        <h3 className="line-clamp-2 font-semibold text-foreground text-base lg:text-[15px] lg:leading-snug">
+        <h3 className="line-clamp-2 font-semibold text-foreground text-base lg:wibe-body lg:leading-snug">
           {list.title}
         </h3>
         {list.description && (

@@ -28,7 +28,7 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
   return (
     <div>
       {/* Tab Buttons */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-gray-200 -mx-4 mb-5">
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-wibe -mx-4 mb-5">
         <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -39,8 +39,8 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
-                    : 'bg-gray-50 text-wibe-secondary hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-indigo-600 to-primary text-white shadow-lg shadow-indigo-500/30'
+                    : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'
                 }`}
               >
                 <Icon className="w-4 h-4" />

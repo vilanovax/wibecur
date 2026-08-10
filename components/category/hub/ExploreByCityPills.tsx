@@ -37,7 +37,7 @@ export default function ExploreByCityPills({
           >
             <span>{city}</span>
             {cityCounts[city] != null && cityCounts[city] > 0 && (
-              <span className="wibe-caption font-medium text-wibe-secondary bg-gray-100 px-1.5 py-0.5 rounded-pill">
+              <span className="wibe-caption font-medium text-wibe-secondary bg-wibe-surface px-1.5 py-0.5 rounded-pill">
                 {cityCounts[city]}
               </span>
             )}

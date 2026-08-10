@@ -34,7 +34,7 @@ export default function SuggestModal({ isOpen, onClose }: SuggestModalProps) {
 
           <button
             onClick={() => setSelectedType('list')}
-            className="w-full p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-colors flex items-center gap-4"
+            className="w-full p-6 bg-white border-2 border-wibe rounded-xl hover:border-primary hover:bg-primary/5 transition-colors flex items-center gap-4"
           >
             <div className="p-3 bg-blue-100 rounded-lg">
               <List className="w-6 h-6 text-blue-600" />
@@ -49,10 +49,10 @@ export default function SuggestModal({ isOpen, onClose }: SuggestModalProps) {
 
           <button
             onClick={() => setSelectedType('item')}
-            className="w-full p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-colors flex items-center gap-4"
+            className="w-full p-6 bg-white border-2 border-wibe rounded-xl hover:border-primary hover:bg-primary/5 transition-colors flex items-center gap-4"
           >
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Package className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-primary/10 rounded-lg">
+              <Package className="w-6 h-6 text-primary" />
             </div>
             <div className="flex-1 text-right">
               <h3 className="font-bold text-lg text-foreground">پیشنهاد آیتم</h3>

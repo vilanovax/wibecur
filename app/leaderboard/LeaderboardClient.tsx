@@ -23,7 +23,7 @@ interface LeaderboardClientProps {
 
 const TOP3_STYLES: Record<number, { card: string; medal: string }> = {
   1: { card: 'border-warning/40 bg-warning/5', medal: 'bg-warning text-white' },
-  2: { card: 'border-wibe bg-gray-50', medal: 'bg-gray-400 text-white' },
+  2: { card: 'border-wibe bg-wibe-surface', medal: 'bg-foreground/40 text-white' },
   3: { card: 'border-warning/30 bg-warning/5', medal: 'bg-warning/80 text-white' },
 };
 
@@ -83,7 +83,7 @@ function AvatarWithGlow({
       {showGlow && (
         <div className={`absolute -inset-1 rounded-full blur-md opacity-50 ${levelConfig.glowClass}`} aria-hidden />
       )}
-      <div className={`relative ${sizeClass} rounded-full overflow-hidden border-2 border-wibe-card bg-gray-200 shadow-sm`}>
+      <div className={`relative ${sizeClass} rounded-full overflow-hidden border-2 border-wibe-card bg-wibe-surface shadow-sm`}>
         {vibeAvatar ? (
           <VibeAvatarDisplay avatar={vibeAvatar} size={avatarSize} className="h-full w-full" />
         ) : row.image ? (
@@ -189,7 +189,7 @@ export default function LeaderboardClient({
             type="button"
             onClick={() => setTab(id)}
             className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 rounded-md wibe-small font-medium transition-colors ${
-              tab === id ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-wibe-secondary'
+              tab === id ? 'bg-primary text-white shadow-sm' : 'bg-wibe-surface text-wibe-secondary'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -221,9 +221,9 @@ export default function LeaderboardClient({
 
       {loading ? (
         <div className="space-y-3 mt-6">
-          <div className="h-40 rounded-lg bg-gray-200 animate-pulse" />
+          <div className="h-40 rounded-lg bg-wibe-surface animate-pulse" />
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 rounded-lg bg-gray-200 animate-pulse" />
+            <div key={i} className="h-16 rounded-lg bg-wibe-surface animate-pulse" />
           ))}
         </div>
       ) : list.length === 0 ? (
@@ -285,7 +285,7 @@ export default function LeaderboardClient({
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
                 >
-                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center wibe-small font-bold text-wibe-secondary">
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-wibe-surface flex items-center justify-center wibe-small font-bold text-wibe-secondary">
                     {row.rank}
                   </span>
                   <AvatarWithGlow row={row} size="sm" showGlow={false} />

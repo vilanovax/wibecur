@@ -1,8 +1,7 @@
 'use client';
 
 import React, { memo } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { UserPlus, Eye } from 'lucide-react';
 import type { ModerationCaseRow } from './types';
 import UserAvatar from '@/components/shared/UserAvatar';
@@ -52,7 +51,7 @@ function ModerationTableInner({
               onClick={() => onRowClick(row.id)}
             >
               <td className="p-3" title={new Date(row.createdAt).toLocaleString('fa-IR')}>
-                {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true, locale: faIR })}
+                {formatRelativeTime(row.createdAt)}
               </td>
               <td className="p-3">
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_BADGE_CLASS[row.type] ?? 'bg-gray-100 text-gray-700'}`}>

@@ -24,7 +24,7 @@ export default function ViralSpotlightSection({
       <CategorySectionTitle title="وایرال این هفته" iconVariant="viral" />
       <Link href={`/lists/${list.slug}`} className="block active:scale-[0.99] transition-transform">
         <div className="rounded-lg overflow-hidden border border-wibe shadow-card bg-wibe-card">
-          <div className="relative aspect-video bg-gray-200">
+          <div className="relative aspect-video bg-wibe-surface">
             {(list.bannerImage ?? list.coverImage) ? (
               <ImageWithFallback
                 src={list.bannerImage ?? list.coverImage ?? ''}
@@ -33,7 +33,7 @@ export default function ViralSpotlightSection({
                 sizes="(min-width: 1024px) 50vw, 100vw"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-5xl opacity-40 bg-gray-200">
+              <div className="w-full h-full flex items-center justify-center text-5xl opacity-40 bg-wibe-surface">
                 📋
               </div>
             )}

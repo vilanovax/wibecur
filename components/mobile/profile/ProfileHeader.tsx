@@ -37,92 +37,87 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
 
   return (
     <>
-      <div className="relative bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-8 -mx-4 -mt-5">
-        {/* Decorative background */}
+      <div className="relative -mx-4 -mt-5 bg-gradient-to-br from-primary/10 via-primary/5 to-warning/10 pb-8">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-200 rounded-full opacity-20 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-200 rounded-full opacity-20 blur-3xl" />
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/20 opacity-20 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-primary/15 opacity-20 blur-3xl" />
         </div>
 
         <div className="relative z-10 px-4 pt-8">
-          {/* Avatar with animated ring */}
-          <div className="flex justify-center mb-6">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full blur-sm animate-pulse" />
-              <div className="relative w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden">
+          <div className="mb-6 flex justify-center">
+            <div className="group relative">
+              <div className="absolute -inset-1 animate-pulse rounded-full bg-gradient-to-r from-primary via-primary to-warning blur-sm" />
+              <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-xl">
                 {user.image ? (
                   <Image
                     src={user.image}
                     alt={user.name || user.email}
                     width={96}
                     height={96}
-                    className="object-cover w-full h-full"
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-600 text-white text-2xl font-bold">
+                  <div className="flex h-full w-full items-center justify-center bg-primary text-2xl font-bold text-white">
                     {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
                   </div>
                 )}
               </div>
               <button
                 onClick={() => setShowAvatarForm(true)}
-                className="absolute bottom-1 right-1 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute bottom-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
                 aria-label="تغییر آواتار"
               >
-                <Camera className="w-4 h-4 text-indigo-600" />
+                <Camera className="h-4 w-4 text-primary" />
               </button>
             </div>
           </div>
 
-          {/* Name & email */}
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold mb-1 text-foreground">
+          <div className="mb-6 text-center">
+            <h1 className="mb-1 text-2xl font-bold text-foreground">
               {user.name || 'کاربر بدون نام'}
             </h1>
-            <p className="text-wibe-secondary text-sm">{user.email}</p>
+            <p className="text-sm text-wibe-secondary">{user.email}</p>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex justify-center gap-3 mb-8">
+          <div className="mb-8 flex justify-center gap-3">
             <button
               onClick={() => setShowEditForm(true)}
-              className="flex items-center gap-2 px-6 py-2.5 bg-white rounded-xl shadow-sm hover:shadow-md transition-colors"
+              className="flex items-center gap-2 rounded-xl bg-white px-6 py-2.5 shadow-sm transition-colors hover:shadow-md"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="h-4 w-4" />
               <span className="text-sm font-medium">ویرایش پروفایل</span>
             </button>
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2.5 text-red-500 bg-white rounded-xl shadow-sm hover:shadow-md hover:bg-red-50 transition-colors disabled:opacity-50"
+              className="rounded-xl bg-white p-2.5 text-red-500 shadow-sm transition-colors hover:bg-red-50 hover:shadow-md disabled:opacity-50"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Stats cards */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-cyan-100 mb-2">
-                <span className="text-2xl font-bold bg-gradient-to-br from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+            <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <span className="text-2xl font-bold text-primary">
                   {user.stats.listsCreated}
                 </span>
               </div>
               <p className="text-xs text-wibe-secondary">لیست</p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 mb-2">
-                <span className="text-2xl font-bold bg-gradient-to-br from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <span className="text-2xl font-bold text-primary">
                   {user.stats.bookmarks}
                 </span>
               </div>
               <p className="text-xs text-wibe-secondary">ذخیره</p>
             </div>
 
-            <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-red-100 mb-2">
-                <span className="text-2xl font-bold bg-gradient-to-br from-orange-600 to-red-600 bg-clip-text text-transparent">
+            <div className="rounded-2xl bg-white p-4 text-center shadow-sm">
+              <div className="mb-2 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-warning/15">
+                <span className="text-2xl font-bold text-warning">
                   {user.stats.itemLikes ?? 0}
                 </span>
               </div>
@@ -132,7 +127,6 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
         </div>
       </div>
 
-      {/* Edit Profile Form */}
       <EditProfileForm
         isOpen={showEditForm}
         onClose={() => setShowEditForm(false)}
@@ -140,7 +134,6 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
         onUpdate={onUpdate}
       />
 
-      {/* Avatar Upload Form */}
       <AvatarUploadForm
         isOpen={showAvatarForm}
         onClose={() => setShowAvatarForm(false)}
@@ -150,4 +143,3 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
     </>
   );
 }
-

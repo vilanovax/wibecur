@@ -32,7 +32,7 @@ export default function CafeWeeklyTrending({
             href={`/lists/${list.slug}`}
             className="block rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-card active:scale-[0.99] transition-transform"
           >
-            <div className="relative aspect-[3/4] bg-gray-200">
+            <div className="relative aspect-[3/4] bg-wibe-surface">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
@@ -41,7 +41,7 @@ export default function CafeWeeklyTrending({
                   placeholderSize="cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-4xl opacity-40 bg-gray-200">
+                <div className="w-full h-full flex items-center justify-center text-4xl opacity-40 bg-wibe-surface">
                   ☕
                 </div>
               )}

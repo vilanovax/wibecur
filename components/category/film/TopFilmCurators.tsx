@@ -32,10 +32,10 @@ export default function TopFilmCurators({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🏆 کیوریتور سینمای هفته
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         برترین کیوریتورهای {categoryName}
       </p>
 
@@ -75,10 +75,10 @@ export default function TopFilmCurators({
               <p className="text-sm font-medium opacity-80" style={{ color: accentColor }}>
                 {LEVEL_LABELS[topCurator.curatorLevel] || topCurator.curatorLevel}
               </p>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-white/65 mt-1">
                 {topCurator.listCount} لیست • {topCurator.totalSaves} ذخیره کل
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-wibe-secondary mt-0.5">
                 {topCurator.followersCount} دنبال‌کننده
               </p>
             </div>
@@ -108,7 +108,7 @@ export default function TopFilmCurators({
                       🎬
                     </div>
                   )}
-                  <p className="text-[10px] font-medium text-gray-300 px-1 py-1 truncate bg-gray-900/80">
+                  <p className="wibe-caption font-medium text-white/80 px-1 py-1 truncate bg-gray-900/80">
                     {list.title}
                   </p>
                 </Link>
@@ -137,10 +137,10 @@ export default function TopFilmCurators({
                   {(c.name || '?')[0]}
                 </div>
               )}
-              <span className="text-xs text-gray-200 truncate flex-1">
+              <span className="text-xs text-white/75 truncate flex-1">
                 {c.name || 'کاربر'}
               </span>
-              <span className="text-[10px] text-gray-500">#{i + 2}</span>
+              <span className="wibe-caption text-wibe-secondary">#{i + 2}</span>
             </Link>
           ))}
         </div>

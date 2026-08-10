@@ -26,7 +26,7 @@ export default function CategoryViralSpotlightSectionServer({
         className="block transition-transform active:scale-[0.99]"
       >
         <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card">
-          <div className="relative aspect-video bg-gray-200">
+          <div className="relative aspect-video bg-wibe-surface">
             {image ? (
               <Image
                 src={image.src}
@@ -37,7 +37,7 @@ export default function CategoryViralSpotlightSectionServer({
                 unoptimized={image.unoptimized}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gray-200 text-5xl opacity-40">
+              <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-5xl opacity-40">
                 📋
               </div>
             )}

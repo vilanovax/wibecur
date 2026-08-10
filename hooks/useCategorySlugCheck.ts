@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isValidCategorySlug } from '@/lib/admin/category-intelligence';
+import { isValidCategorySlug } from '@/lib/admin/category-intelligence-shared';
 
 export type SlugCheckState =
   | { status: 'idle' }

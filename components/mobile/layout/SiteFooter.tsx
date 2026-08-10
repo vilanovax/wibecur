@@ -19,7 +19,7 @@ interface SiteFooterProps {
   variant?: 'desktop' | 'mobile';
 }
 
-/** لینک واحد برند: کپی‌رایت + wibe.ir */
+/** لینک واحد برند: کپی‌رایت + wibe.ir — بدون toLocaleString تا هیدریشن/CLS نشکند */
 function WibeBrandLink({ className = '' }: { className?: string }) {
   const year = new Date().getFullYear();
 
@@ -28,11 +28,11 @@ function WibeBrandLink({ className = '' }: { className?: string }) {
       href={WIBE_SITE_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className={`group inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 wibe-caption text-wibe-secondary transition-colors hover:text-primary ${className}`}
+      className={`group inline-flex items-center gap-1.5 rounded-lg px-1 py-0.5 wibe-caption text-wibe-secondary transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${className}`}
       aria-label={`© ${year} وایب — wibe.ir`}
     >
       <span>
-        © {year.toLocaleString('fa-IR')} وایب
+        © <span suppressHydrationWarning>{year}</span> وایب
         <span className="mx-1.5 text-wibe-secondary/35" aria-hidden>
           ·
         </span>
@@ -50,14 +50,10 @@ export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
   if (variant === 'mobile') {
     return (
       <footer
-        className="border-t border-wibe bg-wibe-card px-4 py-6 lg:hidden"
+        className="border-t border-wibe/70 bg-wibe-card px-4 py-3 lg:hidden"
         role="contentinfo"
       >
-        <div className="mx-auto flex max-w-sm flex-col items-center gap-3 text-center">
-          <SiteLogo variant="header" href="/" className="justify-center" />
-          <p className="max-w-[280px] wibe-caption leading-relaxed text-wibe-secondary">
-            لیست‌های کیوریتد لایف‌استایل
-          </p>
+        <div className="mx-auto flex max-w-sm flex-col items-center gap-1.5 text-center">
           <WibeBrandLink />
         </div>
       </footer>
@@ -66,7 +62,7 @@ export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
 
   return (
     <footer
-      className={`mt-auto hidden border-t border-wibe bg-wibe-card lg:block ${DESKTOP_CONTENT_PADDING_CLASS}`}
+      className={`mt-auto hidden min-h-[11.5rem] border-t border-wibe bg-wibe-card lg:block ${DESKTOP_CONTENT_PADDING_CLASS}`}
       role="contentinfo"
     >
       <div className="py-8 xl:py-10">

@@ -2,7 +2,6 @@ import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
-import CategoryNavStrip from '@/components/shared/CategoryNavStrip';
 import { prepareListDetailForClient } from '@/lib/list-detail-serialize';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
@@ -13,7 +12,6 @@ import { withResolvedItemImages } from '@/lib/resolve-item-image';
 import { withResolvedListDisplay } from '@/lib/list-display-images';
 import { getBaseUrl, toAbsoluteImageUrl } from '@/lib/seo';
 import { listDetailCacheTag } from '@/lib/public-cache';
-import { fetchActiveCategoryMenu } from '@/lib/category-menu';
 import {
   LIST_DETAIL_SSR_ITEM_LIMIT,
   listDetailItemSelect,
@@ -129,10 +127,7 @@ export default async function ListDetailPage({
   // شمارش بازدید از مسیر رندر جدا شد (beacon کلاینت → POST /api/lists/[id]/view)
   // تا صفحه static/ISR بماند و write روی هر revalidation انجام نشود.
 
-  const [sponsoredPlacements, menuCategories] = await Promise.all([
-    getCachedListPagePlacements(list.id, list.categoryId),
-    fetchActiveCategoryMenu(),
-  ]);
+  const sponsoredPlacements = await getCachedListPagePlacements(list.id, list.categoryId);
 
   const listWithCreator = prepareListDetailForClient(
     withResolvedListDisplay({
@@ -158,10 +153,6 @@ export default async function ListDetailPage({
     <div className="bg-wibe-surface lg:pt-1">
       <HomeLcpPreload href={heroLcpImage} />
       <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
-      <CategoryNavStrip
-        activeSlug={list.categories?.slug ?? null}
-        initialCategories={menuCategories}
-      />
       <ListDetailClient
         list={listWithCreator}
         sponsoredPlacements={sponsoredPlacements}

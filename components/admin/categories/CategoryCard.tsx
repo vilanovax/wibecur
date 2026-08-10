@@ -6,7 +6,7 @@ import type { CategoryIntelligenceRow } from '@/lib/admin/categories-types';
 import {
   type CategoryBadgeFlags,
   formatSaveGrowthDisplay,
-} from '@/lib/admin/category-intelligence';
+} from '@/lib/admin/category-intelligence-shared';
 import CategoryBadges from './CategoryBadges';
 import EngagementBar from './EngagementBar';
 import CategoryActions from './CategoryActions';
@@ -31,7 +31,8 @@ function getCardBorderClass(
 ) {
   if (highlightNeedsBoost) return 'ring-2 ring-amber-400/90 dark:ring-amber-500/70';
   if (!category.isActive) return 'border-dashed';
-  if (badges.isDeclining) return 'border-r-4 border-r-red-500 dark:border-r-red-400';
+  // Subtle ring instead of thick side accent (avoids AI side-tab pattern)
+  if (badges.isDeclining) return 'ring-1 ring-red-400/55 dark:ring-red-400/40';
   if (badges.isFastRising) return 'ring-1 ring-emerald-400/50 dark:ring-emerald-500/40';
   return '';
 }
@@ -149,11 +150,11 @@ export default function CategoryCard({
           className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
         >
           <div className="mb-3 flex flex-wrap gap-1.5">
-            {highlightNeedsBoost && (
-              <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+            {highlightNeedsBoost ? (
+              <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
                 ⚡ نیازمند Boost
               </span>
-            )}
+            ) : null}
             <CategoryBadges {...badgeFlags} />
           </div>
 
@@ -168,7 +169,7 @@ export default function CategoryCard({
               <span className="font-semibold text-[var(--color-text-muted)]">—</span>
             )}
             <span className="text-[var(--color-text-muted)]"> تعامل</span>
-            {growth.label !== '—' && (
+            {growth.label !== '—' ? (
               <>
                 <span className="text-[var(--color-text-muted)]"> · </span>
                 <span
@@ -178,13 +179,13 @@ export default function CategoryCard({
                   رشد {growth.label}
                 </span>
               </>
-            )}
-            {weightLabel && (
+            ) : null}
+            {weightLabel ? (
               <>
                 <span className="text-[var(--color-text-muted)]"> · </span>
                 <span className="text-[var(--color-text-muted)]">وزن {weightLabel}</span>
               </>
-            )}
+            ) : null}
           </p>
 
           <div className="mb-3">

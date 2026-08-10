@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MessageSquare, Trash2, Loader2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
-
+import { formatRelativeTime } from '@/lib/format-relative-time';
 interface Comment {
   id: string;
   content: string;
@@ -106,7 +104,7 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
       {displayedComments.map((comment) => (
         <div
           key={comment.id}
-          className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+          className="bg-white rounded-xl p-4 shadow-sm border border-wibe"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -124,10 +122,7 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
                 در: {comment.items.title}
               </Link>
               <p className="text-xs text-wibe-secondary mt-2">
-                {formatDistanceToNow(new Date(comment.createdAt), {
-                  addSuffix: true,
-                  locale: faIR,
-                })}
+                {formatRelativeTime(comment.createdAt)}
               </p>
             </div>
             <button
@@ -143,7 +138,7 @@ export default function CommentsTab({ userId }: CommentsTabProps) {
       {remainingCount > 0 && !showAll && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium mt-4"
+          className="w-full py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium mt-4"
         >
           مشاهده {remainingCount} مورد بیشتر
         </button>

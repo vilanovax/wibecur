@@ -50,7 +50,7 @@ export default function SearchInput({
         <button
           type="button"
           onClick={() => onChange('')}
-          className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-wibe-secondary transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-wibe-secondary transition-colors hover:bg-wibe-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           aria-label="پاک کردن جستجو"
         >
           <X className="h-3.5 w-3.5" />

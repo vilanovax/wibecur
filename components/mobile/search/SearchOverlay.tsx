@@ -34,7 +34,7 @@ import {
   SEARCH_LISTS_ONLY_LIMITS,
 } from '@/lib/search-client';
 import type { UnifiedSearchItem } from '@/lib/unified-search';
-import type { SearchQueryIntent } from '@/lib/search-keywords';
+import { meaningfulSearchTokens, type SearchQueryIntent } from '@/lib/search-keywords';
 
 type TrendingQueryItem = { query: string; count: number };
 
@@ -381,6 +381,7 @@ export default function SearchOverlay({
 
   const normalized = normalizeSearchQuery(query);
   const showResults = normalized.length >= SEARCH_MIN_LENGTH;
+  const multiTokenEmpty = meaningfulSearchTokens(normalized).length >= 2;
   const showItemResults = searchViewTab === 'items';
   const showListResults = searchViewTab === 'lists';
   const listNavOffset = showItemResults ? directItems.length + indirectItems.length : 0;
@@ -535,7 +536,7 @@ export default function SearchOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-gray-100 active:scale-[0.98]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-wibe-surface active:scale-[0.98]"
             aria-label="بستن جستجو"
           >
             <ArrowRight className="h-5 w-5 text-foreground" />
@@ -627,10 +628,10 @@ export default function SearchOverlay({
                 <div className="space-y-2">
                   {[1, 2].map((i) => (
                     <div key={i} className="flex gap-2.5 rounded-xl border border-wibe p-2">
-                      <div className="h-16 w-16 animate-pulse rounded-lg bg-gray-200" />
+                      <div className="h-16 w-16 animate-pulse rounded-lg bg-wibe-surface" />
                       <div className="flex-1 space-y-2 py-1">
-                        <div className="h-3.5 w-3/4 animate-pulse rounded bg-gray-200" />
-                        <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                        <div className="h-3.5 w-3/4 animate-pulse rounded bg-wibe-surface" />
+                        <div className="h-3 w-1/2 animate-pulse rounded bg-wibe-surface" />
                       </div>
                     </div>
                   ))}
@@ -685,10 +686,10 @@ export default function SearchOverlay({
           <div className="space-y-2.5">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
-                <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-wibe-surface" />
                 <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-wibe-surface" />
+                  <div className="h-3 w-1/2 animate-pulse rounded bg-wibe-surface" />
                 </div>
               </div>
             ))}
@@ -697,12 +698,18 @@ export default function SearchOverlay({
 
         {showResults && !isLoading && !hasAnyResults && !(searchViewTab === 'lists' && isLoadingLists) && (
           <div className="py-16 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-wibe-surface">
               <Search className="h-7 w-7 text-wibe-secondary/70" strokeWidth={1.75} />
             </div>
-            <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
+            <p className="wibe-body font-medium text-foreground">
+              {multiTokenEmpty
+                ? `نتیجه‌ای برای «${normalized}» نیست`
+                : 'نتیجه‌ای پیدا نشد'}
+            </p>
             <p className="mt-1 wibe-caption text-wibe-secondary">
-              عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن
+              {multiTokenEmpty
+                ? 'همهٔ کلمات باید در نتیجه باشند — مکان یا نام دقیق‌تری امتحان کن'
+                : 'عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن'}
             </p>
             <button
               type="button"
@@ -746,10 +753,10 @@ export default function SearchOverlay({
               <div className="space-y-2.5">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
-                    <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-gray-200" />
+                    <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-wibe-surface" />
                     <div className="flex-1 space-y-2 py-1">
-                      <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
-                      <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-wibe-surface" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-wibe-surface" />
                     </div>
                   </div>
                 ))}

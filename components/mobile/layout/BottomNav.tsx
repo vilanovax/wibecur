@@ -65,13 +65,16 @@ export default function BottomNav() {
     };
   }, [createOpen, CreateSheet]);
 
+  const isHome = pathname === '/';
+
   return (
     <>
-      <SiteFooter variant="mobile" />
+      {/* Home peak-end: skip marketing footer; bottom nav already anchors the thumb zone */}
+      {isHome ? null : <SiteFooter variant="mobile" />}
       <div aria-hidden className={MOBILE_BOTTOM_NAV_SPACER_CLASS} />
       <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none lg:hidden">
         <nav
-          className="pointer-events-auto w-full border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-lg"
+          className="pointer-events-auto w-full border-t border-wibe bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-lg"
           aria-label="ناوبری اصلی"
         >
           <div className="flex items-center justify-around py-3 px-1">

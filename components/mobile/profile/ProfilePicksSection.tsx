@@ -32,7 +32,7 @@ function PickCard({ pick, accentColor }: { pick: ProfilePickItemDto; accentColor
   const href = pick.itemId ? `/items/${pick.itemId}` : '#';
   const inner = (
     <div
-      className="group relative aspect-[2/3] w-[96px] shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-sm ring-1 ring-black/5"
+      className="group relative aspect-[2/3] w-[96px] shrink-0 overflow-hidden rounded-xl bg-wibe-surface shadow-sm ring-1 ring-black/5"
       style={{ boxShadow: `0 4px 14px ${accentColor}22` }}
     >
       {pick.imageUrl ? (
@@ -41,7 +41,7 @@ function PickCard({ pick, accentColor }: { pick: ProfilePickItemDto; accentColor
           alt={pick.title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           fallbackIcon="🎬"
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-2xl">
@@ -49,12 +49,12 @@ function PickCard({ pick, accentColor }: { pick: ProfilePickItemDto; accentColor
         </div>
       )}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-1.5 pb-1.5 pt-8">
-        <p className="line-clamp-2 text-start text-[11px] font-semibold leading-snug text-white">
+        <p className="line-clamp-2 text-start wibe-caption font-semibold leading-snug text-white">
           {pick.title}
         </p>
       </div>
       {pick.note && (
-        <span className="absolute start-1.5 top-1.5 rounded-full bg-black/50 px-1 py-0.5 text-[10px] text-white backdrop-blur-sm">
+        <span className="absolute start-1.5 top-1.5 rounded-full bg-black/50 px-1 py-0.5 wibe-caption text-white backdrop-blur-sm">
           💬
         </span>
       )}
@@ -82,7 +82,7 @@ function AddSlotButton({ onClick }: { onClick: () => void }) {
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15">
         <Plus className="h-4 w-4" />
       </span>
-      <span className="text-[11px] font-medium">افزودن</span>
+      <span className="wibe-caption font-medium">افزودن</span>
     </button>
   );
 }
@@ -107,7 +107,7 @@ function ShelfTabs({
             key={shelf.categorySlug}
             type="button"
             onClick={() => onSelect(shelf.categorySlug)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-[colors,transform] active:scale-[0.98] ${
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 wibe-small font-medium transition-[colors,transform] active:scale-[0.98] ${
               selected
                 ? 'bg-primary text-white shadow-sm'
                 : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -116,7 +116,7 @@ function ShelfTabs({
             <span>{shelf.categoryIcon}</span>
             <span className="max-w-[88px] truncate">{shelf.categoryName}</span>
             <span
-              className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+              className={`rounded-full px-1.5 py-0.5 wibe-caption font-bold leading-none ${
                 selected ? 'bg-white/25' : 'bg-primary/10 text-primary'
               }`}
             >
@@ -149,7 +149,7 @@ function ActiveShelfPanel({
           <button
             type="button"
             onClick={() => onEditCategory(shelf.categorySlug)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-medium text-primary hover:bg-primary/10"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-small font-medium text-primary hover:bg-primary/10"
           >
             <Plus className="h-4 w-4" />
             افزودن به {shelf.categoryName}
@@ -242,7 +242,7 @@ export default function ProfilePicksSection({
   return (
     <>
       <section className="mb-4 overflow-hidden rounded-2xl border border-wibe bg-wibe-card shadow-sm">
-        <div className="border-b border-wibe/60 bg-gradient-to-l from-primary/[0.06] via-transparent to-violet-500/[0.04] px-3.5 py-2.5 lg:px-4">
+        <div className="border-b border-wibe/60 bg-gradient-to-l from-primary/[0.06] via-transparent to-primary/[0.04] px-3.5 py-2.5 lg:px-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -287,7 +287,7 @@ export default function ProfilePicksSection({
               {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
-                  className="h-[144px] w-[96px] shrink-0 animate-pulse rounded-xl bg-gray-100"
+                  className="h-[144px] w-[96px] shrink-0 animate-pulse rounded-xl bg-wibe-surface"
                 />
               ))}
             </div>

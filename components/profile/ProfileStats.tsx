@@ -49,14 +49,14 @@ export default function ProfileStats({ creatorStats, onNavigate }: ProfileStatsP
         const value = Number(creatorStats[key] ?? 0);
         const content = (
           <>
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-100 text-wibe-secondary lg:h-8 lg:w-8">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-wibe-surface text-wibe-secondary lg:h-8 lg:w-8">
               <Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
             </div>
             <div className="min-w-0 lg:text-right">
               <span className="block text-sm font-bold leading-none text-foreground lg:text-base">
                 {formatStat(value)}
               </span>
-              <span className="mt-0.5 block truncate text-[10px] leading-tight text-wibe-secondary lg:text-xs">
+              <span className="mt-0.5 block truncate wibe-caption leading-tight text-wibe-secondary lg:text-xs">
                 {label}
               </span>
             </div>

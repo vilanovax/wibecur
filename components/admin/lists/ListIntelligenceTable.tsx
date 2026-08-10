@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { ExternalLink, Pencil, Star, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
 import { formatSaveGrowthDisplay } from '@/lib/admin/category-intelligence';
 import ListCardMoreMenu from './ListCardMoreMenu';
 

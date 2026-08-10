@@ -35,7 +35,7 @@ interface AchievementBottomSheetProps {
 
 const CATEGORY_GLOW: Record<string, string> = {
   impact: 'from-orange-100/80 via-amber-50/60 to-transparent',
-  creation: 'from-purple-100/80 via-violet-50/60 to-transparent',
+  creation: 'from-primary/10 via-primary/5 to-transparent',
   community: 'from-emerald-100/80 via-teal-50/60 to-transparent',
   consistency: 'from-blue-100/80 via-sky-50/60 to-transparent',
 };
@@ -128,13 +128,13 @@ export default function AchievementBottomSheet({
       >
         {/* Drag Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-8 h-1 bg-gray-200 rounded-full" />
+          <div className="w-8 h-1 bg-wibe-surface rounded-full" />
         </div>
 
         {/* 1️⃣ Header Section */}
         <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-4 flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <h2 className="text-[22px] font-bold text-foreground leading-tight">
+            <h2 className="wibe-h2 font-bold text-foreground leading-tight">
               {achievement.title} {achievement.icon}
             </h2>
             <p className="text-sm text-wibe-secondary mt-0.5">{impactLabel}</p>
@@ -142,7 +142,7 @@ export default function AchievementBottomSheet({
           <button
             type="button"
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors flex-shrink-0"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-wibe-surface active:bg-wibe-surface transition-colors flex-shrink-0"
             aria-label="بستن"
           >
             <X className="w-5 h-5 text-wibe-secondary" />
@@ -173,7 +173,7 @@ export default function AchievementBottomSheet({
 
           {/* 3️⃣ Impact Metrics Card */}
           {hasMetrics && (
-            <div className="rounded-2xl bg-gray-50/80 border border-gray-100 p-4">
+            <div className="rounded-2xl bg-wibe-surface/80 border border-wibe p-4">
               <div className="grid grid-cols-2 gap-4">
                 {typeof metrics!.views === 'number' && (
                   <div className="flex items-center gap-2">
@@ -237,7 +237,7 @@ export default function AchievementBottomSheet({
             <button
               type="button"
               onClick={handleShare}
-              className="w-full py-3 px-5 rounded-[14px] border-2 border-gray-200 text-foreground font-medium text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 px-5 rounded-[14px] border-2 border-wibe text-foreground font-medium text-sm hover:bg-wibe-surface transition-colors flex items-center justify-center gap-2"
             >
               <Share2 className="w-4 h-4" />
               اشتراک‌گذاری دستاورد

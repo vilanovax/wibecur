@@ -41,9 +41,7 @@ export default function HomeDesktopView({
 
   return (
     <div className="flex flex-col gap-6 xl:gap-7">
-      <QuickCategoryChips initialCategories={initialCategories} />
-
-      <HomeStartStrip />
+      <HomeStartStrip initialCategories={initialCategories} />
 
       <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.55fr)] xl:items-stretch xl:gap-5">
         <HomeMoodRowSection variant="responsive" className="order-2 xl:order-1" />
@@ -84,6 +82,10 @@ export default function HomeDesktopView({
           </>
         )}
 
+        <QuickCategoryChips
+          initialCategories={initialCategories}
+          density="secondary"
+        />
       </div>
     </div>
   );

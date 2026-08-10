@@ -5,32 +5,62 @@ import {
   type MoodExplorerSelection,
   quickPillToSelection,
 } from '@/lib/discovery/mood-explorer-config';
+import { prefetchGuidedDiscovery } from '@/lib/discovery/guided-client';
+import { preloadGuidedDiscoverySheet } from './explore-lazy-sections';
 
 type Props = {
   onSelect: (selection: MoodExplorerSelection) => void;
   disabled?: boolean;
 };
 
+/**
+ * برچسب کوتاه — از تکرار «امشب» با مود free_night پرهیز می‌کند؛
+ * چیپ‌ها میانبر همان مسیر راهنما هستند (زمان/جا).
+ */
+const SHORT_LABEL: Record<string, string> = {
+  quick_30min: '۳۰ دقیقه',
+  quick_tonight: 'فیلم در خانه',
+  quick_out: 'بیرون رفتن',
+};
+
+function warmQuickPill(pill: (typeof QUICK_NOW_PILLS)[number]) {
+  preloadGuidedDiscoverySheet();
+  const selection = quickPillToSelection(pill);
+  prefetchGuidedDiscovery({
+    scenario: selection.scenario,
+    location: selection.preset?.location,
+    timeBudget: selection.preset?.timeBudget,
+  });
+}
+
 export default function QuickNowSection({ onSelect, disabled = false }: Props) {
   return (
     <section
-      className="border-t border-wibe/60 px-2.5 py-4 lg:px-0 lg:py-5"
+      className="border-t border-wibe/40 px-2.5 py-2 lg:px-0 lg:py-2.5"
       aria-labelledby="quick-now-title"
     >
-      <h2 id="quick-now-title" className="mb-2.5 wibe-body font-bold text-foreground">
-        برای همین الان
-      </h2>
-      <div className="scrollbar-hide -mx-2.5 flex gap-2 overflow-x-auto px-2.5 pb-0.5 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
+      <div className="mb-1.5 flex flex-col gap-0.5">
+        <h2 id="quick-now-title" className="wibe-caption font-semibold text-wibe-secondary">
+          میانبر زمان و جا
+        </h2>
+        <p className="wibe-caption text-wibe-secondary/80">
+          همان مسیر راهنما — فقط با قید زمان یا مکان
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
         {QUICK_NOW_PILLS.map((pill) => (
           <button
             key={pill.id}
             type="button"
             disabled={disabled}
+            onPointerDown={() => warmQuickPill(pill)}
             onClick={() => onSelect(quickPillToSelection(pill))}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-wibe bg-wibe-card px-3.5 py-2 wibe-caption font-medium text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50 lg:py-2.5 lg:wibe-small"
+            className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-wibe/80 bg-transparent px-2.5 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-wibe hover:bg-wibe-card hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50"
           >
-            <span aria-hidden>{pill.icon}</span>
-            {pill.label}
+            <span aria-hidden className="opacity-80">
+              {pill.icon}
+            </span>
+            {SHORT_LABEL[pill.id] ?? pill.label}
           </button>
         ))}
       </div>

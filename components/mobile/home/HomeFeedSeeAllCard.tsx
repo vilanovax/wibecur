@@ -23,7 +23,7 @@ export default function HomeFeedSeeAllCard({
         <span className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors group-hover:bg-primary/25 lg:mb-0 lg:h-7 lg:w-7">
           <LayoutGrid className="h-4 w-4" aria-hidden />
         </span>
-        <span className="wibe-small font-semibold text-primary lg:text-[0.8125rem]">{label}</span>
+        <span className="wibe-small font-semibold text-primary">{label}</span>
         <span className="mt-0.5 wibe-caption text-wibe-secondary lg:hidden">{description}</span>
         <ChevronLeft
           className="mt-1.5 h-3.5 w-3.5 rotate-180 text-primary opacity-70 transition-transform group-hover:translate-x-[-2px] lg:mt-0 lg:h-3.5 lg:w-3.5"

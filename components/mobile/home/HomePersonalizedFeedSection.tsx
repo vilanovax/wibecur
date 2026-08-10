@@ -85,7 +85,7 @@ export default function HomePersonalizedFeedSection() {
         />
         <div className="grid grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="aspect-[16/10] animate-pulse rounded-xl bg-gray-100" />
+            <div key={i} className="aspect-[16/10] animate-pulse rounded-xl bg-wibe-surface" />
           ))}
         </div>
       </section>
@@ -106,7 +106,7 @@ export default function HomePersonalizedFeedSection() {
       {isLoading && combined.length === 0 ? (
         <div className="grid grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="aspect-[16/10] animate-pulse rounded-xl bg-gray-100" />
+            <div key={i} className="aspect-[16/10] animate-pulse rounded-xl bg-wibe-surface" />
           ))}
         </div>
       ) : (

@@ -1,19 +1,38 @@
 'use client';
 
 import { Suspense, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import AdminTopBar from './AdminTopBar';
 import DashboardActionCenter from './DashboardActionCenter';
 import ContentOverviewStrip from './ContentOverviewStrip';
 import DashboardPeriodChips from './DashboardPeriodChips';
-import TrendingRadar from './TrendingRadar';
-import CategoryIntelligenceGrid from './CategoryIntelligenceGrid';
-import TopContentPanels from './TopContentPanels';
-import SuggestionsQueueWidget from './SuggestionsQueueWidget';
-import ActivityStream from './ActivityStream';
-import type { DashboardData } from '@/lib/admin/types';
+import type { DashboardClientPayload } from '@/lib/admin/types';
+
+const sectionFallback = (
+  <div className="min-h-[200px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+);
+
+/** Below-fold / heavy widgets — split from critical path (bundle-dynamic-imports) */
+const TrendingRadar = dynamic(() => import('./TrendingRadar'), {
+  loading: () => sectionFallback,
+});
+const CategoryIntelligenceGrid = dynamic(
+  () => import('./CategoryIntelligenceGrid'),
+  { loading: () => sectionFallback }
+);
+const TopContentPanels = dynamic(() => import('./TopContentPanels'), {
+  loading: () => sectionFallback,
+});
+const SuggestionsQueueWidget = dynamic(
+  () => import('./SuggestionsQueueWidget'),
+  { loading: () => null }
+);
+const ActivityStream = dynamic(() => import('./ActivityStream'), {
+  loading: () => null,
+});
 
 interface DashboardContentProps {
-  data: DashboardData;
+  data: DashboardClientPayload;
 }
 
 export default function DashboardContent({ data }: DashboardContentProps) {
@@ -42,7 +61,9 @@ export default function DashboardContent({ data }: DashboardContentProps) {
         .map((a) => ({
           ...a,
           timestamp:
-            typeof a.timestamp === 'string' ? new Date(a.timestamp) : a.timestamp,
+            typeof a.timestamp === 'string'
+              ? new Date(a.timestamp)
+              : a.timestamp,
         })),
     [activities]
   );
@@ -88,18 +109,20 @@ export default function DashboardContent({ data }: DashboardContentProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-        {pendingSuggestionCount > 0 && (
+        {pendingSuggestionCount > 0 ? (
           <SuggestionsQueueWidget
             count={pendingSuggestionCount}
             previews={suggestionPreviews}
           />
-        )}
+        ) : null}
 
-        {normalizedActivities.length > 0 && (
-          <section className={pendingSuggestionCount > 0 ? '' : 'lg:col-span-2'}>
+        {normalizedActivities.length > 0 ? (
+          <section
+            className={pendingSuggestionCount > 0 ? '' : 'lg:col-span-2'}
+          >
             <ActivityStream events={normalizedActivities} />
           </section>
-        )}
+        ) : null}
       </div>
     </div>
   );

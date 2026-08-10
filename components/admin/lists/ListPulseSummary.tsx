@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { List, TrendingUp, AlertCircle, ShieldAlert, Star } from 'lucide-react';
-import type { ListPulse } from '@/lib/admin/lists-intelligence';
+import type { ListPulse } from '@/lib/admin/lists-types';
 import type { ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
 
 type PulseKey = 'totalLists' | 'risingLists' | 'lowEngagementLists' | 'flaggedLists' | 'featuredLists';

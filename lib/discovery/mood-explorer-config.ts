@@ -60,8 +60,8 @@ export const MOOD_EXPLORER_CARDS: MoodExplorerCard[] = [
     title: 'امشب کاری نداری؟',
     subtitle: 'یک پلن آماده برای امشب',
     icon: '🌙',
-    gradient: 'from-indigo-100/80 to-violet-100/60 border-indigo-200/60',
-    accent: 'bg-indigo-100/80',
+    gradient: 'from-slate-100/90 to-blue-100/60 border-slate-200/70',
+    accent: 'bg-slate-200/70',
     guidedScenario: 'weekend',
   },
   {
@@ -69,7 +69,7 @@ export const MOOD_EXPLORER_CARDS: MoodExplorerCard[] = [
     title: 'ذهنت شلوغه؟',
     subtitle: 'چیزهایی برای خاموش کردن دنیا',
     icon: '🧘',
-    gradient: 'from-sky-100/80 to-cyan-100/60 border-sky-200/60',
+    gradient: 'from-sky-100/80 to-teal-100/60 border-sky-200/60',
     accent: 'bg-sky-100/80',
     guidedScenario: 'staying_in',
     guidedPreset: { location: 'home' },
@@ -95,22 +95,12 @@ export const MOOD_EXPLORER_CARDS: MoodExplorerCard[] = [
     guidedPreset: { location: 'out' },
   },
   {
-    id: 'short_time',
-    title: 'فقط ۳۰ دقیقه وقت داری؟',
-    subtitle: 'پیشنهادهای کوتاه و سریع',
-    icon: '⏱️',
-    gradient: 'from-lime-100/80 to-green-100/60 border-lime-200/60',
-    accent: 'bg-lime-100/80',
-    guidedScenario: 'bored',
-    guidedPreset: { timeBudget: '30' },
-  },
-  {
     id: 'change_mood',
     title: 'می‌خوای حالت عوض شه؟',
     subtitle: 'چیزهایی که حس و حال را جابه‌جا می‌کنند',
     icon: '✨',
-    gradient: 'from-fuchsia-100/80 to-purple-100/60 border-fuchsia-200/60',
-    accent: 'bg-fuchsia-100/80',
+    gradient: 'from-rose-100/80 to-orange-100/60 border-rose-200/60',
+    accent: 'bg-rose-100/80',
     guidedScenario: 'bored',
     guidedPreset: { timeBudget: 'free' },
   },
@@ -119,6 +109,10 @@ export const MOOD_EXPLORER_CARDS: MoodExplorerCard[] = [
 /** مودهای پیش‌فرض موبایل — ۲×۲ در نگاه اول */
 export const MOBILE_FEATURED_MOOD_IDS = ['tired', 'bored', 'free_night', 'with_friend'] as const;
 
+/**
+ * فقط قید زمان/مکان — مودهای اجتماعی (با دوست، تنها، با بچه)
+ * در کارت‌های Mood بالای صفحه می‌مانند تا هم‌پوشانی نباشد.
+ */
 export const QUICK_NOW_PILLS: QuickNowPill[] = [
   {
     id: 'quick_30min',
@@ -133,57 +127,24 @@ export const QUICK_NOW_PILLS: QuickNowPill[] = [
   },
   {
     id: 'quick_tonight',
-    label: 'امشب می‌خوام ببینم',
+    label: 'فیلم در خانه',
     icon: '🎬',
     guidedScenario: 'staying_in',
     guidedPreset: { location: 'home' },
     moodMeta: {
-      title: 'امشب می‌خوام ببینم',
-      subtitle: 'فیلم، سریال و چیزهای خوب برای امشب',
+      title: 'فیلم در خانه',
+      subtitle: 'فیلم و سریال برای دیدن در خانه — میانبر مسیر راهنما',
     },
   },
   {
     id: 'quick_out',
-    label: 'بیرون می‌خوام برم',
+    label: 'بیرون رفتن',
     icon: '🚶',
     guidedScenario: 'going_out',
     guidedPreset: { location: 'out' },
     moodMeta: {
-      title: 'بیرون می‌خوام برم',
-      subtitle: 'کافه، رستوران و جاهای بیرون',
-    },
-  },
-  {
-    id: 'quick_kids',
-    label: 'با بچه‌ام',
-    icon: '👨‍👩‍👧',
-    guidedScenario: 'going_out',
-    guidedPreset: { location: 'out' },
-    moodMeta: {
-      title: 'با بچه‌ام',
-      subtitle: 'جاهای مناسب خانواده',
-    },
-  },
-  {
-    id: 'quick_friend',
-    label: 'با دوستم',
-    icon: '👯',
-    guidedScenario: 'going_out',
-    guidedPreset: { location: 'out' },
-    moodMeta: {
-      title: 'با دوستم',
-      subtitle: 'تجربه‌های دونفره',
-    },
-  },
-  {
-    id: 'quick_solo',
-    label: 'تنها هستم',
-    icon: '☕',
-    guidedScenario: 'staying_in',
-    guidedPreset: { location: 'home' },
-    moodMeta: {
-      title: 'تنها هستم',
-      subtitle: 'چیزهایی برای خلوت و آرامش',
+      title: 'بیرون رفتن',
+      subtitle: 'کافه، رستوران و جاهای بیرون — میانبر مسیر راهنما',
     },
   },
 ];

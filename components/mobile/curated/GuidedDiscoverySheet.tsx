@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import GuidedDiscoveryResults from './GuidedDiscoveryResults';
 import {
@@ -8,16 +9,17 @@ import {
   type GuidedScenario,
 } from '@/lib/discovery/guided-intent';
 import type { MoodExplorerSelection } from '@/lib/discovery/mood-explorer-config';
-import type { GuidedDiscoveryPayload } from '@/lib/discovery/guided-recommendations';
-import { fetchGuidedDiscovery, trackGuidedDiscoveryEvent } from '@/lib/discovery/guided-client';
+import {
+  fetchGuidedDiscovery,
+  guidedDiscoveryQueryKey,
+  trackGuidedDiscoveryEvent,
+} from '@/lib/discovery/guided-client';
 
 type Props = {
   selection: MoodExplorerSelection | null;
   isOpen: boolean;
   onClose: () => void;
 };
-
-type Step = 'question' | 'loading' | 'results';
 
 function needsQuestion(
   scenario: GuidedScenario,
@@ -30,26 +32,15 @@ function needsQuestion(
   return true;
 }
 
-function MoodSheetHeader({ icon, subtitle }: { icon?: string; subtitle?: string }) {
-  if (!icon && !subtitle) return null;
-
-  return (
-    <div className="mb-4 flex items-start gap-3 rounded-2xl border border-primary/15 bg-primary/[0.04] p-3.5 lg:mb-5 lg:p-4">
-      {icon && (
-        <span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm"
-          aria-hidden
-        >
-          {icon}
-        </span>
-      )}
-      {subtitle && (
-        <p className="flex-1 pt-0.5 text-right wibe-small leading-relaxed text-wibe-secondary lg:text-[0.9375rem]">
-          {subtitle}
-        </p>
-      )}
-    </div>
-  );
+function optionVisual(questionId: 'location' | 'timeBudget', value: string): string {
+  if (questionId === 'location') {
+    if (value === 'out') return '🚶';
+    if (value === 'home') return '🏠';
+  }
+  if (value === '5') return '⚡';
+  if (value === '30') return '⏱️';
+  if (value === 'free') return '🌙';
+  return '✨';
 }
 
 export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Props) {
@@ -59,175 +50,180 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
     [scenario]
   );
 
-  const [step, setStep] = useState<Step>('question');
   const [location, setLocation] = useState<string | undefined>();
   const [timeBudget, setTimeBudget] = useState<string | undefined>();
-  const [data, setData] = useState<GuidedDiscoveryPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const reset = useCallback(() => {
-    setStep('question');
-    setLocation(undefined);
-    setTimeBudget(undefined);
-    setData(null);
-    setError(null);
-  }, []);
-
+  // Reset local answers + analytics when a new mood opens
   useEffect(() => {
     if (!isOpen || !selection || !scenario) return;
-    reset();
-
-    const preset = selection.preset;
-    if (preset?.location) setLocation(preset.location);
-    if (preset?.timeBudget) setTimeBudget(preset.timeBudget);
-
+    setLocation(undefined);
+    setTimeBudget(undefined);
     trackGuidedDiscoveryEvent('scenario_start', { scenario });
+  }, [isOpen, selection?.moodId, scenario]);
 
-    if (
-      !needsQuestion(scenario, {
-        location: preset?.location,
-        timeBudget: preset?.timeBudget,
-      })
-    ) {
-      setStep('loading');
-    }
-  }, [isOpen, selection, scenario, reset]);
+  const resolvedLocation =
+    location ?? selection?.preset?.location ?? config?.preset?.location;
+  const resolvedTimeBudget =
+    timeBudget ?? selection?.preset?.timeBudget ?? config?.preset?.timeBudget;
 
-  const loadResults = useCallback(
-    async (params: { location?: string; timeBudget?: string }) => {
-      if (!scenario) return;
-      setStep('loading');
-      setError(null);
-      try {
-        const result = await fetchGuidedDiscovery({
-          scenario,
-          location: params.location ?? selection?.preset?.location,
-          timeBudget: params.timeBudget ?? selection?.preset?.timeBudget,
-        });
-        setData(result);
-        setStep('results');
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'خطا در دریافت پیشنهادها');
-        setStep('question');
-      }
-    },
-    [scenario, selection?.preset]
-  );
-
-  useEffect(() => {
-    if (!isOpen || !scenario || !selection || step !== 'loading') return;
-
-    const resolvedLocation =
-      location ?? selection.preset?.location ?? config?.preset?.location;
-    const resolvedTimeBudget =
-      timeBudget ?? selection.preset?.timeBudget ?? config?.preset?.timeBudget;
-
-    if (
-      needsQuestion(scenario, {
-        location: resolvedLocation,
-        timeBudget: resolvedTimeBudget,
-      })
-    ) {
-      setStep('question');
-      return;
-    }
-
-    void loadResults({
+  const waitingOnQuestion =
+    Boolean(scenario) &&
+    needsQuestion(scenario!, {
       location: resolvedLocation,
       timeBudget: resolvedTimeBudget,
     });
-  }, [isOpen, scenario, selection, step, loadResults, location, timeBudget, config]);
 
-  const handleAnswer = (value: string) => {
-    if (!scenario || !config?.question) return;
+  const fetchEnabled = isOpen && Boolean(scenario) && !waitingOnQuestion;
 
-    if (config.question.id === 'location') {
-      setLocation(value);
-      trackGuidedDiscoveryEvent('question_answered', { scenario, location: value });
-      void loadResults({ location: value, timeBudget: timeBudget ?? selection?.preset?.timeBudget });
-      return;
-    }
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: guidedDiscoveryQueryKey({
+      scenario: scenario ?? 'bored',
+      location: resolvedLocation,
+      timeBudget: resolvedTimeBudget,
+    }),
+    queryFn: () =>
+      fetchGuidedDiscovery({
+        scenario: scenario!,
+        location: resolvedLocation,
+        timeBudget: resolvedTimeBudget,
+      }),
+    enabled: fetchEnabled,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    retry: 1,
+  });
 
-    setTimeBudget(value);
-    trackGuidedDiscoveryEvent('question_answered', { scenario, timeBudget: value });
-    void loadResults({ timeBudget: value, location: location ?? selection?.preset?.location });
-  };
+  const handleAnswer = useCallback(
+    (value: string) => {
+      if (!scenario || !config?.question) return;
+
+      if (config.question.id === 'location') {
+        setLocation(value);
+        trackGuidedDiscoveryEvent('question_answered', { scenario, location: value });
+        return;
+      }
+
+      setTimeBudget(value);
+      trackGuidedDiscoveryEvent('question_answered', { scenario, timeBudget: value });
+    },
+    [scenario, config]
+  );
 
   const handleClose = () => {
     onClose();
-    reset();
   };
 
   if (!selection || !scenario || !config) return null;
 
   const moodMeta = selection.moodMeta;
   const moodIcon = moodMeta.icon;
-  const sheetSubtitle =
-    step === 'results' || step === 'loading' ? moodMeta.subtitle : undefined;
+  const showQuestion = waitingOnQuestion;
+  const showLoading = fetchEnabled && isLoading && !data;
+  const showResults = Boolean(data) && !showQuestion;
+  const showError = isError && !data && !showQuestion;
 
-  const title =
-    step === 'loading' ? 'در حال آماده‌سازی…' : moodMeta.title;
+  const title = showLoading
+    ? 'در حال آماده‌سازی…'
+    : showResults
+      ? moodMeta.title
+      : moodMeta.title;
+  const subtitle = showResults ? moodMeta.subtitle : undefined;
 
   return (
     <BottomSheet
       isOpen={isOpen}
       onClose={handleClose}
       title={title}
-      subtitle={sheetSubtitle}
+      subtitle={subtitle}
       maxHeight="92vh"
       desktopMaxWidth="xl"
     >
-      <div className="px-4 pb-5 pt-1 lg:px-0 lg:pb-6" dir="rtl">
-        {step === 'question' && config.question && needsQuestion(scenario, { location, timeBudget }) && (
+      <div className="px-4 pb-6 pt-1 lg:px-0 lg:pb-7" dir="rtl">
+        {showQuestion && config.question && (
           <div className="space-y-5">
-            <MoodSheetHeader icon={moodIcon} subtitle={moodMeta.subtitle} />
+            {(moodIcon || moodMeta.subtitle) && (
+              <div className="flex items-center gap-3">
+                {moodIcon ? (
+                  <span
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-wibe-surface text-2xl ring-1 ring-wibe"
+                    aria-hidden
+                  >
+                    {moodIcon}
+                  </span>
+                ) : null}
+                {moodMeta.subtitle ? (
+                  <p className="min-w-0 flex-1 text-right wibe-small leading-relaxed text-wibe-secondary">
+                    {moodMeta.subtitle}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
             <div>
-              <p className="mb-3 text-right wibe-body font-semibold text-foreground">
+              <p className="mb-3 text-right wibe-body font-bold text-foreground">
                 {config.question.prompt}
               </p>
-              <div className="grid gap-2.5 sm:grid-cols-2">
-                {config.question.options.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => handleAnswer(opt.value)}
-                    className="rounded-2xl border border-wibe bg-wibe-card px-4 py-4 text-right wibe-small font-bold text-foreground transition-colors hover:border-primary/35 hover:bg-primary/[0.04] active:scale-[0.99] lg:py-4.5"
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              <div
+                className={
+                  config.question.options.length === 2
+                    ? 'grid grid-cols-2 gap-2.5'
+                    : 'grid gap-2.5'
+                }
+              >
+                {config.question.options.map((opt) => {
+                  const visual = optionVisual(config.question!.id, opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => handleAnswer(opt.value)}
+                      className="flex items-center gap-3 rounded-2xl border border-wibe bg-wibe-card px-3.5 py-3.5 text-right transition-colors hover:border-primary/30 hover:bg-primary/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:py-4"
+                    >
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-wibe-surface text-xl"
+                        aria-hidden
+                      >
+                        {visual}
+                      </span>
+                      <span className="min-w-0 flex-1 wibe-small font-bold text-foreground">
+                        {opt.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            {error && (
-              <p className="rounded-xl bg-red-50 px-3 py-2 text-center wibe-caption text-red-600">
-                {error}
-              </p>
-            )}
           </div>
         )}
 
-        {step === 'loading' && (
-          <div className="space-y-6 py-6 lg:py-10">
-            <div className="flex flex-col items-center gap-4">
-              {moodIcon && (
-                <span className="flex h-16 w-16 animate-pulse items-center justify-center rounded-3xl bg-primary/10 text-4xl">
+        {showLoading && (
+          <div className="space-y-5 py-4 lg:py-6">
+            <div className="flex flex-col items-center gap-3">
+              {moodIcon ? (
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-wibe-surface text-3xl ring-1 ring-wibe">
                   {moodIcon}
                 </span>
-              )}
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <p className="text-center wibe-small text-wibe-secondary">پیشنهادها رو جمع می‌کنیم…</p>
+              ) : null}
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <p className="text-center wibe-small text-wibe-secondary">
+                پیشنهادها رو جمع می‌کنیم…
+              </p>
             </div>
-            <div className="space-y-4 px-1">
-              {[1, 2].map((row) => (
-                <div key={row} className="space-y-3">
-                  <div className="h-5 w-28 animate-pulse rounded-lg bg-gray-200" />
-                  <div className="flex gap-3 overflow-hidden">
-                    {[1, 2, 3].map((card) => (
-                      <div
-                        key={card}
-                        className="h-36 w-[58%] max-w-[220px] shrink-0 animate-pulse rounded-2xl bg-gray-200 lg:w-full lg:max-w-none"
-                      />
-                    ))}
+            <div className="grid grid-cols-2 gap-2.5">
+              {[1, 2, 3, 4].map((card) => (
+                <div key={card} className="overflow-hidden rounded-xl border border-wibe">
+                  <div className="aspect-[16/10] animate-pulse bg-wibe-surface" />
+                  <div className="space-y-2 p-2.5">
+                    <div className="h-3.5 w-[80%] animate-pulse rounded bg-wibe-surface" />
+                    <div className="h-3 w-[40%] animate-pulse rounded bg-wibe-surface" />
                   </div>
                 </div>
               ))}
@@ -235,9 +231,38 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
           </div>
         )}
 
-        {step === 'results' && data && (
-          <GuidedDiscoveryResults data={data} scenario={scenario} onItemClick={handleClose} />
+        {showError && (
+          <div className="space-y-3 py-8 text-center">
+            <p className="wibe-small text-red-600">
+              {error instanceof Error ? error.message : 'خطا در دریافت پیشنهادها'}
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              className="rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white"
+            >
+              تلاش مجدد
+            </button>
+          </div>
         )}
+
+        {showResults && data ? (
+          <div className="relative">
+            {isFetching && !isLoading ? (
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden rounded-full bg-primary/15"
+                aria-hidden
+              >
+                <div className="h-full w-1/3 animate-pulse bg-primary/50" />
+              </div>
+            ) : null}
+            <GuidedDiscoveryResults
+              data={data}
+              scenario={scenario}
+              onItemClick={handleClose}
+            />
+          </div>
+        ) : null}
       </div>
     </BottomSheet>
   );

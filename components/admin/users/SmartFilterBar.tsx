@@ -8,7 +8,7 @@ import {
 import {
   USER_SORT_OPTIONS,
   type UserSortKind,
-} from '@/lib/admin/users-intelligence';
+} from '@/lib/admin/users-types';
 
 interface SmartFilterBarProps {
   value: UserFilterKind;

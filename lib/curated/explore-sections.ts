@@ -12,31 +12,56 @@ const KEYWORD_SCORE_WEIGHT = 12;
 const PREFERRED_CATEGORY_BOOST = 6;
 const FEATURED_BOOST = 4;
 const TRENDING_BADGE_BOOST = 3;
+const HAS_COVER_BOOST = 1.5;
+
+/** کلید پایدار کاور برای جلوگیری از تکرار thumbnail در سکشن‌ها */
+export function coverAssetKey(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null;
+  const raw = url.trim();
+  try {
+    const path = raw.startsWith('http') ? new URL(raw).pathname : raw.split('?')[0] ?? raw;
+    const base = path.split('/').pop()?.toLowerCase();
+    return base || null;
+  } catch {
+    return raw.toLowerCase();
+  }
+}
+
+type PickCtx = {
+  usedIds: Set<string>;
+  usedCovers: Set<string>;
+};
+
+function claimList(list: CuratedList, ctx: PickCtx): boolean {
+  if (ctx.usedIds.has(list.id)) return false;
+  const key = coverAssetKey(list.coverUrl);
+  // کاور تکراری در ForYou/Trending ممنوع — کوتاه‌تر بهتر از thumbnail یکسان
+  if (key && ctx.usedCovers.has(key)) return false;
+  ctx.usedIds.add(list.id);
+  if (key) ctx.usedCovers.add(key);
+  return true;
+}
 
 function pickUnique(
   pool: CuratedList[],
-  used: Set<string>,
+  ctx: PickCtx,
   limit: number,
   predicate?: (list: CuratedList) => boolean
 ): CuratedList[] {
   const result: CuratedList[] = [];
 
-  const tryAdd = (list: CuratedList) => {
-    if (used.has(list.id) || result.length >= limit) return;
-    result.push(list);
-    used.add(list.id);
-  };
-
   if (predicate) {
     for (const list of pool) {
-      if (predicate(list)) tryAdd(list);
+      if (result.length >= limit) break;
+      if (!predicate(list)) continue;
+      if (claimList(list, ctx)) result.push(list);
     }
   }
 
   if (result.length < limit) {
     for (const list of pool) {
-      tryAdd(list);
       if (result.length >= limit) break;
+      if (claimList(list, ctx)) result.push(list);
     }
   }
 
@@ -54,6 +79,7 @@ export function scoreListForForYou(
   if (list.badges.includes('featured')) score += FEATURED_BOOST;
   if (list.badges.includes('trending')) score += TRENDING_BADGE_BOOST;
   if (list.badges.includes('rising')) score += 2;
+  if (list.coverUrl) score += HAS_COVER_BOOST;
   score += Math.log10(Math.max(list.savesCount ?? 0, 1) + 1);
   return score;
 }
@@ -74,24 +100,27 @@ function resolveForYouLimit(activeCategoryIds: string[], pool: CuratedList[]): n
 function pickBestInCategory(
   pool: CuratedList[],
   categoryId: string,
-  used: Set<string>,
+  ctx: PickCtx,
   preferredKeywords: string[],
   preferredCategories: Set<string>
 ): CuratedList | null {
   const ranked = pool
-    .filter((list) => list.categoryId === categoryId && !used.has(list.id))
+    .filter((list) => list.categoryId === categoryId && !ctx.usedIds.has(list.id))
     .map((list) => ({
       list,
       score: scoreListForForYou(list, preferredKeywords, preferredCategories),
     }))
     .sort((a, b) => b.score - a.score);
 
-  return ranked[0]?.list ?? null;
+  for (const { list } of ranked) {
+    if (claimList(list, ctx)) return list;
+  }
+  return null;
 }
 
 function pickCategoryDiverseForYou(
   pool: CuratedList[],
-  used: Set<string>,
+  ctx: PickCtx,
   activeCategoryIds: string[],
   preferredKeywords: string[],
   preferredCategories: Set<string>
@@ -99,10 +128,9 @@ function pickCategoryDiverseForYou(
   const result: CuratedList[] = [];
 
   for (const categoryId of activeCategoryIds) {
-    const best = pickBestInCategory(pool, categoryId, used, preferredKeywords, preferredCategories);
+    const best = pickBestInCategory(pool, categoryId, ctx, preferredKeywords, preferredCategories);
     if (!best) continue;
     result.push(best);
-    used.add(best.id);
   }
 
   return result;
@@ -110,7 +138,7 @@ function pickCategoryDiverseForYou(
 
 function pickTopScoredForYou(
   pool: CuratedList[],
-  used: Set<string>,
+  ctx: PickCtx,
   limit: number,
   preferredKeywords: string[],
   preferredCategories: Set<string>
@@ -118,7 +146,7 @@ function pickTopScoredForYou(
   if (limit <= 0) return [];
 
   const ranked = pool
-    .filter((list) => !used.has(list.id))
+    .filter((list) => !ctx.usedIds.has(list.id))
     .map((list) => ({
       list,
       score: scoreListForForYou(list, preferredKeywords, preferredCategories),
@@ -128,15 +156,14 @@ function pickTopScoredForYou(
   const result: CuratedList[] = [];
   for (const { list } of ranked) {
     if (result.length >= limit) break;
-    result.push(list);
-    used.add(list.id);
+    if (claimList(list, ctx)) result.push(list);
   }
   return result;
 }
 
 function buildForYouLists(
   filtered: CuratedList[],
-  used: Set<string>,
+  ctx: PickCtx,
   activeCategoryIds: string[],
   preferredKeywords: string[],
   preferredCategories: Set<string>
@@ -146,7 +173,7 @@ function buildForYouLists(
 
   let forYou = pickCategoryDiverseForYou(
     filtered,
-    used,
+    ctx,
     activeCategoryIds,
     preferredKeywords,
     preferredCategories
@@ -157,7 +184,7 @@ function buildForYouLists(
       ...forYou,
       ...pickTopScoredForYou(
         filtered,
-        used,
+        ctx,
         limit - forYou.length,
         preferredKeywords,
         preferredCategories
@@ -170,7 +197,7 @@ function buildForYouLists(
       ...forYou,
       ...pickUnique(
         filtered,
-        used,
+        ctx,
         limit - forYou.length,
         (list) => list.badges.includes('featured')
       ),
@@ -178,7 +205,7 @@ function buildForYouLists(
   }
 
   if (forYou.length < limit) {
-    forYou = [...forYou, ...pickUnique(filtered, used, limit - forYou.length)];
+    forYou = [...forYou, ...pickUnique(filtered, ctx, limit - forYou.length)];
   }
 
   const covered = new Set(
@@ -211,7 +238,7 @@ export type ExploreSectionsOptions = {
   excludeListIds?: string[];
 };
 
-/** تقسیم لیست‌ها بین سکشن‌ها — تنوع دسته + شخصی‌سازی keyword */
+/** تقسیم لیست‌ها بین سکشن‌ها — تنوع دسته + شخصی‌سازی keyword + کاور یکتا */
 export function buildExploreSections(
   allLists: CuratedList[],
   searchQuery: string,
@@ -239,11 +266,11 @@ export function buildExploreSections(
   });
 
   const isSearching = searchQuery.trim().length > 0;
-  const used = new Set<string>();
+  const ctx: PickCtx = { usedIds: new Set(), usedCovers: new Set() };
 
   const { lists: forYou, diverseCategories } = buildForYouLists(
     filtered,
-    used,
+    ctx,
     activeCategoryIds,
     preferredKeywords,
     preferredCategories
@@ -251,12 +278,12 @@ export function buildExploreSections(
 
   const trending = pickUnique(
     filtered,
-    used,
+    ctx,
     TRENDING_LIMIT,
     (list) => list.badges.includes('trending') || (list.savesCount ?? 0) >= 20
   );
 
-  const unused = filtered.filter((list) => !used.has(list.id));
+  const unused = filtered.filter((list) => !ctx.usedIds.has(list.id));
   const more = unused.slice(0, MORE_LIMIT);
 
   return {

@@ -8,10 +8,16 @@
     scroll-behavior: smooth;
   }
 
-  /* وسط‌چین قطعی فریم ۱۲۰۰px در RTL (جلوگیری از چسبیدن به راست viewport) */
+  /*
+   * وسط‌چین قطعی فریم ۱۲۰۰px در RTL.
+   * از flex+justify-center روی والد استفاده نکن — در RTL شِل به راست می‌چسبد
+   * و پنل باریک فقط گوشهٔ چپ/بریده‌شده را نشان می‌دهد.
+   */
   .wibe-desktop-shell {
     width: min(100%, 1200px);
-    margin-inline: auto;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -20,10 +26,10 @@
   /* Consumer deliberately light-first; .dark tokens reserved */
   color-scheme: light;
 
-  /* Brand */
+  /* Brand — sync with lib/design-tokens.ts (AA contrast for white-on-primary) */
   /* --font-vazirmatn از next/font/local روی <html> ست می‌شود */
-  --primary: #6366F1;
-  --primary-dark: #4F46E5;
+  --primary: #4F46E5;
+  --primary-dark: #4338CA;
   --primary-light: #818CF8;
 
   /* Wibe consumer semantic */

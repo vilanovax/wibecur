@@ -11,8 +11,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { AdminCard, Badge, type BadgeVariant } from '@/components/admin/design-system';
 import { AUDIT_ACTIONS, ENTITY_TYPES } from '@/lib/audit/actions';
 import {
@@ -417,7 +416,7 @@ function AuditTableRow({ row, onSelect }: { row: AuditRow; onSelect: () => void 
       onClick={onSelect}
     >
       <td className="py-3 px-4 text-gray-600 whitespace-nowrap" title={formatExact(row.createdAt)}>
-        {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true, locale: faIR })}
+        {formatRelativeTime(row.createdAt)}
       </td>
       <td className="py-3 px-4">
         <Badge variant={ACTION_BADGE[row.action] ?? 'neutral'}>

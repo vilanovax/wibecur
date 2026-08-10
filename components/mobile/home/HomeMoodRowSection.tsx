@@ -34,13 +34,13 @@ function MoodListLink({ moodId, list, compact }: MoodListLinkProps) {
       }`}
     >
       {list.coverImage ? (
-        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-gray-100 lg:h-10 lg:w-10">
+        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-wibe-surface lg:h-10 lg:w-10">
           <ImageWithFallback
             src={list.coverImage}
             alt={list.title}
             className="h-full w-full object-cover"
             fallbackIcon={list.categories?.icon ?? '📋'}
-            fallbackClassName="flex h-full w-full items-center justify-center bg-gray-100 text-sm"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-sm"
             categorySlug={list.categories?.slug}
             listSlug={list.slug}
             listTitle={list.title}
@@ -110,7 +110,7 @@ export default function HomeMoodRowSection({
     if (isSidebar || isResponsive) {
       return (
         <div
-          className={`h-full min-h-[20rem] animate-pulse rounded-2xl bg-gray-100 ${className}`}
+          className={`h-full min-h-[20rem] animate-pulse rounded-2xl bg-wibe-surface ${className}`}
           aria-hidden
         />
       );
@@ -118,11 +118,11 @@ export default function HomeMoodRowSection({
     return (
       <section className="mb-6">
         <div className="mb-3 px-4 lg:px-0">
-          <div className="h-6 w-40 animate-pulse rounded bg-gray-200" />
+          <div className="h-6 w-40 animate-pulse rounded bg-wibe-surface" />
         </div>
         <div className="flex gap-3 overflow-hidden px-4 lg:px-0">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-40 w-[11.5rem] shrink-0 animate-pulse rounded-xl bg-gray-100" />
+            <div key={i} className="h-40 w-[11.5rem] shrink-0 animate-pulse rounded-xl bg-wibe-surface" />
           ))}
         </div>
       </section>

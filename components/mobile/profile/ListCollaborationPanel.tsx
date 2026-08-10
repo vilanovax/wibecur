@@ -146,7 +146,7 @@ export default function ListCollaborationPanel({
           aria-label="همکاری در لیست"
           onClick={toggleCollaboration}
           className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-            collaborationEnabled ? 'bg-primary' : 'bg-gray-200'
+            collaborationEnabled ? 'bg-primary' : 'bg-wibe-surface'
           }`}
         >
           <span
@@ -163,7 +163,7 @@ export default function ListCollaborationPanel({
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="نام کاربری (@username)"
-          className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className="flex-1 rounded-lg border border-wibe px-3 py-2 text-sm"
           dir="ltr"
         />
         <button
@@ -191,7 +191,7 @@ export default function ListCollaborationPanel({
             return (
               <li
                 key={member.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-lg border border-wibe px-3 py-2"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <UserAvatar src={member.user.image} name={label} size={32} />
@@ -224,7 +224,7 @@ export default function ListCollaborationPanel({
                       <button
                         type="button"
                         onClick={() => memberAction(member.userId, 'reject')}
-                        className="rounded-md border border-gray-200 px-2 py-1 text-xs text-wibe-secondary"
+                        className="rounded-md border border-wibe px-2 py-1 text-xs text-wibe-secondary"
                       >
                         رد
                       </button>
@@ -234,7 +234,7 @@ export default function ListCollaborationPanel({
                     <button
                       type="button"
                       onClick={() => memberAction(member.userId, 'revoke')}
-                      className="rounded-md p-1 text-wibe-secondary hover:bg-gray-100"
+                      className="rounded-md p-1 text-wibe-secondary hover:bg-wibe-surface"
                       aria-label="لغو دسترسی"
                     >
                       <X className="h-4 w-4" />

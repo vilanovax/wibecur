@@ -4,7 +4,7 @@ import { memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Flame, Sparkles, Bookmark } from 'lucide-react';
+import { Sparkles, Bookmark } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import UserAvatar from '@/components/shared/UserAvatar';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
@@ -46,6 +46,8 @@ interface ListCardCompactProps {
   isLoggedIn?: boolean;
   /** نمایش دکمهٔ ذخیره روی کارت — پیش‌فرض خاموش برای UI خلوت‌تر */
   showBookmark?: boolean;
+  /** پر کردن ارتفاع والد (چیدمان trio / row-span) */
+  fillHeight?: boolean;
 }
 
 const NEW_LIST_DAYS = 14;
@@ -58,7 +60,11 @@ function getListBadges(list: ListWithCreator): { label: string; className: strin
     badges.push({ label: 'منتخب', className: 'bg-primary/10 text-primary' });
   }
   if (badgeNorm === 'TRENDING' || list.badge?.toString().toLowerCase() === 'trending') {
-    badges.push({ label: 'ترند', className: 'bg-warning/10 text-warning' });
+    // آروم — با mode «ترند» برخورد معنایی نداشته باشد
+    badges.push({
+      label: 'داغ',
+      className: 'bg-black/45 text-white/95 backdrop-blur-sm',
+    });
   }
   if (list.createdAt) {
     const days = (Date.now() - new Date(list.createdAt).getTime()) / (24 * 60 * 60 * 1000);
@@ -116,8 +122,8 @@ function InlineBookmarkView({
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || '/')}&source=bookmark_gate`;
   const btnClass =
     size === 'xs'
-      ? 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface/95 text-wibe-secondary shadow-sm backdrop-blur-sm transition-transform active:scale-95'
-      : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface text-wibe-secondary transition-transform active:scale-95';
+      ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface/95 text-wibe-secondary shadow-sm backdrop-blur-sm transition-transform active:scale-95 lg:h-9 lg:w-9'
+      : 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface text-wibe-secondary transition-transform active:scale-95 lg:h-9 lg:w-9';
 
   if (!loggedIn) {
     return (
@@ -127,18 +133,19 @@ function InlineBookmarkView({
         className={`${btnClass} ${className}`}
         aria-label="ورود برای ذخیره لیست"
       >
-        <Bookmark className="h-3.5 w-3.5 opacity-70" strokeWidth={1.75} />
+        <Bookmark className="h-4 w-4 opacity-70 lg:h-3.5 lg:w-3.5" strokeWidth={1.75} />
       </Link>
     );
   }
 
   return (
-    <div className={`${btnClass} ${className}`} onClick={(e) => e.stopPropagation()}>
+    <div className={`shrink-0 ${className}`} onClick={(e) => e.stopPropagation()}>
       <BookmarkButton
         listId={listId}
         initialIsBookmarked={isBookmarked}
         initialBookmarkCount={saveCount}
         size="sm"
+        className={btnClass}
         analytics={{
           listSlug,
           categorySlug,
@@ -174,6 +181,7 @@ function ListCardCompact({
   searchResultIndex,
   isLoggedIn,
   showBookmark = false,
+  fillHeight = false,
 }: ListCardCompactProps) {
   const saveCount = list.saveCount ?? 0;
   const categorySlug = list.categories?.slug ?? null;
@@ -215,7 +223,7 @@ function ListCardCompact({
           aria-label={displayTitle}
         />
         <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-gray-200 lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-wibe-surface lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
@@ -224,7 +232,7 @@ function ListCardCompact({
               sizes="56px"
               className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-lg"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-lg"
             />
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
@@ -260,7 +268,7 @@ function ListCardCompact({
           aria-label={displayTitle}
         />
         <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2.5">
-          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-gray-200 lg:h-[72px] lg:w-[72px]">
+          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-wibe-surface lg:h-[72px] lg:w-[72px]">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
@@ -269,10 +277,10 @@ function ListCardCompact({
               sizes="72px"
               className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
             />
           </div>
-          <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-9 lg:pe-10' : ''}`}>
+          <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-12 lg:pe-11' : ''}`}>
             {badges.length > 0 && (
               <div className="mb-0.5 flex flex-wrap gap-1">
                 {badges.map((b) => (
@@ -280,7 +288,6 @@ function ListCardCompact({
                     key={b.label}
                     className={`inline-flex items-center rounded px-1.5 py-0.5 wibe-caption font-medium ${b.className}`}
                   >
-                    {b.label === 'ترند' && <Flame className="ml-0.5 h-3 w-3" />}
                     {b.label === 'منتخب' && <Sparkles className="ml-0.5 h-3 w-3" />}
                     {b.label}
                   </span>
@@ -310,7 +317,11 @@ function ListCardCompact({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-colors active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg">
+    <div
+      className={`group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-colors active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg ${
+        fillHeight ? 'h-full' : ''
+      }`}
+    >
       <Link
         href={href}
         onClick={handleSearchResultClick}
@@ -318,7 +329,13 @@ function ListCardCompact({
         aria-label={displayTitle}
       />
       {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
-      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-gray-200 max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
+      <div
+        className={
+          fillHeight
+            ? 'pointer-events-none relative z-[1] h-full min-h-[240px] w-full overflow-hidden bg-wibe-surface lg:min-h-[280px]'
+            : 'pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-wibe-surface max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]'
+        }
+      >
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -327,7 +344,7 @@ function ListCardCompact({
           sizes="(min-width: 1024px) 25vw, 50vw"
           className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl lg:text-4xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-3xl lg:text-4xl"
         />
         {badges.length > 0 && (
           <div className="absolute right-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-end gap-1 lg:right-2 lg:top-2">
@@ -350,8 +367,8 @@ function ListCardCompact({
             مشاهده لیست
           </span>
         </div>
-        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-right max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-11 lg:pe-12' : ''}`}>
-          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] max-lg:text-[0.8125rem] lg:text-base lg:font-bold">
+        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-right max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-14 lg:pe-12' : ''}`}>
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] lg:text-base lg:font-bold">
             {renderTitle('')}
           </h3>
         </div>

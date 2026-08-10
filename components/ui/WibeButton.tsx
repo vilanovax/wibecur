@@ -11,7 +11,7 @@ export type WibeButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variantClasses: Record<WibeButtonVariant, string> = {
   primary: 'bg-primary text-white hover:bg-primary-dark shadow-sm',
-  secondary: 'bg-wibe-surface text-foreground hover:bg-gray-100 border border-wibe',
+  secondary: 'bg-wibe-surface text-foreground hover:bg-wibe-surface border border-wibe',
   ghost: 'bg-transparent text-wibe-secondary hover:bg-wibe-surface hover:text-foreground',
   outline: 'bg-wibe-card text-primary border border-primary/25 hover:bg-primary/5',
 };

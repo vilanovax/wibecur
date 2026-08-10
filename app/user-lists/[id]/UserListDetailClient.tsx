@@ -1,21 +1,30 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { Settings, Trash2, Share2, LayoutGrid, Rows3 } from 'lucide-react';
-import { Bookmark } from 'lucide-react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
-import ListCommentSection from '@/components/mobile/lists/ListCommentSection';
-import PersonalListSettingsModal from '@/components/mobile/profile/PersonalListSettingsModal';
 import Toast from '@/components/shared/Toast';
-import ListCoverImage from '@/components/shared/ListCoverImage';
+import { LIST_DETAIL_ITEMS_PAGE_SIZE } from '@/lib/list-detail-items-shared';
+
+const PersonalListSettingsModal = dynamic(
+  () => import('@/components/mobile/profile/PersonalListSettingsModal'),
+  { ssr: false }
+);
+
+const ListCommentSection = dynamic(
+  () => import('@/components/mobile/lists/ListCommentSection'),
+  { ssr: false }
+);
 
 interface Item {
   id: string;
   title: string;
   description: string | null;
   imageUrl: string | null;
+  displayImageUrl?: string | null;
   externalUrl: string | null;
   metadata?: unknown;
 }
@@ -42,13 +51,6 @@ interface List {
     color: string;
   } | null;
   items: Item[];
-  users: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    role?: string | null;
-  } | null;
 }
 
 interface UserListDetailClientProps {
@@ -56,7 +58,15 @@ interface UserListDetailClientProps {
   currentUserId: string | null;
   isOwner?: boolean;
   canAddItems?: boolean;
+  itemsHasMore?: boolean;
+  itemsTotal?: number;
   pendingCollaboration?: { listId: string; invitedBy: string } | null;
+}
+
+function itemImageSrc(item: Item): string | null {
+  const display = item.displayImageUrl?.trim();
+  if (display) return display;
+  return item.imageUrl?.trim() || null;
 }
 
 export default function UserListDetailClient({
@@ -64,24 +74,90 @@ export default function UserListDetailClient({
   currentUserId,
   isOwner: isOwnerProp,
   canAddItems: canAddItemsProp,
+  itemsHasMore = false,
+  itemsTotal,
   pendingCollaboration = null,
 }: UserListDetailClientProps) {
   const [items, setItems] = useState(list.items);
+  const [hasMore, setHasMore] = useState(itemsHasMore);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const loadingRef = useRef(false);
+
   const [showSettings, setShowSettings] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [itemsView, setItemsView] = useState<'list' | 'grid'>('list');
-
   const [collabActionLoading, setCollabActionLoading] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>('all');
 
   const isOwner = isOwnerProp ?? currentUserId === list.userId;
   const canAddItems = canAddItemsProp ?? isOwner;
-  const categorySlug = list.categories?.slug ?? null;
   const categoryIcon = list.categories?.icon ?? '📋';
-  const headerSrc = (list.coverImage && list.coverImage.trim()) ? list.coverImage : '/images/banners/default.webp';
+  const headerSrc =
+    list.coverImage && list.coverImage.trim()
+      ? list.coverImage
+      : '/images/banners/default.webp';
+
+  const totalCount = itemsTotal ?? list.itemCount ?? items.length;
+
+  useEffect(() => {
+    setItems(list.items);
+    setHasMore(itemsHasMore);
+  }, [list.id, list.items, itemsHasMore]);
+
+  const fetchMoreItems = useCallback(async () => {
+    if (loadingRef.current || !hasMore) return;
+    loadingRef.current = true;
+    setIsLoadingMore(true);
+    try {
+      const offset = items.length;
+      const res = await fetch(
+        `/api/user/lists/${list.id}/items?offset=${offset}&limit=${LIST_DETAIL_ITEMS_PAGE_SIZE}`
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در دریافت آیتم‌ها');
+      }
+      const nextItems = (data.items ?? []) as Item[];
+      setItems((prev) => {
+        const seen = new Set(prev.map((i) => i.id));
+        const merged = [...prev];
+        for (const item of nextItems) {
+          if (!seen.has(item.id)) merged.push(item);
+        }
+        return merged;
+      });
+      setHasMore(Boolean(data.pagination?.hasMore));
+    } catch (error: unknown) {
+      setToastMessage(
+        error instanceof Error ? error.message : 'خطا در دریافت آیتم‌ها'
+      );
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      loadingRef.current = false;
+      setIsLoadingMore(false);
+    }
+  }, [hasMore, items.length, list.id]);
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const el = loadMoreRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          void fetchMoreItems();
+        }
+      },
+      { rootMargin: '600px 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, fetchMoreItems, items.length]);
 
   const categoryMeta = useMemo(() => {
     const map = new Map<string, number>();
@@ -117,8 +193,6 @@ export default function UserListDetailClient({
     return { chips, total: items.length };
   }, [items]);
 
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-
   const filteredItems = useMemo(() => {
     if (activeCategory === 'all') return items;
     return items.filter((it) => {
@@ -140,7 +214,6 @@ export default function UserListDetailClient({
 
   const handleDeleteItem = async (itemId: string) => {
     setIsDeleting(true);
-    setShowDeleteConfirm(null);
 
     try {
       const res = await fetch(`/api/user/lists/${list.id}/items/${itemId}`, {
@@ -153,14 +226,15 @@ export default function UserListDetailClient({
         throw new Error(data.error || 'خطا در حذف آیتم');
       }
 
-      // Remove item from local state
       setItems((prev) => prev.filter((item) => item.id !== itemId));
 
       setToastMessage('آیتم با موفقیت حذف شد');
       setToastType('success');
       setShowToast(true);
-    } catch (error: any) {
-      setToastMessage(error.message || 'خطا در حذف آیتم');
+    } catch (error: unknown) {
+      setToastMessage(
+        error instanceof Error ? error.message : 'خطا در حذف آیتم'
+      );
       setToastType('error');
       setShowToast(true);
     } finally {
@@ -201,6 +275,9 @@ export default function UserListDetailClient({
     }
   };
 
+  const displayCount =
+    activeCategory === 'all' ? totalCount : filteredItems.length;
+
   return (
     <>
       <div className="bg-wibe-surface">
@@ -232,7 +309,7 @@ export default function UserListDetailClient({
 
           <div className="space-y-4 px-4">
             {pendingCollaboration && (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+              <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
                 <p className="wibe-small text-foreground">
                   برای مشارکت در تکمیل این لیست شخصی دعوت شده‌اید.
                 </p>
@@ -260,7 +337,7 @@ export default function UserListDetailClient({
             {list.categories && (
               <Link
                 href={`/categories/${list.categories.slug}`}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md wibe-small font-medium border border-wibe bg-wibe-card"
+                className="inline-flex items-center gap-2 rounded-md border border-wibe bg-wibe-card px-3 py-1.5 wibe-small font-medium"
               >
                 <span>{list.categories.icon}</span>
                 <span>{list.categories.name}</span>
@@ -268,20 +345,25 @@ export default function UserListDetailClient({
             )}
 
             {list.description && (
-              <p className="wibe-body text-wibe-secondary leading-relaxed">{list.description}</p>
+              <p className="wibe-body leading-relaxed text-wibe-secondary">
+                {list.description}
+              </p>
             )}
-
-            {/* intentionally hide counts row (items/saves/views) for cleaner UI */}
 
             {list.isPublic && (
               <div className="flex gap-3">
-                <BookmarkButton listId={list.id} initialBookmarkCount={list.saveCount ?? 0} variant="button" size="md" />
+                <BookmarkButton
+                  listId={list.id}
+                  initialBookmarkCount={list.saveCount ?? 0}
+                  variant="button"
+                  size="md"
+                />
                 <button
                   type="button"
-                  className="px-4 py-3 bg-wibe-card border border-wibe rounded-md flex items-center justify-center"
+                  className="flex items-center justify-center rounded-md border border-wibe bg-wibe-card px-4 py-3"
                   aria-label="اشتراک"
                 >
-                  <Share2 className="w-5 h-5 text-wibe-secondary" />
+                  <Share2 className="h-5 w-5 text-wibe-secondary" />
                 </button>
               </div>
             )}
@@ -293,10 +375,10 @@ export default function UserListDetailClient({
                 <button
                   type="button"
                   onClick={() => setActiveCategory('all')}
-                  className={`shrink-0 h-9 px-3.5 rounded-lg wibe-small font-medium transition-colors border ${
+                  className={`h-9 shrink-0 rounded-lg border px-3.5 wibe-small font-medium transition-colors ${
                     activeCategory === 'all'
-                      ? 'bg-primary text-white border-primary shadow-sm'
-                      : 'bg-wibe-card text-foreground border-wibe hover:border-primary/30'
+                      ? 'border-primary bg-primary text-white shadow-sm'
+                      : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30'
                   }`}
                 >
                   همه ({categoryMeta.total.toLocaleString('fa-IR')})
@@ -306,10 +388,10 @@ export default function UserListDetailClient({
                     key={c.slug}
                     type="button"
                     onClick={() => setActiveCategory(c.slug)}
-                    className={`shrink-0 h-9 px-3.5 rounded-lg wibe-small font-medium transition-colors border flex items-center gap-1.5 ${
+                    className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3.5 wibe-small font-medium transition-colors ${
                       activeCategory === c.slug
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-wibe-card text-foreground border-wibe hover:border-primary/30'
+                        ? 'border-primary bg-primary text-white shadow-sm'
+                        : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30'
                     }`}
                   >
                     <span aria-hidden>{c.icon}</span>
@@ -321,8 +403,10 @@ export default function UserListDetailClient({
               </div>
             )}
 
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="wibe-h3">آیتم‌های لیست ({filteredItems.length})</h2>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="wibe-h3">
+                آیتم‌های لیست ({displayCount.toLocaleString('fa-IR')})
+              </h2>
               <div className="flex items-center gap-2">
                 {filteredItems.length > 0 && (
                   <div className="flex items-center rounded-lg border border-wibe bg-wibe-card p-0.5">
@@ -330,7 +414,9 @@ export default function UserListDetailClient({
                       type="button"
                       onClick={() => setItemsView('list')}
                       className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                        itemsView === 'list' ? 'bg-primary text-white' : 'text-wibe-secondary hover:bg-gray-50'
+                        itemsView === 'list'
+                          ? 'bg-primary text-white'
+                          : 'text-wibe-secondary hover:bg-wibe-surface'
                       }`}
                       aria-label="نمایش لیستی"
                       title="لیستی"
@@ -341,7 +427,9 @@ export default function UserListDetailClient({
                       type="button"
                       onClick={() => setItemsView('grid')}
                       className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                        itemsView === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary hover:bg-gray-50'
+                        itemsView === 'grid'
+                          ? 'bg-primary text-white'
+                          : 'text-wibe-secondary hover:bg-wibe-surface'
                       }`}
                       aria-label="نمایش گریدی"
                       title="گریدی"
@@ -354,7 +442,7 @@ export default function UserListDetailClient({
                 {canAddItems && items.length > 0 && (
                   <Link
                     href={`/user-lists/${list.id}/add-item`}
-                    className="px-4 py-2 bg-primary text-white rounded-md wibe-small font-medium hover:bg-primary-dark transition-colors"
+                    className="rounded-md bg-primary px-4 py-2 wibe-small font-medium text-white transition-colors hover:bg-primary-dark"
                   >
                     افزودن آیتم
                   </Link>
@@ -362,8 +450,8 @@ export default function UserListDetailClient({
               </div>
             </div>
 
-            {filteredItems.length === 0 ? (
-              <div className="text-center py-10 bg-wibe-card rounded-xl border border-wibe shadow-sm">
+            {filteredItems.length === 0 && !isLoadingMore ? (
+              <div className="rounded-xl border border-wibe bg-wibe-card py-10 text-center shadow-sm">
                 <p className="wibe-h3 text-foreground">هنوز آیتمی اضافه نشده است</p>
                 <p className="mt-2 wibe-caption text-wibe-secondary">
                   اولین آیتم را اضافه کن تا این لیست جان بگیرد
@@ -371,7 +459,7 @@ export default function UserListDetailClient({
                 {canAddItems && (
                   <Link
                     href={`/user-lists/${list.id}/add-item`}
-                    className="mt-4 inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl wibe-small font-semibold active:scale-[0.99] transition-transform"
+                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 wibe-small font-semibold text-white transition-transform active:scale-[0.99]"
                   >
                     افزودن اولین آیتم
                   </Link>
@@ -379,108 +467,143 @@ export default function UserListDetailClient({
               </div>
             ) : itemsView === 'grid' ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {filteredItems.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="relative overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm"
-                  >
-                    {isOwner && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm('آیا مطمئن هستید که می‌خواهید این آیتم را حذف کنید؟')) {
-                            handleDeleteItem(item.id);
-                          }
-                        }}
-                        disabled={isDeleting}
-                        className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-danger text-white shadow-sm disabled:opacity-50"
-                        aria-label="حذف آیتم"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
+                {filteredItems.map((item, index) => {
+                  const img = itemImageSrc(item);
+                  return (
+                    <div
+                      key={item.id}
+                      className="relative overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm"
+                    >
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                'آیا مطمئن هستید که می‌خواهید این آیتم را حذف کنید؟'
+                              )
+                            ) {
+                              void handleDeleteItem(item.id);
+                            }
+                          }}
+                          disabled={isDeleting}
+                          className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-danger text-white shadow-sm disabled:opacity-50"
+                          aria-label="حذف آیتم"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
 
-                    <span className="absolute right-2 top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary wibe-caption font-bold">
-                      {index + 1}
-                    </span>
+                      <span className="absolute right-2 top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary wibe-caption font-bold">
+                        {index + 1}
+                      </span>
 
-                    <Link href={`/items/${item.id}`} className="block">
-                      <div className="relative aspect-[4/3] w-full bg-gray-200">
-                        {item.imageUrl ? (
-                          <ImageWithFallback
-                            src={item.imageUrl}
-                            alt={item.title}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            fallbackClassName="absolute inset-0 h-full w-full"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center text-2xl text-wibe-secondary/70">
-                            📌
+                      <Link href={`/items/${item.id}`} className="block">
+                        <div className="relative aspect-[4/3] w-full bg-wibe-surface">
+                          {img ? (
+                            <ImageWithFallback
+                              src={img}
+                              alt={item.title}
+                              className="absolute inset-0 h-full w-full object-cover"
+                              fallbackClassName="absolute inset-0 h-full w-full"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-2xl text-wibe-secondary/70">
+                              📌
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
+                            <h3 className="line-clamp-2 wibe-small font-semibold leading-snug drop-shadow-sm">
+                              {item.title}
+                            </h3>
                           </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
-                          <h3 className="wibe-small font-semibold leading-snug line-clamp-2 drop-shadow-sm">
-                            {item.title}
-                          </h3>
                         </div>
-                      </div>
 
-                      <div className="p-2.5">
-                        {item.description ? (
-                          <p className="wibe-caption text-wibe-secondary line-clamp-2 leading-relaxed">
-                            {item.description}
-                          </p>
-                        ) : (
-                          <p className="wibe-caption text-wibe-secondary/70">بدون توضیح</p>
-                        )}
-                      </div>
-                    </Link>
-                  </div>
-                ))}
+                        <div className="p-2.5">
+                          {item.description ? (
+                            <p className="line-clamp-2 wibe-caption leading-relaxed text-wibe-secondary">
+                              {item.description}
+                            </p>
+                          ) : (
+                            <p className="wibe-caption text-wibe-secondary/70">بدون توضیح</p>
+                          )}
+                        </div>
+                      </Link>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="space-y-3">
-                {filteredItems.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="relative bg-wibe-card rounded-lg p-3 border border-wibe shadow-sm"
-                  >
-                    {isOwner && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm('آیا مطمئن هستید که می‌خواهید این آیتم را حذف کنید؟')) {
-                            handleDeleteItem(item.id);
-                          }
-                        }}
-                        disabled={isDeleting}
-                        className="absolute top-2 left-2 z-10 w-8 h-8 bg-danger text-white rounded-full flex items-center justify-center disabled:opacity-50"
-                        aria-label="حذف آیتم"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                    <Link href={`/items/${item.id}`} className="block">
-                      <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-9 h-9 bg-primary/10 text-primary rounded-full flex items-center justify-center wibe-small font-bold">
-                          {index + 1}
-                        </div>
-                        {item.imageUrl && (
-                          <div className="relative w-14 h-14 flex-shrink-0 rounded-md overflow-hidden bg-gray-200">
-                            <ImageWithFallback src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                {filteredItems.map((item, index) => {
+                  const img = itemImageSrc(item);
+                  return (
+                    <div
+                      key={item.id}
+                      className="relative rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm"
+                    >
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                'آیا مطمئن هستید که می‌خواهید این آیتم را حذف کنید؟'
+                              )
+                            ) {
+                              void handleDeleteItem(item.id);
+                            }
+                          }}
+                          disabled={isDeleting}
+                          className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-danger text-white disabled:opacity-50"
+                          aria-label="حذف آیتم"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                      <Link href={`/items/${item.id}`} className="block">
+                        <div className="flex gap-3">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary wibe-small font-bold">
+                            {index + 1}
                           </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="wibe-small font-semibold text-foreground mb-1">{item.title}</h3>
-                          {item.description && (
-                            <p className="wibe-caption text-wibe-secondary line-clamp-2">{item.description}</p>
+                          {img && (
+                            <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md bg-wibe-surface">
+                              <ImageWithFallback
+                                src={img}
+                                alt={item.title}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
                           )}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="mb-1 wibe-small font-semibold text-foreground">
+                              {item.title}
+                            </h3>
+                            {item.description && (
+                              <p className="line-clamp-2 wibe-caption text-wibe-secondary">
+                                {item.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                  </div>
-                ))}
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {hasMore && activeCategory === 'all' && (
+              <div
+                ref={loadMoreRef}
+                className="flex h-12 w-full items-center justify-center"
+              >
+                {isLoadingMore && (
+                  <span className="wibe-caption text-wibe-secondary">
+                    در حال بارگذاری...
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -493,8 +616,7 @@ export default function UserListDetailClient({
         </main>
       </div>
 
-      {/* Settings Modal */}
-      {isOwner && (
+      {isOwner && showSettings && (
         <PersonalListSettingsModal
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
@@ -514,7 +636,6 @@ export default function UserListDetailClient({
         />
       )}
 
-      {/* Toast Notification */}
       {showToast && (
         <Toast
           message={toastMessage}
@@ -526,4 +647,3 @@ export default function UserListDetailClient({
     </>
   );
 }
-

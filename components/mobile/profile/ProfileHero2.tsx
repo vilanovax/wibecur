@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { Edit2, Camera, LogOut } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import { getLevelConfig, type CuratorLevelKey } from '@/lib/curator';
-import { getLevelByScore, getNextLevelByScore, pointsToNextLevel } from '@/lib/curator';
+import {
+  getLevelByScore,
+  getNextLevelByScore,
+  pointsToNextLevel,
+  type CuratorLevelKey,
+} from '@/lib/curator';
 import { isUserEliteLevel, resolveVibeAvatar } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
-import EditProfileSheet2 from './EditProfileSheet2';
 
 export interface CreatorStats {
   viralListsCount: number;
@@ -39,6 +42,14 @@ export interface ProfileUser {
   curatorPointsToNext?: number | null;
 }
 
+type EditProfileSheet2Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  user: ProfileUser;
+  userLevel: CuratorLevelKey;
+  onUpdate: () => void;
+};
+
 interface ProfileHero2Props {
   user: ProfileUser;
   onUpdate: () => void;
@@ -52,6 +63,20 @@ function formatStat(n: number): string {
 export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [EditProfileSheet2, setEditProfileSheet2] = useState<ComponentType<
+    EditProfileSheet2Props
+  > | null>(null);
+
+  useEffect(() => {
+    if (!showEditSheet || EditProfileSheet2) return;
+    let cancelled = false;
+    void import('./EditProfileSheet2').then((mod) => {
+      if (!cancelled) setEditProfileSheet2(() => mod.default);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [showEditSheet, EditProfileSheet2]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -60,7 +85,6 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
   };
 
   const levelKey = (user.curatorLevel ?? 'EXPLORER') as CuratorLevelKey;
-  const levelConfig = getLevelConfig(levelKey);
   const creatorStats = user.creatorStats ?? {
     viralListsCount: 0,
     popularListsCount: 0,
@@ -95,12 +119,13 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
 
   return (
     <>
-      {/* Hero: gradient only top 260px, then white */}
+      {/* Hero: gradient only top 260px, then white — indigo tokens from DESIGN.md */}
       <div className="relative -mx-4">
         <div
           className="h-[260px] w-full rounded-b-2xl"
           style={{
-            background: 'linear-gradient(135deg, #7C5CFF 0%, #8B5CF6 50%, #9333EA 100%)',
+            background:
+              'linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 50%, var(--primary-dark) 100%)',
           }}
         />
         <div className="absolute inset-x-0 top-0 z-10 px-4 pt-6 pb-8">
@@ -116,7 +141,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                     alt={user.name || user.email || 'Avatar'}
                     className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gray-100 text-wibe-secondary text-2xl font-semibold flex items-center justify-center"
+                    fallbackClassName="w-full h-full bg-wibe-surface text-wibe-secondary text-2xl font-semibold flex items-center justify-center"
                     priority
                   />
                 ) : user.image ? (
@@ -125,25 +150,25 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
                     alt={user.name || user.email || 'Avatar'}
                     className="object-cover w-full h-full"
                     fallbackIcon={(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-gray-100 text-wibe-secondary text-2xl font-semibold flex items-center justify-center"
+                    fallbackClassName="w-full h-full bg-wibe-surface text-wibe-secondary text-2xl font-semibold flex items-center justify-center"
                     priority
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-wibe-secondary text-2xl font-semibold">
+                  <div className="w-full h-full flex items-center justify-center bg-wibe-surface text-wibe-secondary text-2xl font-semibold">
                     {(user.name?.[0] || user.email?.[0] || '?').toUpperCase()}
                   </div>
                 )}
               </div>
               <button
                 onClick={() => setShowEditSheet(true)}
-                className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200"
+                className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow opacity-0 group-hover:opacity-100 transition-opacity border border-wibe"
                 aria-label="تغییر آواتار"
               >
                 <Camera className="w-3.5 h-3.5 text-wibe-secondary" />
               </button>
             </div>
             {isElite && user.showBadge !== false && (
-              <span className="mt-1.5 text-[10px] font-medium text-white/90">Elite Curator</span>
+              <span className="mt-1.5 wibe-caption font-medium text-white/90">Elite Curator</span>
             )}
             <h1 className="mt-2 text-lg font-bold text-white">
               {user.name || 'کاربر بدون نام'}
@@ -155,7 +180,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
 
       {/* Content on white: spacing 8/16/24 */}
       <div className="px-4 -mt-2 relative z-20">
-        <div className="bg-white rounded-t-2xl shadow-sm border border-gray-100/80 border-b-0 pt-6 pb-4 px-4">
+        <div className="bg-white rounded-t-2xl shadow-sm border border-wibe/80 border-b-0 pt-6 pb-4 px-4">
           {/* Actions */}
           <div className="flex justify-center gap-2 mb-6">
             <button
@@ -168,7 +193,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2 rounded-xl border border-gray-200 text-wibe-secondary hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 rounded-xl border border-wibe text-wibe-secondary hover:bg-wibe-surface disabled:opacity-50 transition-colors"
               aria-label="خروج"
             >
               <LogOut className="w-5 h-5" />
@@ -181,7 +206,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
               {expertise.slice(0, 4).map((e) => (
                 <span
                   key={e.slug}
-                  className="px-2.5 py-1 rounded-lg bg-gray-100 text-wibe-secondary text-xs"
+                  className="px-2.5 py-1 rounded-lg bg-wibe-surface text-wibe-secondary text-xs"
                 >
                   {e.icon} {e.name}
                 </span>
@@ -210,38 +235,40 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
           </div>
 
           {/* Level: compact progress */}
-          <div className="rounded-xl bg-gray-50 border border-gray-100 p-3">
+          <div className="rounded-xl bg-wibe-surface border border-wibe p-3">
             <div className="flex justify-between items-center mb-1.5">
               <span className="text-xs font-medium text-wibe-secondary">
                 سطح {currentTier.short}
               </span>
               <span className="text-xs font-bold text-foreground">{curatorScore}</span>
             </div>
-            <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-1.5 rounded-full bg-wibe-surface overflow-hidden">
               <div
                 className="h-full rounded-full bg-primary transition-colors duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
             {nextLabel != null && toNext != null && toNext > 0 && (
-              <p className="text-[11px] text-wibe-secondary mt-1.5">
+              <p className="wibe-caption text-wibe-secondary mt-1.5">
                 {toNext} امتیاز تا {nextLabel}
               </p>
             )}
             {nextTier === null && (
-              <p className="text-[11px] text-wibe-secondary mt-1.5">بالاترین سطح</p>
+              <p className="wibe-caption text-wibe-secondary mt-1.5">بالاترین سطح</p>
             )}
           </div>
         </div>
       </div>
 
-      <EditProfileSheet2
-        isOpen={showEditSheet}
-        onClose={() => setShowEditSheet(false)}
-        user={user}
-        userLevel={levelKey}
-        onUpdate={onUpdate}
-      />
+      {showEditSheet && EditProfileSheet2 ? (
+        <EditProfileSheet2
+          isOpen={showEditSheet}
+          onClose={() => setShowEditSheet(false)}
+          user={user}
+          userLevel={levelKey}
+          onUpdate={onUpdate}
+        />
+      ) : null}
     </>
   );
 }

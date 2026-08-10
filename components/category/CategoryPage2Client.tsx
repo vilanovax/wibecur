@@ -59,7 +59,7 @@ export default function CategoryPage2Client({
 }: CategoryPage2ClientProps) {
   useInterestTracking({ type: 'category_view', categorySlug: slug });
 
-  const { data, isLoading, isFetching, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['category-page', slug],
     queryFn: () => fetchCategoryPageData(slug),
     enabled: !!slug,
@@ -67,19 +67,19 @@ export default function CategoryPage2Client({
     initialDataUpdatedAt: initialData ? Date.now() : undefined,
     staleTime: 3 * 60 * 1000,
     refetchOnMount: initialData ? false : undefined,
+    // SSR slots را با refetch پس‌زمینه عوض نکن — فقط داده‌ی کش را تازه کن.
+    refetchOnWindowFocus: false,
   });
-
-  const isRefetching = isFetching && !isLoading && !!data;
 
   if (isLoading && !data) {
     return (
       <main className="min-h-[50vh] animate-pulse bg-wibe-surface">
         <div className={CATEGORY_PAGE_SHELL}>
-          <div className="mt-3 aspect-[16/9] rounded-2xl bg-gray-200 lg:mt-4" />
-          <div className="mt-6 h-6 w-48 rounded bg-gray-200" />
+          <div className="mt-3 aspect-[16/9] rounded-2xl bg-wibe-surface lg:mt-4" />
+          <div className="mt-6 h-6 w-48 rounded bg-wibe-surface" />
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[4/3] rounded-xl bg-gray-200" />
+              <div key={i} className="aspect-[4/3] rounded-xl bg-wibe-surface" />
             ))}
           </div>
         </div>
@@ -171,13 +171,13 @@ export default function CategoryPage2Client({
         )}
 
         <SectionReveal>
-          {isRefetching || !trendingSection ? trendingClient : trendingSection}
+          {!trendingSection ? trendingClient : trendingSection}
         </SectionReveal>
 
         {(featuredSpotlight || viralSpotlightSection) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-              {isRefetching || !viralSpotlightSection
+              {!viralSpotlightSection
                 ? viralSpotlightClient
                 : viralSpotlightSection}
             </HomeDeferredMount>
@@ -199,14 +199,14 @@ export default function CategoryPage2Client({
 
         <SectionReveal defer>
           <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-            {isRefetching || !newListsSection ? newListsClient : newListsSection}
+            {!newListsSection ? newListsClient : newListsSection}
           </HomeDeferredMount>
         </SectionReveal>
 
         {(mostSavedItemsSection || mostSavedItems.length > 0) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-              {isRefetching || !mostSavedItemsSection
+              {!mostSavedItemsSection
                 ? mostSavedItemsClient
                 : mostSavedItemsSection}
             </HomeDeferredMount>
@@ -216,7 +216,7 @@ export default function CategoryPage2Client({
         {(latestItemsSection || latestItems.length > 0) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-              {isRefetching || !latestItemsSection ? latestItemsClient : latestItemsSection}
+              {!latestItemsSection ? latestItemsClient : latestItemsSection}
             </HomeDeferredMount>
           </SectionReveal>
         )}

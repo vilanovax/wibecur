@@ -4,39 +4,38 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import CuratedLandingPageClient from '@/components/mobile/curated/CuratedLandingPageClient';
 import ExploreLcpPreload from '@/components/mobile/curated/ExploreLcpPreload';
 import ExploreTrendingServer from '@/components/mobile/curated/ExploreTrendingServer';
-import ExploreCategoriesServer from '@/components/mobile/curated/ExploreCategoriesServer';
 import {
   EMPTY_EXPLORE_USER_PREFERENCES,
   fetchExploreBasePayload,
   type ExplorePayload,
 } from '@/lib/curated/explore-data';
+import { toExploreClientSeed } from '@/lib/curated/explore-client-seed';
 import {
   selectExploreLcpImageUrl,
   selectExploreTrendingLists,
 } from '@/lib/curated/explore-sections';
+import { ExplorePageSkeleton } from '@/components/mobile/curated/ExplorePageSkeleton';
 
 export const revalidate = 60;
 
 export const metadata = {
   title: 'اکسپلور',
   description:
-    'کشف لیست‌ها بر اساس حال‌وهوا، ترندها و دسته‌ها — نقطه شروع کشف در وایب',
+    'کشف لیست‌ها بر اساس حال‌وهوا و ترندها — نقطه شروع کشف mood-first در وایب',
 };
 
 /**
- * مسیر رسمی اکسپلور (کشف mood-first).
- * /user-lists فقط لندینگ قدیمی است و به اینجا redirect می‌شود؛
- * جزئیات لیست شخصی همچنان روی /user-lists/[id] می‌ماند.
+ * دادهٔ اکسپلور داخل Suspense await می‌شود تا shell (Header/BottomNav)
+ * بلافاصله استریم شود و کاربر منتظر کل payload نماند.
  */
-export default async function ExplorePage() {
+async function ExploreContent() {
   let initialData: ExplorePayload | undefined;
   let trendingSlot: ReactNode = null;
-  let categoriesSlot: ReactNode = null;
   let lcpImage: string | null = null;
 
   try {
     const base = await fetchExploreBasePayload();
-    initialData = { ...base, ...EMPTY_EXPLORE_USER_PREFERENCES };
+    const full: ExplorePayload = { ...base, ...EMPTY_EXPLORE_USER_PREFERENCES };
 
     const activeCategoryIds = base.categories
       .filter((c) => c.id !== 'all')
@@ -50,9 +49,8 @@ export default async function ExplorePage() {
       );
     }
 
-    if (base.categories.length > 0) {
-      categoriesSlot = <ExploreCategoriesServer categories={base.categories} />;
-    }
+    // Slim seed — trending already in RSC slot (server-dedup-props)
+    initialData = toExploreClientSeed(full);
   } catch (err) {
     console.warn('[ExplorePage] SSR explore fetch failed, falling back to client fetch:', err);
   }
@@ -60,17 +58,24 @@ export default async function ExplorePage() {
   return (
     <>
       <ExploreLcpPreload href={lcpImage} />
-      <div className="bg-wibe-surface">
-        <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
-        <Suspense fallback={<div className="min-h-[50vh]" aria-hidden />}>
-          <CuratedLandingPageClient
-            initialData={initialData}
-            trendingSlot={trendingSlot}
-            categoriesSlot={categoriesSlot}
-          />
-        </Suspense>
-        <BottomNav />
-      </div>
+      <CuratedLandingPageClient initialData={initialData} trendingSlot={trendingSlot} />
     </>
+  );
+}
+
+/**
+ * مسیر رسمی اکسپلور (کشف mood-first).
+ * /user-lists فقط لندینگ قدیمی است و به اینجا redirect می‌شود؛
+ * جزئیات لیست شخصی همچنان روی /user-lists/[id] می‌ماند.
+ */
+export default function ExplorePage() {
+  return (
+    <div className="bg-wibe-surface">
+      <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
+      <Suspense fallback={<ExplorePageSkeleton />}>
+        <ExploreContent />
+      </Suspense>
+      <BottomNav />
+    </div>
   );
 }

@@ -7,6 +7,7 @@ export const ADMIN_CATEGORIES_CACHE_SECONDS = 180;
 export const ADMIN_USERS_CACHE_SECONDS = 120;
 export const ADMIN_COMMENTS_CACHE_SECONDS = 90;
 export const ADMIN_ANALYTICS_CACHE_SECONDS = 120;
+export const ADMIN_FEATURED_CACHE_SECONDS = 60;
 
 export const ADMIN_CACHE_TAGS = {
   lists: 'admin-lists',
@@ -16,6 +17,7 @@ export const ADMIN_CACHE_TAGS = {
   commentReports: 'admin-comment-reports',
   analytics: 'admin-analytics',
   people: 'admin-people-discovery',
+  featured: 'admin-featured',
 } as const;
 
 export function revalidateAdminListsCache() {
@@ -43,6 +45,11 @@ export function revalidateAdminPeopleCache() {
   revalidateTag(ADMIN_CACHE_TAGS.people, 'max');
 }
 
+export function revalidateAdminFeaturedCache() {
+  revalidateTag(ADMIN_CACHE_TAGS.featured, 'max');
+  revalidateHomeCache();
+}
+
 export function revalidateAdminListsAndCategoriesCache() {
   revalidateAdminListsCache();
   revalidateAdminCategoriesCache();
@@ -56,4 +63,5 @@ export function revalidateAdminPanelCaches() {
   revalidateAdminUsersCache();
   revalidateAdminCommentsCache();
   revalidateAdminPeopleCache();
+  revalidateAdminFeaturedCache();
 }

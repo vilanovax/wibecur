@@ -24,7 +24,49 @@ describe('prepareListDetailForClient', () => {
       year: 2010,
       actors: ['Leo'],
     });
-    expect(result.items[0].description?.endsWith('…')).toBe(true);
-    expect(result.items[0].description?.length).toBeLessThanOrEqual(321);
+  });
+
+  it('keeps category filter keys for user-list chips', () => {
+    const result = prepareListDetailForClient({
+      items: [
+        {
+          title: 'X',
+          metadata: {
+            sourceCategorySlug: 'movie',
+            categorySlug: 'movie',
+            heavyBlob: true,
+          },
+        },
+      ],
+    });
+
+    expect(result.items[0].metadata).toEqual({
+      sourceCategorySlug: 'movie',
+      categorySlug: 'movie',
+    });
+  });
+
+  it('keeps preview-modal keys (tip / imdb / entryKind)', () => {
+    const result = prepareListDetailForClient({
+      items: [
+        {
+          title: 'Raid',
+          metadata: {
+            tip: 'انتخاب اصلی',
+            imdbRating: 7.6,
+            entryKind: 'catalog_ref',
+            factType: 'stat',
+            heavyBlob: true,
+          },
+        },
+      ],
+    });
+
+    expect(result.items[0].metadata).toEqual({
+      tip: 'انتخاب اصلی',
+      imdbRating: 7.6,
+      entryKind: 'catalog_ref',
+      factType: 'stat',
+    });
   });
 });

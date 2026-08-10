@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { X, Edit2, Save, XCircle } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
-
+import { formatRelativeTime } from '@/lib/format-relative-time';
 interface Comment {
   id: string;
   content: string;
@@ -323,10 +321,7 @@ export default function CommentDetailModal({
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">{comment.users.email}</p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                {formatDistanceToNow(new Date(comment.createdAt), {
-                  addSuffix: true,
-                  locale: faIR,
-                })}
+                {formatRelativeTime(comment.createdAt)}
               </p>
             </div>
           </div>

@@ -12,6 +12,7 @@ import {
   SEARCH_MIN_LENGTH,
 } from '@/lib/list-search';
 import { trackSearch, trackSearchNoResults } from '@/lib/analytics';
+import { meaningfulSearchTokens } from '@/lib/search-keywords';
 import type { UnifiedSearchResult } from '@/lib/unified-search';
 
 type Props = {
@@ -79,9 +80,15 @@ export default function SearchPageClient({
         <SearchResultSkeleton rows={5} />
       ) : isActive && !loading && !hasResults && !(search.viewTab === 'lists' && search.loadingMore) ? (
         <div className="py-16 text-center">
-          <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
+          <p className="wibe-body font-medium text-foreground">
+            {meaningfulSearchTokens(normalized).length >= 2
+              ? `نتیجه‌ای برای «${normalized}» نیست`
+              : 'نتیجه‌ای پیدا نشد'}
+          </p>
           <p className="mt-1 wibe-caption text-wibe-secondary">
-            عبارت دیگری امتحان کن یا از کلمات کلیدی ژانر استفاده کن
+            {meaningfulSearchTokens(normalized).length >= 2
+              ? 'همهٔ کلمات باید در نتیجه باشند — مکان یا نام دقیق‌تری امتحان کن'
+              : 'عبارت دیگری امتحان کن یا از کلمات کلیدی ژانر استفاده کن'}
           </p>
         </div>
       ) : isActive && (hasResults || (search.viewTab === 'lists' && search.loadingMore)) ? (

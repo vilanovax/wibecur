@@ -18,10 +18,10 @@ export default function PremiumSpotlight({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         💎 انتخاب ویژه
       </h2>
-      <p className="text-[11px] text-gray-500">
+      <p className="wibe-caption text-wibe-secondary">
         پیشنهاد این ماه
       </p>
 
@@ -33,10 +33,10 @@ export default function PremiumSpotlight({
           boxShadow: `0 4px 20px ${accentColor}20`,
         }}
       >
-        <span className="absolute top-2 left-2 z-10 text-[10px] font-medium text-white/90 bg-black/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
+        <span className="absolute top-2 left-2 z-10 wibe-caption font-medium text-white/90 bg-black/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
           Sponsored
         </span>
-        <div className="relative aspect-[3/2] bg-gray-100">
+        <div className="relative aspect-[3/2] bg-wibe-surface">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
@@ -55,8 +55,8 @@ export default function PremiumSpotlight({
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         </div>
         <div className="p-4 bg-white">
-          <h3 className="font-bold text-gray-900 text-base">{list.title}</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="font-bold text-foreground text-base">{list.title}</h3>
+          <p className="text-sm text-wibe-secondary mt-1">
             {list.creator?.name || 'کیوریتور'}
           </p>
           <p className="text-sm font-semibold mt-2" style={{ color: accentColor }}>

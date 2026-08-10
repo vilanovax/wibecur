@@ -8,13 +8,28 @@ import { track } from '@/lib/analytics';
 import { dispatchListsUpdated } from '@/lib/profile-events';
 import { usePreferDesktopAutofocus } from '@/lib/hooks/usePreferDesktopAutofocus';
 
+const TITLE_PLACEHOLDERS: Record<string, string> = {
+  movie: 'مثلاً: فیلم‌های آخر هفته',
+  book: 'مثلاً: کتاب‌های تابستان',
+  cafe: 'مثلاً: کافه‌های کار ریموت',
+  travel: 'مثلاً: سفرهای کوتاه اطراف تهران',
+  mixed: 'مثلاً: وایب جمعه شب',
+};
+
 interface CreateListFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  /** Soft vibe hint from CreateSheet category chips (personal lists stay uncategorized in API). */
+  categoryHint?: string | null;
 }
 
-export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateListFormProps) {
+export default function CreateListForm({
+  isOpen,
+  onClose,
+  onSuccess,
+  categoryHint = null,
+}: CreateListFormProps) {
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,6 +41,8 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
 
   const atLimit = currentListsCount >= maxPersonalLists;
   const remaining = Math.max(0, maxPersonalLists - currentListsCount);
+  const titlePlaceholder =
+    (categoryHint && TITLE_PLACEHOLDERS[categoryHint]) || 'مثلاً: فیلم‌های آخر هفته';
 
   useEffect(() => {
     if (isOpen) {
@@ -151,7 +168,7 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
                     <span
                       key={i}
                       className={`h-1.5 w-6 rounded-full transition-colors ${
-                        i < currentListsCount ? 'bg-primary' : 'bg-gray-200'
+                        i < currentListsCount ? 'bg-primary' : 'bg-wibe-surface'
                       }`}
                     />
                   ))}
@@ -173,7 +190,7 @@ export default function CreateListForm({ isOpen, onClose, onSuccess }: CreateLis
                   setError('');
                 }}
                 className="w-full h-11 px-3 rounded-lg border border-wibe bg-white wibe-small text-foreground placeholder:text-wibe-secondary/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
-                placeholder="مثلاً: فیلم‌های آخر هفته"
+                placeholder={titlePlaceholder}
                 required
                 disabled={isLoading || atLimit}
                 autoFocus={preferDesktopAutofocus}

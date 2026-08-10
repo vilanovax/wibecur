@@ -8,23 +8,21 @@ const baseUrl = process.env.LHCI_BASE_URL || 'http://localhost:3002';
 const categoryPath = process.env.LHCI_CATEGORY_PATH || '/categories/movies';
 
 /**
- * Seed item with poster for item detail audits. Override with LHCI_ITEM_PATH.
- * @example LHCI_ITEM_PATH=/items/your-id npm run lighthouse:ci
+ * Public list detail for audits. Override with LHCI_LIST_PATH.
+ * @example LHCI_LIST_PATH=/lists/great-breakfast-cafes npm run lighthouse:ci
  */
-const itemPath =
-  process.env.LHCI_ITEM_PATH || '/items/ishGWMipxDOeMKb9W3W80';
+const listPath = process.env.LHCI_LIST_PATH || '/lists/great-breakfast-cafes';
 
-const explorePath = process.env.LHCI_EXPLORE_PATH || '/user-lists';
+const homePath = process.env.LHCI_HOME_PATH || '/';
 
 /** @type {import('@lhci/cli/src/index').LHCI.ServerCommand.Options} */
 module.exports = {
   ci: {
     collect: {
       url: [
-        `${baseUrl}/lists`,
+        `${baseUrl}${homePath}`,
         `${baseUrl}${categoryPath}`,
-        `${baseUrl}${itemPath}`,
-        `${baseUrl}${explorePath}`,
+        `${baseUrl}${listPath}`,
       ],
       numberOfRuns: process.env.CI ? 2 : 1,
       settings: {

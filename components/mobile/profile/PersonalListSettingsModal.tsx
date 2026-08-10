@@ -230,7 +230,7 @@ export default function PersonalListSettingsModal({
           </div>
 
           {/* Public/Private Toggle */}
-          <div className="border-t border-gray-200 pt-6">
+          <div className="border-t border-wibe pt-6">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -257,7 +257,7 @@ export default function PersonalListSettingsModal({
                 onClick={handleTogglePublic}
                 disabled={isToggling}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  list.isPublic ? 'bg-primary' : 'bg-gray-200'
+                  list.isPublic ? 'bg-primary' : 'bg-wibe-surface'
                 } ${isToggling ? 'opacity-50' : ''}`}
               >
                 <span
@@ -293,13 +293,13 @@ export default function PersonalListSettingsModal({
           </div>
 
           {!list.isPublic && (
-            <div className="border-t border-gray-200 pt-6">
+            <div className="border-t border-wibe pt-6">
               <ListCollaborationPanel listId={list.id} isPublic={list.isPublic} onChanged={onUpdate} />
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="border-t border-gray-200 pt-6 space-y-3">
+          <div className="border-t border-wibe pt-6 space-y-3">
             <button
               onClick={handleEdit}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors font-medium"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   BarChart3,
   Save,
@@ -20,6 +20,7 @@ type Props = {
   upcomingCount: number;
   pastCount: number;
   refreshKey?: number;
+  initialReport?: WeeklyReport | null;
 };
 
 export default function FeaturedStatsBar({
@@ -27,33 +28,56 @@ export default function FeaturedStatsBar({
   upcomingCount,
   pastCount,
   refreshKey = 0,
+  initialReport = null,
 }: Props) {
-  const [report, setReport] = useState<WeeklyReport | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [weekStart, setWeekStart] = useState('');
+  const [report, setReport] = useState<WeeklyReport | null>(initialReport);
+  const [loading, setLoading] = useState(!initialReport);
+  const [weekStart, setWeekStart] = useState(() =>
+    getMonday(new Date()).toISOString().slice(0, 10)
+  );
+  const seededRef = useRef(Boolean(initialReport));
 
   useEffect(() => {
-    setWeekStart((prev) => prev || getMonday(new Date()).toISOString().slice(0, 10));
-  }, []);
+    if (initialReport && seededRef.current) {
+      setReport(initialReport);
+      setLoading(false);
+    }
+  }, [initialReport]);
 
-  const loadReport = useCallback(() => {
-    if (!weekStart) return;
-    setLoading(true);
-    fetch(`/api/admin/custom/featured/weekly-report?weekStart=${encodeURIComponent(weekStart)}`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.error) {
-          setReport(null);
-          return;
-        }
-        setReport(json);
-      })
-      .catch(() => setReport(null))
-      .finally(() => setLoading(false));
-  }, [weekStart]);
+  const loadReport = useCallback(
+    (force = false) => {
+      if (!weekStart) return;
+      // Skip first client fetch when SSR already seeded current week
+      if (
+        !force &&
+        seededRef.current &&
+        initialReport &&
+        weekStart === initialReport.weekStart.slice(0, 10)
+      ) {
+        seededRef.current = false;
+        return;
+      }
+      seededRef.current = false;
+      setLoading(true);
+      fetch(
+        `/api/admin/custom/featured/weekly-report?weekStart=${encodeURIComponent(weekStart)}`
+      )
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.error) {
+            setReport(null);
+            return;
+          }
+          setReport(json);
+        })
+        .catch(() => setReport(null))
+        .finally(() => setLoading(false));
+    },
+    [weekStart, initialReport]
+  );
 
   useEffect(() => {
-    loadReport();
+    loadReport(refreshKey > 0);
   }, [loadReport, refreshKey]);
 
   const shiftWeek = (delta: number) => {
@@ -79,14 +103,16 @@ export default function FeaturedStatsBar({
       label: 'صف اسلات',
       value: upcomingCount.toLocaleString('fa-IR'),
       sub: 'آینده',
-      accent: 'from-violet-500/10 to-violet-600/5 border-violet-200/50 dark:border-violet-800/60',
+      accent:
+        'from-sky-500/10 to-sky-600/5 border-sky-200/50 dark:border-sky-800/60',
     },
     {
       icon: Calendar,
       label: 'اسلات این هفته',
       value: loading ? '…' : (report?.totalSlots ?? 0).toLocaleString('fa-IR'),
       sub: weekLabel ?? 'هفته جاری',
-      accent: 'from-blue-500/10 to-blue-600/5 border-blue-200/50 dark:border-blue-800/60',
+      accent:
+        'from-blue-500/10 to-blue-600/5 border-blue-200/50 dark:border-blue-800/60',
     },
     {
       icon: BarChart3,
@@ -96,7 +122,8 @@ export default function FeaturedStatsBar({
         : report
           ? `${(report.avgCTR * 100).toFixed(2)}٪`
           : '—',
-      accent: 'from-indigo-500/10 to-indigo-600/5 border-indigo-200/50 dark:border-indigo-800/60',
+      accent:
+        'from-teal-500/10 to-teal-600/5 border-teal-200/50 dark:border-teal-800/60',
     },
     {
       icon: Save,
@@ -106,19 +133,21 @@ export default function FeaturedStatsBar({
         : report?.avgSaveLift != null
           ? `${report.avgSaveLift.toFixed(1)}٪`
           : '—',
-      accent: 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/50 dark:border-emerald-800/60',
+      accent:
+        'from-emerald-500/10 to-emerald-600/5 border-emerald-200/50 dark:border-emerald-800/60',
     },
     {
       icon: Award,
       label: 'بهترین لیست هفته',
-      value: loading ? '…' : report?.bestPerformer?.listTitle ?? '—',
+      value: loading ? '…' : (report?.bestPerformer?.listTitle ?? '—'),
       sub:
         report?.bestPerformer != null
           ? `+${report.bestPerformer.saveLiftPercent.toFixed(1)}٪`
           : pastCount > 0
             ? `${pastCount.toLocaleString('fa-IR')} اسلات گذشته`
             : undefined,
-      accent: 'from-amber-500/10 to-amber-600/5 border-amber-200/50 dark:border-amber-800/60',
+      accent:
+        'from-amber-500/10 to-amber-600/5 border-amber-200/50 dark:border-amber-800/60',
     },
   ];
 
@@ -145,7 +174,9 @@ export default function FeaturedStatsBar({
           </button>
           <button
             type="button"
-            onClick={() => setWeekStart(getMonday(new Date()).toISOString().slice(0, 10))}
+            onClick={() =>
+              setWeekStart(getMonday(new Date()).toISOString().slice(0, 10))
+            }
             className="px-2.5 py-1.5 rounded-lg border border-[var(--color-border)] text-xs font-medium hover:bg-[var(--color-bg)]"
           >
             این هفته
@@ -158,7 +189,9 @@ export default function FeaturedStatsBar({
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          {loading && <Loader2 className="w-4 h-4 animate-spin text-[var(--primary)]" />}
+          {loading && (
+            <Loader2 className="w-4 h-4 animate-spin text-[var(--primary)]" />
+          )}
         </div>
       </div>
 
@@ -168,15 +201,18 @@ export default function FeaturedStatsBar({
             key={label}
             className={`rounded-2xl border bg-gradient-to-br ${accent} p-3.5 sm:p-4 shadow-sm min-w-0`}
           >
-            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[var(--color-text-muted)] mb-1.5">
+            <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] mb-1.5">
               <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{label}</span>
             </div>
-            <p className="text-lg sm:text-xl font-bold text-[var(--color-text)] truncate" title={String(value)}>
+            <p
+              className="text-lg sm:text-xl font-bold text-[var(--color-text)] truncate"
+              title={String(value)}
+            >
               {value}
             </p>
             {sub && (
-              <p className="text-[10px] sm:text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
                 {sub}
               </p>
             )}

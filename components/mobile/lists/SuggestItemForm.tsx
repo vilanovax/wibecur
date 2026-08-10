@@ -443,7 +443,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 دسته‌بندی <span className="text-red-500">*</span>
               </label>
               {isLoadingCategories ? (
-                <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-wibe-secondary">
+                <div className="px-4 py-3 border border-wibe rounded-lg bg-wibe-surface text-center text-wibe-secondary">
                   در حال بارگذاری دسته‌بندی‌ها...
                 </div>
               ) : (
@@ -452,7 +452,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   value={selectedCategoryId}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
+                  className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
                 >
                   <option value="">یک دسته انتخاب کنید</option>
                   {categories.map((category) => (
@@ -471,11 +471,11 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   انتخاب لیست <span className="text-red-500">*</span>
                 </label>
                 {isLoadingLists ? (
-                  <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-wibe-secondary">
+                  <div className="px-4 py-3 border border-wibe rounded-lg bg-wibe-surface text-center text-wibe-secondary">
                     در حال بارگذاری لیست‌ها...
                   </div>
                 ) : filteredLists.length === 0 ? (
-                  <div className="px-4 py-3 border border-gray-300 rounded-lg bg-yellow-50 text-center text-yellow-700">
+                  <div className="px-4 py-3 border border-wibe rounded-lg bg-yellow-50 text-center text-yellow-700">
                     هیچ لیستی برای این دسته‌بندی یافت نشد
                   </div>
                 ) : (
@@ -484,7 +484,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                     value={formData.listId}
                     onChange={handleListChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
+                    className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
                   >
                     <option value="">یک لیست انتخاب کنید</option>
                     {filteredLists.map((list) => (
@@ -526,7 +526,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
+                className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
                 placeholder="عنوان آیتم را وارد کنید"
               />
             </div>
@@ -558,14 +558,14 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none resize-none"
+                className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none resize-none"
                 placeholder="توضیحات آیتم (اختیاری)"
               />
             </div>
 
             {/* Dynamic Metadata Fields */}
             {selectedList && selectedList.categories.slug && (
-              <div className="border-t border-gray-200 pt-4">
+              <div className="border-t border-wibe pt-4">
                 <DynamicMetadataFields
                   categorySlug={selectedList.categories.slug}
                   metadata={formData.metadata}
@@ -586,7 +586,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   type="button"
                   onClick={() => setImageSearchModalOpen(true)}
                   disabled={!formData.title.trim()}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-foreground bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-foreground bg-wibe-surface rounded-lg hover:bg-wibe-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title={!formData.title.trim() ? 'ابتدا عنوان آیتم را وارد کنید' : 'جستجوی تصویر از Google'}
                 >
                   <Search className="w-3 h-3" />
@@ -606,7 +606,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingImage}
-                  className="w-full px-4 py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-12 border-2 border-dashed border-wibe rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUploadingImage ? (
                     <>
@@ -623,7 +623,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-wibe">
                     <img
                       src={formData.imageUrl}
                       alt="Preview"
@@ -645,7 +645,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingImage}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 border border-wibe rounded-lg hover:bg-wibe-surface transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUploadingImage ? (
                       <>
@@ -673,20 +673,20 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                 name="externalUrl"
                 value={formData.externalUrl}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
+                className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
                 placeholder="https://example.com (اختیاری)"
               />
             </div>
           </div>
 
           {/* Footer with Submit Button */}
-          <div className="border-t border-gray-200 p-6 flex-shrink-0 bg-white">
+          <div className="border-t border-wibe p-6 flex-shrink-0 bg-white">
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-foreground hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 border border-wibe rounded-lg text-foreground hover:bg-wibe-surface transition-colors disabled:opacity-50"
               >
                 انصراف
               </button>

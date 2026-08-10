@@ -4,8 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, CheckCheck, RefreshCw, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { useRefetchOnVisible } from '@/lib/hooks/useRefetchOnVisible';
 
@@ -40,11 +39,11 @@ function NotificationSkeleton() {
     <div className="space-y-2 px-2.5 py-2">
       {[1, 2, 3].map((i) => (
         <div key={i} className="flex gap-2.5 rounded-xl border border-wibe p-3">
-          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-gray-200" />
+          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-wibe-surface" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
-            <div className="h-3 w-full animate-pulse rounded bg-gray-100" />
-            <div className="h-3 w-16 animate-pulse rounded bg-gray-100" />
+            <div className="h-4 w-3/4 animate-pulse rounded bg-wibe-surface" />
+            <div className="h-3 w-full animate-pulse rounded bg-wibe-surface" />
+            <div className="h-3 w-16 animate-pulse rounded bg-wibe-surface" />
           </div>
         </div>
       ))}
@@ -364,7 +363,7 @@ export function NotificationSheet({
             <NotificationSkeleton />
           ) : notifications.length === 0 ? (
             <div className="px-4 py-14 text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-wibe-surface">
                 <Bell className="h-7 w-7 text-wibe-secondary/60" strokeWidth={1.5} />
               </div>
               <p className="wibe-body font-medium text-foreground">اعلانی نداری</p>
@@ -379,7 +378,7 @@ export function NotificationSheet({
                   <button
                     type="button"
                     onClick={() => void deleteReadNotifications()}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:bg-gray-100 hover:text-foreground"
+                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-foreground"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     حذف خوانده‌شده‌ها
@@ -404,7 +403,7 @@ export function NotificationSheet({
                         >
                           <div
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${
-                              !notification.read ? 'bg-primary/10' : 'bg-gray-100'
+                              !notification.read ? 'bg-primary/10' : 'bg-wibe-surface'
                             }`}
                             aria-hidden
                           >
@@ -432,17 +431,14 @@ export function NotificationSheet({
                               {notification.message}
                             </p>
                             <p className="mt-1.5 wibe-caption text-wibe-secondary/70">
-                              {formatDistanceToNow(new Date(notification.createdAt), {
-                                addSuffix: true,
-                                locale: faIR,
-                              })}
+                              {formatRelativeTime(notification.createdAt)}
                             </p>
                           </div>
                         </button>
                         <button
                           type="button"
                           onClick={() => void deleteNotification(notification.id)}
-                          className="flex h-7 w-7 shrink-0 items-center justify-center self-start rounded-lg text-wibe-secondary transition-colors hover:bg-gray-100 hover:text-foreground"
+                          className="flex h-7 w-7 shrink-0 items-center justify-center self-start rounded-lg text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-foreground"
                           aria-label="حذف اعلان"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -480,7 +476,7 @@ export function NotificationUnreadBadge({ count }: { count: number }) {
 
   return (
     <span
-      className="pointer-events-none absolute -top-0.5 -left-0.5 z-20 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] ring-2 ring-[var(--color-bg,#fff)]"
+      className="pointer-events-none absolute -top-0.5 -left-0.5 z-20 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 wibe-caption font-bold leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] ring-2 ring-[var(--color-bg,#fff)]"
       aria-hidden
     >
       {label}
