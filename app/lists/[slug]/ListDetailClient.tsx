@@ -38,6 +38,7 @@ import { normalizeSearchQuery } from '@/lib/list-search';
 import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { ListPagePlacements } from '@/lib/sponsored-placements';
 import { isLifestyleCategory, sourceCategorySlugFromItem } from '@/lib/list-entry';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 type Item = {
   id: string;
   title: string;
@@ -441,6 +442,8 @@ export default function ListDetailClient({
 }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  // فقط برای AT — چیدمان همچنان با CSS (`lg:`) تا CLS نسازد
+  const isDesktop = useIsDesktop();
   const [items, setItems] = useState(listProp.items);
   const [hasMoreRemote, setHasMoreRemote] = useState(itemsHasMore);
   const [loadingMoreRemote, setLoadingMoreRemote] = useState(false);
@@ -510,11 +513,19 @@ export default function ListDetailClient({
   const [displaySaveCount, setDisplaySaveCount] = useState(0);
   const [bookmarkSaving, setBookmarkSaving] = useState(false);
   const heroBannerRef = useRef<HTMLElement>(null);
-  const { ref: itemsSectionRef, inView: itemsSectionInView } = useLazyInView<HTMLElement>({
+  const {
+    ref: itemsSectionRef,
+    inView: itemsSectionInView,
+    elementRef: itemsSectionEl,
+  } = useLazyInView<HTMLElement>({
     rootMargin: '240px',
     once: true,
   });
-  const { ref: commentsSectionRef, inView: commentsInView } = useLazyInView<HTMLDivElement>({
+  const {
+    ref: commentsSectionRef,
+    inView: commentsInView,
+    elementRef: commentsSectionEl,
+  } = useLazyInView<HTMLDivElement>({
     rootMargin: '280px',
     once: true,
   });
@@ -763,7 +774,7 @@ export default function ListDetailClient({
 
   const scrollToComments = () => {
     setCommentsActivated(true);
-    scrollToSection(commentsSectionRef);
+    scrollToSection(commentsSectionEl);
   };
 
   const badgeLabel = list.badge ? listBadgeLabel(list.badge) : undefined;
@@ -902,8 +913,8 @@ export default function ListDetailClient({
     setTonightTop5(true);
     setItemSearchQuery('');
     setViewMode('grid');
-    itemsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [itemsSectionRef]);
+    itemsSectionEl.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [itemsSectionEl]);
 
   const handleTonightRandom = useCallback(() => {
     if (list.items.length === 0) return;
@@ -973,9 +984,12 @@ export default function ListDetailClient({
         <PageBreadcrumb items={breadcrumbItems} />
       </div>
 
-      {/* Hero — هر دو چیدمان با CSS تا hydration CLS نسازد (useIsDesktop ممنوع). */}
+      {/* Hero — هر دو چیدمان با CSS تا hydration CLS نسازد؛ aria-hidden فقط برای AT. */}
       <section ref={heroBannerRef} className="lg:mt-1">
-        <div className="hidden grid-cols-[minmax(13rem,17.5rem)_minmax(0,1fr)] items-center gap-5 lg:grid xl:grid-cols-[18rem_minmax(0,1fr)] xl:gap-6">
+        <div
+          className="hidden grid-cols-[minmax(13rem,17.5rem)_minmax(0,1fr)] items-center gap-5 lg:grid xl:grid-cols-[18rem_minmax(0,1fr)] xl:gap-6"
+          aria-hidden={!isDesktop || undefined}
+        >
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-wibe-surface shadow-sm ring-1 ring-black/[0.04] xl:aspect-[16/10]">
             <ImageWithFallback
               src={heroImage}
@@ -1011,7 +1025,10 @@ export default function ListDetailClient({
           </div>
         </div>
 
-        <div className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-900 sm:h-[240px] lg:hidden">
+        <div
+          className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-900 sm:h-[240px] lg:hidden"
+          aria-hidden={isDesktop || undefined}
+        >
           <ImageWithFallback
             src={heroImage}
             alt={displayTitle}
@@ -1079,7 +1096,7 @@ export default function ListDetailClient({
         <p className="text-center wibe-caption text-wibe-secondary tabular-nums">
           <button
             type="button"
-            onClick={() => scrollToSection(itemsSectionRef)}
+            onClick={() => scrollToSection(itemsSectionEl)}
             className="hover:text-foreground"
           >
             {itemCount.toLocaleString('fa-IR')} آیتم
@@ -1312,7 +1329,7 @@ export default function ListDetailClient({
                 isOwner={isOwner}
                 isBookmarked={isBookmarked}
                 bookmarkSaving={bookmarkSaving}
-                onItemsClick={() => scrollToSection(itemsSectionRef)}
+                onItemsClick={() => scrollToSection(itemsSectionEl)}
                 onCommentsClick={scrollToComments}
                 onSavesClick={!isOwner ? () => handleToggleBookmark() : undefined}
               />

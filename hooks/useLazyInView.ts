@@ -1,6 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type RefCallback } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefCallback,
+  type RefObject,
+} from 'react';
 
 type UseLazyInViewOptions = {
   rootMargin?: string;
@@ -12,10 +19,12 @@ type UseLazyInViewOptions = {
 /**
  * IntersectionObserver via callback ref so the first paint never misses observe
  * when `ref.current` was still null in a layout effect.
+ *
+ * `elementRef` tracks the same node for imperative use (scrollIntoView, focus).
  */
 export function useLazyInView<T extends Element = HTMLElement>(
   options: UseLazyInViewOptions = {}
-): { ref: RefCallback<T>; inView: boolean } {
+): { ref: RefCallback<T>; inView: boolean; elementRef: RefObject<T | null> } {
   const { rootMargin = '160px', threshold = 0.01, once = true } = options;
   const [inView, setInView] = useState(false);
   const inViewRef = useRef(false);
@@ -56,5 +65,5 @@ export function useLazyInView<T extends Element = HTMLElement>(
 
   useEffect(() => () => disconnect(), [disconnect]);
 
-  return { ref, inView };
+  return { ref, inView, elementRef: nodeRef };
 }

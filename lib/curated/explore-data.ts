@@ -330,6 +330,7 @@ async function fetchMissingLists(ids: string[]): Promise<DbListRow[]> {
         slug: true,
         description: true,
         coverImage: true,
+        horizontalImage: true,
         categoryId: true,
         badge: true,
         tags: true,
