@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefCallback } from 'react';
 
 type UseLazyInViewOptions = {
   rootMargin?: string;
@@ -9,35 +9,52 @@ type UseLazyInViewOptions = {
   once?: boolean;
 };
 
-/** IntersectionObserver — برای lazy-load تصویر/poster */
+/**
+ * IntersectionObserver via callback ref so the first paint never misses observe
+ * when `ref.current` was still null in a layout effect.
+ */
 export function useLazyInView<T extends Element = HTMLElement>(
   options: UseLazyInViewOptions = {}
-): { ref: RefObject<T | null>; inView: boolean } {
+): { ref: RefCallback<T>; inView: boolean } {
   const { rootMargin = '160px', threshold = 0.01, once = true } = options;
-  const ref = useRef<T | null>(null);
   const [inView, setInView] = useState(false);
+  const inViewRef = useRef(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const nodeRef = useRef<T | null>(null);
 
-  useEffect(() => {
-    if (once && inView) return;
+  const disconnect = useCallback(() => {
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+  }, []);
 
-    const el = ref.current;
-    if (!el) return;
+  const ref = useCallback<RefCallback<T>>(
+    (node) => {
+      nodeRef.current = node;
+      disconnect();
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setInView(true);
-          if (once) observer.disconnect();
-        } else if (!once) {
-          setInView(false);
-        }
-      },
-      { rootMargin, threshold }
-    );
+      if (!node || (once && inViewRef.current)) return;
 
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [inView, once, rootMargin, threshold]);
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry?.isIntersecting) {
+            inViewRef.current = true;
+            setInView(true);
+            if (once) disconnect();
+          } else if (!once) {
+            inViewRef.current = false;
+            setInView(false);
+          }
+        },
+        { rootMargin, threshold }
+      );
+
+      observerRef.current = observer;
+      observer.observe(node);
+    },
+    [disconnect, once, rootMargin, threshold]
+  );
+
+  useEffect(() => () => disconnect(), [disconnect]);
 
   return { ref, inView };
 }

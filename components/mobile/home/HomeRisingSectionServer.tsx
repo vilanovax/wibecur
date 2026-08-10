@@ -68,7 +68,7 @@ export default function HomeRisingSectionServer({ lists }: HomeRisingSectionServ
                 </div>
               )}
               {list.isFastRising ? (
-                <span className="absolute right-1 top-1 rounded-pill bg-success px-1.5 py-0.5 wibe-caption font-semibold text-white">
+                <span className="absolute right-1 top-1 rounded-pill bg-amber-500 px-1.5 py-0.5 wibe-caption font-semibold text-white">
                   ↑
                 </span>
               ) : null}
@@ -112,7 +112,7 @@ export default function HomeRisingSectionServer({ lists }: HomeRisingSectionServ
               key={cell.data.id}
               list={cell.data}
               badge={badge}
-              badgeClassName="bg-success text-white"
+              badgeClassName="bg-amber-500 text-white"
             />
           );
         })}

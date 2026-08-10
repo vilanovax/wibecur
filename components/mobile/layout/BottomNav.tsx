@@ -65,9 +65,12 @@ export default function BottomNav() {
     };
   }, [createOpen, CreateSheet]);
 
+  const isHome = pathname === '/';
+
   return (
     <>
-      <SiteFooter variant="mobile" />
+      {/* Home peak-end: skip marketing footer; bottom nav already anchors the thumb zone */}
+      {isHome ? null : <SiteFooter variant="mobile" />}
       <div aria-hidden className={MOBILE_BOTTOM_NAV_SPACER_CLASS} />
       <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none lg:hidden">
         <nav

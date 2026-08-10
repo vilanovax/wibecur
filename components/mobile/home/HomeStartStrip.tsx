@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
 import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import { openHomeCreateSheet } from '@/lib/home-create-sheet';
@@ -72,13 +72,7 @@ export default function HomeStartStrip() {
       <div className="flex flex-col gap-3 lg:gap-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="flex items-center gap-1.5 wibe-caption font-semibold text-primary">
-              <Sparkles className="h-4 w-4" aria-hidden />
-              {copy.eyebrow}
-            </p>
-            <h2 className="mt-1 text-balance wibe-h3 text-foreground">
-              {copy.title}
-            </h2>
+            <h2 className="text-balance wibe-h3 text-foreground">{copy.title}</h2>
             <p className="mt-1.5 text-pretty wibe-small text-wibe-secondary">
               {copy.description}
             </p>

@@ -2,8 +2,9 @@
 name: Wibe
 description: Mobile-first RTL curated lifestyle lists — save-first discovery
 colors:
-  primary: "#6366F1"
-  primary-dark: "#4F46E5"
+  # Indigo-600 for AA contrast of white-on-primary at caption size (was #6366F1 ≈ 4.47)
+  primary: "#4F46E5"
+  primary-dark: "#4338CA"
   primary-light: "#818CF8"
   surface: "#F8FAFC"
   card: "#FFFFFF"
@@ -120,7 +121,7 @@ Avoid raw `text-sm` / `text-gray-*` on consumer surfaces.
 - Mobile-first; desktop shell max ~1200px (`.wibe-desktop-shell`)
 - Bottom nav: خانه · لیست‌ها · اکسپلور · پروفایل
 - Safe-area on fixed chrome; sheets use `overscroll-contain`
-- First viewport on home: search sticky + hero; categories/explore teaser below
+- First viewport on home: search sticky + hero + one trending lane; For You deferred below saved for logged-in; category chips demoted (mood stays on `/explore`)
 
 ## Elevation & Depth
 

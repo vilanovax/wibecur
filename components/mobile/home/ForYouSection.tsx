@@ -4,6 +4,7 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeGridListCard from './HomeGridListCard';
+import HomeListSaveControl from './HomeListSaveControl';
 import HomeStarterEmptyPanel from './HomeStarterEmptyPanel';
 import HomeFeedGrid from './HomeFeedGrid';
 import {
@@ -26,7 +27,13 @@ type ForYouSectionProps = {
 
 export default function ForYouSection({ embedded = false, fetchEnabled: fetchEnabledProp }: ForYouSectionProps) {
   const { ref, inView } = useLazyInView({ rootMargin: '240px' });
-  const shouldFetch = embedded ? (fetchEnabledProp ?? false) : inView;
+  // Explicit fetchEnabled wins (eager home mount); else embedded waits for prop, standalone waits for inView.
+  const shouldFetch =
+    typeof fetchEnabledProp === 'boolean'
+      ? fetchEnabledProp
+      : embedded
+        ? false
+        : inView;
 
   const { isGuest } = useHomeUserState();
   const { interests } = useHomeOnboardingInterests();
@@ -125,6 +132,16 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
                       className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
                       aria-hidden
                     />
+                    <div className="absolute left-1 top-1 z-10">
+                      <HomeListSaveControl
+                        listId={list.id}
+                        listSlug={list.slug}
+                        categorySlug={list.categories?.slug}
+                        saveCount={list.saveCount}
+                        size="compact"
+                        analyticsSource="home_for_you"
+                      />
+                    </div>
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col justify-center py-3 pl-2 pr-3">
                     {reason ? (

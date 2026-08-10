@@ -87,7 +87,7 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
                 listTitle={list.title}
               />
               {(list as { isFastRising?: boolean }).isFastRising && (
-                <span className="absolute right-1 top-1 flex items-center gap-0.5 rounded-pill bg-success px-1.5 py-0.5 wibe-caption font-semibold text-white">
+                <span className="absolute right-1 top-1 flex items-center gap-0.5 rounded-pill bg-amber-500 px-1.5 py-0.5 wibe-caption font-semibold text-white">
                   <TrendingUp className="h-2.5 w-2.5" />
                 </span>
               )}
@@ -114,7 +114,7 @@ export default function NewAndRisingSection({ embedded = false }: { embedded?: b
           getBadge={(list) =>
             (list as { isFastRising?: boolean }).isFastRising ? 'سریع' : null
           }
-          badgeClassName="bg-success text-white"
+          badgeClassName="bg-amber-500 text-white"
           homeSection="rising"
         />
       </div>

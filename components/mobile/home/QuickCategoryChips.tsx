@@ -22,6 +22,8 @@ function isActiveCategorySlug(chipSlug: string, activeSlug?: string | null): boo
 interface QuickCategoryChipsProps {
   activeSlug?: string | null;
   variant?: 'default' | 'nav';
+  /** secondary = demoted browse strip (below primary home lane) */
+  density?: 'default' | 'secondary';
   /** از SSR — بدون fetch اولیه */
   initialCategories?: CategoryMenuChip[];
 }
@@ -29,6 +31,7 @@ interface QuickCategoryChipsProps {
 export default function QuickCategoryChips({
   activeSlug = null,
   variant = 'default',
+  density = 'default',
   initialCategories,
 }: QuickCategoryChipsProps) {
   const { data: categories = initialCategories ?? [], isLoading } = useQuery({
@@ -46,13 +49,16 @@ export default function QuickCategoryChips({
   }
 
   const isNav = variant === 'nav';
+  const isSecondary = density === 'secondary';
 
   return (
     <section
       className={
-        isNav
-          ? 'px-4 py-2 lg:px-0 lg:py-2.5'
-          : 'px-4 py-2 pb-3 lg:border-b lg:border-wibe/60 lg:px-0 lg:py-3 lg:pb-4'
+        isSecondary
+          ? 'mt-1 border-t border-wibe/50 px-4 pb-2 pt-3 lg:mt-0 lg:border-t-0 lg:px-0 lg:pb-1 lg:pt-2'
+          : isNav
+            ? 'px-4 py-2 lg:px-0 lg:py-2.5'
+            : 'px-4 py-2 pb-3 lg:border-b lg:border-wibe/60 lg:px-0 lg:py-3 lg:pb-4'
       }
       aria-label="دسته‌های سریع"
     >
