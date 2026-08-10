@@ -856,7 +856,7 @@ export default function ListsPageClient({
                     key={value}
                     type="button"
                     onClick={() => setBrowseMode(value)}
-                    className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:px-3.5 ${toolbarBtnFocus} ${
+                    className={`h-11 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:px-3.5 ${toolbarBtnFocus} ${
                       browseMode === value
                         ? 'bg-wibe-card font-semibold text-primary shadow-sm'
                         : 'text-wibe-secondary hover:text-foreground'
@@ -869,7 +869,7 @@ export default function ListsPageClient({
               <button
                 type="button"
                 onClick={() => setFilterSheetOpen(true)}
-                className={`flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-2.5 transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
+                className={`flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-3 transition-colors active:scale-[0.98] lg:h-9 lg:px-2.5 ${toolbarBtnFocus} ${
                   hasAdvancedFilters
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
@@ -890,7 +890,7 @@ export default function ListsPageClient({
               type="button"
               data-category-chip="all"
               onClick={handleAllCategoriesClick}
-              className={`h-8 flex-shrink-0 rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
+              className={`h-11 flex-shrink-0 rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:px-3 ${toolbarBtnFocus} ${
                 isAllCategoriesSelected
                   ? 'bg-primary text-white shadow-sm'
                   : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -907,7 +907,7 @@ export default function ListsPageClient({
                   data-category-chip={cat.id}
                   onClick={() => handleCategoryClick(cat.id)}
                   aria-pressed={isSelected}
-                  className={`h-8 flex-shrink-0 whitespace-nowrap rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${toolbarBtnFocus} ${
+                  className={`h-11 flex-shrink-0 whitespace-nowrap rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:px-3 ${toolbarBtnFocus} ${
                     isSelected
                       ? 'bg-primary text-white shadow-sm'
                       : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'

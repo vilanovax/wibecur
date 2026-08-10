@@ -122,8 +122,8 @@ function InlineBookmarkView({
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || '/')}&source=bookmark_gate`;
   const btnClass =
     size === 'xs'
-      ? 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface/95 text-wibe-secondary shadow-sm backdrop-blur-sm transition-transform active:scale-95'
-      : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface text-wibe-secondary transition-transform active:scale-95';
+      ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface/95 text-wibe-secondary shadow-sm backdrop-blur-sm transition-transform active:scale-95 lg:h-9 lg:w-9'
+      : 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface text-wibe-secondary transition-transform active:scale-95 lg:h-9 lg:w-9';
 
   if (!loggedIn) {
     return (
@@ -133,18 +133,19 @@ function InlineBookmarkView({
         className={`${btnClass} ${className}`}
         aria-label="ورود برای ذخیره لیست"
       >
-        <Bookmark className="h-3.5 w-3.5 opacity-70" strokeWidth={1.75} />
+        <Bookmark className="h-4 w-4 opacity-70 lg:h-3.5 lg:w-3.5" strokeWidth={1.75} />
       </Link>
     );
   }
 
   return (
-    <div className={`${btnClass} ${className}`} onClick={(e) => e.stopPropagation()}>
+    <div className={`shrink-0 ${className}`} onClick={(e) => e.stopPropagation()}>
       <BookmarkButton
         listId={listId}
         initialIsBookmarked={isBookmarked}
         initialBookmarkCount={saveCount}
         size="sm"
+        className={btnClass}
         analytics={{
           listSlug,
           categorySlug,
@@ -279,7 +280,7 @@ function ListCardCompact({
               fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
             />
           </div>
-          <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-9 lg:pe-10' : ''}`}>
+          <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-12 lg:pe-11' : ''}`}>
             {badges.length > 0 && (
               <div className="mb-0.5 flex flex-wrap gap-1">
                 {badges.map((b) => (
@@ -366,7 +367,7 @@ function ListCardCompact({
             مشاهده لیست
           </span>
         </div>
-        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-right max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-11 lg:pe-12' : ''}`}>
+        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-right max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-14 lg:pe-12' : ''}`}>
           <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] lg:text-base lg:font-bold">
             {renderTitle('')}
           </h3>

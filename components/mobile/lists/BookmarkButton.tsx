@@ -154,10 +154,23 @@ export default function BookmarkButton({
     );
   }
 
+  const iconGlyphClasses = {
+    sm: 'h-4 w-4',
+    md: 'h-5 w-5',
+    lg: 'h-5 w-5',
+  };
+
+  /** اندازهٔ گلیف داخل دکمهٔ متنی (نه hit-area) */
   const sizeClasses = {
     sm: 'w-5 h-5',
     md: 'w-6 h-6',
     lg: 'w-7 h-7',
+  };
+
+  const iconHitClasses = {
+    sm: 'h-11 w-11 lg:h-8 lg:w-8',
+    md: 'h-11 w-11',
+    lg: 'h-12 w-12',
   };
 
   const buttonSizeClasses = {
@@ -172,7 +185,7 @@ export default function BookmarkButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50 ${
+        className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50 lg:h-10 lg:w-10 ${
           isBookmarked
             ? 'border-primary bg-primary/10 hover:bg-primary/15'
             : 'border-wibe bg-white hover:border-primary hover:bg-primary/5'
@@ -195,12 +208,12 @@ export default function BookmarkButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`${sizeClasses[size]} flex items-center justify-center transition-[colors,transform] hover:scale-110 disabled:opacity-50 ${
+        className={`${iconHitClasses[size]} flex items-center justify-center transition-[colors,transform] hover:scale-110 disabled:opacity-50 ${className} ${
           isBookmarked ? 'text-primary' : 'text-wibe-secondary'
         }`}
         aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
       >
-        <Bookmark className={`h-full w-full ${isBookmarked ? 'fill-current' : ''}`} />
+        <Bookmark className={`${iconGlyphClasses[size]} ${isBookmarked ? 'fill-current' : ''}`} />
       </button>
     );
   }

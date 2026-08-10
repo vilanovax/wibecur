@@ -65,14 +65,14 @@ export default function HomeListSaveControl({
 
   const shell =
     surface === 'hero'
-      ? 'flex h-10 w-10 items-center justify-center rounded-full border shadow-sm backdrop-blur-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:opacity-50'
-      : 'flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-50';
+      ? 'flex h-11 w-11 items-center justify-center rounded-full border shadow-sm backdrop-blur-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:opacity-50'
+      : 'flex h-11 w-11 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-50 lg:h-9 lg:w-9';
 
   const shellTone = isBookmarked
     ? 'border-primary/40 bg-primary text-white hover:bg-primary-dark'
     : 'border-white/25 bg-black/45 text-white hover:bg-black/60';
 
-  const iconClass = surface === 'hero' ? 'h-4 w-4' : 'h-3.5 w-3.5';
+  const iconClass = surface === 'hero' ? 'h-4 w-4' : 'h-4 w-4 lg:h-3.5 lg:w-3.5';
 
   if (status === 'loading') {
     return <span className={`${shell} animate-pulse border-white/20 bg-black/30 ${className}`} aria-hidden />;

@@ -84,7 +84,7 @@ export default function HomeFeedTabs() {
                       }}
                       onPointerEnter={item.id === 'foryou' ? prefetchForYou : undefined}
                       onTouchStart={item.id === 'foryou' ? prefetchForYou : undefined}
-                      className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-4 wibe-small font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:h-8 lg:px-3.5 ${
+                      className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg px-4 wibe-small font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:h-8 lg:px-3.5 ${
                         isActive
                           ? 'bg-primary text-white shadow-sm'
                           : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/30'
@@ -112,7 +112,7 @@ export default function HomeFeedTabs() {
           <div className="flex min-w-0 flex-1 justify-end lg:gap-4">
             <Link
               href={seeAll.href}
-              className="inline-flex shrink-0 items-center gap-0.5 wibe-caption font-semibold text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="inline-flex min-h-11 shrink-0 items-center gap-0.5 rounded-lg px-2 wibe-caption font-semibold text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:min-h-0 lg:px-0"
             >
               {seeAll.label}
               <ChevronLeft className="h-3.5 w-3.5 rotate-180" aria-hidden />
