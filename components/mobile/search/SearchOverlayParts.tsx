@@ -8,6 +8,8 @@ import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import type { UnifiedSearchItem } from '@/lib/unified-search';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export type SearchListRowData = {
   id: string;
@@ -52,13 +54,14 @@ export function SearchListRow({
       ref={innerRef}
       href={`/lists/${list.slug}`}
       onClick={onClick}
-      className={`flex min-w-0 flex-row-reverse gap-2.5 rounded-xl border p-2 transition-transform active:scale-[0.99] ${
-        isActive
-          ? 'border-primary bg-primary/[0.06] ring-2 ring-primary/25'
-          : 'border-wibe bg-wibe-card'
-      }`}
+      className="block"
     >
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg sm:h-[72px] sm:w-[72px]">
+      <Card
+        className={`flex min-w-0 gap-2.5 p-2 transition-transform active:scale-95 ${
+          isActive ? 'border-primary bg-primary/5 ring-2 ring-primary/25' : 'bg-popover'
+        }`}
+      >
+      <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
         <ListCoverImage
           coverImage={list.coverImage}
           title={displayTitle}
@@ -69,7 +72,7 @@ export function SearchListRow({
           fallbackClassName="flex h-full w-full items-center justify-center text-lg sm:text-xl"
         />
       </div>
-      <div className="min-w-0 flex-1 text-right">
+      <div className="min-w-0 flex-1 text-start">
         <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground">
           {highlightQuery ? (
             <SearchHighlight text={displayTitle} query={highlightQuery} />
@@ -91,7 +94,7 @@ export function SearchListRow({
           <p className="mt-0.5 line-clamp-1 wibe-caption text-primary/90">{list.matchHint}</p>
         )}
         {subtitle && !list.matchedItemTitle && !list.matchHint && (
-          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">
             {highlightQuery ? (
               <SearchHighlight text={subtitle} query={highlightQuery} />
             ) : (
@@ -100,10 +103,10 @@ export function SearchListRow({
           </p>
         )}
         {subtitle && list.matchedItemTitle && (
-          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">{subtitle}</p>
         )}
         {subtitle && !list.matchedItemTitle && list.matchHint && (
-          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{subtitle}</p>
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">{subtitle}</p>
         )}
         <ListCardStats
           saves={list.saveCount ?? 0}
@@ -112,6 +115,7 @@ export function SearchListRow({
           className="mt-1"
         />
       </div>
+      </Card>
     </Link>
   );
 }
@@ -149,25 +153,26 @@ export function SearchItemRow({
   const displayMeta = isDirect ? directMeta : meta;
 
   const surfaceClass = isActive
-    ? 'border-primary bg-primary/[0.06] ring-2 ring-primary/25'
+    ? 'border-primary bg-primary/5 ring-2 ring-primary/25'
     : isDirect
-      ? 'border-amber-200/35 bg-amber-50/30'
+      ? 'border-brand/30 bg-brand/5'
       : isSuggestion
-        ? 'border-wibe/80 bg-wibe-card/60'
-        : 'border-wibe bg-wibe-card';
+        ? 'bg-muted'
+        : 'bg-popover';
 
   return (
     <Link
       ref={innerRef}
       href={`/items/${item.id}`}
       onClick={onClick}
-      className={`flex min-w-0 flex-row-reverse gap-2.5 rounded-xl border p-2 transition-transform active:scale-[0.99] ${surfaceClass} ${
-        compact ? 'p-1.5' : ''
-      }`}
+      className="block"
     >
+      <Card
+        className={`flex min-w-0 gap-2.5 p-2 transition-transform active:scale-95 ${surfaceClass}`}
+      >
       <div
-        className={`shrink-0 overflow-hidden rounded-lg bg-wibe-surface ${
-          compact ? 'h-14 w-14' : 'h-16 w-16 sm:h-[72px] sm:w-[72px]'
+        className={`shrink-0 overflow-hidden rounded-xl bg-muted ${
+          compact ? 'size-14' : 'size-16'
         }`}
       >
         <ImageWithFallback
@@ -178,7 +183,7 @@ export function SearchItemRow({
           fallbackClassName="flex h-full w-full items-center justify-center text-lg"
         />
       </div>
-      <div className="min-w-0 flex-1 text-right">
+      <div className="min-w-0 flex-1 text-start">
         <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground">
           {highlightQuery ? (
             <SearchHighlight text={item.title} query={highlightQuery} />
@@ -190,9 +195,10 @@ export function SearchItemRow({
           <p className="mt-0.5 line-clamp-1 wibe-caption text-primary/90">{item.matchHint}</p>
         )}
         {displayMeta && (
-          <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">{displayMeta}</p>
+          <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">{displayMeta}</p>
         )}
       </div>
+      </Card>
     </Link>
   );
 }
@@ -223,16 +229,15 @@ export function SearchChipButton({
   onClick: () => void;
   variant?: 'default' | 'primary';
 }) {
-  const base =
-    'snap-start shrink-0 rounded-full border px-3 py-2 wibe-caption font-medium transition-transform active:scale-[0.98] min-h-[40px]';
-  const styles =
-    variant === 'primary'
-      ? 'border-primary/20 bg-primary/5 text-primary'
-      : 'border-wibe bg-wibe-card text-foreground shadow-sm';
-
   return (
-    <button type="button" onClick={onClick} className={`${base} ${styles}`}>
+    <Button
+      type="button"
+      onClick={onClick}
+      variant={variant === 'primary' ? 'secondary' : 'outline'}
+      size="sm"
+      className="h-11 snap-start shrink-0 rounded-full"
+    >
       {children}
-    </button>
+    </Button>
   );
 }

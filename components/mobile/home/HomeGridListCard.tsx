@@ -35,7 +35,7 @@ interface HomeGridListCardProps {
 export default function HomeGridListCard({
   list,
   badge,
-  badgeClassName = 'bg-primary/90 text-white',
+  badgeClassName = 'bg-brand text-brand-foreground',
   homeSection,
   showSave = true,
 }: HomeGridListCardProps) {
@@ -43,7 +43,7 @@ export default function HomeGridListCard({
   const textBadge = badge && !isSavedBadge ? badge : null;
 
   return (
-    <div className="group relative w-[10.875rem] shrink-0 snap-start lg:w-full lg:shrink">
+    <div className="group relative w-44 shrink-0 snap-start lg:w-full lg:shrink">
       <Link
         href={`/lists/${list.slug}`}
         onClick={() => {
@@ -55,13 +55,13 @@ export default function HomeGridListCard({
             });
           }
         }}
-        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2"
+        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
       >
-        <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-[0.99] lg:group-hover:border-primary/20 lg:group-hover:shadow-md">
-          <div className="relative aspect-[5/4] w-full bg-wibe-surface sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[11.5rem]">
+        <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-95 lg:group-hover:border-brand/30 lg:group-hover:shadow-md">
+          <div className="relative aspect-[5/4] w-full bg-muted sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-44">
             {!showSave && isSavedBadge ? (
               <span
-                className="absolute start-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-primary/90 text-white shadow-sm"
+                className="absolute start-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm"
                 aria-label="ذخیره‌شده"
               >
                 <Bookmark className="h-3.5 w-3.5 fill-current" strokeWidth={1.75} aria-hidden />
@@ -79,7 +79,7 @@ export default function HomeGridListCard({
               alt={list.title}
               className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-3xl"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl"
               categorySlug={list.categories?.slug}
               listSlug={list.slug}
               listTitle={list.title}
@@ -90,7 +90,7 @@ export default function HomeGridListCard({
               aria-hidden
             />
             <div className="absolute inset-x-0 bottom-0 p-2.5 text-start lg:p-3">
-              <h3 className="line-clamp-2 wibe-small font-semibold text-white drop-shadow-sm lg:leading-snug">
+              <h3 className="line-clamp-2 wibe-small font-semibold text-background drop-shadow-sm lg:leading-snug">
                 {list.title}
               </h3>
             </div>

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
 import {
   LISTS_SECTION_PREVIEW_DESKTOP,
@@ -76,23 +77,25 @@ export default function ListsCategorySection({
         <h2 className="flex min-w-0 flex-1 items-center gap-1.5 wibe-h3">
           {icon ? <span aria-hidden>{icon}</span> : null}
           <span className="truncate">{title}</span>
-          <span className="shrink-0 wibe-caption font-normal text-wibe-secondary tabular-nums">
+          <span className="shrink-0 wibe-caption font-normal text-muted-foreground tabular-nums">
             {lists.length.toLocaleString('fa-IR')} لیست
           </span>
         </h2>
         {hasMore && !expanded && (
           onShowAllCategory ? (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
+              className="h-11 shrink-0 rounded-full border-brand/30 text-brand"
               onClick={() => onShowAllCategory(categoryId, categorySlug)}
-              className="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               مشاهده دسته
-            </button>
+            </Button>
           ) : (
             <Link
               href={filterHref}
-              className="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-3 py-1 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="inline-flex h-11 shrink-0 items-center rounded-full border border-brand/30 bg-brand/5 px-4 text-sm font-semibold text-brand"
             >
               مشاهده دسته
             </Link>
@@ -148,26 +151,30 @@ export default function ListsCategorySection({
       {hasMore && (
         <div className="mt-3 flex justify-center">
           {expanded ? (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="lg"
+              className="rounded-full"
               onClick={() => setExpanded(false)}
-              className="inline-flex items-center gap-1 rounded-full border border-wibe bg-wibe-card px-4 py-2 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary"
             >
-              <ChevronDown className="h-4 w-4 rotate-180" />
+              <ChevronUp />
               نمایش کمتر
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="lg"
+              className="rounded-full border-brand/30 text-brand"
               onClick={() => setExpanded(true)}
-              className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/5 px-4 py-2 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10"
             >
               <ChevronDown className="h-4 w-4" />
               نمایش{' '}
               <span className="lg:hidden">{moreMobile.toLocaleString('fa-IR')}</span>
               <span className="hidden lg:inline">{moreDesktop.toLocaleString('fa-IR')}</span>
               {' '}لیست دیگر
-            </button>
+            </Button>
           )}
         </div>
       )}

@@ -56,27 +56,27 @@ export default function Header({
   const isDark = variant === 'dark';
   const headerClass = isDark
     ? 'sticky top-0 z-50 border-b border-gray-800 bg-gray-950/95 backdrop-blur-sm'
-    : 'sticky top-0 z-50 border-b border-wibe bg-white shadow-sm';
+    : 'sticky top-0 z-50 border-b border-border bg-background/95 shadow-sm backdrop-blur-sm';
   const textClass = isDark ? 'text-white' : 'text-foreground';
-  const iconClass = isDark ? 'text-gray-300' : 'text-wibe-secondary';
+  const iconClass = isDark ? 'text-white/80' : 'text-muted-foreground';
   const buttonClass = isDark
-    ? 'bg-gray-800 hover:bg-gray-700'
-    : 'bg-wibe-surface hover:bg-wibe-surface';
+    ? 'bg-foreground/40 hover:bg-foreground/55'
+    : 'bg-muted hover:bg-muted';
 
   return (
     <header
-      className={`${headerClass} lg:sticky lg:top-14 lg:z-40 lg:mb-0 lg:border-b lg:border-wibe/60 lg:bg-wibe-surface/95 lg:backdrop-blur-sm ${
+      className={`${headerClass} lg:sticky lg:top-14 lg:z-40 lg:mb-0 lg:border-b lg:border-border lg:bg-background/95 lg:backdrop-blur-sm ${
         hideOnDesktop ? 'lg:hidden' : ''
       }`}
       role="banner"
     >
       <div className="flex h-14 items-center justify-between gap-3 px-4 lg:h-12 lg:px-0">
-        <div className="flex min-w-0 flex-1 items-center gap-2 text-right">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-start">
           {showBack && (
             <button
               type="button"
               onClick={() => router.back()}
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${buttonClass}`}
+              className={`flex size-11 shrink-0 items-center justify-center rounded-full transition-colors ${buttonClass}`}
               aria-label="بازگشت"
             >
               <ChevronRight className={`h-6 w-6 ${iconClass}`} strokeWidth={2} />

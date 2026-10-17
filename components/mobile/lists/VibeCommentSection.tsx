@@ -166,17 +166,14 @@ function ReactionPills({
             type="button"
             onClick={() => onSelect(r.type)}
             disabled={isLoading}
-            className={`
-              inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-sm font-medium
-              transition-colors duration-200 active:scale-[0.97] hover:scale-105
-              ${isSelected
-                ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
-                : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface/80 hover:text-foreground'
-              }
-            `}
+            className={`inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors ${
+              isSelected
+                ? 'bg-brand text-brand-foreground'
+                : 'bg-muted text-muted-foreground'
+            }`}
           >
             <span className="text-base">{r.emoji}</span>
-            <span className="tabular-nums">{count}</span>
+            <span>{count.toLocaleString('fa-IR')}</span>
           </button>
         );
       })}
@@ -207,7 +204,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-wibe-surface transition-colors"
+        className="flex size-11 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
         aria-label="گزینه‌های بیشتر"
         aria-expanded={open}
       >
@@ -217,7 +214,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
         <button
           type="button"
           onClick={handleReport}
-          className="w-full flex items-center gap-3 rounded-xl px-3 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-right"
+          className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-start text-sm text-destructive hover:bg-destructive/10"
         >
           <Flag className="w-4 h-4 flex-shrink-0" />
           گزارش نظر
@@ -308,14 +305,14 @@ function VibeCommentItem({
                 {comment.users.name || comment.users.email?.split('@')[0] || 'کاربر'}
               </span>
             )}
-            <span className="text-xs text-wibe-secondary">
+            <span className="text-xs text-muted-foreground">
               {formatRelativeTime(comment.createdAt)}
             </span>
             {comment.users.curatorLevel && (
               <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
             )}
             {isSuggestion && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">➕ پیشنهاد</span>
+              <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">پیشنهاد</span>
             )}
           </div>
           <CommentMoreMenu onReport={() => onReport(comment.id)} />
@@ -330,7 +327,7 @@ function VibeCommentItem({
           </p>
           {!expanded && showReadMore && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-wibe-card to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-popover to-transparent"
               aria-hidden
             />
           )}
@@ -339,13 +336,13 @@ function VibeCommentItem({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-1.5 wibe-caption font-semibold text-primary hover:underline"
+            className="mt-1.5 text-xs font-semibold text-brand"
           >
             {expanded ? 'کمتر' : 'بیشتر بخوان'}
           </button>
         )}
         {isApproved && (
-          <p className="text-xs text-green-600 mt-1.5 flex items-center gap-1.5 font-medium">
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-success">
             <span>✔</span> به لیست اضافه شد
           </p>
         )}
@@ -355,7 +352,7 @@ function VibeCommentItem({
               type="button"
               onClick={() => handleVote(1)}
               aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
-              className={`flex items-center gap-1 text-xs transition-colors ${localVote === 1 ? 'text-green-600 font-medium' : 'text-wibe-secondary hover:text-green-600'}`}
+              className={`flex h-11 items-center gap-1 text-xs ${localVote === 1 ? 'font-medium text-success' : 'text-muted-foreground'}`}
               title="مفید بود"
             >
               <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />
@@ -365,7 +362,7 @@ function VibeCommentItem({
               type="button"
               onClick={() => handleVote(-1)}
               aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
-              className={`flex items-center gap-1 text-xs transition-colors ${localVote === -1 ? 'text-amber-600 font-medium' : 'text-wibe-secondary hover:text-amber-600'}`}
+              className={`flex h-11 items-center gap-1 text-xs ${localVote === -1 ? 'font-medium text-warning' : 'text-muted-foreground'}`}
               title="مفید نبود"
             >
               <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />
@@ -375,25 +372,17 @@ function VibeCommentItem({
         </div>
         {isSuggestion && isOwner && isPending && (
           <div className="flex gap-2 mt-2">
-            <button
-              type="button"
-              onClick={() => onApprove(comment.id)}
-              className="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 text-xs font-medium hover:bg-green-200"
-            >
+            <Button type="button" variant="outline" size="sm" className="h-11 border-success/30 text-success" onClick={() => onApprove(comment.id)}>
               تایید
-            </button>
-            <button
-              type="button"
-              onClick={() => onReject(comment.id)}
-              className="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-medium hover:bg-red-200"
-            >
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="h-11 border-destructive/30 text-destructive" onClick={() => onReject(comment.id)}>
               رد
-            </button>
+            </Button>
           </div>
         )}
         {/* Replies */}
         {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-3 pr-4 border-r-2 border-wibe space-y-2">
+          <div className="mt-3 space-y-2 border-s-2 border-border ps-4">
             {comment.replies.map((reply) => {
               const replyProfileUrl = reply.users.username ? `/u/${encodeURIComponent(reply.users.username)}` : null;
               return (
@@ -432,12 +421,12 @@ function VibeCommentItem({
                     </span>
                   )}
                   {reply.users.curatorLevel && (
-                    <span className="mr-1.5 inline-flex align-middle">
+                    <span className="ms-1.5 inline-flex align-middle">
                       <CuratorBadge level={reply.users.curatorLevel} size="small" glow={false} />
                     </span>
                   )}
-                  <span className="text-wibe-secondary text-xs mr-1">—</span>
-                  <span className="text-wibe-secondary text-xs">{reply.content}</span>
+                  <span className="ms-1 text-xs text-muted-foreground">—</span>
+                  <span className="text-muted-foreground text-xs">{reply.content}</span>
                 </div>
               </div>
             );
@@ -732,7 +721,7 @@ export default function VibeCommentSection({
 
   return (
     <section
-      className={`border-wibe ${
+      className={`border-border ${
         embeddedInSidebar ? 'mt-0 border-t-0 pt-0' : 'mt-8 border-t pt-6'
       }`}
     >
@@ -743,10 +732,10 @@ export default function VibeCommentSection({
             <button
               type="button"
               onClick={() => setSortBy('helpful')}
-              className={`rounded-full px-2.5 py-1 wibe-caption font-medium transition-colors ${
+              className={`h-11 rounded-full px-3 text-sm font-medium ${
                 sortBy === 'helpful'
-                  ? 'bg-primary text-white'
-                  : 'text-wibe-secondary hover:bg-wibe-surface hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
               }`}
             >
               مفیدترین
@@ -754,10 +743,10 @@ export default function VibeCommentSection({
             <button
               type="button"
               onClick={() => setSortBy('newest')}
-              className={`rounded-full px-2.5 py-1 wibe-caption font-medium transition-colors ${
+              className={`h-11 rounded-full px-3 text-sm font-medium ${
                 sortBy === 'newest'
-                  ? 'bg-primary text-white'
-                  : 'text-wibe-secondary hover:bg-wibe-surface hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
               }`}
             >
               جدیدترین
@@ -768,7 +757,7 @@ export default function VibeCommentSection({
 
       <div className="space-y-4">
         {!commentsEnabled && (
-          <p className="wibe-small text-wibe-secondary">کامنت‌ها برای این لیست غیرفعال است</p>
+          <p className="wibe-small text-muted-foreground">کامنت‌ها برای این لیست غیرفعال است</p>
         )}
 
         {/* Thread اول — social proof قبل از کامپوزر */}
@@ -778,7 +767,7 @@ export default function VibeCommentSection({
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : comments.length === 0 ? (
-            <p className="py-2 text-center wibe-caption text-wibe-secondary">
+            <p className="py-2 text-center wibe-caption text-muted-foreground">
               هنوز گفتگویی نیست
               {status === 'authenticated' && commentsEnabled ? ' — اولین نظر را پایین بنویس' : null}
             </p>
@@ -798,11 +787,13 @@ export default function VibeCommentSection({
                 ))}
               </div>
               {hasNextPage ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="lg"
+                  className="mt-4 w-full text-brand"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="mt-4 flex w-full items-center justify-center gap-1 rounded-xl py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/5 disabled:opacity-60"
                 >
                   {isFetchingNextPage ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -815,7 +806,7 @@ export default function VibeCommentSection({
                         : ''}
                     </>
                   )}
-                </button>
+                </Button>
               ) : null}
             </>
           )}
@@ -823,7 +814,7 @@ export default function VibeCommentSection({
 
         {/* کامپوزر جمع‌وجور پایین thread */}
         {commentsEnabled && status === 'authenticated' ? (
-          <div className="space-y-2 border-t border-wibe/60 pt-3">
+          <div className="space-y-2 border-t border-border pt-3">
             <VibeCommentInput
               isExpanded={isFormExpanded}
               onExpand={() => setIsFormExpanded(true)}
@@ -835,21 +826,17 @@ export default function VibeCommentSection({
               suggestionMaxLength={suggestionMaxLength}
             />
             {onOpenSuggestItem ? (
-              <button
-                type="button"
-                onClick={handleSuggestionClick}
-                className="inline-flex items-center gap-1 px-1 wibe-caption font-medium text-primary hover:underline"
-              >
-                + پیشنهاد آیتم
-              </button>
+              <Button type="button" variant="ghost" size="sm" className="h-11 text-brand" onClick={handleSuggestionClick}>
+                پیشنهاد آیتم
+              </Button>
             ) : null}
           </div>
         ) : null}
 
         {status === 'unauthenticated' && commentsEnabled ? (
-          <p className="border-t border-wibe/60 pt-3 wibe-caption text-wibe-secondary">
+          <p className="border-t border-border pt-3 text-sm text-muted-foreground">
             برای ثبت نظر{' '}
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <Link href="/login" className="font-medium text-brand">
               وارد شو
             </Link>
           </p>

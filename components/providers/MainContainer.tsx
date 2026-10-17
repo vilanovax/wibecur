@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import DesktopTopNav from '@/components/mobile/layout/DesktopTopNav';
 import DesktopSiteFooter from '@/components/mobile/layout/DesktopSiteFooter';
+import { ToastProvider } from '@/components/ui/toast';
 import {
   DESKTOP_SITE_SHELL_CLASS,
   DESKTOP_CONTENT_PADDING_CLASS,
@@ -52,6 +53,7 @@ export default function MainContainer({
   }
 
   return (
+    <ToastProvider>
     <div data-theme="paper" className="w-full min-w-0 overflow-x-clip bg-background text-foreground lg:min-h-screen">
       <div className={DESKTOP_SITE_SHELL_CLASS}>
         <DesktopTopNav />
@@ -65,5 +67,6 @@ export default function MainContainer({
         </div>
       </div>
     </div>
+    </ToastProvider>
   );
 }

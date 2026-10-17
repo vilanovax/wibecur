@@ -62,7 +62,7 @@ export default async function CategoriesIndexPage() {
   ];
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <JsonLdBreadcrumb
         items={[
           { name: 'خانه', path: '/' },
@@ -73,7 +73,7 @@ export default async function CategoriesIndexPage() {
       <CategoryNavStrip initialCategories={menuCategories} />
       <main className="px-2.5 pt-3">
         <PageBreadcrumb className="mb-3 px-1.5" items={breadcrumbItems} />
-        <p className="mb-4 wibe-small text-wibe-secondary">
+        <p className="mb-4 text-sm text-muted-foreground">
           بر اساس موضوع، لیست‌های کیوریت‌شده را پیدا کن
         </p>
 

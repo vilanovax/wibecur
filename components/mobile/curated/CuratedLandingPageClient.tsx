@@ -171,7 +171,7 @@ export default function CuratedLandingPageClient({
   const forYouPending = isLoggedIn && forYouInView && prefsLoading && !userPrefs;
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <ExploreSmartHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -182,8 +182,8 @@ export default function CuratedLandingPageClient({
       <main className="space-y-0">
         {isError && !data?.lists?.length ? (
           <div className="px-2.5 py-6 text-center">
-            <p className="wibe-body text-wibe-secondary">بارگذاری اکسپلور ناموفق بود</p>
-            <p className="mt-1 wibe-caption text-wibe-secondary/80">
+            <p className="wibe-body text-muted-foreground">بارگذاری اکسپلور ناموفق بود</p>
+            <p className="mt-1 wibe-caption text-muted-foreground/80">
               اتصال را چک کن و صفحه را دوباره باز کن
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function CuratedLandingPageClient({
               !(search.viewTab === 'lists' && search.loadingMore) ? (
               <div className="py-10 text-center">
                 <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
-                <p className="mt-1 wibe-caption text-wibe-secondary">
+                <p className="mt-1 wibe-caption text-muted-foreground">
                   عبارت دیگری امتحان کن یا از کلمات کلیدی ژانر استفاده کن
                 </p>
               </div>
@@ -275,13 +275,13 @@ export default function CuratedLandingPageClient({
 
             {sections.filtered.length === 0 && (
               <div className="px-2.5 py-12 text-center">
-                <p className="wibe-body text-wibe-secondary">لیستی یافت نشد</p>
-                <p className="mt-2 wibe-caption text-wibe-secondary/80">
+                <p className="wibe-body text-muted-foreground">لیستی یافت نشد</p>
+                <p className="mt-2 wibe-caption text-muted-foreground/80">
                   اولین لیستت را بساز یا در صفحهٔ لیست‌ها جستجو کن
                 </p>
                 <Link
                   href="/lists"
-                  className="mt-4 inline-block rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white"
+                  className="mt-4 inline-flex h-12 items-center rounded-control bg-brand px-4 text-sm font-semibold text-brand-foreground"
                 >
                   رفتن به لیست‌ها
                 </Link>

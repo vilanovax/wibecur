@@ -6,6 +6,7 @@ import ExploreSectionTitle from './ExploreSectionTitle';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import type { CuratedList } from '@/types/curated';
+import { Card } from '@/components/ui/card';
 
 interface ForYouSectionProps {
   lists: CuratedList[];
@@ -45,7 +46,7 @@ export default function ForYouSection({
   return (
     <section
       id="foryou"
-      className="border-t border-wibe/60 px-2.5 py-4 lg:px-0 lg:py-5"
+      className="border-t border-border px-3 py-4 lg:px-0 lg:py-5"
       aria-labelledby="foryou-title"
     >
       <ExploreSectionTitle id="foryou-title" title={title} subtitle={subtitle} icon="✨" />
@@ -64,19 +65,20 @@ export default function ForYouSection({
             <Link
               key={list.id}
               href={`/lists/${list.slug}`}
-              className={`group flex flex-row-reverse gap-2.5 rounded-xl border p-2.5 shadow-sm transition-[colors,transform] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:gap-3 lg:p-3 lg:hover:shadow-md ${
-                index === 0
-                  ? 'border-primary/25 bg-primary/[0.04]'
-                  : 'border-wibe bg-wibe-card'
-              }`}
+              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
-              <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-wibe-surface lg:h-20 lg:w-20">
+              <Card
+                className={`flex gap-3 p-3 transition-transform active:scale-95 ${
+                  index === 0 ? 'border-brand/30 bg-brand/5' : 'bg-popover'
+                }`}
+              >
+              <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted lg:size-20">
                 <ImageWithFallback
                   src={trustedCover}
                   alt={list.title}
                   className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-105"
                   fallbackIcon="📋"
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
                   width={80}
                   height={80}
                   priority={index === 0}
@@ -85,16 +87,17 @@ export default function ForYouSection({
                   listTitle={list.title}
                 />
               </div>
-              <div className="min-w-0 flex-1 text-right">
+              <div className="min-w-0 flex-1 text-start">
                 <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:text-base">
                   {list.title}
                 </h3>
                 {categoryLabel ? (
-                  <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary lg:text-sm">
+                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground lg:text-sm">
                     {categoryLabel}
                   </p>
                 ) : null}
               </div>
+              </Card>
             </Link>
           );
         })}

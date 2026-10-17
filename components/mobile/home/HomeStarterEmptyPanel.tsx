@@ -7,6 +7,8 @@ import HomeGridListCard from './HomeGridListCard';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { openHomeCreateSheet } from '@/lib/home-create-sheet';
 import { ACTIVATION } from '@/lib/activation-copy';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 type Props = {
   lists: HomeListData[];
@@ -45,14 +47,14 @@ export default function HomeStarterEmptyPanel({
   const Icon = copy.Icon;
 
   return (
-    <div className="mx-4 rounded-2xl border border-dashed border-wibe bg-wibe-card/80 p-4 lg:mx-0 lg:p-5">
+    <Card className="mx-4 border-dashed bg-popover p-4 lg:mx-0 lg:p-5">
       <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
           <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="text-balance wibe-h3 text-foreground">{copy.title}</h3>
-          <p className="mt-1.5 text-pretty wibe-small leading-relaxed text-wibe-secondary">
+          <p className="mt-1.5 text-pretty wibe-small leading-relaxed text-muted-foreground">
             {copy.description}
           </p>
         </div>
@@ -67,7 +69,7 @@ export default function HomeStarterEmptyPanel({
               key={list.id}
               list={list}
               badge="پیشنهاد شروع"
-              badgeClassName="bg-primary/90 text-white"
+              badgeClassName="bg-brand text-brand-foreground"
             />
           ))}
         </div>
@@ -76,35 +78,31 @@ export default function HomeStarterEmptyPanel({
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Link
           href={copy.primaryHref}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
+          className="inline-flex h-12 items-center gap-1.5 rounded-control bg-brand px-4 text-sm font-semibold text-brand-foreground"
         >
-          <Sparkles className="h-4 w-4" aria-hidden />
+          <Sparkles className="size-4" aria-hidden />
           {copy.primary}
         </Link>
         {isGuest ? (
           <Link
             href="/login?callbackUrl=%2F&source=home_empty"
-            className="inline-flex items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 wibe-small font-medium text-foreground transition-colors hover:border-primary/30"
+            className="inline-flex h-12 items-center rounded-control border border-border bg-popover px-4 text-sm font-medium text-foreground"
           >
             {copy.secondary}
           </Link>
         ) : (
-          <button
-            type="button"
-            onClick={openHomeCreateSheet}
-            className="inline-flex items-center rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 wibe-small font-medium text-foreground transition-colors hover:border-primary/30"
-          >
+          <Button type="button" variant="outline" size="lg" onClick={openHomeCreateSheet}>
             {copy.secondary}
-          </button>
+          </Button>
         )}
       </div>
 
       {variant === 'saved' ? (
-        <p className="mt-3 flex items-center gap-1 wibe-caption text-wibe-secondary">
-          <Bookmark className="h-3.5 w-3.5 text-primary" aria-hidden />
+        <p className="mt-3 flex items-center gap-1 wibe-caption text-muted-foreground">
+          <Bookmark className="size-4 text-brand" aria-hidden />
           {saved.footer}
         </p>
       ) : null}
-    </div>
+    </Card>
   );
 }

@@ -1,30 +1,30 @@
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+
 export default function UserListDetailSkeleton() {
   return (
-    <main className="min-h-[100dvh] space-y-6 bg-wibe-surface">
-      <div className="h-[168px] animate-pulse bg-wibe-card sm:h-[190px]" />
+    <main className="min-h-[100dvh] space-y-6 bg-background">
+      <Skeleton className="h-40 w-full rounded-none sm:h-48" />
       <div className="space-y-3 px-4">
-        <div className="h-8 w-36 animate-pulse rounded-md bg-wibe-card" />
-        <div className="h-4 w-full animate-pulse rounded bg-wibe-card" />
-        <div className="h-4 w-[80%] animate-pulse rounded bg-wibe-card" />
-        <div className="h-11 w-full animate-pulse rounded-md bg-wibe-card" />
+        <Skeleton className="h-8 w-36" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
+        <Skeleton className="h-12 w-full rounded-xl" />
       </div>
       <div className="space-y-3 px-4">
         <div className="mb-4 flex items-center justify-between">
-          <div className="h-6 w-32 animate-pulse rounded bg-wibe-card" />
-          <div className="h-9 w-28 animate-pulse rounded-md bg-wibe-card" />
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-11 w-28 rounded-xl" />
         </div>
         {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex gap-3 rounded-lg border border-wibe bg-wibe-card p-3"
-          >
-            <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-wibe-surface" />
-            <div className="h-14 w-14 shrink-0 animate-pulse rounded-md bg-wibe-surface" />
+          <Card key={i} className="flex gap-3 bg-popover p-3">
+            <Skeleton className="size-11 shrink-0 rounded-full" />
+            <Skeleton className="size-16 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1 space-y-2 py-1">
-              <div className="h-4 w-[66%] animate-pulse rounded bg-wibe-surface" />
-              <div className="h-3 w-full animate-pulse rounded bg-wibe-surface" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-full" />
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </main>

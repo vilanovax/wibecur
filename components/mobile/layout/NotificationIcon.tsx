@@ -6,6 +6,11 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { formatRelativeTime } from '@/lib/format-relative-time';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { useRefetchOnVisible } from '@/lib/hooks/useRefetchOnVisible';
 
 interface Notification {
@@ -38,14 +43,14 @@ function NotificationSkeleton() {
   return (
     <div className="space-y-2 px-2.5 py-2">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="flex gap-2.5 rounded-xl border border-wibe p-3">
-          <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-wibe-surface" />
+        <Card key={i} className="flex gap-3 bg-popover p-3">
+          <Skeleton className="size-11 shrink-0 rounded-full" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 animate-pulse rounded bg-wibe-surface" />
-            <div className="h-3 w-full animate-pulse rounded bg-wibe-surface" />
-            <div className="h-3 w-16 animate-pulse rounded bg-wibe-surface" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-16" />
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
@@ -65,23 +70,22 @@ function PreferenceToggle({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 py-2.5">
-      <span className="min-w-0 text-right">
-        <span className="block wibe-small font-medium text-foreground">{label}</span>
+    <div className="flex min-h-11 items-center justify-between gap-3 py-2">
+      <span className="min-w-0 text-start">
+        <span className="block text-sm font-medium text-foreground">{label}</span>
         {description && (
-          <span className="mt-0.5 block wibe-caption leading-relaxed text-wibe-secondary">
+          <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
             {description}
           </span>
         )}
       </span>
-      <input
-        type="checkbox"
+      <Switch
         checked={checked}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-5 w-5 shrink-0 rounded border-wibe text-primary focus-visible:ring-primary/30"
+        onCheckedChange={onChange}
+        aria-label={label}
       />
-    </label>
+    </div>
   );
 }
 
@@ -331,85 +335,79 @@ export function NotificationSheet({
       maxHeight="78vh"
       headerAction={
         unreadCount > 0 ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
+            className="h-11 text-brand"
             onClick={markAllAsRead}
-            className="flex h-9 items-center gap-1 rounded-lg px-2 wibe-caption font-medium text-primary transition-colors hover:bg-primary/5"
             aria-label="علامت‌گذاری همه به عنوان خوانده‌شده"
           >
-            <CheckCheck className="h-4 w-4" />
-            <span className="hidden min-[360px]:inline">همه خوانده</span>
-          </button>
+            <CheckCheck />
+            همه خوانده
+          </Button>
         ) : undefined
       }
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {fetchFailed && !isLoading && (
-          <div className="mx-2.5 mb-2 flex items-center justify-between rounded-lg border border-warning/30 bg-warning/5 px-3 py-2">
-            <p className="wibe-caption text-wibe-secondary">بارگذاری ناموفق</p>
-            <button
-              type="button"
-              onClick={() => fetchNotifications()}
-              className="flex items-center gap-1 wibe-caption font-medium text-primary"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
+          <Card className="mx-3 mb-2 flex items-center justify-between border-warning/30 bg-warning/5 px-3 py-2">
+            <p className="text-xs text-muted-foreground">بارگذاری ناموفق</p>
+            <Button type="button" variant="ghost" size="sm" className="h-11" onClick={() => fetchNotifications()}>
+              <RefreshCw />
               تلاش مجدد
-            </button>
-          </div>
+            </Button>
+          </Card>
         )}
 
         <div className="flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom,8px)]">
           {isLoading && notifications.length === 0 ? (
             <NotificationSkeleton />
           ) : notifications.length === 0 ? (
-            <div className="px-4 py-14 text-center">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-wibe-surface">
-                <Bell className="h-7 w-7 text-wibe-secondary/60" strokeWidth={1.5} />
-              </div>
-              <p className="wibe-body font-medium text-foreground">اعلانی نداری</p>
-              <p className="mt-1 wibe-caption text-wibe-secondary">
-                وقتی لیست ذخیره‌شده به‌روز شود یا پیشنهادت تایید شود اینجا می‌بینی
-              </p>
-            </div>
+            <EmptyState
+              icon={Bell}
+              title="اعلانی نداری"
+              description="وقتی لیست ذخیره‌شده به‌روز شود یا پیشنهادت تأیید شود، اینجا می‌بینی."
+            />
           ) : (
             <>
               {readCount > 0 && (
-                <div className="flex justify-end px-2.5 pt-1">
-                  <button
+                <div className="flex px-3 pt-1">
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-11"
                     onClick={() => void deleteReadNotifications()}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-foreground"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 />
                     حذف خوانده‌شده‌ها
-                  </button>
+                  </Button>
                 </div>
               )}
               <ul className="space-y-2 px-2.5 py-2" aria-label="لیست اعلان‌ها">
                 {notifications.map((notification) => {
-                  const rowClass = `flex items-start gap-2 rounded-xl border p-3 transition-colors active:scale-[0.99] ${
-                    !notification.read
-                      ? 'border-primary/20 bg-primary/[0.04]'
-                      : 'border-wibe bg-wibe-card'
-                  }`;
+                  const rowClass = !notification.read
+                    ? 'flex items-start gap-2 border-brand/30 bg-brand/5 p-3'
+                    : 'flex items-start gap-2 bg-popover p-3';
 
                   return (
                     <li key={notification.id}>
-                      <div className={rowClass}>
+                      <Card className={rowClass}>
                         <button
                           type="button"
-                          className="flex min-w-0 flex-1 gap-2.5 text-right"
+                          className="flex min-w-0 flex-1 gap-3 text-start"
                           onClick={(e) => handleNotificationClick(e, notification)}
                         >
                           <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${
-                              !notification.read ? 'bg-primary/10' : 'bg-wibe-surface'
+                            className={`flex size-11 shrink-0 items-center justify-center rounded-full text-lg ${
+                              !notification.read ? 'bg-brand/10' : 'bg-muted'
                             }`}
                             aria-hidden
                           >
                             {notificationEmoji(notification.type)}
                           </div>
-                          <div className="min-w-0 flex-1 text-right">
+                          <div className="min-w-0 flex-1 text-start">
                             <div className="flex items-start justify-between gap-2">
                               <h3
                                 className={`line-clamp-1 wibe-small leading-snug ${
@@ -422,28 +420,30 @@ export function NotificationSheet({
                               </h3>
                               {!notification.read && (
                                 <span
-                                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary"
+                                  className="mt-1.5 size-2 shrink-0 rounded-full bg-brand"
                                   aria-label="خوانده‌نشده"
                                 />
                               )}
                             </div>
-                            <p className="mt-0.5 line-clamp-2 wibe-caption leading-relaxed text-wibe-secondary">
+                            <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                               {notification.message}
                             </p>
-                            <p className="mt-1.5 wibe-caption text-wibe-secondary/70">
+                            <p className="mt-1.5 text-xs text-muted-foreground/70">
                               {formatRelativeTime(notification.createdAt)}
                             </p>
                           </div>
                         </button>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-11 shrink-0 self-start rounded-full"
                           onClick={() => void deleteNotification(notification.id)}
-                          className="flex h-7 w-7 shrink-0 items-center justify-center self-start rounded-lg text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-foreground"
                           aria-label="حذف اعلان"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                          <Trash2 />
+                        </Button>
+                      </Card>
                     </li>
                   );
                 })}
@@ -451,8 +451,8 @@ export function NotificationSheet({
             </>
           )}
 
-          <div className="mx-2.5 mt-2 rounded-2xl border border-wibe bg-wibe-card px-3">
-            <p className="py-2.5 wibe-caption font-semibold uppercase tracking-wide text-wibe-secondary">
+          <Card className="mx-3 mt-2 bg-popover px-3">
+            <p className="py-3 text-sm font-semibold text-foreground">
               تنظیمات اعلان
             </p>
             <PreferenceToggle
@@ -462,7 +462,7 @@ export function NotificationSheet({
               disabled={isSavingPref}
               onChange={(value) => void updateBookmarkPref(value)}
             />
-          </div>
+          </Card>
         </div>
       </div>
     </BottomSheet>
@@ -472,11 +472,11 @@ export function NotificationSheet({
 export function NotificationUnreadBadge({ count }: { count: number }) {
   if (count <= 0) return null;
 
-  const label = count > 9 ? '9+' : count.toLocaleString('fa-IR');
+  const label = count > 9 ? '۹+' : count.toLocaleString('fa-IR');
 
   return (
     <span
-      className="pointer-events-none absolute -top-0.5 -left-0.5 z-20 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 wibe-caption font-bold leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)] ring-2 ring-[var(--color-bg,#fff)]"
+      className="pointer-events-none absolute -top-0.5 end-0 z-20 flex size-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold leading-none text-white ring-2 ring-background"
       aria-hidden
     >
       {label}

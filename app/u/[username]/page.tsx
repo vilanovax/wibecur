@@ -50,7 +50,7 @@ export default async function PublicProfilePage({
   });
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(profileJsonLd) }}

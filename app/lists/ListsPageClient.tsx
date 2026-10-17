@@ -872,7 +872,7 @@ export default function ListsPageClient({
 
       {showBrowseToolbar && (
         <>
-          <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
+          <div className="sticky top-14 z-20 border-b border-border bg-background/95 backdrop-blur-md lg:top-14">
             <div className="flex items-center gap-1.5 px-4 py-2 lg:gap-2 lg:px-0">
               <div className="min-w-0 flex-1 overflow-x-auto scrollbar-hide">
                 <SegmentedControl
@@ -899,36 +899,32 @@ export default function ListsPageClient({
           <div className="py-2 ps-4 lg:px-0" aria-label="فیلتر دسته">
             <div className="me-20 overflow-hidden lg:me-0 lg:overflow-visible">
             <div className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto pe-1 scrollbar-hide lg:flex-wrap lg:snap-none lg:overflow-visible lg:pe-0">
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant={isAllCategoriesSelected ? 'default' : 'outline'}
               data-category-chip="all"
               onClick={handleAllCategoriesClick}
-              className={`h-11 flex-shrink-0 snap-start rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:snap-align-none lg:px-3 ${toolbarBtnFocus} ${
-                isAllCategoriesSelected
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
-              }`}
+              className="h-11 shrink-0 snap-start rounded-full"
             >
               همه
-            </button>
+            </Button>
             {activeCategories.map((cat) => {
               const isSelected = isCategorySelected(cat.id);
               return (
-                <button
+                <Button
                   key={cat.id}
                   type="button"
+                  size="sm"
+                  variant={isSelected ? 'default' : 'outline'}
                   data-category-chip={cat.id}
                   onClick={() => handleCategoryClick(cat.id)}
                   aria-pressed={isSelected}
-                  className={`h-11 flex-shrink-0 snap-start whitespace-nowrap rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:snap-align-none lg:px-3 ${toolbarBtnFocus} ${
-                    isSelected
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
-                  }`}
+                  className="h-11 shrink-0 snap-start rounded-full"
                 >
                   {cat.icon ? `${cat.icon} ` : ''}
                   {cat.name}
-                </button>
+                </Button>
               );
             })}
             </div>
@@ -944,21 +940,24 @@ export default function ListsPageClient({
                   return (
                     <span
                       key={v}
-                      className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-medium text-primary"
+                      className="inline-flex min-h-11 items-center rounded-full bg-brand/10 px-3 text-xs font-medium text-brand"
                     >
                       {label}
                     </span>
                   );
                 })}
               {filterState.creatorType !== 'all' && (
-                <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 wibe-caption font-medium text-primary">
+                <span className="inline-flex min-h-11 items-center rounded-full bg-brand/10 px-3 text-xs font-medium text-brand">
                   {filterState.creatorType === 'top' && 'کیوریتور برتر'}
                   {filterState.creatorType === 'new' && 'تازه‌وارد'}
                   {filterState.creatorType === 'viral' && 'وایرال'}
                 </span>
               )}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
+                className="ms-auto h-11 text-brand"
                 onClick={() =>
                   setFilterState((s) => ({
                     ...s,
@@ -968,15 +967,14 @@ export default function ListsPageClient({
                     minRating: 0,
                   }))
                 }
-                className={`ms-auto wibe-caption font-medium text-primary hover:underline ${toolbarBtnFocus}`}
               >
-                پاک فیلتر
-              </button>
+                پاک کردن فیلتر
+              </Button>
             </div>
           )}
 
           {showContextBar && (
-            <p className="px-4 pb-1.5 wibe-caption text-wibe-secondary lg:px-0">
+            <p className="px-4 pb-1.5 wibe-caption text-muted-foreground lg:px-0">
               {contextParts.join(' · ')}
             </p>
           )}
@@ -1067,10 +1065,10 @@ export default function ListsPageClient({
                   key={category.id}
                   fallback={
                     <section className="mb-6" aria-hidden>
-                      <div className="mb-3 h-6 w-36 animate-pulse rounded bg-wibe-surface" />
+                      <div className="mb-3 h-6 w-36 animate-pulse rounded bg-muted" />
                       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
                         {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="aspect-[5/4] animate-pulse rounded-xl bg-wibe-surface" />
+                          <div key={i} className="aspect-[5/4] animate-pulse rounded-xl bg-muted" />
                         ))}
                       </div>
                     </section>
@@ -1125,14 +1123,14 @@ export default function ListsPageClient({
                       ) : null}
                       <span className="truncate">{selectedCategory.name}</span>
                     </h2>
-                    <span className="shrink-0 wibe-caption text-wibe-secondary tabular-nums">
+                    <span className="shrink-0 wibe-caption text-muted-foreground tabular-nums">
                       {sortedLists.length.toLocaleString('fa-IR')} لیست
                     </span>
                   </div>
                 )}
 
                 {searchQuery.trim() && (
-                  <p className="mb-3 wibe-caption text-wibe-secondary lg:mb-4">
+                  <p className="mb-3 wibe-caption text-muted-foreground lg:mb-4">
                     {sortedLists.length.toLocaleString('fa-IR')} نتیجه برای «{normalizedSearch}»
                   </p>
                 )}
@@ -1223,7 +1221,7 @@ function SavedBookmarksSkeleton() {
   return (
     <div className="space-y-2">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-[80px] bg-wibe-surface rounded-lg animate-pulse" />
+        <div key={i} className="h-20 animate-pulse rounded-surface bg-muted" />
       ))}
     </div>
   );

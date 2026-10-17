@@ -76,8 +76,8 @@ export default function ItemLikeButton({
   if (status === 'loading' || (deferReady && viewerLoading && !viewerState)) {
     return (
       <div
-        className={`h-10 animate-pulse ${
-          isHero ? 'w-14 rounded-lg bg-white/20' : 'w-10 rounded-full bg-wibe-surface'
+        className={`size-11 animate-pulse ${
+          isHero ? 'w-14 rounded-lg bg-background/20' : 'rounded-full bg-muted'
         }`}
         aria-hidden
       />
@@ -89,12 +89,12 @@ export default function ItemLikeButton({
       return (
         <Link
           href={loginHref}
-          className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white border border-wibe hover:border-red-300 hover:bg-red-50 transition-colors"
+          className="relative flex size-11 items-center justify-center rounded-full border border-border bg-popover"
           aria-label="ورود برای پسندیدن"
         >
-          <Heart className="w-5 h-5 text-wibe-secondary" />
+          <Heart className="size-5 text-muted-foreground" />
           {likeCount > 0 && (
-            <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-wibe-surface0 text-white wibe-caption font-bold rounded-full flex items-center justify-center shadow-sm">
+            <span className="absolute -top-1 end-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold text-brand-foreground">
               {likeCount > 99 ? '۹۹+' : countLabel}
             </span>
           )}
@@ -107,12 +107,12 @@ export default function ItemLikeButton({
         href={loginHref}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${
           isHero
-            ? 'bg-white/15 text-white border border-white/20 hover:bg-white/25 backdrop-blur-sm'
-            : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'
+            ? 'bg-background/15 text-background border border-background/20 hover:bg-background/25 backdrop-blur-sm'
+            : 'h-11 rounded-control bg-muted text-muted-foreground'
         }`}
         aria-label="ورود برای پسندیدن"
       >
-        <Heart className={`w-4 h-4 ${isHero ? 'text-white/90' : 'text-wibe-secondary'}`} />
+        <Heart className={`size-4 ${isHero ? 'text-background/90' : 'text-muted-foreground'}`} />
         {countLabel && !isCompact && <span className="text-sm font-medium">{countLabel}</span>}
       </Link>
     );
@@ -133,7 +133,7 @@ export default function ItemLikeButton({
           onChange={() => {
             if (!isLoading && session?.user) toggleLike();
           }}
-          className={isLoading ? 'pointer-events-none opacity-60' : undefined}
+          className={isLoading ? 'pointer-events-none h-11 opacity-60' : 'h-11'}
         />
       </span>
     );
@@ -147,11 +147,11 @@ export default function ItemLikeButton({
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
         isLiked
           ? isHero
-            ? 'bg-white/25 text-white border border-white/30'
-            : 'bg-red-50 text-red-600 hover:bg-red-100'
+            ? 'bg-background/25 text-background border border-background/30'
+            : 'h-11 rounded-control bg-destructive/10 text-destructive'
           : isHero
-            ? 'bg-white/15 text-white border border-white/20 hover:bg-white/25 backdrop-blur-sm'
-            : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'
+            ? 'bg-background/15 text-background border border-background/20 hover:bg-background/25 backdrop-blur-sm'
+            : 'h-11 rounded-control bg-muted text-muted-foreground'
       }`}
       aria-label={isLiked ? 'حذف لایک' : 'لایک'}
     >
@@ -159,15 +159,15 @@ export default function ItemLikeButton({
         className={`w-4 h-4 transition-colors ${
           isLiked
             ? isHero
-              ? 'fill-white text-white'
-              : 'fill-red-500 text-red-500'
+              ? 'fill-background text-background'
+              : 'fill-destructive text-destructive'
             : isHero
-              ? 'text-white/90'
-              : 'text-wibe-secondary'
+              ? 'text-background/90'
+              : 'text-muted-foreground'
         }`}
       />
       {countLabel && (
-        <span className={`text-sm font-medium ${isLiked && !isHero ? 'text-red-600' : ''}`}>
+        <span className={`text-sm font-medium ${isLiked && !isHero ? 'text-destructive' : ''}`}>
           {countLabel}
         </span>
       )}

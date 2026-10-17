@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Skeleton } from '@/components/ui/skeleton';
+import { fa } from '@/lib/utils';
 
 type TabType = 'global' | 'rising' | 'category' | 'monthly';
 
@@ -27,7 +28,7 @@ interface LeaderboardClientProps {
 
 const TOP3_STYLES: Record<number, { card: string; medal: string }> = {
   1: { card: 'border-warning/40 bg-warning/5', medal: 'bg-warning text-white' },
-  2: { card: 'border-wibe bg-wibe-surface', medal: 'bg-foreground/40 text-white' },
+  2: { card: 'border-border bg-muted', medal: 'bg-foreground/40 text-white' },
   3: { card: 'border-warning/30 bg-warning/5', medal: 'bg-warning/80 text-white' },
 };
 
@@ -37,27 +38,27 @@ function RankChangeIndicator({ change }: { change: number }) {
   return (
     <span
       className={`inline-flex items-center wibe-caption font-medium tabular-nums ${
-        isUp ? 'text-success' : 'text-danger'
+        isUp ? 'text-success' : 'text-destructive'
       }`}
     >
-      {isUp ? `↑ ${change}` : `↓ ${Math.abs(change)}`}
+      {isUp ? `↑ ${fa(change)}` : `↓ ${fa(Math.abs(change))}`}
     </span>
   );
 }
 
 function CreatorStatsLine({ row }: { row: LeaderboardRow }) {
   return (
-    <p className="wibe-caption text-wibe-secondary flex items-center justify-center gap-1 flex-wrap">
-      <span className="inline-flex items-center gap-0.5 text-primary font-medium">
-        <Bookmark className="w-3 h-3" />
+    <p className="flex flex-wrap items-center justify-center gap-1 text-xs text-muted-foreground">
+      <span className="inline-flex items-center gap-0.5 font-medium text-brand">
+        <Bookmark className="size-3" />
         {row.totalSaves.toLocaleString('fa-IR')}
       </span>
       <span>·</span>
-      <span>{row.listCount} لیست</span>
+      <span>{fa(row.listCount)} لیست</span>
       {row.viralCount > 0 && (
         <>
           <span>·</span>
-          <span>{row.viralCount} ترند</span>
+          <span>{fa(row.viralCount)} ترند</span>
         </>
       )}
     </p>
@@ -79,15 +80,15 @@ function AvatarWithGlow({
     row.avatarType === 'DEFAULT' && row.avatarId
       ? resolveVibeAvatar(row.avatarId)
       : null;
-  const sizeClass = size === 'sm' ? 'w-10 h-10' : size === 'lg' ? 'w-16 h-16' : 'w-12 h-12';
-  const avatarSize = size === 'sm' ? 40 : size === 'lg' ? 64 : 48;
+  const sizeClass = size === 'sm' ? 'size-11' : size === 'lg' ? 'size-16' : 'size-12';
+  const avatarSize = size === 'sm' ? 44 : size === 'lg' ? 64 : 48;
 
   return (
     <div className="relative flex-shrink-0">
       {showGlow && (
         <div className={`absolute -inset-1 rounded-full blur-md opacity-50 ${levelConfig.glowClass}`} aria-hidden />
       )}
-      <div className={`relative ${sizeClass} rounded-full overflow-hidden border-2 border-wibe-card bg-wibe-surface shadow-sm`}>
+      <div className={`relative ${sizeClass} overflow-hidden rounded-full border border-border bg-muted shadow-sm`}>
         {vibeAvatar ? (
           <VibeAvatarDisplay avatar={vibeAvatar} size={avatarSize} className="h-full w-full" />
         ) : row.image ? (
@@ -96,10 +97,10 @@ function AvatarWithGlow({
             alt={row.name || ''}
             className="w-full h-full object-cover"
             fallbackIcon={(row.name?.[0] || '?').toUpperCase()}
-            fallbackClassName="w-full h-full bg-primary text-white font-bold flex items-center justify-center"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-brand font-bold text-brand-foreground"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-primary text-white font-bold">
+          <div className="flex h-full w-full items-center justify-center bg-brand font-bold text-brand-foreground">
             {(row.name?.[0] || '?').toUpperCase()}
           </div>
         )}
@@ -210,10 +211,10 @@ export default function LeaderboardClient({
               key={c.slug}
               type="button"
               onClick={() => setCategorySlug(c.slug)}
-              className={`h-11 shrink-0 rounded-xl border px-3 text-sm font-medium transition-colors ${
+              className={`h-11 shrink-0 rounded-full border px-3 text-sm font-medium transition-colors ${
                 categorySlug === c.slug
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-popover text-muted-foreground'
+                  ? 'border-brand bg-brand text-brand-foreground'
+                  : 'border-border bg-popover text-foreground'
               }`}
             >
               {c.icon} {c.name}
@@ -223,7 +224,7 @@ export default function LeaderboardClient({
       )}
 
       {tab === 'monthly' && (
-        <p className="wibe-caption text-wibe-secondary mb-2">رتبه‌بندی این ماه — هر ماه از نو محاسبه می‌شود.</p>
+        <p className="mb-2 text-sm text-muted-foreground">رتبه‌بندی این ماه — هر ماه از نو محاسبه می‌شود.</p>
       )}
 
       {loading ? (
@@ -305,7 +306,7 @@ export default function LeaderboardClient({
                     <p className="wibe-small font-semibold text-foreground truncate">{row.name || 'کاربر'}</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <CuratorBadge level={(row.curatorLevel || 'EXPLORER') as CuratorLevelKey} size="small" glow={false} />
-                      <span className="wibe-caption text-primary font-medium inline-flex items-center gap-0.5">
+                      <span className="inline-flex items-center gap-0.5 text-xs font-medium text-brand">
                         <Bookmark className="w-3 h-3" />
                         {row.totalSaves.toLocaleString('fa-IR')}
                       </span>

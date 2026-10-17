@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, Loader2, X } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import Toast from '@/components/shared/Toast';
+import { Button } from '@/components/ui/button';
 
 interface DeleteListConfirmModalProps {
   isOpen: boolean;
@@ -64,8 +65,8 @@ export default function DeleteListConfirmModal({
         <div className="p-6 space-y-6">
           {/* Warning Icon */}
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+            <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="size-8 text-destructive" />
             </div>
           </div>
 
@@ -74,43 +75,35 @@ export default function DeleteListConfirmModal({
             <h3 className="text-lg font-bold text-foreground">
               آیا مطمئن هستید؟
             </h3>
-            <p className="text-wibe-secondary">
+            <p className="text-muted-foreground">
               لیست <span className="font-semibold">&quot;{listTitle}&quot;</span> به همراه تمام آیتم‌های آن حذف خواهد شد و این عمل قابل بازگشت نیست.
             </p>
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm">
+            <div className="rounded-surface border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
               {error}
             </div>
           )}
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
+            <Button type="button" variant="destructive" size="lg" className="w-full" onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <Loader2 className="animate-spin" />
                   در حال حذف...
                 </>
               ) : (
                 <>
-                  <X className="w-5 h-5" />
+                  <X />
                   بله، حذف کن
                 </>
               )}
-            </button>
-            <button
-              onClick={onClose}
-              disabled={isDeleting}
-              className="w-full px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium disabled:opacity-50"
-            >
+            </Button>
+            <Button type="button" variant="outline" size="lg" className="w-full" onClick={onClose} disabled={isDeleting}>
               انصراف
-            </button>
+            </Button>
           </div>
         </div>
       </BottomSheet>

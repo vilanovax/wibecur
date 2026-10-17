@@ -6,16 +6,19 @@ export interface AvatarProps {
   src?: string;
   size?: "sm" | "md" | "lg";
   className?: string;
+  style?: React.CSSProperties;
+  onError?: () => void;
 }
 
 const sizes = { sm: "size-7 text-[11px]", md: "size-9 text-sm", lg: "size-12 text-base" };
 
 /** آواتار. Photo when `src` is set; otherwise a white initial in a white ring. */
-export function Avatar({ name, src, size = "md", className }: AvatarProps) {
+export function Avatar({ name, src, size = "md", className, style, onError }: AvatarProps) {
   const initial = name.trim().charAt(0);
   return (
     <span
       title={name}
+      style={style}
       className={cn(
         "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold",
         !src && "bg-transparent text-foreground ring-2 ring-foreground",
@@ -24,7 +27,7 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
       )}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- avatars are tiny and often external */}
-      {src ? <img src={src} alt={name} className="size-full rounded-full object-cover" /> : initial}
+      {src ? <img src={src} alt={name} className="size-full rounded-full object-cover" referrerPolicy="no-referrer" onError={onError} /> : initial}
     </span>
   );
 }

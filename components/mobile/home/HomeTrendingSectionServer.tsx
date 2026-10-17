@@ -29,13 +29,13 @@ export default function HomeTrendingSectionServer({ lists }: HomeTrendingSection
             <span aria-hidden>🔥</span>
             ترند این هفته
           </h2>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">بر اساس ذخیره و تعامل</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">بر اساس ذخیره و تعامل</p>
         </div>
         <Link
           href="/lists?mode=trending"
-          className="shrink-0 wibe-caption font-semibold text-primary hover:underline"
+          className="inline-flex min-h-11 shrink-0 items-center text-xs font-semibold hover:underline"
         >
-          همه
+          <span className="text-brand">همه</span>
         </Link>
       </div>
 
@@ -56,12 +56,12 @@ export default function HomeTrendingSectionServer({ lists }: HomeTrendingSection
                 href={cell.href}
                 className="group block lg:h-full lg:w-full lg:shrink"
               >
-                <div className="flex aspect-[5/4] h-full max-h-[11.5rem] flex-col items-center justify-center rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 text-center transition-colors hover:border-primary/45 hover:bg-primary/10 sm:aspect-[4/3] lg:aspect-auto lg:min-h-[8.5rem] lg:max-h-[11.5rem] lg:rounded-xl lg:px-4 lg:py-3">
-                  <span className="wibe-small font-semibold text-primary">
+                <div className="flex aspect-[5/4] h-full max-h-44 flex-col items-center justify-center rounded-surface border border-dashed border-brand/30 bg-brand/5 p-3 text-center transition-colors hover:border-brand/40 hover:bg-brand/10 sm:aspect-[4/3] lg:aspect-auto lg:min-h-36 lg:max-h-44 lg:px-4 lg:py-3">
+                  <span className="text-sm font-semibold text-brand">
                     {cell.label}
                   </span>
                   {cell.description ? (
-                    <span className="mt-0.5 wibe-caption text-wibe-secondary lg:hidden">
+                    <span className="mt-0.5 text-xs text-muted-foreground lg:hidden">
                       {cell.description}
                     </span>
                   ) : null}

@@ -84,14 +84,14 @@ export default function BottomNav() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex min-w-[64px] flex-shrink-0 flex-col items-center justify-center rounded-lg px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
-                    isActive ? 'text-primary' : 'text-muted-foreground'
-                  }`}
+                  className="flex min-h-11 min-w-16 shrink-0 flex-col items-center justify-center rounded-control px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
                   aria-current={isActive ? 'page' : undefined}
                   aria-label={item.label}
                 >
-                  <span aria-hidden="true">{item.icon}</span>
-                  <span className="mt-1 whitespace-nowrap text-xs">{item.label}</span>
+                  <span className={`flex flex-col items-center ${isActive ? 'text-brand' : 'text-muted-foreground'}`}>
+                    <span aria-hidden="true">{item.icon}</span>
+                    <span className="mt-1 whitespace-nowrap text-xs">{item.label}</span>
+                  </span>
                 </Link>
               );
             })}

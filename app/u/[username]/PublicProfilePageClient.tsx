@@ -205,12 +205,12 @@ export default function PublicProfilePageClient({
   return (
     <>
       <PublicProfileBreadcrumb username={username} displayName={data.user.name} />
-      <div className="min-h-screen bg-wibe-surface">
+      <div className="min-h-screen bg-background">
         <div className="relative overflow-hidden rounded-b-lg bg-primary px-4 pb-6 pt-8 lg:rounded-xl lg:mx-0 lg:px-8 lg:pb-8 lg:pt-10">
           <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center lg:max-w-none lg:flex-row lg:items-end lg:justify-center lg:gap-8">
             <div className="relative">
               <div className={`absolute -inset-2 rounded-full blur-lg ${levelConfig.glowClass} opacity-40`} />
-              <div className="relative w-24 h-24 rounded-full border-4 border-wibe-card overflow-hidden bg-wibe-card shadow-sm">
+              <div className="relative size-24 overflow-hidden rounded-full border-4 border-popover bg-popover shadow-sm">
                 {vibeAvatar ? (
                   <VibeAvatarDisplay avatar={vibeAvatar} size={96} className="h-full w-full" />
                 ) : data.user.image ? (
@@ -219,20 +219,20 @@ export default function PublicProfilePageClient({
                     alt={data.user.name || ''}
                     className="w-full h-full object-cover"
                     fallbackIcon={(data.user.name?.[0] || '?').toUpperCase()}
-                    fallbackClassName="w-full h-full bg-primary text-white text-2xl font-bold flex items-center justify-center"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-brand text-2xl font-bold text-brand-foreground"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-primary text-white text-2xl font-bold">
+                  <div className="flex h-full w-full items-center justify-center bg-brand text-2xl font-bold text-brand-foreground">
                     {(data.user.name?.[0] || '?').toUpperCase()}
                   </div>
                 )}
               </div>
             </div>
-            <div className="mt-4 flex flex-col items-center text-center lg:mt-0 lg:flex-1 lg:items-start lg:text-right">
-            <h1 className="wibe-h2 text-white lg:wibe-h1">{data.user.name || 'کاربر'}</h1>
-            <p className="wibe-small text-white/85">@{data.user.username}</p>
+            <div className="mt-4 flex flex-col items-center text-center lg:mt-0 lg:flex-1 lg:items-start lg:text-start">
+            <h1 className="wibe-h2 text-background lg:wibe-h1">{data.user.name || 'کاربر'}</h1>
+            <p className="wibe-small text-background/85">@{data.user.username}</p>
             {data.user.bio && (
-              <p className="mt-2 line-clamp-3 max-w-md wibe-small text-white/90 lg:max-w-xl">{data.user.bio}</p>
+              <p className="mt-2 line-clamp-3 max-w-md wibe-small text-background/90 lg:max-w-xl">{data.user.bio}</p>
             )}
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
               {data.user.showBadge !== false && (
@@ -241,7 +241,7 @@ export default function PublicProfilePageClient({
                   size="small"
                   showIcon
                   showLabel
-                  className="bg-white/15 text-white border border-white/25"
+                  className="bg-background/15 text-background border border-background/40"
                 />
               )}
               {data.user.globalRank != null && data.user.globalRank <= 50 && (
@@ -250,7 +250,7 @@ export default function PublicProfilePageClient({
                 </span>
               )}
               {data.user.monthlyRank != null && data.user.monthlyRank <= 10 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/20 px-2.5 py-1 text-sm font-semibold text-white">
+                <span className="inline-flex items-center gap-1 rounded-full border border-background/40 bg-background/20 px-2.5 py-1 text-sm font-semibold text-background">
                   برتر ماه
                 </span>
               )}
@@ -275,7 +275,7 @@ export default function PublicProfilePageClient({
                   size="lg"
                   onClick={handleFollowToggle}
                   disabled={followLoading}
-                  className={isFollowing ? 'border-white/50 bg-white/20 text-white hover:bg-white/30' : undefined}
+                  className={isFollowing ? 'border-background/50 bg-background/20 text-background hover:bg-background/30' : undefined}
                 >
                   {followLoading ? (
                     <Spinner size="sm" className="text-current" />
@@ -301,11 +301,11 @@ export default function PublicProfilePageClient({
           <Card className="grid grid-cols-4 gap-2 bg-popover p-4 lg:gap-4">
             {statItems.map(({ icon: Icon, value, label, highlight }) => (
               <div key={label} className="flex flex-col items-center">
-                <Icon className={`w-5 h-5 mb-1 ${highlight ? 'text-primary' : 'text-wibe-secondary'}`} />
-                <span className={`text-h3 font-bold ${highlight ? 'text-primary' : 'text-foreground'}`}>
+                <Icon className={`mb-1 size-5 ${highlight ? 'text-brand' : 'text-muted-foreground'}`} />
+                <span className={`text-h3 font-bold ${highlight ? 'text-brand' : 'text-foreground'}`}>
                   {value.toLocaleString('fa-IR')}
                 </span>
-                <span className="wibe-caption text-wibe-secondary">{label}</span>
+                <span className="text-xs text-muted-foreground">{label}</span>
               </div>
             ))}
           </Card>
@@ -329,9 +329,9 @@ export default function PublicProfilePageClient({
                 <div key={tag.slug} className="flex items-center gap-2">
                   <span className="text-lg">{tag.icon}</span>
                   <span className="wibe-small text-foreground flex-1">{tag.name}</span>
-                  <div className="w-20 h-1.5 bg-wibe-surface rounded-full overflow-hidden">
+                  <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full bg-primary rounded-full"
+                      className="h-full rounded-full bg-brand"
                       style={{ width: `${tag.percent}%` }}
                     />
                   </div>
@@ -352,7 +352,7 @@ export default function PublicProfilePageClient({
                 className="block"
               >
                 <Card className="overflow-hidden bg-popover p-0">
-                <div className="aspect-[4/3] bg-wibe-surface relative overflow-hidden">
+                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
                   <ListCoverImage
                     coverImage={list.coverImage}
                     title={list.title}
@@ -360,7 +360,7 @@ export default function PublicProfilePageClient({
                     categorySlug={list.categories?.slug}
                     className="w-full h-full object-cover"
                     fallbackIcon={list.categories?.icon ?? '📋'}
-                    fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-wibe-surface"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
                   {list.isFeatured && (
@@ -368,7 +368,7 @@ export default function PublicProfilePageClient({
                       ویژه
                     </span>
                   )}
-                  <div className="absolute bottom-0 left-0 right-0 p-2">
+                  <div className="absolute inset-x-0 bottom-0 p-2">
                     <ListCardStats saves={list.saves} itemCount={list.items} variant="overlay" />
                   </div>
                 </div>

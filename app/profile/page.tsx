@@ -84,7 +84,7 @@ export default async function ProfilePage() {
   const userId = session.user.id;
 
   return (
-    <div className="flex min-h-screen flex-col bg-wibe-card">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header title="پروفایل" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
       <main className="px-4 pt-2 lg:px-0 lg:pt-0">
         <Suspense fallback={<ProfilePageContentSkeleton />}>

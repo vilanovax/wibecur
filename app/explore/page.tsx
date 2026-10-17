@@ -70,7 +70,7 @@ async function ExploreContent() {
  */
 export default function ExplorePage() {
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <Header title="اکسپلور" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
       <Suspense fallback={<ExplorePageSkeleton />}>
         <ExploreContent />

@@ -18,6 +18,8 @@ import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 import { trackHomeSectionClick } from '@/lib/analytics';
 import { useLazyInView } from '@/hooks/useLazyInView';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type ForYouSectionProps = {
   embedded?: boolean;
@@ -66,12 +68,12 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
       <section ref={ref} className={embedded ? '' : 'mb-6'}>
         {!embedded && (
           <div className="mb-3 px-4">
-            <div className="h-6 w-32 animate-pulse rounded bg-wibe-surface" />
+            <Skeleton className="h-6 w-32" />
           </div>
         )}
         <div className="space-y-3 px-4 lg:px-0">
           {[1, 2].map((i) => (
-            <div key={i} className="h-[120px] animate-pulse rounded-lg bg-wibe-surface lg:h-36" />
+            <Skeleton key={i} className="h-32 w-full rounded-xl lg:h-36" />
           ))}
         </div>
       </section>
@@ -96,7 +98,7 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
       ) : (
         <>
           {usingFallback && !embedded ? (
-            <p className="mb-3 px-4 wibe-caption text-wibe-secondary lg:px-0">
+            <p className="mb-3 px-4 wibe-caption text-muted-foreground lg:px-0">
               هنوز ذخیره‌ای نداری — این لیست‌های محبوب را امتحان کن
             </p>
           ) : null}
@@ -105,9 +107,9 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
             {displayLists.map((list) => {
               const reason = getForYouReasonLabel(list, isPersonalized);
               return (
-                <div
+                <Card
                   key={list.id}
-                  className="relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
+                  className="relative overflow-hidden bg-popover p-0 transition-transform active:scale-95"
                 >
                   <Link
                     href={`/lists/${list.slug}`}
@@ -118,28 +120,28 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
                         target: 'card',
                       })
                     }
-                    className="flex min-h-[120px] gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30"
+                    className="flex min-h-32 gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60"
                   >
                     <div className="flex min-w-0 flex-1 flex-col justify-center py-3 pe-2 ps-3">
                       {reason ? (
-                        <p className="mb-1 wibe-caption font-medium text-primary">{reason}</p>
+                        <p className="mb-1 text-xs font-medium text-brand">{reason}</p>
                       ) : null}
                       <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
                         {list.title}
                       </h3>
                       {list.itemCount > 0 ? (
-                        <p className="mt-1.5 wibe-caption text-wibe-secondary">
+                        <p className="mt-1.5 wibe-caption text-muted-foreground">
                           {list.itemCount.toLocaleString('fa-IR')} آیتم
                         </p>
                       ) : null}
                     </div>
-                    <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-wibe-surface">
+                    <div className="relative size-28 shrink-0 overflow-hidden bg-muted">
                       <ImageWithFallback
                         src={list.coverImage}
                         alt={list.title}
                         className="h-full w-full object-cover"
                         fallbackIcon={list.categories?.icon ?? '📋'}
-                        fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface"
+                        fallbackClassName="flex h-full w-full items-center justify-center bg-muted"
                         categorySlug={list.categories?.slug}
                         listSlug={list.slug}
                         listTitle={list.title}
@@ -160,7 +162,7 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
                       analyticsSource="home_for_you"
                     />
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -177,7 +179,7 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
                   (usingFallback ? 'پیشنهاد شروع' : null)
                 );
               }}
-              badgeClassName="bg-primary/90 text-white"
+              badgeClassName="bg-brand text-brand-foreground"
               homeSection="for_you"
             />
           </div>

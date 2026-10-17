@@ -25,21 +25,21 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
       href={`/lists/${rel.slug}`}
       className="block w-[calc(55vw)] max-w-56 shrink-0 lg:w-full lg:max-w-none"
     >
-      <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-[0.99]">
-      <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10] lg:max-h-[7.25rem]">
+      <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-95">
+      <div className="relative aspect-[4/3] bg-muted lg:aspect-[16/10] lg:max-h-[7.25rem]">
         <ImageWithFallback
           src={rel.coverImage ?? ''}
           alt={title}
           className="h-full w-full object-cover"
           fallbackIcon={rel.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"
           categorySlug={rel.categories?.slug}
           listSlug={rel.slug}
           listTitle={rel.title}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-2 text-start lg:p-2.5">
-          <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:hidden">{title}</h3>
+          <h3 className="line-clamp-2 wibe-small font-semibold text-background lg:hidden">{title}</h3>
         </div>
       </div>
       <div className="hidden min-w-0 p-2 lg:block">
@@ -124,7 +124,7 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
           <h3 className="wibe-h3 text-foreground">لیست‌های مشابه</h3>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">ممکنه این‌ها هم به کارت بیان</p>
+          <p className="mt-0.5 wibe-caption text-muted-foreground">ممکنه این‌ها هم به کارت بیان</p>
         </div>
       </div>
       <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:px-0 xl:grid-cols-5 2xl:grid-cols-6">

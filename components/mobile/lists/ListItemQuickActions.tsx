@@ -25,9 +25,7 @@ export default function ListItemQuickActions({
   if (actions.length === 0) return null;
 
   const btnClass =
-    size === 'sm'
-      ? 'flex h-8 w-8 items-center justify-center rounded-lg border border-wibe bg-wibe-surface text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary active:scale-95'
-      : 'flex h-9 w-9 items-center justify-center rounded-xl border border-wibe bg-wibe-surface text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary active:scale-95';
+    'group flex size-11 items-center justify-center rounded-full border border-border bg-popover transition-colors hover:border-brand/30 hover:bg-brand/5';
 
   const containerClass =
     layout === 'vertical'
@@ -51,7 +49,7 @@ export default function ListItemQuickActions({
             onClick={(e) => e.stopPropagation()}
             className={btnClass}
           >
-            <Icon className={size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4'} aria-hidden />
+            <Icon className={`text-muted-foreground group-hover:text-brand ${size === 'sm' ? 'size-4' : 'size-5'}`} aria-hidden />
           </a>
         );
       })}

@@ -22,19 +22,19 @@ export default function PageBreadcrumb({ items, className = '' }: PageBreadcrumb
         return (
           <span key={`${item.label}-${index}`} className="inline-flex min-w-0 max-w-full items-center gap-0.5">
             {index > 0 && (
-              <ChevronLeft className="mx-0.5 h-3.5 w-3.5 shrink-0 rotate-180 text-wibe-secondary/50" aria-hidden />
+              <ChevronLeft className="mx-0.5 size-4 shrink-0 text-muted-foreground/50" aria-hidden />
             )}
             {item.href && !isLast ? (
               <Link
                 href={item.href}
-                className="max-w-[8rem] truncate wibe-caption text-wibe-secondary transition-colors hover:text-primary sm:max-w-[10rem]"
+                className="inline-flex min-h-11 max-w-32 items-center truncate text-xs sm:max-w-40"
               >
-                {item.label}
+                <span className="truncate text-muted-foreground">{item.label}</span>
               </Link>
             ) : (
               <span
-                className={`max-w-[12rem] truncate wibe-caption sm:max-w-[16rem] ${
-                  isLast ? 'font-medium text-foreground' : 'text-wibe-secondary'
+                className={`inline-flex min-h-11 max-w-48 items-center truncate text-xs sm:max-w-64 ${
+                  isLast ? 'font-medium text-foreground' : 'text-muted-foreground'
                 }`}
                 aria-current={isLast ? 'page' : undefined}
               >

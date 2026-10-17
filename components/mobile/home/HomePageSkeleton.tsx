@@ -1,73 +1,68 @@
-/** Fallback while home payload streams — mirrors desktop/mobile first viewport to limit CLS. */
+import { Skeleton } from '@/components/ui/skeleton';
+
+/** اسکلت خانه تا رسیدن داده؛ شکل نوار جستجو، چیپ‌ها و هیرو را نگه می‌دارد. */
 export function HomePageSkeleton() {
   return (
-    <div className="flex flex-col" dir="rtl" aria-busy aria-label="در حال بارگذاری خانه">
-      {/* Mobile sticky search (matches HomeResponsiveContent) */}
-      <div className="sticky top-14 z-10 border-b border-wibe/50 bg-wibe-surface/95 px-4 pb-1.5 pt-0.5 lg:hidden">
-        <div className="h-11 animate-pulse rounded-xl bg-wibe-surface" />
+    <div className="flex flex-col bg-background" aria-busy aria-label="در حال بارگذاری خانه">
+      <div className="sticky top-14 z-10 border-b border-border bg-background/95 px-4 py-2 lg:hidden">
+        <Skeleton className="h-12 w-full rounded-xl" />
       </div>
 
-      {/* Mobile first viewport — chips then hero (matches HomeMobileView) */}
       <div className="lg:hidden">
-        <div className="flex gap-2 px-4 py-2 pb-3">
+        <div className="flex gap-2 px-4 py-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-9 w-28 shrink-0 animate-pulse rounded-lg bg-wibe-surface" />
+            <Skeleton key={i} className="h-11 w-28 shrink-0 rounded-xl" />
           ))}
         </div>
-        <div className="px-4 pt-0.5">
-          <div className="h-[220px] animate-pulse rounded-2xl bg-wibe-surface sm:h-[230px]" />
-          <div className="mt-4 mb-3 flex gap-2">
-            <div className="h-9 w-20 animate-pulse rounded-full bg-wibe-surface" />
-            <div className="h-9 w-24 animate-pulse rounded-full bg-wibe-surface" />
+        <div className="px-4">
+          <Skeleton className="h-56 w-full rounded-xl" />
+          <div className="mb-3 mt-4 flex gap-2">
+            <Skeleton className="h-11 w-20 rounded-full" />
+            <Skeleton className="h-11 w-24 rounded-full" />
           </div>
-          <div className="mb-3 h-5 w-36 animate-pulse rounded bg-wibe-surface" />
+          <Skeleton className="mb-3 h-5 w-36" />
           <div className="flex gap-3 overflow-hidden">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-[183px] w-[160px] shrink-0 animate-pulse rounded-xl bg-wibe-surface"
-              />
+              <Skeleton key={i} className="h-44 w-40 shrink-0 rounded-xl" />
             ))}
           </div>
         </div>
       </div>
 
-      {/* Desktop — matches HomeDesktopView: chips → mood|hero → trending → for-you reserve */}
-      <div className="hidden flex-col gap-6 px-5 pt-3 lg:flex xl:gap-7">
-        <div className="flex gap-2 border-b border-wibe/60 pb-4">
+      <div className="hidden flex-col gap-6 px-5 pt-3 lg:flex">
+        <div className="flex gap-2 border-b border-border pb-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-9 w-28 animate-pulse rounded-full bg-wibe-surface" />
+            <Skeleton key={i} className="h-11 w-28 rounded-full" />
           ))}
         </div>
 
-        <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.55fr)] xl:items-stretch xl:gap-5">
-          <div className="order-2 flex min-h-[20rem] flex-col gap-3 xl:order-1">
-            <div className="h-6 w-40 animate-pulse rounded bg-wibe-surface" />
-            <div className="h-3 w-48 animate-pulse rounded bg-wibe-surface" />
+        <div className="flex flex-col gap-6 xl:grid xl:grid-cols-2 xl:items-stretch">
+          <div className="order-2 flex min-h-80 flex-col gap-3 xl:order-1">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-3 w-48" />
             <div className="flex flex-1 flex-col gap-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-28 animate-pulse rounded-xl bg-wibe-surface" />
+                <Skeleton key={i} className="h-28 w-full rounded-xl" />
               ))}
             </div>
           </div>
           <div className="order-1 xl:order-2">
-            <div className="h-[21rem] animate-pulse rounded-[1.35rem] bg-wibe-surface xl:h-[22.5rem]" />
+            <Skeleton className="h-80 w-full rounded-xl xl:h-96" />
           </div>
         </div>
 
         <div>
-          <div className="mb-3 h-6 w-36 animate-pulse rounded bg-wibe-surface" />
+          <Skeleton className="mb-3 h-6 w-36" />
           <div className="grid grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-36 animate-pulse rounded-xl bg-wibe-surface" />
+              <Skeleton key={i} className="h-36 w-full rounded-xl" />
             ))}
           </div>
         </div>
 
-        {/* Reserve ForYou / deferred personal block */}
-        <div className="min-h-[12rem]">
-          <div className="mb-3 h-6 w-32 animate-pulse rounded bg-wibe-surface" />
-          <div className="h-36 animate-pulse rounded-xl bg-wibe-surface" />
+        <div className="min-h-48">
+          <Skeleton className="mb-3 h-6 w-32" />
+          <Skeleton className="h-36 w-full rounded-xl" />
         </div>
       </div>
     </div>

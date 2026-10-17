@@ -42,15 +42,15 @@ export default function WibeSection({
             {!iconVariant && icon ? <span aria-hidden>{icon}</span> : null}
             {title}
           </h2>
-          {subtitle ? <p className="mt-0.5 wibe-small text-wibe-secondary">{subtitle}</p> : null}
+          {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p> : null}
         </div>
         {actionHref ? (
           <Link
             href={actionHref}
             onClick={onActionClick}
-            className="shrink-0 wibe-caption font-semibold text-primary hover:underline lg:text-sm"
+            className="inline-flex min-h-11 shrink-0 items-center text-xs font-semibold hover:underline lg:text-sm"
           >
-            {actionLabel}
+            <span className="text-brand">{actionLabel}</span>
           </Link>
         ) : null}
       </div>

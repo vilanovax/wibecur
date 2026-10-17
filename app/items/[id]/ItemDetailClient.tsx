@@ -63,7 +63,7 @@ export default function ItemDetailClient({
 
   const listContextCard = (
     <ItemSidebarPanel>
-      <p className="mb-2 wibe-caption font-medium text-wibe-secondary">در لیست</p>
+      <p className="mb-2 wibe-caption font-medium text-muted-foreground">در لیست</p>
       <Link
         href={`/lists/${item.lists.slug}`}
         className="group flex items-start gap-3 rounded-xl border border-border bg-muted p-3 transition-colors hover:border-brand/30 hover:bg-brand/5"
@@ -75,7 +75,7 @@ export default function ItemDetailClient({
           <p className="line-clamp-2 wibe-small font-semibold text-foreground group-hover:text-primary">
             {item.lists.title}
           </p>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-wibe-secondary">
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-muted-foreground">
             <span>{item.lists.saveCount.toLocaleString('fa-IR')} ذخیره</span>
           </p>
         </div>

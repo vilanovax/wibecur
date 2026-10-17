@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { faIR } from 'date-fns/locale/fa-IR';
+import { fa } from './utils';
 
 /**
  * زمان نسبی فارسی — یک import عمیق به‌جای barrel `date-fns`
@@ -11,8 +12,10 @@ export function formatRelativeTime(
 ): string {
   const value =
     typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
-  return formatDistanceToNow(value, {
-    addSuffix: options?.addSuffix ?? true,
-    locale: faIR,
-  });
+  return fa(
+    formatDistanceToNow(value, {
+      addSuffix: options?.addSuffix ?? true,
+      locale: faIR,
+    })
+  );
 }

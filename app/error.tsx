@@ -23,7 +23,7 @@ export default function Error({
 
   return (
     <div
-      className="min-h-screen bg-wibe-surface flex flex-col items-center justify-center px-4 pb-24"
+      className="min-h-screen bg-background flex flex-col items-center justify-center px-4 pb-24"
       dir="rtl"
     >
       <Card className="w-full max-w-sm bg-popover p-8 text-center">

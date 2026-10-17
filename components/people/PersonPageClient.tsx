@@ -111,10 +111,10 @@ export default function PersonPageClient({
               roleIcon={roleMeta.icon}
               size="mobile"
             />
-            <div className="min-w-0 flex-1 text-right">
-              <p className="wibe-caption font-medium text-wibe-secondary">{roleMeta.label}</p>
+            <div className="min-w-0 flex-1 text-start">
+              <p className="wibe-caption font-medium text-muted-foreground">{roleMeta.label}</p>
               <h1 className="mt-1 wibe-h2 font-bold text-foreground">{displayName}</h1>
-              <p className="mt-1 wibe-caption text-wibe-secondary">
+              <p className="mt-1 wibe-caption text-muted-foreground">
                 {items.length.toLocaleString('fa-IR')} آیتم در وایب
               </p>
               {externalUrl && (
@@ -122,16 +122,16 @@ export default function PersonPageClient({
                   href={externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex wibe-caption font-medium text-primary hover:underline"
+                  className="mt-2 inline-flex min-h-11 items-center text-sm font-medium hover:underline"
                 >
-                  منبع خارجی
+                  <span className="text-brand">منبع خارجی</span>
                 </a>
               )}
             </div>
           </div>
 
           {bio && (
-            <div className="mt-4 border-t border-wibe/60 pt-4">
+            <div className="mt-4 border-t border-border/60 pt-4">
               <BioBlock
                 bio={shownBio}
                 bioIsStub={bioIsStub}
@@ -145,7 +145,7 @@ export default function PersonPageClient({
 
         {/* دسکتاپ */}
         <div className="hidden lg:block">
-          <div className="bg-gradient-to-bl from-primary/[0.07] via-primary/[0.02] to-transparent px-8 pb-6 pt-8">
+          <div className="bg-muted/40 px-8 pb-6 pt-8">
             <div className="grid grid-cols-[minmax(0,13.5rem)_minmax(0,1fr)] items-start gap-8 xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] xl:gap-10">
               <PersonAvatar
                 imageUrl={imageUrl}
@@ -154,11 +154,11 @@ export default function PersonPageClient({
                 size="desktop"
               />
 
-              <div className="min-w-0 pt-1 text-right">
-                <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <div className="min-w-0 pt-1 text-start">
+                <span className="inline-flex min-h-11 items-center rounded-full bg-brand/10 px-3 text-xs font-semibold text-brand">
                   {roleMeta.label}
                 </span>
-                <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-foreground xl:text-[2.125rem]">
+                <h1 className="mt-3 text-3xl font-bold leading-tight text-foreground">
                   {displayName}
                 </h1>
 
@@ -174,10 +174,10 @@ export default function PersonPageClient({
                       href={externalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-wibe bg-wibe-surface px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:border-primary/30 hover:bg-primary/5"
+                      className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-popover px-3 text-sm font-medium"
                     >
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      <span>منبع خارجی</span>
+                      <ExternalLink className="size-4 shrink-0 text-brand" aria-hidden />
+                      <span className="text-brand">منبع خارجی</span>
                     </a>
                   )}
                 </div>
@@ -186,8 +186,8 @@ export default function PersonPageClient({
           </div>
 
           {bio && (
-            <div className="border-t border-wibe/60 px-8 py-7">
-              <h2 className="mb-3 text-sm font-semibold text-wibe-secondary">درباره</h2>
+            <div className="border-t border-border/60 px-8 py-7">
+              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">درباره</h2>
               <BioBlock
                 bio={shownBio}
                 bioIsStub={bioIsStub}
@@ -208,11 +208,11 @@ export default function PersonPageClient({
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
               <h2 className="wibe-body font-semibold text-foreground lg:text-lg">آیتم‌ها در وایب</h2>
-              <p className="mt-0.5 hidden text-sm text-wibe-secondary lg:block">
+              <p className="mt-0.5 hidden text-sm text-muted-foreground lg:block">
                 فیلم‌ها و آثاری که {displayName} در لیست‌های وایب حضور دارد
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-wibe-surface px-2.5 py-1 text-xs font-medium text-wibe-secondary ring-1 ring-wibe/80">
+            <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
               {items.length.toLocaleString('fa-IR')} مورد
             </span>
           </div>
@@ -270,8 +270,8 @@ function StatChip({
   icon?: typeof Film;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-wibe bg-wibe-surface/90 px-3 py-1.5 text-xs font-medium text-foreground/85 backdrop-blur-sm">
-      {Icon ? <Icon className="h-3.5 w-3.5 shrink-0 text-wibe-secondary" aria-hidden /> : null}
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/90 px-3 py-1.5 text-xs font-medium text-foreground/85 backdrop-blur-sm">
+      {Icon ? <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden /> : null}
       {children}
     </span>
   );
@@ -297,16 +297,14 @@ function BioBlock({
   return (
     <>
       <p
-        className={`text-right whitespace-pre-line ${
-          desktop
-            ? 'max-w-3xl text-base leading-[1.95] xl:max-w-none xl:text-[1.0625rem] xl:leading-[2]'
-            : 'text-[0.9375rem] leading-[1.75]'
-        } ${bioIsStub ? 'text-wibe-secondary' : 'text-foreground/88'}`}
+        className={`whitespace-pre-line text-start text-base leading-relaxed ${
+          desktop ? 'max-w-3xl' : ''
+        } ${bioIsStub ? 'text-muted-foreground' : 'text-foreground'}`}
       >
         {bio}
       </p>
       {canTruncateBio && (
-        <Button type="button" variant="ghost" className="mt-3 h-11 px-0 text-primary" onClick={onToggle}>
+        <Button type="button" variant="ghost" className="mt-3 h-11 px-0 text-brand" onClick={onToggle}>
           {bioExpanded ? 'نمایش کمتر' : 'ادامهٔ بیوگرافی'}
         </Button>
       )}

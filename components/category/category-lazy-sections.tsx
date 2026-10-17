@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CategorySectionSkeleton, CategoryTrendingSectionSkeleton } from './category-section-skeletons';
 
 export const TrendingListsSectionLazy = dynamic(() => import('./TrendingListsSection'), {
@@ -32,5 +33,5 @@ export const CategoryCreateCTALazy = dynamic(() => import('./CategoryCreateCTA')
 });
 
 export const GenreScrollBarLazy = dynamic(() => import('./film/GenreScrollBar'), {
-  loading: () => <div className="h-12 animate-pulse rounded-lg bg-wibe-surface" aria-hidden />,
+  loading: () => <Skeleton className="h-12 w-full rounded-xl" />,
 });

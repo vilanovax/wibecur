@@ -80,7 +80,7 @@ export default function ListsPage({
   }>;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-wibe-card">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header title="لیست‌ها" hideTitleOnDesktop hideOnDesktop showDesktopSearch={false} />
       <main className="min-w-0 flex-1 pt-2 lg:pt-0">
         <Suspense fallback={<ListsPageContentSkeleton />}>

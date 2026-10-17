@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 export type ListRowCompactList = {
   id: string;
@@ -27,8 +29,8 @@ type ListRowCompactProps = {
 };
 
 const thumbClass: Record<NonNullable<ListRowCompactProps['thumb']>, string> = {
-  square: 'h-16 w-16 rounded-md lg:h-[4.5rem] lg:w-[4.5rem]',
-  poster: 'h-[4.5rem] w-14 rounded-lg lg:h-[6.5rem] lg:w-[4.5rem]',
+  square: 'size-16 rounded-xl lg:size-20',
+  poster: 'h-20 w-14 rounded-xl lg:h-24 lg:w-16',
 };
 
 /** ردیف فشرده لیست — برای سکشن‌های sparse (لیست‌های جدید، هاب و …) */
@@ -48,9 +50,10 @@ export default function ListRowCompact({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`flex gap-3 rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm transition-colors active:scale-[0.99] lg:rounded-2xl lg:p-4 lg:hover:border-primary/20 lg:hover:shadow-md ${className}`}
+      className={cn('block transition-transform active:scale-[0.99]', className)}
     >
-      <div className={`relative shrink-0 overflow-hidden bg-gray-200 ${thumbClass[thumb]}`}>
+      <Card className="flex gap-3 bg-popover p-3 lg:p-4">
+      <div className={cn('relative shrink-0 overflow-hidden bg-muted', thumbClass[thumb])}>
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -59,15 +62,15 @@ export default function ListRowCompact({
           sizes="72px"
           className="h-full w-full object-cover"
           fallbackIcon={fallbackIcon}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl opacity-50"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl opacity-50"
         />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:text-[15px]">
+      <div className="flex min-w-0 flex-1 flex-col justify-center text-start">
+        <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
           {list.title}
         </h3>
         {showCreator ? (
-          <p className="mt-0.5 wibe-caption text-wibe-secondary lg:mt-1">
+          <p className="mt-0.5 text-xs text-muted-foreground lg:mt-1">
             {list.creator?.name || 'کیوریتور'}
           </p>
         ) : null}
@@ -80,6 +83,7 @@ export default function ListRowCompact({
           />
         ) : null}
       </div>
+      </Card>
     </Link>
   );
 }

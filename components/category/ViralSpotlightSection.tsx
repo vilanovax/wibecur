@@ -22,9 +22,9 @@ export default function ViralSpotlightSection({
   return (
     <section className={sectionClass}>
       <CategorySectionTitle title="وایرال این هفته" iconVariant="viral" />
-      <Link href={`/lists/${list.slug}`} className="block active:scale-[0.99] transition-transform">
-        <div className="rounded-lg overflow-hidden border border-wibe shadow-card bg-wibe-card">
-          <div className="relative aspect-video bg-wibe-surface">
+      <Link href={`/lists/${list.slug}`} className="block active:scale-95 transition-transform">
+        <div className="overflow-hidden rounded-surface border border-border bg-popover shadow-surface">
+          <div className="relative aspect-video bg-muted">
             {(list.bannerImage ?? list.coverImage) ? (
               <ImageWithFallback
                 src={list.bannerImage ?? list.coverImage ?? ''}
@@ -33,21 +33,21 @@ export default function ViralSpotlightSection({
                 sizes="(min-width: 1024px) 50vw, 100vw"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-5xl opacity-40 bg-wibe-surface">
+              <div className="flex h-full w-full items-center justify-center bg-muted text-5xl opacity-40">
                 📋
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-            <span className="absolute top-3 right-3 bg-warning text-white wibe-caption px-2 py-1 rounded-pill font-semibold">
+            <span className="absolute end-3 top-3 rounded-full bg-warning px-2 py-1 text-xs font-semibold text-foreground">
               وایرال
             </span>
-            <div className="absolute bottom-0 left-0 right-0 p-4">
+            <div className="absolute inset-x-0 bottom-0 p-4 text-start">
               <h3 className="wibe-h3 text-white line-clamp-2">{list.title}</h3>
               <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="overlay" className="mt-1" />
             </div>
           </div>
           <div className="p-3">
-            <p className="wibe-caption text-wibe-secondary text-center">ببین چرا وایرال شده</p>
+            <p className="text-center text-sm text-muted-foreground">ببین چرا وایرال شده</p>
           </div>
         </div>
       </Link>

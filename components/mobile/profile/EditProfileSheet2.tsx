@@ -13,6 +13,7 @@ import { getLevelConfig } from '@/lib/curator';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import EliteAvatarFrame from '@/components/shared/EliteAvatarFrame';
 import { normalizeUsername, sanitizeUsernameInput, validateUsernameFormat } from '@/lib/username';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -67,13 +68,13 @@ function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1.5 block text-right" dir="rtl">
+    <label htmlFor={htmlFor} className="mb-1.5 block text-start" dir="rtl">
       <span className="wibe-caption font-medium text-foreground">
-        {required && <span className="text-red-500 me-0.5">*</span>}
+        {required && <span className="me-0.5 text-destructive">*</span>}
         {children}
       </span>
       {hint && (
-        <span className="mt-0.5 block wibe-caption leading-relaxed text-wibe-secondary">{hint}</span>
+        <span className="mt-0.5 block wibe-caption leading-relaxed text-muted-foreground">{hint}</span>
       )}
     </label>
   );
@@ -94,19 +95,19 @@ function ToggleRow({
 }) {
   return (
     <div
-      className="flex items-center justify-between gap-4 rounded-xl px-3 py-3.5 transition-colors hover:bg-wibe-surface/60"
+      className="flex items-center justify-between gap-4 rounded-xl px-3 py-3.5 transition-colors hover:bg-muted"
       dir="rtl"
     >
-      <div className="flex min-w-0 flex-1 items-start gap-3 text-right">
+      <div className="flex min-w-0 flex-1 items-start gap-3 text-start">
         {icon && (
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-surface bg-brand/10 text-brand">
             {icon}
           </span>
         )}
         <div className="min-w-0 flex-1">
           <span className="block wibe-small font-medium text-foreground">{label}</span>
           {description && (
-            <span className="mt-0.5 block wibe-caption leading-relaxed text-wibe-secondary">
+            <span className="mt-0.5 block wibe-caption leading-relaxed text-muted-foreground">
               {description}
             </span>
           )}
@@ -128,7 +129,7 @@ function EditTabBar({
 }) {
   return (
     <div
-      className="mb-4 flex gap-1.5 rounded-2xl border border-wibe/80 bg-wibe-surface/80 p-1"
+      className="mb-4 flex gap-1.5 rounded-xl border border-border bg-muted p-1"
       dir="rtl"
       role="tablist"
       aria-label="بخش‌های ویرایش پروفایل"
@@ -142,10 +143,10 @@ function EditTabBar({
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(id)}
-            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 wibe-caption font-semibold transition-colors ${
+            className={`relative flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition-colors ${
               selected
-                ? 'bg-white text-primary shadow-sm ring-1 ring-primary/10'
-                : 'text-wibe-secondary hover:text-foreground'
+                ? 'bg-popover text-brand shadow-sm'
+                : 'text-muted-foreground'
             }`}
           >
             <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -153,7 +154,7 @@ function EditTabBar({
             {id !== 'security' && dirtyProfile && (
               <span
                 className={`absolute top-1.5 end-1.5 h-1.5 w-1.5 rounded-full ${
-                  selected ? 'bg-primary' : 'bg-amber-500'
+                  selected ? 'bg-brand' : 'bg-warning'
                 }`}
                 aria-hidden
               />
@@ -228,7 +229,7 @@ function AvatarPreview({
   const inner = (
     <div className="relative">
       <div
-        className="relative overflow-hidden rounded-full border-2 border-wibe bg-wibe-card shadow-sm"
+        className="relative overflow-hidden rounded-full border-2 border-border bg-popover shadow-sm"
         style={{ width: size, height: size }}
       >
         {avatarType === 'DEFAULT' && currentVibeAvatar ? (
@@ -248,7 +249,7 @@ function AvatarPreview({
         )}
       </div>
       {avatarType === 'UPLOADED' && avatarStatus === 'PENDING' && (
-        <span className="absolute -bottom-1 inset-x-0 mx-auto w-fit whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 wibe-caption font-medium text-amber-800">
+        <span className="absolute -bottom-1 inset-x-0 mx-auto w-fit whitespace-nowrap rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-foreground">
           در انتظار تأیید
         </span>
       )}
@@ -604,11 +605,13 @@ export default function EditProfileSheet2({
 
   const footer = showSaveFooter ? (
     <div className="flex gap-2 px-2.5 lg:px-0" dir="rtl">
-      <button
+      <Button
         type="button"
+        variant="brand"
+        size="lg"
+        className="flex-[1.4]"
         onClick={handleSave}
         disabled={!canSave}
-        className="flex h-11 flex-[1.4] items-center justify-center gap-2 rounded-xl bg-primary wibe-small font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary/95 active:scale-[0.99] disabled:opacity-45"
       >
         {isSaving ? (
           <>
@@ -618,25 +621,23 @@ export default function EditProfileSheet2({
         ) : (
           'ذخیره تغییرات'
         )}
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="outline"
+        size="lg"
+        className="flex-1"
         onClick={requestClose}
         disabled={isSaving}
-        className="h-11 flex-1 rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-wibe-surface active:scale-[0.99] disabled:opacity-50"
       >
         انصراف
-      </button>
+      </Button>
     </div>
   ) : (
     <div className="px-2.5 lg:px-0" dir="rtl">
-      <button
-        type="button"
-        onClick={requestClose}
-        className="h-11 w-full rounded-xl border border-wibe bg-white wibe-small font-semibold text-foreground transition-colors hover:bg-wibe-surface"
-      >
+      <Button type="button" variant="outline" size="lg" className="w-full" onClick={requestClose}>
         بستن
-      </button>
+      </Button>
     </div>
   );
 
@@ -657,7 +658,7 @@ export default function EditProfileSheet2({
           <EditTabBar active={activeTab} onChange={setActiveTab} dirtyProfile={isDirty} />
 
           {error && (
-            <div className="mb-4 flex items-start justify-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-right wibe-caption text-red-600">
+            <div className="mb-4 flex items-start justify-start gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-start text-xs text-destructive">
               <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span>{error}</span>
             </div>
@@ -666,7 +667,7 @@ export default function EditProfileSheet2({
           {activeTab === 'profile' && (
             <div className="lg:grid lg:grid-cols-[minmax(148px,168px)_1fr] lg:gap-6 lg:items-start">
               {/* Avatar column */}
-              <section className="mb-5 flex flex-row items-center gap-4 rounded-2xl border border-wibe/80 bg-gradient-to-br from-primary/[0.07] via-white to-white p-4 lg:mb-0 lg:flex-col lg:items-center lg:p-5">
+              <section className="mb-5 flex flex-row items-center gap-4 rounded-xl border border-border bg-popover p-4 lg:mb-0 lg:flex-col lg:items-center lg:p-5">
                 <button
                   type="button"
                   onClick={() => setShowAvatarSheet(true)}
@@ -683,21 +684,21 @@ export default function EditProfileSheet2({
                     avatarStatus={avatarStatus}
                     isElite={isElite}
                   />
-                  <span className="absolute -bottom-0.5 -end-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-primary text-white shadow-md transition-transform group-hover:scale-105 group-active:scale-95">
+                  <span className="absolute -bottom-0.5 -end-0.5 flex size-8 items-center justify-center rounded-full border-2 border-popover bg-brand text-brand-foreground">
                     <Camera className="h-3.5 w-3.5" />
                   </span>
                 </button>
 
-                <div className="min-w-0 flex-1 text-right lg:flex-none lg:text-center">
+                <div className="min-w-0 flex-1 text-start lg:flex-none lg:text-center">
                   <p className="truncate wibe-small font-semibold text-foreground">
                     {displayName.trim() || 'کاربر'}
                   </p>
-                  <p className="mt-0.5 truncate wibe-caption text-wibe-secondary">
+                  <p className="mt-0.5 truncate wibe-caption text-muted-foreground">
                     <bdi dir="ltr" className="font-mono">
                       @{username || 'username'}
                     </bdi>
                   </p>
-                  <p className="mt-1.5 wibe-caption leading-relaxed text-wibe-secondary lg:max-w-[140px]">
+                  <p className="mt-1.5 wibe-caption leading-relaxed text-muted-foreground lg:max-w-[140px]">
                     {avatarType === 'UPLOADED' && avatarStatus === 'PENDING'
                       ? 'در انتظار تأیید'
                       : 'آواتار مجموعه یا عکس شخصی'}
@@ -705,7 +706,7 @@ export default function EditProfileSheet2({
                   <button
                     type="button"
                     onClick={() => setShowAvatarSheet(true)}
-                    className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-xl border border-primary/20 bg-white px-3.5 wibe-caption font-semibold text-primary shadow-sm transition-colors hover:border-primary/35 hover:bg-primary/5"
+                    className="mt-2.5 inline-flex h-11 items-center gap-1.5 rounded-control border border-brand/30 bg-popover px-3.5 text-sm font-semibold text-brand"
                   >
                     <Camera className="h-3.5 w-3.5" />
                     تغییر آواتار
@@ -715,7 +716,7 @@ export default function EditProfileSheet2({
 
               {/* Fields column */}
               <section className="space-y-4">
-                <div className="rounded-2xl border border-wibe/80 bg-white p-4 shadow-sm">
+                <div className="rounded-xl border border-border bg-popover p-4 shadow-surface">
                   <SectionHeader title="اطلاعات عمومی" icon={<User className="h-3.5 w-3.5" />} />
 
                   <div className="space-y-3.5">
@@ -764,14 +765,14 @@ export default function EditProfileSheet2({
                       {usernameHint && (
                         <p
                           id="edit-username-hint"
-                          className={`mt-1.5 text-right wibe-caption ${
+                          className={`mt-1.5 text-start text-xs ${
                             usernameStatus === 'available'
-                              ? 'text-emerald-600'
+                              ? 'text-success'
                               : usernameStatus === 'checking'
-                                ? 'text-wibe-secondary'
+                                ? 'text-muted-foreground'
                                 : usernameStatus === 'taken' || usernameStatus === 'invalid'
-                                  ? 'text-red-600'
-                                  : 'text-wibe-secondary'
+                                  ? 'text-destructive'
+                                  : 'text-muted-foreground'
                           }`}
                         >
                           {usernameHint}
@@ -792,12 +793,12 @@ export default function EditProfileSheet2({
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-wibe/80 bg-white p-4 shadow-sm">
+                <div className="rounded-xl border border-border bg-popover p-4 shadow-surface">
                   <div className="mb-3 flex items-baseline justify-between gap-2" dir="rtl">
                     <h3 className="wibe-small font-semibold text-foreground">بیو</h3>
                     <span
                       className={`wibe-caption tabular-nums ${
-                        bioRemaining < 20 ? 'font-medium text-amber-600' : 'text-wibe-secondary'
+                        bioRemaining < 20 ? 'font-medium text-warning' : 'text-muted-foreground'
                       }`}
                     >
                       {bio.length.toLocaleString('fa-IR')} از {BIO_MAX.toLocaleString('fa-IR')}
@@ -812,7 +813,7 @@ export default function EditProfileSheet2({
                     dir="rtl"
                     className="min-h-24"
                   />
-                  <p className="mt-2 text-right wibe-caption text-wibe-secondary">
+                  <p className="mt-2 text-start wibe-caption text-muted-foreground">
                     در پروفایل عمومی نمایش داده می‌شود
                   </p>
                 </div>
@@ -823,31 +824,31 @@ export default function EditProfileSheet2({
           {activeTab === 'security' && (
             <section className="mx-auto max-w-md" dir="rtl">
               <div className="mb-4 flex flex-col items-center text-center">
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                <span className="flex size-14 items-center justify-center rounded-xl bg-brand/10 text-brand">
                   <KeyRound className="h-6 w-6" />
                 </span>
                 <h3 className="mt-3 wibe-body font-semibold text-foreground">تغییر رمز عبور</h3>
-                <p className="mt-1 max-w-xs wibe-caption leading-relaxed text-wibe-secondary">
+                <p className="mt-1 max-w-xs wibe-caption leading-relaxed text-muted-foreground">
                   برای امنیت بیشتر، رمز قوی و منحصربه‌فرد انتخاب کنید.
                 </p>
               </div>
 
               {hasPassword === null ? (
-                <div className="flex items-center justify-center gap-2 rounded-2xl border border-wibe/80 bg-wibe-surface/60 px-4 py-8 text-right wibe-caption text-wibe-secondary">
+                <div className="flex items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-8 text-start text-xs text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   در حال بررسی…
                 </div>
               ) : hasPassword === false ? (
-                <div className="rounded-2xl border border-dashed border-wibe bg-wibe-surface/50 px-4 py-8 text-center">
+                <div className="rounded-xl border border-dashed border-border bg-muted px-4 py-8 text-center">
                   <p className="wibe-small font-medium text-foreground">رمز تنظیم نشده</p>
-                  <p className="mt-1.5 wibe-caption leading-relaxed text-wibe-secondary">
+                  <p className="mt-1.5 wibe-caption leading-relaxed text-muted-foreground">
                     برای این حساب رمز عبور تعریف نشده است.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3.5 rounded-2xl border border-wibe/80 bg-white p-4 shadow-sm">
+                <div className="space-y-3.5 rounded-xl border border-border bg-popover p-4 shadow-surface">
                   {passwordError && (
-                    <p className="flex items-start justify-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-right wibe-caption text-red-600">
+                    <p className="flex items-start justify-start gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-start text-xs text-destructive">
                       <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                       {passwordError}
                     </p>
@@ -876,8 +877,11 @@ export default function EditProfileSheet2({
                       autoComplete="new-password"
                     />
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="brand"
+                    size="lg"
+                    className="w-full"
                     onClick={() => void handleChangePassword()}
                     disabled={
                       isChangingPassword ||
@@ -885,7 +889,6 @@ export default function EditProfileSheet2({
                       !newPassword ||
                       !confirmPassword
                     }
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary wibe-small font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary/95 disabled:opacity-45"
                   >
                     {isChangingPassword ? (
                       <>
@@ -898,8 +901,8 @@ export default function EditProfileSheet2({
                         تغییر رمز عبور
                       </>
                     )}
-                  </button>
-                  <p className="text-center wibe-caption text-wibe-secondary">
+                  </Button>
+                  <p className="text-center wibe-caption text-muted-foreground">
                     پس از تغییر، با رمز جدید وارد شوید.
                   </p>
                 </div>
@@ -910,7 +913,7 @@ export default function EditProfileSheet2({
           {activeTab === 'preferences' && (
             <section className="space-y-4" dir="rtl">
               <SectionHeader title="تنظیمات نمایش و اعلان" icon={<Bell className="h-3.5 w-3.5" />} />
-              <div className="rounded-2xl border border-wibe/80 bg-white px-1 py-1 shadow-sm">
+              <div className="rounded-xl border border-border bg-popover px-1 py-1 shadow-surface">
                 <ToggleRow
                   label="نمایش مدال"
                   description="نشان سطح کیوریتور در پروفایل عمومی"
@@ -918,7 +921,7 @@ export default function EditProfileSheet2({
                   onChange={setShowBadge}
                   icon={<BadgeCheck className="h-4 w-4" />}
                 />
-                <div className="mx-3 h-px bg-wibe/80" aria-hidden />
+                <div className="mx-3 h-px bg-border" aria-hidden />
                 <ToggleRow
                   label="اعلان کامنت"
                   description="وقتی روی لیستت کامنت می‌گذارند"
@@ -926,7 +929,7 @@ export default function EditProfileSheet2({
                   onChange={setAllowCommentNotifications}
                   icon={<AtSign className="h-4 w-4" />}
                 />
-                <div className="mx-3 h-px bg-wibe/80" aria-hidden />
+                <div className="mx-3 h-px bg-border" aria-hidden />
                 <ToggleRow
                   label="به‌روزرسانی لیست‌های ذخیره‌شده"
                   description="وقتی آیتم جدید به لیستی که ذخیره کردی اضافه شود"
@@ -936,7 +939,7 @@ export default function EditProfileSheet2({
                 />
               </div>
 
-              <p className="rounded-xl bg-wibe-surface/70 px-3 py-2.5 text-right wibe-caption leading-relaxed text-wibe-secondary">
+              <p className="rounded-xl bg-muted px-3 py-2.5 text-start text-xs leading-relaxed text-muted-foreground">
                 تغییرات این بخش با دکمه «ذخیره تغییرات» در پایین اعمال می‌شود.
               </p>
             </section>

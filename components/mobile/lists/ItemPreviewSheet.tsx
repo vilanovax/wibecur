@@ -120,13 +120,13 @@ function MetadataChip({
 }) {
   if (profileLinks?.length) {
     return (
-      <span className="inline-flex max-w-full flex-wrap items-baseline gap-1 rounded-md bg-wibe-surface px-2 py-1 wibe-caption leading-snug text-right">
-        <span className="shrink-0 text-wibe-secondary">{label}</span>
+      <span className="inline-flex max-w-full flex-wrap items-baseline gap-1 rounded-md bg-muted px-2 py-1 wibe-caption leading-snug text-start">
+        <span className="shrink-0 text-muted-foreground">{label}</span>
         <span className="min-w-0 font-medium text-foreground">
           {profileLinks.map((link, index) => (
             <span key={link.href}>
-              {index > 0 ? <span className="text-wibe-secondary/50"> · </span> : null}
-              <Link href={link.href} className="text-primary hover:underline">
+              {index > 0 ? <span className="text-muted-foreground/50"> · </span> : null}
+              <Link href={link.href} className="text-brand hover:underline">
                 {link.name}
               </Link>
             </span>
@@ -138,15 +138,15 @@ function MetadataChip({
 
   const content = (
     <>
-      <span className="shrink-0 text-wibe-secondary">{label}</span>
-      <span className={`min-w-0 font-medium ${href ? 'text-primary' : 'text-foreground'}`}>
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className={`min-w-0 font-medium ${href ? 'text-brand' : 'text-foreground'}`}>
         {value}
       </span>
     </>
   );
 
   const chipClass =
-    'inline-flex max-w-full items-baseline gap-1 rounded-md bg-wibe-surface px-2 py-1 wibe-caption leading-snug text-right';
+    'inline-flex max-w-full items-baseline gap-1 rounded-md bg-muted px-2 py-1 wibe-caption leading-snug text-start';
 
   if (href) {
     if (href.startsWith('/')) {
@@ -187,14 +187,14 @@ const ClampedText = memo(function ClampedText({
 
   return (
     <div className={className}>
-      <p className="whitespace-pre-line text-right wibe-small leading-relaxed text-wibe-secondary">
+      <p className="whitespace-pre-line text-start wibe-small leading-relaxed text-muted-foreground">
         {shown}
       </p>
       {needsClamp ? (
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1 wibe-caption font-medium text-primary hover:underline"
+          className="mt-1 wibe-caption font-medium text-brand hover:underline"
         >
           {expanded ? 'کمتر' : 'بیشتر'}
         </button>
@@ -265,7 +265,7 @@ const PreviewActions = memo(function PreviewActions({
         layout === 'inline' ? '' : 'w-full'
       }`}
     >
-      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-wibe-secondary" aria-hidden />
+      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
       منبع
     </a>
   ) : null;
@@ -429,14 +429,14 @@ const PreviewBody = memo(function PreviewBody({
         {desc ? (
           <ClampedText text={desc} resetKey={item.id} />
         ) : (
-          <p className="wibe-caption text-wibe-secondary">متنی ثبت نشده</p>
+          <p className="wibe-caption text-muted-foreground">متنی ثبت نشده</p>
         )}
 
         {!isLifestyle && listNote && listNote !== desc ? (
-          <ItemTipCard tip={listNote} className="text-right" />
+          <ItemTipCard tip={listNote} className="text-start" />
         ) : null}
         {showSeparateTip && itemTip ? (
-          <ItemTipCard tip={itemTip} variant="highlight" className="text-right" />
+          <ItemTipCard tip={itemTip} variant="highlight" className="text-start" />
         ) : null}
 
         <div className="max-lg:hidden">{actions}</div>
@@ -447,7 +447,7 @@ const PreviewBody = memo(function PreviewBody({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4 lg:gap-6">
       <div className="relative mx-auto shrink-0 sm:mx-0">
-        <div className="overflow-hidden rounded-xl bg-wibe-surface ring-1 ring-black/5">
+        <div className="overflow-hidden rounded-xl bg-muted ring-1 ring-foreground/10">
           <div className="aspect-[2/3] w-[7.5rem] sm:w-[8.5rem] lg:w-[11rem] xl:w-[12rem]">
             <PreviewPoster
               item={item}
@@ -458,9 +458,9 @@ const PreviewBody = memo(function PreviewBody({
           </div>
         </div>
         {imdbRating ? (
-          <span className="absolute bottom-1.5 right-1.5 inline-flex items-center gap-0.5 rounded-md bg-black/75 px-1.5 py-0.5 wibe-caption font-bold backdrop-blur-sm">
-            <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
-            <span className="text-amber-400 tabular-nums">{imdbRating}</span>
+          <span className="absolute bottom-1.5 end-1.5 inline-flex items-center gap-0.5 rounded-full bg-foreground/80 px-1.5 py-0.5 text-xs font-bold text-background backdrop-blur-sm">
+            <Star className="size-3 shrink-0 fill-warning text-warning" aria-hidden />
+            <span className="tabular-nums">{imdbRating}</span>
           </span>
         ) : null}
       </div>
@@ -480,13 +480,13 @@ const PreviewBody = memo(function PreviewBody({
           </div>
         ) : null}
 
-        {itemTip ? <ItemTipCard tip={itemTip} variant="highlight" className="text-right" /> : null}
-        {listNote ? <ItemTipCard tip={listNote} className="text-right" /> : null}
+        {itemTip ? <ItemTipCard tip={itemTip} variant="highlight" className="text-start" /> : null}
+        {listNote ? <ItemTipCard tip={listNote} className="text-start" /> : null}
 
         {desc ? (
           <ClampedText text={desc} resetKey={item.id} />
         ) : (
-          <p className="wibe-caption text-wibe-secondary">توضیحی ثبت نشده</p>
+          <p className="wibe-caption text-muted-foreground">توضیحی ثبت نشده</p>
         )}
 
         <div className="max-lg:hidden">{actions}</div>
@@ -606,7 +606,7 @@ export default function ItemPreviewSheet({
     onPrev || onNext ? (
       <div className="flex items-center gap-0.5">
         {positionLabel ? (
-          <span className="me-1 tabular-nums wibe-caption text-wibe-secondary">
+          <span className="me-1 tabular-nums wibe-caption text-muted-foreground">
             {positionLabel}
           </span>
         ) : null}
@@ -614,19 +614,19 @@ export default function ItemPreviewSheet({
           type="button"
           onClick={onPrev}
           disabled={!onPrev}
-          className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-wibe-surface disabled:opacity-30"
+          className="flex size-11 items-center justify-center rounded-full hover:bg-muted disabled:opacity-30"
           aria-label="آیتم قبلی"
         >
-          <ChevronRight className="h-4 w-4 text-wibe-secondary" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
         <button
           type="button"
           onClick={onNext}
           disabled={!onNext}
-          className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-wibe-surface disabled:opacity-30"
+          className="flex size-11 items-center justify-center rounded-full hover:bg-muted disabled:opacity-30"
           aria-label="آیتم بعدی"
         >
-          <ChevronLeft className="h-4 w-4 text-wibe-secondary" />
+          <ChevronLeft className="h-4 w-4 text-muted-foreground" />
         </button>
       </div>
     ) : null;
@@ -656,7 +656,7 @@ export default function ItemPreviewSheet({
       headerAction={headerNav}
       footer={footerActions}
     >
-      <div className="px-4 pb-3 pt-2 text-right lg:px-0 lg:pb-1 lg:pt-0" dir="rtl">
+      <div className="px-4 pb-3 pt-2 text-start lg:px-0 lg:pb-1 lg:pt-0" dir="rtl">
         <PreviewBody
           item={item}
           categorySlug={categorySlug}

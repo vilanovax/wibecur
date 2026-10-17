@@ -13,10 +13,9 @@ type SponsoredTextBannerProps = {
 };
 
 const VARIANT_CLASS: Record<SponsoredBannerVariant, string> = {
-  banner:
-    'rounded-2xl border border-wibe bg-wibe-card px-3.5 py-3 shadow-sm lg:px-4',
-  sidebar: 'rounded-xl border border-wibe bg-wibe-card p-3.5 shadow-sm',
-  inline: 'rounded-2xl border border-wibe bg-wibe-card px-4 py-3.5 shadow-sm lg:rounded-2xl lg:border lg:p-4',
+  banner: 'rounded-surface border border-border bg-popover px-4 py-3 shadow-surface lg:px-4',
+  sidebar: 'rounded-surface border border-border bg-popover p-4 shadow-surface',
+  inline: 'rounded-surface border border-border bg-popover px-4 py-4 shadow-surface',
 };
 
 const STACK_CLASS: Record<SponsoredBannerVariant, string> = {
@@ -99,17 +98,17 @@ export default function SponsoredTextBanner({
   const isSidebar = variant === 'sidebar';
 
   const cardClass = `${VARIANT_CLASS[variant]} ${
-    isPreview ? '' : 'block transition-colors hover:border-primary/30 hover:bg-primary/[0.02]'
+    isPreview ? '' : 'block transition-colors hover:border-brand/30'
   }`;
 
   const content = (
     <>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="inline-flex items-center rounded-md bg-amber-100/90 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+        <span className="inline-flex h-6 items-center rounded-full bg-brand/10 px-2 text-xs font-semibold text-brand">
           {placement.disclosureLabel}
         </span>
         {placement.sponsorName ? (
-          <span className="truncate text-[10px] text-wibe-secondary">{placement.sponsorName}</span>
+          <span className="truncate text-xs text-muted-foreground">{placement.sponsorName}</span>
         ) : null}
       </div>
 
@@ -121,7 +120,7 @@ export default function SponsoredTextBanner({
 
       {placement.bodyText ? (
         <p
-          className={`mt-1 text-wibe-secondary ${isSidebar ? 'wibe-caption line-clamp-3' : 'wibe-small line-clamp-2'}`}
+          className={`mt-1 text-muted-foreground ${isSidebar ? 'text-xs line-clamp-3' : 'text-sm line-clamp-2'}`}
         >
           {placement.bodyText}
         </p>

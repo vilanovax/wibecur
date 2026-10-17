@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X, ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react';
+import { ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react';
 import type { ListsViewMode } from '@/lib/lists-page-layout';
 import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
 export type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
 /** Browse-mode vibes stay in FilterState for URL/mode sync; mood vibes are Explore-only */
 export type VibeFilter = 'trending' | 'saved' | 'sleep' | 'calm_movie' | 'cafe' | 'family' | 'comedy' | 'drama';
@@ -79,14 +79,14 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-wibe">
+    <div className="border-b border-border">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-4 text-right"
+        className="flex min-h-12 w-full items-center justify-between text-start"
       >
         <span className="wibe-body font-semibold text-foreground">{title}</span>
-        {open ? <ChevronUp className="w-5 h-5 text-wibe-secondary" /> : <ChevronDown className="w-5 h-5 text-wibe-secondary" />}
+        {open ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
       </button>
       {open && <div className="pb-4 space-y-3">{children}</div>}
     </div>
@@ -165,55 +165,31 @@ export default function FilterBottomSheetPro({
     setLocalState(preset.apply(structuredClone(localState)));
   };
 
-  if (!isOpen) return null;
-
   const activeCategories = cats.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  const sheet = (
-    <div data-theme="paper" className="fixed inset-0 z-[60] flex items-end justify-center">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        className="relative flex w-full max-w-2xl flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-overlay animate-in slide-in-from-bottom duration-300"
-        style={{ height: '85vh' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Drag Handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="h-1 w-10 rounded-full bg-muted" />
-        </div>
-
-        {/* Header */}
-        <div className="flex flex-shrink-0 items-center justify-between border-b border-border px-6 py-3">
-          <button
-            onClick={onClose}
-            className="w-10 h-10 rounded-full hover:bg-wibe-surface flex items-center justify-center"
-            aria-label="بستن"
-          >
-            <X className="w-5 h-5 text-wibe-secondary" />
-          </button>
-          <div className="flex-1 text-center">
-            <h2 className="wibe-h3 font-bold text-foreground">فیلتر لیست‌ها</h2>
-            <p className="wibe-caption text-wibe-secondary mt-0.5">
-              {activeCount > 0 ? `${activeCount.toLocaleString('fa-IR')} فیلتر فعال` : 'بدون فیلتر'}
-            </p>
-          </div>
-          {canReset && (
-            <button
-              onClick={handleReset}
-              className="wibe-caption font-medium text-primary"
-            >
+  return (
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      side="bottom"
+      title="فیلتر لیست‌ها"
+      className="mx-auto max-w-2xl"
+    >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="wibe-caption text-muted-foreground">
+            {activeCount > 0 ? `${activeCount.toLocaleString('fa-IR')} فیلتر فعال` : 'بدون فیلتر'}
+          </p>
+          {canReset ? (
+            <Button type="button" variant="ghost" className="h-11" onClick={handleReset}>
               پاک کردن
-            </button>
-          )}
-          {!canReset && <div className="w-10" />}
+            </Button>
+          ) : null}
         </div>
 
         {/* Live Result */}
-        <div className="px-6 py-3 bg-primary/5 flex-shrink-0">
+        <div className="shrink-0 bg-brand/5 px-6 py-3">
           <p className="wibe-small font-medium text-foreground">
             {resultCount.toLocaleString('fa-IR')} لیست مطابق انتخاب شما
           </p>
@@ -228,7 +204,7 @@ export default function FilterBottomSheetPro({
                 key={p.id}
                 type="button"
                 onClick={() => applyPreset(p)}
-                className="flex-shrink-0 h-9 px-4 rounded-[20px] bg-wibe-surface text-foreground wibe-caption font-medium hover:bg-wibe-surface transition-colors"
+                className="h-11 shrink-0 rounded-full bg-muted px-4 text-sm font-medium text-foreground"
               >
                 {p.label}
               </button>
@@ -236,17 +212,17 @@ export default function FilterBottomSheetPro({
           </div>
 
           {onViewModeChange ? (
-            <div className="mb-5 border-b border-wibe pb-5">
+            <div className="mb-5 border-b border-border pb-5">
               <p className="mb-3 wibe-body font-semibold text-foreground">نمایش</p>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => onViewModeChange('grid')}
                   aria-pressed={viewMode === 'grid'}
-                  className={`inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border wibe-caption font-medium transition-colors ${
+                  className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors ${
                     viewMode === 'grid'
-                      ? 'border-primary bg-primary/10 font-semibold text-primary'
-                      : 'border-wibe bg-wibe-surface text-wibe-secondary'
+                      ? 'border-brand bg-brand/10 font-semibold text-brand'
+                      : 'border-border bg-muted text-muted-foreground'
                   }`}
                 >
                   <LayoutGrid className="h-4 w-4" />
@@ -256,10 +232,10 @@ export default function FilterBottomSheetPro({
                   type="button"
                   onClick={() => onViewModeChange('compact')}
                   aria-pressed={viewMode === 'compact'}
-                  className={`inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border wibe-caption font-medium transition-colors ${
+                  className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors ${
                     viewMode === 'compact'
-                      ? 'border-primary bg-primary/10 font-semibold text-primary'
-                      : 'border-wibe bg-wibe-surface text-wibe-secondary'
+                      ? 'border-brand bg-brand/10 font-semibold text-brand'
+                      : 'border-border bg-muted text-muted-foreground'
                   }`}
                 >
                   <List className="h-4 w-4" />
@@ -280,7 +256,7 @@ export default function FilterBottomSheetPro({
                 type="checkbox"
                 checked={localState.categories.size === 0}
                 onChange={() => setLocalState((s) => ({ ...s, categories: new Set() }))}
-                className="w-5 h-5 rounded border-wibe text-primary"
+                className="size-5 rounded border-border text-brand"
               />
               <span className="wibe-small text-foreground">همه دسته‌ها</span>
             </label>
@@ -293,7 +269,7 @@ export default function FilterBottomSheetPro({
                   type="checkbox"
                   checked={localState.categories.has(cat.id)}
                   onChange={() => toggleCategory(cat.id)}
-                  className="w-5 h-5 rounded border-wibe text-primary"
+                  className="size-5 rounded border-border text-brand"
                 />
                 <span className="wibe-small text-foreground">{cat.icon} {cat.name}</span>
               </label>
@@ -314,10 +290,10 @@ export default function FilterBottomSheetPro({
                   key={opt.value}
                   type="button"
                   onClick={() => setLocalState((s) => ({ ...s, creatorType: opt.value }))}
-                  className={`h-8 px-4 rounded-[20px] wibe-caption font-medium transition-colors ${
+                  className={`h-11 rounded-full px-4 text-sm font-medium ${
                     localState.creatorType === opt.value
-                      ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
-                      : 'bg-wibe-surface border border-wibe text-wibe-secondary'
+                      ? 'border-2 border-brand bg-brand/10 font-semibold text-brand'
+                      : 'border border-border bg-muted text-muted-foreground'
                   }`}
                 >
                   {opt.label}
@@ -333,7 +309,7 @@ export default function FilterBottomSheetPro({
             onToggle={() => toggleSection('itemCount')}
           >
             <div className="space-y-3">
-              <div className="flex justify-between wibe-small text-wibe-secondary">
+              <div className="flex justify-between wibe-small text-muted-foreground">
                 <span>حداقل {localState.minItemCount.toLocaleString('fa-IR')} آیتم</span>
               </div>
               <input
@@ -344,9 +320,9 @@ export default function FilterBottomSheetPro({
                 onChange={(e) =>
                   setLocalState((s) => ({ ...s, minItemCount: parseInt(e.target.value, 10) }))
                 }
-                className="w-full h-2 bg-wibe-surface rounded-full accent-primary"
+                className="h-2 w-full rounded-full bg-muted accent-brand"
               />
-              <div className="flex justify-between text-xs text-wibe-secondary">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>۰</span>
                 <span>۱۰۰</span>
               </div>
@@ -359,17 +335,17 @@ export default function FilterBottomSheetPro({
             open={openSections.saves}
             onToggle={() => toggleSection('saves')}
           >
-            <p className="wibe-caption text-wibe-secondary mb-3">
+            <p className="wibe-caption text-muted-foreground mb-3">
               بر اساس تعداد ذخیره‌ها — امتیاز ستاره‌ای نیست
             </p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setLocalState((s) => ({ ...s, minRating: 0 }))}
-                className={`h-9 px-3 rounded-xl border wibe-caption font-medium transition-colors ${
+                className={`h-11 rounded-full border px-3 text-sm font-medium transition-colors ${
                   localState.minRating === 0
-                    ? 'border-primary bg-primary/10 font-semibold text-primary'
-                    : 'border-wibe bg-wibe-surface text-wibe-secondary'
+                    ? 'border-brand bg-brand/10 font-semibold text-brand'
+                    : 'border-border bg-muted text-muted-foreground'
                 }`}
               >
                 همه
@@ -388,10 +364,10 @@ export default function FilterBottomSheetPro({
                       }))
                     }
                     aria-pressed={localState.minRating === level}
-                    className={`h-9 px-3 rounded-xl border wibe-caption font-medium tabular-nums transition-colors ${
+                    className={`h-11 rounded-full border px-3 text-sm font-medium tabular-nums transition-colors ${
                       localState.minRating === level
-                        ? 'border-primary bg-primary/10 font-semibold text-primary'
-                        : 'border-wibe bg-wibe-surface text-wibe-secondary'
+                        ? 'border-brand bg-brand/10 font-semibold text-brand'
+                        : 'border-border bg-muted text-muted-foreground'
                     }`}
                   >
                     ≥{threshold.toLocaleString('fa-IR')}
@@ -399,7 +375,7 @@ export default function FilterBottomSheetPro({
                 );
               })}
             </div>
-            <p className="wibe-caption text-wibe-secondary mt-2">
+            <p className="wibe-caption text-muted-foreground mt-2">
               {localState.minRating > 0
                 ? `حداقل ${(MIN_SAVE_THRESHOLDS[localState.minRating - 1] ?? 0).toLocaleString('fa-IR')} ذخیره`
                 : 'بدون حد ذخیره'}
@@ -408,17 +384,11 @@ export default function FilterBottomSheetPro({
         </div>
 
         {/* Sticky Bottom CTA */}
-        <div className="flex-shrink-0 border-t border-border p-6 pt-4">
-          <Button type="button" variant="brand" size="lg" className="w-full rounded-xl" onClick={handleApply}>
+        <div className="mt-4 border-t border-border pt-4">
+          <Button type="button" variant="brand" size="lg" className="w-full" onClick={handleApply}>
             اعمال فیلتر ({resultCount.toLocaleString('fa-IR')} نتیجه)
           </Button>
         </div>
-      </div>
-    </div>
+    </Sheet>
   );
-
-  if (typeof document !== 'undefined') {
-    return createPortal(sheet, document.body);
-  }
-  return sheet;
 }

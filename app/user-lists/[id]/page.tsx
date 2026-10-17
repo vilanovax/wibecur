@@ -120,7 +120,7 @@ export default async function UserListDetailPage({
   const { id } = await params;
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <Suspense
         fallback={
           <>

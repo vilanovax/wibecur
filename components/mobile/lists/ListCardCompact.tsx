@@ -64,7 +64,7 @@ function getListBadges(list: ListWithCreator): { label: string; className: strin
     // آروم — با mode «ترند» برخورد معنایی نداشته باشد
     badges.push({
       label: 'داغ',
-      className: 'bg-black/45 text-white/95 backdrop-blur-sm',
+      className: 'bg-foreground/45 text-background/95 backdrop-blur-sm',
     });
   }
   if (list.createdAt) {
@@ -81,14 +81,14 @@ function CreatorRow({ list }: { list: ListWithCreator }) {
   if (!creatorName) return null;
 
   return (
-    <div className="mt-1 flex min-w-0 flex-row-reverse items-center gap-1.5">
+    <div className="mt-1 flex min-w-0 items-center gap-1.5">
       <UserAvatar
         src={list.users?.image}
         name={creatorName}
         size={20}
         className="h-5 w-5 shrink-0"
       />
-      <span className="line-clamp-1 wibe-caption text-wibe-secondary/80">{creatorName}</span>
+      <span className="line-clamp-1 text-xs text-muted-foreground">{creatorName}</span>
     </div>
   );
 }
@@ -123,8 +123,8 @@ function InlineBookmarkView({
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || '/')}&source=bookmark_gate`;
   const btnClass =
     size === 'xs'
-      ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface/95 text-wibe-secondary shadow-sm backdrop-blur-sm transition-transform active:scale-95 lg:h-9 lg:w-9'
-      : 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface text-wibe-secondary transition-transform active:scale-95 lg:h-9 lg:w-9';
+      ? 'flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-popover/95 text-muted-foreground shadow-sm backdrop-blur-sm'
+      : 'flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground';
 
   if (!loggedIn) {
     return (
@@ -216,15 +216,15 @@ function ListCardCompact({
 
   if (variant === 'mini') {
     return (
-      <Card className="group relative min-h-[68px] bg-popover p-2 shadow-sm transition-shadow lg:hover:border-primary/25 lg:hover:shadow-md">
+      <Card className="group relative min-h-16 bg-popover p-2 shadow-sm transition-shadow lg:hover:border-brand/30 lg:hover:shadow-md">
         <Link
           href={href}
           onClick={handleSearchResultClick}
           className="absolute inset-0 z-0 rounded-lg"
           aria-label={displayTitle}
         />
-        <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-wibe-surface lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
+        <div className="pointer-events-none relative z-[1] flex gap-2">
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
@@ -233,7 +233,7 @@ function ListCardCompact({
               sizes="56px"
               className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-lg"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-lg"
             />
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
@@ -252,7 +252,7 @@ function ListCardCompact({
             onToggle={onBookmarkToggle}
             isLoggedIn={isLoggedIn}
             size="xs"
-            className="pointer-events-auto absolute bottom-2 left-2 z-[2]"
+            className="pointer-events-auto absolute bottom-2 end-2 z-[2]"
           />
         ) : null}
       </Card>
@@ -261,15 +261,15 @@ function ListCardCompact({
 
   if (variant === 'compact') {
     return (
-      <Card className="group relative min-h-[76px] bg-popover p-2.5 shadow-sm transition-colors active:scale-[0.99] lg:hover:border-primary/30 lg:hover:shadow-md">
+      <Card className="group relative min-h-20 bg-popover p-2.5 shadow-sm transition-colors active:scale-95 lg:hover:border-brand/30 lg:hover:shadow-md">
         <Link
           href={href}
           onClick={handleSearchResultClick}
           className="absolute inset-0 z-0 rounded-lg"
           aria-label={displayTitle}
         />
-        <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2.5">
-          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-wibe-surface lg:h-[72px] lg:w-[72px]">
+        <div className="pointer-events-none relative z-[1] flex gap-2.5">
+          <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted lg:size-20">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
@@ -278,7 +278,7 @@ function ListCardCompact({
               sizes="72px"
               className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
             />
           </div>
           <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-12 lg:pe-11' : ''}`}>
@@ -289,7 +289,7 @@ function ListCardCompact({
                     key={b.label}
                     className={`inline-flex items-center rounded px-1.5 py-0.5 wibe-caption font-medium ${b.className}`}
                   >
-                    {b.label === 'منتخب' && <Sparkles className="ml-0.5 h-3 w-3" />}
+                    {b.label === 'منتخب' && <Sparkles className="me-0.5 h-3 w-3" />}
                     {b.label}
                   </span>
                 ))}
@@ -310,7 +310,7 @@ function ListCardCompact({
             isBookmarked={isBookmarked}
             onToggle={onBookmarkToggle}
             isLoggedIn={isLoggedIn}
-            className="pointer-events-auto absolute bottom-2.5 left-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
+            className="pointer-events-auto absolute bottom-2.5 end-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
           />
         ) : null}
       </Card>
@@ -319,7 +319,7 @@ function ListCardCompact({
 
   return (
     <Card
-      className={`group relative overflow-hidden bg-popover p-0 shadow-sm transition-colors active:scale-[0.99] lg:hover:border-primary/25 lg:hover:shadow-lg ${
+      className={`group relative overflow-hidden bg-popover p-0 shadow-sm transition-colors active:scale-95 lg:hover:border-brand/30 lg:hover:shadow-lg ${
         fillHeight ? 'h-full' : ''
       }`}
     >
@@ -333,8 +333,8 @@ function ListCardCompact({
       <div
         className={
           fillHeight
-            ? 'pointer-events-none relative z-[1] h-full min-h-[240px] w-full overflow-hidden bg-wibe-surface lg:min-h-[280px]'
-            : 'pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-wibe-surface max-lg:min-h-[118px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]'
+            ? 'pointer-events-none relative z-[1] h-full min-h-60 w-full overflow-hidden bg-muted lg:min-h-72'
+            : 'pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-muted max-lg:min-h-32 sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-52 xl:aspect-[5/3] xl:max-h-56'
         }
       >
         <ListCoverImage
@@ -345,10 +345,10 @@ function ListCardCompact({
           sizes="(min-width: 1024px) 25vw, 50vw"
           className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-3xl lg:text-4xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl lg:text-4xl"
         />
         {badges.length > 0 && (
-          <div className="absolute right-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-end gap-1 lg:right-2 lg:top-2">
+          <div className="absolute start-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-start gap-1 lg:start-2 lg:top-2">
             {badges.map((b) => (
               <span
                 key={b.label}
@@ -364,12 +364,12 @@ function ListCardCompact({
           className="absolute inset-0 hidden items-center justify-center bg-black/25 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
           aria-hidden
         >
-          <span className="rounded-full bg-white/95 px-4 py-2 wibe-small font-semibold text-foreground shadow-md">
+          <span className="rounded-full bg-popover px-4 py-2 text-sm font-semibold text-foreground shadow-md">
             مشاهده لیست
           </span>
         </div>
-        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-right max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-14 lg:pe-12' : ''}`}>
-          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] lg:text-base lg:font-bold">
+        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-start max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-14 lg:pe-12' : ''}`}>
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-background lg:text-base lg:font-bold">
             {renderTitle('')}
           </h3>
         </div>
@@ -384,7 +384,7 @@ function ListCardCompact({
           onToggle={onBookmarkToggle}
           isLoggedIn={isLoggedIn}
           size="xs"
-          className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
+          className="pointer-events-auto absolute bottom-2 end-2 z-[2] lg:bottom-2.5 lg:end-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
         />
       ) : null}
     </Card>

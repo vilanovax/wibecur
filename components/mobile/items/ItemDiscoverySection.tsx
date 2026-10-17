@@ -49,8 +49,8 @@ function DiscoveryCarouselCard({
 
   return (
     <Link href={href} className={`${className} block`}>
-      <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-[0.99]">
-      <div className="relative aspect-[2/3] w-full bg-wibe-surface lg:aspect-[16/10] lg:max-h-[9rem]">
+      <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-95">
+      <div className="relative aspect-[2/3] w-full bg-muted lg:aspect-[16/10] lg:max-h-[9rem]">
         <LazyItemCoverImage
           itemId={itemId}
           title={title}
@@ -66,16 +66,16 @@ function DiscoveryCarouselCard({
           aria-hidden
         />
         {rank != null && rank <= 3 && (
-          <span className="absolute end-2 top-2 wibe-caption rounded-pill bg-warning/90 px-1.5 py-0.5 font-medium text-foreground">
-            #{rank.toLocaleString('fa-IR')}
+          <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-foreground">
+            {rank.toLocaleString('fa-IR')}
           </span>
         )}
-        <div className="absolute inset-x-0 bottom-0 p-2 text-white">
+        <div className="absolute inset-x-0 bottom-0 p-2 text-start text-background">
           <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug drop-shadow-sm">
             {title}
           </h3>
           {ratingLabel && (
-            <div className="mt-0.5 flex items-center gap-0.5 wibe-caption text-white/85">
+            <div className="mt-0.5 flex items-center gap-0.5 wibe-caption text-background/85">
               <span aria-hidden>⭐</span>
               <span>{ratingLabel}</span>
             </div>
@@ -209,7 +209,7 @@ export default function ItemDiscoverySection({
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 text-start">
           <h2 className="wibe-h3 text-foreground">پیشنهاد برای تو</h2>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">
+          <p className="mt-0.5 wibe-caption text-muted-foreground">
             {tabDescriptions[activeTab]}
           </p>
         </div>

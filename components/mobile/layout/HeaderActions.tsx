@@ -67,7 +67,7 @@ function AccountAvatar({
       ) : headerAvatarUrl ? (
         <UserAvatar src={headerAvatarUrl} name={userName} size={HEADER_AVATAR_PX} className="h-full w-full" />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-sm font-bold text-white">
+        <div className="flex h-full w-full items-center justify-center bg-brand text-sm font-bold text-brand-foreground">
           {userName.charAt(0).toUpperCase()}
         </div>
       )}
@@ -161,11 +161,11 @@ export default function HeaderActions({
   };
 
   const avatarInnerClass = `flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full ${
-    isDark ? 'bg-gray-800 ring-1 ring-gray-700' : 'bg-wibe-surface'
+    isDark ? 'bg-foreground ring-1 ring-foreground' : 'bg-muted'
   }`;
 
-  const avatarButtonClass = `relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 ${
-    isDark ? 'hover:bg-gray-800/60' : 'hover:bg-wibe-surface'
+  const avatarButtonClass = `relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 ${
+    isDark ? 'hover:bg-foreground/80' : 'hover:bg-muted'
   }`;
 
   const unreadLabel =
@@ -179,7 +179,8 @@ export default function HeaderActions({
           <div
             ref={menuRef}
             role="menu"
-            className="fixed z-[200] w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg"
+            data-theme="paper"
+            className="fixed z-[200] w-48 rounded-surface border border-border bg-popover py-1 shadow-surface"
             style={{ top: menuPos.top, left: menuPos.left }}
             dir="rtl"
           >
@@ -187,15 +188,15 @@ export default function HeaderActions({
               <button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2.5 wibe-small hover:bg-[var(--color-bg)]"
+                className="flex h-11 w-full items-center gap-2 px-3 text-sm hover:bg-muted"
                 onClick={openNotificationsFromMenu}
               >
-                <Bell className="h-4 w-4 shrink-0 text-wibe-secondary" />
+                <Bell className="size-4 shrink-0 text-muted-foreground" />
                 <span>اعلان‌ها</span>
                 {notifications.unreadCount > 0 && (
-                  <span className="mr-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+                  <span className="ms-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-bold text-white">
                     {notifications.unreadCount > 9
-                      ? '9+'
+                      ? '۹+'
                       : notifications.unreadCount.toLocaleString('fa-IR')}
                   </span>
                 )}
@@ -204,20 +205,20 @@ export default function HeaderActions({
             <Link
               href="/profile"
               role="menuitem"
-              className="flex items-center gap-2 px-3 py-2.5 wibe-small hover:bg-[var(--color-bg)]"
+              className="flex h-11 items-center gap-2 px-3 text-sm hover:bg-muted"
               onClick={() => setMenuOpen(false)}
             >
-              <User className="h-4 w-4 shrink-0 text-wibe-secondary" />
+              <User className="size-4 shrink-0 text-muted-foreground" />
               پروفایل
             </Link>
             {isAdmin && (
               <Link
                 href="/admin/dashboard"
                 role="menuitem"
-                className="flex items-center gap-2 px-3 py-2.5 wibe-small hover:bg-[var(--color-bg)]"
+                className="flex h-11 items-center gap-2 px-3 text-sm hover:bg-muted"
                 onClick={() => setMenuOpen(false)}
               >
-                <LayoutDashboard className="h-4 w-4 shrink-0 text-wibe-secondary" />
+                <LayoutDashboard className="size-4 shrink-0 text-muted-foreground" />
                 پنل مدیریت
               </Link>
             )}
@@ -225,7 +226,7 @@ export default function HeaderActions({
               type="button"
               role="menuitem"
               disabled={isLoggingOut}
-              className="flex w-full items-center gap-2 px-3 py-2.5 wibe-small text-red-600 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-900/20"
+              className="flex h-11 w-full items-center gap-2 px-3 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
               onClick={handleLogout}
             >
               {isLoggingOut ? (
@@ -251,7 +252,7 @@ export default function HeaderActions({
             <button
               ref={buttonRef}
               type="button"
-              className={`${avatarButtonClass} ${menuOpen ? 'ring-2 ring-primary/40 rounded-full' : ''}`}
+              className={`${avatarButtonClass} ${menuOpen ? 'rounded-full ring-2 ring-brand/40' : ''}`}
               aria-label={`منوی حساب ${userName}${unreadLabel}`}
               aria-expanded={menuOpen}
               aria-haspopup="menu"
@@ -265,7 +266,7 @@ export default function HeaderActions({
                   isGuest={isGuest}
                 />
               </span>
-              <ChevronDown className="absolute -bottom-0.5 -right-0.5 z-10 h-3.5 w-3.5 rounded-full bg-white text-wibe-secondary ring-1 ring-wibe/80" />
+              <ChevronDown className="absolute -bottom-0.5 -start-0.5 z-10 size-4 rounded-full bg-popover text-muted-foreground ring-1 ring-border" />
               {!hideNotifications && (
                 <NotificationUnreadBadge count={notifications.unreadCount} />
               )}

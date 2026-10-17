@@ -7,9 +7,9 @@ export default function SponsoredPage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <Header title="ویژه" showBack />
-      <div className="p-4 text-center text-wibe-secondary">
+      <div className="p-4 text-center text-muted-foreground">
         <p>صفحه اسپانسر — به زودی</p>
       </div>
       <BottomNav />

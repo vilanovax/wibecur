@@ -30,29 +30,29 @@ function MoodListLink({ moodId, list, compact }: MoodListLinkProps) {
     <Link
       href={`/lists/${list.slug}`}
       onClick={() => trackMoodCardClick(moodId, 'list', list.slug)}
-      className={`group flex items-center gap-2 rounded-lg hover:bg-wibe-surface ${
-        compact ? 'px-1 py-1' : 'px-1.5 py-1.5'
+      className={`group flex min-h-11 items-center gap-2 rounded-lg hover:bg-muted ${
+        compact ? 'px-1' : 'px-2'
       }`}
     >
       {list.coverImage ? (
-        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md bg-wibe-surface lg:h-10 lg:w-10">
+        <div className="relative size-11 shrink-0 overflow-hidden rounded-md bg-muted">
           <ImageWithFallback
             src={list.coverImage}
             alt={list.title}
             className="h-full w-full object-cover"
             fallbackIcon={list.categories?.icon ?? '📋'}
-            fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-sm"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-sm"
             categorySlug={list.categories?.slug}
             listSlug={list.slug}
             listTitle={list.title}
           />
         </div>
       ) : (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-wibe-surface text-base lg:h-10 lg:w-10">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-muted text-base">
           {list.categories?.icon ?? '📋'}
         </span>
       )}
-      <span className="line-clamp-2 min-w-0 flex-1 wibe-caption font-medium text-foreground group-hover:text-primary">
+      <span className="line-clamp-2 min-w-0 flex-1 text-sm font-medium text-foreground group-hover:text-brand">
         {list.title}
       </span>
     </Link>
@@ -75,7 +75,7 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
           </span>
           {mood.label}
         </p>
-        <p className="mt-0.5 wibe-caption text-wibe-secondary">{mood.subtitle}</p>
+        <p className="mt-0.5 wibe-caption text-muted-foreground">{mood.subtitle}</p>
       </div>
 
       <ul className="space-y-1">
@@ -89,10 +89,12 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
       <Link
         href={mood.href}
         onClick={() => trackMoodCardClick(mood.id, 'more')}
-        className="mt-2 inline-flex items-center gap-0.5 wibe-caption font-semibold text-primary hover:underline"
+        className="mt-2 inline-flex min-h-11 items-center"
       >
-        بیشتر
-        <ChevronLeft className="h-3 w-3" aria-hidden />
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-brand">
+          بیشتر
+          <ChevronLeft className="h-3 w-3" aria-hidden />
+        </span>
       </Link>
     </Card>
   );
@@ -111,7 +113,7 @@ export default function HomeMoodRowSection({
     if (isSidebar || isResponsive) {
       return (
         <div
-          className={`h-full min-h-[20rem] animate-pulse rounded-2xl bg-wibe-surface ${className}`}
+          className={`h-full min-h-80 animate-pulse rounded-surface bg-muted ${className}`}
           aria-hidden
         />
       );
@@ -119,11 +121,11 @@ export default function HomeMoodRowSection({
     return (
       <section className="mb-6">
         <div className="mb-3 px-4 lg:px-0">
-          <div className="h-6 w-40 animate-pulse rounded bg-wibe-surface" />
+          <div className="h-6 w-40 animate-pulse rounded bg-muted" />
         </div>
         <div className="flex gap-3 overflow-hidden px-4 lg:px-0">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-40 w-[11.5rem] shrink-0 animate-pulse rounded-xl bg-wibe-surface" />
+            <div key={i} className="h-40 w-44 shrink-0 animate-pulse rounded-surface bg-muted" />
           ))}
         </div>
       </section>
@@ -141,7 +143,7 @@ export default function HomeMoodRowSection({
               <SectionIcon variant="mood" />
               بر اساس حال‌وهوا
             </h2>
-            <p className="mt-0.5 wibe-caption text-wibe-secondary">انتخاب سریع برای امروز</p>
+            <p className="mt-0.5 wibe-caption text-muted-foreground">انتخاب سریع برای امروز</p>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             {moods.map((mood) => (
@@ -170,7 +172,7 @@ export default function HomeMoodRowSection({
             ))}
           </HorizontalScrollFade>
           {moods.length > 2 ? (
-            <p className="mt-1.5 px-4 text-center wibe-caption text-wibe-secondary lg:hidden">
+            <p className="mt-1.5 px-4 text-center wibe-caption text-muted-foreground lg:hidden">
               بکش برای بیشتر ←
             </p>
           ) : null}
@@ -195,7 +197,7 @@ export default function HomeMoodRowSection({
             <SectionIcon variant="mood" />
             بر اساس حال‌وهوا
           </h2>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">انتخاب سریع برای امروز</p>
+          <p className="mt-0.5 wibe-caption text-muted-foreground">انتخاب سریع برای امروز</p>
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           {moods.map((mood) => (
@@ -228,7 +230,7 @@ export default function HomeMoodRowSection({
         ))}
       </HorizontalScrollFade>
       {moods.length > 2 ? (
-        <p className="mt-1.5 px-4 text-center wibe-caption text-wibe-secondary lg:hidden">
+        <p className="mt-1.5 px-4 text-center wibe-caption text-muted-foreground lg:hidden">
           بکش برای بیشتر ←
         </p>
       ) : null}

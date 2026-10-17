@@ -25,7 +25,7 @@ function range(page: number, total: number, siblings: number): (number | "…")[
 
 /** صفحه‌بندی. «قبلی» points right and «بعدی» points left, as reading order demands. */
 export function Pagination({ page, total, onChange, siblings = 1, size = "md", className }: PaginationProps) {
-  const btn = cn(size === "sm" ? "size-8 text-xs" : "size-9 text-sm", "flex cursor-pointer items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40");
+  const btn = cn(size === "sm" ? "size-11 text-xs" : "size-11 text-sm", "flex cursor-pointer items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40");
   return (
     <nav aria-label="صفحه‌بندی" className={cn("flex items-center gap-1", className)}>
       <button type="button" aria-label="صفحه‌ی قبل" disabled={page <= 1} onClick={() => onChange(page - 1)} className={btn}>

@@ -6,6 +6,7 @@ import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { track, type AnalyticsData } from '@/lib/analytics';
+import { fa } from '@/lib/utils';
 import { signOutIfStaleSession } from '@/lib/session-client';
 
 interface BaseCommentFormProps {
@@ -22,7 +23,7 @@ export default function BaseCommentForm({
   onClose,
   apiUrl,
   onSubmit,
-  title = 'ثبت کامنت',
+  title = 'ثبت نظر',
   analytics,
 }: BaseCommentFormProps) {
   const [content, setContent] = useState('');
@@ -33,7 +34,7 @@ export default function BaseCommentForm({
     e.preventDefault();
 
     if (!content.trim()) {
-      setError('لطفاً متن کامنت را وارد کنید');
+      setError('لطفاً متن نظر را وارد کنید');
       return;
     }
 
@@ -56,11 +57,11 @@ export default function BaseCommentForm({
       }
 
       if (!response.ok) {
-        const message = data?.error || (response.status === 429 ? 'لطفاً چند دقیقه صبر کنید و دوباره امتحان کنید.' : 'خطا در ثبت کامنت');
+        const message = data?.error || (response.status === 429 ? 'لطفاً چند دقیقه صبر کنید و دوباره امتحان کنید.' : 'خطا در ثبت نظر');
         throw new Error(message);
       }
       if (!data.success) {
-        throw new Error(data.error || 'خطا در ثبت کامنت');
+        throw new Error(data.error || 'خطا در ثبت نظر');
       }
 
       setContent('');
@@ -68,7 +69,7 @@ export default function BaseCommentForm({
       onClose();
       onSubmit();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'خطا در ثبت کامنت');
+      setError(err instanceof Error ? err.message : 'خطا در ثبت نظر');
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +81,7 @@ export default function BaseCommentForm({
       <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6">
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4" role="alert">
+            <div className="mb-4 rounded-surface border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive" role="alert">
               {error}
             </div>
           )}
@@ -104,11 +105,11 @@ export default function BaseCommentForm({
               disabled={isLoading}
             />
             <div className="mt-2 flex items-center justify-between">
-              <p className="text-xs text-wibe-secondary">
-                کامنت‌های نامناسب به صورت خودکار فیلتر می‌شوند
+              <p className="text-xs text-muted-foreground">
+                نظرهای نامناسب به‌صورت خودکار فیلتر می‌شوند
               </p>
-              <p className="text-xs text-wibe-secondary">
-                {content.length} کاراکتر
+              <p className="text-xs text-muted-foreground">
+                {fa(content.length)} کاراکتر
               </p>
             </div>
           </div>

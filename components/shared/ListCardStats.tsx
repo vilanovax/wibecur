@@ -30,7 +30,7 @@ export default function ListCardStats({
   if (variant === 'overlay') {
     return (
       <p
-        className={`flex flex-wrap items-center justify-end gap-x-1 gap-y-0.5 leading-tight wibe-caption text-white/95 tabular-nums drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] lg:gap-x-1.5 ${className}`}
+        className={`flex flex-wrap items-center justify-start gap-x-1 gap-y-0.5 text-xs leading-tight text-white/95 tabular-nums lg:gap-x-1.5 ${className}`}
       >
         <Bookmark className="h-3 w-3 shrink-0 max-lg:opacity-90 lg:h-4 lg:w-4" />
         <span className="line-clamp-1">
@@ -42,7 +42,7 @@ export default function ListCardStats({
 
   if (variant === 'minimal') {
     return (
-      <p className={`wibe-caption text-wibe-secondary tabular-nums ${className}`}>
+      <p className={`wibe-caption text-muted-foreground tabular-nums ${className}`}>
         {saveLabel} ذخیره · {itemLabel} آیتم
       </p>
     );
@@ -50,7 +50,7 @@ export default function ListCardStats({
 
   if (variant === 'items-only') {
     return (
-      <p className={`inline-flex items-center gap-1 wibe-caption text-wibe-secondary ${className}`}>
+      <p className={`inline-flex items-center gap-1 wibe-caption text-muted-foreground ${className}`}>
         <Package className="h-3.5 w-3.5 shrink-0" aria-hidden />
         <span className="tabular-nums">{itemLabel} آیتم</span>
       </p>
@@ -59,12 +59,12 @@ export default function ListCardStats({
 
   if (variant === 'compact') {
     return (
-      <p className={`flex items-center gap-2 wibe-caption text-wibe-secondary ${className}`}>
-        <span className="inline-flex items-center gap-1 text-primary font-medium">
+      <p className={`flex items-center gap-2 wibe-caption text-muted-foreground ${className}`}>
+        <span className="inline-flex items-center gap-1 font-medium text-brand">
           <Bookmark className="w-3.5 h-3.5" />
           {saveLabel} ذخیره
         </span>
-        <span className="text-wibe-secondary/60">·</span>
+        <span className="text-muted-foreground/60">·</span>
         <span className="inline-flex items-center gap-1">
           <Package className="w-3.5 h-3.5" />
           {itemLabel} آیتم
@@ -75,11 +75,11 @@ export default function ListCardStats({
 
   return (
     <div className={`flex items-center justify-between gap-2 mt-2 ${className}`}>
-      <span className="inline-flex items-center gap-1 wibe-small font-semibold text-primary">
+      <span className="inline-flex items-center gap-1 text-sm font-semibold text-brand">
         <Bookmark className="w-4 h-4" />
         {saveLabel} ذخیره
       </span>
-      <span className="inline-flex items-center gap-1 wibe-caption text-wibe-secondary">
+      <span className="inline-flex items-center gap-1 wibe-caption text-muted-foreground">
         <Package className="w-3.5 h-3.5" />
         {itemLabel} آیتم
       </span>

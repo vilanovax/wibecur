@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import GuidedDiscoveryResults from './GuidedDiscoveryResults';
 import {
   GUIDED_SCENARIO_CONFIGS,
@@ -153,14 +156,14 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
               <div className="flex items-center gap-3">
                 {moodIcon ? (
                   <span
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-wibe-surface text-2xl ring-1 ring-wibe"
+                    className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted text-2xl"
                     aria-hidden
                   >
                     {moodIcon}
                   </span>
                 ) : null}
                 {moodMeta.subtitle ? (
-                  <p className="min-w-0 flex-1 text-right wibe-small leading-relaxed text-wibe-secondary">
+                  <p className="min-w-0 flex-1 text-start text-sm leading-relaxed text-muted-foreground">
                     {moodMeta.subtitle}
                   </p>
                 ) : null}
@@ -168,7 +171,7 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
             )}
 
             <div>
-              <p className="mb-3 text-right wibe-body font-bold text-foreground">
+              <p className="mb-3 text-start text-base font-bold text-foreground">
                 {config.question.prompt}
               </p>
               <div
@@ -185,10 +188,10 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
                       key={opt.value}
                       type="button"
                       onClick={() => handleAnswer(opt.value)}
-                      className="flex items-center gap-3 rounded-2xl border border-wibe bg-wibe-card px-3.5 py-3.5 text-right transition-colors hover:border-primary/30 hover:bg-primary/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:py-4"
+                      className="flex min-h-12 items-center gap-3 rounded-surface border border-border bg-popover px-4 py-3 text-start transition-colors hover:border-brand/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
                     >
                       <span
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-wibe-surface text-xl"
+                        className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-xl"
                         aria-hidden
                       >
                         {visual}
@@ -208,24 +211,24 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
           <div className="space-y-5 py-4 lg:py-6">
             <div className="flex flex-col items-center gap-3">
               {moodIcon ? (
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-wibe-surface text-3xl ring-1 ring-wibe">
+                <span className="flex size-14 items-center justify-center rounded-xl bg-muted text-3xl">
                   {moodIcon}
                 </span>
               ) : null}
-              <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <p className="text-center wibe-small text-wibe-secondary">
+              <div className="size-7 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+              <p className="text-center text-sm text-muted-foreground">
                 پیشنهادها رو جمع می‌کنیم…
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2.5">
               {[1, 2, 3, 4].map((card) => (
-                <div key={card} className="overflow-hidden rounded-xl border border-wibe">
-                  <div className="aspect-[16/10] animate-pulse bg-wibe-surface" />
-                  <div className="space-y-2 p-2.5">
-                    <div className="h-3.5 w-[80%] animate-pulse rounded bg-wibe-surface" />
-                    <div className="h-3 w-[40%] animate-pulse rounded bg-wibe-surface" />
+                <Card key={card} className="overflow-hidden bg-popover p-0">
+                  <Skeleton className="aspect-video w-full rounded-none" />
+                  <div className="space-y-2 p-3">
+                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-3 w-2/5" />
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           </div>
@@ -233,16 +236,12 @@ export default function GuidedDiscoverySheet({ selection, isOpen, onClose }: Pro
 
         {showError && (
           <div className="space-y-3 py-8 text-center">
-            <p className="wibe-small text-red-600">
+            <p className="text-sm text-destructive">
               {error instanceof Error ? error.message : 'خطا در دریافت پیشنهادها'}
             </p>
-            <button
-              type="button"
-              onClick={() => void refetch()}
-              className="rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white"
-            >
+            <Button type="button" variant="brand" size="lg" onClick={() => void refetch()}>
               تلاش مجدد
-            </button>
+            </Button>
           </div>
         )}
 

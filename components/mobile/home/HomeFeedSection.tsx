@@ -14,7 +14,7 @@ export default function HomeFeedSection({
 }: Props) {
   return (
     <div
-      className={`${divider ? 'border-t border-wibe/70 pt-6 xl:pt-7' : ''} ${className}`.trim()}
+      className={`${divider ? 'border-t border-border pt-6 xl:pt-7' : ''} ${className}`.trim()}
     >
       {children}
     </div>

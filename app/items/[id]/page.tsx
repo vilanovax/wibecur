@@ -123,7 +123,7 @@ export default async function ItemDetailPage({
   const metadataSection = <ItemMetadataServer item={serialized} />;
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <ItemLcpPreload href={serialized.displayImageUrl} />
       <Header showBack hideTitleOnDesktop showDesktopSearch={false} />
       <ItemPageBreadcrumb

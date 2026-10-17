@@ -3,17 +3,15 @@ import BottomNav from '@/components/mobile/layout/BottomNav';
 import DesignSystemShowcase from './DesignSystemShowcase';
 
 export const metadata = {
-  title: 'Design System — Wibe',
-  description: 'مرجع داخلی توکن‌ها و کامپوننت‌های consumer UI',
+  title: 'نمایش طراحی',
+  description: 'نمونهٔ دکمه‌ها، کارت‌ها و کنترل‌های وایب‌فارسی',
 };
 
 export default function DesignSystemPage() {
   return (
-    <div className="min-h-screen bg-wibe-surface">
-      <Header title="Design System" showBack showDesktopSearch={false} />
-      <main className="wibe-desktop-shell pb-24 lg:pb-8">
-        <DesignSystemShowcase />
-      </main>
+    <div className="min-h-screen bg-background">
+      <Header title="نمایش طراحی" showBack showDesktopSearch={false} />
+      <DesignSystemShowcase />
       <BottomNav />
     </div>
   );

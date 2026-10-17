@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { Card } from '@/components/ui/card';
 import CategorySectionTitle from './CategorySectionTitle';
 import { CATEGORY_SECTION } from '@/lib/category-layout';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
@@ -23,10 +24,10 @@ export default function CategoryViralSpotlightSectionServer({
       <CategorySectionTitle title="وایرال این هفته" iconVariant="viral" />
       <Link
         href={`/lists/${list.slug}`}
-        className="block transition-transform active:scale-[0.99]"
+        className="block transition-transform active:scale-95"
       >
-        <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card">
-          <div className="relative aspect-video bg-wibe-surface">
+        <Card className="overflow-hidden bg-popover p-0">
+          <div className="relative aspect-video bg-muted">
             {image ? (
               <Image
                 src={image.src}
@@ -37,15 +38,15 @@ export default function CategoryViralSpotlightSectionServer({
                 unoptimized={image.unoptimized}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-5xl opacity-40">
+              <div className="flex h-full w-full items-center justify-center bg-muted text-5xl opacity-40">
                 📋
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-            <span className="absolute right-3 top-3 rounded-pill bg-warning px-2 py-1 wibe-caption font-semibold text-white">
+            <span className="absolute end-3 top-3 rounded-full bg-warning px-2 py-1 text-xs font-semibold text-foreground">
               وایرال
             </span>
-            <div className="absolute bottom-0 left-0 right-0 p-4">
+            <div className="absolute inset-x-0 bottom-0 p-4">
               <h3 className="line-clamp-2 wibe-h3 text-white">{list.title}</h3>
               <p className="mt-1 wibe-caption tabular-nums text-white/90">
                 {list.saveCount.toLocaleString('fa-IR')} ذخیره ·{' '}
@@ -54,9 +55,9 @@ export default function CategoryViralSpotlightSectionServer({
             </div>
           </div>
           <div className="p-3">
-            <p className="text-center wibe-caption text-wibe-secondary">ببین چرا وایرال شده</p>
+            <p className="text-center text-sm text-muted-foreground">ببین چرا وایرال شده</p>
           </div>
-        </div>
+        </Card>
       </Link>
     </section>
   );

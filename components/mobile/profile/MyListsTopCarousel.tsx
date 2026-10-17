@@ -4,26 +4,27 @@ import Link from 'next/link';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import type { MyListCardData } from './MyListCardCompact';
+import { Card } from '@/components/ui/card';
 
 interface MyListsTopCarouselProps {
   lists: MyListCardData[];
 }
 
-/** هایلایت فشرده — فقط ۲–۳ کارت کوچک، بدون بج تکراری */
+/** هایلایت فشرده — دو کارت روی موبایل، سه کارت در یک ردیف روی دسکتاپ */
 export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
   if (lists.length === 0) return null;
 
   return (
     <section aria-labelledby="top-public-lists-title">
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <h2 id="top-public-lists-title" className="wibe-small font-bold text-foreground">
-          برترین عمومی
+        <h2 id="top-public-lists-title" className="shrink-0 whitespace-nowrap wibe-small font-bold text-foreground">
+          محبوب‌ترین‌ها
         </h2>
-        <span className="shrink-0 wibe-caption text-wibe-secondary">بر اساس ذخیره</span>
+        <span className="shrink-0 text-xs text-muted-foreground">بر اساس ذخیره</span>
       </div>
       <div className="overflow-hidden lg:overflow-visible">
         <div
-          className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto scrollbar-hide lg:grid lg:grid-cols-3 lg:overflow-visible"
+          className="grid grid-cols-2 gap-2.5 lg:grid-cols-3"
           dir="rtl"
         >
         {lists.map((list) => {
@@ -33,9 +34,10 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
             <Link
               key={list.id}
               href={`/user-lists/${list.id}`}
-              className="block w-[calc((100%-0.625rem)/2)] shrink-0 snap-start overflow-hidden rounded-xl border border-wibe bg-wibe-card transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:w-auto"
+              className="block min-w-0"
             >
-              <div className="relative h-[5.75rem] overflow-hidden bg-wibe-surface">
+              <Card className="overflow-hidden bg-popover p-0">
+              <div className="relative h-24 overflow-hidden bg-muted">
                 <ListCoverImage
                   coverImage={list.coverImage}
                   title={list.title}
@@ -43,14 +45,14 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
                   categorySlug={list.categories?.slug}
                   className="h-full w-full object-cover"
                   fallbackIcon={list.categories?.icon ?? '📋'}
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
                 />
                 <div
                   className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"
                   aria-hidden
                 />
                 <div className="absolute inset-x-0 bottom-0 p-2 pt-6">
-                  <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-white">
+                  <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-background">
                     {list.title}
                   </h3>
                   <ListCardStats
@@ -61,6 +63,7 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
                   />
                 </div>
               </div>
+              </Card>
             </Link>
           );
         })}

@@ -53,14 +53,14 @@ function CreateActionCard({
       href={href}
       onClick={onClose}
       className={`
-        flex items-center gap-3 p-4 rounded-2xl text-right transition-colors duration-200
-        active:scale-[0.98] active:transition-none
+        flex min-h-12 items-center gap-3 rounded-surface p-4 text-start transition-colors duration-200
+        active:scale-95 active:transition-none
         ${animateOnOpen ? 'origin-center transition-transform duration-300' : ''}
         ${animateOnOpen && !mounted ? 'scale-[0.98] opacity-90' : ''}
         ${disabled ? 'pointer-events-none opacity-50' : ''}
         ${isPrimary
-          ? 'bg-primary/5 hover:bg-primary/10'
-          : 'bg-wibe-surface/80 hover:bg-wibe-surface'
+          ? 'bg-brand/5 hover:bg-brand/10'
+          : 'bg-muted hover:bg-muted'
         }
       `}
     >
@@ -69,7 +69,7 @@ function CreateActionCard({
       </span>
       <div className="flex-1 min-w-0">
         <span className="font-semibold text-foreground block">{title}</span>
-        <span className="text-sm text-wibe-secondary mt-0.5 block">{description}</span>
+        <span className="mt-0.5 block text-sm text-muted-foreground">{description}</span>
       </div>
     </Link>
   );
@@ -133,9 +133,9 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
               type="button"
               onClick={() => setExpanded(true)}
               className="
-                flex w-full origin-center items-center gap-3 rounded-2xl bg-primary/5
-                p-4 text-right transition duration-200
-                hover:bg-primary/10 active:scale-[0.98]
+                flex min-h-12 w-full origin-center items-center gap-3 rounded-surface bg-brand/5
+                p-4 text-start transition duration-200
+                hover:bg-brand/10 active:scale-95
               "
             >
               <span className="text-2xl flex-shrink-0 leading-none" aria-hidden>
@@ -143,7 +143,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
               </span>
               <div className="flex-1 min-w-0">
                 <span className="font-semibold text-foreground block">ساخت لیست جدید</span>
-                <span className="text-sm text-wibe-secondary mt-0.5 block">
+                <span className="mt-0.5 block text-sm text-muted-foreground">
                   لیست شخصی خودتو بساز و منتشر کن
                 </span>
               </div>
@@ -151,7 +151,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
           ) : (
             <div
               className="
-                rounded-2xl border border-primary/15 bg-primary/5 shadow-sm
+                rounded-surface border border-brand/20 bg-brand/5 shadow-sm
                 overflow-hidden transition-colors duration-200
               "
             >
@@ -159,7 +159,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
                 <span className="text-2xl flex-shrink-0 leading-none">🧩</span>
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold text-foreground block">ساخت لیست جدید</span>
-                  <span className="text-sm text-wibe-secondary mt-0.5 block">
+                  <span className="mt-0.5 block text-sm text-muted-foreground">
                     یه حال‌وهوا انتخاب کن
                   </span>
                 </div>
@@ -171,9 +171,9 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
                     type="button"
                     onClick={() => handleCategorySelect(cat.slug)}
                     className="
-                      inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl
-                      bg-white border border-wibe text-sm font-medium text-foreground
-                      hover:bg-wibe-surface hover:border-primary/30 active:scale-[0.98]
+                      inline-flex h-11 items-center gap-1.5 rounded-full
+                      border border-border bg-popover px-4 text-sm font-medium text-foreground
+                      hover:border-brand/30 hover:bg-muted active:scale-95
                       transition-colors duration-200
                     "
                   >

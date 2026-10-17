@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
+import { useToastOptional } from '@/components/ui/toast';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -38,21 +39,33 @@ export default function Toast({
   className = '',
 }: ToastProps) {
   const [entered, setEntered] = useState(false);
+  const kit = useToastOptional();
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
+    if (!kit) return;
+    const variant = type === 'error' ? 'error' : type === 'success' ? 'success' : 'default';
+    kit.toast({ title: message, variant, duration });
+    const timer = window.setTimeout(() => onCloseRef.current(), duration);
+    return () => window.clearTimeout(timer);
+  }, [kit, message, type, duration]);
+
+  useEffect(() => {
+    if (kit) return;
     const id = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(id);
   }, []);
 
   useEffect(() => {
-    if (duration > 0) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, duration);
+    if (kit || duration <= 0) return;
+    const timer = setTimeout(() => {
+      onClose();
+    }, duration);
+    return () => clearTimeout(timer);
+  }, [kit, duration, onClose]);
 
-      return () => clearTimeout(timer);
-    }
-  }, [duration, onClose]);
+  if (kit) return null;
 
   const Icon = toastIcons[type];
 

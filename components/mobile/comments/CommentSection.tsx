@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
 import { Card } from '@/components/ui/card';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Spinner } from '@/components/ui/spinner';
@@ -14,7 +15,6 @@ import CommentReportModal from './CommentReportModal';
 import { usePreferDesktopAutofocus } from '@/lib/hooks/usePreferDesktopAutofocus';
 import {
   COMMENTS_INITIAL_VISIBLE,
-  COMMENTS_LOAD_MORE_STEP,
   DEFAULT_LIST_COMMENT_MAX_LENGTH,
   MIN_COMMENT_LENGTH,
 } from '@/lib/comment-limits';
@@ -171,7 +171,7 @@ export default function CommentSection({
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('popular');
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(COMMENTS_INITIAL_VISIBLE);
+  const [page, setPage] = useState(1);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
@@ -186,7 +186,7 @@ export default function CommentSection({
   const maxCommentLength = data?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
 
   useEffect(() => {
-    setVisibleCount(COMMENTS_INITIAL_VISIBLE);
+    setPage(1);
   }, [itemId, sortBy]);
 
   const handleSubmit = async (content: string): Promise<boolean> => {
@@ -302,17 +302,17 @@ export default function CommentSection({
     }
   };
 
-  const displayedComments = comments.slice(0, visibleCount);
-  const hasMore = visibleCount < comments.length;
-  const remainingCount = comments.length - visibleCount;
-  const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
+  const pageSize = COMMENTS_INITIAL_VISIBLE;
+  const totalPages = Math.max(1, Math.ceil(comments.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const displayedComments = comments.slice((safePage - 1) * pageSize, safePage * pageSize);
   const showSort = !isLoading && comments.length > 1;
 
   return (
     <section
       id="comments"
       className={`scroll-mt-28 ${
-        embeddedInPanel ? 'mt-0 border-t-0 pt-0' : 'mt-2 border-t border-wibe pt-5'
+        embeddedInPanel ? 'mt-0 border-t-0 pt-0' : 'mt-2 border-t border-border pt-5'
       }`}
     >
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -332,7 +332,7 @@ export default function CommentSection({
       </div>
 
       {!commentsEnabled && (
-        <p className="mb-3 wibe-caption text-wibe-secondary">نظرها غیرفعال است</p>
+        <p className="mb-3 wibe-caption text-muted-foreground">نظرها غیرفعال است</p>
       )}
 
       <div className="space-y-4">
@@ -343,7 +343,7 @@ export default function CommentSection({
               <Spinner />
             </div>
           ) : comments.length === 0 ? (
-            <p className="py-2 text-center wibe-caption text-wibe-secondary">
+            <p className="py-2 text-center wibe-caption text-muted-foreground">
               هنوز گفتگویی نیست
               {status === 'authenticated' && commentsEnabled
                 ? ' — اولین نظر را پایین بنویس'
@@ -363,25 +363,20 @@ export default function CommentSection({
                   />
                 ))}
               </div>
-              {hasMore ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="lg"
-                  className="mt-4 w-full"
-                  onClick={() => setVisibleCount((v) => v + COMMENTS_LOAD_MORE_STEP)}
-                >
-                  <ChevronDown aria-hidden />
-                  {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر (
-                  {remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
-                </Button>
+              {totalPages > 1 ? (
+                <Pagination
+                  className="mt-4 justify-center"
+                  page={safePage}
+                  total={totalPages}
+                  onChange={setPage}
+                />
               ) : null}
             </>
           )}
         </div>
 
         {commentsEnabled && status === 'authenticated' ? (
-          <div className="space-y-2 border-t border-wibe/60 pt-3">
+          <div className="space-y-2 border-t border-border pt-3">
             <ItemCommentInput
               isExpanded={isFormExpanded}
               onExpand={() => setIsFormExpanded(true)}

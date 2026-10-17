@@ -70,10 +70,10 @@ export default function HomeResponsiveContent({
   return (
     <>
       <div
-        className={`sticky top-14 z-10 overflow-hidden border-b bg-wibe-surface/95 backdrop-blur-sm transition-[max-height,opacity,border-color] duration-200 ease-out lg:hidden ${
+        className={`sticky top-14 z-10 overflow-hidden border-b bg-background/95 backdrop-blur-sm transition-[max-height,opacity,border-color] duration-200 ease-out lg:hidden ${
           searchCollapsed
             ? 'pointer-events-none max-h-0 border-transparent opacity-0'
-            : 'max-h-20 border-wibe/50 opacity-100 pb-1.5 pt-0.5'
+            : 'max-h-20 border-border opacity-100 pb-1.5 pt-0.5'
         }`}
         aria-hidden={isDesktop || searchCollapsed || undefined}
       >

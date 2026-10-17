@@ -154,7 +154,7 @@ export default function EditPersonalListForm({
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto overscroll-contain p-6 min-h-0">
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4">
+            <div className="mb-4 rounded-surface border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -165,7 +165,7 @@ export default function EditPersonalListForm({
               htmlFor="title"
               className="block text-sm font-medium text-foreground mb-2"
             >
-              عنوان لیست <span className="text-red-500">*</span>
+              عنوان لیست <span className="text-destructive">*</span>
             </label>
             <Input
               type="text"
@@ -198,7 +198,7 @@ export default function EditPersonalListForm({
               placeholder="توضیحات لیست را وارد کنید..."
               disabled={isLoading}
             />
-            <p className="text-xs text-wibe-secondary mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               {formData.description.length} / {MAX_DESCRIPTION_LENGTH} کاراکتر
             </p>
           </div>
@@ -218,7 +218,7 @@ export default function EditPersonalListForm({
             />
             {formData.coverImage ? (
               <div className="space-y-2">
-                <div className="relative w-full h-48 rounded-lg overflow-hidden border border-wibe">
+                <div className="relative h-48 w-full overflow-hidden rounded-surface border border-border">
                   <img
                     src={formData.coverImage}
                     alt="Cover preview"
@@ -227,7 +227,7 @@ export default function EditPersonalListForm({
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, coverImage: '' }))}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                    className="absolute end-2 top-2 flex size-11 items-center justify-center rounded-full bg-destructive text-white"
                     disabled={isLoading || isUploadingImage}
                   >
                     <X className="w-4 h-4" />
@@ -239,11 +239,11 @@ export default function EditPersonalListForm({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isUploadingImage}
-                className="w-full px-4 py-12 border-2 border-dashed border-wibe rounded-lg hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-wibe-secondary"
+                className="flex min-h-12 w-full flex-col items-center justify-center gap-2 rounded-surface border border-dashed border-border px-4 py-8 text-muted-foreground transition-colors hover:border-brand"
               >
                 {isUploadingImage ? (
                   <>
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <Loader2 className="size-6 animate-spin text-brand" />
                     <span className="text-sm">در حال آپلود...</span>
                   </>
                 ) : (

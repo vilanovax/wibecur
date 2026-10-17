@@ -40,7 +40,7 @@ export const SuggestItemSearchLazy = dynamic(() => import('./SuggestItemSearch')
 export const ListSimilarListsSectionLazy = dynamic(() => import('./ListSimilarListsSection'), {
   ssr: false,
   loading: () => (
-    <section className="mt-1 border-t border-wibe pt-4" aria-hidden>
+    <section className="mt-1 border-t border-border pt-4" aria-hidden>
       <Skeleton className="mb-3 h-6 w-36" />
       <Skeleton className="h-28 w-full rounded-lg" />
     </section>

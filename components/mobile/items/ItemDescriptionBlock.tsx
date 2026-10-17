@@ -22,7 +22,7 @@ export default function ItemDescriptionBlock({
 
   if (!bodyText) {
     return (
-      <p className="py-2 text-start wibe-caption text-wibe-secondary">
+      <p className="py-2 text-start text-xs text-muted-foreground">
         هنوز توضیحی ثبت نشده
       </p>
     );

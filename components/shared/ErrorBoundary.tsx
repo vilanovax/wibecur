@@ -3,6 +3,7 @@
 import { Component, type ReactNode } from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   children: ReactNode;
@@ -47,22 +48,18 @@ export default class ErrorBoundary extends Component<Props, State> {
       }
       return (
         <div
-          className="flex flex-col items-center justify-center p-6 rounded-xl bg-amber-50/50 border border-amber-100"
+          className="flex flex-col items-center justify-center rounded-surface border border-warning/30 bg-warning/10 p-6"
           dir="rtl"
         >
-          <div className="flex justify-center mb-3">
-            <AlertCircle className="w-8 h-8 text-amber-600" />
+          <div className="mb-3 flex justify-center">
+            <AlertCircle className="size-8 text-warning" />
           </div>
-          <p className="text-sm font-medium text-gray-800 mb-1">خطا در بارگذاری</p>
-          <p className="text-xs text-gray-500 mb-4">دوباره امتحان کن</p>
-          <button
-            type="button"
-            onClick={this.handleReset}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark"
-          >
-            <RefreshCw className="w-4 h-4" />
+          <p className="mb-1 text-sm font-medium text-foreground">خطا در بارگذاری</p>
+          <p className="mb-4 text-xs text-muted-foreground">دوباره امتحان کن</p>
+          <Button type="button" variant="brand" size="lg" onClick={this.handleReset}>
+            <RefreshCw />
             تلاش دوباره
-          </button>
+          </Button>
         </div>
       );
     }

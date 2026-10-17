@@ -83,16 +83,16 @@ function AvatarChip({
       onClick={onSelect}
       aria-pressed={selected}
       aria-label={avatar.label}
-      className={`relative flex items-center justify-center rounded-2xl border-2 p-2 transition-all active:scale-95 ${
+      className={`relative flex min-h-11 items-center justify-center rounded-surface border p-2 transition-colors ${
         selected
-          ? 'border-primary bg-primary/5 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+          ? 'border-brand bg-brand/5'
+          : 'border-border bg-popover hover:border-brand/30 hover:bg-muted'
       }`}
     >
       <VibeAvatarDisplay avatar={avatar} size={48} selected={selected} />
       {selected && (
-        <span className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow-md">
-          <Check className="h-3 w-3" strokeWidth={3} />
+        <span className="absolute end-1 top-1 flex size-5 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm">
+          <Check className="size-3" strokeWidth={3} />
         </span>
       )}
     </button>

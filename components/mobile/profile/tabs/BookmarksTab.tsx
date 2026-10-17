@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Bookmark, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
@@ -91,15 +95,15 @@ export default function BookmarksTab({
   if (isLoading && bookmarks.length === 0 && !hasInitial) {
     return (
       <div className="px-4 lg:px-0">
-        <div className="grid grid-cols-2 gap-2 sm:-mx-4 sm:px-0 lg:mx-0 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="rounded-[20px] overflow-hidden bg-wibe-surface animate-pulse">
-              <div className="aspect-[16/9] bg-wibe-surface" />
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-wibe-surface rounded w-3/4" />
-                <div className="h-3 bg-wibe-surface rounded w-1/2" />
+            <Card key={i} className="overflow-hidden bg-popover p-0">
+              <Skeleton className="aspect-video w-full rounded-none" />
+              <div className="space-y-2 p-4">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </div>
@@ -109,19 +113,16 @@ export default function BookmarksTab({
   if (isError && bookmarks.length === 0) {
     return (
       <div className="px-4 py-8">
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
-          <p className="wibe-small text-red-600">
-            {error instanceof Error ? error.message : 'خطا در بارگذاری ذخیره‌ها'}
-          </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 text-white wibe-small font-medium"
-          >
-            <RefreshCw className="w-4 h-4" />
-            تلاش مجدد
-          </button>
-        </div>
+        <EmptyState
+          title="ذخیره‌ها بارگذاری نشد"
+          description={error instanceof Error ? error.message : 'خطا در بارگذاری ذخیره‌ها'}
+          action={
+            <Button type="button" variant="brand" size="lg" onClick={() => refetch()}>
+              <RefreshCw />
+              تلاش مجدد
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -129,29 +130,27 @@ export default function BookmarksTab({
   if (bookmarks.length === 0 && !isLoading) {
     return (
       <div className="px-4 py-8">
-        <div className="rounded-xl border border-wibe bg-wibe-card px-4 py-12 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-            <Bookmark className="h-7 w-7 text-primary" strokeWidth={1.75} />
-          </div>
-          <h3 className="mb-1 wibe-h3 text-foreground">هنوز لیستی ذخیره نکردی</h3>
-          <p className="mx-auto mb-6 max-w-xs wibe-small text-wibe-secondary">
-            از اکسپلور یا لیست‌ها یک وایب ذخیره کن تا اینجا جمع شود
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <Link
-              href="/explore"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 wibe-small font-semibold text-white"
-            >
-              رفتن به اکسپلور
-            </Link>
-            <Link
-              href="/lists"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-card px-5 py-2.5 wibe-small font-semibold text-foreground"
-            >
-              کاتالوگ لیست‌ها
-            </Link>
-          </div>
-        </div>
+        <EmptyState
+          icon={Bookmark}
+          title="هنوز لیستی ذخیره نکردی"
+          description="از اکسپلور یا لیست‌ها یک وایب ذخیره کن تا اینجا جمع شود."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link
+                href="/explore"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-base font-semibold text-brand-foreground"
+              >
+                رفتن به اکسپلور
+              </Link>
+              <Link
+                href="/lists"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-popover px-6 text-base font-semibold text-foreground"
+              >
+                کاتالوگ لیست‌ها
+              </Link>
+            </div>
+          }
+        />
       </div>
     );
   }
@@ -162,7 +161,7 @@ export default function BookmarksTab({
     <div className="space-y-4 px-4 pb-4 lg:px-0">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="wibe-h3 text-foreground">ذخیره‌های تو</h2>
-        <span className="wibe-caption tabular-nums text-wibe-secondary">
+        <span className="wibe-caption tabular-nums text-muted-foreground">
           {totalLabel} لیست
         </span>
       </div>
@@ -178,9 +177,10 @@ export default function BookmarksTab({
             <Link
               key={bookmark.id}
               href={`/lists/${list.slug}`}
-              className="flex flex-row-reverse gap-2.5 rounded-xl border border-wibe bg-wibe-card p-2.5 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
+              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
-              <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-wibe-surface">
+              <Card className="flex gap-2.5 bg-popover p-2.5 transition-transform active:scale-95">
+              <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
                 <ListCoverImage
                   coverImage={list.coverImage}
                   title={list.title}
@@ -188,19 +188,20 @@ export default function BookmarksTab({
                   categorySlug={list.categories?.slug}
                   className="h-full w-full object-cover"
                   fallbackIcon={list.categories?.icon}
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
                 />
               </div>
-              <div className="min-w-0 flex-1 text-right">
+              <div className="min-w-0 flex-1 text-start">
                 <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
                 {list.categories?.name ? (
-                  <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">
+                  <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">
                     {list.categories.icon ? `${list.categories.icon} ` : ''}
                     {list.categories.name}
                   </p>
                 ) : null}
                 <ListCardStats saves={saves} itemCount={items} variant="compact" className="mt-1" />
               </div>
+              </Card>
             </Link>
           );
         })}
@@ -217,9 +218,10 @@ export default function BookmarksTab({
             <Link
               key={bookmark.id}
               href={`/lists/${list.slug}`}
-              className="relative block overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-colors hover:border-primary/20 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
-              <div className="relative aspect-[16/10] max-h-[9.5rem] bg-wibe-surface">
+              <Card className="overflow-hidden bg-popover p-0">
+              <div className="relative aspect-[16/10] max-h-40 bg-muted">
                 <ListCoverImage
                   coverImage={list.coverImage}
                   title={list.title}
@@ -227,7 +229,7 @@ export default function BookmarksTab({
                   categorySlug={list.categories?.slug}
                   className="h-full w-full object-cover"
                   fallbackIcon={list.categories?.icon}
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"
                 />
               </div>
               <div className="p-2.5">
@@ -236,28 +238,29 @@ export default function BookmarksTab({
                 </h3>
                 <ListCardStats saves={saves} itemCount={items} variant="compact" />
               </div>
+              </Card>
             </Link>
           );
         })}
       </div>
 
       {!showAll && bookmarks.length > 12 && (
-        <button
-          onClick={() => setShowAll(true)}
-          className="w-full rounded-xl border border-wibe py-3 text-sm font-medium text-wibe-secondary transition-colors hover:bg-wibe-surface lg:max-w-xs lg:mx-auto"
-        >
-          مشاهده بیشتر ({bookmarks.length - 12} مورد دیگر)
-        </button>
+        <Button type="button" variant="outline" size="lg" className="w-full" onClick={() => setShowAll(true)}>
+          مشاهده بیشتر ({(bookmarks.length - 12).toLocaleString('fa-IR')} مورد دیگر)
+        </Button>
       )}
 
       {showAll && hasMore && (
-        <button
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full"
           onClick={() => setPage((p) => p + 1)}
           disabled={isLoading}
-          className="w-full py-3 rounded-xl border border-wibe text-wibe-secondary hover:bg-wibe-surface font-medium text-sm disabled:opacity-50"
         >
-          {isLoading ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
-        </button>
+          {isLoading ? 'در حال بارگذاری…' : 'بارگذاری بیشتر'}
+        </Button>
       )}
 
     </div>

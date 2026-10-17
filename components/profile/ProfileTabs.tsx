@@ -65,7 +65,7 @@ export default function ProfileTabs({
                   ? formatBadge(bookmarksBadgeCount)
                   : null;
             return (
-              <TabsTrigger key={tab.id} value={tab.id} className="h-11 flex-1 gap-1.5 lg:flex-none lg:px-6">
+              <TabsTrigger key={tab.id} value={tab.id} className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 lg:flex-none lg:px-6">
                 <Icon className="size-4" />
                 {tab.label}
                 {badge ? (
@@ -79,7 +79,7 @@ export default function ProfileTabs({
         </TabsList>
       </div>
 
-      <div className="min-h-[calc(100vh-14rem)] border-t border-wibe/40 bg-wibe-card px-0 pt-4 lg:min-h-0 lg:rounded-b-xl lg:border lg:border-t-0 lg:border-wibe lg:px-4 lg:pb-4">
+      <div className="px-0 pt-4 lg:rounded-b-xl lg:border lg:border-t-0 lg:bg-popover lg:px-4 lg:pb-4">
         {visibleTab === 'my-lists' && (
           <MyListsTab
             userId={userId}

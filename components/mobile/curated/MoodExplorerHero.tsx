@@ -8,6 +8,7 @@ import {
   type MoodExplorerCard,
 } from '@/lib/discovery/mood-explorer-config';
 import MoodMissionCard from './MoodMissionCard';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   onMoodSelect: (card: MoodExplorerCard) => void;
@@ -23,10 +24,10 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
   return (
     <div className="mb-0">
       <header className="mb-3.5 lg:mb-4">
-        <h2 className="text-balance wibe-h1 leading-snug lg:text-3xl lg:leading-[1.15]">
+        <h2 className="text-balance text-xl font-bold leading-tight">
           امروز دنبال چه وایبی هستی؟
         </h2>
-        <p className="mt-1.5 max-w-md text-pretty wibe-small text-wibe-secondary lg:mt-2 lg:text-base">
+        <p className="mt-1.5 max-w-md text-pretty text-sm text-muted-foreground lg:mt-2 lg:text-base">
           یک حال‌وهوا انتخاب کن؛ بقیه‌اش را ما جور می‌کنیم
         </p>
       </header>
@@ -50,11 +51,13 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
       </div>
 
       {EXTRA_COUNT > 0 && (
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="lg"
+          className="mt-3 w-full"
           onClick={() => setShowAll((v) => !v)}
           aria-expanded={showAll}
-          className="mt-3 flex min-h-11 w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card py-2.5 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
         >
           {showAll ? (
             <>
@@ -67,7 +70,7 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
               <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden />
             </>
           )}
-        </button>
+        </Button>
       )}
     </div>
   );

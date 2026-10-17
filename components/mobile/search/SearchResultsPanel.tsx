@@ -11,6 +11,8 @@ import SearchResultsSummary, {
 import type { UnifiedSearchHasMore, UnifiedSearchItem, UnifiedSearchList } from '@/lib/unified-search';
 import type { SearchQueryIntent } from '@/lib/search-keywords';
 import { searchHasLoadMore } from '@/lib/search-client';
+import { Button } from '@/components/ui/button';
+import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 
 type Props = {
   query: string;
@@ -99,38 +101,30 @@ export default function SearchResultsPanel({
       {isBroad && subThemes.length > 0 && (
         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
           {subThemes.map((theme) => (
-            <button
+            <Button
               key={theme}
               type="button"
+              variant="outline"
+              size="sm"
+              className="h-11 shrink-0 rounded-full"
               onClick={() => onSubThemeClick?.(theme)}
-              className="h-8 shrink-0 rounded-full border border-wibe bg-wibe-card px-3.5 wibe-caption font-medium text-foreground transition-colors active:scale-[0.98] hover:border-primary/40"
             >
               {theme}
-            </button>
+            </Button>
           ))}
         </div>
       )}
 
       {showLists && loadingMore && lists.length === 0 && (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
-              <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-wibe-surface" />
-              <div className="flex-1 space-y-2 py-1">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-wibe-surface" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-wibe-surface" />
-              </div>
-            </div>
-          ))}
-        </div>
+        <SearchResultSkeleton rows={3} />
       )}
 
       {showLists && lists.length > 0 && (
         <section>
-          <h2 className="mb-2 wibe-caption font-medium text-wibe-secondary">
+          <h2 className="mb-2 wibe-caption font-medium text-muted-foreground">
             {isBroad ? 'لیست‌های پیشنهادی' : 'لیست‌ها'}
             {totals.lists > lists.length && (
-              <span className="mr-1 tabular-nums">({totals.lists.toLocaleString('fa-IR')})</span>
+              <span className="ms-1 tabular-nums">({totals.lists.toLocaleString('fa-IR')})</span>
             )}
           </h2>
           <div className="space-y-2">
@@ -157,7 +151,7 @@ export default function SearchResultsPanel({
 
       {showItems && isBroad && topPicks.length > 0 && (
         <section>
-          <h2 className="mb-2 wibe-caption font-medium text-wibe-secondary">پیشنهادهای برتر</h2>
+          <h2 className="mb-2 wibe-caption font-medium text-muted-foreground">پیشنهادهای برتر</h2>
           <div className="space-y-2">
             {topPicks.map((item) => (
               <SearchItemRow
@@ -173,7 +167,7 @@ export default function SearchResultsPanel({
 
       {showItems && !isBroad && indirectItems.length > 0 && (
         <section>
-          <h2 className="mb-2 wibe-caption font-medium text-wibe-secondary">مرتبط با جستجو</h2>
+          <h2 className="mb-2 wibe-caption font-medium text-muted-foreground">مرتبط با جستجو</h2>
           <div className="space-y-2">
             {indirectItems.map((item) => (
               <SearchItemRow key={item.id} item={item} highlightQuery={highlightQuery} />
@@ -184,7 +178,7 @@ export default function SearchResultsPanel({
 
       {showItems && !isBroad && similarItems.length > 0 && (
         <section>
-          <h2 className="mb-2 wibe-caption font-medium text-wibe-secondary">پیشنهاد مرتبط</h2>
+          <h2 className="mb-2 wibe-caption font-medium text-muted-foreground">پیشنهاد مرتبط</h2>
           <div className="space-y-2">
             {similarItems.map((item) => (
               <SearchItemRow
@@ -199,7 +193,7 @@ export default function SearchResultsPanel({
       )}
 
       {showItems && remainingItems > 0 && !canLoadMore && (
-        <p className="text-center wibe-caption text-wibe-secondary">
+        <p className="text-center wibe-caption text-muted-foreground">
           {isBroad ? (
             <>
               +{remainingItems.toLocaleString('fa-IR')} مورد دیگر — از لیست‌ها یا جستجوی دقیق‌تر کاوش
@@ -214,18 +208,20 @@ export default function SearchResultsPanel({
       )}
 
       {canLoadMore && (
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="lg"
+          className="w-full"
           onClick={onLoadMore}
           disabled={loadingMore}
-          className="w-full rounded-xl border border-primary/25 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-transform active:scale-[0.99] disabled:opacity-60"
         >
           {loadingMore
             ? 'در حال بارگذاری…'
             : isBroad
               ? 'لیست‌های بیشتر'
               : 'بارگذاری بیشتر'}
-        </button>
+        </Button>
       )}
     </div>
   );

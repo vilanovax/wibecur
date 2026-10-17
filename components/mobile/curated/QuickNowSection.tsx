@@ -7,6 +7,7 @@ import {
 } from '@/lib/discovery/mood-explorer-config';
 import { prefetchGuidedDiscovery } from '@/lib/discovery/guided-client';
 import { preloadGuidedDiscoverySheet } from './explore-lazy-sections';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   onSelect: (selection: MoodExplorerSelection) => void;
@@ -40,28 +41,30 @@ export default function QuickNowSection({ onSelect, disabled = false }: Props) {
       aria-labelledby="quick-now-title"
     >
       <div className="mb-1.5 flex flex-col gap-0.5">
-        <h2 id="quick-now-title" className="wibe-caption font-semibold text-wibe-secondary">
+        <h2 id="quick-now-title" className="text-xs font-semibold text-muted-foreground">
           میانبر زمان و جا
         </h2>
-        <p className="wibe-caption text-wibe-secondary/80">
+        <p className="text-xs text-muted-foreground/80">
           همان مسیر راهنما — فقط با قید زمان یا مکان
         </p>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {QUICK_NOW_PILLS.map((pill) => (
-          <button
+          <Button
             key={pill.id}
             type="button"
+            variant="outline"
+            size="sm"
+            className="h-11"
             disabled={disabled}
             onPointerDown={() => warmQuickPill(pill)}
             onClick={() => onSelect(quickPillToSelection(pill))}
-            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-wibe/80 bg-transparent px-3 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-wibe hover:bg-wibe-card hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50"
           >
             <span aria-hidden className="opacity-80">
               {pill.icon}
             </span>
             {SHORT_LABEL[pill.id] ?? pill.label}
-          </button>
+          </Button>
         ))}
       </div>
     </section>

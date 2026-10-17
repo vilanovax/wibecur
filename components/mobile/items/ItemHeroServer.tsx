@@ -15,6 +15,7 @@ import {
   type FactType,
 } from '@/lib/list-entry';
 import { resolveImdbRatingDisplay } from '@/lib/item-metadata-display';
+import { fa } from '@/lib/utils';
 
 export type ItemHeroServerItem = {
   id: string;
@@ -66,18 +67,16 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
   if (isLightweight) {
     return (
       <section
-        className={`relative overflow-hidden rounded-b-2xl px-4 pb-5 pt-4 lg:rounded-2xl lg:px-6 lg:pb-6 lg:pt-5 ${
-          isLifestyle
-            ? 'bg-wibe-surface'
-            : 'bg-gradient-to-br from-amber-50 via-white to-wibe-surface'
-        }`}
+        className="relative overflow-hidden rounded-b-xl bg-muted/40 px-4 pb-5 pt-4 lg:rounded-xl lg:px-6 lg:pb-6 lg:pt-5"
       >
         <Link
           href={`/lists/${item.lists.slug}`}
-          className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 wibe-caption font-medium text-wibe-secondary shadow-sm"
+          className="mb-3 inline-flex min-h-11 max-w-full items-center rounded-full border border-border bg-popover px-3"
         >
-          <List className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
-          <span className="truncate">{item.lists.title}</span>
+          <span className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-muted-foreground">
+            <List className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
+            <span className="truncate">{item.lists.title}</span>
+          </span>
         </Link>
 
         {isLifestyle ? (
@@ -88,16 +87,16 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
           )
         ) : (
           <div className="flex items-start gap-3">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm ring-1 ring-amber-200/70">
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-surface bg-popover text-3xl shadow-sm ring-1 ring-border">
               {entryKindIcon(entryKind)}
             </span>
             <div className="min-w-0 flex-1 pt-1">
               <div className="mb-2 flex flex-wrap gap-1.5">
-                <span className="inline-flex rounded-md bg-white/90 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary shadow-sm">
+                <span className="inline-flex min-h-8 items-center rounded-full bg-popover px-3 text-sm font-semibold text-muted-foreground">
                   {entryKindBadgeLabel(entryKind)}
                 </span>
                 {factLabel && (
-                  <span className="inline-flex rounded-md bg-white/90 px-2 py-0.5 wibe-caption font-semibold text-wibe-secondary shadow-sm">
+                  <span className="inline-flex min-h-8 items-center rounded-full bg-popover px-3 text-sm font-semibold text-muted-foreground">
                     {factLabel}
                   </span>
                 )}
@@ -121,7 +120,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
     <section className="px-4 pt-2 lg:px-0 lg:pt-1">
       <div className="flex gap-3.5 sm:gap-4 lg:grid lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-6">
         <div
-          className={`relative shrink-0 overflow-hidden rounded-xl bg-wibe-surface shadow-sm ring-1 ring-black/[0.05] lg:rounded-2xl ${
+          className={`relative shrink-0 overflow-hidden rounded-xl bg-muted shadow-sm ${
             isLocationPoster
               ? 'h-[7.25rem] w-[6.5rem] sm:h-32 sm:w-[8.5rem] lg:h-auto lg:w-full lg:aspect-[4/3]'
               : 'h-[10.5rem] w-[7rem] sm:h-[11.5rem] sm:w-[7.75rem] lg:h-auto lg:w-full lg:aspect-[2/3]'
@@ -137,7 +136,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               className={
                 isLocationPoster
                   ? 'object-cover object-center'
-                  : 'object-contain bg-wibe-surface'
+                  : 'object-contain bg-muted'
               }
               unoptimized={poster.unoptimized}
             />
@@ -147,9 +146,9 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
             </div>
           )}
           {imdbRating && (
-            <span className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1 rounded-lg bg-black/75 px-2 py-1 wibe-caption font-bold backdrop-blur-sm">
-              <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
-              <span className="text-amber-400 tabular-nums">{imdbRating}</span>
+            <span className="absolute bottom-2 end-2 z-10 inline-flex items-center gap-1 rounded-full bg-foreground/80 px-2 py-1 text-xs font-bold backdrop-blur-sm">
+              <Star className="h-3 w-3 shrink-0 fill-warning text-warning" aria-hidden />
+              <span className="text-warning tabular-nums">{fa(imdbRating)}</span>
             </span>
           )}
         </div>
@@ -157,22 +156,24 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
         <div className="flex min-w-0 flex-1 flex-col justify-end lg:justify-center lg:py-1">
           <Link
             href={`/lists/${item.lists.slug}`}
-            className="mb-2 inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-xl border border-border bg-popover px-3 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/30 hover:text-brand lg:mb-3"
+            className="mb-2 inline-flex min-h-11 max-w-full items-center rounded-control border border-border bg-popover px-3 transition-colors hover:border-brand/30 lg:mb-3"
           >
-            <span aria-hidden>{item.lists.categories?.icon || '📋'}</span>
-            <span className="truncate">{item.lists.title}</span>
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-muted-foreground">
+              <span aria-hidden>{item.lists.categories?.icon || '📋'}</span>
+              <span className="truncate">{item.lists.title}</span>
+            </span>
           </Link>
 
           <h1 className="text-lg font-bold leading-snug text-foreground sm:text-xl lg:wibe-h1 lg:leading-snug">
             {item.title}
           </h1>
 
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-wibe-secondary lg:mt-2 lg:text-sm">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground lg:mt-2 lg:text-sm">
             {(genre || categoryName) && <span>{String(genre || categoryName)}</span>}
             {year != null && (
               <>
-                {(genre || categoryName) && <span className="text-wibe-secondary/40">·</span>}
-                <span>{String(year)}</span>
+                {(genre || categoryName) && <span className="text-muted-foreground/40">·</span>}
+                <span>{fa(String(year))}</span>
               </>
             )}
           </div>

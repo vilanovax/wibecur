@@ -80,43 +80,37 @@ export default function HomeStartStrip({
 
   return (
     <section
-      className="mx-4 mb-3 rounded-2xl border border-dashed border-primary/25 bg-gradient-to-b from-primary/[0.08] to-wibe-card p-4 lg:mx-0 lg:mb-0 lg:max-w-3xl lg:p-5"
+      className="mx-4 mb-3 rounded-surface border border-dashed border-brand/30 bg-brand/5 p-4 lg:mx-0 lg:mb-0 lg:max-w-3xl lg:p-5"
       aria-label="شروع در وایب"
     >
       <div className="flex flex-col gap-3 lg:gap-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-balance wibe-h3 text-foreground">{copy.title}</h2>
-            <p className="mt-1.5 text-pretty wibe-small text-wibe-secondary">
+            <p className="mt-1.5 text-pretty text-sm text-muted-foreground">
               {copy.description}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={completeOnboarding}
-            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-3 wibe-caption font-medium text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          >
+          <Button type="button" variant="ghost" size="sm" className="h-11 shrink-0" onClick={completeOnboarding}>
             {copy.skip}
-          </button>
+          </Button>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {categories.slice(0, 8).map((cat) => {
             const isSelected = selected.includes(cat.slug);
             return (
-              <button
+              <Button
                 key={cat.id}
                 type="button"
+                size="sm"
+                variant={isSelected ? 'default' : 'outline'}
+                className="h-11"
                 onClick={() => toggleSlug(cat.slug)}
-                className={`inline-flex min-h-11 items-center rounded-xl border px-3.5 wibe-small font-medium transition-colors ${
-                  isSelected
-                    ? 'border-primary bg-primary text-white'
-                    : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30'
-                }`}
               >
                 {cat.icon ? `${cat.icon} ` : ''}
                 {cat.name}
-              </button>
+              </Button>
             );
           })}
         </div>

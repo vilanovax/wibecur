@@ -20,21 +20,19 @@ interface TrendingListsSectionProps {
 function TrendingListCard({
   list,
   index,
-  accentColor,
 }: {
   list: CategoryListCard;
   index: number;
-  accentColor: string;
 }) {
   const showTrendBadge = index < 3 || list.badge === 'viral' || list.badge === 'hot';
 
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="group block active:scale-[0.99] transition-transform lg:hover:-translate-y-0.5"
+      className="group block active:scale-95 transition-transform lg:hover:-translate-y-0.5"
     >
-      <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-card lg:rounded-2xl lg:transition-shadow lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-wibe-surface">
+      <div className="overflow-hidden rounded-surface border border-border bg-popover shadow-surface lg:transition-shadow lg:group-hover:shadow-md">
+        <div className="relative aspect-[4/3] bg-muted">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
@@ -42,27 +40,24 @@ function TrendingListCard({
               className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-[1.03]"
             />
           ) : (
-            <div
-              className="flex h-full w-full items-center justify-center bg-wibe-surface text-4xl opacity-40"
-              style={{ color: accentColor }}
-            >
+            <div className="flex h-full w-full items-center justify-center bg-muted text-4xl opacity-40">
               📋
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
           {showTrendBadge && (
-            <span className="absolute right-2 top-2 rounded-pill bg-warning px-2 py-0.5 wibe-caption font-semibold text-white">
+            <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-semibold text-foreground">
               ترند
             </span>
           )}
           {list.cityTag && (
-            <span className="absolute bottom-2 right-2 rounded-md bg-black/40 px-2 py-0.5 wibe-caption text-white/95 backdrop-blur-sm">
+            <span className="absolute bottom-2 end-2 rounded-full bg-foreground/40 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
               {list.cityTag}
             </span>
           )}
         </div>
         <div className="p-3">
-          <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
+          <h3 className="line-clamp-2 text-start text-sm font-semibold text-foreground">{list.title}</h3>
         </div>
       </div>
     </Link>
@@ -74,7 +69,6 @@ export default function TrendingListsSection({
   subtitle,
   lists,
   categorySlug,
-  accentColor = '#6366F1',
   inset = false,
 }: TrendingListsSectionProps) {
   if (lists.length === 0) return null;
@@ -89,16 +83,16 @@ export default function TrendingListsSection({
         {categorySlug && (
           <Link
             href={`/lists?category=${categorySlug}`}
-            className="shrink-0 pb-0.5 wibe-small font-medium text-primary hover:text-primary-dark"
+            className="inline-flex min-h-11 shrink-0 items-center"
           >
-            مشاهده همه
+            <span className="text-sm font-medium text-brand">مشاهده همه</span>
           </Link>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         {visible.map((list, index) => (
-          <TrendingListCard key={list.id} list={list} index={index} accentColor={accentColor} />
+          <TrendingListCard key={list.id} list={list} index={index} />
         ))}
       </div>
     </section>

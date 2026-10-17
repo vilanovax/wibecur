@@ -85,7 +85,7 @@ export default function DesktopDialog({
       >
         {(title || subtitle || headerAction) && (
           <div className="flex flex-shrink-0 items-start justify-between gap-2 border-b border-border px-5 py-4">
-            <div className="min-w-0 flex-1 text-right">
+            <div className="min-w-0 flex-1 text-start">
               {title && (
                 <h2 id="desktop-dialog-title" className="text-base font-semibold text-foreground">
                   {title}

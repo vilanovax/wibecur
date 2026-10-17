@@ -13,9 +13,9 @@ export default function NotFoundSearchButton() {
     <button
       type="button"
       onClick={() => search.openSearch()}
-      className="inline-flex items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-card px-5 py-2.5 wibe-small font-semibold text-foreground hover:border-primary/40 transition-colors"
+      className="inline-flex h-12 items-center justify-center gap-2 rounded-control border border-border bg-popover px-5 text-sm font-semibold text-foreground transition-colors hover:border-brand/40"
     >
-      <Search className="h-4 w-4 text-wibe-secondary" aria-hidden />
+      <Search className="size-4 text-muted-foreground" aria-hidden />
       جستجو
       <SearchShortcutHint className="!inline-flex opacity-70" />
     </button>

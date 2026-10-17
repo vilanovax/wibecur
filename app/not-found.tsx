@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-dvh flex-col bg-wibe-surface" dir="rtl">
+    <div className="flex min-h-dvh flex-col bg-background" dir="rtl">
       <Header title="صفحه پیدا نشد" showBack />
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
         <EmptyState
@@ -16,19 +16,19 @@ export default function NotFound() {
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/"
-                className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-base font-semibold text-brand-foreground"
+                className="inline-flex h-12 items-center justify-center rounded-control bg-brand px-6 text-base font-semibold text-brand-foreground"
               >
                 بازگشت به خانه
               </Link>
               <Link
                 href="/lists"
-                className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-popover px-6 text-base font-semibold text-foreground"
+                className="inline-flex h-12 items-center justify-center rounded-control border border-border bg-popover px-6 text-base font-semibold text-foreground"
               >
                 مشاهده لیست‌ها
               </Link>
               <Link
                 href="/explore"
-                className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-popover px-6 text-base font-semibold text-foreground"
+                className="inline-flex h-12 items-center justify-center rounded-control border border-border bg-popover px-6 text-base font-semibold text-foreground"
               >
                 اکسپلور
               </Link>

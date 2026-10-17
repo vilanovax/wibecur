@@ -91,7 +91,7 @@ export default function MobileBottomSheet({
 
         {(title || subtitle || headerAction) && (
           <div className="flex flex-shrink-0 items-start justify-between gap-2 border-b border-border px-4 pb-3 pt-1">
-            <div className="min-w-0 flex-1 text-right">
+            <div className="min-w-0 flex-1 text-start">
               {title && <h2 className="text-base font-semibold leading-tight text-foreground">{title}</h2>}
               {subtitle && (
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>

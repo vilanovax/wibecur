@@ -44,7 +44,7 @@ function ListGridItemCard({
         onPointerDown={() => preloadItemPreviewSheet()}
         onClick={() => onOpenAt(index)}
         aria-label={`رفتن به آیتم ${(index + 1).toLocaleString('fa-IR')}${item.title ? ` — ${item.title}` : ''}`}
-        className="block w-full text-right transition-colors active:scale-[0.99]"
+        className="block w-full text-start"
       >
         <div
           className={`relative overflow-hidden ${
@@ -68,14 +68,14 @@ function ListGridItemCard({
             priority={index < 8}
           />
           <span
-            className="absolute right-1.5 top-1.5 flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-black/70 px-1.5 ring-1 ring-white/25 wibe-caption font-bold text-white tabular-nums"
+            className="absolute start-1.5 top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-foreground/80 px-1.5 text-xs font-bold text-background tabular-nums"
             aria-hidden
           >
             {(index + 1).toLocaleString('fa-IR')}
           </span>
           {!isMovieGrid && (
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2 pb-2 pt-10">
-              <p className="line-clamp-2 text-start wibe-caption font-semibold leading-snug text-white lg:text-xs">
+              <p className="line-clamp-2 text-start wibe-caption font-semibold leading-snug text-background lg:text-xs">
                 {item.title}
               </p>
             </div>
@@ -83,7 +83,7 @@ function ListGridItemCard({
         </div>
       </button>
       {quickActions.length > 0 && (
-        <div className="border-t border-wibe/60 px-2.5 py-2 lg:px-3">
+        <div className="border-t border-border px-2.5 py-2 lg:px-3">
           <ListItemQuickActions actions={quickActions} size="sm" />
         </div>
       )}

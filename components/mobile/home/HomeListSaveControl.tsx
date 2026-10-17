@@ -39,7 +39,6 @@ export default function HomeListSaveControl({
   saveCount = 0,
   initialIsBookmarked = false,
   surface = 'overlay',
-  size = 'default',
   analyticsSource = 'home_card',
   className = '',
 }: HomeListSaveControlProps) {
@@ -72,21 +71,15 @@ export default function HomeListSaveControl({
     };
   }, [session?.user, listId, initialIsBookmarked]);
 
-  const isCompact = size === 'compact';
-  const shellSize = isCompact
-    ? 'h-9 w-9'
-    : surface === 'hero'
-      ? 'h-11 w-11'
-      : 'h-11 w-11 lg:h-9 lg:w-9';
-  const shell = `relative z-20 flex ${shellSize} items-center justify-center rounded-full border shadow-md transition-[colors,transform] duration-150 ease-out active:scale-95 motion-reduce:transition-colors motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:opacity-50 ${
+  const shell = `relative z-20 flex size-11 items-center justify-center rounded-full border shadow-md transition-[colors,transform] duration-150 ease-out active:scale-95 motion-reduce:transition-colors motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:opacity-50 ${
     surface === 'hero' ? 'backdrop-blur-md' : 'backdrop-blur-sm'
   }`;
 
   const shellTone = isBookmarked
-    ? 'border-primary bg-primary text-white hover:bg-primary-dark'
+    ? 'border-brand bg-brand text-brand-foreground'
     : 'border-white/80 bg-white/95 text-foreground hover:bg-white';
 
-  const iconClass = isCompact || surface !== 'hero' ? 'h-3.5 w-3.5' : 'h-4 w-4';
+  const iconClass = 'size-4';
 
   if (status === 'loading') {
     return (

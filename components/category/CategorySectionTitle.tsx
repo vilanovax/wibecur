@@ -26,7 +26,7 @@ export default function CategorySectionTitle({
         {!iconVariant && icon ? <span aria-hidden>{icon}</span> : null}
         {title}
       </h2>
-      {subtitle ? <p className="mt-0.5 wibe-small text-wibe-secondary">{subtitle}</p> : null}
+      {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p> : null}
     </div>
   );
 }

@@ -20,7 +20,7 @@ export default function ListsSimilarRow({
   if (lists.length === 0) return null;
 
   return (
-    <section className="mt-2 border-t border-wibe pt-4 lg:pt-5" aria-label={title}>
+    <section className="mt-2 border-t border-border pt-4 lg:pt-5" aria-label={title}>
       <h2 className="mb-2.5 flex items-center gap-1.5 wibe-h3">
         <span aria-hidden>✨</span>
         <span>{title}</span>

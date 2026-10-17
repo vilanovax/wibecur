@@ -1,6 +1,7 @@
 'use client';
 
 import { Globe, Lock, FilePenLine } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 type Variant = 'public' | 'private' | 'draft';
 
@@ -11,17 +12,17 @@ const CONFIG: Record<
   public: {
     label: 'عمومی',
     icon: Globe,
-    className: 'bg-emerald-50 text-emerald-800 ring-emerald-200/80',
+    className: 'bg-success/10 text-success ring-success/25',
   },
   private: {
     label: 'شخصی',
     icon: Lock,
-    className: 'bg-slate-100 text-slate-700 ring-slate-200/80',
+    className: 'bg-muted text-muted-foreground ring-border',
   },
   draft: {
     label: 'پیش‌نویس',
     icon: FilePenLine,
-    className: 'bg-amber-50 text-amber-800 ring-amber-200/80',
+    className: 'bg-warning/15 text-foreground ring-warning/30',
   },
 };
 
@@ -45,14 +46,16 @@ export default function ListVisibilityBadge({
 }) {
   if (hideWhenPublic && variant === 'public') return null;
   const { label, icon: Icon, className } = CONFIG[variant];
+  const tone = variant === 'public' ? 'success' : variant === 'draft' ? 'warning' : 'secondary';
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full font-semibold ring-1 ${className} ${
-        size === 'md' ? 'px-2.5 py-1 text-xs' : 'px-2 py-0.5 wibe-caption'
+    <Badge
+      variant={tone}
+      className={`gap-1 rounded-full font-semibold ring-1 ${className} ${
+        size === 'md' ? 'min-h-11 px-3 text-sm' : 'px-2 py-0.5 wibe-caption'
       }`}
     >
       <Icon className={size === 'md' ? 'h-3.5 w-3.5' : 'h-3 w-3'} aria-hidden />
       {label}
-    </span>
+    </Badge>
   );
 }

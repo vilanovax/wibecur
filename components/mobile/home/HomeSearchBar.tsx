@@ -13,7 +13,7 @@ export default function HomeSearchBar() {
         type="button"
         variant="outline"
         onClick={() => openSearch()}
-        className="h-auto min-h-11 w-full justify-start gap-3 rounded-xl px-4 py-3 text-start font-normal shadow-sm"
+        className="h-12 w-full justify-start gap-3 rounded-control px-4 font-normal shadow-sm"
         aria-label="باز کردن جستجو"
       >
         <Search className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />

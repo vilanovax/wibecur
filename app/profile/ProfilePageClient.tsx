@@ -9,6 +9,10 @@ import { LISTS_UPDATED_EVENT, PROFILE_UPDATED_EVENT } from '@/lib/profile-events
 import type { UserListVisibilityCounts } from '@/lib/user-lists';
 import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
 import ProfileBreadcrumb from '@/components/profile/ProfileBreadcrumb';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProfilePageClientProps {
   userId: string;
@@ -97,18 +101,17 @@ export default function ProfilePageClient({
     return (
       <div className="space-y-4">
         <ProfileBreadcrumb />
-        <div className="overflow-hidden rounded-xl border border-wibe">
-          <div className="h-14 animate-pulse bg-wibe-surface" />
-          <div className="flex items-start gap-3 px-2.5 pb-2.5 -mt-8">
-            <div className="flex-1 space-y-1.5 pt-1.5">
-              <div className="h-4 w-14 rounded-full bg-wibe-surface" />
-              <div className="h-5 w-28 rounded bg-wibe-surface" />
-              <div className="h-3 w-16 rounded bg-wibe-surface" />
+        <Card className="bg-popover px-4 py-4">
+          <div className="flex items-start gap-3">
+            <Skeleton className="size-20 shrink-0 rounded-full" />
+            <div className="flex-1 space-y-2 pt-1">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-5 w-20 rounded-full" />
             </div>
-            <div className="h-[82px] w-[82px] shrink-0 rounded-full border-[3px] border-white bg-wibe-surface" />
           </div>
-        </div>
-        <div className="h-10 animate-pulse rounded bg-wibe-surface" />
+        </Card>
+        <Skeleton className="h-11 w-full" />
       </div>
     );
   }
@@ -117,16 +120,15 @@ export default function ProfilePageClient({
     return (
       <div className="space-y-4">
         <ProfileBreadcrumb />
-        <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-lg text-center">
-          <p className="wibe-small">{error}</p>
-          <button
-            type="button"
-            onClick={() => fetchProfile(false)}
-            className="mt-4 px-5 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors wibe-small font-medium"
-          >
-            تلاش مجدد
-          </button>
-        </div>
+        <EmptyState
+          title="پروفایل بارگذاری نشد"
+          description={error}
+          action={
+            <Button type="button" variant="brand" size="lg" onClick={() => fetchProfile(false)}>
+              تلاش مجدد
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -135,9 +137,7 @@ export default function ProfilePageClient({
     return (
       <div className="space-y-4">
         <ProfileBreadcrumb />
-        <div className="text-center py-12 bg-wibe-card rounded-lg border border-wibe">
-          <p className="wibe-small text-wibe-secondary">کاربر یافت نشد</p>
-        </div>
+        <EmptyState title="کاربر یافت نشد" />
       </div>
     );
   }
@@ -150,9 +150,9 @@ export default function ProfilePageClient({
         }
       />
       <h1 className="mb-3 hidden text-xl font-bold text-foreground lg:block">پروفایل</h1>
-      <div className="mb-4 overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:mb-5">
+      <Card className="mb-4 overflow-hidden bg-popover lg:mb-5">
         <ProfileHeader user={user} isOwner onUpdate={() => fetchProfile(true)} />
-      </div>
+      </Card>
 
       <ProfileTabs
         userId={userId}

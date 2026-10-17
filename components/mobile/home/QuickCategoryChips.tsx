@@ -56,10 +56,10 @@ export default function QuickCategoryChips({
     <section
       className={
         isSecondary
-          ? 'mt-1 border-t border-wibe/50 pb-2 pt-3 lg:mt-0 lg:border-t-0 lg:pb-1 lg:pt-2'
+          ? 'mt-1 border-t border-border pb-2 pt-3 lg:mt-0 lg:border-t-0 lg:pb-1 lg:pt-2'
           : isNav
             ? 'py-2 lg:py-2.5'
-            : 'py-2 pb-3 lg:border-b lg:border-wibe/60 lg:py-3 lg:pb-4'
+            : 'py-2 pb-3 lg:border-b lg:border-border lg:py-3 lg:pb-4'
       }
       aria-label="دسته‌های سریع"
     >
@@ -86,14 +86,16 @@ export default function QuickCategoryChips({
                 href={`/categories/${cat.slug}`}
                 onClick={() => trackCategoryChipClick(cat.slug, cat.name)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex h-11 min-w-11 shrink-0 snap-start items-center whitespace-nowrap rounded-xl border px-3 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 ${
+                className={`flex h-11 min-w-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full border px-3 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                   isActive
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-popover text-foreground hover:bg-accent'
+                    ? 'border-brand bg-brand'
+                    : 'border-border bg-popover hover:bg-muted'
                 }`}
               >
-                {cat.icon ? `${cat.icon} ` : ''}
-                {cat.name}
+                <span className={isActive ? 'text-brand-foreground' : 'text-foreground'}>
+                  {cat.icon ? `${cat.icon} ` : ''}
+                  {cat.name}
+                </span>
               </Link>
             );
           })

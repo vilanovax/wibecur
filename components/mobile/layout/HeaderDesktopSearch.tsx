@@ -14,7 +14,7 @@ export default function HeaderDesktopSearch() {
       type="button"
       variant="outline"
       onClick={() => openSearch()}
-      className="h-auto w-full justify-start gap-3 rounded-xl px-4 py-2.5 text-right font-normal"
+      className="h-12 w-full justify-start gap-3 rounded-control px-4 font-normal"
       aria-label="باز کردن جستجو"
     >
       <Search className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />

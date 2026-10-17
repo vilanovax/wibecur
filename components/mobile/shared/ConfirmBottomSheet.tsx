@@ -40,12 +40,12 @@ export default function ConfirmBottomSheet({
       <div className="px-2.5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1">
         <div className="mb-4 flex justify-center">
           <div
-            className={`flex h-14 w-14 items-center justify-center rounded-full ${
-              variant === 'danger' ? 'bg-red-50' : 'bg-primary/10'
+            className={`flex size-14 items-center justify-center rounded-full ${
+              variant === 'danger' ? 'bg-destructive/10' : 'bg-brand/10'
             }`}
           >
             <AlertTriangle
-              className={`h-7 w-7 ${variant === 'danger' ? 'text-red-600' : 'text-primary'}`}
+              className={`size-7 ${variant === 'danger' ? 'text-destructive' : 'text-brand'}`}
               strokeWidth={1.75}
             />
           </div>

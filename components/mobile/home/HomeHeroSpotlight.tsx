@@ -39,10 +39,10 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
         aria-hidden
       >
         <div
-          className={`animate-pulse rounded-2xl bg-wibe-surface shadow-vibe-hero lg:rounded-[1.35rem] ${
+          className={`animate-pulse-soft rounded-xl bg-muted shadow-vibe-hero ${
             fillHeight
-              ? 'h-[220px] sm:h-[230px] xl:h-full xl:min-h-[20rem]'
-              : 'h-[220px] sm:h-[230px] lg:h-[21rem] xl:h-[22.5rem]'
+              ? 'h-56 sm:h-60 xl:h-full xl:min-h-80'
+              : 'h-56 sm:h-60 lg:h-80 xl:h-96'
           }`}
         />
       </section>
@@ -68,10 +68,10 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
         listId={list.id}
         slotId={featuredSlotId}
         ariaLabel={`مشاهده لیست ${list.title}`}
-        className={`group relative block overflow-hidden rounded-2xl bg-gray-900 shadow-vibe-hero ring-1 ring-black/5 sm:h-[230px] lg:rounded-[1.35rem] lg:shadow-vibe-floating ${
+        className={`group relative block overflow-hidden rounded-xl bg-foreground shadow-vibe-hero ring-1 ring-foreground/10 sm:h-60 ${
           fillHeight
-            ? 'h-[220px] xl:h-full xl:min-h-[20rem]'
-            : 'h-[220px] lg:h-[21rem] xl:h-[22.5rem]'
+            ? 'h-56 xl:h-full xl:min-h-80'
+            : 'h-56 lg:h-80 xl:h-96'
         }`}
       >
         <ListCoverImage
@@ -84,7 +84,7 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           categorySlug={categorySlug}
           className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04] lg:object-[center_35%]"
           fallbackIcon={list.categories?.icon ?? '📚'}
-          fallbackClassName="pointer-events-none flex h-full w-full min-h-[220px] items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950 text-5xl lg:min-h-0 lg:text-7xl"
+          fallbackClassName="pointer-events-none flex h-full w-full min-h-56 items-center justify-center bg-foreground text-5xl lg:min-h-0"
           priority
           sizes={
             fillHeight
@@ -101,34 +101,34 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent"
           aria-hidden
         />
-        <div className="relative z-10 flex h-full flex-col justify-end p-4 sm:p-5 lg:max-w-[min(100%,36rem)] lg:p-8 lg:pb-9 xl:max-w-[min(100%,40rem)] xl:p-10 xl:pb-11">
-          <span className="mb-1.5 inline-flex w-fit items-center gap-1.5 rounded-full border border-amber-200/30 bg-amber-400/15 px-2.5 py-1 wibe-caption font-semibold text-amber-50 backdrop-blur-md lg:mb-3 lg:gap-2 lg:px-3.5 lg:py-1.5 lg:text-sm">
-            <Sparkles className="h-3.5 w-3.5 text-amber-300 lg:h-4 lg:w-4" aria-hidden />
+        <div className="relative z-10 flex h-full flex-col justify-end p-4 sm:p-5 lg:max-w-xl lg:p-8 lg:pb-8 xl:max-w-2xl">
+          <span className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-background/40 bg-background/10 px-3 py-1 text-xs font-semibold text-background backdrop-blur-md">
+            <Sparkles className="size-4" aria-hidden />
             منتخب هفته
           </span>
 
-          <h2 className="line-clamp-2 text-balance text-h1 font-bold leading-[1.15] text-white sm:text-3xl lg:text-4xl lg:leading-[1.1] xl:text-h1">
+          <h2 className="line-clamp-2 text-balance text-h1 font-bold leading-tight text-background">
             {list.title}
           </h2>
 
           {description ? (
-            <p className="mt-1.5 line-clamp-2 text-pretty wibe-small leading-relaxed text-white/90 lg:mt-2.5 lg:text-base">
+            <p className="mt-1.5 line-clamp-2 text-pretty wibe-small leading-relaxed text-background/90 lg:mt-2.5 lg:text-base">
               {description}
             </p>
           ) : null}
 
           {metaParts.length > 0 ? (
-            <p className="mt-2 hidden flex-wrap items-center gap-x-2 gap-y-1 wibe-caption text-white/80 tabular-nums sm:flex lg:mt-3 lg:text-sm">
+            <p className="mt-2 hidden flex-wrap items-center gap-x-2 gap-y-1 wibe-caption text-background/80 tabular-nums sm:flex lg:mt-3 lg:text-sm">
               {metaParts.map((part, i) => (
                 <span key={part} className="inline-flex items-center gap-2">
-                  {i > 0 ? <span aria-hidden className="text-white/45">·</span> : null}
+                  {i > 0 ? <span aria-hidden className="text-background/45">·</span> : null}
                   {part}
                 </span>
               ))}
             </p>
           ) : null}
 
-          <span className="mt-2.5 inline-flex w-fit items-center gap-1 rounded-full bg-white/12 px-3 py-1.5 wibe-caption font-semibold text-white backdrop-blur-sm transition-colors group-hover:bg-white/20 lg:mt-4 lg:px-3.5 lg:py-2 lg:text-sm">
+          <span className="mt-3 inline-flex h-11 w-fit items-center gap-1 rounded-full bg-background/15 px-4 text-sm font-semibold text-background backdrop-blur-sm transition-colors group-hover:bg-background/25">
             مشاهده لیست
             <ChevronLeft className="h-3.5 w-3.5 lg:h-4 lg:w-4" aria-hidden />
           </span>

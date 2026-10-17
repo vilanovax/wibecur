@@ -150,7 +150,7 @@ export default async function ListDetailPage({
     '';
 
   return (
-    <div className="bg-wibe-surface lg:pt-1">
+    <div className="bg-background lg:pt-1">
       <HomeLcpPreload href={heroLcpImage} />
       <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
       <ListDetailClient

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Avatar } from '@/components/ui/avatar';
 import { resolveVibeAvatar } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import { resolveStorageImageDisplayUrl } from '@/lib/storage-image-url';
@@ -26,7 +27,8 @@ export default function CommentAvatar({
   avatarStatus?: string | null;
 }) {
   const [failed, setFailed] = useState(false);
-  const initial = (name || (email && email.split('@')[0]) || '?').charAt(0).toUpperCase();
+  const displayName = name || (email && email.split('@')[0]) || 'کاربر';
+  const kitSize = size >= 48 ? 'lg' : size >= 36 ? 'md' : 'sm';
 
   const showVibeAvatar =
     String(avatarType ?? '').toUpperCase() === 'DEFAULT' &&
@@ -42,29 +44,18 @@ export default function CommentAvatar({
     );
   }
 
-  if (!displaySrc || failed) {
-    return (
-      <div
-        className={`flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold ${className}`}
-        style={{ width: size, height: size }}
-      >
-        <span style={{ fontSize: Math.round(size * 0.45) }}>{initial}</span>
-      </div>
-    );
-  }
-
   return (
-    <div
-      className={`flex-shrink-0 rounded-full overflow-hidden bg-gray-100 ${className}`}
+    <Avatar
+      name={displayName}
+      src={!displaySrc || failed ? undefined : displaySrc}
+      size={kitSize}
+      onError={() => setFailed(true)}
       style={{ width: size, height: size }}
-    >
-      <img
-        src={displaySrc}
-        alt={name || ''}
-        className="w-full h-full object-cover"
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-      />
-    </div>
+      className={
+        !displaySrc || failed
+          ? `bg-brand/10 text-brand ring-brand/30 ${className}`
+          : `bg-muted ring-0 ${className}`
+      }
+    />
   );
 }

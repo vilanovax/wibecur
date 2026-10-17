@@ -5,6 +5,8 @@ import { Settings, Flame } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import ListVisibilityBadge, { getListVisibilityVariant } from './ListVisibilityBadge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export function getListItemCount(list: {
   itemCount?: number;
@@ -58,12 +60,12 @@ export default function MyListCardCompact({
     visibility !== 'public' || (!hidePublicBadge && visibility === 'public');
 
   return (
-    <div className="flex flex-row-reverse items-stretch gap-1 overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm">
+    <Card className="flex items-stretch gap-1 overflow-hidden bg-popover p-0">
       <Link
         href={`/user-lists/${list.id}`}
-        className="flex min-h-[76px] min-w-0 flex-1 flex-row-reverse gap-2.5 p-2.5 transition-colors hover:bg-wibe-surface/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30 active:scale-[0.99]"
+        className="flex min-h-20 min-w-0 flex-1 gap-2.5 p-2.5 transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60"
       >
-        <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-wibe-surface">
+        <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
           <ListCoverImage
             coverImage={list.coverImage}
             title={list.title}
@@ -71,7 +73,7 @@ export default function MyListCardCompact({
             categorySlug={categorySlug}
             className="h-full w-full object-cover"
             fallbackIcon={list.categories?.icon ?? '📋'}
-            fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
           />
           {showVisibilityOnCover ? (
             <div className="absolute bottom-1 start-1">
@@ -102,7 +104,7 @@ export default function MyListCardCompact({
               </span>
             )}
             {isEmptyPublic && (
-              <span className="rounded-md bg-orange-50 px-1.5 py-0.5 wibe-caption font-medium text-orange-700 ring-1 ring-orange-200/80">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                 خالی
               </span>
             )}
@@ -111,7 +113,7 @@ export default function MyListCardCompact({
             {list.title}
           </h3>
           {list.categories?.name && (
-            <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
               {list.categories.icon ? `${list.categories.icon} ` : ''}
               {list.categories.name}
             </p>
@@ -120,17 +122,19 @@ export default function MyListCardCompact({
         </div>
       </Link>
       {!hideSettings && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={onSettingsClick}
-          className="my-2 me-2 flex shrink-0 flex-col items-center justify-center gap-0.5 self-stretch rounded-lg px-2.5 text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="my-2 me-2 h-auto min-h-11 shrink-0 flex-col self-stretch px-2"
           aria-label="مدیریت لیست"
           title="مدیریت"
         >
-          <Settings className="h-4 w-4" aria-hidden />
-          <span className="wibe-caption font-semibold leading-none">مدیریت</span>
-        </button>
+          <Settings aria-hidden />
+          <span className="text-xs font-semibold leading-none">مدیریت</span>
+        </Button>
       )}
-    </div>
+    </Card>
   );
 }

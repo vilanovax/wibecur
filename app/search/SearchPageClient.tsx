@@ -85,7 +85,7 @@ export default function SearchPageClient({
               ? `نتیجه‌ای برای «${normalized}» نیست`
               : 'نتیجه‌ای پیدا نشد'}
           </p>
-          <p className="mt-1 wibe-caption text-wibe-secondary">
+          <p className="mt-1 wibe-caption text-muted-foreground">
             {meaningfulSearchTokens(normalized).length >= 2
               ? 'همهٔ کلمات باید در نتیجه باشند — مکان یا نام دقیق‌تری امتحان کن'
               : 'عبارت دیگری امتحان کن یا از کلمات کلیدی ژانر استفاده کن'}
@@ -110,7 +110,7 @@ export default function SearchPageClient({
           highlightQuery={normalized}
         />
       ) : (
-        <p className="py-12 text-center wibe-caption text-wibe-secondary">
+        <p className="py-12 text-center wibe-caption text-muted-foreground">
           برای شروع، عبارت جستجو را وارد کن
         </p>
       )}

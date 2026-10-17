@@ -1,10 +1,17 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Search, X, Grid, List as ListIcon, Plus, Check, Trash2, RotateCcw } from 'lucide-react';
 import Toast from '@/components/shared/Toast';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import SearchInput from '@/components/mobile/search/SearchInput';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Select } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Category {
   id: string;
@@ -66,25 +73,27 @@ interface AddItemClientProps {
 type SortOption = 'newest' | 'oldest' | 'title-asc' | 'title-desc' | 'available-first';
 type AvailabilityFilter = 'all' | 'available' | 'in-list';
 
-const CHIP_BASE =
-  'flex items-center gap-1.5 h-9 px-3.5 rounded-lg wibe-small font-medium whitespace-nowrap flex-shrink-0 transition-all active:scale-[0.98]';
-
-function categoryChipClass(isSelected: boolean) {
-  return isSelected
-    ? `${CHIP_BASE} bg-primary text-white shadow-sm`
-    : `${CHIP_BASE} bg-wibe-card border border-wibe text-foreground shadow-sm hover:border-primary/30`;
+function FilterChip({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant={selected ? 'default' : 'outline'}
+      className="h-11 shrink-0"
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
 }
-
-function availabilityChipClass(isSelected: boolean, tone: 'default' | 'success') {
-  if (!isSelected) {
-    return `${CHIP_BASE} bg-wibe-card border border-wibe text-foreground shadow-sm hover:border-primary/30`;
-  }
-  if (tone === 'success') return `${CHIP_BASE} bg-emerald-600 text-white shadow-sm`;
-  return `${CHIP_BASE} bg-primary text-white shadow-sm`;
-}
-
-const SELECT_CLASS =
-  'px-3 py-2 rounded-md border border-wibe bg-wibe-surface wibe-small text-foreground focus-visible:ring-2 focus-visible:ring-primary/20 focus:border-primary outline-none';
 
 function findExistingEntry(
   item: Item,
@@ -382,216 +391,177 @@ export default function AddItemClient({
     setShowToast(true);
   };
 
-  const renderActionButton = (item: Item, compact?: boolean) => {
+  const renderActionButton = (item: Item) => {
     const inList = isInList(item);
     const busy = busyItemId === item.id;
 
     if (inList) {
       if (!canRemoveFromList) {
         return (
-          <div
-            className={`inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 wibe-small font-medium text-emerald-800 ${
-              compact ? 'py-1.5' : ''
-            }`}
-          >
-            <Check className="h-4 w-4" aria-hidden />
+          <div className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-muted text-sm font-semibold text-foreground">
+            <Check className="size-4" aria-hidden />
             در لیست
           </div>
         );
       }
       return (
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="lg"
+          className="w-full text-destructive"
           onClick={(e) => {
             e.stopPropagation();
             void handleRemoveItem(item, { forUndo: true });
           }}
           disabled={busy}
-          className={`inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-2 wibe-small font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50 ${
-            compact ? 'py-1.5' : ''
-          }`}
         >
-          {busy ? 'در حال حذف...' : (
+          {busy ? 'در حال حذف…' : (
             <>
-              <Trash2 className="h-4 w-4" aria-hidden />
+              <Trash2 aria-hidden />
               حذف از لیست
             </>
           )}
-        </button>
+        </Button>
       );
     }
 
     return (
-      <button
+      <Button
         type="button"
+        variant="brand"
+        size="lg"
+        className="w-full"
         onClick={(e) => {
           e.stopPropagation();
           void handleAddItem(item);
         }}
         disabled={busy}
-        className={`inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 wibe-small font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50 ${
-          compact ? 'py-1.5' : ''
-        }`}
       >
-        {busy ? 'در حال افزودن...' : (
+        {busy ? 'در حال افزودن…' : (
           <>
-            <Plus className="h-4 w-4" aria-hidden />
+            <Plus aria-hidden />
             افزودن
           </>
         )}
-      </button>
+      </Button>
     );
   };
 
   return (
-    <div className="min-h-screen bg-wibe-surface pb-24">
-      <div className="sticky top-14 z-40 border-b border-wibe bg-wibe-card/95 backdrop-blur-sm lg:top-14">
+    <div className="min-h-screen bg-background pb-24">
+      <div className="sticky top-14 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="px-4 py-3 lg:mx-auto lg:max-w-5xl">
           <div className="mb-3 lg:hidden">
-            <p className="mt-0.5 wibe-caption text-wibe-secondary">
-              <span className="font-medium text-emerald-700">
+            <p className="mt-0.5 wibe-caption text-muted-foreground">
+              <span className="font-medium text-brand">
                 {totals.inList.toLocaleString('fa-IR')} در لیست
               </span>
-              <span className="mx-1.5 text-wibe-secondary/50">·</span>
+              <span className="mx-1.5 text-muted-foreground/50">·</span>
               <span>{totals.available.toLocaleString('fa-IR')} قابل افزودن</span>
             </p>
           </div>
           <div className="mb-3 hidden lg:block">
             <h1 className="wibe-h3 truncate">افزودن به {listTitle}</h1>
-            <p className="mt-0.5 wibe-caption text-wibe-secondary">
-              <span className="font-medium text-emerald-700">
+            <p className="mt-0.5 wibe-caption text-muted-foreground">
+              <span className="font-medium text-brand">
                 {totals.inList.toLocaleString('fa-IR')} در لیست
               </span>
-              <span className="mx-1.5 text-wibe-secondary/50">·</span>
+              <span className="mx-1.5 text-muted-foreground/50">·</span>
               <span>{totals.available.toLocaleString('fa-IR')} قابل افزودن</span>
-              <span className="mx-1.5 text-wibe-secondary/50">·</span>
+              <span className="mx-1.5 text-muted-foreground/50">·</span>
               <span>{totals.totalPublic.toLocaleString('fa-IR')} در کاتالوگ</span>
             </p>
           </div>
 
-          <div className="relative mb-3">
-            <Search className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-wibe-secondary" />
-            <input
-              type="text"
-              placeholder="جستجو در عنوان، توضیح یا لیست مبدأ..."
+          <div className="mb-3">
+            <SearchInput
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full rounded-lg border border-wibe bg-wibe-surface py-2.5 pe-10 ps-10 wibe-small outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+              onChange={setSearchInput}
+              placeholder="جستجو در عنوان، توضیح یا لیست مبدأ…"
+              aria-label="جستجو در آیتم‌ها"
             />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={() => setSearchInput('')}
-                className="absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full hover:bg-wibe-surface"
-                aria-label="پاک کردن جستجو"
-              >
-                <X className="h-4 w-4 text-wibe-secondary" />
-              </button>
-            )}
           </div>
 
           <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
-            <button
-              type="button"
-              onClick={() => setAvailabilityFilter('all')}
-              className={availabilityChipClass(availabilityFilter === 'all', 'default')}
-            >
+            <FilterChip selected={availabilityFilter === 'all'} onClick={() => setAvailabilityFilter('all')}>
               همه
-            </button>
-            <button
-              type="button"
+            </FilterChip>
+            <FilterChip
+              selected={availabilityFilter === 'available'}
               onClick={() => setAvailabilityFilter('available')}
-              className={availabilityChipClass(availabilityFilter === 'available', 'default')}
             >
               قابل افزودن ({totals.available.toLocaleString('fa-IR')})
-            </button>
-            <button
-              type="button"
+            </FilterChip>
+            <FilterChip
+              selected={availabilityFilter === 'in-list'}
               onClick={() => setAvailabilityFilter('in-list')}
-              className={availabilityChipClass(availabilityFilter === 'in-list', 'success')}
             >
-              <Check className="h-3.5 w-3.5" />
+              <Check aria-hidden />
               در لیست ({totals.inList.toLocaleString('fa-IR')})
-            </button>
+            </FilterChip>
           </div>
 
           <div className="-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('all')}
-              className={categoryChipClass(selectedCategory === 'all')}
-            >
+            <FilterChip selected={selectedCategory === 'all'} onClick={() => setSelectedCategory('all')}>
               همه دسته‌ها
-            </button>
+            </FilterChip>
             {categories.map((category) => {
               const count = categoryCounts[category.id] ?? 0;
               if (count === 0) return null;
               return (
-                <button
+                <FilterChip
                   key={category.id}
-                  type="button"
+                  selected={selectedCategory === category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={categoryChipClass(selectedCategory === category.id)}
                 >
                   <span aria-hidden>{category.icon}</span>
                   <span>
                     {category.name} ({count.toLocaleString('fa-IR')})
                   </span>
-                </button>
+                </FilterChip>
               );
             })}
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <select
-              value={selectedList}
-              onChange={(e) => setSelectedList(e.target.value)}
-              className={`min-w-0 flex-1 ${SELECT_CLASS}`}
-            >
-              <option value="all">همه لیست‌های عمومی</option>
-              {filteredLists.map((list) => (
-                <option key={list.id} value={list.id}>
-                  {list.title}
-                </option>
-              ))}
-            </select>
+            <div className="min-w-0 flex-1">
+              <Select
+                value={selectedList}
+                onChange={(e) => setSelectedList(e.target.value)}
+                className="h-12"
+                aria-label="لیست مبدأ"
+                options={[
+                  { value: 'all', label: 'همه لیست‌های عمومی' },
+                  ...filteredLists.map((list) => ({ value: list.id, label: list.title })),
+                ]}
+              />
+            </div>
 
-            <select
+            <Select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className={SELECT_CLASS}
-            >
-              <option value="available-first">اول: قابل افزودن</option>
-              <option value="newest">جدیدترین</option>
-              <option value="oldest">قدیمی‌ترین</option>
-              <option value="title-asc">عنوان (الف–ی)</option>
-              <option value="title-desc">عنوان (ی–الف)</option>
-            </select>
+              className="h-12"
+              aria-label="مرتب‌سازی"
+              options={[
+                { value: 'available-first', label: 'اول: قابل افزودن' },
+                { value: 'newest', label: 'جدیدترین' },
+                { value: 'oldest', label: 'قدیمی‌ترین' },
+                { value: 'title-asc', label: 'عنوان (الف–ی)' },
+                { value: 'title-desc', label: 'عنوان (ی–الف)' },
+              ]}
+            />
 
-            <div className="flex shrink-0 rounded-md border border-wibe bg-wibe-surface p-0.5">
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                aria-label="نمایش گریدی"
-                aria-pressed={viewMode === 'grid'}
-                className={`rounded-sm p-2 transition-colors ${
-                  viewMode === 'grid' ? 'bg-wibe-card text-primary shadow-sm' : 'text-wibe-secondary'
-                }`}
-              >
-                <Grid className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('list')}
-                aria-label="نمایش لیستی"
-                aria-pressed={viewMode === 'list'}
-                className={`rounded-sm p-2 transition-colors ${
-                  viewMode === 'list' ? 'bg-wibe-card text-primary shadow-sm' : 'text-wibe-secondary'
-                }`}
-              >
-                <ListIcon className="h-4 w-4" />
-              </button>
-            </div>
+            <SegmentedControl
+              aria-label="نوع نمایش"
+              size="sm"
+              value={viewMode}
+              onChange={(value) => setViewMode(value as 'grid' | 'list')}
+              options={[
+                { value: 'grid', label: <Grid aria-hidden />, 'aria-label': 'نمایش گریدی' },
+                { value: 'list', label: <ListIcon aria-hidden />, 'aria-label': 'نمایش لیستی' },
+              ]}
+            />
           </div>
 
           {isFetching && !isFetchingNextPage && (
@@ -604,25 +574,20 @@ export default function AddItemClient({
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-wibe-surface" />
+              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
             ))}
           </div>
         ) : isError ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 py-10 text-center">
-            <p className="wibe-small text-red-700">
-              {error instanceof Error ? error.message : 'خطا در بارگذاری'}
-            </p>
-          </div>
+          <EmptyState
+            title="بارگذاری انجام نشد"
+            description={error instanceof Error ? error.message : 'خطا در بارگذاری'}
+          />
         ) : items.length === 0 ? (
-          <div className="rounded-xl border border-wibe bg-wibe-card py-12 text-center">
-            <div className="mb-3 text-5xl" aria-hidden>
-              🔍
-            </div>
-            <p className="wibe-body text-wibe-secondary">آیتمی یافت نشد</p>
-            <p className="mt-1 wibe-caption text-wibe-secondary">
-              فیلتر یا عبارت جستجو را تغییر دهید
-            </p>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="آیتمی یافت نشد"
+            description="فیلتر یا عبارت جستجو را عوض کن."
+          />
         ) : (
           <>
             <div
@@ -636,7 +601,7 @@ export default function AddItemClient({
                 const inList = isInList(item);
                 const canToggle = !inList || canRemoveFromList;
                 return (
-                  <div
+                  <Card
                     key={item.id}
                     role={canToggle ? 'button' : undefined}
                     tabIndex={canToggle ? 0 : undefined}
@@ -651,19 +616,17 @@ export default function AddItemClient({
                           }
                         : undefined
                     }
-                    className={`overflow-hidden rounded-xl border bg-wibe-card shadow-sm transition-all ${
-                      inList
-                        ? 'border-emerald-300 ring-1 ring-emerald-200/80'
-                        : 'border-wibe hover:border-primary/20'
+                    className={`overflow-hidden bg-popover p-0 ${
+                      inList ? 'border-brand ring-1 ring-brand/30' : ''
                     } ${canToggle ? 'cursor-pointer active:scale-[0.99]' : ''} ${
                       viewMode === 'list' ? 'flex gap-3 p-2' : ''
                     }`}
                   >
                     <div
-                      className={`relative bg-wibe-surface ${
+                      className={`relative bg-muted ${
                         viewMode === 'grid'
                           ? 'aspect-[4/3]'
-                          : 'h-20 w-20 shrink-0 overflow-hidden rounded-lg'
+                          : 'size-20 shrink-0 overflow-hidden rounded-xl'
                       }`}
                     >
                       <ImageWithFallback
@@ -674,7 +637,7 @@ export default function AddItemClient({
                         fallbackClassName="h-full w-full"
                       />
                       {inList && (
-                        <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-emerald-600/95 px-2 py-0.5 wibe-caption font-semibold text-white shadow-sm">
+                        <span className="absolute end-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-brand-foreground">
                           <Check className="h-3 w-3" />
                           در لیست
                         </span>
@@ -688,33 +651,33 @@ export default function AddItemClient({
                         {item.title}
                       </h3>
                       {item.lists.categories && (
-                        <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">
+                        <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">
                           {item.lists.categories.icon} {item.lists.categories.name}
                         </p>
                       )}
-                      <p className="line-clamp-1 wibe-caption text-wibe-secondary/80">
+                      <p className="line-clamp-1 wibe-caption text-muted-foreground/80">
                         از: {item.lists.title}
                       </p>
                       {item.description && viewMode === 'list' && (
-                        <p className="mt-1 line-clamp-2 wibe-caption text-wibe-secondary">
+                        <p className="mt-1 line-clamp-2 wibe-caption text-muted-foreground">
                           {item.description}
                         </p>
                       )}
                       <div className={viewMode === 'grid' ? 'mt-2' : 'mt-1.5 max-w-xs'}>
-                        {renderActionButton(item, viewMode === 'list')}
+                        {renderActionButton(item)}
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
 
             <div ref={loadMoreRef} className="py-6 text-center">
               {isFetchingNextPage && (
-                <p className="wibe-caption text-wibe-secondary">بارگذاری بیشتر...</p>
+                <p className="wibe-caption text-muted-foreground">بارگذاری بیشتر...</p>
               )}
               {!hasNextPage && items.length > 0 && (
-                <p className="wibe-caption text-wibe-secondary">همه نتایج نمایش داده شد</p>
+                <p className="wibe-caption text-muted-foreground">همه نتایج نمایش داده شد</p>
               )}
             </div>
           </>
@@ -722,24 +685,22 @@ export default function AddItemClient({
       </div>
 
       {undoItem && (
-        <div className="fixed bottom-20 left-4 right-4 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-xl bg-gray-900 px-4 py-3 text-white shadow-2xl">
-          <p className="flex-1 wibe-small">«{undoItem.title}» حذف شد</p>
-          <button
-            type="button"
-            onClick={() => void handleUndo()}
-            className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-3 py-1.5 wibe-caption font-semibold hover:bg-white/25"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
+        <div className="fixed inset-x-4 bottom-20 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-xl border border-border bg-popover px-4 py-3 text-foreground shadow-overlay">
+          <p className="min-w-0 flex-1 text-sm">«{undoItem.title}» حذف شد</p>
+          <Button type="button" variant="brand" size="sm" className="h-11" onClick={() => void handleUndo()}>
+            <RotateCcw aria-hidden />
             بازگردانی
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
+            className="size-11 shrink-0 rounded-full"
             onClick={clearUndo}
-            className="rounded-lg p-1 hover:bg-white/15"
             aria-label="بستن"
           >
-            <X className="h-4 w-4" />
-          </button>
+            <X />
+          </Button>
         </div>
       )}
 

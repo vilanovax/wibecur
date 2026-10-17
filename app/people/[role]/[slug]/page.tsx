@@ -50,7 +50,7 @@ export default async function PersonPage({
   const serialized = JSON.parse(JSON.stringify(data)) as typeof data;
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <Header showBack hideTitleOnDesktop showDesktopSearch={false} />
       <PersonPageClient {...serialized} />
       <BottomNav />

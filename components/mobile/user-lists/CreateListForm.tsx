@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ListPlus, Loader2, Globe } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Toast from '@/components/shared/Toast';
@@ -151,18 +152,18 @@ export default function CreateListForm({
         <form onSubmit={handleSubmit} className="flex flex-col">
           <div className="px-4 py-3 space-y-3">
             {error && (
-              <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5 wibe-caption text-red-600">
+              <Alert variant="destructive" title="لیست ساخته نشد">
                 {error}
-              </div>
+              </Alert>
             )}
 
             {atLimit ? (
-              <div className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2.5 wibe-caption text-amber-800 leading-relaxed">
+              <Alert variant="warning">
                 به سقف لیست‌های خصوصی رسیدید. یکی را حذف یا از تنظیمات عمومی کنید.
-              </div>
+              </Alert>
             ) : (
-              <div className="flex items-center justify-between gap-2 rounded-lg bg-wibe-surface px-3 py-2.5">
-                <span className="wibe-caption text-wibe-secondary">
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-muted px-3 py-2.5">
+                <span className="text-xs text-muted-foreground">
                   {remaining.toLocaleString('fa-IR')} جای خالی
                 </span>
                 <div className="flex gap-1">
@@ -170,7 +171,7 @@ export default function CreateListForm({
                     <span
                       key={i}
                       className={`h-1.5 w-6 rounded-full transition-colors ${
-                        i < currentListsCount ? 'bg-primary' : 'bg-wibe-surface'
+                        i < currentListsCount ? 'bg-brand' : 'bg-border'
                       }`}
                     />
                   ))}
@@ -180,7 +181,7 @@ export default function CreateListForm({
 
             <div>
               <label htmlFor="list-title" className="block wibe-small font-medium text-foreground mb-1.5">
-                عنوان لیست <span className="text-red-500">*</span>
+                عنوان لیست <span className="text-destructive">*</span>
               </label>
               <Input
                 type="text"
@@ -199,15 +200,15 @@ export default function CreateListForm({
               />
             </div>
 
-            <p className="flex items-start gap-1.5 wibe-caption text-wibe-secondary leading-relaxed">
-              <Globe className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary/70" />
+            <p className="flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
+              <Globe className="mt-0.5 size-4 shrink-0 text-brand" />
               <span>
                 لیست خصوصی ساخته می‌شود. برای عمومی کردن، بعداً توضیحات و کاور اضافه کنید.
               </span>
             </p>
           </div>
 
-          <div className="flex-shrink-0 border-t border-wibe px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-border px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div className="flex gap-2">
               <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onClose} disabled={isLoading}>
                 انصراف

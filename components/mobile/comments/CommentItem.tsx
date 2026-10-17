@@ -159,7 +159,7 @@ export default function CommentItem({
             ) : (
               <span className="font-medium text-foreground text-sm">{comment.user.name}</span>
             )}
-            <span className="text-xs text-wibe-secondary">
+            <span className="text-xs text-muted-foreground">
               {formatRelativeTime(comment.createdAt)}
             </span>
           </div>
@@ -172,14 +172,14 @@ export default function CommentItem({
         <div className="relative">
           <p
             className={`text-foreground text-sm leading-relaxed break-words whitespace-pre-wrap ${
-              comment.isFiltered ? 'text-wibe-secondary italic' : ''
+              comment.isFiltered ? 'italic text-muted-foreground' : ''
             } ${!expanded && showReadMore ? 'line-clamp-3' : ''}`}
           >
             {comment.content}
           </p>
           {!expanded && showReadMore && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-wibe-card to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-popover to-transparent"
               aria-hidden
             />
           )}
@@ -188,7 +188,7 @@ export default function CommentItem({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-1.5 wibe-caption font-semibold text-primary hover:underline"
+            className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-brand"
           >
             {expanded ? 'کمتر' : 'بیشتر بخوان'}
           </button>
@@ -200,8 +200,8 @@ export default function CommentItem({
             onClick={() => handleVote(1)}
             disabled={isLoading}
             aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
-            className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
-              localVote === 1 ? 'text-green-600 font-medium' : 'text-wibe-secondary hover:text-green-600'
+            className={`inline-flex min-h-11 items-center gap-1 px-1 text-sm transition-colors disabled:opacity-50 ${
+              localVote === 1 ? 'font-medium text-success' : 'text-muted-foreground hover:text-success'
             }`}
           >
             <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />

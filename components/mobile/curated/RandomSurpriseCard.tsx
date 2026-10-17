@@ -6,6 +6,8 @@ import { Sparkles, ArrowLeft, RefreshCw } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import type { CuratedList } from '@/types/curated';
 import { trackMoodExplorerClick } from '@/lib/analytics';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 
 type Props = {
@@ -32,17 +34,17 @@ export default function RandomSurpriseCard({ lists }: Props) {
 
   return (
     <section
-      className="border-t border-wibe/30 px-2.5 py-2.5 lg:px-0 lg:py-3"
+      className="border-t border-border px-3 py-3 lg:px-0"
       aria-labelledby="surprise-title"
     >
       {!preview ? (
         <button
           type="button"
           onClick={roll}
-          className="flex w-full items-center gap-3 rounded-xl border border-wibe bg-wibe-card px-3.5 py-3 text-right transition-colors hover:border-primary/30 hover:bg-primary/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:mx-auto lg:max-w-xl"
+          className="flex h-auto w-full items-center gap-3 rounded-surface border border-border bg-popover px-4 py-3 text-start transition-colors hover:border-brand/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 lg:mx-auto lg:max-w-xl"
         >
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-wibe-surface text-xl"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-xl"
             aria-hidden
           >
             🎲
@@ -51,26 +53,26 @@ export default function RandomSurpriseCard({ lists }: Props) {
             <h2 id="surprise-title" className="wibe-small font-bold text-foreground">
               نمی‌دونی چی می‌خوای؟
             </h2>
-            <p className="mt-0.5 wibe-caption text-wibe-secondary">یک پیش‌نمایش ببین</p>
+            <p className="mt-0.5 wibe-caption text-muted-foreground">یک پیش‌نمایش ببین</p>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 wibe-caption font-bold text-white">
+          <span className="inline-flex h-11 shrink-0 items-center gap-1 rounded-control bg-brand px-3 text-xs font-bold text-brand-foreground">
             <Sparkles className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
             سورپرایز
           </span>
         </button>
       ) : (
-        <div className="rounded-xl border border-primary/20 bg-primary/[0.03] p-3 lg:mx-auto lg:max-w-xl">
-          <p id="surprise-title" className="mb-2 wibe-caption font-semibold text-primary">
+        <Card className="border-brand/30 bg-brand/5 p-3 lg:mx-auto lg:max-w-xl">
+          <p id="surprise-title" className="mb-2 text-xs font-semibold text-brand">
             پیشنهاد سورپرایز
           </p>
-          <div className="flex flex-row-reverse gap-2.5">
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-wibe-surface">
+          <div className="flex gap-3">
+            <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
               <ImageWithFallback
                 src={preview.coverUrl ?? ''}
                 alt={preview.title}
                 className="h-full w-full object-cover"
                 fallbackIcon="📋"
-                fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-lg"
+                fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-lg"
                 width={64}
                 height={64}
                 categorySlug={preview.category?.slug}
@@ -78,33 +80,29 @@ export default function RandomSurpriseCard({ lists }: Props) {
                 listTitle={preview.title}
               />
             </div>
-            <div className="min-w-0 flex-1 text-right">
+            <div className="min-w-0 flex-1 text-start">
               <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{preview.title}</h3>
               {getListCardSubtitle(preview) ? (
-                <p className="mt-0.5 line-clamp-1 wibe-caption text-wibe-secondary">
+                <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">
                   {getListCardSubtitle(preview)}
                 </p>
               ) : null}
             </div>
           </div>
-          <div className="mt-2.5 flex flex-wrap items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={roll}
-              className="inline-flex items-center gap-1 rounded-lg border border-wibe bg-wibe-card px-2.5 py-1.5 wibe-caption font-semibold text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-            >
-              <RefreshCw className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+          <div className="mt-3 flex flex-wrap items-center justify-start gap-2">
+            <Button type="button" variant="outline" size="lg" onClick={roll}>
+              <RefreshCw aria-hidden />
               یکی دیگه
-            </button>
+            </Button>
             <Link
               href={`/lists/${preview.slug}`}
-              className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 wibe-caption font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="inline-flex h-12 items-center gap-1 rounded-control bg-brand px-4 text-sm font-semibold text-brand-foreground"
             >
               برو به لیست
-              <ArrowLeft className="h-3.5 w-3.5 rotate-180" strokeWidth={2.5} aria-hidden />
+              <ArrowLeft className="size-4" aria-hidden />
             </Link>
           </div>
-        </div>
+        </Card>
       )}
     </section>
   );

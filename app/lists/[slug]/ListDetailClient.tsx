@@ -164,7 +164,7 @@ function ListCompactStatsBar({
       const countLabel = formatCompact(saveCount);
       const row = (
         <>
-          <span className="wibe-caption text-wibe-secondary">ذخیره</span>
+          <span className="wibe-caption text-muted-foreground">ذخیره</span>
           <span className="wibe-small font-bold tabular-nums text-foreground">{countLabel}</span>
         </>
       );
@@ -173,7 +173,7 @@ function ListCompactStatsBar({
       ) : (
         <div className="px-1 py-2.5 text-center">
           <p className="wibe-small font-bold tabular-nums leading-none text-foreground">{countLabel}</p>
-          <p className="mt-0.5 wibe-caption text-wibe-secondary">ذخیره</p>
+          <p className="mt-0.5 wibe-caption text-muted-foreground">ذخیره</p>
         </div>
       );
     }
@@ -185,12 +185,12 @@ function ListCompactStatsBar({
     const bookmarkedHorizontal = (
       <>
         <Bookmark
-          className={`mx-auto mb-1 h-4 w-4 fill-primary text-primary ${bookmarkSaving ? 'opacity-60' : ''}`}
+          className={`mx-auto mb-1 size-4 fill-brand text-brand ${bookmarkSaving ? 'opacity-60' : ''}`}
           aria-hidden
         />
-        <p className="wibe-caption font-bold leading-none text-primary">{saveLabel}</p>
+        <p className="wibe-caption font-bold leading-none text-brand">{saveLabel}</p>
         {saveCountLabel ? (
-          <p className="mt-0.5 wibe-caption tabular-nums text-primary/75">{saveCountLabel}</p>
+          <p className="mt-0.5 wibe-caption tabular-nums text-brand/75">{saveCountLabel}</p>
         ) : null}
       </>
     );
@@ -199,33 +199,33 @@ function ListCompactStatsBar({
       <>
         <p
           className={`wibe-small font-bold tabular-nums leading-none ${
-            saveCount > 0 ? 'text-primary' : 'text-foreground'
+            saveCount > 0 ? 'text-brand' : 'text-foreground'
           }`}
         >
           {saveCountLabel ?? '۰'}
         </p>
-        <p className="mt-0.5 wibe-caption text-wibe-secondary">{saveLabel}</p>
+        <p className="mt-0.5 wibe-caption text-muted-foreground">{saveLabel}</p>
       </>
     );
 
     const bookmarkedVertical = (
       <>
-        <span className="inline-flex items-center gap-1.5 wibe-caption font-bold text-primary">
-          <Bookmark className="h-3.5 w-3.5 fill-primary text-primary" aria-hidden />
+        <span className="inline-flex items-center gap-1.5 wibe-caption font-bold text-brand">
+          <Bookmark className="size-4 fill-brand text-brand" aria-hidden />
           {saveLabel}
         </span>
         {saveCountLabel ? (
-          <span className="wibe-caption tabular-nums text-primary/75">{saveCountLabel}</span>
+          <span className="wibe-caption tabular-nums text-brand/75">{saveCountLabel}</span>
         ) : null}
       </>
     );
 
     const defaultVertical = (
       <>
-        <span className="wibe-caption text-wibe-secondary">{saveLabel}</span>
+        <span className="wibe-caption text-muted-foreground">{saveLabel}</span>
         <span
           className={`wibe-small font-bold tabular-nums ${
-            saveCount > 0 ? 'text-primary' : 'text-foreground'
+            saveCount > 0 ? 'text-brand' : 'text-foreground'
           }`}
         >
           {saveCountLabel ?? '۰'}
@@ -237,15 +237,15 @@ function ListCompactStatsBar({
     const verticalInner = isBookmarked ? bookmarkedVertical : defaultVertical;
 
     const horizontalClass = isBookmarked
-      ? 'bg-primary/[0.12] ring-1 ring-inset ring-primary/25'
+      ? 'bg-brand/10 ring-1 ring-inset ring-brand/25'
       : saveInteractive
-        ? 'hover:bg-primary/[0.06] active:bg-primary/10'
+        ? 'hover:bg-brand/5 active:bg-brand/10'
         : '';
 
     const verticalClass = isBookmarked
-      ? 'rounded-lg bg-primary/[0.1] px-2 py-1.5 ring-1 ring-inset ring-primary/20'
+      ? 'rounded-control bg-brand/10 px-2 py-1.5 ring-1 ring-inset ring-brand/20'
       : saveInteractive
-        ? 'rounded-lg px-1 py-0.5 hover:bg-wibe-surface'
+        ? 'rounded-lg px-1 py-0.5 hover:bg-muted'
         : 'px-1 py-0.5';
 
     if (layout === 'vertical') {
@@ -298,7 +298,7 @@ function ListCompactStatsBar({
           {metricCells.map(({ key, label, value, onClick }) => {
             const row = (
               <>
-                <span className="wibe-caption text-wibe-secondary">{label}</span>
+                <span className="wibe-caption text-muted-foreground">{label}</span>
                 <span className="wibe-small font-bold tabular-nums text-foreground">{value}</span>
               </>
             );
@@ -309,7 +309,7 @@ function ListCompactStatsBar({
                   key={key}
                   type="button"
                   onClick={onClick}
-                  className="flex w-full items-center justify-between rounded-lg px-1 py-0.5 transition-colors hover:bg-wibe-surface"
+                  className="flex min-h-11 w-full items-center justify-between rounded-lg px-1 transition-colors hover:bg-muted"
                 >
                   {row}
                 </button>
@@ -334,7 +334,7 @@ function ListCompactStatsBar({
         const inner = (
           <>
             <p className="wibe-small font-bold tabular-nums leading-none text-foreground">{value}</p>
-            <p className="mt-0.5 wibe-caption text-wibe-secondary">{label}</p>
+            <p className="mt-0.5 wibe-caption text-muted-foreground">{label}</p>
           </>
         );
 
@@ -422,13 +422,13 @@ function ListConsumeActionBar({
       </div>
       {showViral ? (
         <div className="flex items-center gap-2 px-0.5">
-          <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-wibe-surface">
+          <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-warning transition-all"
               style={{ width: `${viralProgress}%` }}
             />
           </div>
-          <span className="shrink-0 wibe-caption tabular-nums text-wibe-secondary">
+          <span className="shrink-0 wibe-caption tabular-nums text-muted-foreground">
             {Math.round(viralProgress).toLocaleString('fa-IR')}٪ وایرال
           </span>
         </div>
@@ -994,13 +994,13 @@ export default function ListDetailClient({
       {list.categories && (
         <Link
           href={`/categories/${list.categories.slug}`}
-          className="inline-flex items-center gap-1 rounded-md bg-wibe-surface px-2.5 py-1 wibe-caption font-medium text-foreground transition-colors hover:bg-wibe-surface lg:bg-wibe-surface lg:ring-1 lg:ring-wibe/80"
+          className="inline-flex min-h-11 items-center gap-1 rounded-full bg-muted px-3 text-sm font-medium text-foreground transition-colors hover:bg-border"
         >
           {list.categories.icon} {list.categories.name}
         </Link>
       )}
       {badgeLabel && (
-        <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-wibe-surface text-foreground'}`}>
+        <span className={`inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold ${badgeClass ?? 'bg-muted text-foreground'}`}>
           {badgeLabel}
         </span>
       )}
@@ -1013,7 +1013,7 @@ export default function ListDetailClient({
   );
 
   return (
-    <div className="bg-wibe-surface" dir="rtl">
+    <div className="bg-background" dir="rtl">
       <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
       <div className="mb-1 hidden px-4 pt-2 lg:mb-0 lg:block lg:px-0 lg:pt-3">
         <PageBreadcrumb items={breadcrumbItems} />
@@ -1025,13 +1025,13 @@ export default function ListDetailClient({
           className="hidden grid-cols-[minmax(13rem,17.5rem)_minmax(0,1fr)] items-center gap-5 lg:grid xl:grid-cols-[18rem_minmax(0,1fr)] xl:gap-6"
           aria-hidden={!isDesktop || undefined}
         >
-          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-wibe-surface shadow-sm ring-1 ring-black/[0.04] xl:aspect-[16/10]">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted shadow-sm xl:aspect-[16/10]">
             <ImageWithFallback
               src={heroImage}
               alt={displayTitle}
               className="h-full w-full object-cover object-center"
               fallbackIcon={categoryIcon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-5xl"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-5xl"
               categorySlug={categorySlug}
               listSlug={list.slug}
               listTitle={list.title}
@@ -1054,7 +1054,7 @@ export default function ListDetailClient({
               {displayTitle}
             </h1>
             {listDescription && (
-              <p className="mt-2 line-clamp-3 max-w-2xl wibe-small leading-relaxed text-wibe-secondary xl:line-clamp-2">
+              <p className="mt-2 line-clamp-3 max-w-2xl wibe-small leading-relaxed text-muted-foreground xl:line-clamp-2">
                 {listDescription}
               </p>
             )}
@@ -1063,7 +1063,7 @@ export default function ListDetailClient({
         </div>
 
         <div
-          className="relative h-[210px] overflow-hidden rounded-b-2xl bg-gray-900 sm:h-[240px] lg:hidden"
+          className="relative h-52 overflow-hidden rounded-b-xl bg-foreground sm:h-60 lg:hidden"
           aria-hidden={isDesktop || undefined}
         >
           <ImageWithFallback
@@ -1071,7 +1071,7 @@ export default function ListDetailClient({
             alt={displayTitle}
             className="absolute inset-0 h-full w-full object-cover object-center"
             fallbackIcon={categoryIcon ?? '📋'}
-            fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-wibe-surface text-6xl"
+            fallbackClassName="absolute inset-0 flex h-full w-full items-center justify-center bg-muted text-6xl"
             categorySlug={categorySlug}
             listSlug={list.slug}
             listTitle={list.title}
@@ -1092,27 +1092,27 @@ export default function ListDetailClient({
           </div>
           {isViral && (
             <div className="absolute end-4 top-4 z-10">
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-white">
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-foreground">
                 <Flame className="w-3.5 h-3.5" /> وایرال
               </span>
             </div>
           )}
-          <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-right">
-            <h1 className="text-h1 font-bold leading-tight text-white line-clamp-2">{displayTitle}</h1>
+          <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-start">
+            <h1 className="text-h1 font-bold leading-tight text-background line-clamp-2">{displayTitle}</h1>
             {listDescription && (
-              <p className="mt-1 line-clamp-2 wibe-small leading-relaxed text-white/85">{listDescription}</p>
+              <p className="mt-1 line-clamp-2 wibe-small leading-relaxed text-background/85">{listDescription}</p>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {list.categories && (
                 <Link
                   href={`/categories/${list.categories.slug}`}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-white/15 backdrop-blur text-white/95"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-background/15 backdrop-blur text-background/95"
                 >
                   {list.categories.icon} {list.categories.name}
                 </Link>
               )}
               {badgeLabel && (
-                <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-white/20 text-white'}`}>
+                <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-background/20 text-background'}`}>
                   {badgeLabel}
                 </span>
               )}
@@ -1132,7 +1132,7 @@ export default function ListDetailClient({
           onShare={handleShare}
           onManage={() => setMoreOpen(true)}
         />
-        <p className="text-center wibe-caption text-wibe-secondary tabular-nums">
+        <p className="text-center wibe-caption text-muted-foreground tabular-nums">
           <button
             type="button"
             onClick={() => scrollToSection(itemsSectionEl)}
@@ -1172,7 +1172,7 @@ export default function ListDetailClient({
                 {list.tags.slice(0, 5).map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex rounded-md bg-wibe-surface px-3 py-1 wibe-caption font-medium text-wibe-secondary"
+                    className="inline-flex min-h-11 items-center rounded-full bg-muted px-3 text-sm font-medium text-muted-foreground"
                   >
                     {tag}
                   </span>
@@ -1235,7 +1235,7 @@ export default function ListDetailClient({
                         aria-label="جستجو در آیتم‌های لیست"
                       />
                       {isItemSearchActive && (
-                        <p className="mt-1 px-0.5 wibe-caption text-wibe-secondary">
+                        <p className="mt-1 px-0.5 wibe-caption text-muted-foreground">
                           {filteredItemEntries.length.toLocaleString('fa-IR')} نتیجه از{' '}
                           {list.items.length.toLocaleString('fa-IR')} آیتم
                         </p>
@@ -1301,7 +1301,7 @@ export default function ListDetailClient({
                   {hasMoreToReveal ? (
                     <div ref={loadMoreRef} className="flex h-10 w-full items-center justify-center">
                       {loadingMoreRemote ? (
-                        <span className="wibe-caption text-wibe-secondary">در حال بارگذاری…</span>
+                        <span className="wibe-caption text-muted-foreground">در حال بارگذاری…</span>
                       ) : null}
                     </div>
                   ) : null}
@@ -1412,12 +1412,12 @@ export default function ListDetailClient({
                 href={`/user-lists/${list.id}/add-item`}
                 role="menuitem"
                 onClick={() => setMoreOpen(false)}
-                className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
                   <Plus className="h-4 w-4" aria-hidden />
                 </span>
-                <span className="min-w-0 flex-1 text-right wibe-small font-semibold text-foreground">
+                <span className="min-w-0 flex-1 text-start text-sm font-semibold text-foreground">
                   افزودن آیتم
                 </span>
               </Link>
@@ -1425,16 +1425,16 @@ export default function ListDetailClient({
                 href={`/user-lists/${list.id}`}
                 role="menuitem"
                 onClick={() => setMoreOpen(false)}
-                className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center text-wibe-secondary">
+                <span className="flex size-11 shrink-0 items-center justify-center text-muted-foreground">
                   <Settings className="h-4 w-4" aria-hidden />
                 </span>
-                <span className="min-w-0 flex-1 text-right wibe-small font-medium text-foreground">
+                <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
                   ویرایش لیست
                 </span>
               </Link>
-              <div className="my-1.5 border-t border-wibe/70" aria-hidden />
+              <div className="my-1.5 border-t border-border" aria-hidden />
             </>
           ) : (
             <>
@@ -1443,11 +1443,11 @@ export default function ListDetailClient({
                 role="menuitem"
                 disabled={bookmarkSaving}
                 onClick={() => handleToggleBookmark(true)}
-                className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-wibe-surface active:bg-wibe-surface disabled:opacity-60"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted disabled:opacity-60"
               >
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center ${
-                    isBookmarked ? 'text-primary' : 'text-wibe-secondary'
+                  className={`flex size-11 shrink-0 items-center justify-center ${
+                    isBookmarked ? 'text-brand' : 'text-muted-foreground'
                   }`}
                 >
                   {isBookmarked ? (
@@ -1456,7 +1456,7 @@ export default function ListDetailClient({
                     <Bookmark className="h-4 w-4" aria-hidden />
                   )}
                 </span>
-                <span className="min-w-0 flex-1 text-right wibe-small font-medium text-foreground">
+                <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
                   {isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره لیست'}
                 </span>
               </button>
@@ -1464,16 +1464,16 @@ export default function ListDetailClient({
                 type="button"
                 role="menuitem"
                 onClick={handleOpenSuggestFromMenu}
-                className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center text-wibe-secondary">
+                <span className="flex size-11 shrink-0 items-center justify-center text-muted-foreground">
                   <Lightbulb className="h-4 w-4" aria-hidden />
                 </span>
-                <span className="min-w-0 flex-1 text-right wibe-small font-medium text-foreground">
+                <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
                   پیشنهاد آیتم
                 </span>
               </button>
-              <div className="my-1.5 border-t border-wibe/70" aria-hidden />
+              <div className="my-1.5 border-t border-border" aria-hidden />
             </>
           )}
 
@@ -1481,12 +1481,12 @@ export default function ListDetailClient({
             type="button"
             role="menuitem"
             onClick={handleShare}
-            className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-wibe-secondary">
+            <span className="flex size-11 shrink-0 items-center justify-center text-muted-foreground">
               <Share2 className="h-4 w-4" aria-hidden />
             </span>
-            <span className="min-w-0 flex-1 text-right wibe-small font-medium text-foreground">
+            <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
               اشتراک‌گذاری
             </span>
           </button>
@@ -1498,29 +1498,29 @@ export default function ListDetailClient({
               setToast({ message: 'لینک کپی شد', type: 'success' });
               setMoreOpen(false);
             }}
-            className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center text-wibe-secondary">
+            <span className="flex size-11 shrink-0 items-center justify-center text-muted-foreground">
               <Link2 className="h-4 w-4" aria-hidden />
             </span>
-            <span className="min-w-0 flex-1 text-right wibe-small font-medium text-foreground">
+            <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
               کپی لینک
             </span>
           </button>
 
           {!isOwner ? (
             <>
-              <div className="my-1.5 border-t border-wibe/70" aria-hidden />
+              <div className="my-1.5 border-t border-border" aria-hidden />
               <button
                 type="button"
                 role="menuitem"
                 onClick={handleOpenReportFromMenu}
-                className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-red-50 active:bg-red-50"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-destructive/10"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center text-red-600">
+                <span className="flex size-11 shrink-0 items-center justify-center text-destructive">
                   <Flag className="h-4 w-4" aria-hidden />
                 </span>
-                <span className="min-w-0 flex-1 text-right wibe-small font-medium text-red-600">
+                <span className="min-w-0 flex-1 text-start text-sm font-medium text-destructive">
                   گزارش لیست
                 </span>
               </button>

@@ -66,10 +66,10 @@ function ExploreTrendingCard({
   return (
     <ExploreTrendingPrefetchLink
       href={href}
-      className="group block transition-transform active:scale-[0.99] lg:hover:scale-[1.01]"
+      className="group block transition-transform active:scale-95"
     >
       <Card className="overflow-hidden bg-popover p-0 shadow-sm lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10]">
+        <div className="relative aspect-[4/3] bg-muted lg:aspect-[16/10]">
           {cover ? (
             <Image
               src={cover.src}
@@ -81,18 +81,18 @@ function ExploreTrendingCard({
               unoptimized={cover.unoptimized}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl">
+            <div className="flex h-full w-full items-center justify-center bg-muted text-2xl">
               {list.category?.icon ?? '📋'}
             </div>
           )}
           {showBadge ? (
-            <span className="absolute end-2 top-2 z-10 rounded-md bg-black/50 px-1.5 py-0.5 wibe-caption font-medium text-white/95 backdrop-blur-sm">
+            <span className="absolute end-2 top-2 z-10 rounded-full bg-brand px-2 py-0.5 text-xs font-medium text-brand-foreground">
               داغ
             </span>
           ) : null}
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent lg:from-black/85" />
           <div className="absolute inset-x-0 bottom-0 p-3 text-start lg:p-3">
-            <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:text-base lg:font-bold lg:leading-snug">
+            <h3 className="line-clamp-2 wibe-small font-semibold text-background lg:text-base lg:font-bold lg:leading-snug">
               {list.title}
             </h3>
           </div>

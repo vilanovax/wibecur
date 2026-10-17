@@ -14,8 +14,8 @@ export default function CategoryHeroServer({ category, metrics }: CategoryHeroSe
   const showCityLink = isLocationCategorySlug(category.slug);
 
   return (
-    <section className="relative mb-1 mt-3 overflow-hidden rounded-2xl lg:mt-4">
-      <div className="relative aspect-[16/9] w-full min-h-[200px] overflow-hidden bg-neutral-900">
+    <section className="relative mb-1 mt-3 overflow-hidden rounded-xl lg:mt-4">
+      <div className="relative aspect-video w-full min-h-52 overflow-hidden bg-foreground">
         <HeroCoverImage
           src={heroImage}
           alt={category.name}
@@ -27,18 +27,18 @@ export default function CategoryHeroServer({ category, metrics }: CategoryHeroSe
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
 
-        <div className="absolute inset-0 flex flex-col justify-end p-4 pb-5 text-right lg:p-6 lg:pb-6">
-          <h1 className="wibe-h1 text-white lg:text-3xl">
-            <span className="ml-1.5" aria-hidden>
+        <div className="absolute inset-0 flex flex-col justify-end p-4 pb-5 text-start lg:p-6 lg:pb-6">
+          <h1 className="wibe-h1 text-background lg:text-3xl">
+            <span className="me-1.5" aria-hidden>
               {category.icon}
             </span>
             {category.name}
           </h1>
-          <p className="mt-1 line-clamp-2 wibe-small text-white/90 lg:text-base">
+          <p className="mt-1 line-clamp-2 wibe-small text-background/90 lg:text-base">
             {category.description || `بهترین لیست‌های ${category.name}`}
           </p>
 
-          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 wibe-caption text-white/95 lg:text-sm">
+          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 wibe-caption text-background/95 lg:text-sm">
             <span>{metrics.totalLists.toLocaleString('fa-IR')} لیست</span>
             <span aria-hidden>·</span>
             <span>{metrics.totalItems.toLocaleString('fa-IR')} آیتم</span>
@@ -54,7 +54,7 @@ export default function CategoryHeroServer({ category, metrics }: CategoryHeroSe
             <div className="mt-4">
               <Link
                 href="#explore-by-city"
-                className="inline-flex items-center justify-center rounded-xl border border-white/40 px-4 py-3 wibe-small font-medium text-white/95 transition-colors hover:bg-white/10 sm:px-6"
+                className="inline-flex h-12 items-center justify-center rounded-control border border-background/40 px-4 text-sm font-medium text-background/95 transition-colors hover:bg-background/10"
               >
                 انتخاب شهر
               </Link>

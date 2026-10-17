@@ -7,6 +7,8 @@ import ExploreSectionTitle from './ExploreSectionTitle';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import SearchHighlight from '@/components/mobile/search/SearchHighlight';
 import type { CuratedList } from '@/types/curated';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface ExploreSearchResultsProps {
   lists: CuratedList[];
@@ -16,9 +18,11 @@ interface ExploreSearchResultsProps {
 export default function ExploreSearchResults({ lists, query }: ExploreSearchResultsProps) {
   if (lists.length === 0) {
     return (
-      <section className="px-2.5 py-10 text-center lg:px-0" aria-label="نتایج جستجو">
-        <p className="wibe-body text-wibe-secondary">لیستی برای «{query}» پیدا نشد</p>
-        <p className="mt-1 wibe-small text-wibe-secondary">عبارت دیگری امتحان کن یا دسته‌ها را ببین</p>
+      <section className="px-2.5 py-10 lg:px-0" aria-label="نتایج جستجو">
+        <EmptyState
+          title={`لیستی برای «${query}» پیدا نشد`}
+          description="عبارت دیگری امتحان کن یا دسته‌ها را ببین."
+        />
       </section>
     );
   }
@@ -37,9 +41,10 @@ export default function ExploreSearchResults({ lists, query }: ExploreSearchResu
             <Link
               key={list.id}
               href={`/lists/${list.slug}`}
-              className="group flex flex-row-reverse gap-3 rounded-xl border border-wibe bg-wibe-card p-2.5 shadow-sm transition-[colors,transform] active:scale-[0.99] lg:p-3 lg:hover:shadow-md"
+              className="group block"
             >
-              <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-wibe-surface lg:h-20 lg:w-20">
+              <Card className="flex gap-3 bg-popover p-2.5 transition-transform active:scale-[0.99] lg:p-3">
+              <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted lg:size-20">
                 <ImageWithFallback
                   src={list.coverUrl ?? ''}
                   alt={list.title}
@@ -48,7 +53,7 @@ export default function ExploreSearchResults({ lists, query }: ExploreSearchResu
                   fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
                 />
               </div>
-              <div className="min-w-0 flex-1 text-right">
+              <div className="min-w-0 flex-1 text-start">
                 <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:text-base">
                   <SearchHighlight text={list.title} query={query} />
                 </h3>
@@ -64,6 +69,7 @@ export default function ExploreSearchResults({ lists, query }: ExploreSearchResu
                   className="mt-1 lg:text-sm"
                 />
               </div>
+              </Card>
             </Link>
           );
         })}

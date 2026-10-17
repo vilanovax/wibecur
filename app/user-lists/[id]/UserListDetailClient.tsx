@@ -284,10 +284,10 @@ export default function UserListDetailClient({
 
   return (
     <>
-      <div className="bg-wibe-surface">
-        <main className="min-h-[100dvh] space-y-6 bg-wibe-surface">
-          <section className="relative overflow-hidden bg-wibe-surface">
-            <div className="relative h-[168px] sm:h-[190px]">
+      <div className="bg-background">
+        <main className="min-h-dvh space-y-6 bg-background">
+          <section className="relative overflow-hidden bg-muted">
+            <div className="relative h-44 sm:h-48">
               <ImageWithFallback
                 src={headerSrc}
                 alt={list.title}
@@ -303,7 +303,7 @@ export default function UserListDetailClient({
               <button
                 type="button"
                 onClick={() => setShowSettings(true)}
-                className="absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/55"
+                className="absolute end-3 top-3 flex size-11 items-center justify-center rounded-full bg-foreground/40 text-background backdrop-blur-sm transition-colors hover:bg-foreground/55"
                 aria-label="تنظیمات لیست"
               >
                 <Settings className="h-5 w-5" />
@@ -352,7 +352,7 @@ export default function UserListDetailClient({
             )}
 
             {list.description && (
-              <p className="wibe-body leading-relaxed text-wibe-secondary">
+              <p className="wibe-body leading-relaxed text-muted-foreground">
                 {list.description}
               </p>
             )}
@@ -423,9 +423,9 @@ export default function UserListDetailClient({
                 {canAddItems && items.length > 0 && (
                   <Link
                     href={`/user-lists/${list.id}/add-item`}
-                    className="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-brand-foreground"
+                    className="inline-flex h-11 items-center justify-center rounded-control bg-brand px-4"
                   >
-                    افزودن آیتم
+                    <span className="text-sm font-semibold text-brand-foreground">افزودن آیتم</span>
                   </Link>
                 )}
               </div>
@@ -439,9 +439,9 @@ export default function UserListDetailClient({
                   canAddItems ? (
                     <Link
                       href={`/user-lists/${list.id}/add-item`}
-                      className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-base font-semibold text-brand-foreground"
+                      className="inline-flex h-12 items-center justify-center rounded-control bg-brand px-6"
                     >
-                      افزودن اولین آیتم
+                      <span className="text-base font-semibold text-brand-foreground">افزودن اولین آیتم</span>
                     </Link>
                   ) : undefined
                 }
@@ -480,7 +480,7 @@ export default function UserListDetailClient({
                       </span>
 
                       <Link href={`/items/${item.id}`} className="block">
-                        <div className="relative aspect-[4/3] w-full bg-wibe-surface">
+                        <div className="relative aspect-[4/3] w-full bg-muted">
                           {img ? (
                             <ImageWithFallback
                               src={img}
@@ -489,12 +489,12 @@ export default function UserListDetailClient({
                               fallbackClassName="absolute inset-0 h-full w-full"
                             />
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-2xl text-wibe-secondary/70">
+                            <div className="absolute inset-0 flex items-center justify-center text-2xl text-muted-foreground/70">
                               📌
                             </div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-                          <div className="absolute inset-x-0 bottom-0 p-2 text-white">
+                          <div className="absolute inset-x-0 bottom-0 p-2 text-start text-background">
                             <h3 className="line-clamp-2 wibe-small font-semibold leading-snug drop-shadow-sm">
                               {item.title}
                             </h3>
@@ -503,11 +503,11 @@ export default function UserListDetailClient({
 
                         <div className="p-2.5">
                           {item.description ? (
-                            <p className="line-clamp-2 wibe-caption leading-relaxed text-wibe-secondary">
+                            <p className="line-clamp-2 wibe-caption leading-relaxed text-muted-foreground">
                               {item.description}
                             </p>
                           ) : (
-                            <p className="wibe-caption text-wibe-secondary/70">بدون توضیح</p>
+                            <p className="wibe-caption text-muted-foreground/70">بدون توضیح</p>
                           )}
                         </div>
                       </Link>
@@ -545,11 +545,11 @@ export default function UserListDetailClient({
                       )}
                       <Link href={`/items/${item.id}`} className="block">
                         <div className="flex gap-3">
-                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary wibe-small font-bold">
-                            {index + 1}
+                          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-bold text-brand">
+                            {(index + 1).toLocaleString('fa-IR')}
                           </div>
                           {img && (
-                            <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md bg-wibe-surface">
+                            <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted">
                               <ImageWithFallback
                                 src={img}
                                 alt={item.title}
@@ -562,7 +562,7 @@ export default function UserListDetailClient({
                               {item.title}
                             </h3>
                             {item.description && (
-                              <p className="line-clamp-2 wibe-caption text-wibe-secondary">
+                              <p className="line-clamp-2 wibe-caption text-muted-foreground">
                                 {item.description}
                               </p>
                             )}
@@ -581,7 +581,7 @@ export default function UserListDetailClient({
                 className="flex h-12 w-full items-center justify-center"
               >
                 {isLoadingMore && (
-                  <span className="wibe-caption text-wibe-secondary">
+                  <span className="wibe-caption text-muted-foreground">
                     در حال بارگذاری...
                   </span>
                 )}
