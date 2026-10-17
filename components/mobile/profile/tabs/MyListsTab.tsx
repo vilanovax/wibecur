@@ -273,7 +273,7 @@ export default function MyListsTab({
         <button
           type="button"
           onClick={() => toggleVisibilityFilter('public')}
-          className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 wibe-caption font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+          className={`inline-flex h-11 items-center gap-1.5 rounded-xl px-3 wibe-caption font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
             visibilityFilter === 'public'
               ? 'bg-primary text-white'
               : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/25'
@@ -285,7 +285,7 @@ export default function MyListsTab({
         <button
           type="button"
           onClick={() => toggleVisibilityFilter('private')}
-          className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 wibe-caption font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+          className={`inline-flex h-11 items-center gap-1.5 rounded-xl px-3 wibe-caption font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
             visibilityFilter === 'private'
               ? 'bg-foreground text-white'
               : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/25'
@@ -298,7 +298,7 @@ export default function MyListsTab({
           <button
             type="button"
             onClick={() => toggleVisibilityFilter('shared')}
-            className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 wibe-caption font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+            className={`inline-flex h-11 items-center gap-1.5 rounded-xl px-3 wibe-caption font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
               visibilityFilter === 'shared'
                 ? 'bg-primary text-white'
                 : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/25'
@@ -357,7 +357,7 @@ export default function MyListsTab({
       <button
         type="button"
         onClick={openCreate}
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors hover:bg-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.98] lg:hidden"
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors hover:bg-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.98] lg:hidden"
         aria-label="ایجاد لیست"
         title="ایجاد لیست"
       >
@@ -366,7 +366,7 @@ export default function MyListsTab({
       <button
         type="button"
         onClick={() => setShowCreate(true)}
-        className="hidden h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-white wibe-small font-semibold transition-colors hover:bg-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.98] lg:inline-flex"
+        className="hidden h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-white wibe-small font-semibold transition-colors hover:bg-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.98] lg:inline-flex"
       >
         <Plus className="h-4 w-4" />
         ایجاد لیست
@@ -383,7 +383,7 @@ export default function MyListsTab({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="جستجو در لیست‌ها..."
-          className="h-10 w-full rounded-xl border border-wibe bg-wibe-card pe-3 ps-9 wibe-small text-foreground placeholder:text-wibe-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+          className="h-11 w-full rounded-xl border border-wibe bg-wibe-card pe-3 ps-9 wibe-small text-foreground placeholder:text-wibe-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
           aria-label="جستجو در لیست‌ها"
         />
       </div>

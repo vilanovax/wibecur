@@ -11,6 +11,7 @@ import SectionIcon from '@/components/shared/SectionIcon';
 import HomeSectionTitle from './HomeSectionTitle';
 import type { HomeListData } from '@/types/home-data';
 import { trackMoodCardClick } from '@/lib/analytics';
+import { Card } from '@/components/ui/card';
 
 type MoodListLinkProps = {
   moodId: string;
@@ -62,8 +63,8 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
   const lists = mood.lists.slice(0, compact ? 2 : 3);
 
   return (
-    <div
-      className={`rounded-xl border border-wibe bg-wibe-card shadow-sm ${
+    <Card
+      className={`bg-popover shadow-sm ${
         compact ? 'p-3' : 'w-[11.5rem] shrink-0 snap-start p-3 lg:w-full lg:p-4'
       }`}
     >
@@ -91,9 +92,9 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
         className="mt-2 inline-flex items-center gap-0.5 wibe-caption font-semibold text-primary hover:underline"
       >
         بیشتر
-        <ChevronLeft className="h-3 w-3 rotate-180" aria-hidden />
+        <ChevronLeft className="h-3 w-3" aria-hidden />
       </Link>
-    </div>
+    </Card>
   );
 }
 

@@ -9,6 +9,8 @@ import {
   fetchActiveCategoryMenu,
   type CategoryMenuChip,
 } from '@/lib/category-menu';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export const revalidate = 3600;
 
@@ -76,26 +78,30 @@ export default async function CategoriesIndexPage() {
         </p>
 
         {categories.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-wibe py-12 text-center">
-            <p className="wibe-body text-wibe-secondary">دسته‌ای یافت نشد</p>
-            <Link href="/lists" className="mt-3 inline-block wibe-small font-semibold text-primary">
-              رفتن به لیست‌ها
-            </Link>
-          </div>
+          <EmptyState
+            title="دسته‌ای یافت نشد"
+            description="هنوز دسته‌ای برای مرور نیست."
+            action={
+              <Link
+                href="/lists"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-base font-semibold text-brand-foreground"
+              >
+                رفتن به لیست‌ها
+              </Link>
+            }
+          />
         ) : (
           <div className="grid grid-cols-2 gap-2.5">
             {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/categories/${cat.slug ?? cat.id}`}
-                className="flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm transition-transform active:scale-[0.98]"
-              >
-                <span className="text-3xl leading-none" aria-hidden>
-                  {cat.icon ?? '📁'}
-                </span>
-                <span className="line-clamp-2 text-center wibe-small font-semibold text-foreground">
-                  {cat.name}
-                </span>
+              <Link key={cat.id} href={`/categories/${cat.slug ?? cat.id}`} className="block">
+                <Card className="flex min-h-24 flex-col items-center justify-center gap-2 bg-popover p-4">
+                  <span className="text-3xl leading-none" aria-hidden>
+                    {cat.icon ?? '📁'}
+                  </span>
+                  <span className="line-clamp-2 text-center text-sm font-semibold text-foreground">
+                    {cat.name}
+                  </span>
+                </Card>
               </Link>
             ))}
           </div>

@@ -2,7 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { List, Users, UserPlus, Bookmark, Check, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { List, Users, UserPlus, Bookmark, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Spinner } from '@/components/ui/spinner';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
@@ -70,6 +75,7 @@ export default function PublicProfilePageClient({
   currentUserId,
   initialData = null,
 }: PublicProfilePageClientProps) {
+  const router = useRouter();
   const [data, setData] = useState<ProfileData | null>(initialData);
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState('');
@@ -143,8 +149,7 @@ export default function PublicProfilePageClient({
   if (loading && !data) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
-        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-        <p className="wibe-small text-wibe-secondary">در حال بارگذاری...</p>
+        <Spinner size="lg" label="در حال بارگذاری…" className="text-foreground" />
       </div>
     );
   }
@@ -152,13 +157,10 @@ export default function PublicProfilePageClient({
   if (error && !data) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4">
-        <p className="wibe-body text-wibe-secondary text-center mb-4">{error}</p>
-        <button
-          onClick={fetchProfile}
-          className="px-5 py-2.5 rounded-md bg-primary text-white wibe-small font-medium hover:bg-primary-dark transition-colors"
-        >
+        <p className="mb-4 text-center text-base text-muted-foreground">{error}</p>
+        <Button type="button" variant="brand" size="lg" onClick={fetchProfile}>
           تلاش مجدد
-        </button>
+        </Button>
       </div>
     );
   }
@@ -243,18 +245,18 @@ export default function PublicProfilePageClient({
                 />
               )}
               {data.user.globalRank != null && data.user.globalRank <= 50 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-warning text-white wibe-caption font-semibold">
-                  Top {data.user.globalRank <= 10 ? 10 : 50}
+                <span className="inline-flex items-center gap-1 rounded-full bg-warning px-2.5 py-1 text-sm font-semibold text-foreground">
+                  {data.user.globalRank <= 10 ? '۱۰' : '۵۰'} برتر
                 </span>
               )}
               {data.user.monthlyRank != null && data.user.monthlyRank <= 10 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-wibe-card/20 text-white wibe-caption font-semibold border border-white/30">
+                <span className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/20 px-2.5 py-1 text-sm font-semibold text-white">
                   برتر ماه
                 </span>
               )}
               {data.user.spotlightActive && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-warning text-white wibe-caption font-semibold">
-                  Spotlight
+                <span className="inline-flex items-center gap-1 rounded-full bg-warning px-2.5 py-1 text-sm font-semibold text-foreground">
+                  ویترین
                   {data.user.spotlightEndDate &&
                     ` · ${new Date(data.user.spotlightEndDate).toLocaleDateString('fa-IR', { month: 'long', year: 'numeric' })}`}
                 </span>
@@ -263,37 +265,32 @@ export default function PublicProfilePageClient({
 
             <div className="mt-4 flex gap-3 lg:justify-start">
               {isOwnProfile ? (
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 px-6 py-2.5 bg-wibe-card rounded-md shadow-sm text-primary wibe-small font-semibold"
-                >
+                <Button variant="secondary" size="lg" onClick={() => router.push('/profile')}>
                   ویرایش پروفایل
-                </Link>
+                </Button>
               ) : currentUserId ? (
-                <button
+                <Button
                   type="button"
+                  variant={isFollowing ? 'outline' : 'secondary'}
+                  size="lg"
                   onClick={handleFollowToggle}
                   disabled={followLoading}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-md wibe-small font-semibold transition-all active:scale-[0.98] disabled:opacity-50 ${
-                    isFollowing
-                      ? 'bg-white/20 text-white border border-white/50'
-                      : 'bg-wibe-card text-primary shadow-sm'
-                  }`}
+                  className={isFollowing ? 'border-white/50 bg-white/20 text-white hover:bg-white/30' : undefined}
                 >
                   {followLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Spinner size="sm" className="text-current" />
                   ) : isFollowing ? (
                     <>
-                      <Check className="w-4 h-4" />
+                      <Check className="size-4" />
                       دنبال می‌کنی
                     </>
                   ) : (
                     <>
-                      <UserPlus className="w-4 h-4" />
+                      <UserPlus className="size-4" />
                       دنبال کردن
                     </>
                   )}
-                </button>
+                </Button>
               ) : null}
             </div>
             </div>
@@ -301,7 +298,7 @@ export default function PublicProfilePageClient({
         </div>
 
         <div className="px-4 pt-4 lg:px-0">
-          <div className="grid grid-cols-4 gap-2 rounded-lg border border-wibe bg-wibe-card p-4 shadow-sm lg:grid-cols-4 lg:gap-4">
+          <Card className="grid grid-cols-4 gap-2 bg-popover p-4 lg:gap-4">
             {statItems.map(({ icon: Icon, value, label, highlight }) => (
               <div key={label} className="flex flex-col items-center">
                 <Icon className={`w-5 h-5 mb-1 ${highlight ? 'text-primary' : 'text-wibe-secondary'}`} />
@@ -311,7 +308,7 @@ export default function PublicProfilePageClient({
                 <span className="wibe-caption text-wibe-secondary">{label}</span>
               </div>
             ))}
-          </div>
+          </Card>
         </div>
 
         {data.profilePicks && data.profilePicks.length > 0 && (
@@ -327,7 +324,7 @@ export default function PublicProfilePageClient({
         {data.topTags.length > 0 && (
           <section className="mt-6 px-4 lg:px-0">
             <h2 className="wibe-h3 mb-3">سلیقه</h2>
-            <div className="rounded-lg bg-wibe-card p-4 shadow-sm border border-wibe space-y-2">
+            <Card className="space-y-2 bg-popover p-4">
               {data.topTags.map((tag) => (
                 <div key={tag.slug} className="flex items-center gap-2">
                   <span className="text-lg">{tag.icon}</span>
@@ -338,10 +335,10 @@ export default function PublicProfilePageClient({
                       style={{ width: `${tag.percent}%` }}
                     />
                   </div>
-                  <span className="wibe-caption text-wibe-secondary w-8">{tag.percent}%</span>
+                  <span className="w-8 text-sm text-muted-foreground">{tag.percent.toLocaleString('fa-IR')}٪</span>
                 </div>
               ))}
-            </div>
+            </Card>
           </section>
         )}
 
@@ -352,8 +349,9 @@ export default function PublicProfilePageClient({
               <Link
                 key={list.id}
                 href={`/lists/${list.slug}`}
-                className="block rounded-lg bg-wibe-card overflow-hidden border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+                className="block"
               >
+                <Card className="overflow-hidden bg-popover p-0">
                 <div className="aspect-[4/3] bg-wibe-surface relative overflow-hidden">
                   <ListCoverImage
                     coverImage={list.coverImage}
@@ -366,7 +364,7 @@ export default function PublicProfilePageClient({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
                   {list.isFeatured && (
-                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-pill bg-warning text-white wibe-caption font-semibold">
+                    <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 text-sm font-semibold text-foreground">
                       ویژه
                     </span>
                   )}
@@ -375,13 +373,14 @@ export default function PublicProfilePageClient({
                   </div>
                 </div>
                 <div className="p-2.5">
-                  <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
+                  <h3 className="line-clamp-2 text-sm font-semibold text-foreground">{list.title}</h3>
                 </div>
+                </Card>
               </Link>
             ))}
           </div>
           {data.publicLists.length === 0 && (
-            <p className="text-center wibe-small text-wibe-secondary py-8">هنوز لیست عمومی ندارد</p>
+            <EmptyState title="هنوز لیست عمومی ندارد" description="وقتی لیستی عمومی شود، اینجا دیده می‌شود." />
           )}
         </section>
       </div>

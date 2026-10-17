@@ -12,6 +12,8 @@ import ListsCategorySection from '@/components/mobile/lists/ListsCategorySection
 import InfiniteScrollSentinel from '@/components/mobile/lists/InfiniteScrollSentinel';
 import ListsSimilarRow from '@/components/mobile/lists/ListsSimilarRow';
 import SearchInput from '@/components/mobile/search/SearchInput';
+import { Button } from '@/components/ui/button';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 import { filterListsByQuery, normalizeSearchQuery, pushRecentSearch, SEARCH_MIN_LENGTH } from '@/lib/list-search';
 import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
@@ -853,18 +855,18 @@ export default function ListsPageClient({
               inputRef={searchInputRef}
             />
           </div>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="lg"
             onClick={() => openSearch({ query: searchQuery })}
-            className={`flex h-12 shrink-0 items-center gap-1 rounded-xl border border-wibe bg-wibe-card px-3 text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-12 ${toolbarBtnFocus} ${
-              isSearchActive ? 'hidden' : ''
-            }`}
+            className={`shrink-0 rounded-xl px-3 ${toolbarBtnFocus} ${isSearchActive ? 'hidden' : ''}`}
             aria-label="جستجوی سراسری در وایب"
             title="جستجوی سراسری در وایب"
           >
             <Globe className="h-4 w-4" strokeWidth={2} aria-hidden />
-            <span className="wibe-caption font-medium text-foreground/80">سراسری</span>
-          </button>
+            <span className="text-sm font-medium">سراسری</span>
+          </Button>
         </div>
       </div>
 
@@ -872,39 +874,25 @@ export default function ListsPageClient({
         <>
           <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
             <div className="flex items-center gap-1.5 px-4 py-2 lg:gap-2 lg:px-0">
-              <div
-                className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide"
-                role="group"
-                aria-label="مرتب‌سازی کاتالوگ"
-              >
-                {BROWSE_MODES.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setBrowseMode(value)}
-                    className={`h-11 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:px-3.5 ${toolbarBtnFocus} ${
-                      browseMode === value
-                        ? 'bg-wibe-card font-semibold text-primary shadow-sm'
-                        : 'text-wibe-secondary hover:text-foreground'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+              <div className="min-w-0 flex-1 overflow-x-auto scrollbar-hide">
+                <SegmentedControl
+                  aria-label="مرتب‌سازی کاتالوگ"
+                  value={browseMode}
+                  onChange={(value) => setBrowseMode(value as BrowseMode)}
+                  options={BROWSE_MODES}
+                />
               </div>
-              <button
+              <Button
                 type="button"
+                variant={hasAdvancedFilters ? 'default' : 'outline'}
+                size="lg"
                 onClick={() => setFilterSheetOpen(true)}
-                className={`flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-3 transition-colors active:scale-[0.98] lg:h-9 lg:px-2.5 ${toolbarBtnFocus} ${
-                  hasAdvancedFilters
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
-                }`}
+                className={`h-11 shrink-0 rounded-xl px-3 ${toolbarBtnFocus}`}
                 aria-label="فیلتر نمایش"
               >
                 <Filter className="h-4 w-4" />
-                <span className="wibe-caption font-medium">فیلتر</span>
-              </button>
+                <span className="text-sm font-medium">فیلتر</span>
+              </Button>
             </div>
           </div>
 

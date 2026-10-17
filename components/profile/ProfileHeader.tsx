@@ -149,7 +149,7 @@ export default function ProfileHeader({
               <button
                 type="button"
                 onClick={() => setMenuOpen((o) => !o)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 active:scale-[0.97]"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 active:scale-[0.97]"
                 aria-label="منوی پروفایل"
                 aria-expanded={menuOpen}
                 aria-haspopup="menu"
@@ -165,7 +165,7 @@ export default function ProfileHeader({
                     type="button"
                     role="menuitem"
                     onClick={openEdit}
-                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-right wibe-small font-medium text-foreground transition-colors hover:bg-wibe-surface focus:outline-none focus-visible:bg-wibe-surface"
+                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-start wibe-small font-medium text-foreground transition-colors hover:bg-wibe-surface focus:outline-none focus-visible:bg-wibe-surface"
                   >
                     <Edit2 className="h-4 w-4 text-wibe-secondary" aria-hidden />
                     ویرایش پروفایل
@@ -175,7 +175,7 @@ export default function ProfileHeader({
                     role="menuitem"
                     onClick={requestLogout}
                     disabled={isLoggingOut}
-                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-right wibe-small font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus-visible:bg-red-50 disabled:opacity-50"
+                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-start wibe-small font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus-visible:bg-red-50 disabled:opacity-50"
                   >
                     {isLoggingOut ? (
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -240,7 +240,7 @@ export default function ProfileHeader({
                 <button
                   type="button"
                   onClick={openEdit}
-                  className="absolute -bottom-0.5 left-0 flex h-7 w-7 items-center justify-center rounded-full border border-wibe bg-wibe-card shadow-sm transition-colors hover:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="absolute -bottom-0.5 end-0 flex h-11 w-11 items-center justify-center rounded-full border border-wibe bg-wibe-card shadow-sm transition-colors hover:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   aria-label="عکس پروفایل اضافه کن"
                   title="عکس پروفایل اضافه کن"
                 >
@@ -249,7 +249,7 @@ export default function ProfileHeader({
               )}
             </div>
 
-            <div className="min-w-0 flex-1 pb-0.5 text-right">
+            <div className="min-w-0 flex-1 pb-0.5 text-start">
               <div className="mb-1.5 flex flex-wrap items-center justify-start gap-1.5">
                 <span className="inline-flex items-center rounded-lg bg-wibe-surface px-2 py-0.5 wibe-caption font-semibold text-foreground ring-1 ring-wibe">
                   سطح {levelShort}
@@ -263,7 +263,7 @@ export default function ProfileHeader({
               </div>
 
               <div className="flex w-full flex-wrap items-center justify-start gap-x-2 gap-y-2">
-                <h1 className="min-w-0 truncate wibe-h2 font-bold leading-snug tracking-tight text-foreground lg:text-2xl">
+                <h1 className="min-w-0 truncate wibe-h2 font-bold leading-snug text-foreground lg:text-2xl">
                   {user.name || 'کاربر بدون نام'}
                 </h1>
                 {isOwner && (

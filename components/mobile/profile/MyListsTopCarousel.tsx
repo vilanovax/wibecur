@@ -14,17 +14,18 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
   if (lists.length === 0) return null;
 
   return (
-    <section className="mb-0 -mx-4 lg:mx-0" aria-labelledby="top-public-lists-title">
-      <div className="mb-2 flex items-baseline justify-between gap-2 px-4 lg:px-0">
+    <section aria-labelledby="top-public-lists-title">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
         <h2 id="top-public-lists-title" className="wibe-small font-bold text-foreground">
           برترین عمومی
         </h2>
         <span className="shrink-0 wibe-caption text-wibe-secondary">بر اساس ذخیره</span>
       </div>
-      <div
-        className="flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-ps-4 scroll-pe-5 px-4 pb-0.5 scrollbar-hide lg:scroll-ps-0 lg:px-0"
-        dir="rtl"
-      >
+      <div className="overflow-hidden lg:overflow-visible">
+        <div
+          className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto scrollbar-hide lg:grid lg:grid-cols-3 lg:overflow-visible"
+          dir="rtl"
+        >
         {lists.map((list) => {
           const saveCount = list.saveCount ?? list._count?.bookmarks ?? 0;
           const itemCount = list.itemCount ?? list._count?.items ?? 0;
@@ -32,7 +33,7 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
             <Link
               key={list.id}
               href={`/user-lists/${list.id}`}
-              className="block w-[132px] shrink-0 snap-start overflow-hidden rounded-xl border border-wibe bg-wibe-card transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
+              className="block w-[calc((100%-0.625rem)/2)] shrink-0 snap-start overflow-hidden rounded-xl border border-wibe bg-wibe-card transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:w-auto"
             >
               <div className="relative h-[5.75rem] overflow-hidden bg-wibe-surface">
                 <ListCoverImage
@@ -63,6 +64,7 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
             </Link>
           );
         })}
+        </div>
       </div>
     </section>
   );

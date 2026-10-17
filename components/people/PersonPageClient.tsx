@@ -10,6 +10,9 @@ import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
 import { PERSON_ROLE_META, type PersonPageData } from '@/lib/people';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 type PersonPageClientProps = PersonPageData;
 
@@ -98,7 +101,7 @@ export default function PersonPageClient({
       <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
       <PageBreadcrumb className="mb-4 lg:mb-5" items={breadcrumbItems} />
 
-      <section className="mb-8 overflow-hidden rounded-2xl border border-wibe bg-wibe-card shadow-sm lg:rounded-3xl lg:shadow-md">
+      <Card className="mb-8 overflow-hidden bg-popover p-0">
         {/* موبایل */}
         <div className="p-5 lg:hidden">
           <div className="flex items-start gap-4">
@@ -196,12 +199,10 @@ export default function PersonPageClient({
             </div>
           )}
         </div>
-      </section>
+      </Card>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-wibe px-6 py-14 text-center lg:py-20">
-          <p className="wibe-body text-wibe-secondary">آیتمی برای این نام پیدا نشد</p>
-        </div>
+        <EmptyState title="آیتمی برای این نام پیدا نشد" description="هنوز اثری با این نام در لیست‌های وایب نیست." />
       ) : (
         <section aria-label={`آیتم‌های ${displayName}`}>
           <div className="mb-4 flex items-end justify-between gap-3">
@@ -223,9 +224,10 @@ export default function PersonPageClient({
                 <Link
                   key={item.id}
                   href={`/items/${item.id}`}
-                  className="group overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md lg:rounded-2xl"
+                  className="block"
                 >
-                  <div className="relative aspect-[2/3] w-full bg-gray-100">
+                  <Card className="group overflow-hidden bg-popover p-0">
+                  <div className="relative aspect-[2/3] w-full bg-muted">
                     <LazyItemCoverImage
                       itemId={item.id}
                       title={item.title}
@@ -249,6 +251,7 @@ export default function PersonPageClient({
                       ) : null}
                     </div>
                   </div>
+                  </Card>
                 </Link>
               );
             })}
@@ -303,13 +306,9 @@ function BioBlock({
         {bio}
       </p>
       {canTruncateBio && (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="mt-3 text-sm font-medium text-primary transition-colors hover:text-primary/80"
-        >
+        <Button type="button" variant="ghost" className="mt-3 h-11 px-0 text-primary" onClick={onToggle}>
           {bioExpanded ? 'نمایش کمتر' : 'ادامهٔ بیوگرافی'}
-        </button>
+        </Button>
       )}
     </>
   );

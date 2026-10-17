@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { HomeListData } from '@/types/home-data';
+import { Card } from '@/components/ui/card';
 
 type HomeListCardServerProps = {
   list: Pick<HomeListData, 'id' | 'title' | 'slug' | 'coverImage' | 'categories'>;
@@ -21,11 +22,11 @@ export default function HomeListCardServer({
       href={`/lists/${list.slug}`}
       className="group block w-[10rem] shrink-0 snap-start lg:w-full lg:shrink"
     >
-      <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card transition-[colors,transform] active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md">
+      <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md">
         <div className="relative aspect-[5/4] w-full bg-wibe-surface sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[11.5rem]">
           {badge ? (
             <span
-              className={`absolute right-2 top-2 z-10 rounded-pill px-2 py-0.5 wibe-caption font-semibold shadow-sm ${badgeClassName}`}
+              className={`absolute end-2 top-2 z-10 rounded-full px-2 py-0.5 text-sm font-semibold shadow-sm ${badgeClassName}`}
             >
               {badge}
             </span>
@@ -54,7 +55,7 @@ export default function HomeListCardServer({
             </h3>
           </div>
         </div>
-      </div>
+      </Card>
     </Link>
   );
 }

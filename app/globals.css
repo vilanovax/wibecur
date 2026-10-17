@@ -408,6 +408,16 @@ body {
   animation: fadeIn 0.35s ease-out;
 }
 
+@keyframes pulse-soft {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
 /* جلوگیری از تأخیر double-tap zoom روی کنترل‌های تعاملی */
 a,
 button,
@@ -558,6 +568,12 @@ summary {
 
 [data-theme="paper"] [role="dialog"] .bg-white {
   background-color: var(--popover);
+}
+
+/* بقیهٔ کارت‌های سایت کاربر همان سطح کارت وایب‌فارسی را می‌گیرند. */
+[data-theme="paper"] :is(.rounded-lg, .rounded-xl, .rounded-2xl).bg-wibe-card {
+  background-color: var(--popover);
+  border-radius: var(--shape-surface);
 }
 
 /* --- vibefarsi:tailwind-map --- */

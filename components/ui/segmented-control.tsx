@@ -95,7 +95,7 @@ export function SegmentedControl({ options, value, defaultValue, onChange, size 
               "relative cursor-pointer rounded-control font-medium whitespace-nowrap transition-colors duration-(--motion) ease-motion",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
               "disabled:cursor-not-allowed disabled:opacity-40",
-              size === "sm" ? "h-7 px-2.5 text-xs" : "h-8 px-3.5 text-sm",
+              size === "sm" ? "h-11 px-3 text-sm" : "h-11 px-3.5 text-sm",
               on ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >

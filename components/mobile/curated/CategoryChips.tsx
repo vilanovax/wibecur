@@ -1,6 +1,8 @@
 'use client';
 
 import type { CuratedCategory } from '@/types/curated';
+import { fa } from '@/lib/utils';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface CategoryChipsProps {
   categories: CuratedCategory[];
@@ -9,45 +11,32 @@ interface CategoryChipsProps {
   count?: number;
 }
 
-const CHIP_BASE =
-  'flex items-center gap-1.5 h-9 px-3.5 rounded-lg wibe-small font-medium whitespace-nowrap flex-shrink-0 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98]';
-
-function chipClass(isSelected: boolean) {
-  return isSelected
-    ? `${CHIP_BASE} bg-primary text-white shadow-sm`
-    : `${CHIP_BASE} bg-wibe-card border border-wibe text-foreground shadow-sm hover:border-primary/30`;
-}
-
 export default function CategoryChips({
   categories,
   selectedId,
   onSelect,
   count,
 }: CategoryChipsProps) {
+  if (categories.length === 0) return null;
+  const value = categories.some((cat) => cat.id === selectedId) ? selectedId : categories[0].id;
+
   return (
-    <div className="px-4 py-3 bg-wibe-surface">
+    <div className="bg-muted/40 px-4 py-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide min-w-0 -mx-1 px-1">
-          {categories.map((cat) => {
-            const isSelected = selectedId === cat.id;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => onSelect(cat.id)}
-                className={chipClass(isSelected)}
-                aria-pressed={isSelected}
-              >
-                <span aria-hidden="true">{cat.icon}</span>
-                {cat.title}
-              </button>
-            );
-          })}
+        <div className="min-w-0 flex-1 overflow-x-auto">
+          <Tabs value={value} defaultValue={value} onValueChange={onSelect} variant="segmented">
+            <TabsList aria-label="دسته‌های اکسپلور" className="w-max">
+              {categories.map((cat) => (
+                <TabsTrigger key={cat.id} value={cat.id} className="h-11 gap-1.5 px-3">
+                  <span aria-hidden>{cat.icon}</span>
+                  {cat.title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
         {count !== undefined && (
-          <span className="wibe-caption text-wibe-secondary flex-shrink-0">
-            {count.toLocaleString('fa-IR')} لیست
-          </span>
+          <span className="shrink-0 text-sm text-muted-foreground">{fa(count)} لیست</span>
         )}
       </div>
     </div>

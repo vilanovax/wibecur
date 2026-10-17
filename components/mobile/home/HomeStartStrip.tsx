@@ -9,6 +9,7 @@ import { openHomeCreateSheet } from '@/lib/home-create-sheet';
 import { forYouQueryKey } from '@/hooks/useForYouRecommendations';
 import { useSession } from 'next-auth/react';
 import { ACTIVATION } from '@/lib/activation-copy';
+import { Button } from '@/components/ui/button';
 
 type CategoryChip = { id: string; slug: string; name: string; icon: string | null };
 
@@ -121,21 +122,13 @@ export default function HomeStartStrip({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={handleContinue}
-            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark sm:flex-none sm:min-w-[10.5rem]"
-          >
+          <Button type="button" variant="brand" size="lg" className="flex-1 sm:flex-none" onClick={handleContinue}>
             {selected.length > 0 ? copy.continueWith : copy.continueWithout}
-          </button>
-          <button
-            type="button"
-            onClick={openHomeCreateSheet}
-            className="inline-flex min-h-11 flex-1 items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card px-4 py-2.5 wibe-small font-medium text-foreground transition-colors hover:border-primary/30 sm:flex-none"
-          >
-            <Plus className="h-4 w-4" aria-hidden />
+          </Button>
+          <Button type="button" variant="outline" size="lg" className="flex-1 sm:flex-none" onClick={openHomeCreateSheet}>
+            <Plus className="size-4" aria-hidden />
             {copy.createList}
-          </button>
+          </Button>
         </div>
       </div>
     </section>

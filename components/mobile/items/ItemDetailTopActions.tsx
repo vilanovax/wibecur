@@ -9,6 +9,7 @@ import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
 import ItemProfilePickButton from '@/components/mobile/items/ItemProfilePickButton';
 import ItemShareButton from '@/components/mobile/items/ItemShareButton';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
 
 const ItemReportModal = dynamic(() => import('./ItemReportModal'), { ssr: false });
 
@@ -87,17 +88,19 @@ export default function ItemDetailTopActions({
           />
 
           {canReport ? (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="lg"
+              className="w-full justify-start"
               onClick={() => {
                 setMoreOpen(false);
                 setReportOpen(true);
               }}
-              className="flex w-full items-center gap-2 rounded-xl border border-wibe bg-wibe-card px-3 py-2.5 wibe-small font-medium text-wibe-secondary transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
             >
-              <Flag className="h-4 w-4 shrink-0" aria-hidden />
+              <Flag className="size-4 shrink-0" aria-hidden />
               گزارش آیتم
-            </button>
+            </Button>
           ) : null}
         </div>
       </BottomSheet>

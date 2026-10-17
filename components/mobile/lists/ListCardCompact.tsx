@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Sparkles, Bookmark } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
+import { Card } from '@/components/ui/card';
 import UserAvatar from '@/components/shared/UserAvatar';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { getDisplayListTitle } from '@/lib/list-display-title';
@@ -215,7 +216,7 @@ function ListCardCompact({
 
   if (variant === 'mini') {
     return (
-      <div className="group relative min-h-[68px] rounded-lg border border-wibe bg-wibe-card p-2 shadow-sm transition-shadow lg:hover:border-primary/25 lg:hover:shadow-md">
+      <Card className="group relative min-h-[68px] bg-popover p-2 shadow-sm transition-shadow lg:hover:border-primary/25 lg:hover:shadow-md">
         <Link
           href={href}
           onClick={handleSearchResultClick}
@@ -254,13 +255,13 @@ function ListCardCompact({
             className="pointer-events-auto absolute bottom-2 left-2 z-[2]"
           />
         ) : null}
-      </div>
+      </Card>
     );
   }
 
   if (variant === 'compact') {
     return (
-      <div className="group relative min-h-[76px] rounded-lg border border-wibe bg-wibe-card p-2.5 shadow-sm transition-colors active:scale-[0.99] lg:hover:border-primary/30 lg:hover:shadow-md">
+      <Card className="group relative min-h-[76px] bg-popover p-2.5 shadow-sm transition-colors active:scale-[0.99] lg:hover:border-primary/30 lg:hover:shadow-md">
         <Link
           href={href}
           onClick={handleSearchResultClick}
@@ -312,13 +313,13 @@ function ListCardCompact({
             className="pointer-events-auto absolute bottom-2.5 left-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
           />
         ) : null}
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div
-      className={`group relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-colors active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/25 lg:hover:shadow-lg ${
+    <Card
+      className={`group relative overflow-hidden bg-popover p-0 shadow-sm transition-colors active:scale-[0.99] lg:hover:border-primary/25 lg:hover:shadow-lg ${
         fillHeight ? 'h-full' : ''
       }`}
     >
@@ -386,7 +387,7 @@ function ListCardCompact({
           className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
         />
       ) : null}
-    </div>
+    </Card>
   );
 }
 

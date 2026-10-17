@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Card } from '@/components/ui/card';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import { LIST_BADGE_LABELS, listBadgeSolidStyles } from '@/lib/list-badge-styles';
@@ -46,8 +47,8 @@ export default function ListCard({
   if (variant === 'compact') {
     return (
       <Link href={listHref} className="block active:scale-[0.99] transition-transform">
-        <div className="bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-sm flex flex-row-reverse">
-          <div className="relative w-24 h-24 flex-shrink-0 bg-wibe-surface overflow-hidden">
+        <Card className="flex overflow-hidden bg-popover p-0 shadow-sm">
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden bg-muted">
             <ImageWithFallback
               src={coverImage}
               alt={title}
@@ -68,14 +69,14 @@ export default function ListCard({
             )}
             <ListCardStats saves={saves} itemCount={itemCount} variant="compact" className="mt-1" />
           </div>
-        </div>
+        </Card>
       </Link>
     );
   }
 
   return (
     <Link href={listHref} className="block active:scale-[0.99] transition-transform">
-      <article className="bg-wibe-card rounded-lg overflow-hidden border border-wibe shadow-card">
+      <Card className="overflow-hidden bg-popover p-0 shadow-sm">
         <div className="relative h-40 bg-wibe-surface overflow-hidden">
           <ImageWithFallback
             src={coverImage}
@@ -92,7 +93,7 @@ export default function ListCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           {badge && (
             <span
-              className={`absolute top-2 right-2 wibe-caption font-semibold px-2 py-0.5 rounded-pill ${badgeStyles[badge]}`}
+              className={`absolute end-2 top-2 rounded-full px-2 py-0.5 text-sm font-semibold ${badgeStyles[badge]}`}
             >
               {badgeLabels[badge]}
             </span>
@@ -107,7 +108,7 @@ export default function ListCard({
             <p className="wibe-small text-wibe-secondary line-clamp-2">{description}</p>
           </div>
         )}
-      </article>
+      </Card>
     </Link>
   );
 }

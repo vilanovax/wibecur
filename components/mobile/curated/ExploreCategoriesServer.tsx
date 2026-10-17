@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { getCategoryCoverUrl } from '@/lib/category-cover-images';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { CuratedCategory } from '@/types/curated';
+import { Card } from '@/components/ui/card';
 import ExploreSectionTitle from './ExploreSectionTitle';
 
 type ExploreCategoriesServerProps = {
@@ -35,8 +36,9 @@ export default function ExploreCategoriesServer({ categories }: ExploreCategorie
             <Link
               key={cat.id}
               href={`/categories/${slug}`}
-              className="group relative aspect-[4/5] overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.98] lg:aspect-[5/4] lg:hover:border-primary/25"
+              className="group block"
             >
+              <Card className="relative aspect-[4/5] overflow-hidden bg-popover p-0 shadow-sm transition-transform active:scale-[0.98] lg:aspect-[5/4] lg:hover:border-primary/25">
               {cover ? (
                 <Image
                   src={cover.src}
@@ -63,6 +65,7 @@ export default function ExploreCategoriesServer({ categories }: ExploreCategorie
                   {cat.title}
                 </span>
               </div>
+              </Card>
             </Link>
           );
         })}

@@ -4,6 +4,7 @@ import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import type { CuratedList } from '@/types/curated';
+import { Card } from '@/components/ui/card';
 
 type ExploreTrendingServerProps = {
   lists: CuratedList[];
@@ -67,7 +68,7 @@ function ExploreTrendingCard({
       href={href}
       className="group block transition-transform active:scale-[0.99] lg:hover:scale-[1.01]"
     >
-      <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:rounded-xl lg:group-hover:shadow-md">
+      <Card className="overflow-hidden bg-popover p-0 shadow-sm lg:group-hover:shadow-md">
         <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10]">
           {cover ? (
             <Image
@@ -96,7 +97,7 @@ function ExploreTrendingCard({
             </h3>
           </div>
         </div>
-      </div>
+      </Card>
     </ExploreTrendingPrefetchLink>
   );
 }

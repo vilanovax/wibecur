@@ -6,6 +6,7 @@ import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import HomeListSaveControl from '@/components/mobile/home/HomeListSaveControl';
 import type { HomeListCreator } from '@/types/home-data';
 import { trackHomeSectionClick, type HomeSectionId } from '@/lib/analytics';
+import { Card } from '@/components/ui/card';
 
 /** نشانگر ذخیره‌شده — وضعیت اولیهٔ کنترل ذخیره */
 export const SAVED_LIST_BADGE = '__saved_list_bookmark__';
@@ -56,7 +57,7 @@ export default function HomeGridListCard({
         }}
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2"
       >
-        <div className="overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-card transition-[colors,transform] active:scale-[0.99] lg:rounded-xl lg:group-hover:border-primary/20 lg:group-hover:shadow-md">
+        <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-[0.99] lg:group-hover:border-primary/20 lg:group-hover:shadow-md">
           <div className="relative aspect-[5/4] w-full bg-wibe-surface sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[11.5rem]">
             {!showSave && isSavedBadge ? (
               <span
@@ -94,7 +95,7 @@ export default function HomeGridListCard({
               </h3>
             </div>
           </div>
-        </div>
+        </Card>
       </Link>
       {showSave ? (
         <div className="absolute start-2 top-2 z-10">

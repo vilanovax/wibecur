@@ -6,6 +6,7 @@ import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions
 import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
 import { isMovieLikeCategory, isPortraitCoverCategory } from '@/lib/resolve-item-image';
 import { preloadItemPreviewSheet } from '@/components/mobile/lists/list-detail-lazy-sections';
+import { Card } from '@/components/ui/card';
 
 /** srcset next/image برای گرید ۲–۴ ستونه */
 export const LIST_GRID_IMAGE_SIZES =
@@ -37,7 +38,7 @@ function ListGridItemCard({
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-wibe bg-wibe-card text-right shadow-sm transition-colors lg:hover:border-primary/20 lg:hover:shadow-md">
+    <Card className="flex flex-col overflow-hidden bg-popover p-0 text-start shadow-sm transition-colors lg:hover:border-primary/20 lg:hover:shadow-md">
       <button
         type="button"
         onPointerDown={() => preloadItemPreviewSheet()}
@@ -86,7 +87,7 @@ function ListGridItemCard({
           <ListItemQuickActions actions={quickActions} size="sm" />
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 

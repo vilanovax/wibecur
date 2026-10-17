@@ -6,6 +6,7 @@ import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import { isSameCategorySlug } from '@/lib/category-slug-aliases';
 import { trackCategoryChipClick } from '@/lib/analytics';
 import type { CategoryMenuChip } from '@/lib/category-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 
 async function fetchActiveCategories(): Promise<CategoryMenuChip[]> {
   const res = await fetch('/api/categories');
@@ -73,10 +74,7 @@ export default function QuickCategoryChips({
         {isLoading ? (
           <>
             {[1, 2, 3, 4].map((i) => (
-              <span
-                key={i}
-                className="h-11 w-20 flex-shrink-0 animate-pulse rounded-lg bg-wibe-muted"
-              />
+              <Skeleton key={i} className="h-11 w-20 shrink-0 rounded-xl" />
             ))}
           </>
         ) : (
@@ -88,10 +86,10 @@ export default function QuickCategoryChips({
                 href={`/categories/${cat.slug}`}
                 onClick={() => trackCategoryChipClick(cat.slug, cat.name)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex h-11 min-w-11 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-2 wibe-small font-medium shadow-sm transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:h-11 lg:px-3 ${
+                className={`flex h-11 min-w-11 shrink-0 snap-start items-center whitespace-nowrap rounded-xl border px-3 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 ${
                   isActive
-                    ? 'border-primary bg-primary text-white shadow-sm hover:bg-primary-dark'
-                    : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30 lg:bg-wibe-surface'
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-popover text-foreground hover:bg-accent'
                 }`}
               >
                 {cat.icon ? `${cat.icon} ` : ''}
