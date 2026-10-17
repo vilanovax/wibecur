@@ -15,6 +15,8 @@ import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import CommentReportModal from '@/components/mobile/comments/CommentReportModal';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import CommentAvatar from '@/components/shared/CommentAvatar';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { track } from '@/lib/analytics';
 import {
   COMMENT_CLAMP_CHAR_THRESHOLD,
@@ -265,9 +267,9 @@ function VibeCommentItem({
   const profileUrl = comment.users.username ? `/u/${encodeURIComponent(comment.users.username)}` : null;
 
   return (
-    <div
+    <Card
       id={`comment-${comment.id}`}
-      className="flex gap-3 rounded-xl border border-wibe bg-wibe-card px-3 py-3.5 shadow-sm"
+      className="flex gap-3 bg-popover px-3 py-3.5"
     >
       <div className="flex-shrink-0">
         {profileUrl ? (
@@ -443,7 +445,7 @@ function VibeCommentItem({
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -494,54 +496,54 @@ function VibeCommentInput({
 
   if (!isExpanded) {
     return (
-      <button
+      <Button
         type="button"
         onClick={onExpand}
-        className="flex h-11 w-full items-center rounded-xl border border-wibe bg-wibe-card px-3.5 text-right wibe-small text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-wibe-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+        variant="outline"
+        size="lg"
+        className="w-full justify-start px-4 font-normal text-muted-foreground"
       >
         {placeholders.collapsed}
-      </button>
+      </Button>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-2 rounded-xl border border-wibe bg-wibe-card p-2.5 shadow-sm">
+      <Card className="flex items-end gap-2 bg-popover p-2.5">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxLength))}
           placeholder={isSuggestionMode ? placeholders.suggestion : placeholders.comment}
-          className="min-h-[40px] flex-1 resize-none border-0 bg-transparent px-0 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
+          className="min-h-11 flex-1 resize-none border-0 bg-transparent px-0 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           rows={2}
           maxLength={maxLength}
           aria-describedby="comment-char-count"
         />
-        <button
+        <Button
           type="submit"
           disabled={!canSubmit}
           aria-label="ارسال نظر"
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          variant="brand"
+          size="icon"
+          className="size-11 shrink-0 rounded-full"
         >
-          <Send className="h-4 w-4" aria-hidden />
-        </button>
-      </div>
+          <Send aria-hidden />
+        </Button>
+      </Card>
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setContent('')}
-            className="px-3 py-1.5 text-xs text-wibe-secondary hover:text-foreground"
-          >
+          <Button type="button" variant="ghost" size="sm" className="h-11" onClick={() => setContent('')}>
             انصراف
-          </button>
+          </Button>
           {isTooShort && (
-            <span className="text-xs text-amber-600">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
+            <span className="text-xs text-warning">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
           )}
         </div>
         <span
           id="comment-char-count"
           className={`text-xs tabular-nums ${
-            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-wibe-secondary'
+            isOverLimit ? 'font-medium text-destructive' : isNearLimit ? 'text-warning' : 'text-muted-foreground'
           }`}
         >
           {content.length.toLocaleString('fa-IR')}/{maxLength.toLocaleString('fa-IR')}

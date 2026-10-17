@@ -14,6 +14,7 @@ import {
   sourceCategorySlugFromItem,
 } from '@/lib/list-entry';
 import type { ItemHeroServerItem } from '@/components/mobile/items/ItemHeroServer';
+import { Card } from '@/components/ui/card';
 
 export type ItemMetadataServerItem = ItemHeroServerItem & {
   description: string | null;
@@ -58,7 +59,7 @@ export default function ItemMetadataServer({ item }: ItemMetadataServerProps) {
     : item.description?.trim() || null;
 
   return (
-    <section className="space-y-3.5 lg:space-y-4 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
+    <Card className="space-y-3.5 rounded-none border-0 bg-transparent p-0 shadow-none lg:space-y-4 lg:border lg:bg-popover lg:p-5 lg:shadow-surface">
       {displayMetadataFacts.length > 0 && (
         <>
           <div className="lg:hidden">
@@ -83,6 +84,6 @@ export default function ItemMetadataServer({ item }: ItemMetadataServerProps) {
         isLightweight={isLightweight}
         entryKind={entryKind}
       />
-    </section>
+    </Card>
   );
 }

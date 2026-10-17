@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2, ChevronDown, Send } from 'lucide-react';
+import { ChevronDown, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Spinner } from '@/components/ui/spinner';
 import CommentItem from './CommentItem';
 import Toast from '@/components/shared/Toast';
 import CommentReportModal from './CommentReportModal';
@@ -97,55 +101,55 @@ function ItemCommentInput({
 
   if (!isExpanded) {
     return (
-      <button
+      <Button
         type="button"
         onClick={onExpand}
-        className="flex h-11 w-full items-center rounded-xl border border-wibe bg-wibe-surface/60 px-4 text-right wibe-small text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-wibe-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+        variant="outline"
+        size="lg"
+        className="w-full justify-start px-4 font-normal text-muted-foreground"
       >
         نظرت درباره این آیتم چیه؟
-      </button>
+      </Button>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-2 p-3 rounded-2xl border border-wibe bg-white shadow-sm">
+      <Card className="flex items-end gap-2 bg-popover p-3">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxCommentLength))}
           placeholder="نظرت درباره این آیتم چیه؟"
-          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
+          className="min-h-11 flex-1 resize-none border-0 bg-transparent px-0 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           rows={2}
           maxLength={maxCommentLength}
           aria-describedby="item-comment-char-count"
           autoFocus={preferDesktopAutofocus}
         />
-        <button
+        <Button
           type="submit"
           disabled={!canSubmit}
           aria-label="ارسال نظر"
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          variant="brand"
+          size="icon"
+          className="size-11 shrink-0 rounded-full"
         >
-          <Send className="w-4 h-4" aria-hidden />
-        </button>
-      </div>
+          <Send aria-hidden />
+        </Button>
+      </Card>
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setContent('')}
-            className="px-3 py-1.5 text-xs text-wibe-secondary hover:text-foreground"
-          >
+          <Button type="button" variant="ghost" size="sm" className="h-11" onClick={() => setContent('')}>
             انصراف
-          </button>
+          </Button>
           {isTooShort && (
-            <span className="text-xs text-amber-600">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
+            <span className="text-xs text-warning">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
           )}
         </div>
         <span
           id="item-comment-char-count"
           className={`text-xs tabular-nums ${
-            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-wibe-secondary'
+            isOverLimit ? 'font-medium text-destructive' : isNearLimit ? 'text-warning' : 'text-muted-foreground'
           }`}
         >
           {content.length.toLocaleString('fa-IR')}/{maxCommentLength.toLocaleString('fa-IR')}
@@ -314,30 +318,16 @@ export default function CommentSection({
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="wibe-h3 text-foreground">نظرات</h2>
         {showSort ? (
-          <div className="flex items-center gap-1" role="group" aria-label="مرتب‌سازی نظرات">
-            <button
-              type="button"
-              onClick={() => setSortBy('popular')}
-              className={`rounded-full px-2.5 py-1 wibe-caption font-medium transition-colors ${
-                sortBy === 'popular'
-                  ? 'bg-primary text-white'
-                  : 'text-wibe-secondary hover:bg-wibe-surface hover:text-foreground'
-              }`}
-            >
-              مفیدترین
-            </button>
-            <button
-              type="button"
-              onClick={() => setSortBy('newest')}
-              className={`rounded-full px-2.5 py-1 wibe-caption font-medium transition-colors ${
-                sortBy === 'newest'
-                  ? 'bg-primary text-white'
-                  : 'text-wibe-secondary hover:bg-wibe-surface hover:text-foreground'
-              }`}
-            >
-              جدیدترین
-            </button>
-          </div>
+          <SegmentedControl
+            aria-label="مرتب‌سازی نظرات"
+            size="sm"
+            value={sortBy}
+            onChange={(value) => setSortBy(value as 'popular' | 'newest')}
+            options={[
+              { value: 'popular', label: 'مفیدترین' },
+              { value: 'newest', label: 'جدیدترین' },
+            ]}
+          />
         ) : null}
       </div>
 
@@ -350,7 +340,7 @@ export default function CommentSection({
         <div>
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <Spinner />
             </div>
           ) : comments.length === 0 ? (
             <p className="py-2 text-center wibe-caption text-wibe-secondary">
@@ -374,15 +364,17 @@ export default function CommentSection({
                 ))}
               </div>
               {hasMore ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="lg"
+                  className="mt-4 w-full"
                   onClick={() => setVisibleCount((v) => v + COMMENTS_LOAD_MORE_STEP)}
-                  className="mt-4 flex w-full items-center justify-center gap-1 rounded-xl py-3 wibe-small font-medium text-primary transition-colors hover:bg-primary/5"
                 >
-                  <ChevronDown className="h-4 w-4" aria-hidden />
+                  <ChevronDown aria-hidden />
                   {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر (
                   {remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
-                </button>
+                </Button>
               ) : null}
             </>
           )}

@@ -1,3 +1,5 @@
+import { Card } from '@/components/ui/card';
+
 type Props = {
   tip: string;
   className?: string;
@@ -15,13 +17,13 @@ export default function ItemTipCard({
 
   const styles =
     variant === 'highlight'
-      ? 'border-wibe bg-wibe-surface/80'
-      : 'border-wibe bg-wibe-card';
+      ? 'border-brand/30 bg-brand/5'
+      : 'bg-popover';
 
   const iconBg =
     variant === 'highlight'
-      ? 'bg-amber-50 text-amber-700'
-      : 'bg-wibe-surface text-wibe-secondary';
+      ? 'bg-brand/10 text-brand'
+      : 'bg-muted text-muted-foreground';
 
   const textColor =
     variant === 'highlight'
@@ -29,12 +31,12 @@ export default function ItemTipCard({
       : 'text-foreground/85';
 
   return (
-    <div
-      className={`rounded-xl border px-3 py-2.5 ${styles} ${className}`}
+    <Card
+      className={`px-3 py-2.5 ${styles} ${className}`}
       role="note"
       aria-label="نکته"
     >
-      <div className="flex items-start gap-2.5 text-right" dir="rtl">
+      <div className="flex items-start gap-2.5 text-start">
         <span
           className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg wibe-caption ${iconBg}`}
           aria-hidden
@@ -45,6 +47,6 @@ export default function ItemTipCard({
           {text}
         </p>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -8,6 +8,10 @@ import { Settings, Trash2, Share2, LayoutGrid, Rows3 } from 'lucide-react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import Toast from '@/components/shared/Toast';
 import { LIST_DETAIL_ITEMS_PAGE_SIZE } from '@/lib/list-detail-items-shared';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 
 const PersonalListSettingsModal = dynamic(
   () => import('@/components/mobile/profile/PersonalListSettingsModal'),
@@ -309,35 +313,38 @@ export default function UserListDetailClient({
 
           <div className="space-y-4 px-4">
             {pendingCollaboration && (
-              <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-                <p className="wibe-small text-foreground">
+              <Card className="space-y-3 border-brand/20 bg-brand/5 p-4">
+                <p className="text-sm text-foreground">
                   برای مشارکت در تکمیل این لیست شخصی دعوت شده‌اید.
                 </p>
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="brand"
+                    size="lg"
+                    className="flex-1"
                     disabled={collabActionLoading}
                     onClick={() => handleCollaborationResponse('accept')}
-                    className="flex-1 rounded-lg bg-primary px-4 py-2.5 wibe-small font-semibold text-white disabled:opacity-50"
                   >
                     پذیرش همکاری
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="lg"
                     disabled={collabActionLoading}
                     onClick={() => handleCollaborationResponse('reject')}
-                    className="rounded-lg border border-wibe bg-wibe-card px-4 py-2.5 wibe-small font-semibold text-wibe-secondary disabled:opacity-50"
                   >
                     رد
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             )}
 
             {list.categories && (
               <Link
                 href={`/categories/${list.categories.slug}`}
-                className="inline-flex items-center gap-2 rounded-md border border-wibe bg-wibe-card px-3 py-1.5 wibe-small font-medium"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-popover px-3 text-sm font-medium"
               >
                 <span>{list.categories.icon}</span>
                 <span>{list.categories.name}</span>
@@ -358,13 +365,9 @@ export default function UserListDetailClient({
                   variant="button"
                   size="md"
                 />
-                <button
-                  type="button"
-                  className="flex items-center justify-center rounded-md border border-wibe bg-wibe-card px-4 py-3"
-                  aria-label="اشتراک"
-                >
-                  <Share2 className="h-5 w-5 text-wibe-secondary" />
-                </button>
+                <Button type="button" variant="outline" size="icon" className="size-11 rounded-full" aria-label="اشتراک">
+                  <Share2 />
+                </Button>
               </div>
             )}
           </div>
@@ -372,33 +375,29 @@ export default function UserListDetailClient({
           <div className="px-4">
             {showCategoryFilter && (
               <div className="mb-3 -mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5 scrollbar-hide">
-                <button
+                <Button
                   type="button"
+                  size="sm"
+                  variant={activeCategory === 'all' ? 'default' : 'outline'}
+                  className="h-11 shrink-0"
                   onClick={() => setActiveCategory('all')}
-                  className={`h-9 shrink-0 rounded-lg border px-3.5 wibe-small font-medium transition-colors ${
-                    activeCategory === 'all'
-                      ? 'border-primary bg-primary text-white shadow-sm'
-                      : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30'
-                  }`}
                 >
                   همه ({categoryMeta.total.toLocaleString('fa-IR')})
-                </button>
+                </Button>
                 {categoryMeta.chips.map((c) => (
-                  <button
+                  <Button
                     key={c.slug}
                     type="button"
+                    size="sm"
+                    variant={activeCategory === c.slug ? 'default' : 'outline'}
+                    className="h-11 shrink-0"
                     onClick={() => setActiveCategory(c.slug)}
-                    className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3.5 wibe-small font-medium transition-colors ${
-                      activeCategory === c.slug
-                        ? 'border-primary bg-primary text-white shadow-sm'
-                        : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30'
-                    }`}
                   >
                     <span aria-hidden>{c.icon}</span>
                     <span>
                       {c.label} ({c.count.toLocaleString('fa-IR')})
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -409,40 +408,22 @@ export default function UserListDetailClient({
               </h2>
               <div className="flex items-center gap-2">
                 {filteredItems.length > 0 && (
-                  <div className="flex items-center rounded-lg border border-wibe bg-wibe-card p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setItemsView('list')}
-                      className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                        itemsView === 'list'
-                          ? 'bg-primary text-white'
-                          : 'text-wibe-secondary hover:bg-wibe-surface'
-                      }`}
-                      aria-label="نمایش لیستی"
-                      title="لیستی"
-                    >
-                      <Rows3 className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setItemsView('grid')}
-                      className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                        itemsView === 'grid'
-                          ? 'bg-primary text-white'
-                          : 'text-wibe-secondary hover:bg-wibe-surface'
-                      }`}
-                      aria-label="نمایش گریدی"
-                      title="گریدی"
-                    >
-                      <LayoutGrid className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <SegmentedControl
+                    aria-label="نوع نمایش"
+                    size="sm"
+                    value={itemsView}
+                    onChange={(value) => setItemsView(value as 'list' | 'grid')}
+                    options={[
+                      { value: 'list', label: <Rows3 aria-hidden />, 'aria-label': 'نمایش لیستی' },
+                      { value: 'grid', label: <LayoutGrid aria-hidden />, 'aria-label': 'نمایش گریدی' },
+                    ]}
+                  />
                 )}
 
                 {canAddItems && items.length > 0 && (
                   <Link
                     href={`/user-lists/${list.id}/add-item`}
-                    className="rounded-md bg-primary px-4 py-2 wibe-small font-medium text-white transition-colors hover:bg-primary-dark"
+                    className="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-brand-foreground"
                   >
                     افزودن آیتم
                   </Link>
@@ -451,28 +432,28 @@ export default function UserListDetailClient({
             </div>
 
             {filteredItems.length === 0 && !isLoadingMore ? (
-              <div className="rounded-xl border border-wibe bg-wibe-card py-10 text-center shadow-sm">
-                <p className="wibe-h3 text-foreground">هنوز آیتمی اضافه نشده است</p>
-                <p className="mt-2 wibe-caption text-wibe-secondary">
-                  اولین آیتم را اضافه کن تا این لیست جان بگیرد
-                </p>
-                {canAddItems && (
-                  <Link
-                    href={`/user-lists/${list.id}/add-item`}
-                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 wibe-small font-semibold text-white transition-transform active:scale-[0.99]"
-                  >
-                    افزودن اولین آیتم
-                  </Link>
-                )}
-              </div>
+              <EmptyState
+                title="هنوز آیتمی اضافه نشده است"
+                description="اولین آیتم را اضافه کن تا این لیست جان بگیرد"
+                action={
+                  canAddItems ? (
+                    <Link
+                      href={`/user-lists/${list.id}/add-item`}
+                      className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-base font-semibold text-brand-foreground"
+                    >
+                      افزودن اولین آیتم
+                    </Link>
+                  ) : undefined
+                }
+              />
             ) : itemsView === 'grid' ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {filteredItems.map((item, index) => {
                   const img = itemImageSrc(item);
                   return (
-                    <div
+                    <Card
                       key={item.id}
-                      className="relative overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm"
+                      className="relative overflow-hidden bg-popover p-0"
                     >
                       {isOwner && (
                         <button
@@ -487,15 +468,15 @@ export default function UserListDetailClient({
                             }
                           }}
                           disabled={isDeleting}
-                          className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-danger text-white shadow-sm disabled:opacity-50"
+                          className="absolute end-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
                           aria-label="حذف آیتم"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
 
-                      <span className="absolute right-2 top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary wibe-caption font-bold">
-                        {index + 1}
+                      <span className="absolute start-2 top-2 z-10 inline-flex size-11 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                        {(index + 1).toLocaleString('fa-IR')}
                       </span>
 
                       <Link href={`/items/${item.id}`} className="block">
@@ -513,7 +494,7 @@ export default function UserListDetailClient({
                             </div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-                          <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
+                          <div className="absolute inset-x-0 bottom-0 p-2 text-white">
                             <h3 className="line-clamp-2 wibe-small font-semibold leading-snug drop-shadow-sm">
                               {item.title}
                             </h3>
@@ -530,7 +511,7 @@ export default function UserListDetailClient({
                           )}
                         </div>
                       </Link>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>
@@ -539,9 +520,9 @@ export default function UserListDetailClient({
                 {filteredItems.map((item, index) => {
                   const img = itemImageSrc(item);
                   return (
-                    <div
+                    <Card
                       key={item.id}
-                      className="relative rounded-lg border border-wibe bg-wibe-card p-3 shadow-sm"
+                      className="relative bg-popover p-3"
                     >
                       {isOwner && (
                         <button
@@ -556,7 +537,7 @@ export default function UserListDetailClient({
                             }
                           }}
                           disabled={isDeleting}
-                          className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-danger text-white disabled:opacity-50"
+                          className="absolute end-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
                           aria-label="حذف آیتم"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -588,7 +569,7 @@ export default function UserListDetailClient({
                           </div>
                         </div>
                       </Link>
-                    </div>
+                    </Card>
                   );
                 })}
               </div>

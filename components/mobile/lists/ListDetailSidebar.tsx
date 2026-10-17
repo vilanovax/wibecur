@@ -7,6 +7,8 @@ import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner
 import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 import { DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS } from '@/lib/layout-tokens';
 import { shouldShowViralProgress } from '@/lib/list-viral-display';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface ListDetailSidebarProps {
   listId: string;
@@ -42,33 +44,21 @@ export default function ListDetailSidebar({
       <div className={`${DESKTOP_STICKY_BELOW_PAGE_HEADER_CLASS} space-y-4`}>
         {statsBar}
 
-        <div className="space-y-2 rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm">
-          <button
-            type="button"
-            onClick={onShare}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 wibe-small font-semibold text-white transition-colors hover:bg-primary-dark"
-          >
-            <Share2 className="h-4 w-4" />
+        <Card className="space-y-2 bg-popover p-4">
+          <Button type="button" variant="brand" size="lg" className="w-full" onClick={onShare}>
+            <Share2 />
             اشتراک‌گذاری
-          </button>
+          </Button>
           {isOwner ? (
-            <button
-              type="button"
-              onClick={onManage}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-surface py-2.5 wibe-small font-medium text-wibe-secondary transition-colors hover:border-primary/25 hover:text-foreground"
-            >
-              <Settings className="h-4 w-4" />
+            <Button type="button" variant="outline" size="lg" className="w-full" onClick={onManage}>
+              <Settings />
               مدیریت لیست
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
-              onClick={onSuggestItem}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-surface py-2.5 wibe-small font-medium text-foreground transition-colors hover:border-primary/25"
-            >
-              <Lightbulb className="h-4 w-4 text-primary" />
+            <Button type="button" variant="outline" size="lg" className="w-full" onClick={onSuggestItem}>
+              <Lightbulb />
               پیشنهاد آیتم
-            </button>
+            </Button>
           )}
           {isOwner && shouldShowViralProgress(saveCount) ? (
             <div>
@@ -86,7 +76,7 @@ export default function ListDetailSidebar({
               </div>
             </div>
           ) : null}
-        </div>
+        </Card>
 
         {sidebarAds.length > 0 ? (
           <SponsoredPlacementStack
@@ -98,7 +88,7 @@ export default function ListDetailSidebar({
         ) : null}
 
         {tags.length > 0 && (
-          <div className="rounded-xl border border-wibe bg-wibe-card p-4 shadow-sm">
+          <Card className="bg-popover p-4">
             <p className="mb-2 wibe-caption font-medium text-wibe-secondary">برچسب‌ها</p>
             <div className="flex flex-wrap gap-1.5">
               {tags.slice(0, 6).map((tag) => (
@@ -110,13 +100,13 @@ export default function ListDetailSidebar({
                 </span>
               ))}
             </div>
-          </div>
+          </Card>
         )}
 
         {isOwner ? (
           <Link
             href={`/user-lists/${listId}/add-item`}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/35 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-colors hover:bg-primary/10"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-brand/40 bg-brand/5 text-base font-semibold text-brand"
           >
             <Plus className="h-4 w-4" />
             افزودن آیتم

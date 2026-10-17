@@ -157,7 +157,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
         <div className="flex min-w-0 flex-1 flex-col justify-end lg:justify-center lg:py-1">
           <Link
             href={`/lists/${item.lists.slug}`}
-            className="mb-2 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-wibe/80 bg-wibe-card px-2.5 py-1 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary lg:mb-3"
+            className="mb-2 inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-xl border border-border bg-popover px-3 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/30 hover:text-brand lg:mb-3"
           >
             <span aria-hidden>{item.lists.categories?.icon || '📋'}</span>
             <span className="truncate">{item.lists.title}</span>

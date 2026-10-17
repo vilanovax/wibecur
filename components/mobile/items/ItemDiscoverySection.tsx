@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import type { SimilarItem, TrendingItem, AlsoLikedItem } from '@/types/items';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type DiscoveryTab = 'similar' | 'saves' | 'trending';
-
-const TAB_ACTIVE = 'bg-primary text-white shadow-sm';
-const TAB_INACTIVE =
-  'text-wibe-secondary hover:bg-wibe-card hover:text-foreground';
 
 const DISCOVERY_GRID_CLASS =
   'flex gap-3 overflow-x-auto overflow-y-hidden pb-1 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible lg:snap-none';
@@ -19,7 +19,7 @@ const DESKTOP_ITEM_LIMIT = 8;
 
 function displayRating(rating: number | null | undefined): string | null {
   if (rating == null || Number(rating) === 0) return null;
-  return String(rating);
+  return Number(rating).toLocaleString('fa-IR');
 }
 
 function DiscoveryCarouselCard({
@@ -48,10 +48,8 @@ function DiscoveryCarouselCard({
   const ratingLabel = displayRating(rating ?? null);
 
   return (
-    <Link
-      href={href}
-      className={`${className} overflow-hidden rounded-xl border border-wibe bg-wibe-card transition-transform active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-sm`}
-    >
+    <Link href={href} className={`${className} block`}>
+      <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-[0.99]">
       <div className="relative aspect-[2/3] w-full bg-wibe-surface lg:aspect-[16/10] lg:max-h-[9rem]">
         <LazyItemCoverImage
           itemId={itemId}
@@ -68,7 +66,7 @@ function DiscoveryCarouselCard({
           aria-hidden
         />
         {rank != null && rank <= 3 && (
-          <span className="absolute right-2 top-2 wibe-caption rounded-pill bg-warning/90 px-1.5 py-0.5 font-medium text-white">
+          <span className="absolute end-2 top-2 wibe-caption rounded-pill bg-warning/90 px-1.5 py-0.5 font-medium text-foreground">
             #{rank.toLocaleString('fa-IR')}
           </span>
         )}
@@ -84,6 +82,7 @@ function DiscoveryCarouselCard({
           )}
         </div>
       </div>
+      </Card>
     </Link>
   );
 }
@@ -98,9 +97,9 @@ function CarouselSkeleton({
   return (
     <div className={`${DISCOVERY_GRID_CLASS}`}>
       {Array.from({ length: count }).map((_, i) => (
-        <div
+        <Skeleton
           key={i}
-          className={`${className} flex-shrink-0 animate-pulse rounded-xl bg-wibe-surface`}
+          className={`${className} shrink-0 rounded-xl`}
         />
       ))}
     </div>
@@ -205,9 +204,10 @@ export default function ItemDiscoverySection({
   };
 
   return (
-    <section className="pt-1 lg:rounded-2xl lg:border lg:border-wibe/60 lg:bg-wibe-card lg:p-5 lg:shadow-sm">
+    <section className="pt-1">
+    <Card className="rounded-none border-0 bg-transparent p-0 shadow-none lg:border lg:bg-popover lg:p-5 lg:shadow-surface">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 text-right">
+        <div className="min-w-0 text-start">
           <h2 className="wibe-h3 text-foreground">پیشنهاد برای تو</h2>
           <p className="mt-0.5 wibe-caption text-wibe-secondary">
             {tabDescriptions[activeTab]}
@@ -215,26 +215,21 @@ export default function ItemDiscoverySection({
         </div>
 
         {availableTabs.length > 1 && (
-          <div
-            className="flex shrink-0 gap-1 rounded-xl border border-wibe bg-wibe-surface p-1"
-            role="tablist"
-            aria-label="نوع پیشنهاد"
+          <Tabs
+            value={activeTab}
+            defaultValue={availableTabs[0]?.id ?? 'similar'}
+            onValueChange={(value) => setActiveTab(value as DiscoveryTab)}
+            variant="segmented"
+            className="shrink-0"
           >
-            {availableTabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-[colors,transform] active:scale-[0.98] ${
-                  activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+            <TabsList aria-label="نوع پیشنهاد">
+              {availableTabs.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id} className="h-11">
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         )}
       </div>
 
@@ -289,10 +284,9 @@ export default function ItemDiscoverySection({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-wibe/80 bg-wibe-surface py-6 text-center">
-          <p className="wibe-small text-wibe-secondary">فعلاً پیشنهادی برای این بخش نداریم</p>
-        </div>
+        <EmptyState title="فعلاً پیشنهادی برای این بخش نداریم" />
       )}
+    </Card>
     </section>
   );
 }

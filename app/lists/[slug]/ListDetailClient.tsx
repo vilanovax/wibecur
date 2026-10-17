@@ -40,6 +40,10 @@ import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner
 import type { ListPagePlacements } from '@/lib/sponsored-placements';
 import { isLifestyleCategory, sourceCategorySlugFromItem } from '@/lib/list-entry';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 type Item = {
   id: string;
   title: string;
@@ -272,19 +276,23 @@ function ListCompactStatsBar({
           disabled={bookmarkSaving}
           aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره لیست'}
           aria-pressed={isBookmarked}
-          className={`px-1 py-2.5 text-center transition-colors disabled:opacity-60 ${horizontalClass}`}
+          className={`border-s border-border px-1 py-2.5 text-center transition-colors first:border-s-0 disabled:opacity-60 ${horizontalClass}`}
         >
           {horizontalInner}
         </button>
       );
     }
 
-    return <div className={`px-1 py-2.5 text-center ${horizontalClass}`}>{horizontalInner}</div>;
+    return (
+      <div className={`border-s border-border px-1 py-2.5 text-center first:border-s-0 ${horizontalClass}`}>
+        {horizontalInner}
+      </div>
+    );
   };
 
   if (variant === 'vertical') {
     return (
-      <div className="rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm">
+      <Card className="bg-popover p-3">
         <div className="space-y-2">
           {renderSaveCell('vertical')}
           {metricCells.map(({ key, label, value, onClick }) => {
@@ -315,12 +323,12 @@ function ListCompactStatsBar({
             );
           })}
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-4 divide-x divide-x-reverse divide-wibe overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:py-0.5">
+    <Card className="grid grid-cols-4 overflow-hidden bg-popover p-0 shadow-none lg:py-0.5">
       {renderSaveCell('horizontal')}
       {metricCells.map(({ key, label, value, onClick }) => {
         const inner = (
@@ -336,7 +344,7 @@ function ListCompactStatsBar({
               key={key}
               type="button"
               onClick={onClick}
-              className="px-1 py-2.5 text-center transition-colors hover:bg-wibe-surface active:bg-wibe-surface"
+              className="border-s border-border px-1 py-2.5 text-center transition-colors first:border-s-0 hover:bg-muted active:bg-muted"
             >
               {inner}
             </button>
@@ -344,12 +352,12 @@ function ListCompactStatsBar({
         }
 
         return (
-          <div key={key} className="px-1 py-2.5 text-center">
+          <div key={key} className="border-s border-border px-1 py-2.5 text-center first:border-s-0">
             {inner}
           </div>
         );
       })}
-    </div>
+    </Card>
   );
 }
 
@@ -379,43 +387,37 @@ function ListConsumeActionBar({
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         {!isOwner ? (
-          <button
+          <Button
             type="button"
             onClick={onSave}
             disabled={bookmarkSaving}
             aria-pressed={isBookmarked}
-            className={`inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl wibe-caption font-semibold transition-colors active:scale-[0.98] disabled:opacity-60 ${
-              isBookmarked
-                ? 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/25'
-                : 'bg-primary text-white hover:bg-primary-dark'
-            }`}
+            variant={isBookmarked ? 'secondary' : 'brand'}
+            size="lg"
+            className="flex-1"
           >
             <Bookmark
-              className={`h-4 w-4 ${isBookmarked ? 'fill-primary' : ''}`}
+              className={isBookmarked ? 'fill-primary' : undefined}
               aria-hidden
             />
             {isBookmarked ? 'ذخیره شد' : 'ذخیره'}
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="button"
           onClick={onShare}
-          className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-wibe bg-wibe-card wibe-caption font-semibold text-foreground transition-colors hover:border-primary/25 active:scale-[0.98] ${
-            isOwner ? 'flex-1' : 'px-4'
-          }`}
+          variant="outline"
+          size="lg"
+          className={isOwner ? 'flex-1' : undefined}
         >
-          <Share2 className="h-4 w-4 text-wibe-secondary" aria-hidden />
+          <Share2 aria-hidden />
           اشتراک
-        </button>
+        </Button>
         {isOwner ? (
-          <button
-            type="button"
-            onClick={onManage}
-            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl px-3 wibe-caption font-medium text-wibe-secondary transition-colors hover:bg-wibe-surface hover:text-foreground active:scale-[0.98]"
-          >
-            <Settings className="h-4 w-4" aria-hidden />
+          <Button type="button" onClick={onManage} variant="ghost" size="lg">
+            <Settings aria-hidden />
             مدیریت
-          </button>
+          </Button>
         ) : null}
       </div>
       {showViral ? (
@@ -1035,14 +1037,16 @@ export default function ListDetailClient({
               listTitle={list.title}
               priority
             />
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="icon"
               onClick={() => setMoreOpen(true)}
-              className="absolute top-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform hover:scale-105 active:scale-95"
+              className="absolute start-3 top-3 size-11 rounded-full bg-popover/95 shadow-sm backdrop-blur"
               aria-label="بیشتر"
             >
-              <MoreVertical className="h-4 w-4" />
-            </button>
+              <MoreVertical />
+            </Button>
           </div>
 
           <div className="min-w-0 py-1">
@@ -1074,18 +1078,20 @@ export default function ListDetailClient({
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
-          <div className="absolute top-4 right-4 z-10">
-            <button
+          <div className="absolute start-4 top-4 z-10">
+            <Button
               type="button"
+              variant="secondary"
+              size="icon"
               onClick={() => setMoreOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-wibe-card/95 text-foreground shadow-sm backdrop-blur transition-transform active:scale-95"
+              className="size-11 rounded-full bg-popover/95 shadow-sm backdrop-blur"
               aria-label="بیشتر"
             >
-              <MoreVertical className="h-5 w-5" />
-            </button>
+              <MoreVertical />
+            </Button>
           </div>
           {isViral && (
-            <div className="absolute top-4 left-4 z-10">
+            <div className="absolute end-4 top-4 z-10">
               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-white">
                 <Flame className="w-3.5 h-3.5" /> وایرال
               </span>
@@ -1177,40 +1183,43 @@ export default function ListDetailClient({
             <section
               ref={itemsSectionRef}
               id="list-items-section"
-              className={`${LIST_SECTION_SCROLL_MT} lg:rounded-2xl lg:border lg:border-wibe lg:bg-wibe-card lg:p-5 lg:shadow-sm`}
+              className={LIST_SECTION_SCROLL_MT}
             >
+            <Card className="rounded-none border-0 bg-transparent p-0 shadow-none lg:border lg:bg-popover lg:p-5 lg:shadow-surface">
               {showTonightPath ? (
                 <div className="mb-3 flex flex-wrap items-center gap-2 lg:mb-4">
                   <span className="wibe-caption font-semibold text-foreground">امشب چی؟</span>
-                  <button
+                  <Button
                     type="button"
                     onClick={handleTonightTop5}
                     aria-pressed={tonightTop5}
-                    className={`inline-flex h-8 items-center gap-1 rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${
-                      tonightTop5
-                        ? 'bg-primary text-white'
-                        : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/30'
-                    }`}
+                    variant={tonightTop5 ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-11 rounded-full"
                   >
-                    <ListOrdered className="h-3.5 w-3.5" aria-hidden />
+                    <ListOrdered aria-hidden />
                     ۵تای اول
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={handleTonightRandom}
-                    className="inline-flex h-8 items-center gap-1 rounded-full border border-wibe bg-wibe-card px-3 wibe-caption font-medium text-foreground transition-colors hover:border-primary/30 active:scale-[0.98]"
+                    variant="outline"
+                    size="sm"
+                    className="h-11 rounded-full"
                   >
-                    <Shuffle className="h-3.5 w-3.5" aria-hidden />
+                    <Shuffle aria-hidden />
                     یکی تصادفی
-                  </button>
+                  </Button>
                   {tonightTop5 ? (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setTonightTop5(false)}
-                      className="ms-auto wibe-caption font-medium text-primary hover:underline"
+                      variant="ghost"
+                      size="sm"
+                      className="ms-auto h-11"
                     >
                       نمایش همه
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
               ) : null}
@@ -1236,17 +1245,15 @@ export default function ListDetailClient({
                     <div className="flex-1" />
                   )}
                   {showMapView && list.items.length > 0 ? (
-                    <button
+                    <Button
                       type="button"
                       onClick={handleSetMap}
                       title={viewMode === 'map' ? 'نمایش شبکه‌ای' : 'نمایش نقشه'}
                       aria-label={viewMode === 'map' ? 'نمایش شبکه‌ای' : 'نمایش نقشه'}
                       aria-pressed={viewMode === 'map'}
-                      className={`flex shrink-0 items-center gap-1 rounded-lg border px-3 py-2.5 wibe-caption transition-colors ${
-                        viewMode === 'map'
-                          ? 'border-primary/30 bg-primary/10 text-primary'
-                          : 'border-wibe bg-wibe-card text-wibe-secondary'
-                      }`}
+                      variant={viewMode === 'map' ? 'secondary' : 'outline'}
+                      size="lg"
+                      className="shrink-0"
                     >
                       {viewMode === 'map' ? (
                         <LayoutGrid className="h-4 w-4" />
@@ -1254,38 +1261,38 @@ export default function ListDetailClient({
                         <Map className="h-4 w-4" />
                       )}
                       {viewMode === 'map' ? 'شبکه' : 'نقشه'}
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
               )}
 
               {!list.items?.length ? (
-                <div className="text-center py-10 bg-wibe-card rounded-lg border border-wibe">
-                  <p className="wibe-body text-wibe-secondary">این لیست هنوز آیتمی ندارد</p>
-                  {isOwner ? (
-                    <Link
-                      href={`/user-lists/${list.id}/add-item`}
-                      className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 wibe-small font-medium text-white"
-                    >
-                      <Plus className="h-4 w-4" />
-                      افزودن اولین آیتم
-                    </Link>
-                  ) : null}
-                </div>
+                <EmptyState
+                  title="این لیست هنوز آیتمی ندارد"
+                  action={
+                    isOwner ? (
+                      <Button
+                        type="button"
+                        variant="brand"
+                        size="lg"
+                        onClick={() => router.push(`/user-lists/${list.id}/add-item`)}
+                      >
+                        <Plus aria-hidden />
+                        افزودن اولین آیتم
+                      </Button>
+                    ) : undefined
+                  }
+                />
               ) : isItemSearchActive && filteredItemEntries.length === 0 ? (
-                <div className="py-10 text-center bg-wibe-card rounded-lg border border-wibe">
-                  <p className="wibe-body font-medium text-foreground">آیتمی پیدا نشد</p>
-                  <p className="mt-1 wibe-caption text-wibe-secondary">
-                    عبارت دیگری برای «{normalizedItemSearch}» امتحان کن
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setItemSearchQuery('')}
-                    className="mt-4 wibe-caption font-medium text-primary"
-                  >
-                    پاک کردن جستجو
-                  </button>
-                </div>
+                <EmptyState
+                  title="آیتمی پیدا نشد"
+                  description={`عبارت دیگری برای «${normalizedItemSearch}» امتحان کن`}
+                  action={
+                    <Button type="button" variant="ghost" size="lg" onClick={() => setItemSearchQuery('')}>
+                      پاک کردن جستجو
+                    </Button>
+                  }
+                />
               ) : isItemSearchActive ? (
                 renderItemEntries(filteredItemEntries)
               ) : (
@@ -1300,13 +1307,15 @@ export default function ListDetailClient({
                   ) : null}
                 </>
               )}
+            </Card>
             </section>
 
             <div
               ref={commentsSectionRef}
               id="list-comments-section"
-              className={`${LIST_SECTION_SCROLL_MT} border-t border-wibe pt-6 lg:mt-0 lg:rounded-2xl lg:border lg:bg-wibe-card lg:p-5 lg:pt-5 lg:shadow-sm`}
+              className={`${LIST_SECTION_SCROLL_MT} border-t border-border pt-6 lg:mt-0 lg:border-0 lg:pt-0`}
             >
+            <Card className="rounded-none border-0 bg-transparent p-0 shadow-none lg:border lg:bg-popover lg:p-5 lg:shadow-surface">
               {commentsActivated ? (
                 <VibeCommentSectionLazy
                   listId={list.id}
@@ -1318,11 +1327,12 @@ export default function ListDetailClient({
                 />
               ) : (
                 <div className="space-y-3" aria-hidden>
-                  <div className="h-11 animate-pulse rounded-xl bg-wibe-surface" />
-                  <div className="h-20 animate-pulse rounded-xl bg-wibe-surface" />
-                  <div className="h-20 animate-pulse rounded-xl bg-wibe-surface" />
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
                 </div>
               )}
+            </Card>
             </div>
 
             {/* مشابه بعد از نظرات — وسط مصرف نیاید */}

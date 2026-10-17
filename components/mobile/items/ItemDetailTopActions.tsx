@@ -22,8 +22,7 @@ interface ItemDetailTopActionsProps {
   variant?: 'bar' | 'inline';
 }
 
-const shareButtonClass =
-  'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary active:scale-95';
+const shareButtonClass = 'size-11 shrink-0 rounded-full';
 
 export default function ItemDetailTopActions({
   itemId,
@@ -47,15 +46,17 @@ export default function ItemDetailTopActions({
         className={shareButtonClass}
         iconClassName="h-4 w-4"
       />
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="icon"
         onClick={() => setMoreOpen(true)}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary active:scale-95"
+        className="size-11 shrink-0 rounded-full"
         aria-label="گزینه‌های بیشتر"
         title="بیشتر"
       >
-        <MoreHorizontal className="h-4 w-4" aria-hidden />
-      </button>
+        <MoreHorizontal aria-hidden />
+      </Button>
     </>
   );
 
@@ -65,7 +66,7 @@ export default function ItemDetailTopActions({
         {actions}
       </div>
     ) : (
-      <div className="sticky top-16 z-30 flex items-center justify-start gap-2 border-b border-wibe/80 bg-wibe-surface/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
+      <div className="sticky top-16 z-30 flex items-center justify-start gap-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur-sm lg:hidden">
         {actions}
       </div>
     );

@@ -248,8 +248,8 @@ const PreviewActions = memo(function PreviewActions({
     <Link
       href={`/items/${item.id}`}
       onClick={onClose}
-      className={`flex min-w-0 items-center justify-center rounded-xl bg-primary py-2.5 wibe-small font-semibold text-white transition-colors hover:bg-primary-dark active:scale-[0.99] ${
-        layout === 'inline' ? 'min-w-[7.5rem] flex-1' : 'w-full'
+      className={`inline-flex h-12 min-w-0 items-center justify-center rounded-control bg-brand px-4 text-sm font-semibold text-brand-foreground ${
+        layout === 'inline' ? 'min-w-32 flex-1' : 'w-full'
       }`}
     >
       مشاهده
@@ -261,8 +261,8 @@ const PreviewActions = memo(function PreviewActions({
       href={externalUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex min-w-0 items-center justify-center gap-1 rounded-xl border border-wibe bg-wibe-card py-2.5 wibe-small font-medium text-foreground transition-[colors,transform] hover:border-primary/30 active:scale-[0.99] ${
-        layout === 'inline' ? 'px-3' : 'w-full'
+      className={`inline-flex h-12 min-w-0 items-center justify-center gap-1 rounded-control border border-border bg-popover px-4 text-sm font-semibold text-foreground ${
+        layout === 'inline' ? '' : 'w-full'
       }`}
     >
       <ExternalLink className="h-3.5 w-3.5 shrink-0 text-wibe-secondary" aria-hidden />
@@ -404,17 +404,17 @@ const PreviewBody = memo(function PreviewBody({
     return (
       <div className="flex flex-col gap-3">
         {!isLifestyle && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-wibe bg-wibe-surface/60 p-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-wibe-card text-xl ring-1 ring-wibe">
+          <div className="flex items-start gap-2.5 rounded-xl border border-border bg-muted/60 p-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-popover text-xl">
               {entryKindIcon(entryKind)}
             </span>
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex flex-wrap gap-1">
-                <span className="inline-flex rounded-md bg-wibe-card px-1.5 py-0.5 wibe-caption font-medium text-wibe-secondary">
+                <span className="inline-flex rounded-md bg-popover px-1.5 py-0.5 wibe-caption font-medium text-muted-foreground">
                   {entryKindBadgeLabel(entryKind)}
                 </span>
                 {factLabel ? (
-                  <span className="inline-flex rounded-md bg-wibe-card px-1.5 py-0.5 wibe-caption font-medium text-wibe-secondary">
+                  <span className="inline-flex rounded-md bg-popover px-1.5 py-0.5 wibe-caption font-medium text-muted-foreground">
                     {factLabel}
                   </span>
                 ) : null}

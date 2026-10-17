@@ -7,6 +7,8 @@ import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentAvatar from '@/components/shared/CommentAvatar';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { COMMENT_CLAMP_CHAR_THRESHOLD } from '@/lib/comment-limits';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface CommentItemProps {
   comment: {
@@ -41,39 +43,45 @@ function CommentMoreMenu({ onReport, onDelete }: { onReport: () => void; onDelet
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-wibe-surface transition-colors"
+        className="size-11 rounded-full text-muted-foreground"
         aria-label="گزینه‌های بیشتر"
       >
-        <MoreVertical className="w-4 h-4" />
-      </button>
+        <MoreVertical />
+      </Button>
       <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="گزینه‌های نظر">
         <div className="space-y-1">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="lg"
+            className="w-full justify-start text-destructive"
             onClick={() => {
               setOpen(false);
               onReport();
             }}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-right"
           >
-            <Flag className="w-4 h-4 flex-shrink-0" />
+            <Flag />
             گزارش نظر
-          </button>
+          </Button>
           {onDelete && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="lg"
+              className="w-full justify-start text-destructive"
               onClick={() => {
                 setOpen(false);
                 onDelete();
               }}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-right"
             >
-              <Trash2 className="w-4 h-4 flex-shrink-0" />
+              <Trash2 />
               حذف نظر
-            </button>
+            </Button>
           )}
         </div>
       </BottomSheet>
@@ -114,7 +122,7 @@ export default function CommentItem({
   };
 
   return (
-    <div className="flex gap-3 rounded-xl border border-wibe bg-wibe-card px-3 py-3.5 shadow-sm">
+    <Card className="flex gap-3 bg-popover px-3 py-3.5">
       <div className="flex-shrink-0">
         {profileUrl ? (
           <Link href={profileUrl} className="block">
@@ -205,7 +213,7 @@ export default function CommentItem({
             disabled={isLoading}
             aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
             className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
-              localVote === -1 ? 'text-amber-600 font-medium' : 'text-wibe-secondary hover:text-amber-600'
+              localVote === -1 ? 'font-medium text-warning' : 'text-muted-foreground hover:text-warning'
             }`}
           >
             <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />
@@ -213,6 +221,6 @@ export default function CommentItem({
           </button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

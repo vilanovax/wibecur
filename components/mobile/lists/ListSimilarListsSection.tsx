@@ -6,6 +6,8 @@ import { useLazyInView } from '@/hooks/useLazyInView';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import { fetchListSimilar, type SimilarListClient } from '@/lib/list-similar-client';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const LIST_SECTION_SCROLL_MT = 'scroll-mt-[7.5rem]';
 
@@ -21,8 +23,9 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
   return (
     <Link
       href={`/lists/${rel.slug}`}
-      className="w-[calc(55vw)] max-w-[220px] shrink-0 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-[colors,transform] active:scale-[0.99] lg:w-full lg:max-w-none lg:hover:border-primary/20 lg:hover:shadow-md"
+      className="block w-[calc(55vw)] max-w-56 shrink-0 lg:w-full lg:max-w-none"
     >
+      <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-[0.99]">
       <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10] lg:max-h-[7.25rem]">
         <ImageWithFallback
           src={rel.coverImage ?? ''}
@@ -35,13 +38,14 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
           listTitle={rel.title}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-2 text-right lg:p-2.5">
+        <div className="absolute inset-x-0 bottom-0 p-2 text-start lg:p-2.5">
           <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:hidden">{title}</h3>
         </div>
       </div>
       <div className="hidden min-w-0 p-2 lg:block">
         <h3 className="line-clamp-2 wibe-caption font-semibold text-foreground">{title}</h3>
       </div>
+      </Card>
     </Link>
   );
 }
@@ -72,15 +76,17 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
       <section
         ref={ref}
         id="list-similar-section"
-        className={`${LIST_SECTION_SCROLL_MT} mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
+        className={`${LIST_SECTION_SCROLL_MT} mt-1`}
         aria-hidden
       >
-        <div className="mb-3 h-6 w-36 animate-pulse rounded bg-wibe-surface" />
-        <div className="flex gap-3 overflow-hidden">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 w-[55vw] max-w-[220px] shrink-0 animate-pulse rounded-lg bg-wibe-surface lg:h-32 lg:w-full" />
-          ))}
-        </div>
+        <Card className="rounded-none border-0 bg-transparent p-0 shadow-none lg:border lg:bg-popover lg:p-5 lg:shadow-surface">
+          <Skeleton className="mb-3 h-6 w-36" />
+          <div className="flex gap-3 overflow-hidden">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-28 w-[55vw] max-w-56 shrink-0 rounded-lg lg:h-32 lg:w-full" />
+            ))}
+          </div>
+        </Card>
       </section>
     );
   }
@@ -90,16 +96,18 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
       <section
         ref={ref}
         id="list-similar-section"
-        className={`${LIST_SECTION_SCROLL_MT} mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
+        className={`${LIST_SECTION_SCROLL_MT} mt-1`}
         aria-busy
         aria-label="در حال بارگذاری لیست‌های مشابه"
       >
-        <div className="mb-3 h-6 w-36 animate-pulse rounded bg-wibe-surface" />
-        <div className="flex gap-3 overflow-hidden">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-28 w-[55vw] max-w-[220px] shrink-0 animate-pulse rounded-lg bg-wibe-surface lg:h-32 lg:w-full" />
-          ))}
-        </div>
+        <Card className="rounded-none border-0 bg-transparent p-0 shadow-none lg:border lg:bg-popover lg:p-5 lg:shadow-surface">
+          <Skeleton className="mb-3 h-6 w-36" />
+          <div className="flex gap-3 overflow-hidden">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-28 w-[55vw] max-w-56 shrink-0 rounded-lg lg:h-32 lg:w-full" />
+            ))}
+          </div>
+        </Card>
       </section>
     );
   }
@@ -110,8 +118,9 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
     <section
       ref={ref}
       id="list-similar-section"
-      className={`${LIST_SECTION_SCROLL_MT} mt-1 border-t border-wibe pt-4 lg:rounded-2xl lg:border lg:bg-wibe-card/60 lg:p-5 lg:pt-5`}
+      className={`${LIST_SECTION_SCROLL_MT} mt-1`}
     >
+      <Card className="rounded-none border-0 bg-transparent p-0 shadow-none lg:border lg:bg-popover lg:p-5 lg:shadow-surface">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
           <h3 className="wibe-h3 text-foreground">لیست‌های مشابه</h3>
@@ -123,6 +132,7 @@ export default function ListSimilarListsSection({ listSlug }: ListSimilarListsSe
           <SimilarListCard key={rel.id} rel={rel} />
         ))}
       </div>
+      </Card>
     </section>
   );
 }
