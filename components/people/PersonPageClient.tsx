@@ -239,15 +239,15 @@ export default function PersonPageClient({
                       coverLayout="grid"
                     />
                     <div
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/20 to-transparent"
                       aria-hidden
                     />
-                    <div className="absolute inset-x-0 bottom-0 p-2.5 text-white lg:p-3">
-                      <h3 className="line-clamp-2 wibe-small font-semibold leading-snug drop-shadow-sm lg:text-sm">
+                    <div className="absolute inset-x-0 bottom-0 p-2.5 lg:p-3">
+                      <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-background drop-shadow-sm lg:text-sm">
                         {item.title}
                       </h3>
                       {ratingLabel ? (
-                        <p className="mt-1 wibe-caption text-white/90 lg:text-xs">⭐ {ratingLabel}</p>
+                        <p className="mt-1 wibe-caption text-background/90 lg:text-xs">⭐ {ratingLabel}</p>
                       ) : null}
                     </div>
                   </div>

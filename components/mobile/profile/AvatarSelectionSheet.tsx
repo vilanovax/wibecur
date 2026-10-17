@@ -260,7 +260,7 @@ export default function AvatarSelectionSheet({
                       setUploadPreview(null);
                       setUploadFile(null);
                     }}
-                    className="absolute start-2 top-2 flex size-11 items-center justify-center rounded-full bg-foreground/50 text-white backdrop-blur-sm"
+                    className="absolute start-2 top-2 flex size-11 items-center justify-center rounded-full bg-foreground/50 text-background backdrop-blur-sm"
                     aria-label="حذف پیش‌نمایش"
                   >
                     <X className="h-4 w-4" />

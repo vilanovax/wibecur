@@ -57,14 +57,16 @@ export default function ItemDescriptionBlock({
             rel="noopener noreferrer"
             className={
               isLightweight && entryKind === 'link'
-                ? 'inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark'
-                : 'inline-flex items-center gap-1 wibe-caption font-medium text-primary hover:underline'
+                ? 'inline-flex min-h-11 items-center gap-1.5 rounded-control bg-primary px-4 wibe-small font-semibold shadow-sm transition-colors hover:bg-primary-dark'
+                : 'inline-flex min-h-11 items-center gap-1 wibe-caption font-medium'
             }
           >
             {isLightweight && entryKind === 'link' && (
-              <ExternalLink className="h-4 w-4" aria-hidden />
+              <ExternalLink className="h-4 w-4 text-primary-foreground" aria-hidden />
             )}
-            {isLightweight && entryKind === 'link' ? 'باز کردن لینک' : 'منبع خارجی'}
+            <span className={isLightweight && entryKind === 'link' ? 'text-primary-foreground' : 'text-brand'}>
+              {isLightweight && entryKind === 'link' ? 'باز کردن لینک' : 'منبع خارجی'}
+            </span>
           </a>
         )}
       </div>

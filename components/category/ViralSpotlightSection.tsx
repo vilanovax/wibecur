@@ -37,12 +37,12 @@ export default function ViralSpotlightSection({
                 📋
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent" />
             <span className="absolute end-3 top-3 rounded-full bg-warning px-2 py-1 text-xs font-semibold text-foreground">
               وایرال
             </span>
             <div className="absolute inset-x-0 bottom-0 p-4 text-start">
-              <h3 className="wibe-h3 text-white line-clamp-2">{list.title}</h3>
+              <h3 className="wibe-h3 text-background line-clamp-2">{list.title}</h3>
               <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="overlay" className="mt-1" />
             </div>
           </div>

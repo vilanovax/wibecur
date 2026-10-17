@@ -119,7 +119,7 @@ export default function HomePersonalizedFeedSection() {
               return forYou ? getForYouReasonLabel(forYou, isPersonalized) : null;
             }}
             getBadgeClassName={(list) =>
-              savedIds.has(list.id) ? '' : 'bg-primary/90 text-white'
+              savedIds.has(list.id) ? '' : 'bg-primary/90 text-primary-foreground'
             }
             homeSection="for_you"
           />

@@ -6,7 +6,7 @@ interface ListCardStatsProps {
   /** ذخیره در بازهٔ اخیر (مثلاً ۷ روز) — اولویت نمایش در overlay */
   periodSaves?: number;
   periodLabel?: string;
-  /** compact = یک خط کوتاه | inline = داخل overlay سفید */
+  /** compact = یک خط کوتاه | overlay = روی عکس کاور */
   variant?: 'default' | 'compact' | 'overlay' | 'minimal' | 'items-only';
   className?: string;
 }
@@ -30,7 +30,7 @@ export default function ListCardStats({
   if (variant === 'overlay') {
     return (
       <p
-        className={`flex flex-wrap items-center justify-start gap-x-1 gap-y-0.5 text-xs leading-tight text-white/95 tabular-nums lg:gap-x-1.5 ${className}`}
+        className={`flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs leading-tight text-background/95 tabular-nums lg:gap-x-1.5 ${className}`}
       >
         <Bookmark className="h-3 w-3 shrink-0 max-lg:opacity-90 lg:h-4 lg:w-4" />
         <span className="line-clamp-1">

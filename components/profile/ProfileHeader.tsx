@@ -174,7 +174,18 @@ export default function ProfileHeader({
           </div>
 
           {isOwner ? (
-            <div className="relative shrink-0" ref={menuRef}>
+            <div className="flex shrink-0 items-start gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={openEdit}
+                className="hidden h-11 lg:inline-flex"
+              >
+                <Edit2 />
+                ویرایش
+              </Button>
+              <div className="relative" ref={menuRef}>
               <Button
                 type="button"
                 variant="outline"
@@ -221,6 +232,7 @@ export default function ProfileHeader({
                   </Button>
                 </Card>
               ) : null}
+              </div>
             </div>
           ) : onFollowToggle ? (
             <Button

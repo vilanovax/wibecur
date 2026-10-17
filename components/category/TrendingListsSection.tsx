@@ -44,14 +44,14 @@ function TrendingListCard({
               📋
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-foreground/10 to-transparent" />
           {showTrendBadge && (
             <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-semibold text-foreground">
               ترند
             </span>
           )}
           {list.cityTag && (
-            <span className="absolute bottom-2 end-2 rounded-full bg-foreground/40 px-2 py-0.5 text-xs text-white backdrop-blur-sm">
+            <span className="absolute bottom-2 end-2 rounded-full bg-foreground/40 px-2 py-0.5 text-xs text-background backdrop-blur-sm">
               {list.cityTag}
             </span>
           )}

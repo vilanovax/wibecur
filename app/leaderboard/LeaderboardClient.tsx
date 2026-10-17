@@ -27,9 +27,9 @@ interface LeaderboardClientProps {
 }
 
 const TOP3_STYLES: Record<number, { card: string; medal: string }> = {
-  1: { card: 'border-warning/40 bg-warning/5', medal: 'bg-warning text-white' },
-  2: { card: 'border-border bg-muted', medal: 'bg-foreground/40 text-white' },
-  3: { card: 'border-warning/30 bg-warning/5', medal: 'bg-warning/80 text-white' },
+  1: { card: 'border-warning/40 bg-warning/5', medal: 'bg-warning text-foreground' },
+  2: { card: 'border-border bg-muted', medal: 'bg-foreground/40 text-background' },
+  3: { card: 'border-warning/30 bg-warning/5', medal: 'bg-warning/80 text-foreground' },
 };
 
 function RankChangeIndicator({ change }: { change: number }) {
