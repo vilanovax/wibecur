@@ -31,6 +31,13 @@ interface CommentsPageClientProps {
   navStats?: CommentsNavStats;
 }
 
+const QUEUE_FILTERS = new Set<CommentFilterKind>([
+  'pending',
+  'flagged',
+  'reported',
+  'filtered',
+]);
+
 export default function CommentsPageClient({ data, navStats }: CommentsPageClientProps) {
   const router = useRouter();
   const [localComments, setLocalComments] = useState<Comment[]>(data.comments);
@@ -221,6 +228,41 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
     }
   };
 
+  const advanceAfterResolve = useCallback(
+    (id: string, mode: 'approve' | 'reject') => {
+      const inQueue = QUEUE_FILTERS.has(filter);
+      setLocalComments((prev) => {
+        const idx = prev.findIndex((c) => c.id === id);
+        if (idx < 0) return prev;
+
+        let nextList: Comment[];
+        if (inQueue) {
+          nextList = prev.filter((c) => c.id !== id);
+        } else if (mode === 'approve') {
+          nextList = prev.map((c) =>
+            c.id === id ? { ...c, isApproved: true, isFiltered: false } : c
+          );
+        } else {
+          nextList = prev.map((c) =>
+            c.id === id ? { ...c, isApproved: false } : c
+          );
+        }
+
+        const nextId =
+          nextList[Math.min(idx, Math.max(0, nextList.length - 1))]?.id ?? null;
+        setSelectedId(nextId);
+        setSelectedIds((ids) => {
+          if (!ids.has(id)) return ids;
+          const copy = new Set(ids);
+          copy.delete(id);
+          return copy;
+        });
+        return nextList;
+      });
+    },
+    [filter]
+  );
+
   const performApprove = useCallback(
     async (id: string) => {
       setApprovingId(id);
@@ -230,11 +272,7 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'خطا');
-        setLocalComments((prev) =>
-          prev.map((c) =>
-            c.id === id ? { ...c, isApproved: true, isFiltered: false } : c
-          )
-        );
+        advanceAfterResolve(id, 'approve');
         showToast('کامنت تایید شد', 'success');
         router.refresh();
       } catch (e: unknown) {
@@ -243,7 +281,7 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
         setApprovingId(null);
       }
     },
-    [router, showToast]
+    [advanceAfterResolve, router, showToast]
   );
 
   const performReject = useCallback(
@@ -255,9 +293,7 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'خطا');
-        setLocalComments((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, isApproved: false } : c))
-        );
+        advanceAfterResolve(id, 'reject');
         showToast('کامنت رد شد', 'success');
         setRejectTarget(null);
         router.refresh();
@@ -267,7 +303,7 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
         setRejectingId(null);
       }
     },
-    [router, showToast]
+    [advanceAfterResolve, router, showToast]
   );
 
   const handleApprove = (id: string) => {
@@ -503,46 +539,55 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
       />
 
       <div
-        className={`flex flex-col lg:flex-row gap-4 ${
+        className={`flex flex-col lg:flex-row gap-3 items-start ${
           selectedIds.size > 0 ? 'pb-28' : panelComment ? 'pb-20 lg:pb-0' : ''
         }`}
       >
-        <div className="flex-1 min-w-0">
-      {localComments.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm p-12 text-center">
-          <p className="text-[var(--color-text)] mb-2">کامنتی یافت نشد</p>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            فیلترها یا عبارت جستجو را تغییر دهید.
-          </p>
-          {(hasActiveFilters) && (
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="mt-4 text-sm font-medium text-[var(--primary)] hover:underline"
-            >
-              پاک کردن فیلترها
-            </button>
+        <div className="flex-1 min-w-0 w-full">
+          {localComments.length === 0 ? (
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-10 text-center">
+              <p className="text-[var(--color-text)] font-medium mb-2">
+                {filter === 'pending' ||
+                filter === 'flagged' ||
+                filter === 'reported'
+                  ? 'صف خالی است'
+                  : 'کامنتی یافت نشد'}
+              </p>
+              <p className="text-sm text-[var(--color-text-muted)]">
+                {filter === 'pending'
+                  ? 'همه کامنت‌های در انتظار رسیدگی شده‌اند.'
+                  : 'فیلترها یا عبارت جستجو را تغییر دهید.'}
+              </p>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="mt-4 text-sm font-medium text-[var(--primary)] hover:underline"
+                >
+                  بازگشت به صف در انتظار
+                </button>
+              )}
+            </div>
+          ) : (
+            <CommentsTable
+              comments={localComments}
+              selectedIds={selectedIds}
+              activeId={selectedId}
+              onToggleSelect={handleToggleSelect}
+              onSelectAll={handleSelectAll}
+              onView={handleView}
+              onRowClick={selectComment}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              approvingId={approvingId}
+              rejectingId={rejectingId}
+              filterBadWords={filterBadWords}
+              hideMetaColumns
+            />
           )}
         </div>
-      ) : (
-        <CommentsTable
-          comments={localComments}
-          selectedIds={selectedIds}
-          activeId={selectedId}
-          onToggleSelect={handleToggleSelect}
-          onSelectAll={handleSelectAll}
-          onView={handleView}
-          onRowClick={selectComment}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          approvingId={approvingId}
-          rejectingId={rejectingId}
-          filterBadWords={filterBadWords}
-        />
-      )}
-        </div>
 
-        <div className="hidden lg:block w-[min(380px,32%)] shrink-0">
+        <div className="hidden lg:block w-[300px] xl:w-[320px] shrink-0">
           <CommentDetailPanel
             comment={panelComment}
             onApprove={handleApprove}

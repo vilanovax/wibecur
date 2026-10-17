@@ -189,7 +189,7 @@ export default function SaveToPersonalListModal({
                 <p className="text-wibe-secondary mb-4">برای ذخیره در لیست شخصی وارد شوید</p>
                 <Link
                   href={`/login?callbackUrl=${encodeURIComponent(`/items/${itemId}`)}&source=item_gate`}
-                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary text-white font-semibold"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-sm font-semibold text-brand-foreground"
                 >
                   ورود
                 </Link>

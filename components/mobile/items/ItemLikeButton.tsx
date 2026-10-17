@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
+import { LikeButton } from '@/components/animations/like-button';
 import { signOutIfStaleSession } from '@/lib/session-client';
 import { useDeferReady } from '@/hooks/useDeferReady';
 import {
@@ -117,30 +118,24 @@ export default function ItemLikeButton({
     );
   }
 
-  if (isCompact) {
+  if (!isHero) {
     return (
-      <button
-        type="button"
-        onClick={handleToggle}
-        disabled={isLoading}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
-          isLiked
-            ? 'bg-red-50 border-2 border-red-200 hover:bg-red-100'
-            : 'bg-white border border-wibe hover:border-red-300 hover:bg-red-50'
-        }`}
-        aria-label={isLiked ? 'حذف لایک' : 'لایک'}
+      <span
+        className="inline-flex"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
       >
-        <Heart
-          className={`w-5 h-5 transition-colors ${
-            isLiked ? 'fill-red-500 text-red-500' : 'text-wibe-secondary'
-          }`}
+        <LikeButton
+          liked={isLiked}
+          count={Math.max(0, likeCount - (isLiked ? 1 : 0))}
+          onChange={() => {
+            if (!isLoading && session?.user) toggleLike();
+          }}
+          className={isLoading ? 'pointer-events-none opacity-60' : undefined}
         />
-        {likeCount > 0 && (
-          <span className="absolute -top-1 -left-1 min-w-[1.125rem] h-[1.125rem] px-0.5 bg-red-500 text-white wibe-caption font-bold rounded-full flex items-center justify-center shadow-sm">
-            {likeCount > 99 ? '۹۹+' : countLabel}
-          </span>
-        )}
-      </button>
+      </span>
     );
   }
 

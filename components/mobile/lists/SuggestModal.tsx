@@ -34,7 +34,7 @@ export default function SuggestModal({ isOpen, onClose }: SuggestModalProps) {
 
           <button
             onClick={() => setSelectedType('list')}
-            className="w-full p-6 bg-white border-2 border-wibe rounded-xl hover:border-primary hover:bg-primary/5 transition-colors flex items-center gap-4"
+            className="flex w-full items-center gap-4 rounded-xl border border-border bg-popover p-6 transition-colors hover:border-primary hover:bg-accent"
           >
             <div className="p-3 bg-blue-100 rounded-lg">
               <List className="w-6 h-6 text-blue-600" />
@@ -49,7 +49,7 @@ export default function SuggestModal({ isOpen, onClose }: SuggestModalProps) {
 
           <button
             onClick={() => setSelectedType('item')}
-            className="w-full p-6 bg-white border-2 border-wibe rounded-xl hover:border-primary hover:bg-primary/5 transition-colors flex items-center gap-4"
+            className="flex w-full items-center gap-4 rounded-xl border border-border bg-popover p-6 transition-colors hover:border-primary hover:bg-accent"
           >
             <div className="p-3 bg-primary/10 rounded-lg">
               <Package className="w-6 h-6 text-primary" />

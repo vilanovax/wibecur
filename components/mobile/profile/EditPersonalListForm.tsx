@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Loader2, Image as ImageIcon, X } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EditPersonalListFormProps {
   isOpen: boolean;
@@ -164,13 +167,13 @@ export default function EditPersonalListForm({
             >
               عنوان لیست <span className="text-red-500">*</span>
             </label>
-            <input
+            <Input
               type="text"
               id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+              className="h-12"
               placeholder="عنوان لیست را وارد کنید..."
               required
               disabled={isLoading}
@@ -185,14 +188,13 @@ export default function EditPersonalListForm({
             >
               توضیحات (اختیاری)
             </label>
-            <textarea
+            <Textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows={4}
               maxLength={MAX_DESCRIPTION_LENGTH}
-              className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
               placeholder="توضیحات لیست را وارد کنید..."
               disabled={isLoading}
             />
@@ -255,19 +257,16 @@ export default function EditPersonalListForm({
           </div>
         </div>
 
-        <div className="flex-shrink-0 bg-white border-t border-wibe p-4">
+        <div className="flex-shrink-0 border-t border-border bg-popover p-4">
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium"
-              disabled={isLoading || isUploadingImage}
-            >
+            <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onClose} disabled={isLoading || isUploadingImage}>
               انصراف
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              variant="brand"
+              size="lg"
+              className="flex-1"
               disabled={isLoading || isUploadingImage || !formData.title.trim()}
             >
               {isLoading ? (
@@ -278,7 +277,7 @@ export default function EditPersonalListForm({
               ) : (
                 'ذخیره تغییرات'
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </form>

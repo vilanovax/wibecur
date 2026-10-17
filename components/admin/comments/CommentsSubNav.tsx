@@ -95,7 +95,7 @@ export default function CommentsSubNav({ stats }: { stats?: CommentsNavStats }) 
 
   return (
     <nav
-      className="flex gap-1 p-1 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)] overflow-x-auto mb-6"
+      className="flex gap-0.5 p-0.5 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] overflow-x-auto mb-3"
       dir="rtl"
       aria-label="ناوبری کامنت‌ها"
     >
@@ -109,16 +109,16 @@ export default function CommentsSubNav({ stats }: { stats?: CommentsNavStats }) 
           <Link
             key={href}
             href={href}
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
               active
                 ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
             }`}
           >
-            <Icon className="w-4 h-4 shrink-0" />
+            <Icon className="w-3.5 h-3.5 shrink-0" />
             {label}
             {badge != null && (
-              <span className="min-w-[1.25rem] px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-xs font-bold tabular-nums">
+              <span className="min-w-[1.1rem] px-1 py-0.5 rounded-full bg-rose-500 text-white text-xs font-bold tabular-nums leading-none">
                 {badge.toLocaleString('fa-IR')}
               </span>
             )}

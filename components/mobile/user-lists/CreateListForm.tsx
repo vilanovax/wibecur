@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { ListPlus, Loader2, Globe } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import Toast from '@/components/shared/Toast';
 import { track } from '@/lib/analytics';
 import { dispatchListsUpdated } from '@/lib/profile-events';
@@ -180,7 +182,7 @@ export default function CreateListForm({
               <label htmlFor="list-title" className="block wibe-small font-medium text-foreground mb-1.5">
                 عنوان لیست <span className="text-red-500">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 id="list-title"
                 name="title"
@@ -189,7 +191,7 @@ export default function CreateListForm({
                   setTitle(e.target.value);
                   setError('');
                 }}
-                className="w-full h-11 px-3 rounded-lg border border-wibe bg-white wibe-small text-foreground placeholder:text-wibe-secondary/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
+                className="h-12"
                 placeholder={titlePlaceholder}
                 required
                 disabled={isLoading || atLimit}
@@ -207,17 +209,14 @@ export default function CreateListForm({
 
           <div className="flex-shrink-0 border-t border-wibe px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 h-11 rounded-lg border border-wibe bg-wibe-surface wibe-small font-medium text-foreground active:scale-[0.98] transition-transform"
-                disabled={isLoading}
-              >
+              <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onClose} disabled={isLoading}>
                 انصراف
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="flex-1 h-11 rounded-lg bg-primary text-white wibe-small font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
+                variant="brand"
+                size="lg"
+                className="flex-1"
                 disabled={isLoading || !title.trim() || atLimit}
               >
                 {isLoading ? (
@@ -231,7 +230,7 @@ export default function CreateListForm({
                     ایجاد
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </form>

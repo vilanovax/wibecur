@@ -55,25 +55,27 @@ export default function QuickCategoryChips({
     <section
       className={
         isSecondary
-          ? 'mt-1 border-t border-wibe/50 px-4 pb-2 pt-3 lg:mt-0 lg:border-t-0 lg:px-0 lg:pb-1 lg:pt-2'
+          ? 'mt-1 border-t border-wibe/50 pb-2 pt-3 lg:mt-0 lg:border-t-0 lg:pb-1 lg:pt-2'
           : isNav
-            ? 'px-4 py-2 lg:px-0 lg:py-2.5'
-            : 'px-4 py-2 pb-3 lg:border-b lg:border-wibe/60 lg:px-0 lg:py-3 lg:pb-4'
+            ? 'py-2 lg:py-2.5'
+            : 'py-2 pb-3 lg:border-b lg:border-wibe/60 lg:py-3 lg:pb-4'
       }
       aria-label="دسته‌های سریع"
     >
+      <div className="overflow-hidden px-4 lg:overflow-visible lg:px-0">
       <HorizontalScrollFade
         dir="rtl"
-        surface="surface"
+        surface="background"
+        fadeEnd={false}
         fadeClassName="lg:hidden"
-        innerClassName="flex gap-2 snap-x snap-mandatory -mx-1 lg:mx-0 lg:flex-wrap lg:justify-start lg:gap-2 lg:overflow-visible"
+        innerClassName="flex snap-x snap-mandatory gap-1 pe-4 lg:flex-wrap lg:justify-start lg:gap-2 lg:overflow-visible lg:pe-0"
       >
         {isLoading ? (
           <>
             {[1, 2, 3, 4].map((i) => (
               <span
                 key={i}
-                className="h-9 w-20 flex-shrink-0 rounded-lg bg-wibe-muted animate-pulse"
+                className="h-11 w-20 flex-shrink-0 animate-pulse rounded-lg bg-wibe-muted"
               />
             ))}
           </>
@@ -86,7 +88,7 @@ export default function QuickCategoryChips({
                 href={`/categories/${cat.slug}`}
                 onClick={() => trackCategoryChipClick(cat.slug, cat.name)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-3.5 wibe-small font-medium shadow-sm transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:h-8 lg:px-3 lg:wibe-caption ${
+                className={`flex h-11 min-w-11 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-lg border px-2 wibe-small font-medium shadow-sm transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:h-11 lg:px-3 ${
                   isActive
                     ? 'border-primary bg-primary text-white shadow-sm hover:bg-primary-dark'
                     : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30 lg:bg-wibe-surface'
@@ -99,6 +101,7 @@ export default function QuickCategoryChips({
           })
         )}
       </HorizontalScrollFade>
+      </div>
     </section>
   );
 }

@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Send, Loader2, Image as ImageIcon, Sparkles, Film, Search } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import Toast from '@/components/shared/Toast';
 import DynamicMetadataFields from '@/components/admin/items/DynamicMetadataFields';
 import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
@@ -447,20 +450,18 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   در حال بارگذاری دسته‌بندی‌ها...
                 </div>
               ) : (
-                <select
+                <Select
                   name="categoryId"
                   value={selectedCategoryId}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
-                >
-                  <option value="">یک دسته انتخاب کنید</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.icon} {category.name}
-                    </option>
-                  ))}
-                </select>
+                  className="h-12"
+                  placeholder="یک دسته انتخاب کنید"
+                  options={categories.map((category) => ({
+                    value: category.id,
+                    label: `${category.icon} ${category.name}`,
+                  }))}
+                />
               )}
             </div>
 
@@ -479,20 +480,18 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                     هیچ لیستی برای این دسته‌بندی یافت نشد
                   </div>
                 ) : (
-                  <select
+                  <Select
                     name="listId"
                     value={formData.listId}
                     onChange={handleListChange}
                     required
-                    className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
-                  >
-                    <option value="">یک لیست انتخاب کنید</option>
-                    {filteredLists.map((list) => (
-                      <option key={list.id} value={list.id}>
-                        {list.categories.icon} {list.title}
-                      </option>
-                    ))}
-                  </select>
+                    className="h-12"
+                    placeholder="یک لیست انتخاب کنید"
+                    options={filteredLists.map((list) => ({
+                      value: list.id,
+                      label: `${list.categories.icon} ${list.title}`,
+                    }))}
+                  />
                 )}
               </div>
             )}
@@ -520,13 +519,13 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   </button>
                 )}
               </div>
-              <input
+              <Input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
+                className="h-12"
                 placeholder="عنوان آیتم را وارد کنید"
               />
             </div>
@@ -553,12 +552,11 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                   </button>
                 )}
               </div>
-              <textarea
+              <Textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none resize-none"
                 placeholder="توضیحات آیتم (اختیاری)"
               />
             </div>
@@ -668,32 +666,33 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
               <label className="block text-sm font-medium text-foreground mb-2">
                 لینک خارجی
               </label>
-              <input
+              <Input
                 type="url"
                 name="externalUrl"
                 value={formData.externalUrl}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
+                dir="ltr"
+                className="h-12"
                 placeholder="https://example.com (اختیاری)"
               />
             </div>
           </div>
 
           {/* Footer with Submit Button */}
-          <div className="border-t border-wibe p-6 flex-shrink-0 bg-white">
+          <div className="flex-shrink-0 border-t border-border bg-popover p-6">
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 border border-wibe rounded-lg text-foreground hover:bg-wibe-surface transition-colors disabled:opacity-50"
+                className="flex h-12 flex-1 items-center justify-center rounded-xl border border-border bg-secondary text-sm font-semibold text-secondary-foreground disabled:opacity-50"
               >
                 انصراف
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-brand-foreground disabled:opacity-50"
               >
                 {isLoading ? (
                   <>

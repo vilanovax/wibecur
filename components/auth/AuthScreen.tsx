@@ -1,28 +1,29 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { ArrowLeft, Bookmark, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { DEFAULT_PACK_AVATARS } from '@/lib/vibe-avatars';
 import {
-  ArrowLeft,
-  Bookmark,
-  Eye,
-  EyeOff,
-  Loader2,
-} from 'lucide-react';
-import {
+  digitsFromPhoneInput,
   formatIranPhoneDisplay,
+  formatPhoneDigitsForDisplay,
   normalizeIranPhone,
   validateAuthPassword,
   validatePhoneInput,
 } from '@/lib/phone-auth';
-import { persianToEnglish } from '@/lib/utils/number-converter';
-import RegisterAvatarPicker, {
-  getDefaultRegisterAvatarId,
-} from './RegisterAvatarPicker';
-import AuthShell from './AuthShell';
+import { cn } from '@/lib/utils';
 import { trackSignupComplete, type SignupSource } from '@/lib/analytics';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import AuthShell from './AuthShell';
+
+const RegisterAvatarPicker = dynamic(() => import('./RegisterAvatarPicker'), {
+  loading: () => <div className="h-16 rounded-xl bg-muted" aria-hidden />,
+});
 
 export type AuthMode = 'login' | 'register';
 type LoginStep = 'phone' | 'password';
@@ -53,6 +54,10 @@ export function resolveSignupSource(raw?: string | null): SignupSource {
   return parseSignupSource(raw);
 }
 
+function defaultAvatarId(): string {
+  return DEFAULT_PACK_AVATARS.find((avatar) => avatar.id === 'vibe')?.id ?? DEFAULT_PACK_AVATARS[0]?.id ?? 'vibe';
+}
+
 export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' }: AuthScreenProps) {
   const router = useRouter();
   const isRegister = mode === 'register';
@@ -60,14 +65,21 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [avatarId, setAvatarId] = useState(getDefaultRegisterAvatarId);
+  const [avatarId, setAvatarId] = useState(defaultAvatarId);
   const [showPassword, setShowPassword] = useState(false);
   const [loginStep, setLoginStep] = useState<LoginStep>('phone');
   const [error, setError] = useState('');
+  const [fieldError, setFieldError] = useState('');
+  const [fieldErrorTarget, setFieldErrorTarget] = useState<'phone' | 'password' | null>(null);
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handlePhoneChange = (value: string) => {
-    setPhone(persianToEnglish(value));
+    setPhone(digitsFromPhoneInput(value));
+    if (fieldErrorTarget === 'phone') {
+      setFieldError('');
+      setFieldErrorTarget(null);
+    }
   };
 
   const passwordStrength = getPasswordStrength(password);
@@ -77,13 +89,25 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
   const loginHref = `/login?callbackUrl=${encodeURIComponent(callbackUrl)}${sourceQuery}`;
   const guestHref = callbackUrl && callbackUrl !== '/login' ? callbackUrl : '/';
 
+  const clearFeedback = () => {
+    setError('');
+    setFieldError('');
+    setFieldErrorTarget(null);
+    setNotice('');
+  };
+
+  const showFieldError = (target: 'phone' | 'password', message: string) => {
+    setFieldErrorTarget(target);
+    setFieldError(message);
+  };
+
   const handlePhoneContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearFeedback();
 
     const phoneError = validatePhoneInput(phone);
     if (phoneError) {
-      setError(phoneError);
+      showFieldError('phone', phoneError);
       return;
     }
 
@@ -92,11 +116,11 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearFeedback();
 
     const passwordError = validateAuthPassword(password);
     if (passwordError) {
-      setError(passwordError);
+      showFieldError('password', passwordError);
       return;
     }
 
@@ -125,17 +149,17 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearFeedback();
 
     const phoneError = validatePhoneInput(phone);
     if (phoneError) {
-      setError(phoneError);
+      showFieldError('phone', phoneError);
       return;
     }
 
     const passwordError = validateAuthPassword(password);
     if (passwordError) {
-      setError(passwordError);
+      showFieldError('password', passwordError);
       return;
     }
 
@@ -182,247 +206,270 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
   const resetLoginStep = () => {
     setLoginStep('phone');
     setPassword('');
-    setError('');
+    clearFeedback();
   };
 
   const displayPhone = useMemo(() => {
     const normalized = normalizeIranPhone(phone);
-    return normalized ? formatIranPhoneDisplay(normalized) : phone;
+    return normalized ? formatIranPhoneDisplay(normalized) : formatPhoneDigitsForDisplay(phone);
   }, [phone]);
 
   if (!isRegister) {
     return (
       <AuthShell>
-        <AuthBrandHeader />
+        <div className="flex flex-col gap-6">
+          <AuthBrandHeader />
 
-        <AuthFormCard>
-          <form
-            onSubmit={loginStep === 'phone' ? handlePhoneContinue : handleLogin}
-            className="space-y-4"
-          >
-            {loginStep === 'phone' ? (
-              <AuthField
-                label="شماره موبایل"
-                type="tel"
-                inputMode="tel"
-                value={phone}
-                onChange={(e) => handlePhoneChange(e.target.value)}
-                placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
-                autoComplete="tel"
-                required
-                dir="ltr"
-                className="text-left tracking-wide"
-                autoFocus
-                hasError={Boolean(error)}
-              />
-            ) : (
-              <>
-                <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-3">
-                  <div className="min-w-0">
-                    <p className="text-xs text-wibe-secondary">شماره موبایل</p>
-                    <p className="mt-0.5 truncate text-sm font-medium text-foreground" dir="ltr">
-                      {displayPhone}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={resetLoginStep}
-                    className="shrink-0 text-xs font-medium text-primary transition-colors hover:text-primary-dark"
-                  >
-                    تغییر
-                  </button>
-                </div>
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="text-sm font-medium text-foreground">رمز عبور</label>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setError(
-                          'بازیابی رمز عبور به‌زودی اضافه می‌شود. فعلاً ثبت‌نام کن یا با پشتیبانی تماس بگیر.'
-                        )
-                      }
-                      className="text-xs font-medium text-primary transition-colors hover:text-primary-dark"
-                    >
-                      فراموشی رمز؟
-                    </button>
-                  </div>
-                  <AuthField
-                    label=""
-                    hideLabel
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="رمز عبور"
-                    autoComplete="current-password"
-                    required
-                    minLength={6}
-                    dir="ltr"
-                    className="pe-11 text-left"
-                    autoFocus
-                    hasError={Boolean(error)}
-                    trailing={
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-wibe-secondary transition-colors hover:bg-gray-100 hover:text-wibe-secondary"
-                        aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-[1.125rem] w-[1.125rem]" />
-                        ) : (
-                          <Eye className="h-[1.125rem] w-[1.125rem]" />
-                        )}
-                      </button>
-                    }
-                  />
-                </div>
-              </>
-            )}
-
-            {error && <AuthErrorAlert message={error} />}
-
-            <AuthPrimaryButton loading={loading} loadingLabel="در حال ورود…">
+          <AuthFormCard>
+            <form
+              onSubmit={loginStep === 'phone' ? handlePhoneContinue : handleLogin}
+              className="flex flex-col gap-4"
+              noValidate
+            >
               {loginStep === 'phone' ? (
-                'ادامه'
+                <AuthField
+                  id="auth-phone"
+                  label="شماره موبایل"
+                  type="tel"
+                  inputMode="tel"
+                  name="tel"
+                  value={formatPhoneDigitsForDisplay(phone)}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
+                  autoComplete="tel"
+                  enterKeyHint="next"
+                  required
+                  dir="ltr"
+                  autoFocus
+                  error={fieldErrorTarget === 'phone' ? fieldError : undefined}
+                />
               ) : (
                 <>
-                  ورود
-                  <ArrowLeft className="h-4 w-4" aria-hidden />
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4! py-2!">
+                    <div className="min-w-0">
+                      <p className="wibe-caption text-muted-foreground">شماره موبایل</p>
+                      <p className="truncate wibe-small font-medium text-foreground" dir="ltr">
+                        {displayPhone}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resetLoginStep}
+                      className="flex min-h-11 shrink-0 items-center px-2! wibe-small font-medium text-brand"
+                    >
+                      تغییر
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <label htmlFor="auth-password" className="wibe-small font-medium text-foreground">
+                        رمز عبور
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNotice(
+                            'بازیابی رمز عبور به‌زودی اضافه می‌شود. فعلاً ثبت‌نام کن یا با پشتیبانی تماس بگیر.'
+                          )
+                        }
+                        className="flex min-h-11 items-center px-2! wibe-caption font-medium text-brand"
+                      >
+                        فراموشی رمز؟
+                      </button>
+                    </div>
+                    <AuthField
+                      id="auth-password"
+                      label="رمز عبور"
+                      hideLabel
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (fieldErrorTarget === 'password') {
+                          setFieldError('');
+                          setFieldErrorTarget(null);
+                        }
+                      }}
+                      placeholder="رمز عبور"
+                      autoComplete="current-password"
+                      enterKeyHint="done"
+                      required
+                      minLength={6}
+                      dir="ltr"
+                      autoFocus
+                      error={fieldErrorTarget === 'password' ? fieldError : undefined}
+                      trailing={
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((value) => !value)}
+                          className="absolute end-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                          aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="size-5" strokeWidth={1.5} />
+                          ) : (
+                            <Eye className="size-5" strokeWidth={1.5} />
+                          )}
+                        </button>
+                      }
+                    />
+                  </div>
                 </>
               )}
-            </AuthPrimaryButton>
-          </form>
 
-          <p className="mt-4 text-center">
+              {notice ? (
+                <p role="status" className="wibe-caption text-muted-foreground">
+                  {notice}
+                </p>
+              ) : null}
+
+              {error ? <AuthErrorAlert message={error} /> : null}
+
+              <AuthPrimaryButton loading={loading} loadingLabel="در حال ورود…">
+                {loginStep === 'phone' ? (
+                  'ادامه'
+                ) : (
+                  <>
+                    ورود
+                    <ArrowLeft className="size-4" aria-hidden />
+                  </>
+                )}
+              </AuthPrimaryButton>
+            </form>
+
             <Link
               href={guestHref}
-              className="text-sm text-wibe-secondary transition-colors hover:text-foreground"
+              className="flex min-h-11 items-center justify-center wibe-small text-muted-foreground hover:text-foreground"
             >
               بعداً وارد می‌شوم
             </Link>
-          </p>
-        </AuthFormCard>
+          </AuthFormCard>
 
-        <AuthLegalNotice mode="login" />
-
-        <p className="mt-4 text-center text-sm text-wibe-secondary">
-          حساب نداری؟{' '}
-          <Link
-            href={registerHref}
-            className="font-medium text-primary transition-colors hover:text-primary-dark hover:underline"
-          >
-            ثبت‌نام
-          </Link>
-        </p>
+          <AuthFooter
+            legal={<AuthLegalNotice mode="login" />}
+            prompt="حساب نداری؟"
+            actionHref={registerHref}
+            actionLabel="ثبت‌نام"
+          />
+        </div>
       </AuthShell>
     );
   }
 
   return (
     <AuthShell>
-      <AuthBrandHeader
-        title="ساخت حساب"
-        subtitle="چند ثانیه تا شروع کشف لیست‌ها"
-      />
+      <div className="flex flex-col gap-6">
+        <AuthBrandHeader title="ساخت حساب" subtitle="چند ثانیه تا شروع کشف لیست‌ها" />
 
-      <AuthFormCard>
-        <form onSubmit={handleRegisterSubmit} className="space-y-4">
-          <RegisterAvatarPicker value={avatarId} onChange={setAvatarId} />
+        <AuthFormCard>
+          <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4" noValidate>
+            <RegisterAvatarPicker value={avatarId} onChange={setAvatarId} />
 
-          <AuthField
-            label="نام"
-            hint="اختیاری — در پروفایل نمایش داده می‌شود"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="مثلاً رامین"
-            autoComplete="name"
-          />
-
-          <AuthField
-            label="شماره موبایل"
-            type="tel"
-            inputMode="tel"
-            value={phone}
-            onChange={(e) => handlePhoneChange(e.target.value)}
-            placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
-            autoComplete="tel"
-            required
-            dir="ltr"
-            className="text-left tracking-wide"
-            autoFocus
-            hasError={Boolean(error)}
-          />
-
-          <div>
             <AuthField
-              label="رمز عبور"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="حداقل ۶ کاراکتر"
-              autoComplete="new-password"
-              required
-              minLength={6}
-              dir="ltr"
-              className="pe-11 text-left"
-              hasError={Boolean(error)}
-              trailing={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-wibe-secondary transition-colors hover:bg-gray-100 hover:text-wibe-secondary"
-                  aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-[1.125rem] w-[1.125rem]" />
-                  ) : (
-                    <Eye className="h-[1.125rem] w-[1.125rem]" />
-                  )}
-                </button>
-              }
+              id="auth-name"
+              label="نام"
+              hint="اختیاری — در پروفایل نمایش داده می‌شود"
+              type="text"
+              name="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="مثلاً رامین"
+              autoComplete="name"
             />
-            {password.length > 0 && (
-              <div className="mt-2.5">
-                <div className="flex gap-1">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className={`h-1 flex-1 rounded-full transition-colors ${
-                        passwordStrength >= i ? passwordStrengthColor(passwordStrength) : 'bg-gray-200'
-                      }`}
-                    />
-                  ))}
+
+            <AuthField
+              id="auth-phone"
+              label="شماره موبایل"
+              type="tel"
+              inputMode="tel"
+              name="tel"
+              value={formatPhoneDigitsForDisplay(phone)}
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
+              autoComplete="tel"
+              required
+              dir="ltr"
+              autoFocus
+              error={fieldErrorTarget === 'phone' ? fieldError : undefined}
+            />
+
+            <div className="flex flex-col gap-2">
+              <AuthField
+                id="auth-new-password"
+                label="رمز عبور"
+                type={showPassword ? 'text' : 'password'}
+                name="new-password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrorTarget === 'password') {
+                    setFieldError('');
+                    setFieldErrorTarget(null);
+                  }
+                }}
+                placeholder="حداقل ۶ کاراکتر"
+                autoComplete="new-password"
+                required
+                minLength={6}
+                dir="ltr"
+                error={fieldErrorTarget === 'password' ? fieldError : undefined}
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute end-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="size-5" strokeWidth={1.5} />
+                    ) : (
+                      <Eye className="size-5" strokeWidth={1.5} />
+                    )}
+                  </button>
+                }
+              />
+              {password.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-1" aria-hidden>
+                    {[1, 2, 3].map((level) => (
+                      <div
+                        key={level}
+                        className={cn(
+                          'h-1 flex-1 rounded-full',
+                          passwordStrength >= level
+                            ? passwordStrengthColor(passwordStrength)
+                            : 'bg-muted',
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <p className="wibe-caption text-muted-foreground">
+                    {passwordStrengthLabel(passwordStrength)}
+                  </p>
                 </div>
-                <p className="mt-1 wibe-caption text-wibe-secondary">{passwordStrengthLabel(passwordStrength)}</p>
-              </div>
-            )}
-          </div>
+              ) : null}
+            </div>
 
-          {error && <AuthErrorAlert message={error} />}
+            {error ? <AuthErrorAlert message={error} /> : null}
 
-          <AuthPrimaryButton loading={loading} loadingLabel="در حال ساخت حساب…">
-            <>
-              ساخت حساب
-              <ArrowLeft className="h-4 w-4" aria-hidden />
-            </>
-          </AuthPrimaryButton>
-        </form>
-      </AuthFormCard>
+            <AuthPrimaryButton loading={loading} loadingLabel="در حال ساخت حساب…">
+              <>
+                ساخت حساب
+                <ArrowLeft className="size-4" aria-hidden />
+              </>
+            </AuthPrimaryButton>
+          </form>
+        </AuthFormCard>
 
-      <AuthLegalNotice mode="register" />
-
-      <p className="mt-4 text-center text-sm text-wibe-secondary">
-        حساب داری؟{' '}
-        <Link
-          href={loginHref}
-          className="font-medium text-primary transition-colors hover:text-primary-dark hover:underline"
-        >
-          ورود
-        </Link>
-      </p>
+        <AuthFooter
+          legal={<AuthLegalNotice mode="register" />}
+          prompt="حساب داری؟"
+          actionHref={loginHref}
+          actionLabel="ورود"
+        />
+      </div>
     </AuthShell>
   );
 }
@@ -435,20 +482,49 @@ function AuthBrandHeader({
   subtitle?: string;
 }) {
   return (
-    <div className="text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary">
-        <Bookmark className="h-6 w-6 fill-white text-white" strokeWidth={2.25} />
+    <div className="flex flex-col items-center gap-3 text-center">
+      <div className="flex size-12 items-center justify-center rounded-2xl bg-primary">
+        <Bookmark className="size-6 fill-primary-foreground text-primary-foreground" strokeWidth={2} aria-hidden />
       </div>
-      <h1 className="mt-4 text-2xl font-bold text-foreground">{title}</h1>
-      <p className="mt-2 text-sm leading-relaxed text-wibe-secondary">{subtitle}</p>
+      <div className="flex flex-col gap-2">
+        <h1 className="wibe-h2">{title}</h1>
+        <p className="text-pretty wibe-small text-muted-foreground">{subtitle}</p>
+      </div>
     </div>
   );
 }
 
 function AuthFormCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-8 rounded-2xl border border-gray-100/80 bg-white/95 p-5 shadow-sm backdrop-blur-sm sm:p-6">
+    <div className="flex flex-col gap-2 rounded-2xl border border-border bg-popover p-5! shadow-overlay">
       {children}
+    </div>
+  );
+}
+
+function AuthFooter({
+  legal,
+  prompt,
+  actionHref,
+  actionLabel,
+}: {
+  legal: React.ReactNode;
+  prompt: string;
+  actionHref: string;
+  actionLabel: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 text-center">
+      {legal}
+      <p className="flex flex-wrap items-center justify-center gap-1 wibe-small text-muted-foreground">
+        <span>{prompt}</span>
+        <Link
+          href={actionHref}
+          className="inline-flex min-h-11 items-center px-2! font-medium text-brand hover:underline"
+        >
+          {actionLabel}
+        </Link>
+      </p>
     </div>
   );
 }
@@ -456,7 +532,7 @@ function AuthFormCard({ children }: { children: React.ReactNode }) {
 function AuthLegalNotice({ mode }: { mode: 'login' | 'register' }) {
   const verb = mode === 'register' ? 'ثبت‌نام' : 'ورود';
   return (
-    <p className="mt-5 text-center text-xs leading-relaxed text-wibe-secondary">
+    <p className="text-pretty wibe-caption text-muted-foreground">
       {verb} یعنی پذیرش قوانین و حریم خصوصی
     </p>
   );
@@ -466,7 +542,7 @@ function AuthErrorAlert({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm leading-relaxed text-red-700"
+      className="rounded-xl border border-destructive/30 bg-destructive/10 px-4! py-3! wibe-small text-destructive"
     >
       {message}
     </div>
@@ -483,75 +559,78 @@ function AuthPrimaryButton({
   loadingLabel: string;
 }) {
   return (
-    <button
+    <Button
       type="submit"
+      variant="brand"
+      size="lg"
       disabled={loading}
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-semibold text-white transition-colors hover:bg-primary-dark active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+      aria-busy={loading}
+      className="w-full"
     >
       {loading ? (
         <>
-          <Loader2 className="h-5 w-5 animate-spin" />
+          <Loader2 className="size-5 animate-spin" />
           {loadingLabel}
         </>
       ) : (
         children
       )}
-    </button>
+    </Button>
   );
 }
 
 function AuthField({
   label,
   hint,
-  icon,
   trailing,
   className = '',
-  hasError = false,
+  error,
   hideLabel = false,
   id,
+  dir,
   ...props
 }: {
   label: string;
   hint?: string;
-  icon?: React.ReactNode;
   trailing?: React.ReactNode;
   className?: string;
-  hasError?: boolean;
+  error?: string;
   hideLabel?: boolean;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
-  const fieldId =
-    id ||
-    (label
-      ? `auth-field-${label.replace(/\s+/g, '-').slice(0, 40)}`
-      : undefined);
+  const fieldId = id || `auth-field-${label.replace(/\s+/g, '-').slice(0, 40)}`;
+  const errorId = error ? `${fieldId}-error` : undefined;
+  const ltr = dir === 'ltr';
 
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       {!hideLabel && label ? (
-        <label htmlFor={fieldId} className="mb-2 block">
+        <label htmlFor={fieldId} className="flex flex-col gap-1">
           <span className="wibe-small font-medium text-foreground">{label}</span>
-          {hint && <span className="mt-0.5 block wibe-caption text-wibe-secondary">{hint}</span>}
+          {hint ? <span className="wibe-caption text-muted-foreground">{hint}</span> : null}
         </label>
       ) : null}
-      <div className="relative flex items-center">
-        {icon && (
-          <span className="pointer-events-none absolute start-3.5 text-wibe-secondary">{icon}</span>
-        )}
-        <input
+      <div className="relative" dir={ltr ? 'ltr' : undefined}>
+        <Input
           {...props}
           id={fieldId}
+          dir={dir}
           aria-label={hideLabel && label ? label : props['aria-label']}
-          aria-invalid={hasError || undefined}
-          className={`w-full rounded-xl border bg-white py-3.5 wibe-body text-foreground placeholder:text-wibe-secondary outline-none transition-[border-color,box-shadow] focus:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/15 ${
-            icon ? 'ps-11 pe-3' : 'px-3.5'
-          } ${
-            hasError
-              ? 'border-red-300 focus:border-red-400 focus-visible:ring-red-100'
-              : 'border-gray-200'
-          } ${className}`}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={errorId}
+          className={cn(
+            'h-12! rounded-xl! wibe-body ps-4!',
+            trailing ? 'pe-12!' : 'pe-4!',
+            ltr && 'text-start',
+            className,
+          )}
         />
         {trailing}
       </div>
+      {error ? (
+        <p id={errorId} role="alert" className="wibe-small text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -564,9 +643,9 @@ function getPasswordStrength(password: string): number {
 }
 
 function passwordStrengthColor(level: number): string {
-  if (level >= 3) return 'bg-emerald-500';
-  if (level >= 2) return 'bg-amber-400';
-  return 'bg-orange-400';
+  if (level >= 3) return 'bg-success';
+  if (level >= 2) return 'bg-warning';
+  return 'bg-destructive';
 }
 
 function passwordStrengthLabel(level: number): string {

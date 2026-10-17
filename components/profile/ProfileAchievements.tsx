@@ -196,8 +196,8 @@ function AllAchievementsSheet({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white" dir="rtl">
-      <div className="flex items-center gap-2 border-b border-wibe px-4 py-3">
+    <div data-theme="paper" className="fixed inset-0 z-50 flex flex-col bg-background text-foreground" dir="rtl" role="dialog" aria-modal="true" aria-label="همه دستاوردها">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         <button
           type="button"
           onClick={onClose}

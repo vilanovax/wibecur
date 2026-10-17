@@ -22,16 +22,16 @@ export default function RegisterAvatarPicker({ value, onChange }: RegisterAvatar
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-3">
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4! py-2!">
         <div className="flex min-w-0 items-center gap-3">
           {selectedAvatar ? (
-            <VibeAvatarDisplay avatar={selectedAvatar} size={52} />
+            <VibeAvatarDisplay avatar={selectedAvatar} size={48} />
           ) : (
-            <div className="h-[52px] w-[52px] rounded-full bg-gray-200" />
+            <div className="size-12 rounded-full bg-secondary" />
           )}
-          <div className="min-w-0 text-right">
-            <p className="text-sm font-medium text-foreground">آواتار تو</p>
-            <p className="mt-0.5 truncate text-xs text-wibe-secondary">
+          <div className="min-w-0 text-start">
+            <p className="wibe-small font-medium text-foreground">آواتار تو</p>
+            <p className="truncate wibe-caption text-muted-foreground">
               {selectedAvatar?.label ?? 'پیش‌فرض'}
             </p>
           </div>
@@ -39,7 +39,7 @@ export default function RegisterAvatarPicker({ value, onChange }: RegisterAvatar
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
-          className="shrink-0 text-xs font-medium text-primary transition-colors hover:text-primary-dark"
+          className="flex min-h-11 shrink-0 items-center px-2! wibe-caption font-medium text-brand"
         >
           تغییر آواتار
         </button>

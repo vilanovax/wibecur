@@ -14,6 +14,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Textarea } from '@/components/ui/textarea';
 
 const REPORT_REASONS = [
   {
@@ -198,15 +199,16 @@ export default function ListReportModal({
                 <label htmlFor="list-report-desc" className="mb-1.5 block text-sm font-medium text-foreground">
                   توضیح کوتاه <span className="text-red-500">*</span>
                 </label>
-                <textarea
+                <Textarea
                   id="list-report-desc"
                   ref={descriptionRef}
                   value={description}
                   onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX_LENGTH))}
                   rows={3}
+                  maxLength={DESCRIPTION_MAX_LENGTH}
+                  showCount
                   placeholder="مثلاً: عنوان لیست با آیتم‌ها مطابقت ندارد..."
                   disabled={isSubmitting}
-                  className="w-full resize-none rounded-xl border border-wibe bg-wibe-surface/50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:opacity-50"
                 />
               </div>
             )}
@@ -223,7 +225,7 @@ export default function ListReportModal({
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-medium text-white disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-brand-foreground disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

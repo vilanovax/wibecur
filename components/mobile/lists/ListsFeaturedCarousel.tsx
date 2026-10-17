@@ -21,7 +21,7 @@ interface ListsFeaturedCarouselProps {
 }
 
 const SLIDE_CLASS =
-  'w-[min(72vw,240px)] shrink-0 snap-start max-lg:snap-center lg:w-full lg:max-w-none lg:shrink';
+  'w-full min-w-full shrink-0 snap-start lg:min-w-0 lg:w-full lg:max-w-none lg:shrink';
 
 export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -72,7 +72,7 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
       ) : (
         <div
           ref={scrollRef}
-          className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-2 max-lg:overflow-x-auto max-lg:pb-0.5 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
+          className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-0 max-lg:overflow-x-auto max-lg:pb-0.5 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
           role="list"
           aria-label="لیست‌های منتخب"
         >
@@ -128,11 +128,11 @@ function FeaturedSlide({
       />
       <div className="absolute inset-0 bg-gradient-to-l from-black/85 via-black/50 to-black/20" />
       {categoryLabel && (
-        <span className="absolute top-1.5 right-1.5 rounded-md bg-black/45 px-1.5 py-0.5 wibe-caption text-white/95 backdrop-blur-sm lg:top-2.5 lg:right-2.5 lg:px-2">
+        <span className="absolute end-1.5 top-1.5 rounded-md bg-black/45 px-1.5 py-0.5 wibe-caption text-white/95 backdrop-blur-sm lg:end-2.5 lg:top-2.5 lg:px-2">
           {categoryLabel}
         </span>
       )}
-      <div className="absolute inset-0 flex flex-col justify-end p-2 text-right lg:p-4">
+      <div className="absolute inset-0 flex flex-col justify-end p-2 text-start lg:p-4">
         <h3 className="line-clamp-2 wibe-caption font-bold text-white lg:wibe-small lg:text-lg">
           {list.title}
         </h3>

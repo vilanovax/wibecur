@@ -856,7 +856,7 @@ export default function ListsPageClient({
           <button
             type="button"
             onClick={() => openSearch({ query: searchQuery })}
-            className={`flex h-10 shrink-0 items-center gap-1 rounded-xl border border-wibe bg-wibe-card px-2.5 text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 ${toolbarBtnFocus} ${
+            className={`flex h-12 shrink-0 items-center gap-1 rounded-xl border border-wibe bg-wibe-card px-3 text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-12 ${toolbarBtnFocus} ${
               isSearchActive ? 'hidden' : ''
             }`}
             aria-label="جستجوی سراسری در وایب"
@@ -871,7 +871,7 @@ export default function ListsPageClient({
       {showBrowseToolbar && (
         <>
           <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
-            <div className="flex items-center gap-1.5 px-3 py-2 lg:gap-2 lg:px-0">
+            <div className="flex items-center gap-1.5 px-4 py-2 lg:gap-2 lg:px-0">
               <div
                 className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide"
                 role="group"
@@ -900,7 +900,7 @@ export default function ListsPageClient({
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
                 }`}
-                aria-label="فیلتر نمایش و مرتب‌سازی"
+                aria-label="فیلتر نمایش"
               >
                 <Filter className="h-4 w-4" />
                 <span className="wibe-caption font-medium">فیلتر</span>
@@ -908,15 +908,14 @@ export default function ListsPageClient({
             </div>
           </div>
 
-          <div
-            className="flex gap-1.5 overflow-x-auto px-3 py-2 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0"
-            aria-label="فیلتر دسته"
-          >
+          <div className="py-2 ps-4 lg:px-0" aria-label="فیلتر دسته">
+            <div className="me-20 overflow-hidden lg:me-0 lg:overflow-visible">
+            <div className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto pe-1 scrollbar-hide lg:flex-wrap lg:snap-none lg:overflow-visible lg:pe-0">
             <button
               type="button"
               data-category-chip="all"
               onClick={handleAllCategoriesClick}
-              className={`h-11 flex-shrink-0 rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:px-3 ${toolbarBtnFocus} ${
+              className={`h-11 flex-shrink-0 snap-start rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:snap-align-none lg:px-3 ${toolbarBtnFocus} ${
                 isAllCategoriesSelected
                   ? 'bg-primary text-white shadow-sm'
                   : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -933,7 +932,7 @@ export default function ListsPageClient({
                   data-category-chip={cat.id}
                   onClick={() => handleCategoryClick(cat.id)}
                   aria-pressed={isSelected}
-                  className={`h-11 flex-shrink-0 whitespace-nowrap rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:px-3 ${toolbarBtnFocus} ${
+                  className={`h-11 flex-shrink-0 snap-start whitespace-nowrap rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] lg:h-9 lg:snap-align-none lg:px-3 ${toolbarBtnFocus} ${
                     isSelected
                       ? 'bg-primary text-white shadow-sm'
                       : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -944,10 +943,12 @@ export default function ListsPageClient({
                 </button>
               );
             })}
+            </div>
+            </div>
           </div>
 
           {hasAdvancedFilters && (
-            <div className="flex flex-wrap items-center gap-1.5 px-3 pb-2 lg:px-0">
+            <div className="flex flex-wrap items-center gap-1.5 px-4 pb-2 lg:px-0">
               {[...filterState.vibes]
                 .filter((v) => v !== 'trending' && v !== 'saved')
                 .map((v) => {
@@ -987,7 +988,7 @@ export default function ListsPageClient({
           )}
 
           {showContextBar && (
-            <p className="px-3 pb-1.5 wibe-caption text-wibe-secondary lg:px-0">
+            <p className="px-4 pb-1.5 wibe-caption text-wibe-secondary lg:px-0">
               {contextParts.join(' · ')}
             </p>
           )}
@@ -996,12 +997,12 @@ export default function ListsPageClient({
 
       {/* منتخب demoted: after mode+category chrome so catalog chips win first viewport */}
       {showFeatured ? (
-        <div className="mb-1 max-lg:px-3 lg:mb-2 lg:px-0">
+        <div className="mb-1 max-lg:px-4 lg:mb-2 lg:px-0">
           <ListsFeaturedCarousel lists={featuredLists} />
         </div>
       ) : null}
 
-      <div className="mt-2 w-full min-w-0 max-lg:px-3 lg:mt-4 lg:px-0">
+      <div className="mt-2 w-full min-w-0 max-lg:px-4 lg:mt-4 lg:px-0">
         {guestSavedGate ? (
           <GuestSavedEmptyState />
         ) : browseMode === 'saved' && !bookmarksLoaded ? (

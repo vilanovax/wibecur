@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react';
 import type { ListsViewMode } from '@/lib/lists-page-layout';
+import { Button } from '@/components/ui/button';
 export type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
 /** Browse-mode vibes stay in FilterState for URL/mode sync; mood vibes are Explore-only */
 export type VibeFilter = 'trending' | 'saved' | 'sleep' | 'calm_movie' | 'cafe' | 'family' | 'comedy' | 'drama';
@@ -169,24 +170,24 @@ export default function FilterBottomSheetPro({
   const activeCategories = cats.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   const sheet = (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center">
+    <div data-theme="paper" className="fixed inset-0 z-[60] flex items-end justify-center">
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onClose}
         aria-hidden
       />
       <div
-        className="relative bg-white rounded-t-[28px] shadow-2xl w-full max-w-2xl flex flex-col animate-in slide-in-from-bottom duration-300"
+        className="relative flex w-full max-w-2xl flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-overlay animate-in slide-in-from-bottom duration-300"
         style={{ height: '85vh' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-wibe-surface rounded-full" />
+          <div className="h-1 w-10 rounded-full bg-muted" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 border-b border-wibe">
+        <div className="flex flex-shrink-0 items-center justify-between border-b border-border px-6 py-3">
           <button
             onClick={onClose}
             className="w-10 h-10 rounded-full hover:bg-wibe-surface flex items-center justify-center"
@@ -407,14 +408,10 @@ export default function FilterBottomSheetPro({
         </div>
 
         {/* Sticky Bottom CTA */}
-        <div className="p-6 pt-4 flex-shrink-0 border-t border-wibe">
-          <button
-            type="button"
-            onClick={handleApply}
-            className="w-full h-14 rounded-[20px] bg-gradient-to-r from-primary to-primary-dark text-white font-semibold wibe-body flex items-center justify-center shadow-lg hover:opacity-95 transition-opacity"
-          >
+        <div className="flex-shrink-0 border-t border-border p-6 pt-4">
+          <Button type="button" variant="brand" size="lg" className="w-full rounded-xl" onClick={handleApply}>
             اعمال فیلتر ({resultCount.toLocaleString('fa-IR')} نتیجه)
-          </button>
+          </Button>
         </div>
       </div>
     </div>

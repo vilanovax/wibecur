@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Settings, Edit, Trash2, X, Eye, EyeOff } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Switch } from '@/components/ui/switch';
 import EditPersonalListForm from './EditPersonalListForm';
 import DeleteListConfirmModal from './DeleteListConfirmModal';
 import ListCollaborationPanel from './ListCollaborationPanel';
@@ -249,23 +250,12 @@ export default function PersonalListSettingsModal({
                     : 'این لیست فقط برای شما قابل مشاهده است'}
                 </p>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={list.isPublic}
-                aria-label={list.isPublic ? 'خصوصی کردن لیست' : 'عمومی کردن لیست'}
-                onClick={handleTogglePublic}
+              <Switch
+                checked={list.isPublic}
+                onCheckedChange={() => handleTogglePublic()}
                 disabled={isToggling}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  list.isPublic ? 'bg-primary' : 'bg-wibe-surface'
-                } ${isToggling ? 'opacity-50' : ''}`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    list.isPublic ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+                aria-label={list.isPublic ? 'خصوصی کردن لیست' : 'عمومی کردن لیست'}
+              />
             </div>
 
             {/* Instructions for making public */}

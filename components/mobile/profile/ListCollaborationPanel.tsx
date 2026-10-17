@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { UserPlus, Users, X } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 
 type CollaboratorMember = {
   id: string;
@@ -139,42 +142,26 @@ export default function ListCollaborationPanel({
             <p className="text-sm text-wibe-secondary">دعوت دیگران برای افزودن آیتم</p>
           </div>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={collaborationEnabled}
+        <Switch
+          checked={collaborationEnabled}
+          onCheckedChange={() => toggleCollaboration()}
           aria-label="همکاری در لیست"
-          onClick={toggleCollaboration}
-          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-            collaborationEnabled ? 'bg-primary' : 'bg-wibe-surface'
-          }`}
-        >
-          <span
-            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-              collaborationEnabled ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
+        />
       </div>
 
       <div className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="نام کاربری (@username)"
-          className="flex-1 rounded-lg border border-wibe px-3 py-2 text-sm"
+          className="h-12 flex-1"
           dir="ltr"
         />
-        <button
-          type="button"
-          onClick={inviteUser}
-          disabled={inviting || !username.trim()}
-          className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        >
+        <Button type="button" variant="brand" size="lg" onClick={inviteUser} disabled={inviting || !username.trim()}>
           <UserPlus className="h-4 w-4" />
           دعوت
-        </button>
+        </Button>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { track, type AnalyticsData } from '@/lib/analytics';
 import { signOutIfStaleSession } from '@/lib/session-client';
 
@@ -90,7 +92,7 @@ export default function BaseCommentForm({
             >
               نظر شما
             </label>
-            <textarea
+            <Textarea
               id="comment"
               value={content}
               onChange={(e) => {
@@ -98,7 +100,6 @@ export default function BaseCommentForm({
                 setError('');
               }}
               rows={6}
-              className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
               placeholder="نظر خود را بنویسید..."
               disabled={isLoading}
             />
@@ -114,21 +115,12 @@ export default function BaseCommentForm({
         </div>
 
         {/* نوار دکمه‌ها — شیت با maxHeight calc(100vh - 100px) تمام می‌شود پس دکمه‌ها بالای ناو می‌مانند */}
-        <div className="flex-shrink-0 bg-white border-t border-wibe p-4">
+        <div className="flex-shrink-0 border-t border-border bg-popover p-4">
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium"
-              disabled={isLoading}
-            >
+            <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onClose} disabled={isLoading}>
               انصراف
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              disabled={isLoading || !content.trim()}
-            >
+            </Button>
+            <Button type="submit" variant="brand" size="lg" className="flex-1" disabled={isLoading || !content.trim()}>
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -140,7 +132,7 @@ export default function BaseCommentForm({
                   ارسال
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </form>

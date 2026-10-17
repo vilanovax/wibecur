@@ -1,4 +1,6 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type WibeButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline';
 type WibeButtonSize = 'sm' | 'md';
@@ -9,33 +11,31 @@ export type WibeButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
 };
 
-const variantClasses: Record<WibeButtonVariant, string> = {
-  primary: 'bg-primary text-white hover:bg-primary-dark shadow-sm',
-  secondary: 'bg-wibe-surface text-foreground hover:bg-wibe-surface border border-wibe',
-  ghost: 'bg-transparent text-wibe-secondary hover:bg-wibe-surface hover:text-foreground',
-  outline: 'bg-wibe-card text-primary border border-primary/25 hover:bg-primary/5',
+const variantMap: Record<WibeButtonVariant, 'brand' | 'secondary' | 'ghost' | 'outline'> = {
+  primary: 'brand',
+  secondary: 'secondary',
+  ghost: 'ghost',
+  outline: 'outline',
 };
 
-const sizeClasses: Record<WibeButtonSize, string> = {
-  sm: 'h-8 px-3 wibe-caption',
-  md: 'h-10 px-4 wibe-small',
-};
-
+/** Consumer button. Same call sites, VibeFarsi paper control underneath. */
 export default function WibeButton({
   variant = 'primary',
   size = 'md',
-  className = '',
+  className,
   children,
   type = 'button',
   ...props
 }: WibeButtonProps) {
   return (
-    <button
+    <Button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors duration-fast ease-vibe focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      variant={variantMap[variant]}
+      size={size}
+      className={cn(className)}
       {...props}
     >
       {children}
-    </button>
+    </Button>
   );
 }

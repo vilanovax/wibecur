@@ -1,4 +1,6 @@
 import { type ReactNode } from 'react';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 export type WibeCardProps = {
   children: ReactNode;
@@ -18,10 +20,8 @@ export default function WibeCard({
   padding = 'md',
 }: WibeCardProps) {
   return (
-    <div
-      className={`rounded-2xl border border-wibe/70 bg-wibe-card shadow-sm ${paddingClasses[padding]} ${className}`}
-    >
+    <Card className={cn(paddingClasses[padding], className)}>
       {children}
-    </div>
+    </Card>
   );
 }

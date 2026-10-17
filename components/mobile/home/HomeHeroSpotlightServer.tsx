@@ -88,23 +88,18 @@ export default function HomeHeroSpotlightServer({
           className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent"
           aria-hidden
         />
-        <div
-          className="pointer-events-none absolute -right-8 bottom-0 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl"
-          aria-hidden
-        />
-
         <div className="relative z-10 flex h-full flex-col justify-end p-4 sm:p-5 lg:max-w-[min(100%,36rem)] lg:p-8 lg:pb-9 xl:max-w-[min(100%,40rem)] xl:p-10 xl:pb-11">
           <span className="mb-1.5 inline-flex w-fit items-center gap-1.5 rounded-full border border-amber-200/30 bg-amber-400/15 px-2.5 py-1 wibe-caption font-semibold text-amber-50 backdrop-blur-md lg:mb-3 lg:gap-2 lg:px-3.5 lg:py-1.5 lg:text-sm">
             <Sparkles className="h-3.5 w-3.5 text-amber-300 lg:h-4 lg:w-4" aria-hidden />
             منتخب هفته
           </span>
 
-          <h2 className="line-clamp-2 text-balance text-h1 font-bold leading-[1.15] tracking-tight text-white sm:text-3xl lg:text-4xl lg:leading-[1.1] xl:text-h1">
+          <h2 className="line-clamp-2 text-balance text-h1 font-bold leading-[1.15] text-white sm:text-3xl lg:text-4xl lg:leading-[1.1] xl:text-h1">
             {list.title}
           </h2>
 
           {description ? (
-            <p className="mt-1.5 line-clamp-1 max-w-xl text-pretty wibe-small leading-relaxed text-white/90 sm:line-clamp-2 lg:mt-2.5 lg:text-base">
+            <p className="mt-1.5 line-clamp-2 text-pretty wibe-small leading-relaxed text-white/90 lg:mt-2.5 lg:line-clamp-2 lg:text-base">
               {description}
             </p>
           ) : null}
@@ -122,7 +117,7 @@ export default function HomeHeroSpotlightServer({
 
           <span className="mt-2.5 inline-flex w-fit items-center gap-1 rounded-full bg-white/12 px-3 py-1.5 wibe-caption font-semibold text-white backdrop-blur-sm transition-colors group-hover:bg-white/20 lg:mt-4 lg:px-3.5 lg:py-2 lg:text-sm">
             مشاهده لیست
-            <ChevronLeft className="h-3.5 w-3.5 rotate-180 lg:h-4 lg:w-4" aria-hidden />
+            <ChevronLeft className="h-3.5 w-3.5 lg:h-4 lg:w-4" aria-hidden />
           </span>
 
           <HomeHeroImpressionTracker slotId={slotId} />

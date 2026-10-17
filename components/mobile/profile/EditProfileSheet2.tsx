@@ -5,7 +5,7 @@ import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import ConfirmBottomSheet from '@/components/mobile/shared/ConfirmBottomSheet';
 import Toast from '@/components/shared/Toast';
 import AvatarSelectionSheet from './AvatarSelectionSheet';
-import { Camera, Check, Eye, EyeOff, KeyRound, Loader2, XCircle, User, Shield, Bell, Sparkles, AtSign, BadgeCheck } from 'lucide-react';
+import { Camera, Check, KeyRound, Loader2, XCircle, User, Shield, Bell, Sparkles, AtSign, BadgeCheck } from 'lucide-react';
 import { isUserEliteLevel, resolveVibeAvatar, type VibeAvatarOption } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import type { CuratorLevelKey } from '@/lib/curator';
@@ -13,6 +13,10 @@ import { getLevelConfig } from '@/lib/curator';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import EliteAvatarFrame from '@/components/shared/EliteAvatarFrame';
 import { normalizeUsername, sanitizeUsernameInput, validateUsernameFormat } from '@/lib/username';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { PasswordInput } from '@/components/ui/password-input';
+import { Switch } from '@/components/ui/switch';
 
 export interface EditProfileUser {
   id: string;
@@ -50,9 +54,6 @@ const EDIT_TABS: { id: EditTab; label: string; icon: typeof User }[] = [
 ];
 
 type UsernameCheckStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
-
-const inputClass =
-  'w-full h-11 px-3.5 rounded-xl border border-wibe/90 bg-white wibe-small text-foreground shadow-sm placeholder:text-wibe-secondary/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/15 focus:border-primary/40 transition-colors';
 
 function FieldLabel({
   htmlFor,
@@ -111,23 +112,7 @@ function ToggleRow({
           )}
         </div>
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        onClick={() => onChange(!checked)}
-        dir="ltr"
-        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-          checked ? 'bg-primary shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]' : 'bg-wibe-surface'
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 start-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-            checked ? 'translate-x-5' : 'translate-x-0'
-          }`}
-        />
-      </button>
+      <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
     </div>
   );
 }
@@ -206,30 +191,17 @@ function PasswordField({
   placeholder?: string;
   autoComplete?: string;
 }) {
-  const [visible, setVisible] = useState(false);
   return (
     <div dir="rtl">
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <div className="relative">
-        <input
-          id={id}
-          type={visible ? 'text' : 'password'}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          dir="rtl"
-          className={`${inputClass} ps-3.5 pe-10 text-right`}
-        />
-        <button
-          type="button"
-          onClick={() => setVisible((v) => !v)}
-          className="absolute start-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-wibe-secondary hover:bg-wibe-surface"
-          aria-label={visible ? 'مخفی کردن رمز' : 'نمایش رمز'}
-        >
-          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
+      <PasswordInput
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="h-12"
+      />
     </div>
   );
 }
@@ -619,13 +591,6 @@ export default function EditProfileSheet2({
   const canSave =
     Boolean(displayName.trim()) && isDirty && !isSaving && !usernameBlockingSave;
 
-  const usernameInputBorder =
-    usernameStatus === 'taken' || usernameStatus === 'invalid'
-      ? 'border-red-300 focus:border-red-400 focus-visible:ring-red-200'
-      : usernameStatus === 'available'
-        ? 'border-emerald-300 focus:border-emerald-400 focus-visible:ring-emerald-200'
-        : 'border-wibe/90 focus:border-primary/40 focus-visible:ring-primary/15';
-
   const subtitle =
     activeTab === 'profile'
       ? isDirty
@@ -758,7 +723,7 @@ export default function EditProfileSheet2({
                       <FieldLabel htmlFor="edit-display-name" required>
                         نام نمایشی
                       </FieldLabel>
-                      <input
+                      <Input
                         id="edit-display-name"
                         type="text"
                         value={displayName}
@@ -766,7 +731,7 @@ export default function EditProfileSheet2({
                         placeholder="نام شما"
                         autoComplete="name"
                         dir="rtl"
-                        className={`${inputClass} text-right`}
+                        className="h-12"
                       />
                     </div>
 
@@ -774,44 +739,28 @@ export default function EditProfileSheet2({
                       <FieldLabel htmlFor="edit-username" hint="فقط حروف انگلیسی، عدد و _">
                         نام کاربری
                       </FieldLabel>
-                      <div className="relative rounded-xl" dir="ltr">
-                        <span
-                          className="pointer-events-none absolute inset-y-0 start-0 flex w-8 items-center justify-center wibe-caption text-wibe-secondary"
-                          aria-hidden
-                        >
-                          @
-                        </span>
-                        <input
-                          id="edit-username"
-                          type="text"
-                          value={username}
-                          onChange={(e) => setUsername(sanitizeUsernameInput(e.target.value))}
-                          placeholder="username"
-                          dir="ltr"
-                          autoComplete="username"
-                          aria-invalid={usernameStatus === 'taken' || usernameStatus === 'invalid'}
-                          aria-describedby={usernameHint ? 'edit-username-hint' : undefined}
-                          className={`${inputClass} ps-8 pe-9 text-left ${usernameInputBorder}`}
-                        />
-                        {usernameStatus === 'checking' && (
-                          <Loader2
-                            className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-wibe-secondary"
-                            aria-hidden
-                          />
-                        )}
-                        {usernameStatus === 'available' && (
-                          <Check
-                            className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600"
-                            aria-hidden
-                          />
-                        )}
-                        {(usernameStatus === 'taken' || usernameStatus === 'invalid') && (
-                          <XCircle
-                            className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-500"
-                            aria-hidden
-                          />
-                        )}
-                      </div>
+                      <Input
+                        id="edit-username"
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(sanitizeUsernameInput(e.target.value))}
+                        placeholder="username"
+                        dir="ltr"
+                        autoComplete="username"
+                        aria-invalid={usernameStatus === 'taken' || usernameStatus === 'invalid'}
+                        aria-describedby={usernameHint ? 'edit-username-hint' : undefined}
+                        startAddon="@"
+                        endAddon={
+                          usernameStatus === 'checking' ? (
+                            <Loader2 className="size-4 animate-spin" aria-hidden />
+                          ) : usernameStatus === 'available' ? (
+                            <Check className="size-4 text-success" aria-hidden />
+                          ) : usernameStatus === 'taken' || usernameStatus === 'invalid' ? (
+                            <XCircle className="size-4 text-destructive" aria-hidden />
+                          ) : null
+                        }
+                        className="h-12"
+                      />
                       {usernameHint && (
                         <p
                           id="edit-username-hint"
@@ -854,13 +803,14 @@ export default function EditProfileSheet2({
                       {bio.length.toLocaleString('fa-IR')} از {BIO_MAX.toLocaleString('fa-IR')}
                     </span>
                   </div>
-                  <textarea
+                  <Textarea
                     value={bio}
                     onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX))}
                     placeholder="چند خط درباره خودت بنویس…"
                     rows={3}
+                    maxLength={BIO_MAX}
                     dir="rtl"
-                    className="w-full min-h-[96px] resize-none rounded-xl border border-wibe/90 bg-white px-3.5 py-2.5 text-right wibe-small text-foreground shadow-sm placeholder:text-wibe-secondary/55 focus:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/15"
+                    className="min-h-24"
                   />
                   <p className="mt-2 text-right wibe-caption text-wibe-secondary">
                     در پروفایل عمومی نمایش داده می‌شود

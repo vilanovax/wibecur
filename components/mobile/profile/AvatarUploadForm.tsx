@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Input } from '@/components/ui/input';
 import { Loader2, Upload, Image as ImageIcon } from 'lucide-react';
 
 interface AvatarUploadFormProps {
@@ -216,15 +217,16 @@ export default function AvatarUploadForm({
               <label htmlFor="imageUrl" className="block text-sm font-medium text-foreground mb-2">
                 آدرس تصویر
               </label>
-              <input
+              <Input
                 id="imageUrl"
                 type="url"
+                dir="ltr"
                 value={imageUrl}
                 onChange={(e) => {
                   setImageUrl(e.target.value);
                   setError('');
                 }}
-                className="w-full px-4 py-3 border border-wibe rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+                className="h-12"
                 placeholder="https://example.com/avatar.jpg"
               />
               <p className="mt-2 text-xs text-wibe-secondary">
@@ -247,19 +249,19 @@ export default function AvatarUploadForm({
         </div>
 
         {/* Fixed Buttons at Bottom - OUTSIDE scrollable area */}
-        <div className="flex-shrink-0 bg-white border-t border-wibe p-4">
+        <div className="flex-shrink-0 border-t border-border bg-popover p-4">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium"
+              className="flex h-12 flex-1 items-center justify-center rounded-xl border border-border bg-secondary text-sm font-semibold text-secondary-foreground"
               disabled={isLoading}
             >
               انصراف
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-brand-foreground disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading || (uploadMethod === 'file' && !selectedFile) || (uploadMethod === 'url' && !imageUrl.trim())}
             >
               {isLoading ? (

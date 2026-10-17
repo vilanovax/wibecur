@@ -10,6 +10,8 @@ import {
   XCircle,
   Search,
   RefreshCw,
+  SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import type { CommentsPulseSummary } from '@/lib/admin/comments-pulse';
 import type { CommentFilterKind } from '@/lib/admin/comments-filter-utils';
@@ -25,14 +27,15 @@ const FILTERS: {
   label: string;
   icon: typeof Filter;
   countKey?: keyof CommentsPulseSummary;
+  urgent?: boolean;
 }[] = [
-  { id: 'all', label: 'همه', icon: Filter },
-  { id: 'pending', label: 'در انتظار', icon: Clock, countKey: 'pending' },
-  { id: 'flagged', label: 'نیاز بررسی', icon: AlertTriangle, countKey: 'flagged' },
-  { id: 'reported', label: 'ریپورت', icon: Flag, countKey: 'reported' },
-  { id: 'approved', label: 'تایید', icon: CheckCircle, countKey: 'approved' },
+  { id: 'pending', label: 'در انتظار', icon: Clock, countKey: 'pending', urgent: true },
+  { id: 'flagged', label: 'نیاز بررسی', icon: AlertTriangle, countKey: 'flagged', urgent: true },
+  { id: 'reported', label: 'ریپورت', icon: Flag, countKey: 'reported', urgent: true },
+  { id: 'approved', label: 'تایید شده', icon: CheckCircle, countKey: 'approved' },
   { id: 'filtered', label: 'کلمات بد', icon: AlertTriangle },
   { id: 'rejected', label: 'رد شده', icon: XCircle },
+  { id: 'all', label: 'همه', icon: Filter },
 ];
 
 type Props = {
@@ -75,9 +78,23 @@ export default function CommentsFilterBar({
     null
   );
 
+  const scopeActive =
+    currentOrigin !== 'all' || !!currentCategoryId || !!currentListId;
+  const [scopeOpen, setScopeOpen] = useState(scopeActive);
+
   useEffect(() => {
     setSearchInput(currentSearch);
   }, [currentSearch]);
+
+  useEffect(() => {
+    if (scopeActive) setScopeOpen(true);
+  }, [scopeActive]);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) clearTimeout(searchTimeout);
+    };
+  }, [searchTimeout]);
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,99 +109,143 @@ export default function CommentsFilterBar({
 
   return (
     <div
-      className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 mb-4 space-y-3"
+      className="mb-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5 space-y-2"
       dir="rtl"
     >
-      <div className="flex flex-col lg:flex-row gap-3">
+      <div className="flex items-center gap-2">
+        <div
+          className="flex flex-1 gap-1 overflow-x-auto scrollbar-thin min-w-0"
+          role="tablist"
+          aria-label="فیلتر وضعیت"
+        >
+          {FILTERS.map(({ id, label, icon: Icon, countKey, urgent }) => {
+            const active = currentFilter === id;
+            const count = countKey && pulse ? pulse[countKey] : undefined;
+            const showBadge = count != null && count > 0;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => onFilterChange(id)}
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/40 ${
+                  active
+                    ? 'bg-[var(--primary)] text-white'
+                    : 'bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-border-muted)]'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 opacity-90" />
+                {label}
+                {showBadge && (
+                  <span
+                    className={`min-w-[1.1rem] px-1 rounded-full text-xs font-bold tabular-nums leading-none py-0.5 ${
+                      active
+                        ? 'bg-white/25 text-white'
+                        : urgent
+                          ? 'bg-rose-500 text-white'
+                          : 'bg-[var(--color-border-muted)] text-[var(--color-text-muted)]'
+                    }`}
+                  >
+                    {count.toLocaleString('fa-IR')}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <span className="hidden sm:inline text-xs text-[var(--color-text-muted)] tabular-nums shrink-0">
+          {totalCount.toLocaleString('fa-IR')}
+        </span>
+        <select
+          value={currentSort}
+          onChange={(e) => onSortChange(e.target.value as CommentSortKind)}
+          className="hidden md:block py-1.5 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-xs shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+          aria-label="مرتب‌سازی"
+          title="مرتب‌سازی · میانبر: J/K ردیف، A تایید، R رد"
+        >
+          {COMMENT_SORT_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+          aria-label="بروزرسانی"
+          title="بروزرسانی · J/K ردیف · A تایید · R رد"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2">
         <form
-          className="flex-1"
+          className="flex-1 min-w-0"
           onSubmit={(e) => {
             e.preventDefault();
             onSearchChange(searchInput);
           }}
         >
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+            <Search className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)]" />
             <input
               type="search"
               value={searchInput}
               onChange={handleSearchChange}
               placeholder="جستجو در متن کامنت…"
-              className="w-full pr-10 pl-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--primary)]/30"
+              className="w-full pr-9 pl-3 py-1.5 text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/30"
             />
           </div>
         </form>
-        <div className="flex items-center gap-2 shrink-0">
-          <select
-            value={currentSort}
-            onChange={(e) => onSortChange(e.target.value as CommentSortKind)}
-            className="py-2 px-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm"
-            aria-label="مرتب‌سازی"
-          >
-            {COMMENT_SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <span className="text-xs text-[var(--color-text-muted)] tabular-nums whitespace-nowrap">
-            {totalCount.toLocaleString('fa-IR')} نتیجه
-          </span>
-          <button
-            type="button"
-            onClick={onRefresh}
-            className="p-2 rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
-            aria-label="بروزرسانی"
-          >
-            <RefreshCw className="w-4 h-4 text-[var(--color-text-muted)]" />
-          </button>
-        </div>
+
+        <select
+          value={currentSort}
+          onChange={(e) => onSortChange(e.target.value as CommentSortKind)}
+          className="md:hidden py-1.5 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-xs shrink-0"
+          aria-label="مرتب‌سازی"
+        >
+          {COMMENT_SORT_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={() => setScopeOpen((v) => !v)}
+          aria-expanded={scopeOpen}
+          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35 ${
+            scopeActive || scopeOpen
+              ? 'border-[var(--primary)]/40 bg-[var(--primary)]/8 text-[var(--primary)]'
+              : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+          }`}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">محدوده</span>
+          {scopeActive && (
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]" aria-hidden />
+          )}
+          <ChevronDown
+            className={`w-3.5 h-3.5 transition-transform ${scopeOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
-        {FILTERS.map(({ id, label, icon: Icon, countKey }) => {
-          const active = currentFilter === id;
-          const count =
-            countKey && pulse ? pulse[countKey] : undefined;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => onFilterChange(id)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors shrink-0 ${
-                active
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-border-muted)]'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-              {count != null && count > 0 && (
-                <span
-                  className={`min-w-[1.1rem] px-1 rounded-full text-[10px] font-bold tabular-nums ${
-                    active ? 'bg-white/25 dark:bg-gray-800' : 'bg-rose-500 text-white'
-                  }`}
-                >
-                  {count.toLocaleString('fa-IR')}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <CommentsScopeFilters
-        origin={currentOrigin}
-        categoryId={currentCategoryId}
-        listId={currentListId}
-        onOriginChange={onOriginChange}
-        onCategoryChange={onCategoryChange}
-        onListChange={onListChange}
-      />
-
-      <p className="text-[10px] text-[var(--color-text-subtle)] hidden sm:block">
-        میانبر: <kbd className="px-1 rounded bg-[var(--color-bg)]">J</kbd>/<kbd className="px-1 rounded bg-[var(--color-bg)]">K</kbd> ردیف · <kbd className="px-1 rounded bg-[var(--color-bg)]">A</kbd> تایید · <kbd className="px-1 rounded bg-[var(--color-bg)]">R</kbd> رد
-      </p>
+      {scopeOpen && (
+        <CommentsScopeFilters
+          origin={currentOrigin}
+          categoryId={currentCategoryId}
+          listId={currentListId}
+          onOriginChange={onOriginChange}
+          onCategoryChange={onCategoryChange}
+          onListChange={onListChange}
+        />
+      )}
     </div>
   );
 }

@@ -11,7 +11,13 @@ export type ListIdentityValues = {
   categoryId: string;
 };
 
-type CategoryOption = { id: string; name: string; icon: string; slug?: string };
+type CategoryOption = {
+  id: string;
+  name: string;
+  icon: string;
+  slug?: string;
+  isActive?: boolean;
+};
 
 const inputClass =
   'w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:ring-2 focus:ring-[var(--primary)]';
@@ -57,6 +63,9 @@ export default function ListFormIdentity({
   const slugValid = values.slug.length > 0 && isValidListSlug(values.slug);
   const canQuickFill = values.title.trim().length > 0 && !!values.categoryId;
   const quickBusy = generatingSlug || generatingDescription || quickFillLoading;
+  const hasInactiveCategories = categories.some((c) => c.isActive === false);
+  const selectedInactive =
+    categories.find((c) => c.id === values.categoryId)?.isActive === false;
 
   return (
     <div className="space-y-4" dir="rtl">
@@ -86,26 +95,38 @@ export default function ListFormIdentity({
           required
           className={inputClass}
         >
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.icon} {c.name}
-            </option>
-          ))}
+          {categories.length === 0 ? (
+            <option value="">دسته‌ای یافت نشد</option>
+          ) : (
+            categories.map((c) => {
+              const inactive = c.isActive === false;
+              return (
+                <option key={c.id} value={c.id}>
+                  {c.icon} {c.name}
+                  {inactive ? ' (غیرفعال)' : ''}
+                </option>
+              );
+            })
+          )}
         </select>
+        {hasInactiveCategories && (
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+            دسته‌های فعال و غیرفعال هر دو در لیست هستند.
+            {selectedInactive ? ' دسته انتخاب‌شده فعلاً در اپ عمومی پنهان است.' : ''}
+          </p>
+        )}
       </div>
 
       {showQuickActions && (
-        <div className="rounded-xl border border-violet-200/80 bg-gradient-to-l from-violet-50/90 to-indigo-50/50 dark:from-violet-950/30 dark:to-indigo-950/20 px-3 py-3 space-y-2">
-          <p className="text-xs font-semibold text-violet-900 dark:text-violet-200">
-            تکمیل سریع
-          </p>
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-3 space-y-2">
+          <p className="text-xs font-semibold text-[var(--color-text)]">تکمیل سریع</p>
           <div className="flex flex-wrap gap-2">
             {onQuickFill && (
               <button
                 type="button"
                 disabled={!canQuickFill || quickBusy}
                 onClick={onQuickFill}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white text-xs font-bold hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
                 {quickFillLoading ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -120,7 +141,7 @@ export default function ListFormIdentity({
                 type="button"
                 disabled={!values.title.trim() || generatingSlug || quickFillLoading}
                 onClick={onGenerateSlug}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-300 bg-white dark:bg-gray-900 text-violet-800 dark:text-violet-200 text-xs font-semibold hover:bg-violet-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-xs font-semibold hover:bg-[var(--color-border-muted)] disabled:opacity-50"
               >
                 {generatingSlug ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -135,7 +156,7 @@ export default function ListFormIdentity({
                 type="button"
                 disabled={!canQuickFill || generatingDescription || quickFillLoading}
                 onClick={onGenerateDescription}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-300 bg-white dark:bg-gray-900 text-indigo-800 dark:text-indigo-200 text-xs font-semibold hover:bg-indigo-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-xs font-semibold hover:bg-[var(--color-border-muted)] disabled:opacity-50"
               >
                 {generatingDescription ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -146,7 +167,7 @@ export default function ListFormIdentity({
               </button>
             )}
           </div>
-          <p className="text-[10px] text-violet-700/80 dark:text-violet-300/70">
+          <p className="text-xs text-[var(--color-text-muted)]">
             Slug از عنوان فارسی ساخته می‌شود · توضیحات با OpenAI (تنظیمات)
           </p>
         </div>
@@ -250,7 +271,7 @@ export default function ListFormIdentity({
               type="button"
               disabled={!canQuickFill || generatingDescription}
               onClick={onGenerateDescription}
-              className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline disabled:opacity-50"
+              className="inline-flex items-center gap-1 text-xs text-[var(--primary)] hover:underline disabled:opacity-50"
             >
               {generatingDescription ? (
                 <Loader2 className="w-3 h-3 animate-spin" />

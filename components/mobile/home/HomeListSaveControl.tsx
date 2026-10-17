@@ -91,9 +91,11 @@ export default function HomeListSaveControl({
   if (status === 'loading') {
     return (
       <span
-        className={`${shell} animate-pulse border-white/50 bg-white/70 ${className}`}
+        className={`${shell} border-white/50 bg-white/80 ${className}`}
         aria-hidden
-      />
+      >
+        <Bookmark className={iconClass} strokeWidth={2} />
+      </span>
     );
   }
 

@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AuthScreen, { resolveSignupSource } from '@/components/auth/AuthScreen';
+import { AuthPageFallback } from '@/components/auth/AuthShell';
 
 function safeCallbackUrl(raw: string | null): string {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/';
@@ -19,11 +20,7 @@ function RegisterContent() {
 export default function RegisterPage() {
   return (
     <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#f7f8fa]">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
-        </div>
-      }
+      fallback={<AuthPageFallback />}
     >
       <RegisterContent />
     </Suspense>

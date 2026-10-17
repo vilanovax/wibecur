@@ -115,6 +115,7 @@ export default function AchievementBottomSheet({
   const sheet = (
     <div
       ref={backdropRef}
+      data-theme="paper"
       className="fixed inset-0 z-[60] flex items-end justify-center"
       onClick={handleBackdropClick}
     >
@@ -123,7 +124,7 @@ export default function AchievementBottomSheet({
       <div
         ref={sheetRef}
         dir="rtl"
-        className="relative bg-white rounded-t-3xl shadow-2xl w-full max-w-md animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[85vh] overflow-hidden"
+        className="relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-overlay animate-in slide-in-from-bottom duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag Handle */}
@@ -229,7 +230,7 @@ export default function AchievementBottomSheet({
           <div className="flex flex-col gap-3 pt-2">
             <Link
               href="/leaderboard"
-              className="w-full py-3.5 px-5 rounded-[14px] bg-gradient-to-r from-[#7C3AED] to-[#8B5CF6] text-white font-medium text-sm text-center hover:opacity-95 transition-opacity shadow-sm"
+              className="flex h-12 w-full items-center justify-center rounded-xl bg-brand text-sm font-semibold text-brand-foreground"
               onClick={onClose}
             >
               مشاهده رتبه‌بندی کریتورها
@@ -237,7 +238,7 @@ export default function AchievementBottomSheet({
             <button
               type="button"
               onClick={handleShare}
-              className="w-full py-3 px-5 rounded-[14px] border-2 border-wibe text-foreground font-medium text-sm hover:bg-wibe-surface transition-colors flex items-center justify-center gap-2"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-popover text-sm font-semibold text-foreground hover:bg-accent"
             >
               <Share2 className="w-4 h-4" />
               اشتراک‌گذاری دستاورد

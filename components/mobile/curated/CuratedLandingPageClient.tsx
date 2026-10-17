@@ -224,15 +224,6 @@ export default function CuratedLandingPageClient({
           </div>
         ) : (
           <>
-            {/*
-              Mood owns the first viewport on mobile — spacer + deferred mount keep
-              QuickNow / داغ from peeking under the 2×2 fold (critique P1).
-            */}
-            <div
-              className="h-[min(18vh,7.5rem)] max-h-32 min-h-8 lg:h-4"
-              aria-hidden
-            />
-
             <HomeDeferredMount
               rootMargin="0px"
               className="min-h-0"

@@ -36,7 +36,7 @@ function warmQuickPill(pill: (typeof QUICK_NOW_PILLS)[number]) {
 export default function QuickNowSection({ onSelect, disabled = false }: Props) {
   return (
     <section
-      className="border-t border-wibe/40 px-2.5 py-2 lg:px-0 lg:py-2.5"
+      className="px-4 pb-2 pt-4 lg:px-0 lg:py-3"
       aria-labelledby="quick-now-title"
     >
       <div className="mb-1.5 flex flex-col gap-0.5">
@@ -55,7 +55,7 @@ export default function QuickNowSection({ onSelect, disabled = false }: Props) {
             disabled={disabled}
             onPointerDown={() => warmQuickPill(pill)}
             onClick={() => onSelect(quickPillToSelection(pill))}
-            className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-wibe/80 bg-transparent px-2.5 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-wibe hover:bg-wibe-card hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-wibe/80 bg-transparent px-3 py-1.5 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-wibe hover:bg-wibe-card hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] disabled:opacity-50"
           >
             <span aria-hidden className="opacity-80">
               {pill.icon}

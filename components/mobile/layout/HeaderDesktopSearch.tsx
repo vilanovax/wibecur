@@ -1,35 +1,25 @@
 'use client';
 
+import { Search } from 'lucide-react';
 import { useSearch } from '@/contexts/SearchContext';
 import SearchShortcutHint from '@/components/shared/SearchShortcutHint';
+import { Button } from '@/components/ui/button';
 
 /** دکمه جستجو برای هدر دسکتاپ */
 export default function HeaderDesktopSearch() {
   const { openSearch } = useSearch();
 
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={() => openSearch()}
-      className="flex w-full items-center gap-3 rounded-xl border border-wibe bg-wibe-surface px-4 py-2.5 text-right transition-colors hover:border-primary/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      className="h-auto w-full justify-start gap-3 rounded-xl px-4 py-2.5 text-right font-normal"
       aria-label="باز کردن جستجو"
     >
-      <svg
-        className="h-5 w-5 shrink-0 text-wibe-secondary"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
-      <span className="flex-1 wibe-small text-wibe-secondary">فیلم، کتاب، کافه، لیست…</span>
+      <Search className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="flex-1 wibe-small font-normal text-muted-foreground">فیلم، کتاب، کافه، لیست…</span>
       <SearchShortcutHint />
-    </button>
+    </Button>
   );
 }

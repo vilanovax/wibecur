@@ -23,7 +23,7 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
   return (
     <div className="mb-0">
       <header className="mb-3.5 lg:mb-4">
-        <h2 className="text-balance wibe-h1 leading-snug tracking-tight lg:text-3xl lg:leading-[1.15]">
+        <h2 className="text-balance wibe-h1 leading-snug lg:text-3xl lg:leading-[1.15]">
           امروز دنبال چه وایبی هستی؟
         </h2>
         <p className="mt-1.5 max-w-md text-pretty wibe-small text-wibe-secondary lg:mt-2 lg:text-base">
@@ -54,7 +54,7 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
           type="button"
           onClick={() => setShowAll((v) => !v)}
           aria-expanded={showAll}
-          className="mt-2.5 flex w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card py-2.5 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
+          className="mt-3 flex min-h-11 w-full items-center justify-center gap-1 rounded-2xl border border-wibe bg-wibe-card py-2.5 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99]"
         >
           {showAll ? (
             <>

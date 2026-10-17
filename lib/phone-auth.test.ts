@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeIranPhone, validatePhoneInput } from './phone-auth';
+import {
+  digitsFromPhoneInput,
+  formatIranPhoneDisplay,
+  formatPhoneDigitsForDisplay,
+  normalizeIranPhone,
+  validatePhoneInput,
+} from './phone-auth';
 
 describe('normalizeIranPhone', () => {
   it('accepts Persian digits', () => {
@@ -12,6 +18,24 @@ describe('normalizeIranPhone', () => {
 
   it('accepts English digits', () => {
     expect(normalizeIranPhone('09121234567')).toBe('989121234567');
+  });
+});
+
+describe('formatPhoneDigitsForDisplay', () => {
+  it('groups a partial number in Persian digits', () => {
+    expect(formatPhoneDigitsForDisplay('0912')).toBe('۰۹۱۲');
+    expect(formatPhoneDigitsForDisplay('0912123')).toBe('۰۹۱۲ ۱۲۳');
+    expect(formatPhoneDigitsForDisplay('09121234567')).toBe('۰۹۱۲ ۱۲۳ ۴۵۶۷');
+  });
+
+  it('keeps only eleven digits from mixed input', () => {
+    expect(digitsFromPhoneInput('۰۹۱۲-۱۲۳۴۵۶۷۸۹۹')).toBe('09121234567');
+  });
+});
+
+describe('formatIranPhoneDisplay', () => {
+  it('shows a normalized phone as a local grouped number', () => {
+    expect(formatIranPhoneDisplay('989121234567')).toBe('۰۹۱۲ ۱۲۳ ۴۵۶۷');
   });
 });
 

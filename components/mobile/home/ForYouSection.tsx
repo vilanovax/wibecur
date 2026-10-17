@@ -105,58 +105,62 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
             {displayLists.map((list) => {
               const reason = getForYouReasonLabel(list, isPersonalized);
               return (
-                <Link
+                <div
                   key={list.id}
-                  href={`/lists/${list.slug}`}
-                  onClick={() =>
-                    trackHomeSectionClick('for_you', {
-                      list_slug: list.slug,
-                      category_slug: list.categories?.slug,
-                      target: 'card',
-                    })
-                  }
-                  className="flex min-h-[120px] flex-row-reverse gap-4 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
+                  className="relative overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
                 >
-                  <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-wibe-surface">
-                    <ImageWithFallback
-                      src={list.coverImage}
-                      alt={list.title}
-                      className="h-full w-full object-cover"
-                      fallbackIcon={list.categories?.icon ?? '📋'}
-                      fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface"
-                      categorySlug={list.categories?.slug}
-                      listSlug={list.slug}
-                      listTitle={list.title}
-                    />
-                    <div
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
-                      aria-hidden
-                    />
-                    <div className="absolute left-1 top-1 z-10">
-                      <HomeListSaveControl
-                        listId={list.id}
-                        listSlug={list.slug}
+                  <Link
+                    href={`/lists/${list.slug}`}
+                    onClick={() =>
+                      trackHomeSectionClick('for_you', {
+                        list_slug: list.slug,
+                        category_slug: list.categories?.slug,
+                        target: 'card',
+                      })
+                    }
+                    className="flex min-h-[120px] gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30"
+                  >
+                    <div className="flex min-w-0 flex-1 flex-col justify-center py-3 pe-2 ps-3">
+                      {reason ? (
+                        <p className="mb-1 wibe-caption font-medium text-primary">{reason}</p>
+                      ) : null}
+                      <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
+                        {list.title}
+                      </h3>
+                      {list.itemCount > 0 ? (
+                        <p className="mt-1.5 wibe-caption text-wibe-secondary">
+                          {list.itemCount.toLocaleString('fa-IR')} آیتم
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-wibe-surface">
+                      <ImageWithFallback
+                        src={list.coverImage}
+                        alt={list.title}
+                        className="h-full w-full object-cover"
+                        fallbackIcon={list.categories?.icon ?? '📋'}
+                        fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface"
                         categorySlug={list.categories?.slug}
-                        saveCount={list.saveCount}
-                        size="compact"
-                        analyticsSource="home_for_you"
+                        listSlug={list.slug}
+                        listTitle={list.title}
+                      />
+                      <div
+                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
+                        aria-hidden
                       />
                     </div>
+                  </Link>
+                  <div className="absolute end-1 top-1 z-10">
+                    <HomeListSaveControl
+                      listId={list.id}
+                      listSlug={list.slug}
+                      categorySlug={list.categories?.slug}
+                      saveCount={list.saveCount}
+                      size="compact"
+                      analyticsSource="home_for_you"
+                    />
                   </div>
-                  <div className="flex min-w-0 flex-1 flex-col justify-center py-3 pl-2 pr-3">
-                    {reason ? (
-                      <p className="mb-1 wibe-caption font-medium text-primary">{reason}</p>
-                    ) : null}
-                    <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
-                      {list.title}
-                    </h3>
-                    {list.itemCount > 0 ? (
-                      <p className="mt-1.5 wibe-caption text-wibe-secondary">
-                        {list.itemCount.toLocaleString('fa-IR')} آیتم
-                      </p>
-                    ) : null}
-                  </div>
-                </Link>
+                </div>
               );
             })}
           </div>

@@ -31,8 +31,8 @@ export default async function EditListPage({
       },
     }),
     prisma.categories.findMany({
-      where: { isActive: true },
-      orderBy: { order: 'asc' },
+      where: { deletedAt: null },
+      orderBy: [{ isActive: 'desc' }, { order: 'asc' }, { name: 'asc' }],
     }),
     getListIntelligenceForEdit(id),
   ]);

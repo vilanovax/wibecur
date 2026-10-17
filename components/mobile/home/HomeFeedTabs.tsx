@@ -28,10 +28,10 @@ export default function HomeFeedTabs({ carousel }: HomeFeedTabsProps) {
         </div>
         <Link
           href="/lists?mode=trending"
-          className="inline-flex min-h-10 shrink-0 items-center gap-0.5 rounded-lg px-1.5 wibe-caption font-semibold text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:min-h-0 lg:px-0"
+          className="inline-flex min-h-11 shrink-0 items-center gap-0.5 rounded-lg px-1.5 wibe-caption font-semibold text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:min-h-0 lg:px-0"
         >
           کاتالوگ ترند
-          <ChevronLeft className="h-3.5 w-3.5 rotate-180" aria-hidden />
+          <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>
 

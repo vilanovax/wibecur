@@ -21,10 +21,10 @@ const toastIcons = {
 };
 
 const toastStyles = {
-  success: 'bg-green-500 text-white',
-  error: 'bg-amber-600/95 text-white',
-  warning: 'bg-amber-500 text-white',
-  info: 'bg-blue-500 text-white',
+  success: 'bg-success text-white',
+  error: 'bg-destructive text-white',
+  warning: 'bg-warning text-foreground',
+  info: 'bg-primary text-primary-foreground',
 };
 
 /**
@@ -59,16 +59,17 @@ export default function Toast({
   return (
     <div
       role="status"
-      className={`fixed bottom-6 left-4 right-4 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-xl p-4 shadow-2xl transition duration-300 ease-out motion-reduce:transition-none ${toastStyles[type]} ${
+      data-theme="paper"
+      className={`fixed inset-x-4 bottom-6 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-xl p-4 shadow-overlay transition duration-300 ease-out motion-reduce:transition-none ${toastStyles[type]} ${
         entered ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-5 scale-95 opacity-0'
       } ${className}`}
     >
-      <Icon className="h-6 w-6 flex-shrink-0" />
-      <p className="flex-1 pr-2 text-sm font-medium">{message}</p>
+      <Icon className="h-6 w-6 shrink-0" />
+      <p className="flex-1 text-sm font-medium">{message}</p>
       <button
         type="button"
         onClick={onClose}
-        className="flex-shrink-0 rounded-lg p-1 transition-colors hover:bg-white/20"
+        className="flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-white/20"
         aria-label="بستن"
       >
         <X className="h-4 w-4" />

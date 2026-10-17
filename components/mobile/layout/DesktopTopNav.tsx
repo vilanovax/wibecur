@@ -23,13 +23,13 @@ export default function DesktopTopNav() {
     `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-small font-medium transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
       active
         ? 'bg-primary/10 text-primary'
-        : 'text-foreground hover:bg-wibe-surface hover:text-primary'
+        : 'text-foreground hover:bg-accent hover:text-primary'
     }`;
 
   return (
     <>
       <header
-        className="sticky top-0 z-50 hidden w-full shrink-0 border-b border-wibe/80 bg-white/95 backdrop-blur-md lg:block"
+        className="sticky top-0 z-50 hidden w-full shrink-0 border-b border-border bg-card/95 backdrop-blur-md lg:block"
         role="banner"
       >
         <div className={`flex h-[3.5rem] w-full min-w-0 items-center gap-3 ${DESKTOP_CONTENT_PADDING_CLASS}`}>

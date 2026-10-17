@@ -22,12 +22,14 @@ export default function HomeTrendingCarouselServer({
   }
 
   return (
-    <div
-      className={`flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide ${HOME_FEED_GRID_CLASS}`}
-    >
-      {lists.map((list) => (
-        <HomeGridListCard key={list.id} list={list} homeSection="trending" />
-      ))}
+    <div className="overflow-hidden px-4 lg:overflow-visible lg:px-0">
+      <div
+        className={`flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-0.5 scrollbar-hide ${HOME_FEED_GRID_CLASS}`}
+      >
+        {lists.map((list) => (
+          <HomeGridListCard key={list.id} list={list} homeSection="trending" />
+        ))}
+      </div>
     </div>
   );
 }
