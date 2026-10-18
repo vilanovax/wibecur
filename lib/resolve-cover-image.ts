@@ -9,6 +9,7 @@ import {
 import {
   isAllowedExternalImageUrl,
   isGenericListCover,
+  normalizeLocalBannerSrc,
 } from '@/lib/image-url-policy';
 import { isLegacyLiaraStorageUrl, isOurStorageUrl } from '@/lib/object-storage-config';
 
@@ -67,7 +68,7 @@ function isTrustedFieldCover(
  * ۳. variant متنوع بر اساس دسته + slug
  */
 export function resolveCoverImage(input: ResolveCoverImageInput): string {
-  const cover = input.coverImage?.trim() ?? '';
+  const cover = normalizeLocalBannerSrc(input.coverImage ?? '');
   const listSlug = normalizeCategorySlug(input.listSlug);
   const titleInferred = inferCategorySlugFromTitle(input.listTitle);
   const categorySlug =
@@ -97,7 +98,7 @@ export function resolveCoverImage(input: ResolveCoverImageInput): string {
     return cover;
   }
 
-  const horizontal = input.horizontalImage?.trim() ?? '';
+  const horizontal = normalizeLocalBannerSrc(input.horizontalImage ?? '');
   if (horizontal && isTrustedFieldCover(horizontal, coverCategory)) {
     return horizontal;
   }

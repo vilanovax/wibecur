@@ -9,6 +9,7 @@ import {
   HomeSavedListsSectionLazy,
 } from '@/components/mobile/home/home-lazy-sections';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
+import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import type { CategoryMenuChip } from '@/lib/category-menu';
 
 type HomeMobileViewProps = {
@@ -21,7 +22,7 @@ type HomeMobileViewProps = {
 
 /**
  * Distilled + hardened home IA (Operate / save-first):
- * start → hero → trending lane → saved → for you → chips.
+ * start → hero → trending lane → saved (after onboarding) → for you row → chips.
  * Trending is streamed as RSC children; personal sections stay dynamic.
  */
 export default function HomeMobileView({
@@ -30,8 +31,11 @@ export default function HomeMobileView({
   mobileFeed,
   initialCategories,
 }: HomeMobileViewProps) {
-  const { isGuest, isLoading: userLoading } = useHomeUserState();
-  const showPersonal = !userLoading && !isGuest;
+  const { isGuest, isNewUser, isLoading: userLoading } = useHomeUserState();
+  const { shouldShowStartStrip, hydrated } = useHomeOnboardingInterests();
+  const onboarding = (!hydrated && isNewUser) || (hydrated && shouldShowStartStrip && isNewUser);
+  const showSaved = !userLoading && !isGuest && !onboarding;
+  const showForYou = !userLoading && !isGuest;
 
   return (
     <div className="flex flex-col">
@@ -40,8 +44,8 @@ export default function HomeMobileView({
         {heroSpotlight}
       </HomeHeroSpotlightSlot>
       {mobileFeed}
-      {showPersonal ? <HomeSavedListsSectionLazy /> : null}
-      {showPersonal ? <ForYouSectionLazy fetchEnabled /> : null}
+      {showSaved ? <HomeSavedListsSectionLazy /> : null}
+      {showForYou ? <ForYouSectionLazy fetchEnabled /> : null}
       <QuickCategoryChips
         initialCategories={initialCategories}
         variant="nav"

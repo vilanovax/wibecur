@@ -9,6 +9,17 @@ import { publicCuratedListWhere } from '@/lib/public-content-filters';
 const DEFAULT_LIMIT = 6;
 const MIN_SEEDS = 1;
 
+/**
+ * فقط لیست‌هایی که کاربر ذخیره یا لایک کرده کنار می‌روند.
+ * لیست‌های ساختهٔ خودش حذف نمی‌شوند؛ وگرنه سازندهٔ کاتالوگ هیچ پیشنهاد ذخیره‌نشده‌ای نمی‌بیند.
+ */
+export function buildRecommendationExcludeIds(
+  bookmarkIds: string[],
+  likeIds: string[]
+): Set<string> {
+  return new Set([...bookmarkIds, ...likeIds]);
+}
+
 export type HomeRecommendationItem = {
   id: string;
   title: string;
@@ -267,7 +278,7 @@ export async function getHomeRecommendationsForUser(
     return { lists, isPersonalized: false };
   }
 
-  const [bookmarks, likes, ownedListIds] = await Promise.all([
+  const [bookmarks, likes] = await Promise.all([
     prisma.bookmarks.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -280,17 +291,12 @@ export async function getHomeRecommendationsForUser(
       take: 10,
       select: { listId: true },
     }),
-    prisma.lists.findMany({
-      where: { userId },
-      select: { id: true },
-    }),
   ]);
 
-  const excludeIds = new Set<string>([
-    ...bookmarks.map((b) => b.listId),
-    ...likes.map((l) => l.listId),
-    ...ownedListIds.map((l) => l.id),
-  ]);
+  const excludeIds = buildRecommendationExcludeIds(
+    bookmarks.map((b) => b.listId),
+    likes.map((l) => l.listId)
+  );
 
   const seedListIds = [
     ...new Set([

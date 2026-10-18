@@ -16,6 +16,7 @@ import {
   HomePersonalizedFeedSectionLazy,
 } from '@/components/mobile/home/home-lazy-sections';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
+import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import type { CategoryMenuChip } from '@/lib/category-menu';
 
 type HomeDesktopViewProps = {
@@ -35,9 +36,11 @@ export default function HomeDesktopView({
   heroSpotlight,
   desktopTrending,
 }: HomeDesktopViewProps) {
-  const { hasSaves, isLoggedIn, isLoading: userLoading, isGuest } = useHomeUserState();
-  const showCombinedPersonal = isLoggedIn && hasSaves && !userLoading;
-  const showSavedSection = isLoggedIn && !isGuest && !userLoading;
+  const { hasSaves, isLoggedIn, isNewUser, isLoading: userLoading, isGuest } = useHomeUserState();
+  const { shouldShowStartStrip, hydrated } = useHomeOnboardingInterests();
+  const onboarding = (!hydrated && isNewUser) || (hydrated && shouldShowStartStrip && isNewUser);
+  const showCombinedPersonal = isLoggedIn && hasSaves && !userLoading && !onboarding;
+  const showSavedSection = isLoggedIn && !isGuest && !userLoading && !onboarding;
 
   return (
     <div className="flex flex-col gap-6 xl:gap-7">
@@ -63,6 +66,12 @@ export default function HomeDesktopView({
           <HomeFeedSection divider>
             <HomeDeferredMount fallback={<HomeFeedSectionSkeleton titleWidth="w-24" />}>
               <HomePersonalizedFeedSectionLazy />
+            </HomeDeferredMount>
+          </HomeFeedSection>
+        ) : onboarding ? (
+          <HomeFeedSection divider>
+            <HomeDeferredMount fallback={<HomeFeedSectionSkeleton titleWidth="w-32" />}>
+              <ForYouSectionLazy />
             </HomeDeferredMount>
           </HomeFeedSection>
         ) : (

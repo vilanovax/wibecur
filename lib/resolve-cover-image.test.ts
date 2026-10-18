@@ -54,6 +54,15 @@ describe('resolveCoverImage — cafe cover trust', () => {
     expect(url).toBe('/images/banners/cafe-2.webp');
   });
 
+  it('rewrites a stored jpg banner to the webp file on disk', () => {
+    const url = resolveCoverImage({
+      coverImage: '/images/banners/cafe-3.jpg',
+      listSlug: 'not-pinned',
+      categorySlug: 'cafe',
+    });
+    expect(url).toBe('/images/banners/cafe-3.webp');
+  });
+
   it('pins view cafes to cafe-3 terrace banner, not cozy desk flatlay', () => {
     const url = resolveCoverImage({
       coverImage: '/images/banners/cozy.webp',

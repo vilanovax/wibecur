@@ -1,3 +1,4 @@
+import { normalizeLocalBannerSrc } from '@/lib/image-url-policy';
 import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 import { isLegacyLiaraStorageUrl, isParsPackStorageUrl } from '@/lib/object-storage-config';
 import { resolveStorageImageDisplayUrl } from '@/lib/storage-image-url';
@@ -14,7 +15,7 @@ export function resolveNextImageSrc(src: string): {
   src: string;
   unoptimized: boolean;
 } {
-  const trimmed = src.trim();
+  const trimmed = normalizeLocalBannerSrc(src);
   if (!trimmed) return { src: '', unoptimized: false };
 
   if (isProxiedStoragePath(trimmed)) {

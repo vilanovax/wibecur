@@ -27,6 +27,50 @@ export function selectHomeTrendingDesktopLists(
   return padHomeFeedLists(trending, dedupeListsById(data.rising), limit, excludeIds);
 }
 
+/**
+ * ردیف «برای تو»: اول لیست‌هایی که در هیرو و ترند نیستند.
+ * اگر پیشنهادها همان ترند باشند، سه تای انتهای همان مجموعه می‌ماند
+ * تا ردیف خالی نشود. اگر هیچ پیشنهادی نباشد، ردیف ساخته نمی‌شود.
+ */
+export function selectForYouHomeLists<T extends { id: string }>(input: {
+  recommendations: T[];
+  trending: { id: string }[];
+  featuredId?: string | null;
+  rising?: T[];
+  limit?: number;
+}): { pool: T[]; mobile: T[]; usedRisingOnly: boolean } {
+  const featuredId = input.featuredId ?? undefined;
+  const onScreen = new Set(
+    selectHomeTrendingLists(
+      {
+        trending: input.trending as HomeListData[],
+        featured: featuredId
+          ? ({ id: featuredId } as HomeData['featured'])
+          : null,
+      },
+      { limit: 12, excludeFeatured: true },
+    ).map((list) => list.id),
+  );
+  if (featuredId) onScreen.add(featuredId);
+
+  const fromApi = input.recommendations.filter((list) => !onScreen.has(list.id));
+  const apiIds = new Set(fromApi.map((list) => list.id));
+  const fromRising = (input.rising ?? []).filter(
+    (list) => !onScreen.has(list.id) && !apiIds.has(list.id),
+  );
+  const limit = input.limit ?? 8;
+  let pool = dedupeListsById([...fromApi, ...fromRising]).slice(0, limit);
+  const usedRisingOnly = fromApi.length === 0 && pool.length > 0;
+
+  if (pool.length === 0) {
+    pool = dedupeListsById(
+      input.recommendations.filter((list) => list.id !== featuredId),
+    ).slice(-3);
+  }
+
+  return { pool, mobile: pool.slice(0, 3), usedRisingOnly };
+}
+
 export function selectHomeRisingLists(
   data: Pick<HomeData, 'rising'>,
   options?: { limit?: number }

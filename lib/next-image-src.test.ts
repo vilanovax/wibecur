@@ -35,6 +35,12 @@ describe('resolveNextImageSrc', () => {
     expect(result.unoptimized).toBe(true);
   });
 
+  it('rewrites missing local jpg banners to the webp file', () => {
+    const result = resolveNextImageSrc('/images/banners/cafe.jpg');
+    expect(result.src).toBe('/images/banners/cafe.webp');
+    expect(result.unoptimized).toBe(false);
+  });
+
   it('allows optimization for non-parspack external HTTPS URLs', () => {
     const url = 'https://images.example.com/poster.jpg';
     const result = resolveNextImageSrc(url);

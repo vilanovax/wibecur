@@ -77,35 +77,35 @@ export default function HomeStartStrip({
   };
 
   const copy = ACTIVATION.startStrip;
+  const atLimit = selected.length >= 3;
 
   return (
     <section
-      className="mx-4 mb-3 rounded-surface border border-dashed border-brand/30 bg-brand/5 p-4 lg:mx-0 lg:mb-0 lg:max-w-3xl lg:p-5"
+      className="mx-4 mb-3 rounded-surface border border-dashed border-brand/30 bg-brand/5 px-4 py-3 lg:mx-0 lg:mb-0 lg:max-w-xl"
       aria-label="شروع در وایب"
     >
-      <div className="flex flex-col gap-3 lg:gap-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-balance wibe-h3 text-foreground">{copy.title}</h2>
-            <p className="mt-1.5 text-pretty text-sm text-muted-foreground">
-              {copy.description}
-            </p>
-          </div>
-          <Button type="button" variant="ghost" size="sm" className="h-11 shrink-0" onClick={completeOnboarding}>
-            {copy.skip}
-          </Button>
+      <div className="flex flex-col gap-3">
+        <div className="text-start">
+          <h2 className="text-balance wibe-h3 text-foreground">{copy.title}</h2>
+          <p className="mt-1 text-pretty wibe-small text-muted-foreground">{copy.description}</p>
+          <p className="mt-1 wibe-caption tabular-nums text-muted-foreground" aria-live="polite">
+            {selected.length.toLocaleString('fa-IR')} از ۳
+          </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {categories.slice(0, 8).map((cat) => {
+        <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="علاقه‌مندی‌ها">
+          {categories.slice(0, 4).map((cat) => {
             const isSelected = selected.includes(cat.slug);
+            const locked = atLimit && !isSelected;
             return (
               <Button
                 key={cat.id}
                 type="button"
                 size="sm"
-                variant={isSelected ? 'default' : 'outline'}
-                className="h-11"
+                variant={isSelected ? 'brand' : 'outline'}
+                className="h-11 w-full"
+                aria-pressed={isSelected}
+                disabled={locked}
                 onClick={() => toggleSlug(cat.slug)}
               >
                 {cat.icon ? `${cat.icon} ` : ''}
@@ -115,13 +115,16 @@ export default function HomeStartStrip({
           })}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="brand" size="lg" className="flex-1 sm:flex-none" onClick={handleContinue}>
-            {selected.length > 0 ? copy.continueWith : copy.continueWithout}
-          </Button>
-          <Button type="button" variant="outline" size="lg" className="flex-1 sm:flex-none" onClick={openHomeCreateSheet}>
-            <Plus className="size-4" aria-hidden />
+        <Button type="button" variant="brand" size="lg" className="w-full" onClick={handleContinue}>
+          {selected.length > 0 ? copy.continueWith : copy.continueWithout}
+        </Button>
+        <div className="flex items-center justify-between gap-2">
+          <Button type="button" variant="ghost" size="sm" className="h-11" onClick={openHomeCreateSheet}>
+            <Plus aria-hidden />
             {copy.createList}
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="h-11" onClick={completeOnboarding}>
+            {copy.skip}
           </Button>
         </div>
       </div>

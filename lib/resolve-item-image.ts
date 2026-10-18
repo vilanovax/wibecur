@@ -4,6 +4,7 @@ import {
   isAllowedItemImageUrl,
   isPlaceholderCoverPath,
   isTmdbImageUrl,
+  normalizeLocalBannerSrc,
 } from './image-url-policy';
 import { getItemPlaceholderImageUrl } from './item-placeholder-image';
 
@@ -41,7 +42,7 @@ export function resolveItemImage(input: ItemImageSource): string {
 
   for (const raw of candidates) {
     const url = raw.trim();
-    if (isUsableItemImage(url)) return url;
+    if (isUsableItemImage(url)) return normalizeLocalBannerSrc(url);
   }
 
   return '';
