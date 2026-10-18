@@ -12,8 +12,8 @@ import {
 } from '@/lib/list-entry';
 
 const GRID_BATCH_THRESHOLD = 20;
-const GRID_INITIAL_VISIBLE = 16;
-const GRID_LOAD_MORE = 12;
+const GRID_INITIAL_VISIBLE = 24;
+const GRID_LOAD_MORE = 18;
 
 export type ListGridEntry = {
   item: {
@@ -86,7 +86,7 @@ function ListItemsGrid({
     useBatching ? GRID_INITIAL_VISIBLE : entries.length
   );
   const { ref: sentinelRef, inView: sentinelInView } = useLazyInView<HTMLDivElement>({
-    rootMargin: '360px',
+    rootMargin: '800px',
     once: false,
   });
 
@@ -107,19 +107,13 @@ function ListItemsGrid({
       {visibleEntries.map(({ item, originalIndex }) => {
         const entryKind = resolveEntryKind(item);
         const slug = itemCategorySlug(item, listCategorySlug);
-        // Skip paint for offscreen cards; keep first row eager so posters aren't stuck
-        // behind content-visibility + IntersectionObserver races.
-        const paintClass =
-          originalIndex < 8
-            ? ''
-            : '[content-visibility:auto] [contain-intrinsic-size:auto_17.5rem]';
 
         if (isLightweightListItem(item)) {
           const spanClass = isLifestyleList
             ? 'col-span-2'
             : 'col-span-2 sm:col-span-1';
           return (
-            <div key={item.id} className={`${spanClass} ${paintClass}`}>
+            <div key={item.id} className={spanClass}>
               <LightweightGridCard
                 item={item}
                 index={originalIndex}
@@ -133,7 +127,7 @@ function ListItemsGrid({
         }
 
         return (
-          <div key={item.id} className={paintClass}>
+          <div key={item.id}>
             <ListGridItemCard
               item={item}
               index={originalIndex}

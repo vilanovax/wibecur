@@ -16,7 +16,7 @@ type LazyItemCoverImageProps = ItemCoverImageProps & {
  * `content-visibility: auto` parents make IntersectionObserver flaky.
  */
 export default function LazyItemCoverImage({
-  rootMargin = '280px',
+  rootMargin = '800px',
   enrichWhenVisible = true,
   title,
   categorySlug,
@@ -46,7 +46,7 @@ export default function LazyItemCoverImage({
 
     const check = () => {
       const rect = el.getBoundingClientRect();
-      const margin = 280;
+      const margin = Number.parseInt(rootMargin, 10) || 800;
       const vh = window.innerHeight || 0;
       if (rect.top < vh + margin && rect.bottom > -margin) {
         setGeometryVisible(true);
@@ -60,7 +60,7 @@ export default function LazyItemCoverImage({
       window.cancelAnimationFrame(raf);
       window.clearTimeout(timer);
     };
-  }, [priority, inView, elementRef]);
+  }, [priority, inView, elementRef, rootMargin]);
 
   const shouldEnrich = enrichWhenVisible && (enrichPoster ?? true);
   const showImage = priority || inView || geometryVisible;
@@ -78,6 +78,7 @@ export default function LazyItemCoverImage({
           enrichPoster={shouldEnrich}
           coverLayout={coverLayout}
           priority={priority}
+          eager
           {...rest}
         />
       ) : (

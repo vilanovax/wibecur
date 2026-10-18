@@ -17,11 +17,8 @@ function getTitleInitial(title: string): string {
 export function getItemCoverPlaceholderGradient(
   title: string,
   categorySlug?: string | null,
-  state: ItemCoverPlaceholderState = 'idle'
+  _state: ItemCoverPlaceholderState = 'idle'
 ): string {
-  if (state === 'idle' || state === 'loading') {
-    return 'from-slate-200 via-slate-100 to-slate-200';
-  }
   const slug = categorySlug ?? inferCategorySlugFromTitle(title) ?? 'default';
   return pickCategoryCoverGradient(slug, title);
 }

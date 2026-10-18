@@ -42,6 +42,11 @@ export interface ItemCoverImageProps {
   enrichPoster?: boolean;
   /** grid = poster card در لیست */
   coverLayout?: ItemCoverLayout;
+  /**
+   * والد قبلاً تصمیم گرفته این تصویر نزدیک viewport است.
+   * lazy دومِ next/image درخواست را دوباره عقب می‌اندازد.
+   */
+  eager?: boolean;
   preferPosterEnrich?: boolean;
   /**
    * اگر مقدار بگیرد، تصویر با next/image (fill) رندر و بهینه می‌شود
@@ -54,7 +59,7 @@ export interface ItemCoverImageProps {
 function toItemDisplaySrc(resolved: string): string {
   if (!resolved) return '';
   if (resolved.startsWith('/')) return resolved;
-  if (isOurStorageUrl(resolved)) return toLiaraImageSrc(resolved);
+  if (isOurStorageUrl(resolved)) return toLiaraImageSrc(resolved, { preferDirect: true });
   if (isAllowedItemImageUrl(resolved)) return resolved;
   if (isAllowedExternalImageUrl(resolved)) return resolved;
   if (isDisplayableCoverPath(resolved)) return resolved;
@@ -75,6 +80,7 @@ export default function ItemCoverImage({
   coverLayout = 'default',
   preferPosterEnrich = false,
   sizes,
+  eager = false,
 }: ItemCoverImageProps) {
   const [fetchedPoster, setFetchedPoster] = useState<string | null>(null);
   // تلاش مجدد از طریق پراکسی same-origin (نه URL مستقیم parspack که ممکن است
@@ -215,14 +221,20 @@ export default function ItemCoverImage({
   }
 
   const handleImgError = () => {
-    // برای تصاویر پراکسی same-origin، به‌جای سقوط به URL مستقیم parspack (که در
-    // شبکه‌های فیلترشده ERR_CONNECTION_REFUSED می‌دهد) همان پراکسی را با cache-bust
-    // دوباره تلاش می‌کنیم؛ پس از اتمام تلاش‌ها placeholder نمایش داده می‌شود.
-    const base = toItemDisplaySrc(resolvedSrc);
-    if (isStorageProxySrc(base) && proxyRetry < IMAGE_LOAD_MAX_RETRIES) {
+    // اول URL عمومی پارس‌پک. اگر مرورگر نرسد، همان فایل از پروکسی same-origin.
+    if (isOurStorageUrl(resolvedSrc) && !isStorageProxySrc(displaySrc)) {
+      setProxyRetry(0);
+      setRetrySrc(toLiaraImageSrc(resolvedSrc, { forceProxy: true }));
+      setImageLoaded(false);
+      return;
+    }
+    const proxyBase = isOurStorageUrl(resolvedSrc)
+      ? toLiaraImageSrc(resolvedSrc, { forceProxy: true })
+      : displaySrc;
+    if (isStorageProxySrc(proxyBase) && proxyRetry < IMAGE_LOAD_MAX_RETRIES) {
       const next = proxyRetry + 1;
       setProxyRetry(next);
-      setRetrySrc(withImageRetryQuery(base, next));
+      setRetrySrc(withImageRetryQuery(proxyBase, next));
       setImageLoaded(false);
       return;
     }
@@ -230,11 +242,12 @@ export default function ItemCoverImage({
     setLoadFailed(true);
   };
 
-  // مسیر بهینه‌شده (next/image) — فقط با opt-in از طریق prop `sizes`.
-  // proxy داخلی را به URL اصلی باز می‌کنیم تا next آن را بهینه کند.
-  const { src: nextSrc, unoptimized } = sizes
-    ? resolveNextImageSrc(displaySrc)
-    : { src: displaySrc, unoptimized: false };
+  // مسیر next/image فقط با sizes. URL استوریج همین‌جا می‌ماند تا دوباره پروکسی نشود.
+  const { src: nextSrc, unoptimized } = !sizes
+    ? { src: displaySrc, unoptimized: false }
+    : isOurStorageUrl(displaySrc) || isStorageProxySrc(displaySrc)
+      ? { src: displaySrc, unoptimized: true }
+      : resolveNextImageSrc(displaySrc);
 
   return (
     <div className={`relative h-full w-full overflow-hidden ${className}`}>
@@ -256,10 +269,12 @@ export default function ItemCoverImage({
           alt={title}
           fill
           sizes={sizes}
-          className={`object-cover transition-opacity duration-300 ease-out ${
+          className={`object-cover transition-opacity duration-300 ease-out motion-reduce:transition-none ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           priority={priority}
+          loading={priority ? undefined : eager ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : eager ? 'low' : undefined}
           unoptimized={unoptimized}
           referrerPolicy="no-referrer"
           onLoad={() => setImageLoaded(true)}
@@ -270,11 +285,11 @@ export default function ItemCoverImage({
           ref={imgRef}
           src={displaySrc}
           alt={title}
-          className={`h-full w-full object-cover transition-opacity duration-300 ease-out ${
+          className={`h-full w-full object-cover transition-opacity duration-300 ease-out motion-reduce:transition-none ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}
-          loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : undefined}
+          loading={priority || eager ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : eager ? 'low' : undefined}
           referrerPolicy="no-referrer"
           onLoad={() => setImageLoaded(true)}
           onError={handleImgError}

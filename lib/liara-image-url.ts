@@ -24,6 +24,11 @@ export const getLiaraImageMode = getStorageImageMode;
 export type ToStorageImageSrcOptions = {
   /** حتی در حالت direct، از API same-origin استفاده کن */
   forceProxy?: boolean;
+  /**
+   * URL عمومی استوریج، بدون پروکسی.
+   * اگر مرورگر نتواند وصل شود، caller باید با forceProxy دوباره تلاش کند.
+   */
+  preferDirect?: boolean;
 };
 
 /** @deprecated */
@@ -42,8 +47,8 @@ export function toStorageImageSrc(
 
   const useProxy =
     options?.forceProxy ||
-    getStorageImageMode() === 'same-origin' ||
-    isParsPackStorageUrl(url);
+    (!options?.preferDirect &&
+      (getStorageImageMode() === 'same-origin' || isParsPackStorageUrl(url)));
 
   if (!useProxy) return url;
 

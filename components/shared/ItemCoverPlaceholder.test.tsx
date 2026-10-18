@@ -4,8 +4,10 @@ import ItemCoverPlaceholder, {
 } from '@/components/shared/ItemCoverPlaceholder';
 
 describe('ItemCoverPlaceholder', () => {
-  it('uses neutral gradient for loading state', () => {
-    expect(getItemCoverPlaceholderGradient('ماتریکس', 'movies', 'loading')).toContain('slate');
+  it('uses category gradient while the poster is still loading', () => {
+    const gradient = getItemCoverPlaceholderGradient('ماتریکس', 'movies', 'loading');
+    expect(gradient).not.toContain('slate-200');
+    expect(gradient).toContain('from-');
   });
 
   it('uses category gradient for empty state', () => {
