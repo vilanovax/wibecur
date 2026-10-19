@@ -16,7 +16,7 @@ interface ItemDetailTopActionsProps {
 }
 
 const shareButtonClass =
-  'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary active:scale-95';
+  'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95';
 
 export default function ItemDetailTopActions({
   itemId,
@@ -41,15 +41,23 @@ export default function ItemDetailTopActions({
 
   if (variant === 'inline') {
     return (
-      <div className="flex shrink-0 items-center justify-start gap-2" aria-label="ذخیره، پسند و اشتراک">
+      <div
+        className="flex flex-wrap items-center justify-start gap-2"
+        aria-label="ذخیره، پسند و اشتراک"
+      >
         {actions}
       </div>
     );
   }
 
   return (
-    <div className="sticky top-16 z-30 flex items-center justify-start gap-2 border-b border-wibe/80 bg-wibe-surface/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
-      {actions}
+    <div className="sticky top-16 z-30 border-b border-wibe/70 bg-wibe-surface/95 px-4 py-2.5 backdrop-blur-md lg:hidden">
+      <div
+        className="flex items-center justify-start gap-2"
+        aria-label="ذخیره، پسند و اشتراک"
+      >
+        {actions}
+      </div>
     </div>
   );
 }

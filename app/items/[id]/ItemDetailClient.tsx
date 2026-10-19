@@ -129,10 +129,10 @@ export default function ItemDetailClient({
         </div>
       )}
 
-      <div className="relative z-10 mt-4 flex flex-col gap-5 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
+      <div className="relative z-10 mt-3 flex flex-col gap-5 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
           {isLightweight && (
-            <div className="rounded-2xl border border-wibe/70 bg-wibe-card px-3 py-2.5 shadow-sm">
+            <div className="rounded-2xl bg-wibe-card px-3 py-2.5 shadow-sm ring-1 ring-wibe/80">
               <ItemDetailTopActions
                 itemId={item.id}
                 likeCount={likeCount}
@@ -146,7 +146,7 @@ export default function ItemDetailClient({
           {authStatus === 'unauthenticated' && (
             <Link
               href={loginHref}
-              className="flex items-center justify-between gap-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 wibe-small text-foreground transition-colors hover:bg-primary/10"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-primary/[0.04] px-4 py-3 wibe-small text-foreground transition-colors hover:bg-primary/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               <span>برای ذخیره، پسند و نظر وارد شو</span>
               <span className="shrink-0 font-semibold text-primary">ورود</span>
@@ -173,7 +173,7 @@ export default function ItemDetailClient({
 
           <section
             ref={commentsRef}
-            className="scroll-mt-16 rounded-2xl border border-wibe/60 bg-wibe-card p-5 shadow-sm lg:border-wibe/60"
+            className="scroll-mt-16 rounded-2xl bg-wibe-card p-4 shadow-sm ring-1 ring-wibe/80 sm:p-5"
           >
             {commentsInView ? (
               <CommentSectionLazy
@@ -184,7 +184,11 @@ export default function ItemDetailClient({
                 fetchEnabled
               />
             ) : (
-              <div className="min-h-[8rem] animate-pulse rounded-xl bg-gray-100/80" aria-hidden />
+              <div className="space-y-3" aria-hidden>
+                <div className="h-5 w-28 animate-pulse rounded-md bg-wibe-surface" />
+                <div className="h-24 animate-pulse rounded-2xl bg-wibe-surface" />
+                <div className="h-20 animate-pulse rounded-2xl bg-wibe-surface" />
+              </div>
             )}
           </section>
         </aside>

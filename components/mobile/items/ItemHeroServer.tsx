@@ -76,7 +76,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
       >
         <Link
           href={`/lists/${item.lists.slug}`}
-          className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-white/80 px-2.5 py-1 wibe-caption font-medium text-wibe-secondary shadow-sm"
+          className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-full bg-wibe-card px-2.5 py-1 wibe-caption font-medium text-wibe-secondary shadow-sm ring-1 ring-wibe/80"
         >
           <List className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
           <span className="truncate">{item.lists.title}</span>
@@ -84,7 +84,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
 
         {isLifestyle ? (
           item.title?.trim() && (
-            <h1 className="text-xl font-bold leading-snug text-foreground sm:text-2xl">
+            <h1 className="wibe-h1 leading-snug">
               {item.title}
             </h1>
           )
@@ -105,7 +105,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
                 )}
               </div>
               {item.title?.trim() && (
-                <h1 className="text-xl font-bold leading-snug text-foreground sm:text-2xl">
+                <h1 className="wibe-h1 leading-snug">
                   {item.title}
                 </h1>
               )}
@@ -123,10 +123,10 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
     <section className="px-4 pt-2 lg:px-0 lg:pt-1">
       <div className="flex gap-3.5 sm:gap-4 lg:grid lg:grid-cols-[minmax(11rem,14rem)_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-6">
         <div
-          className={`relative shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-sm ring-1 ring-black/[0.05] lg:rounded-2xl ${
+          className={`relative shrink-0 overflow-hidden rounded-2xl bg-wibe-surface shadow-sm ring-1 ring-wibe/90 ${
             isLocationPoster
               ? 'h-[7.25rem] w-[6.5rem] sm:h-32 sm:w-[8.5rem] lg:h-auto lg:w-full lg:aspect-[4/3]'
-              : 'h-[10.5rem] w-[7rem] sm:h-[11.5rem] sm:w-[7.75rem] lg:h-auto lg:w-full lg:aspect-[2/3]'
+              : 'h-[10.75rem] w-[7.25rem] sm:h-[12rem] sm:w-32 lg:h-auto lg:w-full lg:aspect-[2/3]'
           }`}
         >
           {poster ? (
@@ -139,7 +139,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               className={
                 isLocationPoster
                   ? 'object-cover object-center'
-                  : 'object-contain bg-gray-100'
+                  : 'object-cover object-center bg-wibe-surface'
               }
               unoptimized={poster.unoptimized}
             />
@@ -149,9 +149,9 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
             </div>
           )}
           {imdbRating && (
-            <span className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1 rounded-lg bg-black/75 px-2 py-1 wibe-caption font-bold backdrop-blur-sm">
-              <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" aria-hidden />
-              <span className="text-amber-400 tabular-nums">{imdbRating}</span>
+            <span className="absolute bottom-2 end-2 z-10 inline-flex items-center gap-1 rounded-full bg-black/80 px-2 py-1 wibe-caption font-bold text-white shadow-sm backdrop-blur-sm">
+              <Star className="h-3 w-3 shrink-0 fill-warning text-warning" aria-hidden />
+              <span className="tabular-nums text-warning">{imdbRating}</span>
             </span>
           )}
         </div>
@@ -159,27 +159,30 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
         <div className="flex min-w-0 flex-1 flex-col justify-end lg:justify-center lg:py-1">
           <Link
             href={`/lists/${item.lists.slug}`}
-            className="mb-2 inline-flex max-w-full items-center gap-1.5 rounded-lg border border-wibe/80 bg-wibe-card px-2.5 py-1 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary lg:mb-3"
+            className="mb-2.5 inline-flex max-w-full items-center gap-1.5 rounded-full border border-wibe bg-wibe-card px-2.5 py-1 wibe-caption font-medium text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:mb-3"
           >
             <span aria-hidden>{item.lists.categories?.icon || '📋'}</span>
             <span className="truncate">{item.lists.title}</span>
           </Link>
 
-          <h1 className="text-lg font-bold leading-snug text-foreground sm:text-xl lg:text-[1.65rem] lg:leading-snug">
+          <h1 className="wibe-h1 leading-snug">
             {item.title}
           </h1>
 
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-wibe-secondary lg:mt-2 lg:text-sm">
-            {(genre || categoryName) && <span>{String(genre || categoryName)}</span>}
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 wibe-caption text-wibe-secondary">
+            {(genre || categoryName) && (
+              <span className="rounded-full bg-wibe-surface px-2 py-0.5 font-medium text-foreground/80">
+                {String(genre || categoryName)}
+              </span>
+            )}
             {year != null && (
-              <>
-                {(genre || categoryName) && <span className="text-wibe-secondary/40">·</span>}
-                <span>{String(year)}</span>
-              </>
+              <span className="rounded-full bg-wibe-surface px-2 py-0.5 tabular-nums font-medium text-foreground/80">
+                {String(year)}
+              </span>
             )}
           </div>
 
-          <div className="mt-3 hidden lg:block">
+          <div className="mt-4 hidden lg:block">
             <ItemDetailTopActions
               itemId={item.id}
               likeCount={likeCount}

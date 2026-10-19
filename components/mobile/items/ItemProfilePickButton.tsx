@@ -61,7 +61,7 @@ export default function ItemProfilePickButton({
   if (status === 'loading' || (status === 'authenticated' && viewerLoading && !viewerState)) {
     return (
       <div
-        className={`animate-pulse rounded-lg bg-gray-200 ${isCompact ? 'h-9 w-9' : 'h-9 w-28'}`}
+        className={`animate-pulse rounded-full bg-wibe-surface ${isCompact ? 'h-10 w-10' : 'h-9 w-28 rounded-lg'}`}
         aria-hidden
       />
     );
@@ -114,18 +114,18 @@ export default function ItemProfilePickButton({
           type="button"
           onClick={handleToggle}
           disabled={loading}
-          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
+          className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50 ${
             isPicked
-              ? 'border-2 border-violet-600 bg-violet-600 shadow-md hover:bg-violet-700'
+              ? 'border-primary bg-primary shadow-sm hover:bg-primary-dark'
               : isHero
-                ? 'border border-white/30 bg-white/15 backdrop-blur-sm hover:bg-white/25'
-                : 'border-2 border-gray-300 bg-white hover:border-violet-500 hover:bg-violet-50'
+                ? 'border-white/30 bg-white/15 backdrop-blur-sm hover:bg-white/25'
+                : 'border-wibe bg-wibe-card hover:border-primary/40 hover:bg-primary/5'
           }`}
           aria-label={isPicked ? 'حذف از منتخب‌های پروفایل' : 'افزودن به منتخب‌های پروفایل'}
           title={isPicked ? 'در منتخب‌های پروفایل' : 'افزودن به منتخب‌های پروفایل'}
         >
           <Sparkles
-            className={`h-5 w-5 ${isPicked ? 'fill-white text-white' : isHero ? 'text-white' : 'text-wibe-secondary'}`}
+            className={`h-4 w-4 ${isPicked ? 'fill-white text-white' : isHero ? 'text-white' : 'text-wibe-secondary'}`}
           />
         </button>
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
