@@ -22,11 +22,11 @@ export default function GenreScrollBar({ categorySlug, genres, inset = false }: 
 
   return (
     <section className={sectionClass}>
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
         <p className="wibe-caption font-semibold text-wibe-secondary">ژانرها</p>
         <Link
           href={`/lists?category=${categorySlug}`}
-          className="wibe-caption font-medium text-primary hover:underline"
+          className="wibe-caption font-semibold text-primary transition-colors hover:text-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         >
           همه لیست‌ها
         </Link>
@@ -39,12 +39,12 @@ export default function GenreScrollBar({ categorySlug, genres, inset = false }: 
           <Link
             key={`${genre.slug}-${genre.label}`}
             href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(genre.label)}`}
-            className="flex shrink-0 snap-start items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-3.5 py-2 text-sm font-medium text-gray-800 transition-all hover:bg-gray-200 lg:hover:border-primary/30 lg:hover:bg-primary/5"
+            className="flex shrink-0 snap-start items-center gap-1.5 rounded-full border border-wibe bg-wibe-card px-3.5 py-2 wibe-small font-medium text-foreground shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           >
-            <span>{genre.icon}</span>
+            <span aria-hidden>{genre.icon}</span>
             <span>{genre.label}</span>
             {genre.listCount > 0 && (
-              <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 tabular-nums">
+              <span className="rounded-full bg-wibe-surface px-1.5 py-0.5 wibe-caption font-bold tabular-nums text-wibe-secondary">
                 {genre.listCount.toLocaleString('fa-IR')}
               </span>
             )}

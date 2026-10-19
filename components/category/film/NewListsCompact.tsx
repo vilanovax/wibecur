@@ -24,7 +24,7 @@ export default function NewListsCompact({
         iconVariant="new"
       />
 
-      <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+      <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
         {lists.map((list) => (
           <ListRowCompact
             key={list.id}

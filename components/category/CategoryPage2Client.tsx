@@ -75,11 +75,11 @@ export default function CategoryPage2Client({
     return (
       <main className="min-h-[50vh] animate-pulse bg-wibe-surface">
         <div className={CATEGORY_PAGE_SHELL}>
-          <div className="mt-3 aspect-[16/9] rounded-2xl bg-gray-200 lg:mt-4" />
-          <div className="mt-6 h-6 w-48 rounded bg-gray-200" />
+          <div className="mt-3 aspect-[16/9] rounded-2xl bg-wibe-surface lg:mt-4" />
+          <div className="mt-6 h-6 w-48 rounded bg-wibe-surface" />
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[4/3] rounded-xl bg-gray-200" />
+              <div key={i} className="aspect-[3/4] rounded-2xl bg-wibe-surface" />
             ))}
           </div>
         </div>
@@ -112,6 +112,7 @@ export default function CategoryPage2Client({
     !isLocationCategorySlug(category.slug) &&
     cityBreakdown.some((c) => c.listCount > 0);
   const showGenreBar = isFilmCategorySlug(category.slug);
+  const itemChipLayout = showGenreBar ? 'poster' : 'tile';
 
   const featuredSpotlight =
     viralSpotlight && viralSpotlight.id !== trendingLists[0]?.id ? viralSpotlight : null;
@@ -129,7 +130,12 @@ export default function CategoryPage2Client({
   );
 
   const newListsClient = (
-    <NewListsSectionLazy inset lists={newLists} categoryName={category.name} />
+    <NewListsSectionLazy
+      inset
+      lists={newLists}
+      categoryName={category.name}
+      categorySlug={category.slug}
+    />
   );
 
   const viralSpotlightClient = featuredSpotlight ? (
@@ -138,12 +144,22 @@ export default function CategoryPage2Client({
 
   const mostSavedItemsClient =
     mostSavedItems.length > 0 ? (
-      <MostSavedItemsCafeLazy items={mostSavedItems} accentColor={accentColor} inset />
+      <MostSavedItemsCafeLazy
+        items={mostSavedItems}
+        accentColor={accentColor}
+        inset
+        itemLayout={itemChipLayout}
+      />
     ) : null;
 
   const latestItemsClient =
     latestItems.length > 0 ? (
-      <LatestItemsSectionLazy items={latestItems} accentColor={accentColor} inset />
+      <LatestItemsSectionLazy
+        items={latestItems}
+        accentColor={accentColor}
+        inset
+        itemLayout={itemChipLayout}
+      />
     ) : null;
 
   const breadcrumbItems = [
