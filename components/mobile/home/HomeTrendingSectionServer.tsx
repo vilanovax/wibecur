@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import SectionIcon from '@/components/shared/SectionIcon';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 import { isSeeAllCell } from '@/lib/home-feed-grid';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
@@ -26,7 +27,7 @@ export default function HomeTrendingSectionServer({ lists }: HomeTrendingSection
       <div className="mb-3 flex items-start justify-between gap-3 px-4 lg:mb-4 lg:items-center lg:px-0">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 wibe-h3">
-            <span aria-hidden>🔥</span>
+            <SectionIcon variant="trending" />
             ترند این هفته
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">بر اساس ذخیره و تعامل</p>
@@ -56,7 +57,7 @@ export default function HomeTrendingSectionServer({ lists }: HomeTrendingSection
                 href={cell.href}
                 className="group block lg:h-full lg:w-full lg:shrink"
               >
-                <div className="flex aspect-[5/4] h-full max-h-44 flex-col items-center justify-center rounded-surface border border-dashed border-brand/30 bg-brand/5 p-3 text-center transition-colors hover:border-brand/40 hover:bg-brand/10 sm:aspect-[4/3] lg:aspect-auto lg:min-h-36 lg:max-h-44 lg:px-4 lg:py-3">
+                <div className="flex aspect-5/4 h-full max-h-44 flex-col items-center justify-center rounded-surface border border-dashed border-brand/30 bg-brand/5 p-3 text-center transition-colors hover:border-brand/40 hover:bg-brand/10 sm:aspect-4/3 lg:aspect-auto lg:min-h-36 lg:max-h-44 lg:px-4 lg:py-3">
                   <span className="text-sm font-semibold text-brand">
                     {cell.label}
                   </span>

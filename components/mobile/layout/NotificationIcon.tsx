@@ -1,7 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, CheckCheck, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  Ban,
+  Bell,
+  CheckCheck,
+  CircleCheck,
+  CircleX,
+  ListPlus,
+  MessageCircle,
+  Pencil,
+  RefreshCw,
+  Trash2,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { formatRelativeTime } from '@/lib/format-relative-time';
@@ -28,15 +41,45 @@ interface NotificationPreferences {
   allowCommentNotifications: boolean;
 }
 
-function notificationEmoji(type: string): string {
+function notificationMark(type: string): { Icon: LucideIcon; className: string } {
   const t = type.toLowerCase();
-  if (t.includes('list_item')) return '📋';
-  if (t.includes('list')) return '📋';
-  if (t.includes('item') || t.includes('suggest')) return '✅';
-  if (t.includes('like') || t.includes('save')) return '❤️';
-  if (t.includes('comment')) return '💬';
-  if (t.includes('follow') || t.includes('collab')) return '👤';
-  return '🔔';
+  if (t.includes('comment_banned') || t.includes('comment_restricted')) {
+    return { Icon: Ban, className: 'bg-destructive/10 text-destructive' };
+  }
+  if (t.includes('comment_unrestricted')) {
+    return { Icon: CircleCheck, className: 'bg-success/10 text-success' };
+  }
+  if (t.includes('rejected') || t.includes('deleted')) {
+    return { Icon: CircleX, className: 'bg-destructive/10 text-destructive' };
+  }
+  if (t.includes('approved')) {
+    return { Icon: CircleCheck, className: 'bg-success/10 text-success' };
+  }
+  if (t.includes('updated')) {
+    return { Icon: Pencil, className: 'bg-muted text-foreground' };
+  }
+  if (t.includes('collab') || t.includes('follow')) {
+    return { Icon: Users, className: 'bg-muted text-foreground' };
+  }
+  if (t.includes('list')) {
+    return { Icon: ListPlus, className: 'bg-muted text-foreground' };
+  }
+  if (t.includes('comment')) {
+    return { Icon: MessageCircle, className: 'bg-muted text-foreground' };
+  }
+  return { Icon: Bell, className: 'bg-muted text-muted-foreground' };
+}
+
+function NotificationGlyph({ type }: { type: string }) {
+  const { Icon, className } = notificationMark(type);
+  return (
+    <span
+      className={`flex size-11 shrink-0 items-center justify-center rounded-full ${className}`}
+      aria-hidden
+    >
+      <Icon className="size-5" strokeWidth={1.75} />
+    </span>
+  );
 }
 
 function NotificationSkeleton() {
@@ -333,21 +376,6 @@ export function NotificationSheet({
       title="اعلان‌ها"
       subtitle={subtitle}
       maxHeight="78vh"
-      headerAction={
-        unreadCount > 0 ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-11 text-brand"
-            onClick={markAllAsRead}
-            aria-label="علامت‌گذاری همه به عنوان خوانده‌شده"
-          >
-            <CheckCheck />
-            همه خوانده
-          </Button>
-        ) : undefined
-      }
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {fetchFailed && !isLoading && (
@@ -360,7 +388,7 @@ export function NotificationSheet({
           </Card>
         )}
 
-        <div className="flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom,8px)]">
+        <div className="flex-1 overflow-y-auto overscroll-contain pb-4">
           {isLoading && notifications.length === 0 ? (
             <NotificationSkeleton />
           ) : notifications.length === 0 ? (
@@ -371,21 +399,38 @@ export function NotificationSheet({
             />
           ) : (
             <>
-              {readCount > 0 && (
-                <div className="flex px-3 pt-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-11"
-                    onClick={() => void deleteReadNotifications()}
-                  >
-                    <Trash2 />
-                    حذف خوانده‌شده‌ها
-                  </Button>
+              {(unreadCount > 0 || readCount > 0) && (
+                <div className="flex items-center justify-between gap-2 border-b border-border px-2">
+                  {unreadCount > 0 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-11 text-brand"
+                      onClick={markAllAsRead}
+                      aria-label="علامت‌گذاری همه به عنوان خوانده‌شده"
+                    >
+                      <CheckCheck />
+                      همه خوانده
+                    </Button>
+                  ) : (
+                    <span />
+                  )}
+                  {readCount > 0 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-11 text-muted-foreground"
+                      onClick={() => void deleteReadNotifications()}
+                    >
+                      <Trash2 />
+                      حذف خوانده‌شده‌ها
+                    </Button>
+                  ) : null}
                 </div>
               )}
-              <ul className="space-y-2 px-2.5 py-2" aria-label="لیست اعلان‌ها">
+              <ul className="space-y-2 px-3 py-3" aria-label="لیست اعلان‌ها">
                 {notifications.map((notification) => {
                   const rowClass = !notification.read
                     ? 'flex items-start gap-2 border-brand/30 bg-brand/5 p-3'
@@ -399,14 +444,7 @@ export function NotificationSheet({
                           className="flex min-w-0 flex-1 gap-3 text-start"
                           onClick={(e) => handleNotificationClick(e, notification)}
                         >
-                          <div
-                            className={`flex size-11 shrink-0 items-center justify-center rounded-full text-lg ${
-                              !notification.read ? 'bg-brand/10' : 'bg-muted'
-                            }`}
-                            aria-hidden
-                          >
-                            {notificationEmoji(notification.type)}
-                          </div>
+                          <NotificationGlyph type={notification.type} />
                           <div className="min-w-0 flex-1 text-start">
                             <div className="flex items-start justify-between gap-2">
                               <h3
@@ -428,7 +466,7 @@ export function NotificationSheet({
                             <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                               {notification.message}
                             </p>
-                            <p className="mt-1.5 text-xs text-muted-foreground/70">
+                            <p className="mt-1.5 wibe-caption text-muted-foreground">
                               {formatRelativeTime(notification.createdAt)}
                             </p>
                           </div>

@@ -37,7 +37,7 @@ export default function MoodMissionCard({ card, onSelect }: Props) {
       type="button"
       onPointerDown={() => warmMoodOpen(card)}
       onClick={() => onSelect(card)}
-      className="w-full text-start"
+      className="w-full rounded-xl text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
     >
       <Card className="flex min-h-32 flex-col bg-popover p-4 lg:min-h-36">
       <span
@@ -47,10 +47,10 @@ export default function MoodMissionCard({ card, onSelect }: Props) {
         {card.icon}
       </span>
 
-      <p className="text-sm font-bold text-foreground">
+      <p className="text-balance wibe-small font-semibold text-foreground">
         {card.title}
       </p>
-      <p className="relative mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+      <p className="relative mt-1 line-clamp-2 text-balance wibe-small text-muted-foreground">
         {card.subtitle}
       </p>
       </Card>

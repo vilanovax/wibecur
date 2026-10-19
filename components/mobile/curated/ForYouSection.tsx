@@ -46,11 +46,16 @@ export default function ForYouSection({
   return (
     <section
       id="foryou"
-      className="border-t border-border px-3 py-4 lg:px-0 lg:py-5"
+      className="border-t border-border px-4 py-4 lg:px-0 lg:py-5"
       aria-labelledby="foryou-title"
     >
-      <ExploreSectionTitle id="foryou-title" title={title} subtitle={subtitle} icon="✨" />
-      <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
+      <ExploreSectionTitle
+        id="foryou-title"
+        title={title}
+        subtitle={subtitle}
+        iconVariant="forYou"
+      />
+      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-0.5 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-3 lg:overflow-visible lg:snap-none xl:grid-cols-4">
         {visible.map((list, index) => {
           const categoryLabel = list.category?.name
             ? `${list.category.icon ? `${list.category.icon} ` : ''}${list.category.name}`
@@ -65,39 +70,39 @@ export default function ForYouSection({
             <Link
               key={list.id}
               href={`/lists/${list.slug}`}
-              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              className="block w-44 shrink-0 snap-start focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 lg:w-full lg:shrink"
             >
-              <Card
-                className={`flex gap-3 p-3 transition-transform active:scale-95 ${
-                  index === 0 ? 'border-brand/30 bg-brand/5' : 'bg-popover'
-                }`}
-              >
-              <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted lg:size-20">
-                <ImageWithFallback
-                  src={trustedCover}
-                  alt={list.title}
-                  className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-105"
-                  fallbackIcon="📋"
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
-                  width={80}
-                  height={80}
-                  priority={index === 0}
-                  categorySlug={list.category?.slug}
-                  listSlug={list.slug}
-                  listTitle={list.title}
-                />
-              </div>
-              <div className="min-w-0 flex-1 text-start">
-                <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:text-base">
-                  {list.title}
-                </h3>
-                {categoryLabel ? (
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground lg:text-sm">
-                    {categoryLabel}
-                  </p>
-                ) : null}
-              </div>
+              <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-95">
+                <div className="relative aspect-4/3 bg-muted">
+                  <ImageWithFallback
+                    src={trustedCover}
+                    alt={list.title}
+                    className="h-full w-full object-cover"
+                    fallbackIcon="📋"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
+                    width={176}
+                    height={132}
+                    priority={index === 0}
+                    categorySlug={list.category?.slug}
+                    listSlug={list.slug}
+                    listTitle={list.title}
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/75 to-transparent"
+                    aria-hidden
+                  />
+                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-start">
+                    <h3 className="line-clamp-2 wibe-small font-semibold text-background">
+                      {list.title}
+                    </h3>
+                  </div>
+                </div>
               </Card>
+              {categoryLabel ? (
+                <p className="mt-1.5 line-clamp-1 wibe-caption text-muted-foreground">
+                  {categoryLabel}
+                </p>
+              ) : null}
             </Link>
           );
         })}

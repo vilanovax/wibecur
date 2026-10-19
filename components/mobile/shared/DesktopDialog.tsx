@@ -67,14 +67,19 @@ export default function DesktopDialog({
     <div
       ref={backdropRef}
       data-theme="paper"
-      className="fixed inset-0 flex items-center justify-center p-4"
+      className="fixed inset-0 flex items-center justify-center bg-transparent p-4"
       style={{ zIndex }}
       onClick={(e) => {
         if (closeOnBackdrop && e.target === backdropRef.current) onClose();
       }}
       role="presentation"
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" />
+      <div
+        className="absolute inset-0 bg-foreground/40 animate-in fade-in duration-200"
+        onClick={() => {
+          if (closeOnBackdrop) onClose();
+        }}
+      />
       <div
         role="dialog"
         aria-modal="true"

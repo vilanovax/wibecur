@@ -68,13 +68,18 @@ export default function MobileBottomSheet({
     <div
       ref={backdropRef}
       data-theme="paper"
-      className="fixed inset-0 flex items-end justify-center lg:hidden"
+      className="fixed inset-0 flex items-end justify-center bg-transparent lg:hidden"
       style={{ zIndex }}
       onClick={(e) => {
         if (closeOnBackdrop && e.target === backdropRef.current) onClose();
       }}
     >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" />
+      <div
+        className="absolute inset-0 bg-foreground/40 animate-in fade-in duration-200"
+        onClick={() => {
+          if (closeOnBackdrop) onClose();
+        }}
+      />
 
       <div
         ref={sheetRef}
@@ -85,12 +90,12 @@ export default function MobileBottomSheet({
         style={{ maxHeight }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-shrink-0 justify-center pb-1 pt-2.5">
+        <div className="flex shrink-0 justify-center pb-1 pt-2.5">
           <div className="h-1 w-9 rounded-full bg-muted" />
         </div>
 
         {(title || subtitle || headerAction) && (
-          <div className="flex flex-shrink-0 items-start justify-between gap-2 border-b border-border px-4 pb-3 pt-1">
+          <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border px-4 pb-3 pt-1">
             <div className="min-w-0 flex-1 text-start">
               {title && <h2 className="text-base font-semibold leading-tight text-foreground">{title}</h2>}
               {subtitle && (
@@ -116,7 +121,7 @@ export default function MobileBottomSheet({
         </div>
 
         {footer && (
-          <div className="flex-shrink-0 border-t border-border bg-popover pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-border bg-popover pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             {footer}
           </div>
         )}

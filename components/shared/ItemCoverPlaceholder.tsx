@@ -50,14 +50,14 @@ export default function ItemCoverPlaceholder({
 
   return (
     <div
-      className={`relative overflow-hidden bg-gradient-to-br ${gradient} ${className}`}
+      className={`relative overflow-hidden bg-linear-to-br ${gradient} ${className}`}
       aria-hidden={!ariaLabel}
       aria-label={ariaLabel}
       role={ariaLabel ? 'img' : undefined}
     >
       {showShimmer && (
         <div
-          className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.45)_45%,rgba(255,255,255,0.55)_55%,transparent_100%)] bg-[length:220%_100%] animate-shimmer"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.45)_45%,rgba(255,255,255,0.55)_55%,transparent_100%)] bg-size-[220%_100%] animate-shimmer"
           aria-hidden
         />
       )}

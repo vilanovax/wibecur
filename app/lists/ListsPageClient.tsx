@@ -896,9 +896,8 @@ export default function ListsPageClient({
             </div>
           </div>
 
-          <div className="py-2 ps-4 lg:px-0" aria-label="فیلتر دسته">
-            <div className="me-20 overflow-hidden lg:me-0 lg:overflow-visible">
-            <div className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto pe-1 scrollbar-hide lg:flex-wrap lg:snap-none lg:overflow-visible lg:pe-0">
+          <div className="py-2 lg:px-0" role="group" aria-label="فیلتر دسته">
+            <div className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-4 scrollbar-hide lg:flex-wrap lg:snap-none lg:overflow-visible lg:px-0">
             <Button
               type="button"
               size="sm"
@@ -927,7 +926,6 @@ export default function ListsPageClient({
                 </Button>
               );
             })}
-            </div>
             </div>
           </div>
 

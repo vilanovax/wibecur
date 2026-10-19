@@ -155,7 +155,7 @@ export default function ProfileHeader({
           </div>
 
           <div className="min-w-0 flex-1 pt-1 text-start">
-            <h1 className="truncate wibe-h2 font-bold leading-snug text-foreground lg:text-2xl">
+            <h1 className="truncate wibe-h2 font-bold leading-snug text-foreground">
               {user.name || 'کاربر بدون نام'}
             </h1>
             <p className="mt-0.5 truncate text-start wibe-small font-medium text-muted-foreground">
@@ -201,7 +201,7 @@ export default function ProfileHeader({
               {menuOpen ? (
                 <Card
                   role="menu"
-                  className="absolute end-0 top-12 z-30 min-w-44 overflow-hidden bg-popover py-1"
+                  className="absolute inset-e-0 top-12 z-30 min-w-44 overflow-hidden bg-popover py-1"
                 >
                   <Button
                     type="button"
@@ -261,7 +261,7 @@ export default function ProfileHeader({
         </div>
 
         {user.bio?.trim() ? (
-          <p className="mt-3 text-start wibe-small leading-relaxed text-muted-foreground line-clamp-2 whitespace-pre-wrap break-words">
+          <p className="mt-3 text-start wibe-small leading-relaxed text-muted-foreground line-clamp-2 whitespace-pre-wrap wrap-break-word">
             {user.bio.trim()}
           </p>
         ) : isOwner ? (

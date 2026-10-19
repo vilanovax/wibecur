@@ -94,11 +94,11 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
         />
 
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/10 lg:bg-gradient-to-l lg:from-black lg:via-black/75 lg:via-[42%] lg:to-transparent"
+          className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground via-foreground/55 to-foreground/10 lg:bg-linear-to-l lg:from-foreground lg:via-foreground/75 lg:via-42% lg:to-transparent"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-foreground/35 to-transparent"
           aria-hidden
         />
         <div className="relative z-10 flex h-full flex-col justify-end p-4 sm:p-5 lg:max-w-xl lg:p-8 lg:pb-8 xl:max-w-2xl">

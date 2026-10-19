@@ -1,4 +1,3 @@
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function ExploreSurpriseSectionSkeleton() {
@@ -40,15 +39,9 @@ export function ExploreForYouSectionSkeleton() {
   return (
     <section className="border-t border-border px-3 py-4 lg:px-0 lg:py-5" aria-hidden>
       <Skeleton className="mb-3 h-5 w-32" />
-      <div className="space-y-2">
-        {[1, 2].map((i) => (
-          <Card key={i} className="flex gap-3 bg-popover p-3">
-            <Skeleton className="size-16 shrink-0 rounded-xl" />
-            <div className="flex flex-1 flex-col justify-center gap-2">
-              <Skeleton className="h-4 w-4/5" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          </Card>
+      <div className="flex gap-2.5 overflow-hidden">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-36 w-44 shrink-0 rounded-xl" />
         ))}
       </div>
     </section>

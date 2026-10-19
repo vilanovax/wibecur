@@ -223,7 +223,7 @@ function ListCardCompact({
           className="absolute inset-0 z-0 rounded-lg"
           aria-label={displayTitle}
         />
-        <div className="pointer-events-none relative z-[1] flex gap-2">
+        <div className="pointer-events-none relative z-1 flex gap-2">
           <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
             <ListCoverImage
               coverImage={list.coverImage}
@@ -252,7 +252,7 @@ function ListCardCompact({
             onToggle={onBookmarkToggle}
             isLoggedIn={isLoggedIn}
             size="xs"
-            className="pointer-events-auto absolute bottom-2 end-2 z-[2]"
+            className="pointer-events-auto absolute bottom-2 inset-e-2 z-2"
           />
         ) : null}
       </Card>
@@ -268,7 +268,7 @@ function ListCardCompact({
           className="absolute inset-0 z-0 rounded-lg"
           aria-label={displayTitle}
         />
-        <div className="pointer-events-none relative z-[1] flex gap-2.5">
+        <div className="pointer-events-none relative z-1 flex gap-2.5">
           <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted lg:size-20">
             <ListCoverImage
               coverImage={list.coverImage}
@@ -310,7 +310,7 @@ function ListCardCompact({
             isBookmarked={isBookmarked}
             onToggle={onBookmarkToggle}
             isLoggedIn={isLoggedIn}
-            className="pointer-events-auto absolute bottom-2.5 end-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
+            className="pointer-events-auto absolute bottom-2.5 inset-e-2.5 z-2 lg:transition-transform lg:group-hover:scale-110"
           />
         ) : null}
       </Card>
@@ -333,8 +333,8 @@ function ListCardCompact({
       <div
         className={
           fillHeight
-            ? 'pointer-events-none relative z-[1] h-full min-h-60 w-full overflow-hidden bg-muted lg:min-h-72'
-            : 'pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-muted max-lg:min-h-32 sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-52 xl:aspect-[5/3] xl:max-h-56'
+            ? 'pointer-events-none relative z-1 h-full min-h-60 w-full overflow-hidden bg-muted lg:min-h-72'
+            : 'pointer-events-none relative z-1 aspect-5/4 w-full overflow-hidden bg-muted max-lg:min-h-32 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-52 xl:aspect-5/3 xl:max-h-56'
         }
       >
         <ListCoverImage
@@ -348,7 +348,7 @@ function ListCardCompact({
           fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl lg:text-4xl"
         />
         {badges.length > 0 && (
-          <div className="absolute start-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-start gap-1 lg:start-2 lg:top-2">
+          <div className="absolute inset-s-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-start gap-1 lg:inset-s-2 lg:top-2">
             {badges.map((b) => (
               <span
                 key={b.label}
@@ -359,9 +359,9 @@ function ListCardCompact({
             ))}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-black/10 transition-opacity duration-300 max-lg:via-black/60 lg:group-hover:from-black/90" />
+        <div className="absolute inset-0 bg-linear-to-t from-foreground/95 via-foreground/55 to-foreground/10 transition-opacity duration-300 max-lg:via-foreground/60 lg:group-hover:from-foreground/90" />
         <div
-          className="absolute inset-0 hidden items-center justify-center bg-black/25 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
+          className="absolute inset-0 hidden items-center justify-center bg-foreground/25 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
           aria-hidden
         >
           <span className="rounded-full bg-popover px-4 py-2 text-sm font-semibold text-foreground shadow-md">
@@ -384,7 +384,7 @@ function ListCardCompact({
           onToggle={onBookmarkToggle}
           isLoggedIn={isLoggedIn}
           size="xs"
-          className="pointer-events-auto absolute bottom-2 end-2 z-[2] lg:bottom-2.5 lg:end-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
+          className="pointer-events-auto absolute bottom-2 inset-e-2 z-2 lg:bottom-2.5 lg:inset-e-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
         />
       ) : null}
     </Card>

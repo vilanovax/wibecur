@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 
 export type FeaturedListItem = {
@@ -21,7 +22,7 @@ interface ListsFeaturedCarouselProps {
 }
 
 const SLIDE_CLASS =
-  'w-full min-w-full shrink-0 snap-start lg:min-w-0 lg:w-full lg:max-w-none lg:shrink';
+  'w-80 min-w-80 shrink-0 snap-start lg:min-w-0 lg:w-full lg:max-w-none lg:shrink';
 
 export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -53,13 +54,13 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
   return (
     <section className="mb-2 w-full min-w-0 lg:mb-5" aria-label="منتخب">
       <div className="mb-1.5 flex items-center justify-between gap-2 lg:mb-2">
-        <h2 className="flex items-center gap-1.5 wibe-small font-semibold text-foreground lg:wibe-h3">
-          <span aria-hidden>⭐</span>
+        <h2 className="flex items-center gap-1.5 wibe-h3 text-foreground">
+          <Sparkles className="size-4" strokeWidth={1.75} aria-hidden />
           <span>منتخب</span>
         </h2>
         {lists.length > 1 && (
           <span
-            className="text-xs text-muted-foreground tabular-nums"
+            className="wibe-caption tabular-nums text-muted-foreground"
             aria-live="polite"
           >
             {(activeIndex + 1).toLocaleString('fa-IR')}/{lists.length.toLocaleString('fa-IR')}
@@ -72,7 +73,7 @@ export default function ListsFeaturedCarousel({ lists }: ListsFeaturedCarouselPr
       ) : (
         <div
           ref={scrollRef}
-          className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-0 max-lg:overflow-x-auto max-lg:pb-0.5 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
+          className="max-lg:flex max-lg:w-full max-lg:snap-x max-lg:snap-mandatory max-lg:gap-2.5 max-lg:overflow-x-auto max-lg:pb-0.5 max-lg:scrollbar-hide lg:grid lg:w-full lg:grid-cols-3 lg:gap-4"
           role="list"
           aria-label="لیست‌های منتخب"
         >
@@ -111,7 +112,7 @@ function FeaturedSlide({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className={`group relative block aspect-[5/2] min-h-20 overflow-hidden rounded-surface border border-border bg-muted shadow-surface transition-[colors,transform] active:scale-95 sm:aspect-[5/3] sm:min-h-28 lg:aspect-[3/2] lg:min-h-44 lg:hover:border-brand/30 xl:min-h-52 ${className}`}
+      className={`group relative block aspect-5/2 min-h-20 overflow-hidden rounded-surface border border-border bg-muted shadow-surface transition-[colors,transform] active:scale-95 sm:aspect-5/3 sm:min-h-28 lg:aspect-3/2 lg:min-h-44 lg:hover:border-brand/30 xl:min-h-52 ${className}`}
     >
       <ListCoverImage
         coverImage={list.coverImage}
@@ -126,14 +127,14 @@ function FeaturedSlide({
         fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl lg:text-4xl"
         priority={priority}
       />
-      <div className="absolute inset-0 bg-gradient-to-l from-black/85 via-black/50 to-black/20" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-l from-foreground/85 via-foreground/45 to-foreground/15" />
       {categoryLabel && (
-        <span className="absolute end-1.5 top-1.5 rounded-md bg-foreground/45 px-1.5 py-0.5 wibe-caption text-background/95 backdrop-blur-sm lg:end-2.5 lg:top-2.5 lg:px-2">
+        <span className="absolute inset-e-1.5 top-1.5 rounded-md bg-foreground/45 px-1.5 py-0.5 wibe-caption text-background/95 backdrop-blur-sm lg:inset-e-2.5 lg:top-2.5 lg:px-2">
           {categoryLabel}
         </span>
       )}
       <div className="absolute inset-0 flex flex-col justify-end p-2 text-start lg:p-4">
-        <h3 className="line-clamp-2 wibe-caption font-bold text-background lg:wibe-small lg:text-lg">
+        <h3 className="line-clamp-2 wibe-small font-bold text-background">
           {list.title}
         </h3>
       </div>

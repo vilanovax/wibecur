@@ -16,11 +16,11 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
 
   return (
     <section aria-labelledby="top-public-lists-title">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
-        <h2 id="top-public-lists-title" className="shrink-0 whitespace-nowrap wibe-small font-bold text-foreground">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0">
+        <h2 id="top-public-lists-title" className="wibe-h3 text-foreground">
           محبوب‌ترین‌ها
         </h2>
-        <span className="shrink-0 text-xs text-muted-foreground">بر اساس ذخیره</span>
+        <span className="wibe-caption text-muted-foreground">بر اساس ذخیره</span>
       </div>
       <div className="overflow-hidden lg:overflow-visible">
         <div
@@ -48,7 +48,7 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
                   fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
                 />
                 <div
-                  className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/35 to-transparent"
                   aria-hidden
                 />
                 <div className="absolute inset-x-0 bottom-0 p-2 pt-6">

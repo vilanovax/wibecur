@@ -76,7 +76,7 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
         )}
         <div className="flex gap-2.5 overflow-hidden px-4 lg:hidden">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-36 w-44 shrink-0 rounded-xl" />
+            <Skeleton key={i} className="h-36 w-40 shrink-0 rounded-xl" />
           ))}
         </div>
         <div className="hidden gap-2.5 lg:grid lg:grid-cols-4">

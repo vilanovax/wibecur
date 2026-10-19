@@ -43,7 +43,7 @@ export default function HomeGridListCard({
   const textBadge = badge && !isSavedBadge ? badge : null;
 
   return (
-    <div className="group relative w-44 shrink-0 snap-start lg:w-full lg:shrink">
+    <div className="group relative w-40 shrink-0 snap-start lg:w-full lg:shrink">
       <Link
         href={`/lists/${list.slug}`}
         onClick={() => {
@@ -58,10 +58,10 @@ export default function HomeGridListCard({
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
       >
         <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-95 lg:group-hover:border-brand/30 lg:group-hover:shadow-md">
-          <div className="relative aspect-[5/4] w-full bg-muted sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-44">
+          <div className="relative aspect-5/4 w-full bg-muted sm:aspect-4/3 lg:aspect-16/10 lg:max-h-44">
             {!showSave && isSavedBadge ? (
               <span
-                className="absolute start-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm"
+                className="absolute inset-s-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm"
                 aria-label="ذخیره‌شده"
               >
                 <Bookmark className="h-3.5 w-3.5 fill-current" strokeWidth={1.75} aria-hidden />
@@ -69,7 +69,7 @@ export default function HomeGridListCard({
             ) : null}
             {textBadge ? (
               <span
-                className={`absolute end-2 top-2 z-10 rounded-pill px-2 py-0.5 wibe-caption font-semibold shadow-sm ${badgeClassName}`}
+                className={`absolute inset-e-2 top-2 z-10 rounded-pill px-2 py-0.5 wibe-caption font-semibold shadow-sm ${badgeClassName}`}
               >
                 {textBadge}
               </span>
@@ -86,7 +86,7 @@ export default function HomeGridListCard({
               sizes="(min-width: 1024px) 240px, 176px"
             />
             <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/5 lg:via-black/25"
+              className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/90 via-foreground/35 to-foreground/5 lg:via-foreground/25"
               aria-hidden
             />
             <div className="absolute inset-x-0 bottom-0 p-2.5 text-start lg:p-3">
@@ -98,7 +98,7 @@ export default function HomeGridListCard({
         </Card>
       </Link>
       {showSave ? (
-        <div className="absolute start-2 top-2 z-10">
+        <div className="absolute inset-s-2 top-2 z-10">
           <HomeListSaveControl
             listId={list.id}
             listSlug={list.slug}

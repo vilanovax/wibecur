@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import SectionIcon from '@/components/shared/SectionIcon';
 
 type HomeFeedTabsProps = {
   carousel: ReactNode;
@@ -15,7 +15,10 @@ export default function HomeFeedTabs({ carousel }: HomeFeedTabsProps) {
     <section className="mb-3 lg:mb-0" aria-label="فید کشف">
       <div className="mb-2.5 flex items-start justify-between gap-3 px-4 lg:mb-0 lg:border-b lg:border-border lg:px-5 lg:pb-4 lg:pt-4">
         <div className="min-w-0">
-          <h2 className="wibe-h3 text-foreground">ترند این هفته</h2>
+          <h2 className="flex items-center gap-2 wibe-h3 text-foreground">
+            <SectionIcon variant="trending" />
+            ترند این هفته
+          </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             لیست‌های محبوب · حال‌وهوا در{' '}
             <Link href="/explore" className="underline-offset-2 hover:underline">
@@ -27,10 +30,7 @@ export default function HomeFeedTabs({ carousel }: HomeFeedTabsProps) {
           href="/lists?mode=trending"
           className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-1.5"
         >
-          <span className="inline-flex items-center gap-0.5 text-sm font-semibold text-brand">
-            کاتالوگ ترند
-            <ChevronLeft className="size-4" aria-hidden />
-          </span>
+          <span className="text-sm font-semibold text-brand">همه</span>
         </Link>
       </div>
 

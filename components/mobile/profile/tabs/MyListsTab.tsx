@@ -293,7 +293,7 @@ export default function MyListsTab({
           type="button"
           size="sm"
           variant={visibilityFilter === null ? 'default' : 'outline'}
-          className="h-11"
+          className="h-11 px-2"
           aria-pressed={visibilityFilter === null}
           onClick={() => setVisibilityFilter(null)}
         >
@@ -304,7 +304,7 @@ export default function MyListsTab({
           type="button"
           size="sm"
           variant={visibilityFilter === 'public' ? 'default' : 'outline'}
-          className="h-11"
+          className="h-11 px-2"
           onClick={() => toggleVisibilityFilter('public')}
         >
           <span>عمومی</span>
@@ -314,7 +314,7 @@ export default function MyListsTab({
           type="button"
           size="sm"
           variant={visibilityFilter === 'private' ? 'default' : 'outline'}
-          className="h-11"
+          className="h-11 px-2"
           onClick={() => toggleVisibilityFilter('private')}
         >
           <span>شخصی</span>
@@ -383,7 +383,7 @@ export default function MyListsTab({
         variant="brand"
         size="sm"
         onClick={openCreate}
-        className="h-11 shrink-0 rounded-xl px-3 lg:hidden"
+        className="h-11 shrink-0 rounded-xl px-2 lg:hidden"
       >
         <Plus />
         ساخت لیست
@@ -456,7 +456,7 @@ export default function MyListsTab({
         <>
           <div className="space-y-5 px-4 lg:px-0">
             <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1">
                 {createButton}
                 {visibilityChips}
               </div>
@@ -474,7 +474,7 @@ export default function MyListsTab({
                 {showGroupedSections ? (
                   <>
                     <section>
-                      <div className="mb-3 flex items-center justify-between gap-2">
+                      <div className="mb-3 flex items-baseline gap-2">
                         <h2 className="wibe-h3 text-foreground">لیست‌های عمومی</h2>
                         <span className="wibe-caption tabular-nums text-muted-foreground">
                           {publicCount.toLocaleString('fa-IR')}
@@ -483,7 +483,7 @@ export default function MyListsTab({
                       {renderListGrid(publicLists, { hidePublicBadge: true })}
                     </section>
                     <section>
-                      <div className="mb-3 flex items-center justify-between gap-2">
+                      <div className="mb-3 flex items-baseline gap-2">
                         <h2 className="wibe-h3 text-foreground">لیست‌های شخصی</h2>
                         <span className="wibe-caption tabular-nums text-muted-foreground">
                           {personalCount.toLocaleString('fa-IR')}

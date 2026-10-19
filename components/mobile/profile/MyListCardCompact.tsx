@@ -125,14 +125,12 @@ export default function MyListCardCompact({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={onSettingsClick}
-          className="my-2 me-2 h-auto min-h-11 shrink-0 flex-col self-stretch px-2"
+          className="me-1 size-11 shrink-0 self-center"
           aria-label="مدیریت لیست"
-          title="مدیریت"
         >
-          <Settings aria-hidden />
-          <span className="text-xs font-semibold leading-none">مدیریت</span>
+          <Settings strokeWidth={1.75} aria-hidden />
         </Button>
       )}
     </Card>

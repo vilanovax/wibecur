@@ -24,10 +24,10 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
   return (
     <div className="mb-0">
       <header className="mb-3.5 lg:mb-4">
-        <h2 className="text-balance text-xl font-bold leading-tight">
+        <h2 className="text-balance wibe-h3 text-foreground">
           امروز دنبال چه وایبی هستی؟
         </h2>
-        <p className="mt-1.5 max-w-md text-pretty text-sm text-muted-foreground lg:mt-2 lg:text-base">
+        <p className="mt-1.5 max-w-md text-pretty wibe-small text-muted-foreground lg:mt-2">
           یک حال‌وهوا انتخاب کن؛ بقیه‌اش را ما جور می‌کنیم
         </p>
       </header>
