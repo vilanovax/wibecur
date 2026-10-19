@@ -74,8 +74,8 @@ export default function ItemLikeButton({
   if (status === 'loading' || (deferReady && viewerLoading && !viewerState)) {
     return (
       <div
-        className={`h-10 animate-pulse ${
-          isHero ? 'w-14 rounded-lg bg-white/20' : 'w-10 rounded-full bg-wibe-surface'
+        className={`h-11 animate-pulse ${
+          isHero ? 'w-14 rounded-lg bg-white/20' : 'w-11 rounded-full bg-wibe-surface'
         }`}
         aria-hidden
       />
@@ -87,15 +87,15 @@ export default function ItemLikeButton({
       return (
         <Link
           href={loginHref}
-          className="inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full border border-wibe bg-wibe-card px-2.5 text-wibe-secondary transition-colors hover:border-red-300 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="relative flex h-11 w-11 items-center justify-center rounded-full border border-wibe bg-wibe-surface transition-colors hover:border-red-300/70 hover:bg-red-50/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
           aria-label="ورود برای پسندیدن"
         >
-          <Heart className="h-4 w-4 shrink-0" />
-          {countLabel ? (
-            <span className="wibe-caption font-bold tabular-nums text-wibe-secondary">
+          <Heart className="h-5 w-5 text-wibe-secondary" />
+          {likeCount > 0 && (
+            <span className="absolute -start-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-wibe-secondary px-0.5 text-xs font-bold text-white shadow-sm tabular-nums">
               {likeCount > 99 ? '۹۹+' : countLabel}
             </span>
-          ) : null}
+          )}
         </Link>
       );
     }
@@ -122,23 +122,23 @@ export default function ItemLikeButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full border px-2.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50 ${
+        className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50 ${
           isLiked
-            ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
-            : 'border-wibe bg-wibe-card text-wibe-secondary hover:border-red-300 hover:bg-red-50'
+            ? 'border border-red-200 bg-red-50 hover:bg-red-100'
+            : 'border border-wibe bg-wibe-surface hover:border-red-300/70 hover:bg-red-50/80'
         }`}
         aria-label={isLiked ? 'حذف لایک' : 'لایک'}
       >
         <Heart
-          className={`h-4 w-4 shrink-0 transition-colors ${
-            isLiked ? 'fill-red-500 text-red-500' : ''
+          className={`h-5 w-5 transition-colors ${
+            isLiked ? 'fill-red-500 text-red-500' : 'text-wibe-secondary'
           }`}
         />
-        {countLabel ? (
-          <span className={`wibe-caption font-bold tabular-nums ${isLiked ? 'text-red-600' : ''}`}>
+        {likeCount > 0 && (
+          <span className="absolute -start-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-0.5 text-xs font-bold text-white shadow-sm tabular-nums">
             {likeCount > 99 ? '۹۹+' : countLabel}
           </span>
-        ) : null}
+        )}
       </button>
     );
   }
