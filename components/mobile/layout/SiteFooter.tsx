@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import SiteLogo from '@/components/shared/SiteLogo';
+import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
 import { DESKTOP_CONTENT_PADDING_CLASS } from '@/lib/layout-tokens';
 import { fa } from '@/lib/utils';
 
@@ -18,6 +20,15 @@ const FOOTER_LINKS = [
 
 interface SiteFooterProps {
   variant?: 'desktop' | 'mobile';
+}
+
+function isOwnProfilePath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return pathname === '/profile' || pathname.startsWith('/profile/');
+}
+
+function appVersionLabel(): string {
+  return fa(ADMIN_PANEL_VERSION).replace(/\./g, '٫');
 }
 
 /** لینک واحد برند: کپی‌رایت + wibe.ir — بدون toLocaleString تا هیدریشن/CLS نشکند */
@@ -47,15 +58,32 @@ function WibeBrandLink({ className = '' }: { className?: string }) {
   );
 }
 
+function ProfileAppVersion() {
+  const version = appVersionLabel();
+
+  return (
+    <span className="inline-flex h-11 items-center text-xs text-muted-foreground">
+      <span className="text-muted-foreground/40" aria-hidden>
+        ·
+      </span>
+      <span className="ms-1.5">نسخهٔ {version}</span>
+    </span>
+  );
+}
+
 export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
+  const pathname = usePathname();
+  const showVersion = isOwnProfilePath(pathname);
+
   if (variant === 'mobile') {
     return (
       <footer
         className="border-t border-border bg-popover px-4 py-3 lg:hidden"
         role="contentinfo"
       >
-        <div className="mx-auto flex max-w-sm flex-col items-center gap-1.5 text-center">
+        <div className="mx-auto flex max-w-sm flex-wrap items-center justify-center">
           <WibeBrandLink />
+          {showVersion ? <ProfileAppVersion /> : null}
         </div>
       </footer>
     );
@@ -97,8 +125,9 @@ export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
           </nav>
         </div>
 
-        <div className="mt-6 flex justify-center border-t border-border pt-5 lg:justify-start">
+        <div className="mt-6 flex flex-wrap items-center justify-center border-t border-border pt-5 lg:justify-start">
           <WibeBrandLink />
+          {showVersion ? <ProfileAppVersion /> : null}
         </div>
       </div>
     </footer>
