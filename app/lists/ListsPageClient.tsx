@@ -772,7 +772,7 @@ export default function ListsPageClient({
   const showBrowseToolbar = !isSearchActive && !singleCategoryFilter;
   const displayViewMode: ViewMode = singleCategoryFilter ? 'grid' : viewMode;
 
-  /** چیپ دسته = فیلتر کاتالوگ (نه اسکرول به سکشن) */
+  /** «همه» فیلتر همین کاتالوگ است؛ بقیهٔ چیپ‌ها همان آدرس صفحهٔ دسته در خانه. */
   const isAllCategoriesSelected = filterState.categories.size === 0;
   const isCategorySelected = (catId: string) => filterState.categories.has(catId);
 
@@ -797,16 +797,6 @@ export default function ListsPageClient({
     },
     [router, pathname]
   );
-
-  const handleCategoryClick = (catId: string) => {
-    setFilterState((s) => ({ ...s, categories: new Set([catId]) }));
-    const cat = activeCategories.find((c) => c.id === catId);
-    const params = new URLSearchParams(window.location.search);
-    if (cat?.slug) params.set('category', cat.slug);
-    else params.set('category', catId);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const contextParts = [
     `${sortedLists.length.toLocaleString('fa-IR')} لیست`,
@@ -896,7 +886,7 @@ export default function ListsPageClient({
             </div>
           </div>
 
-          <div className="py-2 lg:px-0" role="group" aria-label="فیلتر دسته">
+          <div className="py-2 lg:px-0" role="group" aria-label="دسته‌ها">
             <div className="flex snap-x snap-mandatory gap-1.5 overflow-x-auto px-4 scrollbar-hide lg:flex-wrap lg:snap-none lg:overflow-visible lg:px-0">
             <Button
               type="button"
@@ -909,21 +899,23 @@ export default function ListsPageClient({
               همه
             </Button>
             {activeCategories.map((cat) => {
+              if (!cat.slug) return null;
               const isSelected = isCategorySelected(cat.id);
               return (
-                <Button
+                <Link
                   key={cat.id}
-                  type="button"
-                  size="sm"
-                  variant={isSelected ? 'default' : 'outline'}
+                  href={`/categories/${cat.slug}`}
                   data-category-chip={cat.id}
-                  onClick={() => handleCategoryClick(cat.id)}
-                  aria-pressed={isSelected}
-                  className="h-11 shrink-0 snap-start rounded-full"
+                  aria-current={isSelected ? 'page' : undefined}
+                  className={`inline-flex h-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold shadow-control ${
+                    isSelected
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-input bg-transparent text-foreground hover:bg-accent'
+                  }`}
                 >
                   {cat.icon ? `${cat.icon} ` : ''}
                   {cat.name}
-                </Button>
+                </Link>
               );
             })}
             </div>
