@@ -8,8 +8,7 @@ import { useSidebar } from './SidebarContext';
 import { signOut, useSession } from 'next-auth/react';
 import RoleBadge from '@/components/auth/RoleBadge';
 import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { BREADCRUMB_MAP } from '@/lib/admin/breadcrumb-labels';
 
 /** سگمنت‌های مسیر که نباید به‌عنوان «جزئیات» (شناسه) نمایش داده شوند */
@@ -235,7 +234,7 @@ export default function AdminHeader() {
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden lg:flex p-2 rounded-xl hover:bg-admin-muted dark:hover:bg-gray-700 text-admin-text-secondary dark:text-[var(--color-text-subtle)] transition-colors"
+          className="hidden lg:flex p-2 rounded-xl hover:bg-admin-muted dark:hover:bg-gray-700 text-admin-text-secondary dark:text-gray-400 transition-colors"
           aria-label={collapsed ? 'باز کردن منو' : 'جمع کردن منو'}
         >
           {collapsed ? <PanelRightOpen className="h-5 w-5" /> : <PanelRightClose className="h-5 w-5" />}
@@ -246,11 +245,11 @@ export default function AdminHeader() {
           const className = `text-sm truncate max-w-[120px] ${
             isLast
               ? 'font-semibold text-admin-text-primary dark:text-white'
-              : 'text-admin-text-secondary dark:text-[var(--color-text-subtle)] hover:text-admin-text-primary dark:hover:text-white'
+              : 'text-admin-text-secondary dark:text-gray-400 hover:text-admin-text-primary dark:hover:text-white'
           }`;
           return (
             <span key={`${b.href}-${i}`} className="flex items-center gap-2 shrink-0">
-              {i > 0 && <ChevronLeft className="h-4 w-4 text-[var(--color-text-subtle)] rotate-180" />}
+              {i > 0 && <ChevronLeft className="h-4 w-4 text-gray-400 rotate-180" />}
               {isLast ? (
                 <span className={className}>{b.label}</span>
               ) : (
@@ -271,7 +270,7 @@ export default function AdminHeader() {
       {/* Left: Version + Trash + Profile + Notifications + Role */}
       <div className="flex items-center gap-3 shrink-0">
         <span
-          className="text-[11px] font-medium tabular-nums text-[var(--color-text-subtle)]/90 dark:text-[var(--color-text-muted)] select-none"
+          className="text-[11px] font-medium tabular-nums text-gray-400/90 dark:text-gray-500 select-none"
           title="Admin panel build version"
         >
           v{ADMIN_PANEL_VERSION}
@@ -280,7 +279,7 @@ export default function AdminHeader() {
         <Link
           href="/admin/trash"
           aria-label={trashCount > 0 ? `زباله‌دان (${trashCount} مورد)` : 'زباله‌دان'}
-          className="relative w-10 h-10 rounded-lg bg-admin-muted dark:bg-gray-700 hover:bg-admin-hover dark:hover:bg-gray-600 flex items-center justify-center transition-colors text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]"
+          className="relative w-10 h-10 rounded-lg bg-admin-muted dark:bg-gray-700 hover:bg-admin-hover dark:hover:bg-gray-600 flex items-center justify-center transition-colors text-gray-600 dark:text-gray-300"
         >
           <Trash2 className="h-5 w-5" />
           {trashCount > 0 && (
@@ -296,7 +295,7 @@ export default function AdminHeader() {
             onClick={() => setShowNotifications(!showNotifications)}
             aria-label={unreadCount > 0 ? `اعلان‌ها (${unreadCount} خوانده‌نشده)` : 'اعلان‌ها'}
             aria-expanded={showNotifications}
-            className="relative w-10 h-10 rounded-lg bg-admin-muted dark:bg-gray-700 hover:bg-admin-hover dark:hover:bg-gray-600 flex items-center justify-center transition-colors text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]"
+            className="relative w-10 h-10 rounded-lg bg-admin-muted dark:bg-gray-700 hover:bg-admin-hover dark:hover:bg-gray-600 flex items-center justify-center transition-colors text-gray-600 dark:text-gray-300"
           >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
@@ -317,9 +316,9 @@ export default function AdminHeader() {
               </div>
               <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
                 {notificationsLoading ? (
-                  <p className="text-sm text-admin-text-secondary dark:text-[var(--color-text-subtle)]">در حال بارگذاری…</p>
+                  <p className="text-sm text-admin-text-secondary dark:text-gray-400">در حال بارگذاری…</p>
                 ) : notifications.length === 0 ? (
-                  <p className="text-sm text-admin-text-secondary dark:text-[var(--color-text-subtle)]">پیامی نیست.</p>
+                  <p className="text-sm text-admin-text-secondary dark:text-gray-400">پیامی نیست.</p>
                 ) : (
                   notifications.map((n) => (
                     <div key={n.id}>
@@ -330,9 +329,9 @@ export default function AdminHeader() {
                           className={`block p-3 rounded-lg text-right ${n.read ? 'bg-admin-muted dark:bg-gray-700/50' : 'bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-800'}`}
                         >
                           <p className="text-sm font-medium text-admin-text-primary dark:text-white">{n.title}</p>
-                          <p className="text-xs text-admin-text-secondary dark:text-[var(--color-text-subtle)] mt-1">{n.message}</p>
-                          <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-muted)] mt-2">
-                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
+                          <p className="text-xs text-admin-text-secondary dark:text-gray-400 mt-1">{n.message}</p>
+                          <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-2">
+                            {formatRelativeTime(n.createdAt)}
                           </p>
                         </Link>
                       ) : (
@@ -343,9 +342,9 @@ export default function AdminHeader() {
                           className={`block w-full p-3 rounded-lg text-right disabled:cursor-default ${n.read ? 'bg-admin-muted dark:bg-gray-700/50' : 'bg-violet-50 dark:bg-violet-900/20'}`}
                         >
                           <p className="text-sm font-medium text-admin-text-primary dark:text-white">{n.title}</p>
-                          <p className="text-xs text-admin-text-secondary dark:text-[var(--color-text-subtle)] mt-1">{n.message}</p>
-                          <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-muted)] mt-2">
-                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: faIR })}
+                          <p className="text-xs text-admin-text-secondary dark:text-gray-400 mt-1">{n.message}</p>
+                          <p className="text-xs text-admin-text-tertiary dark:text-gray-500 mt-2">
+                            {formatRelativeTime(n.createdAt)}
                           </p>
                         </button>
                       )}
@@ -378,7 +377,7 @@ export default function AdminHeader() {
             <span className="text-sm font-medium text-admin-text-primary dark:text-white max-w-[100px] truncate hidden sm:block">
               {session?.user?.name || session?.user?.email || 'ادمین'}
             </span>
-            <User className="h-4 w-4 text-admin-text-tertiary dark:text-[var(--color-text-subtle)]" />
+            <User className="h-4 w-4 text-admin-text-tertiary dark:text-gray-400" />
           </button>
           {showProfileMenu && (
             <div className="absolute left-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-admin-lg border border-admin-border dark:border-gray-600 py-2 z-50">

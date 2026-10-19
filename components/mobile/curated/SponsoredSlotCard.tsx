@@ -12,7 +12,7 @@ export default function SponsoredSlotCard() {
         <span className="text-3xl">✨</span>
       </div>
       <div className="p-2.5">
-        <span className="text-[10px] font-medium text-primary">ویژه · اسپانسر</span>
+        <span className="wibe-caption font-medium text-primary">ویژه · اسپانسر</span>
         <h3 className="mt-0.5 line-clamp-2 wibe-small font-semibold text-foreground">
           مجموعه کیوریت‌شده ویژه
         </h3>

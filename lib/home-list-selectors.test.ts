@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  selectForYouHomeLists,
   selectHomeLcpImageUrl,
   selectHomeRisingLists,
   selectHomeTrendingDesktopLists,
@@ -73,6 +74,47 @@ describe('home-list-selectors', () => {
     const lists = selectHomeRisingLists(sampleData, { limit: 4 });
     expect(lists).toHaveLength(1);
     expect(lists[0]?.id).toBe('r1');
+  });
+
+  it('keeps for-you lists that are not already on the trending row', () => {
+    const picked = selectForYouHomeLists({
+      recommendations: [
+        { id: 't1' },
+        { id: 'fresh' },
+        { id: 'f1' },
+      ],
+      trending: sampleData.trending,
+      featuredId: 'f1',
+      rising: [{ id: 'r1' }, { id: 'fresh' }],
+    });
+    expect(picked.pool.map((list) => list.id)).toEqual(['fresh', 'r1']);
+    expect(picked.mobile.map((list) => list.id)).toEqual(['fresh', 'r1']);
+    expect(picked.usedRisingOnly).toBe(false);
+  });
+
+  it('uses the far end of recommendations when they repeat the trending row', () => {
+    const picked = selectForYouHomeLists({
+      recommendations: [
+        { id: 't1' },
+        { id: 't2' },
+        { id: 't3' },
+        { id: 't4' },
+      ],
+      trending: [{ id: 't1' }, { id: 't2' }, { id: 't3' }, { id: 't4' }],
+      featuredId: 'f1',
+    });
+    expect(picked.mobile.map((list) => list.id)).toEqual(['t2', 't3', 't4']);
+    expect(picked.usedRisingOnly).toBe(false);
+  });
+
+  it('returns no for-you row when nothing can be suggested', () => {
+    const picked = selectForYouHomeLists({
+      recommendations: [],
+      trending: sampleData.trending,
+      featuredId: 'f1',
+      rising: [{ id: 'f1' }, { id: 't1' }],
+    });
+    expect(picked.pool).toEqual([]);
   });
 
   it('prefers banner for LCP preload', () => {

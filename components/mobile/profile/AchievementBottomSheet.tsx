@@ -35,7 +35,7 @@ interface AchievementBottomSheetProps {
 
 const CATEGORY_GLOW: Record<string, string> = {
   impact: 'from-orange-100/80 via-amber-50/60 to-transparent',
-  creation: 'from-purple-100/80 via-violet-50/60 to-transparent',
+  creation: 'from-primary/10 via-primary/5 to-transparent',
   community: 'from-emerald-100/80 via-teal-50/60 to-transparent',
   consistency: 'from-blue-100/80 via-sky-50/60 to-transparent',
 };
@@ -115,6 +115,7 @@ export default function AchievementBottomSheet({
   const sheet = (
     <div
       ref={backdropRef}
+      data-theme="paper"
       className="fixed inset-0 z-[60] flex items-end justify-center"
       onClick={handleBackdropClick}
     >
@@ -123,18 +124,18 @@ export default function AchievementBottomSheet({
       <div
         ref={sheetRef}
         dir="rtl"
-        className="relative bg-white rounded-t-3xl shadow-2xl w-full max-w-md animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[85vh] overflow-hidden"
+        className="relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-overlay animate-in slide-in-from-bottom duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-8 h-1 bg-gray-200 rounded-full" />
+          <div className="w-8 h-1 bg-wibe-surface rounded-full" />
         </div>
 
         {/* 1️⃣ Header Section */}
         <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-4 flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <h2 className="text-[22px] font-bold text-foreground leading-tight">
+            <h2 className="wibe-h2 font-bold text-foreground leading-tight">
               {achievement.title} {achievement.icon}
             </h2>
             <p className="text-sm text-wibe-secondary mt-0.5">{impactLabel}</p>
@@ -142,7 +143,7 @@ export default function AchievementBottomSheet({
           <button
             type="button"
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors flex-shrink-0"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-wibe-surface active:bg-wibe-surface transition-colors flex-shrink-0"
             aria-label="بستن"
           >
             <X className="w-5 h-5 text-wibe-secondary" />
@@ -173,7 +174,7 @@ export default function AchievementBottomSheet({
 
           {/* 3️⃣ Impact Metrics Card */}
           {hasMetrics && (
-            <div className="rounded-2xl bg-gray-50/80 border border-gray-100 p-4">
+            <div className="rounded-2xl bg-wibe-surface/80 border border-wibe p-4">
               <div className="grid grid-cols-2 gap-4">
                 {typeof metrics!.views === 'number' && (
                   <div className="flex items-center gap-2">
@@ -229,7 +230,7 @@ export default function AchievementBottomSheet({
           <div className="flex flex-col gap-3 pt-2">
             <Link
               href="/leaderboard"
-              className="w-full py-3.5 px-5 rounded-[14px] bg-gradient-to-r from-[#7C3AED] to-[#8B5CF6] text-white font-medium text-sm text-center hover:opacity-95 transition-opacity shadow-sm"
+              className="flex h-12 w-full items-center justify-center rounded-xl bg-brand text-sm font-semibold text-brand-foreground"
               onClick={onClose}
             >
               مشاهده رتبه‌بندی کریتورها
@@ -237,7 +238,7 @@ export default function AchievementBottomSheet({
             <button
               type="button"
               onClick={handleShare}
-              className="w-full py-3 px-5 rounded-[14px] border-2 border-gray-200 text-foreground font-medium text-sm hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-popover text-sm font-semibold text-foreground hover:bg-accent"
             >
               <Share2 className="w-4 h-4" />
               اشتراک‌گذاری دستاورد

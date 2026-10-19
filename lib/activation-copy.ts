@@ -5,7 +5,6 @@
 
 export const ACTIVATION = {
   startStrip: {
-    eyebrow: 'شروع سریع',
     title: '۳ تا از علاقه‌مندی‌ات را انتخاب کن',
     description: 'فید «برای تو» بر اساس انتخاب‌هایت پر می‌شود',
     continueWith: 'ادامه با انتخاب‌ها',

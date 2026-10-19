@@ -108,8 +108,8 @@ export default function BookmarkButton({
   if (status === 'loading') {
     return (
       <div
-        className={`animate-pulse rounded-full bg-gray-200 ${
-          isCompact || variant === 'icon' ? 'h-10 w-10' : 'h-12 w-full'
+        className={`animate-pulse rounded-full bg-muted ${
+          isCompact || variant === 'icon' ? 'size-11' : 'h-12 w-full'
         }`}
         aria-hidden
       />
@@ -121,7 +121,7 @@ export default function BookmarkButton({
       return (
         <Link
           href={loginHref}
-          className="flex h-full w-full items-center justify-center text-wibe-secondary transition-colors hover:text-primary"
+          className="flex h-full w-full items-center justify-center text-muted-foreground transition-colors hover:text-brand"
           aria-label="ورود برای ذخیره لیست"
           title="ورود برای ذخیره لیست"
         >
@@ -134,11 +134,11 @@ export default function BookmarkButton({
       return (
         <Link
           href={loginHref}
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-gray-200 bg-white transition-colors hover:border-primary hover:bg-primary/5"
+          className="relative flex size-11 items-center justify-center rounded-full border border-border bg-popover transition-colors hover:border-brand hover:bg-brand/5"
           aria-label="ورود برای ذخیره لیست"
           title="ورود برای ذخیره لیست"
         >
-          <Bookmark className="h-5 w-5 text-wibe-secondary" />
+          <Bookmark className="h-5 w-5 text-muted-foreground" />
         </Link>
       );
     }
@@ -146,24 +146,37 @@ export default function BookmarkButton({
     return (
       <Link
         href={loginHref}
-        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-control bg-brand px-5 font-semibold shadow-sm"
       >
-        <Bookmark className="h-5 w-5" />
-        <span>ورود برای ذخیره لیست</span>
+        <Bookmark className="h-5 w-5 text-brand-foreground" />
+        <span className="text-brand-foreground">ورود برای ذخیره لیست</span>
       </Link>
     );
   }
 
+  const iconGlyphClasses = {
+    sm: 'h-4 w-4',
+    md: 'h-5 w-5',
+    lg: 'h-5 w-5',
+  };
+
+  /** اندازهٔ گلیف داخل دکمهٔ متنی (نه hit-area) */
   const sizeClasses = {
     sm: 'w-5 h-5',
     md: 'w-6 h-6',
     lg: 'w-7 h-7',
   };
 
+  const iconHitClasses = {
+    sm: 'size-11',
+    md: 'h-11 w-11',
+    lg: 'h-12 w-12',
+  };
+
   const buttonSizeClasses = {
-    sm: 'px-3 py-1.5 wibe-small',
-    md: 'px-4 py-2 wibe-body',
-    lg: 'px-5 py-3 wibe-small h-12',
+    sm: 'h-11 px-3 text-sm',
+    md: 'h-12 px-4 text-base',
+    lg: 'h-12 px-5 text-sm',
   };
 
   if (isCompact) {
@@ -172,17 +185,17 @@ export default function BookmarkButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors disabled:opacity-50 ${
+        className={`relative flex size-11 items-center justify-center rounded-full border transition-colors disabled:opacity-50 ${
           isBookmarked
-            ? 'border-primary bg-primary/10 hover:bg-primary/15'
-            : 'border-gray-200 bg-white hover:border-primary hover:bg-primary/5'
+            ? 'border-brand bg-brand/10 hover:bg-brand/15'
+            : 'border-border bg-popover hover:border-brand hover:bg-brand/5'
         }`}
         aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
         title={isBookmarked ? 'ذخیره شده' : 'ذخیره لیست'}
       >
         <Bookmark
           className={`h-5 w-5 transition-colors ${
-            isBookmarked ? 'fill-primary text-primary' : 'text-wibe-secondary'
+            isBookmarked ? 'fill-brand text-brand' : 'text-muted-foreground'
           }`}
         />
       </button>
@@ -195,27 +208,27 @@ export default function BookmarkButton({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`${sizeClasses[size]} flex items-center justify-center transition-[colors,transform] hover:scale-110 disabled:opacity-50 ${
-          isBookmarked ? 'text-primary' : 'text-wibe-secondary'
+        className={`${iconHitClasses[size]} flex items-center justify-center transition-[colors,transform] hover:scale-110 disabled:opacity-50 ${className} ${
+          isBookmarked ? 'text-brand' : 'text-muted-foreground'
         }`}
         aria-label={isBookmarked ? 'حذف از ذخیره‌ها' : 'ذخیره این لیست'}
       >
-        <Bookmark className={`h-full w-full ${isBookmarked ? 'fill-current' : ''}`} />
+        <Bookmark className={`${iconGlyphClasses[size]} ${isBookmarked ? 'fill-current' : ''}`} />
       </button>
     );
   }
 
   const unsavedToneClasses =
     tone === 'secondary'
-      ? 'border border-wibe bg-wibe-surface text-foreground shadow-none hover:bg-gray-50 active:scale-[0.99]'
-      : 'bg-primary text-white shadow-sm hover:bg-primary-dark active:scale-[0.99]';
+      ? 'border border-border bg-muted text-foreground shadow-none hover:bg-muted'
+      : 'bg-brand text-brand-foreground shadow-sm';
 
   return (
     <button
       type="button"
       onClick={handleToggle}
       disabled={isLoading}
-      className={`${buttonSizeClasses[size]} flex w-full items-center justify-center gap-2 rounded-md font-semibold transition-colors duration-300 disabled:opacity-50 ${
+      className={`${buttonSizeClasses[size]} flex w-full items-center justify-center gap-2 rounded-control font-semibold transition-colors disabled:opacity-50 ${
         isBookmarked
           ? 'animate-saved-pulse border border-success/30 bg-success/10 text-success'
           : unsavedToneClasses

@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Loader2, Image as ImageIcon, X } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EditPersonalListFormProps {
   isOpen: boolean;
@@ -151,7 +154,7 @@ export default function EditPersonalListForm({
       <form onSubmit={handleSubmit} className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto overscroll-contain p-6 min-h-0">
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-4">
+            <div className="mb-4 rounded-surface border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -162,15 +165,15 @@ export default function EditPersonalListForm({
               htmlFor="title"
               className="block text-sm font-medium text-foreground mb-2"
             >
-              عنوان لیست <span className="text-red-500">*</span>
+              عنوان لیست <span className="text-destructive">*</span>
             </label>
-            <input
+            <Input
               type="text"
               id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+              className="h-12"
               placeholder="عنوان لیست را وارد کنید..."
               required
               disabled={isLoading}
@@ -185,18 +188,17 @@ export default function EditPersonalListForm({
             >
               توضیحات (اختیاری)
             </label>
-            <textarea
+            <Textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows={4}
               maxLength={MAX_DESCRIPTION_LENGTH}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent resize-none"
               placeholder="توضیحات لیست را وارد کنید..."
               disabled={isLoading}
             />
-            <p className="text-xs text-wibe-secondary mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               {formData.description.length} / {MAX_DESCRIPTION_LENGTH} کاراکتر
             </p>
           </div>
@@ -216,7 +218,7 @@ export default function EditPersonalListForm({
             />
             {formData.coverImage ? (
               <div className="space-y-2">
-                <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                <div className="relative h-48 w-full overflow-hidden rounded-surface border border-border">
                   <img
                     src={formData.coverImage}
                     alt="Cover preview"
@@ -225,7 +227,7 @@ export default function EditPersonalListForm({
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, coverImage: '' }))}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                    className="absolute end-2 top-2 flex size-11 items-center justify-center rounded-full bg-destructive text-white"
                     disabled={isLoading || isUploadingImage}
                   >
                     <X className="w-4 h-4" />
@@ -237,11 +239,11 @@ export default function EditPersonalListForm({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isUploadingImage}
-                className="w-full px-4 py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary transition-colors flex flex-col items-center justify-center gap-2 text-wibe-secondary"
+                className="flex min-h-12 w-full flex-col items-center justify-center gap-2 rounded-surface border border-dashed border-border px-4 py-8 text-muted-foreground transition-colors hover:border-brand"
               >
                 {isUploadingImage ? (
                   <>
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <Loader2 className="size-6 animate-spin text-brand" />
                     <span className="text-sm">در حال آپلود...</span>
                   </>
                 ) : (
@@ -255,19 +257,16 @@ export default function EditPersonalListForm({
           </div>
         </div>
 
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
+        <div className="flex-shrink-0 border-t border-border bg-popover p-4">
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
-              disabled={isLoading || isUploadingImage}
-            >
+            <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onClose} disabled={isLoading || isUploadingImage}>
               انصراف
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              variant="brand"
+              size="lg"
+              className="flex-1"
               disabled={isLoading || isUploadingImage || !formData.title.trim()}
             >
               {isLoading ? (
@@ -278,7 +277,7 @@ export default function EditPersonalListForm({
               ) : (
                 'ذخیره تغییرات'
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </form>

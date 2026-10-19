@@ -2,8 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Loader2, Check, Plus, ChevronLeft, Image as ImageIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import SearchInput from '@/components/mobile/search/SearchInput';
+import { fa } from '@/lib/utils';
 
 const DEBOUNCE_MS = 400;
 const MIN_QUERY_LENGTH = 2;
@@ -84,13 +88,13 @@ function StepProgress({ step, total }: { step: number; total: number }) {
         {Array.from({ length: total }).map((_, i) => (
           <span
             key={i}
-            className={`inline-block w-2 h-2 rounded-full transition-colors ${
-              i + 1 <= step ? 'bg-primary' : 'bg-gray-200'
+            className={`inline-block size-2 rounded-full transition-colors ${
+              i + 1 <= step ? 'bg-brand' : 'bg-muted'
             }`}
           />
         ))}
       </div>
-      <span className="text-xs text-wibe-secondary">مرحله {step} از {total}</span>
+      <span className="text-xs text-muted-foreground">مرحله {fa(step)} از {fa(total)}</span>
     </div>
   );
 }
@@ -105,14 +109,13 @@ function ItemPoster({
   className?: string;
 }) {
   return (
-    <div className={`relative rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 ${className}`}>
+    <div className={`flex-shrink-0 overflow-hidden rounded-surface bg-muted ${className}`}>
       <ImageWithFallback
         src={src ?? ''}
         alt={title}
         className="w-full h-full object-cover"
         fallbackIcon="📋"
         fallbackClassName="w-full h-full flex items-center justify-center text-lg"
-        sizes="48px"
       />
     </div>
   );
@@ -135,10 +138,8 @@ function SuggestActionButton({
         disabled={status === 'submitting' || done}
         onClick={onClick}
         aria-label={done ? 'پیشنهاد ثبت شده' : 'پیشنهاد'}
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
-          done
-            ? 'bg-green-50 text-green-600'
-            : 'bg-primary/10 text-primary hover:bg-primary/15 active:scale-95'
+        className={`flex size-11 shrink-0 items-center justify-center rounded-full ${
+          done ? 'bg-success/15 text-success' : 'bg-brand/10 text-brand'
         } disabled:opacity-60`}
       >
         {status === 'submitting' ? (
@@ -157,7 +158,7 @@ function SuggestActionButton({
       type="button"
       disabled={status === 'submitting' || done}
       onClick={onClick}
-      className="w-full py-2.5 rounded-xl bg-primary text-white wibe-small font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+      className="flex h-12 w-full items-center justify-center gap-2 rounded-control bg-brand text-sm font-semibold text-brand-foreground disabled:opacity-50"
     >
       {status === 'submitting' && <Loader2 className="w-4 h-4 animate-spin" />}
       {status === 'success' && 'ثبت شد ✨'}
@@ -422,14 +423,10 @@ export default function SuggestItemSearch({
     return (
       <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
         <p className="text-xl font-semibold text-foreground mb-2">پیشنهادت ثبت شد 👌</p>
-        <p className="text-wibe-secondary text-sm mb-6">بعد از بررسی اضافه می‌شود.</p>
-        <button
-          type="button"
-          onClick={handleSuccessClose}
-          className="px-8 py-3 rounded-xl bg-primary text-white font-medium"
-        >
+        <p className="text-muted-foreground text-sm mb-6">بعد از بررسی اضافه می‌شود.</p>
+        <Button type="button" variant="brand" size="lg" onClick={handleSuccessClose}>
           باشه
-        </button>
+        </Button>
       </div>
     );
   }
@@ -441,7 +438,7 @@ export default function SuggestItemSearch({
         <button
           type="button"
           onClick={() => setView('step1')}
-          className="flex items-center gap-1 text-sm text-wibe-secondary hover:text-foreground mb-2 self-start"
+          className="mb-2 flex min-h-11 items-center gap-1 self-start text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="w-4 h-4" />
           بازگشت
@@ -452,24 +449,26 @@ export default function SuggestItemSearch({
         <form onSubmit={handleStep2Submit} className="space-y-4 flex-1 flex flex-col">
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">لینک مرتبط (اختیاری)</label>
-            <input
+            <Input
               type="url"
+              dir="ltr"
               value={formData.externalUrl}
               onChange={(e) => setFormData((p) => ({ ...p, externalUrl: e.target.value }))}
               placeholder="لینک سایت، اینستاگرام یا صفحه معرفی"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
+              className="h-12"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">تصویر (اختیاری)</label>
-            <input
+            <Input
               type="url"
+              dir="ltr"
               value={formData.imageUrl}
               onChange={(e) => setFormData((p) => ({ ...p, imageUrl: e.target.value }))}
               placeholder="لینک تصویر یا آپلود فایل"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary mb-2"
+              className="mb-2 h-12"
             />
-            <label className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-gray-300 text-wibe-secondary text-sm cursor-pointer hover:bg-gray-50">
+            <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-surface border border-dashed border-border px-3 text-sm text-muted-foreground hover:border-brand hover:bg-muted">
               <ImageIcon className="w-4 h-4" />
               {imageUploading ? 'در حال آپلود...' : 'انتخاب فایل'}
               <input
@@ -483,15 +482,17 @@ export default function SuggestItemSearch({
           </div>
 
           <div className="mt-auto pt-4 space-y-3">
-            <button
+            <Button
               type="submit"
+              variant="brand"
+              size="lg"
+              className="w-full"
               disabled={formSubmitting}
-              className="w-full py-3 rounded-xl bg-primary text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {formSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
               ارسال برای بررسی ✨
-            </button>
-            <p className="text-xs text-wibe-secondary text-center">
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
               بعد از بررسی منتشر می‌شود و اسم تو به عنوان پیشنهاددهنده ثبت می‌شود.
             </p>
           </div>
@@ -507,24 +508,24 @@ export default function SuggestItemSearch({
         <button
           type="button"
           onClick={() => setView('search')}
-          className="flex items-center gap-1 text-sm text-wibe-secondary hover:text-foreground mb-2 self-start"
+          className="mb-2 flex min-h-11 items-center gap-1 self-start text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="w-4 h-4" />
           بازگشت به جستجو
         </button>
         <h2 className="text-lg font-semibold text-foreground">افزودن مورد جدید ✨</h2>
-        <p className="text-sm text-wibe-secondary mb-3">این مورد هنوز تو وایب ثبت نشده</p>
+        <p className="text-sm text-muted-foreground mb-3">این مورد هنوز تو وایب ثبت نشده</p>
         <StepProgress step={1} total={2} />
 
         <form onSubmit={handleStep1Next} className="space-y-4 flex-1 flex flex-col">
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">عنوان (اجباری)</label>
-            <input
+            <Input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
               placeholder={getTitlePlaceholder(categorySlug)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
+              className="h-12"
               required
             />
           </div>
@@ -538,8 +539,10 @@ export default function SuggestItemSearch({
                     key={c.id}
                     type="button"
                     onClick={() => setFormData((p) => ({ ...p, categoryId: p.categoryId === c.id ? '' : c.id }))}
-                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      formData.categoryId === c.id ? 'bg-primary text-white' : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                    className={`h-11 rounded-full px-3 text-sm font-medium ${
+                      formData.categoryId === c.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'border border-border bg-popover text-foreground'
                     }`}
                   >
                     {c.name}
@@ -553,7 +556,7 @@ export default function SuggestItemSearch({
             <label className="block text-sm font-medium text-foreground mb-1">
               توضیح کوتاه (اختیاری)
             </label>
-            <textarea
+            <Textarea
               value={formData.description}
               onChange={(e) =>
                 setFormData((p) => ({
@@ -564,22 +567,15 @@ export default function SuggestItemSearch({
               placeholder="یک توضیح کوتاه بنویس که چرا ارزش اضافه شدن دارد..."
               maxLength={MAX_DESCRIPTION_LENGTH}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus:border-primary"
+              showCount
             />
-            <p className="text-xs text-wibe-secondary mt-1 text-start">
-              {formData.description.length}/{MAX_DESCRIPTION_LENGTH}
-            </p>
           </div>
 
           <div className="mt-auto pt-2">
-            <button
-              type="submit"
-              disabled={!formData.title.trim()}
-              className="w-full py-3 rounded-xl bg-primary text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-            >
+            <Button type="submit" variant="brand" size="lg" className="w-full" disabled={!formData.title.trim()}>
               ادامه
-              <ChevronLeft className="w-4 h-4 rotate-180" />
-            </button>
+              <ChevronLeft className="size-4" />
+            </Button>
           </div>
         </form>
       </div>
@@ -599,14 +595,14 @@ export default function SuggestItemSearch({
       />
 
       {query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH && (
-        <p className="wibe-caption text-wibe-secondary mb-3 flex-shrink-0">حداقل ۲ حرف وارد کن</p>
+        <p className="wibe-caption text-muted-foreground mb-3 flex-shrink-0">حداقل ۲ حرف وارد کن</p>
       )}
 
       <div className="flex-1 overflow-y-auto min-h-0 -mx-1 px-1">
         {/* پیشنهادهای مرتبط — فقط وقتی جستجو خالی است */}
         {query.trim().length === 0 && autoSuggestItems.length > 0 && (
           <section className="mb-4">
-            <p className="wibe-caption font-medium text-wibe-secondary mb-2">پیشنهادهای مرتبط</p>
+            <p className="wibe-caption font-medium text-muted-foreground mb-2">پیشنهادهای مرتبط</p>
             <ul className="space-y-2">
               {autoSuggestItems.map((item) => {
                 const status = autoSuggestStatusMap[item.id] ?? 'idle';
@@ -614,7 +610,7 @@ export default function SuggestItemSearch({
                 return (
                   <li key={item.id}>
                     <div
-                      className={`flex items-center gap-3 rounded-xl border border-wibe bg-wibe-card p-2.5 transition-opacity ${
+                      className={`flex items-center gap-3 rounded-surface border border-border bg-popover p-2.5 ${
                         done ? 'opacity-60' : ''
                       }`}
                     >
@@ -624,7 +620,7 @@ export default function SuggestItemSearch({
                           {item.title}
                         </p>
                         {item.category && (
-                          <p className="wibe-caption text-wibe-secondary truncate mt-0.5">{item.category}</p>
+                          <p className="wibe-caption text-muted-foreground truncate mt-0.5">{item.category}</p>
                         )}
                       </div>
                       <SuggestActionButton
@@ -641,7 +637,7 @@ export default function SuggestItemSearch({
         )}
 
         {query.trim().length === 0 && autoSuggestItems.length === 0 && !loading && (
-          <p className="wibe-caption text-wibe-secondary text-center py-8">
+          <p className="wibe-caption text-muted-foreground text-center py-8">
             نام فیلم، سریال یا آیتم را جستجو کن
           </p>
         )}
@@ -656,15 +652,11 @@ export default function SuggestItemSearch({
         {!loading && debouncedQuery.length >= MIN_QUERY_LENGTH && results.length === 0 && (
           <div className="py-6 text-center">
             <p className="wibe-small font-semibold text-foreground mb-1">نتیجه‌ای پیدا نشد</p>
-            <p className="wibe-caption text-wibe-secondary mb-4">هنوز تو وایب ثبت نشده — می‌تونی خودت اضافه کنی</p>
-            <button
-              type="button"
-              onClick={goToCreate}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 wibe-small font-medium text-white"
-            >
-              <Plus className="w-4 h-4" />
+            <p className="wibe-caption text-muted-foreground mb-4">هنوز تو وایب ثبت نشده — می‌تونی خودت اضافه کنی</p>
+            <Button type="button" variant="brand" size="lg" onClick={goToCreate}>
+              <Plus className="size-4" />
               افزودن مورد جدید
-            </button>
+            </Button>
           </div>
         )}
 
@@ -679,15 +671,15 @@ export default function SuggestItemSearch({
                 return (
                   <li
                     key={item.id}
-                    className="flex items-center gap-3 rounded-xl border border-wibe bg-gray-50/80 p-2.5"
+                    className="flex items-center gap-3 rounded-surface border border-border bg-muted p-2.5"
                   >
                     <ItemPoster src={item.imageUrl} title={item.title} />
                     <div className="min-w-0 flex-1">
                       <p className="wibe-small font-semibold text-foreground truncate">{item.title}</p>
                       {item.categoryName && (
-                        <p className="wibe-caption text-wibe-secondary mt-0.5">{item.categoryName}</p>
+                        <p className="wibe-caption text-muted-foreground mt-0.5">{item.categoryName}</p>
                       )}
-                      <p className="wibe-caption text-green-600 mt-1 flex items-center gap-1">
+                      <p className="mt-1 flex items-center gap-1 text-xs text-success">
                         <Check className="w-3.5 h-3.5 flex-shrink-0" />
                         داخل لیست است
                       </p>
@@ -700,15 +692,15 @@ export default function SuggestItemSearch({
                 return (
                   <li
                     key={item.id}
-                    className="flex items-center gap-3 rounded-xl border border-wibe bg-wibe-card p-2.5"
+                    className="flex items-center gap-3 rounded-surface border border-border bg-popover p-2.5"
                   >
                     <ItemPoster src={item.imageUrl} title={item.title} />
                     <div className="min-w-0 flex-1">
                       <p className="wibe-small font-semibold text-foreground truncate">{item.title}</p>
                       {item.categoryName && (
-                        <p className="wibe-caption text-wibe-secondary mt-0.5">{item.categoryName}</p>
+                        <p className="wibe-caption text-muted-foreground mt-0.5">{item.categoryName}</p>
                       )}
-                      <p className="wibe-caption text-amber-700 mt-1">قبلاً پیشنهاد شده</p>
+                      <p className="mt-1 text-xs text-warning">قبلاً پیشنهاد شده</p>
                       {item.suggestionCommentId && (
                         <button
                           type="button"
@@ -726,44 +718,44 @@ export default function SuggestItemSearch({
               return (
                 <li
                   key={item.id}
-                  className={`rounded-xl border bg-wibe-card overflow-hidden transition-colors ${
-                    isExpanded ? 'border-primary/30 ring-1 ring-primary/10' : 'border-wibe'
+                  className={`overflow-hidden rounded-surface border bg-popover ${
+                    isExpanded ? 'border-brand/30' : 'border-border'
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => expandCard(item)}
-                    className="w-full flex items-center gap-3 p-2.5 text-right"
+                    className="flex min-h-12 w-full items-center gap-3 p-2.5 text-start"
                   >
                     <ItemPoster src={item.imageUrl} title={item.title} />
                     <div className="min-w-0 flex-1">
                       <p className="wibe-small font-semibold text-foreground truncate">{item.title}</p>
                       {item.categoryName && (
-                        <p className="wibe-caption text-wibe-secondary mt-0.5">{item.categoryName}</p>
+                        <p className="wibe-caption text-muted-foreground mt-0.5">{item.categoryName}</p>
                       )}
                     </div>
                     <span className="wibe-caption text-primary shrink-0">انتخاب</span>
                   </button>
 
                   {isExpanded && (
-                    <div className="border-t border-wibe px-3 pb-3 pt-2 space-y-3 bg-gray-50/40">
+                    <div className="space-y-3 border-t border-border bg-muted/40 px-3 pb-3 pt-2">
                       <div>
                         <p className="wibe-small font-semibold text-foreground">
                           {emoji} {item.title}
                         </p>
-                        <p className="wibe-caption text-wibe-secondary mt-1">به این لیست پیشنهاد بده؟</p>
+                        <p className="wibe-caption text-muted-foreground mt-1">به این لیست پیشنهاد بده؟</p>
                       </div>
 
                       {status === 'success' && (
-                        <div className="rounded-xl bg-green-50 border border-green-200/60 p-3">
-                          <p className="wibe-small font-medium text-green-800">پیشنهادت ثبت شد ✨</p>
-                          <p className="wibe-caption text-green-700 mt-0.5">منتظر تأیید صاحب لیست</p>
+                        <div className="rounded-xl border border-success/20 bg-success/10 p-3">
+                          <p className="text-sm font-medium text-success">پیشنهادت ثبت شد ✨</p>
+                          <p className="mt-0.5 text-xs text-success">منتظر تأیید صاحب لیست</p>
                         </div>
                       )}
 
                       {status === 'alreadySuggested' && (
-                        <div className="rounded-xl bg-amber-50 border border-amber-200/60 p-3">
-                          <p className="wibe-caption text-amber-800">قبلاً پیشنهاد شده</p>
+                        <div className="rounded-xl border border-warning/30 bg-warning/10 p-3">
+                          <p className="text-xs text-foreground">قبلاً پیشنهاد شده</p>
                           <button
                             type="button"
                             onClick={() => handleViewSuggestion(alreadySuggestedCommentId || item.suggestionCommentId || '')}
@@ -783,17 +775,16 @@ export default function SuggestItemSearch({
                           <button
                             type="button"
                             onClick={() => setOptionalNoteOpen((o) => !o)}
-                            className="wibe-caption text-wibe-secondary hover:text-primary"
+                            className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-brand"
                           >
                             {optionalNoteOpen ? 'بستن توضیح' : '+ توضیح اختیاری'}
                           </button>
                           {optionalNoteOpen && (
-                            <textarea
+                            <Textarea
                               value={optionalNote}
                               onChange={(e) => setOptionalNote(e.target.value)}
                               placeholder="چرا این آیتم به لیست اضافه شود؟"
                               rows={2}
-                              className="w-full px-3 py-2 rounded-xl border border-wibe wibe-small resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                             />
                           )}
                         </>
@@ -808,28 +799,32 @@ export default function SuggestItemSearch({
       </div>
 
       {query.trim().length === 0 && (
-        <div className="flex-shrink-0 pt-3 border-t border-wibe mt-2">
-          <button
+        <div className="mt-2 flex-shrink-0 border-t border-border pt-3">
+          <Button
             type="button"
+            variant="outline"
+            size="lg"
+            className="w-full border-dashed"
             onClick={goToCreate}
-            className="w-full py-2.5 rounded-xl border border-dashed border-wibe wibe-small font-medium text-wibe-secondary hover:bg-gray-50 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             مورد جدید ثبت نشده؟ خودت اضافه کن
-          </button>
+          </Button>
         </div>
       )}
 
       {!loading && debouncedQuery.length >= MIN_QUERY_LENGTH && results.length > 0 && (
-        <div className="flex-shrink-0 pt-3 border-t border-wibe mt-2">
-          <button
+        <div className="mt-2 flex-shrink-0 border-t border-border pt-3">
+          <Button
             type="button"
+            variant="outline"
+            size="lg"
+            className="w-full border-dashed"
             onClick={goToCreate}
-            className="w-full py-2.5 rounded-xl border border-dashed border-wibe wibe-small font-medium text-wibe-secondary hover:bg-gray-50 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             افزودن مورد جدید
-          </button>
+          </Button>
         </div>
       )}
     </div>

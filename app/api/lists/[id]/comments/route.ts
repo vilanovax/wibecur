@@ -30,21 +30,21 @@ export async function GET(
       : 10;
     const cursor = searchParams.get('cursor');
 
-    const session = await auth();
+    // auth / bad-words / وجود لیست مستقل‌اند — موازی شروع شوند.
+    const [session, badWordsList, list] = await Promise.all([
+      auth(),
+      getCachedBadWords(),
+      dbQuery(() =>
+        prisma.lists.findUnique({
+          where: { id: listId },
+          select: {
+            id: true,
+            commentsEnabled: true,
+          },
+        })
+      ),
+    ]);
     const userId = session?.user ? (session.user as { id: string }).id : null;
-
-    const badWordsList = await getCachedBadWords();
-
-    // Check if list exists and comments are enabled
-    const list = await dbQuery(() =>
-      prisma.lists.findUnique({
-        where: { id: listId },
-        select: {
-          id: true,
-          commentsEnabled: true,
-        },
-      })
-    );
 
     if (!list) {
       return NextResponse.json(
@@ -76,59 +76,57 @@ export async function GET(
           ]
         : [{ createdAt: 'desc' as const }, { id: 'desc' as const }];
 
-    // take: limit+1 برای تشخیص hasMore بدون کوئری اضافه.
-    const commentsPlusOne = await dbQuery(() =>
-      prisma.list_comments.findMany({
-        where: whereClause,
-        include: {
-          users: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              image: true,
-              curatorLevel: true,
-              avatarType: true,
-              avatarId: true,
-              avatarStatus: true,
-            },
-          },
-          replies: {
-            where: { deletedAt: null },
-            include: {
-              users: {
-                select: {
-                  id: true,
-                  name: true,
-                  username: true,
-                  image: true,
-                  curatorLevel: true,
-                  avatarType: true,
-                  avatarId: true,
-                  avatarStatus: true,
-                },
+    // comments + count + settings موازی (count فقط صفحهٔ اول).
+    const [commentsPlusOne, totalCount, globalSettings] = await Promise.all([
+      dbQuery(() =>
+        prisma.list_comments.findMany({
+          where: whereClause,
+          include: {
+            users: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                image: true,
+                curatorLevel: true,
+                avatarType: true,
+                avatarId: true,
+                avatarStatus: true,
               },
             },
-            orderBy: { createdAt: 'asc' },
+            replies: {
+              where: { deletedAt: null },
+              include: {
+                users: {
+                  select: {
+                    id: true,
+                    name: true,
+                    username: true,
+                    image: true,
+                    curatorLevel: true,
+                    avatarType: true,
+                    avatarId: true,
+                    avatarStatus: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: 'asc' },
+            },
           },
-        },
-        orderBy,
-        take: limit + 1,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      })
-    );
+          orderBy,
+          take: limit + 1,
+          ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        })
+      ),
+      !cursor
+        ? dbQuery(() => prisma.list_comments.count({ where: whereClause }))
+        : Promise.resolve(undefined as number | undefined),
+      dbQuery(() => prisma.comment_settings.findFirst()).catch(() => null),
+    ]);
 
     const hasMore = commentsPlusOne.length > limit;
     const comments = hasMore ? commentsPlusOne.slice(0, limit) : commentsPlusOne;
     const nextCursor = hasMore ? comments[comments.length - 1]?.id ?? null : null;
-
-    // شمارش کل فقط در صفحهٔ اول (بدون cursor) تا هدر «کامنت‌ها (n)» درست بماند.
-    let totalCount: number | undefined;
-    if (!cursor) {
-      totalCount = await dbQuery(() =>
-        prisma.list_comments.count({ where: whereClause })
-      );
-    }
 
     const allCommentIds = [
       ...comments.map((c) => c.id),
@@ -197,16 +195,8 @@ export async function GET(
     };
 
     const processedComments = comments.map(processOne);
-
-    let maxCommentLength = DEFAULT_LIST_COMMENT_MAX_LENGTH;
-    try {
-      const globalSettings = await dbQuery(() => prisma.comment_settings.findFirst());
-      if (globalSettings?.maxCommentLength != null) {
-        maxCommentLength = globalSettings.maxCommentLength;
-      }
-    } catch {
-      /* use default */
-    }
+    const maxCommentLength =
+      globalSettings?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
 
     return NextResponse.json({
       success: true,

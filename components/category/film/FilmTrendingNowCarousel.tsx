@@ -41,8 +41,7 @@ export default function FilmTrendingNowCarousel({
                     alt={list.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     placeholderSize="square"
-              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
-            />
+                  />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center text-5xl opacity-50"
@@ -76,15 +75,13 @@ export default function FilmTrendingNowCarousel({
                       src={list.creator.image}
                       alt={list.creator.name || ''}
                       className="w-5 h-5 rounded-full object-cover flex-shrink-0 ring-1 ring-white/30"
-                  width={20}
-                  height={20}
-                />
+                    />
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-[10px] text-white flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center wibe-caption text-white flex-shrink-0">
                       {(list.creator?.name || '?')[0]}
                     </div>
                   )}
-                  <span className="truncate text-[11px] text-white/65">
+                  <span className="wibe-caption text-white/65 truncate">
                     {list.creator?.name || 'کیوریتور'}
                   </span>
                 </div>

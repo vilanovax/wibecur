@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Package } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import CommentsSubNav, { type CommentsNavStats } from '@/components/admin/comments/CommentsSubNav';
 import ItemReportsKpiStrip from '@/components/admin/comments/ItemReportsKpiStrip';
@@ -203,10 +202,7 @@ export default function ItemReportsPageClient({
                         {report.users.name ?? report.users.email}
                       </td>
                       <td className="px-4 py-3 text-[var(--color-text-muted)] whitespace-nowrap">
-                        {formatDistanceToNow(new Date(report.createdAt), {
-                          addSuffix: true,
-                          locale: faIR,
-                        })}
+                        {formatRelativeTime(report.createdAt)}
                       </td>
                       <td className="px-4 py-3">
                         {!report.resolved ? (

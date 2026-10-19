@@ -36,7 +36,7 @@ export default function ProfileTabs2({ userId }: ProfileTabs2Props) {
 
   return (
     <div className="mt-6">
-      <div className="sticky top-0 z-10 bg-[#fafafa]/95 backdrop-blur border-b border-gray-200/80 -mx-4 px-4 pb-0">
+      <div className="sticky top-0 z-10 bg-[#fafafa]/95 backdrop-blur border-b border-wibe/80 -mx-4 px-4 pb-0">
         <div className="flex gap-1 relative">
           {TABS.map((tab, index) => {
             const Icon = tab.icon;

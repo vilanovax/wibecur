@@ -1,5 +1,5 @@
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
-import { dbQuery } from '@/lib/db';
 import {
   getListsIntelligenceData,
   type ListsIntelligenceData,
@@ -26,26 +26,29 @@ function cacheKey(query: ListsIntelligenceQuery): string[] {
   ];
 }
 
-async function loadListsIntelligence(query: ListsIntelligenceQuery): Promise<ListsIntelligenceData> {
-  return dbQuery(() =>
-    getListsIntelligenceData(query.trash, {
-      page: query.page,
-      categoryId: query.categoryId === 'all' ? undefined : query.categoryId,
-      q: query.q,
-    })
-  );
-}
-
-export function getCachedListsIntelligenceData(
+async function loadListsIntelligence(
   query: ListsIntelligenceQuery
 ): Promise<ListsIntelligenceData> {
-  const getCached = unstable_cache(
+  return getListsIntelligenceData(query.trash, {
+    page: query.page,
+    categoryId: query.categoryId === 'all' ? undefined : query.categoryId,
+    q: query.q,
+  });
+}
+
+function getCrossRequestCachedListsIntelligence(query: ListsIntelligenceQuery) {
+  return unstable_cache(
     () => loadListsIntelligence(query),
     cacheKey(query),
     {
       revalidate: ADMIN_LISTS_CACHE_SECONDS,
       tags: [ADMIN_CACHE_TAGS.lists],
     }
-  );
-  return getCached();
+  )();
 }
+
+/** Per-request dedupe (server-cache-react) + short TTL */
+export const getCachedListsIntelligenceData = cache(
+  (query: ListsIntelligenceQuery) =>
+    getCrossRequestCachedListsIntelligence(query)
+);

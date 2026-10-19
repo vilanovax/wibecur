@@ -1,23 +1,40 @@
 'use client';
 
 import { useState, useCallback, useEffect, useTransition } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import UserPulseSummary from '@/components/admin/users/UserPulseSummary';
 import SmartFilterBar from '@/components/admin/users/SmartFilterBar';
-import UsersIntelligenceTable from '@/components/admin/users/UsersIntelligenceTable';
 import Pagination from '@/components/admin/shared/Pagination';
-import UserDetailModal from '@/components/admin/users/UserDetailModal';
-import UserToggleActiveDialog from '@/components/admin/users/UserToggleActiveDialog';
 import Toast, { type ToastType } from '@/components/shared/Toast';
-import type { UserIntelligenceRow } from '@/lib/admin/users-types';
-import type { UsersIntelligenceData } from '@/lib/admin/users-intelligence';
-import type { UserSortKind } from '@/lib/admin/users-intelligence';
+import type {
+  UserIntelligenceRow,
+  UsersIntelligenceData,
+  UserSortKind,
+} from '@/lib/admin/users-types';
 import {
   USER_FILTER_PILLS,
   PULSE_TO_FILTER,
   type UserFilterKind,
   type UserPulseFilterKey,
 } from '@/lib/admin/user-filter-utils';
+
+const tableFallback = (
+  <div className="min-h-[320px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+);
+
+const UsersIntelligenceTable = dynamic(
+  () => import('@/components/admin/users/UsersIntelligenceTable'),
+  { loading: () => tableFallback }
+);
+const UserDetailModal = dynamic(
+  () => import('@/components/admin/users/UserDetailModal'),
+  { loading: () => null }
+);
+const UserToggleActiveDialog = dynamic(
+  () => import('@/components/admin/users/UserToggleActiveDialog'),
+  { loading: () => null }
+);
 
 interface UsersPageClientProps {
   data: UsersIntelligenceData;

@@ -95,7 +95,7 @@ export default async function CategoryPage({
   return (
     <>
       <HomeLcpPreload href={lcpImage} />
-      <div className="bg-wibe-surface">
+      <div className="bg-background">
         <Header title={category.name} showBack showDesktopSearch={false} />
         <CategoryNavStrip
           activeSlug={category.slug}

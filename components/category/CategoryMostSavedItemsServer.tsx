@@ -15,7 +15,7 @@ type CategoryMostSavedItemsServerProps = {
 
 export default function CategoryMostSavedItemsServer({
   items,
-  accentColor = '#EA580C',
+  accentColor,
   inset = false,
   itemLayout = 'tile',
 }: CategoryMostSavedItemsServerProps) {

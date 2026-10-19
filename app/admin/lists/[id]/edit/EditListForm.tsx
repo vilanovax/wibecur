@@ -15,7 +15,7 @@ import ListEditItemsPanel from '@/components/admin/lists/ListEditItemsPanel';
 import ListEditStatusToggles from '@/components/admin/lists/ListEditStatusToggles';
 import ListEditFormStepper, { type ListEditFormStep } from '@/components/admin/lists/ListEditFormStepper';
 import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
-import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
 import { slugFromTitle, normalizeListSlug, isValidListSlug } from '@/lib/admin/list-slug';
 import {
   buildSlugFromListTitle,

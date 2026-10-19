@@ -2,8 +2,9 @@
 name: Wibe
 description: Mobile-first RTL curated lifestyle lists — save-first discovery
 colors:
-  primary: "#6366F1"
-  primary-dark: "#4F46E5"
+  # Indigo-600 for AA contrast of white-on-primary at caption size (was #6366F1 ≈ 4.47)
+  primary: "#4F46E5"
+  primary-dark: "#4338CA"
   primary-light: "#818CF8"
   surface: "#F8FAFC"
   card: "#FFFFFF"
@@ -90,6 +91,8 @@ components:
 
 Consumer UI is **Operate + Experience**: RTL Persian, Vazirmatn, slate surfaces, indigo primary, amber for hot/trend. Atmosphere comes from list imagery and mood cards — not purple/pink decorative gradients. Source of truth in code: `lib/design-tokens.ts`, `app/globals.css`, presets `wibe-*`.
 
+**Contract for new work + migration:** [`docs/CONSUMER_DESIGN_TOKENS.md`](docs/CONSUMER_DESIGN_TOKENS.md) · audit: `npm run audit:design-tokens`
+
 ## Colors
 
 - **Primary (indigo)** — CTA، ویژه، لینک فعال
@@ -118,7 +121,9 @@ Avoid raw `text-sm` / `text-gray-*` on consumer surfaces.
 - Mobile-first; desktop shell max ~1200px (`.wibe-desktop-shell`)
 - Bottom nav: خانه · لیست‌ها · اکسپلور · پروفایل
 - Safe-area on fixed chrome; sheets use `overscroll-contain`
-- First viewport on home: search sticky + hero; categories/explore teaser below
+- First viewport on home: search sticky + hero + one trending lane; For You deferred below saved for logged-in; category chips demoted (mood stays on `/explore`)
+- Lists (`/lists`): catalog — browse modes own sort (ترند/جدید/محبوب); category chips first; featured «منتخب» demoted; filter sheet = advanced only (no sort, no mood; «حداقل ذخیره» not star ratings)
+- Explore (`/explore`): mood-first 2×2 owns first viewport; QuickNow + داغ deferred below fold; categories via quiet link to Lists — not a full catalog grid
 
 ## Elevation & Depth
 

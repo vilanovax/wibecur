@@ -9,6 +9,7 @@ import { track } from '@/lib/analytics';
 import Toast from '@/components/shared/Toast';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { Button } from '@/components/ui/button';
 
 interface PersonalList {
   id: string;
@@ -186,31 +187,31 @@ export default function SaveToPersonalListModal({
           <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
             {authRequired ? (
               <div className="text-center py-12 px-6">
-                <p className="text-wibe-secondary mb-4">برای ذخیره در لیست شخصی وارد شوید</p>
+                <p className="text-muted-foreground mb-4">برای ذخیره در لیست شخصی وارد شوید</p>
                 <Link
                   href={`/login?callbackUrl=${encodeURIComponent(`/items/${itemId}`)}&source=item_gate`}
-                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary text-white font-semibold"
+                  className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-sm font-semibold text-brand-foreground"
                 >
                   ورود
                 </Link>
               </div>
             ) : isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <Loader2 className="size-8 animate-spin text-brand" />
               </div>
             ) : lists.length === 0 ? (
               <div className="text-center py-12 px-6">
                 <div className="text-5xl mb-3">📋</div>
-                <p className="text-wibe-secondary mb-2">لیست شخصی وجود ندارد</p>
+                <p className="text-muted-foreground mb-2">لیست شخصی وجود ندارد</p>
                 {canCreateNewList && (
-                  <p className="text-sm text-wibe-secondary mb-4">
+                  <p className="text-sm text-muted-foreground mb-4">
                     با ساخت لیست جدید شروع کنید
                   </p>
                 )}
               </div>
             ) : (
               <div className="px-4 pb-4 space-y-2">
-                <p className="text-sm font-medium text-wibe-secondary px-1 pb-2">
+                <p className="text-sm font-medium text-muted-foreground px-1 pb-2">
                   لیست‌های من
                 </p>
                 {lists.map((list) => {
@@ -221,10 +222,10 @@ export default function SaveToPersonalListModal({
                   return (
                     <div
                       key={list.id}
-                      className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 transition-colors"
+                      className="flex items-center gap-3 rounded-surface border border-border bg-popover p-3"
                     >
                       {/* کاور کوچک */}
-                      <div className="relative w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
                         <ImageWithFallback
                           src={list.coverImage ?? ''}
                           alt={list.title}
@@ -232,18 +233,17 @@ export default function SaveToPersonalListModal({
                           fallbackIcon="📋"
                           fallbackClassName="w-full h-full flex items-center justify-center text-xl"
                           placeholderSize="cover"
-                          sizes="56px"
                         />
                       </div>
 
                       {/* عنوان و آمار */}
-                      <div className="flex-1 min-w-0 text-right">
+                      <div className="min-w-0 flex-1 text-start">
                         <h3 className="font-bold text-foreground truncate">
                           {list.title}
                         </h3>
-                        <p className="text-xs text-wibe-secondary mt-0.5">
-                          {list._count.items} آیتم
-                          <span className="mx-1">•</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {list._count.items.toLocaleString('fa-IR')} آیتم
+                          <span className="mx-1">·</span>
                           {list.isPublic ? (
                             <span className="inline-flex items-center gap-0.5">
                               <Globe className="w-3 h-3" />
@@ -264,8 +264,8 @@ export default function SaveToPersonalListModal({
                           <div
                             className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium ${
                               justAdded
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-wibe-secondary'
+                                ? 'bg-success/15 text-success'
+                                : 'bg-muted text-muted-foreground'
                             }`}
                           >
                             {justAdded ? (
@@ -282,9 +282,10 @@ export default function SaveToPersonalListModal({
                           </div>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => handleAddToList(list)}
                             disabled={adding}
-                            className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-dark active:scale-95 transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+                            className="flex size-11 items-center justify-center rounded-full bg-brand text-brand-foreground disabled:opacity-60"
                             aria-label={`افزودن به ${list.title}`}
                           >
                             {adding ? (
@@ -303,18 +304,21 @@ export default function SaveToPersonalListModal({
           </div>
 
           {/* CTA ساخت لیست جدید — جدا و شفاف */}
-          <div className="flex-shrink-0 px-4 py-4 border-t border-gray-100">
+          <div className="shrink-0 border-t border-border px-4 py-4">
             {canCreateNewList ? (
-              <button
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full border-brand/30 text-brand"
                 onClick={() => setIsCreateListOpen(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 text-primary border-2 border-primary rounded-xl font-medium hover:bg-primary/5 transition-colors"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="size-4" />
                 ساخت لیست جدید
-              </button>
+              </Button>
             ) : (
-              <p className="text-center text-sm text-wibe-secondary py-2">
-                به حداکثر تعداد لیست‌های خصوصی ({maxPersonalLists}) رسیده‌اید
+              <p className="text-center text-sm text-muted-foreground py-2">
+                به حداکثر تعداد لیست‌های خصوصی ({maxPersonalLists.toLocaleString('fa-IR')}) رسیده‌اید
               </p>
             )}
           </div>

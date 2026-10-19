@@ -23,9 +23,9 @@ export default function HomeSavedListsSection() {
     return (
       <section className="mb-6">
         <div className="mb-3 px-4 lg:px-0">
-          <div className="h-6 w-36 animate-pulse rounded bg-gray-200" />
+          <div className="h-6 w-36 animate-pulse rounded bg-muted" />
         </div>
-        <div className="mx-4 h-28 animate-pulse rounded-xl bg-gray-100 lg:mx-0" />
+        <div className="mx-4 h-28 animate-pulse rounded-xl bg-muted lg:mx-0" />
       </section>
     );
   }
@@ -69,7 +69,7 @@ export default function HomeSavedListsSection() {
   });
 
   return (
-    <section className="mb-6 border-t border-wibe/50 pt-5">
+    <section className="mb-6">
       <HomeSectionTitle
         iconVariant="bookmark"
         title="ذخیره‌شده‌های تو"
@@ -82,10 +82,10 @@ export default function HomeSavedListsSection() {
       />
 
       {isLoading ? (
-        <div className="mx-4 h-28 animate-pulse rounded-2xl bg-wibe-surface lg:mx-0" />
+        <div className="mx-4 h-28 animate-pulse rounded-xl bg-muted lg:mx-0" />
       ) : showSaved ? (
         <>
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:hidden">
+          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
             {savedLists.map((list) => (
               <HomeGridListCard
                 key={list.id}
@@ -112,13 +112,13 @@ export default function HomeSavedListsSection() {
         </>
       ) : (
         <>
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide lg:hidden">
+          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
             {suggestionLists.map((list) => (
               <HomeGridListCard
                 key={list.id}
                 list={list}
                 badge="پیشنهاد"
-                badgeClassName="bg-primary/90 text-white"
+                badgeClassName="bg-brand text-brand-foreground"
                 homeSection="saved"
               />
             ))}
@@ -127,7 +127,7 @@ export default function HomeSavedListsSection() {
             <HomeFeedGrid
               cells={suggestionCells}
               badge="پیشنهاد"
-              badgeClassName="bg-primary/90 text-white"
+              badgeClassName="bg-brand text-brand-foreground"
               homeSection="saved"
             />
           </div>
@@ -135,8 +135,8 @@ export default function HomeSavedListsSection() {
       )}
 
       {showSaved ? (
-        <p className="mt-2 hidden px-4 wibe-caption text-wibe-secondary lg:block lg:px-0">
-          <Bookmark className="ml-1 inline h-3.5 w-3.5 text-primary" />
+        <p className="mt-2 hidden px-4 text-xs text-muted-foreground lg:block lg:px-0">
+          <Bookmark className="me-1 inline size-4 text-brand" />
           برای مدیریت کامل به پروفایل برو
         </p>
       ) : null}

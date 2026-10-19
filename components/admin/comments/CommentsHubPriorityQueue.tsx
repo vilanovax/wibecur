@@ -1,9 +1,6 @@
-'use client';
-
 import Link from 'next/link';
 import { Clock, Flag, Package, ArrowLeft, ListTodo, ShieldBan } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import type { HubPriorityItem } from '@/lib/admin/comments-hub-priority';
 
 const typeMeta: Record<
@@ -23,7 +20,8 @@ const typeMeta: Record<
   item_report: {
     icon: Package,
     label: 'ریپورت آیتم',
-    color: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20',
+    color:
+      'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20',
   },
   user_penalty: {
     icon: ShieldBan,
@@ -87,11 +85,8 @@ export default function CommentsHubPriorityQueue({
                     {item.subtitle}
                   </p>
                 </div>
-                <span className="text-[10px] text-[var(--color-text-subtle)] whitespace-nowrap shrink-0">
-                  {formatDistanceToNow(new Date(item.createdAt), {
-                    addSuffix: true,
-                    locale: faIR,
-                  })}
+                <span className="text-xs text-[var(--color-text-subtle)] whitespace-nowrap shrink-0">
+                  {formatRelativeTime(item.createdAt)}
                 </span>
               </Link>
             </li>

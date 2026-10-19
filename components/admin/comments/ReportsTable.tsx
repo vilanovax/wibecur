@@ -1,7 +1,6 @@
 'use client';
 
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import type { ReportGroup } from '@/lib/admin/comments-reports-intelligence';
 import { UserPenaltyBadge } from '@/components/admin/comments/UserPenaltyBadge';
 
@@ -84,10 +83,7 @@ export default function ReportsTable({
                   {group.comment.items.title}
                 </td>
                 <td className="px-3 py-2.5 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
-                  {formatDistanceToNow(new Date(group.comment.createdAt), {
-                    addSuffix: true,
-                    locale: faIR,
-                  })}
+                  {formatRelativeTime(group.comment.createdAt)}
                 </td>
                 <td className="px-3 py-2.5">
                   {group.comment.isApproved ? (

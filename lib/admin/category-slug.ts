@@ -3,7 +3,7 @@
  */
 
 import { slugify } from '@/lib/utils/slug';
-import { isValidCategorySlug } from '@/lib/admin/category-intelligence';
+import { isValidCategorySlug } from '@/lib/admin/category-intelligence-shared';
 
 /** واژه‌های پرتکرار دسته‌ها */
 const WORD_MAP: Record<string, string> = {

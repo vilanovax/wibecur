@@ -7,6 +7,7 @@ import UpcomingSlotsGrid from './UpcomingSlotsGrid';
 import FeaturedPerformanceSection from './FeaturedPerformanceSection';
 import FeaturedHistoryAccordion from './FeaturedHistoryAccordion';
 import type { SlotItem } from '../FeaturedManagementClient';
+import type { FeaturedSlotPerformance } from '@/lib/admin/featured-management-types';
 
 type Props = {
   current: SlotItem | null;
@@ -23,6 +24,8 @@ type Props = {
   onAddSlot: () => void;
   onEditSlot: (slot: SlotItem) => void;
   onDeleteSlot: (id: string) => void;
+  initialPerformance?: FeaturedSlotPerformance | null;
+  initialRecommendations?: string[];
 };
 
 export default function FeaturedSchedulerTab({
@@ -40,6 +43,8 @@ export default function FeaturedSchedulerTab({
   onAddSlot,
   onEditSlot,
   onDeleteSlot,
+  initialPerformance = null,
+  initialRecommendations = [],
 }: Props) {
   const totalScheduled = (current ? 1 : 0) + upcoming.length;
 
@@ -96,7 +101,13 @@ export default function FeaturedSchedulerTab({
           </section>
         )}
 
-        {current && <FeaturedPerformanceSection slotId={current.id} />}
+        {current && (
+          <FeaturedPerformanceSection
+            slotId={current.id}
+            initialPerformance={initialPerformance}
+            initialRecommendations={initialRecommendations}
+          />
+        )}
 
         <FeaturedHistoryAccordion past={past} formatDate={formatDate} />
       </div>

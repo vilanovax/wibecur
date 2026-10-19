@@ -7,6 +7,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { MessageSquare, Plus, Loader2, TrendingUp, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ListCommentItem from './ListCommentItem';
 import ListCommentForm from './ListCommentForm';
 import Toast from '@/components/shared/Toast';
@@ -175,25 +176,25 @@ export default function ListCommentSection({
 
   return (
     <>
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="rounded-surface border border-border bg-popover p-4 shadow-surface">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
+            <MessageSquare className="size-5 text-brand" />
             <h3 className="font-bold text-foreground">
-              کامنت‌ها ({totalCount})
+              نظرها ({totalCount.toLocaleString('fa-IR')})
             </h3>
           </div>
           {commentsEnabled ? (
             <button
               onClick={() => setIsFormOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors duration-200 shadow-sm hover:shadow-md"
+              className="flex size-11 items-center justify-center rounded-full bg-brand/10 text-brand"
               aria-label="افزودن کامنت جدید"
             >
               <Plus className="w-5 h-5" strokeWidth={2.5} />
             </button>
           ) : (
-            <span className="text-sm text-wibe-secondary">
+            <span className="text-sm text-muted-foreground">
               کامنت‌ها برای این لیست غیرفعال است
             </span>
           )}
@@ -204,10 +205,10 @@ export default function ListCommentSection({
           <div className="flex gap-2 mb-4">
             <button
               onClick={() => setSortBy('newest')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`inline-flex h-11 items-center gap-1 rounded-full px-3 text-sm font-medium transition-colors ${
                 sortBy === 'newest'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-foreground hover:bg-muted'
               }`}
             >
               <Clock className="w-4 h-4" />
@@ -215,10 +216,10 @@ export default function ListCommentSection({
             </button>
             <button
               onClick={() => setSortBy('popular')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`inline-flex h-11 items-center gap-1 rounded-full px-3 text-sm font-medium transition-colors ${
                 sortBy === 'popular'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-foreground hover:bg-muted'
               }`}
             >
               <TrendingUp className="w-4 h-4" />
@@ -230,14 +231,14 @@ export default function ListCommentSection({
         {/* Comments List */}
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <Loader2 className="size-6 animate-spin text-brand" />
           </div>
         ) : comments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageSquare className="w-12 h-12 text-wibe-secondary mx-auto mb-2" />
-            <p className="text-wibe-secondary">هنوز کامنتی ثبت نشده است</p>
-            <p className="text-sm text-wibe-secondary mt-1">
-              اولین کسی باشید که کامنت می‌گذارد
+            <MessageSquare className="mx-auto mb-2 size-12 text-muted-foreground" />
+            <p className="text-muted-foreground">هنوز نظری ثبت نشده است</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              اولین کسی باشید که نظر می‌گذارد
             </p>
           </div>
         ) : (
@@ -255,24 +256,27 @@ export default function ListCommentSection({
             </div>
             {hasNextPage && (
               <div className="flex justify-center mt-4">
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-foreground rounded-xl font-medium transition-colors flex items-center gap-2 disabled:opacity-60"
+                  className="text-brand"
                 >
                   {isFetchingNextPage ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                   ) : (
                     <>
-                      <span>نمایش بیشتر</span>
+                      نمایش بیشتر
                       {remainingCount > 0 && (
-                        <span className="text-sm text-wibe-secondary">
-                          ({remainingCount} باقی‌مانده)
+                        <span className="text-sm text-muted-foreground">
+                          ({remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
                         </span>
                       )}
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             )}
           </>

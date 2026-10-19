@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import {
   ArchiveRestore,
   CheckSquare,
@@ -39,7 +38,7 @@ function formatDeletedAt(iso: string) {
   const date = new Date(iso);
   return {
     absolute: date.toLocaleDateString('fa-IR', { dateStyle: 'medium' }),
-    relative: formatDistanceToNow(date, { addSuffix: true, locale: faIR }),
+    relative: formatRelativeTime(date),
   };
 }
 

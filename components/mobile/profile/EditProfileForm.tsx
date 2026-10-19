@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 
 interface EditProfileFormProps {
@@ -80,12 +82,12 @@ export default function EditProfileForm({
           <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
             نام
           </label>
-          <input
+          <Input
             id="name"
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+            className="h-12"
             placeholder="نام خود را وارد کنید"
           />
         </div>
@@ -94,31 +96,23 @@ export default function EditProfileForm({
           <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
             ایمیل
           </label>
-          <input
+          <Input
             id="email"
             type="email"
+            dir="ltr"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+            className="h-12"
             placeholder="example@email.com"
             required
           />
         </div>
 
         <div className="flex gap-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
-            disabled={isLoading}
-          >
+          <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onClose} disabled={isLoading}>
             انصراف
-          </button>
-          <button
-            type="submit"
-            className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            disabled={isLoading}
-          >
+          </Button>
+          <Button type="submit" variant="brand" size="lg" className="flex-1" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -127,7 +121,7 @@ export default function EditProfileForm({
             ) : (
               'ذخیره تغییرات'
             )}
-          </button>
+          </Button>
         </div>
       </form>
     </BottomSheet>

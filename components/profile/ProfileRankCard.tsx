@@ -45,7 +45,7 @@ export default function ProfileRankCard({ userId }: ProfileRankCardProps) {
         <div className="min-w-0 flex-1">
           <p className="wibe-caption text-wibe-secondary">رتبه‌بندی کیوریتورها</p>
           {isLoading ? (
-            <p className="mt-0.5 h-5 w-32 bg-gray-200 rounded animate-pulse" />
+            <p className="mt-0.5 h-5 w-32 bg-wibe-surface rounded animate-pulse" />
           ) : hasRank ? (
             <div className="mt-0.5 space-y-1">
               <p className="wibe-body font-bold text-foreground">

@@ -1,53 +1,19 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/auth/require-permission';
+import { getFeaturedListsForPicker } from '@/lib/admin/featured-management-data';
 
 /**
  * GET /api/admin/custom/featured/lists
- * فقط لیست لیست‌ها برای دراپ‌داون «مدیریت منتخب‌ها». بدون اسلات و رویداد.
+ * فقط لیست لیست‌ها برای دراپ‌داون ویزارد — lazy روی باز شدن مودال.
  */
 export async function GET() {
   try {
     const userOrRes = await requirePermission('manage_lists');
     if (userOrRes instanceof NextResponse) return userOrRes;
 
-    const lists = await prisma.lists.findMany({
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        description: true,
-        coverImage: true,
-        saveCount: true,
-        itemCount: true,
-        badge: true,
-        isPublic: true,
-        isActive: true,
-        deletedAt: true,
-        isFeatured: true,
-        categories: { select: { name: true, slug: true } },
-      },
-      orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
-      take: 300,
-    });
+    const lists = await getFeaturedListsForPicker();
 
-    const response = NextResponse.json({
-      lists: lists.map((l) => ({
-        id: l.id,
-        title: l.title,
-        slug: l.slug,
-        description: l.description,
-        coverImage: l.coverImage,
-        saveCount: l.saveCount,
-        itemCount: l.itemCount,
-        badge: l.badge,
-        isPublic: l.isPublic,
-        isActive: l.isActive,
-        deletedAt: l.deletedAt?.toISOString() ?? null,
-        isFeatured: l.isFeatured,
-        categories: l.categories,
-      })),
-    });
+    const response = NextResponse.json({ lists });
     response.headers.set('Cache-Control', 'no-store, max-age=0');
     return response;
   } catch (err: unknown) {

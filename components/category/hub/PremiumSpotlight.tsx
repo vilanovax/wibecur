@@ -21,7 +21,7 @@ export default function PremiumSpotlight({
       <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         💎 انتخاب ویژه
       </h2>
-      <p className="text-[11px] text-wibe-secondary">
+      <p className="wibe-caption text-wibe-secondary">
         پیشنهاد این ماه
       </p>
 
@@ -33,17 +33,16 @@ export default function PremiumSpotlight({
           boxShadow: `0 4px 20px ${accentColor}20`,
         }}
       >
-        <span className="absolute top-2 left-2 z-10 text-[10px] font-medium text-white/90 bg-black/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
+        <span className="absolute top-2 left-2 z-10 wibe-caption font-medium text-white/90 bg-black/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
           Sponsored
         </span>
-        <div className="relative aspect-[3/2] bg-gray-100">
+        <div className="relative aspect-[3/2] bg-wibe-surface">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
               alt={list.title}
               className="w-full h-full object-cover"
               placeholderSize="cover"
-              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
             />
           ) : (
             <div

@@ -309,6 +309,8 @@ export function buildItemSearchHaystack(item: SearchableItemFields): string {
     metaString(meta, 'country'),
     metaString(meta, 'cuisine'),
     metaString(meta, 'address'),
+    metaString(meta, 'neighborhood'),
+    metaString(meta, 'area'),
     metaString(meta, 'priceRange'),
     meta.year != null ? String(meta.year) : '',
     extractSearchProfileText(meta),
@@ -497,6 +499,19 @@ export function scoreItemForSearch(
   const matchedTokenCount = tokens.filter((t) => haystack.includes(t)).length;
   score += matchedTokenCount * 12;
 
+  // Multi-token queries (e.g. «کافه ولیعصر») must hit every meaningful token —
+  // otherwise a single broad word floods results with false confidence.
+  const meaningful = meaningfulSearchTokens(rawQuery);
+  if (meaningful.length >= 2 && score > 0) {
+    const matchedAll = meaningful.every((token) => {
+      const variants = catalogTermsForToken(token);
+      return variants.some((v) => haystack.includes(v));
+    });
+    if (!matchedAll) {
+      return { score: 0, reason: null, matchHint: null, matchTier: 'indirect' };
+    }
+  }
+
   if (score > 0 && !matchHint && reason === 'title') {
     matchHint = null;
   } else if (score > 0 && !matchHint && reason === 'description') {
@@ -596,83 +611,79 @@ export function scoreCatalogItemForSearch(
   );
 }
 
-/** شرط Prisma برای جستجوی گسترده آیتم‌ها */
+function itemClausesForTerm(term: string): Prisma.itemsWhereInput[] {
+  return [
+    { title: { contains: term, mode: 'insensitive' } },
+    { description: { contains: term, mode: 'insensitive' } },
+    {
+      catalog_items: {
+        is: {
+          OR: [
+            { title: { contains: term, mode: 'insensitive' } },
+            { description: { contains: term, mode: 'insensitive' } },
+          ],
+        },
+      },
+    },
+    { metadata: metadataStringContains(term, ['genre']) },
+    { metadata: metadataStringContains(term, ['director']) },
+    { metadata: metadataStringContains(term, ['author']) },
+    { metadata: metadataStringContains(term, ['country']) },
+    { metadata: metadataStringContains(term, ['address']) },
+    { metadata: metadataStringContains(term, ['neighborhood']) },
+    { metadata: metadataStringContains(term, ['area']) },
+    { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
+    {
+      catalog_items: {
+        is: {
+          OR: [
+            { metadata: metadataStringContains(term, ['genre']) },
+            { metadata: metadataStringContains(term, ['address']) },
+            { metadata: metadataStringContains(term, ['neighborhood']) },
+            { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
+          ],
+        },
+      },
+    },
+    {
+      lists: {
+        OR: [
+          { title: { contains: term, mode: 'insensitive' } },
+          { description: { contains: term, mode: 'insensitive' } },
+          {
+            categories: {
+              isActive: true,
+              deletedAt: null,
+              name: { contains: term, mode: 'insensitive' },
+            },
+          },
+          { tags: { has: term } },
+        ],
+      },
+    },
+  ];
+}
+
+/** شرط Prisma برای جستجوی گسترده آیتم‌ها — توکن‌های معنادار با AND */
 export function buildItemSearchWhere(
   rawQuery: string,
   listWhere: Prisma.listsWhereInput
 ): Prisma.itemsWhereInput {
-  const { terms, titleAnchors } = collectDbSearchTerms(rawQuery);
-  if (terms.length === 0 && titleAnchors.length === 0) {
+  const meaningful = meaningfulSearchTokens(rawQuery);
+  if (meaningful.length === 0) {
     return { id: { in: [] } };
   }
 
-  const termClauses: Prisma.itemsWhereInput[] = [];
-
-  const addTerm = (term: string) => {
-    termClauses.push(
-      { title: { contains: term, mode: 'insensitive' } },
-      { description: { contains: term, mode: 'insensitive' } },
-      {
-        catalog_items: {
-          is: {
-            OR: [
-              { title: { contains: term, mode: 'insensitive' } },
-              { description: { contains: term, mode: 'insensitive' } },
-            ],
-          },
-        },
-      },
-      { metadata: metadataStringContains(term, ['genre']) },
-      { metadata: metadataStringContains(term, ['director']) },
-      { metadata: metadataStringContains(term, ['author']) },
-      { metadata: metadataStringContains(term, ['country']) },
-      { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
-      {
-        catalog_items: {
-          is: {
-            OR: [
-              { metadata: metadataStringContains(term, ['genre']) },
-              { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
-            ],
-          },
-        },
-      },
-      {
-        lists: {
-          OR: [
-            { title: { contains: term, mode: 'insensitive' } },
-            { description: { contains: term, mode: 'insensitive' } },
-            {
-              categories: {
-                isActive: true,
-                deletedAt: null,
-                name: { contains: term, mode: 'insensitive' },
-              },
-            },
-            { tags: { has: term } },
-          ],
-        },
-      }
-    );
-  };
-
-  const addTitleAnchor = (term: string) => {
-    termClauses.push(
-      { title: { contains: term, mode: 'insensitive' } },
-      {
-        catalog_items: {
-          is: { title: { contains: term, mode: 'insensitive' } },
-        },
-      }
-    );
-  };
-
-  for (const term of terms) addTerm(term);
-  for (const anchor of titleAnchors) addTitleAnchor(anchor);
+  const perToken = meaningful.map((token) => {
+    const variants = catalogTermsForToken(token);
+    return {
+      OR: variants.flatMap((term) => itemClausesForTerm(term)),
+    };
+  });
 
   return {
     lists: listWhere,
-    AND: [itemModerationWhere, { OR: termClauses }],
+    AND: [itemModerationWhere, ...perToken],
   };
 }
 
@@ -681,27 +692,25 @@ export function buildItemTitleSearchWhere(
   rawQuery: string,
   listWhere: Prisma.listsWhereInput
 ): Prisma.itemsWhereInput {
-  const { terms, titleAnchors } = collectDbSearchTerms(rawQuery);
-  const searchTerms = [...new Set([...titleAnchors, ...terms])].slice(0, 4);
-  if (searchTerms.length === 0) {
+  const meaningful = meaningfulSearchTokens(rawQuery).slice(0, 4);
+  if (meaningful.length === 0) {
     return { id: { in: [] } };
   }
 
-  const termClauses: Prisma.itemsWhereInput[] = [];
-  for (const term of searchTerms) {
-    termClauses.push(
-      { title: { contains: term, mode: 'insensitive' } },
+  const perToken = meaningful.map((token) => ({
+    OR: [
+      { title: { contains: token, mode: 'insensitive' as const } },
       {
         catalog_items: {
-          is: { title: { contains: term, mode: 'insensitive' } },
+          is: { title: { contains: token, mode: 'insensitive' as const } },
         },
-      }
-    );
-  }
+      },
+    ],
+  }));
 
   return {
     lists: listWhere,
-    AND: [itemModerationWhere, { OR: termClauses }],
+    AND: [itemModerationWhere, ...perToken],
   };
 }
 

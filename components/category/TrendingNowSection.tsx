@@ -31,8 +31,8 @@ export default function TrendingNowSection({
             href={`/lists/${list.slug}`}
             className="flex-shrink-0 w-[75vw] max-w-[280px] snap-start"
           >
-            <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm active:scale-[0.98] transition-transform">
-              <div className="relative aspect-[4/3] bg-gray-100">
+            <div className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-sm active:scale-[0.98] transition-transform">
+              <div className="relative aspect-[4/3] bg-wibe-surface">
                 {list.coverImage ? (
                   <ImageWithFallback
                     src={list.coverImage}
@@ -71,7 +71,7 @@ export default function TrendingNowSection({
                   height={24}
                 />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-wibe-surface flex items-center justify-center text-xs flex-shrink-0">
                       {(list.creator?.name || '?')[0]}
                     </div>
                   )}

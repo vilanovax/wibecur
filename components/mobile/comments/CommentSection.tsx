@@ -3,14 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2, ChevronDown, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/ui/pagination';
+import { Card } from '@/components/ui/card';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Spinner } from '@/components/ui/spinner';
 import CommentItem from './CommentItem';
 import Toast from '@/components/shared/Toast';
 import CommentReportModal from './CommentReportModal';
 import { usePreferDesktopAutofocus } from '@/lib/hooks/usePreferDesktopAutofocus';
 import {
   COMMENTS_INITIAL_VISIBLE,
-  COMMENTS_LOAD_MORE_STEP,
   DEFAULT_LIST_COMMENT_MAX_LENGTH,
   MIN_COMMENT_LENGTH,
 } from '@/lib/comment-limits';
@@ -97,55 +101,55 @@ function ItemCommentInput({
 
   if (!isExpanded) {
     return (
-      <button
+      <Button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-primary/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+        variant="outline"
+        size="lg"
+        className="w-full justify-start px-4 font-normal text-muted-foreground"
       >
         نظرت درباره این آیتم چیه؟
-      </button>
+      </Button>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-2 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <Card className="flex items-end gap-2 bg-popover p-3">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxCommentLength))}
           placeholder="نظرت درباره این آیتم چیه؟"
-          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
+          className="min-h-11 flex-1 resize-none border-0 bg-transparent px-0 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           rows={2}
           maxLength={maxCommentLength}
           aria-describedby="item-comment-char-count"
           autoFocus={preferDesktopAutofocus}
         />
-        <button
+        <Button
           type="submit"
           disabled={!canSubmit}
           aria-label="ارسال نظر"
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          variant="brand"
+          size="icon"
+          className="size-11 shrink-0 rounded-full"
         >
-          <Send className="w-4 h-4" aria-hidden />
-        </button>
-      </div>
+          <Send aria-hidden />
+        </Button>
+      </Card>
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setContent('')}
-            className="px-3 py-1.5 text-xs text-wibe-secondary hover:text-foreground"
-          >
+          <Button type="button" variant="ghost" size="sm" className="h-11" onClick={() => setContent('')}>
             انصراف
-          </button>
+          </Button>
           {isTooShort && (
-            <span className="text-xs text-amber-600">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
+            <span className="text-xs text-warning">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
           )}
         </div>
         <span
           id="item-comment-char-count"
           className={`text-xs tabular-nums ${
-            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-wibe-secondary'
+            isOverLimit ? 'font-medium text-destructive' : isNearLimit ? 'text-warning' : 'text-muted-foreground'
           }`}
         >
           {content.length.toLocaleString('fa-IR')}/{maxCommentLength.toLocaleString('fa-IR')}
@@ -167,7 +171,7 @@ export default function CommentSection({
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('popular');
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(COMMENTS_INITIAL_VISIBLE);
+  const [page, setPage] = useState(1);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
@@ -182,7 +186,7 @@ export default function CommentSection({
   const maxCommentLength = data?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
 
   useEffect(() => {
-    setVisibleCount(COMMENTS_INITIAL_VISIBLE);
+    setPage(1);
   }, [itemId, sortBy]);
 
   const handleSubmit = async (content: string): Promise<boolean> => {
@@ -298,77 +302,52 @@ export default function CommentSection({
     }
   };
 
-  const displayedComments = comments.slice(0, visibleCount);
-  const hasMore = visibleCount < comments.length;
-  const remainingCount = comments.length - visibleCount;
-  const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
-  const hasComments = comments.length > 0;
+  const pageSize = COMMENTS_INITIAL_VISIBLE;
+  const totalPages = Math.max(1, Math.ceil(comments.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const displayedComments = comments.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const showSort = !isLoading && comments.length > 1;
 
   return (
     <section
       id="comments"
       className={`scroll-mt-28 ${
-        embeddedInPanel ? 'mt-0 border-t-0 pt-0' : 'mt-2 border-t border-wibe pt-5'
+        embeddedInPanel ? 'mt-0 border-t-0 pt-0' : 'mt-2 border-t border-border pt-5'
       }`}
     >
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="wibe-h3 text-foreground">نظرات</h2>
+        {showSort ? (
+          <SegmentedControl
+            aria-label="مرتب‌سازی نظرات"
+            size="sm"
+            value={sortBy}
+            onChange={(value) => setSortBy(value as 'popular' | 'newest')}
+            options={[
+              { value: 'popular', label: 'مفیدترین' },
+              { value: 'newest', label: 'جدیدترین' },
+            ]}
+          />
+        ) : null}
+      </div>
+
       {!commentsEnabled && (
-        <p className="wibe-caption text-wibe-secondary mb-3">نظرها غیرفعال است</p>
+        <p className="mb-3 wibe-caption text-muted-foreground">نظرها غیرفعال است</p>
       )}
 
-      <div className="space-y-3">
-        {commentsEnabled && status === 'authenticated' && (
-          <ItemCommentInput
-            isExpanded={isFormExpanded}
-            onExpand={() => setIsFormExpanded(true)}
-            onSubmit={handleSubmit}
-            isLoading={submitLoading}
-            maxCommentLength={maxCommentLength}
-          />
-        )}
-
-        {!isLoading && comments.length > 0 && (
-          <div className="flex gap-2 pb-1">
-            <span className="text-xs text-wibe-secondary py-1.5">مرتب‌سازی:</span>
-              <button
-                type="button"
-                onClick={() => setSortBy('popular')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === 'popular' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'
-                }`}
-              >
-                مفیدترین
-              </button>
-              <button
-                type="button"
-                onClick={() => setSortBy('newest')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  sortBy === 'newest' ? 'bg-primary text-white shadow-sm' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'
-                }`}
-              >
-                جدیدترین
-              </button>
-            </div>
-        )}
-
-        <div className={hasComments ? 'mt-2' : 'mt-1'}>
+      <div className="space-y-4">
+        {/* Thread اول — social proof قبل از کامپوزر */}
+        <div>
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <Spinner />
             </div>
           ) : comments.length === 0 ? (
-            <p className="py-2 text-center wibe-caption text-wibe-secondary">
-              هنوز گفتگویی نیست —{' '}
-              {status === 'authenticated' && commentsEnabled ? (
-                <button
-                  type="button"
-                  onClick={() => setIsFormExpanded(true)}
-                  className="font-medium text-primary hover:underline"
-                >
-                  اولین نظر رو بذار
-                </button>
-              ) : (
-                'اولین نظر رو بذار'
-              )}
+            <p className="py-2 text-center wibe-caption text-muted-foreground">
+              هنوز گفتگویی نیست
+              {status === 'authenticated' && commentsEnabled
+                ? ' — اولین نظر را پایین بنویس'
+                : null}
             </p>
           ) : (
             <>
@@ -384,19 +363,29 @@ export default function CommentSection({
                   />
                 ))}
               </div>
-              {hasMore && (
-                <button
-                  type="button"
-                  onClick={() => setVisibleCount((v) => v + COMMENTS_LOAD_MORE_STEP)}
-                  className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                  {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر ({remainingCount.toLocaleString('fa-IR')} باقی‌مانده)
-                </button>
-              )}
+              {totalPages > 1 ? (
+                <Pagination
+                  className="mt-4 justify-center"
+                  page={safePage}
+                  total={totalPages}
+                  onChange={setPage}
+                />
+              ) : null}
             </>
           )}
         </div>
+
+        {commentsEnabled && status === 'authenticated' ? (
+          <div className="space-y-2 border-t border-border pt-3">
+            <ItemCommentInput
+              isExpanded={isFormExpanded}
+              onExpand={() => setIsFormExpanded(true)}
+              onSubmit={handleSubmit}
+              isLoading={submitLoading}
+              maxCommentLength={maxCommentLength}
+            />
+          </div>
+        ) : null}
       </div>
 
       {toast && (

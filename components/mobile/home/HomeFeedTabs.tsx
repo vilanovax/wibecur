@@ -1,140 +1,40 @@
-'use client';
-
-import { useCallback, useState } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import { useSession } from 'next-auth/react';
-import { useQueryClient } from '@tanstack/react-query';
-import TrendingThisWeekCarousel from './TrendingThisWeekCarousel';
-import { HomeFeedSectionSkeleton } from './home-section-skeletons';
-import {
-  fetchForYouRecommendations,
-  forYouQueryKey,
-} from '@/hooks/useForYouRecommendations';
-import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
-import { useHomeUserState } from '@/hooks/useHomeUserState';
-import { trackHomeTabSwitch } from '@/lib/analytics';
+import SectionIcon from '@/components/shared/SectionIcon';
 
-const ForYouSection = dynamic(() => import('./ForYouSection'), {
-  loading: () => <HomeFeedSectionSkeleton titleWidth="w-32" />,
-});
-
-type FeedTab = 'trending' | 'foryou';
-
-const TABS: { id: FeedTab; label: string; ariaLabel: string }[] = [
-  { id: 'trending', label: 'ترند', ariaLabel: 'ترند این هفته' },
-  { id: 'foryou', label: 'برای تو', ariaLabel: 'پیشنهاد برای تو' },
-];
-
-const TAB_SEE_ALL: Record<FeedTab, string> = {
-  trending: '/lists?mode=trending',
-  foryou: '/lists',
+type HomeFeedTabsProps = {
+  carousel: ReactNode;
 };
 
-export default function HomeFeedTabs() {
-  const [tab, setTab] = useState<FeedTab>('trending');
-  const { data: session } = useSession();
-  const { interests, shouldShowStartStrip } = useHomeOnboardingInterests();
-  const { isNewUser, isGuest } = useHomeUserState();
-  const queryClient = useQueryClient();
-
-  const prefetchForYou = useCallback(() => {
-    void queryClient.prefetchQuery({
-      queryKey: forYouQueryKey(session?.user?.id, interests),
-      queryFn: () => fetchForYouRecommendations(interests),
-      staleTime: 2 * 60 * 1000,
-    });
-  }, [queryClient, session?.user?.id, interests]);
-
+/**
+ * RSC header + injected carousel (SSR trending cards).
+ * Single discovery lane on Home: trending catalog.
+ */
+export default function HomeFeedTabs({ carousel }: HomeFeedTabsProps) {
   return (
-    <section className="mb-5 lg:mb-0" aria-label="فید کشف">
-      <div className="mb-3.5 space-y-2 px-4 lg:mb-0 lg:border-b lg:border-wibe/60 lg:px-5 lg:pb-4 lg:pt-4">
-        <div className="flex items-center justify-between gap-3">
-          <div
-            className="inline-flex min-w-0 rounded-full border border-wibe bg-wibe-surface p-0.5"
-            role="tablist"
-            aria-label="نوع فید"
-          >
-            {TABS.map((item) => {
-              const isActive = tab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  id={`feed-tab-${item.id}`}
-                  aria-selected={isActive}
-                  aria-controls={`feed-panel-${item.id}`}
-                  aria-label={item.ariaLabel}
-                  onClick={() => {
-                    if (!isActive) trackHomeTabSwitch(item.id);
-                    setTab(item.id);
-                  }}
-                  onPointerEnter={item.id === 'foryou' ? prefetchForYou : undefined}
-                  onTouchStart={item.id === 'foryou' ? prefetchForYou : undefined}
-                  className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 wibe-small font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
-                    isActive
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-wibe-secondary hover:text-foreground'
-                  }`}
-                >
-                  {item.id === 'trending' && isNewUser && !isGuest ? (
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-xs font-bold leading-none ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-amber-400/20 text-amber-700'
-                      }`}
-                    >
-                      شروع
-                    </span>
-                  ) : null}
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <Link
-            href={TAB_SEE_ALL[tab]}
-            className="inline-flex shrink-0 items-center gap-0.5 wibe-caption font-semibold text-primary transition-colors hover:text-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          >
-            مشاهده همه
-            <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-          </Link>
-        </div>
-      </div>
-
-      {tab === 'foryou' && isGuest && !shouldShowStartStrip && (
-        <div className="mx-4 mb-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5 lg:mx-0">
-          <p className="wibe-caption text-wibe-secondary">
-            برای پیشنهادهای شخصی‌تر{' '}
-            <Link
-              href="/login?callbackUrl=%2F&source=login_banner"
-              className="font-semibold text-primary hover:underline"
-            >
-              وارد شو
+    <section className="mb-3 lg:mb-0" aria-label="فید کشف">
+      <div className="mb-2.5 flex items-start justify-between gap-3 px-4 lg:mb-0 lg:border-b lg:border-border lg:px-5 lg:pb-4 lg:pt-4">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 wibe-h3 text-foreground">
+            <SectionIcon variant="trending" />
+            ترند این هفته
+          </h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            لیست‌های محبوب · حال‌وهوا در{' '}
+            <Link href="/explore" className="underline-offset-2 hover:underline">
+              <span className="font-semibold text-brand">اکسپلور</span>
             </Link>
           </p>
         </div>
-      )}
-
-      {tab === 'foryou' && isNewUser && !isGuest && (
-        <div className="mx-4 mb-3 rounded-xl border border-wibe bg-wibe-surface px-3 py-2.5 lg:mx-0">
-          <p className="wibe-caption text-wibe-secondary">
-            از تب ترند چند لیست ذخیره کن — پیشنهادهای این بخش دقیق‌تر می‌شوند.
-          </p>
-        </div>
-      )}
-
-      <div
-        role="tabpanel"
-        id={`feed-panel-${tab}`}
-        aria-labelledby={`feed-tab-${tab}`}
-        className="lg:px-5 lg:pb-5 lg:pt-1"
-      >
-        {tab === 'trending' && <TrendingThisWeekCarousel embedded />}
-        {tab === 'foryou' && <ForYouSection embedded fetchEnabled />}
+        <Link
+          href="/lists?mode=trending"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-1.5"
+        >
+          <span className="text-sm font-semibold text-brand">همه</span>
+        </Link>
       </div>
+
+      <div className="lg:px-5 lg:pb-5 lg:pt-1">{carousel}</div>
     </section>
   );
 }

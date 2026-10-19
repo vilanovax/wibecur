@@ -10,8 +10,7 @@ import {
   ExternalLink,
   ShieldCheck,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import UserAvatar from '@/components/shared/UserAvatar';
 import { getRoleLabel } from '@/lib/auth/roles';
 import { isAdminRole } from '@/lib/auth/roles';
@@ -238,7 +237,7 @@ export default function UserDetailModal({
                   </div>
                   <p className="text-xs text-[var(--color-text-muted)] mt-2">
                     آخرین فعالیت:{' '}
-                    {formatDistanceToNow(new Date(user.updatedAt), { addSuffix: true, locale: faIR })}
+                    {formatRelativeTime(user.updatedAt)}
                   </p>
                   <p className="text-xs text-[var(--color-text-muted)]">
                     وضعیت:{' '}

@@ -34,14 +34,14 @@ const ICON_VARIANTS: Record<
   viral: { Icon: Flame, className: 'h-5 w-5 shrink-0 text-warning' },
   new: { Icon: Sparkles, className: 'h-5 w-5 shrink-0 text-success' },
   saved: { Icon: Star, className: 'h-5 w-5 shrink-0 text-warning' },
-  location: { Icon: MapPin, className: 'h-5 w-5 shrink-0 text-wibe-secondary' },
-  curators: { Icon: Trophy, className: 'h-5 w-5 shrink-0 text-primary' },
-  debate: { Icon: MessageCircle, className: 'h-5 w-5 shrink-0 text-wibe-secondary' },
-  film: { Icon: Film, className: 'h-5 w-5 shrink-0 text-primary' },
-  rising: { Icon: TrendingUp, className: 'h-5 w-5 shrink-0 text-primary' },
-  bookmark: { Icon: Bookmark, className: 'h-5 w-5 shrink-0 text-primary' },
-  forYou: { Icon: Sparkles, className: 'h-5 w-5 shrink-0 text-primary' },
-  mood: { Icon: Target, className: 'h-5 w-5 shrink-0 text-primary' },
+  location: { Icon: MapPin, className: 'h-5 w-5 shrink-0 text-muted-foreground' },
+  curators: { Icon: Trophy, className: 'h-5 w-5 shrink-0 text-brand' },
+  debate: { Icon: MessageCircle, className: 'h-5 w-5 shrink-0 text-muted-foreground' },
+  film: { Icon: Film, className: 'h-5 w-5 shrink-0 text-brand' },
+  rising: { Icon: TrendingUp, className: 'h-5 w-5 shrink-0 text-brand' },
+  bookmark: { Icon: Bookmark, className: 'h-5 w-5 shrink-0 text-brand' },
+  forYou: { Icon: Sparkles, className: 'h-5 w-5 shrink-0 text-brand' },
+  mood: { Icon: Target, className: 'h-5 w-5 shrink-0 text-brand' },
 };
 
 export default function SectionIcon({ variant }: { variant: SectionIconVariant }) {

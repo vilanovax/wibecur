@@ -1,5 +1,3 @@
-'use client';
-
 import { MessageSquare } from 'lucide-react';
 import CommentsSubNav from './CommentsSubNav';
 import CommentsHubKpiStrip from './CommentsHubKpiStrip';
@@ -50,7 +48,8 @@ export default function CommentsHubDashboard({
       </section>
 
       <p className="text-xs text-[var(--color-text-muted)]">
-        از نوار بالا برای رفتن به صف کار، ریپورت‌ها یا تنظیم کلمات ممنوع استفاده کنید.
+        از نوار بالا برای رفتن به صف کار، ریپورت‌ها یا تنظیم کلمات ممنوع استفاده
+        کنید.
       </p>
     </div>
   );

@@ -1,10 +1,10 @@
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
-import { dbQuery } from '@/lib/db';
-import {
-  getUsersIntelligenceData,
-  type UsersIntelligenceData,
-  type UsersIntelligenceQuery,
-} from '@/lib/admin/users-intelligence';
+import { getUsersIntelligenceData } from '@/lib/admin/users-intelligence';
+import type {
+  UsersIntelligenceData,
+  UsersIntelligenceQuery,
+} from '@/lib/admin/users-types';
 import {
   ADMIN_CACHE_TAGS,
   ADMIN_USERS_CACHE_SECONDS,
@@ -22,22 +22,19 @@ function cacheKey(q: UsersIntelligenceQuery): string[] {
   ];
 }
 
-async function loadUsersIntelligence(
-  query: UsersIntelligenceQuery
-): Promise<UsersIntelligenceData> {
-  return dbQuery(() => getUsersIntelligenceData(query));
-}
-
-export function getCachedUsersIntelligenceData(
-  query: UsersIntelligenceQuery
-): Promise<UsersIntelligenceData> {
-  const getCached = unstable_cache(
-    () => loadUsersIntelligence(query),
+function getCrossRequestCachedUsersIntelligence(query: UsersIntelligenceQuery) {
+  return unstable_cache(
+    () => getUsersIntelligenceData(query),
     cacheKey(query),
     {
       revalidate: ADMIN_USERS_CACHE_SECONDS,
       tags: [ADMIN_CACHE_TAGS.users],
     }
-  );
-  return getCached();
+  )();
 }
+
+/** Per-request dedupe + short TTL cross-request cache */
+export const getCachedUsersIntelligenceData = cache(
+  (query: UsersIntelligenceQuery): Promise<UsersIntelligenceData> =>
+    getCrossRequestCachedUsersIntelligence(query)
+);

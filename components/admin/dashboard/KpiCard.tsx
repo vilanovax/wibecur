@@ -15,7 +15,7 @@ export default function KpiCard({ item }: KpiCardProps) {
   return (
     <div
       className="rounded-[16px] p-4 sm:p-5 bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[var(--shadow-card)] transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
-      style={{ padding: 'var(--spacing-lg) var(--spacing-xl)' }}
+      style={{ padding: 'var(--wibe-space-lg) var(--wibe-space-xl)' }}
     >
       <p className="text-[13px] text-[var(--color-text-muted)] font-medium mb-1">
         {label}

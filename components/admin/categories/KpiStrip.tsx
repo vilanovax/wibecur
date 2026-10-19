@@ -1,7 +1,7 @@
 'use client';
 
 import { HelpCircle } from 'lucide-react';
-import { MONETIZABLE_KPI_TOOLTIP } from '@/lib/admin/category-intelligence';
+import { MONETIZABLE_KPI_TOOLTIP } from '@/lib/admin/category-intelligence-shared';
 
 interface KpiCardProps {
   title: string;

@@ -16,6 +16,7 @@ import {
   HomePersonalizedFeedSectionLazy,
 } from '@/components/mobile/home/home-lazy-sections';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
+import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import type { CategoryMenuChip } from '@/lib/category-menu';
 
 type HomeDesktopViewProps = {
@@ -35,15 +36,15 @@ export default function HomeDesktopView({
   heroSpotlight,
   desktopTrending,
 }: HomeDesktopViewProps) {
-  const { hasSaves, isLoggedIn, isLoading: userLoading, isGuest } = useHomeUserState();
-  const showCombinedPersonal = isLoggedIn && hasSaves && !userLoading;
-  const showSavedSection = isLoggedIn && !isGuest && !userLoading;
+  const { hasSaves, isLoggedIn, isNewUser, isLoading: userLoading, isGuest } = useHomeUserState();
+  const { shouldShowStartStrip, hydrated } = useHomeOnboardingInterests();
+  const onboarding = (!hydrated && isNewUser) || (hydrated && shouldShowStartStrip && isNewUser);
+  const showCombinedPersonal = isLoggedIn && hasSaves && !userLoading && !onboarding;
+  const showSavedSection = isLoggedIn && !isGuest && !userLoading && !onboarding;
 
   return (
     <div className="flex flex-col gap-6 xl:gap-7">
-      <QuickCategoryChips initialCategories={initialCategories} />
-
-      <HomeStartStrip />
+      <HomeStartStrip initialCategories={initialCategories} />
 
       <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.55fr)] xl:items-stretch xl:gap-5">
         <HomeMoodRowSection variant="responsive" className="order-2 xl:order-1" />
@@ -67,6 +68,12 @@ export default function HomeDesktopView({
               <HomePersonalizedFeedSectionLazy />
             </HomeDeferredMount>
           </HomeFeedSection>
+        ) : onboarding ? (
+          <HomeFeedSection divider>
+            <HomeDeferredMount fallback={<HomeFeedSectionSkeleton titleWidth="w-32" />}>
+              <ForYouSectionLazy />
+            </HomeDeferredMount>
+          </HomeFeedSection>
         ) : (
           <>
             {showSavedSection ? (
@@ -84,6 +91,10 @@ export default function HomeDesktopView({
           </>
         )}
 
+        <QuickCategoryChips
+          initialCategories={initialCategories}
+          density="secondary"
+        />
       </div>
     </div>
   );

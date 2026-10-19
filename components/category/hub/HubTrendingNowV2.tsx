@@ -25,7 +25,7 @@ export default function HubTrendingNowV2({
         </span>
         داغ‌ترین لیست‌های ۲۴ ساعت اخیر
       </h2>
-      <p className="text-[11px] text-wibe-secondary">
+      <p className="wibe-caption text-wibe-secondary">
         بر اساس رشد سریع ذخیره و تعامل
       </p>
 
@@ -69,15 +69,14 @@ function TrendingCard({
       href={`/lists/${list.slug}`}
       className="flex-shrink-0 w-[70vw] max-w-[260px] snap-start"
     >
-      <div ref={ref} className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-xl active:scale-[0.98] transition-transform">
-        <div className="relative aspect-[3/4] bg-gray-100">
+      <div ref={ref} className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-xl active:scale-[0.98] transition-transform">
+        <div className="relative aspect-[3/4] bg-wibe-surface">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
               alt={list.title}
               className="w-full h-full object-cover"
               placeholderSize="cover"
-              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
             />
           ) : (
             <div
@@ -90,7 +89,7 @@ function TrendingCard({
 
           {growth > 0 && (
             <span
-              className={`absolute top-2 right-2 flex items-center gap-0.5 text-white text-[11px] px-2 py-1 rounded-lg font-bold shadow-lg transition-transform ${
+              className={`absolute top-2 right-2 flex items-center gap-0.5 text-white wibe-caption px-2 py-1 rounded-lg font-bold shadow-lg transition-transform ${
                 inView ? 'animate-pulse' : ''
               }`}
               style={{
@@ -107,7 +106,7 @@ function TrendingCard({
             <h3 className="font-bold text-white text-sm line-clamp-1 drop-shadow">
               {list.title}
             </h3>
-            <div className="flex items-center gap-2 mt-1.5 text-white/90 text-[11px]">
+            <div className="flex items-center gap-2 mt-1.5 text-white/90 wibe-caption">
               <span>❤️ {list.likeCount}</span>
               <span>⭐ {list.saveCount}</span>
               {list.creator?.username && (
@@ -120,10 +119,8 @@ function TrendingCard({
                     <ImageWithFallback
                       src={list.creator.image}
                       alt=""
-                      className="h-3.5 w-3.5 rounded-full object-cover"
-                  width={14}
-                  height={14}
-                />
+                      className="w-3.5 h-3.5 rounded-full object-cover"
+                    />
                   )}
                   <span className="truncate">👤 {list.creator?.name || 'کیوریتور'}</span>
                 </Link>

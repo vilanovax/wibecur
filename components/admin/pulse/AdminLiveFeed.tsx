@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import Link from 'next/link';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { Pause, Play } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -81,7 +80,7 @@ const EventRow = memo(function EventRow({
   isNew: boolean;
   tick?: number;
 }) {
-  const timeAgo = formatDistanceToNow(new Date(item.createdAt), { addSuffix: true, locale: faIR });
+  const timeAgo = formatRelativeTime(item.createdAt);
   const badge = BADGE[item.type];
   const href = getAdminHref(item);
   const summary = eventSummary(item);

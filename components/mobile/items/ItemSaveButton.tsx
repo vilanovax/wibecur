@@ -21,12 +21,15 @@ interface ItemSaveButtonProps {
   variant?: 'default' | 'hero';
   /** Defer viewer-state fetch until idle (modal preview). */
   deferViewerState?: boolean;
+  /** بج تعداد لیست‌ها — در پیش‌نمایش شلوغ است؛ پیش‌فرض روشن */
+  showCountBadge?: boolean;
 }
 
 export default function ItemSaveButton({
   itemId,
   variant = 'default',
   deferViewerState = false,
+  showCountBadge = true,
 }: ItemSaveButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
@@ -55,15 +58,15 @@ export default function ItemSaveButton({
     return (
       <Link
         href={loginHref}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+        className={`relative flex size-11 items-center justify-center rounded-full transition-colors ${
           isHero
-            ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
-            : 'bg-white border-2 border-gray-300 hover:border-primary hover:bg-primary/5'
+            ? 'border border-background/30 bg-background/15 hover:bg-background/25 backdrop-blur-sm'
+            : 'border border-border bg-popover hover:border-brand hover:bg-brand/5'
         }`}
         aria-label="ورود برای ذخیره"
         title="ورود برای ذخیره"
       >
-        <Bookmark className={`w-5 h-5 ${isHero ? 'text-white' : 'text-wibe-secondary'}`} />
+        <Bookmark className={`size-5 ${isHero ? 'text-background' : 'text-muted-foreground'}`} />
       </Link>
     );
   }
@@ -71,7 +74,7 @@ export default function ItemSaveButton({
   if (status === 'loading' || (status === 'authenticated' && deferReady && viewerLoading)) {
     return (
       <div
-        className={`w-10 h-10 rounded-full animate-pulse ${isHero ? 'bg-white/20' : 'bg-gray-200'}`}
+        className={`size-11 animate-pulse rounded-full ${isHero ? 'bg-background/20' : 'bg-muted'}`}
         aria-hidden
       />
     );
@@ -90,33 +93,33 @@ export default function ItemSaveButton({
           e.stopPropagation();
           setIsModalOpen(true);
         }}
-        className={`relative w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+        className={`relative flex size-11 items-center justify-center rounded-full transition-colors ${
           isSaved
             ? isPrivate
-              ? 'bg-gray-900 border-2 border-gray-900 hover:bg-black shadow-md'
-              : 'bg-blue-600 border-2 border-blue-600 hover:bg-blue-700 shadow-md'
+              ? 'border border-foreground bg-foreground text-background'
+              : 'border border-brand bg-brand text-brand-foreground'
             : isHero
-              ? 'bg-white/15 border border-white/30 hover:bg-white/25 backdrop-blur-sm'
-              : 'bg-white border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+              ? 'border border-background/30 bg-background/15 hover:bg-background/25 backdrop-blur-sm'
+              : 'border border-border bg-popover hover:border-brand hover:bg-brand/5'
         }`}
         aria-label={
           isSaved
             ? isPrivate
-              ? `ذخیره شده در ${savedCount} لیست خصوصی`
-              : `ذخیره شده در ${savedCount} لیست عمومی`
+              ? `ذخیره شده در ${savedCount.toLocaleString('fa-IR')} لیست خصوصی`
+              : `ذخیره شده در ${savedCount.toLocaleString('fa-IR')} لیست عمومی`
             : 'ذخیره در لیست'
         }
       >
         <Bookmark
           className={`w-5 h-5 transition-colors ${
-            isSaved ? 'text-white fill-white' : isHero ? 'text-white' : 'text-wibe-secondary'
+            isSaved ? 'fill-current text-current' : isHero ? 'text-background' : 'text-muted-foreground'
           }`}
         />
-        {savedCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md">
-            {savedCount}
+        {showCountBadge && savedCount > 0 ? (
+          <span className="absolute -top-1 end-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold leading-none text-brand-foreground shadow-sm">
+            {savedCount.toLocaleString('fa-IR')}
           </span>
-        )}
+        ) : null}
       </button>
 
       {isModalOpen && (

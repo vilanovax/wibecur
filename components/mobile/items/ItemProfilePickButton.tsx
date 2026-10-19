@@ -46,10 +46,10 @@ export default function ItemProfilePickButton({
     return (
       <Link
         href={loginHref}
-        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-caption font-medium transition-colors ${
+        className={`inline-flex h-11 items-center gap-1.5 rounded-control px-3 text-sm font-medium ${
           isHero
-            ? 'bg-white/15 text-white border border-white/30'
-            : 'border border-wibe bg-wibe-card text-foreground hover:border-primary/30'
+            ? 'border border-background/30 bg-background/15 text-background'
+            : 'border border-border bg-popover text-foreground'
         }`}
       >
         <Sparkles className="h-4 w-4" />
@@ -61,7 +61,7 @@ export default function ItemProfilePickButton({
   if (status === 'loading' || (status === 'authenticated' && viewerLoading && !viewerState)) {
     return (
       <div
-        className={`animate-pulse rounded-lg bg-gray-200 ${isCompact ? 'h-9 w-9' : 'h-9 w-28'}`}
+        className={`animate-pulse rounded-control bg-muted ${isCompact ? 'size-11' : 'h-11 w-28'}`}
         aria-hidden
       />
     );
@@ -114,18 +114,18 @@ export default function ItemProfilePickButton({
           type="button"
           onClick={handleToggle}
           disabled={loading}
-          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors disabled:opacity-50 ${
+          className={`relative flex size-11 items-center justify-center rounded-full disabled:opacity-50 ${
             isPicked
-              ? 'border-2 border-violet-600 bg-violet-600 shadow-md hover:bg-violet-700'
+              ? 'bg-brand text-brand-foreground'
               : isHero
-                ? 'border border-white/30 bg-white/15 backdrop-blur-sm hover:bg-white/25'
-                : 'border-2 border-gray-300 bg-white hover:border-violet-500 hover:bg-violet-50'
+                ? 'border border-background/30 bg-background/15'
+                : 'border border-border bg-popover text-muted-foreground'
           }`}
           aria-label={isPicked ? 'حذف از منتخب‌های پروفایل' : 'افزودن به منتخب‌های پروفایل'}
           title={isPicked ? 'در منتخب‌های پروفایل' : 'افزودن به منتخب‌های پروفایل'}
         >
           <Sparkles
-            className={`h-5 w-5 ${isPicked ? 'fill-white text-white' : isHero ? 'text-white' : 'text-wibe-secondary'}`}
+            className={`size-5 ${isPicked ? 'fill-brand-foreground text-brand-foreground' : isHero ? 'text-background' : 'text-muted-foreground'}`}
           />
         </button>
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
@@ -139,12 +139,12 @@ export default function ItemProfilePickButton({
         type="button"
         onClick={handleToggle}
         disabled={loading}
-        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-caption font-semibold transition-colors disabled:opacity-50 active:scale-[0.98] ${
+        className={`inline-flex h-11 items-center gap-1.5 rounded-control px-3 text-sm font-semibold disabled:opacity-50 ${
           isPicked
-            ? 'bg-violet-600 text-white shadow-sm hover:bg-violet-700'
+            ? 'bg-brand text-brand-foreground'
             : isHero
-              ? 'bg-white/15 text-white border border-white/30 hover:bg-white/25'
-              : 'border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'
+              ? 'border border-background/30 bg-background/15 text-background'
+              : 'border border-brand/30 bg-brand/5 text-brand'
         }`}
       >
         <Sparkles className={`h-4 w-4 ${isPicked ? 'fill-current' : ''}`} />

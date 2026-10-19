@@ -6,6 +6,7 @@ import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import { isSameCategorySlug } from '@/lib/category-slug-aliases';
 import { trackCategoryChipClick } from '@/lib/analytics';
 import type { CategoryMenuChip } from '@/lib/category-menu';
+import { Skeleton } from '@/components/ui/skeleton';
 
 async function fetchActiveCategories(): Promise<CategoryMenuChip[]> {
   const res = await fetch('/api/categories');
@@ -22,6 +23,8 @@ function isActiveCategorySlug(chipSlug: string, activeSlug?: string | null): boo
 interface QuickCategoryChipsProps {
   activeSlug?: string | null;
   variant?: 'default' | 'nav';
+  /** secondary = demoted browse strip (below primary home lane) */
+  density?: 'default' | 'secondary';
   /** از SSR — بدون fetch اولیه */
   initialCategories?: CategoryMenuChip[];
 }
@@ -29,6 +32,7 @@ interface QuickCategoryChipsProps {
 export default function QuickCategoryChips({
   activeSlug = null,
   variant = 'default',
+  density = 'default',
   initialCategories,
 }: QuickCategoryChipsProps) {
   const { data: categories = initialCategories ?? [], isLoading } = useQuery({
@@ -46,29 +50,31 @@ export default function QuickCategoryChips({
   }
 
   const isNav = variant === 'nav';
+  const isSecondary = density === 'secondary';
 
   return (
     <section
       className={
-        isNav
-          ? 'px-4 py-2 lg:px-0 lg:py-2.5'
-          : 'px-4 pb-3 pt-1 lg:border-b lg:border-wibe/60 lg:px-0 lg:pb-4 lg:pt-2'
+        isSecondary
+          ? 'mt-1 border-t border-border pb-2 pt-3 lg:mt-0 lg:border-t-0 lg:pb-1 lg:pt-2'
+          : isNav
+            ? 'py-2 lg:py-2.5'
+            : 'py-2 pb-3 lg:border-b lg:border-border lg:py-3 lg:pb-4'
       }
       aria-label="دسته‌های سریع"
     >
+      <div className="overflow-hidden px-4 lg:overflow-visible lg:px-0">
       <HorizontalScrollFade
         dir="rtl"
-        surface="surface"
+        surface="background"
+        fadeEnd={false}
         fadeClassName="lg:hidden"
-        innerClassName="flex gap-2 snap-x snap-mandatory -mx-0.5 lg:mx-0 lg:flex-wrap lg:justify-start lg:gap-2 lg:overflow-visible"
+        innerClassName="flex snap-x snap-mandatory gap-1 pe-4 lg:flex-wrap lg:justify-start lg:gap-2 lg:overflow-visible lg:pe-0"
       >
         {isLoading ? (
           <>
             {[1, 2, 3, 4].map((i) => (
-              <span
-                key={i}
-                className="h-9 w-24 flex-shrink-0 animate-pulse rounded-full bg-wibe-surface"
-              />
+              <Skeleton key={i} className="h-11 w-20 shrink-0 rounded-xl" />
             ))}
           </>
         ) : (
@@ -80,19 +86,22 @@ export default function QuickCategoryChips({
                 href={`/categories/${cat.slug}`}
                 onClick={() => trackCategoryChipClick(cat.slug, cat.name)}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex h-9 flex-shrink-0 snap-start items-center whitespace-nowrap rounded-full border px-3.5 wibe-caption font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] ${
+                className={`flex h-11 min-w-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full border px-3 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                   isActive
-                    ? 'border-primary bg-primary text-white shadow-sm hover:bg-primary-dark'
-                    : 'border-wibe bg-wibe-card text-foreground hover:border-primary/30 lg:bg-wibe-surface'
+                    ? 'border-brand bg-brand'
+                    : 'border-border bg-popover hover:bg-muted'
                 }`}
               >
-                {cat.icon ? `${cat.icon} ` : ''}
-                {cat.name}
+                <span className={isActive ? 'text-brand-foreground' : 'text-foreground'}>
+                  {cat.icon ? `${cat.icon} ` : ''}
+                  {cat.name}
+                </span>
               </Link>
             );
           })
         )}
       </HorizontalScrollFade>
+      </div>
     </section>
   );
 }

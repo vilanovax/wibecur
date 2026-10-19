@@ -65,13 +65,16 @@ export default function BottomNav() {
     };
   }, [createOpen, CreateSheet]);
 
+  const isHome = pathname === '/';
+
   return (
     <>
-      <SiteFooter variant="mobile" />
+      {/* Home peak-end: skip marketing footer; bottom nav already anchors the thumb zone */}
+      {isHome ? null : <SiteFooter variant="mobile" />}
       <div aria-hidden className={MOBILE_BOTTOM_NAV_SPACER_CLASS} />
       <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none lg:hidden">
         <nav
-          className="pointer-events-auto w-full border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-lg"
+          className="pointer-events-auto w-full border-t border-border bg-card pb-[env(safe-area-inset-bottom,0px)] shadow-lg"
           aria-label="ناوبری اصلی"
         >
           <div className="flex items-center justify-around py-3 px-1">
@@ -81,14 +84,14 @@ export default function BottomNav() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex min-w-[64px] flex-shrink-0 flex-col items-center justify-center rounded-lg px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
-                    isActive ? 'text-primary' : 'text-wibe-secondary'
-                  }`}
+                  className="flex min-h-11 min-w-16 shrink-0 flex-col items-center justify-center rounded-control px-2 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
                   aria-current={isActive ? 'page' : undefined}
                   aria-label={item.label}
                 >
-                  <span aria-hidden="true">{item.icon}</span>
-                  <span className="mt-1 whitespace-nowrap text-xs">{item.label}</span>
+                  <span className={`flex flex-col items-center ${isActive ? 'text-brand' : 'text-muted-foreground'}`}>
+                    <span aria-hidden="true">{item.icon}</span>
+                    <span className="mt-1 whitespace-nowrap text-xs">{item.label}</span>
+                  </span>
                 </Link>
               );
             })}

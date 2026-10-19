@@ -86,10 +86,10 @@ export default function ProfileAchievementsSection({ creatorStats }: ProfileAchi
   if (loading && list.length === 0) {
     return (
       <section className="px-4 mt-6">
-        <div className="h-5 w-28 bg-gray-100 rounded mb-3" />
+        <div className="h-5 w-28 bg-wibe-surface rounded mb-3" />
         <div className="grid grid-cols-6 gap-2">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-square rounded-xl bg-gray-100 animate-pulse" />
+            <div key={i} className="aspect-square rounded-xl bg-wibe-surface animate-pulse" />
           ))}
         </div>
       </section>
@@ -113,8 +113,8 @@ export default function ProfileAchievementsSection({ creatorStats }: ProfileAchi
               flex flex-col items-center justify-center p-2 rounded-xl border transition-colors
               active:scale-95
               ${a.unlocked
-                ? 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                : 'border-gray-100 bg-gray-50'
+                ? 'border-wibe bg-white hover:border-wibe hover:bg-wibe-surface'
+                : 'border-wibe bg-wibe-surface'
               }
             `}
           >
@@ -124,7 +124,7 @@ export default function ProfileAchievementsSection({ creatorStats }: ProfileAchi
             >
               {a.unlocked ? a.icon : (a.isSecret ? '?' : '🔒')}
             </span>
-            <span className={`text-[9px] font-medium text-center line-clamp-1 max-w-full ${a.unlocked ? 'text-wibe-secondary' : 'text-wibe-secondary'}`}>
+            <span className={`wibe-caption font-medium text-center line-clamp-1 max-w-full ${a.unlocked ? 'text-wibe-secondary' : 'text-wibe-secondary'}`}>
               {a.unlocked || !a.isSecret ? a.title : '???'}
             </span>
           </button>

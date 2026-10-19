@@ -20,7 +20,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
 import type {
   CoverAuditSummary,
   CoverUrgency,

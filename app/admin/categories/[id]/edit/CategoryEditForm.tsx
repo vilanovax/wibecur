@@ -14,7 +14,7 @@ import CategoryFormIdentity from '@/components/admin/categories/CategoryFormIden
 import CategoryFormStickyPreview from '@/components/admin/categories/CategoryFormStickyPreview';
 import CategoryEditHeaderActions from '@/components/admin/categories/CategoryEditHeaderActions';
 import CategoryEditFormBar from '@/components/admin/categories/CategoryEditFormBar';
-import { formatSaveGrowthDisplay, isValidCategorySlug, CATEGORY_BOOST_WEIGHT } from '@/lib/admin/category-intelligence';
+import { formatSaveGrowthDisplay, isValidCategorySlug, CATEGORY_BOOST_WEIGHT } from '@/lib/admin/category-intelligence-shared';
 import CategoryPageAppearanceFields from '@/components/admin/categories/CategoryPageAppearanceFields';
 import { useCategorySlugCheck } from '@/hooks/useCategorySlugCheck';
 import Toast, { type ToastType } from '@/components/shared/Toast';

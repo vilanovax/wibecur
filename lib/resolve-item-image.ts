@@ -1,9 +1,11 @@
+import { unwrapStoredImageProxy } from './image-url-sanitize';
 import { isOurStorageUrl } from './object-storage-config';
 import {
   isAllowedExternalImageUrl,
   isAllowedItemImageUrl,
   isPlaceholderCoverPath,
   isTmdbImageUrl,
+  normalizeLocalBannerSrc,
 } from './image-url-policy';
 import { getItemPlaceholderImageUrl } from './item-placeholder-image';
 
@@ -40,8 +42,8 @@ export function resolveItemImage(input: ItemImageSource): string {
   );
 
   for (const raw of candidates) {
-    const url = raw.trim();
-    if (isUsableItemImage(url)) return url;
+    const url = unwrapStoredImageProxy(raw.trim()) || raw.trim();
+    if (isUsableItemImage(url)) return normalizeLocalBannerSrc(url);
   }
 
   return '';

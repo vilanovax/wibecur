@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { ExternalLink, ImageOff, Pencil, Star } from 'lucide-react';
-import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
 import ListCardMoreMenu from './ListCardMoreMenu';
 import ListCoverAuditModal from './ListCoverAuditModal';
 

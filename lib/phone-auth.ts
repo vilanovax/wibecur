@@ -24,10 +24,33 @@ export function normalizeIranPhone(input: string): string | null {
   return null;
 }
 
-/** نمایش فارسی: ۰۹۱۲… */
+const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+
+function toPersianDigits(value: string): string {
+  return value.replace(/\d/g, (d) => PERSIAN_DIGITS[Number(d)] ?? d);
+}
+
+/** گروه‌بندی ۱۱ رقم محلی: ۰۹۱۲ ۱۲۳ ۴۵۶۷ */
+function groupLocalPhone(digits: string): string {
+  const local = digits.replace(/\D/g, '').slice(0, 11);
+  const parts = [local.slice(0, 4), local.slice(4, 7), local.slice(7, 11)].filter(Boolean);
+  return toPersianDigits(parts.join(' '));
+}
+
+/** رقم‌های لاتین ذخیره‌شده؛ حداکثر ۱۱ رقم موبایل */
+export function digitsFromPhoneInput(input: string): string {
+  return persianToEnglish(input).replace(/\D/g, '').slice(0, 11);
+}
+
+/** نمایش زندهٔ ورودی، با ارقام فارسی و فاصله */
+export function formatPhoneDigitsForDisplay(digits: string): string {
+  return groupLocalPhone(digits);
+}
+
+/** نمایش فارسی از شمارهٔ نرمال‌شده (۹۸…) */
 export function formatIranPhoneDisplay(normalized: string): string {
   const local = normalized.startsWith('98') ? `0${normalized.slice(2)}` : normalized;
-  return local.replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] ?? d);
+  return groupLocalPhone(local);
 }
 
 export function phoneToAuthEmail(normalizedPhone: string): string {

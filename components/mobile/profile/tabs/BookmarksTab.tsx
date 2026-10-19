@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Bookmark, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
-
-const RECENT_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 type ListWithMeta = {
   id: string;
@@ -80,6 +82,8 @@ export default function BookmarksTab({
           },
         }
       : undefined,
+    initialDataUpdatedAt: hasInitial ? Date.now() : undefined,
+    refetchOnMount: hasInitial ? false : undefined,
   });
   const bookmarks = data?.bookmarks ?? [];
   const hasMore = (data?.pagination?.page ?? 1) < (data?.pagination?.totalPages ?? 1);
@@ -91,15 +95,15 @@ export default function BookmarksTab({
   if (isLoading && bookmarks.length === 0 && !hasInitial) {
     return (
       <div className="px-4 lg:px-0">
-        <div className="grid grid-cols-2 gap-2 sm:-mx-4 sm:px-0 lg:mx-0 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="rounded-[20px] overflow-hidden bg-gray-100 animate-pulse">
-              <div className="aspect-[16/9] bg-gray-200" />
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-3 bg-gray-100 rounded w-1/2" />
+            <Card key={i} className="overflow-hidden bg-popover p-0">
+              <Skeleton className="aspect-video w-full rounded-none" />
+              <div className="space-y-2 p-4">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </div>
@@ -109,19 +113,16 @@ export default function BookmarksTab({
   if (isError && bookmarks.length === 0) {
     return (
       <div className="px-4 py-8">
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
-          <p className="wibe-small text-red-600">
-            {error instanceof Error ? error.message : 'خطا در بارگذاری ذخیره‌ها'}
-          </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 text-white wibe-small font-medium"
-          >
-            <RefreshCw className="w-4 h-4" />
-            تلاش مجدد
-          </button>
-        </div>
+        <EmptyState
+          title="ذخیره‌ها بارگذاری نشد"
+          description={error instanceof Error ? error.message : 'خطا در بارگذاری ذخیره‌ها'}
+          action={
+            <Button type="button" variant="brand" size="lg" onClick={() => refetch()}>
+              <RefreshCw />
+              تلاش مجدد
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -129,93 +130,137 @@ export default function BookmarksTab({
   if (bookmarks.length === 0 && !isLoading) {
     return (
       <div className="px-4 py-8">
-        <div className="text-center py-12 rounded-lg border border-wibe bg-wibe-card">
-          <Bookmark className="w-14 h-14 text-wibe-secondary mx-auto mb-4" />
-          <h3 className="wibe-h3 text-foreground mb-1">هنوز لیستی ذخیره نکردی</h3>
-          <p className="wibe-small text-wibe-secondary max-w-xs mx-auto mb-6">
-            لیست‌های جذاب را کشف کن و ذخیره کن
-          </p>
-          <Link
-            href="/lists"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md bg-primary text-white wibe-small font-medium"
-          >
-            کشف لیست‌ها
-          </Link>
-        </div>
+        <EmptyState
+          icon={Bookmark}
+          title="هنوز لیستی ذخیره نکردی"
+          description="از اکسپلور یا لیست‌ها یک وایب ذخیره کن تا اینجا جمع شود."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link
+                href="/explore"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-base font-semibold text-brand-foreground"
+              >
+                رفتن به اکسپلور
+              </Link>
+              <Link
+                href="/lists"
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-popover px-6 text-base font-semibold text-foreground"
+              >
+                کاتالوگ لیست‌ها
+              </Link>
+            </div>
+          }
+        />
       </div>
     );
   }
 
+  const totalLabel = (initialBookmarksTotal || bookmarks.length).toLocaleString('fa-IR');
+
   return (
-    <div className="px-4 pb-4 lg:px-0">
-      <div className="-mx-1 grid grid-cols-2 gap-2 sm:-mx-4 sm:px-0 lg:mx-0 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+    <div className="space-y-4 px-4 pb-4 lg:px-0">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="wibe-h3 text-foreground">ذخیره‌های تو</h2>
+        <span className="wibe-caption tabular-nums text-muted-foreground">
+          {totalLabel} لیست
+        </span>
+      </div>
+
+      {/* موبایل: ردیف‌های فشرده مثل «لیست‌های من» */}
+      <div className="space-y-2.5 lg:hidden">
         {displayedBookmarks.map((bookmark) => {
           const list = bookmark.list;
           const items = list.itemCount ?? list._count?.items ?? 0;
           const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
-          const isRecentlyUpdated =
-            Date.now() - new Date(list.updatedAt).getTime() < RECENT_DAYS_MS;
 
           return (
             <Link
               key={bookmark.id}
               href={`/lists/${list.slug}`}
-              className="relative block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99] lg:hover:border-primary/15 lg:hover:shadow-md"
+              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
-              <div className="relative aspect-[4/3] bg-gray-100 lg:aspect-[16/10] lg:max-h-[9.5rem]">
+              <Card className="flex gap-2.5 bg-popover p-2.5 transition-transform active:scale-95">
+              <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
                 <ListCoverImage
                   coverImage={list.coverImage}
                   title={list.title}
                   slug={list.slug}
                   categorySlug={list.categories?.slug}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                   fallbackIcon={list.categories?.icon}
-                  fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
                 />
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent lg:hidden" />
-                <div className="absolute bottom-2 left-2 right-2 lg:hidden">
-                  <h3 className="line-clamp-2 wibe-small font-semibold leading-tight text-white">
-                    {list.title}
-                  </h3>
-                  <ListCardStats saves={saves} itemCount={items} variant="overlay" className="mt-0.5" />
-                </div>
-                {isRecentlyUpdated && (
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-white" />
-                )}
               </div>
-              <div className="p-2 lg:p-2.5">
-                <h3 className="mb-1 hidden line-clamp-2 wibe-small font-semibold text-foreground lg:block">
+              <div className="min-w-0 flex-1 text-start">
+                <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
+                {list.categories?.name ? (
+                  <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">
+                    {list.categories.icon ? `${list.categories.icon} ` : ''}
+                    {list.categories.name}
+                  </p>
+                ) : null}
+                <ListCardStats saves={saves} itemCount={items} variant="compact" className="mt-1" />
+              </div>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* دسکتاپ: گرید کاور */}
+      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+        {displayedBookmarks.map((bookmark) => {
+          const list = bookmark.list;
+          const items = list.itemCount ?? list._count?.items ?? 0;
+          const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
+
+          return (
+            <Link
+              key={bookmark.id}
+              href={`/lists/${list.slug}`}
+              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+            >
+              <Card className="overflow-hidden bg-popover p-0">
+              <div className="relative aspect-[16/10] max-h-40 bg-muted">
+                <ListCoverImage
+                  coverImage={list.coverImage}
+                  title={list.title}
+                  slug={list.slug}
+                  categorySlug={list.categories?.slug}
+                  className="h-full w-full object-cover"
+                  fallbackIcon={list.categories?.icon}
+                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"
+                />
+              </div>
+              <div className="p-2.5">
+                <h3 className="mb-1 line-clamp-2 wibe-small font-semibold text-foreground">
                   {list.title}
                 </h3>
-                <ListCardStats
-                  saves={saves}
-                  itemCount={items}
-                  variant="compact"
-                  className="hidden lg:flex"
-                />
+                <ListCardStats saves={saves} itemCount={items} variant="compact" />
               </div>
+              </Card>
             </Link>
           );
         })}
       </div>
 
       {!showAll && bookmarks.length > 12 && (
-        <button
-          onClick={() => setShowAll(true)}
-          className="w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-wibe-secondary transition-colors hover:bg-gray-50 lg:max-w-xs lg:mx-auto"
-        >
-          مشاهده بیشتر ({bookmarks.length - 12} مورد دیگر)
-        </button>
+        <Button type="button" variant="outline" size="lg" className="w-full" onClick={() => setShowAll(true)}>
+          مشاهده بیشتر ({(bookmarks.length - 12).toLocaleString('fa-IR')} مورد دیگر)
+        </Button>
       )}
 
       {showAll && hasMore && (
-        <button
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full"
           onClick={() => setPage((p) => p + 1)}
           disabled={isLoading}
-          className="w-full py-3 rounded-xl border border-gray-200 text-wibe-secondary hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
         >
-          {isLoading ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
-        </button>
+          {isLoading ? 'در حال بارگذاری…' : 'بارگذاری بیشتر'}
+        </Button>
       )}
 
     </div>

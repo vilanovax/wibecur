@@ -15,7 +15,7 @@ export default function SearchShortcutHint({ className = '' }: { className?: str
 
   return (
     <kbd
-      className={`hidden xl:inline-flex rounded-md border border-wibe bg-wibe-card px-1.5 py-0.5 wibe-caption text-wibe-secondary tabular-nums ${className}`}
+      className={`hidden xl:inline-flex rounded-control border border-border bg-popover px-2 py-0.5 text-xs text-muted-foreground tabular-nums ${className}`}
     >
       {label}
     </kbd>

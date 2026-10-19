@@ -98,9 +98,9 @@ export const LIST_TOPIC_COVER_IMAGES: Record<string, string> = {
   '90s-action-movies': B.movies5,
   'top-scifi-series': B.movies4,
   'family-comedy-movies': B.movies6,
-  // کافه و رستوران
+  // کافه و رستوران — هر slug کاور یکتا (بدون تکرار cafe-2 روی دو لیست)
   'great-breakfast-cafes': B.cafe2,
-  'cozy-cafes-for-studying': B.cafe3,
+  'cozy-cafes-for-studying': B.cozy,
   'instagrammable-cafes': B.cafe,
   'traditional-iranian-restaurants': B.restaurant2,
   'seafood-restaurants': B.restaurant3,
@@ -145,6 +145,81 @@ export function pickCategoryCoverVariant(
   const pool = CATEGORY_COVER_VARIANTS[key] ?? CATEGORY_COVER_VARIANTS.default;
   const s = (seed ?? key).trim() || key;
   return pool[hashCoverSeed(s) % pool.length];
+}
+
+/** basename بنر محلی → دسته‌هایی که آن تصویر برایشان قابل‌اعتماد است */
+const BANNER_BASENAME_CATEGORIES: Record<string, readonly string[]> = {
+  'car.webp': ['car', 'tech'],
+  // نام‌های اشتباه تاریخی (خودرو به‌جای کافه) — فقط car/tech
+  'wey_coffee_02': ['car', 'tech'],
+  'cafe.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
+  'cafe-2.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
+  'cafe-3.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
+  'restaurant.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
+  'restaurant-2.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
+  'restaurant-3.webp': ['cafe', 'cafes', 'restaurant', 'restaurants', 'lifestyle', 'default'],
+  'movies.webp': ['movies', 'movie', 'film', 'lifestyle', 'default'],
+  'movies-2.webp': ['movies', 'movie', 'film', 'lifestyle', 'default'],
+  'movies-3.webp': ['movies', 'movie', 'film', 'lifestyle', 'default'],
+  'movies-4.webp': ['movies', 'movie', 'film', 'lifestyle', 'default'],
+  'movies-5.webp': ['movies', 'movie', 'film', 'lifestyle', 'default'],
+  'movies-6.webp': ['movies', 'movie', 'film', 'lifestyle', 'default'],
+  'books.webp': ['books', 'book', 'lifestyle', 'default'],
+  'books-2.webp': ['books', 'book', 'lifestyle', 'default'],
+  'books-3.webp': ['books', 'book', 'lifestyle', 'default'],
+  'history.webp': ['books', 'book', 'lifestyle', 'default'],
+  'personal-development.webp': ['books', 'book', 'lifestyle', 'default'],
+  'philosophy.webp': ['books', 'book', 'lifestyle', 'default'],
+  'mystery.webp': ['books', 'book', 'lifestyle', 'default'],
+  'fantasy.webp': ['books', 'book', 'lifestyle', 'default'],
+  'podcast.webp': ['podcast', 'podcasts', 'lifestyle', 'default'],
+  'travel.webp': ['travel', 'lifestyle', 'cafe', 'cafes', 'default'],
+  'lifestyle.webp': ['lifestyle', 'travel', 'cafe', 'cafes', 'restaurant', 'restaurants', 'default'],
+  'cozy.webp': [
+    'lifestyle',
+    'books',
+    'book',
+    'movies',
+    'movie',
+    'film',
+    'cafe',
+    'cafes',
+    'default',
+  ],
+  'default.webp': ['default'],
+};
+
+function bannerBasename(url: string): string | null {
+  try {
+    const path = url.startsWith('http') ? new URL(url).pathname : url.split('?')[0] ?? url;
+    return path.split('/').pop()?.toLowerCase() ?? null;
+  } catch {
+    return url.split('/').pop()?.toLowerCase() ?? null;
+  }
+}
+
+/**
+ * بنر محلیِ ناسازگار با دسته (مثلاً car.webp روی لیست کافه) را رد می‌کند.
+ * کاور آپلودشدهٔ کاربر بدون basename بنر را همیشه می‌پذیرد.
+ */
+export function isBannerCompatibleWithCategory(
+  coverUrl: string | null | undefined,
+  categorySlug?: string | null
+): boolean {
+  if (!coverUrl?.trim()) return true;
+  const t = coverUrl.trim().toLowerCase();
+  if (!t.includes('/images/banners/')) return true;
+
+  const file = bannerBasename(t);
+  if (!file) return true;
+
+  const allowed = BANNER_BASENAME_CATEGORIES[file];
+  if (!allowed) return true;
+
+  const cat = normalizeCategorySlug(categorySlug);
+  if (!cat) return true;
+
+  return allowed.includes(cat);
 }
 
 export function getCategoryCoverUrl(categorySlug?: string | null): string {
@@ -194,7 +269,7 @@ function getListTopicCoverFromTitle(
 
   // کافه و رستوران
   if (/صبحانه|breakfast/.test(t)) return B.cafe2;
-  if (/دنج|درس|studying|cozy/.test(t)) return B.cafe3;
+  if (/دنج|درس|studying|مطالعه|cozy/.test(t)) return B.cozy;
   if (/اینستاگرام|instagram/.test(t)) return B.cafe;
   if (/سنتی|traditional|ایرانی/.test(t)) return B.restaurant2;
   if (/دریایی|seafood|ماهی/.test(t)) return B.restaurant3;
@@ -214,13 +289,22 @@ function getListTopicCoverFromTitle(
   return null;
 }
 
+/** کاور پین‌شدهٔ seed — همیشه بر DB/آپلود اشتباه اولویت دارد */
+export function getPinnedListTopicCover(listSlug?: string | null): string | null {
+  const key = normalizeCategorySlug(listSlug);
+  if (!key) return null;
+  return LIST_TOPIC_COVER_IMAGES[key] ?? null;
+}
+
 export function getListTopicCoverUrl(
   listSlug?: string | null,
   categorySlug?: string | null,
   listTitle?: string | null
 ): string | null {
+  const pinned = getPinnedListTopicCover(listSlug);
+  if (pinned) return pinned;
+
   const key = normalizeCategorySlug(listSlug);
-  if (key && LIST_TOPIC_COVER_IMAGES[key]) return LIST_TOPIC_COVER_IMAGES[key];
 
   const seed = key ?? listTitle?.trim() ?? '';
 
@@ -300,22 +384,22 @@ export function getCuratedCategoryCoverUrl(categoryId: string): string {
 
 /** گرادیان fallback وقتی تصویر لود نشود — متنوع بر اساس seed */
 const CATEGORY_COVER_GRADIENTS: Record<string, readonly string[]> = {
-  movies: ['from-violet-500 to-purple-800', 'from-indigo-500 to-violet-900', 'from-fuchsia-500 to-purple-800'],
-  movie: ['from-violet-500 to-purple-800', 'from-indigo-500 to-violet-900', 'from-fuchsia-500 to-purple-800'],
-  film: ['from-violet-500 to-purple-800', 'from-indigo-500 to-violet-900', 'from-fuchsia-500 to-purple-800'],
+  movies: ['from-amber-500 to-red-800', 'from-rose-500 to-orange-800', 'from-red-500 to-stone-800'],
+  movie: ['from-amber-500 to-red-800', 'from-rose-500 to-orange-800', 'from-red-500 to-stone-800'],
+  film: ['from-amber-500 to-red-800', 'from-rose-500 to-orange-800', 'from-red-500 to-stone-800'],
   books: ['from-orange-400 to-amber-700', 'from-rose-400 to-orange-600', 'from-amber-500 to-red-700'],
   book: ['from-orange-400 to-amber-700', 'from-rose-400 to-orange-600', 'from-amber-500 to-red-700'],
   cafe: ['from-amber-400 to-orange-600', 'from-yellow-500 to-amber-700', 'from-orange-400 to-red-600'],
   cafes: ['from-amber-400 to-orange-600', 'from-yellow-500 to-amber-700', 'from-orange-400 to-red-600'],
   restaurant: ['from-red-400 to-orange-700', 'from-rose-500 to-red-700', 'from-amber-500 to-orange-700'],
   restaurants: ['from-red-400 to-orange-700', 'from-rose-500 to-red-700', 'from-amber-500 to-orange-700'],
-  podcast: ['from-pink-400 to-rose-700', 'from-fuchsia-500 to-pink-800', 'from-purple-400 to-pink-700'],
-  podcasts: ['from-pink-400 to-rose-700', 'from-fuchsia-500 to-pink-800', 'from-purple-400 to-pink-700'],
-  travel: ['from-sky-400 to-blue-700', 'from-cyan-400 to-teal-700', 'from-blue-400 to-indigo-700'],
-  lifestyle: ['from-emerald-400 to-teal-700', 'from-green-400 to-cyan-700', 'from-lime-500 to-emerald-700'],
-  car: ['from-slate-500 to-zinc-800', 'from-gray-500 to-slate-800', 'from-blue-500 to-slate-800'],
-  tech: ['from-slate-500 to-zinc-800', 'from-gray-500 to-slate-800', 'from-blue-500 to-slate-800'],
-  default: ['from-slate-400 to-slate-700', 'from-gray-400 to-gray-700', 'from-zinc-400 to-zinc-700'],
+  podcast: ['from-pink-400 to-rose-700', 'from-rose-500 to-red-800', 'from-orange-400 to-rose-700'],
+  podcasts: ['from-pink-400 to-rose-700', 'from-rose-500 to-red-800', 'from-orange-400 to-rose-700'],
+  travel: ['from-sky-400 to-blue-700', 'from-teal-400 to-sky-700', 'from-blue-400 to-slate-700'],
+  lifestyle: ['from-emerald-400 to-teal-700', 'from-green-400 to-teal-700', 'from-lime-500 to-emerald-700'],
+  car: ['from-slate-500 to-zinc-800', 'from-stone-500 to-slate-800', 'from-blue-500 to-slate-800'],
+  tech: ['from-slate-500 to-zinc-800', 'from-stone-500 to-slate-800', 'from-blue-500 to-slate-800'],
+  default: ['from-slate-400 to-slate-700', 'from-stone-400 to-stone-700', 'from-zinc-400 to-zinc-700'],
 };
 
 export function pickCategoryCoverGradient(

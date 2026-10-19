@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import { ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react';
+import type { ListsViewMode } from '@/lib/lists-page-layout';
+import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
 export type SortOption = 'newest' | 'popular' | 'most_saved' | 'rising';
+/** Browse-mode vibes stay in FilterState for URL/mode sync; mood vibes are Explore-only */
 export type VibeFilter = 'trending' | 'saved' | 'sleep' | 'calm_movie' | 'cafe' | 'family' | 'comedy' | 'drama';
 export type CreatorType = 'all' | 'top' | 'new' | 'viral';
 
@@ -19,49 +22,50 @@ export type FilterCategoryOption = {
 
 export interface FilterState {
   categories: Set<string>;
+  /** Owned by browse modes on Lists — sheet must not offer a second sort control */
   sortBy: SortOption;
   vibes: Set<VibeFilter>;
   creatorType: CreatorType;
   minItemCount: number;
+  /**
+   * Index into save-count thresholds [0,5,10,20,50] (1–5), not star ratings.
+   * Kept as `minRating` for persisted filterState compatibility.
+   */
   minRating: number;
 }
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'newest', label: 'جدیدترین' },
-  { value: 'popular', label: 'محبوب‌ترین' },
-  { value: 'most_saved', label: 'بیشترین ذخیره' },
-  { value: 'rising', label: 'در حال رشد' },
-];
-
-/** حال‌وهوا — ترند/ذخیره در نوار browse mode هستند، اینجا تکرار نشوند */
-const VIBE_CHIPS: { value: VibeFilter; label: string }[] = [
-  { value: 'sleep', label: '🌙 قبل خواب' },
-  { value: 'comedy', label: '😂 کمدی' },
-  { value: 'family', label: '👨‍👩‍👧 خانوادگی' },
-  { value: 'drama', label: '🎭 درام' },
-  { value: 'calm_movie', label: '🎬 آرامش‌بخش' },
-  { value: 'cafe', label: '☕ کافه دنج' },
-];
+/** saveCount floors for minRating levels 1–5 — UI must say ذخیره, never امتیاز */
+export const MIN_SAVE_THRESHOLDS = [0, 5, 10, 20, 50] as const;
 
 const CREATOR_OPTIONS: { value: CreatorType; label: string }[] = [
   { value: 'all', label: 'همه' },
-  { value: 'top', label: '⭐ کیوریتورهای برتر' },
-  { value: 'new', label: '🆕 تازه‌وارد' },
-  { value: 'viral', label: '🔥 وایرال شده' },
+  { value: 'top', label: 'کیوریتورهای برتر' },
+  { value: 'new', label: 'تازه‌وارد' },
+  { value: 'viral', label: 'وایرال شده' },
 ];
 
+/** Catalog presets only — mood/vibe presets belong on Explore */
 const PRESETS: { id: string; label: string; apply: (state: FilterState) => FilterState }[] = [
   {
-    id: 'sleep',
-    label: '🌙 قبل خواب',
-    apply: (s) => ({ ...s, vibes: new Set(['sleep' as VibeFilter]) }),
-  },
-  {
     id: 'top',
-    label: '⭐ فقط برترین‌ها',
+    label: 'فقط پرذخیره (≥۲۰)',
     apply: (s) => ({ ...s, minRating: 4, creatorType: 'top' as CreatorType }),
   },
 ];
+
+/** Browse-mode vibes (ترند/ذخیره) are not “active filters” — modes own them */
+const BROWSE_MODE_VIBES = new Set<VibeFilter>(['trending', 'saved']);
+
+function countAdvancedFilters(state: FilterState): number {
+  const advancedVibes = [...state.vibes].filter((v) => !BROWSE_MODE_VIBES.has(v)).length;
+  return (
+    state.categories.size +
+    advancedVibes +
+    (state.creatorType !== 'all' ? 1 : 0) +
+    (state.minItemCount > 0 ? 1 : 0) +
+    (state.minRating > 0 ? 1 : 0)
+  );
+}
 
 function AccordionSection({
   title,
@@ -75,14 +79,14 @@ function AccordionSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-gray-100">
+    <div className="border-b border-border">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between py-4 text-right"
+        className="flex min-h-12 w-full items-center justify-between text-start"
       >
         <span className="wibe-body font-semibold text-foreground">{title}</span>
-        {open ? <ChevronUp className="w-5 h-5 text-wibe-secondary" /> : <ChevronDown className="w-5 h-5 text-wibe-secondary" />}
+        {open ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
       </button>
       {open && <div className="pb-4 space-y-3">{children}</div>}
     </div>
@@ -96,6 +100,8 @@ interface FilterBottomSheetProProps {
   filterState: FilterState;
   getResultCount: (state: FilterState) => number;
   onApply: (state: FilterState) => void;
+  viewMode?: ListsViewMode;
+  onViewModeChange?: (mode: ListsViewMode) => void;
 }
 
 export default function FilterBottomSheetPro({
@@ -105,15 +111,15 @@ export default function FilterBottomSheetPro({
   filterState,
   getResultCount,
   onApply,
+  viewMode = 'grid',
+  onViewModeChange,
 }: FilterBottomSheetProProps) {
   const [localState, setLocalState] = useState<FilterState>(filterState);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     categories: true,
-    sort: false,
-    vibe: false,
     creator: false,
     itemCount: false,
-    rating: false,
+    saves: false,
   });
 
   useEffect(() => {
@@ -122,15 +128,7 @@ export default function FilterBottomSheetPro({
 
   const resultCount = getResultCount(localState);
 
-  const activeCount =
-    localState.categories.size +
-    (localState.sortBy !== 'newest' ? 1 : 0) +
-    localState.vibes.size +
-    (localState.creatorType !== 'all' ? 1 : 0) +
-    (localState.minItemCount > 0 ? 1 : 0) +
-    (localState.minRating > 0 ? 1 : 0);
-
-  const hasChanges = JSON.stringify(localState) !== JSON.stringify(filterState);
+  const activeCount = countAdvancedFilters(localState);
   const canReset = activeCount > 0;
 
   const toggleSection = (key: string) => {
@@ -146,24 +144,16 @@ export default function FilterBottomSheetPro({
     });
   };
 
-  const toggleVibe = (v: VibeFilter) => {
-    setLocalState((s) => {
-      const next = new Set(s.vibes);
-      if (next.has(v)) next.delete(v);
-      else next.add(v);
-      return { ...s, vibes: next };
-    });
-  };
-
   const handleReset = () => {
-    setLocalState({
+    // Keep browse-mode vibes/sort; clear only advanced filters + categories
+    setLocalState((s) => ({
+      ...s,
       categories: new Set(),
-      sortBy: 'newest',
-      vibes: new Set(),
+      vibes: new Set([...s.vibes].filter((v) => BROWSE_MODE_VIBES.has(v))),
       creatorType: 'all',
       minItemCount: 0,
       minRating: 0,
-    });
+    }));
   };
 
   const handleApply = () => {
@@ -175,57 +165,33 @@ export default function FilterBottomSheetPro({
     setLocalState(preset.apply(structuredClone(localState)));
   };
 
-  if (!isOpen) return null;
-
   const activeCategories = cats.filter((c) => c.isActive).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  const sheet = (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center">
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        className="relative bg-white rounded-t-[28px] shadow-2xl w-full max-w-2xl flex flex-col animate-in slide-in-from-bottom duration-300"
-        style={{ height: '85vh' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Drag Handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-gray-200 rounded-full" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 border-b border-gray-100">
-          <button
-            onClick={onClose}
-            className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
-            aria-label="بستن"
-          >
-            <X className="w-5 h-5 text-wibe-secondary" />
-          </button>
-          <div className="flex-1 text-center">
-            <h2 className="wibe-h3 font-bold text-foreground">فیلتر لیست‌ها</h2>
-            <p className="wibe-caption text-wibe-secondary mt-0.5">
-              {activeCount > 0 ? `${activeCount} فیلتر فعال` : 'بدون فیلتر'}
-            </p>
-          </div>
-          {canReset && (
-            <button
-              onClick={handleReset}
-              className="wibe-caption font-medium text-primary"
-            >
+  return (
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      side="bottom"
+      title="فیلتر لیست‌ها"
+      className="mx-auto max-w-2xl"
+    >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="wibe-caption text-muted-foreground">
+            {activeCount > 0 ? `${activeCount.toLocaleString('fa-IR')} فیلتر فعال` : 'بدون فیلتر'}
+          </p>
+          {canReset ? (
+            <Button type="button" variant="ghost" className="h-11" onClick={handleReset}>
               پاک کردن
-            </button>
-          )}
-          {!canReset && <div className="w-10" />}
+            </Button>
+          ) : null}
         </div>
 
         {/* Live Result */}
-        <div className="px-6 py-3 bg-primary/5 flex-shrink-0">
+        <div className="shrink-0 bg-brand/5 px-6 py-3">
           <p className="wibe-small font-medium text-foreground">
-            {resultCount} لیست مطابق انتخاب شما
+            {resultCount.toLocaleString('fa-IR')} لیست مطابق انتخاب شما
           </p>
         </div>
 
@@ -238,12 +204,46 @@ export default function FilterBottomSheetPro({
                 key={p.id}
                 type="button"
                 onClick={() => applyPreset(p)}
-                className="flex-shrink-0 h-9 px-4 rounded-[20px] bg-gray-100 text-foreground wibe-caption font-medium hover:bg-gray-200 transition-colors"
+                className="h-11 shrink-0 rounded-full bg-muted px-4 text-sm font-medium text-foreground"
               >
                 {p.label}
               </button>
             ))}
           </div>
+
+          {onViewModeChange ? (
+            <div className="mb-5 border-b border-border pb-5">
+              <p className="mb-3 wibe-body font-semibold text-foreground">نمایش</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => onViewModeChange('grid')}
+                  aria-pressed={viewMode === 'grid'}
+                  className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors ${
+                    viewMode === 'grid'
+                      ? 'border-brand bg-brand/10 font-semibold text-brand'
+                      : 'border-border bg-muted text-muted-foreground'
+                  }`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  گرید
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onViewModeChange('compact')}
+                  aria-pressed={viewMode === 'compact'}
+                  className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors ${
+                    viewMode === 'compact'
+                      ? 'border-brand bg-brand/10 font-semibold text-brand'
+                      : 'border-border bg-muted text-muted-foreground'
+                  }`}
+                >
+                  <List className="h-4 w-4" />
+                  لیستی
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {/* Categories */}
           <AccordionSection
@@ -256,7 +256,7 @@ export default function FilterBottomSheetPro({
                 type="checkbox"
                 checked={localState.categories.size === 0}
                 onChange={() => setLocalState((s) => ({ ...s, categories: new Set() }))}
-                className="w-5 h-5 rounded border-gray-300 text-primary"
+                className="size-5 rounded border-border text-brand"
               />
               <span className="wibe-small text-foreground">همه دسته‌ها</span>
             </label>
@@ -269,59 +269,14 @@ export default function FilterBottomSheetPro({
                   type="checkbox"
                   checked={localState.categories.has(cat.id)}
                   onChange={() => toggleCategory(cat.id)}
-                  className="w-5 h-5 rounded border-gray-300 text-primary"
+                  className="size-5 rounded border-border text-brand"
                 />
                 <span className="wibe-small text-foreground">{cat.icon} {cat.name}</span>
               </label>
             ))}
           </AccordionSection>
 
-          {/* Sort */}
-          <AccordionSection
-            title="مرتب‌سازی"
-            open={openSections.sort}
-            onToggle={() => toggleSection('sort')}
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex items-center gap-3 py-2 cursor-pointer"
-              >
-                <input
-                  type="radio"
-                  name="sort"
-                  checked={localState.sortBy === opt.value}
-                  onChange={() => setLocalState((s) => ({ ...s, sortBy: opt.value }))}
-                  className="w-4 h-4 border-gray-300 text-primary"
-                />
-                <span className="wibe-small text-foreground">{opt.label}</span>
-              </label>
-            ))}
-          </AccordionSection>
-
-          {/* Vibe */}
-          <AccordionSection
-            title="وایب / حال‌وهوا"
-            open={openSections.vibe}
-            onToggle={() => toggleSection('vibe')}
-          >
-            <div className="flex flex-wrap gap-2">
-              {VIBE_CHIPS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => toggleVibe(value)}
-                  className={`h-8 px-4 rounded-[20px] wibe-caption font-medium transition-colors ${
-                    localState.vibes.has(value)
-                      ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
-                      : 'bg-gray-50 border border-gray-200 text-wibe-secondary'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </AccordionSection>
+          {/* Sort lives on browse modes (ترند/جدید/محبوب) — no second control here */}
 
           {/* Creator Type */}
           <AccordionSection
@@ -335,10 +290,10 @@ export default function FilterBottomSheetPro({
                   key={opt.value}
                   type="button"
                   onClick={() => setLocalState((s) => ({ ...s, creatorType: opt.value }))}
-                  className={`h-8 px-4 rounded-[20px] wibe-caption font-medium transition-colors ${
+                  className={`h-11 rounded-full px-4 text-sm font-medium ${
                     localState.creatorType === opt.value
-                      ? 'bg-primary/10 border-2 border-primary text-primary font-semibold'
-                      : 'bg-gray-50 border border-gray-200 text-wibe-secondary'
+                      ? 'border-2 border-brand bg-brand/10 font-semibold text-brand'
+                      : 'border border-border bg-muted text-muted-foreground'
                   }`}
                 >
                   {opt.label}
@@ -354,8 +309,8 @@ export default function FilterBottomSheetPro({
             onToggle={() => toggleSection('itemCount')}
           >
             <div className="space-y-3">
-              <div className="flex justify-between wibe-small text-wibe-secondary">
-                <span>حداقل {localState.minItemCount} آیتم</span>
+              <div className="flex justify-between wibe-small text-muted-foreground">
+                <span>حداقل {localState.minItemCount.toLocaleString('fa-IR')} آیتم</span>
               </div>
               <input
                 type="range"
@@ -365,65 +320,75 @@ export default function FilterBottomSheetPro({
                 onChange={(e) =>
                   setLocalState((s) => ({ ...s, minItemCount: parseInt(e.target.value, 10) }))
                 }
-                className="w-full h-2 bg-gray-200 rounded-full accent-primary"
+                className="h-2 w-full rounded-full bg-muted accent-brand"
               />
-              <div className="flex justify-between text-xs text-wibe-secondary">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>۰</span>
                 <span>۱۰۰</span>
               </div>
             </div>
           </AccordionSection>
 
-          {/* Min Rating */}
+          {/* Min saves (not ratings) — thresholds match ListsPageClient.matchMinRating */}
           <AccordionSection
-            title="حداقل امتیاز"
-            open={openSections.rating}
-            onToggle={() => toggleSection('rating')}
+            title="حداقل ذخیره"
+            open={openSections.saves}
+            onToggle={() => toggleSection('saves')}
           >
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() =>
-                    setLocalState((s) => ({
-                      ...s,
-                      minRating: s.minRating === n ? 0 : n,
-                    }))
-                  }
-                  className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                  aria-label={`${n} ستاره`}
-                >
-                  <Star
-                    className={`w-8 h-8 ${
-                      n <= localState.minRating ? 'fill-amber-400 text-amber-400' : 'text-wibe-secondary/40'
+            <p className="wibe-caption text-muted-foreground mb-3">
+              بر اساس تعداد ذخیره‌ها — امتیاز ستاره‌ای نیست
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setLocalState((s) => ({ ...s, minRating: 0 }))}
+                className={`h-11 rounded-full border px-3 text-sm font-medium transition-colors ${
+                  localState.minRating === 0
+                    ? 'border-brand bg-brand/10 font-semibold text-brand'
+                    : 'border-border bg-muted text-muted-foreground'
+                }`}
+              >
+                همه
+              </button>
+              {MIN_SAVE_THRESHOLDS.map((threshold, idx) => {
+                const level = idx + 1;
+                if (threshold === 0) return null;
+                return (
+                  <button
+                    key={threshold}
+                    type="button"
+                    onClick={() =>
+                      setLocalState((s) => ({
+                        ...s,
+                        minRating: s.minRating === level ? 0 : level,
+                      }))
+                    }
+                    aria-pressed={localState.minRating === level}
+                    className={`h-11 rounded-full border px-3 text-sm font-medium tabular-nums transition-colors ${
+                      localState.minRating === level
+                        ? 'border-brand bg-brand/10 font-semibold text-brand'
+                        : 'border-border bg-muted text-muted-foreground'
                     }`}
-                  />
-                </button>
-              ))}
+                  >
+                    ≥{threshold.toLocaleString('fa-IR')}
+                  </button>
+                );
+              })}
             </div>
-            <p className="wibe-caption text-wibe-secondary mt-2">
-              {localState.minRating > 0 ? `${localState.minRating}+ ستاره` : 'بدون حد'}
+            <p className="wibe-caption text-muted-foreground mt-2">
+              {localState.minRating > 0
+                ? `حداقل ${(MIN_SAVE_THRESHOLDS[localState.minRating - 1] ?? 0).toLocaleString('fa-IR')} ذخیره`
+                : 'بدون حد ذخیره'}
             </p>
           </AccordionSection>
         </div>
 
         {/* Sticky Bottom CTA */}
-        <div className="p-6 pt-4 flex-shrink-0 border-t border-gray-100">
-          <button
-            type="button"
-            onClick={handleApply}
-            className="w-full h-14 rounded-[20px] bg-gradient-to-r from-primary to-primary-dark text-white font-semibold wibe-body flex items-center justify-center shadow-lg hover:opacity-95 transition-opacity"
-          >
-            اعمال فیلتر ({resultCount} نتیجه)
-          </button>
+        <div className="mt-4 border-t border-border pt-4">
+          <Button type="button" variant="brand" size="lg" className="w-full" onClick={handleApply}>
+            اعمال فیلتر ({resultCount.toLocaleString('fa-IR')} نتیجه)
+          </Button>
         </div>
-      </div>
-    </div>
+    </Sheet>
   );
-
-  if (typeof document !== 'undefined') {
-    return createPortal(sheet, document.body);
-  }
-  return sheet;
 }

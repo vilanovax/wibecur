@@ -12,6 +12,18 @@ describe('resolve-admin-display-image', () => {
     expect(classifyAdminImageSource(tmdb)).toBe('external');
   });
 
+  it('returns the public ParsPack URL for item images', () => {
+    const poster = 'https://c466145.parspack.net/c466145/wibe/items/poster.webp';
+    expect(resolveAdminDisplayImageSrc(poster)).toBe(poster);
+    expect(classifyAdminImageSource(poster)).toBe('storage');
+  });
+
+  it('unwraps a stored list-cover proxy to the public ParsPack URL', () => {
+    const cover = 'https://c466145.parspack.net/c466145/wibe/lists/cover.webp';
+    const wrapped = `/api/liara-image?url=${encodeURIComponent(cover)}`;
+    expect(resolveAdminDisplayImageSrc(wrapped)).toBe(cover);
+  });
+
   it('returns castando proxy URL as stored in DB', () => {
     const proxied = `${CASTANDO_IMAGE_PROXY_PREFIX}https://image.tmdb.org/x.jpg`;
     expect(classifyAdminImageSource(proxied)).toBe('proxy');

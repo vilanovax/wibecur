@@ -1,18 +1,47 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import SettingsPageHeader from '@/components/admin/settings/SettingsPageHeader';
 import SettingsTabs from '@/components/admin/settings/SettingsTabs';
 import SettingsStatusStrip from '@/components/admin/settings/SettingsStatusStrip';
-import IntegrationsSettingsPanel from '@/components/admin/settings/IntegrationsSettingsPanel';
-import CommentSettingsPanel from '@/components/admin/settings/CommentSettingsPanel';
-import ListSettingsPanel from '@/components/admin/settings/ListSettingsPanel';
-import BrandingSettingsPanel from '@/components/admin/settings/BrandingSettingsPanel';
-import MaintenanceModePanel from '@/components/admin/settings/MaintenanceModePanel';
-import AccountSettingsPanel from '@/components/admin/settings/AccountSettingsPanel';
+
+function PanelFallback() {
+  return (
+    <div
+      className="mt-4 h-48 animate-pulse rounded-2xl bg-[var(--color-border-muted)]"
+      aria-hidden
+    />
+  );
+}
+
+const IntegrationsSettingsPanel = dynamic(
+  () => import('@/components/admin/settings/IntegrationsSettingsPanel'),
+  { loading: () => <PanelFallback /> }
+);
+const CommentSettingsPanel = dynamic(
+  () => import('@/components/admin/settings/CommentSettingsPanel'),
+  { loading: () => <PanelFallback /> }
+);
+const ListSettingsPanel = dynamic(
+  () => import('@/components/admin/settings/ListSettingsPanel'),
+  { loading: () => <PanelFallback /> }
+);
+const BrandingSettingsPanel = dynamic(
+  () => import('@/components/admin/settings/BrandingSettingsPanel'),
+  { loading: () => <PanelFallback /> }
+);
+const MaintenanceModePanel = dynamic(
+  () => import('@/components/admin/settings/MaintenanceModePanel'),
+  { loading: () => <PanelFallback /> }
+);
+const AccountSettingsPanel = dynamic(
+  () => import('@/components/admin/settings/AccountSettingsPanel'),
+  { loading: () => <PanelFallback /> }
+);
 import {
   parseSettingsTab,
   type SettingsData,

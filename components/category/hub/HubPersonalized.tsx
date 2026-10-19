@@ -85,7 +85,7 @@ export default function HubPersonalized({
       <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         🎯 پیشنهاد برای تو
       </h2>
-      <p className="text-[11px] text-wibe-secondary mb-2">
+      <p className="wibe-caption text-wibe-secondary mb-2">
         بر اساس ذخیره‌هایت
       </p>
 
@@ -94,17 +94,16 @@ export default function HubPersonalized({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-28 rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm active:scale-[0.97] transition-transform"
+            className="flex-shrink-0 w-28 rounded-2xl overflow-hidden bg-white border border-wibe shadow-sm active:scale-[0.97] transition-transform"
           >
-            <div className="relative aspect-[3/4] bg-gray-100">
+            <div className="relative aspect-[3/4] bg-wibe-surface">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
                   alt={list.title}
                   className="w-full h-full object-cover"
                   placeholderSize="square"
-              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
-            />
+                />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-2xl opacity-40"

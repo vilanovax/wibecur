@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ThumbsUp, ThumbsDown, Flag, Trash2, MoreVertical } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentAvatar from '@/components/shared/CommentAvatar';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { COMMENT_CLAMP_CHAR_THRESHOLD } from '@/lib/comment-limits';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface CommentItemProps {
   comment: {
@@ -42,39 +43,45 @@ function CommentMoreMenu({ onReport, onDelete }: { onReport: () => void; onDelet
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-gray-100 transition-colors"
+        className="size-11 rounded-full text-muted-foreground"
         aria-label="گزینه‌های بیشتر"
       >
-        <MoreVertical className="w-4 h-4" />
-      </button>
+        <MoreVertical />
+      </Button>
       <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="گزینه‌های نظر">
         <div className="space-y-1">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="lg"
+            className="w-full justify-start text-destructive"
             onClick={() => {
               setOpen(false);
               onReport();
             }}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-right"
           >
-            <Flag className="w-4 h-4 flex-shrink-0" />
+            <Flag />
             گزارش نظر
-          </button>
+          </Button>
           {onDelete && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="lg"
+              className="w-full justify-start text-destructive"
               onClick={() => {
                 setOpen(false);
                 onDelete();
               }}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-right"
             >
-              <Trash2 className="w-4 h-4 flex-shrink-0" />
+              <Trash2 />
               حذف نظر
-            </button>
+            </Button>
           )}
         </div>
       </BottomSheet>
@@ -115,7 +122,7 @@ export default function CommentItem({
   };
 
   return (
-    <div className="flex gap-3 rounded-xl border border-wibe bg-wibe-card px-3 py-3.5 shadow-sm">
+    <Card className="flex gap-3 bg-popover px-3 py-3.5">
       <div className="flex-shrink-0">
         {profileUrl ? (
           <Link href={profileUrl} className="block">
@@ -152,8 +159,8 @@ export default function CommentItem({
             ) : (
               <span className="font-medium text-foreground text-sm">{comment.user.name}</span>
             )}
-            <span className="text-xs text-wibe-secondary">
-              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
+            <span className="text-xs text-muted-foreground">
+              {formatRelativeTime(comment.createdAt)}
             </span>
           </div>
           <CommentMoreMenu
@@ -165,14 +172,14 @@ export default function CommentItem({
         <div className="relative">
           <p
             className={`text-foreground text-sm leading-relaxed break-words whitespace-pre-wrap ${
-              comment.isFiltered ? 'text-wibe-secondary italic' : ''
+              comment.isFiltered ? 'italic text-muted-foreground' : ''
             } ${!expanded && showReadMore ? 'line-clamp-3' : ''}`}
           >
             {comment.content}
           </p>
           {!expanded && showReadMore && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-wibe-card to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-popover to-transparent"
               aria-hidden
             />
           )}
@@ -181,7 +188,7 @@ export default function CommentItem({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-1.5 wibe-caption font-semibold text-primary hover:underline"
+            className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-brand"
           >
             {expanded ? 'کمتر' : 'بیشتر بخوان'}
           </button>
@@ -193,8 +200,8 @@ export default function CommentItem({
             onClick={() => handleVote(1)}
             disabled={isLoading}
             aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
-            className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
-              localVote === 1 ? 'text-green-600 font-medium' : 'text-wibe-secondary hover:text-green-600'
+            className={`inline-flex min-h-11 items-center gap-1 px-1 text-sm transition-colors disabled:opacity-50 ${
+              localVote === 1 ? 'font-medium text-success' : 'text-muted-foreground hover:text-success'
             }`}
           >
             <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />
@@ -206,7 +213,7 @@ export default function CommentItem({
             disabled={isLoading}
             aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
             className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
-              localVote === -1 ? 'text-amber-600 font-medium' : 'text-wibe-secondary hover:text-amber-600'
+              localVote === -1 ? 'font-medium text-warning' : 'text-muted-foreground hover:text-warning'
             }`}
           >
             <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />
@@ -214,6 +221,6 @@ export default function CommentItem({
           </button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

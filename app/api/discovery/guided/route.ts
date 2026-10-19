@@ -8,7 +8,7 @@ import {
   parseGuidedScenario,
   resolveGuidedContext,
 } from '@/lib/discovery/guided-intent';
-import { getGuidedDiscoveryResults } from '@/lib/discovery/guided-recommendations';
+import { getCachedGuidedDiscoveryResults } from '@/lib/discovery/guided-recommendations';
 
 const EMPTY = { headline: '', scenario: 'bored' as const, rows: [] };
 
@@ -41,14 +41,14 @@ export async function GET(request: NextRequest) {
       /* مهمان */
     }
 
-    const data = await dbQuery(() => getGuidedDiscoveryResults(prisma, ctx, userId));
+    const data = await dbQuery(() => getCachedGuidedDiscoveryResults(prisma, ctx, userId));
 
     const response = NextResponse.json({ success: true, data });
     response.headers.set(
       'Cache-Control',
       userId
         ? 'private, max-age=60, stale-while-revalidate=120'
-        : 'public, max-age=120, stale-while-revalidate=300'
+        : 'public, max-age=180, s-maxage=180, stale-while-revalidate=600'
     );
     return response;
   } catch (error: unknown) {

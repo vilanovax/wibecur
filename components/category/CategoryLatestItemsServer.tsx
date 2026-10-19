@@ -15,7 +15,7 @@ type CategoryLatestItemsServerProps = {
 
 export default function CategoryLatestItemsServer({
   items,
-  accentColor = '#EA580C',
+  accentColor,
   inset = false,
   itemLayout = 'tile',
 }: CategoryLatestItemsServerProps) {

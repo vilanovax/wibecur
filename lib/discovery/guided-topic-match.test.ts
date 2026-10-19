@@ -55,4 +55,40 @@ describe('listMatchesGuidedTopic', () => {
       )
     ).toBe(false);
   });
+
+  it('matches travel lists for سفر rows (with_friend / going_out)', () => {
+    expect(
+      listMatchesGuidedTopic(
+        {
+          id: '4',
+          slug: 'iran-travel',
+          title: 'مقاصد سفر ایران',
+          description: '',
+          coverImage: '',
+          saveCount: 0,
+          itemCount: 1,
+          category: { name: 'سفر', slug: 'travel', icon: '✈️' },
+        },
+        'سفر'
+      )
+    ).toBe(true);
+  });
+
+  it('keeps cafe lists in کافه rows for going_out', () => {
+    expect(
+      listMatchesGuidedTopic(
+        {
+          id: '5',
+          slug: 'breakfast-cafes',
+          title: 'کافه‌های صبحانه عالی',
+          description: '',
+          coverImage: '',
+          saveCount: 105,
+          itemCount: 24,
+          category: { name: 'کافه', slug: 'cafe', icon: '☕' },
+        },
+        'کافه'
+      )
+    ).toBe(true);
+  });
 });

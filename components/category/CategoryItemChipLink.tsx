@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import { Card } from '@/components/ui/card';
 import type { CategoryItemCard } from '@/types/category-page';
 
 interface CategoryItemChipLinkProps {
@@ -11,7 +12,6 @@ interface CategoryItemChipLinkProps {
 
 export default function CategoryItemChipLink({
   item,
-  accentColor = '#EA580C',
 }: CategoryItemChipLinkProps) {
   const imageSrc = item.displayImageUrl ?? item.imageUrl;
 
@@ -20,24 +20,20 @@ export default function CategoryItemChipLink({
       href={`/items/${item.id}`}
       className="w-24 shrink-0 transition-transform active:scale-[0.97]"
     >
-      <div className="relative aspect-square overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm">
+      <Card className="aspect-square overflow-hidden bg-popover p-0">
         {imageSrc ? (
           <ImageWithFallback
             src={imageSrc}
             alt={item.title}
             className="h-full w-full object-cover"
             placeholderSize="square"
-            sizes="96px"
           />
         ) : (
-          <div
-            className="flex h-full w-full items-center justify-center text-2xl opacity-40"
-            style={{ backgroundColor: `${accentColor}20` }}
-          >
+          <div className="flex h-full w-full items-center justify-center bg-muted text-2xl opacity-40">
             📋
           </div>
         )}
-      </div>
+      </Card>
       <p className="mt-1.5 line-clamp-2 wibe-caption font-medium leading-tight text-foreground">
         {item.title}
       </p>

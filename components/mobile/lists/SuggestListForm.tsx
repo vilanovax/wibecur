@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, Loader2, Image as ImageIcon, X } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import Toast from '@/components/shared/Toast';
 
 interface SuggestListFormProps {
@@ -194,38 +197,29 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
               <label className="block text-sm font-medium text-foreground mb-2">
                 عنوان <span className="text-red-500">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none"
+                className="h-12"
                 placeholder="عنوان لیست را وارد کنید"
               />
             </div>
 
             {/* Description */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-foreground">
-                  توضیحات
-                </label>
-                <span className={`text-xs ${
-                  formData.description.length > MAX_DESCRIPTION_LENGTH
-                    ? 'text-red-500'
-                    : 'text-wibe-secondary'
-                }`}>
-                  {formData.description.length} / {MAX_DESCRIPTION_LENGTH}
-                </span>
-              </div>
-              <textarea
+              <label className="mb-2 block text-sm font-medium text-foreground">
+                توضیحات
+              </label>
+              <Textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
                 maxLength={MAX_DESCRIPTION_LENGTH}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none resize-none"
+                showCount
                 placeholder="توضیحات لیست (حداکثر 300 کاراکتر)"
               />
             </div>
@@ -236,24 +230,22 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                 انتخاب دسته‌بندی <span className="text-red-500">*</span>
               </label>
               {isLoadingCategories ? (
-                <div className="px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-center text-wibe-secondary">
+                <div className="px-4 py-3 border border-wibe rounded-lg bg-wibe-surface text-center text-wibe-secondary">
                   در حال بارگذاری دسته‌بندی‌ها...
                 </div>
               ) : (
-                <select
+                <Select
                   name="categoryId"
                   value={formData.categoryId}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-primary outline-none bg-white"
-                >
-                  <option value="">یک دسته‌بندی انتخاب کنید</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                  className="h-12"
+                  placeholder="یک دسته‌بندی انتخاب کنید"
+                  options={categories.map((category) => ({
+                    value: category.id,
+                    label: category.name,
+                  }))}
+                />
               )}
             </div>
 
@@ -275,7 +267,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingImage}
-                  className="w-full px-4 py-12 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-12 border-2 border-dashed border-wibe rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUploadingImage ? (
                     <>
@@ -292,7 +284,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-wibe">
                     <img
                       src={formData.coverImage}
                       alt="Preview"
@@ -314,7 +306,7 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploadingImage}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 border border-wibe rounded-lg hover:bg-wibe-surface transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUploadingImage ? (
                       <>
@@ -334,20 +326,20 @@ export default function SuggestListForm({ isOpen, onClose }: SuggestListFormProp
           </div>
 
           {/* Footer with Submit Button */}
-          <div className="border-t border-gray-200 p-6">
+          <div className="border-t border-wibe p-6">
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-foreground hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex h-12 flex-1 items-center justify-center rounded-xl border border-border bg-secondary text-sm font-semibold text-secondary-foreground disabled:opacity-50"
               >
                 انصراف
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-brand-foreground disabled:opacity-50"
               >
                 {isLoading ? (
                   <>

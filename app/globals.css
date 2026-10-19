@@ -1,6 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@config "../tailwind.config.ts";
+@import "./tailwind-v3-compat.css";
+@source not "../wibe";
+
+@layer base {
+  /*
+   * v3 painted every border gray-200 unless a color utility said otherwise.
+   * v4 uses currentColor, which turns plain `border` into the text color.
+   * This project's gray-200 is the slate border token (#E2E8F0).
+   */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e2e8f0;
+  }
+
+  /* v3 placeholders were gray-400. The design token for that step is #94A3B8. */
+  ::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+  }
+}
 
 /* Consumer app — desktop shell */
 @media (min-width: 1024px) {
@@ -8,10 +31,16 @@
     scroll-behavior: smooth;
   }
 
-  /* وسط‌چین قطعی فریم ۱۲۰۰px در RTL (جلوگیری از چسبیدن به راست viewport) */
+  /*
+   * وسط‌چین قطعی فریم ۱۲۰۰px در RTL.
+   * از flex+justify-center روی والد استفاده نکن — در RTL شِل به راست می‌چسبد
+   * و پنل باریک فقط گوشهٔ چپ/بریده‌شده را نشان می‌دهد.
+   */
   .wibe-desktop-shell {
     width: min(100%, 1200px);
-    margin-inline: auto;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -20,10 +49,10 @@
   /* Consumer deliberately light-first; .dark tokens reserved */
   color-scheme: light;
 
-  /* Brand */
+  /* Brand — sync with lib/design-tokens.ts (AA contrast for white-on-primary) */
   /* --font-vazirmatn از next/font/local روی <html> ست می‌شود */
-  --primary: #6366F1;
-  --primary-dark: #4F46E5;
+  --primary: #4F46E5;
+  --primary-dark: #4338CA;
   --primary-light: #818CF8;
 
   /* Wibe consumer semantic */
@@ -67,14 +96,16 @@
   --shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.10);
   --shadow-focus: 0 0 0 2px rgba(99, 102, 241, 0.35);
 
-  /* Spacing: 4 / 8 / 12 / 16 / 24 / 32 / 48 */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 12px;
-  --spacing-lg: 16px;
-  --spacing-xl: 24px;
-  --spacing-2xl: 32px;
-  --spacing-3xl: 48px;
+  /* Spacing: 4 / 8 / 12 / 16 / 24 / 32 / 48
+     Named --spacing-* is Tailwind's max-width scale (max-w-sm and friends).
+     Keep these under --wibe-space-* so max-w-xl stays 36rem, not 24px. */
+  --wibe-space-xs: 4px;
+  --wibe-space-sm: 8px;
+  --wibe-space-md: 12px;
+  --wibe-space-lg: 16px;
+  --wibe-space-xl: 24px;
+  --wibe-space-2xl: 32px;
+  --wibe-space-3xl: 48px;
 
   /* Radius: sm 8 | md 14 | lg 20 | xl 28 */
   --radius-sm: 8px;
@@ -158,11 +189,8 @@
   .bg-wibe-surface { background-color: var(--wibe-surface); }
   .bg-wibe-card { background-color: var(--wibe-card); }
   .text-wibe-primary { color: var(--color-text); }
-  .text-wibe-secondary { color: var(--color-text-muted); }
-  .border-wibe { border-color: var(--color-border); }
   .bg-surface { background-color: var(--color-surface); }
   .bg-surface-raised { background-color: var(--color-surface-raised); }
-  .text-muted { color: var(--color-text-muted); }
   .text-subtle { color: var(--color-text-subtle); }
   .border-default { border-color: var(--color-border); }
   .border-muted { border-color: var(--color-border-muted); }
@@ -170,6 +198,17 @@
   .text-warning { color: var(--color-warning); }
   .text-danger { color: var(--color-danger); }
   .text-info { color: var(--color-info); }
+}
+
+/* Not theme colors. Component classes @apply these. */
+@utility border-wibe {
+  border-color: var(--color-border);
+}
+@utility text-wibe-secondary {
+  color: var(--color-text-muted);
+}
+@utility text-muted {
+  color: var(--color-text-muted);
 }
 
 @layer components {
@@ -185,7 +224,7 @@
     @apply bg-wibe-card border border-wibe rounded-lg shadow-card;
   }
   .wibe-chip {
-    @apply flex-shrink-0 rounded-pill border px-4 py-2 wibe-small font-medium transition-colors active:scale-[0.98];
+    @apply flex-shrink-0 rounded-pill border px-4 py-2 text-small font-medium text-muted-foreground transition-colors active:scale-[0.98];
   }
   .wibe-chip-active {
     @apply border-primary bg-primary text-white shadow-sm;
@@ -197,8 +236,24 @@
 
 * {
   box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+}
+
+/* Edge fade for horizontal scrollers. Consumer UI is RTL, so the end edge is the physical left. */
+.wibe-edge-fade-end {
+  background-image: linear-gradient(
+    to right,
+    var(--wibe-edge-fade, var(--background)) 0,
+    var(--wibe-edge-fade, var(--background)) 0.75rem,
+    transparent 100%
+  );
+}
+
+.wibe-edge-fade-start {
+  background-image: linear-gradient(
+    to left,
+    var(--wibe-edge-fade, var(--background)),
+    transparent
+  );
 }
 
 html,
@@ -353,6 +408,16 @@ body {
   animation: fadeIn 0.35s ease-out;
 }
 
+@keyframes pulse-soft {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
 /* جلوگیری از تأخیر double-tap zoom روی کنترل‌های تعاملی */
 a,
 button,
@@ -373,3 +438,236 @@ summary {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Aliasهای وایب‌فارسی بیرون از تم کاغذ = همان توکن‌های فعلی، تا ادمین و کلاس‌های قدیمی نپرند. */
+:root {
+  --foreground: var(--color-text);
+  --background: var(--color-bg);
+  --card: var(--wibe-card);
+  --card-foreground: var(--color-text);
+  --popover: #ffffff;
+  --popover-foreground: var(--color-text);
+  --primary-foreground: #ffffff;
+  --secondary: #8b5cf6;
+  --secondary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: var(--color-text-muted);
+  --accent: #f8fafc;
+  --accent-foreground: var(--color-text);
+  --destructive: #ef4444;
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: #4f46e5;
+}
+
+/* --- vibefarsi:theme-paper --- */
+/* کاغذ، مجله‌ای. تیترها با وزیرمتن. */
+[data-theme="paper"] {
+  color-scheme: light;
+
+  /* رنگ */
+  --background: oklch(0.985 0.004 85);
+  --foreground: oklch(0.2 0.01 60);
+  --card: oklch(0.985 0.004 85);
+  --card-foreground: oklch(0.2 0.01 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.01 60);
+  --primary: oklch(0.2 0.01 60);
+  --primary-foreground: oklch(0.985 0.004 85);
+  --secondary: oklch(0.94 0.008 85);
+  --secondary-foreground: oklch(0.2 0.01 60);
+  --muted: oklch(0.955 0.006 85);
+  --muted-foreground: oklch(0.47 0.015 60);
+  --accent: oklch(0.94 0.008 85);
+  --accent-foreground: oklch(0.2 0.01 60);
+  --destructive: oklch(0.55 0.2 25);
+  --success: oklch(0.52 0.13 160);
+  --warning: oklch(0.62 0.14 70);
+  --border: oklch(0.2 0.01 60 / 14%);
+  --input: oklch(0.2 0.01 60 / 30%);
+  --ring: oklch(0.5 0.02 60);
+  --brand: oklch(0.55 0.19 30);
+  --brand-foreground: oklch(0.985 0 0);
+
+  /* زبان طراحی: فونت، فرم، خط، عمق، حرکت و تراکم */
+  --radius: 0.25rem;
+  --type-display: var(--font-vazirmatn), "Vazirmatn", sans-serif;
+  --type-display-weight: 700;
+  --shape-control: 0.125rem;
+  --shape-field: 0rem;
+  --shape-surface: 0.125rem;
+  --shape-overlay: 0.25rem;
+  --line: 1px;
+  --line-field: 0 0 1px 0;
+  --line-style: solid;
+  --field: transparent;
+  --depth-control: 0 0 #0000;
+  --depth-press: 0 0 #0000;
+  --depth-field: 0 0 #0000;
+  --depth-surface: 0 0 #0000;
+  --depth-overlay: 0 12px 32px -16px oklch(0.2 0.01 60 / 25%);
+  --surface-filter: none;
+  --press: translateY(1px);
+  --motion: 160ms;
+  --motion-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --backdrop: none;
+  --spacing: 0.26rem;
+}
+/* --- vibefarsi:theme-paper-end --- */
+
+/* فاصله و شعاع اپ همان مقیاس وایب می‌ماند. رنگ سطح‌های قدیمی داخل صفحات به تم کاغذ وصل می‌شود. */
+[data-theme="paper"] {
+  --spacing: 0.25rem;
+  --shape-control: 0.875rem;
+  --shape-field: 0.875rem;
+  --shape-surface: 1.25rem;
+  --shape-overlay: 1.25rem;
+  --line: 1px;
+  --line-field: 1px;
+  --primary-dark: oklch(0.16 0.01 60);
+  --primary-light: oklch(0.4 0.012 60);
+  --wibe-background: var(--background);
+  --wibe-surface: var(--muted);
+  --wibe-card: var(--popover);
+  --color-bg: var(--background);
+  --color-surface: var(--muted);
+  --color-surface-raised: var(--popover);
+  --color-border: var(--border);
+  --color-border-muted: var(--border);
+  --color-text: var(--foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-text-subtle: var(--muted-foreground);
+}
+
+/* فیلد و دکمهٔ اصلی داخل مودال، همان کنترل وایب‌فارسی. */
+[data-theme="paper"] [role="dialog"] :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="search"]):not([type="hidden"]),
+  textarea,
+  select
+) {
+  border-radius: var(--shape-field);
+  border: 1px solid var(--input);
+  background-color: var(--popover);
+  color: var(--foreground);
+  min-height: 2.75rem;
+}
+
+[data-theme="paper"] [role="dialog"] textarea {
+  min-height: 6rem;
+  padding-block: 0.75rem;
+}
+
+[data-theme="paper"] [role="dialog"] button[type="submit"] {
+  background-color: var(--brand);
+  color: var(--brand-foreground);
+  border-radius: var(--shape-control);
+  min-height: 2.75rem;
+  font-weight: 600;
+  border: 0;
+}
+
+[data-theme="paper"] [role="dialog"] .bg-white {
+  background-color: var(--popover);
+}
+
+/* بقیهٔ کارت‌های سایت کاربر همان سطح کارت وایب‌فارسی را می‌گیرند. */
+[data-theme="paper"] :is(.rounded-lg, .rounded-xl, .rounded-2xl).bg-wibe-card {
+  background-color: var(--popover);
+  border-radius: var(--shape-surface);
+}
+
+/* --- vibefarsi:tailwind-map --- */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+
+  /* Design language: type, shape, line, depth and motion of the active system. */
+  --radius-control: var(--shape-control);
+  --radius-field: var(--shape-field);
+  --radius-surface: var(--shape-surface);
+  --radius-overlay: var(--shape-overlay);
+  --border-width-line: var(--line);
+  --border-width-line-field: var(--line-field);
+  --color-field: var(--field);
+  --shadow-control: var(--depth-control);
+  --shadow-press: var(--depth-press);
+  --shadow-field: var(--depth-field);
+  --shadow-surface: var(--depth-surface);
+  --shadow-overlay: var(--depth-overlay);
+  --ease-motion: var(--motion-ease);
+  --font-display: var(--type-display);
+}
+
+@layer base {
+  [data-theme='paper'] {
+    font-size: 16.5px;
+    line-height: 1.8;
+    letter-spacing: 0;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    font-family: var(--type-body, inherit);
+    background-image: var(--backdrop, none);
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  [data-theme='paper'] :is(h1, h2, h3, h4) {
+    font-family: var(--type-display, inherit);
+    font-weight: var(--type-display-weight, 700);
+    font-synthesis-weight: none;
+  }
+
+  /* iOS Safari zooms into any focused field smaller than 16px; only iOS matches this query. */
+  @supports (-webkit-touch-callout: none) {
+    input, textarea, select {
+      --text-xs: 1rem;
+      --text-sm: 1rem;
+      font-size: max(1rem, 1em);
+    }
+  }
+}
+/* --- vibefarsi:tailwind-map-end --- */
+
+/* --- vibefarsi:font --- */
+@theme inline {
+  --font-sans: var(--font-vazirmatn), "IRANSans", "IRANSansX", "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+}
+/* --- vibefarsi:font-end --- */
+
+/* --- vibefarsi:like-button --- */
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  30% { transform: scale(0.8); }
+  65% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+@keyframes like-burst {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  20% { opacity: 1; transform: translate(calc(var(--px) * 0.25), calc(var(--py) * 0.25)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0.5); }
+}
+@keyframes digit-pop {
+  from { opacity: 0; filter: blur(2px); transform: translate(calc(var(--pop-x, 0) * 8px), calc(var(--pop-y, 1) * 8px)); }
+  to { opacity: 1; filter: blur(0); transform: translate(0, 0); }
+}
+/* --- vibefarsi:like-button-end --- */

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Share2 } from 'lucide-react';
 import Toast from '@/components/shared/Toast';
+import { Button } from '@/components/ui/button';
 
 type ItemShareButtonProps = {
   title: string;
@@ -47,14 +48,16 @@ export default function ItemShareButton({
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="icon"
         onClick={handleShare}
-        className={className}
+        className={className ?? 'size-11 rounded-full'}
         aria-label="اشتراک‌گذاری"
       >
         <Share2 className={iconClassName} />
-      </button>
+      </Button>
       {toast && (
         <Toast
           message={toast.message}

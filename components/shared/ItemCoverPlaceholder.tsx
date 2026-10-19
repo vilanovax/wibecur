@@ -17,11 +17,8 @@ function getTitleInitial(title: string): string {
 export function getItemCoverPlaceholderGradient(
   title: string,
   categorySlug?: string | null,
-  state: ItemCoverPlaceholderState = 'idle'
+  _state: ItemCoverPlaceholderState = 'idle'
 ): string {
-  if (state === 'idle' || state === 'loading') {
-    return 'from-slate-200 via-slate-100 to-slate-200';
-  }
   const slug = categorySlug ?? inferCategorySlugFromTitle(title) ?? 'default';
   return pickCategoryCoverGradient(slug, title);
 }
@@ -53,14 +50,14 @@ export default function ItemCoverPlaceholder({
 
   return (
     <div
-      className={`relative overflow-hidden bg-gradient-to-br ${gradient} ${className}`}
+      className={`relative overflow-hidden bg-linear-to-br ${gradient} ${className}`}
       aria-hidden={!ariaLabel}
       aria-label={ariaLabel}
       role={ariaLabel ? 'img' : undefined}
     >
       {showShimmer && (
         <div
-          className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.45)_45%,rgba(255,255,255,0.55)_55%,transparent_100%)] bg-[length:220%_100%] animate-shimmer"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.45)_45%,rgba(255,255,255,0.55)_55%,transparent_100%)] bg-size-[220%_100%] animate-shimmer"
           aria-hidden
         />
       )}
@@ -73,16 +70,16 @@ export default function ItemCoverPlaceholder({
         {state === 'empty' ? (
           isGrid ? (
             <>
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/12 text-lg font-bold text-white/95 shadow-sm backdrop-blur-[2px] ring-1 ring-white/20">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-foreground/15 text-lg font-bold text-background shadow-sm ring-1 ring-background/30">
                 {initial}
               </span>
-              <span className="max-w-[85%] truncate px-2 text-center wibe-caption font-medium text-white/75">
+              <span className="max-w-full truncate px-2 text-center wibe-caption font-medium text-background/80">
                 {title}
               </span>
             </>
           ) : (
             <>
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/10 text-sm font-bold text-white/90">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 text-sm font-bold text-background">
                 {initial}
               </span>
               <span className="text-lg opacity-70">{fallbackIcon}</span>

@@ -25,7 +25,7 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
       href={`/lists/${list.slug}`}
       className="group block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-[colors,transform] active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-200 lg:aspect-[16/10] lg:max-h-[200px]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-wibe-surface lg:aspect-[16/10] lg:max-h-[200px]">
         <ListCoverImage
           coverImage={list.coverUrl}
           title={list.title}
@@ -33,11 +33,11 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
           categorySlug={categorySlug}
           className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
           fallbackIcon="📋"
-          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-3xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-3xl"
         />
         {topBadge && (
           <span
-            className={`absolute right-2 top-2 rounded-pill px-2 py-0.5 wibe-caption font-semibold ${BADGE_STYLES[topBadge] ?? 'bg-gray-800 text-white'}`}
+            className={`absolute right-2 top-2 rounded-pill px-2 py-0.5 wibe-caption font-semibold ${BADGE_STYLES[topBadge] ?? 'bg-black/75 text-white'}`}
           >
             {BADGE_LABELS[topBadge] ?? topBadge}
           </span>

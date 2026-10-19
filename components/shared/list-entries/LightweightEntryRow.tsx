@@ -67,10 +67,8 @@ function EntryBody({
   return (
     <>
       <div
-        className={`flex shrink-0 items-center justify-center rounded-full bg-gray-100 wibe-caption font-semibold text-wibe-secondary tabular-nums ${
-          hideEntryKindChrome
-            ? 'mt-0.5 h-6 w-6 text-[0.6875rem] lg:h-7 lg:w-7'
-            : 'h-7 w-7 lg:h-8 lg:w-8'
+        className={`flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground tabular-nums ${
+          hideEntryKindChrome ? 'mt-0.5' : ''
         }`}
         aria-hidden
       >
@@ -79,8 +77,8 @@ function EntryBody({
 
       {!hideEntryKindChrome && (
         <div
-          className={`flex shrink-0 items-center justify-center rounded-xl bg-amber-50/80 text-lg ring-1 ring-amber-200/60 ${
-            compact ? 'h-10 w-10' : 'h-11 w-11 lg:h-12 lg:w-12'
+          className={`flex size-11 shrink-0 items-center justify-center rounded-surface bg-warning/10 text-lg ${
+            compact ? '' : 'lg:size-12'
           }`}
           aria-hidden
         >
@@ -91,11 +89,11 @@ function EntryBody({
       <div className="min-w-0 flex-1">
         {!hideEntryKindChrome && (
           <div className="mb-1 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 wibe-caption font-medium text-wibe-secondary">
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
               {entryKindBadgeLabel(entryKind)}
             </span>
             {factLabel && (
-              <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 wibe-caption font-medium text-wibe-secondary">
+              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                 {factLabel}
               </span>
             )}
@@ -106,10 +104,10 @@ function EntryBody({
           <h3
             className={`line-clamp-2 font-semibold text-foreground ${
               hideEntryKindChrome
-                ? 'text-[0.9375rem] leading-snug lg:text-base'
+                ? 'text-sm leading-snug lg:text-base'
                 : compact
-                  ? 'wibe-small'
-                  : 'wibe-small lg:text-[0.9375rem] lg:leading-snug'
+                  ? 'text-sm'
+                  : 'text-sm leading-snug lg:text-base'
             }`}
           >
             {headline}
@@ -118,7 +116,7 @@ function EntryBody({
 
         {body && (
           <p
-            className={`text-wibe-secondary whitespace-pre-line ${
+            className={`whitespace-pre-line text-muted-foreground ${
               headline
                 ? hideEntryKindChrome
                   ? 'mt-1.5 line-clamp-4'
@@ -133,7 +131,7 @@ function EntryBody({
         )}
 
         {hasLink && (
-          <span className="mt-2 inline-flex items-center gap-1 wibe-caption font-medium text-primary">
+          <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand">
             <ExternalLink className="h-3.5 w-3.5" aria-hidden />
             {entryKind === 'link' ? 'باز کردن لینک' : 'لینک مرتبط'}
           </span>
@@ -160,9 +158,9 @@ export default function LightweightEntryRow({
   const hasLink = Boolean(item.externalUrl?.trim());
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
 
-  const shellClass = `rounded-xl border border-wibe bg-wibe-card text-right shadow-sm transition-colors ${
+  const shellClass = `rounded-surface border border-border bg-popover text-start shadow-sm transition-colors ${
     compact ? 'p-2.5' : hideEntryKindChrome ? 'p-3.5 lg:p-4' : 'p-3 lg:p-3.5'
-  } ${onOpen ? 'lg:hover:border-primary/15 lg:hover:shadow-sm' : ''}`;
+  } ${onOpen ? 'lg:hover:border-brand/30 lg:hover:shadow-sm' : ''}`;
 
   const bodyProps = {
     item,
@@ -184,16 +182,16 @@ export default function LightweightEntryRow({
             type="button"
             onClick={onOpen}
             aria-label={itemOpenLabel(index, headline || item.title)}
-            className="flex w-full items-start gap-3 text-right transition-colors active:scale-[0.99]"
+            className="flex w-full items-start gap-3 text-start transition-colors active:scale-[0.99]"
           >
             <EntryBody {...bodyProps} />
           </button>
         ) : (
-          <div className="flex w-full items-start gap-3 text-right">
+          <div className="flex w-full items-start gap-3 text-start">
             <EntryBody {...bodyProps} />
           </div>
         )}
-        <div className={onOpen ? 'border-t border-wibe/60 pt-2' : 'pt-0.5'}>
+        <div className={onOpen ? 'border-t border-border pt-2' : 'pt-0.5'}>
           <ListItemQuickActions actions={quickActions} size="sm" />
         </div>
       </div>

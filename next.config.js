@@ -44,10 +44,16 @@ const nextConfig = {
         key: 'Permissions-Policy',
         value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
       },
-      {
-        key: 'Strict-Transport-Security',
-        value: 'max-age=63072000; includeSubDomains; preload',
-      },
+      // HSTS را روی localhost برای LHCI/dev ارسال نکن — Chrome interstitial می‌سازد.
+      // در پروداکشن: DISABLE_HSTS را ست نکن (پیش‌فرض فعال).
+      ...(process.env.DISABLE_HSTS === 'true'
+        ? []
+        : [
+            {
+              key: 'Strict-Transport-Security',
+              value: 'max-age=63072000; includeSubDomains; preload',
+            },
+          ]),
       // CSP پایه و غیرمخرب: این دستورها اسکریپت/استایل را بلاک نمی‌کنند پس اپ نمی‌شکند،
       // ولی clickjacking، تزریق <base>، و embed افزونه (object/embed) را می‌بندند.
       // فاز بعد: افزودن script-src مبتنی بر nonce برای دفاع کامل در برابر XSS.
@@ -108,7 +114,7 @@ const nextConfig = {
   // Increase header size limit to handle large cookies
   experimental: {
     // Tree-shake barrel packages so mobile shell doesn't pull full icon/motion graphs.
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'date-fns'],
     serverActions: {
       bodySizeLimit: '2mb',
     },

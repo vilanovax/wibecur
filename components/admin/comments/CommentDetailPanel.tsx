@@ -1,9 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle, XCircle, ExternalLink, FileText, Flag, FlagOff } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import {
+  CheckCircle,
+  XCircle,
+  FileText,
+  Flag,
+  FlagOff,
+  Keyboard,
+  MessageSquare,
+} from 'lucide-react';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentStatusBadge from './CommentStatusBadge';
 import UserAvatar from '@/components/shared/UserAvatar';
 import { UserPenaltyBadge, CommentRestrictionStatusBadge } from './UserPenaltyBadge';
@@ -57,9 +64,24 @@ export default function CommentDetailPanel({
   if (!comment) {
     return (
       <div
-        className={`rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/50 flex items-center justify-center min-h-[280px] p-6 text-center text-sm text-[var(--color-text-muted)] ${className}`}
+        className={`rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/50 flex flex-col items-center justify-center min-h-[280px] lg:min-h-[calc(100vh-280px)] p-6 text-center ${className}`}
+        dir="rtl"
       >
-        {emptyLabel}
+        <MessageSquare className="w-8 h-8 text-[var(--color-text-muted)] mb-3 opacity-60" />
+        <p className="text-sm text-[var(--color-text-muted)]">{emptyLabel}</p>
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--color-text-subtle)]">
+          <Keyboard className="w-3 h-3" aria-hidden />
+          <span>
+            <kbd className="px-1 rounded border border-[var(--color-border)] bg-[var(--color-surface)]">
+              J
+            </kbd>
+            /
+            <kbd className="px-1 rounded border border-[var(--color-border)] bg-[var(--color-surface)]">
+              K
+            </kbd>{' '}
+            برای جابه‌جایی
+          </span>
+        </p>
       </div>
     );
   }
@@ -75,21 +97,23 @@ export default function CommentDetailPanel({
     approvingId === comment.id ||
     rejectingId === comment.id ||
     discardingId === comment.id;
+  const canApprove = !comment.deletedAt && !comment.isApproved;
+  const canReject = !comment.deletedAt && showReject;
 
   return (
     <div
-      className={`rounded-2xl border bg-[var(--color-surface)] shadow-sm flex flex-col min-h-[280px] lg:min-h-[calc(100vh-280px)] ${
+      className={`rounded-xl border bg-[var(--color-surface)] flex flex-col min-h-[240px] lg:sticky lg:top-3 lg:max-h-[calc(100vh-5rem)] ${
         comment.isSeeded
           ? 'border-violet-200 bg-violet-50/30'
           : 'border-[var(--color-border)]'
       } ${className}`}
       dir="rtl"
     >
-      <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+      <div className="px-3 py-2.5 border-b border-[var(--color-border)] flex items-center justify-between gap-2 shrink-0">
         <h2 className="text-sm font-semibold text-[var(--color-text)]">جزئیات</h2>
         <div className="flex flex-wrap items-center gap-1.5">
           {comment.isSeeded && (
-            <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+            <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">
               ساختگی
             </span>
           )}
@@ -102,7 +126,7 @@ export default function CommentDetailPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
         {comment.isSeeded && (
           <div className="rounded-xl border border-violet-200 bg-violet-50/80 px-3 py-2 text-xs text-violet-800">
             <p className="font-medium">کامنت تولیدشده با AI</p>
@@ -127,10 +151,13 @@ export default function CommentDetailPanel({
               </Link>
             </p>
             {!comment.deletedAt && onDelete && (
-              <p className="mt-1 text-violet-600">برای غیرفعال‌سازی از دکمه «حذف» استفاده کنید.</p>
+              <p className="mt-1 text-violet-600">
+                برای غیرفعال‌سازی از دکمه «حذف» استفاده کنید.
+              </p>
             )}
           </div>
         )}
+
         <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap bg-[var(--color-bg)] rounded-xl p-3 leading-relaxed">
           {displayContent}
         </p>
@@ -171,12 +198,7 @@ export default function CommentDetailPanel({
               {comment.items.title}
             </Link>
           </p>
-          <p>
-            {formatDistanceToNow(new Date(comment.createdAt), {
-              addSuffix: true,
-              locale: faIR,
-            })}
-          </p>
+          <p>{formatRelativeTime(comment.createdAt)}</p>
         </div>
 
         {reports && reports.length > 0 && (
@@ -193,13 +215,9 @@ export default function CommentDetailPanel({
                 >
                   <p className="text-[var(--color-text)]">{r.reason || 'بدون دلیل'}</p>
                   <p className="text-[var(--color-text-muted)] mt-0.5">
-                    {r.users.name || r.users.email} ·{' '}
-                    {formatDistanceToNow(new Date(r.createdAt), {
-                      addSuffix: true,
-                      locale: faIR,
-                    })}
+                    {r.users.name || r.users.email} · {formatRelativeTime(r.createdAt)}
                     {r.resolved && (
-                      <span className="mr-1 text-emerald-600 dark:text-emerald-400">· حل‌شده</span>
+                      <span className="mr-1 text-emerald-600">· حل‌شده</span>
                     )}
                   </p>
                 </li>
@@ -207,76 +225,78 @@ export default function CommentDetailPanel({
             </ul>
           </div>
         )}
-
-        {onOpenFullDetail && (
-          <button
-            type="button"
-            onClick={() => onOpenFullDetail(comment)}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
-          >
-            <FileText className="w-4 h-4" />
-            ویرایش / حذف کامل
-          </button>
-        )}
       </div>
 
       {!comment.deletedAt && (
-        <div className="p-3 border-t border-[var(--color-border)] flex flex-col gap-2">
-          <div className="flex flex-wrap gap-2">
-          {onDiscardReports && (
-            <button
-              type="button"
-              onClick={() => onDiscardReports(comment.id)}
-              disabled={isActionBusy || !hasOpenReports}
-              className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50"
-              title="ریپورت اشتباه بود — بدون تغییر کامنت یا امتیاز منفی"
-            >
-              <FlagOff className="w-4 h-4" />
-              رد ریپورت
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => onApprove(comment.id)}
-            disabled={
-              isActionBusy ||
-              comment.isApproved
-            }
-            className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
-          >
-            <CheckCircle className="w-4 h-4" />
-            تایید
-          </button>
-          {showReject && (
-            <button
-              type="button"
-              onClick={() => onReject(comment.id)}
-              disabled={isActionBusy}
-              className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-rose-600 text-white text-sm font-medium hover:bg-rose-700 disabled:opacity-50"
-            >
-              <XCircle className="w-4 h-4" />
-              رد
-            </button>
-          )}
-          {onEdit && (
-            <button
-              type="button"
-              onClick={() => onEdit(comment)}
-              className="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg)]"
-            >
-              ویرایش
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              onClick={() => onDelete(comment.id, comment.content)}
-              className="px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 text-sm hover:bg-rose-50"
-            >
-              حذف
-            </button>
-          )}
+        <div className="p-2.5 border-t border-[var(--color-border)] flex flex-col gap-1.5 shrink-0 bg-[var(--color-surface)]">
+          <div className="flex flex-wrap gap-1.5">
+            {onDiscardReports && (
+              <button
+                type="button"
+                onClick={() => onDiscardReports(comment.id)}
+                disabled={isActionBusy || !hasOpenReports}
+                className="flex-1 min-w-[96px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-border-muted)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+                title="ریپورت اشتباه بود — بدون تغییر کامنت یا امتیاز منفی"
+              >
+                <FlagOff className="w-4 h-4" />
+                رد ریپورت
+              </button>
+            )}
+            {canApprove && (
+              <button
+                type="button"
+                onClick={() => onApprove(comment.id)}
+                disabled={isActionBusy}
+                className="flex-1 min-w-[96px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              >
+                <CheckCircle className="w-4 h-4" />
+                تایید
+              </button>
+            )}
+            {canReject && (
+              <button
+                type="button"
+                onClick={() => onReject(comment.id)}
+                disabled={isActionBusy}
+                className={`flex-1 min-w-[96px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40 ${
+                  canApprove
+                    ? 'bg-rose-600 text-white hover:bg-rose-700'
+                    : 'border border-rose-200 text-rose-700 hover:bg-rose-50'
+                }`}
+              >
+                <XCircle className="w-4 h-4" />
+                رد
+              </button>
+            )}
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(comment)}
+                className="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+              >
+                ویرایش
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(comment.id, comment.content)}
+                className="px-3 py-2 rounded-xl border border-rose-200 text-rose-600 text-sm hover:bg-rose-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/35"
+              >
+                حذف
+              </button>
+            )}
           </div>
+          {onOpenFullDetail && (
+            <button
+              type="button"
+              onClick={() => onOpenFullDetail(comment)}
+              className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg border border-[var(--color-border)] text-xs text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              ویرایش / حذف کامل
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -20,10 +20,10 @@ export default function VibeAvatarDisplay({
 }: VibeAvatarDisplayProps) {
   return (
     <div
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-wibe-surface ${
-        avatar.premium ? 'ring-2 ring-amber-400/50 shadow-md shadow-amber-500/10' : 'ring-1 ring-black/[0.06]'
-      } ${selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-white' : ''} ${
-        locked ? 'opacity-45 grayscale-[0.4]' : ''
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ${
+        avatar.premium ? 'ring-2 ring-warning/40' : 'ring-1 ring-border'
+      } ${selected ? 'ring-2 ring-brand ring-offset-2 ring-offset-background' : ''} ${
+        locked ? 'opacity-45' : ''
       } ${className}`}
       style={{ width: size, height: size }}
     >

@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { UserPlus, Users, X } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 
 type CollaboratorMember = {
   id: string;
@@ -123,7 +126,7 @@ export default function ListCollaborationPanel({
 
   if (isPublic) {
     return (
-      <p className="text-sm text-wibe-secondary">
+      <p className="text-sm text-muted-foreground">
         همکاری فقط برای لیست‌های شخصی فعال است.
       </p>
     );
@@ -133,56 +136,40 @@ export default function ListCollaborationPanel({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-slate-600" />
+          <Users className="size-5 text-muted-foreground" />
           <div>
             <h3 className="text-base font-semibold text-foreground">همکاری در لیست</h3>
-            <p className="text-sm text-wibe-secondary">دعوت دیگران برای افزودن آیتم</p>
+            <p className="text-sm text-muted-foreground">دعوت دیگران برای افزودن آیتم</p>
           </div>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={collaborationEnabled}
+        <Switch
+          checked={collaborationEnabled}
+          onCheckedChange={() => toggleCollaboration()}
           aria-label="همکاری در لیست"
-          onClick={toggleCollaboration}
-          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-            collaborationEnabled ? 'bg-primary' : 'bg-gray-200'
-          }`}
-        >
-          <span
-            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
-              collaborationEnabled ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
+        />
       </div>
 
       <div className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="نام کاربری (@username)"
-          className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          className="h-12 flex-1"
           dir="ltr"
         />
-        <button
-          type="button"
-          onClick={inviteUser}
-          disabled={inviting || !username.trim()}
-          className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        >
+        <Button type="button" variant="brand" size="lg" onClick={inviteUser} disabled={inviting || !username.trim()}>
           <UserPlus className="h-4 w-4" />
           دعوت
-        </button>
+        </Button>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {loading ? (
-        <p className="text-sm text-wibe-secondary">در حال بارگذاری...</p>
+        <p className="text-sm text-muted-foreground">در حال بارگذاری...</p>
       ) : members.length === 0 ? (
-        <p className="text-sm text-wibe-secondary">هنوز همکاری دعوت نشده است.</p>
+        <p className="text-sm text-muted-foreground">هنوز همکاری دعوت نشده است.</p>
       ) : (
         <ul className="space-y-2">
           {members.map((member) => {
@@ -191,18 +178,18 @@ export default function ListCollaborationPanel({
             return (
               <li
                 key={member.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2"
+                className="flex min-h-12 items-center justify-between gap-2 rounded-surface border border-border px-3"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <UserAvatar src={member.user.image} name={label} size={32} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{label}</p>
                     {member.user.username && (
-                      <p className="truncate text-xs text-wibe-secondary" dir="ltr">
+                      <p className="truncate text-xs text-muted-foreground" dir="ltr">
                         @{member.user.username}
                       </p>
                     )}
-                    <p className="text-xs text-wibe-secondary">
+                    <p className="text-xs text-muted-foreground">
                       {member.status === 'PENDING'
                         ? isIncomingRequest
                           ? 'درخواست همکاری'
@@ -217,14 +204,14 @@ export default function ListCollaborationPanel({
                       <button
                         type="button"
                         onClick={() => memberAction(member.userId, 'accept')}
-                        className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-white"
+                        className="inline-flex h-11 items-center rounded-control bg-brand px-3 text-sm font-semibold text-brand-foreground"
                       >
                         بپذیر
                       </button>
                       <button
                         type="button"
                         onClick={() => memberAction(member.userId, 'reject')}
-                        className="rounded-md border border-gray-200 px-2 py-1 text-xs text-wibe-secondary"
+                        className="inline-flex h-11 items-center rounded-control border border-border px-3 text-sm text-muted-foreground"
                       >
                         رد
                       </button>
@@ -234,7 +221,7 @@ export default function ListCollaborationPanel({
                     <button
                       type="button"
                       onClick={() => memberAction(member.userId, 'revoke')}
-                      className="rounded-md p-1 text-wibe-secondary hover:bg-gray-100"
+                      className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
                       aria-label="لغو دسترسی"
                     >
                       <X className="h-4 w-4" />

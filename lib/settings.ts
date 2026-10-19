@@ -4,6 +4,7 @@ import type { settings as SettingsRow } from '@prisma/client';
 import { prisma } from './prisma';
 import { encrypt, decrypt } from './encryption';
 import { isDatabaseConnectionError } from './admin/is-database-error';
+import { normalizeImageUrlForStorage } from './image-url-sanitize';
 
 export const SETTINGS_CACHE_TAG = 'settings';
 
@@ -217,7 +218,8 @@ export async function updateSettings(data: {
   }
 
   if (data.siteLogoUrl !== undefined) {
-    updateData.siteLogoUrl = data.siteLogoUrl?.trim() || null;
+    const trimmed = data.siteLogoUrl?.trim() || '';
+    updateData.siteLogoUrl = trimmed ? normalizeImageUrlForStorage(trimmed) || null : null;
   }
 
   const updated = await prisma.settings.update({

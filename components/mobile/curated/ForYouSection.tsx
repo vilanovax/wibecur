@@ -4,7 +4,9 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
+import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import type { CuratedList } from '@/types/curated';
+import { Card } from '@/components/ui/card';
 
 interface ForYouSectionProps {
   lists: CuratedList[];
@@ -12,11 +14,23 @@ interface ForYouSectionProps {
   diverseCategories?: boolean;
 }
 
-function resolveForYouSubtitle(personalized: boolean, diverseCategories: boolean): string {
-  if (personalized && diverseCategories) return 'علایق تو · از هر دسته';
-  if (diverseCategories) return 'از هر دسته یک پیشنهاد';
-  if (personalized) return 'بر اساس علایق تو';
-  return 'برترین لیست‌های منتخب';
+/** حداکثر نمایش — بعد از ترند نباید دیوار لیست تکراری بسازد */
+const FOR_YOU_DISPLAY_MAX = 6;
+
+function resolveForYouCopy(personalized: boolean, diverseCategories: boolean): {
+  title: string;
+  subtitle: string;
+} {
+  if (personalized && diverseCategories) {
+    return { title: 'برای تو', subtitle: 'از هر دسته یکی' };
+  }
+  if (personalized) {
+    return { title: 'برای تو', subtitle: 'بر اساس علایق تو' };
+  }
+  if (diverseCategories) {
+    return { title: 'از هر موضوع', subtitle: 'یک پیشنهاد از هر دسته' };
+  }
+  return { title: 'پیشنهاد وایب', subtitle: 'منتخب برای شروع' };
 }
 
 export default function ForYouSection({
@@ -26,61 +40,69 @@ export default function ForYouSection({
 }: ForYouSectionProps) {
   if (lists.length === 0) return null;
 
+  const visible = lists.slice(0, FOR_YOU_DISPLAY_MAX);
+  const { title, subtitle } = resolveForYouCopy(personalized, diverseCategories);
+
   return (
     <section
       id="foryou"
-      className="border-t border-wibe/50 px-3.5 py-5 lg:px-0 lg:py-6"
+      className="border-t border-border px-4 py-4 lg:px-0 lg:py-5"
       aria-labelledby="foryou-title"
     >
       <ExploreSectionTitle
         id="foryou-title"
-        title="پیشنهاد وایب"
-        subtitle={resolveForYouSubtitle(personalized, diverseCategories)}
-        icon="✨"
+        title={title}
+        subtitle={subtitle}
+        iconVariant="forYou"
       />
-      <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
-        {lists.map((list, index) => {
-          const subtitle = getListCardSubtitle(list);
-          const categoryIcon = list.category?.icon ?? null;
+      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-0.5 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-3 lg:overflow-visible lg:snap-none xl:grid-cols-4">
+        {visible.map((list, index) => {
+          const categoryLabel = list.category?.name
+            ? `${list.category.icon ? `${list.category.icon} ` : ''}${list.category.name}`
+            : getListCardSubtitle(list);
+          const trustedCover = resolveCoverImage({
+            coverImage: list.coverUrl,
+            categorySlug: list.category?.slug,
+            listSlug: list.slug,
+            listTitle: list.title,
+          });
           return (
             <Link
               key={list.id}
               href={`/lists/${list.slug}`}
-              className={`group flex flex-row-reverse gap-3 rounded-2xl border p-2.5 shadow-sm transition-[transform,box-shadow] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.99] lg:gap-3 lg:p-3 lg:hover:shadow-md ${
-                index === 0
-                  ? 'border-primary/25 bg-primary/[0.04]'
-                  : 'border-wibe bg-wibe-card hover:border-primary/20'
-              }`}
+              className="block w-44 shrink-0 snap-start focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 lg:w-full lg:shrink"
             >
-              <div className="h-[4.75rem] w-[4.75rem] shrink-0 overflow-hidden rounded-xl bg-wibe-surface lg:h-20 lg:w-20">
-                <ImageWithFallback
-                  src={list.coverUrl ?? ''}
-                  alt={list.title}
-                  className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-105"
-                  fallbackIcon={categoryIcon ?? '📋'}
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
-                  width={80}
-                  height={80}
-                  priority={index === 0}
-                />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col justify-center text-right">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="min-w-0 flex-1 line-clamp-2 wibe-small font-bold text-foreground lg:text-base">
-                    {list.title}
-                  </h3>
-                  {categoryIcon ? (
-                    <span className="shrink-0 text-base leading-none" aria-hidden>
-                      {categoryIcon}
-                    </span>
-                  ) : null}
+              <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-95">
+                <div className="relative aspect-4/3 bg-muted">
+                  <ImageWithFallback
+                    src={trustedCover}
+                    alt={list.title}
+                    className="h-full w-full object-cover"
+                    fallbackIcon="📋"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
+                    width={176}
+                    height={132}
+                    priority={index === 0}
+                    categorySlug={list.category?.slug}
+                    listSlug={list.slug}
+                    listTitle={list.title}
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/75 to-transparent"
+                    aria-hidden
+                  />
+                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-start">
+                    <h3 className="line-clamp-2 wibe-small font-semibold text-background">
+                      {list.title}
+                    </h3>
+                  </div>
                 </div>
-                {subtitle ? (
-                  <p className="mt-1 line-clamp-2 wibe-caption leading-relaxed text-wibe-secondary lg:line-clamp-2">
-                    {subtitle}
-                  </p>
-                ) : null}
-              </div>
+              </Card>
+              {categoryLabel ? (
+                <p className="mt-1.5 line-clamp-1 wibe-caption text-muted-foreground">
+                  {categoryLabel}
+                </p>
+              ) : null}
             </Link>
           );
         })}

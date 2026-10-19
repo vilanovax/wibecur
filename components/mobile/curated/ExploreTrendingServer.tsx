@@ -2,7 +2,9 @@ import Image from 'next/image';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
+import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import type { CuratedList } from '@/types/curated';
+import { Card } from '@/components/ui/card';
 
 type ExploreTrendingServerProps = {
   lists: CuratedList[];
@@ -20,7 +22,7 @@ export default function ExploreTrendingServer({
   if (lists.length === 0) return null;
 
   return (
-    <section id="trending" className="px-2.5 py-4 lg:px-0 lg:py-5" aria-labelledby="trending-title">
+    <section id="trending" className="px-4 py-4 lg:px-0 lg:py-5" aria-labelledby="trending-title">
       <ExploreSectionTitle
         id="trending-title"
         title="داغ‌ترین لیست‌های امروز"
@@ -28,13 +30,13 @@ export default function ExploreTrendingServer({
         icon="🔥"
       />
 
-      <div className="scrollbar-hide -mx-2.5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2.5 pb-1 lg:mx-0 lg:px-0">
+      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto scrollbar-hide lg:grid lg:grid-cols-4 lg:gap-4 lg:overflow-visible xl:grid-cols-5">
         {lists.map((list, index) => (
           <div
             key={list.id}
-            className="w-[78%] max-w-[280px] shrink-0 snap-start sm:w-[46%] md:w-[38%] lg:w-[calc(25%-0.5625rem)] lg:max-w-none xl:w-[calc(20%-0.6rem)]"
+            className="w-72 shrink-0 snap-start lg:w-auto lg:min-w-0"
           >
-            <ExploreTrendingCard list={list} priority={index < 2} />
+            <ExploreTrendingCard list={list} priority={index < 2} showBadge={index === 0} />
           </div>
         ))}
       </div>
@@ -45,47 +47,57 @@ export default function ExploreTrendingServer({
 function ExploreTrendingCard({
   list,
   priority = false,
+  showBadge = false,
 }: {
   list: CuratedList;
   priority?: boolean;
+  showBadge?: boolean;
 }) {
   const href = `/lists/${list.slug}`;
-  const coverSrc = isRenderableCover(list.coverUrl) ? list.coverUrl : null;
+  const trustedCover = resolveCoverImage({
+    coverImage: list.coverUrl,
+    categorySlug: list.category?.slug,
+    listSlug: list.slug,
+    listTitle: list.title,
+  });
+  const coverSrc = isRenderableCover(trustedCover) ? trustedCover : null;
   const cover = coverSrc ? resolveNextImageSrc(coverSrc) : null;
 
   return (
     <ExploreTrendingPrefetchLink
       href={href}
-      className="group block transition-transform active:scale-[0.99] lg:hover:scale-[1.01]"
+      className="group block transition-transform active:scale-95"
     >
-      <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:rounded-xl lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10]">
+      <Card className="overflow-hidden bg-popover p-0 shadow-sm lg:group-hover:shadow-md">
+        <div className="relative aspect-4/3 bg-muted lg:aspect-16/10">
           {cover ? (
             <Image
               src={cover.src}
               alt={list.title}
               fill
-              sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 78vw"
+              sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 100vw"
               className="object-cover transition-transform duration-500 lg:group-hover:scale-105"
               priority={priority}
               unoptimized={cover.unoptimized}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-2xl">
+            <div className="flex h-full w-full items-center justify-center bg-muted text-2xl">
               {list.category?.icon ?? '📋'}
             </div>
           )}
-          <span className="absolute right-2 top-2 z-10 rounded-full bg-warning px-2 py-0.5 wibe-caption font-semibold text-white lg:text-xs">
-            ترند
-          </span>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent lg:from-black/85" />
-          <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
-            <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:text-base lg:font-bold lg:leading-snug">
+          {showBadge ? (
+            <span className="absolute inset-e-2 top-2 z-10 rounded-full bg-brand px-2 py-0.5 text-xs font-medium text-brand-foreground">
+              داغ
+            </span>
+          ) : null}
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/75 via-transparent to-transparent lg:from-foreground/80" />
+          <div className="absolute inset-x-0 bottom-0 p-3 text-start lg:p-3">
+            <h3 className="line-clamp-2 wibe-small font-semibold text-background lg:text-base lg:font-bold lg:leading-snug">
               {list.title}
             </h3>
           </div>
         </div>
-      </div>
+      </Card>
     </ExploreTrendingPrefetchLink>
   );
 }

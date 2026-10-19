@@ -11,36 +11,13 @@ import {
   ItemDiscoverySectionLazy,
 } from '@/components/mobile/items/item-detail-lazy-sections';
 import ItemDetailTopActions from '@/components/mobile/items/ItemDetailTopActions';
-import {
-  isLightweightListItem,
-  sourceCategorySlugFromItem,
-} from '@/lib/list-entry';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { ItemDetailClientSeed } from '@/lib/item-detail-types';
 import type { SimilarItem } from '@/types/items';
 
 interface ItemDetailClientProps {
-  item: {
-    id: string;
-    title: string;
-    catalogItemId?: string | null;
-    metadata: Record<string, unknown> | null;
-    voteCount: number | null;
-    personalSaveCount: number;
-    listRank: number | null;
-    listItemCount: number;
-    lists: {
-      id: string;
-      title: string;
-      slug: string;
-      saveCount: number;
-      categories: {
-        id: string;
-        name: string;
-        slug: string;
-        icon: string;
-        color: string;
-      } | null;
-    };
-  };
+  item: ItemDetailClientSeed;
   metadataSection: ReactNode;
   initialSimilarItems?: SimilarItem[];
 }
@@ -53,11 +30,9 @@ function ItemSidebarPanel({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-2xl border border-wibe/70 bg-wibe-card p-4 shadow-sm ${className}`}
-    >
+    <Card className={`bg-popover p-4 ${className}`}>
       {children}
-    </div>
+    </Card>
   );
 }
 
@@ -83,56 +58,38 @@ export default function ItemDetailClient({
   });
 
   const categoryId = item.lists.categories?.id ?? null;
-  const listCategorySlug = item.lists.categories?.slug ?? null;
-  const itemCategorySlug =
-    sourceCategorySlugFromItem({
-      metadata: item.metadata,
-      catalogItemId: item.catalogItemId,
-    }) ?? listCategorySlug;
-  const isLightweight = isLightweightListItem(item);
   const likeCount = item.voteCount ?? 0;
+  const hasSimilarSeed = Boolean(initialSimilarItems?.length);
 
   const listContextCard = (
     <ItemSidebarPanel>
-      <p className="mb-2 wibe-caption font-medium text-wibe-secondary">در لیست</p>
+      <p className="mb-2 wibe-caption font-medium text-muted-foreground">در لیست</p>
       <Link
         href={`/lists/${item.lists.slug}`}
-        className="group flex items-start gap-3 rounded-xl border border-wibe bg-wibe-surface p-3 transition-colors hover:border-primary/25 hover:bg-primary/5"
+        className="group flex items-start gap-3 rounded-xl border border-border bg-muted p-3 transition-colors hover:border-brand/30 hover:bg-brand/5"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-lg">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-popover text-lg">
           {item.lists.categories?.icon || '📋'}
         </span>
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 wibe-small font-semibold text-foreground group-hover:text-primary">
             {item.lists.title}
           </p>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-wibe-secondary">
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 wibe-caption text-muted-foreground">
             <span>{item.lists.saveCount.toLocaleString('fa-IR')} ذخیره</span>
           </p>
         </div>
-        <ChevronLeft className="mt-1 h-4 w-4 shrink-0 rotate-180 text-wibe-secondary opacity-60" />
+        <ChevronLeft className="mt-1 size-4 shrink-0 text-muted-foreground" />
       </Link>
     </ItemSidebarPanel>
   );
 
   return (
     <main className="pb-2" dir="rtl">
-      {!isLightweight && (
-        <div className="lg:hidden">
-          <ItemDetailTopActions
-            itemId={item.id}
-            likeCount={likeCount}
-            catalogItemId={item.catalogItemId}
-            shareTitle={item.title}
-            variant="bar"
-          />
-        </div>
-      )}
-
-      <div className="relative z-10 mt-3 flex flex-col gap-5 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
-          {isLightweight && (
-            <div className="rounded-2xl bg-wibe-card px-3 py-2.5 shadow-sm ring-1 ring-wibe/80">
+      <div className="relative z-10 mt-3 flex flex-col gap-4 px-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-8 lg:px-0 xl:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
+          {item.isLightweight && (
+            <Card className="bg-popover px-3 py-2.5">
               <ItemDetailTopActions
                 itemId={item.id}
                 likeCount={likeCount}
@@ -140,27 +97,27 @@ export default function ItemDetailClient({
                 shareTitle={item.title}
                 variant="inline"
               />
-            </div>
+            </Card>
           )}
 
           {authStatus === 'unauthenticated' && (
             <Link
               href={loginHref}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-primary/[0.04] px-4 py-3 wibe-small text-foreground transition-colors hover:bg-primary/[0.08] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand/5 px-4 text-sm text-foreground"
             >
               <span>برای ذخیره، پسند و نظر وارد شو</span>
-              <span className="shrink-0 font-semibold text-primary">ورود</span>
+              <span className="shrink-0 font-semibold text-brand">ورود</span>
             </Link>
           )}
 
           {metadataSection}
 
-          <div ref={discoveryRef} className="min-h-[6rem]">
-            {discoveryInView ? (
+          <div ref={discoveryRef} className="min-h-24">
+            {discoveryInView || hasSimilarSeed ? (
               <ItemDiscoverySectionLazy
                 itemId={item.id}
                 categoryId={categoryId}
-                categorySlug={itemCategorySlug}
+                categorySlug={item.itemCategorySlug}
                 fetchEnabled
                 initialSimilarItems={initialSimilarItems}
               />
@@ -171,10 +128,8 @@ export default function ItemDetailClient({
         <aside className="flex flex-col gap-4 lg:sticky lg:top-[6.5rem] lg:self-start">
           <div className="hidden lg:block">{listContextCard}</div>
 
-          <section
-            ref={commentsRef}
-            className="scroll-mt-16 rounded-2xl bg-wibe-card p-4 shadow-sm ring-1 ring-wibe/80 sm:p-5"
-          >
+          <div ref={commentsRef} className="scroll-mt-16">
+          <Card className="bg-popover p-5">
             {commentsInView ? (
               <CommentSectionLazy
                 itemId={item.id}
@@ -184,13 +139,10 @@ export default function ItemDetailClient({
                 fetchEnabled
               />
             ) : (
-              <div className="space-y-3" aria-hidden>
-                <div className="h-5 w-28 animate-pulse rounded-md bg-wibe-surface" />
-                <div className="h-24 animate-pulse rounded-2xl bg-wibe-surface" />
-                <div className="h-20 animate-pulse rounded-2xl bg-wibe-surface" />
-              </div>
+              <Skeleton className="min-h-32 w-full rounded-xl" />
             )}
-          </section>
+          </Card>
+          </div>
         </aside>
       </div>
     </main>

@@ -1,7 +1,34 @@
-/** User Intelligence Panel 3.0 – types */
+/** User Intelligence Panel 3.0 – types + client-safe constants (no Prisma) */
+
+import type { UserFilterKind } from '@/lib/admin/user-filter-utils';
 
 export type UserQualityBadge = 'high_impact' | 'stable' | 'low_engagement';
 export type UserRiskLevel = 'clean' | 'spike' | 'bot_risk';
+
+export type UserSortKind =
+  | 'created_desc'
+  | 'created_asc'
+  | 'growth_desc'
+  | 'growth_asc'
+  | 'bookmarks_desc'
+  | 'lists_desc'
+  | 'curator_desc';
+
+export const USER_SORT_OPTIONS: { value: UserSortKind; label: string }[] = [
+  { value: 'created_desc', label: 'جدیدترین عضویت' },
+  { value: 'created_asc', label: 'قدیمی‌ترین عضویت' },
+  { value: 'growth_desc', label: 'بیشترین رشد ۷ روزه' },
+  { value: 'growth_asc', label: 'کمترین رشد ۷ روزه' },
+  { value: 'bookmarks_desc', label: 'بیشترین ذخیره' },
+  { value: 'lists_desc', label: 'بیشترین لیست' },
+  { value: 'curator_desc', label: 'امتیاز کیوریتور' },
+];
+
+export function parseUserSort(value: string | undefined): UserSortKind {
+  const valid = new Set(USER_SORT_OPTIONS.map((o) => o.value));
+  if (value && valid.has(value as UserSortKind)) return value as UserSortKind;
+  return 'created_desc';
+}
 
 export interface UserPulseSummary {
   activeUsers7d: number;
@@ -42,6 +69,29 @@ export interface UserIntelligenceRow {
   commentStatus?: import('@/lib/comment-permission').CommentPermissionStatus;
   isBot: boolean;
 }
+
+export type UsersIntelligenceQuery = {
+  page: number;
+  search: string;
+  filter: UserFilterKind;
+  hideBots: boolean;
+  sort: UserSortKind;
+  trash?: boolean;
+};
+
+export type UsersIntelligenceData = {
+  pulse: UserPulseSummary;
+  users: UserIntelligenceRow[];
+  filterCounts: Record<UserFilterKind, number>;
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
+  filter: UserFilterKind;
+  sort: UserSortKind;
+  search: string;
+  hideBots: boolean;
+};
 
 export const USER_GROWTH_7D_LABEL = 'رشد ۷ روزه';
 

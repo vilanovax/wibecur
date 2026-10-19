@@ -1,11 +1,16 @@
 /**
  * Admin Dashboard 3.0 – Server-side data fetcher
- * Blends real DB data with mock for missing metrics
+ *
+ * Performance notes (vercel-react-best-practices):
+ * - All independent DB work runs in one Promise.all (async-parallel)
+ * - Aggregates combined to avoid sequential waterfalls
+ * - Unused / below-fold queries removed (curators, userGrowth, duplicate topLists)
+ * - Lean moderation snapshot skips violations hub
  */
 
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { getCommentsHubStats } from './comments-hub-stats';
+import { getDashboardModerationSnapshot } from './dashboard-moderation';
 import { getDashboardPeriod, type DashboardRange } from './dashboard-range';
 import type {
   DashboardData,
@@ -13,7 +18,6 @@ import type {
   SystemPulseCard,
   TrendingRadarRow,
   CategoryIntelligenceCard,
-  CuratorIntelligenceRow,
   RiskItem,
   ActionQueueItem,
   ActivityEvent,
@@ -37,11 +41,6 @@ function dedupeDashboardActivities(events: ActivityEvent[]): ActivityEvent[] {
   );
 }
 
-const persianMonths = [
-  'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-  'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند',
-];
-
 export async function getDashboardData(
   rangeInput: DashboardRange = 'today'
 ): Promise<DashboardData> {
@@ -50,10 +49,11 @@ export async function getDashboardData(
     prevPeriodStart,
     prevPeriodEnd,
     periodLabel,
-    bookmarkWindowStart,
     last7d,
     last24h,
   } = getDashboardPeriod(rangeInput);
+
+  const prev7dStart = new Date(last7d.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const [
     userCount,
@@ -65,19 +65,15 @@ export async function getDashboardData(
     prevPeriodLists,
     periodBookmarks,
     prevPeriodBookmarks,
-    commentsHub,
+    commentsModeration,
     pendingSuggestedLists,
     recentSuggestedPreviews,
     recentCommentReports,
     recentItemReports,
-    topCuratorsDb,
-    topListsDb,
     categoriesWithCount,
-    userGrowth,
     recentLists,
     recentItems,
-    listsWithViews,
-    bookmarks7d,
+    listTotals,
     bookmarks24hByList,
     bookmarks7dByList,
     bookmarksPrev7dByList,
@@ -87,7 +83,9 @@ export async function getDashboardData(
     dbQuery(() => prisma.users.count()),
     dbQuery(() => prisma.lists.count({ where: { isActive: true } })),
     dbQuery(() => prisma.items.count({ where: { deletedAt: null } })),
-    dbQuery(() => prisma.users.count({ where: { createdAt: { gte: periodStart } } })),
+    dbQuery(() =>
+      prisma.users.count({ where: { createdAt: { gte: periodStart } } })
+    ),
     dbQuery(() =>
       prisma.users.count({
         where: {
@@ -95,7 +93,9 @@ export async function getDashboardData(
         },
       })
     ),
-    dbQuery(() => prisma.lists.count({ where: { createdAt: { gte: periodStart } } })),
+    dbQuery(() =>
+      prisma.lists.count({ where: { createdAt: { gte: periodStart } } })
+    ),
     dbQuery(() =>
       prisma.lists.count({
         where: {
@@ -113,9 +113,9 @@ export async function getDashboardData(
         },
       })
     ),
-    dbQuery(() => getCommentsHubStats()),
+    getDashboardModerationSnapshot(),
     dbQuery(() =>
-      prisma.suggested_lists.count({ where: { status: 'pending' } }),
+      prisma.suggested_lists.count({ where: { status: 'pending' } })
     ),
     dbQuery(() =>
       prisma.suggested_lists.findMany({
@@ -148,39 +148,6 @@ export async function getDashboardData(
       })
     ),
     dbQuery(() =>
-      prisma.users.findMany({
-        where: {
-          lists: { some: { isActive: true } },
-          OR: [{ curatorScore: { gt: 0 } }, { lists: { some: {} } }],
-        },
-        orderBy: [{ curatorScore: 'desc' }, { createdAt: 'desc' }],
-        take: 5,
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          image: true,
-          curatorScore: true,
-          _count: { select: { lists: true } },
-        },
-      })
-    ),
-    dbQuery(() =>
-      prisma.lists.findMany({
-        where: { isActive: true, isPublic: true },
-        orderBy: { saveCount: 'desc' },
-        take: 5,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          saveCount: true,
-          viewCount: true,
-          categories: { select: { name: true } },
-        },
-      })
-    ),
-    dbQuery(() =>
       prisma.categories.findMany({
         where: { isActive: true },
         select: {
@@ -193,24 +160,6 @@ export async function getDashboardData(
         orderBy: { order: 'asc' },
       })
     ),
-    dbQuery(async () => {
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      const users = await prisma.users.findMany({
-        where: { createdAt: { gte: sixMonthsAgo } },
-        select: { createdAt: true },
-      });
-      const monthCounts: Record<number, number> = {};
-      users.forEach((u) => {
-        const m = new Date(u.createdAt).getMonth();
-        monthCounts[m] = (monthCounts[m] || 0) + 1;
-      });
-      const cur = new Date().getMonth();
-      return Array.from({ length: 6 }, (_, i) => {
-        const idx = (cur - 5 + i + 12) % 12;
-        return { month: persianMonths[idx], users: monthCounts[idx] || 0 };
-      });
-    }),
     dbQuery(() =>
       prisma.lists.findMany({
         take: 3,
@@ -222,16 +171,21 @@ export async function getDashboardData(
       prisma.items.findMany({
         take: 2,
         orderBy: { createdAt: 'desc' },
-        select: { id: true, title: true, lists: { select: { slug: true } }, createdAt: true },
+        select: {
+          id: true,
+          title: true,
+          lists: { select: { slug: true } },
+          createdAt: true,
+        },
       })
     ),
+    // Combined aggregate — avoids sequential waterfall after Promise.all
     dbQuery(() =>
       prisma.lists.aggregate({
         where: { isActive: true },
-        _sum: { viewCount: true },
+        _sum: { viewCount: true, saveCount: true },
       })
     ),
-    dbQuery(() => prisma.bookmarks.count({ where: { createdAt: { gte: last7d } } })),
     dbQuery(() =>
       prisma.bookmarks.groupBy({
         by: ['listId'],
@@ -246,14 +200,13 @@ export async function getDashboardData(
         _count: true,
       })
     ),
-    dbQuery(() => {
-      const prev7dStart = new Date(last7d.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return prisma.bookmarks.groupBy({
+    dbQuery(() =>
+      prisma.bookmarks.groupBy({
         by: ['listId'],
         where: { createdAt: { gte: prev7dStart, lt: last7d } },
         _count: true,
-      });
-    }),
+      })
+    ),
     dbQuery(() =>
       prisma.lists.findMany({
         where: { isActive: true, isPublic: true },
@@ -280,37 +233,25 @@ export async function getDashboardData(
     ),
   ]);
 
-  const totalViews = listsWithViews._sum.viewCount ?? 0;
-  const totalSaves = await dbQuery(() =>
-    prisma.lists.aggregate({ where: { isActive: true }, _sum: { saveCount: true } })
-  ).then((r) => r._sum.saveCount ?? 0);
-  const saveRate = totalViews > 0 ? ((totalSaves / totalViews) * 100).toFixed(1) : '۰';
-  const pendingItemReports = commentsHub.itemReportsOpen;
-  const pendingCommentReports = commentsHub.commentReports.open;
-
-  const commentsModeration = {
-    pending: commentsHub.comments.pending,
-    flagged: commentsHub.comments.flagged,
-    reported: commentsHub.comments.reported,
-    filtered: commentsHub.filteredComments,
-    approved: commentsHub.comments.approved,
-    unresolvedCommentReports: commentsHub.commentReports.open,
-    unresolvedItemReports: commentsHub.itemReportsOpen,
-    totalCommentReports: commentsHub.commentReports.total,
-  };
+  const totalViews = listTotals._sum.viewCount ?? 0;
+  const totalSaves = listTotals._sum.saveCount ?? 0;
+  const saveRate =
+    totalViews > 0 ? ((totalSaves / totalViews) * 100).toFixed(1) : '۰';
+  const pendingItemReports = commentsModeration.unresolvedItemReports;
+  const pendingCommentReports = commentsModeration.unresolvedCommentReports;
 
   const delta = (curr: number, prev: number) =>
     prev > 0 ? Math.round(((curr - prev) / prev) * 100) : curr > 0 ? 100 : 0;
 
   const actionQueue: ActionQueueItem[] = [
-    ...(commentsHub.comments.pending > 0
+    ...(commentsModeration.pending > 0
       ? [
           {
             id: 'action-comments-pending',
             label: 'کامنت در انتظار',
-            count: commentsHub.comments.pending,
+            count: commentsModeration.pending,
             href: '/admin/comments/all?filter=pending',
-            severity: (commentsHub.comments.pending > 3 ? 'high' : 'medium') as
+            severity: (commentsModeration.pending > 3 ? 'high' : 'medium') as
               | 'high'
               | 'medium',
           },
@@ -412,7 +353,8 @@ export async function getDashboardData(
     0
   );
 
-  const topLists = topListsDb.map((l) => ({
+  // Derive top lists from trending query — removes duplicate findMany
+  const topLists = trendingListsDb.slice(0, 5).map((l) => ({
     id: l.id,
     title: l.title,
     slug: l.slug,
@@ -427,19 +369,12 @@ export async function getDashboardData(
     name: c.name,
     slug: c.slug,
     listCount: c._count.lists,
-    sharePercent: totalListCount > 0 ? Math.round((c._count.lists / totalListCount) * 100) : 0,
+    sharePercent:
+      totalListCount > 0
+        ? Math.round((c._count.lists / totalListCount) * 100)
+        : 0,
     delta: 0,
   }));
-
-  const listsByCategory = categoriesWithCount
-    .map((c) => ({ category: c.name, count: c._count.lists }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-
-  const itemDistribution = [
-    { name: 'فعال', value: 85, color: '#10B981' },
-    { name: 'غیرفعال', value: 15, color: '#EF4444' },
-  ];
 
   const activities = [
     ...recentCommentReports.map((r) => ({
@@ -478,13 +413,17 @@ export async function getDashboardData(
       timestamp: i.createdAt,
       href: i.lists ? `/lists/${i.lists.slug}` : undefined,
     })),
-  ]
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
   const dedupedActivities = dedupeDashboardActivities(activities).slice(0, 12);
 
-  const count24hByList = new Map(bookmarks24hByList.map((b) => [b.listId, b._count]));
-  const count7dByList = new Map(bookmarks7dByList.map((b) => [b.listId, b._count]));
+  // O(1) lookups for trending scores (js-index-maps / js-set-map-lookups)
+  const count24hByList = new Map(
+    bookmarks24hByList.map((b) => [b.listId, b._count])
+  );
+  const count7dByList = new Map(
+    bookmarks7dByList.map((b) => [b.listId, b._count])
+  );
   const countPrev7dByList = new Map(
     bookmarksPrev7dByList.map((b) => [b.listId, b._count])
   );
@@ -494,7 +433,8 @@ export async function getDashboardData(
       id: 'trending_momentum',
       label: 'شاخص ترند',
       value: trendingListsDb.length,
-      deltaPercent: listCount > 0 ? Math.round((activeLists7d / listCount) * 100) : 0,
+      deltaPercent:
+        listCount > 0 ? Math.round((activeLists7d / listCount) * 100) : 0,
       trend: 'up',
       sparkline: [3, 5, 4, 6, trendingListsDb.length].slice(0, 5),
       semanticColor: 'blue',
@@ -503,12 +443,22 @@ export async function getDashboardData(
     {
       id: 'active_lists_ratio',
       label: 'لیست‌های فعال ۷ روز',
-      value: listCount > 0 ? `${Math.round((activeLists7d / listCount) * 100)}٪` : '۰٪',
+      value:
+        listCount > 0
+          ? `${Math.round((activeLists7d / listCount) * 100)}٪`
+          : '۰٪',
       deltaPercent: activeLists7d,
       trend: activeLists7d > 0 ? 'up' : 'neutral',
-      sparkline: [40, 50, 55, 60, Math.round((activeLists7d / Math.max(1, listCount)) * 100)],
+      sparkline: [
+        40,
+        50,
+        55,
+        60,
+        Math.round((activeLists7d / Math.max(1, listCount)) * 100),
+      ],
       semanticColor: 'amber',
-      tooltip: 'سهم لیست‌هایی که در ۷ روز اخیر حداقل یک ذخیره داشته‌اند.',
+      tooltip:
+        'سهم لیست‌هایی که در ۷ روز اخیر حداقل یک ذخیره داشته‌اند.',
     },
   ];
 
@@ -563,63 +513,52 @@ export async function getDashboardData(
     کتاب: '#F59E0B',
     پادکست: '#EC4899',
   };
-  const categoryIntelligence: CategoryIntelligenceCard[] = categoriesWithCount.slice(0, 4).map((c) => {
-    const topInCategory = trendingListsDb.find((l) => l.categoryId === c.id);
-    const saves7dCat = topInCategory ? count7dByList.get(topInCategory.id) ?? 0 : 0;
-    const growth = topInCategory ? (topInCategory.saveCount > 0 ? Math.min(50, Math.round((saves7dCat / Math.max(1, topInCategory.saveCount)) * 100)) : 0) : 0;
-    return {
-      id: c.id,
-      name: c.name,
-      slug: c.slug,
-      saveGrowthPercent: growth,
-      newListsCount: c._count.lists,
-      engagementRatio: totalListCount > 0 ? (c._count.lists / totalListCount) * 100 : 0,
-      topRisingList: topInCategory
-        ? {
-            id: topInCategory.id,
-            title: topInCategory.title,
-            slug: topInCategory.slug,
-            growthPercent: growth,
-          }
-        : undefined,
-      accentColor: categoryAccentColors[c.name] ?? '#6B7280',
-    };
-  });
-
-  const curatorIntelligence: CuratorIntelligenceRow[] = topCuratorsDb.map((c, i) => {
-    const listsCount = c._count.lists;
-    const score = c.curatorScore ?? 0;
-    const growthPercent = Math.min(
-      99,
-      Math.round(score * 12 + listsCount * 4)
-    );
-    const trustBadge: CuratorIntelligenceRow['trustBadge'] =
-      score >= 5 || listsCount >= 5
-        ? 'high_growth'
-        : listsCount >= 1 || score >= 1
-          ? 'stable'
-          : 'risky';
-    return {
-      id: c.id,
-      name: c.name ?? 'بدون نام',
-      username: c.username,
-      avatarUrl: c.image,
-      growthPercent,
-      avgSavesPerList: listsCount > 0 ? Math.max(1, Math.round(score * 2)) : 0,
-      trustBadge,
-      rank: i + 1,
-    };
-  });
+  const categoryIntelligence: CategoryIntelligenceCard[] = categoriesWithCount
+    .slice(0, 4)
+    .map((c) => {
+      const topInCategory = trendingListsDb.find((l) => l.categoryId === c.id);
+      const saves7dCat = topInCategory
+        ? (count7dByList.get(topInCategory.id) ?? 0)
+        : 0;
+      const growth = topInCategory
+        ? topInCategory.saveCount > 0
+          ? Math.min(
+              50,
+              Math.round(
+                (saves7dCat / Math.max(1, topInCategory.saveCount)) * 100
+              )
+            )
+          : 0
+        : 0;
+      return {
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        saveGrowthPercent: growth,
+        newListsCount: c._count.lists,
+        engagementRatio:
+          totalListCount > 0 ? (c._count.lists / totalListCount) * 100 : 0,
+        topRisingList: topInCategory
+          ? {
+              id: topInCategory.id,
+              title: topInCategory.title,
+              slug: topInCategory.slug,
+              growthPercent: growth,
+            }
+          : undefined,
+        accentColor: categoryAccentColors[c.name] ?? '#6B7280',
+      };
+    });
 
   const riskAlerts: RiskItem[] = [
-    ...(commentsHub.comments.pending > 0
+    ...(commentsModeration.pending > 0
       ? [
           {
             id: 'comments-pending',
             type: 'flagged_list' as const,
             label: 'کامنت در انتظار تایید',
-            count: commentsHub.comments.pending,
-            severity: (commentsHub.comments.pending > 3 ? 'high' : 'medium') as
+            count: commentsModeration.pending,
+            severity: (commentsModeration.pending > 3 ? 'high' : 'medium') as
               | 'high'
               | 'medium',
             href: '/admin/comments/all?filter=pending',
@@ -633,7 +572,9 @@ export async function getDashboardData(
             type: 'flagged_list' as const,
             label: 'ریپورت آیتم‌ها',
             count: pendingItemReports,
-            severity: (pendingItemReports > 2 ? 'high' : 'medium') as 'high' | 'medium',
+            severity: (pendingItemReports > 2 ? 'high' : 'medium') as
+              | 'high'
+              | 'medium',
             href: '/admin/comments/item-reports?resolved=false',
           },
         ]
@@ -652,13 +593,13 @@ export async function getDashboardData(
           },
         ]
       : []),
-    ...(commentsHub.filteredComments > 0
+    ...(commentsModeration.filtered > 0
       ? [
           {
             id: 'filtered-comments',
             type: 'anomaly' as const,
             label: 'کلمات فیلترشده',
-            count: commentsHub.filteredComments,
+            count: commentsModeration.filtered,
             severity: 'low' as const,
             href: '/admin/comments/all?filter=filtered',
           },
@@ -709,28 +650,16 @@ export async function getDashboardData(
     ],
     topLists,
     topCategories,
-    topCurators: curatorIntelligence.map((c) => ({
-      id: c.id,
-      name: c.name,
-      username: c.username,
-      followers: 0,
-      saves: c.avgSavesPerList * 5,
-      growthPercent: c.growthPercent,
-      reliability:
-        c.trustBadge === 'high_growth'
-          ? 'high'
-          : c.trustBadge === 'stable'
-            ? 'medium'
-            : 'low',
-    })),
+    // Legacy fields kept empty — not rendered by current dashboard UI
+    topCurators: [],
     activities: dedupedActivities,
-    userGrowthData: userGrowth,
-    listsByCategory,
-    itemDistribution,
+    userGrowthData: [],
+    listsByCategory: [],
+    itemDistribution: [],
     systemPulse,
     trendingRadar,
     categoryIntelligence,
-    curatorIntelligence,
+    curatorIntelligence: [],
     riskAlerts,
     commentsModeration,
     range: rangeInput,

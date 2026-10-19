@@ -15,10 +15,10 @@ export default function HeaderSearchButton({ className = '' }: HeaderSearchButto
     <button
       type="button"
       onClick={() => search.openSearch()}
-      className={`flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors hover:bg-gray-200 active:scale-[0.98] ${className}`}
+      className={`flex h-10 w-10 items-center justify-center rounded-full bg-wibe-surface transition-colors hover:bg-wibe-surface active:scale-[0.98] ${className}`}
       aria-label="جستجو"
     >
-      <Search className="h-5 w-5 text-gray-600" />
+      <Search className="h-5 w-5 text-wibe-secondary" />
     </button>
   );
 }

@@ -2,9 +2,8 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
-import { Eye, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { Eye, CheckCircle, XCircle } from 'lucide-react';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentStatusBadge from './CommentStatusBadge';
 import UserAvatar from '@/components/shared/UserAvatar';
 import { UserPenaltyBadge } from './UserPenaltyBadge';
@@ -52,9 +51,8 @@ interface CommentRowProps {
   approvingId: string | null;
   rejectingId: string | null;
   filterBadWords?: (text: string) => string;
+  hideMetaColumns?: boolean;
 }
-
-const TRUNCATE_LEN = 60;
 
 function CommentRow({
   comment,
@@ -68,18 +66,18 @@ function CommentRow({
   approvingId,
   rejectingId,
   filterBadWords,
+  hideMetaColumns = false,
 }: CommentRowProps) {
   const isReported = comment._count.comment_reports > 0;
   const isBadWords = comment.isFiltered;
-  const riskReported = isReported;
-  const riskBadWords = isBadWords && !riskReported;
 
   const rowClass = [
-    'border-b border-slate-100 dark:border-gray-700 transition-colors',
-    isActive && 'bg-indigo-50/80 dark:bg-indigo-900/20 ring-1 ring-inset ring-indigo-200',
-    comment.isSeeded && 'bg-violet-50/50 dark:bg-violet-900/10',
-    riskReported && 'border-r-4 border-r-rose-500 bg-rose-50/60 dark:bg-rose-900/20',
-    riskBadWords && !riskReported && 'border-r-4 border-r-amber-500 bg-amber-50/60 dark:bg-amber-900/20',
+    'border-b border-[var(--color-border-muted)] transition-colors duration-150',
+    isActive &&
+      'bg-[var(--primary)]/[0.07] shadow-[inset_3px_0_0_0_var(--primary)]',
+    !isActive && comment.isSeeded && 'bg-violet-50/40',
+    !isActive && isReported && 'bg-rose-50/50',
+    !isActive && isBadWords && !isReported && 'bg-amber-50/45',
   ]
     .filter(Boolean)
     .join(' ');
@@ -87,12 +85,8 @@ function CommentRow({
   const displayContent = filterBadWords
     ? filterBadWords(comment.content)
     : comment.content;
-  const truncated =
-    displayContent.length > TRUNCATE_LEN
-      ? displayContent.slice(0, TRUNCATE_LEN) + '…'
-      : displayContent;
 
-  const isPending = approvingId === comment.id || rejectingId === comment.id;
+  const isBusy = approvingId === comment.id || rejectingId === comment.id;
 
   const handleRowClick = () => {
     if (onRowClick) onRowClick(comment);
@@ -100,32 +94,36 @@ function CommentRow({
 
   return (
     <tr
-      className={`hover:bg-slate-50/80 ${rowClass} ${onRowClick ? 'cursor-pointer' : ''}`}
-      style={{ direction: 'rtl' }}
+      className={`group hover:bg-[var(--color-bg)]/80 ${rowClass} ${
+        onRowClick ? 'cursor-pointer' : ''
+      }`}
+      dir="rtl"
       onClick={onRowClick ? handleRowClick : undefined}
+      aria-selected={isActive}
     >
-      <td className="px-4 py-3 w-10">
+      <td className="px-2.5 py-2 w-9 align-middle">
         {!comment.deletedAt && (
           <input
             type="checkbox"
             checked={isSelected}
             onChange={() => onToggleSelect(comment.id)}
             onClick={(e) => e.stopPropagation()}
-            className="rounded border-slate-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500"
+            aria-label={`انتخاب کامنت ${comment.users.name || comment.users.email}`}
+            className="rounded border-[var(--color-border)] text-[var(--primary)] focus:ring-[var(--primary)]"
           />
         )}
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
+      <td className="px-2.5 py-2 align-middle">
+        <div className="flex items-center gap-2 min-w-0">
           <UserAvatar
             src={comment.users.image}
             name={comment.users.name}
             email={comment.users.email}
-            size={32}
+            size={hideMetaColumns ? 28 : 26}
           />
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <p className="text-sm font-medium text-[var(--color-text)] truncate">
                 {comment.users.name || 'بدون نام'}
               </p>
               {comment.userModeration && (
@@ -136,90 +134,111 @@ function CommentRow({
                 />
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] truncate">{comment.users.email}</p>
+            <p className="text-xs text-[var(--color-text-muted)] truncate">
+              {comment.users.email}
+            </p>
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 max-w-[220px]">
-        <span
-          title={displayContent}
-          className="text-sm text-slate-700 dark:text-gray-200 line-clamp-1 cursor-default"
-        >
-          {truncated}
-        </span>
+      <td className="px-2.5 py-2 align-middle">
+        <div className="flex items-start gap-2 min-w-0">
+          <p
+            title={displayContent}
+            className="text-sm text-[var(--color-text)] line-clamp-2 leading-snug flex-1 min-w-0"
+          >
+            {displayContent}
+          </p>
+          {(isReported || isBadWords || comment.isSeeded) && (
+            <div className="flex flex-col gap-0.5 shrink-0">
+              {isReported && (
+                <span className="text-xs font-medium text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                  ریپورت
+                </span>
+              )}
+              {isBadWords && (
+                <span className="text-xs font-medium text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                  کلمه بد
+                </span>
+              )}
+              {comment.isSeeded && (
+                <span
+                  className="text-xs font-medium text-violet-700 bg-violet-100 px-1.5 py-0.5 rounded-md whitespace-nowrap"
+                  title={comment.seedCampaign?.title ?? 'کامنت ساختگی'}
+                >
+                  ساختگی
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-2.5 py-2 align-middle">
         <Link
           href={`/admin/items?id=${comment.items.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate block max-w-[140px]"
+          className="text-sm text-[var(--primary)] hover:underline truncate block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35 rounded"
+          title={comment.items.title}
         >
           {comment.items.title}
         </Link>
+        {hideMetaColumns && (
+          <p className="text-xs text-[var(--color-text-muted)] tabular-nums mt-0.5">
+            {formatRelativeTime(comment.createdAt)}
+          </p>
+        )}
       </td>
-      <td className="px-4 py-3 text-sm text-slate-500 dark:text-[var(--color-text-subtle)] whitespace-nowrap">
-        {formatDistanceToNow(new Date(comment.createdAt), {
-          addSuffix: true,
-          locale: faIR,
-        })}
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <CommentStatusBadge
-            isApproved={comment.isApproved}
-            isFiltered={comment.isFiltered}
-            reportsCount={comment._count.comment_reports}
-            deletedAt={comment.deletedAt}
-          />
-          {comment.isSeeded && (
-            <span
-              className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700"
-              title={comment.seedCampaign?.title ?? 'کامنت ساختگی'}
+      {!hideMetaColumns && (
+        <>
+          <td className="px-2.5 py-2 text-xs text-[var(--color-text-muted)] whitespace-nowrap tabular-nums align-middle">
+            {formatRelativeTime(comment.createdAt)}
+          </td>
+          <td className="px-2.5 py-2 align-middle">
+            <CommentStatusBadge
+              isApproved={comment.isApproved}
+              isFiltered={comment.isFiltered}
+              reportsCount={comment._count.comment_reports}
+              deletedAt={comment.deletedAt}
+            />
+          </td>
+          <td className="px-2.5 py-2 align-middle">
+            <div
+              className="flex items-center gap-0.5 opacity-70 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
             >
-              ساختگی
-            </span>
-          )}
-          {comment.isSeeded && comment.seedCampaign?.title && (
-            <span className="inline-flex max-w-[100px] truncate rounded-full bg-violet-50 px-2 py-0.5 text-[10px] text-violet-600">
-              {comment.seedCampaign.title}
-            </span>
-          )}
-        </div>
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => onView(comment)}
-            className="p-2 rounded-lg text-slate-500 dark:text-[var(--color-text-subtle)] hover:bg-slate-100 hover:text-slate-700"
-            title="مشاهده"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          {!comment.deletedAt && (
-            <>
               <button
                 type="button"
-                onClick={() => onApprove(comment.id)}
-                disabled={isPending || comment.isApproved}
-                className="p-2 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="تایید"
+                onClick={() => onView(comment)}
+                className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+                title="جزئیات"
               >
-                <CheckCircle className="w-4 h-4" />
+                <Eye className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                onClick={() => onReject(comment.id)}
-                disabled={isPending}
-                className="p-2 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="رد"
-              >
-                <XCircle className="w-4 h-4" />
-              </button>
-            </>
-          )}
-        </div>
-      </td>
+              {!comment.deletedAt && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onApprove(comment.id)}
+                    disabled={isBusy || comment.isApproved}
+                    className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/35"
+                    title={comment.isApproved ? 'تایید شده' : 'تایید'}
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onReject(comment.id)}
+                    disabled={isBusy}
+                    className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/35"
+                    title="رد"
+                  >
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
+          </td>
+        </>
+      )}
     </tr>
   );
 }

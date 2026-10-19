@@ -31,7 +31,7 @@ export async function fetchForYouRecommendations(
     params.set('interests', interests.slice(0, 3).join(','));
   }
   const qs = params.toString();
-  const res = await fetch(`/api/lists/home/for-you${qs ? `?${qs}` : ''}`);
+  const res = await fetch(`/api/lists/home/for-you${qs ? `?${qs}` : ''}`, { cache: 'no-store' });
   const json = await res.json();
   if (!json.success || !json.data) {
     return { lists: [], isPersonalized: false };

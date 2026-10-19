@@ -31,7 +31,7 @@ export default async function LeaderboardPage() {
   }
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <Header title="رتبه‌بندی" showBack />
       <LeaderboardClient
         initialList={JSON.parse(JSON.stringify(initialList))}

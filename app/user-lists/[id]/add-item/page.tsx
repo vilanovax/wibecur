@@ -96,7 +96,7 @@ export default async function AddItemPage({
   ]);
 
   return (
-    <div className="bg-wibe-surface">
+    <div className="bg-background">
       <Header
         title={`افزودن به ${list.title}`}
         showBack

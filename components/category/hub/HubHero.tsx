@@ -47,7 +47,7 @@ export default function HubHero({
           {/* ۳ آمار زنده + Social Proof */}
           <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4">
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase tracking-widest text-white/60">
+              <span className="wibe-caption uppercase tracking-widest text-white/60">
                 لیست فعال
               </span>
               <span className="text-xl font-bold text-white tabular-nums">
@@ -55,7 +55,7 @@ export default function HubHero({
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase tracking-widest text-white/60">
+              <span className="wibe-caption uppercase tracking-widest text-white/60">
                 کیوریتور فعال
               </span>
               <span className="text-xl font-bold text-white tabular-nums">
@@ -63,7 +63,7 @@ export default function HubHero({
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase tracking-widest text-white/60">
+              <span className="wibe-caption uppercase tracking-widest text-white/60">
                 ذخیره این هفته
               </span>
               <span className="flex items-center gap-1.5">

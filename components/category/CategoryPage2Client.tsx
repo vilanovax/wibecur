@@ -17,6 +17,8 @@ import { SectionReveal } from './hub';
 import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { SponsoredPlacementPublic } from '@/lib/sponsored-placements';
 import { CategorySectionSkeleton } from './category-section-skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   TrendingListsSectionLazy,
   ViralSpotlightSectionLazy,
@@ -59,7 +61,7 @@ export default function CategoryPage2Client({
 }: CategoryPage2ClientProps) {
   useInterestTracking({ type: 'category_view', categorySlug: slug });
 
-  const { data, isLoading, isFetching, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['category-page', slug],
     queryFn: () => fetchCategoryPageData(slug),
     enabled: !!slug,
@@ -67,19 +69,19 @@ export default function CategoryPage2Client({
     initialDataUpdatedAt: initialData ? Date.now() : undefined,
     staleTime: 3 * 60 * 1000,
     refetchOnMount: initialData ? false : undefined,
+    // SSR slots را با refetch پس‌زمینه عوض نکن — فقط داده‌ی کش را تازه کن.
+    refetchOnWindowFocus: false,
   });
-
-  const isRefetching = isFetching && !isLoading && !!data;
 
   if (isLoading && !data) {
     return (
-      <main className="min-h-[50vh] animate-pulse bg-wibe-surface">
+      <main className="min-h-[50vh] bg-background">
         <div className={CATEGORY_PAGE_SHELL}>
-          <div className="mt-3 aspect-[16/9] rounded-2xl bg-wibe-surface lg:mt-4" />
-          <div className="mt-6 h-6 w-48 rounded bg-wibe-surface" />
+          <Skeleton className="mt-3 aspect-video w-full rounded-xl lg:mt-4" />
+          <Skeleton className="mt-6 h-6 w-48" />
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3/4] rounded-2xl bg-wibe-surface" />
+              <Skeleton key={i} className="aspect-[4/3] w-full rounded-xl" />
             ))}
           </div>
         </div>
@@ -90,7 +92,7 @@ export default function CategoryPage2Client({
   if (error || !data) {
     return (
       <main className="flex min-h-[40vh] flex-col items-center justify-center px-4">
-        <p className="wibe-body text-wibe-secondary">خطا در بارگذاری صفحه دسته</p>
+        <EmptyState title="صفحهٔ دسته بارگذاری نشد" description="یک بار دیگر امتحان کن." />
       </main>
     );
   }
@@ -112,7 +114,6 @@ export default function CategoryPage2Client({
     !isLocationCategorySlug(category.slug) &&
     cityBreakdown.some((c) => c.listCount > 0);
   const showGenreBar = isFilmCategorySlug(category.slug);
-  const itemChipLayout = showGenreBar ? 'poster' : 'tile';
 
   const featuredSpotlight =
     viralSpotlight && viralSpotlight.id !== trendingLists[0]?.id ? viralSpotlight : null;
@@ -130,12 +131,7 @@ export default function CategoryPage2Client({
   );
 
   const newListsClient = (
-    <NewListsSectionLazy
-      inset
-      lists={newLists}
-      categoryName={category.name}
-      categorySlug={category.slug}
-    />
+    <NewListsSectionLazy inset lists={newLists} categoryName={category.name} />
   );
 
   const viralSpotlightClient = featuredSpotlight ? (
@@ -144,22 +140,12 @@ export default function CategoryPage2Client({
 
   const mostSavedItemsClient =
     mostSavedItems.length > 0 ? (
-      <MostSavedItemsCafeLazy
-        items={mostSavedItems}
-        accentColor={accentColor}
-        inset
-        itemLayout={itemChipLayout}
-      />
+      <MostSavedItemsCafeLazy items={mostSavedItems} accentColor={accentColor} inset />
     ) : null;
 
   const latestItemsClient =
     latestItems.length > 0 ? (
-      <LatestItemsSectionLazy
-        items={latestItems}
-        accentColor={accentColor}
-        inset
-        itemLayout={itemChipLayout}
-      />
+      <LatestItemsSectionLazy items={latestItems} accentColor={accentColor} inset />
     ) : null;
 
   const breadcrumbItems = [
@@ -169,7 +155,7 @@ export default function CategoryPage2Client({
   ];
 
   return (
-    <main className="scroll-smooth bg-wibe-surface">
+    <main className="scroll-smooth bg-background">
       <div className={CATEGORY_PAGE_SHELL}>
         <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
         <PageBreadcrumb className="mb-2 mt-3 lg:mb-3" items={breadcrumbItems} />
@@ -187,13 +173,13 @@ export default function CategoryPage2Client({
         )}
 
         <SectionReveal>
-          {isRefetching || !trendingSection ? trendingClient : trendingSection}
+          {!trendingSection ? trendingClient : trendingSection}
         </SectionReveal>
 
         {(featuredSpotlight || viralSpotlightSection) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-              {isRefetching || !viralSpotlightSection
+              {!viralSpotlightSection
                 ? viralSpotlightClient
                 : viralSpotlightSection}
             </HomeDeferredMount>
@@ -215,14 +201,14 @@ export default function CategoryPage2Client({
 
         <SectionReveal defer>
           <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-            {isRefetching || !newListsSection ? newListsClient : newListsSection}
+            {!newListsSection ? newListsClient : newListsSection}
           </HomeDeferredMount>
         </SectionReveal>
 
         {(mostSavedItemsSection || mostSavedItems.length > 0) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-              {isRefetching || !mostSavedItemsSection
+              {!mostSavedItemsSection
                 ? mostSavedItemsClient
                 : mostSavedItemsSection}
             </HomeDeferredMount>
@@ -232,7 +218,7 @@ export default function CategoryPage2Client({
         {(latestItemsSection || latestItems.length > 0) && (
           <SectionReveal defer>
             <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-              {isRefetching || !latestItemsSection ? latestItemsClient : latestItemsSection}
+              {!latestItemsSection ? latestItemsClient : latestItemsSection}
             </HomeDeferredMount>
           </SectionReveal>
         )}

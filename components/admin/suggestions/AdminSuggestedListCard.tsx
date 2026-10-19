@@ -9,8 +9,7 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import Image from 'next/image';
 
 export interface AdminSuggestedListSuggestion {
@@ -53,10 +52,7 @@ export default function AdminSuggestedListCard({
 }: AdminSuggestedListCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const timeAgo = formatDistanceToNow(new Date(suggestion.createdAt), {
-    addSuffix: true,
-    locale: faIR,
-  });
+  const timeAgo = formatRelativeTime(suggestion.createdAt);
   const suggestedBy = suggestion.users?.name || suggestion.users?.email || 'کاربر';
   const statusCfg = STATUS_LABEL[suggestion.status] ?? STATUS_LABEL.pending;
   const isPending = suggestion.status === 'pending';

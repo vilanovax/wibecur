@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
-import { IMAGE_SIZES } from '@/lib/image-sizes';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import type { CuratedList } from '@/types/curated';
+import { Card } from '@/components/ui/card';
 
 interface RisingListsSectionProps {
   lists: CuratedList[];
@@ -31,18 +31,18 @@ export default function RisingListsSection({ lists }: RisingListsSectionProps) {
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="group block overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm transition-[colors,transform] active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md"
+            className="group block"
           >
-            <div className="relative aspect-[4/3] bg-gray-200 lg:aspect-[16/10] lg:max-h-[190px]">
+            <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-[0.99] lg:hover:border-primary/20 lg:hover:shadow-md">
+            <div className="relative aspect-[4/3] bg-wibe-surface lg:aspect-[16/10] lg:max-h-[190px]">
               <ImageWithFallback
                 src={list.coverUrl ?? ''}
                 alt={list.title}
                 className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
                 fallbackIcon="📋"
-                fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-2xl"
-                sizes={IMAGE_SIZES.listGridCard}
+                fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl"
               />
-              <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 wibe-caption font-semibold text-white">
+              <span className="absolute end-2 top-2 rounded-full bg-primary px-2 py-0.5 text-sm font-semibold text-primary-foreground">
                 در حال رشد
               </span>
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
@@ -58,6 +58,7 @@ export default function RisingListsSection({ lists }: RisingListsSectionProps) {
                 />
               </div>
             </div>
+            </Card>
           </Link>
         ))}
       </div>

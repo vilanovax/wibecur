@@ -34,6 +34,7 @@ export function isMaintenanceBypassPath(pathname: string): boolean {
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/api/admin') ||
+    pathname.startsWith('/api/ingest') ||
     pathname.startsWith('/api/auth') ||
     pathname === '/login' ||
     pathname === '/register' ||

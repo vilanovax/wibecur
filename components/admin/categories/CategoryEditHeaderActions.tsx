@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Zap, BarChart3, ExternalLink, Copy } from 'lucide-react';
 import Toast, { type ToastType } from '@/components/shared/Toast';
-import { CATEGORY_BOOST_WEIGHT } from '@/lib/admin/category-intelligence';
+import { CATEGORY_BOOST_WEIGHT } from '@/lib/admin/category-intelligence-shared';
 
 interface CategoryEditHeaderActionsProps {
   categoryId: string;

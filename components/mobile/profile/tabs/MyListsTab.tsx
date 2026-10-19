@@ -1,7 +1,11 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { Plus, RefreshCw, Search } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import SearchInput from '@/components/mobile/search/SearchInput';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UserListRecord, UserListFilter, UserListVisibilityCounts } from '@/lib/user-lists';
 import { LISTS_UPDATED_EVENT } from '@/lib/profile-events';
@@ -17,12 +21,18 @@ export type ListWithCategory = UserListRecord;
 type VisibilityFilter = 'public' | 'private' | 'shared' | null;
 
 const SEARCH_MIN_LISTS = 8;
+/** هایلایت فقط وقتی دست‌کم سه لیست عمومی هست؛ روی موبایل دوتایش دیده می‌شود */
+const TOP_CAROUSEL_MIN = 3;
+const HIGHLIGHT_MOBILE = 2;
+const HIGHLIGHT_DESKTOP = 3;
 
 interface MyListsTabProps {
   userId: string;
   initialLists?: UserListRecord[];
   initialTotal?: number;
   initialVisibilityCounts?: UserListVisibilityCounts;
+  /** Chip count from SSR; full shared lists load only when filter is active */
+  initialSharedCount?: number;
 }
 
 interface MyListsResponse {
@@ -107,25 +117,32 @@ export default function MyListsTab({
   initialLists,
   initialTotal,
   initialVisibilityCounts,
+  initialSharedCount = 0,
 }: MyListsTabProps) {
   const [search, setSearch] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>(null);
   const [selectedList, setSelectedList] = useState<ListWithCategory | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [highlightCount, setHighlightCount] = useState(HIGHLIGHT_MOBILE);
   const queryClient = useQueryClient();
 
   const apiFilter = visibilityFilter === 'shared' ? 'all' : toApiFilter(visibilityFilter);
-  const hasInitial = Boolean(initialLists?.length) && apiFilter === 'all' && visibilityFilter !== 'shared';
+  const hasInitial =
+    Boolean(initialLists?.length) &&
+    apiFilter === 'all' &&
+    visibilityFilter !== 'shared';
 
+  // Full shared rows only when filter is active (chip uses SSR count)
   const { data: sharedData, isLoading: isSharedLoading } = useQuery({
     queryKey: ['user', userId, 'shared-lists'],
     queryFn: fetchSharedLists,
     staleTime: 30_000,
+    enabled: visibilityFilter === 'shared',
   });
 
   const sharedLists = sharedData?.lists ?? [];
-  const sharedCount = sharedData?.total ?? 0;
+  const sharedCount = sharedData?.total ?? initialSharedCount;
 
   const {
     data,
@@ -145,25 +162,35 @@ export default function MyListsTab({
       lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
         : undefined,
-    initialData:
-      hasInitial
-        ? {
-            pages: [
-              {
-                lists: initialLists!,
-                pagination: {
-                  page: 1,
-                  totalPages: Math.ceil((initialTotal ?? initialLists!.length) / 20) || 1,
-                  total: initialTotal ?? initialLists!.length,
-                },
-                counts: initialVisibilityCounts,
+    initialData: hasInitial
+      ? {
+          pages: [
+            {
+              lists: initialLists!,
+              pagination: {
+                page: 1,
+                totalPages:
+                  Math.ceil((initialTotal ?? initialLists!.length) / 20) || 1,
+                total: initialTotal ?? initialLists!.length,
               },
-            ],
-            pageParams: [1],
-          }
-        : undefined,
+              counts: initialVisibilityCounts,
+            },
+          ],
+          pageParams: [1],
+        }
+      : undefined,
+    initialDataUpdatedAt: hasInitial ? Date.now() : undefined,
+    refetchOnMount: hasInitial ? false : undefined,
     staleTime: 30_000,
   });
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const apply = () => setHighlightCount(mq.matches ? HIGHLIGHT_DESKTOP : HIGHLIGHT_MOBILE);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
 
   useEffect(() => {
     const onListsUpdated = () => {
@@ -190,17 +217,30 @@ export default function MyListsTab({
   const publicCount = visibilityCounts.public;
   const personalCount = visibilityCounts.personal;
 
-  const topLists = useMemo(() => {
-    if (lists.length === 0) return [];
-    return pickTopLists(lists, 3);
-  }, [lists]);
+  const rankedTop = useMemo(
+    () => (lists.length === 0 ? [] : pickTopLists(lists, HIGHLIGHT_DESKTOP)),
+    [lists]
+  );
+  const topLists = useMemo(
+    () => rankedTop.slice(0, highlightCount),
+    [rankedTop, highlightCount]
+  );
 
-  const topIds = useMemo(() => new Set(topLists.map((l) => l.id)), [topLists]);
+  const showTopCarousel =
+    rankedTop.length >= TOP_CAROUSEL_MIN &&
+    publicCount >= TOP_CAROUSEL_MIN &&
+    visibilityFilter === null &&
+    !search.trim();
+
+  const topIds = useMemo(
+    () => (showTopCarousel ? new Set(topLists.map((l) => l.id)) : new Set<string>()),
+    [showTopCarousel, topLists]
+  );
 
   const displayLists = useMemo(() => {
-    if (topLists.length === 0) return lists;
+    if (topIds.size === 0) return lists;
     return lists.filter((l) => !topIds.has(l.id));
-  }, [lists, topLists.length, topIds]);
+  }, [lists, topIds]);
 
   const listCountHint = initialTotal ?? lists.length;
 
@@ -248,46 +288,51 @@ export default function MyListsTab({
 
   const visibilityChips =
     publicCount + personalCount + sharedCount > 0 ? (
-      <div className="flex flex-wrap items-center gap-2">
-        <button
+      <>
+        <Button
           type="button"
+          size="sm"
+          variant={visibilityFilter === null ? 'default' : 'outline'}
+          className="h-11 px-2"
+          aria-pressed={visibilityFilter === null}
+          onClick={() => setVisibilityFilter(null)}
+        >
+          <span>همه</span>
+          <span className="tabular-nums">{(publicCount + personalCount).toLocaleString('fa-IR')}</span>
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={visibilityFilter === 'public' ? 'default' : 'outline'}
+          className="h-11 px-2"
           onClick={() => toggleVisibilityFilter('public')}
-          className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-colors ${
-            visibilityFilter === 'public'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'border border-emerald-200 bg-emerald-50/80 text-emerald-800'
-          }`}
         >
           <span>عمومی</span>
-          <span className="tabular-nums opacity-90">{publicCount.toLocaleString('fa-IR')}</span>
-        </button>
-        <button
+          <span className="tabular-nums">{publicCount.toLocaleString('fa-IR')}</span>
+        </Button>
+        <Button
           type="button"
+          size="sm"
+          variant={visibilityFilter === 'private' ? 'default' : 'outline'}
+          className="h-11 px-2"
           onClick={() => toggleVisibilityFilter('private')}
-          className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-colors ${
-            visibilityFilter === 'private'
-              ? 'bg-slate-700 text-white shadow-sm'
-              : 'border border-slate-200 bg-slate-50 text-slate-700'
-          }`}
         >
           <span>شخصی</span>
-          <span className="tabular-nums opacity-90">{personalCount.toLocaleString('fa-IR')}</span>
-        </button>
+          <span className="tabular-nums">{personalCount.toLocaleString('fa-IR')}</span>
+        </Button>
         {sharedCount > 0 && (
-          <button
+          <Button
             type="button"
+            size="sm"
+            variant={visibilityFilter === 'shared' ? 'default' : 'outline'}
+            className="h-11"
             onClick={() => toggleVisibilityFilter('shared')}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 wibe-caption font-semibold transition-colors ${
-              visibilityFilter === 'shared'
-                ? 'bg-violet-600 text-white shadow-sm'
-                : 'border border-violet-200 bg-violet-50/80 text-violet-800'
-            }`}
           >
             <span>مشترک</span>
-            <span className="tabular-nums opacity-90">{sharedCount.toLocaleString('fa-IR')}</span>
-          </button>
+            <span className="tabular-nums">{sharedCount.toLocaleString('fa-IR')}</span>
+          </Button>
         )}
-      </div>
+      </>
     ) : null;
 
   const openCreate = () => {
@@ -311,13 +356,20 @@ export default function MyListsTab({
     refetch();
   };
 
-  const renderListGrid = (items: ListWithCategory[], options?: { hideSettings?: boolean }) => (
-    <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
+  const hidePublicBadge =
+    visibilityFilter === 'public' || visibilityFilter === null || showGroupedSections;
+
+  const renderListGrid = (
+    items: ListWithCategory[],
+    options?: { hideSettings?: boolean; hidePublicBadge?: boolean }
+  ) => (
+    <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:grid-cols-3">
       {items.map((list) => (
         <MyListCardCompact
           key={list.id}
           list={toCardData(list)}
           hideSettings={options?.hideSettings}
+          hidePublicBadge={options?.hidePublicBadge ?? hidePublicBadge}
           onSettingsClick={(e) => handleSettingsClick(e, list)}
         />
       ))}
@@ -326,39 +378,37 @@ export default function MyListsTab({
 
   const createButton = (
     <>
-      <button
+      <Button
         type="button"
+        variant="brand"
+        size="sm"
         onClick={openCreate}
-        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-wibe bg-wibe-card text-primary transition-colors hover:border-primary/30 active:scale-[0.98] lg:hidden"
-        aria-label="ایجاد لیست"
-        title="ایجاد لیست"
+        className="h-11 shrink-0 rounded-xl px-2 lg:hidden"
       >
-        <Plus className="h-4 w-4" />
-      </button>
-      <button
+        <Plus />
+        ساخت لیست
+      </Button>
+      <Button
         type="button"
+        variant="brand"
+        size="lg"
         onClick={() => setShowCreate(true)}
-        className="hidden h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-white wibe-small font-semibold transition-transform hover:bg-primary-dark active:scale-[0.98] lg:inline-flex"
+        className="hidden shrink-0 lg:inline-flex"
       >
-        <Plus className="h-4 w-4" />
+        <Plus />
         ایجاد لیست
-      </button>
+      </Button>
     </>
   );
 
   const searchField =
     listCountHint >= SEARCH_MIN_LISTS ? (
-      <div className="relative">
-        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary" />
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="جستجو در لیست‌ها..."
-          className="h-9 w-full rounded-lg border border-wibe bg-wibe-card pe-3 ps-9 wibe-small text-foreground placeholder:text-wibe-secondary"
-          aria-label="جستجو در لیست‌ها"
-        />
-      </div>
+      <SearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="جستجو در لیست‌ها…"
+        aria-label="جستجو در لیست‌ها"
+      />
     ) : null;
 
   let content: React.ReactNode = null;
@@ -368,7 +418,7 @@ export default function MyListsTab({
       <div className="space-y-3 px-4 lg:px-0">
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-[72px] bg-gray-200 rounded-lg animate-pulse" />
+            <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
         </div>
       </div>
@@ -376,19 +426,16 @@ export default function MyListsTab({
   } else if (isError && lists.length === 0) {
     content = (
       <div className="px-4 lg:px-0">
-        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center">
-          <p className="wibe-small text-red-600">
-            {error instanceof Error ? error.message : 'خطا در بارگذاری لیست‌ها'}
-          </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 text-white wibe-small font-medium"
-          >
-            <RefreshCw className="w-4 h-4" />
-            تلاش مجدد
-          </button>
-        </div>
+        <EmptyState
+          title="لیست‌ها بارگذاری نشد"
+          description={error instanceof Error ? error.message : 'خطا در بارگذاری لیست‌ها'}
+          action={
+            <Button type="button" variant="brand" size="lg" onClick={() => refetch()}>
+              <RefreshCw />
+              تلاش مجدد
+            </Button>
+          }
+        />
       </div>
     );
   } else {
@@ -407,68 +454,62 @@ export default function MyListsTab({
     } else {
       content = (
         <>
-          <div className="space-y-3 px-4 lg:px-0">
-            <div className="rounded-xl border border-wibe/60 bg-wibe-surface/30 p-2.5 space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                {visibilityChips}
+          <div className="space-y-5 px-4 lg:px-0">
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center gap-1">
                 {createButton}
+                {visibilityChips}
               </div>
               {searchField}
             </div>
 
             {isFetching && !isFetchingNextPage && (
-              <p className="wibe-caption text-primary -mt-1 px-0">در حال بروزرسانی...</p>
+              <p className="wibe-caption text-primary -mt-2 px-0">در حال بروزرسانی...</p>
             )}
 
-            {topLists.length > 0 && visibilityFilter !== 'private' && visibilityFilter !== 'shared' && (
-              <MyListsTopCarousel lists={topLists} />
-            )}
+            {showTopCarousel ? <MyListsTopCarousel lists={topLists} /> : null}
 
             {filteredSortedLists.length > 0 && (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {showGroupedSections ? (
                   <>
                     <section>
-                      <div className="mb-2.5 flex items-center justify-between gap-2">
-                        <h2 className="flex items-center gap-1.5 wibe-h3 text-emerald-900">
-                          <span aria-hidden>🌐</span>
-                          لیست‌های عمومی
-                        </h2>
-                        <span className="wibe-caption tabular-nums text-wibe-secondary">
+                      <div className="mb-3 flex items-baseline gap-2">
+                        <h2 className="wibe-h3 text-foreground">لیست‌های عمومی</h2>
+                        <span className="wibe-caption tabular-nums text-muted-foreground">
                           {publicCount.toLocaleString('fa-IR')}
                         </span>
                       </div>
-                      {renderListGrid(publicLists)}
+                      {renderListGrid(publicLists, { hidePublicBadge: true })}
                     </section>
                     <section>
-                      <div className="mb-2.5 flex items-center justify-between gap-2">
-                        <h2 className="flex items-center gap-1.5 wibe-h3 text-slate-800">
-                          <span aria-hidden>🔒</span>
-                          لیست‌های شخصی
-                        </h2>
-                        <span className="wibe-caption tabular-nums text-wibe-secondary">
+                      <div className="mb-3 flex items-baseline gap-2">
+                        <h2 className="wibe-h3 text-foreground">لیست‌های شخصی</h2>
+                        <span className="wibe-caption tabular-nums text-muted-foreground">
                           {personalCount.toLocaleString('fa-IR')}
                         </span>
                       </div>
-                      {renderListGrid(personalLists)}
+                      {renderListGrid(personalLists, { hidePublicBadge: false })}
                     </section>
                   </>
                 ) : (
                   <div>
                     {visibilityFilter === 'public' && (
-                      <h2 className="mb-2.5 wibe-h3 text-emerald-900">لیست‌های عمومی</h2>
+                      <h2 className="mb-3 wibe-h3 text-foreground">لیست‌های عمومی</h2>
                     )}
                     {visibilityFilter === 'private' && (
-                      <h2 className="mb-2.5 wibe-h3 text-slate-800">لیست‌های شخصی</h2>
+                      <h2 className="mb-3 wibe-h3 text-foreground">لیست‌های شخصی</h2>
                     )}
                     {visibilityFilter === 'shared' && (
-                      <h2 className="mb-2.5 wibe-h3 text-violet-900">لیست‌های مشترک با من</h2>
+                      <h2 className="mb-3 wibe-h3 text-foreground">لیست‌های مشترک با من</h2>
                     )}
-                    {!visibilityFilter && topLists.length > 0 && (
-                      <h2 className="mb-2.5 wibe-h3">همه لیست‌ها</h2>
+                    {!visibilityFilter && showTopCarousel && (
+                      <h2 className="mb-3 wibe-h3 text-foreground">همه لیست‌ها</h2>
                     )}
                     {renderListGrid(filteredSortedLists, {
                       hideSettings: visibilityFilter === 'shared',
+                      hidePublicBadge:
+                        visibilityFilter === 'public' || visibilityFilter === null,
                     })}
                   </div>
                 )}
@@ -487,13 +528,13 @@ export default function MyListsTab({
               )}
 
             {search.trim() && filteredSortedLists.length === 0 && displayLists.length > 0 && (
-              <p className="wibe-caption text-wibe-secondary py-4 text-center">
+              <p className="wibe-caption text-muted-foreground py-4 text-center">
                 لیستی با این عنوان پیدا نشد
               </p>
             )}
 
-            {topLists.length > 0 && displayLists.length === 0 && !search.trim() && (
-              <p className="wibe-caption text-wibe-secondary text-center py-2">
+            {showTopCarousel && displayLists.length === 0 && !search.trim() && (
+              <p className="wibe-caption text-muted-foreground text-center py-2">
                 فقط {topLists.length.toLocaleString('fa-IR')} لیست برتر دارید
               </p>
             )}
@@ -502,14 +543,18 @@ export default function MyListsTab({
           {hasMore &&
             visibilityFilter !== 'shared' &&
             !(visibilityFilter === 'private' && filteredSortedLists.length === 0 && !isLoading) && (
-            <button
-              type="button"
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-              className="mx-4 mt-4 w-[calc(100%-2rem)] py-3 rounded-lg border border-wibe bg-wibe-card wibe-small font-semibold text-primary disabled:opacity-50 active:scale-[0.99] transition-transform"
-            >
-              {isFetchingNextPage ? 'در حال بارگذاری...' : 'بارگذاری بیشتر'}
-            </button>
+            <div className="px-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="mt-4 w-full"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? 'در حال بارگذاری…' : 'بارگذاری بیشتر'}
+              </Button>
+            </div>
           )}
         </>
       );

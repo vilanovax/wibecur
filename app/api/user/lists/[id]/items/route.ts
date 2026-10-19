@@ -16,6 +16,56 @@ import {
   denormalizedItemFieldsFromCatalog,
   isCatalogInList,
 } from '@/lib/catalog-items';
+import {
+  fetchUserListItemsPage,
+  LIST_DETAIL_ITEMS_PAGE_SIZE,
+} from '@/lib/list-detail-items';
+
+/** GET /api/user/lists/[id]/items — صفحه‌بندی آیتم‌های لیست شخصی */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    const userId = session?.user
+      ? await resolveSessionUserId(session)
+      : null;
+
+    const { id: listId } = await params;
+    const { searchParams } = new URL(request.url);
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
+    const limit = parseInt(
+      searchParams.get('limit') || String(LIST_DETAIL_ITEMS_PAGE_SIZE),
+      10
+    );
+
+    const result = await fetchUserListItemsPage({
+      listId,
+      userId,
+      offset: Number.isFinite(offset) ? offset : 0,
+      limit: Number.isFinite(limit) ? limit : LIST_DETAIL_ITEMS_PAGE_SIZE,
+    });
+
+    if (!result) {
+      return NextResponse.json(
+        { success: false, error: 'لیست یافت نشد' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, ...result });
+  } catch (error: unknown) {
+    console.error('GET user list items page error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: getClientErrorMessage(error, 'خطا در دریافت آیتم‌ها'),
+      },
+      { status: 500 }
+    );
+  }
+}
 
 // POST /api/user/lists/[id]/items - افزودن آیتم به لیست شخصی
 export async function POST(

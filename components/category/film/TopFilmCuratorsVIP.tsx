@@ -49,9 +49,7 @@ export default function TopFilmCuratorsVIP({
                 src={topCurator.image}
                 alt={topCurator.name || 'کیوریتور'}
                 className="w-20 h-20 rounded-full object-cover ring-2 ring-amber-300"
-                  width={80}
-                  height={80}
-                />
+              />
             ) : (
               <div
                 className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white"
@@ -64,7 +62,7 @@ export default function TopFilmCuratorsVIP({
               🎬
             </span>
           </div>
-          <span className="text-[10px] font-bold text-amber-600 mt-2 px-2 py-0.5 rounded bg-amber-100">
+          <span className="wibe-caption font-bold text-amber-600 mt-2 px-2 py-0.5 rounded bg-amber-100">
             Pro Critic
           </span>
           <span className="font-bold text-foreground text-sm mt-1 truncate max-w-full">
@@ -82,26 +80,24 @@ export default function TopFilmCuratorsVIP({
           <Link
             key={c.id}
             href={c.username ? `/u/${c.username}` : '#'}
-            className="flex-shrink-0 flex flex-col items-center p-4 rounded-2xl bg-white border border-gray-200 shadow-sm min-w-[100px]"
+            className="flex-shrink-0 flex flex-col items-center p-4 rounded-2xl bg-white border border-wibe shadow-sm min-w-[100px]"
           >
             {c.image ? (
               <ImageWithFallback
                 src={c.image}
                 alt={c.name || ''}
                 className="w-14 h-14 rounded-full object-cover"
-                  width={56}
-                  height={56}
-                />
+              />
             ) : (
               <div className="w-14 h-14 rounded-full bg-gray-700 flex items-center justify-center text-lg font-bold text-white">
                 {(c.name || '?')[0]}
               </div>
             )}
-            <span className="text-[10px] text-amber-600 mt-1.5">🎬 Pro</span>
+            <span className="wibe-caption text-amber-600 mt-1.5">🎬 Pro</span>
             <span className="text-xs font-medium text-foreground mt-0.5 truncate max-w-full">
               {c.name || 'کاربر'}
             </span>
-            <span className="text-[10px] text-wibe-secondary mt-0.5">#{i + 2}</span>
+            <span className="wibe-caption text-wibe-secondary mt-0.5">#{i + 2}</span>
           </Link>
         ))}
       </div>

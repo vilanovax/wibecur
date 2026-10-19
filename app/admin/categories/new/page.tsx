@@ -13,7 +13,7 @@ import CategoryFormStepper, {
 } from '@/components/admin/categories/CategoryFormStepper';
 import CategoryFormStickyPreview from '@/components/admin/categories/CategoryFormStickyPreview';
 import type { CategoryLayoutType } from '@/types/category-page';
-import { isValidCategorySlug } from '@/lib/admin/category-intelligence';
+import { isValidCategorySlug } from '@/lib/admin/category-intelligence-shared';
 import { slugifyCategoryName } from '@/lib/admin/category-slug';
 import { useCategorySlugCheck } from '@/hooks/useCategorySlugCheck';
 import Toast from '@/components/shared/Toast';
@@ -31,7 +31,7 @@ export default function NewCategoryPage() {
     name: '',
     slug: '',
     icon: '',
-    color: '#6366F1',
+    color: '#4F46E5',
     accentColor: '',
     heroImage: '',
     layoutType: '' as CategoryLayoutType | '',

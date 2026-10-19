@@ -1,6 +1,7 @@
 'use client';
 
 import type { SearchQueryIntent } from '@/lib/search-keywords';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 
 export type SearchResultTab = 'items' | 'lists';
 
@@ -79,23 +80,14 @@ export default function SearchResultsSummary({
 
   return (
     <div className="space-y-2.5">
-      <p className="wibe-caption leading-relaxed text-wibe-secondary">{summary}</p>
-      <div className="flex gap-1 overflow-x-auto scrollbar-hide">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => onTabChange(tab.id)}
-            className={`h-8 shrink-0 rounded-full px-3.5 wibe-caption font-medium transition-colors active:scale-[0.98] ${
-              activeTab === tab.id
-                ? 'bg-primary text-white'
-                : 'border border-wibe bg-wibe-card text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <p className="wibe-caption leading-relaxed text-muted-foreground">{summary}</p>
+      <SegmentedControl
+        aria-label="نوع نتیجه"
+        size="sm"
+        value={activeTab}
+        onChange={(value) => onTabChange(value as SearchResultTab)}
+        options={TABS.map((tab) => ({ value: tab.id, label: tab.label }))}
+      />
     </div>
   );
 }

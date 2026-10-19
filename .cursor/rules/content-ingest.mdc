@@ -1,0 +1,29 @@
+---
+description: Use when creating a list, adding items to a list, or importing category content. The agent writes JSON and runs the ingest command; it does not insert with Prisma.
+alwaysApply: false
+---
+
+# ورود لیست و آیتم
+
+داده را فقط با JSON و دستور ingest وارد کن. `prisma.lists.create` و `prisma.items.create` ممنوع.
+
+1. `npm run content:models` را بخوان. مدل را از slug دسته بردار، خودت kind ننویس.
+2. `npm run content:categories` را بخوان و فقط slug موجود را بگذار.
+3. فایل را در `content/lists/<slug>.json` بنویس. همین فایل لیست را در آن دسته می‌سازد و آیتم‌ها را هم وارد می‌کند. آیتم‌ها می‌توانند خالی باشند.
+4. اول `npm run content:ingest -- --file … --dry-run`. اگر `ok` نبود، چیزی را بدون dry-run اجرا نکن. `preview` می‌گوید هر آیتم جدید است، در کاتالوگ هست، یا از قبل در همین لیست است.
+5. بعد همان دستور را بدون `--dry-run` بزن. بار دوم باید `created` برابر ۰ باشد.
+
+مدل آیتم را از `kind` در خروجی `content:categories` بردار:
+
+- movie (`movies`): عنوان + لینک IMDb یا `metadata.imdbId`
+- book (`bookspodcast`): عنوان + `metadata.author`
+- cafe (`cafe`): عنوان + `metadata.address` + `metadata.priceRange` یکی از `$` `$$` `$$$` `$$$$`
+- mixed (`lifestyle`، `car`، `khanoadgi`): `entryKind` برابر `tip` یا `fact` یا `link` یا `catalog_ref`
+
+عنوان فارسی، slug لیست لاتین. دستهٔ تازه نساز.
+
+بات کلاد به ریپو دسترسی ندارد. با هدر `Authorization: Bearer` این‌ها را بزند:
+
+- `GET /api/ingest/categories`
+- `GET /api/ingest/models`
+- `POST /api/ingest/lists` با همان JSON و `dryRun`. اول `true`، بعد `false`.

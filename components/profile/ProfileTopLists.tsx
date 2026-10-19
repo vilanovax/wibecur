@@ -41,10 +41,10 @@ export default function ProfileTopLists({ userId }: ProfileTopListsProps) {
   if (isLoading && lists.length === 0) {
     return (
       <section className="mt-6">
-        <div className="h-5 w-32 bg-gray-200 rounded mb-3" />
+        <div className="h-5 w-32 bg-wibe-surface rounded mb-3" />
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-40 w-[72%] max-w-[200px] shrink-0 rounded-lg bg-gray-200 animate-pulse" />
+            <div key={i} className="h-40 w-[72%] max-w-[200px] shrink-0 rounded-lg bg-wibe-surface animate-pulse" />
           ))}
         </div>
       </section>
@@ -64,7 +64,7 @@ export default function ProfileTopLists({ userId }: ProfileTopListsProps) {
               href={`/lists/${list.slug}`}
               className="block w-[72%] max-w-[200px] shrink-0 rounded-lg overflow-hidden border border-wibe bg-wibe-card shadow-sm active:scale-[0.99] transition-transform"
             >
-              <div className="aspect-[4/3] relative overflow-hidden bg-gray-200">
+              <div className="aspect-[4/3] relative overflow-hidden bg-wibe-surface">
                 <ListCoverImage
                   coverImage={list.coverImage}
                   title={list.title}
@@ -72,7 +72,7 @@ export default function ProfileTopLists({ userId }: ProfileTopListsProps) {
                   categorySlug={list.categories?.slug}
                   className="w-full h-full object-cover"
                   fallbackIcon="📋"
-                  fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+                  fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-wibe-surface"
                 />
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent" />
                 <div className="absolute bottom-2 left-2 right-2" dir="rtl">

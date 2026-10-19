@@ -28,12 +28,27 @@ export type FeaturedSlotResult = {
   endAt: Date | null;
 };
 
+const featuredListSelect = {
+  id: true,
+  title: true,
+  slug: true,
+  description: true,
+  coverImage: true,
+  horizontalImage: true,
+  saveCount: true,
+  itemCount: true,
+  likeCount: true,
+  categories: {
+    select: { id: true, name: true, slug: true, icon: true, isActive: true },
+  },
+  users: { select: { id: true, name: true, username: true } },
+} as const;
+
 /**
- * اسلات فعال = startAt <= now و (endAt null یا endAt > now).
- * اگر هیچ اسلات فعالی نبود: آخرین اسلات منقضی‌شده (endAt < now) را برمی‌گرداند و در همان لحظه اگر قبلاً نوتیف نساختیم، برای ادمین‌ها نوتیف می‌سازد.
- * اگر هیچ اسلاتی در تاریخچه نبود: null (caller از fallback isFeatured استفاده کند).
+ * Read-only current featured slot (no admin notification side effects).
+ * Use on public home / cached paths so Data Cache never runs writes.
  */
-export async function getCurrentFeaturedSlot(
+export async function getCurrentFeaturedSlotReadOnly(
   prisma: PrismaClient
 ): Promise<FeaturedSlotResult | null> {
   const now = new Date();
@@ -44,23 +59,7 @@ export async function getCurrentFeaturedSlot(
       OR: [{ endAt: null }, { endAt: { gt: now } }],
     },
     orderBy: { startAt: 'desc' },
-    include: {
-      lists: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          coverImage: true,
-          horizontalImage: true,
-          saveCount: true,
-          itemCount: true,
-          likeCount: true,
-          categories: { select: { id: true, name: true, slug: true, icon: true, isActive: true } },
-          users: { select: { id: true, name: true, username: true } },
-        },
-      },
-    },
+    include: { lists: { select: featuredListSelect } },
   });
 
   if (activeSlot?.lists && isListVisibleInPublicFeed(activeSlot.lists)) {
@@ -76,31 +75,10 @@ export async function getCurrentFeaturedSlot(
   const lastExpiredSlot = await prisma.home_featured_slot.findFirst({
     where: { endAt: { lt: now } },
     orderBy: { endAt: 'desc' },
-    include: {
-      lists: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          coverImage: true,
-          horizontalImage: true,
-          saveCount: true,
-          itemCount: true,
-          likeCount: true,
-          categories: { select: { id: true, name: true, slug: true, icon: true, isActive: true } },
-          users: { select: { id: true, name: true, username: true } },
-        },
-      },
-    },
+    include: { lists: { select: featuredListSelect } },
   });
 
   if (lastExpiredSlot?.lists && isListVisibleInPublicFeed(lastExpiredSlot.lists)) {
-    try {
-      await ensureAdminFeaturedNoNextNotification(prisma, lastExpiredSlot.id);
-    } catch (err) {
-      console.warn('ensureAdminFeaturedNoNextNotification failed:', err);
-    }
     return {
       slotId: lastExpiredSlot.id,
       listId: lastExpiredSlot.listId,
@@ -111,6 +89,33 @@ export async function getCurrentFeaturedSlot(
   }
 
   return null;
+}
+
+/**
+ * اسلات فعال = startAt <= now و (endAt null یا endAt > now).
+ * اگر هیچ اسلات فعالی نبود: آخرین اسلات منقضی‌شده را برمی‌گرداند و در صورت نیاز نوتیف ادمین می‌سازد.
+ * برای صفحهٔ خانه / کش از getCurrentFeaturedSlotReadOnly استفاده کن.
+ */
+export async function getCurrentFeaturedSlot(
+  prisma: PrismaClient
+): Promise<FeaturedSlotResult | null> {
+  const result = await getCurrentFeaturedSlotReadOnly(prisma);
+  if (!result) return null;
+
+  const now = new Date();
+  const isLive =
+    result.startAt <= now &&
+    (result.endAt == null || result.endAt > now);
+  // نوتیف فقط برای fallback اسلات منقضی (وقتی اسلات زنده نیست)
+  if (!isLive) {
+    try {
+      await ensureAdminFeaturedNoNextNotification(prisma, result.slotId);
+    } catch (err) {
+      console.warn('ensureAdminFeaturedNoNextNotification failed:', err);
+    }
+  }
+
+  return result;
 }
 
 /** یک‌بار به ازای هر اسلات منقضی‌شده نوتیف «منتخب بعدی تعیین نشده» برای ADMIN/SUPER_ADMIN */

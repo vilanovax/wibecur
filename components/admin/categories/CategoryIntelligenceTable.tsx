@@ -7,7 +7,7 @@ import type { CategoryIntelligenceRow } from '@/lib/admin/categories-types';
 import {
   formatSaveGrowthDisplay,
   getCategoryBadgeFlags,
-} from '@/lib/admin/category-intelligence';
+} from '@/lib/admin/category-intelligence-shared';
 import { getCategoryLayoutLabel } from '@/lib/admin/category-form-constants';
 import { getDisplayImageUrl } from '@/lib/display-image';
 import CategoryBadges from './CategoryBadges';

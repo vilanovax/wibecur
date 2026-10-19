@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Search,
   Plus,
   Trash2,
   ChevronUp,
@@ -12,6 +11,9 @@ import {
   Check,
   GripVertical,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import Toast from '@/components/shared/Toast';
@@ -47,12 +49,12 @@ interface ProfilePicksEditorSheetProps {
 }
 
 const CHIP_BASE =
-  'flex items-center gap-1.5 h-9 px-3 rounded-full wibe-caption font-medium whitespace-nowrap flex-shrink-0 transition-[colors,transform] active:scale-[0.98]';
+  'flex h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm font-medium';
 
 function categoryChipClass(isSelected: boolean) {
   return isSelected
-    ? `${CHIP_BASE} bg-primary text-white shadow-sm`
-    : `${CHIP_BASE} bg-wibe-surface border border-wibe text-foreground hover:border-primary/30`;
+    ? `${CHIP_BASE} bg-primary text-primary-foreground`
+    : `${CHIP_BASE} border border-border bg-popover text-foreground`;
 }
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
@@ -106,28 +108,27 @@ function PickEditorCard({
   const isBusy = busyId === pick.id;
 
   return (
-    <div className="flex shrink-0 flex-col w-[92px]">
-      <div className="group relative aspect-[2/3] overflow-hidden rounded-xl bg-gray-100 ring-1 ring-black/5">
+    <div className="flex w-24 shrink-0 flex-col">
+      <div className="group relative aspect-[2/3] overflow-hidden rounded-xl bg-muted ring-1 ring-foreground/10">
         {pick.imageUrl ? (
           <ImageWithFallback
             src={pick.imageUrl}
             alt={pick.title}
             className="h-full w-full object-cover"
             fallbackIcon="✨"
-            fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200"
-            sizes="96px"
+            fallbackClassName="flex h-full w-full items-center justify-center bg-muted"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gray-200 text-xl">✨</div>
+          <div className="flex h-full w-full items-center justify-center bg-muted text-xl">✨</div>
         )}
-        <span className="absolute start-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/55 wibe-caption font-bold text-white">
+        <span className="absolute start-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-foreground/55 text-xs font-bold text-background">
           {(idx + 1).toLocaleString('fa-IR')}
         </span>
         <button
           type="button"
           disabled={isBusy}
           onClick={onRemove}
-          className="absolute end-1.5 top-1.5 rounded-full bg-red-500/90 p-1 text-white opacity-0 shadow transition-opacity group-hover:opacity-100 disabled:opacity-50"
+          className="absolute end-1.5 top-1.5 flex size-8 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
           aria-label="حذف"
         >
           <Trash2 className="h-3 w-3" />
@@ -144,21 +145,21 @@ function PickEditorCard({
             onChange={(e) => onNoteDraftChange(e.target.value)}
             maxLength={120}
             placeholder="یادداشت..."
-            className="w-full rounded-md border border-wibe px-1.5 py-1 wibe-caption outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            className="h-11 w-full rounded-field border border-border bg-popover px-2 text-sm outline-none focus:border-brand"
           />
           <div className="flex gap-1">
             <button
               type="button"
               onClick={onSaveNote}
               disabled={isBusy}
-              className="flex-1 rounded bg-primary py-0.5 wibe-caption text-white"
+              className="h-11 flex-1 rounded-control bg-brand text-sm font-semibold text-brand-foreground"
             >
               ذخیره
             </button>
             <button
               type="button"
               onClick={onCancelNote}
-              className="px-1 wibe-caption text-wibe-secondary"
+              className="flex size-11 items-center justify-center text-lg text-muted-foreground"
             >
               ×
             </button>
@@ -168,7 +169,7 @@ function PickEditorCard({
         <button
           type="button"
           onClick={onStartEditNote}
-          className="mt-0.5 line-clamp-1 w-full text-start wibe-caption text-primary/80 hover:text-primary"
+          className="mt-1 line-clamp-1 w-full text-start text-xs text-brand"
         >
           {pick.note || '+ یادداشت'}
         </button>
@@ -178,17 +179,17 @@ function PickEditorCard({
           type="button"
           disabled={idx === 0 || isBusy}
           onClick={() => onReorder('up')}
-          className="rounded p-0.5 text-wibe-secondary hover:bg-gray-100 disabled:opacity-25"
+          className="flex size-11 items-center justify-center rounded-full text-muted-foreground disabled:opacity-25"
           aria-label="جابجایی به چپ"
         >
           <ChevronUp className="h-3.5 w-3.5 rotate-90" />
         </button>
-        <GripVertical className="h-3.5 w-3.5 text-wibe-secondary/40" aria-hidden />
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40" aria-hidden />
         <button
           type="button"
           disabled={idx >= total - 1 || isBusy}
           onClick={() => onReorder('down')}
-          className="rounded p-0.5 text-wibe-secondary hover:bg-gray-100 disabled:opacity-25"
+          className="flex size-11 items-center justify-center rounded-full text-muted-foreground disabled:opacity-25"
           aria-label="جابجایی به راست"
         >
           <ChevronDown className="h-3.5 w-3.5 rotate-90" />
@@ -413,7 +414,7 @@ export default function ProfilePicksEditorSheet({
                   {count > 0 && (
                     <span
                       className={`rounded-full px-1.5 py-0.5 wibe-caption font-bold leading-none ${
-                        selected ? 'bg-white/25 text-white' : 'bg-primary/10 text-primary'
+                        selected ? 'bg-primary-foreground/25 text-primary-foreground' : 'bg-brand/10 text-brand'
                       }`}
                     >
                       {count.toLocaleString('fa-IR')}
@@ -425,19 +426,19 @@ export default function ProfilePicksEditorSheet({
           </div>
 
           {activeCat && (
-            <div className="rounded-xl bg-wibe-surface px-3 py-2.5">
+            <div className="rounded-xl bg-muted px-3 py-2.5">
               <div className="flex items-center justify-between gap-2">
                 <p className="wibe-small font-medium text-foreground">
                   {activeCat.icon} {activeCat.name}
                 </p>
-                <span className="wibe-caption font-semibold text-primary">
+                <span className="text-xs font-semibold text-brand">
                   {shelfPicks.length.toLocaleString('fa-IR')} /{' '}
                   {maxPerCategory.toLocaleString('fa-IR')}
                 </span>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-primary transition-colors duration-300"
+                  className="h-full rounded-full bg-brand transition-colors duration-300"
                   style={{ width: `${fillPercent}%` }}
                 />
               </div>
@@ -447,8 +448,8 @@ export default function ProfilePicksEditorSheet({
           {/* Current picks — horizontal scroll */}
           {shelfPicks.length > 0 ? (
             <div>
-              <p className="mb-2 wibe-caption font-medium text-wibe-secondary">
-                منتخب‌های فعلی — برای حذف روی پوستر hover کن
+              <p className="mb-2 wibe-caption font-medium text-muted-foreground">
+                منتخب‌های فعلی — برای حذف، دکمهٔ گوشهٔ پوستر را بزن
               </p>
               <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide" dir="ltr">
                 <div className="flex gap-2.5" style={{ direction: 'rtl' }}>
@@ -476,8 +477,8 @@ export default function ProfilePicksEditorSheet({
               </div>
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-wibe py-6 text-center">
-              <p className="wibe-small text-wibe-secondary">
+            <div className="rounded-xl border border-dashed border-border py-6 text-center">
+              <p className="wibe-small text-muted-foreground">
                 هنوز {activeCat?.name ?? 'آیتمی'} انتخاب نکردی
               </p>
             </div>
@@ -485,23 +486,22 @@ export default function ProfilePicksEditorSheet({
 
           {/* Search — always visible when slots remain */}
           {canAddMore && (
-            <div className="rounded-xl border border-wibe bg-wibe-card p-3">
+            <Card className="bg-popover p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="wibe-small font-semibold text-foreground">
                   {shelfPicks.length === 0 ? 'انتخاب آیتم' : 'افزودن آیتم'}
                 </p>
-                <span className="wibe-caption text-wibe-secondary">
+                <span className="wibe-caption text-muted-foreground">
                   {maxPerCategory - shelfPicks.length} جای خالی
                 </span>
               </div>
-              <div className="relative mb-3">
-                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary" />
-                <input
+              <div className="mb-3">
+                <Input
                   type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={`جستجو در ${activeCat?.name ?? 'دسته'}...`}
-                  className="w-full rounded-xl border border-wibe bg-wibe-surface py-2.5 pe-3 ps-9 wibe-small outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/15"
+                  className="h-12"
                 />
               </div>
 
@@ -510,7 +510,7 @@ export default function ProfilePicksEditorSheet({
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : browseItems.length === 0 ? (
-                <p className="py-4 text-center wibe-caption text-wibe-secondary">
+                <p className="py-4 text-center wibe-caption text-muted-foreground">
                   {search ? 'نتیجه‌ای یافت نشد' : 'برای جستجو تایپ کن'}
                 </p>
               ) : (
@@ -525,9 +525,9 @@ export default function ProfilePicksEditorSheet({
                           type="button"
                           disabled={isBusy}
                           onClick={() => handleAdd(cid)}
-                          className="flex w-full items-center gap-3 rounded-xl border border-transparent p-2 text-start transition-colors hover:border-primary/20 hover:bg-primary/5 disabled:opacity-50"
+                          className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-transparent p-2 text-start transition-colors hover:border-brand/20 hover:bg-brand/5 disabled:opacity-50"
                         >
-                          <div className="h-11 w-8 shrink-0 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-black/5">
+                          <div className="h-12 w-8 shrink-0 overflow-hidden rounded-lg bg-muted">
                             {item.imageUrl ? (
                               <ImageWithFallback
                                 src={item.imageUrl}
@@ -535,7 +535,6 @@ export default function ProfilePicksEditorSheet({
                                 className="h-full w-full object-cover"
                                 fallbackIcon="✨"
                                 fallbackClassName="flex h-full w-full items-center justify-center text-xs"
-                                sizes="48px"
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center text-xs">✨</div>
@@ -547,7 +546,7 @@ export default function ProfilePicksEditorSheet({
                           {isBusy ? (
                             <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
                           ) : (
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
                               <Plus className="h-4 w-4" />
                             </span>
                           )}
@@ -563,24 +562,20 @@ export default function ProfilePicksEditorSheet({
                   )}
                 </ul>
               )}
-            </div>
+            </Card>
           )}
 
           {!canAddMore && (
-            <p className="rounded-xl bg-emerald-50 px-3 py-2 text-center wibe-caption font-medium text-emerald-700">
+            <p className="rounded-xl bg-success/10 px-3 py-2 text-center text-sm font-medium text-success">
               ✓ این قفسه پر است ({maxPerCategory.toLocaleString('fa-IR')} /{' '}
               {maxPerCategory.toLocaleString('fa-IR')})
             </p>
           )}
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 wibe-small font-semibold text-white shadow-sm active:scale-[0.99]"
-          >
-            <Check className="h-4 w-4" />
+          <Button type="button" variant="brand" size="lg" className="w-full" onClick={onClose}>
+            <Check className="size-4" />
             تمام
-          </button>
+          </Button>
         </div>
       </BottomSheet>
 

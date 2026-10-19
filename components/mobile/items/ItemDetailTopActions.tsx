@@ -1,10 +1,17 @@
 'use client';
 
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { Flag, MoreHorizontal } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
 import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
-import ItemReportButton from '@/components/mobile/items/ItemReportButton';
 import ItemProfilePickButton from '@/components/mobile/items/ItemProfilePickButton';
 import ItemShareButton from '@/components/mobile/items/ItemShareButton';
+import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Button } from '@/components/ui/button';
+
+const ItemReportModal = dynamic(() => import('./ItemReportModal'), { ssr: false });
 
 interface ItemDetailTopActionsProps {
   itemId: string;
@@ -15,8 +22,7 @@ interface ItemDetailTopActionsProps {
   variant?: 'bar' | 'inline';
 }
 
-const shareButtonClass =
-  'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/25 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95';
+const shareButtonClass = 'size-11 shrink-0 rounded-full';
 
 export default function ItemDetailTopActions({
   itemId,
@@ -25,39 +31,89 @@ export default function ItemDetailTopActions({
   shareTitle,
   variant = 'bar',
 }: ItemDetailTopActionsProps) {
+  const { data: session } = useSession();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+
+  const canReport = Boolean(session?.user);
+
   const actions = (
     <>
-      <ItemSaveButton itemId={itemId} />
-      <ItemProfilePickButton itemId={itemId} catalogItemId={catalogItemId} variant="compact" />
+      <ItemSaveButton itemId={itemId} showCountBadge={false} />
       <ItemLikeButton itemId={itemId} initialLikeCount={likeCount} variant="compact" />
       <ItemShareButton
         title={shareTitle}
         className={shareButtonClass}
         iconClassName="h-4 w-4"
       />
-      <ItemReportButton itemId={itemId} />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={() => setMoreOpen(true)}
+        className="size-11 shrink-0 rounded-full"
+        aria-label="گزینه‌های بیشتر"
+        title="بیشتر"
+      >
+        <MoreHorizontal aria-hidden />
+      </Button>
     </>
   );
 
-  if (variant === 'inline') {
-    return (
-      <div
-        className="flex flex-wrap items-center justify-start gap-2"
-        aria-label="ذخیره، پسند و اشتراک"
-      >
+  const shell =
+    variant === 'inline' ? (
+      <div className="flex shrink-0 items-center justify-start gap-2" aria-label="ذخیره، پسند و اشتراک">
+        {actions}
+      </div>
+    ) : (
+      <div className="sticky top-16 z-30 flex items-center justify-start gap-2 border-b border-border bg-background/95 px-4 py-2 backdrop-blur-sm lg:hidden">
         {actions}
       </div>
     );
-  }
 
   return (
-    <div className="sticky top-16 z-30 border-b border-wibe/70 bg-wibe-surface/95 px-4 py-2.5 backdrop-blur-md lg:hidden">
-      <div
-        className="flex items-center justify-start gap-2"
-        aria-label="ذخیره، پسند و اشتراک"
+    <>
+      {shell}
+
+      <BottomSheet
+        isOpen={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title="گزینه‌ها"
+        maxHeight="50vh"
       >
-        {actions}
-      </div>
-    </div>
+        <div className="space-y-3 pb-2" dir="rtl">
+          <ItemProfilePickButton
+            itemId={itemId}
+            catalogItemId={catalogItemId}
+            variant="default"
+          />
+
+          {canReport ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full justify-start"
+              onClick={() => {
+                setMoreOpen(false);
+                setReportOpen(true);
+              }}
+            >
+              <Flag className="size-4 shrink-0" aria-hidden />
+              گزارش آیتم
+            </Button>
+          ) : null}
+        </div>
+      </BottomSheet>
+
+      {canReport ? (
+        <ItemReportModal
+          isOpen={reportOpen}
+          onClose={() => setReportOpen(false)}
+          itemId={itemId}
+          onReportSuccess={() => setReportOpen(false)}
+        />
+      ) : null}
+    </>
   );
 }

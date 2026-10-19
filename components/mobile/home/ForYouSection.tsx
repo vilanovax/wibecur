@@ -1,22 +1,21 @@
 'use client';
 
-import Link from 'next/link';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeGridListCard from './HomeGridListCard';
-import HomeStarterEmptyPanel from './HomeStarterEmptyPanel';
 import HomeFeedGrid from './HomeFeedGrid';
 import {
   useForYouRecommendations,
   getForYouReasonLabel,
+  type ForYouList,
 } from '@/hooks/useForYouRecommendations';
 import { useHomeData } from '@/contexts/HomeDataContext';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
 import { useHomeOnboardingInterests } from '@/hooks/useHomeOnboardingInterests';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
-import { trackHomeSectionClick } from '@/lib/analytics';
+import { selectForYouHomeLists } from '@/lib/home-list-selectors';
 import { useLazyInView } from '@/hooks/useLazyInView';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type ForYouSectionProps = {
   embedded?: boolean;
@@ -26,18 +25,31 @@ type ForYouSectionProps = {
 
 export default function ForYouSection({ embedded = false, fetchEnabled: fetchEnabledProp }: ForYouSectionProps) {
   const { ref, inView } = useLazyInView({ rootMargin: '240px' });
-  const shouldFetch = embedded ? (fetchEnabledProp ?? false) : inView;
+  // Explicit fetchEnabled wins (eager home mount); else embedded waits for prop, standalone waits for inView.
+  const shouldFetch =
+    typeof fetchEnabledProp === 'boolean'
+      ? fetchEnabledProp
+      : embedded
+        ? false
+        : inView;
 
-  const { isGuest } = useHomeUserState();
+  const { hasSaves } = useHomeUserState();
   const { interests } = useHomeOnboardingInterests();
   const { data: homeData } = useHomeData();
   const { lists, isPersonalized, isLoading } = useForYouRecommendations({ enabled: shouldFetch });
 
-  const trendingFallback = (homeData?.trending ?? []).filter(
-    (l) => l.id !== homeData?.featured?.id
-  );
-  const displayLists = (lists.length > 0 ? lists : trendingFallback).slice(0, 8);
-  const desktopCells = buildDesktopFeedCells(displayLists, {
+  const lane = selectForYouHomeLists({
+    recommendations: lists,
+    trending: homeData?.trending ?? [],
+    featuredId: homeData?.featured?.id,
+    rising: (homeData?.rising ?? []).map((list) => ({ ...list, reasonType: 'popular' as const })),
+  });
+  const pool = lane.pool;
+  const mobileLists = lane.mobile;
+  const usingFallback = lane.usedRisingOnly;
+  const waiting = (isLoading || !shouldFetch) && lists.length === 0;
+
+  const desktopCells = buildDesktopFeedCells(pool, {
     maxLists: 8,
     seeAll: {
       href: '/lists',
@@ -45,38 +57,53 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
       description: 'پیشنهادهای بیشتر',
     },
   });
-  const usingFallback = !isPersonalized && lists.length === 0 && displayLists.length > 0;
-  const trulyEmpty = displayLists.length === 0;
 
   const subtitle = isPersonalized
     ? 'بر اساس ذخیره‌ها و علایق تو'
     : interests.length > 0
       ? 'بر اساس علاقه‌مندی‌های انتخاب‌شده'
       : 'لیست‌های پیشنهادی برای شروع';
+  const title =
+    hasSaves || interests.length > 0 || isPersonalized ? 'برای تو' : 'پیشنهاد برای شروع';
 
-  if (isLoading && displayLists.length === 0) {
+  if (waiting) {
     return (
       <section ref={ref} className={embedded ? '' : 'mb-6'}>
         {!embedded && (
           <div className="mb-3 px-4">
-            <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
+            <Skeleton className="h-6 w-32" />
           </div>
         )}
-        <div className="space-y-3 px-4 lg:px-0">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-[120px] animate-pulse rounded-lg bg-gray-100 lg:h-36" />
+        <div className="flex gap-2.5 overflow-hidden px-4 lg:hidden">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-36 w-40 shrink-0 rounded-xl" />
+          ))}
+        </div>
+        <div className="hidden gap-2.5 lg:grid lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-36 w-full rounded-xl" />
           ))}
         </div>
       </section>
     );
   }
 
+  if (pool.length === 0) return null;
+
+  const badgeFor = (list: { id: string }) => {
+    const full = pool.find((item) => item.id === list.id) ?? list;
+    return (
+      getForYouReasonLabel(full as ForYouList, isPersonalized) ||
+      (usingFallback ? 'پیشنهاد شروع' : null)
+    );
+  };
+
   return (
     <section ref={ref} className={embedded ? '' : 'mb-6'}>
       {!embedded && (
         <HomeSectionTitle
           iconVariant="forYou"
-          title={isPersonalized ? 'برای تو' : 'پیشنهاد برای شروع'}
+          title={title}
           subtitle={subtitle}
           actionHref="/lists"
           actionLabel="همه"
@@ -84,85 +111,32 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
         />
       )}
 
-      {trulyEmpty ? (
-        <HomeStarterEmptyPanel lists={trendingFallback.slice(0, 4)} isGuest={isGuest} />
-      ) : (
-        <>
-          {usingFallback && !embedded ? (
-            <p className="mb-3 px-4 wibe-caption text-wibe-secondary lg:px-0">
-              هنوز ذخیره‌ای نداری — این لیست‌های محبوب را امتحان کن
-            </p>
-          ) : null}
+      {usingFallback && !hasSaves && !embedded ? (
+        <p className="mb-3 px-4 wibe-caption text-muted-foreground lg:px-0">
+          هنوز ذخیره‌ای نداری — این لیست‌های محبوب را امتحان کن
+        </p>
+      ) : null}
 
-          <div className="space-y-2 px-4 lg:hidden">
-            {displayLists.map((list) => {
-              const reason = getForYouReasonLabel(list, isPersonalized);
-              return (
-                <Link
-                  key={list.id}
-                  href={`/lists/${list.slug}`}
-                  onClick={() =>
-                    trackHomeSectionClick('for_you', {
-                      list_slug: list.slug,
-                      category_slug: list.categories?.slug,
-                      target: 'card',
-                    })
-                  }
-                  className="flex min-h-[120px] flex-row-reverse gap-4 overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
-                >
-                  <div className="relative h-28 w-28 shrink-0 overflow-hidden bg-gray-200">
-                    <ImageWithFallback
-                      src={list.coverImage}
-                      alt={list.title}
-                      className="h-full w-full object-cover"
-                      fallbackIcon={list.categories?.icon ?? '📋'}
-                      fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200"
-                      categorySlug={list.categories?.slug}
-                      listSlug={list.slug}
-                      listTitle={list.title}
-                      sizes="112px"
-                    />
-                    <div
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
-                      aria-hidden
-                    />
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col justify-center py-3 pl-2 pr-3">
-                    {reason ? (
-                      <p className="mb-1 wibe-caption font-medium text-primary">{reason}</p>
-                    ) : null}
-                    <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
-                      {list.title}
-                    </h3>
-                    {list.itemCount > 0 ? (
-                      <p className="mt-1.5 wibe-caption text-wibe-secondary">
-                        {list.itemCount.toLocaleString('fa-IR')} آیتم
-                      </p>
-                    ) : null}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
+        {mobileLists.map((list) => (
+          <HomeGridListCard
+            key={list.id}
+            list={list}
+            badge={badgeFor(list)}
+            badgeClassName="max-w-32 truncate bg-brand text-brand-foreground"
+            homeSection="for_you"
+          />
+        ))}
+      </div>
 
-          <div
-            className={`hidden lg:grid lg:overflow-visible lg:snap-none lg:px-0 ${HOME_FEED_GRID_CLASS}`}
-          >
-            <HomeFeedGrid
-              cells={desktopCells}
-              getBadge={(list) => {
-                const full = lists.find((l) => l.id === list.id) ?? list;
-                return (
-                  getForYouReasonLabel(full as Parameters<typeof getForYouReasonLabel>[0], isPersonalized) ||
-                  (usingFallback ? 'پیشنهاد شروع' : null)
-                );
-              }}
-              badgeClassName="bg-primary/90 text-white"
-              homeSection="for_you"
-            />
-          </div>
-        </>
-      )}
+      <div className={`hidden lg:grid lg:overflow-visible lg:snap-none lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
+        <HomeFeedGrid
+          cells={desktopCells}
+          getBadge={badgeFor}
+          badgeClassName="bg-brand text-brand-foreground"
+          homeSection="for_you"
+        />
+      </div>
     </section>
   );
 }

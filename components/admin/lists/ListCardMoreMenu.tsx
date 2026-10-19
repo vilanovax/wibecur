@@ -11,7 +11,7 @@ import {
   MoreHorizontal,
   Pencil,
 } from 'lucide-react';
-import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
 
 interface ListCardMoreMenuProps {
   row: ListIntelligenceRow;

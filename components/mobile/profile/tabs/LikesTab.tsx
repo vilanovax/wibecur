@@ -41,8 +41,8 @@ export default function LikesTab({ userId }: LikesTabProps) {
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
           <div key={i} className="bg-white rounded-xl p-4 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-            <div className="h-3 bg-gray-200 rounded w-1/2" />
+            <div className="h-4 bg-wibe-surface rounded w-3/4 mb-2" />
+            <div className="h-3 bg-wibe-surface rounded w-1/2" />
           </div>
         ))}
       </div>
@@ -69,18 +69,17 @@ export default function LikesTab({ userId }: LikesTabProps) {
             className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-colors"
           >
             {like.image ? (
-              <div className="relative h-40 bg-wibe-surface">
+              <div className="relative h-40 bg-gradient-to-br from-primary/10 to-blue-100">
                 <ImageWithFallback
                   src={like.image}
                   alt={like.title}
                   className="w-full h-full object-cover"
                   fallbackIcon={like.category.icon}
                   fallbackClassName="h-full w-full"
-                  sizes="(min-width: 1024px) 25vw, 50vw"
                 />
               </div>
             ) : (
-              <div className="relative flex h-40 items-center justify-center bg-wibe-surface">
+              <div className="relative h-40 bg-gradient-to-br from-primary/10 to-blue-100 flex items-center justify-center">
                 <span className="text-4xl">{like.category.icon}</span>
               </div>
             )}
@@ -98,7 +97,7 @@ export default function LikesTab({ userId }: LikesTabProps) {
       {!showAll && likes.length > 8 && (
         <button
           onClick={() => setShowAll(true)}
-          className="w-full mt-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
+          className="w-full mt-4 py-3 bg-wibe-surface text-foreground rounded-lg hover:bg-wibe-surface transition-colors font-medium"
         >
           مشاهده بیشتر ({likes.length - 8} مورد دیگر)
         </button>

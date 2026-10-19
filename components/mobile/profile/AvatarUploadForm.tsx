@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
+import { Input } from '@/components/ui/input';
 import { Loader2, Upload, Image as ImageIcon } from 'lucide-react';
 
 interface AvatarUploadFormProps {
@@ -126,7 +127,7 @@ export default function AvatarUploadForm({
 
           {currentAvatar && !previewUrl && (
             <div className="flex justify-center">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 ring-4 ring-gray-100">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-wibe-surface ring-4 ring-gray-100">
                 <img
                   src={currentAvatar}
                   alt="آواتار فعلی"
@@ -150,7 +151,7 @@ export default function AvatarUploadForm({
               className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                 uploadMethod === 'file'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  : 'bg-wibe-surface text-foreground hover:bg-wibe-surface'
               }`}
             >
               <ImageIcon className="w-4 h-4 inline ml-2" />
@@ -167,7 +168,7 @@ export default function AvatarUploadForm({
               className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                 uploadMethod === 'url'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-foreground hover:bg-gray-200'
+                  : 'bg-wibe-surface text-foreground hover:bg-wibe-surface'
               }`}
             >
               <Upload className="w-4 h-4 inline ml-2" />
@@ -191,7 +192,7 @@ export default function AvatarUploadForm({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-wibe-secondary font-medium"
+                className="w-full px-4 py-3 border-2 border-dashed border-wibe rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-wibe-secondary font-medium"
               >
                 <ImageIcon className="w-5 h-5 inline ml-2" />
                 {selectedFile ? selectedFile.name : 'انتخاب فایل'}
@@ -201,7 +202,7 @@ export default function AvatarUploadForm({
               </p>
               {previewUrl && (
                 <div className="mt-4 flex justify-center">
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 ring-4 ring-gray-100">
+                  <div className="w-32 h-32 rounded-full overflow-hidden bg-wibe-surface ring-4 ring-gray-100">
                     <img
                       src={previewUrl}
                       alt="پیش‌نمایش"
@@ -216,15 +217,16 @@ export default function AvatarUploadForm({
               <label htmlFor="imageUrl" className="block text-sm font-medium text-foreground mb-2">
                 آدرس تصویر
               </label>
-              <input
+              <Input
                 id="imageUrl"
                 type="url"
+                dir="ltr"
                 value={imageUrl}
                 onChange={(e) => {
                   setImageUrl(e.target.value);
                   setError('');
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus:border-transparent"
+                className="h-12"
                 placeholder="https://example.com/avatar.jpg"
               />
               <p className="mt-2 text-xs text-wibe-secondary">
@@ -232,7 +234,7 @@ export default function AvatarUploadForm({
               </p>
               {imageUrl && (
                 <div className="mt-4 flex justify-center">
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 ring-4 ring-gray-100">
+                  <div className="w-32 h-32 rounded-full overflow-hidden bg-wibe-surface ring-4 ring-gray-100">
                     <img
                       src={imageUrl}
                       alt="پیش‌نمایش"
@@ -247,19 +249,19 @@ export default function AvatarUploadForm({
         </div>
 
         {/* Fixed Buttons at Bottom - OUTSIDE scrollable area */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
+        <div className="flex-shrink-0 border-t border-border bg-popover p-4">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-3 bg-gray-100 text-foreground rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="flex h-12 flex-1 items-center justify-center rounded-xl border border-border bg-secondary text-sm font-semibold text-secondary-foreground"
               disabled={isLoading}
             >
               انصراف
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-brand text-sm font-semibold text-brand-foreground disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading || (uploadMethod === 'file' && !selectedFile) || (uploadMethod === 'url' && !imageUrl.trim())}
             >
               {isLoading ? (

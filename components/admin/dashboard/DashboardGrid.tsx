@@ -13,7 +13,7 @@ export default function DashboardGrid({ children, className = '' }: DashboardGri
   return (
     <div
       className={`grid grid-cols-12 gap-4 md:gap-6 ${className}`}
-      style={{ gap: 'var(--spacing-lg)' }}
+      style={{ gap: 'var(--wibe-space-lg)' }}
     >
       {children}
     </div>

@@ -42,8 +42,7 @@ export default function FilmTrendingListsSection({
                     alt={list.title}
                     className="w-full h-full object-cover"
                     placeholderSize="square"
-              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
-            />
+                  />
                 ) : (
                   <div
                     className="w-full h-full flex items-center justify-center text-5xl opacity-50"
@@ -55,7 +54,7 @@ export default function FilmTrendingListsSection({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 {(list.badge === 'viral' || list.badge === 'hot' || i < 3) && (
                   <span
-                    className={`absolute top-2 right-2 text-white text-[10px] px-2 py-0.5 rounded font-bold ${
+                    className={`absolute top-2 right-2 text-white wibe-caption px-2 py-0.5 rounded font-bold ${
                       list.badge === 'viral' ? 'bg-red-500/90' : 'bg-orange-500/90'
                     }`}
                   >
@@ -67,15 +66,13 @@ export default function FilmTrendingListsSection({
                 <h3 className="font-semibold text-white/90 text-sm line-clamp-2">
                   {list.title}
                 </h3>
-                <div className="mt-1 flex items-center gap-1.5 text-xs text-white/65">
+                <div className="flex items-center gap-1.5 mt-1 text-xs text-wibe-secondary">
                   {list.creator?.image && (
                     <ImageWithFallback
                       src={list.creator.image}
                       alt=""
                       className="w-4 h-4 rounded-full object-cover"
-                  width={16}
-                  height={16}
-                />
+                    />
                   )}
                   <span className="truncate">{list.creator?.name || 'کیوریتور'}</span>
                   <span>•</span>

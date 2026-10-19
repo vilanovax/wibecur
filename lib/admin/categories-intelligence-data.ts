@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -42,10 +43,18 @@ async function fetchCategoriesIntelligenceData(): Promise<CategoriesIntelligence
     })
   );
 
+  if (categories.length === 0) {
+    return {
+      pulse: buildCategoryPulse([], 0),
+      categories: [],
+    };
+  }
+
   const categoryIds = categories.map((c) => c.id);
 
+  // All independent aggregations in parallel (async-parallel)
   const [growthMap, sumAgg, activeAgg, uniqueItemMap] = await Promise.all([
-    getCategorySaveGrowthMap(prisma, categoryIds),
+    dbQuery(() => getCategorySaveGrowthMap(prisma, categoryIds)),
     dbQuery(() =>
       prisma.lists.groupBy({
         by: ['categoryId'],
@@ -78,7 +87,9 @@ async function fetchCategoriesIntelligenceData(): Promise<CategoriesIntelligence
       },
     ])
   );
-  const activeByCat = new Map(activeAgg.map((g) => [g.categoryId!, g._count._all]));
+  const activeByCat = new Map(
+    activeAgg.map((g) => [g.categoryId!, g._count._all])
+  );
 
   const rows: CategoryIntelligenceRow[] = categories.map((cat) => {
     const sums = sumByCat.get(cat.id);
@@ -100,20 +111,24 @@ async function fetchCategoriesIntelligenceData(): Promise<CategoriesIntelligence
     );
   });
 
-  const pulse = buildCategoryPulse(rows, rows.length);
-
-  return { pulse, categories: rows };
+  return {
+    pulse: buildCategoryPulse(rows, rows.length),
+    categories: rows,
+  };
 }
 
-const getCachedCategoriesIntelligence = unstable_cache(
-  () => dbQuery(() => fetchCategoriesIntelligenceData()),
-  ['admin-categories-intelligence'],
-  {
-    revalidate: ADMIN_CATEGORIES_CACHE_SECONDS,
-    tags: [ADMIN_CACHE_TAGS.categories],
-  }
+function getCrossRequestCachedCategoriesIntelligence() {
+  return unstable_cache(
+    () => fetchCategoriesIntelligenceData(),
+    ['admin-categories-intelligence'],
+    {
+      revalidate: ADMIN_CATEGORIES_CACHE_SECONDS,
+      tags: [ADMIN_CACHE_TAGS.categories],
+    }
+  )();
+}
+
+/** Per-request dedupe + short TTL cross-request cache */
+export const getCachedCategoriesIntelligenceData = cache(() =>
+  getCrossRequestCachedCategoriesIntelligence()
 );
-
-export function getCachedCategoriesIntelligenceData(): Promise<CategoriesIntelligencePayload> {
-  return getCachedCategoriesIntelligence();
-}

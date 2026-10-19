@@ -52,8 +52,6 @@ export default function TopFilmCurators({
                   src={topCurator.image}
                   alt={topCurator.name || 'کیوریتور'}
                   className="w-24 h-24 rounded-full object-cover ring-4 ring-white/20"
-                  width={96}
-                  height={96}
                 />
               ) : (
                 <div
@@ -77,10 +75,10 @@ export default function TopFilmCurators({
               <p className="text-sm font-medium opacity-80" style={{ color: accentColor }}>
                 {LEVEL_LABELS[topCurator.curatorLevel] || topCurator.curatorLevel}
               </p>
-              <p className="mt-1 text-sm text-white/60">
+              <p className="text-sm text-white/65 mt-1">
                 {topCurator.listCount} لیست • {topCurator.totalSaves} ذخیره کل
               </p>
-              <p className="mt-0.5 text-xs text-white/50">
+              <p className="text-xs text-wibe-secondary mt-0.5">
                 {topCurator.followersCount} دنبال‌کننده
               </p>
             </div>
@@ -96,15 +94,12 @@ export default function TopFilmCurators({
                   className="flex-shrink-0 w-20 rounded-xl overflow-hidden border border-gray-700 group"
                 >
                   {list.coverImage ? (
-                    <div className="relative aspect-[3/4] w-full overflow-hidden">
-                      <ImageWithFallback
-                        src={list.coverImage}
-                        alt={list.title}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                        placeholderSize="square"
-                        sizes="80px"
-                      />
-                    </div>
+                    <ImageWithFallback
+                      src={list.coverImage}
+                      alt={list.title}
+                      className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform"
+                      placeholderSize="square"
+                    />
                   ) : (
                     <div
                       className="w-full aspect-[3/4] flex items-center justify-center text-2xl"
@@ -113,7 +108,7 @@ export default function TopFilmCurators({
                       🎬
                     </div>
                   )}
-                  <p className="text-[10px] font-medium text-white/80 px-1 py-1 truncate bg-gray-900/80">
+                  <p className="wibe-caption font-medium text-white/80 px-1 py-1 truncate bg-gray-900/80">
                     {list.title}
                   </p>
                 </Link>
@@ -136,18 +131,16 @@ export default function TopFilmCurators({
                   src={c.image}
                   alt={c.name || ''}
                   className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                  width={32}
-                  height={32}
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs text-white flex-shrink-0">
                   {(c.name || '?')[0]}
                 </div>
               )}
-              <span className="text-xs text-white/70 truncate flex-1">
+              <span className="text-xs text-white/75 truncate flex-1">
                 {c.name || 'کاربر'}
               </span>
-              <span className="text-[10px] text-white/50">#{i + 2}</span>
+              <span className="wibe-caption text-wibe-secondary">#{i + 2}</span>
             </Link>
           ))}
         </div>

@@ -2,37 +2,50 @@ import { describe, expect, it } from 'vitest';
 import { resolveNextImageSrc } from './next-image-src';
 
 describe('resolveNextImageSrc', () => {
-  it('uses same-origin proxy (unoptimized) for parspack liara-image proxy', () => {
+  it('unwraps a hub proxy URL to the public ParsPack file', () => {
     const storage =
       'https://c466145.parspack.net/c466145/wibe/hubs/fac6a6ed-8f73-413b-a298-c57e89628298.webp';
     const proxy = `/api/liara-image?url=${encodeURIComponent(storage)}`;
     const result = resolveNextImageSrc(proxy);
-    expect(result.src).toBe(proxy);
+    expect(result.src).toBe(storage);
     expect(result.unoptimized).toBe(true);
   });
 
-  it('wraps direct parspack URLs in proxy and marks unoptimized', () => {
+  it('keeps item posters as the public ParsPack URL', () => {
+    const storage = 'https://c466145.parspack.net/c466145/wibe/items/poster.webp';
+    const wrapped = `/api/liara-image?url=${encodeURIComponent(storage)}`;
+    expect(resolveNextImageSrc(storage)).toEqual({ src: storage, unoptimized: true });
+    expect(resolveNextImageSrc(wrapped)).toEqual({ src: storage, unoptimized: true });
+  });
+
+  it('keeps list covers as the public ParsPack URL', () => {
     const storage =
       'https://c466145.parspack.net/c466145/wibe/lists/288c83e8-723e-4861-8427-bc264df35ff3.webp';
     const result = resolveNextImageSrc(storage);
-    expect(result.src).toBe(`/api/liara-image?url=${encodeURIComponent(storage)}`);
+    expect(result.src).toBe(storage);
     expect(result.unoptimized).toBe(true);
   });
 
-  it('marks local proxy URLs as unoptimized', () => {
-    const proxy = '/api/storage-image?key=wibe%2Fcovers%2Fx.jpg&url=https%3A%2F%2Fexample.com%2Fx.jpg';
+  it('unwraps storage-image proxy URLs to the inner address', () => {
+    const proxy =
+      '/api/storage-image?key=wibe%2Fcovers%2Fx.jpg&url=https%3A%2F%2Fexample.com%2Fx.jpg';
     const result = resolveNextImageSrc(proxy);
-    expect(result.src).toBe(proxy);
-    expect(result.unoptimized).toBe(true);
+    expect(result.src).toBe('https://example.com/x.jpg');
+    expect(result.unoptimized).toBe(false);
   });
 
-  it('wraps legacy liara avatar URLs in storage-image proxy', () => {
+  it('keeps legacy liara avatar URLs as the public object address', () => {
     const legacy =
       'https://storage.c2.liara.space/wibe/avatars/7040ec89e38f8d5529ed73f0f7f17313.jpg';
     const result = resolveNextImageSrc(legacy);
-    expect(result.src).toContain('/api/storage-image?');
-    expect(result.src).toContain('key=wibe%2Favatars%2F');
+    expect(result.src).toBe(legacy);
     expect(result.unoptimized).toBe(true);
+  });
+
+  it('rewrites missing local jpg banners to the webp file', () => {
+    const result = resolveNextImageSrc('/images/banners/cafe.jpg');
+    expect(result.src).toBe('/images/banners/cafe.webp');
+    expect(result.unoptimized).toBe(false);
   });
 
   it('allows optimization for non-parspack external HTTPS URLs', () => {

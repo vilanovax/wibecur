@@ -120,9 +120,10 @@ jobs:
       ENCRYPTION_KEY: ci-encryption-key-32chars!!
       PORT: '3002'
       LHCI_BASE_URL: http://localhost:3002
+      LHCI_HOME_PATH: /
       LHCI_CATEGORY_PATH: /categories/movies
-      LHCI_ITEM_PATH: /items/ishGWMipxDOeMKb9W3W80
-      LHCI_EXPLORE_PATH: /user-lists
+      LHCI_LIST_PATH: /lists/great-breakfast-cafes
+      LHCI_BASELINE_LABEL: ci
 
     steps:
       - uses: actions/checkout@v4
@@ -153,10 +154,14 @@ jobs:
           echo $! > /tmp/wibe-server.pid
 
       - name: Wait for server
-        run: npx wait-on -t 120000 http-get://127.0.0.1:3002/lists http-get://127.0.0.1:3002/items/ishGWMipxDOeMKb9W3W80 http-get://127.0.0.1:3002/user-lists
+        run: npx wait-on -t 120000 http-get://127.0.0.1:3002/ http-get://127.0.0.1:3002/categories/movies http-get://127.0.0.1:3002/lists/great-breakfast-cafes
 
       - name: Run Lighthouse CI
         run: npm run lighthouse:ci
+
+      - name: Write baseline snapshot
+        if: always()
+        run: npm run lighthouse:baseline
 
       - name: Stop server
         if: always()
@@ -170,7 +175,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-reports
-          path: .lighthouseci/
+          path: |
+            .lighthouseci/
+            perf/baselines/
           retention-days: 14
 
       - name: Summarize scores

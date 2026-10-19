@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { ListIntelligenceRow } from '@/lib/admin/lists-intelligence';
+import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
 
 const REASON_OPTIONS = [
   { value: 'Spam', label: 'اسپم' },

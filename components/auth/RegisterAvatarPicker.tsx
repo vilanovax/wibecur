@@ -22,16 +22,16 @@ export default function RegisterAvatarPicker({ value, onChange }: RegisterAvatar
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-3">
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4! py-2!">
         <div className="flex min-w-0 items-center gap-3">
           {selectedAvatar ? (
-            <VibeAvatarDisplay avatar={selectedAvatar} size={52} />
+            <VibeAvatarDisplay avatar={selectedAvatar} size={48} />
           ) : (
-            <div className="h-[52px] w-[52px] rounded-full bg-gray-200" />
+            <div className="size-12 rounded-full bg-secondary" />
           )}
-          <div className="min-w-0 text-right">
-            <p className="text-sm font-medium text-foreground">آواتار تو</p>
-            <p className="mt-0.5 truncate text-xs text-wibe-secondary">
+          <div className="min-w-0 text-start">
+            <p className="wibe-small font-medium text-foreground">آواتار تو</p>
+            <p className="truncate wibe-caption text-muted-foreground">
               {selectedAvatar?.label ?? 'پیش‌فرض'}
             </p>
           </div>
@@ -39,7 +39,7 @@ export default function RegisterAvatarPicker({ value, onChange }: RegisterAvatar
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
-          className="shrink-0 text-xs font-medium text-primary transition-colors hover:text-primary-dark"
+          className="flex min-h-11 shrink-0 items-center px-2! wibe-caption font-medium text-brand"
         >
           تغییر آواتار
         </button>
@@ -83,16 +83,16 @@ function AvatarChip({
       onClick={onSelect}
       aria-pressed={selected}
       aria-label={avatar.label}
-      className={`relative flex items-center justify-center rounded-2xl border-2 p-2 transition-all active:scale-95 ${
+      className={`relative flex min-h-11 items-center justify-center rounded-surface border p-2 transition-colors ${
         selected
-          ? 'border-primary bg-primary/5 shadow-[0_0_0_2px_rgba(99,102,241,0.15)]'
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+          ? 'border-brand bg-brand/5'
+          : 'border-border bg-popover hover:border-brand/30 hover:bg-muted'
       }`}
     >
       <VibeAvatarDisplay avatar={avatar} size={48} selected={selected} />
       {selected && (
-        <span className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow-md">
-          <Check className="h-3 w-3" strokeWidth={3} />
+        <span className="absolute end-1 top-1 flex size-5 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm">
+          <Check className="size-3" strokeWidth={3} />
         </span>
       )}
     </button>

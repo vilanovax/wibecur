@@ -1,51 +1,59 @@
 'use client';
 
-import { ChevronLeft } from 'lucide-react';
-import type { MoodExplorerCard } from '@/lib/discovery/mood-explorer-config';
+import {
+  moodCardToSelection,
+  type MoodExplorerCard,
+} from '@/lib/discovery/mood-explorer-config';
+import { prefetchGuidedDiscovery } from '@/lib/discovery/guided-client';
+import { preloadGuidedDiscoverySheet } from './explore-lazy-sections';
+import { Card } from '@/components/ui/card';
 
 type Props = {
   card: MoodExplorerCard;
   onSelect: (card: MoodExplorerCard) => void;
 };
 
+function warmMoodOpen(card: MoodExplorerCard) {
+  preloadGuidedDiscoverySheet();
+  const selection = moodCardToSelection(card);
+  // Skip prefetch when a question is still required (bored without timeBudget)
+  if (selection.scenario === 'bored' && !selection.preset?.timeBudget) {
+    return;
+  }
+  if (selection.scenario === 'weekend' && !selection.preset?.location) {
+    return;
+  }
+  // going_out («با دوستی؟») always has location=out via preset — prefetch hits guest cache
+  prefetchGuidedDiscovery({
+    scenario: selection.scenario,
+    location: selection.preset?.location,
+    timeBudget: selection.preset?.timeBudget,
+  });
+}
+
 export default function MoodMissionCard({ card, onSelect }: Props) {
   return (
     <button
       type="button"
+      onPointerDown={() => warmMoodOpen(card)}
       onClick={() => onSelect(card)}
-      className={`group relative flex w-full min-h-[8.5rem] flex-col overflow-hidden rounded-2xl border bg-gradient-to-br p-3.5 text-right shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] lg:min-h-[10rem] lg:p-5 ${card.gradient}`}
+      className="w-full rounded-xl text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
     >
+      <Card className="flex min-h-32 flex-col bg-popover p-4 lg:min-h-36">
       <span
-        className="pointer-events-none absolute -bottom-1 -start-1 select-none text-6xl leading-none opacity-[0.1] transition-transform duration-300 group-hover:scale-105"
-        aria-hidden
-      >
-        {card.icon}
-      </span>
-      <span
-        className="pointer-events-none absolute -end-8 -top-8 h-24 w-24 rounded-full bg-white/40 blur-2xl"
-        aria-hidden
-      />
-
-      <span
-        className={`relative mb-2.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl shadow-sm ring-1 ring-black/[0.04] lg:mb-3 lg:h-12 lg:w-12 lg:rounded-2xl lg:text-3xl ${card.accent}`}
+        className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-xl"
         aria-hidden
       >
         {card.icon}
       </span>
 
-      <p className="relative wibe-small font-bold text-foreground transition-colors group-hover:text-primary">
+      <p className="text-balance wibe-small font-semibold text-foreground">
         {card.title}
       </p>
-      <p className="relative mt-1 line-clamp-2 wibe-caption leading-relaxed text-wibe-secondary">
+      <p className="relative mt-1 line-clamp-2 text-balance wibe-small text-muted-foreground">
         {card.subtitle}
       </p>
-      <span className="relative mt-auto inline-flex items-center gap-0.5 pt-2.5 wibe-caption font-semibold text-primary lg:pt-3.5">
-        ببین چی داریم
-        <ChevronLeft
-          className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5"
-          aria-hidden
-        />
-      </span>
+      </Card>
     </button>
   );
 }

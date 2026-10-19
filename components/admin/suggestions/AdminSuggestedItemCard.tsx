@@ -14,8 +14,7 @@ import {
   Trash2,
   Check,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import Image from 'next/image';
 
 export interface AdminSuggestedItemSuggestion {
@@ -72,10 +71,7 @@ export default function AdminSuggestedItemCard({
 }: AdminSuggestedItemCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const timeAgo = formatDistanceToNow(new Date(suggestion.createdAt), {
-    addSuffix: true,
-    locale: faIR,
-  });
+  const timeAgo = formatRelativeTime(suggestion.createdAt);
   const listTitle = suggestion.lists?.title ?? '';
   const listSlug = suggestion.lists?.slug;
   const suggestedBy = suggestion.users?.name || suggestion.users?.email || 'کاربر';

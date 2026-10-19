@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ChevronLeft, Flame, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 import SearchInput from '@/components/mobile/search/SearchInput';
 import {
   clearRecentSearches,
@@ -34,7 +37,7 @@ import {
   SEARCH_LISTS_ONLY_LIMITS,
 } from '@/lib/search-client';
 import type { UnifiedSearchItem } from '@/lib/unified-search';
-import type { SearchQueryIntent } from '@/lib/search-keywords';
+import { meaningfulSearchTokens, type SearchQueryIntent } from '@/lib/search-keywords';
 
 type TrendingQueryItem = { query: string; count: number };
 
@@ -381,6 +384,7 @@ export default function SearchOverlay({
 
   const normalized = normalizeSearchQuery(query);
   const showResults = normalized.length >= SEARCH_MIN_LENGTH;
+  const multiTokenEmpty = meaningfulSearchTokens(normalized).length >= 2;
   const showItemResults = searchViewTab === 'items';
   const showListResults = searchViewTab === 'lists';
   const listNavOffset = showItemResults ? directItems.length + indirectItems.length : 0;
@@ -518,28 +522,31 @@ export default function SearchOverlay({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex animate-in fade-in justify-center bg-black/30 backdrop-blur-[2px] duration-200"
+      data-theme="paper"
+      className="fixed inset-0 z-[70] flex animate-in fade-in justify-center bg-black/60 backdrop-blur-sm duration-200"
       dir="rtl"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className={`flex h-[100dvh] w-full max-w-none animate-in fade-in slide-in-from-top-2 flex-col bg-wibe-surface shadow-2xl duration-300 ${DESKTOP_PAGE_MAX_WIDTH_CLASS}`}
+        className={`flex h-[100dvh] w-full max-w-none animate-in fade-in slide-in-from-top-2 flex-col bg-background text-foreground shadow-overlay duration-300 ${DESKTOP_PAGE_MAX_WIDTH_CLASS}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="جستجو"
       >
-        <div className="flex-shrink-0 border-b border-wibe bg-wibe-surface/95 px-2.5 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm">
+        <div className="flex-shrink-0 border-b border-border bg-background/95 px-2.5 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm">
         <div className="mb-2 flex items-center gap-2">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-gray-100 active:scale-[0.98]"
+            className="size-11 shrink-0 rounded-full"
             aria-label="بستن جستجو"
           >
-            <ArrowRight className="h-5 w-5 text-foreground" />
-          </button>
+            <ArrowRight />
+          </Button>
           <div className="min-w-0 flex-1">
             <SearchInput
               value={query}
@@ -552,7 +559,7 @@ export default function SearchOverlay({
           </div>
         </div>
         {(showResults || isLoading) && (
-          <p className="px-1 wibe-caption text-wibe-secondary">
+          <p className="px-1 wibe-caption text-muted-foreground">
             {isLoading
               ? 'در حال جستجو…'
               : `${resultCount.toLocaleString('fa-IR')} نتیجه${
@@ -569,16 +576,18 @@ export default function SearchOverlay({
               <section>
                 {recent.length > 0 && (
                   <div className="mb-1.5 flex justify-start">
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-11"
                       onClick={() => {
                         clearRecentSearches();
                         setRecent([]);
                       }}
-                      className="wibe-caption font-medium text-primary"
                     >
                       پاک کردن تاریخچه
-                    </button>
+                    </Button>
                   </div>
                 )}
                 <SearchChipScroller>
@@ -594,7 +603,7 @@ export default function SearchOverlay({
                           {chip.label}
                         </span>
                       ) : chip.prefix === 'recent' ? (
-                        <span className="inline-flex items-center gap-1 text-wibe-secondary">
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
                           <span aria-hidden>🕐</span>
                           {chip.label}
                         </span>
@@ -609,32 +618,24 @@ export default function SearchOverlay({
 
             <section>
               <div className="mb-2 flex items-center justify-between">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-11"
                   onClick={() => navigateAndClose('/lists?mode=trending')}
-                  className="flex items-center gap-0.5 wibe-caption font-medium text-primary"
                 >
                   همه
-                  <ChevronLeft className="h-3.5 w-3.5 rotate-180" aria-hidden />
-                </button>
-                <h3 className="flex items-center gap-1 wibe-caption font-medium text-wibe-secondary">
+                  <ChevronLeft aria-hidden />
+                </Button>
+                <h3 className="flex items-center gap-1 wibe-caption font-medium text-muted-foreground">
                   <Flame className="h-3.5 w-3.5 text-warning" aria-hidden />
                   ترند
                 </h3>
               </div>
 
               {featuredLoading ? (
-                <div className="space-y-2">
-                  {[1, 2].map((i) => (
-                    <div key={i} className="flex gap-2.5 rounded-xl border border-wibe p-2">
-                      <div className="h-16 w-16 animate-pulse rounded-lg bg-gray-200" />
-                      <div className="flex-1 space-y-2 py-1">
-                        <div className="h-3.5 w-3/4 animate-pulse rounded bg-gray-200" />
-                        <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <SearchResultSkeleton rows={2} />
               ) : featuredPreview.length > 0 ? (
                 <div className="space-y-2">
                   {featuredPreview.map((list) => (
@@ -656,62 +657,58 @@ export default function SearchOverlay({
                   ))}
                 </div>
               ) : (
-                <p className="py-6 text-center wibe-caption text-wibe-secondary">
+                <p className="py-6 text-center wibe-caption text-muted-foreground">
                   لیست ترندی نیست —{' '}
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-11"
                     onClick={() => navigateAndClose('/lists')}
-                    className="font-medium text-primary"
                   >
                     برو لیست‌ها
-                  </button>
+                  </Button>
                 </p>
               )}
             </section>
 
-            <div className="border-t border-wibe pt-3 text-center">
-              <button
+            <div className="border-t border-border pt-3 text-center">
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
+                className="h-11"
                 onClick={() => navigateAndClose('/explore')}
-                className="wibe-caption font-medium text-wibe-secondary underline-offset-2 hover:text-primary hover:underline"
               >
                 کشف در اکسپلور
-              </button>
+              </Button>
             </div>
           </div>
         )}
 
         {showResults && isLoading && !hasAnyResults && (
-          <div className="space-y-2.5">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
-                <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-gray-200" />
-                <div className="flex-1 space-y-2 py-1">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <SearchResultSkeleton rows={3} />
         )}
 
         {showResults && !isLoading && !hasAnyResults && !(searchViewTab === 'lists' && isLoadingLists) && (
-          <div className="py-16 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
-              <Search className="h-7 w-7 text-wibe-secondary/70" strokeWidth={1.75} />
-            </div>
-            <p className="wibe-body font-medium text-foreground">نتیجه‌ای پیدا نشد</p>
-            <p className="mt-1 wibe-caption text-wibe-secondary">
-              عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن
-            </p>
-            <button
-              type="button"
-              onClick={() => goToLists(query)}
-              className="mt-4 rounded-xl bg-primary px-4 py-2.5 wibe-small font-semibold text-white"
-            >
-              جستجو در همه نتایج
-            </button>
-          </div>
+          <EmptyState
+            icon={Search}
+            title={
+              multiTokenEmpty
+                ? `نتیجه‌ای برای «${normalized}» نیست`
+                : 'نتیجه‌ای پیدا نشد'
+            }
+            description={
+              multiTokenEmpty
+                ? 'همهٔ کلمات باید در نتیجه باشند. مکان یا نام دقیق‌تری امتحان کن.'
+                : 'عبارت دیگری امتحان کن یا از پیشنهادهای جستجو استفاده کن.'
+            }
+            action={
+              <Button type="button" variant="brand" size="lg" onClick={() => goToLists(query)}>
+                جستجو در همه نتایج
+              </Button>
+            }
+          />
         )}
 
         {showResults && (hasAnyResults || (searchViewTab === 'lists' && isLoadingLists)) && (
@@ -730,38 +727,30 @@ export default function SearchOverlay({
             {isBroad && subThemes.length > 0 && (
               <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
                 {subThemes.map((theme) => (
-                  <button
+                  <Button
                     key={theme}
                     type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-11 shrink-0 rounded-full"
                     onClick={() => fillQueryFromChip(theme)}
-                    className="h-8 shrink-0 rounded-full border border-wibe bg-wibe-card px-3.5 wibe-caption font-medium text-foreground"
                   >
                     {theme}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
 
             {showListResults && isLoadingLists && directLists.length + indirectLists.length === 0 && (
-              <div className="space-y-2.5">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-3 rounded-xl border border-wibe p-2.5">
-                    <div className="h-[72px] w-[72px] animate-pulse rounded-lg bg-gray-200" />
-                    <div className="flex-1 space-y-2 py-1">
-                      <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
-                      <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <SearchResultSkeleton rows={3} />
             )}
 
             {showListResults && (directLists.length > 0 || indirectLists.length > 0) && (
               <section>
-                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-muted-foreground">
                   {isBroad ? 'لیست‌های پیشنهادی' : 'لیست‌ها'}
                   {totals.lists > directLists.length + indirectLists.length && (
-                    <span className="mr-1 tabular-nums">
+                    <span className="ms-1 tabular-nums">
                       ({totals.lists.toLocaleString('fa-IR')})
                     </span>
                   )}
@@ -863,7 +852,7 @@ export default function SearchOverlay({
 
             {showItemResults && isBroad && topPicks.length > 0 && (
               <section>
-                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-muted-foreground">
                   پیشنهادهای برتر
                 </h3>
                 <div className="space-y-2">
@@ -901,7 +890,7 @@ export default function SearchOverlay({
 
             {showItemResults && !isBroad && indirectItems.length > 0 && (
               <section>
-                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-muted-foreground">
                   مرتبط با جستجو
                 </h3>
                 <div className="space-y-2">
@@ -937,10 +926,10 @@ export default function SearchOverlay({
 
             {showListResults && !isBroad && (directLists.length > 0 || indirectLists.length > 0) && (
               <section>
-                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-muted-foreground">
                   لیست‌ها
                   {totals.lists > directLists.length + indirectLists.length && (
-                    <span className="mr-1 tabular-nums">
+                    <span className="ms-1 tabular-nums">
                       ({totals.lists.toLocaleString('fa-IR')})
                     </span>
                   )}
@@ -1004,7 +993,7 @@ export default function SearchOverlay({
 
             {showItemResults && !isBroad && similarItems.length > 0 && (
               <section>
-                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-wibe-secondary">
+                <h3 className="mb-2 px-0.5 wibe-caption font-medium text-muted-foreground">
                   پیشنهاد مرتبط
                 </h3>
                 <div className="space-y-2">
@@ -1033,7 +1022,7 @@ export default function SearchOverlay({
             {showItemResults &&
               totals.items > directItems.length + (isBroad ? topPicks.length : indirectItems.length) &&
               showItemResults && (
-                <p className="text-center wibe-caption text-wibe-secondary">
+                <p className="text-center wibe-caption text-muted-foreground">
                   {isBroad ? (
                     <>
                       +{(
@@ -1053,13 +1042,15 @@ export default function SearchOverlay({
               )}
 
             {resultCount > navigableResults.length && (
-              <button
+              <Button
                 type="button"
+                variant="brand"
+                size="lg"
+                className="mt-2 w-full"
                 onClick={() => goToLists(query)}
-                className="mt-2 w-full rounded-xl border border-primary/25 bg-primary/5 py-3 wibe-small font-semibold text-primary transition-transform active:scale-[0.99]"
               >
                 {allResultsLabel}
-              </button>
+              </Button>
             )}
           </div>
         )}

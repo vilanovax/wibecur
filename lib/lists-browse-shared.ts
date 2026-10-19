@@ -7,7 +7,7 @@ export type ListsBrowseSort = 'newest' | 'popular' | 'most_saved' | 'rising';
 
 export const LISTS_BROWSE_DEFAULT_LIMIT = 48;
 /** First paint SSR payload — keep small; client remote-paginates the rest. */
-export const LISTS_SSR_LIMIT = 36;
+export const LISTS_SSR_LIMIT = 48;
 /** Max rows per browse API/page request (also caps SSR). */
 export const LISTS_BROWSE_MAX_LIMIT = 48;
 

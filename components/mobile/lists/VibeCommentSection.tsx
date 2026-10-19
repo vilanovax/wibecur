@@ -9,13 +9,14 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { MessageSquare, Loader2, ChevronDown, ThumbsUp, ThumbsDown, Flag, Send, MoreVertical } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import Toast from '@/components/shared/Toast';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import CommentReportModal from '@/components/mobile/comments/CommentReportModal';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 import CommentAvatar from '@/components/shared/CommentAvatar';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { track } from '@/lib/analytics';
 import {
   COMMENT_CLAMP_CHAR_THRESHOLD,
@@ -165,17 +166,14 @@ function ReactionPills({
             type="button"
             onClick={() => onSelect(r.type)}
             disabled={isLoading}
-            className={`
-              inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-sm font-medium
-              transition-colors duration-200 active:scale-[0.97] hover:scale-105
-              ${isSelected
-                ? 'bg-[#7C3AED] text-white shadow-sm ring-1 ring-[#7C3AED]/20'
-                : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200/80 hover:text-foreground'
-              }
-            `}
+            className={`inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors ${
+              isSelected
+                ? 'bg-brand text-brand-foreground'
+                : 'bg-muted text-muted-foreground'
+            }`}
           >
             <span className="text-base">{r.emoji}</span>
-            <span className="tabular-nums">{count}</span>
+            <span>{count.toLocaleString('fa-IR')}</span>
           </button>
         );
       })}
@@ -206,7 +204,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 flex items-center justify-center rounded-full text-wibe-secondary hover:text-wibe-secondary hover:bg-gray-100 transition-colors"
+        className="flex size-11 items-center justify-center rounded-full text-muted-foreground hover:bg-muted"
         aria-label="گزینه‌های بیشتر"
         aria-expanded={open}
       >
@@ -216,7 +214,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
         <button
           type="button"
           onClick={handleReport}
-          className="w-full flex items-center gap-3 rounded-xl px-3 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-right"
+          className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-start text-sm text-destructive hover:bg-destructive/10"
         >
           <Flag className="w-4 h-4 flex-shrink-0" />
           گزارش نظر
@@ -266,9 +264,9 @@ function VibeCommentItem({
   const profileUrl = comment.users.username ? `/u/${encodeURIComponent(comment.users.username)}` : null;
 
   return (
-    <div
+    <Card
       id={`comment-${comment.id}`}
-      className="flex gap-3 rounded-xl border border-wibe bg-wibe-card px-3 py-3.5 shadow-sm"
+      className="flex gap-3 bg-popover px-3 py-3.5"
     >
       <div className="flex-shrink-0">
         {profileUrl ? (
@@ -307,14 +305,14 @@ function VibeCommentItem({
                 {comment.users.name || comment.users.email?.split('@')[0] || 'کاربر'}
               </span>
             )}
-            <span className="text-xs text-wibe-secondary">
-              {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: faIR })}
+            <span className="text-xs text-muted-foreground">
+              {formatRelativeTime(comment.createdAt)}
             </span>
             {comment.users.curatorLevel && (
               <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
             )}
             {isSuggestion && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">➕ پیشنهاد</span>
+              <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">پیشنهاد</span>
             )}
           </div>
           <CommentMoreMenu onReport={() => onReport(comment.id)} />
@@ -329,7 +327,7 @@ function VibeCommentItem({
           </p>
           {!expanded && showReadMore && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-wibe-card to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-popover to-transparent"
               aria-hidden
             />
           )}
@@ -338,13 +336,13 @@ function VibeCommentItem({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-1.5 wibe-caption font-semibold text-primary hover:underline"
+            className="mt-1.5 text-xs font-semibold text-brand"
           >
             {expanded ? 'کمتر' : 'بیشتر بخوان'}
           </button>
         )}
         {isApproved && (
-          <p className="text-xs text-green-600 mt-1.5 flex items-center gap-1.5 font-medium">
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-success">
             <span>✔</span> به لیست اضافه شد
           </p>
         )}
@@ -354,7 +352,7 @@ function VibeCommentItem({
               type="button"
               onClick={() => handleVote(1)}
               aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
-              className={`flex items-center gap-1 text-xs transition-colors ${localVote === 1 ? 'text-green-600 font-medium' : 'text-wibe-secondary hover:text-green-600'}`}
+              className={`flex h-11 items-center gap-1 text-xs ${localVote === 1 ? 'font-medium text-success' : 'text-muted-foreground'}`}
               title="مفید بود"
             >
               <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />
@@ -364,7 +362,7 @@ function VibeCommentItem({
               type="button"
               onClick={() => handleVote(-1)}
               aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
-              className={`flex items-center gap-1 text-xs transition-colors ${localVote === -1 ? 'text-amber-600 font-medium' : 'text-wibe-secondary hover:text-amber-600'}`}
+              className={`flex h-11 items-center gap-1 text-xs ${localVote === -1 ? 'font-medium text-warning' : 'text-muted-foreground'}`}
               title="مفید نبود"
             >
               <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />
@@ -374,25 +372,17 @@ function VibeCommentItem({
         </div>
         {isSuggestion && isOwner && isPending && (
           <div className="flex gap-2 mt-2">
-            <button
-              type="button"
-              onClick={() => onApprove(comment.id)}
-              className="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 text-xs font-medium hover:bg-green-200"
-            >
+            <Button type="button" variant="outline" size="sm" className="h-11 border-success/30 text-success" onClick={() => onApprove(comment.id)}>
               تایید
-            </button>
-            <button
-              type="button"
-              onClick={() => onReject(comment.id)}
-              className="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-medium hover:bg-red-200"
-            >
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="h-11 border-destructive/30 text-destructive" onClick={() => onReject(comment.id)}>
               رد
-            </button>
+            </Button>
           </div>
         )}
         {/* Replies */}
         {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-3 pr-4 border-r-2 border-gray-100 space-y-2">
+          <div className="mt-3 space-y-2 border-s-2 border-border ps-4">
             {comment.replies.map((reply) => {
               const replyProfileUrl = reply.users.username ? `/u/${encodeURIComponent(reply.users.username)}` : null;
               return (
@@ -431,12 +421,12 @@ function VibeCommentItem({
                     </span>
                   )}
                   {reply.users.curatorLevel && (
-                    <span className="mr-1.5 inline-flex align-middle">
+                    <span className="ms-1.5 inline-flex align-middle">
                       <CuratorBadge level={reply.users.curatorLevel} size="small" glow={false} />
                     </span>
                   )}
-                  <span className="text-wibe-secondary text-xs mr-1">—</span>
-                  <span className="text-wibe-secondary text-xs">{reply.content}</span>
+                  <span className="ms-1 text-xs text-muted-foreground">—</span>
+                  <span className="text-muted-foreground text-xs">{reply.content}</span>
                 </div>
               </div>
             );
@@ -444,15 +434,15 @@ function VibeCommentItem({
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
-function getPlaceholders(categorySlug?: string | null) {
+function getPlaceholders(_categorySlug?: string | null) {
   return {
-    collapsed: 'نظرت درباره این لیست چیه؟ پیشنهادی داری؟',
-    comment: 'نظرت درباره این لیست چیه؟ پیشنهادی داری؟',
-    suggestion: 'اسم آیتم پیشنهادی‌تو بنویس...',
+    collapsed: 'نظرت درباره این لیست چیه؟',
+    comment: 'نظرت درباره این لیست چیه؟',
+    suggestion: 'اسم آیتم پیشنهادی‌تو بنویس…',
   };
 }
 
@@ -495,54 +485,54 @@ function VibeCommentInput({
 
   if (!isExpanded) {
     return (
-      <button
+      <Button
         type="button"
         onClick={onExpand}
-        className="w-full h-[52px] flex items-center px-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-wibe-secondary text-sm text-right hover:border-[#7C3AED]/40 hover:bg-gray-50/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C3AED]/20"
+        variant="outline"
+        size="lg"
+        className="w-full justify-start px-4 font-normal text-muted-foreground"
       >
         {placeholders.collapsed}
-      </button>
+      </Button>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex items-end gap-2 p-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <Card className="flex items-end gap-2 bg-popover p-2.5">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value.slice(0, maxLength))}
           placeholder={isSuggestionMode ? placeholders.suggestion : placeholders.comment}
-          className="flex-1 min-h-[44px] py-2.5 px-0 border-0 bg-transparent text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-1"
+          className="min-h-11 flex-1 resize-none border-0 bg-transparent px-0 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
           rows={2}
           maxLength={maxLength}
           aria-describedby="comment-char-count"
         />
-        <button
+        <Button
           type="submit"
           disabled={!canSubmit}
           aria-label="ارسال نظر"
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-[#7C3AED] text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          variant="brand"
+          size="icon"
+          className="size-11 shrink-0 rounded-full"
         >
-          <Send className="w-4 h-4" aria-hidden />
-        </button>
-      </div>
+          <Send aria-hidden />
+        </Button>
+      </Card>
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setContent('')}
-            className="px-3 py-1.5 text-xs text-wibe-secondary hover:text-foreground"
-          >
+          <Button type="button" variant="ghost" size="sm" className="h-11" onClick={() => setContent('')}>
             انصراف
-          </button>
+          </Button>
           {isTooShort && (
-            <span className="text-xs text-amber-600">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
+            <span className="text-xs text-warning">حداقل {MIN_COMMENT_LENGTH.toLocaleString('fa-IR')} کاراکتر</span>
           )}
         </div>
         <span
           id="comment-char-count"
           className={`text-xs tabular-nums ${
-            isOverLimit ? 'text-red-500 font-medium' : isNearLimit ? 'text-amber-600' : 'text-wibe-secondary'
+            isOverLimit ? 'font-medium text-destructive' : isNearLimit ? 'text-warning' : 'text-muted-foreground'
           }`}
         >
           {content.length.toLocaleString('fa-IR')}/{maxLength.toLocaleString('fa-IR')}
@@ -726,21 +716,105 @@ export default function VibeCommentSection({
   const displayedComments = comments;
   const remainingCount = Math.max(totalCount - comments.length, 0);
   const loadMoreStep = Math.min(COMMENTS_LOAD_MORE_STEP, remainingCount);
-  const hasComments = comments.length > 0;
+
+  const showSort = !isLoading && totalCount > 1;
 
   return (
     <section
-      className={`border-wibe ${
+      className={`border-border ${
         embeddedInSidebar ? 'mt-0 border-t-0 pt-0' : 'mt-8 border-t pt-6'
       }`}
     >
-      <h2 className="mb-3 wibe-h3 text-foreground">نظرات</h2>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="wibe-h3 text-foreground">نظرات</h2>
+        {showSort ? (
+          <div className="flex items-center gap-1" role="group" aria-label="مرتب‌سازی نظرات">
+            <button
+              type="button"
+              onClick={() => setSortBy('helpful')}
+              className={`h-11 rounded-full px-3 text-sm font-medium ${
+                sortBy === 'helpful'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              مفیدترین
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortBy('newest')}
+              className={`h-11 rounded-full px-3 text-sm font-medium ${
+                sortBy === 'newest'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              جدیدترین
+            </button>
+          </div>
+        ) : null}
+      </div>
 
-      {/* Spacing: Header→Reaction 12, Reaction→Input 12, Input→Suggest 16, Suggest→Empty 20 */}
-      <div className="space-y-3">
-        {/* Comment Input — Primary */}
-        {commentsEnabled && status === 'authenticated' && (
-          <div>
+      <div className="space-y-4">
+        {!commentsEnabled && (
+          <p className="wibe-small text-muted-foreground">کامنت‌ها برای این لیست غیرفعال است</p>
+        )}
+
+        {/* Thread اول — social proof قبل از کامپوزر */}
+        <div>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="py-2 text-center wibe-caption text-muted-foreground">
+              هنوز گفتگویی نیست
+              {status === 'authenticated' && commentsEnabled ? ' — اولین نظر را پایین بنویس' : null}
+            </p>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {displayedComments.map((c) => (
+                  <VibeCommentItem
+                    key={c.id}
+                    comment={c}
+                    isOwner={isOwner}
+                    onApprove={handleApprove}
+                    onReject={handleReject}
+                    onVote={handleVote}
+                    onReport={handleOpenReport}
+                  />
+                ))}
+              </div>
+              {hasNextPage ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  className="mt-4 w-full text-brand"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر
+                      {remainingCount > 0
+                        ? ` (${remainingCount.toLocaleString('fa-IR')} باقی‌مانده)`
+                        : ''}
+                    </>
+                  )}
+                </Button>
+              ) : null}
+            </>
+          )}
+        </div>
+
+        {/* کامپوزر جمع‌وجور پایین thread */}
+        {commentsEnabled && status === 'authenticated' ? (
+          <div className="space-y-2 border-t border-border pt-3">
             <VibeCommentInput
               isExpanded={isFormExpanded}
               onExpand={() => setIsFormExpanded(true)}
@@ -751,113 +825,22 @@ export default function VibeCommentSection({
               maxCommentLength={maxCommentLength}
               suggestionMaxLength={suggestionMaxLength}
             />
+            {onOpenSuggestItem ? (
+              <Button type="button" variant="ghost" size="sm" className="h-11 text-brand" onClick={handleSuggestionClick}>
+                پیشنهاد آیتم
+              </Button>
+            ) : null}
           </div>
-        )}
+        ) : null}
 
-        {/* Suggest Item — فقط بعد از اولین کامنت، Secondary CTA — Input→Suggest 16px */}
-        {status === 'authenticated' && onOpenSuggestItem && hasComments && (
-          <button
-            type="button"
-            onClick={handleSuggestionClick}
-            className="w-full flex items-center gap-3 py-2 px-3 mt-1 rounded-lg border border-[#7C3AED]/20 bg-[#7C3AED]/5 hover:bg-[#7C3AED]/8 transition-colors text-right"
-          >
-            <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#7C3AED]/15 flex items-center justify-center text-[#7C3AED] text-xs font-bold">
-              +
-            </span>
-            <span className="text-sm font-medium text-foreground">پیشنهاد آیتم جدید</span>
-          </button>
-        )}
-
-        {!commentsEnabled && (
-          <p className="text-sm text-wibe-secondary py-4">کامنت‌ها برای این لیست غیرفعال است</p>
-        )}
-
-        {status === 'unauthenticated' && (
-          <p className="text-sm text-wibe-secondary py-4">برای ثبت نظر وارد شو</p>
-        )}
-
-        {/* Sort + Comments */}
-        {!isLoading && comments.length > 0 && (
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex gap-2 mb-4">
-              <span className="text-xs text-wibe-secondary py-1.5">مرتب‌سازی:</span>
-              <button
-                type="button"
-                onClick={() => setSortBy('helpful')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'helpful' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'}`}
-              >
-                مفیدترین
-              </button>
-              <button
-                type="button"
-                onClick={() => setSortBy('newest')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium ${sortBy === 'newest' ? 'bg-[#7C3AED] text-white' : 'bg-gray-100 text-wibe-secondary hover:bg-gray-200'}`}
-              >
-                جدیدترین
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Comments List / Empty State — Suggest→Empty 20px */}
-        <div className={hasComments ? 'mt-2' : 'mt-1'}>
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-[#7C3AED]" />
-          </div>
-        ) : comments.length === 0 ? (
-          <p className="py-4 text-center wibe-caption text-wibe-secondary">
-            هنوز گفتگویی نیست —{' '}
-            {status === 'authenticated' && commentsEnabled ? (
-              <button
-                type="button"
-                onClick={() => setIsFormExpanded(true)}
-                className="font-medium text-primary hover:underline"
-              >
-                اولین نظر رو بذار
-              </button>
-            ) : (
-              'اولین نظر رو بذار'
-            )}
+        {status === 'unauthenticated' && commentsEnabled ? (
+          <p className="border-t border-border pt-3 text-sm text-muted-foreground">
+            برای ثبت نظر{' '}
+            <Link href="/login" className="font-medium text-brand">
+              وارد شو
+            </Link>
           </p>
-        ) : (
-          <>
-            <div className="space-y-4">
-              {displayedComments.map((c) => (
-                <VibeCommentItem
-                  key={c.id}
-                  comment={c}
-                  isOwner={isOwner}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onVote={handleVote}
-                  onReport={handleOpenReport}
-                />
-              ))}
-            </div>
-            {hasNextPage && (
-              <button
-                type="button"
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-                className="w-full py-3 mt-4 text-sm font-medium text-primary hover:bg-primary/5 rounded-xl transition-colors flex items-center justify-center gap-1 disabled:opacity-60"
-              >
-                {isFetchingNextPage ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4" />
-                    {loadMoreStep.toLocaleString('fa-IR')} نظر دیگر
-                    {remainingCount > 0
-                      ? ` (${remainingCount.toLocaleString('fa-IR')} باقی‌مانده)`
-                      : ''}
-                  </>
-                )}
-              </button>
-            )}
-          </>
-        )}
-        </div>
+        ) : null}
       </div>
 
       {toast && (

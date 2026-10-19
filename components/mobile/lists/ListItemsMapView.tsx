@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { MapPin } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import {
   buildListItemQuickActions,
@@ -52,19 +53,19 @@ export default function ListItemsMapView({
 
   if (mappableEntries.length === 0) {
     return (
-      <div className="rounded-xl border border-wibe bg-wibe-card px-4 py-10 text-center">
-        <MapPin className="mx-auto mb-2 h-8 w-8 text-wibe-secondary/60" aria-hidden />
-        <p className="wibe-body font-medium text-foreground">موقعیت مکانی ثبت نشده</p>
-        <p className="mt-1 wibe-caption text-wibe-secondary">
+      <Card className="bg-popover px-4 py-10 text-center">
+        <MapPin className="mx-auto mb-2 size-8 text-muted-foreground" aria-hidden />
+        <p className="text-base font-medium text-foreground">موقعیت مکانی ثبت نشده</p>
+        <p className="mt-1 text-sm text-muted-foreground">
           برای نمایش نقشه، آدرس یا لینک نقشه به آیتم‌ها اضافه کن
         </p>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-sm lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-stretch">
-      <div className="relative aspect-[4/3] min-h-[220px] bg-gray-100 lg:aspect-auto lg:min-h-[320px]">
+    <Card className="overflow-hidden bg-popover p-0 lg:grid lg:grid-cols-4 lg:items-stretch">
+      <div className="relative aspect-[4/3] min-h-56 bg-muted lg:col-span-3 lg:aspect-auto lg:min-h-80">
         {embedUrl ? (
           <iframe
             title={`نقشه — ${selectedEntry?.item.title ?? ''}`}
@@ -75,17 +76,17 @@ export default function ListItemsMapView({
             allowFullScreen
           />
         ) : (
-          <div className="flex h-full items-center justify-center wibe-caption text-wibe-secondary">
+          <div className="flex h-full items-center justify-center wibe-caption text-muted-foreground">
             نقشه در دسترس نیست
           </div>
         )}
       </div>
 
-      <div className="max-h-[280px] overflow-y-auto border-t border-wibe lg:max-h-none lg:border-t-0 lg:border-r">
-        <p className="sticky top-0 z-10 border-b border-wibe/60 bg-wibe-card px-3 py-2 wibe-caption font-medium text-wibe-secondary">
+      <div className="max-h-72 overflow-y-auto border-t border-border lg:max-h-none lg:border-s lg:border-t-0">
+        <p className="sticky top-0 z-10 border-b border-border bg-popover px-3 py-2 text-sm font-medium text-muted-foreground">
           {mappableEntries.length.toLocaleString('fa-IR')} مکان
         </p>
-        <ul className="divide-y divide-wibe/60">
+        <ul className="divide-y divide-border">
           {mappableEntries.map(({ item, originalIndex }) => {
             const isSelected = item.id === (selectedEntry?.item.id ?? null);
             const address =
@@ -95,21 +96,21 @@ export default function ListItemsMapView({
             return (
               <li key={item.id}>
                 <div
-                  className={`flex items-stretch gap-2 px-2 py-2 transition-colors ${
-                    isSelected ? 'bg-primary/5' : 'hover:bg-gray-50'
+                  className={`flex items-stretch gap-2 px-2 py-1 ${
+                    isSelected ? 'bg-brand/5' : 'hover:bg-muted'
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => setSelectedId(item.id)}
-                    className="min-w-0 flex-1 text-right"
+                    className="min-h-12 min-w-0 flex-1 text-start"
                   >
                     <span className="flex items-start gap-2">
                       <span
-                        className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full wibe-caption font-semibold tabular-nums ${
+                        className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                           isSelected
-                            ? 'bg-primary text-white'
-                            : 'bg-gray-100 text-wibe-secondary'
+                            ? 'bg-brand text-brand-foreground'
+                            : 'bg-muted text-muted-foreground'
                         }`}
                       >
                         {(originalIndex + 1).toLocaleString('fa-IR')}
@@ -119,7 +120,7 @@ export default function ListItemsMapView({
                           {item.title}
                         </span>
                         {address && (
-                          <span className="mt-0.5 line-clamp-2 wibe-caption text-wibe-secondary">
+                          <span className="mt-0.5 line-clamp-2 wibe-caption text-muted-foreground">
                             {address}
                           </span>
                         )}
@@ -137,6 +138,6 @@ export default function ListItemsMapView({
           })}
         </ul>
       </div>
-    </div>
+    </Card>
   );
 }

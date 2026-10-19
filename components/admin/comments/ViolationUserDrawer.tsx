@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { Loader2, ShieldBan, ShieldCheck, X } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
 import { CommentRestrictionStatusBadge } from './UserPenaltyBadge';
@@ -281,10 +280,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                           </p>
                         )}
                         <p className="mt-1 text-[var(--color-text-muted)]">
-                          {formatDistanceToNow(new Date(p.createdAt), {
-                            addSuffix: true,
-                            locale: faIR,
-                          })}
+                          {formatRelativeTime(p.createdAt)}
                         </p>
                       </li>
                     ))}

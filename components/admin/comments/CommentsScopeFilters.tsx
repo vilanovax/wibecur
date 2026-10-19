@@ -78,11 +78,11 @@ export default function CommentsScopeFilters({
   };
 
   const selectClass =
-    'py-1.5 px-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm min-w-0 max-w-full';
+    'py-1 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-xs min-w-0 max-w-full';
 
   return (
-    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[var(--color-border-muted)]">
-      <label className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] shrink-0">
+    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--color-border-muted)]">
+      <label className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] shrink-0">
         <User className="w-3.5 h-3.5" />
         <span className="whitespace-nowrap">منبع</span>
         <select
@@ -99,13 +99,13 @@ export default function CommentsScopeFilters({
         </select>
       </label>
 
-      <label className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] min-w-[10rem] flex-1 sm:flex-none">
+      <label className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] min-w-[9rem] flex-1 sm:flex-none">
         <FolderOpen className="w-3.5 h-3.5 shrink-0" />
         <span className="whitespace-nowrap">دسته</span>
         <select
           value={categoryId}
           onChange={(e) => handleCategoryChange(e.target.value)}
-          className={`${selectClass} flex-1 sm:max-w-[14rem]`}
+          className={`${selectClass} flex-1 sm:max-w-[12rem]`}
           aria-label="فیلتر دسته"
         >
           <option value="">همه دسته‌ها</option>
@@ -118,14 +118,14 @@ export default function CommentsScopeFilters({
         </select>
       </label>
 
-      <label className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] min-w-[10rem] flex-1 sm:flex-none">
+      <label className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] min-w-[9rem] flex-1 sm:flex-none">
         <List className="w-3.5 h-3.5 shrink-0" />
         <span className="whitespace-nowrap">لیست</span>
         <select
           value={listId}
           onChange={(e) => onListChange(e.target.value)}
           disabled={listsLoading}
-          className={`${selectClass} flex-1 sm:max-w-[16rem] disabled:opacity-60`}
+          className={`${selectClass} flex-1 sm:max-w-[14rem] disabled:opacity-60`}
           aria-label="فیلتر لیست"
         >
           <option value="">همه لیست‌ها</option>
@@ -145,10 +145,10 @@ export default function CommentsScopeFilters({
             onCategoryChange('');
             onListChange('');
           }}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 dark:text-violet-300 dark:bg-violet-950/40"
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[var(--primary)] bg-[var(--primary)]/8 hover:bg-[var(--primary)]/12"
         >
           <X className="w-3 h-3" />
-          پاک کردن فیلتر محدوده
+          پاک کردن
         </button>
       )}
     </div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Search, LayoutGrid, Table2, SlidersHorizontal, X, Images, Sparkles } from 'lucide-react';
-import type { ListCategoryOption } from '@/lib/admin/lists-intelligence';
+import type { ListCategoryOption } from '@/lib/admin/lists-types';
 import type { ListAdminViewMode } from './ListCoversGallery';
 
 export type ListFilterKind =

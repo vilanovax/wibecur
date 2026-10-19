@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import { List, Bookmark } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MyListsTab from '@/components/mobile/profile/tabs/MyListsTab';
 import type { ListWithCategory } from '@/components/mobile/profile/tabs/MyListsTab';
 import BookmarksTab from '@/components/mobile/profile/tabs/BookmarksTab';
@@ -23,6 +23,7 @@ interface ProfileTabsProps {
   initialLists?: ListWithCategory[];
   listsCount?: number;
   initialVisibilityCounts?: UserListVisibilityCounts;
+  initialSharedCount?: number;
   initialBookmarks?: ProfileBookmarkSSR[];
   initialBookmarksTotal?: number;
 }
@@ -34,27 +35,11 @@ export default function ProfileTabs({
   initialLists,
   listsCount,
   initialVisibilityCounts,
+  initialSharedCount = 0,
   initialBookmarks,
   initialBookmarksTotal,
 }: ProfileTabsProps) {
   const visibleTab = activeTab === 'activity' ? 'my-lists' : activeTab;
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-
-  useEffect(() => {
-    const updateIndicator = () => {
-      const i = VISIBLE_TABS.findIndex((t) => t.id === visibleTab);
-      const el = tabRefs.current[i];
-      if (el) setIndicatorStyle({ left: el.offsetLeft, width: el.offsetWidth });
-    };
-    updateIndicator();
-    const t = setTimeout(updateIndicator, 50);
-    window.addEventListener('resize', updateIndicator);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener('resize', updateIndicator);
-    };
-  }, [visibleTab]);
 
   const myListsBadgeCount = listsCount ?? initialLists?.length ?? 0;
   const bookmarksBadgeCount = initialBookmarksTotal ?? initialBookmarks?.length ?? 0;
@@ -63,11 +48,16 @@ export default function ProfileTabs({
 
   return (
     <div className="mt-0 -mx-4 lg:mx-0">
-      <div className="sticky top-[57px] z-20 border-b border-wibe bg-wibe-card/95 px-4 pb-0 backdrop-blur-sm lg:top-14 lg:rounded-t-xl lg:border lg:border-b-0 lg:border-wibe lg:bg-wibe-card">
-        <div className="relative flex gap-1 lg:justify-start lg:gap-0">
-          {VISIBLE_TABS.map((tab, index) => {
+      <Tabs
+        value={visibleTab}
+        defaultValue="my-lists"
+        onValueChange={(value) => onTabChange(value as ProfileTabId)}
+        variant="underline"
+      >
+      <div className="sticky top-14 z-20 border-b border-border bg-popover/95 px-4 backdrop-blur-sm lg:rounded-t-xl lg:border lg:border-b-0 lg:bg-popover">
+        <TabsList aria-label="بخش‌های پروفایل" className="w-full">
+          {VISIBLE_TABS.map((tab) => {
             const Icon = tab.icon;
-            const isActive = visibleTab === tab.id;
             const badge =
               tab.id === 'my-lists' && myListsBadgeCount > 0
                 ? formatBadge(myListsBadgeCount)
@@ -75,50 +65,28 @@ export default function ProfileTabs({
                   ? formatBadge(bookmarksBadgeCount)
                   : null;
             return (
-              <button
-                key={tab.id}
-                type="button"
-                ref={(r) => {
-                  tabRefs.current[index] = r;
-                }}
-                onClick={() => onTabChange(tab.id)}
-                className={`flex flex-1 items-center justify-center gap-1.5 px-2 py-3 rounded-t-md whitespace-nowrap transition-all duration-200 lg:flex-none lg:px-6 lg:py-2.5 ${
-                  isActive
-                    ? 'text-primary font-bold wibe-small'
-                    : 'text-wibe-secondary font-medium wibe-caption'
-                }`}
-              >
-                <Icon className={isActive ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
+              <TabsTrigger key={tab.id} value={tab.id} className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 lg:flex-none lg:px-6">
+                <Icon className="size-4" />
                 {tab.label}
-                {badge && (
-                  <span
-                    className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold leading-none flex items-center justify-center ${
-                      isActive ? 'bg-primary/15 text-primary' : 'bg-gray-100 text-wibe-secondary'
-                    }`}
-                  >
+                {badge ? (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1 text-xs font-bold text-muted-foreground">
                     {badge}
                   </span>
-                )}
-              </button>
+                ) : null}
+              </TabsTrigger>
             );
           })}
-          <div
-            className="absolute bottom-0 h-[3px] bg-primary rounded-full transition-all duration-300 ease-out"
-            style={{
-              left: indicatorStyle.left,
-              width: indicatorStyle.width,
-            }}
-          />
-        </div>
+        </TabsList>
       </div>
 
-      <div className="min-h-[calc(100vh-14rem)] border-t border-wibe/40 bg-wibe-card px-0 pt-4 lg:min-h-0 lg:rounded-b-xl lg:border lg:border-t-0 lg:border-wibe lg:px-4 lg:pb-4">
+      <div className="px-0 pt-4 lg:rounded-b-xl lg:border lg:border-t-0 lg:bg-popover lg:px-4 lg:pb-4">
         {visibleTab === 'my-lists' && (
           <MyListsTab
             userId={userId}
             initialLists={initialLists}
             initialTotal={listsCount ?? initialLists?.length}
             initialVisibilityCounts={initialVisibilityCounts}
+            initialSharedCount={initialSharedCount}
           />
         )}
         {visibleTab === 'bookmarks' && (
@@ -129,6 +97,7 @@ export default function ProfileTabs({
           />
         )}
       </div>
+      </Tabs>
     </div>
   );
 }

@@ -33,7 +33,7 @@ export default function DiscoverByCity({
       <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         📍 محبوب در شهرها
       </h2>
-      <p className="text-[11px] text-wibe-secondary">
+      <p className="wibe-caption text-wibe-secondary">
         کشف لیست‌های محبوب در هر شهر
       </p>
 
@@ -44,15 +44,14 @@ export default function DiscoverByCity({
             <Link
               key={city}
               href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(city)}`}
-              className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100 active:scale-[0.98] transition-transform shadow-sm"
+              className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-wibe-surface active:scale-[0.98] transition-transform shadow-sm"
             >
               <ImageWithFallback
                 src={img}
                 alt={city}
                 className="w-full h-full object-cover"
                 placeholderSize="cover"
-              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
-            />
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="font-bold text-white text-base">{city}</p>

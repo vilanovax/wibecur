@@ -27,7 +27,7 @@ export default function HubTrendingNow({
         </span>
         داغ‌ترین لیست‌های امروز
       </h2>
-      <p className="text-[11px] text-wibe-secondary">
+      <p className="wibe-caption text-wibe-secondary">
         بر اساس رشد ذخیره در ۲۴ ساعت گذشته
       </p>
 
@@ -40,16 +40,15 @@ export default function HubTrendingNow({
               href={`/lists/${list.slug}`}
               className="flex-shrink-0 w-[68vw] max-w-[240px] snap-start"
             >
-              <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-lg active:scale-[0.98] transition-transform">
-                <div className="relative aspect-[3/4] bg-gray-100">
+              <div className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-lg active:scale-[0.98] transition-transform">
+                <div className="relative aspect-[3/4] bg-wibe-surface">
                   {list.coverImage ? (
                     <ImageWithFallback
                       src={list.coverImage}
                       alt={list.title}
                       className="w-full h-full object-cover"
                       placeholderSize="cover"
-              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
-            />
+                    />
                   ) : (
                     <div
                       className="w-full h-full flex items-center justify-center text-4xl opacity-40"
@@ -60,7 +59,7 @@ export default function HubTrendingNow({
                   )}
                   <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
                     <span
-                      className="flex items-center gap-0.5 text-white text-[11px] px-2 py-0.5 rounded-lg font-bold shadow-md"
+                      className="flex items-center gap-0.5 text-white wibe-caption px-2 py-0.5 rounded-lg font-bold shadow-md"
                       style={{
                         background: `linear-gradient(135deg, ${accentColor}, ${accentColor}dd)`,
                         animation: 'pulse 2s ease-in-out infinite',
@@ -69,13 +68,13 @@ export default function HubTrendingNow({
                       🔥 {growth}
                     </span>
                     {growth > 0 && (
-                      <span className="flex items-center gap-0.5 text-white text-[10px] px-1.5 py-0.5 rounded-md font-semibold bg-emerald-500/95 shadow">
+                      <span className="flex items-center gap-0.5 text-white wibe-caption px-1.5 py-0.5 rounded-md font-semibold bg-emerald-500/95 shadow">
                         ↑ +{growth}
                       </span>
                     )}
                   </div>
                   {list.cityTag && (
-                    <span className="absolute bottom-2 right-2 text-white/95 text-[10px] px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm">
+                    <span className="absolute bottom-2 right-2 text-white/95 wibe-caption px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-sm">
                       📍 {list.cityTag}
                     </span>
                   )}
@@ -90,14 +89,12 @@ export default function HubTrendingNow({
                         src={list.creator.image}
                         alt=""
                         className="w-4 h-4 rounded-full object-cover"
-                  width={16}
-                  height={16}
-                />
+                      />
                     )}
-                    <span className="text-[10px] text-wibe-secondary truncate flex-1">
+                    <span className="wibe-caption text-wibe-secondary truncate flex-1">
                       {list.creator?.name || 'کیوریتور'}
                     </span>
-                    <span className="text-[10px] font-bold" style={{ color: accentColor }}>
+                    <span className="wibe-caption font-bold" style={{ color: accentColor }}>
                       ⭐ {list.saveCount}
                     </span>
                   </div>

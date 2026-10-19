@@ -38,7 +38,7 @@ export default function ListsFeaturedBanner({ list }: ListsFeaturedBannerProps) 
           variant="banner"
           className="absolute inset-0 w-full h-full object-cover"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="w-full h-full flex items-center justify-center text-4xl bg-gray-200"
+          fallbackClassName="w-full h-full flex items-center justify-center text-4xl bg-wibe-surface"
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/45 to-black/20" />

@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { Heart, Flag } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import CommentAvatar from '@/components/shared/CommentAvatar';
 import CuratorBadge from '@/components/shared/CuratorBadge';
 
@@ -44,7 +43,7 @@ export default function ListCommentItem({
   };
 
   return (
-    <div className="flex gap-3 p-4 bg-white rounded-xl border border-gray-100">
+    <div className="flex gap-3 rounded-surface border border-border bg-popover p-4">
       {/* Avatar */}
       <div className="flex-shrink-0">
         <CommentAvatar
@@ -65,18 +64,15 @@ export default function ListCommentItem({
           {comment.users.curatorLevel && (
             <CuratorBadge level={comment.users.curatorLevel} size="small" glow={false} />
           )}
-          <span className="text-xs text-wibe-secondary">
-            {formatDistanceToNow(new Date(comment.createdAt), {
-              addSuffix: true,
-              locale: faIR,
-            })}
+          <span className="text-xs text-muted-foreground">
+            {formatRelativeTime(comment.createdAt)}
           </span>
         </div>
 
         {/* Comment Text */}
         <p
           className={`text-foreground text-sm mb-2 ${
-            comment.isFiltered ? 'text-wibe-secondary italic' : ''
+            comment.isFiltered ? 'italic text-muted-foreground' : ''
           }`}
         >
           {comment.content}
@@ -87,22 +83,22 @@ export default function ListCommentItem({
           <button
             onClick={handleLike}
             disabled={isLoading}
-            className={`flex items-center gap-1 text-xs transition-colors ${
+            className={`inline-flex min-h-11 items-center gap-1 px-1 text-sm transition-colors ${
               localIsLiked
-                ? 'text-red-500'
-                : 'text-wibe-secondary hover:text-red-500'
+                ? 'text-destructive'
+                : 'text-muted-foreground hover:text-destructive'
             }`}
           >
             <Heart
               className={`w-4 h-4 ${localIsLiked ? 'fill-current' : ''}`}
             />
-            <span>{localLikeCount}</span>
+            <span>{localLikeCount.toLocaleString('fa-IR')}</span>
           </button>
 
           <button
             onClick={() => onReport(comment.id)}
             disabled={isLoading}
-            className="flex items-center gap-1 text-xs text-wibe-secondary hover:text-orange-500 transition-colors"
+            className="inline-flex min-h-11 items-center gap-1 px-1 text-sm text-muted-foreground transition-colors hover:text-warning"
           >
             <Flag className="w-4 h-4" />
             <span>گزارش</span>

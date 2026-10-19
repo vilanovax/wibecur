@@ -1,4 +1,4 @@
-import { isOurStorageUrl } from './object-storage-config';
+import { isLegacyLiaraStorageUrl, isOurStorageUrl } from './object-storage-config';
 
 const TMDB_IMAGE_HOSTS = new Set(['image.tmdb.org', 'www.themoviedb.org', 'themoviedb.org']);
 
@@ -121,6 +121,17 @@ export function isGenericListCover(url: string | null | undefined): boolean {
   return false;
 }
 
+/**
+ * بنرهای محلی به webp تبدیل شده‌اند. مسیرهای قدیمی jpg/png همان فایل را
+ * از بهینه‌ساز next/image با ۴۰۰ برمی‌گردانند چون فایل مبدأ وجود ندارد.
+ */
+export function normalizeLocalBannerSrc(url: string): string {
+  const trimmed = url.trim();
+  const match = trimmed.match(/^(\/images\/banners\/[^/?#]+)\.(?:jpe?g|png)([?#].*)?$/i);
+  if (!match) return trimmed;
+  return `${match[1]}.webp${match[2] ?? ''}`;
+}
+
 /** آیا URL برای نمایش در <img> معتبر است؟ */
 export function isDisplayableCoverPath(url: string | null | undefined): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -128,7 +139,7 @@ export function isDisplayableCoverPath(url: string | null | undefined): boolean 
   if (!t || isPlaceholderCoverPath(t)) return false;
   if (t.startsWith('/images/banners/')) return true;
   if (t.startsWith('/')) return true;
-  if (isOurStorageUrl(t)) return true;
+  if (isOurStorageUrl(t) || isLegacyLiaraStorageUrl(t)) return true;
   if (isAllowedItemImageUrl(t)) return true;
   if (isAllowedExternalImageUrl(t)) return true;
   return false;
@@ -139,7 +150,7 @@ export function resolveImageDisplaySrc(rawUrl: string | null | undefined): strin
   const url = rawUrl.trim();
   if (!url) return '';
   if (url.startsWith('/')) return url;
-  if (isOurStorageUrl(url)) return url;
+  if (isOurStorageUrl(url) || isLegacyLiaraStorageUrl(url)) return url;
   if (isAllowedItemImageUrl(url)) return url;
   if (isAllowedExternalImageUrl(url)) return url;
   return '';

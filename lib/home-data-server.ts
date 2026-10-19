@@ -1,8 +1,9 @@
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getCachedGlobalTrending, getCachedFastRising } from '@/lib/trending/cached';
-import { getCurrentFeaturedSlot } from '@/lib/home-featured';
+import { getCurrentFeaturedSlotReadOnly } from '@/lib/home-featured';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import type {
@@ -26,11 +27,13 @@ export type HomeApiPayload = {
   recommendations: HomeListData[];
 };
 
+const HOME_CURATED_TAKE = 4;
+
 async function computeHomePageData(): Promise<HomeData> {
-  // همهٔ کوئری‌های مستقل موازی — featured-slot دیگر بقیه را بلاک نمی‌کند.
+  // موازی: featured read-only (بدون نوتیف/write) + curated lean + trending + rising
   const [slotResult, lists, trendingResults, risingResults] = await Promise.all([
-    dbQuery(() => getCurrentFeaturedSlot(prisma)).catch((slotErr) => {
-      console.warn('getCurrentFeaturedSlot failed, using fallback:', slotErr);
+    dbQuery(() => getCurrentFeaturedSlotReadOnly(prisma)).catch((slotErr) => {
+      console.warn('getCurrentFeaturedSlotReadOnly failed, using fallback:', slotErr);
       return null;
     }),
     dbQuery(() =>
@@ -41,23 +44,33 @@ async function computeHomePageData(): Promise<HomeData> {
           title: true,
           slug: true,
           description: true,
-        coverImage: true,
-        horizontalImage: true,
-        saveCount: true,
+          coverImage: true,
+          horizontalImage: true,
+          saveCount: true,
           itemCount: true,
           likeCount: true,
           isFeatured: true,
           badge: true,
-          userId: true,
           categories: {
-            select: { id: true, name: true, slug: true, icon: true, isActive: true },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              icon: true,
+              isActive: true,
+            },
           },
           users: {
-            select: { id: true, name: true, username: true, image: true },
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              image: true,
+            },
           },
         },
         orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
-        take: 10,
+        take: HOME_CURATED_TAKE,
       })
     ),
     getCachedGlobalTrending(10),
@@ -69,9 +82,8 @@ async function computeHomePageData(): Promise<HomeData> {
     slotResult?.list && isListVisibleInPublicFeed(slotResult.list)
       ? slotResult.list
       : null;
-  const featuredFromSlot = slotList;
-  const featured = featuredFromSlot ?? (visibleLists.length > 0 ? visibleLists[0] : null);
-  const featuredSlotId = slotResult?.slotId ?? null;
+  const featured = slotList ?? (visibleLists.length > 0 ? visibleLists[0] : null);
+  const featuredSlotId = slotList ? slotResult?.slotId ?? null : null;
 
   const withCover = (input: {
     coverImage?: string | null;
@@ -98,7 +110,34 @@ async function computeHomePageData(): Promise<HomeData> {
     };
   };
 
-  const mapList = (l: (typeof lists)[0]): HomeListData => {
+  type ListLike = {
+    id: string;
+    title: string;
+    slug: string;
+    description?: string | null;
+    coverImage?: string | null;
+    horizontalImage?: string | null;
+    saveCount?: number | null;
+    itemCount?: number | null;
+    likeCount?: number | null;
+    isFeatured?: boolean;
+    badge?: string | null;
+    categories?: {
+      id: string;
+      name: string;
+      slug: string;
+      icon: string;
+      isActive?: boolean;
+    } | null;
+    users?: {
+      id: string;
+      name: string | null;
+      username: string | null;
+      image?: string | null;
+    } | null;
+  };
+
+  const mapList = (l: ListLike): HomeListData => {
     const images = withCover({
       coverImage: l.coverImage,
       horizontalImage: l.horizontalImage,
@@ -117,18 +156,27 @@ async function computeHomePageData(): Promise<HomeData> {
       saveCount: l.saveCount ?? 0,
       itemCount: l.itemCount ?? 0,
       likes: l.likeCount ?? 0,
-      badge: (l.isFeatured ? 'featured' : (l.badge?.toLowerCase() ?? undefined)) as
+      badge: (l.isFeatured
+        ? 'featured'
+        : (l.badge?.toLowerCase() ?? undefined)) as
         | 'trending'
         | 'new'
         | 'featured'
         | undefined,
-      categories: l.categories,
+      categories: l.categories
+        ? {
+            id: l.categories.id,
+            name: l.categories.name,
+            slug: l.categories.slug,
+            icon: l.categories.icon,
+          }
+        : null,
       creator: l.users
         ? {
             id: l.users.id,
             name: l.users.name,
             username: l.users.username,
-            image: l.users.image,
+            image: l.users.image ?? null,
           }
         : null,
     };
@@ -154,11 +202,11 @@ async function computeHomePageData(): Promise<HomeData> {
       itemCount: t.itemCount,
       likes: t.likeCount,
       weeklySaves: t.weeklySaves,
-      badge: (t.badge === 'viral' ? 'trending' : t.badge === 'hot' ? 'trending' : undefined) as
-        | 'trending'
-        | 'new'
-        | 'featured'
-        | undefined,
+      badge: (t.badge === 'viral'
+        ? 'trending'
+        : t.badge === 'hot'
+          ? 'trending'
+          : undefined) as 'trending' | 'new' | 'featured' | undefined,
       categories: t.categorySlug
         ? { slug: t.categorySlug, name: '', id: '', icon: '' }
         : undefined,
@@ -211,26 +259,27 @@ async function computeHomePageData(): Promise<HomeData> {
   };
 
   const mapFeatured: FeaturedListData | null = featured
-    ? {
-        ...mapList(featured as (typeof lists)[0]),
-      }
+    ? mapList(featured as ListLike)
     : null;
 
   return {
     featured: mapFeatured,
-    featuredSlotId: slotList ? slotResult?.slotId ?? null : null,
+    featuredSlotId,
     trending: dedupeListsById(trendingResults.map(mapTrending)),
     rising: dedupeListsById(risingResults.map(mapRising)),
     recommendations: visibleLists.slice(0, 4).map(mapList),
   };
 }
 
-/**
- * دادهٔ صفحهٔ اول — کش بین‌درخواستی (Data Cache) با tag `home`.
- * خطاها کش نمی‌شوند؛ صفحه/API خودشان fallback دارند.
- */
-export const fetchHomePageData: () => Promise<HomeData> = unstable_cache(
+const getCrossRequestHomePageData = unstable_cache(
   computeHomePageData,
   ['home-page-data'],
   { revalidate: 60, tags: ['home', 'trending'] }
+);
+
+/**
+ * دادهٔ صفحهٔ اول — per-request dedupe + کش بین‌درخواستی با tag `home`.
+ */
+export const fetchHomePageData: () => Promise<HomeData> = cache(() =>
+  getCrossRequestHomePageData()
 );

@@ -1,8 +1,9 @@
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { getCommentsHubStats, type CommentsHubStats } from './comments-hub-stats';
 import { ADMIN_CACHE_TAGS, ADMIN_COMMENTS_CACHE_SECONDS } from './admin-cache';
 
-export function getCachedCommentsHubStats(): Promise<CommentsHubStats> {
+function getCrossRequestCachedCommentsHubStats() {
   return unstable_cache(
     () => getCommentsHubStats(),
     ['admin-comments-hub-stats'],
@@ -12,3 +13,8 @@ export function getCachedCommentsHubStats(): Promise<CommentsHubStats> {
     }
   )();
 }
+
+/** Per-request dedupe + short TTL cross-request cache */
+export const getCachedCommentsHubStats = cache(
+  (): Promise<CommentsHubStats> => getCrossRequestCachedCommentsHubStats()
+);

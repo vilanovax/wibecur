@@ -1,31 +1,24 @@
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import {
-  activeCategoryWhere,
   filterListsInActiveCategories,
   publicCuratedListWhere,
 } from '@/lib/public-content-filters';
 import { dbQuery } from '@/lib/db';
-import { getGlobalTrending, getFastRising, type TrendingListResult } from '@/lib/trending/service';
+import type { TrendingListResult } from '@/lib/trending/service';
+import {
+  getCachedGlobalTrending,
+  getCachedFastRising,
+} from '@/lib/trending/cached';
+import { fetchActiveCategoryIndex } from '@/lib/category-menu';
 import { getPreferredCategoryIds, getPreferredKeywordIds } from '@/lib/user-interests';
 import { resolveListCover } from '@/lib/resolve-list-cover';
 import { computeTrendScore } from './utils';
 import type { CuratedCategory, CuratedList, CuratorBadge, ListBadge } from '@/types/curated';
 import type { CuratorLevelKey } from '@/lib/curator';
 import { getLevelConfig } from '@/lib/curator';
-
-// trending/rising سراسری‌اند (وابسته به کاربر نیستند) — هر ۵ دقیقه یک‌بار محاسبه
-// می‌شوند به‌جای هر بار لود اکسپلورِ هر کاربر.
-const getCachedGlobalTrending = unstable_cache(
-  () => getGlobalTrending(prisma, 10),
-  ['explore-global-trending-10'],
-  { revalidate: 300, tags: ['trending'] }
-);
-const getCachedFastRising = unstable_cache(
-  () => getFastRising(prisma, 10),
-  ['explore-fast-rising-10'],
-  { revalidate: 300, tags: ['trending'] }
-);
 
 const EXPLORE_LISTS_PER_CATEGORY = 8;
 const EXPLORE_FEATURED_LIMIT = 12;
@@ -36,6 +29,7 @@ const exploreListSelect = {
   slug: true,
   description: true,
   coverImage: true,
+  horizontalImage: true,
   categoryId: true,
   badge: true,
   tags: true,
@@ -58,35 +52,68 @@ const exploreListSelect = {
   },
 } as const;
 
-async function fetchExploreListsPool(categoryIds: string[]): Promise<DbListRow[]> {
-  const [perCategory, featuredGlobal] = await Promise.all([
-    Promise.all(
-      categoryIds.map((categoryId) =>
-        dbQuery(() =>
-          prisma.lists.findMany({
-            where: { ...publicCuratedListWhere, categoryId },
-            select: exploreListSelect,
-            orderBy: [{ isFeatured: 'desc' }, { saveCount: 'desc' }],
-            take: EXPLORE_LISTS_PER_CATEGORY,
-          })
-        )
-      )
-    ),
+/**
+ * Top-N lists per category + featured — 2 queries instead of N+1 findMany.
+ * Window function picks ids; one findMany hydrates relations.
+ */
+async function fetchExploreListsPool(
+  categoryIds: string[],
+  extraListIds: string[] = []
+): Promise<DbListRow[]> {
+  const [rankedIds, featuredIds] = await Promise.all([
+    categoryIds.length === 0
+      ? Promise.resolve([] as { id: string }[])
+      : dbQuery(() =>
+          prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
+            SELECT id FROM (
+              SELECT
+                l.id,
+                ROW_NUMBER() OVER (
+                  PARTITION BY l."categoryId"
+                  ORDER BY l."isFeatured" DESC, l."saveCount" DESC, l."createdAt" DESC
+                ) AS rn
+              FROM lists l
+              INNER JOIN users u ON u.id = l."userId"
+              LEFT JOIN categories c ON c.id = l."categoryId"
+              WHERE l."deletedAt" IS NULL
+                AND l."isActive" = true
+                AND l."isPublic" = true
+                AND u.role::text <> 'USER'
+                AND l."categoryId" IN (${Prisma.join(categoryIds)})
+                AND (
+                  l."categoryId" IS NULL
+                  OR (c."isActive" = true AND c."deletedAt" IS NULL)
+                )
+            ) ranked
+            WHERE rn <= ${EXPLORE_LISTS_PER_CATEGORY}
+          `)
+        ),
     dbQuery(() =>
       prisma.lists.findMany({
         where: { ...publicCuratedListWhere, isFeatured: true },
-        select: exploreListSelect,
+        select: { id: true },
         orderBy: { saveCount: 'desc' },
         take: EXPLORE_FEATURED_LIMIT,
       })
     ),
   ]);
 
-  const byId = new Map<string, DbListRow>();
-  for (const row of [...perCategory.flat(), ...featuredGlobal]) {
-    if (!byId.has(row.id)) byId.set(row.id, row as DbListRow);
-  }
-  return [...byId.values()];
+  const allIds = [
+    ...new Set([
+      ...rankedIds.map((r) => r.id),
+      ...featuredIds.map((f) => f.id),
+      ...extraListIds,
+    ]),
+  ];
+  if (allIds.length === 0) return [];
+
+  const rows = await dbQuery(() =>
+    prisma.lists.findMany({
+      where: { id: { in: allIds }, ...publicCuratedListWhere },
+      select: exploreListSelect,
+    })
+  );
+  return rows as DbListRow[];
 }
 
 type DbListRow = {
@@ -95,6 +122,7 @@ type DbListRow = {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  horizontalImage: string | null;
   categoryId: string | null;
   isFeatured: boolean;
   badge: string | null;
@@ -193,6 +221,7 @@ function mapDbListToCurated(
     category: mapCategoryMeta(row.categories),
     coverUrl: resolveListCover({
       coverImage: row.coverImage,
+      horizontalImage: row.horizontalImage,
       slug: row.slug,
       title: row.title,
       categories: row.categories,
@@ -228,6 +257,7 @@ function mapTrendingToCurated(t: TrendingListResult, rising = false): CuratedLis
     categoryId: t.categoryId ?? 'unknown',
     coverUrl: resolveListCover({
       coverImage: t.coverImage,
+      horizontalImage: t.horizontalImage,
       slug: t.slug,
       title: t.title,
       categorySlug: t.categorySlug,
@@ -311,55 +341,15 @@ async function fetchUserPreferences(userId: string) {
   };
 }
 
-async function fetchMissingLists(ids: string[]): Promise<DbListRow[]> {
-  if (ids.length === 0) return [];
-
-  return dbQuery(() =>
-    prisma.lists.findMany({
-      where: {
-        id: { in: ids },
-        ...publicCuratedListWhere,
-      },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        description: true,
-        coverImage: true,
-        categoryId: true,
-        badge: true,
-        tags: true,
-        isFeatured: true,
-        saveCount: true,
-        likeCount: true,
-        itemCount: true,
-        createdAt: true,
-        categories: {
-          select: { id: true, name: true, slug: true, icon: true, isActive: true },
-        },
-        users: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-            curatorLevel: true,
-          },
-        },
-        // _count حذف شد: itemCount/likeCount از ستون‌های denormalized خوانده می‌شوند
-      },
-    })
-  );
-}
-
 type ExploreBasePayload = Pick<ExplorePayload, 'lists' | 'categories'>;
 
-async function mergeExploreLists(
+/** Sync merge — missing trending/rising rows already included via pool extraListIds */
+function mergeExploreLists(
   categoriesRaw: { id: string; name: string; slug: string | null; icon: string | null }[],
   listsRaw: DbListRow[],
   trendingRaw: TrendingListResult[],
   risingRaw: TrendingListResult[]
-): Promise<ExploreBasePayload> {
+): ExploreBasePayload {
   const trendingIds = new Set(trendingRaw.map((t) => t.listId));
   const risingIds = new Set(risingRaw.map((r) => r.listId));
   const scoreById = new Map<string, number>();
@@ -369,10 +359,7 @@ async function mergeExploreLists(
   }
 
   const activeCategoryIdSet = new Set(categoriesRaw.map((c) => c.id));
-  const knownIds = new Set(listsRaw.map((l) => l.id));
-  const extraIds = [...new Set([...trendingIds, ...risingIds])].filter((id) => !knownIds.has(id));
-  const extraLists = await fetchMissingLists(extraIds);
-  const visibleListRows = filterListsInActiveCategories([...listsRaw, ...extraLists]);
+  const visibleListRows = filterListsInActiveCategories(listsRaw);
 
   const byId = new Map<string, CuratedList>();
 
@@ -421,28 +408,36 @@ async function mergeExploreLists(
 
 /** لیست‌ها + دسته‌ها — مستقل از کاربر؛ هر ۵ دقیقه یک‌بار */
 async function fetchExploreBaseData(): Promise<ExploreBasePayload> {
-  // trending/rising به categoryIds وابسته نیستند — موازی با categories (async-parallel).
-  const [categoriesRaw, trendingRaw, risingRaw] = await Promise.all([
-    dbQuery(() =>
-      prisma.categories.findMany({
-        where: activeCategoryWhere,
-        select: { id: true, name: true, slug: true, icon: true },
-        orderBy: { order: 'asc' },
-      })
-    ),
-    getCachedGlobalTrending(),
-    getCachedFastRising(),
+  // دسته‌ها از کش مشترک + trending/rising موازی (async-parallel)
+  const [categoryRows, trendingRaw, risingRaw] = await Promise.all([
+    fetchActiveCategoryIndex(),
+    getCachedGlobalTrending(10),
+    getCachedFastRising(10),
   ]);
 
+  const categoriesRaw = categoryRows.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    icon: c.icon,
+  }));
   const categoryIds = categoriesRaw.map((c) => c.id);
-  const listsRaw = await fetchExploreListsPool(categoryIds);
+  const extraListIds = [
+    ...new Set([
+      ...trendingRaw.map((t) => t.listId),
+      ...risingRaw.map((r) => r.listId),
+    ]),
+  ];
+
+  // Pool includes trending/rising ids → no second missing-lists waterfall
+  const listsRaw = await fetchExploreListsPool(categoryIds, extraListIds);
 
   return mergeExploreLists(categoriesRaw, listsRaw, trendingRaw, risingRaw);
 }
 
 const getCachedExploreBase = unstable_cache(
   fetchExploreBaseData,
-  ['explore-base-v26'],
+  ['explore-base-v27'],
   { revalidate: 300, tags: ['explore'] }
 );
 
@@ -457,10 +452,10 @@ const EMPTY_EXPLORE_USER_PREFERENCES: ExploreUserPreferences = {
   bookmarkedListIds: [],
 };
 
-/** payload پایه (لیست‌ها + دسته‌ها) — برای SSR با revalidate و API مهمان */
-export async function fetchExploreBasePayload(): Promise<ExploreBasePayload> {
-  return getCachedExploreBase();
-}
+/** payload پایه (لیست‌ها + دسته‌ها) — per-request dedupe + کش بین‌درخواستی */
+export const fetchExploreBasePayload: () => Promise<ExploreBasePayload> = cache(
+  () => getCachedExploreBase()
+);
 
 /** ترجیحات کاربر — جدا از payload پایه برای lazy-load در کلاینت */
 export async function fetchExploreUserPreferences(

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function ListDetailError({
   error,
@@ -15,17 +16,13 @@ export default function ListDetailError({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4" dir="rtl">
-      <p className="text-xl font-bold text-gray-800 mb-2">لیست لود نشد</p>
-      <button
-        type="button"
-        onClick={reset}
-        className="mt-4 px-6 py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors"
-      >
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4" dir="rtl">
+      <p className="mb-2 text-xl font-bold text-foreground">لیست لود نشد</p>
+      <Button type="button" variant="brand" size="lg" className="mt-4" onClick={reset}>
         تلاش دوباره
-      </button>
-      <Link href="/lists" className="mt-3 text-sm text-primary font-medium">
-        بازگشت به لیست‌ها
+      </Button>
+      <Link href="/lists" className="mt-3 inline-flex h-12 items-center">
+        <span className="text-sm font-medium text-brand">بازگشت به لیست‌ها</span>
       </Link>
     </div>
   );

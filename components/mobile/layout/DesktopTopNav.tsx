@@ -20,19 +20,17 @@ export default function DesktopTopNav() {
   const { profile } = useUserHeaderProfile();
 
   const navLinkClass = (active: boolean) =>
-    `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-small font-medium transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
-      active
-        ? 'bg-primary/10 text-primary'
-        : 'text-foreground hover:bg-gray-50 hover:text-primary'
+    `inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+      active ? 'bg-brand/10' : 'hover:bg-muted'
     }`;
 
   return (
     <>
       <header
-        className="sticky top-0 z-50 hidden w-full shrink-0 border-b border-wibe/80 bg-white/95 backdrop-blur-md lg:block"
+        className="sticky top-0 z-50 hidden w-full shrink-0 border-b border-border bg-card/95 backdrop-blur-md lg:block"
         role="banner"
       >
-        <div className={`flex h-[3.5rem] w-full min-w-0 items-center gap-3 ${DESKTOP_CONTENT_PADDING_CLASS}`}>
+        <div className={`flex h-14 w-full min-w-0 items-center gap-3 ${DESKTOP_CONTENT_PADDING_CLASS}`}>
           {/* راست: لوگو + ناو — چسبیده به هم */}
           <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             <SiteLogo variant="nav" href="/" />
@@ -50,8 +48,10 @@ export default function DesktopTopNav() {
                     className={navLinkClass(active)}
                     aria-current={active ? 'page' : undefined}
                   >
-                    {item.icon}
-                    {item.label}
+                    <span className={`inline-flex items-center gap-1.5 ${active ? 'text-brand' : 'text-foreground'}`}>
+                      {item.icon}
+                      {item.label}
+                    </span>
                   </Link>
                 );
               })}
@@ -66,7 +66,7 @@ export default function DesktopTopNav() {
           </div>
 
           {/* چپ: اعلان + منوی حساب */}
-          <div className="flex shrink-0 items-center gap-1 border-s border-wibe/60 ps-2">
+          <div className="flex shrink-0 items-center gap-1 border-s border-border ps-2">
             <HeaderActions profile={profile} enableAccountMenu />
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { getDashboardData } from './dashboard-data';
 import type { DashboardRange } from './dashboard-range';
@@ -5,14 +6,14 @@ import type { DashboardRange } from './dashboard-range';
 /**
  * نسخهٔ کش‌شدهٔ دادهٔ داشبورد ادمین.
  *
- * بدون کش، هر بار باز کردن داشبورد ~۲۶ کوئری اجرا می‌شود. این wrapper نتیجه را
- * به‌ازای هر بازهٔ زمانی برای مدت کوتاهی کش می‌کند تا ناوبری رفت‌وبرگشتی فشار
- * زیادی به DB نیاورد. TTL کوتاه است تا داده تقریباً تازه بماند؛ برای ابطال
- * فوری بعد از اقدام می‌توان از `revalidateTag('admin-dashboard')` استفاده کرد.
+ * - React.cache: dedupe داخل همان request (server-cache-react)
+ * - unstable_cache: TTL کوتاه بین requestها تا ناوبری رفت‌وبرگشتی فشار DB نیاورد
+ *
+ * برای ابطال فوری: `revalidateTag('admin-dashboard')`
  */
 const DASHBOARD_TTL_SECONDS = 45;
 
-export function getCachedDashboardData(range: DashboardRange) {
+function getCrossRequestCachedDashboardData(range: DashboardRange) {
   const cached = unstable_cache(
     () => getDashboardData(range),
     ['admin-dashboard-data', range],
@@ -20,3 +21,7 @@ export function getCachedDashboardData(range: DashboardRange) {
   );
   return cached();
 }
+
+export const getCachedDashboardData = cache(
+  (range: DashboardRange) => getCrossRequestCachedDashboardData(range)
+);

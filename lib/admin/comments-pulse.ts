@@ -1,3 +1,9 @@
+/**
+ * Comments pulse counters for admin hub / lists.
+ * Perf: one SQL for comment aggregates instead of 5× count() (async-parallel).
+ */
+
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 
@@ -21,55 +27,52 @@ export const PULSE_TO_FILTER: Record<CommentsPulseFilterKey, string> = {
   approved: 'approved',
 };
 
-const activeOnly = { deletedAt: null } as const;
-
 export async function getCommentsPulse(): Promise<CommentsPulseSummary> {
-  const [
-    pending,
-    flagged,
-    reported,
-    approved,
-    unresolvedReports,
-  ] = await Promise.all([
-    dbQuery(() =>
-      prisma.comments.count({
-        where: { ...activeOnly, isApproved: false },
-      })
-    ),
-    dbQuery(() =>
-      prisma.comments.count({
-        where: {
-          ...activeOnly,
-          OR: [
-            { isFiltered: true },
-            { comment_reports: { some: { resolved: false } } },
-          ],
-        },
-      })
-    ),
-    dbQuery(() =>
-      prisma.comments.count({
-        where: {
-          ...activeOnly,
-          comment_reports: { some: { resolved: false } },
-        },
-      })
-    ),
-    dbQuery(() =>
-      prisma.comments.count({
-        where: { ...activeOnly, isApproved: true },
-      })
-    ),
-    dbQuery(() =>
-      prisma.comment_reports.count({ where: { resolved: false } })
-    ),
-  ]);
+  const [commentAgg, unresolvedReports] = await dbQuery(() =>
+    Promise.all([
+      prisma.$queryRaw<
+        {
+          pending: number;
+          approved: number;
+          flagged: number;
+          reported: number;
+        }[]
+      >(Prisma.sql`
+        SELECT
+          COUNT(*) FILTER (WHERE c."isApproved" = false)::int AS pending,
+          COUNT(*) FILTER (WHERE c."isApproved" = true)::int AS approved,
+          COUNT(*) FILTER (
+            WHERE c."isFiltered" = true
+              OR EXISTS (
+                SELECT 1 FROM comment_reports r
+                WHERE r."commentId" = c.id AND r.resolved = false
+              )
+          )::int AS flagged,
+          COUNT(*) FILTER (
+            WHERE EXISTS (
+              SELECT 1 FROM comment_reports r
+              WHERE r."commentId" = c.id AND r.resolved = false
+            )
+          )::int AS reported
+        FROM comments c
+        WHERE c."deletedAt" IS NULL
+      `),
+      prisma.$queryRaw<{ count: number }[]>(Prisma.sql`
+        SELECT COUNT(*)::int AS count
+        FROM comment_reports r
+        INNER JOIN comments c ON c.id = r."commentId"
+        WHERE r.resolved = false
+          AND c."deletedAt" IS NULL
+      `),
+    ])
+  );
 
+  const row = commentAgg[0];
   return {
-    pending,
-    flagged,
-    reported,
-    approved,
-    unresolvedReports,
+    pending: row?.pending ?? 0,
+    flagged: row?.flagged ?? 0,
+    reported: row?.reported ?? 0,
+    approved: row?.approved ?? 0,
+    unresolvedReports: unresolvedReports[0]?.count ?? 0,
   };
 }

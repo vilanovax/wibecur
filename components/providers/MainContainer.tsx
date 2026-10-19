@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import DesktopTopNav from '@/components/mobile/layout/DesktopTopNav';
 import DesktopSiteFooter from '@/components/mobile/layout/DesktopSiteFooter';
+import { ToastProvider } from '@/components/ui/toast';
 import {
   DESKTOP_SITE_SHELL_CLASS,
   DESKTOP_CONTENT_PADDING_CLASS,
@@ -35,7 +36,7 @@ export default function MainContainer({
   const isAuth = pathname === '/login' || pathname === '/register';
   const isMaintenance = pathname === '/maintenance';
 
-  if (isAdmin || isAuth || isMaintenance) {
+  if (isAdmin) {
     return (
       <div id="main" role="main" className="min-h-screen w-full">
         {children}
@@ -43,19 +44,29 @@ export default function MainContainer({
     );
   }
 
+  if (isAuth || isMaintenance) {
+    return (
+      <div id="main" role="main" data-theme="paper" className="min-h-screen w-full bg-background text-foreground">
+        {children}
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full bg-wibe-surface lg:flex lg:min-h-screen lg:justify-center lg:bg-[#e8eaef]">
+    <ToastProvider>
+    <div data-theme="paper" className="w-full min-w-0 overflow-x-clip bg-background text-foreground lg:min-h-screen">
       <div className={DESKTOP_SITE_SHELL_CLASS}>
         <DesktopTopNav />
         <div
           id="main"
           role="main"
-          className={`flex min-w-0 flex-col max-lg:bg-wibe-surface lg:flex-1 lg:bg-white ${DESKTOP_CONTENT_PADDING_CLASS} ${DESKTOP_CONTENT_PADDING_TOP_CLASS} ${CONSUMER_PAGE_PADDING_BOTTOM_CLASS}`}
+          className={`flex min-w-0 flex-1 flex-col bg-transparent ${DESKTOP_CONTENT_PADDING_CLASS} ${DESKTOP_CONTENT_PADDING_TOP_CLASS} ${CONSUMER_PAGE_PADDING_BOTTOM_CLASS}`}
         >
           {children}
           <DesktopSiteFooter />
         </div>
       </div>
     </div>
+    </ToastProvider>
   );
 }

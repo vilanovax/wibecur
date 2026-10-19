@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { isValidCategorySlug } from '@/lib/admin/category-intelligence';
+import { isValidCategorySlug } from '@/lib/admin/category-intelligence-shared';
 import type { SlugCheckState } from '@/hooks/useCategorySlugCheck';
 import CategoryHeroImageField from '@/components/admin/categories/CategoryHeroImageField';
 

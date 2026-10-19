@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { cn } from '@/lib/utils';
 
 export type WibeEmptyAction = {
   label: string;
@@ -28,12 +31,30 @@ function ActionControl({
   action: WibeEmptyAction;
   tone: 'primary' | 'link' | 'muted';
 }) {
+  if (tone === 'primary' && action.href) {
+    return (
+      <Link
+        href={action.href}
+        onClick={action.onClick}
+        className="inline-flex h-12 items-center justify-center rounded-xl bg-brand px-6 text-base font-semibold text-brand-foreground"
+      >
+        {action.label}
+      </Link>
+    );
+  }
+
+  if (tone === 'primary') {
+    return (
+      <Button variant="brand" size="lg" className="rounded-xl" onClick={action.onClick}>
+        {action.label}
+      </Button>
+    );
+  }
+
   const className =
-    tone === 'primary'
-      ? 'inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 wibe-small font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark active:scale-[0.98]'
-      : tone === 'link'
-        ? 'wibe-caption font-medium text-primary transition-colors hover:underline'
-        : 'wibe-caption font-medium text-wibe-secondary transition-colors hover:text-foreground hover:underline';
+    tone === 'link'
+      ? 'text-sm font-medium text-primary transition-colors hover:underline'
+      : 'text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:underline';
 
   if (action.href) {
     return (
@@ -64,42 +85,34 @@ export default function WibeEmptyState({
   variant = 'card',
   iconToneClassName = 'bg-primary/10 text-primary',
 }: WibeEmptyStateProps) {
-  const shell =
-    variant === 'card'
-      ? 'rounded-2xl border border-dashed border-wibe bg-wibe-card/60 px-4 py-12 text-center lg:py-14'
-      : 'px-4 py-12 text-center lg:py-14';
+  const Glyph = () => (
+    <span className={iconToneClassName}>
+      {typeof icon === 'string' ? (
+        <span className="text-2xl leading-none" aria-hidden>
+          {icon}
+        </span>
+      ) : (
+        icon
+      )}
+    </span>
+  );
+
+  const actions =
+    primaryAction || secondaryAction || tertiaryAction ? (
+      <div className="flex flex-col items-center gap-2.5">
+        {primaryAction ? <ActionControl action={primaryAction} tone="primary" /> : null}
+        {secondaryAction ? <ActionControl action={secondaryAction} tone="link" /> : null}
+        {tertiaryAction ? <ActionControl action={tertiaryAction} tone="muted" /> : null}
+      </div>
+    ) : undefined;
 
   return (
-    <div className={`${shell} ${className}`}>
-      {icon != null ? (
-        <div
-          className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full [&_svg]:h-7 [&_svg]:w-7 ${iconToneClassName}`}
-        >
-          {typeof icon === 'string' ? (
-            <span className="text-2xl leading-none" aria-hidden>
-              {icon}
-            </span>
-          ) : (
-            icon
-          )}
-        </div>
-      ) : null}
-
-      <h3 className="text-balance wibe-h3 text-foreground">{title}</h3>
-
-      {description ? (
-        <p className="mx-auto mt-2 max-w-xs text-pretty wibe-small leading-relaxed text-wibe-secondary">
-          {description}
-        </p>
-      ) : null}
-
-      {(primaryAction || secondaryAction || tertiaryAction) && (
-        <div className="mt-5 flex flex-col items-center gap-2.5">
-          {primaryAction ? <ActionControl action={primaryAction} tone="primary" /> : null}
-          {secondaryAction ? <ActionControl action={secondaryAction} tone="link" /> : null}
-          {tertiaryAction ? <ActionControl action={tertiaryAction} tone="muted" /> : null}
-        </div>
-      )}
-    </div>
+    <EmptyState
+      className={cn(variant === 'plain' && 'border-0 bg-transparent shadow-none', className)}
+      icon={icon != null ? Glyph : undefined}
+      title={title}
+      description={description}
+      action={actions}
+    />
   );
 }

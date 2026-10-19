@@ -6,18 +6,21 @@ import { Loader2 } from 'lucide-react';
 interface InfiniteScrollSentinelProps {
   hasMore: boolean;
   onLoadMore: () => void;
+  /** فقط وقتی واقعاً در حال لود است اسپینر نشان بده — نه همیشه وقتی hasMore */
+  loading?: boolean;
 }
 
 export default function InfiniteScrollSentinel({
   hasMore,
   onLoadMore,
+  loading = false,
 }: InfiniteScrollSentinelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
 
   useEffect(() => {
-    loadingRef.current = false;
-  }, [hasMore]);
+    if (!loading) loadingRef.current = false;
+  }, [hasMore, loading]);
 
   useEffect(() => {
     if (!hasMore) return;
@@ -41,8 +44,13 @@ export default function InfiniteScrollSentinel({
   if (!hasMore) return null;
 
   return (
-    <div ref={ref} className="py-5 flex justify-center" aria-hidden>
-      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+    <div
+      ref={ref}
+      className={loading ? 'flex justify-center py-5' : 'h-px w-full'}
+      aria-hidden={!loading}
+      aria-busy={loading || undefined}
+    >
+      {loading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : null}
     </div>
   );
 }

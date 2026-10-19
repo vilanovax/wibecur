@@ -8,9 +8,10 @@ export default async function NewListPage() {
   await requireAdmin();
 
   try {
+    // Active + inactive (not trashed) — admins assign lists to either
     const categories = await prisma.categories.findMany({
-      where: { isActive: true },
-      orderBy: { order: 'asc' },
+      where: { deletedAt: null },
+      orderBy: [{ isActive: 'desc' }, { order: 'asc' }, { name: 'asc' }],
     });
 
     return (

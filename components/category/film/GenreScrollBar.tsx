@@ -23,12 +23,12 @@ export default function GenreScrollBar({ categorySlug, genres, inset = false }: 
   return (
     <section className={sectionClass}>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="wibe-caption font-semibold text-wibe-secondary">ژانرها</p>
+        <p className="text-xs font-semibold text-muted-foreground">ژانرها</p>
         <Link
           href={`/lists?category=${categorySlug}`}
-          className="wibe-caption font-medium text-primary hover:underline"
+          className="inline-flex h-11 items-center text-xs font-medium"
         >
-          همه لیست‌ها
+          <span className="text-brand">همه لیست‌ها</span>
         </Link>
       </div>
       <div
@@ -39,12 +39,12 @@ export default function GenreScrollBar({ categorySlug, genres, inset = false }: 
           <Link
             key={`${genre.slug}-${genre.label}`}
             href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(genre.label)}`}
-            className="flex shrink-0 snap-start items-center gap-1.5 rounded-full border border-gray-200 bg-gray-100 px-3.5 py-2 text-sm font-medium text-foreground transition-all hover:bg-gray-200 lg:hover:border-primary/30 lg:hover:bg-primary/5"
+            className="flex h-11 shrink-0 snap-start items-center gap-1.5 rounded-full border border-border bg-popover px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
             <span>{genre.icon}</span>
             <span>{genre.label}</span>
             {genre.listCount > 0 && (
-              <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-wibe-secondary tabular-nums">
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-bold text-muted-foreground tabular-nums">
                 {genre.listCount.toLocaleString('fa-IR')}
               </span>
             )}

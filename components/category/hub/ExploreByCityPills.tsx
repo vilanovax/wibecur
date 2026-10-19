@@ -33,19 +33,19 @@ export default function ExploreByCityPills({
           <Link
             key={city}
             href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(city)}`}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg wibe-small font-medium border border-wibe bg-wibe-card shadow-sm active:scale-[0.98] transition-transform"
+            className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-popover px-4 text-sm font-medium text-foreground transition-transform active:scale-[0.98]"
           >
             <span>{city}</span>
             {cityCounts[city] != null && cityCounts[city] > 0 && (
-              <span className="wibe-caption font-medium text-wibe-secondary bg-gray-100 px-1.5 py-0.5 rounded-pill">
-                {cityCounts[city]}
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+                {cityCounts[city].toLocaleString('fa-IR')}
               </span>
             )}
           </Link>
         ))}
         <Link
           href={`/lists?category=${categorySlug}`}
-          className="inline-flex items-center gap-1 px-4 py-2 rounded-lg wibe-small font-semibold text-white bg-primary hover:bg-primary-dark transition-colors"
+          className="inline-flex h-11 items-center gap-1 rounded-full bg-brand px-4 text-sm font-semibold text-brand-foreground"
         >
           همه شهرها
         </Link>

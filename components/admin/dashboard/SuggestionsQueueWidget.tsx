@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { Lightbulb, ChevronLeft } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { faIR } from 'date-fns/locale';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import type { SuggestionPreview } from '@/lib/admin/types';
 
 export default function SuggestionsQueueWidget({
@@ -54,12 +53,7 @@ export default function SuggestionsQueueWidget({
                   {s.title}
                 </span>
                 <span className="text-xs text-[var(--color-text-muted)] shrink-0">
-                  {formatDistanceToNow(
-                    typeof s.createdAt === 'string'
-                      ? new Date(s.createdAt)
-                      : s.createdAt,
-                    { addSuffix: true, locale: faIR }
-                  )}
+                  {formatRelativeTime(s.createdAt)}
                 </span>
               </Link>
             </li>

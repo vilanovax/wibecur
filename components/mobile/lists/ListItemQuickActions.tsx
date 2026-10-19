@@ -25,14 +25,12 @@ export default function ListItemQuickActions({
   if (actions.length === 0) return null;
 
   const btnClass =
-    size === 'sm'
-      ? 'flex h-9 w-9 items-center justify-center rounded-full border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-primary/[0.04] hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95'
-      : 'flex h-10 w-10 items-center justify-center rounded-full border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-primary/[0.04] hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95';
+    'group flex size-11 items-center justify-center rounded-full border border-border bg-popover transition-colors hover:border-brand/30 hover:bg-brand/5';
 
   const containerClass =
     layout === 'vertical'
       ? `flex flex-col gap-1.5 ${className}`
-      : `flex flex-wrap items-center gap-2 ${className}`;
+      : `flex flex-wrap items-center gap-1.5 ${className}`;
 
   return (
     <div className={containerClass} role="group" aria-label="عملیات سریع">
@@ -51,7 +49,7 @@ export default function ListItemQuickActions({
             onClick={(e) => e.stopPropagation()}
             className={btnClass}
           >
-            <Icon className={size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4'} aria-hidden />
+            <Icon className={`text-muted-foreground group-hover:text-brand ${size === 'sm' ? 'size-4' : 'size-5'}`} aria-hidden />
           </a>
         );
       })}

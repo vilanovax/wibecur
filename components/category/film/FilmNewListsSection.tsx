@@ -34,15 +34,14 @@ export default function FilmNewListsSection({
             href={`/lists/${list.slug}`}
             className="flex gap-4 p-4 rounded-2xl bg-gray-900 border border-gray-800 active:scale-[0.99] transition-transform"
           >
-            <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-800">
+            <div className="w-20 h-28 rounded-xl bg-gray-800 flex-shrink-0 overflow-hidden">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
                   alt={list.title}
-                  className="h-full w-full object-cover"
+                  className="w-full h-full object-cover"
                   placeholderSize="cover"
-                        sizes="80px"
-                      />
+                />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-3xl opacity-50"
@@ -57,9 +56,9 @@ export default function FilmNewListsSection({
                 {list.title}
               </h3>
               {list.creator?.name && (
-                <p className="mt-1 text-sm text-white/60">{list.creator.name}</p>
+                <p className="text-sm text-white/65 mt-1">{list.creator.name}</p>
               )}
-              <div className="mt-2 flex gap-3 text-sm text-white/65">
+              <div className="flex gap-3 mt-2 text-sm text-wibe-secondary">
                 <span>⭐ {list.saveCount}</span>
                 <span>•</span>
                 <span>❤️ {list.likeCount}</span>

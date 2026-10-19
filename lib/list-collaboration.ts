@@ -19,6 +19,8 @@ export type ListAccess = {
   canAddItems: boolean;
   canEditList: boolean;
   canManageCollaborators: boolean;
+  /** Pending invite for current user — avoids a second collaborator query on list detail */
+  pendingCollaboration: { listId: string; invitedBy: string } | null;
 };
 
 export type CollaboratorMember = {
@@ -45,7 +47,10 @@ function buildAccess(
   isOwner: boolean,
   role: ListAccessRole,
   status?: ListCollaborationStatus,
-  options?: { isPendingInvitee?: boolean }
+  options?: {
+    isPendingInvitee?: boolean;
+    pendingCollaboration?: { listId: string; invitedBy: string } | null;
+  }
 ): ListAccess {
   const accepted = isOwner || status === 'ACCEPTED';
   const canView = accepted || (status === 'PENDING' && options?.isPendingInvitee === true);
@@ -57,6 +62,7 @@ function buildAccess(
     canAddItems: accepted && (isOwner || role === 'CONTRIBUTOR' || isEditor),
     canEditList: isOwner || (accepted && isEditor),
     canManageCollaborators: isOwner,
+    pendingCollaboration: options?.pendingCollaboration ?? null,
   };
 }
 
@@ -84,7 +90,13 @@ export async function getListAccessForUser(
     return buildAccess(false, null);
   }
   const isPendingInvitee = collab.status === 'PENDING' && collab.invitedBy != null;
-  return buildAccess(false, collab.role, collab.status, { isPendingInvitee });
+  return buildAccess(false, collab.role, collab.status, {
+    isPendingInvitee,
+    pendingCollaboration:
+      isPendingInvitee && collab.invitedBy
+        ? { listId: list.id, invitedBy: collab.invitedBy }
+        : null,
+  });
 }
 
 export async function assertListAccess(

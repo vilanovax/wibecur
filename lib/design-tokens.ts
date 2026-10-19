@@ -7,8 +7,10 @@
 
 // ─── Brand ─────────────────────────────────────────────────────────────
 export const brand = {
-  primary: '#6366F1',
-  primaryDark: '#4F46E5',
+  // Indigo-600 — white-on-primary passes WCAG AA (≥4.5) even at caption size.
+  // Indigo-500 (#6366F1) measured ~4.47 and failed axe on search/home chips.
+  primary: '#4F46E5',
+  primaryDark: '#4338CA',
   primaryLight: '#818CF8',
   /** Legacy — use sparingly in consumer UI */
   secondary: '#8B5CF6',
@@ -213,13 +215,13 @@ export function getCssVariableDefinitions(): Record<string, string> {
     '--shadow-hero': shadows.hero,
     '--shadow-floating': shadows.floating,
     '--shadow-focus': shadows.focus,
-    '--spacing-xs': spacing.xs,
-    '--spacing-sm': spacing.sm,
-    '--spacing-md': spacing.md,
-    '--spacing-lg': spacing.lg,
-    '--spacing-xl': spacing.xl,
-    '--spacing-2xl': spacing['2xl'],
-    '--spacing-3xl': spacing['3xl'],
+    '--wibe-space-xs': spacing.xs,
+    '--wibe-space-sm': spacing.sm,
+    '--wibe-space-md': spacing.md,
+    '--wibe-space-lg': spacing.lg,
+    '--wibe-space-xl': spacing.xl,
+    '--wibe-space-2xl': spacing['2xl'],
+    '--wibe-space-3xl': spacing['3xl'],
     '--radius-sm': radius.sm,
     '--radius-md': radius.md,
     '--radius-lg': radius.lg,

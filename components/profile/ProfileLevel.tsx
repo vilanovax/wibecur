@@ -31,7 +31,7 @@ export default function ProfileLevel({ user, compact = false }: ProfileLevelProp
           {score.toLocaleString('fa-IR')} XP
         </span>
       </div>
-      <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+      <div className="h-1.5 rounded-full bg-wibe-surface overflow-hidden">
         <div
           className="h-full rounded-full bg-primary transition-all duration-500"
           style={{ width: `${progressPercent}%` }}

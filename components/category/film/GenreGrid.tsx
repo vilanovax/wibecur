@@ -6,7 +6,7 @@ const FILM_GENRES = [
   { slug: 'action', label: 'اکشن', icon: '🎬', gradient: 'from-red-600 to-orange-600' },
   { slug: 'drama', label: 'درام', icon: '💔', gradient: 'from-blue-700 to-indigo-700' },
   { slug: 'comedy', label: 'کمدی', icon: '😂', gradient: 'from-yellow-500 to-amber-500' },
-  { slug: 'horror', label: 'ترسناک', icon: '👻', gradient: 'from-purple-900 to-gray-900' },
+  { slug: 'horror', label: 'ترسناک', icon: '👻', gradient: 'from-slate-900 to-gray-900' },
   { slug: 'scifi', label: 'علمی‌تخیلی', icon: '🚀', gradient: 'from-cyan-600 to-blue-700' },
   { slug: 'romance', label: 'عاشقانه', icon: '❤️', gradient: 'from-pink-500 to-rose-600' },
   { slug: 'animation', label: 'انیمیشن', icon: '🌈', gradient: 'from-green-500 to-emerald-600' },

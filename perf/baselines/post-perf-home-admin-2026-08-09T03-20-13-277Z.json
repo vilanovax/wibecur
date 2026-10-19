@@ -1,0 +1,58 @@
+{
+  "label": "post-perf-home-admin",
+  "createdAt": "2026-08-09T03:20:13.278Z",
+  "preset": "desktop",
+  "pages": [
+    {
+      "key": "home",
+      "url": "http://localhost:3003/",
+      "scores": {
+        "performance": 73,
+        "accessibility": 95,
+        "bestPractices": 96,
+        "seo": 92
+      },
+      "metrics": {
+        "fcpMs": 326,
+        "lcpMs": 1487,
+        "tbtMs": 0,
+        "cls": 0.614,
+        "siMs": 496
+      }
+    },
+    {
+      "key": "category",
+      "url": "http://localhost:3003/categories/movies",
+      "scores": {
+        "performance": 98,
+        "accessibility": 95,
+        "bestPractices": 96,
+        "seo": 100
+      },
+      "metrics": {
+        "fcpMs": 326,
+        "lcpMs": 1078,
+        "tbtMs": 0,
+        "cls": 0.003,
+        "siMs": 843
+      }
+    },
+    {
+      "key": "list",
+      "url": "http://localhost:3003/lists/great-breakfast-cafes",
+      "scores": {
+        "performance": 92,
+        "accessibility": 95,
+        "bestPractices": 96,
+        "seo": 100
+      },
+      "metrics": {
+        "fcpMs": 321,
+        "lcpMs": 888,
+        "tbtMs": 0,
+        "cls": 0.175,
+        "siMs": 428
+      }
+    }
+  ]
+}

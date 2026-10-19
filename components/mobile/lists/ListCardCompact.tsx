@@ -4,8 +4,9 @@ import { memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Flame, Sparkles, Bookmark } from 'lucide-react';
+import { Sparkles, Bookmark } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
+import { Card } from '@/components/ui/card';
 import UserAvatar from '@/components/shared/UserAvatar';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { getDisplayListTitle } from '@/lib/list-display-title';
@@ -46,6 +47,8 @@ interface ListCardCompactProps {
   isLoggedIn?: boolean;
   /** نمایش دکمهٔ ذخیره روی کارت — پیش‌فرض خاموش برای UI خلوت‌تر */
   showBookmark?: boolean;
+  /** پر کردن ارتفاع والد (چیدمان trio / row-span) */
+  fillHeight?: boolean;
 }
 
 const NEW_LIST_DAYS = 14;
@@ -58,7 +61,11 @@ function getListBadges(list: ListWithCreator): { label: string; className: strin
     badges.push({ label: 'منتخب', className: 'bg-primary/10 text-primary' });
   }
   if (badgeNorm === 'TRENDING' || list.badge?.toString().toLowerCase() === 'trending') {
-    badges.push({ label: 'ترند', className: 'bg-warning/10 text-warning' });
+    // آروم — با mode «ترند» برخورد معنایی نداشته باشد
+    badges.push({
+      label: 'داغ',
+      className: 'bg-foreground/45 text-background/95 backdrop-blur-sm',
+    });
   }
   if (list.createdAt) {
     const days = (Date.now() - new Date(list.createdAt).getTime()) / (24 * 60 * 60 * 1000);
@@ -74,14 +81,14 @@ function CreatorRow({ list }: { list: ListWithCreator }) {
   if (!creatorName) return null;
 
   return (
-    <div className="mt-1 flex min-w-0 flex-row-reverse items-center gap-1.5">
+    <div className="mt-1 flex min-w-0 items-center gap-1.5">
       <UserAvatar
         src={list.users?.image}
         name={creatorName}
         size={20}
         className="h-5 w-5 shrink-0"
       />
-      <span className="line-clamp-1 wibe-caption text-wibe-secondary/80">{creatorName}</span>
+      <span className="line-clamp-1 text-xs text-muted-foreground">{creatorName}</span>
     </div>
   );
 }
@@ -116,8 +123,8 @@ function InlineBookmarkView({
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || '/')}&source=bookmark_gate`;
   const btnClass =
     size === 'xs'
-      ? 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface/95 text-wibe-secondary shadow-sm backdrop-blur-sm transition-transform active:scale-95'
-      : 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-wibe/80 bg-wibe-surface text-wibe-secondary transition-transform active:scale-95';
+      ? 'flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-popover/95 text-muted-foreground shadow-sm backdrop-blur-sm'
+      : 'flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground';
 
   if (!loggedIn) {
     return (
@@ -127,18 +134,19 @@ function InlineBookmarkView({
         className={`${btnClass} ${className}`}
         aria-label="ورود برای ذخیره لیست"
       >
-        <Bookmark className="h-3.5 w-3.5 opacity-70" strokeWidth={1.75} />
+        <Bookmark className="h-4 w-4 opacity-70 lg:h-3.5 lg:w-3.5" strokeWidth={1.75} />
       </Link>
     );
   }
 
   return (
-    <div className={`${btnClass} ${className}`} onClick={(e) => e.stopPropagation()}>
+    <div className={`shrink-0 ${className}`} onClick={(e) => e.stopPropagation()}>
       <BookmarkButton
         listId={listId}
         initialIsBookmarked={isBookmarked}
         initialBookmarkCount={saveCount}
         size="sm"
+        className={btnClass}
         analytics={{
           listSlug,
           categorySlug,
@@ -174,6 +182,7 @@ function ListCardCompact({
   searchResultIndex,
   isLoggedIn,
   showBookmark = false,
+  fillHeight = false,
 }: ListCardCompactProps) {
   const saveCount = list.saveCount ?? 0;
   const categorySlug = list.categories?.slug ?? null;
@@ -207,15 +216,15 @@ function ListCardCompact({
 
   if (variant === 'mini') {
     return (
-      <div className="group relative min-h-[68px] rounded-lg border border-wibe bg-wibe-card p-2 shadow-sm transition-shadow lg:hover:border-primary/25 lg:hover:shadow-md">
+      <Card className="group relative min-h-16 bg-popover p-2 shadow-sm transition-shadow lg:hover:border-brand/30 lg:hover:shadow-md">
         <Link
           href={href}
           onClick={handleSearchResultClick}
           className="absolute inset-0 z-0 rounded-lg"
           aria-label={displayTitle}
         />
-        <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-gray-200 lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
+        <div className="pointer-events-none relative z-1 flex gap-2">
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
@@ -224,7 +233,7 @@ function ListCardCompact({
               sizes="56px"
               className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-lg"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-lg"
             />
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
@@ -243,24 +252,24 @@ function ListCardCompact({
             onToggle={onBookmarkToggle}
             isLoggedIn={isLoggedIn}
             size="xs"
-            className="pointer-events-auto absolute bottom-2 left-2 z-[2]"
+            className="pointer-events-auto absolute bottom-2 inset-e-2 z-2"
           />
         ) : null}
-      </div>
+      </Card>
     );
   }
 
   if (variant === 'compact') {
     return (
-      <div className="group relative min-h-[76px] rounded-lg border border-wibe bg-wibe-card p-2.5 shadow-sm transition-colors active:scale-[0.99] lg:hover:border-primary/30 lg:hover:shadow-md">
+      <Card className="group relative min-h-20 bg-popover p-2.5 shadow-sm transition-colors active:scale-95 lg:hover:border-brand/30 lg:hover:shadow-md">
         <Link
           href={href}
           onClick={handleSearchResultClick}
           className="absolute inset-0 z-0 rounded-lg"
           aria-label={displayTitle}
         />
-        <div className="pointer-events-none relative z-[1] flex flex-row-reverse gap-2.5">
-          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md bg-gray-200 lg:h-[72px] lg:w-[72px]">
+        <div className="pointer-events-none relative z-1 flex gap-2.5">
+          <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted lg:size-20">
             <ListCoverImage
               coverImage={list.coverImage}
               title={list.title}
@@ -269,10 +278,10 @@ function ListCardCompact({
               sizes="72px"
               className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+              fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
             />
           </div>
-          <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-9 lg:pe-10' : ''}`}>
+          <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-12 lg:pe-11' : ''}`}>
             {badges.length > 0 && (
               <div className="mb-0.5 flex flex-wrap gap-1">
                 {badges.map((b) => (
@@ -280,8 +289,7 @@ function ListCardCompact({
                     key={b.label}
                     className={`inline-flex items-center rounded px-1.5 py-0.5 wibe-caption font-medium ${b.className}`}
                   >
-                    {b.label === 'ترند' && <Flame className="ml-0.5 h-3 w-3" />}
-                    {b.label === 'منتخب' && <Sparkles className="ml-0.5 h-3 w-3" />}
+                    {b.label === 'منتخب' && <Sparkles className="me-0.5 h-3 w-3" />}
                     {b.label}
                   </span>
                 ))}
@@ -302,17 +310,19 @@ function ListCardCompact({
             isBookmarked={isBookmarked}
             onToggle={onBookmarkToggle}
             isLoggedIn={isLoggedIn}
-            className="pointer-events-auto absolute bottom-2.5 left-2.5 z-[2] lg:transition-transform lg:group-hover:scale-110"
+            className="pointer-events-auto absolute bottom-2.5 inset-e-2.5 z-2 lg:transition-transform lg:group-hover:scale-110"
           />
         ) : null}
-      </div>
+      </Card>
     );
   }
 
-  const itemCount = list.itemCount ?? list._count?.items ?? 0;
-
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90 transition-[transform,box-shadow] active:scale-[0.99] lg:hover:shadow-lg lg:hover:ring-primary/25">
+    <Card
+      className={`group relative overflow-hidden bg-popover p-0 shadow-sm transition-colors active:scale-95 lg:hover:border-brand/30 lg:hover:shadow-lg ${
+        fillHeight ? 'h-full' : ''
+      }`}
+    >
       <Link
         href={href}
         onClick={handleSearchResultClick}
@@ -320,7 +330,13 @@ function ListCardCompact({
         aria-label={displayTitle}
       />
       {/* موبایل: نسبت متعادل | دسکتاپ گرید: landscape مثل بنر منتخب — نه ستون‌های خیلی بلند */}
-      <div className="pointer-events-none relative z-[1] aspect-[5/4] w-full overflow-hidden bg-wibe-surface max-lg:min-h-[128px] sm:aspect-[4/3] lg:aspect-[16/10] lg:max-h-[200px] xl:aspect-[5/3] xl:max-h-[220px]">
+      <div
+        className={
+          fillHeight
+            ? 'pointer-events-none relative z-1 h-full min-h-60 w-full overflow-hidden bg-muted lg:min-h-72'
+            : 'pointer-events-none relative z-1 aspect-5/4 w-full overflow-hidden bg-muted max-lg:min-h-32 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-52 xl:aspect-5/3 xl:max-h-56'
+        }
+      >
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -329,44 +345,33 @@ function ListCardCompact({
           sizes="(min-width: 1024px) 25vw, 50vw"
           className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
           fallbackIcon={list.categories?.icon ?? '📋'}
-          fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-3xl lg:text-4xl"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl lg:text-4xl"
         />
         {badges.length > 0 && (
-          <div className="absolute end-1.5 top-1.5 flex max-w-[75%] flex-wrap justify-end gap-1 lg:end-2 lg:top-2">
+          <div className="absolute inset-s-1.5 top-1.5 flex max-w-[70%] flex-wrap justify-start gap-1 lg:inset-s-2 lg:top-2">
             {badges.map((b) => (
               <span
                 key={b.label}
-                className={`inline-flex items-center rounded-md px-1.5 py-0.5 wibe-caption font-semibold backdrop-blur-sm lg:px-2 lg:py-1 ${b.className}`}
+                className={`rounded px-1.5 py-0.5 wibe-caption font-medium backdrop-blur-sm lg:px-2 lg:py-1 lg:text-xs ${b.className}`}
               >
-                {b.label === 'ترند' && <Flame className="ms-0.5 h-3 w-3" />}
-                {b.label === 'منتخب' && <Sparkles className="ms-0.5 h-3 w-3" />}
                 {b.label}
               </span>
             ))}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/45 to-transparent transition-opacity duration-300 lg:group-hover:from-black/88" />
+        <div className="absolute inset-0 bg-linear-to-t from-foreground/95 via-foreground/55 to-foreground/10 transition-opacity duration-300 max-lg:via-foreground/60 lg:group-hover:from-foreground/90" />
         <div
-          className="absolute inset-0 hidden items-center justify-center bg-black/20 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
+          className="absolute inset-0 hidden items-center justify-center bg-foreground/25 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
           aria-hidden
         >
-          <span className="rounded-full bg-white/95 px-4 py-2 wibe-small font-semibold text-foreground shadow-md">
+          <span className="rounded-full bg-popover px-4 py-2 text-sm font-semibold text-foreground shadow-md">
             مشاهده لیست
           </span>
         </div>
-        <div
-          className={`absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3 ${
-            showBookmark ? 'pe-11 lg:pe-12' : ''
-          }`}
-        >
-          <h3 className="line-clamp-2 wibe-small font-bold leading-snug text-white drop-shadow-sm lg:text-base">
+        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-start max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-14 lg:pe-12' : ''}`}>
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-background lg:text-base lg:font-bold">
             {renderTitle('')}
           </h3>
-          {itemCount > 0 && (
-            <p className="mt-0.5 wibe-caption font-medium text-white/75 tabular-nums">
-              {itemCount.toLocaleString('fa-IR')} آیتم
-            </p>
-          )}
         </div>
       </div>
       {showBookmark ? (
@@ -379,10 +384,10 @@ function ListCardCompact({
           onToggle={onBookmarkToggle}
           isLoggedIn={isLoggedIn}
           size="xs"
-          className="pointer-events-auto absolute bottom-2 left-2 z-[2] lg:bottom-2.5 lg:left-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
+          className="pointer-events-auto absolute bottom-2 inset-e-2 z-2 lg:bottom-2.5 lg:inset-e-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
         />
       ) : null}
-    </div>
+    </Card>
   );
 }
 

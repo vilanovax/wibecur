@@ -5,6 +5,7 @@ import ListCoverImage from '@/components/shared/ListCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import type { CategoryListCard } from '@/types/category-page';
+import { Card } from '@/components/ui/card';
 
 interface CategoryListCardImprovedProps {
   list: CategoryListCard;
@@ -14,15 +15,15 @@ interface CategoryListCardImprovedProps {
 
 export default function CategoryListCardImproved({
   list,
-  accentColor = '#6366F1',
   categorySlug,
 }: CategoryListCardImprovedProps) {
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="flex gap-3 p-3 rounded-lg bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+      className="block"
     >
-      <div className="relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden bg-gray-200">
+      <Card className="flex gap-3 bg-popover p-3">
+      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
         <ListCoverImage
           coverImage={list.coverImage}
           title={list.title}
@@ -30,10 +31,10 @@ export default function CategoryListCardImproved({
           categorySlug={categorySlug}
           className="w-full h-full object-cover"
           fallbackIcon="📋"
-          fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-gray-200"
+          fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-wibe-surface"
         />
         {list.badge && (
-          <span className="absolute top-1 right-1 wibe-caption font-semibold text-white px-1.5 py-0.5 rounded-pill bg-warning">
+          <span className="absolute end-1 top-1 rounded-full bg-warning px-1.5 py-0.5 text-xs font-semibold text-foreground">
             {list.badge === 'viral' || list.badge === 'hot' ? 'ترند' : 'ویژه'}
           </span>
         )}
@@ -44,12 +45,12 @@ export default function CategoryListCardImproved({
             <ImageWithFallback
               src={list.creator.image}
               alt={list.creator.name || ''}
-              className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-                  width={20}
-                  height={20}
-                />
+              width={20}
+              height={20}
+              className="size-5 shrink-0 rounded-full object-cover"
+            />
           ) : (
-            <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center wibe-caption flex-shrink-0">
+            <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs">
               {(list.creator?.name || '?')[0]}
             </div>
           )}
@@ -57,7 +58,7 @@ export default function CategoryListCardImproved({
             {list.creator?.name || 'کاربر'}
           </span>
           {list.cityTag && (
-            <span className="wibe-caption px-1.5 py-0.5 rounded-md bg-gray-100 text-wibe-secondary">
+            <span className="wibe-caption px-1.5 py-0.5 rounded-md bg-wibe-surface text-wibe-secondary">
               {list.cityTag}
             </span>
           )}
@@ -65,6 +66,7 @@ export default function CategoryListCardImproved({
         <h3 className="wibe-small font-semibold text-foreground line-clamp-2">{list.title}</h3>
         <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="compact" className="mt-1" />
       </div>
+      </Card>
     </Link>
   );
 }

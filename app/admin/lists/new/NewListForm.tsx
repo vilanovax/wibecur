@@ -56,7 +56,8 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
     description: '',
     coverImage: '',
     horizontalImage: '',
-    categoryId: categoryList[0]?.id || '',
+    categoryId:
+      categoryList.find((c) => c.isActive)?.id || categoryList[0]?.id || '',
     badge: '',
     isPublic: true,
     isFeatured: false,
@@ -292,7 +293,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
               <section className={sectionCard}>
                 <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
                   <h2 className="text-sm font-semibold text-[var(--color-text)]">نمایش و وضعیت</h2>
-                  <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                     Featured = اسلات صفحه اصلی · نشان = برچسب روی کارت
                   </p>
                 </div>
@@ -328,7 +329,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
                       <option value="NEW">New</option>
                       <option value="FEATURED">Featured badge</option>
                     </select>
-                    <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
                       جدا از Featured صفحه اصلی
                     </p>
                   </div>
