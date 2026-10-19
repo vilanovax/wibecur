@@ -9,7 +9,7 @@ import {
   isStorageProxySrc,
   withImageRetryQuery,
 } from '@/lib/resilient-image';
-import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
+import { unwrapStoredImageProxy } from '@/lib/image-url-sanitize';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import {
   isAllowedExternalImageUrl,
@@ -58,11 +58,12 @@ export interface ItemCoverImageProps {
 
 function toItemDisplaySrc(resolved: string): string {
   if (!resolved) return '';
-  if (resolved.startsWith('/')) return resolved;
-  if (isOurStorageUrl(resolved)) return toLiaraImageSrc(resolved, { preferDirect: true });
-  if (isAllowedItemImageUrl(resolved)) return resolved;
-  if (isAllowedExternalImageUrl(resolved)) return resolved;
-  if (isDisplayableCoverPath(resolved)) return resolved;
+  const unwrapped = unwrapStoredImageProxy(resolved) || resolved;
+  if (isOurStorageUrl(unwrapped)) return toLiaraImageSrc(unwrapped, { preferDirect: true });
+  if (unwrapped.startsWith('/')) return unwrapped;
+  if (isAllowedItemImageUrl(unwrapped)) return unwrapped;
+  if (isAllowedExternalImageUrl(unwrapped)) return unwrapped;
+  if (isDisplayableCoverPath(unwrapped)) return unwrapped;
   return '';
 }
 
@@ -221,20 +222,11 @@ export default function ItemCoverImage({
   }
 
   const handleImgError = () => {
-    // اول URL عمومی پارس‌پک. اگر مرورگر نرسد، همان فایل از پروکسی same-origin.
-    if (isOurStorageUrl(resolvedSrc) && !isStorageProxySrc(displaySrc)) {
-      setProxyRetry(0);
-      setRetrySrc(toLiaraImageSrc(resolvedSrc, { forceProxy: true }));
-      setImageLoaded(false);
-      return;
-    }
-    const proxyBase = isOurStorageUrl(resolvedSrc)
-      ? toLiaraImageSrc(resolvedSrc, { forceProxy: true })
-      : displaySrc;
-    if (isStorageProxySrc(proxyBase) && proxyRetry < IMAGE_LOAD_MAX_RETRIES) {
+    const direct = toItemDisplaySrc(resolvedSrc);
+    if (direct && proxyRetry < IMAGE_LOAD_MAX_RETRIES) {
       const next = proxyRetry + 1;
       setProxyRetry(next);
-      setRetrySrc(withImageRetryQuery(proxyBase, next));
+      setRetrySrc(withImageRetryQuery(direct, next));
       setImageLoaded(false);
       return;
     }

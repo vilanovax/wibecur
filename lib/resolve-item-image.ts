@@ -1,3 +1,4 @@
+import { unwrapStoredImageProxy } from './image-url-sanitize';
 import { isOurStorageUrl } from './object-storage-config';
 import {
   isAllowedExternalImageUrl,
@@ -41,7 +42,7 @@ export function resolveItemImage(input: ItemImageSource): string {
   );
 
   for (const raw of candidates) {
-    const url = raw.trim();
+    const url = unwrapStoredImageProxy(raw.trim()) || raw.trim();
     if (isUsableItemImage(url)) return normalizeLocalBannerSrc(url);
   }
 

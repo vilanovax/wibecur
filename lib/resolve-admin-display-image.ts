@@ -1,4 +1,5 @@
 import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
+import { unwrapStoredImageProxy } from '@/lib/image-url-sanitize';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { isCastandoImageProxyUrl } from '@/lib/castando-image-proxy';
 
@@ -15,13 +16,13 @@ export function classifyAdminImageSource(
   return 'none';
 }
 
-/**
- * URL نمایش در ادمین — فقط همان مقدار DB (بدون wrap خودکار).
- * ParsPack از proxy داخلی اپ؛ بقیه همان URL ذخیره‌شده.
- */
+/** URL نمایش در ادمین — لینک مستقیم استوریج، بدون پروکسی اپ. */
 export function resolveAdminDisplayImageSrc(raw: string | null | undefined): string {
   if (!raw?.trim()) return '';
-  const trimmed = raw.trim();
+  const trimmed = unwrapStoredImageProxy(raw.trim()) || raw.trim();
+  if (trimmed.startsWith('/api/liara-image') || trimmed.startsWith('/api/storage-image')) {
+    return '';
+  }
 
   if (isOurStorageUrl(trimmed)) {
     return toAdminStorageImageSrc(trimmed);

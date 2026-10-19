@@ -1,9 +1,9 @@
+import { unwrapStoredImageProxy } from '@/lib/image-url-sanitize';
 import {
   isLegacyLiaraStorageUrl,
   isOurStorageUrl,
   STORAGE_OBJECT_PREFIX,
 } from '@/lib/object-storage-config';
-import { toStorageImageSrc } from '@/lib/liara-image-url';
 
 export function extractStorageObjectKeyFromUrl(url: string): string | null {
   try {
@@ -30,30 +30,22 @@ export function buildLegacyLiaraPublicUrl(objectKey: string): string {
 }
 
 /**
- * URL نمایش تصویر storage — ParsPack از proxy، Liara قدیمی از /api/storage-image
- * هرگز مستقیم به storage.c2.liara.space درخواست نمی‌زند.
+ * URL نمایش تصویر storage — همیشه لینک مستقیم.
+ * پروکسی /api/liara-image و /api/storage-image ساخته نمی‌شود.
  */
 export function resolveStorageImageDisplayUrl(raw: string | null | undefined): string {
   if (!raw?.trim()) return '';
-  const url = raw.trim();
+  const url = unwrapStoredImageProxy(raw.trim()) || raw.trim();
 
-  if (isOurStorageUrl(url)) {
-    return toStorageImageSrc(url, { forceProxy: true });
-  }
-
-  if (isLegacyLiaraStorageUrl(url)) {
-    const key = extractStorageObjectKeyFromUrl(url);
-    if (key) {
-      const params = new URLSearchParams({ key, url });
-      return `/api/storage-image?${params.toString()}`;
-    }
-    return '';
+  if (isOurStorageUrl(url) || isLegacyLiaraStorageUrl(url)) {
+    return url;
   }
 
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
 
+  if (url.startsWith('/api/liara-image') || url.startsWith('/api/storage-image')) return '';
   if (url.startsWith('/')) return url;
   return '';
 }

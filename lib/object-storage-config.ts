@@ -65,6 +65,17 @@ export function isOurStorageUrl(url: string): boolean {
   return isParsPackStorageUrl(url);
 }
 
+/** تصویر آیتم روی ParsPack — مسیر wibe/items */
+export function isParsPackItemsUrl(url: string | null | undefined): boolean {
+  if (!url || !isParsPackStorageUrl(url)) return false;
+  try {
+    const pathname = decodeURIComponent(new URL(url.trim()).pathname);
+    return pathname.includes(`/${STORAGE_OBJECT_PREFIX}/items/`);
+  } catch {
+    return false;
+  }
+}
+
 /** URL کاور دسته که قبلاً در ParsPack / wibe/hubs آپلود شده */
 export function isParsPackHubsUrl(url: string): boolean {
   if (!isParsPackStorageUrl(url)) return false;

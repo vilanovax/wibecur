@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { resolveAdminDisplayImageSrc } from '@/lib/resolve-admin-display-image';
 import ItemCoverPlaceholder from '@/components/shared/ItemCoverPlaceholder';
 
@@ -31,32 +30,15 @@ export default function AdminItemCardImage({
   const [failed, setFailed] = useState(!displaySrc);
   const [loading, setLoading] = useState(Boolean(displaySrc));
   const [posterFetched, setPosterFetched] = useState(false);
-  const [proxyTried, setProxyTried] = useState(false);
 
   useEffect(() => {
     setSrc(displaySrc ? resolveAdminDisplayImageSrc(displaySrc) : '');
     setFailed(!displaySrc);
     setLoading(Boolean(displaySrc));
     setPosterFetched(false);
-    setProxyTried(false);
   }, [displaySrc, itemId]);
 
   const handleError = useCallback(async () => {
-    if (isOurStorageUrl(displaySrc) && !proxyTried && src !== displaySrc) {
-      setProxyTried(true);
-      setSrc(displaySrc);
-      return;
-    }
-
-    if (isOurStorageUrl(displaySrc) && !proxyTried) {
-      const proxy = resolveAdminDisplayImageSrc(displaySrc);
-      if (proxy && proxy !== src) {
-        setProxyTried(true);
-        setSrc(proxy);
-        return;
-      }
-    }
-
     if (!posterFetched && itemId) {
       try {
         const res = await fetch(`/api/items/${itemId}/poster`, { cache: 'no-store' });
@@ -82,7 +64,7 @@ export default function AdminItemCardImage({
 
     setLoading(false);
     setFailed(true);
-  }, [displaySrc, itemId, posterFetched, proxyTried, src]);
+  }, [itemId, posterFetched, src]);
 
   if (failed || !src) {
     return (

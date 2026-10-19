@@ -1,10 +1,9 @@
-import { isOurStorageUrl, isParsPackStorageUrl } from '@/lib/object-storage-config';
-import { isValidHttpImageUrl, normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
+import { isOurStorageUrl } from '@/lib/object-storage-config';
+import { isValidHttpImageUrl, unwrapStoredImageProxy } from '@/lib/image-url-sanitize';
 
 /**
- * نحوهٔ تحویل تصویر Object Storage به مرورگر:
- * - same-origin: از API خود اپ (سرور با S3 می‌خواند) — برای ParsPack توصیه می‌شود
- * - direct: URL عمومی parspack.net (فقط اگر از شبکه کاربر در دسترس باشد)
+ * تصویر استوریج همیشه با URL عمومی خودش به مرورگر می‌رسد.
+ * same-origin فقط برای سازگاری با تنظیم قدیمی مانده و دیگر پروکسی نمی‌سازد.
  */
 export type StorageImageMode = 'same-origin' | 'direct';
 
@@ -12,53 +11,40 @@ export type StorageImageMode = 'same-origin' | 'direct';
 export type LiaraImageMode = StorageImageMode;
 
 export function getStorageImageMode(): StorageImageMode {
-  const mode = process.env.NEXT_PUBLIC_LIARA_IMAGE_MODE?.trim();
-  if (mode === 'direct') return 'direct';
-  // ParsPack از مرورگر مستقیم اغلب timeout می‌دهد — پیش‌فرض proxy
-  return 'same-origin';
+  return 'direct';
 }
 
 /** @deprecated */
 export const getLiaraImageMode = getStorageImageMode;
 
 export type ToStorageImageSrcOptions = {
-  /** حتی در حالت direct، از API same-origin استفاده کن */
+  /** بی‌اثر — تصویر استوریج دیگر از پروکسی اپ رد نمی‌شود. */
   forceProxy?: boolean;
-  /**
-   * URL عمومی استوریج، بدون پروکسی.
-   * اگر مرورگر نتواند وصل شود، caller باید با forceProxy دوباره تلاش کند.
-   */
+  /** بی‌اثر — خروجی همیشه URL عمومی است. */
   preferDirect?: boolean;
 };
 
 /** @deprecated */
 export type ToLiaraImageSrcOptions = ToStorageImageSrcOptions;
 
-/** آدرس نهایی <img> — برای URLهای ParsPack / استوریج داخلی */
+/** آدرس نهایی <img> — URL عمومی استوریج، بدون /api/liara-image */
 export function toStorageImageSrc(
   rawUrl: string | null | undefined,
-  options?: ToStorageImageSrcOptions
+  _options?: ToStorageImageSrcOptions
 ): string {
   if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) return '';
-  const url = normalizeImageUrlForStorage(rawUrl);
+  const url = unwrapStoredImageProxy(rawUrl);
   if (!url || (!url.startsWith('/') && !isValidHttpImageUrl(url))) return '';
+  if (url.startsWith('/api/liara-image') || url.startsWith('/api/storage-image')) return '';
   if (url.startsWith('/')) return url;
   if (!isOurStorageUrl(url)) return url;
-
-  const useProxy =
-    options?.forceProxy ||
-    (!options?.preferDirect &&
-      (getStorageImageMode() === 'same-origin' || isParsPackStorageUrl(url)));
-
-  if (!useProxy) return url;
-
-  return `/api/liara-image?url=${encodeURIComponent(url)}`;
+  return url;
 }
 
 /** @deprecated */
 export const toLiaraImageSrc = toStorageImageSrc;
 
-/** thumbnail ادمین — همیشه از proxy برای ParsPack */
+/** پیش‌نمایش ادمین — همان لینک عمومی استوریج */
 export function toAdminStorageImageSrc(rawUrl: string | null | undefined): string {
-  return toStorageImageSrc(rawUrl, { forceProxy: true });
+  return toStorageImageSrc(rawUrl);
 }

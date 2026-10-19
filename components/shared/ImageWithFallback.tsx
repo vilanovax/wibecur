@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { isOurStorageUrl, isLegacyLiaraStorageUrl } from '@/lib/object-storage-config';
-import { toLiaraImageSrc, getLiaraImageMode } from '@/lib/liara-image-url';
-import { resolveStorageImageDisplayUrl } from '@/lib/storage-image-url';
+import { unwrapStoredImageProxy } from '@/lib/image-url-sanitize';
 import { directStorageFallbackSrc } from '@/lib/resilient-image';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
 import {
@@ -18,7 +17,6 @@ import {
   inferCategorySlugFromTitle,
   pickCategoryCoverGradient,
 } from '@/lib/category-cover-images';
-import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 
 interface ImageWithFallbackProps {
@@ -55,13 +53,15 @@ interface ImageWithFallbackProps {
 }
 
 function toDisplaySrc(resolved: string): string {
-  if (!isDisplayableCoverPath(resolved)) return '';
-  if (resolved.startsWith('/')) return resolved;
-  if (isOurStorageUrl(resolved) || isLegacyLiaraStorageUrl(resolved)) {
-    return resolveStorageImageDisplayUrl(resolved);
+  const unwrapped = unwrapStoredImageProxy(resolved) || resolved;
+  if (!unwrapped || unwrapped.startsWith('/api/liara-image') || unwrapped.startsWith('/api/storage-image')) {
+    return '';
   }
-  if (isAllowedItemImageUrl(resolved)) return resolved;
-  if (isAllowedExternalImageUrl(resolved)) return resolved;
+  if (!isDisplayableCoverPath(unwrapped)) return '';
+  if (isOurStorageUrl(unwrapped) || isLegacyLiaraStorageUrl(unwrapped)) return unwrapped;
+  if (unwrapped.startsWith('/')) return unwrapped;
+  if (isAllowedItemImageUrl(unwrapped)) return unwrapped;
+  if (isAllowedExternalImageUrl(unwrapped)) return unwrapped;
   return '';
 }
 
@@ -83,12 +83,10 @@ export default function ImageWithFallback({
   height,
 }: ImageWithFallbackProps) {
   const [forceLocal, setForceLocal] = useState(false);
-  const [forceLiaraProxy, setForceLiaraProxy] = useState(false);
   const [directStorageSrc, setDirectStorageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     setForceLocal(false);
-    setForceLiaraProxy(false);
     setDirectStorageSrc(null);
   }, [src, preferStoredImage, categorySlug, listSlug, listTitle, itemImageSource]);
 
@@ -120,10 +118,8 @@ export default function ImageWithFallback({
 
   const displaySrc = useMemo(() => {
     if (directStorageSrc) return directStorageSrc;
-    const base = toDisplaySrc(resolvedSrc);
-    if (!base || !forceLiaraProxy || !isOurStorageUrl(resolvedSrc)) return base;
-    return toLiaraImageSrc(resolvedSrc, { forceProxy: true });
-  }, [resolvedSrc, forceLiaraProxy, directStorageSrc]);
+    return toDisplaySrc(resolvedSrc);
+  }, [resolvedSrc, directStorageSrc]);
 
   const fallbackGradient = useMemo(() => {
     const slug =
@@ -134,8 +130,6 @@ export default function ImageWithFallback({
     return pickCategoryCoverGradient(slug, seed);
   }, [categorySlug, listSlug, listTitle]);
 
-  // زنجیرهٔ fallback مشترک بین <img> و next/image:
-  // ۱) تلاش با URL مستقیم storage ۲) سوییچ به proxy لیارا ۳) کاور محلی دسته
   const handleError = useCallback(() => {
     if (!directStorageSrc) {
       const direct = directStorageFallbackSrc(displaySrc);
@@ -144,15 +138,6 @@ export default function ImageWithFallback({
         return;
       }
     }
-    if (
-      preferStoredImage &&
-      !forceLiaraProxy &&
-      isOurStorageUrl(resolvedSrc) &&
-      getLiaraImageMode() === 'direct'
-    ) {
-      setForceLiaraProxy(true);
-      return;
-    }
     if (!forceLocal && (categorySlug || listSlug || listTitle) && !preferStoredImage) {
       setForceLocal(true);
     }
@@ -160,8 +145,6 @@ export default function ImageWithFallback({
     directStorageSrc,
     displaySrc,
     preferStoredImage,
-    forceLiaraProxy,
-    resolvedSrc,
     forceLocal,
     categorySlug,
     listSlug,
@@ -180,12 +163,9 @@ export default function ImageWithFallback({
 
   // مسیر بهینه‌شدهٔ ابعاد-ثابت (آواتارها) — مستقل از positioning والد.
   if (width && height && !sizes) {
-    const unwrappedFixed = normalizeImageUrlForStorage(directStorageSrc ?? displaySrc);
-    const fixedSrc =
-      unwrappedFixed && /^https?:\/\//.test(unwrappedFixed)
-        ? unwrappedFixed
-        : (directStorageSrc ?? displaySrc);
-    const { src: imageSrc, unoptimized: unoptimizedFixed } = resolveNextImageSrc(fixedSrc);
+    const { src: imageSrc, unoptimized: unoptimizedFixed } = resolveNextImageSrc(
+      directStorageSrc ?? displaySrc
+    );
     return (
       <Image
         key={imageSrc}
