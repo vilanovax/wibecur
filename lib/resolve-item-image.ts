@@ -87,10 +87,21 @@ export function isMovieLikeCategory(categorySlug?: string | null): boolean {
   return s.includes('movie') || s.includes('film') || s === 'series';
 }
 
+/** کتاب، ادبیات، پادکست — کاور پرتره با عنوان زیر تصویر. */
+export function isBookLikeCategory(categorySlug?: string | null): boolean {
+  if (!categorySlug) return false;
+  const s = categorySlug.toLowerCase();
+  return s.includes('book') || s.includes('literature') || s.includes('podcast');
+}
+
 /** دسته‌هایی که کاورشان مستطیلی (پرتره) نمایش داده می‌شود: فیلم، سریال، کتاب و پادکست. */
 export function isPortraitCoverCategory(categorySlug?: string | null): boolean {
   if (!categorySlug) return false;
   if (isMovieLikeCategory(categorySlug)) return true;
-  const s = categorySlug.toLowerCase();
-  return s.includes('book') || s.includes('literature') || s.includes('podcast');
+  return isBookLikeCategory(categorySlug);
+}
+
+/** عنوان زیر کاور (نه روی تصویر) — خوانایی بهتر برای فیلم و کتاب. */
+export function isTitleBelowCoverCategory(categorySlug?: string | null): boolean {
+  return isPortraitCoverCategory(categorySlug);
 }
