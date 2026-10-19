@@ -874,58 +874,56 @@ export default function ListsPageClient({
   return (
     <div className="w-full min-w-0 space-y-0 pb-6 lg:pb-4">
       <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
-      <div className="mb-2 max-lg:px-4 lg:mb-3">
+      <div className="mb-1.5 max-lg:px-4 lg:mb-2">
         <PageBreadcrumb items={breadcrumbItems} />
       </div>
       <h1 className="mb-2 hidden wibe-h3 font-bold text-foreground lg:block">لیست‌ها</h1>
       {/* جستجو در همین صفحه — هدر دسکتاپ جستجو ندارد تا تکراری نشود */}
-      <div className="pb-2 pt-1 max-lg:px-4 lg:pb-2 lg:pt-0 lg:px-0">
-        <div>
-          <div className="flex items-center gap-1.5">
-            <div className="min-w-0 flex-1">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                onSubmit={() => {
-                  const q = normalizeSearchQuery(searchQuery);
-                  if (q) {
-                    pushRecentSearch(q);
-                    trackSearch(q, 'lists_input');
-                  }
-                }}
-                placeholder="جستجو در لیست‌ها و آیتم‌ها…"
-                inputRef={searchInputRef}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => openSearch({ query: searchQuery })}
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-card text-wibe-secondary transition-colors hover:border-primary/30 hover:text-primary active:scale-[0.98] lg:h-9 lg:w-9 ${
-                isSearchActive ? 'hidden' : ''
-              }`}
-              aria-label="جستجوی سراسری"
-              title="جستجو در کل وایب"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-            </button>
+      <div className="pb-2.5 pt-0.5 max-lg:px-4 lg:pb-3 lg:pt-0 lg:px-0">
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSubmit={() => {
+                const q = normalizeSearchQuery(searchQuery);
+                if (q) {
+                  pushRecentSearch(q);
+                  trackSearch(q, 'lists_input');
+                }
+              }}
+              placeholder="جستجو در لیست‌ها و آیتم‌ها…"
+              inputRef={searchInputRef}
+            />
           </div>
+          <button
+            type="button"
+            onClick={() => openSearch({ query: searchQuery })}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-wibe bg-wibe-surface text-wibe-secondary transition-colors hover:border-primary/30 hover:bg-primary/[0.04] hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] lg:h-10 lg:w-10 ${
+              isSearchActive ? 'hidden' : ''
+            }`}
+            aria-label="جستجوی سراسری"
+            title="جستجو در کل وایب"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          </button>
         </div>
       </div>
 
       {/* Sticky: دسته + مرتب‌سازی + نمای/فیلتر — مخفی در نمای تک‌دسته */}
       {showBrowseToolbar && (
-      <div className="sticky top-14 z-20 border-b border-wibe bg-wibe-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
+      <div className="sticky top-14 z-20 border-b border-wibe/70 bg-wibe-card/95 shadow-[0_1px_0_rgba(15,23,42,0.03)] backdrop-blur-md supports-[backdrop-filter]:bg-wibe-card/90 lg:top-14">
           <div
             ref={categoryChipsRef}
-            className="flex gap-1.5 overflow-x-auto border-b border-wibe/40 px-3 py-2 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-2.5"
+            className="flex gap-2 overflow-x-auto px-3 py-2.5 scrollbar-hide lg:flex-wrap lg:overflow-visible lg:px-0"
           >
             <button
               type="button"
               data-category-chip="all"
               onClick={handleAllCategoriesClick}
-              className={`h-8 flex-shrink-0 rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${
+              className={`h-9 flex-shrink-0 rounded-full px-3.5 wibe-caption font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] ${
                 isAllCategoriesSelected
                   ? 'bg-primary text-white shadow-sm'
                   : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -941,7 +939,7 @@ export default function ListsPageClient({
                   type="button"
                   data-category-chip={cat.id}
                   onClick={() => handleCategoryClick(cat.id)}
-                  className={`h-8 flex-shrink-0 whitespace-nowrap rounded-full px-3 wibe-caption font-medium transition-colors active:scale-[0.98] ${
+                  className={`h-9 flex-shrink-0 whitespace-nowrap rounded-full px-3.5 wibe-caption font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] ${
                     isSelected
                       ? 'bg-primary text-white shadow-sm'
                       : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
@@ -954,31 +952,40 @@ export default function ListsPageClient({
             })}
           </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-2 lg:gap-2 lg:px-0">
-          <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-lg bg-wibe-surface p-0.5 scrollbar-hide">
+        <div className="flex items-center gap-2 border-t border-wibe/40 px-3 py-2 lg:gap-2.5 lg:px-0">
+          <div
+            className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto scrollbar-hide"
+            role="tablist"
+            aria-label="حالت مرور"
+          >
             {BROWSE_MODES.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
+                role="tab"
+                aria-selected={browseMode === value}
                 onClick={() => setBrowseMode(value)}
-                className={`h-8 flex-shrink-0 rounded-md px-3 wibe-caption font-medium transition-colors active:scale-[0.98] lg:px-3.5 ${
+                className={`relative h-9 flex-shrink-0 px-3 wibe-caption font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] lg:px-3.5 ${
                   browseMode === value
-                    ? 'bg-wibe-card font-semibold text-primary shadow-sm'
+                    ? 'font-semibold text-primary'
                     : 'text-wibe-secondary hover:text-foreground'
                 }`}
               >
                 {label}
+                {browseMode === value ? (
+                  <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary" aria-hidden />
+                ) : null}
               </button>
             ))}
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <div className="hidden rounded-lg border border-wibe bg-wibe-surface p-0.5 sm:flex">
+          <div className="flex shrink-0 items-center gap-1.5">
+            <div className="hidden rounded-xl border border-wibe bg-wibe-surface p-0.5 sm:flex">
               <button
                 type="button"
                 onClick={() => setViewMode('compact')}
                 aria-label="نمایش لیستی"
                 aria-pressed={viewMode === 'compact'}
-                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] ${
                   viewMode === 'compact' ? 'bg-primary text-white' : 'text-wibe-secondary'
                 }`}
               >
@@ -989,7 +996,7 @@ export default function ListsPageClient({
                 onClick={() => setViewMode('grid')}
                 aria-label="نمایش گریدی"
                 aria-pressed={viewMode === 'grid'}
-                className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors active:scale-[0.98] ${
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] ${
                   viewMode === 'grid' ? 'bg-primary text-white' : 'text-wibe-secondary'
                 }`}
               >
@@ -999,7 +1006,7 @@ export default function ListsPageClient({
             <button
               type="button"
               onClick={() => setFilterSheetOpen(true)}
-              className={`flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 transition-colors active:scale-[0.98] ${
+              className={`flex h-9 items-center justify-center gap-1.5 rounded-xl border px-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] ${
                 hasAdvancedFilters
                   ? 'border-primary bg-primary/10 text-primary'
                   : 'border-wibe bg-wibe-surface text-wibe-secondary hover:border-primary/30'
@@ -1060,7 +1067,7 @@ export default function ListsPageClient({
       </div>
       )}
 
-      <div className="mt-2 w-full min-w-0 max-lg:px-3 lg:mt-4 lg:px-0">
+      <div className="mt-3 w-full min-w-0 max-lg:px-3.5 lg:mt-5 lg:px-0">
         {browseMode === 'saved' && !bookmarksLoaded ? (
           <SavedBookmarksSkeleton />
         ) : savedBrowseEmpty ? (
@@ -1136,11 +1143,11 @@ export default function ListsPageClient({
                 <HomeDeferredMount
                   key={category.id}
                   fallback={
-                    <section className="mb-6" aria-hidden>
-                      <div className="mb-3 h-6 w-36 animate-pulse rounded bg-gray-200" />
+                    <section className="mb-6 border-t border-wibe/50 pt-5" aria-hidden>
+                      <div className="mb-3.5 h-8 w-40 animate-pulse rounded-xl bg-wibe-surface" />
                       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
                         {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="aspect-[5/4] animate-pulse rounded-xl bg-gray-100" />
+                          <div key={i} className="aspect-[5/4] animate-pulse rounded-2xl bg-wibe-surface" />
                         ))}
                       </div>
                     </section>

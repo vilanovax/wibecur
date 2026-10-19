@@ -21,20 +21,21 @@ export default function ListsSimilarRow({
   const isDesktop = useIsDesktop();
   if (lists.length === 0) return null;
 
-  const cardVariant = isDesktop ? 'compact' : 'mini';
-
   return (
-    <section className="mt-2 border-t border-wibe pt-4 lg:pt-5" aria-label={title}>
-      <h2 className="mb-2.5 flex items-center gap-1.5 wibe-h3">
+    <section className="mt-3 border-t border-wibe/60 pt-5 lg:mt-4 lg:pt-6" aria-label={title}>
+      <h2 className="mb-3.5 flex items-center gap-1.5 wibe-h3">
         <span aria-hidden>✨</span>
         <span>{title}</span>
       </h2>
-      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-3 lg:overflow-visible lg:snap-none xl:grid-cols-4">
+      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-1 scrollbar-hide lg:grid lg:grid-cols-3 lg:gap-3 lg:overflow-visible lg:snap-none xl:grid-cols-4">
         {lists.map((list) => (
-          <div key={list.id} className="w-[min(220px,72vw)] shrink-0 snap-start lg:w-full lg:max-w-none">
+          <div
+            key={list.id}
+            className="w-[min(11.5rem,46vw)] shrink-0 snap-start lg:w-full lg:max-w-none"
+          >
             <ListCardCompact
               list={list}
-              variant={cardVariant}
+              variant={isDesktop ? 'compact' : 'grid'}
               isBookmarked={bookmarkedIds?.has(list.id)}
               onBookmarkToggle={onBookmarkToggle}
             />
