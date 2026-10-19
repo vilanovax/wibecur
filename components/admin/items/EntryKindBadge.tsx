@@ -11,7 +11,7 @@ const TONE: Record<EntryKind, string> = {
   tip: 'bg-amber-50 text-amber-900 ring-amber-200/80',
   fact: 'bg-violet-50 text-violet-900 ring-violet-200/80',
   link: 'bg-sky-50 text-sky-900 ring-sky-200/80',
-  catalog_ref: 'bg-gray-100 text-gray-700 ring-gray-200/80',
+  catalog_ref: 'bg-gray-100 text-[var(--color-text)] ring-gray-200/80',
 };
 
 type ItemLike = {

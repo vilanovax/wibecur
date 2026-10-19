@@ -61,7 +61,7 @@ function KpiCard({
     <div
       className={`rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-admin-border dark:border-gray-600 border-l-4 p-4 ${SEVERITY_BORDER[severity]} ${className}`}
     >
-      <p className="text-[11px] font-semibold text-admin-text-tertiary dark:text-gray-500 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-[11px] font-semibold text-admin-text-tertiary dark:text-[var(--color-text-muted)] uppercase tracking-wider mb-1">{label}</p>
       <p className="text-2xl font-bold text-admin-text-primary dark:text-white tabular-nums">{value}</p>
       {growthPercent != null && (
         <p className={`text-xs mt-1.5 font-medium ${SEVERITY_TEXT[severity]}`}>
@@ -240,7 +240,7 @@ export default function GrowthKPIDashboard() {
 
   const subMetricClass = (val: number) =>
     val === 0
-      ? 'text-gray-400 dark:text-gray-500'
+      ? 'text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)]'
       : 'text-white/95 dark:text-gray-100';
 
   return (
@@ -291,7 +291,7 @@ export default function GrowthKPIDashboard() {
 
       {/* 3. KPI Strip — white cards, border-l severity */}
       <section>
-        <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-gray-500 uppercase tracking-wider mb-4">خلاصه KPI</h2>
+        <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-[var(--color-text-muted)] uppercase tracking-wider mb-4">خلاصه KPI</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KpiCard
             label="کاربران فعال (۷ روز)"
@@ -349,7 +349,7 @@ export default function GrowthKPIDashboard() {
                       cat.status === 'fast'
                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
                         : cat.status === 'stable'
-                          ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
+                          ? 'bg-gray-100 text-[var(--color-text)] dark:bg-gray-700 dark:text-gray-200'
                           : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
                     }`}
                   >
@@ -359,14 +359,14 @@ export default function GrowthKPIDashboard() {
                   </span>
                 </div>
                 <p className="font-medium text-admin-text-primary dark:text-white truncate">{cat.name}</p>
-                <p className="text-xs text-admin-text-tertiary dark:text-gray-400 mt-1">
+                <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)] mt-1">
                   +{cat.growth}% رشد · {(cat.savesThisWeek ?? 0).toLocaleString('fa-IR')} ذخیره این هفته
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-admin-border dark:border-gray-600 bg-admin-muted dark:bg-gray-800/50 p-6 text-center text-admin-text-tertiary dark:text-gray-400 text-sm">
+          <div className="rounded-xl border border-admin-border dark:border-gray-600 bg-admin-muted dark:bg-gray-800/50 p-6 text-center text-admin-text-tertiary dark:text-[var(--color-text-subtle)] text-sm">
             داده‌ای برای دسته‌ها موجود نیست
           </div>
         )}
@@ -374,14 +374,14 @@ export default function GrowthKPIDashboard() {
 
       {/* 6. Trending — حداکثر ۸ ردیف، هدر sticky */}
       <section>
-        <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-[var(--color-text-muted)] uppercase tracking-wider mb-4 flex items-center gap-2">
           <Flame className="h-3.5 w-3.5" />
           برترین‌های هفته
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-admin-border dark:border-gray-600 overflow-hidden">
             <div className="px-4 py-3 border-b border-admin-border dark:border-gray-600 bg-admin-muted/50 dark:bg-gray-700/30">
-              <h3 className="text-xs font-semibold text-admin-text-tertiary dark:text-gray-400 uppercase">لیست‌ها</h3>
+              <h3 className="text-xs font-semibold text-admin-text-tertiary dark:text-[var(--color-text-subtle)] uppercase">لیست‌ها</h3>
             </div>
             <ul className="divide-y divide-admin-border dark:divide-gray-600">
               {(data.topMovers.topListsWeek ?? []).slice(0, 8).map((list, i) => (
@@ -390,7 +390,7 @@ export default function GrowthKPIDashboard() {
                     href={`/lists/${list.slug}`}
                     className="flex items-center gap-3 py-3 px-4 hover:bg-admin-muted/50 dark:hover:bg-gray-700/30 transition-colors"
                   >
-                    <span className="text-admin-text-tertiary dark:text-gray-500 text-xs font-medium w-6 tabular-nums">{i + 1}</span>
+                    <span className="text-admin-text-tertiary dark:text-[var(--color-text-muted)] text-xs font-medium w-6 tabular-nums">{i + 1}</span>
                     <span className="font-medium text-admin-text-primary dark:text-white truncate flex-1 min-w-0">{list.title}</span>
                     <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded tabular-nums">{list.saves}</span>
                   </Link>
@@ -398,17 +398,17 @@ export default function GrowthKPIDashboard() {
               ))}
             </ul>
             {(!data.topMovers.topListsWeek || data.topMovers.topListsWeek.length === 0) && (
-              <p className="text-sm text-admin-text-tertiary dark:text-gray-500 py-4 px-4">داده‌ای نیست</p>
+              <p className="text-sm text-admin-text-tertiary dark:text-[var(--color-text-muted)] py-4 px-4">داده‌ای نیست</p>
             )}
           </div>
           <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-admin-border dark:border-gray-600 overflow-hidden">
             <div className="px-4 py-3 border-b border-admin-border dark:border-gray-600 bg-admin-muted/50 dark:bg-gray-700/30">
-              <h3 className="text-xs font-semibold text-admin-text-tertiary dark:text-gray-400 uppercase">دسته‌های با رشد</h3>
+              <h3 className="text-xs font-semibold text-admin-text-tertiary dark:text-[var(--color-text-subtle)] uppercase">دسته‌های با رشد</h3>
             </div>
             <ul className="divide-y divide-admin-border dark:divide-gray-600">
               {(data.fastestGrowingCategories ?? []).slice(0, 8).map((cat, i) => (
                 <li key={cat.id} className="flex items-center gap-3 py-3 px-4 min-w-0 hover:bg-admin-muted/50 dark:hover:bg-gray-700/30 transition-colors">
-                  <span className="text-admin-text-tertiary dark:text-gray-500 text-xs font-medium w-6 tabular-nums">{i + 1}</span>
+                  <span className="text-admin-text-tertiary dark:text-[var(--color-text-muted)] text-xs font-medium w-6 tabular-nums">{i + 1}</span>
                   <span className="text-base">{cat.icon}</span>
                   <span className="font-medium text-admin-text-primary dark:text-white truncate flex-1 min-w-0">{cat.name}</span>
                   <span className="text-[10px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded">+{cat.growth}%</span>
@@ -416,7 +416,7 @@ export default function GrowthKPIDashboard() {
               ))}
             </ul>
             {(!data.fastestGrowingCategories || data.fastestGrowingCategories.length === 0) && (
-              <p className="text-sm text-admin-text-tertiary dark:text-gray-500 py-4 px-4">داده‌ای نیست</p>
+              <p className="text-sm text-admin-text-tertiary dark:text-[var(--color-text-muted)] py-4 px-4">داده‌ای نیست</p>
             )}
           </div>
         </div>
@@ -425,11 +425,11 @@ export default function GrowthKPIDashboard() {
       {/* 7. نمودارها */}
       {data.charts && (data.charts.activeUsersLast30Days?.length ?? 0) > 0 && (
         <section>
-          <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-gray-500 uppercase tracking-wider mb-4">نمودارهای رشد</h2>
+          <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-[var(--color-text-muted)] uppercase tracking-wider mb-4">نمودارهای رشد</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {data.charts.activeUsersLast30Days?.length > 0 && (
               <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-admin-border dark:border-gray-600 p-4">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">کاربران فعال (۳۰ روز)</h3>
+                <h3 className="text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-text-subtle)] mb-3">کاربران فعال (۳۰ روز)</h3>
                 <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={data.charts.activeUsersLast30Days} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="2 2" stroke="#E5E7EB" vertical={false} strokeOpacity={0.6} />
@@ -448,7 +448,7 @@ export default function GrowthKPIDashboard() {
             {(data.charts.savesVsListsLast30Days?.length ?? 0) > 0 && (
               <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-admin-border dark:border-gray-600 p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">ذخیره vs لیست جدید (۳۰ روز)</h3>
+                  <h3 className="text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-text-subtle)]">ذخیره vs لیست جدید (۳۰ روز)</h3>
                   <div className="flex items-center gap-3 text-[10px]">
                     <span className="flex items-center gap-1"><span className="w-2 h-0.5 rounded bg-indigo-500" /> ذخیره</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-0.5 rounded bg-purple-500" /> لیست</span>
@@ -475,22 +475,22 @@ export default function GrowthKPIDashboard() {
 
       {/* 8. Creator Snapshot */}
       <section>
-        <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-[var(--color-text-muted)] uppercase tracking-wider mb-3 flex items-center gap-2">
           <Award className="h-3.5 w-3.5" />
           خلاصه سازندگان
         </h2>
         <div className="flex flex-wrap gap-3">
           <div className="inline-flex items-center gap-2 rounded-xl border border-admin-border dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm px-4 py-2.5">
-            <span className="text-xs text-admin-text-tertiary dark:text-gray-400">Power Creators</span>
+            <span className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)]">Power Creators</span>
             <span className="text-sm font-bold text-admin-text-primary dark:text-white tabular-nums">{creatorsWith5PlusSaves}</span>
           </div>
           <div className="inline-flex items-center gap-2 rounded-xl border border-admin-border dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm px-4 py-2.5">
-            <span className="text-xs text-admin-text-tertiary dark:text-gray-400">Creators 2+ Lists</span>
+            <span className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)]">Creators 2+ Lists</span>
             <span className="text-sm font-bold text-admin-text-primary dark:text-white tabular-nums">{pctPowerCreators}%</span>
           </div>
           {topCreator && (
             <div className="inline-flex items-center gap-2 rounded-xl border border-admin-border dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm px-4 py-2.5">
-              <span className="text-xs text-admin-text-tertiary dark:text-gray-400">Top Creator</span>
+              <span className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)]">Top Creator</span>
               <span className="text-sm font-bold text-admin-text-primary dark:text-white truncate max-w-[8rem]" title={topCreator.name || topCreator.userId}>
                 {topCreator.name || topCreator.userId.slice(0, 8)}
               </span>
@@ -502,20 +502,20 @@ export default function GrowthKPIDashboard() {
       {/* 9. Retention */}
       {showRetention && (
         <section>
-          <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-gray-500 uppercase tracking-wider mb-3">Retention</h2>
+          <h2 className="text-xs font-semibold text-admin-text-tertiary dark:text-[var(--color-text-muted)] uppercase tracking-wider mb-3">Retention</h2>
           <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-admin-border dark:border-gray-600 p-4">
             <div className="flex gap-4">
               <div className="flex-1 text-center p-3 rounded-xl bg-admin-muted/50 dark:bg-gray-700/30">
                 <p className="text-xl font-bold text-admin-text-primary dark:text-white">{data.retention.d1Retention}%</p>
-                <p className="text-xs text-admin-text-tertiary dark:text-gray-400 mt-0.5">D1</p>
+                <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)] mt-0.5">D1</p>
               </div>
               <div className="flex-1 text-center p-3 rounded-xl bg-admin-muted/50 dark:bg-gray-700/30">
                 <p className="text-xl font-bold text-admin-text-primary dark:text-white">{data.retention.d7Retention}%</p>
-                <p className="text-xs text-admin-text-tertiary dark:text-gray-400 mt-0.5">D7</p>
+                <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)] mt-0.5">D7</p>
               </div>
               <div className="flex-1 text-center p-3 rounded-xl bg-admin-muted/50 dark:bg-gray-700/30">
                 <p className="text-xl font-bold text-admin-text-primary dark:text-white">{data.retention.d30Retention ?? '-'}%</p>
-                <p className="text-xs text-admin-text-tertiary dark:text-gray-400 mt-0.5">D30</p>
+                <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)] mt-0.5">D30</p>
               </div>
             </div>
           </div>
@@ -540,7 +540,7 @@ export default function GrowthKPIDashboard() {
             <div className={`transition-all duration-200 overflow-hidden ${activityOpen ? 'max-h-[400px]' : 'max-h-0'}`}>
               <ul className="border-t border-admin-border dark:border-gray-600 p-4 space-y-2 overflow-y-auto">
               {data.activityFeed.slice(0, 15).map((e, i) => (
-                <li key={i} className="text-sm text-admin-text-secondary dark:text-gray-400 py-1">
+                <li key={i} className="text-sm text-admin-text-secondary dark:text-[var(--color-text-subtle)] py-1">
                   {e.type === 'save' && (
                     <>
                       <span className="font-medium text-admin-text-primary dark:text-white">{e.userName || 'کاربر'}</span> لیست <span className="text-violet-600 dark:text-violet-400">{e.targetTitle || '—'}</span> را ذخیره کرد

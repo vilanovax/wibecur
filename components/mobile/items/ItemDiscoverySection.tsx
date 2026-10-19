@@ -62,6 +62,7 @@ function DiscoveryCarouselCard({
           className="absolute inset-0 h-full w-full object-cover"
           fallbackClassName="absolute inset-0 h-full w-full"
           coverLayout="grid"
+          sizes="(min-width: 1024px) 20vw, 42vw"
         />
         {rank != null && rank <= 3 && (
           <span className="absolute end-2 top-2 rounded-full bg-warning px-1.5 py-0.5 wibe-caption font-semibold text-white shadow-sm">

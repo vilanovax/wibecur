@@ -144,7 +144,7 @@ function SidebarBrand({
               WibeCur
             </h2>
           )}
-          <p className="text-[10px] text-[var(--color-text-muted)] dark:text-gray-400 truncate">
+          <p className="text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] truncate">
             پنل مدیریت
           </p>
         </div>

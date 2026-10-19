@@ -31,10 +31,10 @@ export default function TopFilmCuratorsVIP({
 
   return (
     <section className={FILM_SECTION}>
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🏆 کیوریتورهای برتر فیلم
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         برترین کیوریتورهای {categoryName}
       </p>
 
@@ -49,7 +49,9 @@ export default function TopFilmCuratorsVIP({
                 src={topCurator.image}
                 alt={topCurator.name || 'کیوریتور'}
                 className="w-20 h-20 rounded-full object-cover ring-2 ring-amber-300"
-              />
+                  width={80}
+                  height={80}
+                />
             ) : (
               <div
                 className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white"
@@ -58,17 +60,17 @@ export default function TopFilmCuratorsVIP({
                 {(topCurator.name || '?')[0]}
               </div>
             )}
-            <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center text-sm bg-amber-400 text-gray-900 font-bold">
+            <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center text-sm bg-amber-400 text-foreground font-bold">
               🎬
             </span>
           </div>
           <span className="text-[10px] font-bold text-amber-600 mt-2 px-2 py-0.5 rounded bg-amber-100">
             Pro Critic
           </span>
-          <span className="font-bold text-gray-900 text-sm mt-1 truncate max-w-full">
+          <span className="font-bold text-foreground text-sm mt-1 truncate max-w-full">
             {topCurator.name || 'کاربر'}
           </span>
-          <span className="text-xs text-gray-600 mt-0.5">
+          <span className="text-xs text-wibe-secondary mt-0.5">
             🔥 {topCurator.listCount} لیست وایرال
           </span>
           <span className="text-xs text-amber-600 mt-1">
@@ -87,17 +89,19 @@ export default function TopFilmCuratorsVIP({
                 src={c.image}
                 alt={c.name || ''}
                 className="w-14 h-14 rounded-full object-cover"
-              />
+                  width={56}
+                  height={56}
+                />
             ) : (
               <div className="w-14 h-14 rounded-full bg-gray-700 flex items-center justify-center text-lg font-bold text-white">
                 {(c.name || '?')[0]}
               </div>
             )}
             <span className="text-[10px] text-amber-600 mt-1.5">🎬 Pro</span>
-            <span className="text-xs font-medium text-gray-900 mt-0.5 truncate max-w-full">
+            <span className="text-xs font-medium text-foreground mt-0.5 truncate max-w-full">
               {c.name || 'کاربر'}
             </span>
-            <span className="text-[10px] text-gray-500 mt-0.5">#{i + 2}</span>
+            <span className="text-[10px] text-wibe-secondary mt-0.5">#{i + 2}</span>
           </Link>
         ))}
       </div>

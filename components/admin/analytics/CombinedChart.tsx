@@ -18,13 +18,13 @@ export default function CombinedChart({ data }: CombinedChartProps) {
       >
         <div className="p-6 border-b border-slate-200 dark:border-gray-700">
           <h2 className="font-semibold text-slate-800 dark:text-gray-100">نمای ۳۰ روزه</h2>
-          <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mt-0.5">
             کاربران فعال، لیست‌های جدید، ذخیره‌ها
           </p>
         </div>
         <div className="p-8 flex flex-col items-center justify-center min-h-[200px] bg-slate-50 dark:bg-gray-800/60">
           <div className="w-full max-w-md h-32 rounded-lg bg-slate-200 dark:bg-gray-700 animate-pulse mb-4" />
-          <p className="text-sm text-slate-600 dark:text-gray-300">
+          <p className="text-sm text-slate-600 dark:text-[var(--color-text-subtle)]">
             داده کافی برای نمایش نمودار وجود ندارد.
           </p>
         </div>
@@ -44,7 +44,7 @@ export default function CombinedChart({ data }: CombinedChartProps) {
     >
       <div className="p-6 border-b border-slate-200 dark:border-gray-700">
         <h2 className="font-semibold text-slate-800 dark:text-gray-100">نمای ۳۰ روزه</h2>
-        <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
+        <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mt-0.5">
           کاربران فعال، لیست‌های جدید، ذخیره‌ها
         </p>
       </div>
@@ -83,7 +83,7 @@ export default function CombinedChart({ data }: CombinedChartProps) {
             </div>
           ))}
         </div>
-        <div className="flex gap-6 mt-3 text-xs text-slate-500 dark:text-gray-400">
+        <div className="flex gap-6 mt-3 text-xs text-slate-500 dark:text-[var(--color-text-subtle)]">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded bg-emerald-500/80" />
             کاربران فعال
@@ -97,7 +97,7 @@ export default function CombinedChart({ data }: CombinedChartProps) {
             ذخیره‌ها
           </span>
         </div>
-        <p className="text-xs text-slate-500 dark:text-gray-400 mt-2">
+        <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mt-2">
           از {data[0]?.date ?? ''} تا {data[data.length - 1]?.date ?? ''}
         </p>
       </div>

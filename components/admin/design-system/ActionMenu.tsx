@@ -46,7 +46,7 @@ export default function ActionMenu({ actions, className = '' }: ActionMenuProps)
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         aria-label="منوی عملیات"
       >
         <MoreVertical className="h-4 w-4" />
@@ -66,7 +66,7 @@ export default function ActionMenu({ actions, className = '' }: ActionMenuProps)
               className={`w-full text-right px-4 py-2 text-sm transition-colors ${
                 action.variant === 'danger'
                   ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  : 'text-[var(--color-text)] dark:text-[var(--color-text-subtle)] hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               {action.label}

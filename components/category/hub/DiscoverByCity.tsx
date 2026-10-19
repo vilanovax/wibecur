@@ -30,10 +30,10 @@ export default function DiscoverByCity({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         📍 محبوب در شهرها
       </h2>
-      <p className="text-[11px] text-gray-500">
+      <p className="text-[11px] text-wibe-secondary">
         کشف لیست‌های محبوب در هر شهر
       </p>
 
@@ -51,7 +51,8 @@ export default function DiscoverByCity({
                 alt={city}
                 className="w-full h-full object-cover"
                 placeholderSize="cover"
-              />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="font-bold text-white text-base">{city}</p>

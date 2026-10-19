@@ -51,7 +51,8 @@ export default function HubCurators({
                     className={`rounded-lg object-cover ring-2 ring-wibe-card shadow ${
                       i === 0 ? 'w-16 h-16' : 'w-12 h-12'
                     }`}
-                  />
+              sizes="(min-width: 1024px) 25vw, 50vw"
+            />
                 ) : (
                   <div
                     className={`rounded-lg flex items-center justify-center font-bold text-white bg-primary shadow ${

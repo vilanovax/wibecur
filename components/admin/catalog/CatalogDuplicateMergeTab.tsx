@@ -62,16 +62,16 @@ function DuplicateGroupCard({
               {group.catalogs.length.toLocaleString('fa-IR')} تکرار
             </span>
             {group.categorySlug && (
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600">
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-text-muted)]">
                 {catalogCategoryLabel(group.categorySlug)}
               </span>
             )}
           </div>
-          <p className="truncate text-sm font-bold text-gray-900" title={group.normalizedTitle}>
+          <p className="truncate text-sm font-bold text-[var(--color-text)]" title={group.normalizedTitle}>
             {group.normalizedTitle}
           </p>
           {target && sources.length > 0 && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
               {sources.length.toLocaleString('fa-IR')} مورد در «{target.title}» ادغام می‌شود
             </p>
           )}
@@ -125,7 +125,7 @@ function DuplicateGroupCard({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="truncate text-sm font-semibold text-gray-900">{catalog.title}</p>
+                    <p className="truncate text-sm font-semibold text-[var(--color-text)]">{catalog.title}</p>
                     {isTarget && (
                       <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold text-white">
                         مقصد
@@ -144,7 +144,7 @@ function DuplicateGroupCard({
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
                     <span>{catalog.listCount.toLocaleString('fa-IR')} لیست</span>
                     {rowExt && <span className="truncate text-violet-600/80">{rowExt}</span>}
                   </div>
@@ -152,7 +152,7 @@ function DuplicateGroupCard({
                 <Link
                   href={`/admin/catalog/${catalog.id}/edit`}
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-bold text-gray-600 hover:bg-white"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-bold text-[var(--color-text-muted)] hover:bg-white"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   ویرایش
@@ -164,7 +164,7 @@ function DuplicateGroupCard({
       </ul>
 
       {extHint && (
-        <footer className="border-t border-gray-100 bg-gray-50/80 px-4 py-2 text-[11px] text-gray-500">
+        <footer className="border-t border-gray-100 bg-gray-50/80 px-4 py-2 text-[11px] text-[var(--color-text-muted)]">
           شناسه مقصد: {extHint}
         </footer>
       )}
@@ -204,11 +204,11 @@ export default function CatalogDuplicateMergeTab({
           className="flex w-full items-center justify-between gap-3 px-4 py-3 text-right hover:bg-gray-50/80"
         >
           <div>
-            <h3 className="text-sm font-bold text-gray-900">جستجوی دستی مشابه</h3>
-            <p className="text-xs text-gray-500 mt-0.5">عنوان، IMDb، ISBN — برای ادغام دستی</p>
+            <h3 className="text-sm font-bold text-[var(--color-text)]">جستجوی دستی مشابه</h3>
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">عنوان، IMDb، ISBN — برای ادغام دستی</p>
           </div>
           <ChevronDown
-            className={`h-5 w-5 shrink-0 text-gray-400 transition-transform ${
+            className={`h-5 w-5 shrink-0 text-[var(--color-text-subtle)] transition-transform ${
               manualSearchOpen ? 'rotate-180' : ''
             }`}
           />
@@ -223,7 +223,7 @@ export default function CatalogDuplicateMergeTab({
               }}
             >
               <div className="relative flex-1">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-subtle)]" />
                 <input
                   value={similarQuery}
                   onChange={(e) => onSimilarQueryChange(e.target.value)}
@@ -256,8 +256,8 @@ export default function CatalogDuplicateMergeTab({
       <section>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="text-sm font-bold text-gray-900">تکرارهای خودکار</h3>
-            <p className="mt-1 max-w-xl text-xs leading-relaxed text-gray-600">
+            <h3 className="text-sm font-bold text-[var(--color-text)]">تکرارهای خودکار</h3>
+            <p className="mt-1 max-w-xl text-xs leading-relaxed text-[var(--color-text-muted)]">
               گروه‌های با عنوان یکسان. مقصد پیشنهادی = بیشترین جایگاه در لیست. موارد «حذف» بعد از
               ادغام از کاتالوگ پاک می‌شوند.
             </p>
@@ -267,7 +267,7 @@ export default function CatalogDuplicateMergeTab({
               <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-900">
                 {groups.length.toLocaleString('fa-IR')} گروه
               </span>
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-[var(--color-text)]">
                 {duplicateEntryCount.toLocaleString('fa-IR')} مورد
               </span>
             </div>

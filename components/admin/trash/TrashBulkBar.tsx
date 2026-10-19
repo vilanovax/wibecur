@@ -18,7 +18,7 @@ export default function TrashBulkBar({ selectedCount, onRestore, onClear, loadin
       dir="rtl"
     >
       <div className="max-w-5xl mx-auto pointer-events-auto flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-xl px-4 py-3">
-        <span className="text-sm font-medium text-gray-900 dark:text-white tabular-nums">
+        <span className="text-sm font-medium text-[var(--color-text)] dark:text-white tabular-nums">
           {selectedCount.toLocaleString('fa-IR')} مورد انتخاب شده
         </span>
         <div className="flex flex-wrap gap-2">
@@ -35,7 +35,7 @@ export default function TrashBulkBar({ selectedCount, onRestore, onClear, loadin
             type="button"
             onClick={onClear}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-2 text-sm font-medium text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60"
           >
             <X className="h-4 w-4" />
             لغو انتخاب

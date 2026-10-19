@@ -224,7 +224,7 @@ export default function SaveToPersonalListModal({
                       className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl hover:border-gray-200 transition-colors"
                     >
                       {/* کاور کوچک */}
-                      <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="relative w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                         <ImageWithFallback
                           src={list.coverImage ?? ''}
                           alt={list.title}
@@ -232,6 +232,7 @@ export default function SaveToPersonalListModal({
                           fallbackIcon="📋"
                           fallbackClassName="w-full h-full flex items-center justify-center text-xl"
                           placeholderSize="cover"
+                          sizes="56px"
                         />
                       </div>
 

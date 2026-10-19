@@ -28,44 +28,43 @@ async function fetchProfilePicks(): Promise<ProfilePicksResponse> {
 const PROFILE_PICKS_HELP_TEXT =
   'شما می‌توانید هر فیلم و سریال و رستوران و آیتمی را که خواستید به علاقه‌مندی‌های شخصی خود اضافه کنید و بعداً در شبکه‌های اجتماعی علایق و سلایق خود را می‌توانید با دیگران به نمایش بگذارید.';
 
-function PickCard({ pick }: { pick: ProfilePickItemDto; accentColor?: string }) {
+function PickCard({ pick, accentColor }: { pick: ProfilePickItemDto; accentColor: string }) {
   const href = pick.itemId ? `/items/${pick.itemId}` : '#';
   const inner = (
-    <div className="w-[6.25rem] shrink-0 overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90">
-      <div className="relative aspect-[2/3] bg-wibe-surface">
-        {pick.imageUrl ? (
-          <ImageWithFallback
-            src={pick.imageUrl}
-            alt={pick.title}
-            className="h-full w-full object-cover"
-            fallbackIcon="🎬"
-            fallbackClassName="flex h-full w-full items-center justify-center bg-wibe-surface text-xl"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl">
-            ✨
-          </div>
-        )}
-        {pick.note ? (
-          <span className="absolute start-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 wibe-caption text-white backdrop-blur-sm">
-            💬
-          </span>
-        ) : null}
-      </div>
-      <div className="px-1.5 py-1.5 text-start">
-        <p className="line-clamp-2 text-caption font-semibold leading-snug text-foreground">
+    <div
+      className="group relative aspect-[2/3] w-[96px] shrink-0 overflow-hidden rounded-xl bg-gray-100 shadow-sm ring-1 ring-black/5"
+      style={{ boxShadow: `0 4px 14px ${accentColor}22` }}
+    >
+      {pick.imageUrl ? (
+        <ImageWithFallback
+          src={pick.imageUrl}
+          alt={pick.title}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          fallbackIcon="🎬"
+          fallbackClassName="flex h-full w-full items-center justify-center bg-gray-200 text-xl"
+          sizes="96px"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-2xl">
+          ✨
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-1.5 pb-1.5 pt-8">
+        <p className="line-clamp-2 text-start wibe-caption font-semibold leading-snug text-white">
           {pick.title}
         </p>
       </div>
+      {pick.note && (
+        <span className="absolute start-1.5 top-1.5 rounded-full bg-black/50 px-1 py-0.5 wibe-caption text-white backdrop-blur-sm">
+          💬
+        </span>
+      )}
     </div>
   );
 
   if (pick.itemId) {
     return (
-      <Link
-        href={href}
-        className="block shrink-0 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.97]"
-      >
+      <Link href={href} className="block shrink-0 active:scale-[0.97] transition-transform">
         {inner}
       </Link>
     );
@@ -79,7 +78,7 @@ function AddSlotButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-[10.5rem] w-[6.25rem] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary/35 bg-primary/[0.04] text-primary transition-colors hover:border-primary/50 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.97]"
+      className="flex h-[144px] w-[96px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-primary/35 bg-primary/[0.04] text-primary transition-colors hover:border-primary/50 hover:bg-primary/10 active:scale-[0.97]"
     >
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15">
         <Plus className="h-4 w-4" />
@@ -109,16 +108,16 @@ function ShelfTabs({
             key={shelf.categorySlug}
             type="button"
             onClick={() => onSelect(shelf.categorySlug)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 wibe-caption font-semibold transition-[colors,transform] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98] ${
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 wibe-small font-medium transition-[colors,transform] active:scale-[0.98] ${
               selected
                 ? 'bg-primary text-white shadow-sm'
                 : 'border border-wibe bg-wibe-surface text-foreground hover:border-primary/30'
             }`}
           >
             <span>{shelf.categoryIcon}</span>
-            <span className="max-w-[5.5rem] truncate">{shelf.categoryName}</span>
+            <span className="max-w-[88px] truncate">{shelf.categoryName}</span>
             <span
-              className={`rounded-full px-1.5 py-0.5 wibe-caption font-bold leading-none tabular-nums ${
+              className={`rounded-full px-1.5 py-0.5 wibe-caption font-bold leading-none ${
                 selected ? 'bg-white/25' : 'bg-primary/10 text-primary'
               }`}
             >
@@ -151,7 +150,7 @@ function ActiveShelfPanel({
           <button
             type="button"
             onClick={() => onEditCategory(shelf.categorySlug)}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 wibe-caption font-semibold text-primary transition-colors hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 wibe-small font-medium text-primary hover:bg-primary/10"
           >
             <Plus className="h-4 w-4" />
             افزودن به {shelf.categoryName}
@@ -243,16 +242,16 @@ export default function ProfilePicksSection({
 
   return (
     <>
-      <section className="mb-4 overflow-hidden rounded-2xl bg-wibe-card shadow-sm ring-1 ring-wibe/90">
-        <div className="border-b border-wibe/70 px-3.5 py-3 lg:px-4">
+      <section className="mb-4 overflow-hidden rounded-2xl border border-wibe bg-wibe-card shadow-sm">
+        <div className="border-b border-wibe/60 bg-gradient-to-l from-primary/[0.06] via-transparent to-violet-500/[0.04] px-3.5 py-2.5 lg:px-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                 <Sparkles className="h-4 w-4 text-primary" />
               </span>
-              <div className="min-w-0 text-start">
-                <h2 className="wibe-h3 text-foreground">منتخب‌های من</h2>
-                <p className="mt-0.5 truncate wibe-caption text-wibe-secondary">
+              <div className="min-w-0">
+                <h2 className="wibe-h3">منتخب‌های من</h2>
+                <p className="truncate wibe-caption text-wibe-secondary">
                   {isOwner
                     ? hasAnyPicks
                       ? `${totalPicks.toLocaleString('fa-IR')} آیتم · ${filledShelves.length.toLocaleString('fa-IR')} قفسه`
@@ -266,7 +265,7 @@ export default function ProfilePicksSection({
                 <button
                   type="button"
                   onClick={() => openEditor(activeShelf?.categorySlug)}
-                  className="rounded-full bg-primary px-3.5 py-1.5 wibe-caption font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-[0.98]"
+                  className="rounded-lg bg-primary px-3 py-1.5 wibe-caption font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark active:scale-[0.98]"
                 >
                   {hasAnyPicks ? 'مدیریت' : 'شروع کن'}
                 </button>
@@ -289,7 +288,7 @@ export default function ProfilePicksSection({
               {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
-                  className="h-[10.5rem] w-[6.25rem] shrink-0 animate-pulse rounded-2xl bg-wibe-surface"
+                  className="h-[144px] w-[96px] shrink-0 animate-pulse rounded-xl bg-gray-100"
                 />
               ))}
             </div>

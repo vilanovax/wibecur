@@ -28,7 +28,8 @@ export default function CategoryHeroUpgraded({
               className="absolute inset-0 w-full h-full object-cover"
               categorySlug={category.slug}
               priority
-            />
+        sizes="100vw"
+      />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
           </>
         ) : (

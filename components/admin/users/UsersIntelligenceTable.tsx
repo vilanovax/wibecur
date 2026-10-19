@@ -19,11 +19,11 @@ import UserRowActionMenu from '@/components/admin/users/UserRowActionMenu';
 const qualityClass: Record<Row['quality'], string> = {
   high_impact: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   stable: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  low_engagement: 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300',
+  low_engagement: 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700/50 dark:text-[var(--color-text-subtle)]',
 };
 
 const roleColors: Record<string, string> = {
-  USER: 'bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-200',
+  USER: 'bg-gray-100 text-[var(--color-text)] dark:bg-gray-700/50 dark:text-gray-200',
   EDITOR: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
   ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };
@@ -153,7 +153,7 @@ export default function UsersIntelligenceTable({
                     className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${
                       user.isActive
                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300'
+                        : 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700/50 dark:text-[var(--color-text-subtle)]'
                     }`}
                   >
                     {user.isActive ? 'فعال' : 'غیرفعال'}

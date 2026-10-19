@@ -24,12 +24,12 @@ export default function Error({
         <div className="flex items-center justify-center mb-6">
           <AlertCircle className="w-16 h-16 text-red-500" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-4 text-center">
+        <h1 className="text-2xl font-bold text-[var(--color-text)] mb-4 text-center">
           خطا در بارگذاری صفحه
         </h1>
         {isDatabaseError ? (
           <div className="space-y-4">
-            <p className="text-gray-600 text-center">
+            <p className="text-[var(--color-text-muted)] text-center">
               خطا در اتصال به دیتابیس
             </p>
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -44,7 +44,7 @@ export default function Error({
             </div>
           </div>
         ) : (
-          <p className="text-gray-600 text-center mb-6">{error.message}</p>
+          <p className="text-[var(--color-text-muted)] text-center mb-6">{error.message}</p>
         )}
         <div className="flex gap-4 mt-6">
           <button
@@ -56,7 +56,7 @@ export default function Error({
           </button>
           <a
             href="/admin/dashboard"
-            className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors text-center"
+            className="flex-1 bg-gray-100 text-[var(--color-text)] py-2 rounded-lg hover:bg-gray-200 transition-colors text-center"
           >
             بازگشت
           </a>

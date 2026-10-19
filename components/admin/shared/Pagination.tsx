@@ -74,8 +74,8 @@ export default function Pagination({
         href={createUrl(currentPage - 1)}
         className={`px-4 py-2 rounded-lg border transition-colors ${
           currentPage === 1
-            ? 'border-gray-200 text-gray-400 cursor-not-allowed pointer-events-none'
-            : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-primary'
+            ? 'border-gray-200 text-[var(--color-text-subtle)] cursor-not-allowed pointer-events-none'
+            : 'border-gray-300 text-[var(--color-text)] hover:bg-gray-50 hover:border-primary'
         }`}
       >
         قبلی
@@ -86,7 +86,7 @@ export default function Pagination({
         {getPageNumbers().map((page, index) => {
           if (page === 'ellipsis') {
             return (
-              <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+              <span key={`ellipsis-${index}`} className="px-2 text-[var(--color-text-subtle)]">
                 ...
               </span>
             );
@@ -102,7 +102,7 @@ export default function Pagination({
               className={`min-w-[40px] px-3 py-2 text-center rounded-lg border transition-colors ${
                 isActive
                   ? 'bg-primary text-white border-primary'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-primary'
+                  : 'border-gray-300 text-[var(--color-text)] hover:bg-gray-50 hover:border-primary'
               }`}
             >
               {pageNum}
@@ -116,15 +116,15 @@ export default function Pagination({
         href={createUrl(currentPage + 1)}
         className={`px-4 py-2 rounded-lg border transition-colors ${
           currentPage === totalPages
-            ? 'border-gray-200 text-gray-400 cursor-not-allowed pointer-events-none'
-            : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-primary'
+            ? 'border-gray-200 text-[var(--color-text-subtle)] cursor-not-allowed pointer-events-none'
+            : 'border-gray-300 text-[var(--color-text)] hover:bg-gray-50 hover:border-primary'
         }`}
       >
         بعدی
       </Link>
 
       {/* Page Info */}
-      <div className="mr-4 text-sm text-gray-600">
+      <div className="mr-4 text-sm text-[var(--color-text-muted)]">
         صفحه {currentPage} از {totalPages}
       </div>
     </div>

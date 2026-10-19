@@ -334,7 +334,7 @@ export default function BackupPageClient() {
             'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
             activeTab === 'export'
               ? 'bg-white dark:bg-gray-700 shadow-sm text-violet-800 dark:text-violet-100'
-              : 'text-gray-600 dark:text-gray-400'
+              : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]'
           )}
         >
           <Database className="h-4 w-4" />
@@ -347,7 +347,7 @@ export default function BackupPageClient() {
             'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
             activeTab === 'import'
               ? 'bg-white dark:bg-gray-700 shadow-sm text-violet-800 dark:text-violet-100'
-              : 'text-gray-600 dark:text-gray-400'
+              : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]'
           )}
         >
           <Upload className="h-4 w-4" />
@@ -378,7 +378,7 @@ export default function BackupPageClient() {
               onClick={() => setInfoOpen((v) => !v)}
               className="w-full flex items-center justify-between gap-3 px-4 py-3 text-right hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors"
             >
-              <span className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <span className="flex items-center gap-2 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
                 <Info className="h-4 w-4 shrink-0 text-blue-500" />
                 <span>فرمت خروجی و محدودیت‌های فاز ۱</span>
               </span>
@@ -387,7 +387,7 @@ export default function BackupPageClient() {
               </span>
             </button>
             {infoOpen && (
-              <div className="px-4 pb-4 pt-0 text-xs leading-relaxed text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700/80 space-y-2">
+              <div className="px-4 pb-4 pt-0 text-xs leading-relaxed text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] border-t border-gray-100 dark:border-gray-700/80 space-y-2">
                 <p>خروجی: JSON در ZIP (یا یک فایل JSON در صورت نبود archiver).</p>
                 <p>
                   <Shield className="inline h-3.5 w-3.5 ml-1 text-emerald-600" />
@@ -405,7 +405,7 @@ export default function BackupPageClient() {
           </AdminCard>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">پیش‌تنظیم:</span>
+            <span className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] ml-1">پیش‌تنظیم:</span>
             {PRESETS.map((p) => (
               <button
                 key={p.id}
@@ -416,7 +416,7 @@ export default function BackupPageClient() {
                   'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors',
                   arraysEqual(selectedScopes, p.scopes)
                     ? 'border-violet-300 bg-violet-50 text-violet-800 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-200'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-violet-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                    : 'border-gray-200 bg-white text-[var(--color-text)] hover:border-violet-200 dark:border-gray-600 dark:bg-gray-800 dark:text-[var(--color-text-subtle)]'
                 )}
               >
                 {p.recommended && (
@@ -455,8 +455,8 @@ export default function BackupPageClient() {
             <div className="border-t border-gray-100 dark:border-gray-700/80 pt-5 space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">سایر بخش‌ها</h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <h2 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">سایر بخش‌ها</h2>
+                <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">
                   {selectedCount} از {SELECTABLE_SCOPES.length} ·{' '}
                   {OTHER_SCOPES.filter((s) => selectedScopes.includes(s)).length} از{' '}
                   {OTHER_SCOPES.length} اختیاری
@@ -470,12 +470,12 @@ export default function BackupPageClient() {
                 >
                   همه
                 </button>
-                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <span className="text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)]">|</span>
                 <button
                   type="button"
                   onClick={clearScopes}
                   disabled={selectedCount === 0}
-                  className="text-xs font-medium text-gray-500 hover:text-gray-700 disabled:opacity-40"
+                  className="text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:opacity-40"
                 >
                   پاک کردن
                 </button>
@@ -484,7 +484,7 @@ export default function BackupPageClient() {
 
             {SCOPE_GROUPS.map((group) => (
               <div key={group.title} className="space-y-2">
-                <h3 className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                <h3 className="text-[11px] font-semibold text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
                   {group.title}
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2">
@@ -504,10 +504,10 @@ export default function BackupPageClient() {
           </AdminCard>
 
           <AdminCard padding="default" hover={false} className="space-y-4">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">گزینه‌های پیشرفته</h2>
+            <h2 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">گزینه‌های پیشرفته</h2>
 
             <div className="space-y-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">رسانه و تصاویر</span>
+              <span className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">رسانه و تصاویر</span>
               <div className="inline-flex p-1 rounded-xl bg-gray-100 dark:bg-gray-800/80 gap-1 w-full sm:w-auto">
                 <SegmentOption
                   active={assetMode === 'none'}
@@ -542,14 +542,14 @@ export default function BackupPageClient() {
                 <Trash2
                   className={clsx(
                     'h-4 w-4 shrink-0',
-                    includeTrash ? 'text-amber-600' : 'text-gray-400'
+                    includeTrash ? 'text-amber-600' : 'text-[var(--color-text-subtle)]'
                   )}
                 />
                 <div>
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 block">
+                  <span className="text-sm font-medium text-[var(--color-text)] dark:text-gray-200 block">
                     شامل سطل‌زباله
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
                     رکوردهای soft-delete
                   </span>
                 </div>
@@ -578,12 +578,12 @@ export default function BackupPageClient() {
                 <Database className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">خلاصه خروجی</h2>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">قبل از شروع بررسی کنید</p>
+                <h2 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">خلاصه خروجی</h2>
+                <p className="text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">قبل از شروع بررسی کنید</p>
               </div>
             </div>
 
-            <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+            <ul className="space-y-2 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
               {hasContentCore && stats && (
                 <>
                   <SummaryRow
@@ -636,7 +636,7 @@ export default function BackupPageClient() {
             </div>
 
             {lastCompletedJob && (
-              <p className="text-[10px] text-gray-400 leading-relaxed">
+              <p className="text-[10px] text-[var(--color-text-subtle)] leading-relaxed">
                 آخرین خروجی موفق:{' '}
                 {new Date(lastCompletedJob.completedAt ?? lastCompletedJob.createdAt).toLocaleString(
                   'fa-IR',
@@ -688,7 +688,7 @@ export default function BackupPageClient() {
               {hasActive ? 'در حال پردازش…' : 'شروع پشتیبان‌گیری'}
             </button>
 
-            <p className="text-[10px] text-center text-gray-400 leading-relaxed">
+            <p className="text-[10px] text-center text-[var(--color-text-subtle)] leading-relaxed">
               حداکثر ۱۰ فایل اخیر روی سرور نگه داشته می‌شود
             </p>
           </AdminCard>
@@ -698,8 +698,8 @@ export default function BackupPageClient() {
       <AdminCard padding="default" hover={false} className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">تاریخچه خروجی‌ها</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <h2 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">تاریخچه خروجی‌ها</h2>
+            <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">
               {jobs.length > 0 ? `${jobs.length} مورد اخیر` : 'آماده برای اولین export'}
             </p>
           </div>
@@ -707,7 +707,7 @@ export default function BackupPageClient() {
             type="button"
             onClick={() => void fetchJobs(true)}
             disabled={refreshing}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
           >
             <RefreshCw className={clsx('h-3.5 w-3.5', refreshing && 'animate-spin')} />
             بروزرسانی
@@ -780,16 +780,16 @@ function ScopeChip({
         'inline-flex flex-col items-start gap-0.5 rounded-xl border px-3 py-2.5 text-sm transition-all min-w-[7.5rem]',
         selected
           ? 'border-violet-400 bg-violet-50 text-violet-900 shadow-sm shadow-violet-500/10 dark:border-violet-500 dark:bg-violet-900/35 dark:text-violet-100'
-          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800/50 dark:text-gray-300'
+          : 'border-gray-200 bg-white text-[var(--color-text)] hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800/50 dark:text-[var(--color-text-subtle)]'
       )}
     >
       <span className="flex w-full items-center gap-2">
-        <Icon className={clsx('h-4 w-4 shrink-0', selected ? 'text-violet-600 dark:text-violet-300' : 'text-gray-400')} />
+        <Icon className={clsx('h-4 w-4 shrink-0', selected ? 'text-violet-600 dark:text-violet-300' : 'text-[var(--color-text-subtle)]')} />
         <span className="font-medium">{short}</span>
         {selected && <CheckCircle2 className="h-3.5 w-3.5 ms-auto text-violet-600 dark:text-violet-400" />}
       </span>
       {hint && (
-        <span className="text-[10px] text-gray-400 dark:text-gray-500 pr-6 leading-snug">{hint}</span>
+        <span className="text-[10px] text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)] pr-6 leading-snug">{hint}</span>
       )}
       {count != null && (
         <span className="text-[11px] tabular-nums font-semibold text-violet-700 dark:text-violet-300 pr-6">
@@ -821,7 +821,7 @@ function SegmentOption({
         'flex-1 sm:flex-none flex items-center gap-2 rounded-lg px-3 py-2 text-right transition-all min-w-[8.5rem]',
         active
           ? 'bg-white dark:bg-gray-700 shadow-sm text-violet-800 dark:text-violet-100'
-          : 'text-gray-600 dark:text-gray-400 hover:text-gray-800'
+          : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] hover:text-[var(--color-text)]'
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -848,7 +848,7 @@ function SummaryRow({
       <span
         className={clsx(
           'font-medium tabular-nums',
-          highlight ? 'text-violet-700 dark:text-violet-300' : 'text-gray-800 dark:text-gray-200'
+          highlight ? 'text-violet-700 dark:text-violet-300' : 'text-[var(--color-text)] dark:text-gray-200'
         )}
       >
         {value}
@@ -876,7 +876,7 @@ function DataOverviewStrip({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <Database className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
-          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-xs font-medium text-[var(--color-text)] dark:text-[var(--color-text-subtle)]">
             وضعیت فعلی دیتابیس
             {includeTrash ? ' (شامل سطل‌زباله)' : ''}
           </span>
@@ -887,9 +887,9 @@ function DataOverviewStrip({
               key={label}
               className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50/80 px-2.5 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-800/50"
             >
-              <Icon className="h-3.5 w-3.5 text-gray-400" />
-              <span className="text-gray-500 dark:text-gray-400">{label}</span>
-              <strong className="tabular-nums text-gray-900 dark:text-white">
+              <Icon className="h-3.5 w-3.5 text-[var(--color-text-subtle)]" />
+              <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">{label}</span>
+              <strong className="tabular-nums text-[var(--color-text)] dark:text-white">
                 {value.toLocaleString('fa-IR')}
               </strong>
             </span>
@@ -907,7 +907,7 @@ function ActiveJobBanner({ job }: { job: BackupJobRow }) {
         <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400 shrink-0" />
         <div className="flex-1 min-w-[12rem] space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+            <p className="text-sm font-medium text-[var(--color-text)] dark:text-white">
               پشتیبان‌گیری در حال اجرا — {STATUS_LABEL[job.status]}
             </p>
             <span className="text-xs font-mono text-blue-700 dark:text-blue-300">{job.progress}%</span>
@@ -927,9 +927,9 @@ function ActiveJobBanner({ job }: { job: BackupJobRow }) {
 function EmptyJobsState({ onQuickFull }: { onQuickFull?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-14 px-4 text-center rounded-xl border border-dashed border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/20">
-      <Archive className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">هنوز خروجی ندارید</p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm leading-relaxed">
+      <Archive className="h-10 w-10 text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)] mb-3" />
+      <p className="text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-text-subtle)]">هنوز خروجی ندارید</p>
+      <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-1 max-w-sm leading-relaxed">
         بخش‌ها را انتخاب کنید یا با «پشتیبان کامل» همه داده‌ها را یک‌جا export کنید
       </p>
       {onQuickFull && (
@@ -976,7 +976,7 @@ function JobCard({
         <div className="space-y-2 min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={job.status} />
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
               {new Date(job.createdAt).toLocaleString('fa-IR', {
                 year: 'numeric',
                 month: 'short',
@@ -986,7 +986,7 @@ function JobCard({
               })}
             </span>
             {job.fileSizeBytes != null && job.status === 'COMPLETED' && (
-              <span className="text-xs text-gray-400">· {formatBytes(job.fileSizeBytes)}</span>
+              <span className="text-xs text-[var(--color-text-subtle)]">· {formatBytes(job.fileSizeBytes)}</span>
             )}
           </div>
 
@@ -1004,7 +1004,7 @@ function JobCard({
           )}
 
           {job.status === 'COMPLETED' && job.stats && (
-            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+            <p className="text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
               {typeof job.stats.categories === 'number' && (
                 <span>دسته {job.stats.categories.toLocaleString('fa-IR')} · </span>
               )}
@@ -1021,13 +1021,13 @@ function JobCard({
             {visibleScopes.map((s) => (
               <span
                 key={s}
-                className="rounded-md bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-600 dark:text-gray-400"
+                className="rounded-md bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]"
               >
                 {SCOPE_META[s]?.short ?? s}
               </span>
             ))}
             {extra > 0 && (
-              <span className="text-[10px] text-gray-400 self-center">+{extra}</span>
+              <span className="text-[10px] text-[var(--color-text-subtle)] self-center">+{extra}</span>
             )}
             {job.assetMode === 'urls_only' && (
               <span className="rounded-md bg-violet-50 dark:bg-violet-900/20 px-1.5 py-0.5 text-[10px] text-violet-700 dark:text-violet-300">
@@ -1049,7 +1049,7 @@ function JobCard({
                 type="button"
                 disabled={previewLoading}
                 onClick={() => void onPreview(job.id)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-xs font-medium text-[var(--color-text)] dark:text-[var(--color-text-subtle)] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
               >
                 {previewLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1068,7 +1068,7 @@ function JobCard({
               </button>
             </>
           ) : job.status === 'RUNNING' || job.status === 'PENDING' ? (
-            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+            <span className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)]">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               {job.progress}%
             </span>

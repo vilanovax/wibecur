@@ -38,9 +38,9 @@ export default function TopCuratorsSection({
                 <ImageWithFallback
                   src={c.image}
                   alt={c.name || 'کاربر'}
+                  className="w-12 h-12 rounded-full object-cover"
                   width={48}
                   height={48}
-                  className="w-12 h-12 rounded-full object-cover"
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-lg">

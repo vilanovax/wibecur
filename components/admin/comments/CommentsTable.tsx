@@ -42,7 +42,7 @@ export default function CommentsTable({
       <table className="w-full min-w-[800px]">
         <thead className="bg-slate-50 dark:bg-gray-800/60 border-b border-slate-200 dark:border-gray-700">
           <tr style={{ direction: 'rtl' }}>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300 w-10">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-[var(--color-text-subtle)] w-10">
               <input
                 type="checkbox"
                 checked={allSelected}
@@ -50,22 +50,22 @@ export default function CommentsTable({
                 className="rounded border-slate-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500"
               />
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-[var(--color-text-subtle)]">
               کاربر
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300 max-w-[220px]">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-[var(--color-text-subtle)] max-w-[220px]">
               متن کامنت
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-[var(--color-text-subtle)]">
               آیتم
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-[var(--color-text-subtle)]">
               تاریخ
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-[var(--color-text-subtle)]">
               وضعیت
             </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-gray-300">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-[var(--color-text-subtle)]">
               عملیات
             </th>
           </tr>

@@ -48,7 +48,7 @@ export default function CategoryIntelligenceCard({ category }: CategoryIntellige
         <div className="flex items-center gap-2 shrink-0">
           <span
             className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-xs font-medium ${
-              category.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+              category.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-[var(--color-text-muted)]'
             }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${category.isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
@@ -56,7 +56,7 @@ export default function CategoryIntelligenceCard({ category }: CategoryIntellige
           </span>
           <span
             className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg text-xs font-medium tabular-nums ${
-              growthUp ? 'bg-emerald-100 text-emerald-700' : growthDown ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+              growthUp ? 'bg-emerald-100 text-emerald-700' : growthDown ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-[var(--color-text-muted)]'
             }`}
           >
             {growthUp && <ArrowUp className="w-3 h-3" />}

@@ -28,7 +28,7 @@ const colorMap = {
 const deltaColorMap = {
   up: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
   down: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
-  neutral: 'bg-gray-100 text-gray-600 dark:bg-gray-500/15 dark:text-gray-300',
+  neutral: 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-500/15 dark:text-[var(--color-text-subtle)]',
 };
 
 interface SystemPulseBarProps {

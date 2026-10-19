@@ -32,6 +32,7 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
           categorySlug={rel.categories?.slug}
           listSlug={rel.slug}
           listTitle={rel.title}
+          sizes="(min-width: 1024px) 25vw, 50vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
         {rel.categories?.name ? (

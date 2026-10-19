@@ -66,7 +66,7 @@ function tabClass(active: boolean) {
   return `inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
     active
       ? 'bg-white text-violet-700 shadow-sm'
-      : 'text-gray-600 hover:text-gray-900'
+      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
   }`;
 }
 

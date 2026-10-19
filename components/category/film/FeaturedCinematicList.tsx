@@ -31,7 +31,8 @@ export default function FeaturedCinematicList({ list }: FeaturedCinematicListPro
                 alt={list.title}
                 className="absolute inset-0 h-full w-full object-cover object-center lg:group-hover:scale-[1.02] lg:transition-transform lg:duration-500"
                 placeholderSize="cover"
-              />
+        sizes="100vw"
+      />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-6xl opacity-40 bg-gray-800">
                 🎬

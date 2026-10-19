@@ -31,7 +31,7 @@ export default function MetricCard({
   const trendStyles = {
     up: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20',
     down: 'text-red-600 dark:text-red-400 bg-red-500/10 dark:bg-red-500/20',
-    neutral: 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50',
+    neutral: 'text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] bg-gray-100 dark:bg-gray-700/50',
   };
 
   return (
@@ -44,11 +44,11 @@ export default function MetricCard({
         className,
       ].join(' ')}
     >
-      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
+      <div className="flex items-center gap-2 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mb-1">
         {Icon && <Icon className="h-4 w-4" />}
         <span className="text-sm font-medium">{title}</span>
       </div>
-      <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
+      <p className="text-2xl font-bold tabular-nums text-[var(--color-text)] dark:text-white">
         {displayValue}
       </p>
       {(delta !== undefined && delta !== null) || trend !== 'neutral' ? (

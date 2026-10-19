@@ -207,7 +207,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'all'
                 ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
             }`}
           >
             همه
@@ -217,7 +217,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
               filter === 'bad_words'
                 ? 'bg-red-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
             }`}
           >
             <AlertTriangle className="w-4 h-4" />
@@ -228,7 +228,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'public'
                 ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
             }`}
           >
             عمومی
@@ -238,7 +238,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'private'
                 ? 'bg-purple-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
             }`}
           >
             خصوصی
@@ -248,7 +248,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'inactive'
                 ? 'bg-gray-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
             }`}
           >
             غیرفعال
@@ -304,7 +304,7 @@ export default function UserCreatedListsPageClient({
               <div className="p-4">
                 {/* Title */}
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-bold text-lg text-gray-900 line-clamp-2 flex-1">
+                  <h3 className="font-bold text-lg text-[var(--color-text)] line-clamp-2 flex-1">
                     {list.hasBadWord && (
                       <AlertTriangle className="w-4 h-4 text-red-500 inline ml-1" />
                     )}
@@ -313,14 +313,14 @@ export default function UserCreatedListsPageClient({
                 </div>
 
                 {/* Category & Creator */}
-                <div className="flex items-center gap-2 mb-3 text-sm text-gray-600">
+                <div className="flex items-center gap-2 mb-3 text-sm text-[var(--color-text-muted)]">
                   <span className="text-lg">
                     {list.categories?.icon || '📋'}
                   </span>
                   <span className="text-xs">
                     {list.categories?.name || 'بدون دسته‌بندی'}
                   </span>
-                  <span className="text-gray-300 mx-1">•</span>
+                  <span className="text-[var(--color-text-subtle)] mx-1">•</span>
                   <span className="text-xs">
                     {list.users.name || list.users.email.split('@')[0]}
                   </span>
@@ -328,13 +328,13 @@ export default function UserCreatedListsPageClient({
 
                 {/* Description */}
                 {list.description && (
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                  <p className="text-[var(--color-text-muted)] text-sm mb-3 line-clamp-2">
                     {list.description}
                   </p>
                 )}
 
                 {/* Stats */}
-                <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)] mb-3">
                   <span>📋 {list.itemCount ?? list._count.items} آیتم</span>
                 </div>
 
@@ -399,7 +399,7 @@ export default function UserCreatedListsPageClient({
 
         {localLists.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">لیستی یافت نشد</p>
+            <p className="text-[var(--color-text-muted)]">لیستی یافت نشد</p>
           </div>
         )}
 

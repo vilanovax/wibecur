@@ -82,10 +82,10 @@ export default function HubPersonalized({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         🎯 پیشنهاد برای تو
       </h2>
-      <p className="text-[11px] text-gray-500 mb-2">
+      <p className="text-[11px] text-wibe-secondary mb-2">
         بر اساس ذخیره‌هایت
       </p>
 
@@ -103,7 +103,8 @@ export default function HubPersonalized({
                   alt={list.title}
                   className="w-full h-full object-cover"
                   placeholderSize="square"
-                />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-2xl opacity-40"
@@ -114,7 +115,7 @@ export default function HubPersonalized({
               )}
             </div>
             <div className="p-2">
-              <h3 className="font-semibold text-gray-900 text-xs line-clamp-2">
+              <h3 className="font-semibold text-foreground text-xs line-clamp-2">
                 {list.title}
               </h3>
             </div>

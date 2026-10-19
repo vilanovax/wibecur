@@ -579,9 +579,9 @@ export default function CatalogPageClient({
                   بازگشت به workspace
                 </Link>
               )}
-              <h2 className="text-base font-bold text-gray-900">ساخت موجودیت جدید</h2>
+              <h2 className="text-base font-bold text-[var(--color-text)]">ساخت موجودیت جدید</h2>
               {targetMeta && (
-                <p className="text-xs text-gray-600 mt-0.5">
+                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
                   مقصد: {targetMeta.categories?.icon || '📋'} {targetMeta.title}
                 </p>
               )}
@@ -613,8 +613,8 @@ export default function CatalogPageClient({
             <Library className="w-6 h-6 text-violet-700" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">آیتم‌ها</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text)]">آیتم‌ها</h1>
+            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
               کاتالوگ · {total.toLocaleString('fa-IR')} موجودیت · یک آیتم در چند لیست
             </p>
           </div>
@@ -629,7 +629,7 @@ export default function CatalogPageClient({
           </Link>
           <Link
             href="/admin/lists?view=catalog"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] hover:bg-gray-50"
           >
             بر اساس لیست
           </Link>
@@ -645,7 +645,7 @@ export default function CatalogPageClient({
       )}
 
       {embedded && !placementMode && (
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-[var(--color-text-muted)] mb-4">
           {total.toLocaleString('fa-IR')} موجودیت در کاتالوگ
           {initialMultiListCount > 0 && (
             <span className="text-violet-700 font-medium">
@@ -671,7 +671,7 @@ export default function CatalogPageClient({
       )}
 
       {placementMode && (
-        <p className="text-xs font-semibold text-gray-500 mb-3 mt-2">یا از کاتالوگ مرور کنید</p>
+        <p className="text-xs font-semibold text-[var(--color-text-muted)] mb-3 mt-2">یا از کاتالوگ مرور کنید</p>
       )}
 
       {!embedded && (
@@ -690,7 +690,7 @@ export default function CatalogPageClient({
           type="button"
           onClick={() => switchTab('browse')}
           className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-            tab === 'browse' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            tab === 'browse' ? 'bg-white text-violet-700 shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
           }`}
         >
           مرور کاتالوگ
@@ -699,7 +699,7 @@ export default function CatalogPageClient({
           type="button"
           onClick={() => switchTab('duplicates')}
           className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all inline-flex items-center gap-2 ${
-            tab === 'duplicates' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            tab === 'duplicates' ? 'bg-white text-violet-700 shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
           }`}
         >
           <GitMerge className="w-4 h-4" />
@@ -740,7 +740,7 @@ export default function CatalogPageClient({
                   className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
                     !category
                       ? 'bg-violet-600 text-white border-violet-600'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'
+                      : 'bg-white text-[var(--color-text-muted)] border-gray-200 hover:border-violet-300'
                   }`}
                 >
                   همه ({catalogTotal.toLocaleString('fa-IR')})
@@ -756,7 +756,7 @@ export default function CatalogPageClient({
                       className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
                         isActive
                           ? 'bg-violet-600 text-white border-violet-600'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-violet-300'
+                          : 'bg-white text-[var(--color-text-muted)] border-gray-200 hover:border-violet-300'
                       }`}
                     >
                       {c.name ?? catalogCategoryLabel(c.slug)} ({c.count.toLocaleString('fa-IR')})
@@ -767,7 +767,7 @@ export default function CatalogPageClient({
 
               <div className="rounded-xl border border-gray-200 bg-white p-4 mb-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text)]">
                     <Filter className="w-4 h-4 text-violet-600" />
                     فیلتر پیشرفته
                     {activeCategoryLabel && (
@@ -780,7 +780,7 @@ export default function CatalogPageClient({
                     <button
                       type="button"
                       onClick={clearAdvancedFilters}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-violet-700"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-text-muted)] hover:text-violet-700"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       پاک کردن فیلترها
@@ -791,7 +791,7 @@ export default function CatalogPageClient({
                 <div className="flex flex-col lg:flex-row gap-2">
                   {!placementMode && (
                   <label className="flex-1 min-w-[200px]">
-                    <span className="block text-[11px] font-semibold text-gray-500 mb-1">
+                    <span className="block text-[11px] font-semibold text-[var(--color-text-muted)] mb-1">
                       {category ? `لیست‌های دارای ${activeCategoryLabel}` : 'فیلتر بر اساس لیست'}
                     </span>
                     <select
@@ -851,7 +851,7 @@ export default function CatalogPageClient({
                       className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${
                         multiListOnly
                           ? 'border-amber-400 bg-amber-50 text-amber-900'
-                          : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-amber-300 hover:bg-amber-50/60'
+                          : 'border-gray-200 bg-gray-50 text-[var(--color-text)] hover:border-amber-300 hover:bg-amber-50/60'
                       } disabled:opacity-40 disabled:cursor-not-allowed`}
                     >
                       <Layers className="w-4 h-4" />
@@ -859,7 +859,7 @@ export default function CatalogPageClient({
                       {multiListCount > 0 && (
                         <span
                           className={`rounded-full text-[10px] min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center ${
-                            multiListOnly ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-700'
+                            multiListOnly ? 'bg-amber-500 text-white' : 'bg-gray-200 text-[var(--color-text)]'
                           }`}
                         >
                           {multiListCount.toLocaleString('fa-IR')}
@@ -870,7 +870,7 @@ export default function CatalogPageClient({
                 </div>
 
                 {!category && (
-                  <p className="text-[11px] text-gray-500">
+                  <p className="text-[11px] text-[var(--color-text-muted)]">
                     برای فیلتر دقیق‌تر، ابتدا یک دسته (مثل فیلم) انتخاب کنید — لیست‌ها و تعداد
                     چندلیستی‌ها بر اساس همان دسته محاسبه می‌شود.
                   </p>
@@ -902,7 +902,7 @@ export default function CatalogPageClient({
                 }}
               >
                 <div className="relative flex-1">
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-subtle)]" />
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -920,7 +920,7 @@ export default function CatalogPageClient({
               </form>
 
               {rows.length > 0 && !loading && (
-                <label className="inline-flex items-center gap-2 mb-3 text-sm text-gray-600 cursor-pointer select-none">
+                <label className="inline-flex items-center gap-2 mb-3 text-sm text-[var(--color-text-muted)] cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={allPageSelected}
@@ -939,7 +939,7 @@ export default function CatalogPageClient({
                 </div>
               ) : rows.length === 0 ? (
                 <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50">
-                  <p className="text-gray-600 mb-3">هنوز در کاتالوگ چیزی نیست یا نتیجه‌ای پیدا نشد.</p>
+                  <p className="text-[var(--color-text-muted)] mb-3">هنوز در کاتالوگ چیزی نیست یا نتیجه‌ای پیدا نشد.</p>
                   <Link
                     href="/admin/lists?view=catalog&mode=place"
                     className="inline-flex items-center gap-2 text-sm font-bold text-violet-600 hover:underline"
@@ -1033,18 +1033,18 @@ export default function CatalogPageClient({
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="font-bold text-sm text-gray-900 line-clamp-2 leading-snug">
+                              <p className="font-bold text-sm text-[var(--color-text)] line-clamp-2 leading-snug">
                                 {row.title}
                               </p>
                               <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-[var(--color-text-muted)]">
                                   {catalogCategoryLabel(row.categorySlug)}
                                 </span>
                                 <span
                                   className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                                     isMultiList
                                       ? 'bg-amber-100 text-amber-800'
-                                      : 'bg-gray-100 text-gray-500'
+                                      : 'bg-gray-100 text-[var(--color-text-muted)]'
                                   }`}
                                 >
                                   {isMultiList && <ListPlus className="w-3 h-3" />}
@@ -1096,7 +1096,7 @@ export default function CatalogPageClient({
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
-                  <span className="text-sm text-gray-600 tabular-nums">
+                  <span className="text-sm text-[var(--color-text-muted)] tabular-nums">
                     صفحه {page.toLocaleString('fa-IR')} از {totalPages.toLocaleString('fa-IR')}
                   </span>
                   <button
@@ -1143,14 +1143,14 @@ export default function CatalogPageClient({
           <aside className="fixed inset-y-0 left-0 z-40 w-[min(100%,20rem)] shadow-2xl lg:static lg:z-auto lg:w-auto lg:shadow-none lg:sticky lg:top-4 lg:self-start">
             <div className="h-full lg:h-auto rounded-none lg:rounded-2xl border-0 lg:border border-gray-200 bg-white lg:shadow-lg overflow-hidden flex flex-col">
               <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50">
-                <h2 className="font-bold text-sm text-gray-900 truncate">جزئیات</h2>
+                <h2 className="font-bold text-sm text-[var(--color-text)] truncate">جزئیات</h2>
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedDetail(null);
                     setDetail(null);
                   }}
-                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500"
+                  className="p-1.5 rounded-lg hover:bg-gray-200 text-[var(--color-text-muted)]"
                   aria-label="بستن"
                 >
                   <X className="w-4 h-4" />
@@ -1177,8 +1177,8 @@ export default function CatalogPageClient({
                       />
                     </div>
                   )}
-                  <h3 className="font-bold text-gray-900 leading-snug">{detail.title}</h3>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <h3 className="font-bold text-[var(--color-text)] leading-snug">{detail.title}</h3>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-1">
                     {catalogCategoryLabel(detail.categorySlug)} ·{' '}
                     {detail.placements.length.toLocaleString('fa-IR')} لیست
                   </p>
@@ -1209,25 +1209,25 @@ export default function CatalogPageClient({
                       افزودن به لیست
                     </button>
                   </div>
-                  <p className="text-xs font-semibold text-gray-700 mt-4 mb-2">جایگاه‌ها</p>
+                  <p className="text-xs font-semibold text-[var(--color-text)] mt-4 mb-2">جایگاه‌ها</p>
                   <ul className="space-y-2 max-h-[240px] overflow-y-auto">
                     {detail.placements.map((p) => (
                       <li
                         key={p.itemId}
                         className="rounded-lg border border-gray-100 px-3 py-2 hover:bg-gray-50"
                       >
-                        <p className="text-sm font-medium text-gray-800 truncate">{p.listTitle}</p>
+                        <p className="text-sm font-medium text-[var(--color-text)] truncate">{p.listTitle}</p>
                         <div className="flex gap-3 mt-1.5">
                           <Link
                             href={`/admin/items/${p.itemId}/edit`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-text-muted)] hover:underline"
                           >
                             یادداشت لیست
                           </Link>
                           <Link
                             href={`/lists/${p.listSlug}`}
                             target="_blank"
-                            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800"
+                            className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                           >
                             <ExternalLink className="w-3 h-3" />
                             مشاهده
@@ -1238,7 +1238,7 @@ export default function CatalogPageClient({
                   </ul>
 
                   <div className="mt-5 border-t border-gray-100 pt-4">
-                    <h4 className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold text-[var(--color-text)] mb-2 flex items-center gap-1.5">
                       <GitMerge className="w-3.5 h-3.5 text-violet-600" />
                       موارد مشابه
                     </h4>

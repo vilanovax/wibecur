@@ -122,14 +122,14 @@ export default function EditItemSuggestionModal({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">ویرایش پیشنهاد آیتم</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{suggestion.title}</p>
+              <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white">ویرایش پیشنهاد آیتم</h2>
+              <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-1">{suggestion.title}</p>
             </div>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <X className="w-5 h-5 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]" />
             </button>
           </div>
 
@@ -145,20 +145,20 @@ export default function EditItemSuggestionModal({
             <div className="p-4 bg-gray-50 dark:bg-gray-800/60 rounded-lg">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">کاربر:</span>
-                  <span className="font-medium text-gray-900 dark:text-white mr-2">
+                  <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">کاربر:</span>
+                  <span className="font-medium text-[var(--color-text)] dark:text-white mr-2">
                     {suggestion.users.name || suggestion.users.email}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">لیست:</span>
-                  <span className="font-medium text-gray-900 dark:text-white mr-2">
+                  <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">لیست:</span>
+                  <span className="font-medium text-[var(--color-text)] dark:text-white mr-2">
                     {suggestion.lists.title}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">تاریخ:</span>
-                  <span className="font-medium text-gray-900 dark:text-white mr-2">
+                  <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">تاریخ:</span>
+                  <span className="font-medium text-[var(--color-text)] dark:text-white mr-2">
                     {formatDistanceToNow(new Date(suggestion.createdAt), {
                       addSuffix: true,
                       locale: faIR,
@@ -166,7 +166,7 @@ export default function EditItemSuggestionModal({
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400">وضعیت:</span>
+                  <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">وضعیت:</span>
                   <span
                     className={`font-medium mr-2 ${
                       suggestion.status === 'pending'
@@ -188,7 +188,7 @@ export default function EditItemSuggestionModal({
 
             {/* Form Fields */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
                 عنوان <span className="text-red-500">*</span>
               </label>
               <input
@@ -201,7 +201,7 @@ export default function EditItemSuggestionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
                 توضیحات
               </label>
               <textarea
@@ -213,7 +213,7 @@ export default function EditItemSuggestionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
                 تصویر
               </label>
               <input
@@ -238,7 +238,7 @@ export default function EditItemSuggestionModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
                 لینک خارجی
               </label>
               <input
@@ -308,7 +308,7 @@ export default function EditItemSuggestionModal({
                   type="button"
                   onClick={onClose}
                   disabled={loading}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-[var(--color-text)] dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
                 >
                   انصراف
                 </button>

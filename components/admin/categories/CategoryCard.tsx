@@ -76,7 +76,7 @@ export default function CategoryCard({
               {category.slug}
             </p>
           </div>
-          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-200/80 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium bg-gray-200/80 dark:bg-gray-700 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
             <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
             غیرفعال
           </span>

@@ -46,7 +46,7 @@ export default function CatalogPlacementPanel({
               بازگشت به workspace
             </Link>
           )}
-          <h2 className="text-base font-bold text-gray-900">
+          <h2 className="text-base font-bold text-[var(--color-text)]">
             {listTitle ? (
               <>
                 افزودن به «{listIcon || '📋'} {listTitle}»
@@ -55,7 +55,7 @@ export default function CatalogPlacementPanel({
               'افزودن از کاتالوگ به لیست'
             )}
           </h2>
-          <p className="text-xs text-gray-600 mt-0.5">
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
             جستجو کنید و با یک کلیک به لیست وصل کنید — بدون کپی محتوا
           </p>
         </div>

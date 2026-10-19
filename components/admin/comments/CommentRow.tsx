@@ -136,7 +136,7 @@ function CommentRow({
                 />
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-gray-400 truncate">{comment.users.email}</p>
+            <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] truncate">{comment.users.email}</p>
           </div>
         </div>
       </td>
@@ -157,7 +157,7 @@ function CommentRow({
           {comment.items.title}
         </Link>
       </td>
-      <td className="px-4 py-3 text-sm text-slate-500 dark:text-gray-400 whitespace-nowrap">
+      <td className="px-4 py-3 text-sm text-slate-500 dark:text-[var(--color-text-subtle)] whitespace-nowrap">
         {formatDistanceToNow(new Date(comment.createdAt), {
           addSuffix: true,
           locale: faIR,
@@ -191,7 +191,7 @@ function CommentRow({
           <button
             type="button"
             onClick={() => onView(comment)}
-            className="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:bg-slate-100 hover:text-slate-700"
+            className="p-2 rounded-lg text-slate-500 dark:text-[var(--color-text-subtle)] hover:bg-slate-100 hover:text-slate-700"
             title="مشاهده"
           >
             <Eye className="w-4 h-4" />

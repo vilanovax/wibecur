@@ -64,7 +64,7 @@ export default function SmartSuggestionsTab({ onScheduleList }: Props) {
   if (loading) {
     return (
       <div className="flex justify-center py-12" dir="rtl">
-        <p className="text-gray-500">در حال بارگذاری پیشنهادات…</p>
+        <p className="text-[var(--color-text-muted)]">در حال بارگذاری پیشنهادات…</p>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function SmartSuggestionsTab({ onScheduleList }: Props) {
                     <li
                       key={c.categoryId}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm ${
-                        c.rotationModifier > 0 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200' : c.rotationModifier < 0 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                        c.rotationModifier > 0 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200' : c.rotationModifier < 0 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200' : 'bg-gray-100 dark:bg-gray-700 text-[var(--color-text)] dark:text-[var(--color-text-subtle)]'
                       }`}
                     >
                       <span>{c.name}</span>
@@ -112,7 +112,7 @@ export default function SmartSuggestionsTab({ onScheduleList }: Props) {
             <p className="text-sm text-indigo-800 dark:text-indigo-200">{rotationInsight.reasoning}</p>
           </section>
         )}
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center text-gray-500 dark:text-gray-400">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
           <Lightbulb className="w-10 h-10 mx-auto mb-3 opacity-60" />
           <p>در حال حاضر لیست واجد شرایطی برای پیشنهاد نیست.</p>
           <p className="text-sm mt-2">لیست‌هایی که اخیراً Featured شده‌اند یا الان زمان‌بندی دارند از پیشنهاد حذف می‌شوند.</p>
@@ -123,11 +123,11 @@ export default function SmartSuggestionsTab({ onScheduleList }: Props) {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+      <div className="flex items-center gap-2 text-[var(--color-text)] dark:text-[var(--color-text-subtle)]">
         <Lightbulb className="w-5 h-5 text-amber-500" />
         <h2 className="text-lg font-semibold">پیشنهاد منتخب</h2>
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
+      <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
         بر اساس امتیاز ترندینگ، رشد ذخیره، عملکرد دسته و مدت Featured نشدن.
       </p>
 
@@ -149,7 +149,7 @@ export default function SmartSuggestionsTab({ onScheduleList }: Props) {
                         ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200'
                         : c.rotationModifier < 0
                           ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                          : 'bg-gray-100 dark:bg-gray-700 text-[var(--color-text)] dark:text-[var(--color-text-subtle)]'
                     }`}
                   >
                     <span>{c.name}</span>
@@ -188,11 +188,11 @@ export default function SmartSuggestionsTab({ onScheduleList }: Props) {
               </span>
             </div>
             <div className="p-4 flex-1 flex flex-col">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
+              <h3 className="font-semibold text-[var(--color-text)] dark:text-white mb-1 line-clamp-2">
                 {item.title}
               </h3>
               {item.categoryName && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mb-3">
                   {item.categoryName}
                 </p>
               )}
@@ -201,16 +201,16 @@ export default function SmartSuggestionsTab({ onScheduleList }: Props) {
                   <BarChart3 className="w-3.5 h-3.5" />
                   امتیاز: {item.suggestionScore.toFixed(1)}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-[var(--color-text)] dark:text-[var(--color-text-subtle)] px-2 py-0.5">
                   <TrendingUp className="w-3.5 h-3.5" />
                   ترند: {item.trendingScore.toFixed(0)}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-[var(--color-text)] dark:text-[var(--color-text-subtle)] px-2 py-0.5">
                   <Save className="w-3.5 h-3.5" />
                   S7: {item.S7}
                 </span>
               </div>
-              <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-0.5 mb-4 flex-1">
+              <ul className="list-disc list-inside text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] space-y-0.5 mb-4 flex-1">
                 {item.reasons.slice(0, 4).map((r, i) => (
                   <li key={i}>{r}</li>
                 ))}

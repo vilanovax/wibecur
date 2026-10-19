@@ -36,7 +36,7 @@ export default function IntelligenceHeaderBar({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0">
           {breadcrumbs && breadcrumbs.length > 0 && (
-            <nav className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-1">
+            <nav className="flex items-center gap-1 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mb-1">
               {breadcrumbs.map((item, i) => (
                 <span key={i} className="flex items-center gap-1">
                   {i > 0 && <ChevronRight className="h-4 w-4 rotate-180" />}
@@ -54,11 +54,11 @@ export default function IntelligenceHeaderBar({
               ))}
             </nav>
           )}
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+          <h1 className="text-lg font-semibold text-[var(--color-text)] dark:text-white truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+            <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5 truncate">
               {subtitle}
             </p>
           )}

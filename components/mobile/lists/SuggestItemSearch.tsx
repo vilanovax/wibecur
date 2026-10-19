@@ -105,13 +105,14 @@ function ItemPoster({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 ${className}`}>
+    <div className={`relative rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 ${className}`}>
       <ImageWithFallback
         src={src ?? ''}
         alt={title}
         className="w-full h-full object-cover"
         fallbackIcon="📋"
         fallbackClassName="w-full h-full flex items-center justify-center text-lg"
+        sizes="48px"
       />
     </div>
   );

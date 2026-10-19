@@ -49,16 +49,16 @@ export default function DynamicMetadataFields({
     return (
       <div className={fieldWrap}>
         {!hideTitle && (
-          <h3 className={`text-lg font-semibold text-gray-900 ${fieldFull}`}>
+          <h3 className={`text-lg font-semibold text-[var(--color-text)] ${fieldFull}`}>
             اطلاعات تکمیلی فیلم/سریال
           </h3>
         )}
 
         {/* Year */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+          <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
             سال تولید
-            <span className="text-xs text-gray-500 font-normal mr-2">(اختیاری)</span>
+            <span className="text-xs text-[var(--color-text-muted)] font-normal mr-2">(اختیاری)</span>
           </label>
           <input
             type="text"
@@ -68,13 +68,13 @@ export default function DynamicMetadataFields({
             className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800"
             placeholder="2024 یا ۱۴۰۳"
           />
-          <p className="text-[11px] text-gray-500 mt-1">اعداد فارسی و سال شمسی قابل قبول است</p>
+          <p className="text-[11px] text-[var(--color-text-muted)] mt-1">اعداد فارسی و سال شمسی قابل قبول است</p>
         </div>
 
         {/* Genre */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-            ژانر <span className="text-xs text-gray-500 font-normal">(اختیاری)</span>
+          <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
+            ژانر <span className="text-xs text-[var(--color-text-muted)] font-normal">(اختیاری)</span>
           </label>
           <select
             value={metadata?.genre || ''}
@@ -92,8 +92,8 @@ export default function DynamicMetadataFields({
 
         {/* Director */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-            کارگردان <span className="text-xs text-gray-500 font-normal">(اختیاری)</span>
+          <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
+            کارگردان <span className="text-xs text-[var(--color-text-muted)] font-normal">(اختیاری)</span>
           </label>
           <input
             type="text"
@@ -106,8 +106,8 @@ export default function DynamicMetadataFields({
 
         {/* Country */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-            کشور سازنده <span className="text-xs text-gray-500 font-normal">(اختیاری)</span>
+          <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
+            کشور سازنده <span className="text-xs text-[var(--color-text-muted)] font-normal">(اختیاری)</span>
           </label>
           <input
             type="text"
@@ -120,8 +120,8 @@ export default function DynamicMetadataFields({
 
         {/* Actors */}
         <div className={fieldFull}>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-            بازیگران مهم <span className="text-xs text-gray-500 font-normal">(حداکثر ۲)</span>
+          <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
+            بازیگران مهم <span className="text-xs text-[var(--color-text-muted)] font-normal">(حداکثر ۲)</span>
           </label>
           <input
             type="text"
@@ -152,8 +152,8 @@ export default function DynamicMetadataFields({
 
         {/* IMDb Rating */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-            امتیاز IMDb <span className="text-xs text-gray-500 font-normal">(اختیاری)</span>
+          <label className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200 mb-2">
+            امتیاز IMDb <span className="text-xs text-[var(--color-text-muted)] font-normal">(اختیاری)</span>
           </label>
           <input
             type="text"
@@ -172,13 +172,13 @@ export default function DynamicMetadataFields({
   if (categorySlug === 'book' || categorySlug === 'books') {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-[var(--color-text)]">
           اطلاعات تکمیلی کتاب
         </h3>
 
         {/* Author */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
             نویسنده (اختیاری)
           </label>
           <input
@@ -192,7 +192,7 @@ export default function DynamicMetadataFields({
 
         {/* Genre */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
             ژانر (اختیاری)
           </label>
           <select
@@ -217,13 +217,13 @@ export default function DynamicMetadataFields({
     return (
       <div className={fieldWrap}>
         {!hideTitle && (
-          <h3 className={`text-lg font-semibold text-gray-900 ${fieldFull}`}>
+          <h3 className={`text-lg font-semibold text-[var(--color-text)] ${fieldFull}`}>
             اطلاعات تکمیلی کافه/رستوران
           </h3>
         )}
 
         <div className={fieldFull}>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
             آدرس <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -237,7 +237,7 @@ export default function DynamicMetadataFields({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
             بازه قیمت <span className="text-red-500">*</span>
           </label>
           <select
@@ -256,7 +256,7 @@ export default function DynamicMetadataFields({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
             نوع غذا (اختیاری)
           </label>
           <select
@@ -274,7 +274,7 @@ export default function DynamicMetadataFields({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">تلفن (اختیاری)</label>
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">تلفن (اختیاری)</label>
           <input
             type="tel"
             dir="ltr"
@@ -286,7 +286,7 @@ export default function DynamicMetadataFields({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">اینستاگرام (اختیاری)</label>
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">اینستاگرام (اختیاری)</label>
           <input
             type="text"
             dir="ltr"
@@ -298,7 +298,7 @@ export default function DynamicMetadataFields({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">وب‌سایت (اختیاری)</label>
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">وب‌سایت (اختیاری)</label>
           <input
             type="url"
             dir="ltr"
@@ -310,7 +310,7 @@ export default function DynamicMetadataFields({
         </div>
 
         <div className={fieldFull}>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
             لینک مسیریابی (اختیاری)
           </label>
           <input
@@ -321,7 +321,7 @@ export default function DynamicMetadataFields({
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Google Maps یا مختصات"
           />
-          <p className="mt-1 text-[11px] text-gray-500">
+          <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
             لینک گوگل‌مپ یا آدرس متنی — در صورت آدرس، لینک مسیریابی ساخته می‌شود
           </p>
         </div>

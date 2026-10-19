@@ -15,7 +15,7 @@ export function UserPenaltyBadge({
   if (totalPenaltyScore <= 0 && status === 'allowed') return null;
 
   const statusStyles: Record<CommentPermissionStatus, string> = {
-    allowed: 'bg-slate-100 dark:bg-gray-700/50 text-slate-600 dark:text-gray-300',
+    allowed: 'bg-slate-100 dark:bg-gray-700/50 text-slate-600 dark:text-[var(--color-text-subtle)]',
     warn: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300',
     restricted: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
     banned: 'bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300',

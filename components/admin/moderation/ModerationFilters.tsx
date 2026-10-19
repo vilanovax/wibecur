@@ -22,7 +22,7 @@ export default function ModerationFilters({ filters, onChange, totalCount }: Mod
 
   return (
     <div className="sticky top-0 z-10 p-5 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3 items-center bg-white dark:bg-gray-800 rounded-t-xl" dir="rtl">
-      <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" />
+      <Filter className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" />
       <select className="rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 py-1.5 shadow-sm" value={filters.type} onChange={(e) => set({ type: e.target.value })}>
         <option value="">Type: All</option>
         {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -47,7 +47,7 @@ export default function ModerationFilters({ filters, onChange, totalCount }: Mod
       <input type="date" className="rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 py-1.5 w-36 shadow-sm" value={filters.dateFrom} onChange={(e) => set({ dateFrom: e.target.value })} />
       <input type="date" className="rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 py-1.5 w-36 shadow-sm" value={filters.dateTo} onChange={(e) => set({ dateTo: e.target.value })} />
       <input type="text" placeholder="جستجو..." className="rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 py-1.5 w-40 shadow-sm" value={filters.search} onChange={(e) => set({ search: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && set({ page: '1' })} />
-      <span className="text-sm text-gray-500 mr-auto">تعداد: {totalCount}</span>
+      <span className="text-sm text-[var(--color-text-muted)] mr-auto">تعداد: {totalCount}</span>
     </div>
   );
 }

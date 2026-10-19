@@ -18,10 +18,10 @@ export default function TopSavedThisWeek({
 
   return (
     <section className="px-4 py-4">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-1">
         📈 محبوب‌ترین‌های این هفته
       </h2>
-      <p className="text-[11px] text-gray-500">
+      <p className="text-[11px] text-wibe-secondary">
         بر اساس ذخیره در ۷ روز گذشته — محبوبیت پایدار
       </p>
 
@@ -39,7 +39,8 @@ export default function TopSavedThisWeek({
                   alt={list.title}
                   className="w-full h-full object-cover"
                   placeholderSize="cover"
-                />
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw"
+            />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-2xl opacity-40"
@@ -53,10 +54,10 @@ export default function TopSavedThisWeek({
               </div>
             </div>
             <div className="p-2.5">
-              <h3 className="font-semibold text-gray-900 text-xs line-clamp-2">
+              <h3 className="font-semibold text-foreground text-xs line-clamp-2">
                 {list.title}
               </h3>
-              <p className="text-[10px] text-gray-500 mt-0.5">
+              <p className="text-[10px] text-wibe-secondary mt-0.5">
                 {list.creator?.name || 'کیوریتور'}
               </p>
             </div>

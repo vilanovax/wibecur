@@ -14,10 +14,10 @@ export default async function BackupPage() {
             <Database className="h-5 w-5" />
           </div>
           <div className="min-w-0 text-right">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <h1 className="text-xl font-bold text-[var(--color-text)] dark:text-white tracking-tight">
               پشتیبان‌گیری
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-xl leading-relaxed">
+            <p className="mt-1 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] max-w-xl leading-relaxed">
               export امن داده‌های سایت — دسته، لیست، آیتم، کاربران و تنظیمات · بازیابی merge بدون حذف
             </p>
           </div>
@@ -26,7 +26,7 @@ export default async function BackupPage() {
           <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
             امن · بدون API key
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400">
+          <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[var(--color-text-muted)] dark:border-gray-600 dark:bg-gray-800 dark:text-[var(--color-text-subtle)]">
             ZIP + JSON
           </span>
         </div>

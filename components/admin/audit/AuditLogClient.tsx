@@ -186,7 +186,7 @@ export default function AuditLogClient() {
             <button
               type="button"
               onClick={() => setFiltersOpen((v) => !v)}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/40"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/40"
             >
               <Filter className="h-4 w-4" />
               فیلترها
@@ -199,7 +199,7 @@ export default function AuditLogClient() {
                 className={`h-4 w-4 transition ${filtersOpen ? 'rotate-180' : ''}`}
               />
             </button>
-            <span className="text-sm text-gray-500">{total.toLocaleString('fa-IR')} رویداد</span>
+            <span className="text-sm text-[var(--color-text-muted)]">{total.toLocaleString('fa-IR')} رویداد</span>
           </div>
           <select
             className="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm"
@@ -218,9 +218,9 @@ export default function AuditLogClient() {
           <div className="space-y-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
               <label className="block">
-                <span className="mb-1 block text-xs font-medium text-gray-500">جستجوی عامل</span>
+                <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">جستجوی عامل</span>
                 <div className="relative">
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-subtle)]" />
                   <input
                     type="text"
                     placeholder="نام، ایمیل یا شناسه"
@@ -233,7 +233,7 @@ export default function AuditLogClient() {
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-xs font-medium text-gray-500">نوع عملیات</span>
+                <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">نوع عملیات</span>
                 <select
                   className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
                   value={draft.action}
@@ -249,7 +249,7 @@ export default function AuditLogClient() {
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-xs font-medium text-gray-500">موجودیت</span>
+                <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">موجودیت</span>
                 <select
                   className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
                   value={draft.entityType}
@@ -266,7 +266,7 @@ export default function AuditLogClient() {
 
               <div className="grid grid-cols-2 gap-2">
                 <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-gray-500">از تاریخ</span>
+                  <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">از تاریخ</span>
                   <input
                     type="date"
                     className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
@@ -278,7 +278,7 @@ export default function AuditLogClient() {
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-gray-500">تا تاریخ</span>
+                  <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">تا تاریخ</span>
                   <input
                     type="date"
                     className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
@@ -308,7 +308,7 @@ export default function AuditLogClient() {
                   className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                     datePreset === value
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
+                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] hover:bg-gray-50'
                   }`}
                 >
                   {label}
@@ -328,7 +328,7 @@ export default function AuditLogClient() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/40"
+                  className="rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-2 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] hover:bg-gray-50 dark:hover:bg-gray-700/40"
                 >
                   پاک کردن
                 </button>
@@ -343,23 +343,23 @@ export default function AuditLogClient() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800/95 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="text-right py-3 px-4 font-semibold text-gray-600">زمان</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-600">عملیات</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-600">موجودیت</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-600">عامل</th>
-                <th className="text-right py-3 px-4 font-semibold text-gray-600">تغییرات</th>
+                <th className="text-right py-3 px-4 font-semibold text-[var(--color-text-muted)]">زمان</th>
+                <th className="text-right py-3 px-4 font-semibold text-[var(--color-text-muted)]">عملیات</th>
+                <th className="text-right py-3 px-4 font-semibold text-[var(--color-text-muted)]">موجودیت</th>
+                <th className="text-right py-3 px-4 font-semibold text-[var(--color-text-muted)]">عامل</th>
+                <th className="text-right py-3 px-4 font-semibold text-[var(--color-text-muted)]">تغییرات</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
+                  <td colSpan={5} className="py-12 text-center text-[var(--color-text-muted)]">
                     در حال بارگذاری...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-500">
+                  <td colSpan={5} className="py-12 text-center text-[var(--color-text-muted)]">
                     رویدادی با این فیلترها یافت نشد
                   </td>
                 </tr>
@@ -374,7 +374,7 @@ export default function AuditLogClient() {
 
         {total > 0 && (
           <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-[var(--color-text-muted)]">
               صفحه {page.toLocaleString('fa-IR')} از {totalPages.toLocaleString('fa-IR')}
             </span>
             <div className="flex items-center gap-1">
@@ -416,7 +416,7 @@ function AuditTableRow({ row, onSelect }: { row: AuditRow; onSelect: () => void 
       className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-indigo-50/40 dark:hover:bg-indigo-500/5 cursor-pointer transition"
       onClick={onSelect}
     >
-      <td className="py-3 px-4 text-gray-600 whitespace-nowrap" title={formatExact(row.createdAt)}>
+      <td className="py-3 px-4 text-[var(--color-text-muted)] whitespace-nowrap" title={formatExact(row.createdAt)}>
         {formatDistanceToNow(new Date(row.createdAt), { addSuffix: true, locale: faIR })}
       </td>
       <td className="py-3 px-4">
@@ -425,18 +425,18 @@ function AuditTableRow({ row, onSelect }: { row: AuditRow; onSelect: () => void 
         </Badge>
       </td>
       <td className="py-3 px-4">
-        <div className="font-medium text-gray-900 dark:text-gray-100">
+        <div className="font-medium text-[var(--color-text)] dark:text-gray-100">
           {entityName ?? getEntityTypeLabel(row.entityType)}
         </div>
-        <div className="text-xs text-gray-500 mt-0.5">
+        <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
           {getEntityTypeLabel(row.entityType)} · {row.entityId.slice(0, 12)}…
         </div>
       </td>
-      <td className="py-3 px-4 text-gray-700 dark:text-gray-300">
+      <td className="py-3 px-4 text-[var(--color-text)] dark:text-[var(--color-text-subtle)]">
         <div>{actorName}</div>
-        <div className="text-xs text-gray-500">{getRoleLabel(row.actorRole)}</div>
+        <div className="text-xs text-[var(--color-text-muted)]">{getRoleLabel(row.actorRole)}</div>
       </td>
-      <td className="py-3 px-4 text-xs text-gray-500 max-w-[180px] truncate">
+      <td className="py-3 px-4 text-xs text-[var(--color-text-muted)] max-w-[180px] truncate">
         {changeSummary || '—'}
       </td>
     </tr>
@@ -475,17 +475,17 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
             <Badge variant={ACTION_BADGE[row.action] ?? 'neutral'}>
               {getAuditActionLabel(row.action)}
             </Badge>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mt-2 truncate">
+            <h2 className="text-lg font-semibold text-[var(--color-text)] dark:text-white mt-2 truncate">
               {entityName ?? getEntityTypeLabel(row.entityType)}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-[var(--color-text-muted)] mt-1">
               {getEntityTypeLabel(row.entityType)} · {actorName} · {formatExact(row.createdAt)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="shrink-0 rounded-lg p-2 text-[var(--color-text-subtle)] hover:bg-gray-100 dark:hover:bg-gray-700"
             aria-label="بستن"
           >
             <X className="h-5 w-5" />
@@ -498,15 +498,15 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
-                    <th className="text-right py-2 px-3 font-medium text-gray-500">فیلد</th>
-                    <th className="text-right py-2 px-3 font-medium text-gray-500">قبل</th>
-                    <th className="text-right py-2 px-3 font-medium text-gray-500">بعد</th>
+                    <th className="text-right py-2 px-3 font-medium text-[var(--color-text-muted)]">فیلد</th>
+                    <th className="text-right py-2 px-3 font-medium text-[var(--color-text-muted)]">قبل</th>
+                    <th className="text-right py-2 px-3 font-medium text-[var(--color-text-muted)]">بعد</th>
                   </tr>
                 </thead>
                 <tbody>
                   {mainRows.map((r) => (
                     <tr key={r.key} className="border-t border-gray-100 dark:border-gray-700/60">
-                      <td className="py-2.5 px-3 font-medium text-gray-700 dark:text-gray-200">
+                      <td className="py-2.5 px-3 font-medium text-[var(--color-text)] dark:text-gray-200">
                         {r.label}
                       </td>
                       <td className="py-2.5 px-3 text-red-600/90 dark:text-red-400 line-through decoration-red-300/60">
@@ -525,7 +525,7 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
               تغییر محتوایی ثبت نشده — فقط متادیتای فنی (مثل زمان به‌روزرسانی) متفاوت است.
             </div>
           ) : (
-            <div className="rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 px-4 py-6 text-center text-sm text-gray-500">
+            <div className="rounded-xl bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 px-4 py-6 text-center text-sm text-[var(--color-text-muted)]">
               {row.before == null && row.after != null
                 ? 'رکورد جدید ایجاد شده'
                 : row.before != null && row.after == null
@@ -539,7 +539,7 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
               <button
                 type="button"
                 onClick={() => setShowTechnical((v) => !v)}
-                className="text-xs text-gray-500 hover:text-gray-700 inline-flex items-center gap-1"
+                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] inline-flex items-center gap-1"
               >
                 <ChevronDown className={`h-3.5 w-3.5 transition ${showTechnical ? 'rotate-180' : ''}`} />
                 {showTechnical ? 'پنهان کردن' : 'نمایش'} فیلدهای فنی ({technicalRows.length})
@@ -550,9 +550,9 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
                     <tbody>
                       {technicalRows.map((r) => (
                         <tr key={r.key} className="border-t border-gray-100 dark:border-gray-700/60 first:border-0">
-                          <td className="py-2 px-3 text-gray-500 w-28">{r.label}</td>
-                          <td className="py-2 px-3 text-gray-600" dir="ltr">{r.before}</td>
-                          <td className="py-2 px-3 text-gray-600" dir="ltr">{r.after}</td>
+                          <td className="py-2 px-3 text-[var(--color-text-muted)] w-28">{r.label}</td>
+                          <td className="py-2 px-3 text-[var(--color-text-muted)]" dir="ltr">{r.before}</td>
+                          <td className="py-2 px-3 text-[var(--color-text-muted)]" dir="ltr">{r.after}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -566,7 +566,7 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
             <button
               type="button"
               onClick={() => setShowRaw((v) => !v)}
-              className="text-xs text-gray-500 hover:text-gray-700 inline-flex items-center gap-1"
+              className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] inline-flex items-center gap-1"
             >
               <ChevronDown className={`h-3.5 w-3.5 transition ${showRaw ? 'rotate-180' : ''}`} />
               {showRaw ? 'پنهان کردن' : 'نمایش'} JSON خام
@@ -580,7 +580,7 @@ function AuditDetailModal({ row, onClose }: { row: AuditRow; onClose: () => void
           </div>
         </div>
 
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-text-muted)]">
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {row.ipAddress && <span>IP: {row.ipAddress}</span>}
             {uaShort && <span title={row.userAgent ?? undefined}>مرورگر: {uaShort}</span>}
@@ -603,7 +603,7 @@ function JsonBlock({ title, data }: { title: string; data: unknown }) {
   const text = data != null ? JSON.stringify(data, null, 2) : '—';
   return (
     <div>
-      <div className="text-xs font-medium text-gray-500 mb-1">{title}</div>
+      <div className="text-xs font-medium text-[var(--color-text-muted)] mb-1">{title}</div>
       <pre
         dir="ltr"
         className="rounded-lg bg-gray-100 dark:bg-gray-900 p-3 text-[11px] leading-relaxed overflow-x-auto text-left font-mono"

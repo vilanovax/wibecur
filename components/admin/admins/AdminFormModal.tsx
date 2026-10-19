@@ -34,11 +34,11 @@ type Props = {
 };
 
 const INPUT =
-  'mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 transition-shadow';
+  'mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-[var(--color-text)] dark:text-white placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400 transition-shadow';
 
 function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <span className="block text-sm font-medium text-gray-700 dark:text-gray-200" id={htmlFor}>
+    <span className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-200" id={htmlFor}>
       {children}
     </span>
   );
@@ -60,9 +60,9 @@ function Section({
       <div className="flex items-start gap-2.5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/40 px-4 py-3">
         <Icon className="h-4 w-4 shrink-0 text-violet-600 mt-0.5" />
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+          <h3 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">{title}</h3>
           {description ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
+            <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">{description}</p>
           ) : null}
         </div>
       </div>
@@ -119,10 +119,10 @@ export default function AdminFormModal({
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-5 py-4">
           <div>
-            <h2 id="admin-form-title" className="text-lg font-bold text-gray-900 dark:text-white">
+            <h2 id="admin-form-title" className="text-lg font-bold text-[var(--color-text)] dark:text-white">
               {mode === 'create' ? 'ادمین جدید' : 'ویرایش ادمین'}
             </h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">
               {mode === 'create'
                 ? 'حساب ورود و سطح دسترسی را تعریف کنید'
                 : 'اطلاعات و دسترسی ادمین را به‌روز کنید'}
@@ -133,7 +133,7 @@ export default function AdminFormModal({
             onClick={onClose}
             disabled={saving}
             aria-label="بستن"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             <X className="h-5 w-5" />
           </button>
@@ -166,7 +166,7 @@ export default function AdminFormModal({
                   autoComplete="email"
                 />
                 {mode === 'edit' ? (
-                  <p className="mt-1 text-[11px] text-gray-400">ایمیل پس از ایجاد قابل تغییر نیست.</p>
+                  <p className="mt-1 text-[11px] text-[var(--color-text-subtle)]">ایمیل پس از ایجاد قابل تغییر نیست.</p>
                 ) : null}
               </label>
 
@@ -216,24 +216,24 @@ export default function AdminFormModal({
                   className="mt-0.5 h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                 />
                 <span>
-                  <span className="block text-sm font-medium text-gray-800 dark:text-gray-100">
+                  <span className="block text-sm font-medium text-[var(--color-text)] dark:text-gray-100">
                     دسترسی سفارشی
                   </span>
-                  <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <span className="block text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">
                     به‌جای قالب نقش، دسترسی‌های هر بخش را خودتان انتخاب کنید
                   </span>
                 </span>
               </label>
 
               {!form.useCustomPermissions && selectedTemplate ? (
-                <p className="text-xs text-gray-500 dark:text-gray-400 ps-7">
+                <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] ps-7">
                   {effectiveCount.toLocaleString('fa-IR')} دسترسی از قالب «{selectedTemplate.label}»
                 </p>
               ) : null}
 
               {form.useCustomPermissions ? (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
                     <SlidersHorizontal className="h-3.5 w-3.5" />
                     <span>
                       {form.adminPermissions.length.toLocaleString('fa-IR')} دسترسی انتخاب شده
@@ -258,8 +258,8 @@ export default function AdminFormModal({
                 className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
               />
               <span className="text-sm">
-                <span className="font-medium text-gray-900 dark:text-white">حساب فعال</span>
-                <span className="block text-xs text-gray-500 mt-0.5">
+                <span className="font-medium text-[var(--color-text)] dark:text-white">حساب فعال</span>
+                <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">
                   نقش فعلی: {getRoleLabel(form.role)}
                 </span>
               </span>
@@ -281,7 +281,7 @@ export default function AdminFormModal({
             type="button"
             disabled={saving}
             onClick={onClose}
-            className="rounded-xl border border-gray-200 dark:border-gray-600 px-5 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="rounded-xl border border-gray-200 dark:border-gray-600 px-5 py-2.5 text-sm text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
             انصراف
           </button>

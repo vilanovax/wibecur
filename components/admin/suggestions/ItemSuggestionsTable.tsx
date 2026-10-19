@@ -281,10 +281,10 @@ export default function ItemSuggestionsTable({
     return (
       <div className="py-12 text-center">
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700/50">
-          <Package className="h-7 w-7 text-gray-400 dark:text-gray-500" />
+          <Package className="h-7 w-7 text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)]" />
         </div>
-        <h3 className="font-semibold text-gray-900 dark:text-white">{emptyMessage.title}</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{emptyMessage.subtitle}</p>
+        <h3 className="font-semibold text-[var(--color-text)] dark:text-white">{emptyMessage.title}</h3>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">{emptyMessage.subtitle}</p>
       </div>
     );
   }
@@ -298,15 +298,15 @@ export default function ItemSuggestionsTable({
       )}
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          <span className="font-semibold text-gray-800 dark:text-gray-100">{total.toLocaleString('fa-IR')}</span> پیشنهاد
+        <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+          <span className="font-semibold text-[var(--color-text)] dark:text-gray-100">{total.toLocaleString('fa-IR')}</span> پیشنهاد
         </p>
         <div className="flex items-center gap-2">
           {suggestions.length > 1 && (
             <button
               type="button"
               onClick={() => setSortOrder((s) => (s === 'newest' ? 'oldest' : 'newest'))}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50"
+              className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] hover:bg-gray-50"
             >
               {sortOrder === 'newest' ? 'جدیدترین ↑' : 'قدیمی‌ترین ↓'}
             </button>
@@ -320,7 +320,7 @@ export default function ItemSuggestionsTable({
             className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
               bulkMode
                 ? 'border-violet-300 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
-                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
+                : 'border-gray-200 dark:border-gray-700 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] hover:bg-gray-50'
             }`}
           >
             {bulkMode ? 'لغو انتخاب' : 'انتخاب چندتایی'}

@@ -20,10 +20,10 @@ export default function FilmNewListsSection({
 
   return (
     <section className="px-4 py-8">
-      <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
         🆕 لیست‌های جدید
       </h2>
-      <p className="text-sm text-gray-600 mt-0.5 mb-5">
+      <p className="text-sm text-wibe-secondary mt-0.5 mb-5">
         تازه‌ترین لیست‌های {categoryName}
       </p>
 
@@ -34,14 +34,15 @@ export default function FilmNewListsSection({
             href={`/lists/${list.slug}`}
             className="flex gap-4 p-4 rounded-2xl bg-gray-900 border border-gray-800 active:scale-[0.99] transition-transform"
           >
-            <div className="w-20 h-28 rounded-xl bg-gray-800 flex-shrink-0 overflow-hidden">
+            <div className="relative h-28 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-800">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
                   alt={list.title}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                   placeholderSize="cover"
-                />
+                        sizes="80px"
+                      />
               ) : (
                 <div
                   className="w-full h-full flex items-center justify-center text-3xl opacity-50"
@@ -52,13 +53,13 @@ export default function FilmNewListsSection({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-gray-100 text-base line-clamp-2">
+              <h3 className="font-semibold text-white/90 text-base line-clamp-2">
                 {list.title}
               </h3>
               {list.creator?.name && (
-                <p className="text-sm text-gray-400 mt-1">{list.creator.name}</p>
+                <p className="mt-1 text-sm text-white/60">{list.creator.name}</p>
               )}
-              <div className="flex gap-3 mt-2 text-sm text-gray-500">
+              <div className="mt-2 flex gap-3 text-sm text-white/65">
                 <span>⭐ {list.saveCount}</span>
                 <span>•</span>
                 <span>❤️ {list.likeCount}</span>

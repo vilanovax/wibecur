@@ -170,7 +170,7 @@ function ImagePathBlock({
     tone === 'success'
       ? 'border-emerald-200 bg-emerald-50/60 text-emerald-900'
       : tone === 'muted'
-        ? 'border-gray-200 bg-white text-gray-600'
+        ? 'border-gray-200 bg-white text-[var(--color-text-muted)]'
         : 'border-orange-200 bg-orange-50/50 text-orange-950';
 
   return (
@@ -503,7 +503,7 @@ export default function StorageImageRepairClient({
 
       <section className="mb-4 space-y-3 rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
         <div className="relative">
-          <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-subtle)]" />
           <input
             type="search"
             value={queryInput}
@@ -642,7 +642,7 @@ export default function StorageImageRepairClient({
               }`}
             >
               <div className="flex items-start gap-3 p-3 sm:p-4">
-                <span className="mt-3 hidden w-5 shrink-0 text-center text-[10px] font-mono text-gray-300 sm:block">
+                <span className="mt-3 hidden w-5 shrink-0 text-center text-[10px] font-mono text-[var(--color-text-subtle)] sm:block">
                   {(index + 1).toLocaleString('fa-IR')}
                 </span>
 
@@ -650,7 +650,7 @@ export default function StorageImageRepairClient({
                   {previewSrc ? (
                     <Image src={previewSrc} alt="" fill className="object-cover" unoptimized />
                   ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-gray-300">
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-[var(--color-text-subtle)]">
                       <ImageOff className="h-6 w-6" />
                       <span className="text-[9px] font-medium">بدون تصویر</span>
                     </div>
@@ -660,7 +660,7 @@ export default function StorageImageRepairClient({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <h2 className="font-semibold text-[var(--color-text)]">{item.title}</h2>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-700">
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-[var(--color-text)]">
                       {item.categoryLabel}
                     </span>
                     <span

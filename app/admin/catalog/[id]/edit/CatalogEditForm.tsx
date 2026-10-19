@@ -256,13 +256,13 @@ export default function CatalogEditForm({
     <div className="max-w-2xl pb-20" dir="rtl">
       <Link
         href="/admin/lists?view=catalog"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-violet-700 mb-4"
+        className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] hover:text-violet-700 mb-4"
       >
         <ArrowRight className="w-4 h-4" />
         بازگشت به کاتالوگ
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">ویرایش آیتم</h1>
+      <h1 className="text-2xl font-bold text-[var(--color-text)] mb-1">ویرایش آیتم</h1>
       <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-4">
         تغییرات روی{' '}
         <strong>{catalog.listCount.toLocaleString('fa-IR')} جایگاه</strong> در لیست‌های مختلف
@@ -317,7 +317,7 @@ export default function CatalogEditForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-gray-500 mt-1.5">
+          <p className="text-xs text-[var(--color-text-muted)] mt-1.5">
             نوع محتوا در کل سیستم (فیلم، کتاب، کافه و …) — مستقل از لیستی که آیتم در آن قرار دارد.
           </p>
         </div>
@@ -385,7 +385,7 @@ export default function CatalogEditForm({
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     mediaTab === tab.id
                       ? 'bg-violet-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-gray-100 text-[var(--color-text-muted)] hover:bg-gray-200'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -442,15 +442,15 @@ export default function CatalogEditForm({
             <button
               type="button"
               onClick={() => setMetadataOpen((open) => !open)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-[var(--color-text)] hover:bg-gray-50"
             >
               <span>
                 اطلاعات تکمیلی {isFilm ? 'فیلم/سریال' : categoryLabel}
               </span>
               {metadataOpen ? (
-                <ChevronUp className="w-4 h-4 text-gray-500" />
+                <ChevronUp className="w-4 h-4 text-[var(--color-text-muted)]" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+                <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
               )}
             </button>
             {metadataOpen && (

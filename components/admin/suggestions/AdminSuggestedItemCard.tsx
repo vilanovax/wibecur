@@ -106,7 +106,7 @@ export default function AdminSuggestedItemCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-gray-300">
+            <div className="flex h-full w-full items-center justify-center text-[var(--color-text-subtle)]">
               <Package className="h-5 w-5" />
             </div>
           )}
@@ -130,8 +130,8 @@ export default function AdminSuggestedItemCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-bold text-gray-900 dark:text-white">{suggestion.title}</h3>
-              <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
+              <h3 className="truncate text-base font-bold text-[var(--color-text)] dark:text-white">{suggestion.title}</h3>
+              <p className="mt-0.5 truncate text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
                 {listSlug ? (
                   <Link href={`/lists/${listSlug}`} className="hover:text-violet-600 hover:underline">
                     {listTitle}
@@ -139,9 +139,9 @@ export default function AdminSuggestedItemCard({
                 ) : (
                   listTitle
                 )}
-                <span className="mx-1.5 text-gray-300">·</span>
+                <span className="mx-1.5 text-[var(--color-text-subtle)]">·</span>
                 {suggestedBy}
-                <span className="mx-1.5 text-gray-300">·</span>
+                <span className="mx-1.5 text-[var(--color-text-subtle)]">·</span>
                 {timeAgo}
               </p>
             </div>
@@ -159,7 +159,7 @@ export default function AdminSuggestedItemCard({
                 <button
                   type="button"
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100"
+                  className="rounded-lg p-1.5 text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)] opacity-0 transition-opacity hover:bg-gray-100 hover:text-[var(--color-text-muted)] group-hover:opacity-100"
                   aria-label="گزینه‌ها"
                 >
                   <MoreVertical className="h-4 w-4" />
@@ -172,7 +172,7 @@ export default function AdminSuggestedItemCard({
                         <button
                           type="button"
                           onClick={() => { onEdit(suggestion); setMenuOpen(false); }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50"
                         >
                           <Edit className="h-4 w-4" /> ویرایش
                         </button>
@@ -182,7 +182,7 @@ export default function AdminSuggestedItemCard({
                           href={suggestion.externalUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50"
                           onClick={() => setMenuOpen(false)}
                         >
                           <ExternalLink className="h-4 w-4" /> لینک
@@ -191,7 +191,7 @@ export default function AdminSuggestedItemCard({
                       <button
                         type="button"
                         onClick={() => { onViewList(suggestion); setMenuOpen(false); }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50"
                       >
                         <ListIcon className="h-4 w-4" /> لیست
                       </button>
@@ -212,11 +212,11 @@ export default function AdminSuggestedItemCard({
           </div>
 
           {description && (
-            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">{description}</p>
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">{description}</p>
           )}
 
           {category?.name && (
-            <span className="mt-2 inline-block rounded-md bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
+            <span className="mt-2 inline-block rounded-md bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
               {category.icon} {category.name}
             </span>
           )}
@@ -240,7 +240,7 @@ export default function AdminSuggestedItemCard({
                 type="button"
                 disabled={processing}
                 onClick={() => onReject(suggestion)}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 text-sm font-medium text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50 disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
                 رد

@@ -146,11 +146,11 @@ export default function ImageSearchModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">جستجوی تصویر در Google</h2>
+          <h2 className="text-2xl font-bold text-[var(--color-text)]">جستجوی تصویر در Google</h2>
           <button
             type="button"
             onClick={(e) => handleClose(e)}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
             aria-label="بستن"
           >
             <X className="w-6 h-6" />
@@ -222,7 +222,7 @@ export default function ImageSearchModal({
         <div className="flex-1 overflow-y-auto p-6">
           {searchResults.length > 0 ? (
             <>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-[var(--color-text-muted)] mb-4">
                 {searchResults.length} تصویر یافت شد - روی تصویر کلیک کنید
               </p>
               <div className="grid grid-cols-3 gap-4">
@@ -246,10 +246,10 @@ export default function ImageSearchModal({
                       />
                     </div>
                     <div className="p-2 bg-white">
-                      <p className="text-xs text-gray-700 line-clamp-2">
+                      <p className="text-xs text-[var(--color-text)] line-clamp-2">
                         {image.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-[var(--color-text-muted)] mt-1">
                         {image.width} × {image.height}
                       </p>
                     </div>
@@ -260,8 +260,8 @@ export default function ImageSearchModal({
           ) : (
             !isSearching &&
             !error && (
-              <div className="text-center py-12 text-gray-500">
-                <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <div className="text-center py-12 text-[var(--color-text-muted)]">
+                <Search className="w-16 h-16 mx-auto mb-4 text-[var(--color-text-subtle)]" />
                 <p className="text-lg">عبارت مورد نظر را جستجو کنید</p>
                 <p className="text-sm mt-2">
                   مثال: &quot;کاور کتاب&quot;، &quot;لوگوی رستوران&quot;، &quot;تصویر محصول&quot;
@@ -286,10 +286,10 @@ export default function ImageSearchModal({
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-[var(--color-text)]">
                     تصویر انتخاب شده
                   </p>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                  <p className="text-xs text-[var(--color-text-muted)] mt-1 line-clamp-1">
                     {selectedImage.title}
                   </p>
                 </div>
@@ -298,7 +298,7 @@ export default function ImageSearchModal({
                 <button
                   type="button"
                   onClick={(e) => handleClose(e)}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="px-6 py-3 border border-gray-300 text-[var(--color-text)] rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   انصراف
                 </button>

@@ -260,7 +260,7 @@ export default function ImageUpload({
         />
       )}
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
           {label}
         </label>
       )}
@@ -288,7 +288,7 @@ export default function ImageUpload({
           >
             <X className="w-4 h-4" />
           </button>
-          <p className="text-[11px] text-center text-gray-500 mt-2">
+          <p className="text-[11px] text-center text-[var(--color-text-muted)] mt-2">
             برای تغییر، تصویر را حذف کنید یا تب دیگری انتخاب کنید
           </p>
         </div>
@@ -317,12 +317,12 @@ export default function ImageUpload({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    <span className="text-gray-600">در حال آپلود...</span>
+                    <span className="text-[var(--color-text-muted)]">در حال آپلود...</span>
                   </>
                 ) : (
                   <>
-                    <Upload className="w-5 h-5 text-gray-600" />
-                    <span className="text-gray-600">آپلود از کامپیوتر</span>
+                    <Upload className="w-5 h-5 text-[var(--color-text-muted)]" />
+                    <span className="text-[var(--color-text-muted)]">آپلود از کامپیوتر</span>
                   </>
                 )}
               </label>
@@ -332,7 +332,7 @@ export default function ImageUpload({
           {showUpload && (showUrl || showSearch) && (
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300" /></div>
-              <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">یا</span></div>
+              <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-[var(--color-text-muted)]">یا</span></div>
             </div>
           )}
 
@@ -365,8 +365,8 @@ export default function ImageUpload({
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowUrlInput(true); }}
                 className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <LinkIcon className="w-5 h-5 text-gray-600" />
-                <span className="text-gray-600">استفاده از لینک تصویر</span>
+                <LinkIcon className="w-5 h-5 text-[var(--color-text-muted)]" />
+                <span className="text-[var(--color-text-muted)]">استفاده از لینک تصویر</span>
               </button>
             )
           )}
@@ -383,8 +383,8 @@ export default function ImageUpload({
                 }}
                 className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
-                <Search className="w-5 h-5 text-gray-600" />
-                <span className="text-gray-600 dark:text-gray-300">جستجو در Google</span>
+                <Search className="w-5 h-5 text-[var(--color-text-muted)]" />
+                <span className="text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">جستجو در Google</span>
               </button>
               {enableMoviePosterSources && (
                 <div className="grid grid-cols-2 gap-2">

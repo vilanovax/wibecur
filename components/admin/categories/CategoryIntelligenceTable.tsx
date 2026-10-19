@@ -160,7 +160,7 @@ export default function CategoryIntelligenceTable({
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium ${
                         cat.isActive
                           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                          : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                          : 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700 dark:text-[var(--color-text-subtle)]'
                       }`}
                     >
                       {cat.isActive ? 'فعال' : 'غیرفعال'}
@@ -177,7 +177,7 @@ export default function CategoryIntelligenceTable({
                       </Link>
                       <Link
                         href={`/admin/analytics?category=${cat.id}`}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500"
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-[var(--color-text-muted)]"
                         title="آنالیتیکس"
                       >
                         <BarChart3 className="w-4 h-4" />
@@ -185,7 +185,7 @@ export default function CategoryIntelligenceTable({
                       <Link
                         href={`/categories/${cat.slug}`}
                         target="_blank"
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500"
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-[var(--color-text-muted)]"
                         title="مشاهده در اپ"
                       >
                         <ExternalLink className="w-4 h-4" />
@@ -199,7 +199,7 @@ export default function CategoryIntelligenceTable({
         </table>
       </div>
       {categories.length === 0 && (
-        <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+        <div className="py-12 text-center text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
           دسته‌ای یافت نشد.
         </div>
       )}

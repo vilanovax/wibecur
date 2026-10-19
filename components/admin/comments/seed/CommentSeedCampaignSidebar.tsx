@@ -17,7 +17,7 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   publishing: { label: 'در حال انتشار', className: 'bg-amber-100 text-amber-700' },
   published: { label: 'منتشر شده', className: 'bg-emerald-100 text-emerald-700' },
   paused: { label: 'متوقف', className: 'bg-orange-100 text-orange-700' },
-  archived: { label: 'بایگانی', className: 'bg-gray-100 text-gray-500' },
+  archived: { label: 'بایگانی', className: 'bg-gray-100 text-[var(--color-text-muted)]' },
 };
 
 const TARGET_LABELS: Record<string, string> = {

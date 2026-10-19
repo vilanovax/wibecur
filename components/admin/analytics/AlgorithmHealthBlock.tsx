@@ -32,7 +32,7 @@ export default function AlgorithmHealthBlock({ data }: AlgorithmHealthBlockProps
       <div className="p-6">
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-slate-500 dark:text-gray-400" />
+            <Zap className="w-5 h-5 text-slate-500 dark:text-[var(--color-text-subtle)]" />
             <h2 className="font-semibold text-slate-800 dark:text-gray-100">سلامت الگوریتم ترند</h2>
           </div>
           {highConcentration && (
@@ -45,29 +45,29 @@ export default function AlgorithmHealthBlock({ data }: AlgorithmHealthBlockProps
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">
-            <p className="text-sm text-slate-500 dark:text-gray-400 mb-1">⚡ Trend Distribution Index</p>
+            <p className="text-sm text-slate-500 dark:text-[var(--color-text-subtle)] mb-1">⚡ Trend Distribution Index</p>
             <p className="text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
               {data.trendDistributionIndex}٪
             </p>
-            <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mt-1">
               سهم ذخیره‌های ۷ روز توسط ۱۰ لیست برتر
             </p>
           </div>
           <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">میانگین Save Velocity</p>
+              <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mb-0.5">میانگین Save Velocity</p>
               <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.avgSaveVelocity.toLocaleString('fa-IR')}
               </p>
             </div>
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">افت سریع ٪</p>
+              <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mb-0.5">افت سریع ٪</p>
               <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.percentRapidlyDeclining}٪
               </p>
             </div>
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-gray-400 mb-0.5">ورود به ناحیه داغ ٪</p>
+              <p className="text-xs text-slate-500 dark:text-[var(--color-text-subtle)] mb-0.5">ورود به ناحیه داغ ٪</p>
               <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
                 {data.percentEnteringHotZone}٪
               </p>
@@ -75,7 +75,7 @@ export default function AlgorithmHealthBlock({ data }: AlgorithmHealthBlockProps
           </div>
         </div>
 
-        <p className="text-sm text-slate-600 dark:text-gray-300 mt-3">{buildInsight(data)}</p>
+        <p className="text-sm text-slate-600 dark:text-[var(--color-text-subtle)] mt-3">{buildInsight(data)}</p>
       </div>
     </section>
   );

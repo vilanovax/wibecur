@@ -48,7 +48,7 @@ export default function EntryKindSelector({
             className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-all ${
               value === kind
                 ? 'border-violet-500 bg-violet-50 text-violet-800 shadow-sm dark:bg-violet-900/30 dark:text-violet-200'
-                : 'border-admin-border bg-white text-gray-600 hover:border-violet-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                : 'border-admin-border bg-white text-[var(--color-text-muted)] hover:border-violet-300 dark:border-gray-600 dark:bg-gray-800 dark:text-[var(--color-text-subtle)]'
             }`}
           >
             {ENTRY_KIND_LABELS_UI[kind]}
