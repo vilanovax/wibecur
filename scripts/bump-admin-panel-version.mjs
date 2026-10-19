@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Bump admin panel display version (1.11, 1.12, …) before each production build.
+ * Bump the app version (1.11, 1.12, …) before each production build.
+ * Shown in the profile footer and the admin header.
  * Updates lib/generated/admin-panel-version.ts and increments version/admin-panel.json.
  */
 import fs from 'fs';
@@ -29,4 +30,4 @@ fs.writeFileSync(
 data.build = build + 1;
 fs.writeFileSync(jsonPath, `${JSON.stringify(data, null, 2)}\n`);
 
-console.log(`[admin-version] panel v${version} (next build → 1.${build + 1})`);
+console.log(`[app-version] v${version} (next build → 1.${build + 1})`);
