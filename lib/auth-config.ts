@@ -12,10 +12,7 @@ import {
   type AdminJwtSnapshot,
 } from '@/lib/auth/admin-jwt-cache';
 
-function applyAdminJwtRow(
-  token: { role?: unknown; isActive?: unknown; adminPermissions?: unknown },
-  row: AdminJwtSnapshot | null
-) {
+function applyAdminJwtRow(token: Record<string, unknown>, row: AdminJwtSnapshot | null) {
   if (!row || row.deletedAt || !isAdminRole(row.role)) return;
   token.role = row.role;
   token.isActive = row.isActive;
