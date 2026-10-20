@@ -10,6 +10,7 @@ import {
   LIST_DETAIL_ITEMS_MAX_LIMIT,
   LIST_DETAIL_ITEMS_PAGE_SIZE,
 } from '@/lib/list-detail-items-shared';
+import { countLiveListItems } from '@/lib/list-item-count';
 
 export {
   LIST_DETAIL_SSR_ITEM_LIMIT,
@@ -72,26 +73,26 @@ export async function fetchPublicListItemsPage(params: {
     LIST_DETAIL_ITEMS_MAX_LIMIT
   );
 
-  const list = await dbQuery(() =>
-    prisma.lists.findFirst({
-      where: {
-        id: params.listId,
-        ...publicCuratedListWhere,
-      },
-      select: {
-        id: true,
-        itemCount: true,
-        categories: { select: { slug: true, isActive: true } },
-        _count: { select: { items: true } },
-      },
-    })
-  );
+  const [list, total] = await Promise.all([
+    dbQuery(() =>
+      prisma.lists.findFirst({
+        where: {
+          id: params.listId,
+          ...publicCuratedListWhere,
+        },
+        select: {
+          id: true,
+          categories: { select: { slug: true, isActive: true } },
+        },
+      })
+    ),
+    dbQuery(() => countLiveListItems(prisma, params.listId)),
+  ]);
 
   if (!list) return null;
   if (list.categories && !list.categories.isActive) return null;
 
   const categorySlug = list.categories?.slug ?? null;
-  const total = list.itemCount ?? list._count.items;
 
   const rows = await dbQuery(() =>
     prisma.items.findMany({
@@ -156,21 +157,22 @@ export async function fetchUserListItemsPage(params: {
     LIST_DETAIL_ITEMS_MAX_LIMIT
   );
 
-  const list = await dbQuery(() =>
-    prisma.lists.findUnique({
-      where: { id: params.listId },
-      select: {
-        id: true,
-        userId: true,
-        isPublic: true,
-        isActive: true,
-        deletedAt: true,
-        itemCount: true,
-        categories: { select: { slug: true } },
-        _count: { select: { items: true } },
-      },
-    })
-  );
+  const [list, total] = await Promise.all([
+    dbQuery(() =>
+      prisma.lists.findUnique({
+        where: { id: params.listId },
+        select: {
+          id: true,
+          userId: true,
+          isPublic: true,
+          isActive: true,
+          deletedAt: true,
+          categories: { select: { slug: true } },
+        },
+      })
+    ),
+    dbQuery(() => countLiveListItems(prisma, params.listId)),
+  ]);
 
   if (!list || !list.isActive || list.deletedAt) return null;
 
@@ -178,7 +180,6 @@ export async function fetchUserListItemsPage(params: {
   if (!list.isPublic && !access.canView) return null;
 
   const categorySlug = list.categories?.slug ?? null;
-  const total = list.itemCount ?? list._count.items;
 
   const rows = await dbQuery(() =>
     prisma.items.findMany({

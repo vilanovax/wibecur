@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { getClientIp } from '@/lib/client-ip';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { apiRateBucket, checkApiRateLimit } from '@/lib/rate-limit';
 import {
   isAdminRole,
   isMaintenanceBypassPath,
@@ -71,7 +71,7 @@ export default auth(async (req) => {
 
   if (url.pathname.startsWith('/api')) {
     const ip = getClientIp(req.headers);
-    const { success } = await checkRateLimit(`api:${ip}`);
+    const { success } = await checkApiRateLimit(apiRateBucket(pathname, req.method), ip);
     if (!success) {
       return NextResponse.json(
         { error: 'تعداد درخواست‌ها زیاد است. لطفاً کمی صبر کنید.' },

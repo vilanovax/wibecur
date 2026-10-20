@@ -126,6 +126,10 @@ export default function UserListDetailClient({
         throw new Error(data.error || 'خطا در دریافت آیتم‌ها');
       }
       const nextItems = (data.items ?? []) as Item[];
+      if (nextItems.length === 0) {
+        setHasMore(false);
+        return;
+      }
       setItems((prev) => {
         const seen = new Set(prev.map((i) => i.id));
         const merged = [...prev];

@@ -6,6 +6,21 @@ import type { AppRole } from '@/types/next-auth';
 import type { Permission } from '@/lib/auth/permissions';
 import { normalizeAdminPermissions } from '@/lib/auth/has-permission';
 import { isAdminRole } from '@/lib/auth/roles';
+import {
+  rememberAdminJwtCache,
+  readAdminJwtCache,
+  type AdminJwtSnapshot,
+} from '@/lib/auth/admin-jwt-cache';
+
+function applyAdminJwtRow(
+  token: { role?: unknown; isActive?: unknown; adminPermissions?: unknown },
+  row: AdminJwtSnapshot | null
+) {
+  if (!row || row.deletedAt || !isAdminRole(row.role)) return;
+  token.role = row.role;
+  token.isActive = row.isActive;
+  token.adminPermissions = normalizeAdminPermissions(row.adminPermissions);
+}
 
 const config: NextAuthConfig = {
   trustHost: true,
@@ -110,19 +125,22 @@ const config: NextAuthConfig = {
         typeof token.id === 'string' ? token.id : typeof token.sub === 'string' ? token.sub : '';
       const tokenRole = typeof token.role === 'string' ? token.role : undefined;
       if (process.env.NEXT_RUNTIME !== 'edge' && userId && isAdminRole(tokenRole)) {
-        try {
-          const { prisma } = await import('@/lib/prisma');
-          const row = await prisma.users.findUnique({
-            where: { id: userId },
-            select: { role: true, isActive: true, adminPermissions: true, deletedAt: true },
-          });
-          if (row && !row.deletedAt && isAdminRole(row.role)) {
-            token.role = row.role;
-            token.isActive = row.isActive;
-            token.adminPermissions = normalizeAdminPermissions(row.adminPermissions);
+        const cached = readAdminJwtCache(userId);
+        if (cached !== undefined) {
+          applyAdminJwtRow(token, cached);
+        } else {
+          try {
+            const { prisma } = await import('@/lib/prisma');
+            const row = await prisma.users.findUnique({
+              where: { id: userId },
+              select: { role: true, isActive: true, adminPermissions: true, deletedAt: true },
+            });
+            rememberAdminJwtCache(userId, row);
+            applyAdminJwtRow(token, row);
+          } catch (error) {
+            rememberAdminJwtCache(userId, null);
+            console.error('[auth jwt refresh]', error);
           }
-        } catch (error) {
-          console.error('[auth jwt refresh]', error);
         }
       }
 

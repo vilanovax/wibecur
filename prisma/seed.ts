@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { syncStoredListItemCounts } from '../lib/list-item-count';
 import bcrypt from 'bcryptjs';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -744,6 +745,11 @@ async function main() {
       }
     }
     console.log('✅ List comment reports seeded');
+  }
+
+  const recounted = await syncStoredListItemCounts(prisma);
+  if (recounted > 0) {
+    console.log(`✅ Recomputed itemCount on ${recounted} lists`);
   }
 
   console.log('✅ Database seeding completed!');

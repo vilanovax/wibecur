@@ -12,6 +12,7 @@ import {
   revalidateHomeCache,
   revalidateListDetailCache,
 } from '@/lib/public-cache';
+import { recountListItemCount } from '@/lib/list-item-count';
 
 export async function PUT(
   request: NextRequest,
@@ -96,6 +97,7 @@ export async function PUT(
         ...(commentsEnabled !== undefined && { commentsEnabled }),
       },
     });
+    const itemCount = await recountListItemCount(prisma, id);
 
     const meta = getRequestMeta(request);
     await logAudit({
@@ -116,7 +118,7 @@ export async function PUT(
     revalidateListDetailCache(list.slug);
     revalidateCategoryCache(existingList.categoryId);
     revalidateCategoryCache(list.categoryId);
-    return NextResponse.json(list);
+    return NextResponse.json({ ...list, itemCount });
   } catch (error: any) {
     console.error('Error updating list:', error);
     return NextResponse.json(

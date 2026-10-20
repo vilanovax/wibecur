@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   API_RATE_LIMIT_MAX,
+  IMAGE_RATE_LIMIT_MAX,
+  SESSION_RATE_LIMIT_MAX,
+  apiRateBucket,
   checkActionRateLimit,
+  checkApiRateLimit,
   checkRateLimit,
   clearRateLimitsForTests,
   createRateLimiter,
@@ -39,6 +43,33 @@ describe('checkActionRateLimit', () => {
     expect((await checkActionRateLimit('image:a', 1, '1 m')).success).toBe(true);
     expect((await checkActionRateLimit('image:a', 1, '1 m')).success).toBe(false);
     expect((await checkActionRateLimit('image:b', 1, '1 m')).success).toBe(true);
+  });
+});
+
+describe('apiRateBucket', () => {
+  it('puts session and image reads in their own buckets', () => {
+    expect(apiRateBucket('/api/auth/session', 'GET')).toBe('session');
+    expect(apiRateBucket('/api/auth/session', 'POST')).toBe('session');
+    expect(apiRateBucket('/api/auth/callback/credentials', 'POST')).toBe('default');
+    expect(apiRateBucket('/api/liara-image', 'GET')).toBe('image');
+    expect(apiRateBucket('/api/storage-image', 'GET')).toBe('image');
+    expect(apiRateBucket('/api/notifications', 'GET')).toBe('default');
+  });
+
+  it('does not let a full page budget block the session read', async () => {
+    for (let i = 0; i < API_RATE_LIMIT_MAX; i += 1) {
+      expect((await checkApiRateLimit('default', '198.51.100.8')).success).toBe(true);
+    }
+    expect((await checkApiRateLimit('default', '198.51.100.8')).success).toBe(false);
+    expect((await checkApiRateLimit('session', '198.51.100.8')).success).toBe(true);
+  });
+
+  it('blocks session only after its own ceiling', async () => {
+    for (let i = 0; i < SESSION_RATE_LIMIT_MAX; i += 1) {
+      expect((await checkApiRateLimit('session', '198.51.100.9')).success).toBe(true);
+    }
+    expect((await checkApiRateLimit('session', '198.51.100.9')).success).toBe(false);
+    expect(IMAGE_RATE_LIMIT_MAX).toBeGreaterThan(API_RATE_LIMIT_MAX);
   });
 });
 

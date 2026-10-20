@@ -24,6 +24,7 @@ import {
   revalidateCategoryCache,
   revalidateItemDetailCache,
 } from '@/lib/public-cache';
+import { recountListItemCount } from '@/lib/list-item-count';
 
 /** تازه‌سازی کش صفحهٔ لیستِ والدِ یک آیتم (با یک کوئری سبک برای slug). */
 async function revalidateItemParentList(
@@ -213,6 +214,13 @@ export async function PUT(
         catalog_items: true,
       },
     });
+
+    if (targetListId !== previousListId && !existingItem.deletedAt) {
+      await Promise.all([
+        recountListItemCount(prisma, previousListId),
+        recountListItemCount(prisma, targetListId),
+      ]);
+    }
 
     // If listId changed, notify users who bookmarked the new list
     if (listId && listId !== previousListId) {

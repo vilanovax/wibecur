@@ -1,0 +1,20 @@
+#!/bin/sh
+# Stamp the next app version into this commit. Re-running the hook before the
+# commit exists (a failed hook, a second attempt) writes the same number.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+if [ -n "$SKIP_VERSION_BUMP" ]; then
+  exit 0
+fi
+
+git_dir=$(git rev-parse --git-path .) || exit 1
+if [ -f "$git_dir/MERGE_HEAD" ] || [ -f "$git_dir/CHERRY_PICK_HEAD" ] || [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ]; then
+  exit 0
+fi
+
+case "$(ps -o args= -p "$PPID" 2>/dev/null || true)" in
+  *"--amend"*) exit 0 ;;
+esac
+
+node scripts/bump-admin-panel-version.mjs --commit || exit 1
+git add -- version/admin-panel.json lib/generated/admin-panel-version.ts

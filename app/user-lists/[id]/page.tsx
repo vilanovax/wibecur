@@ -16,6 +16,8 @@ import {
 } from '@/lib/user-list-detail';
 import UserListDetailClient from './UserListDetailClient';
 import UserListDetailSkeleton from '@/components/mobile/user-lists/UserListDetailSkeleton';
+import { USER_LIST_DETAIL_SSR_ITEM_LIMIT } from '@/lib/list-detail-items-shared';
+import { countLiveListItems, displayedItemCount } from '@/lib/list-item-count';
 
 export async function generateMetadata({
   params,
@@ -88,7 +90,14 @@ async function UserListDetailContent({ id }: { id: string }) {
       });
     }
 
-    const totalItems = list.itemCount ?? list._count.items;
+    const loadedCount = list.items.length;
+    const totalItems = displayedItemCount(
+      loadedCount,
+      USER_LIST_DETAIL_SSR_ITEM_LIMIT,
+      loadedCount < USER_LIST_DETAIL_SSR_ITEM_LIMIT
+        ? loadedCount
+        : await countLiveListItems(prisma, list.id)
+    );
     const prepared = prepareUserListForClient(list);
     // Drop unused owner fields from client payload (server-serialization)
     const { users: _users, deletedAt: _deletedAt, ...listForClient } = prepared;

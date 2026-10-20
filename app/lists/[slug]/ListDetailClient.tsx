@@ -493,6 +493,11 @@ export default function ListDetailClient({
         personHrefs?: Record<string, string>;
       };
       if (!res.ok || !json.success || !Array.isArray(json.items)) return false;
+      if (json.items.length === 0) {
+        hasMoreRemoteRef.current = false;
+        setHasMoreRemote(false);
+        return false;
+      }
       if (json.personHrefs) {
         setPersonHrefs((prev) => ({ ...prev, ...json.personHrefs }));
       }

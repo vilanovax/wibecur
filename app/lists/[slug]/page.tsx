@@ -18,6 +18,7 @@ import {
 } from '@/lib/list-detail-items';
 import { collectPersonLinkTargets } from '@/lib/item-metadata-display';
 import { resolvePublicPersonHrefs } from '@/lib/people-server';
+import { countLiveListItems, displayedItemCount } from '@/lib/list-item-count';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
 
@@ -73,7 +74,7 @@ function loadListBySlug(slug: string) {
  * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنهٔ صفحه).
  */
 const getListBySlug = cache((slug: string) =>
-  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v3', slug], {
+  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v4', slug], {
     revalidate: 300,
     tags: [listDetailCacheTag(slug)],
   })()
@@ -133,9 +134,19 @@ export default async function ListDetailPage({
 
   const sponsoredPlacements = await getCachedListPagePlacements(list.id, list.categoryId);
 
+  const loadedCount = list.items.length;
+  const liveItemCount = displayedItemCount(
+    loadedCount,
+    LIST_DETAIL_SSR_ITEM_LIMIT,
+    loadedCount < LIST_DETAIL_SSR_ITEM_LIMIT
+      ? loadedCount
+      : await countLiveListItems(prisma, list.id)
+  );
+
   const listWithCreator = prepareListDetailForClient(
     withResolvedListDisplay({
       ...list,
+      itemCount: liveItemCount,
       categorySlug: list.categories?.slug ?? null,
       items: withResolvedItemImages(
         list.items.map((item) => ({
@@ -164,9 +175,7 @@ export default async function ListDetailPage({
       <ListDetailClient
         list={listWithCreator}
         sponsoredPlacements={sponsoredPlacements}
-        itemsHasMore={
-          (list.itemCount ?? list._count.items) > listWithCreator.items.length
-        }
+        itemsHasMore={liveItemCount > listWithCreator.items.length}
         personHrefs={personHrefs}
       />
       <BottomNav />

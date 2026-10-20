@@ -9,6 +9,33 @@ const WINDOW_MS = { s: 1000, m: 60_000, h: 3_600_000 } as const;
 export const API_RATE_LIMIT_MAX = 300;
 export const API_RATE_LIMIT_WINDOW = '1 m' as const;
 
+/** خواندن سشن جدا از بودجهٔ صفحه است تا گالری و داشبورد کاربر را از حساب خارج نکنند. */
+export const SESSION_RATE_LIMIT_MAX = 120;
+/** هر تصویر یک GET است؛ نباید سقف APIهای تعاملی را پر کند. */
+export const IMAGE_RATE_LIMIT_MAX = 2_000;
+
+export type ApiRateBucket = 'default' | 'session' | 'image';
+
+const API_RATE_BUCKETS: Record<ApiRateBucket, { max: number; window: RateWindow }> = {
+  default: { max: API_RATE_LIMIT_MAX, window: API_RATE_LIMIT_WINDOW },
+  session: { max: SESSION_RATE_LIMIT_MAX, window: API_RATE_LIMIT_WINDOW },
+  image: { max: IMAGE_RATE_LIMIT_MAX, window: API_RATE_LIMIT_WINDOW },
+};
+
+/** سشن و پروکسی تصویر سطل جدا دارند. ورود و بقیهٔ APIها روی سطل پیش‌فرض می‌مانند. */
+export function apiRateBucket(pathname: string, method: string): ApiRateBucket {
+  if (pathname === '/api/auth/session' || pathname.startsWith('/api/auth/session/')) {
+    return 'session';
+  }
+  if (
+    method === 'GET' &&
+    (pathname === '/api/liara-image' || pathname === '/api/storage-image')
+  ) {
+    return 'image';
+  }
+  return 'default';
+}
+
 const DEFAULT_BUCKET_CAP = 5_000;
 
 type RateWindow = `${number} ${'s' | 'm' | 'h'}`;
@@ -86,6 +113,14 @@ export function clearRateLimitsForTests(): void {
 
 export async function checkRateLimit(identifier: string): Promise<{ success: boolean }> {
   return limiter.check(identifier, API_RATE_LIMIT_MAX, API_RATE_LIMIT_WINDOW);
+}
+
+export async function checkApiRateLimit(
+  bucket: ApiRateBucket,
+  ip: string
+): Promise<{ success: boolean }> {
+  const limit = API_RATE_BUCKETS[bucket];
+  return limiter.check(`${bucket}:${ip}`, limit.max, limit.window);
 }
 
 export async function checkActionRateLimit(
