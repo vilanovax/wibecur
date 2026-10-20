@@ -8,6 +8,7 @@ import { loadCatalogPageData } from '@/lib/admin/catalog-page-data';
 import { isCatalogClientReady } from '@/lib/catalog-items';
 import AdminDatabaseUnavailable from '@/components/admin/shared/AdminDatabaseUnavailable';
 import ContentHubClient, { type ContentHubView } from './ContentHubClient';
+import { queryCachedDiscoveredPeople } from '@/lib/admin/person-discovery-cached';
 import { loadListDescriptionsPageData } from '@/lib/admin/list-descriptions-data';
 import { loadItemTipsPageData } from '@/lib/admin/item-tips-data';
 import { parseListFilterParam } from '@/lib/admin/list-list-utils';
@@ -133,8 +134,13 @@ export default async function AdminListsPage({
   const hubPromise = getCachedContentHubStats();
 
   if (view === 'people') {
-    const hubStats = await hubPromise;
-    return <ContentHubClient view="people" hubStats={hubStats} />;
+    const [hubStats, initialPeople] = await Promise.all([
+      hubPromise,
+      queryCachedDiscoveredPeople({ page: 1, limit: 50 }),
+    ]);
+    return (
+      <ContentHubClient view="people" hubStats={hubStats} initialPeople={initialPeople} />
+    );
   }
 
   if (view === 'descriptions') {

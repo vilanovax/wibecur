@@ -84,6 +84,13 @@ export default function PersonImportModal({
     setMobileTab('preview');
   };
 
+  const handlePickFile = async (file: File | undefined) => {
+    if (!file) return;
+    const text = await file.text();
+    setJson(text);
+    setMobileTab('preview');
+  };
+
   const handleImport = async () => {
     if (parseState.status !== 'valid') return;
     await onImport({ people: parseState.people });
@@ -162,14 +169,30 @@ export default function PersonImportModal({
           >
             <div className="mb-2 flex items-center justify-between gap-2">
               <label className="text-xs font-semibold text-[var(--color-text-muted)]">JSON</label>
-              <button
-                type="button"
-                onClick={handlePasteExample}
-                className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-2 py-1 text-[11px] font-medium hover:bg-[var(--color-bg)]"
-              >
-                <ClipboardPaste className="h-3 w-3" />
-                نمونه
-              </button>
+              <div className="flex gap-1">
+                <label className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-bg)]">
+                  <FileJson className="h-3.5 w-3.5" />
+                  انتخاب فایل JSON
+                  <input
+                    type="file"
+                    accept="application/json,.json"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      void handlePickFile(file);
+                      event.target.value = '';
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={handlePasteExample}
+                  className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-bg)]"
+                >
+                  <ClipboardPaste className="h-3.5 w-3.5" />
+                  نمونه
+                </button>
+              </div>
             </div>
             <textarea
               value={json}

@@ -48,6 +48,32 @@ describe('person bio import', () => {
     expect(text).toBe('Christopher Nolan');
   });
 
+  it('skips rows whose bio is still empty and keeps completed ones', () => {
+    const result = tryParsePersonBioImportPayload({
+      people: [
+        {
+          role: 'author',
+          slug: 'bzrg-aloi',
+          displayName: 'بزرگ علوی',
+          bio: '',
+          status: 'published',
+        },
+        {
+          role: 'author',
+          slug: 'danth-aligiri',
+          displayName: 'دانته آلیگیری',
+          bio: 'دانته آلیگیری شاعر ایتالیایی و سرایندهٔ کمدی الهی است.',
+          status: 'published',
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.people).toHaveLength(1);
+      expect(result.data.people[0]?.slug).toBe('danth-aligiri');
+    }
+  });
+
   it('filters template rows from schema doc JSON', () => {
     const raw = {
       $schema: 'وایب',

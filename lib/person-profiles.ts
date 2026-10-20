@@ -17,6 +17,8 @@ export type PersonProfileRecord = {
   updatedAt: Date;
 };
 
+export type PersonImageStatus = 'none' | 'storage' | 'external';
+
 export type DiscoveredPerson = {
   role: PersonRole;
   slug: string;
@@ -25,6 +27,8 @@ export type DiscoveredPerson = {
   hasProfile: boolean;
   hasBio: boolean;
   profileStatus: PersonProfileStatus | null;
+  /** وضعیت تصویر، یک‌بار هنگام کشف حساب می‌شود تا هر بارگذاری دوباره تطبیق نزند. */
+  imageStatus?: PersonImageStatus;
 };
 
 export type DiscoverPeopleStats = {

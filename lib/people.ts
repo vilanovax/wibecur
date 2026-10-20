@@ -143,6 +143,13 @@ function normalizeSlugPart(part: string): string {
     .replace(/^kh/, 'h');
 }
 
+/** سطل دو بخش اول اسلاگ، بعد از یکسان‌سازی djuric/duric. */
+export function personSlugTwoPartKey(role: string, slug: string): string | null {
+  const parts = slug.toLowerCase().split('-').filter(Boolean);
+  if (parts.length < 2) return null;
+  return `${role}:${normalizeSlugPart(parts[0]!)}:${normalizeSlugPart(parts[1]!)}`;
+}
+
 /** تطبیق fuzzy برای djuric/duric و موارد مشابه */
 export function personSlugsFuzzyMatch(a: string, b: string): boolean {
   if (personSlugsMatch(a, b)) return true;
@@ -275,7 +282,25 @@ export type DiscoveredPersonEntry = {
   slug: string;
   displayName: string;
   itemKeys: Set<string>;
+  /** شناسهٔ ردیف آیتم — برای باز کردن صفحهٔ شخص بدون اسکن دوباره */
+  itemIds?: Set<string>;
 };
+
+function copyDiscoveredEntry(entry: DiscoveredPersonEntry): DiscoveredPersonEntry {
+  return {
+    role: entry.role,
+    slug: entry.slug,
+    displayName: entry.displayName,
+    itemKeys: new Set(entry.itemKeys),
+    ...(entry.itemIds ? { itemIds: new Set(entry.itemIds) } : {}),
+  };
+}
+
+function addDiscoveredItemIds(target: DiscoveredPersonEntry, source: DiscoveredPersonEntry) {
+  if (!source.itemIds?.size) return;
+  if (!target.itemIds) target.itemIds = new Set();
+  for (const id of source.itemIds) target.itemIds.add(id);
+}
 
 export function discoveredEntriesShareItems(
   a: { itemKeys: Set<string> },
@@ -334,6 +359,8 @@ export type ProfileLookup = {
   byRoleDisplayName: Map<string, PersonProfileIdentity[]>;
   byImdbId: Map<string, PersonProfileIdentity[]>;
   byRoleSpellingBucket: Map<string, PersonProfileIdentity[]>;
+  /** دو بخش اول اسلاگ — برای تطبیق پیشوند بدون اسکن همهٔ نقش. */
+  byTwoPartSlug: Map<string, PersonProfileIdentity[]>;
 };
 
 function addProfileMatch(
@@ -435,6 +462,7 @@ export function buildProfileLookup(profiles: PersonProfileIdentity[]): ProfileLo
   const byRoleDisplayName = new Map<string, PersonProfileIdentity[]>();
   const byImdbId = new Map<string, PersonProfileIdentity[]>();
   const byRoleSpellingBucket = new Map<string, PersonProfileIdentity[]>();
+  const byTwoPartSlug = new Map<string, PersonProfileIdentity[]>();
 
   for (const profile of profiles) {
     byRoleSlug.set(`${profile.role}:${profile.slug}`, profile);
@@ -469,9 +497,16 @@ export function buildProfileLookup(profiles: PersonProfileIdentity[]): ProfileLo
       imdbList.push(profile);
       byImdbId.set(imdbId, imdbList);
     }
+
+    const twoPartKey = personSlugTwoPartKey(profile.role, profile.slug);
+    if (twoPartKey) {
+      const twoPartList = byTwoPartSlug.get(twoPartKey) ?? [];
+      twoPartList.push(profile);
+      byTwoPartSlug.set(twoPartKey, twoPartList);
+    }
   }
 
-  return { byRoleSlug, byRole, byRoleDisplayName, byImdbId, byRoleSpellingBucket };
+  return { byRoleSlug, byRole, byRoleDisplayName, byImdbId, byRoleSpellingBucket, byTwoPartSlug };
 }
 
 function profileKeysForEntry(
@@ -510,7 +545,9 @@ function profileKeysForEntry(
   }
 
   if (matches.length === 0) {
-    for (const profile of lookup.byRole.get(entry.role) ?? []) {
+    const twoPartKey = personSlugTwoPartKey(entry.role, entry.slug);
+    const candidates = twoPartKey ? lookup.byTwoPartSlug.get(twoPartKey) ?? [] : [];
+    for (const profile of candidates) {
       if (
         personSlugsPrefixMatch(entry.slug, profile.slug) ||
         personSlugsFuzzyMatch(entry.slug, profile.slug)
@@ -548,7 +585,8 @@ function sharedProfileKeys(a: Set<string>, b: Set<string>): boolean {
 /** بهترین پروفایل برای یک شخص کشف‌شده — در صورت چند تطابق، پروفایل دارای bio اولویت دارد */
 export function findBestProfileForDiscoveredEntry(
   entry: DiscoveredPersonEntry | { role: PersonRole; slug: string; displayName: string },
-  profilesOrLookup: PersonProfileIdentity[] | ProfileLookup
+  profilesOrLookup: PersonProfileIdentity[] | ProfileLookup,
+  options?: { exhaustive?: boolean }
 ): PersonProfileIdentity | undefined {
   const lookup = Array.isArray(profilesOrLookup)
     ? buildProfileLookup(profilesOrLookup)
@@ -583,7 +621,7 @@ export function findBestProfileForDiscoveredEntry(
     }
   }
 
-  if (matches.length === 0) {
+  if (matches.length === 0 && options?.exhaustive !== false) {
     for (const profile of lookup.byRole.get(entry.role) ?? []) {
       if (
         personIdentityMatches(
@@ -606,10 +644,11 @@ export function findBestProfileForDiscoveredEntry(
         }
       }
     }
-    if (matches.length === 0) {
-      for (const profile of findProfilesBySpellingSimilarity(entry, lookup)) {
-        addProfileMatch(matches, seen, profile);
-      }
+  }
+
+  if (matches.length === 0) {
+    for (const profile of findProfilesBySpellingSimilarity(entry, lookup)) {
+      addProfileMatch(matches, seen, profile);
     }
   }
 
@@ -647,12 +686,7 @@ export function mergeDiscoveredPersonEntries(
   profiles?: PersonProfileIdentity[]
 ): DiscoveredPersonEntry[] {
   if (entries.length <= 1) {
-    return entries.map((entry) => ({
-      role: entry.role,
-      slug: entry.slug,
-      displayName: entry.displayName,
-      itemKeys: new Set(entry.itemKeys),
-    }));
+    return entries.map((entry) => copyDiscoveredEntry(entry));
   }
 
   const lookup = profiles ? buildProfileLookup(profiles) : null;
@@ -751,16 +785,12 @@ export function mergeDiscoveredPersonEntries(
     const root = find(index);
     const existing = groups.get(root);
     if (!existing) {
-      groups.set(root, {
-        role: entry.role,
-        slug: entry.slug,
-        displayName: entry.displayName,
-        itemKeys: new Set(entry.itemKeys),
-      });
+      groups.set(root, copyDiscoveredEntry(entry));
       continue;
     }
 
     for (const key of entry.itemKeys) existing.itemKeys.add(key);
+    addDiscoveredItemIds(existing, entry);
     const mergedCount = existing.itemKeys.size;
     existing.slug = pickCanonicalPersonSlug(
       { slug: existing.slug, itemCount: mergedCount },

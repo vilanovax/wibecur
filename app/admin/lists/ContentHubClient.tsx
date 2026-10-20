@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ import type { NewItemFormList } from '../items/new/NewItemForm';
 import type { ListDescriptionsPageData } from '@/lib/admin/list-description-import';
 import type { ItemTipsPageData } from '@/lib/admin/item-tip-import';
 import type { ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
+import type { DiscoverPeopleResult } from '@/lib/person-profiles';
 
 function ViewFallback() {
   return (
@@ -86,9 +87,10 @@ interface ContentHubClientProps {
   catalogMode?: string;
   descriptionsData?: ListDescriptionsPageData;
   itemTipsData?: ItemTipsPageData;
+  initialPeople?: DiscoverPeopleResult;
 }
 
-const STATS_COLLAPSED_KEY = 'admin-content-hub-stats-collapsed';
+const STATS_COLLAPSED_KEY = 'admin-content-hub-stats-collapsed-v2';
 
 function tabClass(active: boolean) {
   return `inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
@@ -116,18 +118,22 @@ export default function ContentHubClient({
   catalogMode,
   descriptionsData,
   itemTipsData,
+  initialPeople,
 }: ContentHubClientProps) {
   const router = useRouter();
-  const [statsCollapsed, setStatsCollapsed] = useState(false);
+  const [statsCollapsed, setStatsCollapsed] = useState(view === 'catalog');
+  const [statsHydrated, setStatsHydrated] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(STATS_COLLAPSED_KEY);
-    if (stored === '0') setStatsCollapsed(false);
+    if (stored === '1' || stored === '0') setStatsCollapsed(stored === '1');
+    setStatsHydrated(true);
   }, []);
 
   useEffect(() => {
+    if (!statsHydrated) return;
     localStorage.setItem(STATS_COLLAPSED_KEY, statsCollapsed ? '1' : '0');
-  }, [statsCollapsed]);
+  }, [statsCollapsed, statsHydrated]);
 
   const switchView = (next: ContentHubView) => {
     if (next === view) return;
@@ -258,7 +264,9 @@ export default function ContentHubClient({
         />
       )}
 
-      {view === 'people' && <PeoplePageClient embedded />}
+      {view === 'people' && (
+        <PeoplePageClient embedded initialPeople={initialPeople ?? null} />
+      )}
 
       {view === 'descriptions' && descriptionsData && (
         <ListDescriptionsClient data={descriptionsData} embedded />

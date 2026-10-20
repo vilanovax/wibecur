@@ -13,7 +13,7 @@ export const PersonBioImportItemSchema = z.object({
 });
 
 export const PersonBioImportPayloadSchema = z.object({
-  people: z.array(PersonBioImportItemSchema).min(1).max(100),
+  people: z.array(PersonBioImportItemSchema).min(1).max(2000),
 });
 
 export type PersonBioImportItem = z.infer<typeof PersonBioImportItemSchema>;
@@ -56,6 +56,13 @@ export function buildPersonBioJsonSchemaDoc(): string {
   );
 }
 
+function isIncompleteImportEntry(entry: unknown): boolean {
+  if (isTemplateImportEntry(entry)) return true;
+  if (!entry || typeof entry !== 'object') return true;
+  const bio = String((entry as Record<string, unknown>).bio ?? '').trim();
+  return bio.length < 20;
+}
+
 function isTemplateImportEntry(entry: unknown): boolean {
   if (!entry || typeof entry !== 'object') return true;
   const e = entry as Record<string, unknown>;
@@ -71,17 +78,29 @@ function isTemplateImportEntry(entry: unknown): boolean {
 export function normalizePersonBioImportRaw(raw: unknown): unknown {
   if (raw == null) return raw;
   if (Array.isArray(raw)) {
-    return { people: raw.filter((entry) => !isTemplateImportEntry(entry)) };
+    return { people: raw.filter((entry) => !isIncompleteImportEntry(entry)) };
   }
   if (typeof raw === 'object') {
     const obj = raw as Record<string, unknown>;
     if (Array.isArray(obj.people)) {
       return {
-        people: obj.people.filter((entry) => !isTemplateImportEntry(entry)),
+        people: obj.people.filter((entry) => !isIncompleteImportEntry(entry)),
       };
     }
   }
   return raw;
+}
+
+function emptyPeopleMessage(normalized: unknown): string | null {
+  if (
+    normalized != null &&
+    typeof normalized === 'object' &&
+    Array.isArray((normalized as { people?: unknown }).people) &&
+    (normalized as { people: unknown[] }).people.length === 0
+  ) {
+    return 'هیچ زندگی‌نامهٔ کاملی در فایل نیست. هر bio باید حداقل ۲۰ کاراکتر باشد.';
+  }
+  return null;
 }
 
 function formatPersonBioImportError(error: z.ZodError): string {
@@ -93,6 +112,8 @@ function formatPersonBioImportError(error: z.ZodError): string {
 
 export function parsePersonBioImportPayload(raw: unknown): PersonBioImportPayload {
   const normalized = normalizePersonBioImportRaw(raw);
+  const empty = emptyPeopleMessage(normalized);
+  if (empty) throw new Error(empty);
   const parsed = PersonBioImportPayloadSchema.safeParse(normalized);
   if (!parsed.success) {
     throw new Error(formatPersonBioImportError(parsed.error));
@@ -105,6 +126,8 @@ export function tryParsePersonBioImportPayload(raw: unknown):
   | { success: false; error: string } {
   try {
     const normalized = normalizePersonBioImportRaw(raw);
+    const empty = emptyPeopleMessage(normalized);
+    if (empty) return { success: false, error: empty };
     const parsed = PersonBioImportPayloadSchema.safeParse(normalized);
     if (!parsed.success) {
       return { success: false, error: formatPersonBioImportError(parsed.error) };

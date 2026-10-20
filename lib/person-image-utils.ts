@@ -53,3 +53,27 @@ export function personImageStatusForDiscovered<T extends PersonImageProfileRow>(
   const profile = resolvePersonImageProfileForDiscovered(person, profiles);
   return personImageStorageStatus(profile?.imageUrl);
 }
+
+/** یک فهرست برای همهٔ اشخاص — ساختن lookup داخل حلقه، هر بارگذاری را چند ده ثانیه کند می‌کند. */
+export function indexPersonImageProfiles<T extends PersonImageProfileRow>(profiles: T[]) {
+  const lookup = buildProfileLookup(
+    profiles.map((profile) => ({
+      role: profile.role,
+      slug: profile.slug,
+      displayName: profile.displayName,
+      externalUrl: profile.externalUrl ?? null,
+    }))
+  );
+  const byKey = new Map(profiles.map((profile) => [`${profile.role}:${profile.slug}`, profile]));
+
+  return {
+    resolve(person: { role: PersonRole; slug: string; displayName: string }): T | undefined {
+      const match = findBestProfileForDiscoveredEntry(person, lookup);
+      if (!match) return undefined;
+      return byKey.get(`${match.role}:${match.slug}`);
+    },
+    status(person: { role: PersonRole; slug: string; displayName: string }): PersonImageStatus {
+      return personImageStorageStatus(this.resolve(person)?.imageUrl);
+    },
+  };
+}

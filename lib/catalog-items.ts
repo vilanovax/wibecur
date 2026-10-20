@@ -713,8 +713,12 @@ export async function getCatalogListFilters(
   const [lists, grouped] = await Promise.all([
     prisma.lists.findMany({
       where: { isActive: true, deletedAt: null },
-      include: { categories: { select: { icon: true } } },
       orderBy: { title: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        categories: { select: { icon: true } },
+      },
     }),
     prisma.items.groupBy({
       by: ['listId'],
@@ -731,10 +735,6 @@ export async function getCatalogListFilters(
     icon: l.categories?.icon ?? null,
     count: countMap.get(l.id) ?? 0,
   }));
-
-  if (options?.categorySlug) {
-    return mapped.filter((l) => l.count > 0);
-  }
 
   return mapped;
 }
@@ -919,7 +919,6 @@ export async function listCatalogItems(
       select: {
         id: true,
         title: true,
-        description: true,
         imageUrl: true,
         categorySlug: true,
         externalKey: true,
@@ -947,10 +946,10 @@ export async function listCatalogItems(
 
   return {
     total,
-    rows: rows.map((r) => ({
+      rows: rows.map((r) => ({
       id: r.id,
       title: r.title,
-      description: r.description,
+      description: null,
       imageUrl: r.imageUrl,
       categorySlug: r.categorySlug,
       externalKey: r.externalKey,

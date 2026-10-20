@@ -17,7 +17,7 @@ import {
 } from '@/lib/item-image-storage';
 import {
   personImageStorageStatus,
-  personImageStatusForDiscovered,
+  indexPersonImageProfiles,
   type PersonImageProfileRow,
   type PersonImageStatus,
 } from '@/lib/person-image-utils';
@@ -453,22 +453,12 @@ export async function getPersonImageStats(
   client: PrismaClient = prisma,
   role?: PersonRole
 ): Promise<PersonImageStats> {
-  const [people, profiles] = await Promise.all([
-    getCachedDiscoveredPeople(),
-    client.person_profiles.findMany({
-      where: role ? { role } : undefined,
-      select: { role: true, slug: true, displayName: true, imageUrl: true, externalUrl: true },
-    }),
-  ]);
-
+  const people = await getCachedDiscoveredPeople();
   const filteredPeople = role ? people.filter((person) => person.role === role) : people;
-  const profileRows = profiles.map((profile) => ({
-    role: profile.role as PersonRole,
-    slug: profile.slug,
-    displayName: profile.displayName,
-    imageUrl: profile.imageUrl,
-    externalUrl: profile.externalUrl,
-  }));
+  const needsMatch = filteredPeople.some((person) => person.imageStatus == null);
+  const profileIndex = needsMatch
+    ? indexPersonImageProfiles(await loadPersonImageProfiles(client, role))
+    : null;
 
   const stats: PersonImageStats = {
     total: filteredPeople.length,
@@ -483,7 +473,7 @@ export async function getPersonImageStats(
       stats.tmdbCapable += 1;
     }
 
-    const status = personImageStatusForDiscovered(person, profileRows);
+    const status = person.imageStatus ?? profileIndex?.status(person) ?? 'none';
     if (status === 'none') stats.noImage += 1;
     else if (status === 'storage') stats.onStorage += 1;
     else stats.external += 1;
@@ -531,13 +521,16 @@ export async function listPersonImageCandidates(
     role: options?.role,
     skipPagination: true,
   });
-  const profiles = await loadPersonImageProfiles(client, options?.role);
+  const needsMatch = people.some((person) => person.imageStatus == null);
+  const profileIndex = needsMatch
+    ? indexPersonImageProfiles(await loadPersonImageProfiles(client, options?.role))
+    : null;
 
   const filtered = people.filter((person) => {
     if (action === 'fetch_tmdb' && person.role !== 'actor' && person.role !== 'director') {
       return false;
     }
-    const status = personImageStatusForDiscovered(person, profiles);
+    const status = person.imageStatus ?? profileIndex?.status(person) ?? 'none';
     if (options?.onlyMissing !== false) {
       if (action === 'fetch_tmdb') return status === 'none' || status === 'external';
       return status === 'external';
@@ -632,7 +625,10 @@ export async function listDiscoveredPeopleWithImageStatus(
     role: options?.role,
     skipPagination: true,
   });
-  const profiles = await loadPersonImageProfiles(client, options?.role);
+  const needsMatch = people.some((person) => person.imageStatus == null);
+  const profileIndex = needsMatch
+    ? indexPersonImageProfiles(await loadPersonImageProfiles(client, options?.role))
+    : null;
 
   return people
     .map((person) => ({
@@ -640,7 +636,7 @@ export async function listDiscoveredPeopleWithImageStatus(
       slug: person.slug,
       displayName: person.displayName,
       itemCount: person.itemCount,
-      imageStatus: personImageStatusForDiscovered(person, profiles),
+      imageStatus: person.imageStatus ?? profileIndex?.status(person) ?? 'none',
     }))
     .filter((person) => matchesPersonImageFilter(person.imageStatus, filter));
 }

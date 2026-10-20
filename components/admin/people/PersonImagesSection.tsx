@@ -45,10 +45,12 @@ const BATCH_SIZE = 25;
 export default function PersonImagesSection({
   roleFilter,
   statsEnabled = true,
+  bare = false,
   onUpdated,
 }: {
   roleFilter: PersonRole | 'all';
   statsEnabled?: boolean;
+  bare?: boolean;
   onUpdated?: () => void;
 }) {
   const [stats, setStats] = useState<PersonImageStats | null>(null);
@@ -187,7 +189,7 @@ export default function PersonImagesSection({
       : 0;
 
   return (
-    <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:p-4 space-y-3">
+    <section className={bare ? 'space-y-3' : 'space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:p-4'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text)]">

@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import {
   ChevronLeft,
   ChevronRight,
   ClipboardCopy,
+  Download,
   ExternalLink,
   Eye,
   FileJson,
@@ -48,9 +50,15 @@ import type {
   DiscoverPeopleStats,
   PersonProfileRecord,
 } from '@/lib/person-profiles';
-import PersonPreviewModal from '@/components/admin/people/PersonPreviewModal';
-import PersonImportModal from '@/components/admin/people/PersonImportModal';
-import PersonSimilarNamesModal from '@/components/admin/people/PersonSimilarNamesModal';
+const PersonPreviewModal = dynamic(
+  () => import('@/components/admin/people/PersonPreviewModal')
+);
+const PersonImportModal = dynamic(
+  () => import('@/components/admin/people/PersonImportModal')
+);
+const PersonSimilarNamesModal = dynamic(
+  () => import('@/components/admin/people/PersonSimilarNamesModal')
+);
 
 const PersonImagesSection = lazy(
   () => import('@/components/admin/people/PersonImagesSection')
@@ -105,7 +113,13 @@ const EMPTY_PAGINATION: DiscoverPeoplePagination = {
   totalPages: 1,
 };
 
-export default function PeoplePageClient({ embedded = false }: { embedded?: boolean }) {
+export default function PeoplePageClient({
+  embedded = false,
+  initialPeople = null,
+}: {
+  embedded?: boolean;
+  initialPeople?: DiscoverPeopleResult | null;
+}) {
   const [roleFilter, setRoleFilter] = useState<PersonRole | 'all'>('all');
   const [missingBioOnly, setMissingBioOnly] = useState(false);
   const [query, setQuery] = useState('');
@@ -113,10 +127,12 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(50);
 
-  const [people, setPeople] = useState<DiscoveredPerson[]>([]);
-  const [stats, setStats] = useState<DiscoverPeopleStats>(EMPTY_STATS);
-  const [pagination, setPagination] = useState<DiscoverPeoplePagination>(EMPTY_PAGINATION);
-  const [loading, setLoading] = useState(true);
+  const [people, setPeople] = useState<DiscoveredPerson[]>(initialPeople?.people ?? []);
+  const [stats, setStats] = useState<DiscoverPeopleStats>(initialPeople?.stats ?? EMPTY_STATS);
+  const [pagination, setPagination] = useState<DiscoverPeoplePagination>(
+    initialPeople?.pagination ?? EMPTY_PAGINATION
+  );
+  const [loading, setLoading] = useState(initialPeople == null);
   const [error, setError] = useState('');
 
   const [aiProvider, setAiProvider] = useState<CommentAiProvider>('openai');
@@ -138,13 +154,18 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
   const [importJson, setImportJson] = useState('');
   const [importOpen, setImportOpen] = useState(false);
   const [similarNamesOpen, setSimilarNamesOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [handoffNote, setHandoffNote] = useState('');
   const [copyLoading, setCopyLoading] = useState<'list' | 'prompt' | null>(null);
   const [previewData, setPreviewData] = useState<PersonPageData | null>(null);
   const [previewLoadingKey, setPreviewLoadingKey] = useState<string | null>(null);
 
   const fetchAbortRef = useRef<AbortController | null>(null);
   const loadSeqRef = useRef(0);
+  const requestKey = `${roleFilter}:${debouncedQuery}:${missingBioOnly ? 1 : 0}:${page}:${pageSize}`;
+  const loadedKeyRef = useRef(initialPeople ? 'all::0:1:50' : '');
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 450);
@@ -219,8 +240,10 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
   }, [loadAiSettings]);
 
   useEffect(() => {
+    if (loadedKeyRef.current === requestKey) return;
+    loadedKeyRef.current = requestKey;
     void loadPeople();
-  }, [loadPeople]);
+  }, [loadPeople, requestKey]);
 
   const openPreview = async (person: DiscoveredPerson) => {
     const key = `${person.role}:${person.slug}`;
@@ -461,6 +484,53 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
     }
   };
 
+  const handleExportMissing = async () => {
+    setExporting(true);
+    setHandoffNote('');
+    setError('');
+    try {
+      const params = new URLSearchParams({ format: 'json' });
+      if (roleFilter !== 'all') params.set('role', roleFilter);
+      const res = await fetch(`/api/admin/people/missing-bio?${params}`);
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در ساخت خروجی');
+      }
+      const rows = (json.data.people ?? []) as DiscoveredPerson[];
+      const scope = roleFilter === 'all' ? 'همهٔ نقش‌ها' : PERSON_ROLE_META[roleFilter].label;
+      const payload = {
+        note: `افراد بدون زندگی‌نامه (${scope}). bio را فارسی و حداقل ۲۰ کاراکتر بنویسید و همین فایل را از «ورود JSON» وارد کنید. ردیف‌های خالی وارد نمی‌شوند.`,
+        role: roleFilter === 'all' ? null : roleFilter,
+        count: rows.length,
+        people: rows.map((person) => ({
+          role: person.role,
+          roleLabel: PERSON_ROLE_META[person.role].label,
+          slug: person.slug,
+          displayName: person.displayName,
+          itemCount: person.itemCount,
+          bio: '',
+          imageUrl: null,
+          externalUrl: null,
+          status: 'published' as const,
+        })),
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `wibe-missing-bio-${roleFilter}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setHandoffNote(
+        `${rows.length.toLocaleString('fa-IR')} نفر بدون زندگی‌نامه (${scope}) در فایل JSON ذخیره شد.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در ساخت خروجی');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleCopyMissing = async (format: 'text' | 'prompt') => {
     setCopyLoading(format === 'text' ? 'list' : 'prompt');
     try {
@@ -547,13 +617,13 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
           <div>
             <h1 className="text-xl font-bold text-[var(--color-text)] md:text-2xl">اشخاص</h1>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              پروفایل کارگردان، بازیگر، نویسنده و مترجم — bio با AI یا JSON
+              پروفایل کارگردان، بازیگر، نویسنده و مترجم
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <StatChip icon={Users} label="کل" value={stats.total} />
-            <StatChip icon={Sparkles} label="با bio" value={stats.withBio} tone="emerald" />
-            <StatChip icon={UserRound} label="بدون bio" value={stats.missingBio} tone="amber" />
+            <StatChip icon={Users} label="کل" value={stats.total} loading={loading && stats.total === 0} />
+            <StatChip icon={Sparkles} label="با زندگی‌نامه" value={stats.withBio} tone="emerald" loading={loading && stats.total === 0} />
+            <StatChip icon={UserRound} label="بدون زندگی‌نامه" value={stats.missingBio} tone="amber" loading={loading && stats.total === 0} />
           </div>
         </header>
       )}
@@ -561,9 +631,9 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
       {embedded && (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
-            <StatChip icon={Users} label="کل" value={stats.total} />
-            <StatChip icon={Sparkles} label="با bio" value={stats.withBio} tone="emerald" />
-            <StatChip icon={UserRound} label="بدون bio" value={stats.missingBio} tone="amber" />
+            <StatChip icon={Users} label="کل" value={stats.total} loading={loading && stats.total === 0} />
+            <StatChip icon={Sparkles} label="با زندگی‌نامه" value={stats.withBio} tone="emerald" loading={loading && stats.total === 0} />
+            <StatChip icon={UserRound} label="بدون زندگی‌نامه" value={stats.missingBio} tone="amber" loading={loading && stats.total === 0} />
           </div>
           {stats.total > 0 && (
             <BioProgressBar withBio={stats.withBio} total={stats.total} />
@@ -593,121 +663,60 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-medium text-[var(--color-text-muted)] ms-1">مدل bio:</span>
-            {COMMENT_AI_PROVIDER_OPTIONS.map((option) => {
-              const configured =
-                option.value === 'openai'
-                  ? aiSettings.openaiConfigured
-                  : aiSettings.deepseekConfigured;
-              return (
-              <button
-                key={option.value}
-                type="button"
-                disabled={savingAiProvider}
-                onClick={() => void saveAiProvider(option.value)}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
-                  aiProvider === option.value
-                    ? 'bg-indigo-600 text-white'
-                    : 'border border-[var(--color-border)] hover:bg-[var(--color-bg)]'
-                } ${!configured ? 'opacity-70' : ''}`}
-                title={configured ? undefined : `کلید ${option.label} در تنظیمات وارد نشده`}
-              >
-                {option.label}
-                {!configured && ' *'}
-              </button>
-            );
-            })}
-          </div>
-          {!aiSettings.providerReady && (
-            <p className="text-xs text-amber-700 dark:text-amber-300">
-              برای bio با AI، کلید OpenAI یا DeepSeek را در{' '}
-              <Link href="/admin/settings?tab=integrations" className="underline">
-                تنظیمات یکپارچه‌سازی
-              </Link>{' '}
-              وارد کنید.
-            </p>
-          )}
-          {aiSettings.fallbackActive && aiSettings.effectiveProvider && (
-            <p className="text-xs text-[var(--color-text-muted)]">
-              {commentAiProviderLabel(aiSettings.personBioAiProvider)} فعال نیست — از{' '}
-              {commentAiProviderLabel(aiSettings.effectiveProvider)} استفاده می‌شود.
-            </p>
-          )}
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-1.5">
-            <FilterChip active={roleFilter === 'all'} onClick={() => setRoleFilter('all')} label="همه" />
-            {PERSON_ROLES.map((role) => (
-              <FilterChip
-                key={role}
-                active={roleFilter === role}
-                onClick={() => setRoleFilter(role)}
-                label={PERSON_ROLE_META[role].label}
-              />
-            ))}
+        <div className="flex flex-wrap gap-1.5">
+          <FilterChip active={roleFilter === 'all'} onClick={() => setRoleFilter('all')} label="همه" />
+          {PERSON_ROLES.map((role) => (
             <FilterChip
-              active={missingBioOnly}
-              onClick={() => setMissingBioOnly((v) => !v)}
-              label="بدون bio"
-              accent="amber"
+              key={role}
+              active={roleFilter === role}
+              onClick={() => setRoleFilter(role)}
+              label={PERSON_ROLE_META[role].label}
             />
-          </div>
-
-          <div className="flex flex-wrap gap-1.5">
-            <div className="flex flex-wrap gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-1">
-              <ActionButton
-                icon={<ClipboardCopy className="h-3.5 w-3.5" />}
-                label="کپی بدون bio"
-                loading={copyLoading === 'list'}
-                onClick={() => void handleCopyMissing('text')}
-                subtle
-              />
-              <ActionButton
-                icon={<Wand2 className="h-3.5 w-3.5" />}
-                label="پرامپت AI"
-                loading={copyLoading === 'prompt'}
-                onClick={() => void handleCopyMissing('prompt')}
-                subtle
-              />
-              <ActionButton
-                icon={<FileJson className="h-3.5 w-3.5" />}
-                label="نمونه JSON"
-                onClick={handleShowJsonSchema}
-                subtle
-              />
-            </div>
-            <ActionButton
-              icon={<GitMerge className="h-3.5 w-3.5" />}
-              label="نام‌های مشابه"
-              onClick={() => setSimilarNamesOpen(true)}
-              subtle
-            />
-            <ActionButton
-              icon={<Upload className="h-3.5 w-3.5" />}
-              label="ورود JSON"
-              onClick={() => setImportOpen(true)}
-              primary
-            />
-          </div>
+          ))}
+          <FilterChip
+            active={missingBioOnly}
+            onClick={() => setMissingBioOnly((v) => !v)}
+            label="بدون زندگی‌نامه"
+            accent="amber"
+          />
         </div>
-      </section>
 
-      <Suspense
-        fallback={
-          <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-xs text-[var(--color-text-muted)]">
-            در حال آماده‌سازی بخش تصاویر…
-          </section>
-        }
-      >
-        <PersonImagesSection
-          roleFilter={roleFilter}
-          statsEnabled={!loading}
-          onUpdated={() => void loadPeopleRef.current()}
-        />
-      </Suspense>
+        <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] pt-3">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void handleExportMissing()}
+              disabled={exporting}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm font-medium hover:bg-[var(--color-surface)] disabled:opacity-60"
+            >
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              خروجی بدون زندگی‌نامه
+            </button>
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              <Upload className="h-4 w-4" />
+              ورود JSON
+            </button>
+          </div>
+          <p className="text-xs text-[var(--color-text-muted)]">
+            برای{' '}
+            <span className="font-medium text-[var(--color-text)]">
+              {roleFilter === 'all' ? 'همهٔ نقش‌ها' : PERSON_ROLE_META[roleFilter].label}
+            </span>
+            {!debouncedQuery && stats.total > 0
+              ? ` · ${stats.missingBio.toLocaleString('fa-IR')} نفر بدون زندگی‌نامه`
+              : ''}
+          </p>
+        </div>
+        {handoffNote && (
+          <p className="text-xs text-emerald-700 dark:text-emerald-300">{handoffNote}</p>
+        )}
+      </section>
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
@@ -721,28 +730,24 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
         </div>
       )}
 
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
-        <div className="min-w-0 flex-1">
+      <div>
+        <div className="min-w-0">
           <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-            {loading ? (
-              <div className="flex items-center justify-center gap-2 px-6 py-20 text-sm text-[var(--color-text-muted)]">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                در حال بارگذاری…
-              </div>
+            {loading && people.length === 0 ? (
+              <PeopleTableSkeleton />
             ) : people.length === 0 ? (
               <div className="px-6 py-20 text-center text-sm text-[var(--color-text-muted)]">
                 شخصی پیدا نشد
               </div>
             ) : (
-              <div className="max-h-[calc(100vh-18rem)] overflow-auto">
+              <div className={`max-h-[calc(100vh-18rem)] overflow-auto ${loading ? 'opacity-60' : ''}`}>
                 <table className="min-w-full text-sm">
                   <thead className="sticky top-0 z-10 bg-[var(--color-bg)] text-[var(--color-text-muted)] shadow-[0_1px_0_var(--color-border)]">
                     <tr>
                       <th className="px-3 py-2.5 text-right font-medium">نام</th>
                       <th className="px-3 py-2.5 text-right font-medium">نقش</th>
                       <th className="hidden sm:table-cell px-3 py-2.5 text-right font-medium">آیتم</th>
-                      <th className="px-3 py-2.5 text-right font-medium">bio</th>
-                      <th className="hidden md:table-cell px-3 py-2.5 text-right font-medium">پروفایل</th>
+                      <th className="px-3 py-2.5 text-right font-medium">پروفایل</th>
                       <th className="px-3 py-2.5 text-left font-medium w-28">عملیات</th>
                     </tr>
                   </thead>
@@ -775,9 +780,6 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
                             {person.itemCount.toLocaleString('fa-IR')}
                           </td>
                           <td className="px-3 py-2.5">
-                            <StatusDot ok={person.hasBio} okLabel="دارد" noLabel="ندارد" />
-                          </td>
-                          <td className="hidden md:table-cell px-3 py-2.5">
                             {person.hasProfile ? (
                               <span className="rounded-md bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-800 dark:bg-sky-900/30 dark:text-sky-200">
                                 {person.profileStatus === 'draft' ? 'پیش‌نویس' : 'منتشر'}
@@ -793,7 +795,7 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
                                   type="button"
                                   title={
                                     aiSettings.providerReady
-                                      ? 'تکمیل bio با AI'
+                                      ? 'تکمیل زندگی‌نامه با هوش مصنوعی'
                                       : 'کلید AI در تنظیمات وارد نشده'
                                   }
                                   disabled={!aiSettings.providerReady || aiEnriching}
@@ -831,7 +833,7 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
                               <button
                                 type="button"
                                 onClick={() => void openEditor(person)}
-                                className="rounded-lg border border-[var(--color-border)] px-2 py-1 text-[11px] font-medium hover:bg-[var(--color-bg)]"
+                                className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-bg)]"
                               >
                                 ویرایش
                               </button>
@@ -845,7 +847,7 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
               </div>
             )}
 
-            {!loading && pagination.totalPages > 0 && (
+            {pagination.totalPages > 0 && people.length > 0 && (
               <div className="flex flex-col gap-2 border-t border-[var(--color-border)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-[var(--color-text-muted)]">
                   {pagination.total === 0
@@ -895,7 +897,18 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
         </div>
 
         {selected && (
-          <aside className="w-full shrink-0 xl:sticky xl:top-4 xl:w-[22rem]">
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+            role="presentation"
+            onClick={closeEditor}
+          >
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label={`ویرایش ${selected.displayName}`}
+            className="max-h-[min(40rem,calc(100vh-2rem))] w-full max-w-lg overflow-y-auto"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -917,7 +930,7 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
                 <button
                   type="button"
                   onClick={closeEditor}
-                  className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
                   aria-label="بستن"
                 >
                   <X className="h-4 w-4" />
@@ -1102,15 +1115,112 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
                     </div>
                   ) : selected ? (
                     <p className="text-[11px] text-center text-[var(--color-text-muted)]">
-                      برای انتشار در سایت: bio بنویسید، وضعیت را «منتشر شده» بگذارید و ذخیره کنید.
+                      برای انتشار در سایت: زندگی‌نامه بنویسید، وضعیت را «منتشر شده» بگذارید و ذخیره کنید.
                     </p>
                   ) : null}
                 </div>
               )}
             </div>
           </aside>
+          </div>
         )}
       </div>
+
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+        <button
+          type="button"
+          onClick={() => setToolsOpen((open) => !open)}
+          className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-start"
+          aria-expanded={toolsOpen}
+        >
+          <span>
+            <span className="block text-sm font-semibold text-[var(--color-text)]">
+              ابزار زندگی‌نامه و تصویر
+            </span>
+            <span className="mt-0.5 block text-xs text-[var(--color-text-muted)]">
+              پرامپت، نام‌های مشابه و تصویر پروفایل
+            </span>
+          </span>
+          <ChevronLeft className={`h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform ${toolsOpen ? '-rotate-90' : ''}`} />
+        </button>
+        {toolsOpen && (
+          <div className="space-y-4 border-t border-[var(--color-border)] px-4 py-4">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-medium text-[var(--color-text-muted)]">مدل زندگی‌نامه:</span>
+              {COMMENT_AI_PROVIDER_OPTIONS.map((option) => {
+                const configured =
+                  option.value === 'openai'
+                    ? aiSettings.openaiConfigured
+                    : aiSettings.deepseekConfigured;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    disabled={savingAiProvider}
+                    onClick={() => void saveAiProvider(option.value)}
+                    className={`min-h-11 rounded-lg px-3 text-xs font-medium transition-colors disabled:opacity-60 ${
+                      aiProvider === option.value
+                        ? 'bg-indigo-600 text-white'
+                        : 'border border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                    } ${!configured ? 'opacity-70' : ''}`}
+                    title={configured ? undefined : `کلید ${option.label} در تنظیمات وارد نشده`}
+                  >
+                    {option.label}
+                    {!configured && ' *'}
+                  </button>
+                );
+              })}
+            </div>
+            {!aiSettings.providerReady && (
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                برای نوشتن زندگی‌نامه با هوش مصنوعی، کلید OpenAI یا DeepSeek را در{' '}
+                <Link href="/admin/settings?tab=integrations" className="underline">
+                  تنظیمات یکپارچه‌سازی
+                </Link>{' '}
+                وارد کنید.
+              </p>
+            )}
+            {aiSettings.fallbackActive && aiSettings.effectiveProvider && (
+              <p className="text-xs text-[var(--color-text-muted)]">
+                {commentAiProviderLabel(aiSettings.personBioAiProvider)} فعال نیست — از{' '}
+                {commentAiProviderLabel(aiSettings.effectiveProvider)} استفاده می‌شود.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-1.5">
+              <ActionButton
+                icon={<Wand2 className="h-3.5 w-3.5" />}
+                label="پرامپت هوش مصنوعی"
+                loading={copyLoading === 'prompt'}
+                onClick={() => void handleCopyMissing('prompt')}
+                subtle
+              />
+              <ActionButton
+                icon={<FileJson className="h-3.5 w-3.5" />}
+                label="نمونه JSON"
+                onClick={handleShowJsonSchema}
+                subtle
+              />
+              <ActionButton
+                icon={<GitMerge className="h-3.5 w-3.5" />}
+                label="نام‌های مشابه"
+                onClick={() => setSimilarNamesOpen(true)}
+                subtle
+              />
+            </div>
+            <Suspense
+              fallback={
+                <p className="text-xs text-[var(--color-text-muted)]">در حال آماده‌سازی بخش تصاویر…</p>
+              }
+            >
+              <PersonImagesSection
+                roleFilter={roleFilter}
+                bare
+                onUpdated={() => void loadPeopleRef.current()}
+              />
+            </Suspense>
+          </div>
+        )}
+      </section>
 
       {previewData && (
         <PersonPreviewModal data={previewData} onClose={() => setPreviewData(null)} />
@@ -1146,12 +1256,14 @@ export default function PeoplePageClient({ embedded = false }: { embedded?: bool
         />
       )}
 
-      <PersonSimilarNamesModal
-        open={similarNamesOpen}
-        onClose={() => setSimilarNamesOpen(false)}
-        roleFilter={roleFilter}
-        onMerged={() => void loadPeopleRef.current()}
-      />
+      {similarNamesOpen && (
+        <PersonSimilarNamesModal
+          open
+          onClose={() => setSimilarNamesOpen(false)}
+          roleFilter={roleFilter}
+          onMerged={() => void loadPeopleRef.current()}
+        />
+      )}
     </div>
   );
 }
@@ -1161,7 +1273,7 @@ function BioProgressBar({ withBio, total }: { withBio: number; total: number }) 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5">
       <div className="mb-1.5 flex items-center justify-between text-[11px]">
-        <span className="font-medium text-[var(--color-text-muted)]">پیشرفت تکمیل bio</span>
+        <span className="font-medium text-[var(--color-text-muted)]">پیشرفت زندگی‌نامه</span>
         <span className="tabular-nums font-semibold text-emerald-700 dark:text-emerald-300">
           {pct.toLocaleString('fa-IR')}٪
         </span>
@@ -1181,11 +1293,13 @@ function StatChip({
   label,
   value,
   tone = 'default',
+  loading = false,
 }: {
   icon: typeof Users;
   label: string;
   value: number;
   tone?: 'default' | 'emerald' | 'amber';
+  loading?: boolean;
 }) {
   const toneClass =
     tone === 'emerald'
@@ -1195,39 +1309,35 @@ function StatChip({
         : 'text-[var(--color-text)]';
 
   return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 min-w-[7rem]">
+    <div className="flex min-h-11 items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 min-w-[7rem]">
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40">
         <Icon className="h-3.5 w-3.5 text-indigo-600" />
       </div>
       <div>
-        <p className={`text-base font-bold tabular-nums leading-none ${toneClass}`}>
-          {value.toLocaleString('fa-IR')}
-        </p>
+        {loading ? (
+          <span className="block h-4 w-8 animate-pulse rounded bg-[var(--color-border)]" />
+        ) : (
+          <p className={`text-base font-bold tabular-nums leading-none ${toneClass}`}>
+            {value.toLocaleString('fa-IR')}
+          </p>
+        )}
         <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{label}</p>
       </div>
     </div>
   );
 }
 
-function StatusDot({
-  ok,
-  okLabel,
-  noLabel,
-}: {
-  ok: boolean;
-  okLabel: string;
-  noLabel: string;
-}) {
+function PeopleTableSkeleton() {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium">
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-emerald-500' : 'bg-amber-400'}`}
-        aria-hidden
-      />
-      <span className={ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}>
-        {ok ? okLabel : noLabel}
-      </span>
-    </span>
+    <div className="space-y-2 p-3" aria-busy="true" aria-label="در حال چیدن فهرست اشخاص">
+      {Array.from({ length: 8 }, (_, index) => (
+        <div key={index} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] px-3 py-3">
+          <span className="h-4 w-32 animate-pulse rounded bg-[var(--color-border)]" />
+          <span className="h-4 w-16 animate-pulse rounded bg-[var(--color-border)]" />
+          <span className="ms-auto h-4 w-12 animate-pulse rounded bg-[var(--color-border)]" />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -1246,7 +1356,7 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={`min-h-11 rounded-full px-3 text-xs font-medium transition-colors ${
         active
           ? accent === 'amber'
             ? 'bg-amber-500 text-white'

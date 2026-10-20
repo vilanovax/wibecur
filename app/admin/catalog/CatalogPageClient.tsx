@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -24,19 +25,22 @@ import {
   Check,
   Loader2,
 } from 'lucide-react';
-import NewItemForm, { type NewItemFormList } from '@/app/admin/items/new/NewItemForm';
-import AddToListModal from '@/components/admin/catalog/AddToListModal';
-import CatalogPlacementPanel from '@/components/admin/catalog/CatalogPlacementPanel';
+import type { NewItemFormList } from '@/app/admin/items/new/NewItemForm';
 import CatalogBulkToolbar from '@/components/admin/catalog/CatalogBulkToolbar';
-import CatalogDuplicateMergeTab from '@/components/admin/catalog/CatalogDuplicateMergeTab';
-import CatalogSimilarMergePanel from '@/components/admin/catalog/CatalogSimilarMergePanel';
 import CatalogVisibilityControl from '@/components/admin/catalog/CatalogVisibilityControl';
-import ExternalImageItemsModal from '@/components/admin/items/ExternalImageItemsModal';
+
+const NewItemForm = dynamic(() => import('@/app/admin/items/new/NewItemForm'));
+const AddToListModal = dynamic(() => import('@/components/admin/catalog/AddToListModal'));
+const CatalogPlacementPanel = dynamic(() => import('@/components/admin/catalog/CatalogPlacementPanel'));
+const CatalogDuplicateMergeTab = dynamic(() => import('@/components/admin/catalog/CatalogDuplicateMergeTab'));
+const CatalogSimilarMergePanel = dynamic(() => import('@/components/admin/catalog/CatalogSimilarMergePanel'));
+const ExternalImageItemsModal = dynamic(() => import('@/components/admin/items/ExternalImageItemsModal'));
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import {
   catalogCategoryLabel,
   formatExternalKeyHint,
 } from '@/lib/catalog-display';
+import { isSameCategorySlug } from '@/lib/category-slug-aliases';
 import {
   pickSuggestedMergeTarget,
   type CatalogCategoryFilter,
@@ -134,6 +138,9 @@ export default function CatalogPageClient({
     isDisabled: boolean;
   } | null>(null);
   const [externalImagesOpen, setExternalImagesOpen] = useState(initialExternalImagesOpen);
+  const [filtersOpen, setFiltersOpen] = useState(
+    Boolean(initialListId || initialMultiListOnly)
+  );
   const placementMode = initialMode === 'place';
   const createMode = initialMode === 'create';
   const [activePlacementListId, setActivePlacementListId] = useState(
@@ -515,7 +522,7 @@ export default function CatalogPageClient({
   const activeCategoryLabel = category
     ? catalogCategoryLabel(category === '__none__' ? null : category)
     : null;
-  const listFilterOptions = category ? listFilters : listFilters.filter((l) => l.count > 0);
+  const listFilterOptions = listFilters.filter((l) => l.count > 0);
 
   const externalImagesScopeTitle = useMemo(() => {
     const parts: string[] = [];
@@ -556,6 +563,13 @@ export default function CatalogPageClient({
     .map((r) => r.title);
 
   const { total: catalogTotal, categories: categoryChips } = initialCategoryFilters;
+  const labelForCategory = (slug: string | null) => {
+    if (!slug) return 'بدون دسته';
+    const named = categoryChips.find(
+      (entry) => entry.slug != null && (entry.slug === slug || isSameCategorySlug(entry.slug, slug))
+    )?.name;
+    return named || catalogCategoryLabel(slug);
+  };
   const allPageSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id));
 
   if (createMode && createLists && createLists.length > 0) {
@@ -644,18 +658,6 @@ export default function CatalogPageClient({
       </div>
       )}
 
-      {embedded && !placementMode && (
-        <p className="text-sm text-[var(--color-text-muted)] mb-4">
-          {total.toLocaleString('fa-IR')} موجودیت در کاتالوگ
-          {initialMultiListCount > 0 && (
-            <span className="text-violet-700 font-medium">
-              {' '}
-              · {initialMultiListCount.toLocaleString('fa-IR')} چندلیستی
-            </span>
-          )}
-        </p>
-      )}
-
       {placementMode && (
         <CatalogPlacementPanel
           listId={activePlacementListId}
@@ -678,18 +680,18 @@ export default function CatalogPageClient({
       <div className="mb-5 flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-sm text-blue-900">
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
         <p>
-          هر کارت اینجا <strong>یک موجودیت</strong> است (مثلاً یک فیلم). با کلیک ببینید در کدام
-          لیست‌ها است. ویرایش عنوان/تصویر از یک جایگاه، همهٔ لیست‌ها را به‌روز می‌کند.
+          هر ردیف یک موجودیت است (مثلاً یک فیلم). با کلیک ببینید در کدام لیست‌ها است.
+          ویرایش عنوان یا تصویر از یک جایگاه، همهٔ لیست‌ها را به‌روز می‌کند.
         </p>
       </div>
       )}
 
-      {/* تب‌ها */}
-      <div className="inline-flex p-1 rounded-xl bg-gray-100 mb-5">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="inline-flex rounded-xl bg-gray-100 p-1">
         <button
           type="button"
           onClick={() => switchTab('browse')}
-          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+          className={`min-h-11 rounded-lg px-4 text-sm font-semibold transition-all ${
             tab === 'browse' ? 'bg-white text-violet-700 shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
           }`}
         >
@@ -698,18 +700,28 @@ export default function CatalogPageClient({
         <button
           type="button"
           onClick={() => switchTab('duplicates')}
-          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all inline-flex items-center gap-2 ${
+          className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition-all ${
             tab === 'duplicates' ? 'bg-white text-violet-700 shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
           }`}
         >
           <GitMerge className="w-4 h-4" />
           ادغام تکراری
           {dupCount > 0 && (
-            <span className="rounded-full bg-amber-500 text-white text-[10px] min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-xs text-white">
               {dupCount > 99 ? '۹۹+' : dupCount.toLocaleString('fa-IR')}
             </span>
           )}
         </button>
+      </div>
+        <p className="text-sm text-[var(--color-text-muted)]">
+          {total.toLocaleString('fa-IR')} موجودیت
+          {multiListCount > 0 && (
+            <span className="font-medium text-violet-700">
+              {' '}
+              · {multiListCount.toLocaleString('fa-IR')} چندلیستی
+            </span>
+          )}
+        </p>
       </div>
 
       {message && (
@@ -733,14 +745,77 @@ export default function CatalogPageClient({
         <div className="min-w-0">
           {tab === 'browse' && (
             <>
-              <div className="flex flex-wrap gap-2 mb-4">
+              <form
+                className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  pushUrl({ page: 1, q: query });
+                  void loadBrowse(1, query, category, listId, multiListOnly);
+                }}
+              >
+                <div className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-subtle)]" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="جستجو با عنوان…"
+                    className="min-h-11 w-full rounded-xl border border-gray-200 bg-white pe-10 ps-4 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="min-h-11 shrink-0 rounded-xl bg-violet-600 px-4 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    جستجو
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleMultiListFilter}
+                    disabled={multiListCount === 0 && !multiListOnly}
+                    className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                      multiListOnly
+                        ? 'border-amber-400 bg-amber-50 text-amber-900'
+                        : 'border-gray-200 bg-white text-[var(--color-text)] hover:border-amber-300'
+                    }`}
+                  >
+                    <Layers className="size-4" />
+                    چندلیستی
+                    {multiListCount > 0 && (
+                      <span
+                        className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs ${
+                          multiListOnly ? 'bg-amber-500 text-white' : 'bg-gray-100 text-[var(--color-text)]'
+                        }`}
+                      >
+                        {multiListCount.toLocaleString('fa-IR')}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    aria-expanded={filtersOpen}
+                    onClick={() => setFiltersOpen((open) => !open)}
+                    className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-semibold ${
+                      filtersOpen || hasAdvancedFilters
+                        ? 'border-violet-300 bg-violet-50 text-violet-800'
+                        : 'border-gray-200 bg-white text-[var(--color-text)]'
+                    }`}
+                  >
+                    <Filter className="size-4" />
+                    فیلتر
+                  </button>
+                </div>
+              </form>
+
+              <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                 <button
                   type="button"
                   onClick={() => setCategoryFilter('')}
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                  className={`min-h-11 shrink-0 rounded-full border px-3 text-xs font-semibold ${
                     !category
-                      ? 'bg-violet-600 text-white border-violet-600'
-                      : 'bg-white text-[var(--color-text-muted)] border-gray-200 hover:border-violet-300'
+                      ? 'border-violet-600 bg-violet-600 text-white'
+                      : 'border-gray-200 bg-white text-[var(--color-text-muted)] hover:border-violet-300'
                   }`}
                 >
                   همه ({catalogTotal.toLocaleString('fa-IR')})
@@ -753,10 +828,10 @@ export default function CatalogPageClient({
                       key={slug}
                       type="button"
                       onClick={() => setCategoryFilter(slug)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                      className={`min-h-11 shrink-0 rounded-full border px-3 text-xs font-semibold ${
                         isActive
-                          ? 'bg-violet-600 text-white border-violet-600'
-                          : 'bg-white text-[var(--color-text-muted)] border-gray-200 hover:border-violet-300'
+                          ? 'border-violet-600 bg-violet-600 text-white'
+                          : 'border-gray-200 bg-white text-[var(--color-text-muted)] hover:border-violet-300'
                       }`}
                     >
                       {c.name ?? catalogCategoryLabel(c.slug)} ({c.count.toLocaleString('fa-IR')})
@@ -765,39 +840,29 @@ export default function CatalogPageClient({
                 })}
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-4 mb-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text)]">
-                    <Filter className="w-4 h-4 text-violet-600" />
-                    فیلتر پیشرفته
-                    {activeCategoryLabel && (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
-                        {activeCategoryLabel}
-                      </span>
+              {filtersOpen && (
+                <div className="mb-3 space-y-3 rounded-xl border border-gray-200 bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-[var(--color-text)]">
+                      {category ? `لیست‌های ${activeCategoryLabel}` : 'فیلتر بر اساس لیست'}
+                    </p>
+                    {hasAdvancedFilters && (
+                      <button
+                        type="button"
+                        onClick={clearAdvancedFilters}
+                        className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-[var(--color-text-muted)] hover:text-violet-700"
+                      >
+                        <RotateCcw className="size-4" />
+                        پاک کردن فیلترها
+                      </button>
                     )}
                   </div>
-                  {hasAdvancedFilters && (
-                    <button
-                      type="button"
-                      onClick={clearAdvancedFilters}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-text-muted)] hover:text-violet-700"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      پاک کردن فیلترها
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex flex-col lg:flex-row gap-2">
                   {!placementMode && (
-                  <label className="flex-1 min-w-[200px]">
-                    <span className="block text-[11px] font-semibold text-[var(--color-text-muted)] mb-1">
-                      {category ? `لیست‌های دارای ${activeCategoryLabel}` : 'فیلتر بر اساس لیست'}
-                    </span>
                     <select
                       value={listId}
                       onChange={(e) => setListFilter(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
+                      aria-label="فیلتر بر اساس لیست"
+                      className="min-h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
                     >
                       <option value="">
                         {category
@@ -810,72 +875,36 @@ export default function CatalogPageClient({
                         </option>
                       ))}
                     </select>
-                  </label>
                   )}
-
-                  <div className="flex flex-wrap items-end gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {!embedded && (
                       <Link
-                        href={`${basePath}?view=${viewParam ?? 'catalog'}&mode=create`}
-                        className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-700 shadow-sm"
+                        href={
+                          category
+                            ? `/admin/catalog/storage-images?categorySlug=${encodeURIComponent(category)}`
+                            : '/admin/catalog/storage-images'
+                        }
+                        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-orange-600 px-4 text-sm font-bold text-white hover:bg-orange-700"
                       >
-                        <Plus className="w-4 h-4" />
-                        آیتم جدید
+                        <ImageIcon className="size-4" />
+                        تصاویر
                       </Link>
                     )}
-                    <Link
-                      href={
-                        category
-                          ? `/admin/catalog/storage-images?categorySlug=${encodeURIComponent(category)}`
-                          : '/admin/catalog/storage-images'
-                      }
-                      className="inline-flex items-center gap-2 rounded-xl border border-orange-300 bg-orange-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-orange-700 shadow-sm"
-                      title="جستجوی Google و آپلود تصویر روی ParsPack"
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                      تصاویر
-                    </Link>
                     <button
                       type="button"
                       onClick={() => setExternalImagesOpen(true)}
-                      className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100"
-                      title="موجودیت‌هایی که poster هنوز روی ParsPack نیست — شامل banner و URLهای بدون parspack"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+                      title="موجودیت‌هایی که پوسترشان هنوز روی استوریج نیست"
                     >
-                      <Link2 className="w-4 h-4" />
-                      S3
-                    </button>
-                    <button
-                      type="button"
-                      onClick={toggleMultiListFilter}
-                      disabled={multiListCount === 0 && !multiListOnly}
-                      className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${
-                        multiListOnly
-                          ? 'border-amber-400 bg-amber-50 text-amber-900'
-                          : 'border-gray-200 bg-gray-50 text-[var(--color-text)] hover:border-amber-300 hover:bg-amber-50/60'
-                      } disabled:opacity-40 disabled:cursor-not-allowed`}
-                    >
-                      <Layers className="w-4 h-4" />
-                      فقط چندلیستی
-                      {multiListCount > 0 && (
-                        <span
-                          className={`rounded-full text-[10px] min-w-[1.25rem] h-5 px-1.5 flex items-center justify-center ${
-                            multiListOnly ? 'bg-amber-500 text-white' : 'bg-gray-200 text-[var(--color-text)]'
-                          }`}
-                        >
-                          {multiListCount.toLocaleString('fa-IR')}
-                        </span>
-                      )}
+                      <Link2 className="size-4" />
+                      تصویر خارجی
                     </button>
                   </div>
-                </div>
-
-                {!category && (
-                  <p className="text-[11px] text-[var(--color-text-muted)]">
-                    برای فیلتر دقیق‌تر، ابتدا یک دسته (مثل فیلم) انتخاب کنید — لیست‌ها و تعداد
-                    چندلیستی‌ها بر اساس همان دسته محاسبه می‌شود.
+                  <p className="text-xs leading-relaxed text-[var(--color-text-muted)]">
+                    با انتخاب دسته، لیست‌ها و چندلیستی‌ها فقط همان دسته را نشان می‌دهند.
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               {selectedIds.size > 0 && (
                 <CatalogBulkToolbar
@@ -893,32 +922,6 @@ export default function CatalogPageClient({
                 />
               )}
 
-              <form
-                className="flex flex-col sm:flex-row gap-2 mb-4"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  pushUrl({ page: 1, q: query });
-                  void loadBrowse(1, query, category, listId, multiListOnly);
-                }}
-              >
-                <div className="relative flex-1">
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-subtle)]" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="جستجو با عنوان…"
-                    className="w-full pr-10 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold disabled:opacity-50 shrink-0"
-                >
-                  جستجو
-                </button>
-              </form>
-
               {rows.length > 0 && !loading && (
                 <label className="inline-flex items-center gap-2 mb-3 text-sm text-[var(--color-text-muted)] cursor-pointer select-none">
                   <input
@@ -932,9 +935,9 @@ export default function CatalogPageClient({
               )}
 
               {loading ? (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />
+                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <div key={i} className="h-16 border-b border-gray-100 bg-gray-50 last:border-b-0" />
                   ))}
                 </div>
               ) : rows.length === 0 ? (
@@ -949,136 +952,103 @@ export default function CatalogPageClient({
                   </Link>
                 </div>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <ul className="overflow-hidden rounded-xl border border-gray-200 bg-white">
                   {rows.map((row) => {
                     const extHint = formatExternalKeyHint(row.externalKey);
                     const isSelected = selectedIds.has(row.id);
                     const isMultiList = row.listCount > 1;
                     const isDisabled = Boolean(row.isDisabled);
                     return (
-                      <div
+                      <li
                         key={row.id}
-                        className={`group relative text-right rounded-xl border p-3 transition-all hover:shadow-md ${
+                        className={`flex items-center gap-3 border-b border-gray-100 px-3 py-2 last:border-b-0 ${
                           selectedDetail === row.id
-                            ? 'border-violet-500 bg-violet-50/50 ring-2 ring-violet-200'
+                            ? 'bg-violet-50'
                             : isSelected
-                              ? 'border-violet-400 bg-violet-50/40'
+                              ? 'bg-violet-50/60'
                               : isDisabled
-                                ? 'border-amber-200 bg-amber-50/40 hover:border-amber-300'
+                                ? 'bg-amber-50/50'
                                 : isMultiList
-                                  ? 'border-amber-200 bg-amber-50/30 hover:border-amber-300'
-                                  : 'border-gray-200 bg-white hover:border-violet-200'
+                                  ? 'bg-amber-50/30'
+                                  : 'bg-white'
                         }`}
                       >
-                        <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
-                          <label className="cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleSelect(row.id)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="rounded border-gray-300 text-violet-600 focus:ring-violet-500 w-4 h-4"
-                              aria-label={`انتخاب ${row.title}`}
-                            />
-                          </label>
-                          <CatalogVisibilityControl
-                            catalogId={row.id}
-                            isDisabled={isDisabled}
-                            variant="compact"
-                            onChanged={(disabled) => markCatalogDisabled(row.id, disabled)}
-                            onError={setMessage}
-                          />
-                        </div>
-                        {placementMode && activePlacementListId && (
-                          <div className="absolute bottom-2 left-2 z-10">
-                            {placedCatalogIds.has(row.id) ? (
-                              <span className="inline-flex items-center gap-0.5 rounded-lg bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-800">
-                                <Check className="w-3 h-3" />
-                                موجود
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                title={`افزودن «${row.title}» به لیست`}
-                                disabled={addingCatalogId === row.id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void handleQuickPlace(row);
-                                }}
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600 text-white shadow-sm hover:bg-violet-700 disabled:opacity-50"
-                              >
-                                {addingCatalogId === row.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Plus className="w-4 h-4" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(row.id)}
+                          className="size-4 shrink-0 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                          aria-label={`انتخاب ${row.title}`}
+                        />
                         <button
                           type="button"
                           onClick={() => openDetail(row.id)}
-                          className="w-full text-right"
+                          className="flex min-h-12 min-w-0 flex-1 items-center gap-3 text-start"
                         >
-                          <div className="flex gap-3 items-center pr-0 pl-6">
-                            <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0 ring-1 ring-black/5">
-                              <ImageWithFallback
-                                src={row.imageUrl ?? ''}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                fallbackIcon="📋"
-                                preferStoredImage
-                                categorySlug={row.categorySlug}
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-sm text-[var(--color-text)] line-clamp-2 leading-snug">
-                                {row.title}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-[var(--color-text-muted)]">
-                                  {catalogCategoryLabel(row.categorySlug)}
-                                </span>
-                                <span
-                                  className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                                    isMultiList
-                                      ? 'bg-amber-100 text-amber-800'
-                                      : 'bg-gray-100 text-[var(--color-text-muted)]'
-                                  }`}
-                                >
-                                  {isMultiList && <ListPlus className="w-3 h-3" />}
-                                  {row.listCount.toLocaleString('fa-IR')} لیست
-                                </span>
-                                {row.hasSearchProfile && (
-                                  <span
-                                    className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800"
-                                    title="پروفایل جستجو ساخته شده"
-                                  >
-                                    🔍 جستجو
-                                  </span>
-                                )}
-                                {isDisabled && (
-                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                                    غیرفعال
-                                  </span>
-                                )}
-                              </div>
-                              {extHint && (
-                                <p
-                                  className="text-[10px] text-violet-600/80 mt-1 truncate"
-                                  title={row.externalKey ?? undefined}
-                                >
-                                  {extHint}
-                                </p>
-                              )}
-                            </div>
+                          <div className="size-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 aspect-square">
+                            <ImageWithFallback
+                              src={row.imageUrl ?? ''}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              fallbackIcon="📋"
+                              preferStoredImage
+                              categorySlug={row.categorySlug}
+                            />
                           </div>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold text-[var(--color-text)]">
+                              {row.title}
+                            </span>
+                            <span className="mt-1 flex flex-wrap items-center gap-1 text-xs text-[var(--color-text-muted)]">
+                              <span>{labelForCategory(row.categorySlug)}</span>
+                              <span aria-hidden="true">·</span>
+                              <span className={isMultiList ? 'font-semibold text-amber-800' : undefined}>
+                                {row.listCount.toLocaleString('fa-IR')} لیست
+                              </span>
+                              {row.hasSearchProfile && <span>جستجو</span>}
+                              {isDisabled && <span className="font-semibold text-amber-800">غیرفعال</span>}
+                              {extHint && (
+                                <span className="truncate text-violet-700" title={row.externalKey ?? undefined}>
+                                  {extHint}
+                                </span>
+                              )}
+                            </span>
+                          </span>
                         </button>
-                      </div>
+                        {placementMode && activePlacementListId && (
+                          placedCatalogIds.has(row.id) ? (
+                            <span className="inline-flex min-h-11 items-center gap-1 rounded-lg bg-emerald-100 px-2 text-xs font-bold text-emerald-800">
+                              <Check className="size-4" />
+                              موجود
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              title={`افزودن «${row.title}» به لیست`}
+                              disabled={addingCatalogId === row.id}
+                              onClick={() => void handleQuickPlace(row)}
+                              className="inline-flex size-11 items-center justify-center rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                            >
+                              {addingCatalogId === row.id ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <Plus className="size-4" />
+                              )}
+                            </button>
+                          )
+                        )}
+                        <CatalogVisibilityControl
+                          catalogId={row.id}
+                          isDisabled={isDisabled}
+                          variant="compact"
+                          className="min-h-11 min-w-11"
+                          onChanged={(disabled) => markCatalogDisabled(row.id, disabled)}
+                          onError={setMessage}
+                        />
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               )}
 
               {totalPages > 1 && !loading && (
@@ -1091,7 +1061,7 @@ export default function CatalogPageClient({
                       pushUrl({ page: np });
                       void loadBrowse(np, query, category, listId, multiListOnly);
                     }}
-                    className="p-2 rounded-lg border border-gray-200 bg-white disabled:opacity-40"
+                    className="inline-flex size-11 items-center justify-center rounded-lg border border-gray-200 bg-white disabled:opacity-40"
                     aria-label="صفحه قبل"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -1107,7 +1077,7 @@ export default function CatalogPageClient({
                       pushUrl({ page: np });
                       void loadBrowse(np, query, category, listId, multiListOnly);
                     }}
-                    className="p-2 rounded-lg border border-gray-200 bg-white disabled:opacity-40"
+                    className="inline-flex size-11 items-center justify-center rounded-lg border border-gray-200 bg-white disabled:opacity-40"
                     aria-label="صفحه بعد"
                   >
                     <ChevronLeft className="w-5 h-5" />

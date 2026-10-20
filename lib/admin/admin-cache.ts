@@ -1,5 +1,6 @@
 import { revalidateTag } from 'next/cache';
 import { revalidateHomeCache, revalidateCategoryMenuCache } from '@/lib/public-cache';
+import { clearAdminPeopleMemoryCache } from '@/lib/admin/person-discovery-cached';
 
 /** TTL کش پنل ادمین (ثانیه) */
 export const ADMIN_LISTS_CACHE_SECONDS = 120;
@@ -42,6 +43,7 @@ export function revalidateAdminCommentsCache() {
 }
 
 export function revalidateAdminPeopleCache() {
+  clearAdminPeopleMemoryCache();
   revalidateTag(ADMIN_CACHE_TAGS.people, 'max');
 }
 

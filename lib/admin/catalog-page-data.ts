@@ -109,18 +109,6 @@ export async function loadCatalogPageData(params: {
 
   const totalPages = Math.ceil(total / 24) || 1;
 
-  const allLists = await dbQuery(() =>
-    prisma.lists.findMany({
-      where: { deletedAt: null, isActive: true },
-      orderBy: { title: 'asc' },
-      select: {
-        id: true,
-        title: true,
-        categories: { select: { icon: true } },
-      },
-    })
-  );
-
   return {
     initialTab: tab,
     initialMode,
@@ -137,10 +125,10 @@ export async function loadCatalogPageData(params: {
     initialCategoryFilters: categoryFilters,
     initialListFilters: listFilters,
     initialDuplicateGroups: duplicateGroups,
-    lists: allLists.map((l) => ({
+    lists: listFilters.map((l) => ({
       id: l.id,
       title: l.title,
-      icon: l.categories?.icon ?? null,
+      icon: l.icon,
     })),
     initialExternalImagesOpen: params.externalImages === '1',
   };

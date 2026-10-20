@@ -4,7 +4,10 @@ import { revalidateTag } from 'next/cache';
 import type { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { revalidateAdminPeopleCache } from '@/lib/admin/admin-cache';
-import { queryCachedDiscoveredPeople } from '@/lib/admin/person-discovery-cached';
+import {
+  getCachedProfileIdentities,
+  queryCachedDiscoveredPeople,
+} from '@/lib/admin/person-discovery-cached';
 import { findBestProfileForDiscoveredEntry, extractImdbNameId, type PersonRole } from '@/lib/people';
 import type {
   DiscoverPeopleResult,
@@ -21,6 +24,25 @@ export function personPageCacheTag(role: PersonRole, slug: string): string {
 export function revalidatePersonPageCache(role: PersonRole, slug: string): void {
   revalidateTag(personPageCacheTag(role, slug), 'max');
   revalidateTag('person-pages', 'max');
+}
+
+const PROFILE_ROW_TTL_MS = 60_000;
+
+type CachedProfileRow = { at: number; row: PersonProfileRecord | null };
+
+const profileRowMemory = globalThis as typeof globalThis & {
+  __personProfileRows?: Map<string, CachedProfileRow>;
+};
+
+function personProfileRowCache(): Map<string, CachedProfileRow> {
+  if (!profileRowMemory.__personProfileRows) {
+    profileRowMemory.__personProfileRows = new Map();
+  }
+  return profileRowMemory.__personProfileRows;
+}
+
+export function clearPersonProfileRowCache(): void {
+  profileRowMemory.__personProfileRows?.clear();
 }
 
 export async function getPersonProfile(
@@ -42,21 +64,31 @@ export async function getPersonProfileFlexible(
   slug: string,
   displayName?: string
 ): Promise<PersonProfileRecord | null> {
-  const candidates = await client.person_profiles.findMany({ where: { role } });
+  const cacheKey = `${role}:${slug}`;
+  const cached = personProfileRowCache().get(cacheKey);
+  if (cached && Date.now() - cached.at < PROFILE_ROW_TTL_MS) return cached.row;
+
+  const exact = await client.person_profiles.findUnique({
+    where: { role_slug: { role, slug } },
+  });
+  if (exact) {
+    const row = exact as PersonProfileRecord;
+    personProfileRowCache().set(cacheKey, { at: Date.now(), row });
+    return row;
+  }
+
+  const identities = await getCachedProfileIdentities();
   const best = findBestProfileForDiscoveredEntry(
     { role, slug, displayName: displayName?.trim() || slug },
-    candidates.map((p) => ({
-      role: p.role as PersonRole,
-      slug: p.slug,
-      displayName: p.displayName,
-      bio: p.bio,
-      externalUrl: p.externalUrl,
-      status: p.status as PersonProfileStatus,
-    }))
+    identities.filter((profile) => profile.role === role)
   );
-  if (!best) return null;
-  const row = candidates.find((p) => p.role === best.role && p.slug === best.slug);
-  return row ? (row as PersonProfileRecord) : null;
+  const row = best
+    ? ((await client.person_profiles.findUnique({
+        where: { role_slug: { role: best.role, slug: best.slug } },
+      })) as PersonProfileRecord | null)
+    : null;
+  personProfileRowCache().set(cacheKey, { at: Date.now(), row });
+  return row;
 }
 
 export async function upsertPersonProfile(

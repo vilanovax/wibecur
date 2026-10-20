@@ -1,29 +1,73 @@
 import { unstable_cache } from 'next/cache';
 import { dbQuery } from '@/lib/db';
-import type { PersonRole } from '@/lib/people';
+import type { PersonProfileIdentity, PersonRole } from '@/lib/people';
 import type {
   DiscoveredPerson,
   DiscoverPeopleResult,
   DiscoverPeopleStats,
 } from '@/lib/person-profiles';
 import { buildDiscoveredPeopleList } from '@/lib/person-discovery-build';
+import { clearPersonProfileRowCache } from '@/lib/person-profiles-server';
 
 export const ADMIN_PEOPLE_CACHE_SECONDS = 300;
 export const ADMIN_PEOPLE_CACHE_TAG = 'admin-people-discovery';
 
-async function loadAllDiscoveredPeople(): Promise<DiscoveredPerson[]> {
+type PeopleMemoryCache = {
+  at: number;
+  people: DiscoveredPerson[];
+  itemIndex: Record<string, string[]>;
+  profiles: PersonProfileIdentity[];
+};
+
+const peopleMemory = globalThis as typeof globalThis & {
+  __adminPeopleDiscovery?: PeopleMemoryCache;
+};
+
+async function loadAllDiscoveredPeople() {
   return buildDiscoveredPeopleList();
 }
 
-export function getCachedDiscoveredPeople(): Promise<DiscoveredPerson[]> {
-  return unstable_cache(
+export function clearAdminPeopleMemoryCache(): void {
+  peopleMemory.__adminPeopleDiscovery = undefined;
+  clearPersonProfileRowCache();
+}
+
+export async function getCachedDiscoveredPeople(): Promise<DiscoveredPerson[]> {
+  const cached = peopleMemory.__adminPeopleDiscovery;
+  if (
+    cached?.profiles &&
+    Date.now() - cached.at < ADMIN_PEOPLE_CACHE_SECONDS * 1000
+  ) {
+    return cached.people;
+  }
+
+  const built = await unstable_cache(
     () => dbQuery(loadAllDiscoveredPeople),
-    ['admin-people-discovery-v4'],
+    ['admin-people-discovery-v7'],
     {
       revalidate: ADMIN_PEOPLE_CACHE_SECONDS,
       tags: [ADMIN_PEOPLE_CACHE_TAG],
     }
   )();
+
+  peopleMemory.__adminPeopleDiscovery = {
+    at: Date.now(),
+    people: built.people,
+    itemIndex: built.itemIndex,
+    profiles: built.profiles,
+  };
+  return built.people;
+}
+
+export async function getCachedProfileIdentities(): Promise<PersonProfileIdentity[]> {
+  await getCachedDiscoveredPeople();
+  return peopleMemory.__adminPeopleDiscovery?.profiles ?? [];
+}
+
+/** شناسه‌های آیتم یک شخص، اگر کش کشف آماده باشد. */
+export function peekPersonItemIds(role: string, slug: string): string[] | null {
+  const ids = peopleMemory.__adminPeopleDiscovery?.itemIndex?.[`${role}:${slug}`];
+  return ids?.length ? ids : null;
 }
 
 function computeStats(people: DiscoveredPerson[]): DiscoverPeopleStats {

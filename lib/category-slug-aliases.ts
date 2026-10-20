@@ -11,6 +11,7 @@ export const BOOK_SLUG_ALIASES = [
   'book',
   'books',
   'bookpodcast',
+  'bookspodcast',
   'book-podcast',
   'podcast',
   'podcasts',
@@ -31,6 +32,7 @@ const FILM_CANONICAL_SLUG_PRIORITY = [
 
 const BOOK_CANONICAL_SLUG_PRIORITY = [
   'bookpodcast',
+  'bookspodcast',
   'book-podcast',
   'books',
   'book',

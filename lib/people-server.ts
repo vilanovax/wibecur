@@ -5,6 +5,8 @@ import { unstable_cache } from 'next/cache';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { dbQuery } from '@/lib/db';
 import { prisma } from '@/lib/prisma';
+import { personNamesLikelySamePerson } from '@/lib/person-spelling';
+import { getCachedDiscoveredPeople, peekPersonItemIds } from '@/lib/admin/person-discovery-cached';
 import { publicItemWhere, publicListWhere } from '@/lib/public-content-filters';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 import { getPersonProfileFlexible, personPageCacheTag } from '@/lib/person-profiles-server';
@@ -22,9 +24,6 @@ import {
   type PersonPageItem,
   type PersonRole,
 } from '@/lib/people';
-
-/** Roles whose metadata is often a JSON array — string_contains misses them. */
-const ARRAYISH_PERSON_ROLES: ReadonlySet<PersonRole> = new Set(['actor']);
 
 function slugToSearchPattern(slug: string): string {
   return slug.replace(/-/g, ' ').trim();
@@ -56,6 +55,17 @@ function buildPersonSearchWhere(role: PersonRole, pattern: string): Prisma.items
   return clauses;
 }
 
+function personNamesOnItem(
+  item: {
+    metadata: unknown;
+    catalog_items: { metadata: unknown } | null;
+  },
+  role: PersonRole
+): string[] {
+  const merged = mergeItemMetadata(item.metadata, item.catalog_items?.metadata);
+  return extractPersonNamesFromMetadata(merged, role);
+}
+
 function itemMatchesPerson(
   item: {
     metadata: unknown;
@@ -64,13 +74,42 @@ function itemMatchesPerson(
   role: PersonRole,
   slug: string
 ): boolean {
-  const merged = mergeItemMetadata(item.metadata, item.catalog_items?.metadata);
-  const names = extractPersonNamesFromMetadata(merged, role);
-  return names.some((name) => nameMatchesSlug(name, slug));
+  return personNamesOnItem(item, role).some((name) => nameMatchesSlug(name, slug));
 }
 
-/** Fallback scan cap — only for arrayish roles; keep small for TTFB. */
-const PERSON_ITEM_SCAN_LIMIT = 1200;
+/** املاهای نزدیک همان شخص — «جرد دایموند» و «جارد دایموند» — را هم به صفحه می‌آورد. */
+function expandSpellingVariants<T extends { metadata: unknown; catalog_items: { metadata: unknown } | null }>(
+  rows: T[],
+  role: PersonRole,
+  slug: string
+): T[] {
+  const anchors = new Set<string>();
+  for (const row of rows) {
+    for (const name of personNamesOnItem(row, role)) {
+      if (nameMatchesSlug(name, slug)) anchors.add(name);
+    }
+  }
+  const anchorList = [...anchors];
+  if (anchorList.length === 0) {
+    return rows.filter((row) => itemMatchesPerson(row, role, slug));
+  }
+
+  return rows.filter((row) =>
+    personNamesOnItem(row, role).some(
+      (name) =>
+        nameMatchesSlug(name, slug) ||
+        anchorList.some((anchor) => personNamesLikelySamePerson(name, anchor))
+    )
+  );
+}
+
+/**
+ * وقتی جستجوی slug در metadata چیزی پیدا نکند.
+ * نام فارسی به اسلاگ لاتین (bzrg-aloi) تبدیل می‌شود و داخل فیلد نویسنده نیست؛
+ * بازیگر هم اغلب آرایهٔ JSON است و string_contains آن را نمی‌بیند.
+ * سقف با اسکن کشف اشخاص یکی است تا آیتم جا نماند.
+ */
+const PERSON_ITEM_SCAN_LIMIT = 5000;
 
 const personItemSelect = {
   id: true,
@@ -102,15 +141,40 @@ type PersonItemRow = {
   };
 };
 
+async function loadItemsByIds(
+  client: PrismaClient,
+  role: PersonRole,
+  slug: string,
+  ids: string[]
+): Promise<PersonItemRow[]> {
+  const rows = await client.items.findMany({
+    where: {
+      id: { in: ids },
+      ...publicItemWhere,
+      lists: publicListWhere,
+    },
+    select: personItemSelect,
+  });
+  if (rows.length === 0) return [];
+  const expanded = expandSpellingVariants(rows, role, slug);
+  return expanded.length > 0 ? expanded : rows;
+}
+
 async function findPublicItemsForPerson(
   client: PrismaClient,
   role: PersonRole,
   slug: string
 ): Promise<PersonItemRow[]> {
+  const knownIds = peekPersonItemIds(role, slug);
+  if (knownIds) {
+    const indexed = await loadItemsByIds(client, role, slug, knownIds);
+    if (indexed.length > 0) return indexed;
+  }
+
   const pattern = slugToSearchPattern(slug);
   if (!pattern) return [];
 
-  // مسیر سریع — برای director/author که metadata رشته‌ای است
+  // مسیر سریع — نام لاتین عین اسلاگ داخل metadata است. نام فارسی این‌جا صفر برمی‌گرداند.
   const filtered = await client.items.findMany({
     where: {
       ...publicItemWhere,
@@ -123,11 +187,17 @@ async function findPublicItemsForPerson(
   });
 
   const fastMatches = filtered.filter((row) => itemMatchesPerson(row, role, slug));
-  if (fastMatches.length > 0 || !ARRAYISH_PERSON_ROLES.has(role)) {
+  if (fastMatches.length > 0) {
     return fastMatches;
   }
 
-  // fallback: اسکن محدود — فقط برای actor که metadata اغلب JSON array است
+  await getCachedDiscoveredPeople();
+  const warmedIds = peekPersonItemIds(role, slug);
+  if (warmedIds) {
+    const indexed = await loadItemsByIds(client, role, slug, warmedIds);
+    if (indexed.length > 0) return indexed;
+  }
+
   const scanned = await client.items.findMany({
     where: {
       ...publicItemWhere,
@@ -137,7 +207,7 @@ async function findPublicItemsForPerson(
     take: PERSON_ITEM_SCAN_LIMIT,
   });
 
-  return scanned.filter((row) => itemMatchesPerson(row, role, slug));
+  return expandSpellingVariants(scanned, role, slug);
 }
 
 export async function resolvePersonPage(
@@ -212,7 +282,7 @@ export async function resolvePersonPage(
 export const getCachedPersonPage = cache((role: PersonRole, slug: string) =>
   unstable_cache(
     () => dbQuery(() => resolvePersonPage(prisma, role, slug)),
-    [`person-page-${role}-${slug}`],
+    [`person-page-v2-${role}-${slug}`],
     { revalidate: 120, tags: [personPageCacheTag(role, slug), 'person-pages'] }
   )()
 );
