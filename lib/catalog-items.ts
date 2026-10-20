@@ -24,6 +24,7 @@ import { expandCategorySlugFilter, dedupeActiveCategoriesByAlias, isSameCategory
 import {
   buildCatalogItemSearchFilter,
   CATALOG_SEARCH_MIN_SCORE,
+  catalogTitleMatchesQuery,
   scoreCatalogItemForSearch,
 } from '@/lib/search-keywords';
 
@@ -300,12 +301,24 @@ export async function resolveOrCreateCatalogItem(
   prisma: PrismaClient,
   input: CatalogItemInput
 ) {
-  const fields = catalogFieldsFromInput(input);
+  let fields = catalogFieldsFromInput(input);
 
   let existing =
     fields.externalKey != null
       ? await findCatalogByExternalKey(prisma, fields.externalKey)
       : null;
+
+  if (existing && !catalogTitlesMatch(input.title, existing.title)) {
+    existing = null;
+    const meta = { ...asMetadataRecord(fields.metadata) };
+    delete meta.imdbId;
+    delete meta.imdbID;
+    delete meta.imdb;
+    fields = {
+      ...fields,
+      externalKey: buildCatalogExternalKey(fields.categorySlug, fields.title, meta),
+    };
+  }
 
   if (!existing) {
     existing = await findCatalogByTitleMatch(prisma, input.categorySlug, input.title);
@@ -353,7 +366,7 @@ export async function isCatalogInList(
   listId: string
 ) {
   const row = await prisma.items.findFirst({
-    where: { catalogItemId, listId },
+    where: { catalogItemId, listId, deletedAt: null },
     select: { id: true },
   });
   return !!row;
@@ -434,15 +447,18 @@ export async function addCatalogItemToList(
   if (!catalog) throw new Error('آیتم کاتالوگ یافت نشد');
   if (!list) throw new Error('لیست یافت نشد');
 
-  const exists = await isCatalogInList(prisma, catalogItemId, listId);
-  if (exists) {
+  const existingPlacement = await prisma.items.findFirst({
+    where: { catalogItemId, listId },
+    select: { id: true, deletedAt: true },
+  });
+  if (existingPlacement && !existingPlacement.deletedAt) {
     throw new Error('این آیتم قبلاً در این لیست وجود دارد');
   }
 
   let order = opts.order;
   if (order === undefined) {
     const maxOrder = await prisma.items.aggregate({
-      where: { listId },
+      where: { listId, deletedAt: null },
       _max: { order: true },
     });
     order = (maxOrder._max.order ?? -1) + 1;
@@ -450,6 +466,41 @@ export async function addCatalogItemToList(
 
   const denorm = denormalizedItemFieldsFromCatalog(catalog);
   const placementMetadata = catalogRefMetadata(catalog, denorm.metadata);
+
+  if (existingPlacement?.deletedAt) {
+    const item = await prisma.items.update({
+      where: { id: existingPlacement.id },
+      data: {
+        ...denorm,
+        metadata: placementMetadata as Prisma.InputJsonValue,
+        listNote: opts.listNote?.trim() || null,
+        order,
+        deletedAt: null,
+        deletedById: null,
+        deleteReason: null,
+        updatedAt: new Date(),
+      },
+      include: {
+        lists: { include: { categories: true } },
+        catalog_items: true,
+      },
+    });
+
+    await prisma.lists.update({
+      where: { id: listId },
+      data: { itemCount: { increment: 1 } },
+    });
+
+    if (isCatalogAdminDisabled(catalog.metadata)) {
+      await prisma.item_moderation.upsert({
+        where: { itemId: item.id },
+        create: { itemId: item.id, status: 'HIDDEN', flagScore: 0 },
+        update: { status: 'HIDDEN' },
+      });
+    }
+
+    return item;
+  }
   const item = await prisma.items.create({
     data: {
       id: nanoid(),
@@ -575,6 +626,7 @@ function rankCatalogSearchCandidates<
       }, query).score,
     }))
     .filter((entry) => entry.score >= CATALOG_SEARCH_MIN_SCORE)
+    .filter((entry) => catalogTitleMatchesQuery(entry.row.title, query))
     .sort(
       (a, b) =>
         b.score - a.score ||
@@ -621,7 +673,7 @@ export async function searchCatalogItems(
   let inListSet = new Set<string>();
   if (listId) {
     const inList = await prisma.items.findMany({
-      where: { listId, catalogItemId: { in: rows.map((r) => r.id) } },
+      where: { listId, catalogItemId: { in: rows.map((r) => r.id) }, deletedAt: null },
       select: { catalogItemId: true },
     });
     inListSet = new Set(
@@ -839,7 +891,7 @@ export async function listCatalogItems(
     ...(q && q.length >= 2 ? buildCatalogItemSearchFilter(q) : {}),
     ...(catalogCategoryWhere(options.categorySlug) ?? {}),
     ...(options.listId
-      ? { items: { some: { listId: options.listId } } }
+      ? { items: { some: { listId: options.listId, deletedAt: null } } }
       : {}),
   };
 
@@ -882,6 +934,7 @@ export async function listCatalogItems(
         where: {
           listId: options.placementListId,
           catalogItemId: { in: pageRows.map((r) => r.id) },
+          deletedAt: null,
         },
         select: { catalogItemId: true },
       });
@@ -936,6 +989,7 @@ export async function listCatalogItems(
       where: {
         listId: options.placementListId,
         catalogItemId: { in: rows.map((r) => r.id) },
+        deletedAt: null,
       },
       select: { catalogItemId: true },
     });
@@ -1035,7 +1089,7 @@ export async function getRecentCatalogItems(
   let inListSet = new Set<string>();
   if (listId) {
     const inList = await prisma.items.findMany({
-      where: { listId, catalogItemId: { in: rows.map((r) => r.id) } },
+      where: { listId, catalogItemId: { in: rows.map((r) => r.id) }, deletedAt: null },
       select: { catalogItemId: true },
     });
     inListSet = new Set(
@@ -1488,7 +1542,7 @@ export async function listCatalogExternalImageItems(
 
   const where: Prisma.catalog_itemsWhereInput = {
     ...(catalogCategoryWhere(options.categorySlug) ?? {}),
-    ...(options.listId ? { items: { some: { listId: options.listId } } } : {}),
+    ...(options.listId ? { items: { some: { listId: options.listId, deletedAt: null } } } : {}),
   };
 
   if (options.multiListOnly) {
@@ -1537,7 +1591,7 @@ export async function listCatalogMissingPosterItems(
 ): Promise<CatalogMissingPosterRow[]> {
   const where: Prisma.catalog_itemsWhereInput = {
     ...(catalogCategoryWhere(options.categorySlug) ?? {}),
-    ...(options.listId ? { items: { some: { listId: options.listId } } } : {}),
+    ...(options.listId ? { items: { some: { listId: options.listId, deletedAt: null } } } : {}),
   };
 
   if (options.multiListOnly) {

@@ -22,6 +22,31 @@ describe('catalogTitlesMatch', () => {
   it('does not match unrelated titles', () => {
     expect(catalogTitlesMatch('Tenet', 'Inception')).toBe(false);
   });
+
+  it('does not collapse a sequel onto another film in the same franchise', () => {
+    expect(
+      catalogTitlesMatch(
+        'Mission: Impossible – The Final Reckoning',
+        'Mission: Impossible – Fallout'
+      )
+    ).toBe(false);
+    expect(
+      catalogTitlesMatch('Mission: Impossible – The Final Reckoning', 'Mission: Impossible')
+    ).toBe(false);
+    expect(
+      catalogTitlesMatch('Spider-Man – Brand New Day', 'Spider-Man: No Way Home')
+    ).toBe(false);
+    expect(catalogTitlesMatch('Spider-Man – Brand New Day', 'Spider-Man')).toBe(false);
+  });
+
+  it('still matches the same sequel when only the dash character differs', () => {
+    expect(
+      catalogTitlesMatch(
+        'Mission: Impossible – The Final Reckoning',
+        'Mission: Impossible - The Final Reckoning'
+      )
+    ).toBe(true);
+  });
 });
 
 describe('primarySuggestionTitle', () => {

@@ -360,7 +360,7 @@ export async function executeBulkImportForList(
 
   const categorySlug = list.categories.slug;
   const maxOrderAgg = await db.items.aggregate({
-    where: { listId },
+    where: { listId, deletedAt: null },
     _max: { order: true },
   });
   let orderCursor = (maxOrderAgg._max.order ?? -1) + 1;

@@ -162,6 +162,14 @@ function tokenizeQuery(query: string): string[] {
     .filter((t) => t.length >= SEARCH_MIN_LENGTH && !STOP_WORDS.has(t));
 }
 
+/** جستجوی صفحهٔ کاتالوگ ادمین روی عنوان است؛ توضیح و بازیگر نتیجه را داخل لیست نگه نمی‌دارند. */
+export function catalogTitleMatchesQuery(title: string, rawQuery: string): boolean {
+  const hay = normalizeSearchQuery(title).toLowerCase();
+  const tokens = meaningfulSearchTokens(rawQuery);
+  if (tokens.length === 0) return false;
+  return tokens.every((token) => hay.includes(token.toLowerCase()));
+}
+
 /** توکن‌های معنادار برای جستجو — بدون واژه‌های پرکننده مثل «خیلی» */
 export function meaningfulSearchTokens(rawQuery: string): string[] {
   const tokens = tokenizeQuery(rawQuery).filter((t) => !SEARCH_FILLER_WORDS.has(t));

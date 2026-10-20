@@ -5,8 +5,8 @@ import {
   buildCatalogExternalKey,
   findCatalogByExternalKey,
   findCatalogByTitleMatch,
-  isCatalogInList,
 } from '@/lib/catalog-items';
+import { catalogTitlesMatch } from '@/lib/suggestion-utils';
 
 export type BulkImportMatchKind = 'new' | 'existing_catalog' | 'already_in_list' | 'lightweight';
 
@@ -136,16 +136,16 @@ async function loadCatalogListStats(
 
   const [inListPlacements, listCounts, allPlacements] = await Promise.all([
     prisma.items.findMany({
-      where: { catalogItemId: { in: catalogIds }, listId },
+      where: { catalogItemId: { in: catalogIds }, listId, deletedAt: null },
       select: { catalogItemId: true },
     }),
     prisma.items.groupBy({
       by: ['catalogItemId'],
-      where: { catalogItemId: { in: catalogIds } },
+      where: { catalogItemId: { in: catalogIds }, deletedAt: null },
       _count: { id: true },
     }),
     prisma.items.findMany({
-      where: { catalogItemId: { in: catalogIds } },
+      where: { catalogItemId: { in: catalogIds }, deletedAt: null },
       select: {
         catalogItemId: true,
         lists: { select: { title: true } },
@@ -184,7 +184,7 @@ export async function resolveBulkImportMatch(
   let catalog: CatalogRef | null = null;
   if (externalKey != null) {
     const byKey = await findCatalogByExternalKey(prisma, externalKey);
-    if (byKey) {
+    if (byKey && catalogTitlesMatch(title, byKey.title)) {
       catalog = {
         id: byKey.id,
         title: byKey.title,
@@ -265,7 +265,9 @@ export async function resolveBulkImportMatchesBatch(
     const { externalKey } = rowKeys[i];
     if (!externalKey) continue;
     const catalog = catalogByKey.get(externalKey);
-    if (catalog) catalogByRowIndex.set(i, catalog);
+    if (catalog && catalogTitlesMatch(rowKeys[i].title, catalog.title)) {
+      catalogByRowIndex.set(i, catalog);
+    }
   }
 
   const titlesForMatch: string[] = [];
@@ -346,7 +348,7 @@ export async function resolveBulkImportCatalogId(
 
   if (externalKey != null) {
     const byKey = await findCatalogByExternalKey(prisma, externalKey);
-    if (byKey) return byKey.id;
+    if (byKey && catalogTitlesMatch(title, byKey.title)) return byKey.id;
   }
 
   const byTitle = await findCatalogByTitleMatch(prisma, categorySlug, title);

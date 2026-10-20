@@ -19,15 +19,39 @@ export function primarySuggestionTitle(text: string): string {
   return primary && primary.length >= 2 ? primary : norm;
 }
 
-/** تطبیق عنوان پیشنهاد با آیتم/کاتالوگ موجود — حتی با زیرعنوان فارسی */
+function subtitleAfterPrimary(text: string): string {
+  const norm = normalizeSuggestionTitle(text);
+  const parts = norm.split(/[-–—|]/);
+  if (parts.length < 2) return '';
+  return parts.slice(1).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+/** پسوند ترجمه‌ای مثل «باشگاه مشت‌زنی»، نه زیرعنوان یک قسمت دیگر. */
+function isTranslationSuffix(subtitle: string): boolean {
+  if (!subtitle) return true;
+  if (!/[\u0600-\u06FF]/.test(subtitle)) return false;
+  return !/[a-z]{3,}/i.test(subtitle);
+}
+
+/**
+ * عنوان دوزبانه یکی است («Tenet» و «Tenet - تنت»).
+ * زیرعنوان لاتین یک اثر دیگر است («Mission: Impossible – Fallout»
+ * با «Mission: Impossible – The Final Reckoning» یکی نیست).
+ */
 export function catalogTitlesMatch(a: string, b: string): boolean {
   const na = normalizeSuggestionTitle(a);
   const nb = normalizeSuggestionTitle(b);
+  if (!na || !nb) return false;
   if (na === nb) return true;
+
   const pa = primarySuggestionTitle(a);
   const pb = primarySuggestionTitle(b);
-  if (pa === pb && pa.length >= 3) return true;
-  return false;
+  if (pa !== pb || pa.length < 3) return false;
+
+  const sa = subtitleAfterPrimary(a);
+  const sb = subtitleAfterPrimary(b);
+  if (sa === sb) return true;
+  return isTranslationSuffix(sa) && isTranslationSuffix(sb);
 }
 
 export type DuplicateSuggestionResult =
