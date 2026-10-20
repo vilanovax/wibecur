@@ -16,7 +16,7 @@ import { getCachedCategoryBannerPlacements } from '@/lib/sponsored-placements';
 import { fetchActiveCategoryMenu } from '@/lib/category-menu';
 import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
 import { toCategoryClientSeed } from '@/lib/category-page-client-seed';
-import { isFilmCategorySlug } from '@/lib/category-layout';
+import { isPortraitCoverCategory } from '@/lib/resolve-item-image';
 
 // داده‌های صفحه با unstable_cache تا ۳۰۰ ثانیه کش می‌شوند؛ revalidate صفحه هم
 // با همان پنجره هماهنگ شد تا پوستهٔ صفحه بی‌جهت هر ۶۰ ثانیه بازتولید نشود.
@@ -85,7 +85,7 @@ export default async function CategoryPage({
   }
   const lcpImage = getCategoryHeroDisplayUrl(pageData.category.heroImage, pageData.category.slug);
   const accentColor = pageData.category.accentColor || pageData.category.color;
-  const filmItemLayout = isFilmCategorySlug(pageData.category.slug) ? 'poster' : 'tile';
+  const itemLayout = isPortraitCoverCategory(pageData.category.slug) ? 'poster' : 'tile';
   const featuredSpotlight =
     pageData.viralSpotlight &&
     pageData.viralSpotlight.id !== pageData.trendingLists[0]?.id
@@ -136,7 +136,7 @@ export default async function CategoryPage({
                 inset
                 items={pageData.mostSavedItems}
                 accentColor={accentColor}
-                itemLayout={filmItemLayout}
+                itemLayout={itemLayout}
               />
             ) : null
           }
@@ -146,7 +146,7 @@ export default async function CategoryPage({
                 inset
                 items={pageData.latestItems}
                 accentColor={accentColor}
-                itemLayout={filmItemLayout}
+                itemLayout={itemLayout}
               />
             ) : null
           }

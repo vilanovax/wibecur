@@ -3,7 +3,16 @@ import {
   displayWebsiteHost,
   phoneToTelHref,
 } from '@/lib/cafe-metadata';
-import { parseActorNames, personPagePath, type PersonRole } from '@/lib/people';
+import {
+  extractPersonNamesFromMetadata,
+  parseActorNames,
+  PERSON_ROLES,
+  personLinkKey,
+  type PersonRole,
+} from '@/lib/people';
+
+/** اگر برنگردد، نام شخص متن ساده می‌ماند و لینک نمی‌گیرد. */
+export type PersonHrefResolver = (role: PersonRole, name: string) => string | undefined;
 export const INTERNAL_METADATA_KEYS = new Set([
   'imdbId',
   'imdbID',
@@ -30,16 +39,20 @@ export function extractItemTip(metadata: Record<string, unknown> | null | undefi
 }
 
 /** اگر tip فقط مترجم است، به‌جای کارت زرد در chips نمایش داده شود */
-export function parseTipAsMetadataFact(tip: string | null): MetadataFact | null {
+export function parseTipAsMetadataFact(
+  tip: string | null,
+  personHref?: PersonHrefResolver
+): MetadataFact | null {
   if (!tip) return null;
   const match = tip.match(/^مترجم\s*[:：]\s*(.+)$/u);
-  if (!match?.[1]?.trim()) return null;
+  const name = match?.[1]?.trim();
+  if (!name) return null;
   return {
     key: 'translator',
     label: 'مترجم',
-    value: match[1].trim(),
+    value: name,
     icon: '📖',
-    href: personPagePath('translator', match[1].trim()),
+    href: personHref?.('translator', name),
   };
 }
 
@@ -85,8 +98,8 @@ export type MetadataFact = {
   value: string;
   icon: string;
   href?: string;
-  /** لینک‌های داخلی — مثلاً هر بازیگر جدا */
-  profileLinks?: Array<{ name: string; href: string }>;
+  /** لینک‌های داخلی — مثلاً هر بازیگر جدا. بدون href فقط نام است. */
+  profileLinks?: Array<{ name: string; href?: string }>;
 };
 
 const PERSON_LINK_KEYS = new Set<string>(['director', 'author', 'translator']);
@@ -216,10 +229,11 @@ function factHref(key: string, value: unknown): string | undefined {
 function pushFact(
   facts: MetadataFact[],
   key: string,
-  metadata: Record<string, unknown>
+  metadata: Record<string, unknown>,
+  personHref?: PersonHrefResolver
 ): void {
   if (key === 'actors') {
-    pushActorFact(facts, metadata);
+    pushActorFact(facts, metadata, personHref);
     return;
   }
 
@@ -227,43 +241,50 @@ function pushFact(
   if (!formatted) return;
   const meta = FACT_LABELS[key] ?? { label: key, icon: '📋' };
   const externalHref = factHref(key, metadata[key]);
-  const personHref =
+  const internalHref =
     !externalHref && PERSON_LINK_KEYS.has(key)
-      ? personPagePath(key as PersonRole, formatted)
+      ? personHref?.(key as PersonRole, formatted)
       : undefined;
   facts.push({
     key,
     label: meta.label,
     value: formatted,
     icon: meta.icon,
-    href: externalHref ?? personHref,
+    href: externalHref ?? internalHref,
   });
 }
 
-function pushActorFact(facts: MetadataFact[], metadata: Record<string, unknown>): void {
+function pushActorFact(
+  facts: MetadataFact[],
+  metadata: Record<string, unknown>,
+  personHref?: PersonHrefResolver
+): void {
   const names = parseActorNames(metadata.actors).slice(0, 6);
   if (names.length === 0) return;
+
+  const links = names.map((name) => ({
+    name,
+    href: personHref?.('actor', name),
+  }));
 
   if (names.length === 1) {
     facts.push({
       key: 'actors',
       label: 'بازیگر',
-      value: names[0],
+      value: names[0]!,
       icon: '🎭',
-      href: personPagePath('actor', names[0]),
+      href: links[0]?.href,
     });
     return;
   }
 
+  const anyLinked = links.some((link) => link.href);
   facts.push({
     key: 'actors',
     label: FACT_LABELS.actors.label,
     value: names.join(' · '),
     icon: FACT_LABELS.actors.icon,
-    profileLinks: names.map((name) => ({
-      name,
-      href: personPagePath('actor', name),
-    })),
+    profileLinks: anyLinked ? links : undefined,
   });
 }
 
@@ -271,7 +292,7 @@ function pushActorFact(facts: MetadataFact[], metadata: Record<string, unknown>)
 export function buildItemMetadataFacts(
   metadata: Record<string, unknown> | null | undefined,
   categorySlug?: string | null,
-  options?: { fallbackImdbRating?: unknown }
+  options?: { fallbackImdbRating?: unknown; personHref?: PersonHrefResolver }
 ): MetadataFact[] {
   const baseMeta =
     metadata != null && typeof metadata === 'object' ? { ...metadata } : ({} as Record<string, unknown>);
@@ -298,7 +319,7 @@ export function buildItemMetadataFacts(
 
   if (order) {
     for (const key of order) {
-      pushFact(facts, key, baseMeta);
+      pushFact(facts, key, baseMeta, options?.personHref);
     }
     return facts;
   }
@@ -308,17 +329,40 @@ export function buildItemMetadataFacts(
       continue;
     }
     if (value == null || value === '') continue;
-    pushFact(facts, key, baseMeta);
+    pushFact(facts, key, baseMeta, options?.personHref);
   }
 
   return facts;
 }
 
 /** برای preview sheet — همان فکت‌ها به‌صورت chip */
+/** نام نویسنده، کارگردان، بازیگر و مترجم داخل metadata یک آیتم. */
+export function collectPersonLinkTargets(
+  metadata: unknown
+): Array<{ role: PersonRole; name: string }> {
+  const meta =
+    metadata != null && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? (metadata as Record<string, unknown>)
+      : null;
+  const seen = new Set<string>();
+  const targets: Array<{ role: PersonRole; name: string }> = [];
+
+  for (const role of PERSON_ROLES) {
+    for (const name of extractPersonNamesFromMetadata(meta, role)) {
+      const key = personLinkKey(role, name);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      targets.push({ role, name });
+    }
+  }
+
+  return targets;
+}
+
 export function buildItemMetadataChips(
   metadata: Record<string, unknown> | null | undefined,
   categorySlug?: string | null,
-  options?: { fallbackImdbRating?: unknown }
+  options?: { fallbackImdbRating?: unknown; personHref?: PersonHrefResolver }
 ): Array<{ key: string; label: string; value: string; href?: string; profileLinks?: MetadataFact['profileLinks'] }> {
   return buildItemMetadataFacts(metadata, categorySlug, options).map(
     ({ key, label, value, href, profileLinks }) => ({

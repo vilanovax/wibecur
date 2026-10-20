@@ -5,6 +5,7 @@ import type { NextAuthConfig } from 'next-auth';
 import type { AppRole } from '@/types/next-auth';
 import type { Permission } from '@/lib/auth/permissions';
 import { normalizeAdminPermissions } from '@/lib/auth/has-permission';
+import { isAdminRole } from '@/lib/auth/roles';
 
 const config: NextAuthConfig = {
   trustHost: true,
@@ -15,7 +16,7 @@ const config: NextAuthConfig = {
         phone: { label: 'Phone', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const identifier = credentials?.phone;
         const password = credentials?.password;
 
@@ -50,16 +51,32 @@ const config: NextAuthConfig = {
           const DUMMY_HASH =
             '$2a$10$CwTycUXWue0Thq9StjUM0uJ8Dg.aQH1pOQp8oV.4nq8r9pVf7tF0e';
 
+          const { isAdminRole } = await import('@/lib/auth/roles');
+          const { recordAdminLogin } = await import('@/lib/auth/record-admin-login');
+          const trackAdmin = async (success: boolean) => {
+            if (!user || !isAdminRole(user.role)) return;
+            await recordAdminLogin({
+              userId: user.id,
+              role: user.role,
+              success,
+              request,
+            });
+          };
+
           if (!user || !user.password || !user.isActive || user.deletedAt) {
             bcrypt.compareSync(password, DUMMY_HASH);
+            await trackAdmin(false);
             return null;
           }
 
           const isPasswordValid = bcrypt.compareSync(password, user.password);
 
           if (!isPasswordValid) {
+            await trackAdmin(false);
             return null;
           }
+
+          await trackAdmin(true);
 
           return {
             id: user.id,
@@ -80,7 +97,7 @@ const config: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -88,6 +105,27 @@ const config: NextAuthConfig = {
         token.adminPermissions = user.adminPermissions ?? [];
         if (user.email) token.email = user.email;
       }
+
+      const userId =
+        typeof token.id === 'string' ? token.id : typeof token.sub === 'string' ? token.sub : '';
+      const tokenRole = typeof token.role === 'string' ? token.role : undefined;
+      if (process.env.NEXT_RUNTIME !== 'edge' && userId && isAdminRole(tokenRole)) {
+        try {
+          const { prisma } = await import('@/lib/prisma');
+          const row = await prisma.users.findUnique({
+            where: { id: userId },
+            select: { role: true, isActive: true, adminPermissions: true, deletedAt: true },
+          });
+          if (row && !row.deletedAt && isAdminRole(row.role)) {
+            token.role = row.role;
+            token.isActive = row.isActive;
+            token.adminPermissions = normalizeAdminPermissions(row.adminPermissions);
+          }
+        } catch (error) {
+          console.error('[auth jwt refresh]', error);
+        }
+      }
+
       return token;
     },
     session({ session, token }) {

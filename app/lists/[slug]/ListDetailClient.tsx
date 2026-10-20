@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, startTransition } fr
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useListScrollDepth } from '@/hooks/useListScrollDepth';
 import { useInterestTracking } from '@/hooks/useInterestTracking';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -41,6 +42,9 @@ import type { ListPagePlacements } from '@/lib/sponsored-placements';
 import { isLifestyleCategory, sourceCategorySlugFromItem } from '@/lib/list-entry';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import { Button } from '@/components/ui/button';
+import AdminListQuickEditSheet, {
+  type AdminListQuickEditValues,
+} from '@/components/mobile/lists/AdminListQuickEditSheet';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -89,6 +93,10 @@ type ListDetail = {
   viewCount: number;
   badge?: 'TRENDING' | 'NEW' | 'FEATURED' | null;
   tags?: string[];
+  isActive?: boolean;
+  isPublic?: boolean;
+  isFeatured?: boolean;
+  commentsEnabled?: boolean;
   categories: Category;
   items: Item[];
   users: User;
@@ -105,6 +113,8 @@ interface ListDetailClientProps {
   sponsoredPlacements?: ListPagePlacements;
   /** SSR فقط پنجرهٔ اول را می‌فرستد؛ بقیه از /api/lists/[id]/items می‌آید. */
   itemsHasMore?: boolean;
+  /** لینک اشخاصی که صفحهٔ منتشرشده دارند. کلید: personLinkKey */
+  personHrefs?: Record<string, string>;
 }
 
 type ListViewMode = 'grid' | 'map';
@@ -443,12 +453,14 @@ export default function ListDetailClient({
   list: listProp,
   sponsoredPlacements = { banner: [], sidebar: [], afterSimilar: [] },
   itemsHasMore = false,
+  personHrefs: personHrefsProp = {},
 }: ListDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
   // فقط برای AT — چیدمان همچنان با CSS (`lg:`) تا CLS نسازد
   const isDesktop = useIsDesktop();
   const [items, setItems] = useState(listProp.items);
+  const [personHrefs, setPersonHrefs] = useState(personHrefsProp);
   const [hasMoreRemote, setHasMoreRemote] = useState(itemsHasMore);
   const [loadingMoreRemote, setLoadingMoreRemote] = useState(false);
   const remoteFetchLock = useRef(false);
@@ -459,10 +471,11 @@ export default function ListDetailClient({
 
   useEffect(() => {
     setItems(listProp.items);
+    setPersonHrefs(personHrefsProp);
     setHasMoreRemote(itemsHasMore);
     itemsLenRef.current = listProp.items.length;
     hasMoreRemoteRef.current = itemsHasMore;
-  }, [listProp.id, listProp.items, itemsHasMore]);
+  }, [listProp.id, listProp.items, itemsHasMore, personHrefsProp]);
 
   const fetchMoreItems = useCallback(async (): Promise<boolean> => {
     if (remoteFetchLock.current || !hasMoreRemoteRef.current) return false;
@@ -477,8 +490,12 @@ export default function ListDetailClient({
         success?: boolean;
         items?: Item[];
         pagination?: { hasMore?: boolean };
+        personHrefs?: Record<string, string>;
       };
       if (!res.ok || !json.success || !Array.isArray(json.items)) return false;
+      if (json.personHrefs) {
+        setPersonHrefs((prev) => ({ ...prev, ...json.personHrefs }));
+      }
 
       setItems((prev) => {
         const seen = new Set(prev.map((i) => i.id));
@@ -651,6 +668,10 @@ export default function ListDetailClient({
   const viewCount = list.viewCount ?? 0;
   const isViral = list.badge === 'TRENDING' || saveCount >= 100;
   const isOwner = !!session?.user && list.userId === (session.user as { id?: string }).id;
+  const { can } = usePermissions();
+  const canEditList = can('manage_lists');
+  const [editOpen, setEditOpen] = useState(false);
+  const [listDraft, setListDraft] = useState<AdminListQuickEditValues | null>(null);
 
   useEffect(() => {
     setDisplaySaveCount(saveCount);
@@ -694,15 +715,43 @@ export default function ListDetailClient({
     [bookmarkSaving, isOwner, list.id, list.slug, router, session?.user]
   );
 
+  const editedTitle = listDraft?.title ?? list.title;
+  const editedDescription = listDraft ? listDraft.description : list.description;
   const displayTitle = getDisplayListTitle({
-    title: list.title,
+    title: editedTitle,
     slug: list.slug,
     categorySlug: list.categories?.slug,
   });
   const categorySlug = list.categories?.slug ?? null;
   const isLifestyleList = isLifestyleCategory(categorySlug);
   const categoryIcon = list.categories?.icon ?? null;
-  const listDescription = list.description?.trim();
+  const listDescription = editedDescription?.trim();
+  const editValues: AdminListQuickEditValues = {
+    id: list.id,
+    title: editedTitle,
+    description: editedDescription,
+    isActive: listDraft?.isActive ?? list.isActive ?? true,
+    isPublic: listDraft?.isPublic ?? list.isPublic ?? true,
+    isFeatured: listDraft?.isFeatured ?? list.isFeatured ?? false,
+    commentsEnabled: listDraft?.commentsEnabled ?? list.commentsEnabled ?? true,
+  };
+
+  const openListEditor = () => {
+    setMoreOpen(false);
+    setEditOpen(true);
+  };
+
+  const handleListSaved = (next: AdminListQuickEditValues) => {
+    setListDraft(next);
+    setEditOpen(false);
+    if (!next.isActive || !next.isPublic) {
+      setToast({ message: 'لیست از دید بازدیدکننده‌ها خارج شد', type: 'success' });
+      router.push(`/admin/lists/${next.id}/edit`);
+      return;
+    }
+    setToast({ message: 'لیست ذخیره شد', type: 'success' });
+    router.refresh();
+  };
 
   const mappableItemCount = useMemo(
     () =>
@@ -1361,6 +1410,7 @@ export default function ListDetailClient({
             tags={list.tags}
             onShare={handleShare}
             onManage={() => setMoreOpen(true)}
+            onEdit={canEditList ? openListEditor : undefined}
             onSuggestItem={handleOpenSuggest}
             statsBar={
               <ListCompactStatsBar
@@ -1392,6 +1442,7 @@ export default function ListDetailClient({
           categoryIcon={categoryIcon}
           categoryName={list.categories?.name}
           listSlug={list.slug}
+          personHrefs={personHrefs}
           onPrev={canPreviewPrev ? goPreviewPrev : undefined}
           onNext={canPreviewNext ? goPreviewNext : undefined}
           adjacentImageUrls={previewAdjacentImageUrls}
@@ -1421,23 +1472,54 @@ export default function ListDetailClient({
                   افزودن آیتم
                 </span>
               </Link>
-              <Link
-                href={`/user-lists/${list.id}`}
-                role="menuitem"
-                onClick={() => setMoreOpen(false)}
-                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
-              >
-                <span className="flex size-11 shrink-0 items-center justify-center text-muted-foreground">
-                  <Settings className="h-4 w-4" aria-hidden />
-                </span>
-                <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
-                  ویرایش لیست
-                </span>
-              </Link>
+              {canEditList ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={openListEditor}
+                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
+                >
+                  <span className="flex size-11 shrink-0 items-center justify-center text-muted-foreground">
+                    <Settings className="h-4 w-4" aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
+                    ویرایش لیست
+                  </span>
+                </button>
+              ) : (
+                <Link
+                  href={`/user-lists/${list.id}`}
+                  role="menuitem"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
+                >
+                  <span className="flex size-11 shrink-0 items-center justify-center text-muted-foreground">
+                    <Settings className="h-4 w-4" aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1 text-start text-sm font-medium text-foreground">
+                    ویرایش لیست
+                  </span>
+                </Link>
+              )}
               <div className="my-1.5 border-t border-border" aria-hidden />
             </>
           ) : (
             <>
+              {canEditList ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={openListEditor}
+                  className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-start transition-colors hover:bg-muted"
+                >
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                    <Settings className="h-4 w-4" aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1 text-start text-sm font-semibold text-foreground">
+                    ویرایش لیست
+                  </span>
+                </button>
+              ) : null}
               <button
                 type="button"
                 role="menuitem"
@@ -1528,6 +1610,16 @@ export default function ListDetailClient({
           ) : null}
         </div>
       </BottomSheet>
+
+      {canEditList ? (
+        <AdminListQuickEditSheet
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
+          list={editValues}
+          onSaved={handleListSaved}
+          onError={(message) => setToast({ message, type: 'error' })}
+        />
+      ) : null}
 
       {listReportOpen ? (
         <ListReportModalLazy

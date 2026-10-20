@@ -84,6 +84,17 @@ function getBreadcrumb(pathname: string | null): { href: string; label: string }
       hiddenResourceId = segments[i];
       continue;
     }
+    if (
+      segments[i - 1] === 'admins' &&
+      segments[i] !== 'new' &&
+      /^[A-Za-z0-9_-]+$/.test(segments[i])
+    ) {
+      acc += `/${segments[i]}`;
+      if (out[out.length - 1]?.href !== acc) {
+        out.push({ href: acc, label: 'پرونده' });
+      }
+      continue;
+    }
     if (hiddenResourceId && (segments[i] === 'edit' || segments[i] === 'debug')) {
       acc += `/${hiddenResourceId}/${segments[i]}`;
       hiddenResourceId = null;

@@ -4,9 +4,12 @@ import ItemDescriptionBlock from '@/components/mobile/items/ItemDescriptionBlock
 import {
   buildItemMetadataFacts,
   buildLightweightDisplayBody,
+  collectPersonLinkTargets,
   extractItemTip,
   parseTipAsMetadataFact,
 } from '@/lib/item-metadata-display';
+import { personLinkKey, type PersonRole } from '@/lib/people';
+import { resolvePublicPersonHrefs } from '@/lib/people-server';
 import {
   isLifestyleCategory,
   isLightweightListItem,
@@ -26,7 +29,9 @@ type ItemMetadataServerProps = {
   item: ItemMetadataServerItem;
 };
 
-export default function ItemMetadataServer({ item }: ItemMetadataServerProps) {
+export default async function ItemMetadataServer({ item }: ItemMetadataServerProps) {
+  const personHrefs = await resolvePublicPersonHrefs(collectPersonLinkTargets(item.metadata));
+  const personHref = (role: PersonRole, name: string) => personHrefs[personLinkKey(role, name)];
   const listCategorySlug = item.lists.categories?.slug ?? null;
   const itemCategorySlug =
     sourceCategorySlugFromItem({
@@ -42,9 +47,10 @@ export default function ItemMetadataServer({ item }: ItemMetadataServerProps) {
     ? []
     : buildItemMetadataFacts(item.metadata, itemCategorySlug, {
         fallbackImdbRating: meta.imdbRating ?? item.rating,
+        personHref,
       });
   const itemTip = extractItemTip(item.metadata);
-  const tipAsFact = parseTipAsMetadataFact(itemTip);
+  const tipAsFact = parseTipAsMetadataFact(itemTip, personHref);
   const displayMetadataFacts = (tipAsFact
     ? baseMetadataFacts.some((f) => f.key === 'translator')
       ? baseMetadataFacts

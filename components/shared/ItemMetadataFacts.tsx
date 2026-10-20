@@ -44,15 +44,22 @@ function FactValueLink({ href, children }: { href: string; children: React.React
   );
 }
 
+function ProfileName({ name, href }: { name: string; href?: string }) {
+  if (!href) return <span className="text-foreground">{name}</span>;
+  return (
+    <Link href={href} className="hover:underline">
+      <span className="text-brand">{name}</span>
+    </Link>
+  );
+}
+
 function ProfileLinksRow({ links }: { links: NonNullable<MetadataFact['profileLinks']> }) {
   return (
     <p className="mt-0.5 wibe-small font-semibold leading-snug text-foreground">
       {links.map((link, index) => (
-        <span key={link.href}>
+        <span key={`${link.name}-${index}`}>
           {index > 0 ? <span className="text-foreground/40"> · </span> : null}
-          <Link href={link.href} className="hover:underline">
-            <span className="text-brand">{link.name}</span>
-          </Link>
+          <ProfileName name={link.name} href={link.href} />
         </span>
       ))}
     </p>
@@ -82,11 +89,9 @@ function FactChip({
         <span className="shrink-0 font-medium text-foreground/55">{label}</span>
         <span className="min-w-0 font-semibold text-foreground">
           {profileLinks.map((link, index) => (
-            <span key={link.href}>
+            <span key={`${link.name}-${index}`}>
               {index > 0 ? <span className="text-foreground/40"> · </span> : null}
-              <Link href={link.href} className="hover:underline">
-                <span className="text-brand">{link.name}</span>
-              </Link>
+              <ProfileName name={link.name} href={link.href} />
             </span>
           ))}
         </span>

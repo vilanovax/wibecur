@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { requireAdmin } from '@/lib/auth';
 import AuditLogClient from '@/components/admin/audit/AuditLogClient';
 
@@ -13,7 +14,9 @@ export default async function AuditPage() {
           تاریخچه عملیات حساس ادمین — کلیک روی هر ردیف برای مشاهده جزئیات
         </p>
       </div>
-      <AuditLogClient />
+      <Suspense fallback={<div className="h-40 rounded-2xl bg-gray-100 dark:bg-gray-700" aria-hidden />}>
+        <AuditLogClient />
+      </Suspense>
     </div>
   );
 }

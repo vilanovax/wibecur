@@ -54,6 +54,8 @@ export const FIELD_LABELS: Record<string, string> = {
   trendingWeight: 'وزن ترند',
   email: 'ایمیل',
   role: 'نقش',
+  adminNote: 'توضیحات',
+  passwordChanged: 'تغییر رمز',
   saveCount: 'تعداد ذخیره',
   updatedAt: 'زمان به‌روزرسانی',
 };

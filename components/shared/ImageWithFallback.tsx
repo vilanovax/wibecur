@@ -154,7 +154,7 @@ export default function ImageWithFallback({
   if (!displaySrc) {
     return (
       <div
-        className={`flex items-center justify-center bg-gradient-to-br ${fallbackGradient} ${className} ${fallbackClassName}`}
+        className={`flex items-center justify-center bg-linear-to-br ${fallbackGradient} ${className} ${fallbackClassName}`}
       >
         <span className="text-2xl opacity-90 drop-shadow-sm sm:text-3xl">{fallbackIcon}</span>
       </div>

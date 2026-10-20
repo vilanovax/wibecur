@@ -9,6 +9,7 @@ import {
   isFilmCategorySlug,
   isLocationCategorySlug,
 } from '@/lib/category-layout';
+import { isPortraitCoverCategory } from '@/lib/resolve-item-image';
 import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
@@ -138,14 +139,26 @@ export default function CategoryPage2Client({
     <ViralSpotlightSectionLazy list={featuredSpotlight} accentColor={accentColor} inset />
   ) : null;
 
+  const itemLayout = isPortraitCoverCategory(category.slug) ? 'poster' : 'tile';
+
   const mostSavedItemsClient =
     mostSavedItems.length > 0 ? (
-      <MostSavedItemsCafeLazy items={mostSavedItems} accentColor={accentColor} inset />
+      <MostSavedItemsCafeLazy
+        items={mostSavedItems}
+        accentColor={accentColor}
+        inset
+        itemLayout={itemLayout}
+      />
     ) : null;
 
   const latestItemsClient =
     latestItems.length > 0 ? (
-      <LatestItemsSectionLazy items={latestItems} accentColor={accentColor} inset />
+      <LatestItemsSectionLazy
+        items={latestItems}
+        accentColor={accentColor}
+        inset
+        itemLayout={itemLayout}
+      />
     ) : null;
 
   const breadcrumbItems = [

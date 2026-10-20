@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import SiteLogo from '@/components/shared/SiteLogo';
 import { ADMIN_PANEL_VERSION } from '@/lib/generated/admin-panel-version';
@@ -22,59 +21,47 @@ interface SiteFooterProps {
   variant?: 'desktop' | 'mobile';
 }
 
-function isOwnProfilePath(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return pathname === '/profile' || pathname.startsWith('/profile/');
-}
-
 function appVersionLabel(): string {
   return fa(ADMIN_PANEL_VERSION).replace(/\./g, '٫');
 }
 
-/** لینک واحد برند: کپی‌رایت + wibe.ir — بدون toLocaleString تا هیدریشن/CLS نشکند */
+/** کپی‌رایت، لینک سایت و نسخهٔ اپ در یک ردیف — بدون toLocaleString تا هیدریشن/CLS نشکند */
 function WibeBrandLink({ className = '' }: { className?: string }) {
   const year = fa(new Date().getFullYear());
-
-  return (
-    <a
-      href={WIBE_SITE_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group inline-flex h-11 items-center gap-1.5 rounded-lg px-2 text-xs text-muted-foreground transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 ${className}`}
-      aria-label={`© ${year} وایب — wibe.ir`}
-    >
-      <span>
-        © <span suppressHydrationWarning>{year}</span> وایب
-        <span className="mx-1.5 text-muted-foreground/40" aria-hidden>
-          ·
-        </span>
-        <span className="font-semibold text-foreground/80 group-hover:text-brand">wibe.ir</span>
-      </span>
-      <ExternalLink
-        className="h-3.5 w-3.5 shrink-0 opacity-50 transition-opacity group-hover:opacity-100"
-        aria-hidden
-      />
-    </a>
-  );
-}
-
-function ProfileAppVersion() {
   const version = appVersionLabel();
 
   return (
-    <span className="inline-flex h-11 items-center text-xs text-muted-foreground">
-      <span className="text-muted-foreground/40" aria-hidden>
+    <span
+      className={`inline-flex h-11 items-center px-2 text-xs text-muted-foreground ${className}`}
+    >
+      <span>
+        © <span suppressHydrationWarning>{year}</span> وایب
+      </span>
+      <span className="mx-1.5 text-muted-foreground/40" aria-hidden>
         ·
       </span>
-      <span className="ms-1.5">نسخهٔ {version}</span>
+      <a
+        href={WIBE_SITE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group inline-flex h-11 items-center gap-1.5 rounded-lg font-semibold text-foreground/80 transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+        aria-label="wibe.ir"
+      >
+        wibe.ir
+        <ExternalLink
+          className="h-3.5 w-3.5 shrink-0 opacity-50 transition-opacity group-hover:opacity-100"
+          aria-hidden
+        />
+      </a>
+      <span className="mx-1.5 text-muted-foreground/40" aria-hidden>
+        ·
+      </span>
+      <span>نسخهٔ {version}</span>
     </span>
   );
 }
 
 export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
-  const pathname = usePathname();
-  const showVersion = isOwnProfilePath(pathname);
-
   if (variant === 'mobile') {
     return (
       <footer
@@ -83,7 +70,6 @@ export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
       >
         <div className="mx-auto flex max-w-sm flex-wrap items-center justify-center">
           <WibeBrandLink />
-          {showVersion ? <ProfileAppVersion /> : null}
         </div>
       </footer>
     );
@@ -127,7 +113,6 @@ export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
 
         <div className="mt-6 flex flex-wrap items-center justify-center border-t border-border pt-5 lg:justify-start">
           <WibeBrandLink />
-          {showVersion ? <ProfileAppVersion /> : null}
         </div>
       </div>
     </footer>

@@ -13,6 +13,7 @@ import type { UserRole } from '@prisma/client';
 import { validateAuthPassword } from '@/lib/phone-auth';
 import { ADMIN_ROLE_TEMPLATES } from '@/lib/auth/role-templates';
 import { PERMISSION_GROUPS } from '@/lib/auth/permission-groups';
+import { parseAdminNote } from '@/lib/admin/admin-note';
 
 function parsePermissions(raw: unknown): Permission[] {
   if (!Array.isArray(raw)) return [];
@@ -79,6 +80,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'حداقل یک دسترسی انتخاب کنید' }, { status: 400 });
     }
 
+    const parsedNote = parseAdminNote(body.adminNote);
+    if (parsedNote && !parsedNote.ok) {
+      return NextResponse.json({ error: parsedNote.error }, { status: 400 });
+    }
+    const adminNote = parsedNote?.ok ? parsedNote.note : null;
+
     const existing = await prisma.users.findUnique({ where: { email }, select: { id: true, role: true } });
     if (existing) {
       if (isAdminRole(existing.role)) {
@@ -100,6 +107,7 @@ export async function POST(request: NextRequest) {
         role: role as UserRole,
         isActive: true,
         adminPermissions: useCustom ? adminPermissions : [],
+        adminNote,
         emailVerified: new Date(),
         createdAt: new Date(),
         updatedAt: new Date(),

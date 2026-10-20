@@ -5,7 +5,11 @@ import { requirePermission } from '@/lib/auth/require-permission';
 import { getAdminAccount } from '@/lib/admin/admins-data';
 import { ADMIN_ROLES, isAdminRole, type AdminRole } from '@/lib/auth/roles';
 import { isPermission, type Permission } from '@/lib/auth/permissions';
-import { assertCanAssignRole, assertCanModifyAdmin } from '@/lib/auth/admin-guards';
+import { assertCanAssignRole, assertCanModifyAdmin, countActiveSuperAdmins } from '@/lib/auth/admin-guards';
+import { getAdminDossier } from '@/lib/admin/admin-dossier';
+import { parseAdminNote } from '@/lib/admin/admin-note';
+import { ADMIN_ROLE_TEMPLATES } from '@/lib/auth/role-templates';
+import { PERMISSION_GROUPS } from '@/lib/auth/permission-groups';
 import { logAudit } from '@/lib/audit/log';
 import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalUser } from '@/lib/audit/snapshots';
@@ -44,6 +48,10 @@ export async function PATCH(
         : undefined;
     const password = typeof body.password === 'string' ? body.password : '';
     const name = typeof body.name === 'string' ? body.name.trim() : undefined;
+    const parsedNote = parseAdminNote(body.adminNote);
+    if (parsedNote && !parsedNote.ok) {
+      return NextResponse.json({ error: parsedNote.error }, { status: 400 });
+    }
 
     if (body.role !== undefined && !ADMIN_ROLES.includes(nextRole)) {
       return NextResponse.json({ error: 'نقش نامعتبر' }, { status: 400 });
@@ -76,6 +84,16 @@ export async function PATCH(
       }
     }
 
+    if (existing.role === 'SUPER_ADMIN' && nextRole !== 'SUPER_ADMIN') {
+      const others = await countActiveSuperAdmins(id);
+      if (others === 0) {
+        return NextResponse.json(
+          { error: 'حداقل یک مدیرکل فعال باید باقی بماند' },
+          { status: 403 }
+        );
+      }
+    }
+
     const updated = await prisma.users.update({
       where: { id },
       data: {
@@ -83,6 +101,7 @@ export async function PATCH(
         ...(body.role !== undefined && { role: nextRole as UserRole }),
         ...(body.isActive !== undefined && { isActive: nextIsActive }),
         ...(adminPermissions !== undefined && { adminPermissions }),
+        ...(parsedNote?.ok && { adminNote: parsedNote.note }),
         ...(password && { password: bcrypt.hashSync(password, 10) }),
         updatedAt: new Date(),
       },
@@ -93,6 +112,7 @@ export async function PATCH(
         role: true,
         isActive: true,
         adminPermissions: true,
+        adminNote: true,
         updatedAt: true,
       },
     });
@@ -104,8 +124,12 @@ export async function PATCH(
       action: 'USER_ROLE_CHANGE',
       entityType: 'USER',
       entityId: id,
-      before: minimalUser(existing),
-      after: minimalUser({ ...existing, ...updated, updatedAt: updated.updatedAt }),
+      before: { ...minimalUser(existing), adminNote: existing.adminNote ?? null },
+      after: {
+        ...minimalUser({ ...existing, ...updated, updatedAt: updated.updatedAt }),
+        adminNote: updated.adminNote ?? null,
+        ...(password ? { passwordChanged: true } : {}),
+      },
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
     });
@@ -134,11 +158,18 @@ export async function GET(
     const userOrRes = await requirePermission('manage_roles');
     if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
-    const account = await getAdminAccount(id);
-    if (!account) {
+    const dossier = await getAdminDossier(id);
+    if (!dossier) {
       return NextResponse.json({ error: 'ادمین یافت نشد' }, { status: 404 });
     }
-    return NextResponse.json({ success: true, data: account });
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...dossier,
+        roleTemplates: ADMIN_ROLE_TEMPLATES,
+        permissionGroups: PERMISSION_GROUPS,
+      },
+    });
   } catch (error: unknown) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'خطا' },

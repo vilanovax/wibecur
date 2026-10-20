@@ -5,6 +5,8 @@ import {
   fetchPublicListItemsPage,
   LIST_DETAIL_ITEMS_PAGE_SIZE,
 } from '@/lib/list-detail-items';
+import { collectPersonLinkTargets } from '@/lib/item-metadata-display';
+import { resolvePublicPersonHrefs } from '@/lib/people-server';
 
 /** GET /api/lists/[id]/items — صفحه‌بندی آیتم‌های لیست کیوریتد عمومی */
 export async function GET(
@@ -30,7 +32,11 @@ export async function GET(
       return NextResponse.json({ error: 'لیست یافت نشد' }, { status: 404 });
     }
 
-    const response = NextResponse.json({ success: true, ...result });
+    const personHrefs = await resolvePublicPersonHrefs(
+      result.items.flatMap((item) => collectPersonLinkTargets(item.metadata))
+    );
+
+    const response = NextResponse.json({ success: true, ...result, personHrefs });
     response.headers.set(
       'Cache-Control',
       'public, max-age=60, s-maxage=120, stale-while-revalidate=300'

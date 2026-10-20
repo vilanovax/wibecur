@@ -23,7 +23,7 @@ export const ADMIN_ROLE_TEMPLATES: AdminRoleTemplate[] = [
   {
     role: 'ADMIN',
     label: 'مدیر',
-    description: 'دسترسی گسترده به محتوا، کاربران، کامنت‌ها و تنظیمات',
+    description: 'محتوا، کاربران، کامنت‌ها و تنظیمات. مدیریت ادمین و پشتیبان با مدیرکل است',
     permissions: [...ROLE_PERMISSIONS.ADMIN],
   },
   {

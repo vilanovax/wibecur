@@ -32,6 +32,7 @@ const SUPER_ADMIN: Permission[] = [
   'manage_settings',
 ];
 
+/** مدیر: مثل مدیرکل، بدون تعریف ادمین و بدون پشتیبان‌گیری */
 const ADMIN: Permission[] = [
   'view_dashboard',
   'view_pulse',
@@ -51,11 +52,9 @@ const ADMIN: Permission[] = [
   'moderate_comments',
   'view_reports',
   'resolve_reports',
-  'manage_roles',
   'view_audit',
   'view_moderation',
   'assign_moderation',
-  'manage_backup',
   'manage_settings',
 ];
 

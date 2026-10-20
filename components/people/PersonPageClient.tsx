@@ -2,23 +2,37 @@
 
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { ExternalLink, Film } from 'lucide-react';
+import { BookOpen, Clapperboard, ExternalLink, Languages, Star, UserRound } from 'lucide-react';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
 import { uiBreadcrumbToSchema } from '@/lib/breadcrumb-schema';
 import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
-import { PERSON_ROLE_META, type PersonPageData } from '@/lib/people';
+import { PERSON_ROLE_META, type PersonPageData, type PersonRole } from '@/lib/people';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 
 type PersonPageClientProps = PersonPageData;
 
-function displayRating(rating: number | null): string | null {
-  if (rating == null || Number(rating) === 0) return null;
-  return String(rating);
+const ROLE_ICON = {
+  director: Clapperboard,
+  actor: UserRound,
+  author: BookOpen,
+  translator: Languages,
+} as const;
+
+function isMostlyLatin(value: string): boolean {
+  const letters = value.replace(/[^\p{L}]/gu, '');
+  if (!letters) return false;
+  const latin = letters.replace(/[^\p{Script=Latin}]/gu, '');
+  return latin.length / letters.length > 0.5;
+}
+
+function formatRating(rating: number | null): string | null {
+  if (rating == null || Number(rating) <= 0) return null;
+  return Number(rating).toLocaleString('fa-IR', { maximumFractionDigits: 1 });
 }
 
 function averageRating(items: PersonPageData['items']): number | null {
@@ -28,43 +42,56 @@ function averageRating(items: PersonPageData['items']): number | null {
   return Math.round((sum / rated.length) * 10) / 10;
 }
 
+function worksLead(role: PersonRole): string {
+  switch (role) {
+    case 'director':
+      return 'فیلم‌هایی با کارگردانی';
+    case 'actor':
+      return 'آثاری با بازی';
+    case 'author':
+      return 'کتاب‌ها و آثاری با نویسندگی';
+    case 'translator':
+      return 'آثاری با ترجمهٔ';
+  }
+}
+
+function PersonName({
+  name,
+  className = '',
+}: {
+  name: string;
+  className?: string;
+}) {
+  const latin = isMostlyLatin(name);
+  return (
+    <bdi dir={latin ? 'ltr' : undefined} className={className}>
+      {name}
+    </bdi>
+  );
+}
+
 function PersonAvatar({
   imageUrl,
   displayName,
   roleIcon,
-  size = 'mobile',
 }: {
   imageUrl: string | null;
   displayName: string;
   roleIcon: string;
-  size?: 'mobile' | 'desktop';
 }) {
-  const isDesktop = size === 'desktop';
-
   return (
-    <div
-      className={
-        isDesktop
-          ? 'relative mx-auto aspect-[3/4] w-full max-w-[13.5rem] overflow-hidden rounded-2xl bg-gradient-to-br from-primary/12 via-primary/5 to-transparent shadow-lg ring-1 ring-primary/15 xl:max-w-[15rem]'
-          : 'h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10'
-      }
-    >
+    <div className="relative size-20 shrink-0 overflow-hidden rounded-2xl bg-muted ring-1 ring-border lg:aspect-[3/4] lg:h-auto lg:w-52 xl:w-56">
       {imageUrl ? (
         <ImageWithFallback
           src={imageUrl}
           alt={displayName}
           className="h-full w-full object-cover"
           fallbackIcon={roleIcon}
-          fallbackClassName="flex h-full w-full items-center justify-center text-4xl lg:text-6xl"
-          priority={isDesktop}
+          fallbackClassName="flex h-full w-full items-center justify-center text-4xl"
+          priority
         />
       ) : (
-        <div
-          className={`flex h-full w-full items-center justify-center ${
-            isDesktop ? 'text-6xl xl:text-7xl' : 'text-4xl'
-          }`}
-          aria-hidden
-        >
+        <div className="flex h-full w-full items-center justify-center text-4xl" aria-hidden>
           {roleIcon}
         </div>
       )}
@@ -82,175 +109,123 @@ export default function PersonPageClient({
   items,
 }: PersonPageClientProps) {
   const roleMeta = PERSON_ROLE_META[role];
+  const WorksIcon = ROLE_ICON[role];
   const [bioExpanded, setBioExpanded] = useState(false);
   const avgRating = averageRating(items);
-  const canTruncateBio = !bioIsStub && (bio?.length ?? 0) > 320;
-  const shownBio =
-    canTruncateBio && !bioExpanded ? `${bio!.slice(0, 320).trim()}…` : bio;
+  const canTruncateBio = !bioIsStub && (bio?.length ?? 0) > 220;
 
   const breadcrumbItems = [
     { label: 'خانه', href: '/' },
-    { label: roleMeta.pluralLabel, href: '/search' },
+    { label: roleMeta.label },
     { label: displayName },
   ];
 
+  const identity = (
+    <div className="min-w-0 text-start">
+      <span className="inline-flex h-8 items-center rounded-full bg-brand/10 px-3 wibe-caption font-semibold text-brand">
+        {roleMeta.label}
+      </span>
+      <h1 className="mt-2 wibe-h2">
+        <PersonName name={displayName} />
+      </h1>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <StatChip icon={WorksIcon}>
+          {items.length.toLocaleString('fa-IR')} آیتم در وایب
+        </StatChip>
+        {avgRating != null ? (
+          <StatChip icon={Star}>
+            میانگین {avgRating.toLocaleString('fa-IR')}
+          </StatChip>
+        ) : null}
+        {externalUrl ? (
+          <a
+            href={externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-popover px-3 text-sm font-medium text-foreground"
+          >
+            <ExternalLink className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+            منبع خارجی
+          </a>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  const bioBlock = bio ? (
+    <BioBlock
+      bio={bio}
+      bioIsStub={bioIsStub}
+      canTruncate={canTruncateBio}
+      expanded={bioExpanded}
+      onToggle={() => setBioExpanded((value) => !value)}
+    />
+  ) : null;
+
   return (
     <main
-      className={`${MOBILE_SHELL_MAX_WIDTH_CLASS} mx-auto w-full px-4 pb-10 pt-3 lg:max-w-[920px] lg:px-6 lg:pb-12 lg:pt-5 xl:max-w-[980px]`}
+      className={`${MOBILE_SHELL_MAX_WIDTH_CLASS} mx-auto w-full px-4 pb-8 pt-2 lg:max-w-5xl lg:px-0 lg:pb-10 lg:pt-4`}
     >
       <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
-      <PageBreadcrumb className="mb-4 lg:mb-5" items={breadcrumbItems} />
+      <PageBreadcrumb className="mb-3 lg:mb-4" items={breadcrumbItems} />
 
-      <Card className="mb-8 overflow-hidden bg-popover p-0">
-        {/* موبایل */}
-        <div className="p-5 lg:hidden">
-          <div className="flex items-start gap-4">
-            <PersonAvatar
-              imageUrl={imageUrl}
-              displayName={displayName}
-              roleIcon={roleMeta.icon}
-              size="mobile"
-            />
-            <div className="min-w-0 flex-1 text-start">
-              <p className="wibe-caption font-medium text-muted-foreground">{roleMeta.label}</p>
-              <h1 className="mt-1 wibe-h2 font-bold text-foreground">{displayName}</h1>
-              <p className="mt-1 wibe-caption text-muted-foreground">
-                {items.length.toLocaleString('fa-IR')} آیتم در وایب
-              </p>
-              {externalUrl && (
-                <a
-                  href={externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-flex min-h-11 items-center text-sm font-medium hover:underline"
-                >
-                  <span className="text-brand">منبع خارجی</span>
-                </a>
-              )}
-            </div>
+      <Card className="mb-6 overflow-hidden bg-popover p-4 lg:mb-8 lg:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-8">
+          <PersonAvatar
+            imageUrl={imageUrl}
+            displayName={displayName}
+            roleIcon={roleMeta.icon}
+          />
+          <div className="min-w-0 flex-1">
+            {identity}
+            {bioBlock ? <div className="mt-4 border-t border-border pt-4">{bioBlock}</div> : null}
           </div>
-
-          {bio && (
-            <div className="mt-4 border-t border-border/60 pt-4">
-              <BioBlock
-                bio={shownBio}
-                bioIsStub={bioIsStub}
-                canTruncateBio={canTruncateBio}
-                bioExpanded={bioExpanded}
-                onToggle={() => setBioExpanded((v) => !v)}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* دسکتاپ */}
-        <div className="hidden lg:block">
-          <div className="bg-muted/40 px-8 pb-6 pt-8">
-            <div className="grid grid-cols-[minmax(0,13.5rem)_minmax(0,1fr)] items-start gap-8 xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] xl:gap-10">
-              <PersonAvatar
-                imageUrl={imageUrl}
-                displayName={displayName}
-                roleIcon={roleMeta.icon}
-                size="desktop"
-              />
-
-              <div className="min-w-0 pt-1 text-start">
-                <span className="inline-flex min-h-11 items-center rounded-full bg-brand/10 px-3 text-xs font-semibold text-brand">
-                  {roleMeta.label}
-                </span>
-                <h1 className="mt-3 text-3xl font-bold leading-tight text-foreground">
-                  {displayName}
-                </h1>
-
-                <div className="mt-4 flex flex-wrap items-center justify-start gap-2">
-                  <StatChip icon={Film}>
-                    {items.length.toLocaleString('fa-IR')} آیتم در وایب
-                  </StatChip>
-                  {avgRating != null && (
-                    <StatChip>میانگین امتیاز ⭐ {avgRating.toLocaleString('fa-IR')}</StatChip>
-                  )}
-                  {externalUrl && (
-                    <a
-                      href={externalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-popover px-3 text-sm font-medium"
-                    >
-                      <ExternalLink className="size-4 shrink-0 text-brand" aria-hidden />
-                      <span className="text-brand">منبع خارجی</span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {bio && (
-            <div className="border-t border-border/60 px-8 py-7">
-              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">درباره</h2>
-              <BioBlock
-                bio={shownBio}
-                bioIsStub={bioIsStub}
-                canTruncateBio={canTruncateBio}
-                bioExpanded={bioExpanded}
-                onToggle={() => setBioExpanded((v) => !v)}
-                desktop
-              />
-            </div>
-          )}
         </div>
       </Card>
 
       {items.length === 0 ? (
-        <EmptyState title="آیتمی برای این نام پیدا نشد" description="هنوز اثری با این نام در لیست‌های وایب نیست." />
+        <EmptyState
+          title="آیتمی برای این نام پیدا نشد"
+          description="هنوز اثری با این نام در لیست‌های وایب نیست."
+        />
       ) : (
         <section aria-label={`آیتم‌های ${displayName}`}>
-          <div className="mb-4 flex items-end justify-between gap-3">
-            <div>
-              <h2 className="wibe-body font-semibold text-foreground lg:text-lg">آیتم‌ها در وایب</h2>
-              <p className="mt-0.5 hidden text-sm text-muted-foreground lg:block">
-                فیلم‌ها و آثاری که {displayName} در لیست‌های وایب حضور دارد
-              </p>
-            </div>
-            <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              {items.length.toLocaleString('fa-IR')} مورد
-            </span>
+          <div className="mb-3">
+            <h2 className="wibe-h3">آیتم‌ها در وایب</h2>
+            <p className="mt-1 wibe-small">
+              {worksLead(role)} <PersonName name={displayName} /> در لیست‌های وایب
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
             {items.map((item) => {
-              const ratingLabel = displayRating(item.rating);
+              const ratingLabel = formatRating(item.rating);
               return (
-                <Link
-                  key={item.id}
-                  href={`/items/${item.id}`}
-                  className="block"
-                >
-                  <Card className="group overflow-hidden bg-popover p-0">
-                  <div className="relative aspect-[2/3] w-full bg-muted">
-                    <LazyItemCoverImage
-                      itemId={item.id}
-                      title={item.title}
-                      imageUrl={item.displayImageUrl || item.imageUrl}
-                      categorySlug={item.categorySlug}
-                      fallbackIcon={item.categoryIcon ?? '📋'}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                      fallbackClassName="absolute inset-0 h-full w-full"
-                      coverLayout="grid"
-                    />
-                    <div
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/20 to-transparent"
-                      aria-hidden
-                    />
-                    <div className="absolute inset-x-0 bottom-0 p-2.5 lg:p-3">
-                      <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-background drop-shadow-sm lg:text-sm">
-                        {item.title}
+                <Link key={item.id} href={`/items/${item.id}`} className="block min-w-0">
+                  <Card className="h-full overflow-hidden bg-popover p-0">
+                    <div className="relative aspect-[2/3] w-full bg-muted">
+                      <LazyItemCoverImage
+                        itemId={item.id}
+                        title={item.title}
+                        imageUrl={item.displayImageUrl || item.imageUrl}
+                        categorySlug={item.categorySlug}
+                        fallbackIcon={item.categoryIcon ?? '📋'}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        fallbackClassName="absolute inset-0 h-full w-full"
+                        coverLayout="grid"
+                      />
+                    </div>
+                    <div className="space-y-1 p-3">
+                      <h3 className="line-clamp-2 text-small font-semibold text-foreground">
+                        <PersonName name={item.title} />
                       </h3>
                       {ratingLabel ? (
-                        <p className="mt-1 wibe-caption text-background/90 lg:text-xs">⭐ {ratingLabel}</p>
+                        <p className="flex items-center gap-1 wibe-caption text-muted-foreground">
+                          <Star className="size-4 shrink-0 fill-warning text-warning" strokeWidth={1.5} aria-hidden />
+                          <span className="tabular-nums">{ratingLabel}</span>
+                        </p>
                       ) : null}
                     </div>
-                  </div>
                   </Card>
                 </Link>
               );
@@ -267,11 +242,11 @@ function StatChip({
   icon: Icon,
 }: {
   children: ReactNode;
-  icon?: typeof Film;
+  icon?: typeof Clapperboard;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/90 px-3 py-1.5 text-xs font-medium text-foreground/85 backdrop-blur-sm">
-      {Icon ? <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden /> : null}
+    <span className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-muted px-3 text-sm font-medium text-foreground">
+      {Icon ? <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden /> : null}
       {children}
     </span>
   );
@@ -280,34 +255,31 @@ function StatChip({
 function BioBlock({
   bio,
   bioIsStub,
-  canTruncateBio,
-  bioExpanded,
+  canTruncate,
+  expanded,
   onToggle,
-  desktop = false,
 }: {
-  bio: string | null | undefined;
+  bio: string;
   bioIsStub: boolean;
-  canTruncateBio: boolean;
-  bioExpanded: boolean;
+  canTruncate: boolean;
+  expanded: boolean;
   onToggle: () => void;
-  desktop?: boolean;
 }) {
-  if (!bio) return null;
-
   return (
-    <>
+    <div>
+      <h2 className="mb-1 wibe-caption font-medium text-muted-foreground">درباره</h2>
       <p
-        className={`whitespace-pre-line text-start text-base leading-relaxed ${
-          desktop ? 'max-w-3xl' : ''
-        } ${bioIsStub ? 'text-muted-foreground' : 'text-foreground'}`}
+        className={`whitespace-pre-line text-start text-body ${
+          bioIsStub ? 'text-muted-foreground' : 'text-foreground'
+        } ${canTruncate && !expanded ? 'line-clamp-4' : ''}`}
       >
         {bio}
       </p>
-      {canTruncateBio && (
-        <Button type="button" variant="ghost" className="mt-3 h-11 px-0 text-brand" onClick={onToggle}>
-          {bioExpanded ? 'نمایش کمتر' : 'ادامهٔ بیوگرافی'}
+      {canTruncate ? (
+        <Button type="button" variant="ghost" className="mt-1 h-11 px-0 text-brand" onClick={onToggle}>
+          {expanded ? 'نمایش کمتر' : 'ادامهٔ بیوگرافی'}
         </Button>
-      )}
-    </>
+      ) : null}
+    </div>
   );
 }

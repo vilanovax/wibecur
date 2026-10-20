@@ -14,6 +14,7 @@ export type AdminAccountRow = {
   isActive: boolean;
   adminPermissions: Permission[];
   effectivePermissions: Permission[];
+  adminNote: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -25,6 +26,7 @@ const ADMIN_SELECT = {
   role: true,
   isActive: true,
   adminPermissions: true,
+  adminNote: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -36,6 +38,7 @@ function mapAdminRow(row: {
   role: string;
   isActive: boolean;
   adminPermissions: string[];
+  adminNote: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): AdminAccountRow {
@@ -50,6 +53,7 @@ function mapAdminRow(row: {
     isActive: row.isActive,
     adminPermissions,
     effectivePermissions: resolveEffectivePermissions(role, adminPermissions),
+    adminNote: row.adminNote,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

@@ -23,6 +23,7 @@ import {
   shouldShowSeparateTipCard,
 } from '@/lib/item-metadata-display';
 import ItemTipCard from '@/components/shared/ItemTipCard';
+import { personLinkKey, type PersonRole } from '@/lib/people';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import { buildListItemQuickActions } from '@/lib/list-item-quick-actions';
 import { trackItemPreviewOpen } from '@/lib/analytics';
@@ -69,6 +70,8 @@ interface ItemPreviewSheetProps {
   onNext?: () => void;
   /** Preload adjacent posters while current item is shown */
   adjacentImageUrls?: Array<string | null | undefined>;
+  /** فقط اشخاصی که صفحهٔ منتشرشده دارند. کلید: personLinkKey */
+  personHrefs?: Record<string, string>;
 }
 
 function preloadImageUrl(url: string | null | undefined) {
@@ -116,7 +119,7 @@ function MetadataChip({
   label: string;
   value: string;
   href?: string;
-  profileLinks?: Array<{ name: string; href: string }>;
+  profileLinks?: Array<{ name: string; href?: string }>;
 }) {
   if (profileLinks?.length) {
     return (
@@ -124,11 +127,15 @@ function MetadataChip({
         <span className="shrink-0 text-muted-foreground">{label}</span>
         <span className="min-w-0 font-medium text-foreground">
           {profileLinks.map((link, index) => (
-            <span key={link.href}>
+            <span key={`${link.name}-${index}`}>
               {index > 0 ? <span className="text-muted-foreground/50"> · </span> : null}
-              <Link href={link.href} className="text-brand hover:underline">
-                {link.name}
-              </Link>
+              {link.href ? (
+                <Link href={link.href} className="text-brand hover:underline">
+                  {link.name}
+                </Link>
+              ) : (
+                <span>{link.name}</span>
+              )}
             </span>
           ))}
         </span>
@@ -314,7 +321,8 @@ type PreviewDerived = {
 
 function derivePreviewContent(
   item: ItemPreviewData,
-  categorySlug?: string | null
+  categorySlug?: string | null,
+  personHrefs?: Record<string, string>
 ): PreviewDerived {
   const entryKind = resolveEntryKind(item);
   const isLightweight = isLightweightListItem(item);
@@ -323,6 +331,9 @@ function derivePreviewContent(
   const meta = (item.metadata ?? {}) as Record<string, unknown>;
   const chips = buildItemMetadataChips(meta, itemCategorySlug, {
     fallbackImdbRating: meta.imdbRating ?? item.rating,
+    personHref: personHrefs
+      ? (role: PersonRole, name: string) => personHrefs[personLinkKey(role, name)]
+      : undefined,
   });
   const itemTip = extractItemTip(meta);
   const listNote = item.listNote?.trim() || null;
@@ -365,16 +376,18 @@ const PreviewBody = memo(function PreviewBody({
   categoryIcon,
   onClose,
   posterPriority,
+  personHrefs,
 }: {
   item: ItemPreviewData;
   categorySlug?: string | null;
   categoryIcon?: string | null;
   onClose: () => void;
   posterPriority: boolean;
+  personHrefs?: Record<string, string>;
 }) {
   const derived = useMemo(
-    () => derivePreviewContent(item, categorySlug),
-    [item, categorySlug]
+    () => derivePreviewContent(item, categorySlug, personHrefs),
+    [item, categorySlug, personHrefs]
   );
 
   const {
@@ -507,6 +520,7 @@ export default function ItemPreviewSheet({
   onPrev,
   onNext,
   adjacentImageUrls,
+  personHrefs,
 }: ItemPreviewSheetProps) {
   const router = useRouter();
   const previewTrackedId = useRef<string | null>(null);
@@ -663,6 +677,7 @@ export default function ItemPreviewSheet({
           categoryIcon={categoryIcon}
           onClose={onClose}
           posterPriority={posterPriority}
+          personHrefs={personHrefs}
         />
       </div>
     </BottomSheet>

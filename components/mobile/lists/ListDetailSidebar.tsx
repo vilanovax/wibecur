@@ -23,6 +23,7 @@ interface ListDetailSidebarProps {
   tags?: string[];
   onShare: () => void;
   onManage: () => void;
+  onEdit?: () => void;
   onSuggestItem: () => void;
   statsBar: ReactNode;
 }
@@ -38,6 +39,7 @@ export default function ListDetailSidebar({
   tags = [],
   onShare,
   onManage,
+  onEdit,
   onSuggestItem,
   statsBar,
 }: ListDetailSidebarProps) {
@@ -47,6 +49,12 @@ export default function ListDetailSidebar({
         {statsBar}
 
         <Card className="space-y-2 bg-popover p-4">
+          {onEdit ? (
+            <Button type="button" variant="outline" size="lg" className="w-full" onClick={onEdit}>
+              <Settings className="h-4 w-4" />
+              ویرایش لیست
+            </Button>
+          ) : null}
           <Button type="button" variant="brand" size="lg" className="w-full" onClick={onShare}>
             <Share2 />
             اشتراک‌گذاری

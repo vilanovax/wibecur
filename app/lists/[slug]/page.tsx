@@ -16,6 +16,8 @@ import {
   LIST_DETAIL_SSR_ITEM_LIMIT,
   listDetailItemSelect,
 } from '@/lib/list-detail-items';
+import { collectPersonLinkTargets } from '@/lib/item-metadata-display';
+import { resolvePublicPersonHrefs } from '@/lib/people-server';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
 
@@ -38,6 +40,8 @@ function loadListBySlug(slug: string) {
       badge: true,
       isPublic: true,
       isActive: true,
+      isFeatured: true,
+      commentsEnabled: true,
       // فقط فیلدهای مصرف‌شده: کلاینت از slug/icon/name و سرور از isActive (برای notFound) استفاده می‌کند
       categories: {
         select: {
@@ -69,7 +73,7 @@ function loadListBySlug(slug: string) {
  * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنهٔ صفحه).
  */
 const getListBySlug = cache((slug: string) =>
-  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v2', slug], {
+  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v3', slug], {
     revalidate: 300,
     tags: [listDetailCacheTag(slug)],
   })()
@@ -143,6 +147,10 @@ export default async function ListDetailPage({
     })
   );
 
+  const personHrefs = await resolvePublicPersonHrefs(
+    listWithCreator.items.flatMap((item) => collectPersonLinkTargets(item.metadata))
+  );
+
   const heroLcpImage =
     listWithCreator.bannerImage ||
     listWithCreator.horizontalImage ||
@@ -159,6 +167,7 @@ export default async function ListDetailPage({
         itemsHasMore={
           (list.itemCount ?? list._count.items) > listWithCreator.items.length
         }
+        personHrefs={personHrefs}
       />
       <BottomNav />
     </div>

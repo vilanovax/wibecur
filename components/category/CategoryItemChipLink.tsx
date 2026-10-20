@@ -29,7 +29,7 @@ export default function CategoryItemChipLink({
       }`}
     >
       <div
-        className={`overflow-hidden bg-wibe-card shadow-sm ring-1 ring-wibe/90 ${
+        className={`relative overflow-hidden bg-wibe-card shadow-sm ring-1 ring-wibe/90 ${
           isPoster
             ? 'aspect-[2/3] rounded-xl'
             : 'aspect-square rounded-xl'

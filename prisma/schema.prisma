@@ -472,6 +472,10 @@ model users {
    * دسترسی‌های سفارشی ادمین — اگر خالی نباشد جایگزین نقش می‌شود
    */
   adminPermissions               String[]                   @default([])
+  /**
+   * توضیح داخلی ادمین — فقط در پنل، روی پروفایل عمومی نیست
+   */
+  adminNote                      String?
   reputationScore                Int                        @default(0) // +1 comment, +2 suggestion, -3 removed
   curatorScore                   Int                        @default(0)
   curatorLevel                   CuratorLevel               @default(EXPLORER)
@@ -526,6 +530,7 @@ model users {
   discovery_spotlight_cache      discovery_spotlight_cache?
   creator_spotlights             creator_spotlights[]
   audit_logs                     audit_log[]
+  admin_login_events             admin_login_event[]
   sponsored_placements_created   sponsored_placement[]      @relation("SponsoredPlacementCreator")
   backup_jobs_created            backup_jobs[]              @relation("BackupJobsCreated")
   book_extract_jobs_created      book_extract_jobs[]        @relation("BookExtractJobsCreated")
@@ -740,6 +745,20 @@ model audit_log {
   @@index([actorId, createdAt])
   @@index([entityType, entityId])
   @@index([action, createdAt])
+}
+
+model admin_login_event {
+  id        String   @id @default(cuid())
+  userId    String
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  users users @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 enum ModerationStatus {

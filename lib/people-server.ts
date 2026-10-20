@@ -14,6 +14,9 @@ import {
   mergeItemMetadata,
   nameMatchesSlug,
   personItemDedupeKey,
+  personLinkKey,
+  personPublicPath,
+  personSlug,
   PERSON_ROLE_META,
   type PersonPageData,
   type PersonPageItem,
@@ -213,3 +216,33 @@ export const getCachedPersonPage = cache((role: PersonRole, slug: string) =>
     { revalidate: 120, tags: [personPageCacheTag(role, slug), 'person-pages'] }
   )()
 );
+
+/**
+ * لینک صفحهٔ شخص فقط وقتی که صفحه واقعاً باز می‌شود و اطلاعات منتشرشده دارد.
+ * پیش‌نویس، بیوی خالی، یا نامی که به آیتمی نمی‌رسد لینک نمی‌گیرد.
+ */
+export async function resolvePublicPersonHrefs(
+  targets: Array<{ role: PersonRole; name: string }>
+): Promise<Record<string, string>> {
+  const unique = new Map<string, { role: PersonRole; name: string }>();
+  for (const target of targets) {
+    const name = target.name.trim();
+    if (!name) continue;
+    unique.set(personLinkKey(target.role, name), { role: target.role, name });
+  }
+
+  const entries = await Promise.all(
+    [...unique.values()].map(async (target) => {
+      try {
+        const data = await getCachedPersonPage(target.role, personSlug(target.name));
+        if (!data || data.items.length === 0) return null;
+        if (data.profileStatus !== 'published' || data.bioIsStub) return null;
+        return [personLinkKey(target.role, target.name), personPublicPath(target.role, data.slug)] as const;
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return Object.fromEntries(entries.filter((entry) => entry != null));
+}

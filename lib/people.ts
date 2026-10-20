@@ -103,6 +103,11 @@ export function personPagePath(role: PersonRole, name: string): string {
   return personPublicPath(role, personSlug(name));
 }
 
+/** کلید یکسان برای نقش + نام نمایشی — مقایسهٔ لینک عمومی */
+export function personLinkKey(role: PersonRole, name: string): string {
+  return `${role}:${normalizePersonDisplayName(name)}`;
+}
+
 /** مسیر عمومی صفحه شخص — همیشه از slug ذخیره‌شده استفاده کنید */
 export function personPublicPath(role: PersonRole, slug: string): string {
   return `/people/${role}/${slug}`;

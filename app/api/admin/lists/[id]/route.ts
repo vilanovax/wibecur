@@ -7,7 +7,11 @@ import { getRequestMeta } from '@/lib/audit/request-meta';
 import { minimalList } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
-import { revalidateListDetailCache, revalidateCategoryCache } from '@/lib/public-cache';
+import {
+  revalidateCategoryCache,
+  revalidateHomeCache,
+  revalidateListDetailCache,
+} from '@/lib/public-cache';
 
 export async function PUT(
   request: NextRequest,
@@ -122,7 +126,10 @@ export async function PUT(
   }
 }
 
-/** PATCH: به‌روزرسانی سریع isFeatured / isActive / description برای پنل ادمین */
+const LIST_TITLE_MAX = 200;
+const LIST_DESCRIPTION_MAX = 2000;
+
+/** PATCH: ویرایش سریع عنوان، توضیحات و وضعیت نمایش — اسلاگ عوض نمی‌شود. */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -132,18 +139,49 @@ export async function PATCH(
     if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
     const body = await request.json();
-    const { isFeatured, isActive, description } = body;
+    const { isFeatured, isActive, isPublic, commentsEnabled, description, title } = body;
 
     const existing = await prisma.lists.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: 'لیست یافت نشد' }, { status: 404 });
     }
 
-    const data: { isFeatured?: boolean; isActive?: boolean; description?: string | null } = {};
+    const data: {
+      title?: string;
+      isFeatured?: boolean;
+      isActive?: boolean;
+      isPublic?: boolean;
+      commentsEnabled?: boolean;
+      description?: string | null;
+    } = {};
+
+    if (typeof title === 'string') {
+      const trimmed = title.trim();
+      if (!trimmed) {
+        return NextResponse.json({ error: 'عنوان لیست را وارد کنید' }, { status: 400 });
+      }
+      if (trimmed.length > LIST_TITLE_MAX) {
+        return NextResponse.json(
+          { error: 'عنوان نباید بیشتر از ۲۰۰ نویسه باشد' },
+          { status: 400 }
+        );
+      }
+      if (trimmed !== existing.title) data.title = trimmed;
+    }
+
     if (typeof isFeatured === 'boolean') data.isFeatured = isFeatured;
     if (typeof isActive === 'boolean') data.isActive = isActive;
+    if (typeof isPublic === 'boolean') data.isPublic = isPublic;
+    if (typeof commentsEnabled === 'boolean') data.commentsEnabled = commentsEnabled;
     if (description === null || typeof description === 'string') {
-      data.description = description === null ? null : description.trim() || null;
+      const next = description === null ? null : description.trim() || null;
+      if (next && next.length > LIST_DESCRIPTION_MAX) {
+        return NextResponse.json(
+          { error: 'توضیحات نباید بیشتر از ۲۰۰۰ نویسه باشد' },
+          { status: 400 }
+        );
+      }
+      data.description = next;
     }
 
     if (Object.keys(data).length === 0) {
@@ -155,7 +193,14 @@ export async function PATCH(
       data,
     });
 
-    const action = typeof isFeatured === 'boolean' && isFeatured !== existing.isFeatured ? 'LIST_BOOST' : 'LIST_UPDATE';
+    const featuredChanged =
+      typeof data.isFeatured === 'boolean' && data.isFeatured !== existing.isFeatured;
+    const visibilityChanged =
+      data.title != null ||
+      data.isActive !== undefined ||
+      data.isPublic !== undefined ||
+      featuredChanged;
+    const action = featuredChanged && Object.keys(data).length === 1 ? 'LIST_BOOST' : 'LIST_UPDATE';
     const meta = getRequestMeta(request);
     await logAudit({
       actorId: userOrRes.id,
@@ -172,6 +217,7 @@ export async function PATCH(
     revalidateAdminListsAndCategoriesCache();
     revalidateListDetailCache(existing.slug);
     revalidateCategoryCache(existing.categoryId);
+    if (visibilityChanged) revalidateHomeCache();
     return NextResponse.json(list);
   } catch (error: any) {
     console.error('Error PATCH list:', error);

@@ -27,6 +27,7 @@ import {
   X,
 } from 'lucide-react';
 import SidebarNavSection, { type NavItem } from './SidebarNavSection';
+import { ADMIN_MENU, type AdminMenuEntry } from '@/lib/admin/admin-menu';
 import MiniUserPanel from './MiniUserPanel';
 import { useSidebar } from './SidebarContext';
 import { useSidebarBadges } from '@/hooks/useSidebarBadges';
@@ -34,68 +35,48 @@ import clsx from 'clsx';
 import SiteLogo from '@/components/shared/SiteLogo';
 import { useSiteBranding } from '@/contexts/SiteBrandingContext';
 
-const PRIMARY: NavItem[] = [
-  { href: '/admin/dashboard', label: 'داشبورد', icon: LayoutDashboard, permission: 'view_dashboard' },
-  { href: '/admin/pulse', label: 'پالس وایب', icon: Activity, permission: 'view_pulse' },
-  { href: '/admin/kpi', label: 'داشبورد رشد (KPI)', icon: TrendingUp, permission: 'view_analytics' },
-  { href: '/admin/categories', label: 'دسته‌بندی‌ها', icon: Tag, permission: 'manage_categories' },
-  {
-    href: '/admin/lists',
-    label: 'لیست‌ها',
-    icon: List,
-    permission: 'manage_lists',
-    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items', '/admin/books'],
-  },
-  {
-    href: '/admin/users',
-    label: 'کاربران',
-    icon: Users,
-    permission: 'manage_users',
-    matchPrefixes: ['/admin/users', '/admin/admins'],
-    submenu: [
-      { href: '/admin/users', label: 'کاربران', icon: Users, permission: 'manage_users' },
-      { href: '/admin/admins', label: 'ادمین‌ها', icon: Shield, permission: 'manage_roles' },
-    ],
-  },
-];
+const NAV_ICONS: Record<string, NavItem['icon']> = {
+  '/admin/dashboard': LayoutDashboard,
+  '/admin/pulse': Activity,
+  '/admin/kpi': TrendingUp,
+  '/admin/categories': Tag,
+  '/admin/lists': List,
+  '/admin/users': Users,
+  '/admin/admins': Shield,
+  '/admin/analytics': BarChart3,
+  '/admin/suggestions': Lightbulb,
+  '/admin/custom/featured': Star,
+  '/admin/custom/sponsored': Megaphone,
+  '/admin/moderation': AlertTriangle,
+  '/admin/trash': Trash2,
+  '/admin/comments': MessageSquare,
+  '/admin/audit': ClipboardList,
+  '/admin/system/backup': Database,
+  '/admin/settings': Settings,
+};
 
-const INTELLIGENCE: NavItem[] = [
-  { href: '/admin/analytics', label: 'آنالیتیکس', icon: BarChart3, permission: 'view_analytics' },
-  {
-    href: '/admin/suggestions',
-    label: 'پیشنهادها',
-    icon: Lightbulb,
-    permission: 'manage_suggestions',
-    badgeKey: 'suggestionsPending',
-  },
-  { href: '/admin/custom/featured', label: 'منتخب هوم', icon: Star, permission: 'manage_lists' },
-  { href: '/admin/custom/sponsored', label: 'تبلیغات اسپانسری', icon: Megaphone, permission: 'manage_lists' },
-];
+function toNavItem(entry: AdminMenuEntry): NavItem {
+  return {
+    href: entry.href,
+    label: entry.label,
+    icon: NAV_ICONS[entry.href] ?? LayoutDashboard,
+    permission: entry.permission,
+    matchPrefixes: entry.matchPrefixes,
+    badgeKey: entry.badgeKey,
+    badgeTone: entry.badgeTone,
+    submenu: entry.children?.map((child) => ({
+      href: child.href,
+      label: child.label,
+      icon: NAV_ICONS[child.href] ?? Users,
+      permission: child.permission,
+    })),
+  };
+}
 
-const MODERATION: NavItem[] = [
-  { href: '/admin/moderation', label: 'صف بررسی', icon: AlertTriangle, permission: 'view_moderation' },
-  {
-    href: '/admin/trash',
-    label: 'زباله‌دان',
-    icon: Trash2,
-    permission: 'view_dashboard',
-    badgeKey: 'trashTotal',
-    badgeTone: 'muted',
-  },
-  {
-    href: '/admin/comments',
-    label: 'کامنت‌ها',
-    icon: MessageSquare,
-    permission: 'view_reports',
-    badgeKey: 'commentsAction',
-  },
-];
-
-const SYSTEM: NavItem[] = [
-  { href: '/admin/audit', label: 'لاگ تغییرات', icon: ClipboardList, permission: 'view_audit' },
-  { href: '/admin/system/backup', label: 'پشتیبان‌گیری', icon: Database, permission: 'manage_backup' },
-  { href: '/admin/settings', label: 'تنظیمات', icon: Settings, permission: 'manage_settings' },
-];
+const PRIMARY = ADMIN_MENU.filter((entry) => entry.group === 'main').map(toNavItem);
+const INTELLIGENCE = ADMIN_MENU.filter((entry) => entry.group === 'intelligence').map(toNavItem);
+const MODERATION = ADMIN_MENU.filter((entry) => entry.group === 'moderation').map(toNavItem);
+const SYSTEM = ADMIN_MENU.filter((entry) => entry.group === 'system').map(toNavItem);
 
 type SidebarContentProps = {
   collapsed: boolean;

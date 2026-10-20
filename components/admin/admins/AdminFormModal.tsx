@@ -14,6 +14,7 @@ export type AdminFormState = {
   name: string;
   email: string;
   password: string;
+  adminNote: string;
   role: AdminRole;
   useCustomPermissions: boolean;
   adminPermissions: Permission[];
@@ -140,7 +141,7 @@ export default function AdminFormModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <Section icon={KeyRound} title="اطلاعات حساب" description="نام، ایمیل و رمز ورود">
+          <Section icon={KeyRound} title="اطلاعات حساب" description="نام، توضیحات، ایمیل و رمز ورود">
             <div className="space-y-4">
               <label className="block">
                 <FieldLabel>نام نمایشی</FieldLabel>
@@ -151,6 +152,22 @@ export default function AdminFormModal({
                   className={INPUT}
                   autoComplete="name"
                 />
+              </label>
+
+              <label className="block">
+                <FieldLabel>توضیحات</FieldLabel>
+                <textarea
+                  value={form.adminNote}
+                  onChange={(e) => onChange({ adminNote: e.target.value })}
+                  placeholder="مثلاً مسئول کامنت‌های شب"
+                  rows={3}
+                  maxLength={500}
+                  className={INPUT}
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  فقط در پنل ادمین دیده می‌شود. {form.adminNote.length.toLocaleString('fa-IR')} از{' '}
+                  {(500).toLocaleString('fa-IR')}
+                </p>
               </label>
 
               <label className="block">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   ChevronDown,
   ChevronLeft,
@@ -106,6 +107,7 @@ function presetToRange(preset: DatePreset): { dateFrom: string; dateTo: string }
 }
 
 export default function AuditLogClient() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<AuditRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -113,8 +115,14 @@ export default function AuditLogClient() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<AuditRow | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
-  const [draft, setDraft] = useState(EMPTY_FILTERS);
-  const [applied, setApplied] = useState(EMPTY_FILTERS);
+  const [draft, setDraft] = useState(() => ({
+    ...EMPTY_FILTERS,
+    actorQuery: searchParams.get('actorQuery') ?? '',
+  }));
+  const [applied, setApplied] = useState(() => ({
+    ...EMPTY_FILTERS,
+    actorQuery: searchParams.get('actorQuery') ?? '',
+  }));
   const [datePreset, setDatePreset] = useState<DatePreset>('');
 
   const activeFilterCount = useMemo(
