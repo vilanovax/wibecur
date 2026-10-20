@@ -77,6 +77,7 @@ interface ContentHubClientProps {
   initialCategoryId?: string;
   initialSearch?: string;
   initialFilter?: ListFilterKind;
+  initialPage?: number;
   catalogData?: CatalogPageData;
   importCategories?: ImportCategoryOption[];
   importLists?: ImportListOption[];
@@ -108,6 +109,7 @@ export default function ContentHubClient({
   initialCategoryId = 'all',
   initialSearch = '',
   initialFilter = 'all',
+  initialPage = 1,
   catalogData,
   importCategories = [],
   importLists = [],
@@ -239,6 +241,7 @@ export default function ContentHubClient({
           initialCategoryId={initialCategoryId}
           initialSearch={initialSearch}
           initialFilter={initialFilter}
+          initialPage={initialPage}
           embedded
         />
       )}

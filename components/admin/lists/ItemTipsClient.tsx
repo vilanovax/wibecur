@@ -1,23 +1,27 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   CheckCircle2,
   CheckSquare,
+  ChevronLeft,
+  ChevronRight,
   ClipboardCopy,
   Download,
   Eye,
   EyeOff,
   FileJson,
   Loader2,
+  Pencil,
   RotateCcw,
   Save,
   Search,
   Square,
+  X,
 } from 'lucide-react';
-import ItemTipImportModal from '@/components/admin/lists/ItemTipImportModal';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import {
   buildExternalItemTipAiPrompt,
@@ -40,15 +44,43 @@ import {
   type BulkImportProgress,
 } from '@/lib/admin/bulk-json-import-client';
 
+const ItemTipImportModal = dynamic(() => import('@/components/admin/lists/ItemTipImportModal'));
+
+const PAGE_SIZE = 15;
+const TIP_MAX = 500;
+
 type Props = {
   data: ItemTipsPageData;
   embedded?: boolean;
 };
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+type SaveState = 'idle' | 'saving' | 'error';
+type TipSort = 'list' | 'title' | 'missing' | 'shortest' | 'longest';
 
 function normalizeSearch(text: string): string {
   return text.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function faCount(value: number): string {
+  return value.toLocaleString('fa-IR');
+}
+
+function sortItems(rows: ItemTipRow[], sort: TipSort): ItemTipRow[] {
+  if (sort === 'list') return rows;
+  const copy = [...rows];
+  copy.sort((a, b) => {
+    if (sort === 'title') return a.title.localeCompare(b.title, 'fa');
+    if (sort === 'missing') {
+      const emptyA = (a.tip ?? '').trim() ? 1 : 0;
+      const emptyB = (b.tip ?? '').trim() ? 1 : 0;
+      if (emptyA !== emptyB) return emptyA - emptyB;
+      return a.title.localeCompare(b.title, 'fa');
+    }
+    const delta = (a.tip ?? '').trim().length - (b.tip ?? '').trim().length;
+    if (delta !== 0) return sort === 'shortest' ? delta : -delta;
+    return a.title.localeCompare(b.title, 'fa');
+  });
+  return copy;
 }
 
 export default function ItemTipsClient({ data, embedded = false }: Props) {
@@ -58,10 +90,14 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   const [listId, setListId] = useState(data.initialListId);
   const [search, setSearch] = useState('');
   const [showReviewed, setShowReviewed] = useState(false);
+  const [missingOnly, setMissingOnly] = useState(false);
+  const [sort, setSort] = useState<TipSort>('list');
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [page, setPage] = useState(1);
   const [importOpen, setImportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<BulkImportProgress>(INITIAL_BULK_IMPORT_PROGRESS);
@@ -72,7 +108,9 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     setCategoryId(data.initialCategoryId);
     setListId(data.initialListId);
     setSelectedIds(new Set());
-    setDrafts({});
+    setEditingId(null);
+    setEditValue('');
+    setPage(1);
   }, [data]);
 
   const hydrateDoneRef = useRef(false);
@@ -94,6 +132,10 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     };
   }, [data.items]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search, showReviewed, missingOnly, sort]);
+
   const listsInCategory = useMemo(() => {
     if (!categoryId) return data.lists;
     return data.lists.filter((list) => list.categoryId === categoryId);
@@ -102,7 +144,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   const scopeLabel = useMemo(() => {
     if (listId) {
       const list = data.lists.find((row) => row.id === listId);
-      return list ? `لیست: ${list.title}` : 'لیست';
+      return list ? list.title : 'لیست';
     }
     if (categoryId) {
       return data.categories.find((cat) => cat.id === categoryId)?.name ?? 'دسته';
@@ -112,10 +154,11 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
 
   const filteredItems = useMemo(() => {
     const q = normalizeSearch(search);
-    return items.filter((item) => {
+    const matched = items.filter((item) => {
       const reviewed = isItemTipReviewed(item, reviewedIds);
       if (!showReviewed && reviewed) return false;
       if (showReviewed && !reviewed) return false;
+      if (missingOnly && (item.tip ?? '').trim()) return false;
       if (!q) return true;
       return (
         normalizeSearch(item.title).includes(q) ||
@@ -123,7 +166,8 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
         normalizeSearch(item.tip ?? '').includes(q)
       );
     });
-  }, [items, search, reviewedIds, showReviewed]);
+    return sortItems(matched, sort);
+  }, [items, search, reviewedIds, showReviewed, missingOnly, sort]);
 
   const reviewedInScope = useMemo(
     () => items.filter((item) => isItemTipReviewed(item, reviewedIds)).length,
@@ -131,6 +175,16 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   );
 
   const pendingCount = items.length - reviewedInScope;
+  const missingCount = useMemo(
+    () =>
+      items.filter((item) => !isItemTipReviewed(item, reviewedIds) && !(item.tip ?? '').trim())
+        .length,
+    [items, reviewedIds]
+  );
+
+  const pageCount = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const pageRows = filteredItems.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const allFilteredSelected =
     filteredItems.length > 0 && filteredItems.every((item) => selectedIds.has(item.id));
@@ -140,17 +194,10 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     [items, selectedIds]
   );
 
-  const getDraft = useCallback(
-    (item: ItemTipRow) => (drafts[item.id] !== undefined ? drafts[item.id] : item.tip ?? ''),
-    [drafts]
-  );
-
   const isDirty = useCallback(
-    (item: ItemTipRow) => {
-      if (drafts[item.id] === undefined) return false;
-      return (drafts[item.id] ?? '').trim() !== (item.tip ?? '').trim();
-    },
-    [drafts]
+    (item: ItemTipRow) =>
+      editingId === item.id && editValue.trim() !== (item.tip ?? '').trim(),
+    [editingId, editValue]
   );
 
   const applyScope = (nextCategoryId: string, nextListId: string) => {
@@ -186,10 +233,37 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     });
   };
 
+  const closeEditor = () => {
+    setEditingId(null);
+    setEditValue('');
+    setSaveState('idle');
+  };
+
+  const openEditor = (item: ItemTipRow) => {
+    if (editingId && editingId !== item.id) {
+      const current = items.find((row) => row.id === editingId);
+      if (current && editValue.trim() !== (current.tip ?? '').trim()) {
+        setToast({ message: 'اول نکتهٔ باز را ذخیره یا لغو کنید', type: 'error' });
+        return;
+      }
+    }
+    setEditingId(item.id);
+    setEditValue(item.tip ?? '');
+    setSaveState('idle');
+  };
+
   const saveTip = async (item: ItemTipRow, silent = false) => {
-    if (!isDirty(item)) return true;
-    const nextTip = (drafts[item.id] ?? '').trim() || null;
-    setSaveStates((prev) => ({ ...prev, [item.id]: 'saving' }));
+    const nextTip = editValue.trim() || null;
+    if (nextTip && nextTip.length > TIP_MAX) {
+      setToast({ message: 'نکته نباید بیشتر از ۵۰۰ نویسه باشد', type: 'error' });
+      return false;
+    }
+    if ((item.tip ?? null) === nextTip) {
+      closeEditor();
+      return true;
+    }
+
+    setSaveState('saving');
     try {
       const res = await fetch(`/api/admin/items/${item.id}`, {
         method: 'PATCH',
@@ -199,24 +273,15 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || 'خطا در ذخیره');
 
-      setItems((prev) =>
-        prev.map((row) => (row.id === item.id ? { ...row, tip: nextTip } : row))
-      );
-      setDrafts((prev) => {
-        const next = { ...prev };
-        delete next[item.id];
-        return next;
-      });
-      setSaveStates((prev) => ({ ...prev, [item.id]: 'saved' }));
-      window.setTimeout(() => {
-        setSaveStates((prev) => ({ ...prev, [item.id]: 'idle' }));
-      }, 1500);
+      setItems((prev) => prev.map((row) => (row.id === item.id ? { ...row, tip: nextTip } : row)));
+      closeEditor();
+      if (!silent) setToast({ message: 'نکته ذخیره شد', type: 'success' });
       return true;
     } catch (error) {
-      setSaveStates((prev) => ({ ...prev, [item.id]: 'error' }));
+      setSaveState('error');
       if (!silent) {
         setToast({
-          message: error instanceof Error ? error.message : 'خطا در ذخیره tip',
+          message: error instanceof Error ? error.message : 'خطا در ذخیره نکته',
           type: 'error',
         });
       }
@@ -225,12 +290,14 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   };
 
   const markReviewed = async (item: ItemTipRow) => {
-    if (isDirty(item)) {
+    if (editingId === item.id && isDirty(item)) {
       const saved = await saveTip(item, true);
       if (!saved) {
-        setToast({ message: 'ابتدا tip را ذخیره کنید', type: 'error' });
+        setToast({ message: 'ابتدا نکته را ذخیره کنید', type: 'error' });
         return;
       }
+    } else if (editingId === item.id) {
+      closeEditor();
     }
     setReviewedIds(markItemTipReviewed(item));
     setSelectedIds((prev) => {
@@ -246,19 +313,21 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
       (item) => selectedIds.has(item.id) && !isItemTipReviewed(item, reviewedIds)
     );
     if (targets.length === 0) return;
-    for (const item of targets) {
-      if (isDirty(item)) {
-        const saved = await saveTip(item, true);
-        if (!saved) {
-          setToast({ message: `ذخیره «${item.title}» ناموفق بود`, type: 'error' });
-          return;
-        }
+
+    const open = targets.find((item) => item.id === editingId);
+    if (open && isDirty(open)) {
+      const saved = await saveTip(open, true);
+      if (!saved) {
+        setToast({ message: `ذخیره «${open.title}» ناموفق بود`, type: 'error' });
+        return;
       }
     }
+
     setReviewedIds(markManyItemTipsReviewed(targets));
     setSelectedIds(new Set());
+    if (editingId && targets.some((item) => item.id === editingId)) closeEditor();
     setToast({
-      message: `${targets.length.toLocaleString('fa-IR')} آیتم از صف خارج شد`,
+      message: `${faCount(targets.length)} آیتم از صف خارج شد`,
       type: 'success',
     });
   };
@@ -278,7 +347,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     const payload = buildItemTipExportPayload(rows);
     const prompt = buildExternalItemTipAiPrompt(payload.items);
     await navigator.clipboard.writeText(prompt);
-    setToast({ message: 'پرامپت + JSON برای هوش مصنوعی کپی شد', type: 'success' });
+    setToast({ message: 'پرامپت و JSON برای هوش مصنوعی کپی شد', type: 'success' });
   };
 
   const handleImport = async (payload: { items: { id: string; tip: string | null }[] }) => {
@@ -300,10 +369,10 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
           return { ...item, tip: imported.tip?.trim() || null };
         })
       );
-      setDrafts({});
+      closeEditor();
       setToast({
-        message: `${result.updated.toLocaleString('fa-IR')} tip به‌روز شد · ${result.skipped.toLocaleString('fa-IR')} بدون تغییر${
-          result.failed > 0 ? ` · ${result.failed.toLocaleString('fa-IR')} خطا` : ''
+        message: `${faCount(result.updated)} نکته به‌روز شد · ${faCount(result.skipped)} بدون تغییر${
+          result.failed > 0 ? ` · ${faCount(result.failed)} خطا` : ''
         }`,
         type: result.failed > 0 ? 'error' : 'success',
       });
@@ -311,7 +380,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     } catch (error) {
       setImportProgress(INITIAL_BULK_IMPORT_PROGRESS);
       setToast({
-        message: error instanceof Error ? error.message : 'خطا در import',
+        message: error instanceof Error ? error.message : 'خطا در ورود',
         type: 'error',
       });
     } finally {
@@ -326,43 +395,50 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
   };
 
   const exportTarget = selectedItems.length > 0 ? selectedItems : filteredItems;
+  const tooLong = editValue.trim().length > TIP_MAX;
 
   return (
     <div className="space-y-4">
       {!embedded && (
         <div>
-          <h2 className="text-lg font-bold text-[var(--color-text)]">نکته‌های آیتم (tip)</h2>
-          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
-            ویرایش tip · export برای AI · علامت‌گذاری بررسی‌شده
+          <h2 className="text-lg font-bold text-[var(--color-text)]">نکته‌های آیتم</h2>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            برای هر آیتم یک نکتهٔ کوتاه. ویرایش را بزنید و بعد ذخیره کنید.
           </p>
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-900 ring-1 ring-amber-200">
-            {pendingCount.toLocaleString('fa-IR')} نیاز به بررسی
+      <div className="space-y-3 rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200">
+            {faCount(pendingCount)} نیاز به بررسی
           </span>
-          <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-800 ring-1 ring-emerald-200">
-            {reviewedInScope.toLocaleString('fa-IR')} بررسی‌شده
+          <button
+            type="button"
+            onClick={() => setMissingOnly((value) => !value)}
+            className={`min-h-11 rounded-full px-3 text-xs font-semibold ring-1 ${
+              missingOnly
+                ? 'bg-violet-600 text-white ring-violet-600'
+                : 'bg-violet-50 text-violet-900 ring-violet-200'
+            }`}
+          >
+            {faCount(missingCount)} بدون نکته
+          </button>
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
+            {faCount(reviewedInScope)} بررسی‌شده
           </span>
-          <span className="text-[var(--color-text-muted)]">· {scopeLabel}</span>
-          {!listId && categoryId && (
-            <span className="text-[var(--color-text-muted)]">
-              · {items.length.toLocaleString('fa-IR')} آیتم یکتا
-            </span>
-          )}
+          <span className="text-xs text-[var(--color-text-muted)]">{scopeLabel}</span>
         </div>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1 min-w-0">
-            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="جستجو در عنوان، لیست یا tip..."
-              className="w-full rounded-xl border border-[var(--color-border-muted)] py-2.5 pr-10 pl-3 text-sm"
+              placeholder="جستجو در عنوان، لیست یا نکته…"
+              className="min-h-11 w-full rounded-xl border border-[var(--color-border-muted)] bg-white pe-10 ps-3 text-sm"
             />
           </div>
           <select
@@ -373,7 +449,8 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
               setListId('');
               applyScope(next, '');
             }}
-            className="rounded-xl border border-[var(--color-border-muted)] px-3 py-2.5 text-sm min-w-[160px]"
+            aria-label="دسته"
+            className="min-h-11 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm lg:w-44"
           >
             {data.categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -389,28 +466,41 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
               setListId(next);
               applyScope(categoryId, next);
             }}
-            className="rounded-xl border border-[var(--color-border-muted)] px-3 py-2.5 text-sm min-w-[180px]"
+            aria-label="لیست"
+            className="min-h-11 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm lg:w-56"
           >
-            <option value="">همه لیست‌های دسته</option>
+            <option value="">همهٔ لیست‌های دسته</option>
             {listsInCategory.map((list) => (
               <option key={list.id} value={list.id}>
-                {list.title} ({list.itemCount.toLocaleString('fa-IR')})
+                {list.title} ({faCount(list.itemCount)})
               </option>
             ))}
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as TipSort)}
+            aria-label="مرتب‌سازی"
+            className="min-h-11 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm lg:w-44"
+          >
+            <option value="list">ترتیب لیست</option>
+            <option value="title">عنوان</option>
+            <option value="missing">بدون نکته اول</option>
+            <option value="shortest">کوتاه‌ترین</option>
+            <option value="longest">بلندترین</option>
           </select>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setShowReviewed((v) => !v)}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium ${
+            onClick={() => setShowReviewed((value) => !value)}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-medium ${
               showReviewed
                 ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
                 : 'border-[var(--color-border-muted)] hover:bg-[var(--color-bg)]'
             }`}
           >
-            {showReviewed ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            {showReviewed ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
             {showReviewed ? 'صف بررسی' : 'بررسی‌شده‌ها'}
           </button>
 
@@ -419,19 +509,20 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
               <button
                 type="button"
                 onClick={toggleSelectAll}
-                className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium hover:bg-[var(--color-bg)]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border-muted)] px-3 text-sm font-medium hover:bg-[var(--color-bg)]"
               >
-                {allFilteredSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
-                انتخاب همه ({filteredItems.length.toLocaleString('fa-IR')})
+                {allFilteredSelected ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
+                {allFilteredSelected ? 'لغو انتخاب' : 'انتخاب همه'}
+                <span className="text-[var(--color-text-muted)]">({faCount(filteredItems.length)})</span>
               </button>
               {selectedIds.size > 0 && (
                 <button
                   type="button"
                   onClick={() => void markSelectedReviewed()}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-800"
                 >
-                  <CheckCircle2 className="h-4 w-4" />
-                  انجام شد ({selectedIds.size.toLocaleString('fa-IR')})
+                  <CheckCircle2 className="size-4" />
+                  انجام شد ({faCount(selectedIds.size)})
                 </button>
               )}
             </>
@@ -441,176 +532,197 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
             type="button"
             onClick={() => exportItems(exportTarget)}
             disabled={exportTarget.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-800 disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 text-sm font-semibold text-violet-800 disabled:opacity-50"
           >
-            <Download className="h-4 w-4" />
+            <Download className="size-4" />
             خروجی JSON
           </button>
           <button
             type="button"
             onClick={() => void copyAiPrompt(exportTarget)}
             disabled={exportTarget.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-900 disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 text-sm font-semibold text-sky-900 disabled:opacity-50"
           >
-            <ClipboardCopy className="h-4 w-4" />
-            کپی برای AI
+            <ClipboardCopy className="size-4" />
+            کپی برای هوش مصنوعی
           </button>
           <button
             type="button"
             onClick={() => setImportOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-800"
           >
-            <FileJson className="h-4 w-4" />
+            <FileJson className="size-4" />
             ورود JSON
           </button>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)]">
-        <div className="overflow-auto max-h-[calc(100vh-18rem)]">
-          <table className="w-full table-fixed text-sm">
-            <colgroup>
-              <col className="w-10" />
-              <col className="w-[148px]" />
-              <col />
-              <col className="w-[96px]" />
-            </colgroup>
-            <thead className="sticky top-0 z-10 bg-[var(--color-bg)]/95 text-[var(--color-text-muted)] backdrop-blur-sm">
-              <tr>
-                <th className="px-3 py-3" />
-                <th className="px-2 py-2.5 text-right font-medium">آیتم</th>
-                <th className="px-2.5 py-2.5 text-right font-medium">tip</th>
-                <th className="px-1.5 py-2.5 text-center font-medium w-[96px]">
-                  <span className="sr-only">عملیات</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--color-border-muted)]">
-              {filteredItems.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-[var(--color-text-muted)]">
-                    {showReviewed
-                      ? 'آیتم بررسی‌شده‌ای نیست'
-                      : pendingCount === 0
-                        ? 'همه آیتم‌ها بررسی شده‌اند'
-                        : 'آیتمی با این فیلتر پیدا نشد'}
-                  </td>
-                </tr>
-              ) : (
-                filteredItems.map((item) => {
-                  const dirty = isDirty(item);
-                  const saveState = saveStates[item.id] ?? 'idle';
-                  const isReviewed = isItemTipReviewed(item, reviewedIds);
-                  return (
-                    <tr key={item.id} className={`align-top hover:bg-[var(--color-bg)]/30 ${isReviewed ? 'bg-emerald-50/40' : ''}`}>
-                      <td className="px-3 py-3">
-                        {!showReviewed && (
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(item.id)}
-                            onChange={() => toggleSelect(item.id)}
-                            className="h-4 w-4 rounded border-gray-300 text-violet-600"
-                          />
-                        )}
-                      </td>
-                      <td className="px-2 py-2.5">
-                        <div className="min-w-0">
-                          <Link
-                            href={`/admin/items/${item.id}/edit`}
-                            className="block text-[11px] font-semibold leading-snug text-[var(--color-text)] hover:text-[var(--primary)] line-clamp-4"
-                            title={item.title}
-                          >
-                            {item.title}
-                          </Link>
-                          {!listId && (
-                            <p
-                              className="mt-1 text-[9px] text-[var(--color-text-muted)] line-clamp-1"
-                              title={item.listTitle}
-                            >
-                              {item.listTitle}
-                            </p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-2.5 py-2.5">
+      <ul className="overflow-hidden rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)]">
+        {pageRows.length === 0 ? (
+          <li className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
+            {showReviewed
+              ? 'آیتم بررسی‌شده‌ای نیست'
+              : pendingCount === 0
+                ? 'همهٔ آیتم‌ها بررسی شده‌اند'
+                : 'آیتمی با این فیلتر پیدا نشد'}
+          </li>
+        ) : (
+          pageRows.map((item) => {
+            const editing = editingId === item.id;
+            const dirty = isDirty(item);
+            const isReviewed = isItemTipReviewed(item, reviewedIds);
+            const preview = (item.tip ?? '').trim();
+
+            return (
+              <li
+                key={item.id}
+                className={`border-b border-[var(--color-border-muted)] p-3 last:border-b-0 ${
+                  isReviewed ? 'bg-emerald-50/40' : ''
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {!showReviewed && (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                      className="mt-3 size-4 shrink-0 rounded border-gray-300 text-violet-600"
+                      aria-label={`انتخاب ${item.title}`}
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/admin/items/${item.id}/edit`}
+                        className="text-sm font-semibold text-[var(--color-text)] hover:text-[var(--primary)]"
+                      >
+                        {item.title}
+                      </Link>
+                      {!listId && (
+                        <span className="text-xs text-[var(--color-text-muted)]">{item.listTitle}</span>
+                      )}
+                    </div>
+
+                    {editing ? (
+                      <div className="mt-2">
                         <textarea
-                          value={getDraft(item)}
-                          onChange={(e) => setDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                          onBlur={() => {
-                            if (dirty) void saveTip(item);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                              e.preventDefault();
-                              void saveTip(item);
-                            }
-                          }}
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
                           rows={4}
-                          maxLength={500}
-                          placeholder="نکتهٔ کوتاه برای نمایش در اپ..."
-                          disabled={showReviewed}
-                          className={`w-full rounded-xl border px-3 py-2 text-sm leading-relaxed resize-y min-h-[104px] disabled:bg-[var(--color-bg)]/50 ${
-                            !getDraft(item).trim() && !showReviewed
-                              ? 'border-amber-200 bg-amber-50/30'
-                              : 'border-[var(--color-border-muted)]'
-                          }`}
+                          autoFocus
+                          placeholder="نکتهٔ کوتاه برای نمایش در اپ…"
+                          className="min-h-24 w-full resize-y rounded-xl border border-[var(--color-border-muted)] px-3 py-2 text-sm leading-relaxed focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
                         />
-                        <p className="mt-1 text-[9px] text-[var(--color-text-muted)] tabular-nums text-left" dir="ltr">
-                          {getDraft(item).length}/500
-                        </p>
-                      </td>
-                      <td className="px-1.5 py-2.5">
-                        <div className="flex flex-col items-center gap-1">
-                          {!showReviewed ? (
-                            <>
-                              <button
-                                type="button"
-                                disabled={!dirty || saveState === 'saving'}
-                                onClick={() => void saveTip(item)}
-                                title="ذخیره"
-                                aria-label="ذخیره tip"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border-muted)] hover:bg-[var(--color-bg)] disabled:opacity-40"
-                              >
-                                {saveState === 'saving' ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <Save className="h-3.5 w-3.5" />
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void markReviewed(item)}
-                                title="انجام شد — از صف خارج"
-                                aria-label="انجام شد"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-                              >
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                              </button>
-                            </>
-                          ) : (
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                          <span
+                            className={`text-xs ${
+                              tooLong ? 'font-semibold text-red-600' : 'text-[var(--color-text-muted)]'
+                            }`}
+                          >
+                            {faCount(editValue.trim().length)} از {faCount(TIP_MAX)} نویسه
+                          </span>
+                          <div className="flex gap-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                setReviewedIds(unmarkItemTipReviewed(item));
-                                setToast({ message: 'به صف بررسی برگشت', type: 'success' });
-                              }}
-                              title="بازگردانی به صف"
-                              aria-label="بازگردانی"
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border hover:bg-[var(--color-bg)]"
+                              onClick={closeEditor}
+                              className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-[var(--color-border-muted)] px-3 text-sm font-medium"
                             >
-                              <RotateCcw className="h-3.5 w-3.5" />
+                              <X className="size-4" />
+                              لغو
                             </button>
-                          )}
+                            <button
+                              type="button"
+                              disabled={!dirty || saveState === 'saving' || tooLong}
+                              onClick={() => void saveTip(item)}
+                              className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-violet-600 px-3 text-sm font-semibold text-white disabled:opacity-40"
+                            >
+                              {saveState === 'saving' ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <Save className="size-4" />
+                              )}
+                              ذخیره
+                            </button>
+                          </div>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      </div>
+                    ) : (
+                      <p
+                        className={`mt-2 line-clamp-2 text-sm leading-relaxed ${
+                          preview ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'
+                        }`}
+                      >
+                        {preview || 'نکته‌ای نوشته نشده'}
+                      </p>
+                    )}
+                  </div>
+
+                  {!editing && (
+                    <div className="flex shrink-0 flex-col gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditor(item)}
+                        className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-violet-200 bg-violet-50 px-3 text-sm font-semibold text-violet-800"
+                      >
+                        <Pencil className="size-4" />
+                        ویرایش
+                      </button>
+                      {!showReviewed ? (
+                        <button
+                          type="button"
+                          onClick={() => void markReviewed(item)}
+                          className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-800"
+                        >
+                          <CheckCircle2 className="size-4" />
+                          انجام شد
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReviewedIds(unmarkItemTipReviewed(item));
+                            setToast({ message: 'به صف بررسی برگشت', type: 'success' });
+                          }}
+                          className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[var(--color-border-muted)] px-3 text-sm font-medium"
+                        >
+                          <RotateCcw className="size-4" />
+                          بازگردانی
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })
+        )}
+      </ul>
+
+      {pageCount > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            disabled={safePage <= 1}
+            onClick={() => setPage(safePage - 1)}
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border-muted)] bg-white disabled:opacity-40"
+            aria-label="صفحه قبل"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+          <span className="text-sm text-[var(--color-text-muted)]">
+            صفحه {faCount(safePage)} از {faCount(pageCount)}
+          </span>
+          <button
+            type="button"
+            disabled={safePage >= pageCount}
+            onClick={() => setPage(safePage + 1)}
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border-muted)] bg-white disabled:opacity-40"
+            aria-label="صفحه بعد"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
         </div>
-      </div>
+      )}
 
       {importOpen && (
         <ItemTipImportModal

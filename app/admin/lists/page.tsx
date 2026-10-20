@@ -79,20 +79,14 @@ async function ListsViewContent({
   const trash = params.trash === 'true';
   const currentPage = Math.max(1, parseInt(params.page ?? '1', 10) || 1);
 
-  // Start category resolve + hub stats together; lists waits only on categoryId
-  const categoryPromise = trash
-    ? Promise.resolve('all')
-    : resolveCategoryId(params.category);
-  const hubPromise = getCachedContentHubStats();
-
-  const initialCategoryId = await categoryPromise;
-  const [hubStats, listsData] = await Promise.all([
-    hubPromise,
+  // دسته فقط برای مقدار اولیهٔ فیلتر است؛ خود لیست‌ها یک‌جا و مستقل از صفحه و جستجو لود می‌شوند
+  const [initialCategoryId, hubStats, listsData] = await Promise.all([
+    trash ? Promise.resolve('all') : resolveCategoryId(params.category),
+    getCachedContentHubStats(),
     getCachedListsIntelligenceData({
       trash,
       page: currentPage,
-      categoryId: initialCategoryId,
-      q: trash ? undefined : params.q,
+      categoryId: 'all',
     }),
   ]);
 
@@ -107,6 +101,7 @@ async function ListsViewContent({
       initialCategoryId={initialCategoryId}
       initialSearch={params.q ?? ''}
       initialFilter={initialFilter}
+      initialPage={currentPage}
     />
   );
 }
@@ -158,18 +153,17 @@ export default async function AdminListsPage({
   }
 
   if (view === 'item-tips') {
-    const tipsCategoryPromise =
-      params.tipsCategory && params.tipsCategory !== 'all'
-        ? resolveCategoryId(params.tipsCategory)
-        : Promise.resolve('');
-    const [hubStats, tipsCategoryId] = await Promise.all([
-      hubPromise,
-      tipsCategoryPromise,
-    ]);
-    const itemTipsData = await loadItemTipsPageData({
-      categoryId: tipsCategoryId === 'all' ? '' : tipsCategoryId,
-      listId: params.tipsList,
-    });
+    const itemTipsPromise = (async () => {
+      const tipsCategoryId =
+        params.tipsCategory && params.tipsCategory !== 'all'
+          ? await resolveCategoryId(params.tipsCategory)
+          : '';
+      return loadItemTipsPageData({
+        categoryId: tipsCategoryId === 'all' ? '' : tipsCategoryId,
+        listId: params.tipsList,
+      });
+    })();
+    const [hubStats, itemTipsData] = await Promise.all([hubPromise, itemTipsPromise]);
     return (
       <ContentHubClient
         view="item-tips"

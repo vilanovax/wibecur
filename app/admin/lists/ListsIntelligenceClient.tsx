@@ -11,16 +11,16 @@ import {
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Sparkles, ChevronDown, ChevronUp, BarChart3, FileJson } from 'lucide-react';
+import { Plus, Sparkles, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, BarChart3, FileJson } from 'lucide-react';
 import type {
   ListsIntelligenceData,
   ListIntelligenceRow,
 } from '@/lib/admin/lists-types';
-import { LISTS_PULSE_SAMPLE } from '@/lib/admin/lists-types';
+import { LISTS_PAGE_SIZE, LISTS_PULSE_SAMPLE } from '@/lib/admin/lists-types';
 import ListPulseSummary from '@/components/admin/lists/ListPulseSummary';
 import ListSmartFilterBar, { type ListFilterKind } from '@/components/admin/lists/ListSmartFilterBar';
+import ListIntelligenceTable from '@/components/admin/lists/ListIntelligenceTable';
 import type { ListAdminViewMode } from '@/components/admin/lists/ListCoversGallery';
-import Pagination from '@/components/admin/shared/Pagination';
 import {
   searchLists,
   countAllListFilters,
@@ -32,10 +32,6 @@ const viewFallback = (
   <div className="min-h-[280px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
 );
 
-const ListIntelligenceTable = dynamic(
-  () => import('@/components/admin/lists/ListIntelligenceTable'),
-  { loading: () => viewFallback }
-);
 const ListIntelligenceCard = dynamic(
   () => import('@/components/admin/lists/ListIntelligenceCard'),
   { loading: () => viewFallback }
@@ -57,6 +53,7 @@ type SortKey =
   | 'saves_desc'
   | 'saves_asc'
   | '24h_desc'
+  | '24h_asc'
   | 'date_desc'
   | 'date_asc';
 
@@ -102,6 +99,8 @@ function sortLists(lists: ListIntelligenceRow[], sortBy: SortKey): ListIntellige
       return arr.sort((a, b) => a.saveCount - b.saveCount);
     case '24h_desc':
       return arr.sort((a, b) => b.saves24h - a.saves24h);
+    case '24h_asc':
+      return arr.sort((a, b) => a.saves24h - b.saves24h);
     case 'date_desc':
       return arr.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     case 'date_asc':
@@ -132,6 +131,7 @@ export default function ListsIntelligenceClient({
   initialCategoryId = 'all',
   initialSearch = '',
   initialFilter = 'all',
+  initialPage = 1,
   embedded = false,
 }: {
   data: ListsIntelligenceData;
@@ -139,6 +139,7 @@ export default function ListsIntelligenceClient({
   initialCategoryId?: string;
   initialSearch?: string;
   initialFilter?: ListFilterKind;
+  initialPage?: number;
   embedded?: boolean;
 }) {
   const router = useRouter();
@@ -146,6 +147,7 @@ export default function ListsIntelligenceClient({
   const [categoryId, setCategoryId] = useState(initialCategoryId);
   const [search, setSearch] = useState(initialSearch);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [page, setPage] = useState(initialPage);
   const [sortBy, setSortBy] = useState<SortKey>('score_desc');
   const [viewMode, setViewMode] = useState<ListAdminViewMode>('table');
   const [kpiCollapsed, setKpiCollapsed] = useState(true);
@@ -157,7 +159,8 @@ export default function ListsIntelligenceClient({
   useEffect(() => {
     setLists(data.lists);
     setCategoryId(initialCategoryId);
-  }, [data.lists, initialCategoryId]);
+    setPage(initialPage);
+  }, [data.lists, initialCategoryId, initialPage]);
 
   // همگام‌سازی با URL (back/forward یا بعد از ناوبریِ جستجو)
   useEffect(() => {
@@ -193,81 +196,105 @@ export default function ListsIntelligenceClient({
     localStorage.setItem(KPI_COLLAPSED_KEY, kpiCollapsed ? '1' : '0');
   }, [kpiCollapsed]);
 
+  const inCategory = useMemo(() => {
+    if (categoryId === 'all') return lists;
+    return lists.filter((row) => row.categoryId === categoryId);
+  }, [lists, categoryId]);
+
   const filterCounts = useMemo(
-    () => (lists.length === 0 ? EMPTY_COUNTS : countAllListFilters(lists)),
-    [lists]
+    () => (inCategory.length === 0 ? EMPTY_COUNTS : countAllListFilters(inCategory)),
+    [inCategory]
   );
 
   const deferredSearch = useDeferredValue(search);
-  const filteredByTab = useMemo(() => filterLists(lists, filter), [lists, filter]);
+  const filteredByTab = useMemo(() => filterLists(inCategory, filter), [inCategory, filter]);
   const searched = useMemo(
     () => searchLists(filteredByTab, deferredSearch),
     [filteredByTab, deferredSearch]
   );
   const sorted = useMemo(() => sortLists(searched, sortBy), [searched, sortBy]);
+  const pageCount = Math.max(1, Math.ceil(sorted.length / LISTS_PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const pageRows = sorted.slice((safePage - 1) * LISTS_PAGE_SIZE, safePage * LISTS_PAGE_SIZE);
+
+  const syncListUrl = useCallback((patch: {
+    q?: string;
+    categorySlug?: string | null;
+    filter?: ListFilterKind;
+    page?: number;
+  }) => {
+    const params = new URLSearchParams(window.location.search);
+    if (patch.q !== undefined) {
+      if (patch.q) params.set('q', patch.q);
+      else params.delete('q');
+    }
+    if (patch.categorySlug !== undefined) {
+      if (patch.categorySlug) params.set('category', patch.categorySlug);
+      else params.delete('category');
+    }
+    if (patch.filter !== undefined) {
+      if (patch.filter === 'all') params.delete('filter');
+      else params.set('filter', patch.filter);
+    }
+    if (patch.page !== undefined) {
+      if (patch.page <= 1) params.delete('page');
+      else params.set('page', String(patch.page));
+    }
+    const qs = params.toString();
+    window.history.replaceState(null, '', qs ? `/admin/lists?${qs}` : '/admin/lists');
+  }, []);
 
   const handleFilterChange = useCallback(
     (next: ListFilterKind) => {
       setFilter(next);
-      const params = new URLSearchParams(window.location.search);
-      if (next === 'all') params.delete('filter');
-      else params.set('filter', next);
-      params.delete('page');
-      const qs = params.toString();
-      router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+      setPage(1);
+      syncListUrl({ filter: next, page: 1 });
     },
-    [router]
+    [syncListUrl]
   );
 
   const handleCategoryChange = useCallback(
     (nextCategoryId: string) => {
       setCategoryId(nextCategoryId);
-      const params = new URLSearchParams(window.location.search);
-      if (nextCategoryId === 'all') {
-        params.delete('category');
-      } else {
-        const cat = data.categories.find((c) => c.id === nextCategoryId);
-        params.set('category', cat?.slug ?? nextCategoryId);
-      }
-      params.delete('page');
-      const qs = params.toString();
-      router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
+      setPage(1);
+      const cat = data.categories.find((c) => c.id === nextCategoryId);
+      syncListUrl({
+        categorySlug: nextCategoryId === 'all' ? null : (cat?.slug ?? nextCategoryId),
+        page: 1,
+      });
     },
-    [data.categories, router]
+    [data.categories, syncListUrl]
   );
 
-  // جستجوی سرور-ساید: ورودی فوراً به‌روز می‌شود (واکنش‌گرا) و با debounce به URL
-  // ناوبری می‌شود تا سرور روی همهٔ صفحات جستجو کند (نه فقط صفحهٔ جاری).
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearch(value);
+      setPage(1);
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
       searchDebounceRef.current = setTimeout(() => {
-        const params = new URLSearchParams(window.location.search);
-        const trimmed = value.trim();
-        if (trimmed) params.set('q', trimmed);
-        else params.delete('q');
-        params.delete('page');
-        const qs = params.toString();
-        router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
-      }, 400);
+        syncListUrl({ q: value.trim(), page: 1 });
+      }, 300);
     },
-    [router]
+    [syncListUrl]
   );
 
   const handleClearFilters = useCallback(() => {
     setFilter('all');
     setSearch('');
     setCategoryId('all');
+    setPage(1);
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    const params = new URLSearchParams(window.location.search);
-    params.delete('q');
-    params.delete('category');
-    params.delete('filter');
-    params.delete('page');
-    const qs = params.toString();
-    router.replace(qs ? `/admin/lists?${qs}` : '/admin/lists', { scroll: false });
-  }, [router]);
+    syncListUrl({ q: '', categorySlug: null, filter: 'all', page: 1 });
+  }, [syncListUrl]);
+
+  const goToPage = useCallback(
+    (next: number) => {
+      const clamped = Math.min(Math.max(1, next), pageCount);
+      setPage(clamped);
+      syncListUrl({ page: clamped });
+    },
+    [pageCount, syncListUrl]
+  );
 
   const handleMoveToTrash = async (id: string, reason?: string) => {
     const res = await fetch(`/api/admin/lists/${id}/trash`, {
@@ -321,11 +348,14 @@ export default function ListsIntelligenceClient({
     search,
     onSearchChange: handleSearchChange,
     sortBy,
-    onSortChange: (v: string) => setSortBy(v as SortKey),
+    onSortChange: (v: string) => {
+      setSortBy(v as SortKey);
+      setPage(1);
+    },
     viewMode,
     onViewModeChange: setViewMode,
     resultCount: sorted.length,
-    totalCount: lists.length,
+    totalCount: inCategory.length,
     categories: data.categories,
     categoryId,
     onCategoryChange: handleCategoryChange,
@@ -483,28 +513,17 @@ export default function ListsIntelligenceClient({
         </p>
       )}
 
-      {/* فیلتر sticky — هنگام اسکرول ثابت می‌ماند */}
-      <div className="sticky top-0 z-30 -mx-1 px-1 py-2 bg-[var(--color-bg)]/90 backdrop-blur-md border-b border-[var(--color-border-muted)] shadow-sm rounded-xl">
-        <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] px-3 py-2.5 shadow-sm">
-          <ListSmartFilterBar {...filterBarProps} />
-        </div>
+      <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] px-3 py-3">
+        <ListSmartFilterBar {...filterBarProps} />
       </div>
 
       {/* نتایج */}
       <div className="space-y-3">
       {sorted.length > 0 && (
         <>
-          {data.pagination.totalPages > 1 && (
-            <p className="text-xs text-[var(--color-text-muted)] px-0.5 tabular-nums">
-              صفحه {data.pagination.currentPage.toLocaleString('fa-IR')} از{' '}
-              {data.pagination.totalPages.toLocaleString('fa-IR')}
-              {hasActiveFilters && ` · ${sorted.length.toLocaleString('fa-IR')} نتیجه در این صفحه`}
-            </p>
-          )}
-
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {sorted.map((row) => (
+              {pageRows.map((row) => (
                 <ListIntelligenceCard
                   key={row.id}
                   row={row}
@@ -518,7 +537,7 @@ export default function ListsIntelligenceClient({
             </div>
           ) : viewMode === 'covers' && !isTrashView ? (
             <ListCoversGallery
-              rows={sorted}
+              rows={pageRows}
               auditOpen={coverAuditOpen}
               onAuditOpenChange={setCoverAuditOpen}
               onFeatureToggle={handleFeatureToggle}
@@ -528,7 +547,12 @@ export default function ListsIntelligenceClient({
             />
           ) : (
             <ListIntelligenceTable
-              rows={sorted}
+              rows={pageRows}
+              sortBy={sortBy}
+              onSortChange={(next) => {
+                setSortBy(next);
+                setPage(1);
+              }}
               isTrashView={isTrashView}
               onFeatureToggle={isTrashView ? undefined : handleFeatureToggle}
               onDisableToggle={isTrashView ? undefined : handleDisableToggle}
@@ -539,17 +563,30 @@ export default function ListsIntelligenceClient({
         </>
       )}
 
-      {data.pagination.totalPages > 1 && sorted.length > 0 && (
-        <Pagination
-          currentPage={data.pagination.currentPage}
-          totalPages={data.pagination.totalPages}
-          basePath="/admin/lists"
-          searchParams={{
-            ...(isTrashView ? { trash: 'true' } : {}),
-            ...(categoryId !== 'all' && activeCategory ? { category: activeCategory.slug } : {}),
-            ...(search.trim() ? { q: search.trim() } : {}),
-          }}
-        />
+      {pageCount > 1 && sorted.length > 0 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            disabled={safePage <= 1}
+            onClick={() => goToPage(safePage - 1)}
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border-muted)] bg-white disabled:opacity-40"
+            aria-label="صفحه قبل"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+          <span className="text-sm text-[var(--color-text-muted)]">
+            صفحه {safePage.toLocaleString('fa-IR')} از {pageCount.toLocaleString('fa-IR')}
+          </span>
+          <button
+            type="button"
+            disabled={safePage >= pageCount}
+            onClick={() => goToPage(safePage + 1)}
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border-muted)] bg-white disabled:opacity-40"
+            aria-label="صفحه بعد"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+        </div>
       )}
       </div>
 

@@ -7,7 +7,7 @@ import type { TrendingStatus } from '@/lib/admin/trending-status';
 
 /** نمونه برای محاسبه پالس KPI (نه محدودیت نمایش) */
 export const LISTS_PULSE_SAMPLE = 500;
-export const LISTS_PAGE_SIZE = 50;
+export const LISTS_PAGE_SIZE = 20;
 /** @deprecated use LISTS_PULSE_SAMPLE */
 export const LISTS_INTELLIGENCE_CAP = LISTS_PULSE_SAMPLE;
 

@@ -11,6 +11,8 @@ import ListCardMoreMenu from './ListCardMoreMenu';
 
 interface ListIntelligenceTableProps {
   rows: ListIntelligenceRow[];
+  sortBy?: string;
+  onSortChange?: (next: string) => void;
   isTrashView?: boolean;
   onFeatureToggle?: (id: string, isFeatured: boolean) => void;
   onDisableToggle?: (id: string, isActive: boolean) => void;
@@ -30,8 +32,14 @@ function rowBg(row: ListIntelligenceRow, idx: number, isTrashView?: boolean) {
   return 'bg-[var(--color-surface)]';
 }
 
+function toggleSort(current: string, desc: string, asc: string) {
+  return current === desc ? asc : desc;
+}
+
 export default function ListIntelligenceTable({
   rows,
+  sortBy = 'score_desc',
+  onSortChange,
   isTrashView,
   onFeatureToggle,
   onDisableToggle,
@@ -82,42 +90,49 @@ export default function ListIntelligenceTable({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--color-border-muted)] overflow-hidden bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
-      <div className="overflow-auto max-h-[calc(100vh-10rem)]">
-        <table className="w-full min-w-[640px] border-collapse text-sm">
+    <div className="overflow-x-auto rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
-              <th className="sticky top-0 z-20 bg-[var(--color-bg)] text-right py-2 px-3 text-xs font-semibold text-[var(--color-text-muted)]">
+            <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+              <th className="bg-[var(--color-bg)] px-3 py-2 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                 لیست
               </th>
-              <th className="sticky top-0 z-20 bg-[var(--color-bg)] text-right py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)] w-[52px]">
-                آیتم
+              <th className="bg-[var(--color-bg)] px-2 py-2 text-start">
+                <button type="button" onClick={() => onSortChange?.(toggleSort(sortBy, 'items_desc', 'items_asc'))} className={`inline-flex min-h-11 items-center text-xs font-semibold ${sortBy.startsWith('items') ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'}`}>
+                  آیتم
+                </button>
               </th>
-              <th className="sticky top-0 z-20 bg-[var(--color-bg)] text-right py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)] w-[72px]">
-                ذخیره
+              <th className="bg-[var(--color-bg)] px-2 py-2 text-start">
+                <button type="button" onClick={() => onSortChange?.(toggleSort(sortBy, 'saves_desc', 'saves_asc'))} className={`inline-flex min-h-11 items-center text-xs font-semibold ${sortBy.startsWith('saves') ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'}`}>
+                  ذخیره
+                </button>
               </th>
-              <th className="sticky top-0 z-20 bg-[var(--color-bg)] text-right py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)] w-[52px]">
-                ۲۴h
+              <th className="bg-[var(--color-bg)] px-2 py-2 text-start">
+                <button type="button" onClick={() => onSortChange?.(toggleSort(sortBy, '24h_desc', '24h_asc'))} className={`inline-flex min-h-11 items-center text-xs font-semibold ${sortBy.startsWith('24h') ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'}`}>
+                  ۲۴ ساعت
+                </button>
               </th>
-              <th className="sticky top-0 z-20 bg-[var(--color-bg)] text-right py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)] w-[56px]">
-                امتیاز
+              <th className="bg-[var(--color-bg)] px-2 py-2 text-start">
+                <button type="button" onClick={() => onSortChange?.(toggleSort(sortBy, 'score_desc', 'score_asc'))} className={`inline-flex min-h-11 items-center text-xs font-semibold ${sortBy.startsWith('score') ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'}`}>
+                  امتیاز
+                </button>
               </th>
               {!isTrashView && (
-                <th className="sticky top-0 z-20 bg-[var(--color-bg)] text-right py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)] w-[72px]">
+                <th className="bg-[var(--color-bg)] px-2 py-2 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                   وضعیت
                 </th>
               )}
               {isTrashView && (
                 <>
-                  <th className="sticky top-0 z-20 bg-[var(--color-bg)] text-right py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)]">
+                  <th className="bg-[var(--color-bg)] px-2 py-2 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                     حذف
                   </th>
-                  <th className="sticky top-0 z-20 bg-[var(--color-bg)] text-right py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)]">
+                  <th className="bg-[var(--color-bg)] px-2 py-2 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                     توسط
                   </th>
                 </>
               )}
-              <th className="sticky top-0 left-0 z-30 bg-[var(--color-bg)] text-center py-2 px-2 text-xs font-semibold text-[var(--color-text-muted)] w-[140px] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
+              <th className="sticky end-0 z-20 border-s border-[var(--color-border-muted)] bg-[var(--color-bg)] px-2 py-2 text-center text-xs font-semibold text-[var(--color-text-muted)]">
                 عملیات
               </th>
             </tr>
@@ -130,7 +145,6 @@ export default function ListIntelligenceTable({
                 row.growth7dPercent
               );
               const status = STATUS_ICON[row.status];
-              const StatusIcon = status.Icon;
               const bg = rowBg(row, idx, isTrashView);
               const scoreNegative = row.trendingScore < 0;
 
@@ -148,27 +162,27 @@ export default function ListIntelligenceTable({
                   } ${!isTrashView ? 'cursor-pointer' : ''}`}
                 >
                   <td className={`py-2 px-3 ${bg}`}>
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-[var(--color-border-muted)]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-6 shrink-0 text-center text-xs tabular-nums text-[var(--color-text-muted)]">
+                        {row.rank.toLocaleString('fa-IR')}
+                      </span>
+                      <div className="relative size-10 shrink-0 overflow-hidden rounded-lg border border-[var(--color-border-muted)] aspect-square">
                         {row.coverImage ? (
                           <ImageWithFallback
                             src={row.coverImage}
                             alt=""
-                            className="object-cover w-full h-full"
+                            className="h-full w-full object-cover"
                             listSlug={row.slug}
                             listTitle={row.title}
                             categorySlug={row.categorySlug}
                             fallbackIcon={row.categoryIcon}
-                            fallbackClassName="w-full h-full"
+                            fallbackClassName="h-full w-full"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-base bg-[var(--color-bg)]">
+                          <div className="flex h-full w-full items-center justify-center bg-[var(--color-bg)] text-base">
                             {row.categoryIcon}
                           </div>
                         )}
-                        <span className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[7px] font-bold text-center tabular-nums">
-                          {row.rank}
-                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1 min-w-0">
@@ -182,7 +196,7 @@ export default function ListIntelligenceTable({
                             <Star className="w-3 h-3 shrink-0 text-amber-500 fill-amber-500" />
                           )}
                         </div>
-                        <p className="text-[10px] text-[var(--color-text-muted)] truncate">
+                        <p className="truncate text-xs text-[var(--color-text-muted)]">
                           {row.categoryName}
                           <span className="mx-1 opacity-30">·</span>
                           {row.ownerUsername || row.ownerName}
@@ -205,7 +219,7 @@ export default function ListIntelligenceTable({
                     <span className="font-medium">{row.saveCount.toLocaleString('fa-IR')}</span>
                     {growth.label !== '—' && (
                       <span
-                        className={`block text-[9px] ${
+                        className={`block text-xs ${
                           growth.tone === 'positive' || growth.tone === 'new'
                             ? 'text-emerald-600'
                             : growth.tone === 'negative'
@@ -218,8 +232,10 @@ export default function ListIntelligenceTable({
                     )}
                   </td>
 
-                  <td className={`py-2 px-2 tabular-nums whitespace-nowrap text-xs ${bg} ${row.saves24h > 0 ? 'text-emerald-600 font-semibold' : 'text-[var(--color-text-muted)]'}`}>
-                    +{row.saves24h.toLocaleString('fa-IR')}
+                  <td className={`whitespace-nowrap px-2 py-2 text-xs tabular-nums ${bg} ${row.saves24h > 0 ? 'font-semibold text-emerald-600' : 'text-[var(--color-text-muted)]'}`}>
+                    {row.saves24h > 0
+                      ? `+${row.saves24h.toLocaleString('fa-IR')}`
+                      : row.saves24h.toLocaleString('fa-IR')}
                   </td>
 
                   <td className={`py-2 px-2 tabular-nums whitespace-nowrap text-xs font-bold ${bg} ${scoreNegative ? 'text-red-600' : 'text-[var(--primary)]'}`}>
@@ -228,11 +244,11 @@ export default function ListIntelligenceTable({
 
                   {!isTrashView && (
                     <td className={`py-2 px-2 ${bg}`}>
-                      <div className="flex items-center gap-1">
-                        <StatusIcon className={`w-3.5 h-3.5 ${status.className}`} aria-label={status.label} />
-                        {!row.isActive && <span className="w-1.5 h-1.5 rounded-full bg-red-500" title="غیرفعال" />}
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className={status.className}>{status.label}</span>
+                        {!row.isActive && <span className="size-2 rounded-full bg-red-500" title="غیرفعال" />}
                         {(row.riskLevel === 'medium' || row.riskLevel === 'high') && (
-                          <span className="text-[8px] px-1 rounded bg-red-100 text-red-700 font-bold">!</span>
+                          <span className="rounded bg-red-100 px-1 text-xs font-bold text-red-700">!</span>
                         )}
                       </div>
                     </td>
@@ -243,7 +259,7 @@ export default function ListIntelligenceTable({
                       <td className={`py-2 px-2 text-xs text-[var(--color-text-muted)] whitespace-nowrap ${bg}`}>
                         {row.deletedAt ? new Date(row.deletedAt).toLocaleDateString('fa-IR') : '—'}
                       </td>
-                      <td className={`py-2 px-2 text-xs text-[var(--color-text-muted)] truncate max-w-[80px] ${bg}`}>
+                      <td className={`max-w-24 truncate px-2 py-2 text-xs text-[var(--color-text-muted)] ${bg}`}>
                         {row.deletedBy?.name || row.deletedBy?.email || '—'}
                       </td>
                     </>
@@ -251,11 +267,11 @@ export default function ListIntelligenceTable({
 
                   <td
                     data-list-ops=""
-                    className={`sticky left-0 z-20 overflow-visible py-1.5 px-1.5 ${bg} shadow-[4px_0_12px_-4px_rgba(0,0,0,0.08)]`}
+                    className={`sticky end-0 z-20 overflow-visible border-s border-[var(--color-border-muted)] px-2 py-2 ${bg}`}
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="relative z-20 flex items-center justify-center gap-1 flex-wrap">
+                    <div className="relative z-20 flex items-center justify-center gap-1">
                       {isTrashView ? (
                         onRestore && (
                           <button
@@ -269,7 +285,7 @@ export default function ListIntelligenceTable({
                               }
                             }}
                             disabled={loadingId === row.id}
-                            className="px-2 py-1 rounded-lg text-[10px] font-medium bg-emerald-100 text-emerald-800 hover:bg-emerald-200 disabled:opacity-50"
+                            className="inline-flex min-h-11 items-center rounded-xl bg-emerald-100 px-3 text-xs font-semibold text-emerald-800 hover:bg-emerald-200 disabled:opacity-50"
                           >
                             بازگردانی
                           </button>
@@ -278,13 +294,10 @@ export default function ListIntelligenceTable({
                         <>
                           <Link
                             href={`/admin/lists/${row.id}/edit`}
-                            target="_blank"
-                            rel="noopener noreferrer"
                             data-list-ops=""
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-[var(--primary)] text-white hover:opacity-90"
-                            title="ویرایش در تب جدید"
+                            className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-[var(--primary)] px-3 text-xs font-semibold text-white hover:opacity-90"
                           >
-                            <Pencil className="w-3 h-3" />
+                            <Pencil className="size-4" />
                             ویرایش
                           </Link>
                           <Link
@@ -292,11 +305,10 @@ export default function ListIntelligenceTable({
                             target="_blank"
                             rel="noopener noreferrer"
                             data-list-ops=""
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
-                            title="نمایش در سایت"
+                            className="inline-flex size-11 items-center justify-center rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                            aria-label="نمایش در سایت"
                           >
-                            <ExternalLink className="w-3 h-3" />
-                            سایت
+                            <ExternalLink className="size-4" />
                           </Link>
                           <ListCardMoreMenu
                             row={row}
@@ -315,7 +327,6 @@ export default function ListIntelligenceTable({
             })}
           </tbody>
         </table>
-      </div>
     </div>
   );
 }

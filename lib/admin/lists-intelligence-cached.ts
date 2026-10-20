@@ -17,13 +17,7 @@ export type ListsIntelligenceQuery = {
 };
 
 function cacheKey(query: ListsIntelligenceQuery): string[] {
-  return [
-    'admin-lists-intelligence',
-    query.trash ? 'trash' : 'active',
-    String(query.page),
-    query.categoryId,
-    query.q?.trim() || '',
-  ];
+  return ['admin-lists-intelligence-v2', query.trash ? 'trash' : 'active'];
 }
 
 async function loadListsIntelligence(

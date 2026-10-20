@@ -92,7 +92,7 @@ const listSelectCore = {
   itemCount: true,
   createdAt: true,
   categories: {
-    select: { id: true, name: true, slug: true, icon: true, color: true },
+    select: { id: true, name: true, slug: true, icon: true },
   },
   users: { select: { id: true, name: true, email: true, username: true } },
 } as const;
@@ -235,6 +235,30 @@ function buildIntelligenceRows(
   return rows;
 }
 
+async function loadListCategoryOptions(trash: boolean): Promise<ListCategoryOption[]> {
+  const deletedAt = trash ? { not: null } : null;
+  const [categoriesRaw, counts] = await Promise.all([
+    prisma.categories.findMany({
+      where: { deletedAt: null },
+      orderBy: { order: 'asc' },
+      select: { id: true, name: true, slug: true, icon: true },
+    }),
+    prisma.lists.groupBy({
+      by: ['categoryId'],
+      where: { deletedAt, categoryId: { not: null } },
+      _count: { _all: true },
+    }),
+  ]);
+  const countById = new Map(counts.map((row) => [row.categoryId, row._count._all]));
+  return categoriesRaw.map((category) => ({
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    icon: category.icon,
+    listCount: countById.get(category.id) ?? 0,
+  }));
+}
+
 export async function getListsIntelligenceData(
   trash: boolean = false,
   options?: {
@@ -249,120 +273,54 @@ export async function getListsIntelligenceData(
   const last7d = new Date(now - 7 * 24 * 60 * 60 * 1000);
   const last14d = new Date(now - 14 * 24 * 60 * 60 * 1000);
 
-  const page = Math.max(1, options?.page ?? 1);
   const pageSize = options?.pageSize ?? LISTS_PAGE_SIZE;
-  const skip = (page - 1) * pageSize;
-  const categoryId =
-    options?.categoryId && options.categoryId !== 'all'
-      ? options.categoryId
-      : undefined;
-  const q = options?.q?.trim() || undefined;
 
-  const listWhere = {
-    ...(trash ? { deletedAt: { not: null } } : { deletedAt: null }),
-    ...(categoryId ? { categoryId } : {}),
-    ...(q ? { title: { contains: q, mode: 'insensitive' as const } } : {}),
-  };
-
+  const listWhere = trash ? { deletedAt: { not: null } } : { deletedAt: null };
   const select = listSelectFor(trash);
-  const orderBy = trash
-    ? ({ deletedAt: 'desc' } as const)
-    : ({ saveCount: 'desc' } as const);
 
-  // Page 1 is always a prefix of the pulse sample (same order) — skip duplicate query
-  const reusePulseForPage = page === 1 && pageSize <= LISTS_PULSE_SAMPLE;
+  const [totalCount, loadedLists, categories] = await Promise.all([
+    dbQuery(() => prisma.lists.count({ where: listWhere })),
+    dbQuery(() =>
+      prisma.lists.findMany({
+        where: listWhere,
+        orderBy: trash ? { deletedAt: 'desc' } : { saveCount: 'desc' },
+        take: LISTS_PULSE_SAMPLE,
+        select,
+      })
+    ),
+    dbQuery(() => loadListCategoryOptions(trash)),
+  ]);
 
-  const [totalCount, pulseLists, pageListsMaybe, categoriesRaw] =
-    await Promise.all([
-      dbQuery(() => prisma.lists.count({ where: listWhere })),
-      dbQuery(() =>
-        prisma.lists.findMany({
-          where: listWhere,
-          orderBy,
-          take: LISTS_PULSE_SAMPLE,
-          select,
-        })
-      ),
-      reusePulseForPage
-        ? Promise.resolve(null)
-        : dbQuery(() =>
-            prisma.lists.findMany({
-              where: listWhere,
-              orderBy,
-              skip,
-              take: pageSize,
-              select,
-            })
-          ),
-      dbQuery(() =>
-        prisma.categories.findMany({
-          where: { deletedAt: null },
-          orderBy: { order: 'asc' },
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            icon: true,
-            _count: {
-              select: {
-                lists: {
-                  where: { deletedAt: trash ? { not: null } : null },
-                },
-              },
-            },
-          },
-        })
-      ),
-    ]);
-
-  const pageLists = reusePulseForPage
-    ? pulseLists.slice(0, pageSize)
-    : (pageListsMaybe as typeof pulseLists);
-
-  const statsListIds = [
-    ...new Set([
-      ...pulseLists.map((l) => l.id),
-      ...pageLists.map((l) => l.id),
-    ]),
-  ];
   const { count24h, count7d, countPrev7d } = await fetchBookmarkCountsByListIds(
-    statsListIds,
+    loadedLists.map((l) => l.id),
     last24h,
     last7d,
     last14d
   );
 
-  const pulseRows = buildIntelligenceRows(
-    pulseLists,
+  const rows = buildIntelligenceRows(
+    loadedLists,
     count24h,
     count7d,
     countPrev7d,
     trash
   );
+
   let risingCount = 0;
   let lowEngagementCount = 0;
   let flaggedCount = 0;
   let featuredCount = 0;
-
-  for (const r of pulseRows) {
+  for (const r of rows) {
     if (r.status === 'rising') risingCount++;
     if (r.lowEngagement) lowEngagementCount++;
     if (r.riskLevel === 'medium' || r.riskLevel === 'high') flaggedCount++;
     if (r.isFeatured) featuredCount++;
   }
 
-  const rows = buildIntelligenceRows(
-    pageLists,
-    count24h,
-    count7d,
-    countPrev7d,
-    trash
-  );
-
   if (!trash) {
     rows.sort((a, b) => b.trendingScore - a.trendingScore);
     rows.forEach((r, i) => {
-      r.rank = skip + i + 1;
+      r.rank = i + 1;
     });
   }
 
@@ -379,23 +337,15 @@ export async function getListsIntelligenceData(
     insightLine: buildListInsightLine(pulseBase),
   };
 
-  const categories: ListCategoryOption[] = categoriesRaw.map((c) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    icon: c.icon,
-    listCount: c._count.lists,
-  }));
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
 
   return {
     pulse,
     lists: rows,
-    pulseFromSample: totalCount > pulseLists.length,
+    pulseFromSample: totalCount > loadedLists.length,
     categories,
     pagination: {
-      currentPage: page,
+      currentPage: 1,
       pageSize,
       totalPages,
     },

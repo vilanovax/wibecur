@@ -1,6 +1,7 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { resolveStoredItemTip, type ItemTipRow, type ItemTipsPageData } from '@/lib/admin/item-tip-import';
+import { type ItemTipRow, type ItemTipsPageData } from '@/lib/admin/item-tip-import';
 
 function dedupeItemTipRows(rows: ItemTipRow[]): ItemTipRow[] {
   const seen = new Map<string, ItemTipRow>();
@@ -38,56 +39,7 @@ export async function loadItemTipsPageData(options?: {
     initialCategoryId = categoriesRaw[0].id;
   }
 
-  const listFilter = initialListId ? { id: initialListId } : undefined;
-  const categoryFilter =
-    !initialListId && initialCategoryId
-      ? { categoryId: initialCategoryId }
-      : undefined;
-
-  const itemsRaw = await dbQuery(() =>
-    prisma.items.findMany({
-      where: {
-        deletedAt: null,
-        lists: {
-          deletedAt: null,
-          isActive: true,
-          ...listFilter,
-          ...categoryFilter,
-        },
-      },
-      orderBy: [{ lists: { title: 'asc' } }, { order: 'asc' }],
-      select: {
-        id: true,
-        title: true,
-        metadata: true,
-        catalogItemId: true,
-        listId: true,
-        lists: {
-          select: {
-            title: true,
-            categoryId: true,
-            categories: { select: { id: true, name: true } },
-          },
-        },
-        catalog_items: { select: { metadata: true } },
-      },
-    })
-  );
-
-  const rows: ItemTipRow[] = itemsRaw.map((item) => {
-    const itemMeta = asMetaRecord(item.metadata);
-    const catalogMeta = asMetaRecord(item.catalog_items?.metadata);
-    return {
-      id: item.id,
-      title: item.title,
-      tip: resolveStoredItemTip(itemMeta, catalogMeta),
-      listId: item.listId,
-      listTitle: item.lists.title,
-      categoryId: item.lists.categoryId,
-      categoryName: item.lists.categories?.name ?? '—',
-      catalogItemId: item.catalogItemId,
-    };
-  });
+  const rows = await dbQuery(() => loadTipRows(initialCategoryId, initialListId));
 
   const items =
     initialListId || !initialCategoryId ? rows : dedupeItemTipRows(rows);
@@ -101,9 +53,62 @@ export async function loadItemTipsPageData(options?: {
   };
 }
 
-function asMetaRecord(value: unknown): Record<string, unknown> | null {
-  if (value != null && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return null;
+type TipSqlRow = {
+  id: string;
+  title: string;
+  catalogItemId: string | null;
+  listId: string;
+  listTitle: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  tip: string | null;
+};
+
+/** فقط متن نکته، بدون کل metadata آیتم و کاتالوگ. */
+async function loadTipRows(categoryId: string, listId: string): Promise<ItemTipRow[]> {
+  const rows = await prisma.$queryRaw<TipSqlRow[]>(Prisma.sql`
+    SELECT
+      i.id,
+      i.title,
+      i."catalogItemId",
+      i."listId",
+      l.title AS "listTitle",
+      l."categoryId",
+      cat.name AS "categoryName",
+      NULLIF(
+        btrim(
+          COALESCE(
+            NULLIF(btrim(i.metadata->>'tip'), ''),
+            NULLIF(btrim(c.metadata->>'tip'), '')
+          )
+        ),
+        ''
+      ) AS tip
+    FROM items i
+    INNER JOIN lists l ON i."listId" = l.id
+    LEFT JOIN categories cat ON l."categoryId" = cat.id
+    LEFT JOIN catalog_items c ON i."catalogItemId" = c.id
+    WHERE i."deletedAt" IS NULL
+      AND l."deletedAt" IS NULL
+      AND l."isActive" = true
+      AND (
+        (${listId} <> '' AND l.id = ${listId})
+        OR (
+          ${listId} = ''
+          AND (${categoryId} = '' OR l."categoryId" = ${categoryId})
+        )
+      )
+    ORDER BY l.title ASC, i."order" ASC
+  `);
+
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    tip: row.tip,
+    listId: row.listId,
+    listTitle: row.listTitle,
+    categoryId: row.categoryId,
+    categoryName: row.categoryName ?? '—',
+    catalogItemId: row.catalogItemId,
+  }));
 }

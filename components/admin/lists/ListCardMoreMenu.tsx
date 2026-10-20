@@ -193,7 +193,7 @@ export default function ListCardMoreMenu({
           skipNextOutsideRef.current = true;
           setOpen((v) => !v);
         }}
-        className="relative z-20 rounded-xl border border-[var(--color-border)] p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+        className="relative z-20 inline-flex size-11 items-center justify-center rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
         aria-label="عملیات بیشتر"
         aria-expanded={open}
         aria-haspopup="menu"
