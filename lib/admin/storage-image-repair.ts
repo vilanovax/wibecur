@@ -1,19 +1,9 @@
-import type { Prisma, PrismaClient } from '@prisma/client';
-import { isCatalogAdminDisabled } from '@/lib/admin/catalog-visibility';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import { catalogCategoryLabel } from '@/lib/catalog-display';
 import { expandCategorySlugFilter } from '@/lib/category-slug-aliases';
 import { buildCafePhotoSearchQuery, extractCafeCoverMetadata, isCafeCategorySlug } from '@/lib/cafe-cover-search';
-import { catalogMissingPosterImage, extractCatalogImdbId } from '@/lib/missing-image-utils';
+import { catalogMissingPosterImage } from '@/lib/missing-image-utils';
 import { externalImageHost, needsS3MigrationImageUrl } from '@/lib/item-image-storage';
-
-function catalogCategoryWhere(categorySlug?: string): Prisma.catalog_itemsWhereInput | undefined {
-  if (!categorySlug) return undefined;
-  if (categorySlug === '__none__') return { categorySlug: null };
-  const slugs = expandCategorySlugFilter(categorySlug);
-  if (slugs.length === 0) return undefined;
-  if (slugs.length === 1) return { categorySlug: slugs[0] };
-  return { categorySlug: { in: slugs } };
-}
 
 export type StorageImageRepairStatus = 'missing' | 'external';
 
@@ -28,6 +18,7 @@ export type StorageImageRepairRow = {
   listCount: number;
   imdbId: string | null;
   isHidden: boolean;
+  instagram: string | null;
   metadata: Record<string, unknown> | null;
 };
 
@@ -64,76 +55,91 @@ export function buildCatalogRepairSearchQuery(input: {
   return parts.join(' ').slice(0, 120);
 }
 
+type RepairCandidateSql = {
+  id: string;
+  title: string;
+  imageUrl: string | null;
+  categorySlug: string | null;
+  instagram: string | null;
+  listCount: number;
+};
+
+function categorySql(categorySlug?: string): Prisma.Sql {
+  if (!categorySlug || categorySlug === 'all') return Prisma.sql`TRUE`;
+  if (categorySlug === '__none__') return Prisma.sql`c."categorySlug" IS NULL`;
+  const slugs = expandCategorySlugFilter(categorySlug);
+  if (slugs.length === 0) return Prisma.sql`TRUE`;
+  return Prisma.sql`c."categorySlug" IN (${Prisma.join(slugs)})`;
+}
+
+/** فقط ردیف‌هایی که ممکن است بدون تصویر یا خارج از ParsPack باشند — بدون کل metadata. */
 export async function listStorageImageRepairItems(
   prisma: PrismaClient,
   filters: StorageImageRepairFilters = {}
 ): Promise<StorageImageRepairRow[]> {
-  const where = {
-    ...(catalogCategoryWhere(filters.categorySlug) ?? {}),
-  };
-
-  const rows = await prisma.catalog_items.findMany({
-    where,
-    orderBy: { title: 'asc' },
-    select: {
-      id: true,
-      title: true,
-      imageUrl: true,
-      categorySlug: true,
-      metadata: true,
-      externalUrl: true,
-      externalKey: true,
-      _count: { select: { items: true } },
-    },
-  });
+  const rows = await prisma.$queryRaw<RepairCandidateSql[]>(Prisma.sql`
+    SELECT
+      c.id,
+      c.title,
+      c."imageUrl",
+      c."categorySlug",
+      NULLIF(btrim(c.metadata->>'instagram'), '') AS instagram,
+      COALESCE(p.n, 0)::int AS "listCount"
+    FROM catalog_items c
+    LEFT JOIN (
+      SELECT i."catalogItemId" AS id, COUNT(*)::int AS n
+      FROM items i
+      WHERE i."deletedAt" IS NULL AND i."catalogItemId" IS NOT NULL
+      GROUP BY i."catalogItemId"
+    ) p ON p.id = c.id
+    WHERE ${categorySql(filters.categorySlug)}
+      AND (
+        c."imageUrl" IS NULL
+        OR btrim(COALESCE(c."imageUrl", '')) = ''
+        OR c."imageUrl" ILIKE '%placeholder-cover%'
+        OR c."imageUrl" ILIKE '%placeholder-item%'
+        OR c."imageUrl" NOT ILIKE '%parspack.net%'
+      )
+    ORDER BY c.title ASC
+  `);
 
   const q = filters.q?.trim().toLowerCase() || '';
   const statusFilter = filters.status ?? 'all';
+  const items: StorageImageRepairRow[] = [];
 
-  return rows
-    .map((row) => {
-      const imageUrl = row.imageUrl?.trim() || '';
-      const isMissing = catalogMissingPosterImage(imageUrl);
-      const isExternal = !isMissing && needsS3MigrationImageUrl(imageUrl);
-      if (!isMissing && !isExternal) return null;
+  for (const row of rows) {
+    const imageUrl = row.imageUrl?.trim() || '';
+    const isMissing = catalogMissingPosterImage(imageUrl);
+    const isExternal = !isMissing && needsS3MigrationImageUrl(imageUrl);
+    if (!isMissing && !isExternal) continue;
 
-      const status: StorageImageRepairStatus = isMissing ? 'missing' : 'external';
-      if (statusFilter !== 'all' && statusFilter !== status) return null;
+    const status: StorageImageRepairStatus = isMissing ? 'missing' : 'external';
+    if (statusFilter !== 'all' && statusFilter !== status) continue;
 
-      if (q) {
-        const haystack = [
-          row.title,
-          row.categorySlug,
-          catalogCategoryLabel(row.categorySlug),
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        if (!haystack.includes(q)) return null;
-      }
+    const categoryLabel = catalogCategoryLabel(row.categorySlug);
+    if (q) {
+      const haystack = [row.title, row.categorySlug, categoryLabel, imageUrl, row.instagram]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!haystack.includes(q)) continue;
+    }
 
-      const metadata =
-        row.metadata != null && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
-          ? (row.metadata as Record<string, unknown>)
-          : null;
+    items.push({
+      id: row.id,
+      title: row.title,
+      categorySlug: row.categorySlug,
+      categoryLabel,
+      imageUrl,
+      status,
+      host: imageUrl ? externalImageHost(imageUrl) : '—',
+      listCount: row.listCount,
+      imdbId: null,
+      isHidden: false,
+      instagram: row.instagram,
+      metadata: null,
+    });
+  }
 
-      return {
-        id: row.id,
-        title: row.title,
-        categorySlug: row.categorySlug,
-        categoryLabel: catalogCategoryLabel(row.categorySlug),
-        imageUrl,
-        status,
-        host: imageUrl ? externalImageHost(imageUrl) : '—',
-        listCount: row._count.items,
-        imdbId: extractCatalogImdbId({
-          metadata: row.metadata,
-          externalUrl: row.externalUrl,
-          externalKey: row.externalKey,
-        }),
-        isHidden: isCatalogAdminDisabled(row.metadata),
-        metadata,
-      } satisfies StorageImageRepairRow;
-    })
-    .filter((row): row is StorageImageRepairRow => row !== null);
+  return items;
 }

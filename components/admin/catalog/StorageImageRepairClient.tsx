@@ -3,25 +3,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   Check,
   CheckCircle2,
-  ExternalLink,
+  Copy,
   ImageIcon,
   ImageOff,
   Loader2,
+  Pencil,
   Search,
   Upload,
   AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Sparkles,
 } from 'lucide-react';
 import { buildCatalogRepairSearchQuery } from '@/lib/admin/storage-image-repair';
 import { buildCastandoProxyImageUrl } from '@/lib/castando-image-proxy';
-import { extractCafeCoverMetadata } from '@/lib/cafe-cover-search';
 import { displayInstagramHandle } from '@/lib/cafe-metadata';
 import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
 import type { StorageImageRepairRow, StorageImageRepairStatus } from '@/lib/admin/storage-image-repair';
@@ -55,6 +51,8 @@ type ItemActionState = {
   newUrl?: string;
 };
 
+const PAGE_SIZE = 12;
+
 type StorageImageRepairClientProps = {
   categories: CategoryOption[];
   initialCategorySlug: string;
@@ -84,7 +82,7 @@ function ActionStatusBadge({ state }: { state: ItemActionState | undefined }) {
           ? 'در حال انتقال…'
           : 'در حال ذخیره…';
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">
         <Loader2 className="h-3 w-3 animate-spin" />
         {label}
       </span>
@@ -93,7 +91,7 @@ function ActionStatusBadge({ state }: { state: ItemActionState | undefined }) {
 
   if (state.phase === 'done') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
         <CheckCircle2 className="h-3 w-3" />
         ذخیره شد
       </span>
@@ -102,58 +100,13 @@ function ActionStatusBadge({ state }: { state: ItemActionState | undefined }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700"
+      className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700"
       title={state.error}
     >
       <AlertCircle className="h-3 w-3" />
       خطا
     </span>
   );
-}
-
-function StatTile({
-  label,
-  value,
-  tone = 'default',
-  active,
-  onClick,
-}: {
-  label: string;
-  value: number;
-  tone?: 'default' | 'sky' | 'amber';
-  active?: boolean;
-  onClick?: () => void;
-}) {
-  const tones = {
-    default: active
-      ? 'border-gray-900 bg-gray-900 text-white'
-      : 'border-[var(--color-border-muted)] bg-[var(--color-bg)]/50 text-[var(--color-text)] hover:border-orange-300/60',
-    sky: active
-      ? 'border-sky-600 bg-sky-600 text-white'
-      : 'border-sky-200 bg-sky-50/80 text-sky-900 hover:border-sky-300',
-    amber: active
-      ? 'border-amber-600 bg-amber-600 text-white'
-      : 'border-amber-200 bg-amber-50/80 text-amber-900 hover:border-amber-300',
-  };
-
-  const className = `rounded-xl border px-3 py-2.5 text-center transition-colors ${tones[tone]}`;
-
-  const content = (
-    <>
-      <p className="text-lg font-bold tabular-nums leading-none">{value.toLocaleString('fa-IR')}</p>
-      <p className="mt-1 text-[10px] font-medium opacity-90">{label}</p>
-    </>
-  );
-
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className={`${className} w-full`}>
-        {content}
-      </button>
-    );
-  }
-
-  return <div className={className}>{content}</div>;
 }
 
 function ImagePathBlock({
@@ -175,8 +128,8 @@ function ImagePathBlock({
 
   return (
     <div className={`rounded-xl border px-3 py-2.5 ${toneClass}`}>
-      <p className="text-[10px] font-semibold opacity-80">{label}</p>
-      <p className="mt-1 break-all font-mono text-[11px] leading-relaxed" dir="ltr">
+      <p className="text-xs font-semibold opacity-80">{label}</p>
+      <p className="mt-1 break-all font-mono text-xs leading-relaxed" dir="ltr">
         {url}
       </p>
     </div>
@@ -189,12 +142,9 @@ export default function StorageImageRepairClient({
   initialStatus,
   initialQ,
 }: StorageImageRepairClientProps) {
-  const router = useRouter();
   const [items, setItems] = useState<StorageImageRepairRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [missingCount, setMissingCount] = useState(0);
-  const [externalCount, setExternalCount] = useState(0);
   const [storageReady, setStorageReady] = useState(true);
   const [storageError, setStorageError] = useState('');
   const [isBatchRunning, setIsBatchRunning] = useState(false);
@@ -208,6 +158,8 @@ export default function StorageImageRepairClient({
   const [searchMap, setSearchMap] = useState<Record<string, ItemSearchState>>({});
   const [actionMap, setActionMap] = useState<Record<string, ItemActionState>>({});
   const [useCastandoProxyMap, setUseCastandoProxyMap] = useState<Record<string, boolean>>({});
+  const [page, setPage] = useState(1);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(queryInput.trim()), 350);
@@ -217,20 +169,9 @@ export default function StorageImageRepairClient({
   const fetchUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (categorySlug && categorySlug !== 'all') params.set('categorySlug', categorySlug);
-    if (status !== 'all') params.set('status', status);
-    if (debouncedQuery) params.set('q', debouncedQuery);
     const qs = params.toString();
     return `/api/admin/catalog/storage-image-repair${qs ? `?${qs}` : ''}`;
-  }, [categorySlug, status, debouncedQuery]);
-
-  const syncUrl = useCallback(() => {
-    const params = new URLSearchParams();
-    if (categorySlug !== 'all') params.set('categorySlug', categorySlug);
-    if (status !== 'all') params.set('status', status);
-    if (debouncedQuery) params.set('q', debouncedQuery);
-    const qs = params.toString();
-    router.replace(`/admin/catalog/storage-images${qs ? `?${qs}` : ''}`, { scroll: false });
-  }, [categorySlug, status, debouncedQuery, router]);
+  }, [categorySlug]);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -240,8 +181,6 @@ export default function StorageImageRepairClient({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'خطا در بارگذاری');
       setItems((data.items || []) as StorageImageRepairRow[]);
-      setMissingCount(data.missingCount || 0);
-      setExternalCount(data.externalCount || 0);
       const storageMeta = data.storage;
       setStorageReady(storageMeta?.ready !== false);
       setStorageError(storageMeta?.error || '');
@@ -257,8 +196,20 @@ export default function StorageImageRepairClient({
   }, [loadItems]);
 
   useEffect(() => {
-    syncUrl();
-  }, [syncUrl]);
+    const params = new URLSearchParams();
+    if (categorySlug !== 'all') params.set('categorySlug', categorySlug);
+    if (status !== 'all') params.set('status', status);
+    if (debouncedQuery) params.set('q', debouncedQuery);
+    const qs = params.toString();
+    const next = `/admin/catalog/storage-images${qs ? `?${qs}` : ''}`;
+    if (`${window.location.pathname}${window.location.search}` !== next) {
+      window.history.replaceState(null, '', next);
+    }
+  }, [categorySlug, status, debouncedQuery]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [status, debouncedQuery, categorySlug]);
 
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((row) => row.id !== id));
@@ -412,8 +363,53 @@ export default function StorageImageRepairClient({
     [removeItem]
   );
 
+  const filteredItems = useMemo(() => {
+    const q = debouncedQuery.trim().toLowerCase();
+    return items.filter((item) => {
+      if (status !== 'all' && item.status !== status) return false;
+      if (!q) return true;
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.imageUrl.toLowerCase().includes(q) ||
+        item.host.toLowerCase().includes(q) ||
+        item.categoryLabel.toLowerCase().includes(q)
+      );
+    });
+  }, [items, status, debouncedQuery]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const pageRows = filteredItems.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const missingTotal = useMemo(
+    () => items.filter((item) => item.status === 'missing').length,
+    [items]
+  );
+  const externalTotal = useMemo(
+    () => items.filter((item) => item.status === 'external').length,
+    [items]
+  );
+
+  const copyImageLink = useCallback(async (itemId: string, url: string) => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = url;
+      area.setAttribute('readonly', '');
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+    }
+    setCopiedId(itemId);
+    window.setTimeout(() => {
+      setCopiedId((current) => (current === itemId ? null : current));
+    }, 1500);
+  }, []);
+
   const handleMigrateAllExternal = useCallback(async () => {
-    const queue = items.filter((item) => item.status === 'external');
+    const queue = filteredItems.filter((item) => item.status === 'external');
     if (queue.length === 0 || isBatchRunning || !storageReady) return;
 
     const ok = window.confirm(
@@ -429,7 +425,7 @@ export default function StorageImageRepairClient({
       await new Promise((r) => window.setTimeout(r, 400));
     }
     setIsBatchRunning(false);
-  }, [items, isBatchRunning, storageReady, migrateExternal, useCastandoProxyMap]);
+  }, [filteredItems, isBatchRunning, storageReady, migrateExternal, useCastandoProxyMap]);
 
   const openItemSearch = useCallback(
     (item: StorageImageRepairRow) => {
@@ -445,54 +441,28 @@ export default function StorageImageRepairClient({
     setExpandedId((prev) => (prev === itemId ? null : itemId));
   }, []);
 
-  const cafeMeta = (item: StorageImageRepairRow) => extractCafeCoverMetadata(item.metadata);
-
-  const activeCategory = categories.find((c) => c.slug === categorySlug);
+  const externalInFilter = filteredItems.filter((item) => item.status === 'external').length;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-5 sm:px-6 sm:py-8" dir="rtl">
-      <section className="mb-5 overflow-hidden rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
-        <div className="border-b border-[var(--color-border-muted)] bg-gradient-to-l from-orange-50/90 via-white to-white px-4 py-4 sm:px-5">
+    <div className="space-y-4" dir="rtl">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
           <Link
             href="/admin/lists?view=catalog"
-            className="mb-3 inline-flex items-center gap-1 text-xs font-medium text-orange-700 hover:underline"
+            className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
           >
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="size-4" />
             بازگشت به مرکز محتوا
           </Link>
-
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700 ring-1 ring-orange-200/70">
-              <ImageIcon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-bold text-[var(--color-text)] sm:text-xl">تصاویر</h1>
-              <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--color-text-muted)]">
-                موجودیت‌های بدون تصویر یا با لینک خارجی — جستجو در Google، انتخاب و ذخیره روی
-                ParsPack.
-              </p>
-            </div>
-          </div>
+          <h1 className="mt-1 flex items-center gap-2 text-xl font-bold text-[var(--color-text)]">
+            <ImageIcon className="size-5 text-orange-700" />
+            لینک تصاویر
+          </h1>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
+            لینک خارجی را ببینید، کپی کنید، یا روی ParsPack ذخیره کنید.
+          </p>
         </div>
-
-        <div className="grid grid-cols-3 gap-2 p-4 sm:gap-3">
-          <StatTile label="در صف" value={items.length} />
-          <StatTile
-            label="بدون تصویر"
-            value={missingCount}
-            tone="sky"
-            active={status === 'missing'}
-            onClick={() => setStatus((s) => (s === 'missing' ? 'all' : 'missing'))}
-          />
-          <StatTile
-            label="تصویر خارجی"
-            value={externalCount}
-            tone="amber"
-            active={status === 'external'}
-            onClick={() => setStatus((s) => (s === 'external' ? 'all' : 'external'))}
-          />
-        </div>
-      </section>
+      </header>
 
       {!storageReady && storageError && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -501,23 +471,59 @@ export default function StorageImageRepairClient({
         </div>
       )}
 
-      <section className="mb-4 space-y-3 rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
-        <div className="relative">
-          <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-subtle)]" />
-          <input
-            type="search"
-            value={queryInput}
-            onChange={(e) => setQueryInput(e.target.value)}
-            placeholder="جستجو در عنوان…"
-            className="w-full rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg)]/40 py-2.5 pr-9 pl-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200/60"
-          />
+      <section className="space-y-3 rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStatus('all')}
+            className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-semibold ring-1 ${
+              status === 'all'
+                ? 'bg-[var(--color-text)] text-white ring-[var(--color-text)]'
+                : 'bg-[var(--color-bg)] text-[var(--color-text)] ring-[var(--color-border-muted)]'
+            }`}
+          >
+            {items.length.toLocaleString('fa-IR')} در صف
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatus((value) => (value === 'missing' ? 'all' : 'missing'))}
+            className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-semibold ring-1 ${
+              status === 'missing'
+                ? 'bg-sky-600 text-white ring-sky-600'
+                : 'bg-sky-50 text-sky-900 ring-sky-200'
+            }`}
+          >
+            {missingTotal.toLocaleString('fa-IR')} بدون تصویر
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatus((value) => (value === 'external' ? 'all' : 'external'))}
+            className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-semibold ring-1 ${
+              status === 'external'
+                ? 'bg-amber-600 text-white ring-amber-600'
+                : 'bg-amber-50 text-amber-900 ring-amber-200'
+            }`}
+          >
+            {externalTotal.toLocaleString('fa-IR')} لینک خارجی
+          </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <input
+              type="search"
+              value={queryInput}
+              onChange={(e) => setQueryInput(e.target.value)}
+              placeholder="جستجو در عنوان یا لینک تصویر…"
+              className="min-h-11 w-full rounded-xl border border-[var(--color-border-muted)] bg-white pe-10 ps-3 text-sm"
+            />
+          </div>
           <select
             value={categorySlug}
             onChange={(e) => setCategorySlug(e.target.value)}
-            className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg)]/40 px-3 py-2 text-sm text-[var(--color-text)] focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200/60"
+            aria-label="دسته"
+            className="min-h-11 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm lg:w-52"
           >
             <option value="all">همه دسته‌ها</option>
             {categories.map((cat) => (
@@ -526,67 +532,19 @@ export default function StorageImageRepairClient({
               </option>
             ))}
           </select>
-
-          <div className="inline-flex rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg)]/40 p-0.5">
-            {(
-              [
-                ['all', 'همه'],
-                ['missing', 'بدون تصویر'],
-                ['external', 'خارجی'],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setStatus(value)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  status === value
-                    ? 'bg-orange-600 text-white shadow-sm'
-                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {externalCount > 0 && status !== 'missing' && (
+          {externalInFilter > 0 && (
             <button
               type="button"
               onClick={() => void handleMigrateAllExternal()}
               disabled={isBatchRunning || !storageReady || loading}
-              className="mr-auto inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-600 px-3 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
             >
-              {isBatchRunning ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Upload className="h-3.5 w-3.5" />
-              )}
-              انتقال {externalCount.toLocaleString('fa-IR')} تصویر خارجی
+              {isBatchRunning ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+              انتقال {externalInFilter.toLocaleString('fa-IR')} لینک
             </button>
           )}
         </div>
-
-        {(activeCategory || debouncedQuery) && (
-          <p className="text-[11px] text-[var(--color-text-muted)]">
-            {activeCategory && (
-              <span>
-                دسته: {activeCategory.icon} {activeCategory.name}
-              </span>
-            )}
-            {activeCategory && debouncedQuery && ' · '}
-            {debouncedQuery && <span>جستجو: «{debouncedQuery}»</span>}
-          </p>
-        )}
       </section>
-
-      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-orange-200/80 bg-orange-50/40 px-3 py-2.5 text-[11px] text-orange-900">
-        <Sparkles className="h-3.5 w-3.5 shrink-0 text-orange-600" />
-        <span>
-          <strong>۱.</strong> جستجو · <strong>۲.</strong> انتخاب تصویر · <strong>۳.</strong> تأیید و
-          آپلود ParsPack
-        </span>
-      </div>
 
       {loading && (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--color-border-muted)] py-16 text-sm text-[var(--color-text-muted)]">
@@ -614,8 +572,15 @@ export default function StorageImageRepairClient({
         </div>
       )}
 
-      <ul className="space-y-2.5">
-        {items.map((item, index) => {
+      {!loading && !error && items.length > 0 && filteredItems.length === 0 && (
+        <p className="rounded-xl border border-dashed border-[var(--color-border)] py-10 text-center text-sm text-[var(--color-text-muted)]">
+          با این فیلتر لینکی پیدا نشد.
+        </p>
+      )}
+
+      {pageRows.length > 0 && (
+      <ul className="overflow-hidden rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)]">
+        {pageRows.map((item) => {
           const isExpanded = expandedId === item.id;
           const searchState = searchMap[item.id];
           const actionState = actionMap[item.id];
@@ -624,7 +589,6 @@ export default function StorageImageRepairClient({
           const currentUrl = actionState?.newUrl || item.imageUrl;
           const previewSrc =
             currentUrl && !currentUrl.includes('placeholder') ? resolvePreviewSrc(currentUrl) : '';
-          const meta = cafeMeta(item);
           const isBusy =
             actionState?.phase === 'searching' ||
             actionState?.phase === 'applying' ||
@@ -633,107 +597,112 @@ export default function StorageImageRepairClient({
           const proxyDownloadUrl = candidate?.link
             ? buildCastandoProxyImageUrl(candidate.link)
             : buildCastandoProxyImageUrl(item.imageUrl);
+          const linkIsHttp = item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://');
 
           return (
             <li
               key={item.id}
-              className={`overflow-hidden rounded-2xl border bg-[var(--color-surface)] shadow-[var(--shadow-card)] transition-shadow ${
-                isExpanded ? 'border-orange-200 ring-1 ring-orange-100' : 'border-[var(--color-border-muted)]'
+              className={`border-b border-[var(--color-border-muted)] p-3 last:border-b-0 ${
+                isExpanded ? 'bg-orange-50/40' : ''
               }`}
             >
-              <div className="flex items-start gap-3 p-3 sm:p-4">
-                <span className="mt-3 hidden w-5 shrink-0 text-center text-[10px] font-mono text-[var(--color-text-subtle)] sm:block">
-                  {(index + 1).toLocaleString('fa-IR')}
-                </span>
-
-                <div className="relative h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl bg-gray-100 ring-1 ring-black/5 sm:h-20 sm:w-20">
+              <div className="flex items-start gap-3">
+                <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-[var(--color-border-muted)] bg-[var(--color-bg)] aspect-square">
                   {previewSrc ? (
                     <Image src={previewSrc} alt="" fill className="object-cover" unoptimized />
                   ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-[var(--color-text-subtle)]">
-                      <ImageOff className="h-6 w-6" />
-                      <span className="text-[9px] font-medium">بدون تصویر</span>
+                    <div className="flex h-full w-full items-center justify-center text-[var(--color-text-muted)]">
+                      <ImageOff className="size-5" />
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <h2 className="font-semibold text-[var(--color-text)]">{item.title}</h2>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-[var(--color-text)]">
-                      {item.categoryLabel}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-sm font-semibold text-[var(--color-text)]">{item.title}</h2>
+                    <span className="text-xs text-[var(--color-text-muted)]">{item.categoryLabel}</span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                         isExternal ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800'
                       }`}
                     >
-                      {isExternal ? 'خارجی' : 'بدون تصویر'}
+                      {isExternal ? 'لینک خارجی' : 'بدون تصویر'}
                     </span>
                     <ActionStatusBadge state={actionState} />
                   </div>
 
-                  <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
-                    {item.listCount.toLocaleString('fa-IR')} جایگذاری
-                    {item.host ? ` · ${item.host}` : ''}
-                  </p>
-
-                  {meta.instagram && (
-                    <p className="mt-1 text-[10px] font-medium text-amber-800">
-                      {displayInstagramHandle(meta.instagram)}
-                    </p>
+                  {item.imageUrl ? (
+                    <div className="mt-2 flex items-center gap-2">
+                      {linkIsHttp ? (
+                        <a
+                          href={item.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          dir="ltr"
+                          title={item.imageUrl}
+                          className="min-w-0 flex-1 truncate text-xs text-[var(--color-text)] hover:underline"
+                        >
+                          {item.imageUrl}
+                        </a>
+                      ) : (
+                        <p dir="ltr" title={item.imageUrl} className="min-w-0 flex-1 truncate text-xs text-[var(--color-text)]">
+                          {item.imageUrl}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void copyImageLink(item.id, item.imageUrl)}
+                        className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-xl border border-[var(--color-border-muted)] px-3 text-xs font-semibold"
+                      >
+                        <Copy className="size-4" />
+                        {copiedId === item.id ? 'کپی شد' : 'کپی لینک'}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-[var(--color-text-muted)]">لینکی ثبت نشده</p>
                   )}
 
-                  <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {item.host !== '—' ? item.host : 'بدون میزبان'}
+                    {' · '}
+                    {item.listCount.toLocaleString('fa-IR')} جایگذاری
+                    {item.instagram ? ` · ${displayInstagramHandle(item.instagram)}` : ''}
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     {isExternal && (
                       <button
                         type="button"
                         onClick={() => void migrateExternal(item, useCastandoProxy)}
                         disabled={!storageReady || isBusy || isBatchRunning}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+                        className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-amber-600 px-3 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
                       >
                         {actionState?.phase === 'migrating' ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <Loader2 className="size-4 animate-spin" />
                         ) : (
-                          <Upload className="h-3.5 w-3.5" />
+                          <Upload className="size-4" />
                         )}
-                        انتقال به ParsPack
+                        انتقال
                       </button>
                     )}
                     <button
                       type="button"
-                      onClick={() =>
-                        isExpanded ? toggleDetails(item.id) : openItemSearch(item)
-                      }
+                      onClick={() => (isExpanded ? toggleDetails(item.id) : openItemSearch(item))}
                       disabled={isBusy}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-orange-200 bg-orange-50 px-3 text-sm font-semibold text-orange-800 disabled:opacity-50"
                     >
                       {searchState?.loading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="size-4 animate-spin" />
                       ) : (
-                        <Search className="h-3.5 w-3.5" />
+                        <Search className="size-4" />
                       )}
-                      {isExpanded ? 'بستن جستجو' : 'جستجو و انتخاب'}
+                      {isExpanded ? 'بستن جستجو' : 'جستجو'}
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleDetails(item.id)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-border-muted)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
-                    >
-                      {isExpanded ? (
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      )}
-                      جزئیات
-                    </button>
-
                     <Link
                       href={`/admin/catalog/${item.id}/edit`}
-                      className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-[var(--color-border-muted)] px-3 text-sm font-semibold"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <Pencil className="size-4" />
                       ویرایش
                     </Link>
                   </div>
@@ -759,7 +728,7 @@ export default function StorageImageRepairClient({
                     </p>
                   )}
 
-                  <label className="mt-3 inline-flex cursor-pointer items-start gap-2 rounded-xl border border-sky-200 bg-sky-50/70 px-3 py-2.5 text-[11px] text-sky-950">
+                  <label className="mt-3 inline-flex min-h-11 cursor-pointer items-start gap-2 rounded-xl border border-sky-200 bg-sky-50/70 px-3 py-2.5 text-xs text-sky-950">
                     <input
                       type="checkbox"
                       checked={useCastandoProxy}
@@ -773,11 +742,11 @@ export default function StorageImageRepairClient({
                     />
                     <span>
                       <span className="font-semibold">پراکسی castando (اختیاری)</span>
-                      <span className="mt-0.5 block text-[10px] leading-relaxed text-sky-800/90">
+                      <span className="mt-0.5 block text-xs leading-relaxed text-sky-800/90">
                         فقط برای سایت‌های فیلترشده — در صورت نیاز تیک بزنید
                       </span>
                       {useCastandoProxy && (candidate?.link || item.imageUrl) && (
-                        <span className="mt-1 block break-all font-mono text-[10px] text-sky-800/90" dir="ltr">
+                        <span className="mt-1 block break-all font-mono text-xs text-sky-800/90" dir="ltr">
                           castando.ir/wibe/image-proxy.php?url=
                           {candidate?.link || item.imageUrl}
                         </span>
@@ -805,7 +774,7 @@ export default function StorageImageRepairClient({
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-semibold text-emerald-900">تصویر انتخاب‌شده</p>
-                            <p className="mt-0.5 truncate text-[10px] text-emerald-800/80" dir="ltr">
+                            <p className="mt-0.5 truncate text-xs text-emerald-800/80" dir="ltr">
                               {candidate.link}
                             </p>
                           </div>
@@ -847,7 +816,7 @@ export default function StorageImageRepairClient({
                               },
                             }))
                           }
-                          className="min-w-[12rem] flex-1 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 py-2 text-sm focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200/60"
+                          className="min-h-11 min-w-48 flex-1 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200/60"
                           placeholder="عبارت جستجو…"
                         />
                         <button
@@ -884,7 +853,7 @@ export default function StorageImageRepairClient({
 
                       {searchState?.results && searchState.results.length > 0 && (
                         <div className="mt-4">
-                          <p className="mb-2 text-[11px] font-semibold text-[var(--color-text-muted)]">
+                          <p className="mb-2 text-xs font-semibold text-[var(--color-text-muted)]">
                             {searchState.results.length.toLocaleString('fa-IR')} نتیجه — یکی را انتخاب کنید
                           </p>
                           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
@@ -921,7 +890,7 @@ export default function StorageImageRepairClient({
                                     </span>
                                   )}
                                   {(result.width > 0 || result.height > 0) && (
-                                    <span className="absolute bottom-1 left-1 rounded bg-black/55 px-1 py-0.5 text-[9px] font-mono text-white" dir="ltr">
+                                    <span className="absolute bottom-1 end-1 rounded bg-black/60 px-1 py-0.5 text-xs font-mono text-white" dir="ltr">
                                       {result.width}×{result.height}
                                     </span>
                                   )}
@@ -945,6 +914,31 @@ export default function StorageImageRepairClient({
           );
         })}
       </ul>
+      )}
+
+      {pageCount > 1 && filteredItems.length > 0 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            disabled={safePage <= 1}
+            onClick={() => setPage(safePage - 1)}
+            className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border-muted)] bg-white px-3 text-sm disabled:opacity-40"
+          >
+            صفحه قبل
+          </button>
+          <span className="text-sm text-[var(--color-text-muted)]">
+            صفحه {safePage.toLocaleString('fa-IR')} از {pageCount.toLocaleString('fa-IR')}
+          </span>
+          <button
+            type="button"
+            disabled={safePage >= pageCount}
+            onClick={() => setPage(safePage + 1)}
+            className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border-muted)] bg-white px-3 text-sm disabled:opacity-40"
+          >
+            صفحه بعد
+          </button>
+        </div>
+      )}
     </div>
   );
 }

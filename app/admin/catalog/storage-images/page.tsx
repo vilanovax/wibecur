@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import StorageImageRepairClient from '@/components/admin/catalog/StorageImageRepairClient';
 
 export const metadata = {
-  title: 'تصاویر | پنل مدیریت',
+  title: 'لینک تصاویر | پنل مدیریت',
 };
 
 export default async function StorageImageRepairPage({
