@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
+import { getClientIp } from '@/lib/client-ip';
 import { checkRateLimit } from '@/lib/rate-limit';
 import {
   isAdminRole,
@@ -16,14 +17,6 @@ type MaintenanceStatus = {
 
 let maintenanceStatusCache: { value: MaintenanceStatus; expiresAt: number } | null = null;
 let maintenanceStatusInflight: Promise<MaintenanceStatus | null> | null = null;
-
-function getClientIp(req: Request): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  const realIp = req.headers.get('x-real-ip');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  if (realIp) return realIp;
-  return 'unknown';
-}
 
 function getRequestOrigin(url: URL, req: Request): string {
   const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
@@ -77,7 +70,7 @@ export default auth(async (req) => {
   const pathname = url.pathname;
 
   if (url.pathname.startsWith('/api')) {
-    const ip = getClientIp(req);
+    const ip = getClientIp(req.headers);
     const { success } = await checkRateLimit(`api:${ip}`);
     if (!success) {
       return NextResponse.json(

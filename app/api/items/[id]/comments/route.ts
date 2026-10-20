@@ -24,12 +24,24 @@ export async function GET(
     const { id: itemId } = await params;
     const { searchParams } = new URL(request.url);
     const sort = searchParams.get('sort') || 'newest'; // newest, popular
+    const limitParam = parseInt(searchParams.get('limit') || '10', 10);
+    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 50) : 10;
+    const cursor = searchParams.get('cursor');
+    const orderBy =
+      sort === 'popular'
+        ? [
+            { weightedScore: 'desc' as const },
+            { helpfulUp: 'desc' as const },
+            { createdAt: 'desc' as const },
+            { id: 'desc' as const },
+          ]
+        : [{ createdAt: 'desc' as const }, { id: 'desc' as const }];
 
     const session = await auth();
     const userId = session?.user ? await resolveSessionUserId(session) : null;
 
     // موازی‌سازی کوئری‌های مستقل
-    const [badWordsList, comments, item, globalSettings] = await Promise.all([
+    const [badWordsList, commentsPlusOne, item, globalSettings] = await Promise.all([
       getCachedBadWords(),
       dbQuery(() =>
         prisma.comments.findMany({
@@ -56,10 +68,9 @@ export async function GET(
             },
             _count: { select: { comment_likes: true } },
           },
-          orderBy:
-            sort === 'popular'
-              ? [{ weightedScore: 'desc' }, { helpfulUp: 'desc' }, { createdAt: 'desc' }]
-              : { createdAt: 'desc' },
+          orderBy,
+          take: limit + 1,
+          ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         })
       ),
       dbQuery(() =>
@@ -78,6 +89,10 @@ export async function GET(
     const categoryCommentsEnabled = category?.commentsEnabled ?? true;
     const itemCommentsEnabled = item?.commentsEnabled ?? globalSettings?.defaultCommentsEnabled ?? true;
     const commentsEnabled = categoryCommentsEnabled && itemCommentsEnabled;
+
+    const hasMore = commentsPlusOne.length > limit;
+    const comments = hasMore ? commentsPlusOne.slice(0, limit) : commentsPlusOne;
+    const nextCursor = hasMore ? comments[comments.length - 1]?.id ?? null : null;
 
     const [userLikes, userVotes] = await Promise.all([
       userId && comments.length > 0
@@ -167,6 +182,8 @@ export async function GET(
         comments: formattedComments,
         commentsEnabled,
         maxCommentLength: globalSettings?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH,
+        nextCursor,
+        hasMore,
       },
     });
   } catch (error) {
@@ -174,7 +191,7 @@ export async function GET(
     // Return safe empty data so CommentSection does not break (e.g. missing tables/columns)
     return NextResponse.json({
       success: true,
-      data: { comments: [], commentsEnabled: true },
+      data: { comments: [], commentsEnabled: true, nextCursor: null, hasMore: false },
     });
   }
 }

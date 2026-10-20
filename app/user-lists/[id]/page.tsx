@@ -3,9 +3,12 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { after } from 'next/server';
 import { auth } from '@/lib/auth-config';
+import { getClientIp } from '@/lib/client-ip';
 import { dbQuery } from '@/lib/db';
+import { recordListView } from '@/lib/list-view';
 import { getListAccessForUser } from '@/lib/list-collaboration';
 import {
   getUserListById,
@@ -78,13 +81,10 @@ async function UserListDetailContent({ id }: { id: string }) {
     }
 
     if (list.isPublic) {
+      const viewIp = getClientIp(await headers());
+      const listId = list.id;
       after(() => {
-        dbQuery(() =>
-          prisma.lists.update({
-            where: { id: list.id },
-            data: { viewCount: { increment: 1 } },
-          })
-        ).catch(() => {});
+        recordListView(listId, viewIp);
       });
     }
 

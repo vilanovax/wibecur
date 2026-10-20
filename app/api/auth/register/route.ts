@@ -10,20 +10,15 @@ import {
   validatePhoneInput,
 } from '@/lib/phone-auth';
 import { DEFAULT_PACK_AVATARS, resolveVibeAvatarId } from '@/lib/vibe-avatars';
+import { getClientIp } from '@/lib/client-ip';
 import { checkActionRateLimit } from '@/lib/rate-limit';
 
 const DEFAULT_AVATAR_IDS = new Set(DEFAULT_PACK_AVATARS.map((a) => a.id));
 
-function getClientIp(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return request.headers.get('x-real-ip') ?? 'unknown';
-}
-
 export async function POST(request: Request) {
   try {
     // ضد-اتوماسیون: حداکثر ۵ ثبت‌نام در ساعت به‌ازای هر IP (جلوگیری از ساخت انبوه حساب).
-    const ip = getClientIp(request);
+    const ip = getClientIp(request.headers);
     const { success } = await checkActionRateLimit(`register:${ip}`, 5, '1 h');
     if (!success) {
       return NextResponse.json(

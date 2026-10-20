@@ -2,18 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureImageInLiara, type ImageFolder } from '@/lib/object-storage';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { isPublicHttpUrl } from '@/lib/ssrf-guard';
+import { getClientIp } from '@/lib/client-ip';
 import { checkActionRateLimit } from '@/lib/rate-limit';
-
-function getClientIp(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return req.headers.get('x-real-ip') || 'unknown';
-}
+import { createBoundedCache } from '@/lib/bounded-cache';
 
 const VALID_FOLDERS: ImageFolder[] = ['items', 'avatars', 'covers', 'lists'];
 
-/** کش در حافظه: URL خارجی → URL نهایی (لیارا یا همان در صورت خطا) */
-const resolveCache = new Map<string, string>();
+/** کش در حافظه: URL خارجی → URL نهایی. سقف ثابت تا پروسه با پوسترهای تازه بزرگ نشود. */
+const RESOLVE_CACHE_MAX = 1_000;
+const resolveCache = createBoundedCache<string, string>(RESOLVE_CACHE_MAX);
 
 /**
  * GET /api/image-resolve?url=...&folder=covers
@@ -48,7 +45,7 @@ export async function GET(request: NextRequest) {
 
   // Rate limit اختصاصی برای fetch خارجی (endpoint بدون احراز هویت و گران).
   const { success } = await checkActionRateLimit(
-    `image-resolve:${getClientIp(request)}`,
+    `image-resolve:${getClientIp(request.headers)}`,
     30,
     '1 m'
   );

@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Pagination } from '@/components/ui/pagination';
 import { Card } from '@/components/ui/card';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Spinner } from '@/components/ui/spinner';
@@ -15,6 +14,7 @@ import CommentReportModal from './CommentReportModal';
 import { usePreferDesktopAutofocus } from '@/lib/hooks/usePreferDesktopAutofocus';
 import {
   COMMENTS_INITIAL_VISIBLE,
+  COMMENTS_LOAD_MORE_STEP,
   DEFAULT_LIST_COMMENT_MAX_LENGTH,
   MIN_COMMENT_LENGTH,
 } from '@/lib/comment-limits';
@@ -41,10 +41,12 @@ interface Comment {
   canDelete: boolean;
 }
 
-interface CommentsResponse {
+interface CommentsPage {
   comments: Comment[];
   commentsEnabled: boolean;
   maxCommentLength: number;
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 interface CommentSectionProps {
@@ -57,16 +59,31 @@ interface CommentSectionProps {
   fetchEnabled?: boolean;
 }
 
-async function fetchItemComments(itemId: string, sortBy: string): Promise<CommentsResponse> {
-  const res = await fetch(`/api/items/${itemId}/comments?sort=${sortBy}`);
+async function fetchItemComments(
+  itemId: string,
+  sortBy: string,
+  cursor: string | null
+): Promise<CommentsPage> {
+  const limit = cursor ? COMMENTS_LOAD_MORE_STEP : COMMENTS_INITIAL_VISIBLE;
+  const params = new URLSearchParams({ sort: sortBy, limit: String(limit) });
+  if (cursor) params.set('cursor', cursor);
+  const res = await fetch(`/api/items/${itemId}/comments?${params.toString()}`);
   const data = await res.json();
   if (!data.success) {
-    return { comments: [], commentsEnabled: true, maxCommentLength: DEFAULT_LIST_COMMENT_MAX_LENGTH };
+    return {
+      comments: [],
+      commentsEnabled: true,
+      maxCommentLength: DEFAULT_LIST_COMMENT_MAX_LENGTH,
+      nextCursor: null,
+      hasMore: false,
+    };
   }
   return {
     comments: data.data.comments ?? [],
     commentsEnabled: data.data.commentsEnabled ?? true,
     maxCommentLength: data.data.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH,
+    nextCursor: data.data.nextCursor ?? null,
+    hasMore: !!data.data.hasMore,
   };
 }
 
@@ -171,23 +188,22 @@ export default function CommentSection({
   const [sortBy, setSortBy] = useState<'newest' | 'popular'>('popular');
   const [isFormExpanded, setIsFormExpanded] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [page, setPage] = useState(1);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [reportCommentId, setReportCommentId] = useState<string | null>(null);
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
-    queryFn: () => fetchItemComments(itemId, sortBy),
+  const queryKey = ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0] as const;
+  const { data, isLoading, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey,
+    queryFn: ({ pageParam }) => fetchItemComments(itemId, sortBy, pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextCursor : undefined),
     enabled: fetchEnabled && !!itemId,
   });
-  const comments = data?.comments ?? [];
-  const commentsEnabled = data?.commentsEnabled ?? true;
-  const maxCommentLength = data?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
-
-  useEffect(() => {
-    setPage(1);
-  }, [itemId, sortBy]);
+  const comments = data?.pages.flatMap((page) => page.comments) ?? [];
+  const firstPage = data?.pages[0];
+  const commentsEnabled = firstPage?.commentsEnabled ?? true;
+  const maxCommentLength = firstPage?.maxCommentLength ?? DEFAULT_LIST_COMMENT_MAX_LENGTH;
 
   const handleSubmit = async (content: string): Promise<boolean> => {
     if (status !== 'authenticated') return false;
@@ -234,13 +250,13 @@ export default function CommentSection({
       const resData = await response.json();
 
       if (resData.success) {
-        queryClient.setQueryData<CommentsResponse>(
-          ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
-          (prev) =>
-            prev
-              ? {
-                  ...prev,
-                  comments: prev.comments.map((c) =>
+        queryClient.setQueryData<InfiniteData<CommentsPage>>(queryKey, (prev) =>
+          prev
+            ? {
+                ...prev,
+                pages: prev.pages.map((page) => ({
+                  ...page,
+                  comments: page.comments.map((c) =>
                     c.id === commentId
                       ? {
                           ...c,
@@ -250,8 +266,9 @@ export default function CommentSection({
                         }
                       : c
                   ),
-                }
-              : prev
+                })),
+              }
+            : prev
         );
       } else {
         refetch();
@@ -285,10 +302,16 @@ export default function CommentSection({
       const resData = await response.json();
 
       if (resData.success) {
-        queryClient.setQueryData<CommentsResponse>(
-          ['items', itemId, 'comments', sortBy, refreshTrigger ?? 0],
-          (prev) =>
-            prev ? { ...prev, comments: prev.comments.filter((c) => c.id !== commentId) } : prev
+        queryClient.setQueryData<InfiniteData<CommentsPage>>(queryKey, (prev) =>
+          prev
+            ? {
+                ...prev,
+                pages: prev.pages.map((page) => ({
+                  ...page,
+                  comments: page.comments.filter((c) => c.id !== commentId),
+                })),
+              }
+            : prev
         );
         onCommentAdded?.();
       } else {
@@ -302,10 +325,6 @@ export default function CommentSection({
     }
   };
 
-  const pageSize = COMMENTS_INITIAL_VISIBLE;
-  const totalPages = Math.max(1, Math.ceil(comments.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const displayedComments = comments.slice((safePage - 1) * pageSize, safePage * pageSize);
   const showSort = !isLoading && comments.length > 1;
 
   return (
@@ -352,7 +371,7 @@ export default function CommentSection({
           ) : (
             <>
               <div className="space-y-4">
-                {displayedComments.map((comment) => (
+                {comments.map((comment) => (
                   <CommentItem
                     key={comment.id}
                     comment={comment}
@@ -363,13 +382,17 @@ export default function CommentSection({
                   />
                 ))}
               </div>
-              {totalPages > 1 ? (
-                <Pagination
-                  className="mt-4 justify-center"
-                  page={safePage}
-                  total={totalPages}
-                  onChange={setPage}
-                />
+              {hasNextPage ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  className="mt-4 w-full"
+                  onClick={() => void fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? <Spinner size="sm" /> : 'نظرهای بیشتر'}
+                </Button>
               ) : null}
             </>
           )}
