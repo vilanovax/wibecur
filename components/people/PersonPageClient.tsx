@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { BookOpen, Clapperboard, ExternalLink, Languages, Star, UserRound } from 'lucide-react';
+import { BookOpen, Clapperboard, ExternalLink, Languages, Star, UserRound, type LucideIcon } from 'lucide-react';
 import LazyItemCoverImage from '@/components/shared/LazyItemCoverImage';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
@@ -128,10 +128,11 @@ export default function PersonPageClient({
       <h1 className="mt-2 wibe-h2">
         <PersonName name={displayName} />
       </h1>
+      <p className="mt-1 flex items-center gap-2 wibe-caption text-muted-foreground">
+        <WorksIcon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+        {items.length.toLocaleString('fa-IR')} آیتم در وایب
+      </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <StatChip icon={WorksIcon}>
-          {items.length.toLocaleString('fa-IR')} آیتم در وایب
-        </StatChip>
         {avgRating != null ? (
           <StatChip icon={Star}>
             میانگین {avgRating.toLocaleString('fa-IR')}
@@ -142,7 +143,7 @@ export default function PersonPageClient({
             href={externalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-popover px-3 text-sm font-medium text-foreground"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-popover px-3 text-sm font-medium text-foreground"
           >
             <ExternalLink className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
             منبع خارجی
@@ -152,16 +153,6 @@ export default function PersonPageClient({
     </div>
   );
 
-  const bioBlock = bio ? (
-    <BioBlock
-      bio={bio}
-      bioIsStub={bioIsStub}
-      canTruncate={canTruncateBio}
-      expanded={bioExpanded}
-      onToggle={() => setBioExpanded((value) => !value)}
-    />
-  ) : null;
-
   return (
     <main
       className={`${MOBILE_SHELL_MAX_WIDTH_CLASS} mx-auto w-full px-4 pb-8 pt-2 lg:max-w-5xl lg:px-0 lg:pb-10 lg:pt-4`}
@@ -170,16 +161,26 @@ export default function PersonPageClient({
       <PageBreadcrumb className="mb-3 lg:mb-4" items={breadcrumbItems} />
 
       <Card className="mb-6 overflow-hidden bg-popover p-4 lg:mb-8 lg:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-8">
-          <PersonAvatar
-            imageUrl={imageUrl}
-            displayName={displayName}
-            roleIcon={roleMeta.icon}
-          />
-          <div className="min-w-0 flex-1">
-            {identity}
-            {bioBlock ? <div className="mt-4 border-t border-border pt-4">{bioBlock}</div> : null}
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-4 lg:gap-x-8">
+          <div className="lg:row-span-2">
+            <PersonAvatar
+              imageUrl={imageUrl}
+              displayName={displayName}
+              roleIcon={roleMeta.icon}
+            />
           </div>
+          {identity}
+          {bio ? (
+            <div className="col-span-2 border-t border-border pt-4 lg:col-span-1 lg:col-start-2 lg:border-0 lg:pt-0">
+              <BioBlock
+                bio={bio}
+                bioIsStub={bioIsStub}
+                canTruncate={canTruncateBio}
+                expanded={bioExpanded}
+                onToggle={() => setBioExpanded((value) => !value)}
+              />
+            </div>
+          ) : null}
         </div>
       </Card>
 
@@ -220,7 +221,7 @@ export default function PersonPageClient({
                         <PersonName name={item.title} />
                       </h3>
                       {ratingLabel ? (
-                        <p className="flex items-center gap-1 wibe-caption text-muted-foreground">
+                        <p className="flex items-center gap-2 wibe-caption text-muted-foreground">
                           <Star className="size-4 shrink-0 fill-warning text-warning" strokeWidth={1.5} aria-hidden />
                           <span className="tabular-nums">{ratingLabel}</span>
                         </p>
@@ -242,10 +243,10 @@ function StatChip({
   icon: Icon,
 }: {
   children: ReactNode;
-  icon?: typeof Clapperboard;
+  icon?: LucideIcon;
 }) {
   return (
-    <span className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-muted px-3 text-sm font-medium text-foreground">
+    <span className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-muted px-3 text-sm font-medium text-foreground">
       {Icon ? <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} aria-hidden /> : null}
       {children}
     </span>
