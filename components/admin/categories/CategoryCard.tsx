@@ -15,6 +15,8 @@ interface CategoryCardProps {
   category: CategoryIntelligenceRow;
   badgeFlags: CategoryBadgeFlags;
   highlightNeedsBoost?: boolean;
+  /** ردیف فشردهٔ لیست — ویرایش در همان نگاه */
+  variant?: 'card' | 'row';
 }
 
 const growthToneClass: Record<string, string> = {
@@ -41,6 +43,7 @@ export default function CategoryCard({
   category,
   badgeFlags,
   highlightNeedsBoost = false,
+  variant = 'card',
 }: CategoryCardProps) {
   const growth = formatSaveGrowthDisplay(
     category.saveGrowthRecent,
@@ -52,6 +55,96 @@ export default function CategoryCard({
     category.isActive && category.trendingWeight !== 1
       ? `${category.trendingWeight.toLocaleString('fa-IR')}×`
       : null;
+
+  if (variant === 'row') {
+    const engagement =
+      category.listCount > 0
+        ? `${category.engagementRatio.toLocaleString('fa-IR', { maximumFractionDigits: 1 })}٪`
+        : '—';
+    return (
+      <div
+        className={`flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-3 ${borderClass} ${
+          category.isActive ? '' : 'bg-[var(--color-bg)]/60'
+        }`}
+        dir="rtl"
+      >
+        <Link
+          href={`/admin/categories/${category.id}/edit`}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+        >
+          <div
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl text-lg"
+            style={{
+              backgroundColor: category.color ? `${category.color}20` : 'var(--color-bg)',
+              color: category.color || undefined,
+            }}
+          >
+            {category.icon || '📁'}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate font-semibold text-[var(--color-text)]">{category.name}</h3>
+              <span
+                className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${
+                  category.isActive
+                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+                    : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
+                }`}
+              >
+                {category.isActive ? 'فعال' : 'غیرفعال'}
+              </span>
+              {highlightNeedsBoost ? (
+                <span className="shrink-0 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                  نیازمند تقویت
+                </span>
+              ) : null}
+            </div>
+            <p className="truncate text-xs text-[var(--color-text-muted)]">
+              <span className="font-mono" dir="ltr">
+                {category.slug}
+              </span>
+              <span> · </span>
+              <span className="tabular-nums">
+                {category.listCount.toLocaleString('fa-IR')} لیست ·{' '}
+                {category.uniqueItemCount.toLocaleString('fa-IR')} آیتم · {engagement} تعامل
+              </span>
+              {growth.label !== '—' ? (
+                <span className={growthToneClass[growth.tone]}> · رشد {growth.label}</span>
+              ) : null}
+              {weightLabel ? <span> · وزن {weightLabel}</span> : null}
+            </p>
+          </div>
+        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={`/admin/categories/${category.id}/edit`}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3 text-sm font-medium text-white hover:opacity-90"
+          >
+            ویرایش
+          </Link>
+          {category.isActive ? (
+            <Link
+              href={`/categories/${category.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+              aria-label={`مشاهده ${category.name} در سایت`}
+            >
+              <ExternalLink className="size-4" strokeWidth={1.5} />
+            </Link>
+          ) : null}
+          <CategoryActions
+            categoryId={category.id}
+            categorySlug={category.slug}
+            categoryName={category.name}
+            isActive={category.isActive}
+            trendingWeight={category.trendingWeight}
+            menuOnly
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (!category.isActive) {
     return (

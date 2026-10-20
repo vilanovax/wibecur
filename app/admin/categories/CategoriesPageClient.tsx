@@ -9,7 +9,7 @@ import {
 } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import KpiStrip from '@/components/admin/categories/KpiStrip';
 import CategoryFilterTabs from '@/components/admin/categories/CategoryFilterTabs';
 import CategoryCard from '@/components/admin/categories/CategoryCard';
@@ -29,7 +29,7 @@ import {
 import { searchCategories, sortCategories } from '@/lib/admin/category-list-utils';
 
 const viewFallback = (
-  <div className="min-h-[240px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+  <div className="min-h-60 animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
 );
 
 /** Conditional / below-fold views — keep off the critical path (bundle-dynamic-imports) */
@@ -47,6 +47,7 @@ const CategoryTrashPanel = dynamic(
 );
 
 const VIEW_MODE_STORAGE_KEY = 'admin-categories-view-mode';
+const STATS_OPEN_KEY = 'admin-categories-stats-open';
 
 interface CategoriesPageClientProps {
   pulse: CategoryPulseSummary;
@@ -110,8 +111,10 @@ function summarizeCategories(categories: CategoryIntelligenceRow[]) {
 
   const avgEngagement =
     categories.length === 0
-      ? '0%'
-      : `${(engagementSum / categories.length).toFixed(1)}%`;
+      ? '۰٪'
+      : `${(engagementSum / categories.length).toLocaleString('fa-IR', {
+          maximumFractionDigits: 1,
+        })}٪`;
 
   return { activeCount, avgEngagement, filterCounts };
 }
@@ -134,11 +137,28 @@ export default function CategoriesPageClient({
   const [sortKey, setSortKey] = useState<CategorySortKey>('order');
   // SSR-safe default; restore persisted mode after mount (hydration-no-flicker tradeoff)
   const [viewMode, setViewMode] = useState<CategoryViewMode>('grid');
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [statsReady, setStatsReady] = useState(false);
   const [, startViewTransition] = useTransition();
 
   useEffect(() => {
     setViewMode(readStoredViewMode());
+    try {
+      setStatsOpen(localStorage.getItem(STATS_OPEN_KEY) === '1');
+    } catch {
+      /* private mode */
+    }
+    setStatsReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!statsReady) return;
+    try {
+      localStorage.setItem(STATS_OPEN_KEY, statsOpen ? '1' : '0');
+    } catch {
+      /* ignore quota */
+    }
+  }, [statsOpen, statsReady]);
 
   const handleViewModeChange = (mode: CategoryViewMode) => {
     startViewTransition(() => {
@@ -198,13 +218,31 @@ export default function CategoriesPageClient({
       )}
 
       <section>
-        <KpiStrip
-          totalCategories={pulse.totalCategories}
-          activeCategories={activeCount}
-          monetizableCount={pulse.monetizableCount}
-          avgEngagementRate={avgEngagement}
-          insightLine={pulse.insightLine}
-        />
+        <button
+          type="button"
+          onClick={() => setStatsOpen((open) => !open)}
+          className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-start text-sm text-[var(--color-text)]"
+          aria-expanded={statsOpen}
+        >
+          <span className="min-w-0 flex-1 truncate">
+            {pulse.totalCategories.toLocaleString('fa-IR')} دسته · {activeCount.toLocaleString('fa-IR')} فعال · میانگین تعامل {avgEngagement}
+          </span>
+          <ChevronDown
+            className={`size-4 shrink-0 text-[var(--color-text-muted)] transition-transform ${statsOpen ? 'rotate-180' : ''}`}
+            strokeWidth={1.5}
+          />
+        </button>
+        {statsOpen ? (
+          <div className="mt-3">
+            <KpiStrip
+              totalCategories={pulse.totalCategories}
+              activeCategories={activeCount}
+              monetizableCount={pulse.monetizableCount}
+              avgEngagementRate={avgEngagement}
+              insightLine={pulse.insightLine}
+            />
+          </div>
+        ) : null}
       </section>
 
       <section className="space-y-3">
@@ -236,11 +274,12 @@ export default function CategoriesPageClient({
 
       <section>
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
             {displayed.map((cat) => (
               <CategoryCard
                 key={cat.id}
                 category={cat}
+                variant="row"
                 badgeFlags={getCategoryBadgeFlags(cat)}
                 highlightNeedsBoost={
                   filter === 'needs_boost' && needsAlgorithmBoost(cat)

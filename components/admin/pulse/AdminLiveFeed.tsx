@@ -12,7 +12,7 @@ type ActivityItem =
   | { type: 'save'; createdAt: string; userName: string; listTitle: string; listId: string }
   | { type: 'comment'; createdAt: string; userName: string; itemTitle: string; contentSnippet: string; itemId: string }
   | { type: 'user'; createdAt: string; userName: string }
-  | { type: 'item'; createdAt: string; itemTitle: string; listTitle: string; itemId: string };
+  | { type: 'item'; createdAt: string; itemTitle: string; listTitle: string; itemId: string; listId?: string };
 
 const POLL_INTERVAL_MS = 15000;
 type ConnectionMode = 'sse' | 'poll';
@@ -116,9 +116,76 @@ const EventRow = memo(function EventRow({
   return <div className={className}>{inner}</div>;
 });
 
-export default function AdminLiveFeed() {
-  const [items, setItems] = useState<ActivityItem[]>([]);
-  const [loading, setLoading] = useState(true);
+function ItemBatchRow({ items }: { items: Extract<ActivityItem, { type: 'item' }>[] }) {
+  const first = items[0];
+  const titles = items.map((item) => item.itemTitle).join('، ');
+  const href = first.listId ? `/admin/lists/${first.listId}/edit` : `/admin/items/${first.itemId}/edit`;
+
+  return (
+    <Link
+      href={href}
+      className="block rounded-md px-2 py-2 transition-colors hover:bg-admin-muted/80 dark:hover:bg-gray-700/50"
+    >
+      <div className="flex items-start gap-2">
+        <span className="shrink-0 rounded-md bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-800 dark:bg-violet-500/20 dark:text-violet-300">
+          {items.length.toLocaleString('fa-IR')} آیتم
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium leading-snug text-admin-text-primary">
+            تازه در «{first.listTitle.trim()}»
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-xs text-admin-text-tertiary">{titles}</p>
+          <p className="mt-1 text-xs text-admin-text-tertiary">{formatRelativeTime(first.createdAt)}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+type ItemEvent = Extract<ActivityItem, { type: 'item' }>;
+
+function collapseSameList(items: ActivityItem[]) {
+  const rows: Array<
+    | { kind: 'one'; id: string; item: ActivityItem }
+    | { kind: 'items'; id: string; items: ItemEvent[] }
+  > = [];
+  let index = 0;
+  while (index < items.length) {
+    const current = items[index];
+    if (current.type === 'item') {
+      const batch: ItemEvent[] = [current];
+      let next = index + 1;
+      while (
+        next < items.length &&
+        items[next].type === 'item' &&
+        items[next].listTitle === current.listTitle
+      ) {
+        batch.push(items[next] as ItemEvent);
+        next += 1;
+      }
+      if (batch.length > 1) {
+        rows.push({
+          kind: 'items',
+          items: batch,
+          id: `items-${current.listId ?? current.listTitle}-${batch[0].createdAt}`,
+        });
+        index = next;
+        continue;
+      }
+    }
+    rows.push({ kind: 'one', item: current, id: getEventId(current) });
+    index += 1;
+  }
+  return rows;
+}
+
+export default function AdminLiveFeed({
+  initialItems = [],
+}: {
+  initialItems?: ActivityItem[];
+}) {
+  const [items, setItems] = useState<ActivityItem[]>(initialItems);
+  const [loading, setLoading] = useState(initialItems.length === 0);
   const [error, setError] = useState(false);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<'all' | ActivityType>('all');
@@ -205,8 +272,8 @@ export default function AdminLiveFeed() {
   }, [paused, connectionMode, fetchActivity, applyActivity]);
 
   const filtered = useMemo(() => {
-    if (filter === 'all') return items;
-    return items.filter((i) => i.type === filter);
+    const source = filter === 'all' ? items : items.filter((i) => i.type === filter);
+    return collapseSameList(source);
   }, [items, filter]);
 
   const connectionHint = paused
@@ -216,7 +283,7 @@ export default function AdminLiveFeed() {
       : 'هر ۱۵ث';
 
   return (
-    <section className="flex flex-col rounded-xl border border-admin-border dark:border-gray-600 bg-white dark:bg-gray-800/40 shadow-sm overflow-hidden xl:sticky xl:top-3 max-h-[calc(100vh-11rem)] min-h-[320px]">
+    <section className="flex max-h-[70vh] min-h-0 flex-col overflow-hidden rounded-xl border border-admin-border bg-white shadow-sm dark:border-gray-600 dark:bg-gray-800/40 xl:sticky xl:top-3">
       <div className="shrink-0 px-2.5 py-2 border-b border-admin-border dark:border-gray-600 bg-admin-muted/20 dark:bg-gray-800/60">
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <div className="flex items-center gap-2">
@@ -234,7 +301,7 @@ export default function AdminLiveFeed() {
           <button
             type="button"
             onClick={() => setPaused((p) => !p)}
-            className="inline-flex items-center gap-1 rounded-lg border border-admin-border dark:border-gray-600 px-2 py-1 text-xs text-admin-text-secondary hover:bg-white dark:hover:bg-gray-700"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-admin-border text-admin-text-secondary hover:bg-white dark:border-gray-600 dark:hover:bg-gray-700"
             aria-label={paused ? 'ادامه به‌روزرسانی' : 'توقف به‌روزرسانی'}
           >
             {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
@@ -247,7 +314,7 @@ export default function AdminLiveFeed() {
               type="button"
               onClick={() => setFilter(f.id)}
               className={clsx(
-                'shrink-0 px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
+                'min-h-11 shrink-0 rounded-md px-3 text-sm font-medium transition-colors',
                 filter === f.id
                   ? 'bg-violet-600 text-white shadow-sm'
                   : 'text-admin-text-secondary hover:bg-white dark:hover:bg-gray-700'
@@ -283,14 +350,18 @@ export default function AdminLiveFeed() {
           </p>
         ) : (
           <div className="divide-y divide-admin-border/60 dark:divide-gray-700/60">
-            {filtered.map((item) => (
-              <EventRow
-                key={getEventId(item)}
-                item={item}
-                isNew={newIds.has(getEventId(item))}
-                tick={tick}
-              />
-            ))}
+            {filtered.map((row) =>
+              row.kind === 'one' ? (
+                <EventRow
+                  key={row.id}
+                  item={row.item}
+                  isNew={newIds.has(row.id)}
+                  tick={tick}
+                />
+              ) : (
+                <ItemBatchRow key={row.id} items={row.items} />
+              )
+            )}
           </div>
         )}
       </div>

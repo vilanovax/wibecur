@@ -17,7 +17,14 @@ export type LiveActivityItem =
       itemId: string;
     }
   | { type: 'user'; createdAt: Date; userName: string }
-  | { type: 'item'; createdAt: Date; itemTitle: string; listTitle: string; itemId: string };
+  | {
+      type: 'item';
+      createdAt: Date;
+      itemTitle: string;
+      listTitle: string;
+      itemId: string;
+      listId: string;
+    };
 
 export async function getLiveActivityData(): Promise<LiveActivityItem[]> {
   return dbQuery(async () => {
@@ -45,9 +52,14 @@ export async function getLiveActivityData(): Promise<LiveActivityItem[]> {
         select: { name: true, createdAt: true },
       }),
       prisma.items.findMany({
+        where: { deletedAt: null },
         orderBy: { createdAt: 'desc' },
         take: LIMIT_PER_TYPE,
-        include: {
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          listId: true,
           lists: { select: { title: true } },
         },
       }),
@@ -92,11 +104,14 @@ export async function getLiveActivityData(): Promise<LiveActivityItem[]> {
         itemTitle: i.title,
         listTitle: i.lists?.title ?? 'لیست',
         itemId: i.id,
+        listId: i.listId,
       });
     });
 
     activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    return activities.slice(0, TOTAL_LIMIT);
+    const recentCutoff = Date.now() - 48 * 60 * 60 * 1000;
+    const recent = activities.filter((item) => item.createdAt.getTime() >= recentCutoff);
+    return (recent.length > 0 ? recent : activities).slice(0, TOTAL_LIMIT);
   });
 }
 
@@ -115,6 +130,6 @@ export function serializeLiveActivity(items: LiveActivityItem[]) {
  */
 export const getCachedLiveActivity = unstable_cache(
   async () => serializeLiveActivity(await getLiveActivityData()),
-  ['admin-live-activity'],
+  ['admin-live-activity-v2'],
   { revalidate: 10, tags: ['admin-live'] }
 );

@@ -18,6 +18,7 @@ import PulseReportActions, {
 import PulseCitiesNotice from '@/components/admin/pulse/PulseCitiesNotice';
 import { usePulseTabShortcuts } from '@/components/admin/pulse/usePulseTabShortcuts';
 import { parsePulseTab } from '@/lib/admin/pulse-types';
+import type { PulseDashboardData } from '@/lib/admin/pulse-dashboard-data';
 import {
   derivePulseHealth,
   fetchJson,
@@ -88,17 +89,26 @@ async function fetchPulseData(): Promise<PulseData> {
 const panelClass =
   'rounded-xl border border-admin-border dark:border-gray-600 bg-white dark:bg-gray-800/40 p-3 shadow-sm';
 
-export default function PulseDashboardClient() {
+export default function PulseDashboardClient({
+  initial,
+}: {
+  initial: PulseDashboardData;
+}) {
   const searchParams = useSearchParams();
   const activeTab = parsePulseTab(searchParams.get('tab'));
   usePulseTabShortcuts();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isFetching, refetch, isError } = useQuery({
+  const { data, isFetching, refetch, isError } = useQuery({
     queryKey: ['admin', 'pulse'],
     queryFn: fetchPulseData,
+    initialData: {
+      overview: initial.overview,
+      trendingLists: initial.trendingLists,
+      categories: initial.categories,
+      suggestions: initial.suggestions,
+    },
     staleTime: 60 * 1000,
-    // داده واقعاً «زنده» شود — هر ۶۰ث، اما فقط وقتی تب در پیش‌زمینه است
     refetchInterval: 60 * 1000,
     refetchIntervalInBackground: false,
   });
@@ -115,20 +125,6 @@ export default function PulseDashboardClient() {
     void refetch();
     void queryClient.invalidateQueries({ queryKey: ['admin', 'pulse'] });
   };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-2 animate-pulse">
-        <div className="h-12 rounded-xl bg-admin-muted" />
-        <div className="h-8 rounded-lg bg-admin-muted w-48" />
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-16 rounded-xl bg-admin-muted" />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   if (isError && !overview) {
     return (
@@ -153,6 +149,9 @@ export default function PulseDashboardClient() {
     ...d,
     lists: d.lists ?? 0,
   }));
+  const chartHasSignal = chartStats.some(
+    (d) => d.saves + d.comments + d.newUsers + (d.lists ?? 0) > 0
+  );
   const periodCompare = buildPeriodCompare(dailyStats);
   const trendingCompact = trendingLists.map((t) => ({
     listId: t.listId,
@@ -187,8 +186,6 @@ export default function PulseDashboardClient() {
         activeTab={activeTab}
         riskBadge={riskBadge}
         health={health}
-        activeUsers={overview?.activeUsersToday ?? 0}
-        interactions24h={overview?.todayInteractions ?? 0}
         lastSync={lastSync}
         onRefresh={handleRefresh}
         isRefreshing={isFetching}
@@ -211,16 +208,16 @@ export default function PulseDashboardClient() {
           />
 
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 items-start">
-            <div className="xl:col-span-7 space-y-2 min-w-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {chartStats.length > 0 && (
+            <div className="xl:col-span-7 min-w-0">
+              <div className={chartHasSignal ? 'grid grid-cols-1 gap-2 md:grid-cols-2' : ''}>
+                {chartHasSignal ? (
                   <PulseSevenDayChart dailyStats={chartStats} compact />
-                )}
+                ) : null}
                 <PulseLiveTrending lists={trendingCompact} dense />
               </div>
             </div>
             <div className="xl:col-span-5 min-w-0">
-              <AdminLiveFeed />
+              <AdminLiveFeed initialItems={initial.activity} />
             </div>
           </div>
         </div>

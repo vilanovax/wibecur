@@ -6,16 +6,13 @@ import AdminTopBar from './AdminTopBar';
 import DashboardActionCenter from './DashboardActionCenter';
 import ContentOverviewStrip from './ContentOverviewStrip';
 import DashboardPeriodChips from './DashboardPeriodChips';
+import TrendingRadar from './TrendingRadar';
 import type { DashboardClientPayload } from '@/lib/admin/types';
 
 const sectionFallback = (
   <div className="min-h-[200px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
 );
 
-/** Below-fold / heavy widgets — split from critical path (bundle-dynamic-imports) */
-const TrendingRadar = dynamic(() => import('./TrendingRadar'), {
-  loading: () => sectionFallback,
-});
 const CategoryIntelligenceGrid = dynamic(
   () => import('./CategoryIntelligenceGrid'),
   { loading: () => sectionFallback }
@@ -89,13 +86,11 @@ export default function DashboardContent({ data }: DashboardContentProps) {
         riskAlerts={riskAlerts}
       />
 
-      <ContentOverviewStrip overview={contentOverview} />
-
       <DashboardPeriodChips snapshot={periodSnapshot} pulseCards={pulseChips} />
 
-      <section className="min-h-[280px]">
-        <TrendingRadar rows={trendingRadar} />
-      </section>
+      <TrendingRadar rows={trendingRadar} />
+
+      <ContentOverviewStrip overview={contentOverview} />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
         <section className="xl:col-span-2 space-y-3">

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { checkAdminAuth } from '@/lib/auth';
@@ -19,52 +20,58 @@ async function getPulseCategories() {
     const thisWeek = getWeekRange(0);
     const lastWeek = getWeekRange(1);
 
-    const categories = await prisma.categories.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, icon: true, slug: true },
-    });
+    const rows = await prisma.$queryRaw<
+      {
+        id: string;
+        name: string;
+        icon: string;
+        slug: string;
+        listCount: number;
+        thisWeek: number;
+        lastWeek: number;
+      }[]
+    >(Prisma.sql`
+      SELECT c.id, c.name, c.icon, c.slug,
+             COUNT(DISTINCT l.id)::int AS "listCount",
+             COUNT(b.id) FILTER (
+               WHERE b."createdAt" >= ${thisWeek.start} AND b."createdAt" < ${thisWeek.end}
+             )::int AS "thisWeek",
+             COUNT(b.id) FILTER (
+               WHERE b."createdAt" >= ${lastWeek.start} AND b."createdAt" < ${lastWeek.end}
+             )::int AS "lastWeek"
+      FROM categories c
+      LEFT JOIN lists l
+        ON l."categoryId" = c.id AND l."deletedAt" IS NULL
+      LEFT JOIN bookmarks b
+        ON b."listId" = l.id AND b."createdAt" >= ${lastWeek.start}
+      WHERE c."isActive" = true AND c."deletedAt" IS NULL
+      GROUP BY c.id, c.name, c.icon, c.slug
+    `);
 
-    const lists = await prisma.lists.findMany({
-      where: { categoryId: { in: categories.map((c) => c.id) } },
-      select: { id: true, categoryId: true },
-    });
-
-    const listIdsByCategory = new Map<string, string[]>();
-    lists.forEach((l) => {
-      if (l.categoryId) {
-        const arr = listIdsByCategory.get(l.categoryId) ?? [];
-        arr.push(l.id);
-        listIdsByCategory.set(l.categoryId, arr);
-      }
-    });
-
-    const result: { id: string; name: string; icon: string; slug: string; growthPercent: number; activeListsCount: number }[] = [];
-    for (const cat of categories) {
-      const listIds = listIdsByCategory.get(cat.id) ?? [];
-      if (listIds.length === 0) {
-        result.push({ ...cat, growthPercent: 0, activeListsCount: 0 });
-        continue;
-      }
-      const [thisW, lastW] = await Promise.all([
-        prisma.bookmarks.count({
-          where: {
-            listId: { in: listIds },
-            createdAt: { gte: thisWeek.start, lt: thisWeek.end },
-          },
-        }),
-        prisma.bookmarks.count({
-          where: {
-            listId: { in: listIds },
-            createdAt: { gte: lastWeek.start, lt: lastWeek.end },
-          },
-        }),
-      ]);
-      const growthPercent = lastW === 0 ? (thisW > 0 ? 100 : 0) : Math.round(((thisW - lastW) / lastW) * 100);
-      result.push({ ...cat, growthPercent, activeListsCount: listIds.length });
-    }
-
-    return result.sort((a, b) => b.growthPercent - a.growthPercent);
+    return rows
+      .map((row) => {
+        const thisW = Number(row.thisWeek);
+        const lastW = Number(row.lastWeek);
+        const growthPercent =
+          lastW === 0 ? (thisW > 0 ? 100 : 0) : Math.round(((thisW - lastW) / lastW) * 100);
+        return {
+          id: row.id,
+          name: row.name,
+          icon: row.icon,
+          slug: row.slug,
+          growthPercent,
+          activeListsCount: Number(row.listCount),
+        };
+      })
+      .sort((a, b) => b.growthPercent - a.growthPercent);
   });
+}
+
+export function getCachedPulseCategories() {
+  return unstable_cache(getPulseCategories, ['admin-pulse-categories-v2'], {
+    revalidate: CACHE_SECONDS,
+    tags: ['admin-pulse'],
+  })();
 }
 
 export async function GET() {
@@ -73,12 +80,7 @@ export async function GET() {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const getCached = unstable_cache(
-      getPulseCategories,
-      ['admin-pulse-categories'],
-      { revalidate: CACHE_SECONDS, tags: ['admin-pulse'] }
-    );
-    const data = await getCached();
+    const data = await getCachedPulseCategories();
     return NextResponse.json({ data }, { status: 200 });
   } catch (err) {
     console.error('Pulse categories error:', err);

@@ -19,7 +19,9 @@ interface PulseSevenDayChartProps {
 }
 
 export default function PulseSevenDayChart({ dailyStats, compact }: PulseSevenDayChartProps) {
-  const [metric, setMetric] = useState<ChartMetric>('saves');
+  const firstWithData =
+    TABS.find((tab) => dailyStats.some((day) => day[tab.id] > 0))?.id ?? 'saves';
+  const [metric, setMetric] = useState<ChartMetric>(firstWithData);
 
   if (dailyStats.length === 0) return null;
 

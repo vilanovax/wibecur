@@ -11,8 +11,6 @@ interface PulsePageToolbarProps {
   activeTab: PulseTab;
   riskBadge: number;
   health: PulseHealth;
-  activeUsers: number;
-  interactions24h: number;
   lastSync: string;
   onRefresh: () => void;
   isRefreshing?: boolean;
@@ -22,8 +20,6 @@ export default function PulsePageToolbar({
   activeTab,
   riskBadge,
   health,
-  activeUsers,
-  interactions24h,
   lastSync,
   onRefresh,
   isRefreshing,
@@ -37,8 +33,6 @@ export default function PulsePageToolbar({
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2 min-w-0">
           <LiveStatusBar
-            activeUsers={activeUsers}
-            interactions24h={interactions24h}
             lastSync={lastSync}
             health={health}
             connectionLabel={activeTab === 'live' ? 'زنده' : 'داده'}
@@ -48,10 +42,10 @@ export default function PulsePageToolbar({
             onClick={onRefresh}
             disabled={isRefreshing}
             className={clsx(
-              'inline-flex items-center gap-1.5 rounded-lg border border-admin-border dark:border-gray-600',
-              'bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs font-medium text-admin-text-primary',
-              'hover:bg-admin-muted dark:hover:bg-gray-700 transition-colors',
-              isRefreshing && 'opacity-60 cursor-wait'
+              'inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-admin-border dark:border-gray-600',
+              'bg-white px-3 text-sm font-medium text-admin-text-primary dark:bg-gray-800',
+              'transition-colors hover:bg-admin-muted dark:hover:bg-gray-700',
+              isRefreshing && 'cursor-wait opacity-60'
             )}
           >
             <RefreshCw className={clsx('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />

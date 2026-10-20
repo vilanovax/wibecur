@@ -16,6 +16,8 @@ interface CategoryActionsProps {
   trendingWeight: number;
   /** کارت غیرفعال — بدون Boost، CTA فعال‌سازی */
   compact?: boolean;
+  /** فقط منوی بیشتر — ویرایش جداگانه در ردیف است */
+  menuOnly?: boolean;
 }
 
 export default function CategoryActions({
@@ -25,6 +27,7 @@ export default function CategoryActions({
   isActive,
   trendingWeight,
   compact = false,
+  menuOnly = false,
 }: CategoryActionsProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -137,6 +140,79 @@ export default function CategoryActions({
   const btnSecondary =
     'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg)] transition-colors';
 
+  const moreMenu = open ? (
+    <div className="absolute top-full end-0 z-50 mt-1 w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg">
+      <Link
+        href={`/admin/categories/${categoryId}/edit#weight`}
+        className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+        onClick={() => setOpen(false)}
+      >
+        <Scale className="size-4" strokeWidth={1.5} />
+        تنظیم وزن
+      </Link>
+      <Link
+        href={`/admin/analytics?category=${categoryId}`}
+        className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+        onClick={() => setOpen(false)}
+      >
+        <BarChart3 className="size-4" strokeWidth={1.5} />
+        آنالیتیکس
+      </Link>
+      <Link
+        href={`/categories/${categorySlug}`}
+        target="_blank"
+        className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+        onClick={() => setOpen(false)}
+      >
+        <ExternalLink className="size-4" strokeWidth={1.5} />
+        مشاهده در سایت
+      </Link>
+      <button
+        type="button"
+        disabled={loading}
+        className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)] disabled:opacity-50"
+        onClick={handleDuplicate}
+      >
+        <Copy className="size-4" strokeWidth={1.5} />
+        کپی دسته
+      </button>
+      <button
+        type="button"
+        disabled={loading}
+        className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/20"
+        onClick={handleToggleActive}
+      >
+        <Power className="size-4" strokeWidth={1.5} />
+        {isActive ? 'غیرفعال کردن' : 'فعال کردن'}
+      </button>
+    </div>
+  ) : null;
+
+  if (menuOnly) {
+    return (
+      <div className="relative" ref={ref}>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(!open);
+          }}
+          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+          aria-expanded={open}
+          aria-label={`کارهای بیشتر ${categoryName}`}
+        >
+          بیشتر
+          <ChevronDown className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`} strokeWidth={1.5} />
+        </button>
+        {moreMenu}
+        {toast ? (
+          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} duration={3500} />
+        ) : null}
+      </div>
+    );
+  }
+
   if (compact) {
     return (
       <div className="space-y-1.5" ref={ref}>
@@ -197,53 +273,7 @@ export default function CategoryActions({
             بیشتر
             <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
           </button>
-          {open && (
-            <div className="absolute top-full right-0 mt-1 w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg py-1 z-50">
-              <Link
-                href={`/admin/categories/${categoryId}/edit#weight`}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
-                onClick={() => setOpen(false)}
-              >
-                <Scale className="w-4 h-4" />
-                تنظیم وزن
-              </Link>
-              <Link
-                href={`/admin/analytics?category=${categoryId}`}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
-                onClick={() => setOpen(false)}
-              >
-                <BarChart3 className="w-4 h-4" />
-                آنالیتیکس
-              </Link>
-              <Link
-                href={`/categories/${categorySlug}`}
-                target="_blank"
-                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
-                onClick={() => setOpen(false)}
-              >
-                <ExternalLink className="w-4 h-4" />
-                مشاهده در اپ
-              </Link>
-              <button
-                type="button"
-                disabled={loading}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)] disabled:opacity-50"
-                onClick={handleDuplicate}
-              >
-                <Copy className="w-4 h-4" />
-                کپی دسته
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
-                onClick={handleToggleActive}
-              >
-                <Power className="w-4 h-4" />
-                غیرفعال کردن
-              </button>
-            </div>
-          )}
+          {moreMenu}
         </div>
       </div>
       {toast && (

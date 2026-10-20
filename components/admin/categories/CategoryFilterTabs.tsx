@@ -11,7 +11,7 @@ const tabs: { value: CategoryFilterKind; label: string; color: string; title?: s
   },
   {
     value: 'needs_boost',
-    label: 'نیازمند Boost',
+    label: 'نیازمند تقویت',
     color: 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200',
     title: 'دسته‌های فعال با وزن الگوریتمی کمتر از ۱.۲×',
   },
@@ -50,7 +50,7 @@ export default function CategoryFilterTabs({ value, onChange, counts }: Category
             aria-selected={value === tab.value}
             onClick={() => onChange(tab.value)}
             title={tab.title}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`min-h-11 rounded-full px-4 text-sm font-medium transition-colors ${
               value === tab.value
                 ? tab.value === 'all'
                   ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-text)] ring-1 ring-[var(--color-border)]'
@@ -60,7 +60,7 @@ export default function CategoryFilterTabs({ value, onChange, counts }: Category
           >
             {tab.label}
             {count !== undefined && (
-              <span className="mr-1.5 text-xs opacity-75 tabular-nums">
+              <span className="ms-1.5 text-xs tabular-nums opacity-75">
                 ({count.toLocaleString('fa-IR')})
               </span>
             )}

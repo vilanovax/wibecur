@@ -48,18 +48,20 @@ async function getSuggestionHealth() {
   });
 }
 
+export function getCachedPulseSuggestions() {
+  return unstable_cache(getSuggestionHealth, ['admin-pulse-suggestions'], {
+    revalidate: CACHE_SECONDS,
+    tags: ['admin-pulse'],
+  })();
+}
+
 export async function GET() {
   try {
     const session = await checkAdminAuth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const getCached = unstable_cache(
-      getSuggestionHealth,
-      ['admin-pulse-suggestions'],
-      { revalidate: CACHE_SECONDS, tags: ['admin-pulse'] }
-    );
-    const data = await getCached();
+    const data = await getCachedPulseSuggestions();
     return NextResponse.json({ data }, { status: 200 });
   } catch (err) {
     console.error('Pulse suggestions error:', err);

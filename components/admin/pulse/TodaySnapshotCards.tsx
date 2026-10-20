@@ -46,7 +46,7 @@ const colorMap = {
 };
 
 function MiniSpark({ data, color }: { data: number[]; color: string }) {
-  if (!data.length) return <div className="w-14 h-8" />;
+  if (!data.some((v) => v > 0)) return null;
   const max = Math.max(...data, 1);
   const pts = data
     .map((v, i) => `${(i / (data.length - 1 || 1)) * 56},${32 - (v / max) * 28}`)
@@ -119,6 +119,7 @@ export default function TodaySnapshotCards(props: TodaySnapshotCardsProps) {
     dailyStats,
   } = props;
 
+  const quiet = (text: string) => (text === 'بدون فعالیت' ? 'مثل دیروز' : text);
   const saveFooter = dayOverDayTone(todaySaves, yesterdaySaves);
   const commentFooter = dayOverDayTone(todayComments, yesterdayComments);
   const listsFooter = dayOverDayTone(todayLists, yesterdayLists);
@@ -136,7 +137,7 @@ export default function TodaySnapshotCards(props: TodaySnapshotCardsProps) {
       <Card
         label="ذخیره"
         value={todaySaves}
-        footer={saveFooter.text}
+        footer={quiet(saveFooter.text)}
         footerPositive={saveFooter.positive}
         footerMuted={saveFooter.muted}
         sparklineData={dailyStats.map((d) => d.saves)}
@@ -146,7 +147,7 @@ export default function TodaySnapshotCards(props: TodaySnapshotCardsProps) {
       <Card
         label="کامنت"
         value={todayComments}
-        footer={commentFooter.text}
+        footer={quiet(commentFooter.text)}
         footerPositive={commentFooter.positive}
         footerMuted={commentFooter.muted}
         sparklineData={dailyStats.map((d) => d.comments)}
@@ -156,7 +157,7 @@ export default function TodaySnapshotCards(props: TodaySnapshotCardsProps) {
       <Card
         label="لیست جدید"
         value={todayLists}
-        footer={listsFooter.text}
+        footer={quiet(listsFooter.text)}
         footerPositive={listsFooter.positive}
         footerMuted={listsFooter.muted}
         sparklineData={dailyStats.map((d) => d.lists ?? 0)}

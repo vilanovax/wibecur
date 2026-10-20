@@ -74,11 +74,8 @@ export async function getDashboardData(
     recentLists,
     recentItems,
     listTotals,
-    bookmarks24hByList,
-    bookmarks7dByList,
-    bookmarksPrev7dByList,
+    bookmarkWindows,
     trendingListsDb,
-    activeLists7d,
   ] = await Promise.all([
     dbQuery(() => prisma.users.count()),
     dbQuery(() => prisma.lists.count({ where: { isActive: true } })),
@@ -187,25 +184,18 @@ export async function getDashboardData(
       })
     ),
     dbQuery(() =>
-      prisma.bookmarks.groupBy({
-        by: ['listId'],
-        where: { createdAt: { gte: last24h } },
-        _count: true,
-      })
-    ),
-    dbQuery(() =>
-      prisma.bookmarks.groupBy({
-        by: ['listId'],
-        where: { createdAt: { gte: last7d } },
-        _count: true,
-      })
-    ),
-    dbQuery(() =>
-      prisma.bookmarks.groupBy({
-        by: ['listId'],
-        where: { createdAt: { gte: prev7dStart, lt: last7d } },
-        _count: true,
-      })
+      prisma.$queryRaw<{ id: string; h24: number; d7: number; prev7: number }[]>`
+        SELECT "listId" AS id,
+               COUNT(*) FILTER (WHERE "createdAt" >= ${last24h})::int AS h24,
+               COUNT(*) FILTER (WHERE "createdAt" >= ${last7d})::int AS d7,
+               COUNT(*) FILTER (
+                 WHERE "createdAt" >= ${prev7dStart} AND "createdAt" < ${last7d}
+               )::int AS prev7
+        FROM bookmarks b
+        INNER JOIN lists l ON l.id = b."listId" AND l."isActive" = true
+        WHERE b."createdAt" >= ${prev7dStart}
+        GROUP BY b."listId"
+      `
     ),
     dbQuery(() =>
       prisma.lists.findMany({
@@ -223,15 +213,9 @@ export async function getDashboardData(
         },
       })
     ),
-    dbQuery(() =>
-      prisma.lists.count({
-        where: {
-          isActive: true,
-          bookmarks: { some: { createdAt: { gte: last7d } } },
-        },
-      })
-    ),
   ]);
+
+  const activeLists7d = bookmarkWindows.filter((row) => Number(row.d7) > 0).length;
 
   const totalViews = listTotals._sum.viewCount ?? 0;
   const totalSaves = listTotals._sum.saveCount ?? 0;
@@ -419,13 +403,13 @@ export async function getDashboardData(
 
   // O(1) lookups for trending scores (js-index-maps / js-set-map-lookups)
   const count24hByList = new Map(
-    bookmarks24hByList.map((b) => [b.listId, b._count])
+    bookmarkWindows.map((b) => [b.id, Number(b.h24)])
   );
   const count7dByList = new Map(
-    bookmarks7dByList.map((b) => [b.listId, b._count])
+    bookmarkWindows.map((b) => [b.id, Number(b.d7)])
   );
   const countPrev7dByList = new Map(
-    bookmarksPrev7dByList.map((b) => [b.listId, b._count])
+    bookmarkWindows.map((b) => [b.id, Number(b.prev7)])
   );
 
   const systemPulse: SystemPulseCard[] = [

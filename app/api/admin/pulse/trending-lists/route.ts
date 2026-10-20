@@ -20,18 +20,20 @@ async function getTrendingLists() {
   }));
 }
 
+export function getCachedPulseTrending() {
+  return unstable_cache(getTrendingLists, ['admin-pulse-trending-lists'], {
+    revalidate: CACHE_SECONDS,
+    tags: ['admin-pulse'],
+  })();
+}
+
 export async function GET() {
   try {
     const session = await checkAdminAuth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const getCached = unstable_cache(
-      getTrendingLists,
-      ['admin-pulse-trending-lists'],
-      { revalidate: CACHE_SECONDS, tags: ['admin-pulse'] }
-    );
-    const data = await getCached();
+    const data = await getCachedPulseTrending();
     return NextResponse.json({ data }, { status: 200 });
   } catch (err) {
     console.error('Pulse trending-lists error:', err);

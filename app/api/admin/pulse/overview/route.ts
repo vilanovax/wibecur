@@ -6,18 +6,30 @@ import { requirePermission } from '@/lib/auth/require-permission';
 
 const CACHE_SECONDS = 120; // 2 min
 
-function startOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+const TEHRAN_OFFSET_MS = (3 * 60 + 30) * 60 * 1000;
+
+/** نیمه‌شب تقویم تهران، به‌صورت UTC. ایران ساعت تابستانی ندارد. */
+function tehranDayStart(dayOffset: number) {
+  const tehranNow = new Date(Date.now() + TEHRAN_OFFSET_MS);
+  return new Date(
+    Date.UTC(
+      tehranNow.getUTCFullYear(),
+      tehranNow.getUTCMonth(),
+      tehranNow.getUTCDate() + dayOffset
+    ) - TEHRAN_OFFSET_MS
+  );
+}
+
+function tehranDateKey(dayOffset: number) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(
+    new Date(tehranDayStart(dayOffset).getTime() + 60 * 60 * 1000)
+  );
 }
 
 async function getPulseOverview() {
   return dbQuery(async () => {
-    const now = new Date();
-    const todayStart = startOfDay(now);
-    const yesterdayStart = new Date(todayStart);
-    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const todayStart = tehranDayStart(0);
+    const yesterdayStart = tehranDayStart(-1);
 
     const [
       todaySaves,
@@ -35,6 +47,7 @@ async function getPulseOverview() {
       usersByDay,
       listsByDay,
       yesterdayLists,
+      activeUsersRows,
     ] = await Promise.all([
       prisma.bookmarks.count({ where: { createdAt: { gte: todayStart } } }),
       prisma.comments.count({
@@ -53,73 +66,73 @@ async function getPulseOverview() {
       prisma.$queryRaw<
         { day: Date; count: bigint }[]
       >`
-        SELECT (b."createdAt"::date) as day, COUNT(*)::bigint as count
+        SELECT to_char(timezone('Asia/Tehran', b."createdAt"), 'YYYY-MM-DD') as day,
+               COUNT(*)::bigint as count
         FROM bookmarks b
         WHERE b."createdAt" >= NOW() - INTERVAL '14 days'
-        GROUP BY (b."createdAt"::date)
+        GROUP BY 1
         ORDER BY day ASC
       `.catch(() => []),
       prisma.$queryRaw<
         { day: Date; count: bigint }[]
       >`
-        SELECT (c."createdAt"::date) as day, COUNT(*)::bigint as count
+        SELECT to_char(timezone('Asia/Tehran', c."createdAt"), 'YYYY-MM-DD') as day,
+               COUNT(*)::bigint as count
         FROM comments c
         WHERE c."createdAt" >= NOW() - INTERVAL '14 days' AND c."deletedAt" IS NULL
-        GROUP BY (c."createdAt"::date)
+        GROUP BY 1
         ORDER BY day ASC
       `.catch(() => []),
       prisma.$queryRaw<
         { day: Date; count: bigint }[]
       >`
-        SELECT (u."createdAt"::date) as day, COUNT(*)::bigint as count
+        SELECT to_char(timezone('Asia/Tehran', u."createdAt"), 'YYYY-MM-DD') as day,
+               COUNT(*)::bigint as count
         FROM users u
         WHERE u."createdAt" >= NOW() - INTERVAL '14 days'
-        GROUP BY (u."createdAt"::date)
+        GROUP BY 1
         ORDER BY day ASC
       `.catch(() => []),
       prisma.$queryRaw<
         { day: Date; count: bigint }[]
       >`
-        SELECT (l."createdAt"::date) as day, COUNT(*)::bigint as count
+        SELECT to_char(timezone('Asia/Tehran', l."createdAt"), 'YYYY-MM-DD') as day,
+               COUNT(*)::bigint as count
         FROM lists l
         WHERE l."createdAt" >= NOW() - INTERVAL '14 days'
-        GROUP BY (l."createdAt"::date)
+        GROUP BY 1
         ORDER BY day ASC
       `.catch(() => []),
       prisma.lists.count({
         where: { createdAt: { gte: yesterdayStart, lt: todayStart } },
       }),
+      prisma.$queryRaw<{ n: number }[]>`
+        SELECT COUNT(*)::int AS n FROM (
+          SELECT "userId" FROM bookmarks WHERE "createdAt" >= ${todayStart}
+          UNION
+          SELECT "userId" FROM comments
+          WHERE "createdAt" >= ${todayStart} AND "deletedAt" IS NULL
+          UNION
+          SELECT "userId" FROM item_votes WHERE "createdAt" >= ${todayStart}
+        ) u
+      `,
     ]);
 
-    const [bookmarksToday, commentsToday, votesToday] = await Promise.all([
-      prisma.bookmarks.findMany({ where: { createdAt: { gte: todayStart } }, select: { userId: true } }),
-      prisma.comments.findMany({ where: { createdAt: { gte: todayStart }, deletedAt: null }, select: { userId: true } }),
-      prisma.item_votes.findMany({ where: { createdAt: { gte: todayStart } }, select: { userId: true } }),
-    ]);
-    const activeUserIds = new Set([
-      ...bookmarksToday.map((b) => b.userId),
-      ...commentsToday.map((c) => c.userId),
-      ...votesToday.map((v) => v.userId),
-    ]);
-    const activeUsersToday = activeUserIds.size;
+    const activeUsersToday = Number(activeUsersRows[0]?.n ?? 0);
 
     const todayInteractions =
       todaySaves + todayComments + newUsersToday + todayItemVotes;
 
     const days: { date: string; saves: number; comments: number; newUsers: number; lists: number }[] =
       [];
+    const dayCount = (rows: { day: Date | string; count: bigint }[], key: string) =>
+      Number(rows.find((r) => String(r.day).slice(0, 10) === key)?.count ?? 0);
     for (let i = 13; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().slice(0, 10);
-      const saves =
-        Number(bookmarksByDay.find((r) => String(r.day).slice(0, 10) === dateStr)?.count ?? 0);
-      const comments =
-        Number(commentsByDay.find((r) => String(r.day).slice(0, 10) === dateStr)?.count ?? 0);
-      const newUsers =
-        Number(usersByDay.find((r) => String(r.day).slice(0, 10) === dateStr)?.count ?? 0);
-      const lists =
-        Number(listsByDay.find((r) => String(r.day).slice(0, 10) === dateStr)?.count ?? 0);
+      const dateStr = tehranDateKey(-i);
+      const saves = dayCount(bookmarksByDay, dateStr);
+      const comments = dayCount(commentsByDay, dateStr);
+      const newUsers = dayCount(usersByDay, dateStr);
+      const lists = dayCount(listsByDay, dateStr);
       days.push({ date: dateStr, saves, comments, newUsers, lists });
     }
 
@@ -155,17 +168,19 @@ async function getPulseOverview() {
   });
 }
 
+export function getCachedPulseOverview() {
+  return unstable_cache(getPulseOverview, ['admin-pulse-overview-v3'], {
+    revalidate: CACHE_SECONDS,
+    tags: ['admin-pulse'],
+  })();
+}
+
 export async function GET() {
   try {
     const userOrRes = await requirePermission('view_pulse');
     if (userOrRes instanceof NextResponse) return userOrRes;
 
-    const getCached = unstable_cache(
-      getPulseOverview,
-      ['admin-pulse-overview'],
-      { revalidate: CACHE_SECONDS, tags: ['admin-pulse'] }
-    );
-    const data = await getCached();
+    const data = await getCachedPulseOverview();
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (err) {

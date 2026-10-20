@@ -237,14 +237,14 @@ export default function DashboardActionCenter({
       ) : (
         <>
           {activePrimary.length > 0 && (
-            <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="flex flex-wrap gap-3 p-4">
               {activePrimary.map((item) => {
                 const Icon = PRIMARY_ICONS[item.iconKey] ?? MessageSquare;
                 return (
                   <Link
                     key={item.id}
                     href={item.href}
-                    className={`rounded-xl border bg-[var(--color-surface)] p-4 transition-all hover:shadow-md hover:border-[var(--primary)]/40 ring-1 ${severityRing[item.severity]}`}
+                    className={`min-h-11 w-full rounded-xl border bg-[var(--color-surface)] p-4 transition-all hover:border-[var(--primary)]/40 hover:shadow-md ring-1 sm:w-56 ${severityRing[item.severity]}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="p-2 rounded-lg bg-[var(--color-bg)]">
@@ -309,7 +309,7 @@ export default function DashboardActionCenter({
                   ))}
                   <Link
                     href="/admin/comments/all?filter=approved"
-                    className="text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)] mr-auto"
+                    className="ms-auto text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)]"
                   >
                     {comments.approved.toLocaleString('fa-IR')} تاییدشده ←
                   </Link>

@@ -1,12 +1,10 @@
 'use client';
 
-import { Users, Activity, Shield, Radio } from 'lucide-react';
+import { Shield, Radio } from 'lucide-react';
 import clsx from 'clsx';
 import type { PulseHealth } from '@/lib/admin/pulse-utils';
 
 interface LiveStatusBarProps {
-  activeUsers: number;
-  interactions24h: number;
   lastSync: string;
   health?: PulseHealth;
   connectionLabel?: string;
@@ -34,8 +32,6 @@ const healthConfig: Record<
 };
 
 export default function LiveStatusBar({
-  activeUsers,
-  interactions24h,
   lastSync,
   health = 'stable',
   connectionLabel = 'زنده',
@@ -59,9 +55,6 @@ export default function LiveStatusBar({
         </span>
       </div>
 
-      <StatChip icon={Users} label="فعال" value={activeUsers.toLocaleString('fa-IR')} />
-      <StatChip icon={Activity} label="تعامل" value={interactions24h.toLocaleString('fa-IR')} />
-
       <div
         className={clsx(
           'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium',
@@ -76,20 +69,3 @@ export default function LiveStatusBar({
   );
 }
 
-function StatChip({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-admin-border dark:border-gray-600 bg-white dark:bg-gray-800/80 px-3 py-1.5 text-xs shadow-sm">
-      <Icon className="h-3.5 w-3.5 text-violet-500" />
-      <span className="text-admin-text-tertiary">{label}</span>
-      <span className="font-bold tabular-nums text-admin-text-primary">{value}</span>
-    </div>
-  );
-}

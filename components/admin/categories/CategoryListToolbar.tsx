@@ -39,13 +39,13 @@ export default function CategoryListToolbar({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" dir="rtl">
       <div className="relative flex-1 max-w-md">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] pointer-events-none" />
+        <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" strokeWidth={1.5} />
         <input
           type="search"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="جستجو در نام یا slug..."
-          className="w-full pr-10 pl-4 py-2.5 rounded-xl border-2 border-[var(--primary)]/20 bg-[var(--color-surface)] text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:ring-2 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
+          placeholder="جستجو در نام یا شناسه…"
+          className="min-h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] pe-10 ps-4 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]"
         />
       </div>
 
@@ -56,7 +56,7 @@ export default function CategoryListToolbar({
             value={sortKey}
             onChange={(e) => onSortChange(e.target.value as CategorySortKey)}
             disabled={viewMode === 'reorder'}
-            className="px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)] disabled:opacity-50"
+            className="min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)] disabled:opacity-50"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -83,7 +83,7 @@ export default function CategoryListToolbar({
               type="button"
               title={label}
               onClick={() => onViewModeChange(mode)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors ${
                 viewMode === mode
                   ? 'bg-[var(--color-surface)] text-[var(--primary)] shadow-sm ring-1 ring-[var(--color-border)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
