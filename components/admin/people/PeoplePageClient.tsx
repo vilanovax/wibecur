@@ -47,6 +47,7 @@ import {
 import type {
   DiscoveredPerson,
   DiscoverPeoplePagination,
+  DiscoverPeopleResult,
   DiscoverPeopleStats,
   PersonProfileRecord,
 } from '@/lib/person-profiles';

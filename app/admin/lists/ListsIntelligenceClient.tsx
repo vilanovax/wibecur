@@ -12,9 +12,11 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus, Sparkles, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, BarChart3, FileJson } from 'lucide-react';
-import type {
-  ListsIntelligenceData,
-  ListIntelligenceRow,
+import {
+  isListSortKey,
+  type ListsIntelligenceData,
+  type ListIntelligenceRow,
+  type ListSortKey,
 } from '@/lib/admin/lists-types';
 import { LISTS_PAGE_SIZE, LISTS_PULSE_SAMPLE } from '@/lib/admin/lists-types';
 import ListPulseSummary from '@/components/admin/lists/ListPulseSummary';
@@ -45,18 +47,6 @@ const MoveToTrashModal = dynamic(
   { loading: () => null }
 );
 
-type SortKey =
-  | 'score_desc'
-  | 'score_asc'
-  | 'items_desc'
-  | 'items_asc'
-  | 'saves_desc'
-  | 'saves_asc'
-  | '24h_desc'
-  | '24h_asc'
-  | 'date_desc'
-  | 'date_asc';
-
 function filterLists(lists: ListIntelligenceRow[], filter: ListFilterKind): ListIntelligenceRow[] {
   switch (filter) {
     case 'all':
@@ -82,7 +72,7 @@ function filterLists(lists: ListIntelligenceRow[], filter: ListFilterKind): List
   }
 }
 
-function sortLists(lists: ListIntelligenceRow[], sortBy: SortKey): ListIntelligenceRow[] {
+function sortLists(lists: ListIntelligenceRow[], sortBy: ListSortKey): ListIntelligenceRow[] {
   const arr = [...lists];
   switch (sortBy) {
     case 'score_desc':
@@ -148,7 +138,7 @@ export default function ListsIntelligenceClient({
   const [search, setSearch] = useState(initialSearch);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [page, setPage] = useState(initialPage);
-  const [sortBy, setSortBy] = useState<SortKey>('score_desc');
+  const [sortBy, setSortBy] = useState<ListSortKey>('score_desc');
   const [viewMode, setViewMode] = useState<ListAdminViewMode>('table');
   const [kpiCollapsed, setKpiCollapsed] = useState(true);
   const [lists, setLists] = useState<ListIntelligenceRow[]>(data.lists);
@@ -349,7 +339,8 @@ export default function ListsIntelligenceClient({
     onSearchChange: handleSearchChange,
     sortBy,
     onSortChange: (v: string) => {
-      setSortBy(v as SortKey);
+      if (!isListSortKey(v)) return;
+      setSortBy(v);
       setPage(1);
     },
     viewMode,

@@ -155,12 +155,10 @@ function collapseSameList(items: ActivityItem[]) {
     if (current.type === 'item') {
       const batch: ItemEvent[] = [current];
       let next = index + 1;
-      while (
-        next < items.length &&
-        items[next].type === 'item' &&
-        items[next].listTitle === current.listTitle
-      ) {
-        batch.push(items[next] as ItemEvent);
+      while (next < items.length) {
+        const candidate = items[next];
+        if (candidate.type !== 'item' || candidate.listTitle !== current.listTitle) break;
+        batch.push(candidate);
         next += 1;
       }
       if (batch.length > 1) {

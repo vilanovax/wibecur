@@ -13,6 +13,35 @@ export const LISTS_INTELLIGENCE_CAP = LISTS_PULSE_SAMPLE;
 
 export type RiskLevel = 'none' | 'low' | 'medium' | 'high';
 
+export type ListSortKey =
+  | 'score_desc'
+  | 'score_asc'
+  | 'items_desc'
+  | 'items_asc'
+  | 'saves_desc'
+  | 'saves_asc'
+  | '24h_desc'
+  | '24h_asc'
+  | 'date_desc'
+  | 'date_asc';
+
+const LIST_SORT_KEYS = new Set<string>([
+  'score_desc',
+  'score_asc',
+  'items_desc',
+  'items_asc',
+  'saves_desc',
+  'saves_asc',
+  '24h_desc',
+  '24h_asc',
+  'date_desc',
+  'date_asc',
+]);
+
+export function isListSortKey(value: string): value is ListSortKey {
+  return LIST_SORT_KEYS.has(value);
+}
+
 export interface ListPulse {
   totalLists: number;
   risingLists: number;

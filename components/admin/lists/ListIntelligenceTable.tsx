@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { ExternalLink, Pencil, Star, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
+import type { ListIntelligenceRow, ListSortKey } from '@/lib/admin/lists-types';
 import { formatSaveGrowthDisplay } from '@/lib/admin/category-intelligence';
 import ListCardMoreMenu from './ListCardMoreMenu';
 
 interface ListIntelligenceTableProps {
   rows: ListIntelligenceRow[];
-  sortBy?: string;
-  onSortChange?: (next: string) => void;
+  sortBy?: ListSortKey;
+  onSortChange?: (next: ListSortKey) => void;
   isTrashView?: boolean;
   onFeatureToggle?: (id: string, isFeatured: boolean) => void;
   onDisableToggle?: (id: string, isActive: boolean) => void;
@@ -32,7 +32,7 @@ function rowBg(row: ListIntelligenceRow, idx: number, isTrashView?: boolean) {
   return 'bg-[var(--color-surface)]';
 }
 
-function toggleSort(current: string, desc: string, asc: string) {
+function toggleSort(current: ListSortKey, desc: ListSortKey, asc: ListSortKey): ListSortKey {
   return current === desc ? asc : desc;
 }
 

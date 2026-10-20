@@ -185,11 +185,11 @@ export async function getDashboardData(
     ),
     dbQuery(() =>
       prisma.$queryRaw<{ id: string; h24: number; d7: number; prev7: number }[]>`
-        SELECT "listId" AS id,
-               COUNT(*) FILTER (WHERE "createdAt" >= ${last24h})::int AS h24,
-               COUNT(*) FILTER (WHERE "createdAt" >= ${last7d})::int AS d7,
+        SELECT b."listId" AS id,
+               COUNT(*) FILTER (WHERE b."createdAt" >= ${last24h})::int AS h24,
+               COUNT(*) FILTER (WHERE b."createdAt" >= ${last7d})::int AS d7,
                COUNT(*) FILTER (
-                 WHERE "createdAt" >= ${prev7dStart} AND "createdAt" < ${last7d}
+                 WHERE b."createdAt" >= ${prev7dStart} AND b."createdAt" < ${last7d}
                )::int AS prev7
         FROM bookmarks b
         INNER JOIN lists l ON l.id = b."listId" AND l."isActive" = true
