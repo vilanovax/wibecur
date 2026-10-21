@@ -6,9 +6,8 @@ import { faNumber } from '@/lib/utils';
 
 const SAMPLE = `{
   "assignments": [
-    { "target": "category:cafe", "url": "https://..." },
-    { "target": "list:great-breakfast-cafes", "url": "https://..." },
-    { "target": "person:author:bozorg-alavi", "url": "https://..." }
+    { "target": "catalog:VPXZ_j7XHk-QabwoUhIeG", "title": "Planet Earth - سیاره زمین" },
+    { "target": "category:cafe", "url": "https://..." }
   ]
 }`;
 
@@ -37,11 +36,20 @@ export default function MediaImportPanel() {
       const data = (await response.json()) as {
         error?: string;
         updated?: number;
+        images?: number;
+        titles?: number;
+        listItems?: number;
         errors?: { target: string; error: string }[];
       };
       if (!response.ok) throw new Error(data.error || 'ایمپورت انجام نشد.');
       const failed = data.errors ?? [];
-      setMessage(`${faNumber(data.updated ?? 0)} تصویر ثبت شد.`);
+      const parts = [
+        data.titles ? `${faNumber(data.titles)} عنوان` : '',
+        data.images ? `${faNumber(data.images)} تصویر` : '',
+      ].filter(Boolean);
+      const summary = parts.length > 0 ? parts.join(' و ') : `${faNumber(data.updated ?? 0)} مورد`;
+      const lists = data.listItems ? ` ${faNumber(data.listItems)} رکورد داخل لیست‌ها هم عوض شد.` : '';
+      setMessage(`${summary} ثبت شد.${lists}`);
       if (failed.length > 0) {
         setError(failed.map((row) => `${row.target}: ${row.error}`).join(' — '));
       } else {
@@ -68,7 +76,7 @@ export default function MediaImportPanel() {
       {open ? (
         <div className="basis-full space-y-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
           <p className="text-xs text-[var(--color-text-muted)]">
-            فایل خروجی JSON را همین‌جا برگردانید. فقط target و url خوانده می‌شود و در هر بار تا ۱۰۰ ردیف ثبت می‌شود. آدرس بیرونی اول روی فضای تصاویر سایت کپی می‌شود. بنرهای ثابت سایت از اینجا عوض نمی‌شوند.
+            برای عنوان، شناسهٔ کاتالوگ و title بفرستید. عنوان کاتالوگ و رکورد همان آیتم در لیست‌ها عوض می‌شود و آیتم تازه ساخته نمی‌شود. برای تصویر، url را بگذارید. در هر بار تا ۲۰۰ ردیف. آدرس بیرونی اول روی فضای تصاویر سایت کپی می‌شود. بنرهای ثابت سایت از اینجا عوض نمی‌شوند.
           </p>
           <textarea
             value={text}

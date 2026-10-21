@@ -49,6 +49,17 @@ describe('parseMediaImport', () => {
     expect(parsed).toEqual([{ target: 'list-banner:cafe', url: 'https://cdn.example/a.webp' }]);
   });
 
+  it('reads a catalog title row, including a single object', () => {
+    expect(
+      parseMediaImport({
+        target: 'catalog:VPXZ_j7XHk-QabwoUhIeG',
+        title: 'Planet Earth - سیاره زمین',
+      }),
+    ).toEqual([
+      { target: 'catalog:VPXZ_j7XHk-QabwoUhIeG', title: 'Planet Earth - سیاره زمین' },
+    ]);
+  });
+
   it('rejects an empty file and a bad target', () => {
     expect(parseMediaImport({ assignments: [] })).toEqual({ error: 'هیچ نسبتی در فایل نیست.' });
     expect(parseMediaImport({ assignments: [{ target: 'banner:a.webp', url: 'https://x' }] })).toEqual({

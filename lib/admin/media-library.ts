@@ -3,6 +3,7 @@ import path from 'path';
 import { Prisma } from '@prisma/client';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { buildCatalogExternalKey } from '@/lib/catalog-items';
 import { getSharp } from '@/lib/get-sharp';
 import { inspectMediaSlots, readImageBuffer } from '@/lib/admin/media-inspect';
 import { optimizeImageDetailed } from '@/lib/image-optimizer';
@@ -909,30 +910,109 @@ export async function exportMissingMediaAssignments(input: {
   return { assignments };
 }
 
+function isUniqueConflict(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+}
+
+/** عنوان کاتالوگ و رکوردهای همان آیتم در لیست‌ها. تصویر و توضیح لیست دست نمی‌خورد. */
+async function renameCatalogTitle(
+  target: MediaTarget,
+  title: string,
+): Promise<{ ok: true; listItems: number } | { ok: false; error: string }> {
+  if (target.kind !== 'catalog') {
+    return { ok: false, error: 'تغییر عنوان فقط با شناسهٔ کاتالوگ ممکن است.' };
+  }
+  const row = await prisma.catalog_items.findUnique({
+    where: { id: target.id },
+    select: { id: true, externalKey: true, categorySlug: true, metadata: true },
+  });
+  if (!row) return { ok: false, error: 'آیتم کاتالوگ پیدا نشد.' };
+
+  const titleBased = !row.externalKey || row.externalKey.startsWith('title:');
+  const nextKey = titleBased
+    ? buildCatalogExternalKey(row.categorySlug, title, row.metadata) ?? row.externalKey
+    : row.externalKey;
+  try {
+    await prisma.catalog_items.update({
+      where: { id: row.id },
+      data: { title, externalKey: nextKey, updatedAt: new Date() },
+    });
+  } catch (error) {
+    if (!isUniqueConflict(error)) throw error;
+    await prisma.catalog_items.update({
+      where: { id: row.id },
+      data: { title, updatedAt: new Date() },
+    });
+  }
+
+  const linked = await prisma.items.findMany({
+    where: { catalogItemId: row.id, deletedAt: null },
+    select: { id: true, lists: { select: { slug: true } } },
+  });
+  if (linked.length > 0) {
+    await prisma.items.updateMany({
+      where: { id: { in: linked.map((item) => item.id) }, deletedAt: null },
+      data: { title, updatedAt: new Date() },
+    });
+    for (const item of linked) {
+      revalidateItemDetailCache(item.id);
+      revalidateListDetailCache(item.lists.slug);
+    }
+  }
+  return { ok: true, listItems: linked.length };
+}
+
 export async function importMediaAssignments(
-  rows: { target: string; url: string }[]
-): Promise<{ updated: number; errors: { target: string; error: string }[] }> {
+  rows: { target: string; url?: string; title?: string }[]
+): Promise<{
+  updated: number;
+  images: number;
+  titles: number;
+  listItems: number;
+  errors: { target: string; error: string }[];
+}> {
   const errors: { target: string; error: string }[] = [];
-  let updated = 0;
+  let images = 0;
+  let titles = 0;
+  let listItems = 0;
   for (const row of rows) {
     const target = parseMediaTarget(row.target);
     if (!target) {
       errors.push({ target: row.target, error: 'هدف نامعتبر است.' });
       continue;
     }
-    const stored = await storeIncomingUrl(target.kind, row.url);
-    if (!stored.ok) {
-      errors.push({ target: row.target, error: stored.error });
-      continue;
+    let changed = false;
+    if (row.url) {
+      const stored = await storeIncomingUrl(target.kind, row.url);
+      if (!stored.ok) {
+        errors.push({ target: row.target, error: stored.error });
+      } else {
+        const written = await writeSlot(target, stored.url);
+        if (!written.ok) errors.push({ target: row.target, error: written.error });
+        else {
+          images += 1;
+          changed = true;
+        }
+      }
     }
-    const written = await writeSlot(target, stored.url);
-    if (!written.ok) {
-      errors.push({ target: row.target, error: written.error });
-      continue;
+    if (row.title) {
+      const renamed = await renameCatalogTitle(target, row.title);
+      if (!renamed.ok) errors.push({ target: row.target, error: renamed.error });
+      else {
+        titles += 1;
+        listItems += renamed.listItems;
+        changed = true;
+      }
     }
-    updated += 1;
+    if (!changed && !row.url && !row.title) {
+      errors.push({ target: row.target, error: 'نه تصویری هست و نه عنوانی.' });
+    }
   }
-  return { updated, errors };
+  if (titles > 0) {
+    revalidateAdminListsCache();
+    revalidateHomeCache();
+  }
+  return { updated: images + titles, images, titles, listItems, errors };
 }
 
 export async function replaceSiteBanner(

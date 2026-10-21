@@ -145,35 +145,50 @@ export function parseMediaTarget(raw: string): MediaTarget | null {
   return null;
 }
 
-export type MediaAssignment = { target: string; url: string };
+export type MediaAssignment = { target: string; url?: string; title?: string };
+
+const IMPORT_ROW_LIMIT = 200;
+const IMPORT_TITLE_MAX = 300;
 
 export function parseMediaImport(body: unknown): MediaAssignment[] | { error: string } {
   const record = Array.isArray(body) ? { assignments: body } : body;
   if (!record || typeof record !== 'object') {
     return { error: 'JSON باید یک شیء با آرایهٔ assignments باشد.' };
   }
-  const bag = record as { assignments?: unknown; images?: unknown };
-  const assignments = Array.isArray(bag.assignments) ? bag.assignments : bag.images;
-  if (!Array.isArray(assignments)) {
+  const bag = record as { assignments?: unknown; images?: unknown; target?: unknown };
+  const assignments = Array.isArray(bag.assignments)
+    ? bag.assignments
+    : Array.isArray(bag.images)
+      ? bag.images
+      : typeof bag.target === 'string'
+        ? [bag]
+        : null;
+  if (!assignments) {
     return { error: 'JSON باید آرایهٔ assignments یا images داشته باشد.' };
   }
   if (assignments.length === 0) return { error: 'هیچ نسبتی در فایل نیست.' };
-  if (assignments.length > 100) return { error: 'در هر بار حداکثر ۱۰۰ نسبت بفرستید.' };
+  if (assignments.length > IMPORT_ROW_LIMIT) return { error: 'در هر بار حداکثر ۲۰۰ نسبت بفرستید.' };
 
   const parsed: MediaAssignment[] = [];
   for (const row of assignments) {
     if (!row || typeof row !== 'object') return { error: 'یکی از ردیف‌ها شیء نیست.' };
     const target = (row as { target?: unknown }).target;
     const url = (row as { url?: unknown }).url;
-    if (typeof target !== 'string' || typeof url !== 'string') {
-      return { error: 'هر ردیف باید target و url متنی داشته باشد.' };
-    }
-    if (!parseMediaTarget(target)) {
-      return { error: `هدف نامعتبر است: ${target}` };
-    }
-    const trimmed = url.trim();
-    if (!trimmed || trimmed.length > 2000) return { error: `آدرس نامعتبر است: ${target}` };
-    parsed.push({ target: target.trim(), url: trimmed });
+    const title = (row as { title?: unknown }).title;
+    if (typeof target !== 'string') return { error: 'هر ردیف باید target متنی داشته باشد.' };
+    if (!parseMediaTarget(target)) return { error: `هدف نامعتبر است: ${target}` };
+    if (url != null && typeof url !== 'string') return { error: `آدرس باید متن باشد: ${target}` };
+    if (title != null && typeof title !== 'string') return { error: `عنوان باید متن باشد: ${target}` };
+    const trimmedUrl = typeof url === 'string' ? url.trim() : '';
+    const trimmedTitle = typeof title === 'string' ? title.trim() : '';
+    if (!trimmedUrl && !trimmedTitle) return { error: `هر ردیف باید url یا title داشته باشد: ${target}` };
+    if (trimmedUrl.length > 2000) return { error: `آدرس نامعتبر است: ${target}` };
+    if (trimmedTitle.length > IMPORT_TITLE_MAX) return { error: `عنوان بلند است: ${target}` };
+    parsed.push({
+      target: target.trim(),
+      ...(trimmedUrl ? { url: trimmedUrl } : {}),
+      ...(trimmedTitle ? { title: trimmedTitle } : {}),
+    });
   }
   return parsed;
 }
