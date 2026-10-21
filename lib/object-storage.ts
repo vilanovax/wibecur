@@ -302,35 +302,72 @@ function parseStorageUrlParts(publicUrl: string): { bucket: string; key: string 
   }
 }
 
+const LARGEST_STORED_FILES = 500;
+const STORAGE_LIST_PAGE_MS = 8000;
+const STORAGE_LIST_BUDGET_MS = 18000;
+
 let storageSizeCache: { at: number; sizes: Map<string, number> } | null = null;
 
-/** اندازهٔ همهٔ فایل‌های فضای تصاویر. یک دقیقه در حافظه می‌ماند. */
-export async function listStorageObjectSizes(): Promise<Map<string, number>> {
-  const now = Date.now();
-  if (storageSizeCache && now - storageSizeCache.at < 60_000) return storageSizeCache.sizes;
+function rememberLargest(found: { key: string; bytes: number }[], key: string, bytes: number, keep: number) {
+  if (found.length === keep && bytes <= found[0].bytes) return;
+  let lo = 0;
+  let hi = found.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (found[mid].bytes < bytes) lo = mid + 1;
+    else hi = mid;
+  }
+  found.splice(lo, 0, { key, bytes });
+  if (found.length > keep) found.shift();
+}
 
-  const sizes = new Map<string, number>();
+/** بزرگ‌ترین فایل‌های فضای تصاویر. اگر خواندن طول بکشد، ناتمام برمی‌گردد. */
+export async function listStorageObjectSizes(): Promise<{ sizes: Map<string, number>; complete: boolean }> {
+  const now = Date.now();
+  if (storageSizeCache && now - storageSizeCache.at < 60_000) {
+    return { sizes: storageSizeCache.sizes, complete: true };
+  }
+
+  const found: { key: string; bytes: number }[] = [];
   const config = await getObjectStorageConfig();
   const client = await getS3Client();
-  if (!config || !client) return sizes;
+  if (!config || !client) return { sizes: new Map(), complete: false };
 
   let token: string | undefined;
-  do {
-    const res = await client.send(
-      new ListObjectsV2Command({
-        Bucket: config.bucketName,
-        Prefix: `${STORAGE_OBJECT_PREFIX}/`,
-        ContinuationToken: token,
-      })
-    );
-    for (const object of res.Contents ?? []) {
-      if (object.Key && object.Size != null) sizes.set(object.Key, object.Size);
-    }
-    token = res.IsTruncated ? res.NextContinuationToken : undefined;
-  } while (token);
+  let complete = true;
+  const started = Date.now();
+  try {
+    do {
+      if (Date.now() - started > STORAGE_LIST_BUDGET_MS) {
+        complete = false;
+        break;
+      }
+      const previous = token;
+      const res = await client.send(
+        new ListObjectsV2Command({
+          Bucket: config.bucketName,
+          Prefix: `${STORAGE_OBJECT_PREFIX}/`,
+          ContinuationToken: token,
+        }),
+        { abortSignal: AbortSignal.timeout(STORAGE_LIST_PAGE_MS) }
+      );
+      for (const object of res.Contents ?? []) {
+        if (object.Key && object.Size != null) rememberLargest(found, object.Key, object.Size, LARGEST_STORED_FILES);
+      }
+      token = res.IsTruncated ? res.NextContinuationToken : undefined;
+      if (token && token === previous) {
+        complete = false;
+        break;
+      }
+    } while (token);
+  } catch (error) {
+    complete = false;
+    console.error('[storage] listing object sizes failed:', (error as Error).message);
+  }
 
-  storageSizeCache = { at: now, sizes };
-  return sizes;
+  const sizes = new Map(found.map((item) => [item.key, item.bytes]));
+  if (complete) storageSizeCache = { at: now, sizes };
+  return { sizes, complete };
 }
 
 export function storageObjectBytes(publicUrl: string, sizes: Map<string, number>): number | null {

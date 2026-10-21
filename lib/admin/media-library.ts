@@ -327,7 +327,7 @@ export async function loadHeaviestMedia(input: {
   filter: MediaFilter;
   q: string;
   state: MediaState;
-}): Promise<MediaSlot[]> {
+}): Promise<{ slots: MediaSlot[]; complete: boolean }> {
   const q = input.q.trim().slice(0, 80);
   const pattern = likePattern(q);
   const candidates: SizedSlotRow[] = [];
@@ -347,11 +347,15 @@ export async function loadHeaviestMedia(input: {
     }
   }
 
+  let complete = input.filter === 'banner';
   if (input.filter !== 'banner') {
     let sizes = new Map<string, number>();
     try {
-      sizes = await listStorageObjectSizes();
+      const listed = await listStorageObjectSizes();
+      sizes = listed.sizes;
+      complete = listed.complete;
     } catch (error) {
+      complete = false;
       console.error('[media] listing storage sizes failed:', error);
     }
     const rows = await prisma.$queryRaw<
@@ -391,7 +395,7 @@ export async function loadHeaviestMedia(input: {
       return slot;
     })
   );
-  return slots;
+  return { slots, complete };
 }
 
 export async function exportHeaviestMedia(input: {
@@ -399,7 +403,7 @@ export async function exportHeaviestMedia(input: {
   q: string;
   state: MediaState;
 }): Promise<{ images: { target: string; title: string; url: string; bytes: number }[] }> {
-  const slots = await loadHeaviestMedia(input);
+  const { slots } = await loadHeaviestMedia(input);
   return {
     images: slots.flatMap((slot) => {
       if (!slot.imageUrl || slot.bytes == null) return [];

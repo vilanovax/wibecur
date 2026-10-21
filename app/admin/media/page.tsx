@@ -84,7 +84,8 @@ export default async function MediaLibraryPage({
   const heaviest = parseMediaRank(params.rank) === 'bytes';
   const page = Math.max(1, Number(params.page) || 1);
   const data = await loadMediaLibrary({ filter, q, missing: heaviest ? false : missing, state, page });
-  const slots = heaviest ? await loadHeaviestMedia({ filter, q, state }) : data.slots;
+  const heavy = heaviest ? await loadHeaviestMedia({ filter, q, state }) : null;
+  const slots = heavy ? heavy.slots : data.slots;
   const pageCount = Math.max(1, Math.ceil(data.total / data.pageSize));
   const filters: MediaFilter[] = ['all', ...MEDIA_KINDS];
 
@@ -237,6 +238,12 @@ export default async function MediaLibraryPage({
           </Link>
         </div>
       </div>
+
+      {heaviest && heavy && !heavy.complete && slots.length > 0 ? (
+        <p className="text-sm text-[var(--color-text-muted)]">
+          خواندن همهٔ فایل‌ها تمام نشد. این فهرست از همان بخشی است که خوانده شد.
+        </p>
+      ) : null}
 
       {slots.length === 0 ? (
         <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-muted)]">
