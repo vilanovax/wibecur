@@ -1,4 +1,4 @@
-import { GetObjectCommand, HeadObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import axios from 'axios';
 import {
@@ -6,6 +6,7 @@ import {
   buildStoragePublicUrl,
   getObjectStorageConfig,
   isOurStorageUrl,
+  STORAGE_OBJECT_PREFIX,
 } from './object-storage-config';
 import crypto from 'crypto';
 import { optimizeImageDetailed } from './image-optimizer';
@@ -299,6 +300,51 @@ function parseStorageUrlParts(publicUrl: string): { bucket: string; key: string 
   } catch {
     return null;
   }
+}
+
+let storageSizeCache: { at: number; sizes: Map<string, number> } | null = null;
+
+/** اندازهٔ همهٔ فایل‌های فضای تصاویر. یک دقیقه در حافظه می‌ماند. */
+export async function listStorageObjectSizes(): Promise<Map<string, number>> {
+  const now = Date.now();
+  if (storageSizeCache && now - storageSizeCache.at < 60_000) return storageSizeCache.sizes;
+
+  const sizes = new Map<string, number>();
+  const config = await getObjectStorageConfig();
+  const client = await getS3Client();
+  if (!config || !client) return sizes;
+
+  let token: string | undefined;
+  do {
+    const res = await client.send(
+      new ListObjectsV2Command({
+        Bucket: config.bucketName,
+        Prefix: `${STORAGE_OBJECT_PREFIX}/`,
+        ContinuationToken: token,
+      })
+    );
+    for (const object of res.Contents ?? []) {
+      if (object.Key && object.Size != null) sizes.set(object.Key, object.Size);
+    }
+    token = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (token);
+
+  storageSizeCache = { at: now, sizes };
+  return sizes;
+}
+
+export function storageObjectBytes(publicUrl: string, sizes: Map<string, number>): number | null {
+  if (!isOurStorageUrl(publicUrl)) return null;
+  const parts = parseStorageUrlParts(publicUrl);
+  if (!parts) return null;
+  const direct = sizes.get(parts.key);
+  if (direct != null) return direct;
+  const bucketPrefix = `${parts.bucket}/`;
+  if (parts.key.startsWith(bucketPrefix)) {
+    const stripped = sizes.get(parts.key.slice(bucketPrefix.length));
+    if (stripped != null) return stripped;
+  }
+  return sizes.get(`${parts.bucket}/${parts.key}`) ?? null;
 }
 
 /** اندازه و نوع فایل از استوریج — بدون دانلود کامل */

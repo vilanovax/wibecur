@@ -154,6 +154,7 @@ export default function MediaSlotRow({
       <p className="truncate text-sm font-semibold text-[var(--color-text)]">{slot.title}</p>
       <p className="truncate text-xs text-[var(--color-text-muted)]">
         {MEDIA_KIND_LABELS[slot.kind]}
+        {slot.active ? '' : ' · غیرفعال'}
         {slot.detail ? (
           <>
             {' · '}

@@ -12,6 +12,10 @@ export type MediaKind = (typeof MEDIA_KINDS)[number];
 
 export type MediaFilter = 'all' | MediaKind;
 
+export type MediaState = 'all' | 'active' | 'inactive';
+
+export const HEAVIEST_IMAGE_LIMIT = 25;
+
 export type MediaSlot = {
   key: string;
   kind: MediaKind;
@@ -23,6 +27,7 @@ export type MediaSlot = {
   bytes: number | null;
   width: number | null;
   height: number | null;
+  active: boolean;
   canClear: boolean;
   editHref: string | null;
 };
@@ -46,6 +51,56 @@ export function isMediaKind(value: string): value is MediaKind {
 export function parseMediaFilter(value: string | undefined): MediaFilter {
   if (value === 'all' || value == null || value === '') return 'all';
   return isMediaKind(value) ? value : 'all';
+}
+
+export function parseMediaState(value: string | null | undefined): MediaState {
+  if (value === 'active' || value === 'inactive') return value;
+  return 'all';
+}
+
+export function parseMediaRank(value: string | null | undefined): 'bytes' | null {
+  return value === 'bytes' ? 'bytes' : null;
+}
+
+/** تصویر یکتا با بیشترین حجم. نشانی تکراری یک بار می‌ماند. */
+export function rankHeaviestImages<T extends { url: string; bytes: number }>(
+  rows: T[],
+  limit = HEAVIEST_IMAGE_LIMIT,
+): T[] {
+  const byUrl = new Map<string, T>();
+  for (const row of rows) {
+    const url = row.url.trim();
+    if (!url || !(row.bytes > 0) || byUrl.has(url)) continue;
+    byUrl.set(url, row);
+  }
+  return [...byUrl.values()]
+    .sort((a, b) => b.bytes - a.bytes || a.url.localeCompare(b.url))
+    .slice(0, limit);
+}
+
+/** کلید ایمپورت برای ردیفی که تصویر ندارد. بنر ثابت در JSON نمی‌آید. */
+export function missingMediaTarget(kind: MediaKind, id: string, detail: string): string | null {
+  if (kind === 'banner') return null;
+  if (kind === 'person') {
+    const slash = detail.indexOf('/');
+    if (slash <= 0 || slash === detail.length - 1) return null;
+    const role = detail.slice(0, slash).trim();
+    const slug = detail.slice(slash + 1).trim();
+    if (!safeTargetPart(role) || !safeTargetPart(slug)) return null;
+    return `person:${role}:${slug}`;
+  }
+  if (kind === 'catalog' || kind === 'item') {
+    const clean = id.trim();
+    if (!safeTargetPart(clean)) return null;
+    return `${kind}:${clean}`;
+  }
+  const slug = detail.trim();
+  if (!safeTargetPart(slug)) return null;
+  return `${kind}:${slug}`;
+}
+
+function safeTargetPart(value: string): boolean {
+  return Boolean(value) && !value.includes(':') && !value.includes('/') && !value.includes('..') && !value.includes('\\');
 }
 
 export type MediaTarget =

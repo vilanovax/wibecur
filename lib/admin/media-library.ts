@@ -6,7 +6,7 @@ import { getSharp } from '@/lib/get-sharp';
 import { validateImage } from '@/lib/image-validator';
 import { getDisplayImageUrl } from '@/lib/display-image';
 import { isValidHttpImageUrl, normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
-import { uploadImageFromUrlDetailed } from '@/lib/object-storage';
+import { listStorageObjectSizes, storageObjectBytes, uploadImageFromUrlDetailed } from '@/lib/object-storage';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import { isPublicHttpUrl } from '@/lib/ssrf-guard';
 import type { ImageProfile } from '@/lib/image-config';
@@ -22,12 +22,17 @@ import {
   revalidateListDetailCache,
 } from '@/lib/public-cache';
 import {
+  HEAVIEST_IMAGE_LIMIT,
   MEDIA_KINDS,
+  isMediaKind,
+  missingMediaTarget,
   parseMediaTarget,
+  rankHeaviestImages,
   safeBannerFileName,
   type MediaFilter,
   type MediaKind,
   type MediaSlot,
+  type MediaState,
   type MediaTarget,
 } from '@/lib/admin/media-targets';
 
@@ -45,29 +50,43 @@ const PAGE_SIZE = 20;
 const BANNERS_DIR = path.join(process.cwd(), 'public/images/banners');
 
 const slotsFrom = Prisma.sql`
-  SELECT 'category'::text AS kind, id, name AS title, slug AS detail, "heroImage" AS url
+  SELECT 'category'::text AS kind, id, name AS title, slug AS detail, "heroImage" AS url, "isActive" AS active
   FROM categories
   WHERE "deletedAt" IS NULL
   UNION ALL
-  SELECT 'list'::text, id, title, slug, "coverImage"
+  SELECT 'list'::text, id, title, slug, "coverImage", "isActive"
   FROM lists
   WHERE "deletedAt" IS NULL
   UNION ALL
-  SELECT 'list-banner'::text, id, title, slug, "horizontalImage"
+  SELECT 'list-banner'::text, id, title, slug, "horizontalImage", "isActive"
   FROM lists
   WHERE "deletedAt" IS NULL
   UNION ALL
-  SELECT 'catalog'::text, id, title, COALESCE("categorySlug", ''), "imageUrl"
+  SELECT 'catalog'::text, id, title, COALESCE("categorySlug", ''), "imageUrl", true
   FROM catalog_items
   UNION ALL
-  SELECT 'item'::text, i.id, i.title, COALESCE(l.title, ''), i."imageUrl"
+  SELECT 'item'::text, i.id, i.title, COALESCE(l.title, ''), i."imageUrl",
+    (l.id IS NOT NULL AND l."deletedAt" IS NULL AND l."isActive" = true)
   FROM items i
   LEFT JOIN lists l ON l.id = i."listId"
   WHERE i."deletedAt" IS NULL
   UNION ALL
-  SELECT 'person'::text, p.id, p."displayName", p.role || '/' || p.slug, p."imageUrl"
+  SELECT 'person'::text, p.id, p."displayName", p.role || '/' || p.slug, p."imageUrl",
+    (COALESCE(p.status, '') = 'published')
   FROM person_profiles p
 `;
+
+function stateWhere(state: MediaState) {
+  return Prisma.sql`(
+    ${state} = 'all'
+    OR (${state} = 'active' AND active IS TRUE)
+    OR (${state} = 'inactive' AND active IS FALSE)
+  )`;
+}
+
+function isActiveFlag(value: unknown): boolean {
+  return value === true || value === 't' || value === 'true';
+}
 
 function emptyCounts(): Record<MediaFilter, number> {
   return {
@@ -132,6 +151,7 @@ async function bannerSlots(q: string): Promise<MediaSlot[]> {
       bytes: meta.bytes,
       width: meta.width,
       height: meta.height,
+      active: true,
       canClear: false,
       editHref: null,
     });
@@ -158,6 +178,7 @@ async function decorate(row: {
   title: string;
   detail: string | null;
   url: string | null;
+  active: unknown;
 }): Promise<MediaSlot> {
   const kind = row.kind as MediaKind;
   const imageUrl = row.url?.trim() || null;
@@ -184,6 +205,7 @@ async function decorate(row: {
     bytes,
     width,
     height,
+    active: isActiveFlag(row.active),
     canClear: kind !== 'banner',
     editHref: editHref(kind, row.id, row.detail?.trim() || ''),
   };
@@ -212,26 +234,29 @@ export async function loadMediaLibrary(input: {
   filter: MediaFilter;
   q: string;
   missing: boolean;
+  state: MediaState;
   page: number;
 }): Promise<MediaLibraryData> {
   const q = input.q.trim().slice(0, 80);
   const page = Number.isFinite(input.page) && input.page > 0 ? Math.floor(input.page) : 1;
   const pattern = likePattern(q);
   const counts = emptyCounts();
+  const state = stateWhere(input.state);
 
   const grouped = await prisma.$queryRaw<{ kind: string; n: number }[]>(Prisma.sql`
     SELECT kind, COUNT(*)::int AS n
     FROM (${slotsFrom}) slots
+    WHERE ${state}
     GROUP BY kind
   `);
   for (const row of grouped) {
     if (row.kind in counts) counts[row.kind as MediaKind] = Number(row.n);
   }
-  counts.banner = bannerNames().length;
+  counts.banner = input.state === 'inactive' ? 0 : bannerNames().length;
   counts.all = MEDIA_KINDS.reduce((sum, kind) => sum + (kind === 'banner' ? 0 : counts[kind]), 0);
 
   if (input.filter === 'banner') {
-    const all = input.missing ? [] : await bannerSlots(q);
+    const all = input.missing || input.state === 'inactive' ? [] : await bannerSlots(q);
     const start = (page - 1) * PAGE_SIZE;
     return {
       slots: all.slice(start, start + PAGE_SIZE),
@@ -246,15 +271,18 @@ export async function loadMediaLibrary(input: {
     WHERE (${input.filter} = 'all' OR kind = ${input.filter})
       AND (${q} = '' OR title ILIKE ${pattern} ESCAPE '\\' OR detail ILIKE ${pattern} ESCAPE '\\')
       AND (${input.missing} = false OR url IS NULL OR btrim(COALESCE(url, '')) = '')
+      AND ${state}
   `;
 
   const [countRows, rows] = await Promise.all([
     prisma.$queryRaw<{ n: number }[]>(Prisma.sql`
       SELECT COUNT(*)::int AS n FROM (${slotsFrom}) slots ${where}
     `),
-    prisma.$queryRaw<{ kind: string; id: string; title: string; detail: string | null; url: string | null }[]>(
+    prisma.$queryRaw<
+      { kind: string; id: string; title: string; detail: string | null; url: string | null; active: unknown }[]
+    >(
       Prisma.sql`
-        SELECT kind, id, title, detail, url
+        SELECT kind, id, title, detail, url, active
         FROM (${slotsFrom}) slots
         ${where}
         ORDER BY kind, title, id
@@ -272,6 +300,114 @@ export async function loadMediaLibrary(input: {
     page,
     pageSize: PAGE_SIZE,
     counts,
+  };
+}
+
+type SizedSlotRow = {
+  kind: string;
+  id: string;
+  title: string;
+  detail: string | null;
+  url: string;
+  active: unknown;
+  bytes: number;
+};
+
+function localFileBytes(url: string): number | null {
+  const file = publicFileFromUrl(url);
+  if (!file) return null;
+  try {
+    return fs.statSync(file).size;
+  } catch {
+    return null;
+  }
+}
+
+export async function loadHeaviestMedia(input: {
+  filter: MediaFilter;
+  q: string;
+  state: MediaState;
+}): Promise<MediaSlot[]> {
+  const q = input.q.trim().slice(0, 80);
+  const pattern = likePattern(q);
+  const candidates: SizedSlotRow[] = [];
+
+  if ((input.filter === 'all' || input.filter === 'banner') && input.state !== 'inactive') {
+    for (const slot of await bannerSlots(q)) {
+      if (!slot.imageUrl || !slot.bytes) continue;
+      candidates.push({
+        kind: slot.kind,
+        id: slot.id,
+        title: slot.title,
+        detail: slot.detail,
+        url: slot.imageUrl,
+        active: true,
+        bytes: slot.bytes,
+      });
+    }
+  }
+
+  if (input.filter !== 'banner') {
+    let sizes = new Map<string, number>();
+    try {
+      sizes = await listStorageObjectSizes();
+    } catch (error) {
+      console.error('[media] listing storage sizes failed:', error);
+    }
+    const rows = await prisma.$queryRaw<
+      { kind: string; id: string; title: string; detail: string | null; url: string | null; active: unknown }[]
+    >(Prisma.sql`
+      SELECT kind, id, title, detail, url, active
+      FROM (${slotsFrom}) slots
+      WHERE (${input.filter} = 'all' OR kind = ${input.filter})
+        AND (${q} = '' OR title ILIKE ${pattern} ESCAPE '\\' OR detail ILIKE ${pattern} ESCAPE '\\')
+        AND url IS NOT NULL
+        AND btrim(url) <> ''
+        AND ${stateWhere(input.state)}
+      ORDER BY kind, title, id
+    `);
+    for (const row of rows) {
+      const url = row.url?.trim() ?? '';
+      if (!url) continue;
+      const bytes = url.startsWith('/images/') ? localFileBytes(url) : storageObjectBytes(url, sizes);
+      if (!bytes) continue;
+      candidates.push({
+        kind: row.kind,
+        id: row.id,
+        title: row.title,
+        detail: row.detail,
+        url,
+        active: row.active,
+        bytes,
+      });
+    }
+  }
+
+  const top = rankHeaviestImages(candidates, HEAVIEST_IMAGE_LIMIT);
+  const slots = await Promise.all(
+    top.map(async (row) => {
+      const slot = await decorate(row);
+      if (slot.bytes == null) slot.bytes = row.bytes;
+      return slot;
+    })
+  );
+  return slots;
+}
+
+export async function exportHeaviestMedia(input: {
+  filter: MediaFilter;
+  q: string;
+  state: MediaState;
+}): Promise<{ images: { target: string; title: string; url: string; bytes: number }[] }> {
+  const slots = await loadHeaviestMedia(input);
+  return {
+    images: slots.flatMap((slot) => {
+      if (!slot.imageUrl || slot.bytes == null) return [];
+      const target =
+        slot.kind === 'banner' ? `banner:${slot.id}` : missingMediaTarget(slot.kind, slot.id, slot.detail);
+      if (!target) return [];
+      return [{ target, title: slot.title, url: slot.imageUrl, bytes: slot.bytes }];
+    }),
   };
 }
 
@@ -465,6 +601,31 @@ async function countUrlUses(url: string): Promise<number> {
     )::int AS n
   `);
   return Number(rows[0]?.n ?? 0);
+}
+
+export async function exportMissingMediaAssignments(input: {
+  filter: MediaFilter;
+  state: MediaState;
+}): Promise<{ assignments: { target: string; title: string; url: string }[] }> {
+  if (input.filter === 'banner') return { assignments: [] };
+  const rows = await prisma.$queryRaw<{ kind: string; id: string; title: string; detail: string | null }[]>(
+    Prisma.sql`
+      SELECT kind, id, title, detail
+      FROM (${slotsFrom}) slots
+      WHERE (${input.filter} = 'all' OR kind = ${input.filter})
+        AND (url IS NULL OR btrim(COALESCE(url, '')) = '')
+        AND ${stateWhere(input.state)}
+      ORDER BY kind, title, id
+    `
+  );
+  const assignments: { target: string; title: string; url: string }[] = [];
+  for (const row of rows) {
+    if (!isMediaKind(row.kind)) continue;
+    const target = missingMediaTarget(row.kind, row.id, row.detail ?? '');
+    if (!target) continue;
+    assignments.push({ target, title: row.title, url: '' });
+  }
+  return { assignments };
 }
 
 export async function importMediaAssignments(

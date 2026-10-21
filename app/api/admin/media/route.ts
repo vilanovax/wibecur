@@ -1,7 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission } from '@/lib/auth/require-permission';
-import { assignMediaImage, clearMediaImage, importMediaAssignments, replaceSiteBanner } from '@/lib/admin/media-library';
-import { isMediaKind, parseMediaImport } from '@/lib/admin/media-targets';
+import {
+  assignMediaImage,
+  clearMediaImage,
+  exportHeaviestMedia,
+  exportMissingMediaAssignments,
+  importMediaAssignments,
+  replaceSiteBanner,
+} from '@/lib/admin/media-library';
+import { isMediaKind, parseMediaFilter, parseMediaImport, parseMediaRank, parseMediaState } from '@/lib/admin/media-targets';
+
+export async function GET(request: NextRequest) {
+  const userOrRes = await requirePermission('edit_list_media');
+  if (userOrRes instanceof NextResponse) return userOrRes;
+
+  const filter = parseMediaFilter(request.nextUrl.searchParams.get('kind') ?? undefined);
+  const state = parseMediaState(request.nextUrl.searchParams.get('state'));
+  const q = request.nextUrl.searchParams.get('q') ?? '';
+  const heaviest = parseMediaRank(request.nextUrl.searchParams.get('rank')) === 'bytes';
+  const body = heaviest
+    ? await exportHeaviestMedia({ filter, q, state })
+    : await exportMissingMediaAssignments({ filter, state });
+  const parts = [heaviest ? 'media-heaviest' : 'media-missing'];
+  if (filter !== 'all') parts.push(filter);
+  if (state !== 'all') parts.push(state);
+  return new NextResponse(JSON.stringify(body, null, 2), {
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'content-disposition': `attachment; filename="${parts.join('-')}.json"`,
+      'cache-control': 'no-store',
+    },
+  });
+}
 
 export async function POST(request: NextRequest) {
   const userOrRes = await requirePermission('edit_list_media');
