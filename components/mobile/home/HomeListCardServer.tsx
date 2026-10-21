@@ -8,18 +8,21 @@ type HomeListCardServerProps = {
   list: Pick<HomeListData, 'id' | 'title' | 'slug' | 'coverImage' | 'categories'>;
   badge?: string | null;
   badgeClassName?: string;
+  priority?: boolean;
 };
 
 export default function HomeListCardServer({
   list,
   badge,
   badgeClassName = 'bg-brand text-brand-foreground',
+  priority = false,
 }: HomeListCardServerProps) {
   const cover = list.coverImage ? resolveNextImageSrc(list.coverImage) : null;
 
   return (
     <Link
       href={`/lists/${list.slug}`}
+      prefetch={false}
       className="group block w-40 shrink-0 snap-start lg:w-full lg:shrink"
     >
       <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-95 lg:hover:border-brand/20 lg:hover:shadow-md">
@@ -37,6 +40,8 @@ export default function HomeListCardServer({
               alt={list.title}
               fill
               sizes="(max-width: 1023px) 160px, 25vw"
+              priority={priority}
+              fetchPriority={priority ? 'high' : 'low'}
               className="object-cover transition-transform duration-500 lg:group-hover:scale-105"
               unoptimized={cover.unoptimized}
             />

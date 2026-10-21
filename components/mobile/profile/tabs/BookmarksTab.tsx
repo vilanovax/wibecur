@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -48,7 +48,22 @@ interface BookmarksTabProps {
 
 interface BookmarksResponse {
   bookmarks: BookmarkItem[];
-  pagination?: { page: number; totalPages: number };
+  pagination?: { page: number; totalPages: number; total?: number };
+}
+
+function subscribeDesktop(onChange: () => void) {
+  const query = window.matchMedia('(min-width: 1024px)');
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+
+/** گرید دسکتاپ فقط وقتی واقعاً دیده می‌شود؛ وگرنه next/image بزرگ‌ترین کاندید را می‌کشد */
+function useDesktopBookmarks() {
+  return useSyncExternalStore(
+    subscribeDesktop,
+    () => window.matchMedia('(min-width: 1024px)').matches,
+    () => false
+  );
 }
 
 async function fetchBookmarks(): Promise<BookmarksResponse> {
@@ -69,6 +84,7 @@ export default function BookmarksTab({
   initialBookmarksTotal = 0,
 }: BookmarksTabProps) {
   const router = useRouter();
+  const desktop = useDesktopBookmarks();
   const hasInitial = Boolean(initialBookmarks?.length);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -96,18 +112,30 @@ export default function BookmarksTab({
 
   if (isLoading && bookmarks.length === 0 && !hasInitial) {
     return (
-      <div className="px-4 lg:px-0">
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="overflow-hidden bg-popover p-0">
-              <Skeleton className="aspect-video w-full rounded-none" />
-              <div className="space-y-2 p-4">
+      <div className="space-y-2.5 px-4 lg:px-0">
+        {desktop ? (
+          <div className="grid grid-cols-3 gap-4 xl:grid-cols-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="overflow-hidden bg-popover p-0">
+                <Skeleton className="aspect-video w-full rounded-none" />
+                <div className="space-y-2 p-4">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          [1, 2, 3, 4, 5].map((i) => (
+            <Card key={i} className="flex min-h-20 gap-2.5 bg-popover p-2.5">
+              <Skeleton className="size-16 shrink-0 rounded-xl" />
+              <div className="flex flex-1 flex-col justify-center gap-2">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
               </div>
             </Card>
-          ))}
-        </div>
+          ))
+        )}
       </div>
     );
   }
@@ -157,7 +185,7 @@ export default function BookmarksTab({
     );
   }
 
-  const totalLabel = (initialBookmarksTotal || bookmarks.length).toLocaleString('fa-IR');
+  const totalLabel = (data?.pagination?.total ?? (initialBookmarksTotal || bookmarks.length)).toLocaleString('fa-IR');
 
   return (
     <div className="space-y-4 px-4 pb-4 lg:px-0">
@@ -168,8 +196,8 @@ export default function BookmarksTab({
         </span>
       </div>
 
-      {/* موبایل: ردیف‌های فشرده مثل «لیست‌های من» */}
-      <div className="space-y-2.5 lg:hidden">
+      {!desktop ? (
+      <div className="space-y-2.5">
         {displayedBookmarks.map((bookmark) => {
           const list = bookmark.list;
           const items = list.itemCount ?? list._count?.items ?? 0;
@@ -184,7 +212,7 @@ export default function BookmarksTab({
               className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
               <Card className="flex gap-2.5 bg-popover p-2.5 transition-transform active:scale-95">
-              <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+              <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
                 <ListCoverImage
                   coverImage={list.coverImage}
                   title={list.title}
@@ -212,9 +240,10 @@ export default function BookmarksTab({
           );
         })}
       </div>
+      ) : null}
 
-      {/* دسکتاپ: گرید کاور */}
-      <div className="hidden lg:grid lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
+      {desktop ? (
+      <div className="grid grid-cols-3 gap-4 xl:grid-cols-4">
         {displayedBookmarks.map((bookmark) => {
           const list = bookmark.list;
           const items = list.itemCount ?? list._count?.items ?? 0;
@@ -253,6 +282,7 @@ export default function BookmarksTab({
           );
         })}
       </div>
+      ) : null}
 
       {!showAll && bookmarks.length > 12 && (
         <Button type="button" variant="outline" size="lg" className="w-full" onClick={() => setShowAll(true)}>

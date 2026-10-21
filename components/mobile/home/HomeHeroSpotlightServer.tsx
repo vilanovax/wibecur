@@ -65,7 +65,8 @@ export default function HomeHeroSpotlightServer({
           <HeroCoverImage
             src={heroSrc}
             alt={list.title}
-            priority
+            // هیرو دسکتاپ (fillHeight) در موبایل display:none است؛ priority آنجا پهنای باند LCP را می‌دزدد
+            priority={!fillHeight}
             sizes={sizes}
             fallbackIcon={list.categories?.icon ?? '📚'}
             categorySlug={categorySlug}

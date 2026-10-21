@@ -17,7 +17,8 @@ export default function HomeSavedListsSection() {
   const { data: homeData } = useHomeData();
   const trendingFallback = (homeData?.trending ?? []).slice(0, 4);
 
-  const { data: savedLists = [], isLoading } = useHomeBookmarks();
+  const { data: allSavedLists = [], isLoading } = useHomeBookmarks();
+  const savedLists = allSavedLists.slice(0, 8);
 
   if (status === 'loading' || userLoading) {
     return (

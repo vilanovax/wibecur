@@ -48,7 +48,7 @@ export function selectForYouHomeLists<T extends { id: string }>(input: {
           ? ({ id: featuredId } as HomeData['featured'])
           : null,
       },
-      { limit: 12, excludeFeatured: true },
+      { limit: 6, excludeFeatured: true },
     ).map((list) => list.id),
   );
   if (featuredId) onScreen.add(featuredId);

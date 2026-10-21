@@ -16,7 +16,12 @@ export function homeBookmarksQueryKey(userId?: string | null) {
   return ['user', userId ?? 'guest', 'home-bookmarks'] as const;
 }
 
-export async function fetchHomeBookmarks(limit = 8): Promise<HomeBookmarkList[]> {
+/** سقف برای وضعیت نشانک روی کارت‌ها؛ UI ذخیره‌ها معمولاً ۸ تای اول را نشان می‌دهد */
+export const HOME_BOOKMARKS_FETCH_LIMIT = 100;
+
+export async function fetchHomeBookmarks(
+  limit = HOME_BOOKMARKS_FETCH_LIMIT
+): Promise<HomeBookmarkList[]> {
   const res = await fetch(`/api/user/bookmarks?page=1&limit=${limit}`);
   const json = await res.json();
   if (!res.ok || !json.success) return [];
@@ -31,7 +36,7 @@ export function useHomeBookmarks(options?: { enabled?: boolean }) {
 
   return useQuery({
     queryKey: homeBookmarksQueryKey(session?.user?.id),
-    queryFn: () => fetchHomeBookmarks(8),
+    queryFn: () => fetchHomeBookmarks(HOME_BOOKMARKS_FETCH_LIMIT),
     enabled,
     staleTime: 60_000,
   });

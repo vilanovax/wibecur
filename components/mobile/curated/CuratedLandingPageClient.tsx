@@ -137,14 +137,13 @@ export default function CuratedLandingPageClient({
   }, [searchParams]);
 
   useEffect(() => {
-    const win = window;
     const warm = () => preloadGuidedDiscoverySheet();
-    if ('requestIdleCallback' in win) {
-      const id = win.requestIdleCallback(warm, { timeout: 2000 });
-      return () => win.cancelIdleCallback(id);
+    const idle = window.requestIdleCallback?.(warm, { timeout: 2000 });
+    if (idle != null) {
+      return () => window.cancelIdleCallback(idle);
     }
-    const id = win.setTimeout(warm, 1500);
-    return () => win.clearTimeout(id);
+    const id = window.setTimeout(warm, 1500);
+    return () => window.clearTimeout(id);
   }, []);
 
   useEffect(() => {

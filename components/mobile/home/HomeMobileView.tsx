@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import HomeStartStrip from '@/components/mobile/home/HomeStartStrip';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
 import HomeHeroSpotlightSlot from '@/components/mobile/home/HomeHeroSpotlightSlot';
+import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
+import { HomeFeedSectionSkeleton } from '@/components/mobile/home/home-section-skeletons';
 import {
   ForYouSectionLazy,
   HomeSavedListsSectionLazy,
@@ -44,8 +46,22 @@ export default function HomeMobileView({
         {heroSpotlight}
       </HomeHeroSpotlightSlot>
       {mobileFeed}
-      {showSaved ? <HomeSavedListsSectionLazy /> : null}
-      {showForYou ? <ForYouSectionLazy fetchEnabled /> : null}
+      {showSaved ? (
+        <HomeDeferredMount
+          rootMargin="200px"
+          fallback={<HomeFeedSectionSkeleton titleWidth="w-36" />}
+        >
+          <HomeSavedListsSectionLazy />
+        </HomeDeferredMount>
+      ) : null}
+      {showForYou ? (
+        <HomeDeferredMount
+          rootMargin="240px"
+          fallback={<HomeFeedSectionSkeleton titleWidth="w-32" />}
+        >
+          <ForYouSectionLazy />
+        </HomeDeferredMount>
+      ) : null}
       <QuickCategoryChips
         initialCategories={initialCategories}
         variant="nav"

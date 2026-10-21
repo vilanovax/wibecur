@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bookmark } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import HomeListSaveControl from '@/components/mobile/home/HomeListSaveControl';
@@ -29,6 +30,9 @@ interface HomeGridListCardProps {
   homeSection?: HomeSectionId;
   /** ذخیرهٔ سریع روی کارت — پیش‌فرض روشن */
   showSave?: boolean;
+  /** فقط اولین کارت نزدیک LCP */
+  priority?: boolean;
+  fetchPriority?: 'high' | 'low' | 'auto';
 }
 
 /** کارت گرید Home — موبایل اسکرول افقی، دسکتاپ landscape فشرده */
@@ -38,14 +42,21 @@ export default function HomeGridListCard({
   badgeClassName = 'bg-brand text-brand-foreground',
   homeSection,
   showSave = true,
+  priority = false,
+  fetchPriority,
 }: HomeGridListCardProps) {
+  const router = useRouter();
+  const href = `/lists/${list.slug}`;
   const isSavedBadge = badge === SAVED_LIST_BADGE;
   const textBadge = badge && !isSavedBadge ? badge : null;
+  const resolvedFetchPriority = priority ? 'high' : (fetchPriority ?? 'low');
 
   return (
     <div className="group relative w-40 shrink-0 snap-start lg:w-full lg:shrink">
       <Link
-        href={`/lists/${list.slug}`}
+        href={href}
+        prefetch={false}
+        onPointerDown={() => router.prefetch(href)}
         onClick={() => {
           if (homeSection) {
             trackHomeSectionClick(homeSection, {
@@ -84,6 +95,8 @@ export default function HomeGridListCard({
               listSlug={list.slug}
               listTitle={list.title}
               sizes="(min-width: 1024px) 240px, 176px"
+              priority={priority}
+              fetchPriority={resolvedFetchPriority}
             />
             <div
               className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/90 via-foreground/35 to-foreground/5 lg:via-foreground/25"

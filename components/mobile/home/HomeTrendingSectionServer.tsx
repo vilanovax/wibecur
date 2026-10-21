@@ -43,8 +43,8 @@ export default function HomeTrendingSectionServer({ lists }: HomeTrendingSection
       <div
         className={`flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden ${HOME_FEED_GRID_CLASS}`}
       >
-        {lists.map((list) => (
-          <HomeListCardServer key={list.id} list={list} />
+        {lists.map((list, index) => (
+          <HomeListCardServer key={list.id} list={list} priority={index === 0} />
         ))}
       </div>
 
@@ -55,6 +55,7 @@ export default function HomeTrendingSectionServer({ lists }: HomeTrendingSection
               <Link
                 key={`see-all-${index}`}
                 href={cell.href}
+                prefetch={false}
                 className="group block lg:h-full lg:w-full lg:shrink"
               >
                 <div className="flex aspect-5/4 h-full max-h-44 flex-col items-center justify-center rounded-surface border border-dashed border-brand/30 bg-brand/5 p-3 text-center transition-colors hover:border-brand/40 hover:bg-brand/10 sm:aspect-4/3 lg:aspect-auto lg:min-h-36 lg:max-h-44 lg:px-4 lg:py-3">
@@ -71,7 +72,13 @@ export default function HomeTrendingSectionServer({ lists }: HomeTrendingSection
             );
           }
 
-          return <HomeListCardServer key={cell.data.id} list={cell.data} />;
+          return (
+            <HomeListCardServer
+              key={cell.data.id}
+              list={cell.data}
+              priority={index === 0}
+            />
+          );
         })}
       </div>
     </section>

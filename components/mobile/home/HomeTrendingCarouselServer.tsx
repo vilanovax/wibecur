@@ -26,8 +26,14 @@ export default function HomeTrendingCarouselServer({
       <div
         className={`flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-0.5 scrollbar-hide ${HOME_FEED_GRID_CLASS}`}
       >
-        {lists.map((list) => (
-          <HomeGridListCard key={list.id} list={list} homeSection="trending" />
+        {lists.map((list, index) => (
+          <HomeGridListCard
+            key={list.id}
+            list={list}
+            homeSection="trending"
+            priority={index === 0}
+            fetchPriority={index === 0 ? 'high' : 'low'}
+          />
         ))}
       </div>
     </div>

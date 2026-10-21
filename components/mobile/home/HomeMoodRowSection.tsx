@@ -29,6 +29,7 @@ function MoodListLink({ moodId, list, compact }: MoodListLinkProps) {
   return (
     <Link
       href={`/lists/${list.slug}`}
+      prefetch={false}
       onClick={() => trackMoodCardClick(moodId, 'list', list.slug)}
       className={`group flex min-h-11 items-center gap-2 rounded-lg hover:bg-muted ${
         compact ? 'px-1' : 'px-2'
@@ -46,6 +47,7 @@ function MoodListLink({ moodId, list, compact }: MoodListLinkProps) {
             listSlug={list.slug}
             listTitle={list.title}
             sizes="40px"
+            fetchPriority="low"
           />
         </div>
       ) : (
@@ -89,6 +91,7 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
 
       <Link
         href={mood.href}
+        prefetch={false}
         onClick={() => trackMoodCardClick(mood.id, 'more')}
         className="mt-2 inline-flex min-h-11 items-center"
       >

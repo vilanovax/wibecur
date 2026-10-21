@@ -12,7 +12,7 @@ import {
   listAnalyticsPayload,
   trackFirstBookmark,
 } from '@/lib/analytics';
-import { homeBookmarksQueryKey } from '@/hooks/useHomeBookmarks';
+import { homeBookmarksQueryKey, useHomeBookmarks } from '@/hooks/useHomeBookmarks';
 
 type HomeListSaveControlProps = {
   listId: string;
@@ -51,25 +51,18 @@ export default function HomeListSaveControl({
 
   const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || '/')}&source=bookmark_gate`;
 
+  const { data: savedLists } = useHomeBookmarks({
+    enabled: Boolean(session?.user) && !initialIsBookmarked,
+  });
+
   useEffect(() => {
     setIsBookmarked(initialIsBookmarked);
   }, [initialIsBookmarked, listId]);
 
   useEffect(() => {
-    if (!session?.user || initialIsBookmarked) return;
-    let cancelled = false;
-    void fetch(`/api/lists/${listId}/bookmark-status`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled && data.success) {
-          setIsBookmarked(Boolean(data.data?.isBookmarked));
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [session?.user, listId, initialIsBookmarked]);
+    if (initialIsBookmarked || !savedLists) return;
+    setIsBookmarked(savedLists.some((list) => list.id === listId));
+  }, [savedLists, listId, initialIsBookmarked]);
 
   const shell = `relative z-20 flex size-11 items-center justify-center rounded-full border shadow-md transition-[colors,transform] duration-150 ease-out active:scale-95 motion-reduce:transition-colors motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:opacity-50 ${
     surface === 'hero' ? 'backdrop-blur-md' : 'backdrop-blur-sm'

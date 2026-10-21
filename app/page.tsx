@@ -49,7 +49,7 @@ async function HomeContent() {
   const lcpImage = selectHomeLcpImageUrl(initialHomeData);
   const desktopTrendingLists = selectHomeTrendingDesktopLists(initialHomeData);
   const mobileTrendingLists = selectHomeTrendingLists(initialHomeData, {
-    limit: 12,
+    limit: 6,
     excludeFeatured: true,
   });
 
