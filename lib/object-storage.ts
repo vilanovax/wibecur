@@ -306,7 +306,14 @@ const LARGEST_STORED_FILES = 500;
 const STORAGE_LIST_PAGE_MS = 8000;
 const STORAGE_LIST_BUDGET_MS = 18000;
 
-let storageSizeCache: { at: number; sizes: Map<string, number> } | null = null;
+let storageSizeCache: { at: number; sizes: Map<string, number>; complete: boolean } | null = null;
+
+function isAbortedStorageList(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const name = 'name' in error ? String(error.name) : '';
+  const message = 'message' in error ? String(error.message) : '';
+  return name === 'AbortError' || name === 'TimeoutError' || message === 'Request aborted';
+}
 
 function rememberLargest(found: { key: string; bytes: number }[], key: string, bytes: number, keep: number) {
   if (found.length === keep && bytes <= found[0].bytes) return;
@@ -324,8 +331,11 @@ function rememberLargest(found: { key: string; bytes: number }[], key: string, b
 /** بزرگ‌ترین فایل‌های فضای تصاویر. اگر خواندن طول بکشد، ناتمام برمی‌گردد. */
 export async function listStorageObjectSizes(): Promise<{ sizes: Map<string, number>; complete: boolean }> {
   const now = Date.now();
-  if (storageSizeCache && now - storageSizeCache.at < 60_000) {
-    return { sizes: storageSizeCache.sizes, complete: true };
+  if (storageSizeCache) {
+    const freshFor = storageSizeCache.complete ? 60_000 : 20_000;
+    if (now - storageSizeCache.at < freshFor) {
+      return { sizes: storageSizeCache.sizes, complete: storageSizeCache.complete };
+    }
   }
 
   const found: { key: string; bytes: number }[] = [];
@@ -362,11 +372,13 @@ export async function listStorageObjectSizes(): Promise<{ sizes: Map<string, num
     } while (token);
   } catch (error) {
     complete = false;
-    console.error('[storage] listing object sizes failed:', (error as Error).message);
+    if (!isAbortedStorageList(error)) {
+      console.error('[storage] listing object sizes failed:', (error as Error).message);
+    }
   }
 
   const sizes = new Map(found.map((item) => [item.key, item.bytes]));
-  if (complete) storageSizeCache = { at: now, sizes };
+  storageSizeCache = { at: now, sizes, complete };
   return { sizes, complete };
 }
 

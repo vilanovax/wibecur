@@ -9,6 +9,7 @@ WORKDIR /app
 FROM base AS deps
 ARG NPM_LOGLEVEL=verbose
 COPY package.json package-lock.json .npmrc ./
+COPY scripts/install-git-hooks.mjs ./scripts/install-git-hooks.mjs
 RUN npm install --loglevel ${NPM_LOGLEVEL}
 
 FROM base AS builder
