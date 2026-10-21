@@ -134,6 +134,33 @@ async function uploadBufferToStorage(
   };
 }
 
+/** وب‌پی آماده‌شده را بدون بهینه‌سازی دوباره در پارس‌پک می‌گذارد. */
+export async function uploadWebpBuffer(buffer: Buffer, folder: string): Promise<string | null> {
+  const client = await getS3Client();
+  const config = await getObjectStorageConfig();
+  if (!client || !config) return null;
+
+  const key = buildStorageObjectKey(folder, `${crypto.randomUUID()}.webp`);
+  const uploadParams = {
+    Bucket: config.bucketName,
+    Key: key,
+    Body: buffer,
+    ContentType: 'image/webp',
+  };
+
+  await withStorageRetry(async () => {
+    try {
+      const upload = new Upload({ client, params: { ...uploadParams, ACL: 'public-read' } });
+      await upload.done();
+    } catch {
+      const upload = new Upload({ client, params: uploadParams });
+      await upload.done();
+    }
+  });
+
+  return buildStoragePublicUrl(config, key);
+}
+
 export type UploadImageFromUrlResult =
   | { ok: true; url: string }
   | {

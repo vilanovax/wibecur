@@ -5,10 +5,18 @@ export const dynamic = 'force-dynamic';
 
 const GrowthKPIDashboard = nextDynamic(() => import('./GrowthKPIDashboardClient'), {
   loading: () => (
-    <div
-      className="h-[28rem] animate-pulse rounded-2xl bg-[var(--color-border-muted)]"
-      aria-hidden
-    />
+    <div className="space-y-6" aria-hidden>
+      <div className="h-16 animate-pulse rounded-xl bg-[var(--color-border-muted)]" />
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="h-24 animate-pulse rounded-xl bg-[var(--color-border-muted)]" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="h-64 animate-pulse rounded-xl bg-[var(--color-border-muted)]" />
+        <div className="h-64 animate-pulse rounded-xl bg-[var(--color-border-muted)]" />
+      </div>
+    </div>
   ),
 });
 

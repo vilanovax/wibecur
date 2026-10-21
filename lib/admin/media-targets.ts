@@ -27,6 +27,9 @@ export type MediaSlot = {
   bytes: number | null;
   width: number | null;
   height: number | null;
+  format: 'webp' | 'jpeg' | 'png' | 'other' | null;
+  source: 'local' | 'parspack' | 'external' | null;
+  issues: ('small' | 'ratio' | 'heavy' | 'format' | 'broken')[];
   active: boolean;
   canClear: boolean;
   editHref: string | null;
@@ -149,12 +152,13 @@ export function parseMediaImport(body: unknown): MediaAssignment[] | { error: st
   if (!record || typeof record !== 'object') {
     return { error: 'JSON باید یک شیء با آرایهٔ assignments باشد.' };
   }
-  const assignments = (record as { assignments?: unknown }).assignments;
+  const bag = record as { assignments?: unknown; images?: unknown };
+  const assignments = Array.isArray(bag.assignments) ? bag.assignments : bag.images;
   if (!Array.isArray(assignments)) {
-    return { error: 'فیلد assignments باید آرایه باشد.' };
+    return { error: 'JSON باید آرایهٔ assignments یا images داشته باشد.' };
   }
   if (assignments.length === 0) return { error: 'هیچ نسبتی در فایل نیست.' };
-  if (assignments.length > 30) return { error: 'در هر بار حداکثر ۳۰ نسبت بفرستید.' };
+  if (assignments.length > 100) return { error: 'در هر بار حداکثر ۱۰۰ نسبت بفرستید.' };
 
   const parsed: MediaAssignment[] = [];
   for (const row of assignments) {

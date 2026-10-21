@@ -36,48 +36,60 @@ export async function GET() {
       const thirtyOneDaysAgo = new Date(now);
       thirtyOneDaysAgo.setDate(thirtyOneDaysAgo.getDate() - 31);
 
-      // ——— Section 1: وضعیت کلی ———
-      const [activeUsersToday, savesToday, newListsToday, pendingItems, pendingLists] =
-        await Promise.all([
-          getActiveUsersCount(todayStart),
-          prisma.bookmarks.count({ where: { createdAt: { gte: todayStart } } }),
-          prisma.lists.count({
-            where: { createdAt: { gte: todayStart }, isPublic: true },
-          }),
-          prisma.suggested_items.count({ where: { status: 'pending' } }),
-          prisma.suggested_lists.count({ where: { status: 'pending' } }),
-        ]);
+      const [
+        activeUsersToday,
+        savesToday,
+        newListsToday,
+        pendingItems,
+        pendingLists,
+        savesWeek,
+        sugWeekItems,
+        sugWeekLists,
+        commentsWeek,
+        listsCreatedWeek,
+        totalUsers,
+        returningUsersWeek,
+        newUsersLast7,
+        newUsersWithFirstSave,
+        d1Retention,
+        d7Retention,
+        d30Retention,
+        pulseScoreLastWeek,
+        activeUsers7d,
+      ] = await Promise.all([
+        getActiveUsersCount(todayStart),
+        prisma.bookmarks.count({ where: { createdAt: { gte: todayStart } } }),
+        prisma.lists.count({
+          where: { createdAt: { gte: todayStart }, isPublic: true },
+        }),
+        prisma.suggested_items.count({ where: { status: 'pending' } }),
+        prisma.suggested_lists.count({ where: { status: 'pending' } }),
+        prisma.bookmarks.count({ where: { createdAt: { gte: weekStart } } }),
+        prisma.suggested_items.count({ where: { createdAt: { gte: weekStart } } }),
+        prisma.suggested_lists.count({ where: { createdAt: { gte: weekStart } } }),
+        prisma.comments.count({
+          where: { createdAt: { gte: weekStart }, deletedAt: null },
+        }),
+        prisma.lists.count({
+          where: { createdAt: { gte: weekStart }, isPublic: true },
+        }),
+        prisma.users.count({ where: { role: 'USER', isActive: true } }),
+        getReturningUsersCount(weekStart, now),
+        prisma.users.count({
+          where: { createdAt: { gte: weekStart }, role: 'USER' },
+        }),
+        getNewUsersWithSaveIn24h(weekStart),
+        getD1Retention(yesterdayStart, todayStart),
+        getD7Retention(eightDaysAgo, weekStart),
+        getD30Retention(thirtyOneDaysAgo, thirtyDaysStart),
+        getPulseScoreForPeriod(twoWeeksStart, weekStart),
+        getActiveUsersCount(weekStart),
+      ]);
       const suggestionsPending = pendingItems + pendingLists;
-
-      // ——— Engagement (۷ روز) برای نمره ———
-      const [savesWeek, sugWeekItems, sugWeekLists, commentsWeek, listsCreatedWeek] =
-        await Promise.all([
-          prisma.bookmarks.count({ where: { createdAt: { gte: weekStart } } }),
-          prisma.suggested_items.count({ where: { createdAt: { gte: weekStart } } }),
-          prisma.suggested_lists.count({ where: { createdAt: { gte: weekStart } } }),
-          prisma.comments.count({
-            where: { createdAt: { gte: weekStart }, deletedAt: null },
-          }),
-          prisma.lists.count({
-            where: { createdAt: { gte: weekStart }, isPublic: true },
-          }),
-        ]);
       const suggestionsWeek = sugWeekItems + sugWeekLists;
 
-      // Engagement Score: (Save*1 + Suggestion*2 + Comment*1.5) → 0–100
-      const engagementRaw =
-        savesWeek * 1 + suggestionsWeek * 2 + commentsWeek * 1.5;
-      const engagementTarget = 200;
-      const engagementScore = Math.min(
-        100,
-        Math.round((engagementRaw / engagementTarget) * 100)
-      );
-
-      // ——— Pulse Score (ترکیب Save, Suggest, List, Retention) ———
-      const totalUsers = await prisma.users.count({
-        where: { role: 'USER', isActive: true },
-      });
-      const returningUsersWeek = await getReturningUsersCount(weekStart, now);
+      const engagementRaw = savesWeek * 1 + suggestionsWeek * 2 + commentsWeek * 1.5;
+      const engagementScore = Math.min(100, Math.round((engagementRaw / 200) * 100));
       const retentionComponent =
         totalUsers > 0
           ? Math.min(100, (returningUsersWeek / Math.max(1, totalUsers)) * 200)
@@ -88,32 +100,13 @@ export async function GET() {
         Math.min(100, (listsCreatedWeek / 10) * 25) +
         Math.min(100, retentionComponent / 4);
       const pulseScore = Math.round(Math.min(100, pulseRaw));
-
-      // ——— Activation ———
-      const newUsersLast7 = await prisma.users.count({
-        where: { createdAt: { gte: weekStart }, role: 'USER' },
-      });
-      const newUsersWithFirstSave = await getNewUsersWithSaveIn24h(weekStart);
       const activationPct =
         newUsersLast7 > 0
           ? Math.round((newUsersWithFirstSave / newUsersLast7) * 100)
           : 0;
-
-      // ——— Retention ———
-      const [d1Retention, d7Retention, d30Retention] = await Promise.all([
-        getD1Retention(yesterdayStart, todayStart),
-        getD7Retention(eightDaysAgo, weekStart),
-        getD30Retention(thirtyOneDaysAgo, thirtyDaysStart),
-      ]);
-
-      // ——— Pulse هفته قبل (برای تغییر هفتگی) ———
-      const pulseScoreLastWeek = await getPulseScoreForPeriod(twoWeeksStart, weekStart);
       const pulseScoreWeeklyChange = pulseScore - pulseScoreLastWeek;
       const pulseStatus: 'up' | 'down' | 'stable' =
         pulseScoreWeeklyChange > 0 ? 'up' : pulseScoreWeeklyChange < 0 ? 'down' : 'stable';
-
-      // ——— کاربران فعال و لیست‌های جدید ۷ روز (برای KPI row) ———
-      const activeUsers7d = await getActiveUsersCount(weekStart);
 
       // ——— سری‌های چارت و KPI کارت‌ها ———
       const [
@@ -140,16 +133,9 @@ export async function GET() {
         getActivityFeed(30),
       ]);
 
-      // ——— Top Movers ———
-      const [topListsWeek, topItemsByVotes, fastestCategory] =
-        await Promise.all([
-          getTopListsThisWeek(weekStart, 5),
-          getTopItemsByVelocity(weekStart, 5),
-          getFastestGrowingCategory(weekStart),
-        ]);
-
-      // ——— Creator Spotlight ———
-      const [topListsBySave, topCreators] = await Promise.all([
+      const [topListsWeek, topItemsByVotes, topListsBySave, topCreators] = await Promise.all([
+        getTopListsThisWeek(weekStart, 5),
+        getTopItemsByVelocity(weekStart, 5),
         prisma.lists.findMany({
           where: { isPublic: true, isActive: true },
           orderBy: { saveCount: 'desc' },
@@ -164,20 +150,17 @@ export async function GET() {
         }),
         getTopCreatorsByActivity(10),
       ]);
+      const fastestCategory = fastestGrowingCategories[0]
+        ? {
+            id: fastestGrowingCategories[0].id,
+            name: fastestGrowingCategories[0].name,
+            icon: fastestGrowingCategories[0].icon,
+            slug: fastestGrowingCategories[0].slug,
+            growth: fastestGrowingCategories[0].growth,
+          }
+        : null;
 
-      // Suggestion quality
-      const [approvedItems, approvedLists, totalItems, totalLists] = await Promise.all([
-        prisma.suggested_items.count({ where: { status: 'approved' } }),
-        prisma.suggested_lists.count({ where: { status: 'approved' } }),
-        prisma.suggested_items.count(),
-        prisma.suggested_lists.count(),
-      ]);
-      const approvedSuggestions = approvedItems + approvedLists;
-      const totalSuggestions = totalItems + totalLists;
-      const suggestionQualityRate =
-        totalSuggestions > 0
-          ? Math.round((approvedSuggestions / totalSuggestions) * 100)
-          : 0;
+      const suggestionQualityRate = suggestionPanel.approvalRate;
 
       // ——— Pulse Breakdown (۰–۱۰) برای نمایش شفاف ———
       const retentionAvg = (d1Retention + d7Retention + (d30Retention ?? 0)) / 3;
@@ -250,7 +233,7 @@ export async function GET() {
         activityFeed,
       };
       }),
-      ['admin-kpi-growth'],
+      ['admin-kpi-growth-v2'],
       { revalidate: 120, tags: ['admin-kpi'] }
     );
     const data = await getCachedGrowth();
@@ -265,120 +248,83 @@ export async function GET() {
   }
 }
 
+async function countDistinct(rows: { n: number }[]): Promise<number> {
+  return Number(rows[0]?.n ?? 0);
+}
+
 async function getActiveUsersCount(since: Date) {
-  const [b, c, v, l] = await Promise.all([
-    prisma.bookmarks.findMany({
-      where: { createdAt: { gte: since } },
-      select: { userId: true },
-    }),
-    prisma.comments.findMany({
-      where: { createdAt: { gte: since }, deletedAt: null },
-      select: { userId: true },
-    }),
-    prisma.item_votes.findMany({
-      where: { createdAt: { gte: since } },
-      select: { userId: true },
-    }),
-    prisma.lists.findMany({
-      where: { createdAt: { gte: since } },
-      select: { userId: true },
-    }),
-  ]);
-  const set = new Set([
-    ...b.map((x) => x.userId),
-    ...c.map((x) => x.userId),
-    ...v.map((x) => x.userId),
-    ...l.map((x) => x.userId),
-  ]);
-  return set.size;
+  const rows = await prisma.$queryRaw<{ n: number }[]>`
+    SELECT COUNT(*)::int AS n FROM (
+      SELECT "userId" FROM bookmarks WHERE "createdAt" >= ${since}
+      UNION
+      SELECT "userId" FROM comments WHERE "createdAt" >= ${since} AND "deletedAt" IS NULL
+      UNION
+      SELECT "userId" FROM item_votes WHERE "createdAt" >= ${since}
+      UNION
+      SELECT "userId" FROM lists WHERE "createdAt" >= ${since}
+    ) active
+  `;
+  return countDistinct(rows);
 }
 
 async function getReturningUsersCount(from: Date, to: Date) {
-  const bookmarks = await prisma.bookmarks.findMany({
-    where: { createdAt: { gte: from, lte: to } },
-    select: { userId: true },
-  });
-  return new Set(bookmarks.map((b) => b.userId)).size;
+  const rows = await prisma.$queryRaw<{ n: number }[]>`
+    SELECT COUNT(DISTINCT "userId")::int AS n
+    FROM bookmarks
+    WHERE "createdAt" >= ${from} AND "createdAt" <= ${to}
+  `;
+  return countDistinct(rows);
 }
 
 async function getNewUsersWithSaveIn24h(weekStart: Date) {
-  const users = await prisma.users.findMany({
-    where: { createdAt: { gte: weekStart }, role: 'USER' },
-    select: { id: true, createdAt: true },
-  });
-  let count = 0;
-  for (const u of users) {
-    const dayEnd = new Date(u.createdAt);
-    dayEnd.setHours(24, 0, 0, 0);
-    const firstSave = await prisma.bookmarks.findFirst({
-      where: {
-        userId: u.id,
-        createdAt: { gte: u.createdAt, lte: dayEnd },
-      },
-    });
-    if (firstSave) count++;
-  }
-  return count;
+  const rows = await prisma.$queryRaw<{ n: number }[]>`
+    SELECT COUNT(*)::int AS n
+    FROM users u
+    WHERE u."createdAt" >= ${weekStart}
+      AND u.role = 'USER'
+      AND EXISTS (
+        SELECT 1 FROM bookmarks b
+        WHERE b."userId" = u.id
+          AND b."createdAt" >= u."createdAt"
+          AND b."createdAt" < u."createdAt" + interval '1 day'
+      )
+  `;
+  return countDistinct(rows);
+}
+
+async function retentionPct(cohortFrom: Date, cohortTo: Date, activityFrom: Date) {
+  const rows = await prisma.$queryRaw<{ cohort: number; returned: number }[]>`
+    WITH cohort AS (
+      SELECT id FROM users
+      WHERE "createdAt" >= ${cohortFrom}
+        AND "createdAt" < ${cohortTo}
+        AND role = 'USER'
+    )
+    SELECT
+      (SELECT COUNT(*)::int FROM cohort) AS cohort,
+      (
+        SELECT COUNT(*)::int FROM cohort c
+        WHERE EXISTS (
+          SELECT 1 FROM bookmarks b
+          WHERE b."userId" = c.id AND b."createdAt" >= ${activityFrom}
+        )
+      ) AS returned
+  `;
+  const cohort = Number(rows[0]?.cohort ?? 0);
+  const returned = Number(rows[0]?.returned ?? 0);
+  return cohort > 0 ? Math.round((returned / cohort) * 100) : 0;
 }
 
 async function getD1Retention(yesterdayStart: Date, todayStart: Date) {
-  const cohort = await prisma.users.findMany({
-    where: {
-      createdAt: { gte: yesterdayStart, lt: todayStart },
-      role: 'USER',
-    },
-    select: { id: true },
-  });
-  if (cohort.length === 0) return 0;
-  let returned = 0;
-  for (const u of cohort) {
-    const any = await prisma.bookmarks.findFirst({
-      where: { userId: u.id, createdAt: { gte: todayStart } },
-    });
-    if (any) returned++;
-  }
-  return Math.round((returned / cohort.length) * 100);
+  return retentionPct(yesterdayStart, todayStart, todayStart);
 }
 
 async function getD7Retention(eightDaysAgo: Date, weekStart: Date) {
-  const cohort = await prisma.users.findMany({
-    where: {
-      createdAt: { gte: eightDaysAgo, lt: weekStart },
-      role: 'USER',
-    },
-    select: { id: true },
-  });
-  if (cohort.length === 0) return 0;
-  let returned = 0;
-  for (const u of cohort) {
-    const any = await prisma.bookmarks.findFirst({
-      where: {
-        userId: u.id,
-        createdAt: { gte: weekStart },
-      },
-    });
-    if (any) returned++;
-  }
-  return cohort.length > 0 ? Math.round((returned / cohort.length) * 100) : 0;
+  return retentionPct(eightDaysAgo, weekStart, weekStart);
 }
 
 async function getD30Retention(thirtyOneDaysAgo: Date, thirtyDaysStart: Date) {
-  const cohort = await prisma.users.findMany({
-    where: {
-      createdAt: { gte: thirtyOneDaysAgo, lt: thirtyDaysStart },
-      role: 'USER',
-    },
-    select: { id: true },
-  });
-  if (cohort.length === 0) return 0;
-  let returned = 0;
-  for (const u of cohort) {
-    const any = await prisma.bookmarks.findFirst({
-      where: { userId: u.id, createdAt: { gte: thirtyDaysStart } },
-    });
-    if (any) returned++;
-  }
-  return cohort.length > 0 ? Math.round((returned / cohort.length) * 100) : 0;
+  return retentionPct(thirtyOneDaysAgo, thirtyDaysStart, thirtyDaysStart);
 }
 
 async function getPulseScoreForPeriod(from: Date, to: Date): Promise<number> {
@@ -401,110 +347,123 @@ async function getPulseScoreForPeriod(from: Date, to: Date): Promise<number> {
   return Math.round(Math.min(100, pulseRaw));
 }
 
+function utcDayKeys(from: Date, to: Date): string[] {
+  const out: string[] = [];
+  const cur = new Date(from);
+  let guard = 0;
+  while (cur <= to && guard < 40) {
+    out.push(cur.toISOString().slice(0, 10));
+    cur.setDate(cur.getDate() + 1);
+    guard += 1;
+  }
+  return out;
+}
+
 async function getActiveUsersLast30Days(
   from: Date,
   to: Date
 ): Promise<{ date: string; count: number }[]> {
-  const bookmarks = await prisma.bookmarks.findMany({
-    where: { createdAt: { gte: from, lte: to } },
-    select: { userId: true, createdAt: true },
-  });
-  const byDay = new Map<string, Set<string>>();
-  for (const b of bookmarks) {
-    const d = b.createdAt.toISOString().slice(0, 10);
-    if (!byDay.has(d)) byDay.set(d, new Set());
-    byDay.get(d)!.add(b.userId);
-  }
-  const out: { date: string; count: number }[] = [];
-  const cur = new Date(from);
-  while (cur <= to) {
-    const d = cur.toISOString().slice(0, 10);
-    out.push({ date: d, count: byDay.get(d)?.size ?? 0 });
-    cur.setDate(cur.getDate() + 1);
-  }
-  return out;
+  const rows = await prisma.$queryRaw<{ day: string; n: number }[]>`
+    SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+      COUNT(DISTINCT "userId")::int AS n
+    FROM bookmarks
+    WHERE "createdAt" >= ${from} AND "createdAt" <= ${to}
+    GROUP BY 1
+  `;
+  const byDay = new Map(rows.map((r) => [r.day, Number(r.n)]));
+  return utcDayKeys(from, to).map((date) => ({ date, count: byDay.get(date) ?? 0 }));
 }
 
 async function getSavesVsListsLast30Days(
   from: Date,
   to: Date
 ): Promise<{ date: string; saves: number; lists: number }[]> {
-  const [bookmarks, listsCreated] = await Promise.all([
-    prisma.bookmarks.findMany({
-      where: { createdAt: { gte: from, lte: to } },
-      select: { createdAt: true },
-    }),
-    prisma.lists.findMany({
-      where: { createdAt: { gte: from, lte: to }, isPublic: true },
-      select: { createdAt: true },
-    }),
+  const [saves, lists] = await Promise.all([
+    prisma.$queryRaw<{ day: string; n: number }[]>`
+      SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+        COUNT(*)::int AS n
+      FROM bookmarks
+      WHERE "createdAt" >= ${from} AND "createdAt" <= ${to}
+      GROUP BY 1
+    `,
+    prisma.$queryRaw<{ day: string; n: number }[]>`
+      SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+        COUNT(*)::int AS n
+      FROM lists
+      WHERE "createdAt" >= ${from} AND "createdAt" <= ${to} AND "isPublic" = true
+      GROUP BY 1
+    `,
   ]);
-  const savesByDay = new Map<string, number>();
-  const listsByDay = new Map<string, number>();
-  for (const b of bookmarks) {
-    const d = b.createdAt.toISOString().slice(0, 10);
-    savesByDay.set(d, (savesByDay.get(d) ?? 0) + 1);
-  }
-  for (const l of listsCreated) {
-    const d = l.createdAt.toISOString().slice(0, 10);
-    listsByDay.set(d, (listsByDay.get(d) ?? 0) + 1);
-  }
-  const out: { date: string; saves: number; lists: number }[] = [];
-  const cur = new Date(from);
-  while (cur <= to) {
-    const d = cur.toISOString().slice(0, 10);
-    out.push({
-      date: d,
-      saves: savesByDay.get(d) ?? 0,
-      lists: listsByDay.get(d) ?? 0,
-    });
-    cur.setDate(cur.getDate() + 1);
-  }
-  return out;
+  const savesByDay = new Map(saves.map((r) => [r.day, Number(r.n)]));
+  const listsByDay = new Map(lists.map((r) => [r.day, Number(r.n)]));
+  return utcDayKeys(from, to).map((date) => ({
+    date,
+    saves: savesByDay.get(date) ?? 0,
+    lists: listsByDay.get(date) ?? 0,
+  }));
 }
 
 async function getSavesVsSuggestionsLast14(
   todayStart: Date
 ): Promise<{ date: string; saves: number; suggestions: number }[]> {
-  const days: { date: string; saves: number; suggestions: number }[] = [];
-  for (let i = 13; i >= 0; i--) {
-    const start = new Date(todayStart);
-    start.setDate(start.getDate() - i);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    const [saves, sugItems, sugLists] = await Promise.all([
-      prisma.bookmarks.count({ where: { createdAt: { gte: start, lt: end } } }),
-      prisma.suggested_items.count({ where: { createdAt: { gte: start, lt: end } } }),
-      prisma.suggested_lists.count({ where: { createdAt: { gte: start, lt: end } } }),
-    ]);
-    const suggestions = sugItems + sugLists;
-    days.push({ date: start.toISOString().slice(0, 10), saves, suggestions });
-  }
-  return days;
+  const from = new Date(todayStart);
+  from.setDate(from.getDate() - 13);
+  const to = new Date(todayStart);
+  to.setDate(to.getDate() + 1);
+  const [saves, suggestions] = await Promise.all([
+    prisma.$queryRaw<{ day: string; n: number }[]>`
+      SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+        COUNT(*)::int AS n
+      FROM bookmarks
+      WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
+      GROUP BY 1
+    `,
+    prisma.$queryRaw<{ day: string; n: number }[]>`
+      SELECT day, COUNT(*)::int AS n FROM (
+        SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day
+        FROM suggested_items
+        WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
+        UNION ALL
+        SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+        FROM suggested_lists
+        WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
+      ) s
+      GROUP BY day
+    `,
+  ]);
+  const savesByDay = new Map(saves.map((r) => [r.day, Number(r.n)]));
+  const sugByDay = new Map(suggestions.map((r) => [r.day, Number(r.n)]));
+  const end = new Date(todayStart);
+  return utcDayKeys(from, end).map((date) => ({
+    date,
+    saves: savesByDay.get(date) ?? 0,
+    suggestions: sugByDay.get(date) ?? 0,
+  }));
 }
 
 async function getNewListsPerWeek(
   weeks: number
 ): Promise<{ weekLabel: string; count: number }[]> {
-  const result: { weekLabel: string; count: number }[] = [];
   const now = new Date();
-  for (let w = weeks - 1; w >= 0; w--) {
+  const windows = Array.from({ length: weeks }, (_, index) => {
+    const w = weeks - 1 - index;
     const weekEnd = new Date(now);
     weekEnd.setDate(weekEnd.getDate() - w * 7);
     const weekStart = new Date(weekEnd);
     weekStart.setDate(weekStart.getDate() - 7);
-    const count = await prisma.lists.count({
-      where: {
-        createdAt: { gte: weekStart, lt: weekEnd },
-        isPublic: true,
-      },
-    });
-    result.push({
-      weekLabel: `${weekStart.getDate()}/${weekStart.getMonth() + 1}`,
-      count,
-    });
-  }
-  return result;
+    return { weekStart, weekEnd };
+  });
+  const counts = await Promise.all(
+    windows.map(({ weekStart, weekEnd }) =>
+      prisma.lists.count({
+        where: { createdAt: { gte: weekStart, lt: weekEnd }, isPublic: true },
+      })
+    )
+  );
+  return windows.map(({ weekStart }, index) => ({
+    weekLabel: `${weekStart.getDate()}/${weekStart.getMonth() + 1}`,
+    count: counts[index] ?? 0,
+  }));
 }
 
 type KpiCard = {
@@ -518,70 +477,96 @@ type KpiCard = {
 async function getKpiCardsSeries(
   weekStart: Date,
   twoWeeksStart: Date,
-  now: Date,
+  _now: Date,
   todayStart: Date
 ): Promise<KpiCard[]> {
-  const totalUsers = await prisma.users.count({ where: { role: 'USER', isActive: true } });
-  const series7d: { date: string; saves: number; suggestions: number; comments: number; active: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const start = new Date(todayStart);
-    start.setDate(start.getDate() - i);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    const [saves, sugItems, sugLists, comments, bookmarks] = await Promise.all([
-      prisma.bookmarks.count({ where: { createdAt: { gte: start, lt: end } } }),
-      prisma.suggested_items.count({ where: { createdAt: { gte: start, lt: end } } }),
-      prisma.suggested_lists.count({ where: { createdAt: { gte: start, lt: end } } }),
-      prisma.comments.count({ where: { createdAt: { gte: start, lt: end }, deletedAt: null } }),
-      prisma.bookmarks.findMany({ where: { createdAt: { gte: start, lt: end } }, select: { userId: true } }),
-    ]);
-    const suggestions = sugItems + sugLists;
-    const active = new Set(bookmarks.map((b) => b.userId)).size;
-    series7d.push({
-      date: start.toISOString().slice(0, 10),
-      saves,
-      suggestions,
-      comments,
-      active,
-    });
-  }
-  const thisWeekActive = new Set(
-    (
-      await prisma.bookmarks.findMany({
-        where: { createdAt: { gte: weekStart } },
-        select: { userId: true },
-      })
-    ).map((b) => b.userId)
-  ).size;
-  const lastWeekActive = new Set(
-    (
-      await prisma.bookmarks.findMany({
-        where: { createdAt: { gte: twoWeeksStart, lt: weekStart } },
-        select: { userId: true },
-      })
-    ).map((b) => b.userId)
-  ).size;
-  const [
-    savesThisWeek,
-    savesLastWeek,
-    sugThisItems,
-    sugThisLists,
-    sugLastItems,
-    sugLastLists,
-    commentsThisWeek,
-    commentsLastWeek,
-  ] = await Promise.all([
-    prisma.bookmarks.count({ where: { createdAt: { gte: weekStart } } }),
-    prisma.bookmarks.count({ where: { createdAt: { gte: twoWeeksStart, lt: weekStart } } }),
-    prisma.suggested_items.count({ where: { createdAt: { gte: weekStart } } }),
-    prisma.suggested_lists.count({ where: { createdAt: { gte: weekStart } } }),
-    prisma.suggested_items.count({ where: { createdAt: { gte: twoWeeksStart, lt: weekStart } } }),
-    prisma.suggested_lists.count({ where: { createdAt: { gte: twoWeeksStart, lt: weekStart } } }),
-    prisma.comments.count({ where: { createdAt: { gte: weekStart }, deletedAt: null } }),
-    prisma.comments.count({ where: { createdAt: { gte: twoWeeksStart, lt: weekStart }, deletedAt: null } }),
+  const sevenStart = new Date(todayStart);
+  sevenStart.setDate(sevenStart.getDate() - 6);
+  const tomorrow = new Date(todayStart);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const [totalUsers, dayBookmarks, daySuggestions, dayComments, weeks] = await Promise.all([
+    prisma.users.count({ where: { role: 'USER', isActive: true } }),
+    prisma.$queryRaw<{ day: string; saves: number; active: number }[]>`
+      SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+        COUNT(*)::int AS saves,
+        COUNT(DISTINCT "userId")::int AS active
+      FROM bookmarks
+      WHERE "createdAt" >= ${sevenStart} AND "createdAt" < ${tomorrow}
+      GROUP BY 1
+    `,
+    prisma.$queryRaw<{ day: string; n: number }[]>`
+      SELECT day, COUNT(*)::int AS n FROM (
+        SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day
+        FROM suggested_items
+        WHERE "createdAt" >= ${sevenStart} AND "createdAt" < ${tomorrow}
+        UNION ALL
+        SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+        FROM suggested_lists
+        WHERE "createdAt" >= ${sevenStart} AND "createdAt" < ${tomorrow}
+      ) s
+      GROUP BY day
+    `,
+    prisma.$queryRaw<{ day: string; n: number }[]>`
+      SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day,
+        COUNT(*)::int AS n
+      FROM comments
+      WHERE "createdAt" >= ${sevenStart}
+        AND "createdAt" < ${tomorrow}
+        AND "deletedAt" IS NULL
+      GROUP BY 1
+    `,
+    prisma.$queryRaw<{
+      active_this: number;
+      active_last: number;
+      saves_this: number;
+      saves_last: number;
+      sug_this: number;
+      sug_last: number;
+      com_this: number;
+      com_last: number;
+    }[]>`
+      SELECT
+        (SELECT COUNT(DISTINCT "userId")::int FROM bookmarks WHERE "createdAt" >= ${weekStart}) AS active_this,
+        (SELECT COUNT(DISTINCT "userId")::int FROM bookmarks WHERE "createdAt" >= ${twoWeeksStart} AND "createdAt" < ${weekStart}) AS active_last,
+        (SELECT COUNT(*)::int FROM bookmarks WHERE "createdAt" >= ${weekStart}) AS saves_this,
+        (SELECT COUNT(*)::int FROM bookmarks WHERE "createdAt" >= ${twoWeeksStart} AND "createdAt" < ${weekStart}) AS saves_last,
+        (
+          (SELECT COUNT(*)::int FROM suggested_items WHERE "createdAt" >= ${weekStart})
+          + (SELECT COUNT(*)::int FROM suggested_lists WHERE "createdAt" >= ${weekStart})
+        ) AS sug_this,
+        (
+          (SELECT COUNT(*)::int FROM suggested_items WHERE "createdAt" >= ${twoWeeksStart} AND "createdAt" < ${weekStart})
+          + (SELECT COUNT(*)::int FROM suggested_lists WHERE "createdAt" >= ${twoWeeksStart} AND "createdAt" < ${weekStart})
+        ) AS sug_last,
+        (SELECT COUNT(*)::int FROM comments WHERE "createdAt" >= ${weekStart} AND "deletedAt" IS NULL) AS com_this,
+        (SELECT COUNT(*)::int FROM comments WHERE "createdAt" >= ${twoWeeksStart} AND "createdAt" < ${weekStart} AND "deletedAt" IS NULL) AS com_last
+    `,
   ]);
-  const suggestionsThisWeek = sugThisItems + sugThisLists;
-  const suggestionsLastWeek = sugLastItems + sugLastLists;
+
+  const savesByDay = new Map(dayBookmarks.map((r) => [r.day, r]));
+  const sugByDay = new Map(daySuggestions.map((r) => [r.day, Number(r.n)]));
+  const commentsByDay = new Map(dayComments.map((r) => [r.day, Number(r.n)]));
+  const series7d = utcDayKeys(sevenStart, todayStart).map((date) => {
+    const row = savesByDay.get(date);
+    return {
+      date,
+      saves: Number(row?.saves ?? 0),
+      suggestions: sugByDay.get(date) ?? 0,
+      comments: commentsByDay.get(date) ?? 0,
+      active: Number(row?.active ?? 0),
+    };
+  });
+
+  const week = weeks[0];
+  const thisWeekActive = Number(week?.active_this ?? 0);
+  const lastWeekActive = Number(week?.active_last ?? 0);
+  const savesThisWeek = Number(week?.saves_this ?? 0);
+  const savesLastWeek = Number(week?.saves_last ?? 0);
+  const suggestionsThisWeek = Number(week?.sug_this ?? 0);
+  const suggestionsLastWeek = Number(week?.sug_last ?? 0);
+  const commentsThisWeek = Number(week?.com_this ?? 0);
+  const commentsLastWeek = Number(week?.com_last ?? 0);
   const weeklyEngagedPct = totalUsers > 0 ? (thisWeekActive / totalUsers) * 100 : 0;
   const weeklyEngagedPctLast = totalUsers > 0 ? (lastWeekActive / totalUsers) * 100 : 0;
   const growthEngaged = weeklyEngagedPctLast > 0 ? ((weeklyEngagedPct - weeklyEngagedPctLast) / weeklyEngagedPctLast) * 100 : 0;
@@ -711,9 +696,10 @@ async function getFastestGrowingCategories(
     select: { id: true, name: true, icon: true, slug: true },
   });
   const catMap = new Map(cats.map((c) => [c.id, c]));
-  return top.map((t) => {
-    const c = catMap.get(t.categoryId)!;
-    return { ...c, growth: t.growth, savesThisWeek: t.thisCount };
+  return top.flatMap((t) => {
+    const c = catMap.get(t.categoryId);
+    if (!c) return [];
+    return [{ ...c, growth: t.growth, savesThisWeek: t.thisCount }];
   });
 }
 
@@ -722,24 +708,35 @@ async function getSuggestionPanelStats(): Promise<{
   approvalRate: number;
   avgApprovalTimeHours: number;
 }> {
-  const [pendingItems, pendingLists, approvedItems, approvedLists, totalItems, totalLists] =
-    await Promise.all([
-      prisma.suggested_items.count({ where: { status: 'pending' } }),
-      prisma.suggested_lists.count({ where: { status: 'pending' } }),
-      prisma.suggested_items.findMany({ where: { status: 'approved' }, select: { createdAt: true, updatedAt: true } }),
-      prisma.suggested_lists.findMany({ where: { status: 'approved' }, select: { createdAt: true, updatedAt: true } }),
-      prisma.suggested_items.count(),
-      prisma.suggested_lists.count(),
-    ]);
-  const pendingCount = pendingItems + pendingLists;
-  const total = totalItems + totalLists;
-  const approvalRate = total > 0 ? Math.round(((approvedItems.length + approvedLists.length) / total) * 100) : 0;
-  const allApproved = [
-    ...approvedItems.map((x) => (x.updatedAt.getTime() - x.createdAt.getTime()) / (1000 * 60 * 60)),
-    ...approvedLists.map((x) => (x.updatedAt.getTime() - x.createdAt.getTime()) / (1000 * 60 * 60)),
-  ];
-  const avgApprovalTimeHours = allApproved.length > 0 ? allApproved.reduce((a, b) => a + b, 0) / allApproved.length : 0;
-  return { pendingCount, approvalRate, avgApprovalTimeHours: Math.round(avgApprovalTimeHours * 10) / 10 };
+  const [items, lists] = await Promise.all([
+    prisma.$queryRaw<{ pending: number; approved: number; total: number; avg_hours: number | null }[]>`
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
+        COUNT(*) FILTER (WHERE status = 'approved')::int AS approved,
+        COUNT(*)::int AS total,
+        AVG(EXTRACT(EPOCH FROM ("updatedAt" - "createdAt")) / 3600) FILTER (WHERE status = 'approved') AS avg_hours
+      FROM suggested_items
+    `,
+    prisma.$queryRaw<{ pending: number; approved: number; total: number; avg_hours: number | null }[]>`
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
+        COUNT(*) FILTER (WHERE status = 'approved')::int AS approved,
+        COUNT(*)::int AS total,
+        AVG(EXTRACT(EPOCH FROM ("updatedAt" - "createdAt")) / 3600) FILTER (WHERE status = 'approved') AS avg_hours
+      FROM suggested_lists
+    `,
+  ]);
+  const pendingCount = Number(items[0]?.pending ?? 0) + Number(lists[0]?.pending ?? 0);
+  const approved = Number(items[0]?.approved ?? 0) + Number(lists[0]?.approved ?? 0);
+  const total = Number(items[0]?.total ?? 0) + Number(lists[0]?.total ?? 0);
+  const itemHours = Number(items[0]?.avg_hours ?? 0) * Number(items[0]?.approved ?? 0);
+  const listHours = Number(lists[0]?.avg_hours ?? 0) * Number(lists[0]?.approved ?? 0);
+  const avgApprovalTimeHours = approved > 0 ? (itemHours + listHours) / approved : 0;
+  return {
+    pendingCount,
+    approvalRate: total > 0 ? Math.round((approved / total) * 100) : 0,
+    avgApprovalTimeHours: Math.round(avgApprovalTimeHours * 10) / 10,
+  };
 }
 
 async function getCreatorStats(): Promise<{
@@ -749,9 +746,15 @@ async function getCreatorStats(): Promise<{
   const [lists50, totalUsers, usersWith2Plus] = await Promise.all([
     prisma.lists.count({ where: { isPublic: true, saveCount: { gte: 50 } } }),
     prisma.users.count({ where: { role: 'USER' } }),
-    prisma.lists.groupBy({ by: ['userId'], where: { isPublic: true }, _count: { id: true } }).then((groups) =>
-      groups.filter((g) => g._count.id >= 2).length
-    ),
+    prisma.$queryRaw<{ n: number }[]>`
+      SELECT COUNT(*)::int AS n FROM (
+        SELECT "userId"
+        FROM lists
+        WHERE "isPublic" = true
+        GROUP BY "userId"
+        HAVING COUNT(*) >= 2
+      ) creators
+    `.then((rows) => Number(rows[0]?.n ?? 0)),
   ]);
   const pctUsersWith2PlusLists = totalUsers > 0 ? Math.round((usersWith2Plus / totalUsers) * 100) : 0;
   return { listsWith50PlusSaves: lists50, pctUsersWith2PlusLists };
@@ -891,80 +894,37 @@ async function getTopItemsByVelocity(
   }));
 }
 
-async function getFastestGrowingCategory(weekStart: Date): Promise<{
-  id: string;
-  name: string;
-  icon: string;
-  slug: string;
-  growth: number;
-} | null> {
-  const prevStart = new Date(weekStart);
-  prevStart.setDate(prevStart.getDate() - 7);
-  const [thisWeek, lastWeek] = await Promise.all([
-    prisma.$queryRaw<
-      { categoryId: string | null; count: bigint }[]
-    >`
-      SELECT l."categoryId" as "categoryId", COUNT(*)::bigint as count
-      FROM bookmarks b
-      JOIN lists l ON l.id = b."listId"
-      WHERE b."createdAt" >= ${weekStart} AND l."categoryId" IS NOT NULL
-      GROUP BY l."categoryId"
-    `.catch(() => []),
-    prisma.$queryRaw<
-      { categoryId: string | null; count: bigint }[]
-    >`
-      SELECT l."categoryId" as "categoryId", COUNT(*)::bigint as count
-      FROM bookmarks b
-      JOIN lists l ON l.id = b."listId"
-      WHERE b."createdAt" >= ${prevStart} AND b."createdAt" < ${weekStart}
-        AND l."categoryId" IS NOT NULL
-      GROUP BY l."categoryId"
-    `.catch(() => []),
-  ]);
-  const lastMap = new Map(
-    lastWeek.map((r) => [r.categoryId ?? '', Number(r.count)])
-  );
-  let best: { id: string; name: string; icon: string; slug: string; growth: number } | null = null;
-  for (const r of thisWeek) {
-    const cid = r.categoryId ?? '';
-    if (!cid) continue;
-    const thisCount = Number(r.count);
-    const prevCount = lastMap.get(cid) ?? 0;
-    const growth = prevCount > 0 ? Math.round(((thisCount - prevCount) / prevCount) * 100) : 100;
-    if (!best || growth > best.growth) {
-      const cat = await prisma.categories.findUnique({
-        where: { id: cid },
-        select: { id: true, name: true, icon: true, slug: true },
-      });
-      if (cat) best = { ...cat, growth };
-    }
-  }
-  return best;
-}
-
 async function getTopCreatorsByActivity(
   limit: number
 ): Promise<{ userId: string; name: string | null; saves: number; lists: number }[]> {
-  const savesByUser = await prisma.$queryRaw<
-    { userId: string; saves: bigint }[]
+  const top = await prisma.$queryRaw<
+    { userId: string; saves: number; lists: number }[]
   >`
-    SELECT "userId", COUNT(*)::bigint as saves
-    FROM bookmarks
-    GROUP BY "userId"
-  `.catch(() => []);
-  const listsByUser = await prisma.lists.groupBy({
-    by: ['userId'],
-    where: { isPublic: true },
-    _count: { id: true },
-  });
-  const listMap = new Map(listsByUser.map((l) => [l.userId, l._count.id]));
-  const combined = savesByUser.map((r) => ({
-    userId: r.userId,
-    saves: Number(r.saves),
-    lists: listMap.get(r.userId) ?? 0,
-  }));
-  combined.sort((a, b) => b.saves + b.lists * 5 - (a.saves + a.lists * 5));
-  const top = combined.slice(0, limit);
+    SELECT ranked."userId" AS "userId", ranked.saves, ranked.lists
+    FROM (
+      SELECT
+        u."userId",
+        COALESCE(s.saves, 0)::int AS saves,
+        COALESCE(l.lists, 0)::int AS lists
+      FROM (
+        SELECT "userId" FROM bookmarks
+        UNION
+        SELECT "userId" FROM lists WHERE "isPublic" = true
+      ) u
+      LEFT JOIN (
+        SELECT "userId", COUNT(*)::int AS saves FROM bookmarks GROUP BY "userId"
+      ) s ON s."userId" = u."userId"
+      LEFT JOIN (
+        SELECT "userId", COUNT(*)::int AS lists
+        FROM lists
+        WHERE "isPublic" = true
+        GROUP BY "userId"
+      ) l ON l."userId" = u."userId"
+      ORDER BY (COALESCE(s.saves, 0) + COALESCE(l.lists, 0) * 5) DESC
+      LIMIT ${limit}
+    ) ranked
+  `;
+  if (top.length === 0) return [];
   const users = await prisma.users.findMany({
     where: { id: { in: top.map((t) => t.userId) } },
     select: { id: true, name: true },
@@ -973,7 +933,7 @@ async function getTopCreatorsByActivity(
   return top.map((t) => ({
     userId: t.userId,
     name: userMap.get(t.userId) ?? null,
-    saves: t.saves,
-    lists: t.lists,
+    saves: Number(t.saves),
+    lists: Number(t.lists),
   }));
 }

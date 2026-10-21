@@ -14,13 +14,12 @@ import type {
 } from '@/lib/admin/users-types';
 import {
   USER_FILTER_PILLS,
-  PULSE_TO_FILTER,
   type UserFilterKind,
-  type UserPulseFilterKey,
 } from '@/lib/admin/user-filter-utils';
+import { faNumber } from '@/lib/utils';
 
 const tableFallback = (
-  <div className="min-h-[320px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+  <div className="min-h-80 animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
 );
 
 const UsersIntelligenceTable = dynamic(
@@ -116,12 +115,6 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
   const handleSortChange = (value: UserSortKind) => {
     setSort(value);
     syncUrl({ sort: value, page: '1' });
-  };
-
-  const handlePulseFilter = (key: UserPulseFilterKey) => {
-    const next = PULSE_TO_FILTER[key];
-    setFilterKind(next);
-    syncUrl({ filter: next, page: '1' });
   };
 
   const handleHideBotsChange = (next: boolean) => {
@@ -247,30 +240,12 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
               مدیریت کاربران
             </h1>
             <p className="text-sm text-[var(--color-text-muted)]">
-              شناسایی کاربران اثرگذار، در حال رشد و ریسکی — فیلتر و رشد ۷ روزه سمت سرور
+              جستجو و فیلتر کاربران. عدد روی هر فیلتر همان تعداد فهرست است.
             </p>
           </div>
-          <p className="text-sm text-[var(--color-text-muted)] tabular-nums">
-            نمایش{' '}
-            <span className="font-semibold text-[var(--color-text)]">
-              {users.length.toLocaleString('fa-IR')}
-            </span>{' '}
-            از{' '}
-            <span className="font-semibold text-[var(--color-text)]">
-              {data.totalCount.toLocaleString('fa-IR')}
-            </span>{' '}
-            کاربر
-            {data.totalPages > 1 && (
-              <>
-                {' '}
-                · صفحه {data.currentPage.toLocaleString('fa-IR')} از{' '}
-                {data.totalPages.toLocaleString('fa-IR')}
-              </>
-            )}
-          </p>
         </div>
 
-        <UserPulseSummary data={data.pulse} onFilterClick={handlePulseFilter} activeFilter={filterKind} />
+        <UserPulseSummary data={data.pulse} />
 
         <SmartFilterBar
           value={filterKind}
@@ -288,6 +263,20 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
         />
 
         {/* حین ناوبری سرور (فیلتر/جستجو/مرتب) جدول کم‌رنگ و غیرفعال می‌شود تا فریزِ بی‌بازخورد نباشد */}
+        <p className="mb-3 text-sm text-[var(--color-text-muted)] tabular-nums">
+          {faNumber(data.totalCount)} کاربر
+          {filterKind !== 'all' && (
+            <> در {USER_FILTER_PILLS.find((p) => p.value === filterKind)?.label}</>
+          )}
+          {data.totalPages > 1 && (
+            <>
+              {' '}
+              · صفحه {faNumber(data.currentPage)} از {faNumber(data.totalPages)}
+            </>
+          )}
+          {hideBots && <> · بات‌ها پنهان‌اند</>}
+        </p>
+
         <div className={`transition-opacity ${isNavigating ? 'opacity-50 pointer-events-none' : ''}`} aria-busy={isNavigating}>
           <UsersIntelligenceTable
             users={users}

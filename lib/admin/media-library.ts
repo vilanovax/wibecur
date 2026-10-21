@@ -4,10 +4,13 @@ import { Prisma } from '@prisma/client';
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getSharp } from '@/lib/get-sharp';
+import { inspectMediaSlots, readImageBuffer } from '@/lib/admin/media-inspect';
+import { optimizeImageDetailed } from '@/lib/image-optimizer';
+import { MEDIA_STANDARDS, type MediaIssue } from '@/lib/admin/media-standards';
 import { validateImage } from '@/lib/image-validator';
 import { getDisplayImageUrl } from '@/lib/display-image';
 import { isValidHttpImageUrl, normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
-import { listStorageObjectSizes, storageObjectBytes, uploadImageFromUrlDetailed } from '@/lib/object-storage';
+import { listStorageObjectSizes, storageObjectBytes, uploadImageFromUrlDetailed, uploadWebpBuffer } from '@/lib/object-storage';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
 import type { ImageProfile } from '@/lib/image-config';
 import {
@@ -163,6 +166,9 @@ async function bannerSlots(q: string): Promise<MediaSlot[]> {
         bytes: meta.bytes,
         width: meta.width,
         height: meta.height,
+        format: 'webp',
+        source: 'local',
+        issues: [],
         active: true,
         canClear: false,
         editHref: null,
@@ -213,6 +219,9 @@ function decorate(
     bytes,
     width: null,
     height: null,
+    format: null,
+    source: null,
+    issues: [],
     active: isActiveFlag(row.active),
     canClear: kind !== 'banner',
     editHref: editHref(kind, row.id, row.detail?.trim() || ''),
@@ -266,8 +275,10 @@ export async function loadMediaLibrary(input: {
   if (input.filter === 'banner') {
     const all = input.missing || input.state === 'inactive' ? [] : await bannerSlots(q);
     const start = (page - 1) * PAGE_SIZE;
+    const slots = all.slice(start, start + PAGE_SIZE);
+    await inspectMediaSlots(slots);
     return {
-      slots: all.slice(start, start + PAGE_SIZE),
+      slots,
       total: all.length,
       page,
       pageSize: PAGE_SIZE,
@@ -299,13 +310,79 @@ export async function loadMediaLibrary(input: {
     ),
   ]);
 
+  const slots = rows.map((row) => decorate(row));
+  await inspectMediaSlots(slots);
   return {
-    slots: rows.map((row) => decorate(row)),
+    slots,
     total: Number(countRows[0]?.n ?? 0),
     page,
     pageSize: PAGE_SIZE,
     counts,
   };
+}
+
+const ISSUE_BATCH = 20;
+const ISSUE_SCAN_CAP = 80;
+
+export async function loadIssueMedia(input: {
+  filter: MediaFilter;
+  q: string;
+  state: MediaState;
+  issue: MediaIssue;
+  scan: number;
+}): Promise<{ slots: MediaSlot[]; scanned: number; nextScan: number | null }> {
+  const q = input.q.trim().slice(0, 80);
+  const pattern = likePattern(q);
+  const formatOnly = input.issue === 'format';
+  let offset = Number.isFinite(input.scan) && input.scan > 0 ? Math.floor(input.scan) : 0;
+  let scanned = 0;
+  const matches: MediaSlot[] = [];
+  const deadline = Date.now() + 8000;
+  let exhausted = false;
+
+  if (offset === 0 && (input.filter === 'all' || input.filter === 'banner') && input.state !== 'inactive') {
+    const banners = await bannerSlots(q);
+    await inspectMediaSlots(banners, 2000);
+    scanned += banners.length;
+    for (const slot of banners) {
+      if (slot.issues.includes(input.issue) && matches.length < PAGE_SIZE) matches.push(slot);
+    }
+    if (input.filter === 'banner') return { slots: matches, scanned, nextScan: null };
+  }
+
+  while (matches.length < PAGE_SIZE && scanned < ISSUE_SCAN_CAP && Date.now() < deadline) {
+    const rows = await prisma.$queryRaw<
+      { kind: string; id: string; title: string; detail: string | null; url: string | null; active: unknown }[]
+    >(Prisma.sql`
+      SELECT kind, id, title, detail, url, active
+      FROM (${slotsFrom}) slots
+      WHERE (${input.filter} = 'all' OR kind = ${input.filter})
+        AND (${q} = '' OR title ILIKE ${pattern} ESCAPE '\\' OR detail ILIKE ${pattern} ESCAPE '\\')
+        AND url IS NOT NULL
+        AND btrim(url) <> ''
+        AND (${formatOnly} = false OR url !~* '\\.webp($|\\?)')
+        AND ${stateWhere(input.state)}
+      ORDER BY kind, title, id
+      LIMIT ${ISSUE_BATCH} OFFSET ${offset}
+    `);
+    if (rows.length === 0) {
+      exhausted = true;
+      break;
+    }
+    const batch = rows.map((row) => decorate(row));
+    await inspectMediaSlots(batch, Math.max(1500, deadline - Date.now()));
+    for (const slot of batch) {
+      if (slot.issues.includes(input.issue) && matches.length < PAGE_SIZE) matches.push(slot);
+    }
+    offset += rows.length;
+    scanned += rows.length;
+    if (rows.length < ISSUE_BATCH) {
+      exhausted = true;
+      break;
+    }
+  }
+
+  return { slots: matches, scanned, nextScan: exhausted ? null : offset };
 }
 
 type SizedSlotRow = {
@@ -451,6 +528,7 @@ export async function loadHeaviestMedia(input: {
     if (row.height != null) slot.height = row.height;
     return slot;
   });
+  await inspectMediaSlots(slots);
   return { slots, complete };
 }
 
@@ -458,7 +536,19 @@ export async function exportHeaviestMedia(input: {
   filter: MediaFilter;
   q: string;
   state: MediaState;
-}): Promise<{ images: { target: string; title: string; url: string; bytes: number }[] }> {
+}): Promise<{
+  images: {
+    target: string;
+    title: string;
+    url: string;
+    bytes: number | null;
+    width: number | null;
+    height: number | null;
+    format: string | null;
+    source: string | null;
+    issues: string[];
+  }[];
+}> {
   const { slots } = await loadHeaviestMedia(input);
   return {
     images: slots.flatMap((slot) => {
@@ -466,9 +556,140 @@ export async function exportHeaviestMedia(input: {
       const target =
         slot.kind === 'banner' ? `banner:${slot.id}` : missingMediaTarget(slot.kind, slot.id, slot.detail);
       if (!target) return [];
-      return [{ target, title: slot.title, url: slot.imageUrl, bytes: slot.bytes }];
+      return [
+        {
+          target,
+          title: slot.title,
+          url: slot.imageUrl,
+          bytes: slot.bytes,
+          width: slot.width,
+          height: slot.height,
+          format: slot.format,
+          source: slot.source,
+          issues: slot.issues,
+        },
+      ];
     }),
   };
+}
+
+function imageRecord(slot: MediaSlot) {
+  const target =
+    slot.kind === 'banner' ? `banner:${slot.id}` : missingMediaTarget(slot.kind, slot.id, slot.detail);
+  if (!target) return null;
+  return {
+    target,
+    title: slot.title,
+    url: slot.imageUrl ?? '',
+    bytes: slot.bytes,
+    width: slot.width,
+    height: slot.height,
+    format: slot.format,
+    source: slot.source,
+    issues: slot.issues,
+  };
+}
+
+export async function exportMediaInventory(input: {
+  filter: MediaFilter;
+  q: string;
+  state: MediaState;
+}): Promise<{ images: NonNullable<ReturnType<typeof imageRecord>>[]; truncated: boolean }> {
+  const q = input.q.trim().slice(0, 80);
+  const pattern = likePattern(q);
+  const limit = 1000;
+  if (input.filter === 'banner') {
+    const slots = input.state === 'inactive' ? [] : await bannerSlots(q);
+    await inspectMediaSlots(slots);
+    return { images: slots.flatMap((slot) => imageRecord(slot) ?? []), truncated: false };
+  }
+  const rows = await prisma.$queryRaw<
+    { kind: string; id: string; title: string; detail: string | null; url: string | null; active: unknown }[]
+  >(Prisma.sql`
+    SELECT kind, id, title, detail, url, active
+    FROM (${slotsFrom}) slots
+    WHERE (${input.filter} = 'all' OR kind = ${input.filter})
+      AND (${q} = '' OR title ILIKE ${pattern} ESCAPE '\\' OR detail ILIKE ${pattern} ESCAPE '\\')
+      AND url IS NOT NULL
+      AND btrim(url) <> ''
+      AND ${stateWhere(input.state)}
+    ORDER BY kind, title, id
+    LIMIT ${limit + 1}
+  `);
+  const truncated = rows.length > limit;
+  const slots = rows.slice(0, limit).map((row) => decorate(row));
+  await inspectMediaSlots(slots, 30000);
+  return { images: slots.flatMap((slot) => imageRecord(slot) ?? []), truncated };
+}
+
+const NORMALIZE_LIMIT = 12;
+
+async function encodeToStandard(buffer: Buffer, width: number, height: number, maxBytes: number) {
+  const sharp = await getSharp();
+  let quality = 78;
+  let output = await sharp(buffer)
+    .rotate()
+    .resize(width, height, { fit: 'cover', position: 'centre' })
+    .webp({ quality })
+    .toBuffer();
+  while (output.length > maxBytes && quality > 46) {
+    quality -= 8;
+    output = await sharp(buffer)
+      .rotate()
+      .resize(width, height, { fit: 'cover', position: 'centre' })
+      .webp({ quality })
+      .toBuffer();
+  }
+  return output;
+}
+
+export async function normalizeMediaImages(
+  items: { kind: MediaKind; id: string; detail?: string }[]
+): Promise<{ updated: number; errors: { target: string; error: string }[] }> {
+  const errors: { target: string; error: string }[] = [];
+  let updated = 0;
+  for (const item of items.slice(0, NORMALIZE_LIMIT)) {
+    const label = item.detail || item.id;
+    try {
+      if (item.kind === 'banner') {
+        const safe = safeBannerFileName(item.id);
+        if (!safe) {
+          errors.push({ target: label, error: 'نام بنر نامعتبر است.' });
+          continue;
+        }
+        const result = await replaceSiteBanner(safe, fs.readFileSync(path.join(BANNERS_DIR, safe)));
+        if (!result.ok) errors.push({ target: label, error: result.error });
+        else updated += 1;
+        continue;
+      }
+      const current = await currentUrl(item.kind, item.id);
+      if (!current) {
+        errors.push({ target: label, error: 'تصویری برای تبدیل نیست.' });
+        continue;
+      }
+      const buffer = await readImageBuffer(current);
+      if (!buffer) {
+        errors.push({ target: label, error: 'خواندن فایل انجام نشد.' });
+        continue;
+      }
+      const standard = MEDIA_STANDARDS[item.kind];
+      const target = STORE_TARGET[item.kind];
+      const output = standard
+        ? await encodeToStandard(buffer, standard.width, standard.height, standard.maxBytes)
+        : (await optimizeImageDetailed(buffer, { profile: target.profile })).buffer;
+      const url = await uploadWebpBuffer(output, target.folder);
+      if (!url) {
+        errors.push({ target: label, error: 'آپلود روی پارس‌پک انجام نشد.' });
+        continue;
+      }
+      const saved = await assignMediaImage({ kind: item.kind, id: item.id, detail: item.detail, url });
+      if (!saved.ok) errors.push({ target: label, error: saved.error });
+      else updated += 1;
+    } catch (error) {
+      errors.push({ target: label, error: error instanceof Error ? error.message : 'تبدیل انجام نشد.' });
+    }
+  }
+  return { updated, errors };
 }
 
 const STORE_TARGET: Record<Exclude<MediaKind, 'banner'>, { folder: string; profile: ImageProfile }> = {

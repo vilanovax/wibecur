@@ -5,6 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ImageOff } from 'lucide-react';
 import { fa, faNumber } from '@/lib/utils';
+import {
+  MEDIA_FORMAT_LABELS,
+  MEDIA_ISSUE_LABELS,
+  MEDIA_SOURCE_LABELS,
+} from '@/lib/admin/media-standards';
 import { MEDIA_KIND_LABELS, type MediaKind, type MediaSlot } from '@/lib/admin/media-targets';
 
 const UPLOAD_PURPOSE: Record<Exclude<MediaKind, 'banner'>, string> = {
@@ -25,9 +30,13 @@ function formatBytes(bytes: number): string {
 export default function MediaSlotRow({
   slot,
   layout = 'list',
+  selected = false,
+  onSelectedChange,
 }: {
   slot: MediaSlot;
   layout?: 'list' | 'grid';
+  selected?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -124,6 +133,11 @@ export default function MediaSlotRow({
       ? `${faNumber(width)}×${faNumber(height)}`
       : 'اندازه بعد از نمایش';
   const bytesLabel = !slot.imageUrl ? '' : bytes != null ? formatBytes(bytes) : 'حجم نامشخص';
+  const formatLabel = slot.format ? MEDIA_FORMAT_LABELS[slot.format] : '';
+  const sourceLabel = slot.source ? MEDIA_SOURCE_LABELS[slot.source] : '';
+  const factLabel = [bytesLabel ? `${sizeLabel} · ${bytesLabel}` : sizeLabel, formatLabel, sourceLabel]
+    .filter(Boolean)
+    .join(' · ');
   const inputId = `media-file-${slot.kind}-${slot.id}`;
   const grid = layout === 'grid';
 
@@ -168,9 +182,15 @@ export default function MediaSlotRow({
           </>
         ) : null}
       </p>
-      <p className="text-xs text-[var(--color-text-muted)]">
-        {bytesLabel ? `${sizeLabel} · ${bytesLabel}` : sizeLabel}
-      </p>
+      <p className="text-xs text-[var(--color-text-muted)]">{factLabel}</p>
+      {slot.imageUrl ? (
+        <p dir="ltr" title={slot.imageUrl} className="truncate text-start text-xs text-[var(--color-text-muted)]">
+          {slot.imageUrl}
+        </p>
+      ) : null}
+      {slot.issues.length > 0 ? (
+        <p className="text-xs text-red-700">{slot.issues.map((issue) => MEDIA_ISSUE_LABELS[issue]).join(' · ')}</p>
+      ) : null}
       {message ? <p className="text-xs text-[var(--color-text)]">{message}</p> : null}
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
     </>
@@ -227,11 +247,24 @@ export default function MediaSlotRow({
     </div>
   );
 
+  const picker = onSelectedChange ? (
+    <label className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center">
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={(event) => onSelectedChange(event.target.checked)}
+        aria-label={`انتخاب ${slot.title}`}
+        className="size-4 accent-[var(--primary)]"
+      />
+    </label>
+  ) : null;
+
   if (grid) {
     return (
       <article className="flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="aspect-square bg-[var(--color-bg)]">{preview}</div>
         <div className="flex min-h-0 flex-1 flex-col gap-1 p-3">
+          {picker}
           {meta}
           {actions}
         </div>
@@ -241,6 +274,7 @@ export default function MediaSlotRow({
 
   return (
     <article className="flex gap-3 bg-[var(--color-surface)] p-3">
+      {picker}
       <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-[var(--color-bg)]">{preview}</div>
       <div className="min-w-0 flex-1">
         {meta}

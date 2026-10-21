@@ -9,16 +9,9 @@ function UsersSkeleton() {
   return (
     <div className="space-y-6 animate-pulse" dir="rtl">
       <div className="h-16 rounded-2xl bg-[var(--color-border-muted)]" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-24 rounded-2xl bg-[var(--color-border-muted)]"
-          />
-        ))}
-      </div>
-      <div className="h-12 rounded-xl bg-[var(--color-border-muted)]" />
-      <div className="h-[420px] rounded-2xl bg-[var(--color-border-muted)]" />
+      <div className="h-11 rounded-xl bg-[var(--color-border-muted)]" />
+      <div className="h-11 rounded-xl bg-[var(--color-border-muted)]" />
+      <div className="h-80 rounded-2xl bg-[var(--color-border-muted)]" />
     </div>
   );
 }

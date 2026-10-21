@@ -65,38 +65,38 @@ export default function UsersIntelligenceTable({
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[960px]">
+        <table className="w-full">
           <thead className="bg-[var(--color-bg)] sticky top-0 z-10">
             <tr className="border-b border-[var(--color-border)]">
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                 کاربر
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                 وضعیت
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                 نقش
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                 کیفیت
               </th>
               <th
-                className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]"
+                className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]"
                 title="بوکمارک و لیست جدید در ۷ روز اخیر نسبت به ۷ روز قبل"
               >
                 {USER_GROWTH_7D_LABEL}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                 لیست‌ها
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                 ذخیره‌ها
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
                 ریسک
               </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--color-text-muted)] w-14">
-                اکشن
+              <th className="sticky end-0 w-14 bg-[var(--color-bg)] px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+                عمل
               </th>
             </tr>
           </thead>
@@ -119,7 +119,7 @@ export default function UsersIntelligenceTable({
                         size={44}
                       />
                       <span
-                        className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--color-surface)] ${
+                        className={`absolute bottom-0 start-0 h-3 w-3 rounded-full border-2 border-[var(--color-surface)] ${
                           user.isActive ? 'bg-emerald-500' : 'bg-gray-400'
                         }`}
                         title={user.isActive ? 'فعال' : 'غیرفعال'}
@@ -131,7 +131,7 @@ export default function UsersIntelligenceTable({
                           {user.name || 'بدون نام'}
                         </p>
                         {user.isBot && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 text-[10px] font-medium">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">
                             <Bot className="w-3 h-3" />
                             بات
                           </span>
@@ -141,7 +141,7 @@ export default function UsersIntelligenceTable({
                         {user.username ? `@${user.username}` : user.email}
                       </p>
                       {user.username && user.email && (
-                        <p className="text-[11px] text-[var(--color-text-subtle)] truncate" title="ایمیل کامل در جزئیات کاربر">
+                        <p className="truncate text-xs text-[var(--color-text-subtle)]" title="ایمیل کامل در جزئیات کاربر">
                           {maskEmail(user.email)}
                         </p>
                       )}
@@ -227,7 +227,7 @@ export default function UsersIntelligenceTable({
                   )}
                 </td>
                 <td
-                  className="px-4 py-3"
+                  className="sticky end-0 bg-[var(--color-surface)] px-4 py-3 group-hover:bg-[var(--color-bg)]"
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
@@ -254,7 +254,7 @@ export default function UsersIntelligenceTable({
                   : `کاربری با فیلتر «${filterLabel ?? 'انتخاب‌شده'}» یافت نشد`}
               </p>
               <p className="text-xs text-[var(--color-text-muted)]">
-                فیلتر یا عبارت جستجو را تغییر دهید — شمارش روی کل دیتابیس (با احتساب مخفی‌سازی بات) است.
+                فیلتر یا عبارت جستجو را عوض کنید.
               </p>
             </>
           ) : (

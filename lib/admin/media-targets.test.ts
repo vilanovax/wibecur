@@ -42,6 +42,13 @@ describe('parseMediaImport', () => {
     expect(parsed).toEqual([{ target: 'item:abc', url: 'https://cdn.example/a.webp' }]);
   });
 
+  it('reads an inventory file and ignores the extra fields', () => {
+    const parsed = parseMediaImport({
+      images: [{ target: 'list-banner:cafe', url: 'https://cdn.example/a.webp', bytes: 1200, width: 1600 }],
+    });
+    expect(parsed).toEqual([{ target: 'list-banner:cafe', url: 'https://cdn.example/a.webp' }]);
+  });
+
   it('rejects an empty file and a bad target', () => {
     expect(parseMediaImport({ assignments: [] })).toEqual({ error: 'هیچ نسبتی در فایل نیست.' });
     expect(parseMediaImport({ assignments: [{ target: 'banner:a.webp', url: 'https://x' }] })).toEqual({

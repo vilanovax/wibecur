@@ -4,8 +4,10 @@ import {
   assignMediaImage,
   clearMediaImage,
   exportHeaviestMedia,
+  exportMediaInventory,
   exportMissingMediaAssignments,
   importMediaAssignments,
+  normalizeMediaImages,
   replaceSiteBanner,
 } from '@/lib/admin/media-library';
 import { isMediaKind, parseMediaFilter, parseMediaImport, parseMediaRank, parseMediaState } from '@/lib/admin/media-targets';
@@ -18,10 +20,13 @@ export async function GET(request: NextRequest) {
   const state = parseMediaState(request.nextUrl.searchParams.get('state'));
   const q = request.nextUrl.searchParams.get('q') ?? '';
   const heaviest = parseMediaRank(request.nextUrl.searchParams.get('rank')) === 'bytes';
+  const inventory = request.nextUrl.searchParams.get('inventory') === '1';
   const body = heaviest
     ? await exportHeaviestMedia({ filter, q, state })
-    : await exportMissingMediaAssignments({ filter, state });
-  const parts = [heaviest ? 'media-heaviest' : 'media-missing'];
+    : inventory
+      ? await exportMediaInventory({ filter, q, state })
+      : await exportMissingMediaAssignments({ filter, state });
+  const parts = [heaviest ? 'media-heaviest' : inventory ? 'media-inventory' : 'media-missing'];
   if (filter !== 'all') parts.push(filter);
   if (state !== 'all') parts.push(state);
   return new NextResponse(JSON.stringify(body, null, 2), {
@@ -63,6 +68,23 @@ export async function POST(request: NextRequest) {
   } | null;
   if (!body?.action) {
     return NextResponse.json({ error: 'درخواست ناقص است.' }, { status: 400 });
+  }
+
+  if (body.action === 'normalize') {
+    const items = Array.isArray((body as { items?: unknown }).items) ? (body as { items: unknown[] }).items : [];
+    const parsed = items.flatMap((item) => {
+      if (!item || typeof item !== 'object') return [];
+      const kind = (item as { kind?: unknown }).kind;
+      const id = (item as { id?: unknown }).id;
+      const detail = (item as { detail?: unknown }).detail;
+      if (typeof kind !== 'string' || !isMediaKind(kind) || typeof id !== 'string' || !id) return [];
+      return [{ kind, id, detail: typeof detail === 'string' ? detail : undefined }];
+    });
+    if (parsed.length === 0) {
+      return NextResponse.json({ error: 'تصویری برای تبدیل انتخاب نشده است.' }, { status: 400 });
+    }
+    const result = await normalizeMediaImages(parsed);
+    return NextResponse.json(result);
   }
 
   if (body.action === 'import') {

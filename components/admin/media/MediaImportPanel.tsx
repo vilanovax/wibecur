@@ -68,7 +68,7 @@ export default function MediaImportPanel() {
       {open ? (
         <div className="basis-full space-y-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
           <p className="text-xs text-[var(--color-text-muted)]">
-            هر ردیف یک بخش را به یک آدرس تصویر وصل می‌کند. آدرس بیرونی اول روی فضای تصاویر سایت کپی می‌شود. بنرهای ثابت سایت از اینجا عوض نمی‌شوند.
+            فایل خروجی JSON را همین‌جا برگردانید. فقط target و url خوانده می‌شود و در هر بار تا ۱۰۰ ردیف ثبت می‌شود. آدرس بیرونی اول روی فضای تصاویر سایت کپی می‌شود. بنرهای ثابت سایت از اینجا عوض نمی‌شوند.
           </p>
           <textarea
             value={text}

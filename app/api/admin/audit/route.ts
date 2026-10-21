@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/auth/require-permission';
-
-const DEFAULT_PAGE_SIZE = 20;
-const MAX_PAGE_SIZE = 100;
+import { listAuditLogs } from '@/lib/admin/audit-query';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,77 +8,20 @@ export async function GET(request: NextRequest) {
     if (userOrRes instanceof NextResponse) return userOrRes;
 
     const { searchParams } = new URL(request.url);
-    const actorQuery =
-      searchParams.get('actorQuery') ??
-      searchParams.get('actorId') ??
-      undefined;
-    const action = searchParams.get('action') ?? undefined;
-    const entityType = searchParams.get('entityType') ?? undefined;
-    const dateFrom = searchParams.get('dateFrom') ?? searchParams.get('from') ?? undefined;
-    const dateTo = searchParams.get('dateTo') ?? searchParams.get('to') ?? undefined;
-    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
-    const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(searchParams.get('pageSize') ?? String(DEFAULT_PAGE_SIZE), 10)));
-
-    const where: {
-      actorId?: string | { in: string[] };
-      action?: string;
-      entityType?: string;
-      createdAt?: { gte?: Date; lte?: Date };
-    } = {};
-
-    if (actorQuery?.trim()) {
-      const q = actorQuery.trim();
-      const matchedActors = await prisma.users.findMany({
-        where: {
-          OR: [
-            { id: q },
-            { name: { contains: q, mode: 'insensitive' } },
-            { email: { contains: q, mode: 'insensitive' } },
-          ],
-        },
-        select: { id: true },
-        take: 25,
-      });
-      if (matchedActors.length > 0) {
-        where.actorId = { in: matchedActors.map((u) => u.id) };
-      } else {
-        where.actorId = q;
-      }
-    }
-    if (action) where.action = action;
-    if (entityType) where.entityType = entityType;
-    if (dateFrom || dateTo) {
-      where.createdAt = {};
-      if (dateFrom) where.createdAt.gte = new Date(dateFrom);
-      if (dateTo) where.createdAt.lte = new Date(dateTo);
-    }
-
-    const [rows, total] = await Promise.all([
-      prisma.audit_log.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        include: {
-          users: {
-            select: { id: true, name: true, email: true },
-          },
-        },
-      }),
-      prisma.audit_log.count({ where }),
-    ]);
-
-    return NextResponse.json({
-      rows,
-      total,
-      page,
-      pageSize,
+    const data = await listAuditLogs({
+      actorQuery:
+        searchParams.get('actorQuery') ?? searchParams.get('actorId') ?? undefined,
+      action: searchParams.get('action') ?? undefined,
+      entityType: searchParams.get('entityType') ?? undefined,
+      dateFrom: searchParams.get('dateFrom') ?? searchParams.get('from') ?? undefined,
+      dateTo: searchParams.get('dateTo') ?? searchParams.get('to') ?? undefined,
+      page: parseInt(searchParams.get('page') ?? '1', 10),
+      pageSize: parseInt(searchParams.get('pageSize') ?? '20', 10),
     });
+
+    return NextResponse.json(data);
   } catch (err) {
     console.error('Audit list error:', err);
-    return NextResponse.json(
-      { error: 'خطا در دریافت لاگ' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'خطا در دریافت لاگ' }, { status: 500 });
   }
 }

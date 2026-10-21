@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { LayoutGrid, List } from 'lucide-react';
 import { requireAdmin } from '@/lib/auth';
 import { hasPermission } from '@/lib/auth/has-permission';
-import { loadHeaviestMedia, loadMediaLibrary } from '@/lib/admin/media-library';
+import { loadHeaviestMedia, loadIssueMedia, loadMediaLibrary } from '@/lib/admin/media-library';
+import { MEDIA_ISSUES, MEDIA_ISSUE_LABELS, parseMediaIssue } from '@/lib/admin/media-standards';
 import {
   HEAVIEST_IMAGE_LIMIT,
   MEDIA_KIND_LABELS,
@@ -16,7 +17,7 @@ import {
 } from '@/lib/admin/media-targets';
 import { faNumber } from '@/lib/utils';
 import MediaImportPanel from '@/components/admin/media/MediaImportPanel';
-import MediaSlotRow from '@/components/admin/media/MediaSlotRow';
+import MediaSlotList from '@/components/admin/media/MediaSlotList';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,25 +35,37 @@ function pageHref(
   view: MediaView,
   state: MediaState,
   heaviest: boolean,
+  issue: string | null,
+  scan = 0,
 ) {
   const params = new URLSearchParams();
   if (filter !== 'all') params.set('kind', filter);
   if (q) params.set('q', q);
-  if (!heaviest && missing) params.set('missing', '1');
+  if (!heaviest && !issue && missing) params.set('missing', '1');
   if (view === 'grid') params.set('view', 'grid');
   if (state !== 'all') params.set('state', state);
   if (heaviest) params.set('rank', 'bytes');
-  if (!heaviest && page > 1) params.set('page', String(page));
+  if (issue) params.set('issue', issue);
+  if (issue && scan > 0) params.set('scan', String(scan));
+  if (!heaviest && !issue && page > 1) params.set('page', String(page));
   const query = params.toString();
   return query ? `/admin/media?${query}` : '/admin/media';
 }
 
-function exportHref(filter: MediaFilter, q: string, state: MediaState, heaviest: boolean) {
+function exportHref(
+  filter: MediaFilter,
+  q: string,
+  state: MediaState,
+  heaviest: boolean,
+  missing: boolean,
+) {
   const params = new URLSearchParams();
   if (filter !== 'all') params.set('kind', filter);
-  if (heaviest && q) params.set('q', q);
+  if (q) params.set('q', q);
   if (state !== 'all') params.set('state', state);
   if (heaviest) params.set('rank', 'bytes');
+  else if (missing) params.set('missing', '1');
+  else params.set('inventory', '1');
   const query = params.toString();
   return query ? `/api/admin/media?${query}` : '/api/admin/media';
 }
@@ -68,6 +81,8 @@ export default async function MediaLibraryPage({
     view?: string;
     state?: string;
     rank?: string;
+    issue?: string;
+    scan?: string;
   }>;
 }) {
   const session = await requireAdmin();
@@ -82,19 +97,22 @@ export default async function MediaLibraryPage({
   const view: MediaView = params.view === 'grid' ? 'grid' : 'list';
   const state = parseMediaState(params.state);
   const heaviest = parseMediaRank(params.rank) === 'bytes';
+  const issue = heaviest ? null : parseMediaIssue(params.issue);
+  const scan = Math.max(0, Number(params.scan) || 0);
   const page = Math.max(1, Number(params.page) || 1);
-  const [data, heavy] = await Promise.all([
+  const [data, heavy, issues] = await Promise.all([
     loadMediaLibrary({
       filter,
       q,
-      missing: heaviest ? false : missing,
+      missing: heaviest || issue ? false : missing,
       state,
       page,
-      countsOnly: heaviest,
+      countsOnly: heaviest || Boolean(issue),
     }),
     heaviest ? loadHeaviestMedia({ filter, q, state }) : Promise.resolve(null),
+    issue ? loadIssueMedia({ filter, q, state, issue, scan }) : Promise.resolve(null),
   ]);
-  const slots = heavy ? heavy.slots : data.slots;
+  const slots = heavy ? heavy.slots : issues ? issues.slots : data.slots;
   const pageCount = Math.max(1, Math.ceil(data.total / data.pageSize));
   const filters: MediaFilter[] = ['all', ...MEDIA_KINDS];
 
@@ -109,14 +127,14 @@ export default async function MediaLibraryPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <a
-            href={exportHref(filter, q, state, heaviest)}
+            href={exportHref(filter, q, state, heaviest, missing)}
             className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)]"
             title={
               heaviest
                 ? `${faNumber(HEAVIEST_IMAGE_LIMIT)} تصویر با بیشترین حجم`
-                : filter === 'banner'
-                  ? 'بنر سایت فایل خالی ندارد.'
-                  : 'موارد بدون تصویر همین فیلتر'
+                : missing
+                  ? 'موارد بدون تصویر همین فیلتر'
+                  : 'ابعاد، حجم و آدرس تصویرهای همین فیلتر'
             }
           >
             خروجی JSON
@@ -131,6 +149,7 @@ export default async function MediaLibraryPage({
         {view === 'grid' ? <input type="hidden" name="view" value="grid" /> : null}
         {state !== 'all' ? <input type="hidden" name="state" value={state} /> : null}
         {heaviest ? <input type="hidden" name="rank" value="bytes" /> : null}
+        {issue ? <input type="hidden" name="issue" value={issue} /> : null}
         <div className="flex min-h-11 min-w-0 flex-1 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
           <input
             name="q"
@@ -154,7 +173,7 @@ export default async function MediaLibraryPage({
           return (
             <Link
               key={item}
-              href={pageHref(item, q, missing, 1, view, state, heaviest)}
+              href={pageHref(item, q, missing, 1, view, state, heaviest, issue)}
               className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-sm ${
                 active
                   ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
@@ -184,7 +203,7 @@ export default async function MediaLibraryPage({
               return (
                 <Link
                   key={mode}
-                  href={pageHref(filter, q, missing, 1, view, selected ? 'all' : mode, heaviest)}
+                  href={pageHref(filter, q, missing, 1, view, selected ? 'all' : mode, heaviest, issue)}
                   aria-pressed={selected}
                   className={`inline-flex min-h-11 items-center px-3 text-sm font-semibold ${
                     selected ? 'bg-[var(--primary)] text-white' : 'bg-[var(--color-surface)] text-[var(--color-text)]'
@@ -210,7 +229,7 @@ export default async function MediaLibraryPage({
               return (
                 <Link
                   key={mode}
-                  href={pageHref(filter, q, missing, 1, mode, state, heaviest)}
+                  href={pageHref(filter, q, missing, 1, mode, state, heaviest, issue)}
                   aria-current={active ? 'page' : undefined}
                   className={`inline-flex min-h-11 items-center gap-1.5 px-3 text-sm font-semibold ${
                     active
@@ -225,7 +244,7 @@ export default async function MediaLibraryPage({
             })}
           </div>
           <Link
-            href={pageHref(filter, q, !missing, 1, view, state, false)}
+            href={pageHref(filter, q, !missing, 1, view, state, false, null)}
             className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
             missing
               ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
@@ -235,7 +254,7 @@ export default async function MediaLibraryPage({
             فقط بدون تصویر
           </Link>
           <Link
-            href={pageHref(filter, q, false, 1, view, state, !heaviest)}
+            href={pageHref(filter, q, false, 1, view, state, !heaviest, null)}
             aria-pressed={heaviest}
             className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
               heaviest
@@ -248,6 +267,26 @@ export default async function MediaLibraryPage({
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2" role="group" aria-label="مشکل تصویر">
+        {MEDIA_ISSUES.map((item) => {
+          const selected = issue === item;
+          return (
+            <Link
+              key={item}
+              href={pageHref(filter, q, false, 1, view, state, false, selected ? null : item)}
+              aria-pressed={selected}
+              className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
+                selected
+                  ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
+                  : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'
+              }`}
+            >
+              {MEDIA_ISSUE_LABELS[item]}
+            </Link>
+          );
+        })}
+      </div>
+
       {heaviest && heavy && !heavy.complete && slots.length > 0 ? (
         <p className="text-sm text-[var(--color-text-muted)]">
           خواندن همهٔ فایل‌ها تمام نشد. این فهرست از همان بخشی است که خوانده شد.
@@ -256,42 +295,44 @@ export default async function MediaLibraryPage({
 
       {slots.length === 0 ? (
         <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-muted)]">
-          {heaviest ? 'حجم این تصویرها از فضای سایت خوانده نشد.' : 'موردی با این فیلتر پیدا نشد.'}
+          {heaviest
+            ? 'حجم این تصویرها از فضای سایت خوانده نشد.'
+            : issue
+              ? 'در این بخش از فهرست، تصویری با این مشکل پیدا نشد.'
+              : 'موردی با این فیلتر پیدا نشد.'}
         </p>
       ) : (
-        view === 'grid' ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {slots.map((slot) => (
-              <MediaSlotRow key={slot.key} slot={slot} layout="grid" />
-            ))}
-          </div>
-        ) : (
-          <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)]">
-            {slots.map((slot) => (
-              <MediaSlotRow key={slot.key} slot={slot} />
-            ))}
-          </div>
-        )
+        <MediaSlotList slots={slots} layout={view} />
       )}
 
       <div className="flex items-center justify-between gap-3 text-sm text-[var(--color-text-muted)]">
         <p>
           {heaviest
             ? `${faNumber(slots.length)} تصویر با بیشترین حجم`
-            : `${faNumber(data.total)} مورد · صفحه ${faNumber(data.page)} از ${faNumber(pageCount)}`}
+            : issue
+              ? `${faNumber(slots.length)} مشکل · ${faNumber(issues?.scanned ?? 0)} تصویر بررسی شد`
+              : `${faNumber(data.total)} مورد · صفحه ${faNumber(data.page)} از ${faNumber(pageCount)}`}
         </p>
         <div className="flex gap-2">
-          {!heaviest && data.page > 1 ? (
+          {!heaviest && !issue && data.page > 1 ? (
             <Link
-              href={pageHref(filter, q, missing, data.page - 1, view, state, false)}
+              href={pageHref(filter, q, missing, data.page - 1, view, state, false, null)}
               className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3"
             >
               قبلی
             </Link>
           ) : null}
-          {!heaviest && data.page < pageCount ? (
+          {issue && issues?.nextScan != null ? (
             <Link
-              href={pageHref(filter, q, missing, data.page + 1, view, state, false)}
+              href={pageHref(filter, q, false, 1, view, state, false, issue, issues.nextScan)}
+              className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3"
+            >
+              بعدی
+            </Link>
+          ) : null}
+          {!heaviest && !issue && data.page < pageCount ? (
+            <Link
+              href={pageHref(filter, q, missing, data.page + 1, view, state, false, null)}
               className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3"
             >
               بعدی
