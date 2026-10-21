@@ -33,7 +33,7 @@ export default function TrendingNowSection({
             key={list.id}
             className="w-72 shrink-0 snap-start lg:w-auto lg:min-w-0"
           >
-            <TrendingCard list={list} priority={index < 2} showBadge={index === 0} />
+            <TrendingCard list={list} priority={index === 0} showBadge={index === 0} />
           </div>
         ))}
       </div>
@@ -71,8 +71,9 @@ function TrendingCard({
             className="h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
             fallbackIcon="📋"
             fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"
-            sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 100vw"
+            sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 18rem"
             priority={priority}
+            fetchPriority={priority ? 'high' : 'low'}
             categorySlug={list.category?.slug}
             listSlug={list.slug}
             listTitle={list.title}

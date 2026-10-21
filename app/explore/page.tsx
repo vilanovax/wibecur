@@ -2,7 +2,6 @@ import { Suspense, type ReactNode } from 'react';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import CuratedLandingPageClient from '@/components/mobile/curated/CuratedLandingPageClient';
-import ExploreLcpPreload from '@/components/mobile/curated/ExploreLcpPreload';
 import ExploreTrendingServer from '@/components/mobile/curated/ExploreTrendingServer';
 import {
   EMPTY_EXPLORE_USER_PREFERENCES,
@@ -10,10 +9,7 @@ import {
   type ExplorePayload,
 } from '@/lib/curated/explore-data';
 import { toExploreClientSeed } from '@/lib/curated/explore-client-seed';
-import {
-  selectExploreLcpImageUrl,
-  selectExploreTrendingLists,
-} from '@/lib/curated/explore-sections';
+import { selectExploreTrendingLists } from '@/lib/curated/explore-sections';
 import { ExplorePageSkeleton } from '@/components/mobile/curated/ExplorePageSkeleton';
 
 export const revalidate = 60;
@@ -31,7 +27,6 @@ export const metadata = {
 async function ExploreContent() {
   let initialData: ExplorePayload | undefined;
   let trendingSlot: ReactNode = null;
-  let lcpImage: string | null = null;
 
   try {
     const base = await fetchExploreBasePayload();
@@ -41,7 +36,6 @@ async function ExploreContent() {
       .filter((c) => c.id !== 'all')
       .map((c) => c.id);
     const trendingLists = selectExploreTrendingLists(base.lists, { activeCategoryIds });
-    lcpImage = selectExploreLcpImageUrl(trendingLists);
 
     if (trendingLists.length > 0) {
       trendingSlot = (
@@ -55,12 +49,7 @@ async function ExploreContent() {
     console.warn('[ExplorePage] SSR explore fetch failed, falling back to client fetch:', err);
   }
 
-  return (
-    <>
-      <ExploreLcpPreload href={lcpImage} />
-      <CuratedLandingPageClient initialData={initialData} trendingSlot={trendingSlot} />
-    </>
-  );
+  return <CuratedLandingPageClient initialData={initialData} trendingSlot={trendingSlot} />;
 }
 
 /**

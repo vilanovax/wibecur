@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, ChevronDown, FileJson, ImageIcon, MoreHorizontal, Plus, Sparkles } from 'lucide-react';
+import { BookOpen, ChevronDown, FileJson, ImageIcon, Images, MoreHorizontal, Plus, Sparkles } from 'lucide-react';
 
 interface ContentHubToolsMenuProps {
   showNewList?: boolean;
@@ -55,9 +55,17 @@ export default function ContentHubToolsMenu({ showNewList = false }: ContentHubT
             import گروهی
           </Link>
           <Link
+            href="/admin/media"
+            onClick={() => setOpen(false)}
+            className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+          >
+            <Images className="w-4 h-4" />
+            کتابخانه تصاویر
+          </Link>
+          <Link
             href="/admin/catalog/storage-images"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+            className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
           >
             <ImageIcon className="w-4 h-4" />
             تصاویر

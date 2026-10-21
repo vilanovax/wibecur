@@ -46,7 +46,38 @@ export const USER_LIST_SELECT = {
   },
 } as const;
 
+/** کارت پروفایل — بدون tags، viewCount و شمارش رابطه‌ای */
+export const PROFILE_LIST_SELECT = {
+  id: true,
+  title: true,
+  slug: true,
+  description: true,
+  coverImage: true,
+  categoryId: true,
+  badge: true,
+  isPublic: true,
+  isFeatured: true,
+  isActive: true,
+  likeCount: true,
+  saveCount: true,
+  itemCount: true,
+  commentsEnabled: true,
+  createdAt: true,
+  updatedAt: true,
+  categories: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      icon: true,
+    },
+  },
+} as const;
+
 export type UserListRecord = Prisma.listsGetPayload<{ select: typeof USER_LIST_SELECT }>;
+export type ProfileListRecord = Prisma.listsGetPayload<{ select: typeof PROFILE_LIST_SELECT }>;
+
+export const PROFILE_LISTS_PAGE_SIZE = 12;
 
 export function buildUserListsWhere(
   userId: string,
@@ -91,7 +122,7 @@ export async function fetchUserLists(
   options: { page?: number; limit?: number; filter?: UserListFilter } = {}
 ) {
   const page = options.page ?? 1;
-  const limit = options.limit ?? 20;
+  const limit = options.limit ?? PROFILE_LISTS_PAGE_SIZE;
   const filter = options.filter ?? 'all';
   const skip = (page - 1) * limit;
   const where = buildUserListsWhere(userId, filter);
@@ -102,7 +133,7 @@ export async function fetchUserLists(
       skip,
       take: limit,
       orderBy: [{ saveCount: 'desc' }, { likeCount: 'desc' }, { updatedAt: 'desc' }],
-      select: USER_LIST_SELECT,
+      select: PROFILE_LIST_SELECT,
     }),
     prisma.lists.count({ where }),
     page === 1 ? fetchUserListVisibilityCounts(userId) : Promise.resolve(undefined),

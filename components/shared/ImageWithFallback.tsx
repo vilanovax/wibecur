@@ -50,6 +50,8 @@ interface ImageWithFallbackProps {
    */
   width?: number;
   height?: number;
+  /** وقتی priority نیست، low جلوی رقابت با تصویر LCP را می‌گیرد. */
+  fetchPriority?: 'high' | 'low' | 'auto';
 }
 
 function toDisplaySrc(resolved: string): string {
@@ -81,7 +83,9 @@ export default function ImageWithFallback({
   sizes,
   width,
   height,
+  fetchPriority,
 }: ImageWithFallbackProps) {
+  const resolvedFetchPriority = priority ? 'high' : fetchPriority;
   const [forceLocal, setForceLocal] = useState(false);
   const [directStorageSrc, setDirectStorageSrc] = useState<string | null>(null);
 
@@ -176,6 +180,7 @@ export default function ImageWithFallback({
         className={className}
         onError={handleError}
         priority={priority}
+        fetchPriority={resolvedFetchPriority}
         unoptimized={unoptimizedFixed}
         referrerPolicy="no-referrer"
       />
@@ -195,6 +200,7 @@ export default function ImageWithFallback({
         className={className}
         onError={handleError}
         priority={priority}
+        fetchPriority={resolvedFetchPriority}
         unoptimized={unoptimized}
         referrerPolicy="no-referrer"
       />
@@ -215,7 +221,7 @@ export default function ImageWithFallback({
       className={className}
       onError={handleError}
       loading={priority ? 'eager' : 'lazy'}
-      fetchPriority={priority ? 'high' : undefined}
+      fetchPriority={resolvedFetchPriority}
       decoding="async"
       referrerPolicy="no-referrer"
     />

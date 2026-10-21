@@ -28,6 +28,8 @@ interface ListsCategorySectionProps {
   bookmarkedIds?: Set<string>;
   onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   onShowAllCategory?: (categoryId: string, categorySlug?: string) => void;
+  /** کارت اول LCP است (وقتی بنر منتخب نیست) */
+  prioritizeFirstCover?: boolean;
 }
 
 const SCROLL_MT = 'scroll-mt-[136px]';
@@ -43,6 +45,7 @@ export default function ListsCategorySection({
   bookmarkedIds,
   onBookmarkToggle,
   onShowAllCategory,
+  prioritizeFirstCover = false,
 }: ListsCategorySectionProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -113,6 +116,8 @@ export default function ListsCategorySection({
               isBookmarked={bookmarkedIds?.has(visible[0]!.id)}
               onBookmarkToggle={onBookmarkToggle}
               fillHeight
+              priority={prioritizeFirstCover}
+              fetchPriority={prioritizeFirstCover ? undefined : 'low'}
             />
           </div>
           {visible.slice(1).map((list) => (
@@ -123,6 +128,7 @@ export default function ListsCategorySection({
                 showCreator={false}
                 isBookmarked={bookmarkedIds?.has(list.id)}
                 onBookmarkToggle={onBookmarkToggle}
+                fetchPriority="low"
               />
             </div>
           ))}
@@ -142,6 +148,8 @@ export default function ListsCategorySection({
                 showCreator={false}
                 isBookmarked={bookmarkedIds?.has(list.id)}
                 onBookmarkToggle={onBookmarkToggle}
+                priority={prioritizeFirstCover && index === 0}
+                fetchPriority={prioritizeFirstCover && index === 0 ? undefined : 'low'}
               />
             </div>
           ))}

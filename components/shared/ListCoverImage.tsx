@@ -16,6 +16,7 @@ export interface ListCoverImageProps {
   fallbackIcon?: string;
   fallbackClassName?: string;
   priority?: boolean;
+  fetchPriority?: 'high' | 'low' | 'auto';
   /** card = کاور عمودی | banner = بنر افقی */
   variant?: 'card' | 'banner';
   /** opt-in بهینه‌سازی next/image (والد باید relative+sized باشد). */
@@ -34,6 +35,7 @@ export default function ListCoverImage({
   fallbackIcon = '📋',
   fallbackClassName = '',
   priority = false,
+  fetchPriority,
   variant = 'card',
   sizes,
 }: ListCoverImageProps) {
@@ -60,6 +62,7 @@ export default function ListCoverImage({
       listSlug={slug ?? undefined}
       listTitle={title}
       priority={priority}
+      fetchPriority={fetchPriority}
       sizes={sizes}
     />
   );

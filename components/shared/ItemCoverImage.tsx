@@ -90,7 +90,7 @@ export default function ItemCoverImage({
   const [proxyRetry, setProxyRetry] = useState(0);
   const [loadFailed, setLoadFailed] = useState(false);
   const [posterLoading, setPosterLoading] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(priority);
 
   const baseResolved = useMemo(
     () =>
@@ -143,8 +143,8 @@ export default function ItemCoverImage({
     setProxyRetry(0);
     setLoadFailed(false);
     setPosterLoading(false);
-    setImageLoaded(false);
-  }, [itemId, baseResolved, enrichPoster]);
+    setImageLoaded(priority);
+  }, [itemId, baseResolved, enrichPoster, priority]);
 
   const shouldEnrichPoster =
     enrichPoster && !!itemId && isMovieItem && (needsPosterEnrich || loadFailed);

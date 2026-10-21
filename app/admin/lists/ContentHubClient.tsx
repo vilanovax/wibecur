@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { List, Library, FileJson, Plus, UserRound, AlignLeft, Lightbulb, ImageIcon } from 'lucide-react';
+import { List, Library, FileJson, Plus, UserRound, AlignLeft, Lightbulb, ImageIcon, Images } from 'lucide-react';
 import type { ContentHubStats } from '@/lib/admin/content-hub-stats';
 import type { ListsIntelligenceData } from '@/lib/admin/lists-types';
 import type { CatalogPageData } from '@/lib/admin/catalog-page-data';
@@ -172,6 +172,13 @@ export default function ContentHubClient({
         <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها و محتوا</h1>
         {showHubTools && (
           <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/admin/media"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)]"
+            >
+              <Images className="size-4" strokeWidth={2} />
+              کتابخانه تصاویر
+            </Link>
             {view === 'catalog' && catalogMode !== 'create' && (
               <Link
                 href="/admin/catalog/storage-images"

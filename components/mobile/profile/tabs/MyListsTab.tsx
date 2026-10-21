@@ -1,22 +1,29 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import SearchInput from '@/components/mobile/search/SearchInput';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { UserListRecord, UserListFilter, UserListVisibilityCounts } from '@/lib/user-lists';
+import type { ProfileListRecord, UserListFilter, UserListVisibilityCounts } from '@/lib/user-lists';
+import { PROFILE_LISTS_PAGE_SIZE } from '@/lib/user-lists';
 import { LISTS_UPDATED_EVENT } from '@/lib/profile-events';
 import { openHomeCreateSheet } from '@/lib/home-create-sheet';
 import MyListCardCompact, { type MyListCardData } from '@/components/mobile/profile/MyListCardCompact';
 import MyListsTopCarousel from '@/components/mobile/profile/MyListsTopCarousel';
 import MyListsEmptyState from '@/components/mobile/profile/MyListsEmptyState';
-import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
-import PersonalListSettingsModal from '../PersonalListSettingsModal';
 
-export type ListWithCategory = UserListRecord;
+const CreateListForm = dynamic(() => import('@/components/mobile/user-lists/CreateListForm'), {
+  ssr: false,
+});
+const PersonalListSettingsModal = dynamic(() => import('../PersonalListSettingsModal'), {
+  ssr: false,
+});
+
+export type ListWithCategory = ProfileListRecord;
 
 type VisibilityFilter = 'public' | 'private' | 'shared' | null;
 
@@ -28,7 +35,7 @@ const HIGHLIGHT_DESKTOP = 3;
 
 interface MyListsTabProps {
   userId: string;
-  initialLists?: UserListRecord[];
+  initialLists?: ListWithCategory[];
   initialTotal?: number;
   initialVisibilityCounts?: UserListVisibilityCounts;
   /** Chip count from SSR; full shared lists load only when filter is active */
@@ -48,7 +55,10 @@ function toApiFilter(filter: VisibilityFilter): UserListFilter {
 }
 
 async function fetchMyLists(pageParam: number, filter: UserListFilter): Promise<MyListsResponse> {
-  const params = new URLSearchParams({ page: String(pageParam), limit: '20' });
+  const params = new URLSearchParams({
+    page: String(pageParam),
+    limit: String(PROFILE_LISTS_PAGE_SIZE),
+  });
   if (filter !== 'all') {
     params.set('filter', filter);
   }
@@ -70,15 +80,20 @@ function toCardData(list: ListWithCategory): MyListCardData {
     title: list.title,
     slug: list.slug,
     coverImage: list.coverImage,
-    saveCount: list.saveCount ?? list._count?.bookmarks,
-    itemCount: list.itemCount ?? list._count?.items,
-    likeCount: list.likeCount ?? list._count?.list_likes,
+    saveCount: list.saveCount ?? 0,
+    itemCount: list.itemCount ?? 0,
+    likeCount: list.likeCount ?? 0,
     isPublic: list.isPublic,
     isActive: list.isActive,
     isFeatured: list.isFeatured,
     badge: list.badge,
-    categories: list.categories,
-    _count: list._count,
+    categories: list.categories
+      ? {
+          name: list.categories.name,
+          icon: list.categories.icon,
+          slug: list.categories.slug,
+        }
+      : null,
   };
 }
 
@@ -100,13 +115,13 @@ function pickTopLists(all: ListWithCategory[], limit = 3): MyListCardData[] {
       (l) =>
         l.isPublic &&
         l.isActive !== false &&
-        (l.itemCount ?? l._count?.items ?? 0) > 0
+        (l.itemCount ?? 0) > 0
     )
     .sort((a, b) => {
-      const savesA = a.saveCount ?? a._count?.bookmarks ?? 0;
-      const savesB = b.saveCount ?? b._count?.bookmarks ?? 0;
+      const savesA = a.saveCount ?? 0;
+      const savesB = b.saveCount ?? 0;
       if (savesB !== savesA) return savesB - savesA;
-      return (b.likeCount ?? b._count?.list_likes ?? 0) - (a.likeCount ?? a._count?.list_likes ?? 0);
+      return (b.likeCount ?? 0) - (a.likeCount ?? 0);
     })
     .slice(0, limit)
     .map(toCardData);
@@ -170,7 +185,7 @@ export default function MyListsTab({
               pagination: {
                 page: 1,
                 totalPages:
-                  Math.ceil((initialTotal ?? initialLists!.length) / 20) || 1,
+                  Math.ceil((initialTotal ?? initialLists!.length) / PROFILE_LISTS_PAGE_SIZE) || 1,
                 total: initialTotal ?? initialLists!.length,
               },
               counts: initialVisibilityCounts,
@@ -583,13 +598,15 @@ export default function MyListsTab({
         />
       )}
 
-      <CreateListForm
-        isOpen={showCreate}
-        onClose={() => setShowCreate(false)}
-        onSuccess={() => {
-          void refetch();
-        }}
-      />
+      {showCreate ? (
+        <CreateListForm
+          isOpen={showCreate}
+          onClose={() => setShowCreate(false)}
+          onSuccess={() => {
+            void refetch();
+          }}
+        />
+      ) : null}
     </>
   );
 }

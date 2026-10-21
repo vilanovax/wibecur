@@ -65,7 +65,9 @@ function ListGridItemCard({
             enrichWhenVisible={false}
             coverLayout="grid"
             sizes={LIST_GRID_IMAGE_SIZES}
-            priority={index < 8}
+            // هیرو LCP است؛ ردیف اول فقط eager با اولویت پایین تا با بنر رقابت نکند.
+            eager={index < 4}
+            rootMargin="240px"
           />
           <span
             className="absolute start-1.5 top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-foreground/80 px-1.5 text-xs font-bold text-background tabular-nums"

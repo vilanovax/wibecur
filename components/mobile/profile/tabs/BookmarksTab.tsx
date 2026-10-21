@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bookmark, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -51,7 +52,7 @@ interface BookmarksResponse {
 }
 
 async function fetchBookmarks(): Promise<BookmarksResponse> {
-  const res = await fetch('/api/user/bookmarks?page=1&limit=50');
+  const res = await fetch('/api/user/bookmarks?page=1&limit=20');
   const data = await res.json();
   if (!res.ok || !data.success) {
     throw new Error(data.error || 'خطا در دریافت ذخیره‌ها');
@@ -67,6 +68,7 @@ export default function BookmarksTab({
   initialBookmarks,
   initialBookmarksTotal = 0,
 }: BookmarksTabProps) {
+  const router = useRouter();
   const hasInitial = Boolean(initialBookmarks?.length);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -78,7 +80,7 @@ export default function BookmarksTab({
           bookmarks: initialBookmarks as BookmarkItem[],
           pagination: {
             page: 1,
-            totalPages: Math.ceil(initialBookmarksTotal / 50) || 1,
+            totalPages: Math.ceil(initialBookmarksTotal / 20) || 1,
           },
         }
       : undefined,
@@ -177,6 +179,8 @@ export default function BookmarksTab({
             <Link
               key={bookmark.id}
               href={`/lists/${list.slug}`}
+              prefetch={false}
+              onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
               className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
               <Card className="flex gap-2.5 bg-popover p-2.5 transition-transform active:scale-95">
@@ -186,6 +190,8 @@ export default function BookmarksTab({
                   title={list.title}
                   slug={list.slug}
                   categorySlug={list.categories?.slug}
+                  sizes="64px"
+                  fetchPriority="low"
                   className="h-full w-full object-cover"
                   fallbackIcon={list.categories?.icon}
                   fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
@@ -218,15 +224,19 @@ export default function BookmarksTab({
             <Link
               key={bookmark.id}
               href={`/lists/${list.slug}`}
+              prefetch={false}
+              onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
               className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
               <Card className="overflow-hidden bg-popover p-0">
-              <div className="relative aspect-[16/10] max-h-40 bg-muted">
+              <div className="relative aspect-video max-h-40 bg-muted">
                 <ListCoverImage
                   coverImage={list.coverImage}
                   title={list.title}
                   slug={list.slug}
                   categorySlug={list.categories?.slug}
+                  sizes="(min-width: 1280px) 25vw, 33vw"
+                  fetchPriority="low"
                   className="h-full w-full object-cover"
                   fallbackIcon={list.categories?.icon}
                   fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"

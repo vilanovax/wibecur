@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 
@@ -104,6 +105,7 @@ function FeaturedSlide({
   priority?: boolean;
   className?: string;
 }) {
+  const router = useRouter();
   const categorySlug = list.categories?.slug ?? null;
   const categoryLabel = list.categories?.name
     ? `${list.categories.icon ? `${list.categories.icon} ` : ''}${list.categories.name}`
@@ -112,6 +114,8 @@ function FeaturedSlide({
   return (
     <Link
       href={`/lists/${list.slug}`}
+      prefetch={false}
+      onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
       className={`group relative block aspect-5/2 min-h-20 overflow-hidden rounded-surface border border-border bg-muted shadow-surface transition-[colors,transform] active:scale-95 sm:aspect-5/3 sm:min-h-28 lg:aspect-3/2 lg:min-h-44 lg:hover:border-brand/30 xl:min-h-52 ${className}`}
     >
       <ListCoverImage
@@ -126,6 +130,7 @@ function FeaturedSlide({
         fallbackIcon={list.categories?.icon ?? '📋'}
         fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl lg:text-4xl"
         priority={priority}
+        fetchPriority={priority ? 'high' : 'low'}
       />
       <div className="pointer-events-none absolute inset-0 bg-linear-to-l from-foreground/85 via-foreground/45 to-foreground/15" />
       {categoryLabel && (

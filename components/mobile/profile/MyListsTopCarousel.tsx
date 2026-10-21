@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
 import type { MyListCardData } from './MyListCardCompact';
@@ -12,6 +13,7 @@ interface MyListsTopCarouselProps {
 
 /** هایلایت فشرده — دو کارت روی موبایل، سه کارت در یک ردیف روی دسکتاپ */
 export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
+  const router = useRouter();
   if (lists.length === 0) return null;
 
   return (
@@ -27,13 +29,17 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
           className="grid grid-cols-2 gap-2.5 lg:grid-cols-3"
           dir="rtl"
         >
-        {lists.map((list) => {
+        {lists.map((list, index) => {
           const saveCount = list.saveCount ?? list._count?.bookmarks ?? 0;
           const itemCount = list.itemCount ?? list._count?.items ?? 0;
+          const href = `/user-lists/${list.id}`;
+          const priority = index === 0;
           return (
             <Link
               key={list.id}
-              href={`/user-lists/${list.id}`}
+              href={href}
+              prefetch={false}
+              onPointerDown={() => router.prefetch(href)}
               className="block min-w-0"
             >
               <Card className="overflow-hidden bg-popover p-0">
@@ -43,12 +49,15 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
                   title={list.title}
                   slug={list.slug}
                   categorySlug={list.categories?.slug}
+                  sizes="(min-width: 1024px) 33vw, 45vw"
+                  priority={priority}
+                  fetchPriority={priority ? 'high' : 'low'}
                   className="h-full w-full object-cover"
                   fallbackIcon={list.categories?.icon ?? '📋'}
                   fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
                 />
                 <div
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/35 to-transparent"
+                  className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/80 via-foreground/35 to-transparent"
                   aria-hidden
                 />
                 <div className="absolute inset-x-0 bottom-0 p-2 pt-6">

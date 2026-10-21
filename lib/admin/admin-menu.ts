@@ -37,7 +37,7 @@ export const ADMIN_MENU: AdminMenuEntry[] = [
     href: '/admin/lists',
     label: 'لیست‌ها',
     permission: 'manage_lists',
-    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items', '/admin/books'],
+    matchPrefixes: ['/admin/lists', '/admin/catalog', '/admin/items', '/admin/books', '/admin/media'],
   },
   {
     group: 'main',

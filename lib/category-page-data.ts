@@ -819,9 +819,9 @@ export async function getCategoryPageData(
   const isLocation = isLocationCategorySlug(slug);
 
   // getCityBreakdown و getFilmGenres هرکدام همهٔ لیست‌های دسته را اسکن می‌کنند.
-  // - City breakdown برای فیلم بی‌ربط است و برای دسته‌های location هم نمایش داده نمی‌شود.
+  // - City breakdown فقط برای کافه و رستوران در UI نشان داده می‌شود.
   // - Film genres فقط برای دستهٔ فیلم لازم است.
-  const shouldScanCities = slug ? !isFilm && !isLocation : true;
+  const shouldScanCities = slug ? isLocation : false;
   const shouldScanGenres = slug ? isFilm : true;
 
   const [

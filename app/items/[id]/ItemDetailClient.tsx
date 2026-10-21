@@ -59,7 +59,6 @@ export default function ItemDetailClient({
 
   const categoryId = item.lists.categories?.id ?? null;
   const likeCount = item.voteCount ?? 0;
-  const hasSimilarSeed = Boolean(initialSimilarItems?.length);
 
   const listContextCard = (
     <ItemSidebarPanel>
@@ -113,7 +112,7 @@ export default function ItemDetailClient({
           {metadataSection}
 
           <div ref={discoveryRef} className="min-h-24">
-            {discoveryInView || hasSimilarSeed ? (
+            {discoveryInView ? (
               <ItemDiscoverySectionLazy
                 itemId={item.id}
                 categoryId={categoryId}

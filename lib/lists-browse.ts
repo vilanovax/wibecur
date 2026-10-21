@@ -39,28 +39,16 @@ export const listsBrowseSelect = {
   isPublic: true,
   isFeatured: true,
   isActive: true,
-  viewCount: true,
   likeCount: true,
   saveCount: true,
   itemCount: true,
   createdAt: true,
-  updatedAt: true,
   categories: {
     select: {
       id: true,
       name: true,
       slug: true,
       icon: true,
-      color: true,
-    },
-  },
-  users: {
-    select: {
-      id: true,
-      name: true,
-      username: true,
-      image: true,
-      role: true,
     },
   },
 } satisfies Prisma.listsSelect;
@@ -84,9 +72,22 @@ function serializeBrowseList(
   list: ListsBrowseRecord & { coverImage: string; bannerImage: string }
 ): ListsBrowseList {
   return {
-    ...list,
+    id: list.id,
+    title: list.title,
+    slug: list.slug,
+    description: list.description,
+    coverImage: list.coverImage,
+    bannerImage: list.bannerImage,
+    categoryId: list.categoryId,
+    badge: list.badge,
+    isPublic: list.isPublic,
+    isFeatured: list.isFeatured,
+    isActive: list.isActive,
+    likeCount: list.likeCount,
+    saveCount: list.saveCount,
+    itemCount: list.itemCount,
     createdAt: list.createdAt.toISOString(),
-    updatedAt: list.updatedAt.toISOString(),
+    categories: list.categories,
   };
 }
 
@@ -146,7 +147,7 @@ async function fetchListsBrowseUncached({
 
   return unstable_cache(
     () => loadListsBrowse(safeOffset, safeLimit, sort, categoryId),
-    ['lists-browse', String(safeOffset), String(safeLimit), sort, cacheCategoryKey],
+    ['lists-browse-v2', String(safeOffset), String(safeLimit), sort, cacheCategoryKey],
     { revalidate: 60, tags: [LISTS_BROWSE_CACHE_TAG] }
   )();
 }

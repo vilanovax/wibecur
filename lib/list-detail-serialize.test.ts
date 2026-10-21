@@ -46,6 +46,31 @@ describe('prepareListDetailForClient', () => {
     });
   });
 
+  it('collapses searchProfile to the text the in-list search needs', () => {
+    const result = prepareListDetailForClient({
+      items: [
+        {
+          title: 'نیمه شب',
+          metadata: {
+            author: 'ریلی سیجر',
+            searchProfile: {
+              genres: ['تریلر'],
+              keywords: ['خانه'],
+              searchText: 'تریلر روان‌شناختی خانه',
+              enrichedAt: '2026-01-01T00:00:00.000Z',
+              model: 'gpt',
+            },
+          },
+        },
+      ],
+    });
+
+    expect(result.items[0].metadata).toEqual({
+      author: 'ریلی سیجر',
+      searchProfile: { searchText: 'تریلر روان‌شناختی خانه' },
+    });
+  });
+
   it('keeps preview-modal keys (tip / imdb / entryKind)', () => {
     const result = prepareListDetailForClient({
       items: [

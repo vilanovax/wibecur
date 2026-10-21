@@ -21,7 +21,13 @@ export default function ExploreTrendingPrefetchLink({
   };
 
   return (
-    <Link href={href} onPointerEnter={prefetch} onFocus={prefetch} {...rest}>
+    <Link
+      href={href}
+      {...rest}
+      prefetch={false}
+      onPointerDown={prefetch}
+      onFocus={prefetch}
+    >
       {children}
     </Link>
   );

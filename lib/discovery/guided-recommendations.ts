@@ -407,17 +407,17 @@ export async function getGuidedDiscoveryResults(
     Promise.all(
       plan.listQueries.map(async (query) => ({
         query,
-        lists: await searchListsByQuery(prisma, query, 6, new Set()),
+        lists: await searchListsByQuery(prisma, query, 4, new Set()),
       }))
     ),
     plan.preferShortLists && plan.shortListMaxItems
-      ? fetchShortLists(prisma, 6, plan.shortListMaxItems, new Set())
+      ? fetchShortLists(prisma, 4, plan.shortListMaxItems, new Set())
       : Promise.resolve([] as GuidedListCard[]),
     plan.includeForYou
-      ? getHomeRecommendationsForUser(prisma, userId, 6)
+      ? getHomeRecommendationsForUser(prisma, userId, 4)
       : Promise.resolve({ lists: [], isPersonalized: false }),
     plan.includeTrending
-      ? getCachedGlobalTrending(6)
+      ? getCachedGlobalTrending(10)
       : Promise.resolve([] as Awaited<ReturnType<typeof getCachedGlobalTrending>>),
   ]);
 
@@ -454,7 +454,7 @@ export async function getGuidedDiscoveryResults(
   if (forYouResult.lists.length > 0) {
     const mapped = forYouResult.lists
       .filter((l) => !usedListIds.has(l.id))
-      .slice(0, 6)
+      .slice(0, 4)
       .map((l) => ({
         id: l.id,
         slug: l.slug,
@@ -489,7 +489,7 @@ export async function getGuidedDiscoveryResults(
         id: 'trending',
         title: 'الان داغه',
         type: 'lists',
-        lists: mapped.slice(0, 6),
+        lists: mapped.slice(0, 4),
       });
     }
   }
@@ -514,7 +514,7 @@ export function getCachedGuidedDiscoveryResults(
   return unstable_cache(
     () => getGuidedDiscoveryResults(prisma, ctx, null),
     [
-      'guided-discovery-v2',
+      'guided-discovery-v3',
       ctx.scenario,
       ctx.location ?? '',
       ctx.timeBudget ?? '',

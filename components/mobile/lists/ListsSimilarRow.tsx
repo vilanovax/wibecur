@@ -33,6 +33,7 @@ export default function ListsSimilarRow({
               variant="compact"
               isBookmarked={bookmarkedIds?.has(list.id)}
               onBookmarkToggle={onBookmarkToggle}
+              fetchPriority="low"
             />
           </div>
         ))}

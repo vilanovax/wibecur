@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
@@ -81,7 +82,7 @@ export default function GuidedDiscoveryResults({ data, scenario, onItemClick }: 
             {row.type === 'lists' && visibleLists.length > 0 ? (
               <div className="grid grid-cols-2 gap-2.5 lg:gap-3 xl:grid-cols-3">
                 {visibleLists.map((list) => {
-                  const priority = listCardIndex < 2;
+                  const priority = listCardIndex === 0;
                   listCardIndex += 1;
                   return (
                     <GuidedListCardLink
@@ -130,6 +131,8 @@ const GuidedListCardLink = memo(function GuidedListCardLink({
   onNavigate?: () => void;
   priority?: boolean;
 }) {
+  const router = useRouter();
+  const href = `/lists/${list.slug}`;
   const coverGradient = pickCategoryCoverGradient(
     list.category?.slug,
     list.slug || list.title
@@ -137,7 +140,9 @@ const GuidedListCardLink = memo(function GuidedListCardLink({
 
   return (
     <Link
-      href={`/lists/${list.slug}`}
+      href={href}
+      prefetch={false}
+      onPointerDown={() => router.prefetch(href)}
       onClick={() => {
         trackGuidedDiscoveryEvent('result_click', {
           scenario,
@@ -150,14 +155,15 @@ const GuidedListCardLink = memo(function GuidedListCardLink({
     >
       <Card className="flex h-full flex-col overflow-hidden bg-popover p-0 transition-transform active:scale-95">
         <div
-          className={`relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-gradient-to-br ${coverGradient}`}
+          className={`relative aspect-4/3 w-full shrink-0 overflow-hidden bg-linear-to-br ${coverGradient}`}
         >
           <ImageWithFallback
             src={list.coverImage}
             alt={list.title}
             sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, 45vw"
             priority={priority}
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            fetchPriority={priority ? 'high' : 'low'}
+            className="object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-105"
             categorySlug={list.category?.slug}
             listSlug={list.slug}
             listTitle={list.title}
@@ -165,7 +171,7 @@ const GuidedListCardLink = memo(function GuidedListCardLink({
             fallbackClassName="absolute inset-0 flex items-center justify-center text-2xl"
           />
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/50 via-transparent to-transparent"
             aria-hidden
           />
         </div>
@@ -196,9 +202,13 @@ const GuidedItemCardRow = memo(function GuidedItemCardRow({
   rowId: string;
   onNavigate?: () => void;
 }) {
+  const router = useRouter();
+  const href = `/items/${item.id}`;
   return (
     <Link
-      href={`/items/${item.id}`}
+      href={href}
+      prefetch={false}
+      onPointerDown={() => router.prefetch(href)}
       onClick={() => {
         trackGuidedDiscoveryEvent('result_click', {
           scenario,

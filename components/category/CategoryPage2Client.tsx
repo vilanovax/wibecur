@@ -111,9 +111,8 @@ export default function CategoryPage2Client({
 
   const accentColor = category.accentColor || category.color;
   const cityCounts = Object.fromEntries(cityBreakdown.map((c) => [c.city, c.listCount]));
-  const showCityExplorer =
-    !isLocationCategorySlug(category.slug) &&
-    cityBreakdown.some((c) => c.listCount > 0);
+  // فقط کافه و رستوران — روی فیلم و کتاب معنی ندارد
+  const showCityExplorer = isLocationCategorySlug(category.slug);
   const showGenreBar = isFilmCategorySlug(category.slug);
 
   const featuredSpotlight =

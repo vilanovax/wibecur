@@ -1,7 +1,6 @@
 'use client';
 
-import { memo, useEffect, useState } from 'react';
-import { useLazyInView } from '@/hooks/useLazyInView';
+import { memo } from 'react';
 import LightweightEntryRow from '@/components/shared/list-entries/LightweightEntryRow';
 import ListGridItemCard from '@/components/mobile/lists/ListGridItemCard';
 import {
@@ -10,10 +9,6 @@ import {
   sourceCategorySlugFromItem,
   type EntryKind,
 } from '@/lib/list-entry';
-
-const GRID_BATCH_THRESHOLD = 20;
-const GRID_INITIAL_VISIBLE = 24;
-const GRID_LOAD_MORE = 18;
 
 export type ListGridEntry = {
   item: {
@@ -81,30 +76,9 @@ function ListItemsGrid({
   isLifestyleList,
   onOpenAt,
 }: ListItemsGridProps) {
-  const useBatching = entries.length > GRID_BATCH_THRESHOLD;
-  const [visibleCount, setVisibleCount] = useState(() =>
-    useBatching ? GRID_INITIAL_VISIBLE : entries.length
-  );
-  const { ref: sentinelRef, inView: sentinelInView } = useLazyInView<HTMLDivElement>({
-    rootMargin: '800px',
-    once: false,
-  });
-
-  useEffect(() => {
-    setVisibleCount(useBatching ? GRID_INITIAL_VISIBLE : entries.length);
-  }, [entries, useBatching]);
-
-  useEffect(() => {
-    if (!useBatching || !sentinelInView || visibleCount >= entries.length) return;
-    setVisibleCount((current) => Math.min(current + GRID_LOAD_MORE, entries.length));
-  }, [sentinelInView, useBatching, visibleCount, entries.length]);
-
-  const visibleEntries = useBatching ? entries.slice(0, visibleCount) : entries;
-  const hasMore = useBatching && visibleCount < entries.length;
-
   return (
     <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4 xl:grid-cols-4">
-      {visibleEntries.map(({ item, originalIndex }) => {
+      {entries.map(({ item, originalIndex }) => {
         const entryKind = resolveEntryKind(item);
         const slug = itemCategorySlug(item, listCategorySlug);
 
@@ -138,15 +112,6 @@ function ListItemsGrid({
           </div>
         );
       })}
-      {hasMore ? (
-        <div
-          ref={sentinelRef}
-          className="col-span-2 flex h-10 items-center justify-center lg:col-span-full"
-          aria-hidden
-        >
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
-      ) : null}
     </div>
   );
 }

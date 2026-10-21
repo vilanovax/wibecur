@@ -18,7 +18,7 @@ import {
 } from '@/lib/list-detail-items';
 import { collectPersonLinkTargets } from '@/lib/item-metadata-display';
 import { resolvePublicPersonHrefs } from '@/lib/people-server';
-import { countLiveListItems, displayedItemCount } from '@/lib/list-item-count';
+import { displayedItemCount } from '@/lib/list-item-count';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
 
@@ -61,7 +61,12 @@ function loadListBySlug(slug: string) {
         take: LIST_DETAIL_SSR_ITEM_LIMIT,
         select: listDetailItemSelect,
       },
-      _count: { select: { items: true, list_comments: true } },
+      _count: {
+        select: {
+          items: { where: { deletedAt: null } },
+          list_comments: true,
+        },
+      },
     },
   });
 }
@@ -74,7 +79,7 @@ function loadListBySlug(slug: string) {
  * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنهٔ صفحه).
  */
 const getListBySlug = cache((slug: string) =>
-  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v4', slug], {
+  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v5', slug], {
     revalidate: 300,
     tags: [listDetailCacheTag(slug)],
   })()
@@ -132,34 +137,34 @@ export default async function ListDetailPage({
   // شمارش بازدید از مسیر رندر جدا شد (beacon کلاینت → POST /api/lists/[id]/view)
   // تا صفحه static/ISR بماند و write روی هر revalidation انجام نشود.
 
-  const sponsoredPlacements = await getCachedListPagePlacements(list.id, list.categoryId);
-
   const loadedCount = list.items.length;
   const liveItemCount = displayedItemCount(
     loadedCount,
     LIST_DETAIL_SSR_ITEM_LIMIT,
-    loadedCount < LIST_DETAIL_SSR_ITEM_LIMIT
-      ? loadedCount
-      : await countLiveListItems(prisma, list.id)
+    list._count.items
   );
+  const resolvedItems = withResolvedItemImages(
+    list.items.map((item) => ({
+      ...item,
+      metadata: item.metadata as Record<string, unknown> | null,
+    })),
+    list.categories?.slug ?? null
+  );
+
+  const [sponsoredPlacements, personHrefs] = await Promise.all([
+    getCachedListPagePlacements(list.id, list.categoryId),
+    resolvePublicPersonHrefs(
+      resolvedItems.flatMap((item) => collectPersonLinkTargets(item.metadata))
+    ),
+  ]);
 
   const listWithCreator = prepareListDetailForClient(
     withResolvedListDisplay({
       ...list,
       itemCount: liveItemCount,
       categorySlug: list.categories?.slug ?? null,
-      items: withResolvedItemImages(
-        list.items.map((item) => ({
-          ...item,
-          metadata: item.metadata as Record<string, unknown> | null,
-        })),
-        list.categories?.slug ?? null
-      ),
+      items: resolvedItems,
     })
-  );
-
-  const personHrefs = await resolvePublicPersonHrefs(
-    listWithCreator.items.flatMap((item) => collectPersonLinkTargets(item.metadata))
   );
 
   const heroLcpImage =

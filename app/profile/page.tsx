@@ -3,10 +3,10 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { fetchUserLists } from '@/lib/user-lists';
+import { fetchUserLists, PROFILE_LISTS_PAGE_SIZE } from '@/lib/user-lists';
+import type { ProfileListRecord } from '@/lib/user-lists';
 import { fetchProfileUser } from '@/lib/profile-server';
 import type { ProfileUser } from '@/components/profile/types';
-import type { UserListRecord } from '@/lib/user-lists';
 import ProfilePageClient from './ProfilePageClient';
 import ProfilePageContentSkeleton from '@/components/mobile/profile/ProfilePageContentSkeleton';
 
@@ -35,14 +35,14 @@ async function fetchSharedListsCount(userId: string): Promise<number> {
  */
 async function ProfileContent({ userId }: { userId: string }) {
   let initialUser: ProfileUser | null = null;
-  let initialLists: UserListRecord[] = [];
+  let initialLists: ProfileListRecord[] = [];
   let initialListsTotal = 0;
   let initialVisibilityCounts = { public: 0, personal: 0 };
   let initialSharedCount = 0;
 
   const [profileResult, listsResult, sharedCountResult] = await Promise.allSettled([
     fetchProfileUser(userId),
-    fetchUserLists(userId, { page: 1, limit: 20, filter: 'all' }),
+    fetchUserLists(userId, { page: 1, limit: PROFILE_LISTS_PAGE_SIZE, filter: 'all' }),
     fetchSharedListsCount(userId),
   ]);
 

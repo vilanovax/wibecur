@@ -40,7 +40,6 @@ import {
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 
 const DESC_CLAMP_CHARS = 180;
-const PREFETCH_DWELL_MS = 280;
 
 export type ItemPreviewData = {
   id: string;
@@ -225,6 +224,7 @@ const PreviewActions = memo(function PreviewActions({
   externalUrl?: string | null;
   categorySlug?: string | null;
 }) {
+  const router = useRouter();
   const quickActions = useMemo(
     () => buildListItemQuickActions(item.metadata, categorySlug),
     [item.metadata, categorySlug]
@@ -254,6 +254,8 @@ const PreviewActions = memo(function PreviewActions({
   const fullPageLink = (
     <Link
       href={`/items/${item.id}`}
+      prefetch={false}
+      onPointerDown={() => router.prefetch(`/items/${item.id}`)}
       onClick={onClose}
       className={`inline-flex h-12 min-w-0 items-center justify-center rounded-control bg-brand px-4 text-sm font-semibold text-brand-foreground ${
         layout === 'inline' ? 'min-w-32 flex-1' : 'w-full'
@@ -522,20 +524,9 @@ export default function ItemPreviewSheet({
   adjacentImageUrls,
   personHrefs,
 }: ItemPreviewSheetProps) {
-  const router = useRouter();
   const previewTrackedId = useRef<string | null>(null);
   const firstPosterPriorityDone = useRef(false);
   const [posterPriority, setPosterPriority] = useState(true);
-
-  // Debounced route prefetch — avoid thrash while swiping 1/N quickly
-  useEffect(() => {
-    if (!isOpen || !item) return;
-    const itemId = item.id;
-    const timer = window.setTimeout(() => {
-      router.prefetch(`/items/${itemId}`);
-    }, PREFETCH_DWELL_MS);
-    return () => window.clearTimeout(timer);
-  }, [isOpen, item?.id, router]);
 
   // Preload adjacent posters for snappy prev/next
   useEffect(() => {

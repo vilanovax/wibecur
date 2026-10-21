@@ -6,6 +6,7 @@ export const BREADCRUMB_MAP: Record<string, string> = {
   '/admin/categories': 'دسته‌بندی‌ها',
   '/admin/categories/new': 'دسته جدید',
   '/admin/lists': 'لیست‌ها و محتوا',
+  '/admin/media': 'کتابخانه تصاویر',
   '/admin/items': 'لیست‌ها',
   '/admin/items/new': 'موجودیت جدید',
   '/admin/items/import': 'لیست‌ها',

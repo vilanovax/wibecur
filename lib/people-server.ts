@@ -10,18 +10,18 @@ import { getCachedDiscoveredPeople, peekPersonItemIds } from '@/lib/admin/person
 import { publicItemWhere, publicListWhere } from '@/lib/public-content-filters';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 import { getPersonProfileFlexible, personPageCacheTag } from '@/lib/person-profiles-server';
+import { matchPublicPersonHrefs } from '@/lib/person-hrefs';
 import {
   buildPersonBioStub,
   extractPersonNamesFromMetadata,
+  isPersonRole,
   mergeItemMetadata,
   nameMatchesSlug,
   personItemDedupeKey,
-  personLinkKey,
-  personPublicPath,
-  personSlug,
   PERSON_ROLE_META,
   type PersonPageData,
   type PersonPageItem,
+  type PersonProfileIdentity,
   type PersonRole,
 } from '@/lib/people';
 
@@ -288,31 +288,53 @@ export const getCachedPersonPage = cache((role: PersonRole, slug: string) =>
 );
 
 /**
- * لینک صفحهٔ شخص فقط وقتی که صفحه واقعاً باز می‌شود و اطلاعات منتشرشده دارد.
- * پیش‌نویس، بیوی خالی، یا نامی که به آیتمی نمی‌رسد لینک نمی‌گیرد.
+ * پروفایل‌های منتشرشده — یک کوئری کش‌شده.
+ * صفحهٔ لیست قبلاً برای هر نویسنده `resolvePersonPage` می‌زد و در بدترین حالت
+ * هزاران آیتم را اسکن می‌کرد؛ لینک فقط به بیوی منتشرشده نیاز دارد.
+ */
+const loadPublishedPersonProfiles = unstable_cache(
+  async () => {
+    const rows = await dbQuery(() =>
+      prisma.person_profiles.findMany({
+        where: { status: 'published' },
+        select: {
+          role: true,
+          slug: true,
+          displayName: true,
+          bio: true,
+          externalUrl: true,
+          status: true,
+        },
+      })
+    );
+    return rows;
+  },
+  ['published-person-profiles-v1'],
+  { revalidate: 300, tags: ['person-pages'] }
+);
+
+/**
+ * لینک صفحهٔ شخص فقط برای پروفایل منتشرشده با بیو.
+ * اسکن آیتم‌ها اینجا انجام نمی‌شود؛ خود صفحهٔ شخص هنگام باز شدن آن را می‌سازد.
  */
 export async function resolvePublicPersonHrefs(
   targets: Array<{ role: PersonRole; name: string }>
 ): Promise<Record<string, string>> {
-  const unique = new Map<string, { role: PersonRole; name: string }>();
-  for (const target of targets) {
-    const name = target.name.trim();
-    if (!name) continue;
-    unique.set(personLinkKey(target.role, name), { role: target.role, name });
+  if (targets.length === 0) return {};
+
+  const rows = await loadPublishedPersonProfiles();
+  const profiles: PersonProfileIdentity[] = [];
+  for (const row of rows) {
+    if (!isPersonRole(row.role) || !row.bio?.trim()) continue;
+    profiles.push({
+      role: row.role,
+      slug: row.slug,
+      displayName: row.displayName,
+      bio: row.bio,
+      externalUrl: row.externalUrl,
+      status: 'published',
+    });
   }
 
-  const entries = await Promise.all(
-    [...unique.values()].map(async (target) => {
-      try {
-        const data = await getCachedPersonPage(target.role, personSlug(target.name));
-        if (!data || data.items.length === 0) return null;
-        if (data.profileStatus !== 'published' || data.bioIsStub) return null;
-        return [personLinkKey(target.role, target.name), personPublicPath(target.role, data.slug)] as const;
-      } catch {
-        return null;
-      }
-    })
-  );
-
-  return Object.fromEntries(entries.filter((entry) => entry != null));
+  return matchPublicPersonHrefs(targets, profiles);
 }

@@ -321,49 +321,46 @@ export default function ListsPageClient({
 
   useEffect(() => {
     const saved = localStorage.getItem('listsPage_filterState');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved) as Partial<FilterState> & {
-          categories?: string[];
-          vibes?: VibeFilter[];
-        };
-        if (parsed) {
-          setFilterState((prev) => {
-            // Strip Explore mood vibes — Lists is catalog browse only
-            const restoredVibes = Array.isArray(parsed.vibes)
-              ? new Set(
-                  (parsed.vibes as VibeFilter[]).filter(
-                    (v) => v === 'trending' || v === 'saved'
-                  )
-                )
-              : prev.vibes;
-            return {
-              ...prev,
-              sortBy: parsed.sortBy ?? prev.sortBy,
-              vibes: restoredVibes.size > 0 ? restoredVibes : prev.vibes,
-              creatorType: parsed.creatorType ?? prev.creatorType,
-              minItemCount: typeof parsed.minItemCount === 'number'
-                ? parsed.minItemCount === 5
-                  ? 0
-                  : parsed.minItemCount
-                : prev.minItemCount,
-              minRating: typeof parsed.minRating === 'number' ? parsed.minRating : prev.minRating,
-            };
-          });
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved) as Partial<FilterState>;
+      if (!parsed) return;
+      // حالت مرور از URL می‌آید. بازگرداندن sort از localStorage همان لیست
+      // SSR را دور می‌ریخت و بلافاصله /api/lists/browse را دوباره می‌گرفت.
+      setFilterState((prev) => {
+        const creatorType = parsed.creatorType ?? prev.creatorType;
+        const minItemCount =
+          typeof parsed.minItemCount === 'number'
+            ? parsed.minItemCount === 5
+              ? 0
+              : parsed.minItemCount
+            : prev.minItemCount;
+        const minRating =
+          typeof parsed.minRating === 'number' ? parsed.minRating : prev.minRating;
+        if (
+          creatorType === prev.creatorType &&
+          minItemCount === prev.minItemCount &&
+          minRating === prev.minRating
+        ) {
+          return prev;
         }
-      } catch {
-        // ignore
-      }
+        return { ...prev, creatorType, minItemCount, minRating };
+      });
+    } catch {
+      // ignore
     }
   }, []);
 
   /** پارامتر category در URL منبع اصلی فیلتر دسته است — localStorage نباید آن را بازنویسی کند */
   useEffect(() => {
     const categoryId = resolveCategoryIdFromParam(initialCategory, categories);
-    setFilterState((prev) => ({
-      ...prev,
-      categories: categoryId ? new Set([categoryId]) : new Set(),
-    }));
+    setFilterState((prev) => {
+      const next = categoryId ? new Set([categoryId]) : new Set<string>();
+      if (prev.categories.size === next.size && [...next].every((id) => prev.categories.has(id))) {
+        return prev;
+      }
+      return { ...prev, categories: next };
+    });
   }, [initialCategory, categories]);
 
   useEffect(() => {
@@ -905,6 +902,8 @@ export default function ListsPageClient({
                 <Link
                   key={cat.id}
                   href={`/categories/${cat.slug}`}
+                  prefetch={false}
+                  onPointerDown={() => router.prefetch(`/categories/${cat.slug}`)}
                   data-category-chip={cat.id}
                   aria-current={isSelected ? 'page' : undefined}
                   className={`inline-flex h-11 shrink-0 snap-start items-center whitespace-nowrap rounded-full border px-3 text-sm font-semibold shadow-control ${
@@ -1044,6 +1043,7 @@ export default function ListsPageClient({
                 bookmarkedIds,
                 onBookmarkToggle: handleBookmarkToggle,
                 onShowAllCategory: handleShowAllCategory,
+                prioritizeFirstCover: index === 0 && !showFeatured,
               };
 
               if (index === 0) {
@@ -1053,6 +1053,7 @@ export default function ListsPageClient({
               return (
                 <HomeDeferredMount
                   key={category.id}
+                  rootMargin="160px"
                   fallback={
                     <section className="mb-6" aria-hidden>
                       <div className="mb-3 h-6 w-36 animate-pulse rounded bg-muted" />
@@ -1076,11 +1077,19 @@ export default function ListsPageClient({
               />
             ) : null}
             {pageSimilarLists.length > 0 && (
-              <ListsSimilarRow
-                lists={pageSimilarLists}
-                bookmarkedIds={bookmarkedIds}
-                onBookmarkToggle={handleBookmarkToggle}
-              />
+              <HomeDeferredMount
+                rootMargin="200px"
+                className="min-h-24"
+                fallback={
+                  <div className="mt-2 h-24 animate-pulse rounded-xl bg-muted" aria-hidden />
+                }
+              >
+                <ListsSimilarRow
+                  lists={pageSimilarLists}
+                  bookmarkedIds={bookmarkedIds}
+                  onBookmarkToggle={handleBookmarkToggle}
+                />
+              </HomeDeferredMount>
             )}
           </>
         ) : (
@@ -1201,6 +1210,8 @@ function FlatListResults({
           onBookmarkToggle={onBookmarkToggle}
           highlightQuery={highlightQuery}
           searchResultIndex={highlightQuery ? index : undefined}
+          priority={index === 0}
+          fetchPriority={index === 0 ? undefined : 'low'}
         />
       ))}
     </div>

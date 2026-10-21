@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Sparkles, Bookmark } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
@@ -49,6 +49,9 @@ interface ListCardCompactProps {
   showBookmark?: boolean;
   /** پر کردن ارتفاع والد (چیدمان trio / row-span) */
   fillHeight?: boolean;
+  /** فقط کارت LCP — بقیه low تا با بنر منتخب رقابت نکنند */
+  priority?: boolean;
+  fetchPriority?: 'high' | 'low' | 'auto';
 }
 
 const NEW_LIST_DAYS = 14;
@@ -183,11 +186,17 @@ function ListCardCompact({
   isLoggedIn,
   showBookmark = false,
   fillHeight = false,
+  priority = false,
+  fetchPriority,
 }: ListCardCompactProps) {
+  const router = useRouter();
   const saveCount = list.saveCount ?? 0;
   const categorySlug = list.categories?.slug ?? null;
   const badges = getListBadges(list);
   const href = `/lists/${list.slug}`;
+  const prefetchList = () => {
+    router.prefetch(href);
+  };
   const displayTitle = getDisplayListTitle({
     title: list.title,
     slug: list.slug,
@@ -219,6 +228,8 @@ function ListCardCompact({
       <Card className="group relative min-h-16 bg-popover p-2 shadow-sm transition-shadow lg:hover:border-brand/30 lg:hover:shadow-md">
         <Link
           href={href}
+          prefetch={false}
+          onPointerDown={prefetchList}
           onClick={handleSearchResultClick}
           className="absolute inset-0 z-0 rounded-lg"
           aria-label={displayTitle}
@@ -231,6 +242,8 @@ function ListCardCompact({
               slug={list.slug}
               categorySlug={categorySlug}
               sizes="56px"
+              priority={priority}
+              fetchPriority={fetchPriority}
               className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
               fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-lg"
@@ -264,6 +277,8 @@ function ListCardCompact({
       <Card className="group relative min-h-20 bg-popover p-2.5 shadow-sm transition-colors active:scale-95 lg:hover:border-brand/30 lg:hover:shadow-md">
         <Link
           href={href}
+          prefetch={false}
+          onPointerDown={prefetchList}
           onClick={handleSearchResultClick}
           className="absolute inset-0 z-0 rounded-lg"
           aria-label={displayTitle}
@@ -276,6 +291,8 @@ function ListCardCompact({
               slug={list.slug}
               categorySlug={categorySlug}
               sizes="72px"
+              priority={priority}
+              fetchPriority={fetchPriority}
               className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-110"
               fallbackIcon={list.categories?.icon ?? '📋'}
               fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
@@ -325,6 +342,8 @@ function ListCardCompact({
     >
       <Link
         href={href}
+        prefetch={false}
+        onPointerDown={prefetchList}
         onClick={handleSearchResultClick}
         className="absolute inset-0 z-0"
         aria-label={displayTitle}
@@ -343,6 +362,8 @@ function ListCardCompact({
           slug={list.slug}
           categorySlug={categorySlug}
           sizes="(min-width: 1024px) 25vw, 50vw"
+          priority={priority}
+          fetchPriority={fetchPriority}
           className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
           fallbackIcon={list.categories?.icon ?? '📋'}
           fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl lg:text-4xl"

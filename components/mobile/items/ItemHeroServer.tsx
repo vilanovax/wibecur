@@ -132,6 +132,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
               alt={item.title}
               fill
               priority
+              fetchPriority="high"
               sizes="(min-width: 1280px) 15rem, (min-width: 1024px) 14rem, 7rem"
               className={
                 isLocationPoster

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Settings, Flame } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
@@ -47,6 +48,7 @@ export default function MyListCardCompact({
   hideSettings,
   hidePublicBadge = true,
 }: MyListCardCompactProps) {
+  const router = useRouter();
   const itemCount = getListItemCount(list);
   const saveCount = list.saveCount ?? list._count?.bookmarks ?? 0;
   const likes = list.likeCount ?? list._count?.list_likes ?? 0;
@@ -63,6 +65,8 @@ export default function MyListCardCompact({
     <Card className="flex items-stretch gap-1 overflow-hidden bg-popover p-0">
       <Link
         href={`/user-lists/${list.id}`}
+        prefetch={false}
+        onPointerDown={() => router.prefetch(`/user-lists/${list.id}`)}
         className="flex min-h-20 min-w-0 flex-1 gap-2.5 p-2.5 transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60"
       >
         <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
@@ -71,6 +75,8 @@ export default function MyListCardCompact({
             title={list.title}
             slug={list.slug}
             categorySlug={categorySlug}
+            sizes="64px"
+            fetchPriority="low"
             className="h-full w-full object-cover"
             fallbackIcon={list.categories?.icon ?? '📋'}
             fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"

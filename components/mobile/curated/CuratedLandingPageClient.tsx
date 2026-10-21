@@ -18,11 +18,11 @@ import {
   RandomSurpriseCardLazy,
   TrendingNowSectionLazy,
   ForYouSectionLazy,
+  preloadGuidedDiscoverySheet,
 } from './explore-lazy-sections';
 import {
   ExploreForYouSectionSkeleton,
   ExploreSurpriseSectionSkeleton,
-  ExploreTrendingSectionSkeleton,
 } from './explore-section-skeletons';
 import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
 import { SEARCH_MIN_LENGTH } from '@/lib/list-search';
@@ -137,6 +137,17 @@ export default function CuratedLandingPageClient({
   }, [searchParams]);
 
   useEffect(() => {
+    const win = window;
+    const warm = () => preloadGuidedDiscoverySheet();
+    if ('requestIdleCallback' in win) {
+      const id = win.requestIdleCallback(warm, { timeout: 2000 });
+      return () => win.cancelIdleCallback(id);
+    }
+    const id = win.setTimeout(warm, 1500);
+    return () => win.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
     if (searchParams.get('openCreate') === '1') {
       setIsCreateFormOpen(true);
       setCreateCategoryHint(searchParams.get('category'));
@@ -224,27 +235,15 @@ export default function CuratedLandingPageClient({
           </div>
         ) : (
           <>
-            <HomeDeferredMount
-              rootMargin="0px"
-              className="min-h-0"
-              fallback={null}
-            >
-              <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
-            </HomeDeferredMount>
+            <QuickNowSection onSelect={(s) => openMoodSelection(s, 'quick_now')} />
 
             {trendingSlot || sections.trending.length > 0 ? (
-              <HomeDeferredMount
-                rootMargin="40px"
-                className="min-h-[8rem] lg:min-h-[10rem]"
-                fallback={<ExploreTrendingSectionSkeleton />}
-              >
-                {trendingSlot ?? (
-                  <TrendingNowSectionLazy
-                    lists={sections.trending}
-                    subtitle="محبوب‌ترین‌ها همین الان"
-                  />
-                )}
-              </HomeDeferredMount>
+              trendingSlot ?? (
+                <TrendingNowSectionLazy
+                  lists={sections.trending}
+                  subtitle="محبوب‌ترین‌ها همین الان"
+                />
+              )
             ) : null}
 
             <div ref={forYouRef} className="min-h-[1px]">

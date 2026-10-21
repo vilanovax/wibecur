@@ -8,9 +8,11 @@ import ItemSaveButton from '@/components/mobile/items/ItemSaveButton';
 import ItemLikeButton from '@/components/mobile/items/ItemLikeButton';
 import ItemProfilePickButton from '@/components/mobile/items/ItemProfilePickButton';
 import ItemShareButton from '@/components/mobile/items/ItemShareButton';
-import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { Button } from '@/components/ui/button';
 
+const BottomSheet = dynamic(() => import('@/components/mobile/shared/BottomSheet'), {
+  ssr: false,
+});
 const ItemReportModal = dynamic(() => import('./ItemReportModal'), { ssr: false });
 
 interface ItemDetailTopActionsProps {
@@ -32,6 +34,7 @@ export default function ItemDetailTopActions({
   variant = 'bar',
 }: ItemDetailTopActionsProps) {
   const { data: session } = useSession();
+  const [moreMounted, setMoreMounted] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
 
@@ -50,7 +53,10 @@ export default function ItemDetailTopActions({
         type="button"
         variant="outline"
         size="icon"
-        onClick={() => setMoreOpen(true)}
+        onClick={() => {
+          setMoreMounted(true);
+          setMoreOpen(true);
+        }}
         className="size-11 shrink-0 rounded-full"
         aria-label="گزینه‌های بیشتر"
         title="بیشتر"
@@ -75,6 +81,7 @@ export default function ItemDetailTopActions({
     <>
       {shell}
 
+      {moreMounted ? (
       <BottomSheet
         isOpen={moreOpen}
         onClose={() => setMoreOpen(false)}
@@ -105,6 +112,7 @@ export default function ItemDetailTopActions({
           ) : null}
         </div>
       </BottomSheet>
+      ) : null}
 
       {canReport ? (
         <ItemReportModal

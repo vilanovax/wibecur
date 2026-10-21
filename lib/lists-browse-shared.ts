@@ -20,31 +20,20 @@ export type ListsBrowseList = {
   description: string | null;
   coverImage: string;
   bannerImage: string;
-  horizontalImage: string | null;
   categoryId: string | null;
   badge: string | null;
   isPublic: boolean;
   isFeatured: boolean;
   isActive: boolean;
-  viewCount: number;
   likeCount: number;
   saveCount: number;
   itemCount: number;
   createdAt: string;
-  updatedAt: string;
   categories: {
     id: string;
     name: string;
     slug: string | null;
     icon: string | null;
-    color: string | null;
-  } | null;
-  users: {
-    id: string;
-    name: string | null;
-    username: string | null;
-    image: string | null;
-    role: string;
   } | null;
 };
 

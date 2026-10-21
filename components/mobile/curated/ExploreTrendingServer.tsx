@@ -36,7 +36,7 @@ export default function ExploreTrendingServer({
             key={list.id}
             className="w-72 shrink-0 snap-start lg:w-auto lg:min-w-0"
           >
-            <ExploreTrendingCard list={list} priority={index < 2} showBadge={index === 0} />
+            <ExploreTrendingCard list={list} priority={index === 0} showBadge={index === 0} />
           </div>
         ))}
       </div>
@@ -75,9 +75,10 @@ function ExploreTrendingCard({
               src={cover.src}
               alt={list.title}
               fill
-              sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 100vw"
+              sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, 18rem"
               className="object-cover transition-transform duration-500 lg:group-hover:scale-105"
               priority={priority}
+              fetchPriority={priority ? 'high' : 'low'}
               unoptimized={cover.unoptimized}
             />
           ) : (

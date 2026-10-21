@@ -33,6 +33,7 @@ function DiscoveryCarouselCard({
   subtitle,
   className = 'flex-shrink-0 w-[calc(38vw)] max-w-[148px] snap-start lg:w-full lg:max-w-none',
   rank,
+  eager = false,
 }: {
   href: string;
   itemId: string;
@@ -44,6 +45,7 @@ function DiscoveryCarouselCard({
   subtitle?: string;
   className?: string;
   rank?: number;
+  eager?: boolean;
 }) {
   const ratingLabel = displayRating(rating ?? null);
 
@@ -60,6 +62,10 @@ function DiscoveryCarouselCard({
           className="absolute inset-0 h-full w-full object-cover"
           fallbackClassName="absolute inset-0 h-full w-full"
           coverLayout="grid"
+          sizes="148px"
+          eager={eager}
+          enrichWhenVisible={false}
+          rootMargin="64px"
         />
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent"
@@ -237,7 +243,7 @@ export default function ItemDiscoverySection({
         <CarouselSkeleton count={4} />
       ) : activeTab === 'similar' && hasSimilar ? (
         <div className={DISCOVERY_GRID_CLASS}>
-          {similarItems.slice(0, DESKTOP_ITEM_LIMIT).map((s) => (
+          {similarItems.slice(0, DESKTOP_ITEM_LIMIT).map((s, index) => (
             <DiscoveryCarouselCard
               key={s.id}
               href={`/items/${s.id}`}
@@ -248,12 +254,13 @@ export default function ItemDiscoverySection({
               fallbackIcon={s.category?.icon ?? undefined}
               rating={s.rating}
               subtitle={s.category?.name ?? undefined}
+              eager={index < 2}
             />
           ))}
         </div>
       ) : activeTab === 'saves' && hasSaves ? (
         <div className={DISCOVERY_GRID_CLASS}>
-          {alsoLikedItems.slice(0, DESKTOP_ITEM_LIMIT).map((a) => (
+          {alsoLikedItems.slice(0, DESKTOP_ITEM_LIMIT).map((a, index) => (
             <DiscoveryCarouselCard
               key={a.id}
               href={`/items/${a.id}`}
@@ -264,6 +271,7 @@ export default function ItemDiscoverySection({
               rating={a.rating}
               subtitle={`${a.commonUsersCount.toLocaleString('fa-IR')} نفر همراه`}
               className="flex-shrink-0 w-[calc(48vw)] max-w-[200px] snap-start lg:w-full lg:max-w-none"
+              eager={index < 2}
             />
           ))}
         </div>
@@ -280,6 +288,7 @@ export default function ItemDiscoverySection({
               rating={t.rating}
               rank={index + 1}
               className="flex-shrink-0 w-[108px] max-w-[108px] snap-start lg:w-full lg:max-w-none"
+              eager={index < 2}
             />
           ))}
         </div>

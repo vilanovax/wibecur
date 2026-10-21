@@ -27,16 +27,18 @@ export default function LazyItemCoverImage({
   imageUrl,
   coverLayout = 'default',
   priority = false,
+  eager = false,
   ...rest
 }: LazyItemCoverImageProps) {
+  const showNow = priority || eager;
   const { ref, inView, elementRef } = useLazyInView<HTMLDivElement>({
     rootMargin,
     once: true,
   });
-  const [geometryVisible, setGeometryVisible] = useState(priority);
+  const [geometryVisible, setGeometryVisible] = useState(showNow);
 
   useEffect(() => {
-    if (priority || inView) {
+    if (showNow || inView) {
       setGeometryVisible(true);
       return;
     }
@@ -60,10 +62,10 @@ export default function LazyItemCoverImage({
       window.cancelAnimationFrame(raf);
       window.clearTimeout(timer);
     };
-  }, [priority, inView, elementRef, rootMargin]);
+  }, [showNow, inView, elementRef, rootMargin]);
 
   const shouldEnrich = enrichWhenVisible && (enrichPoster ?? true);
-  const showImage = priority || inView || geometryVisible;
+  const showImage = showNow || inView || geometryVisible;
 
   return (
     <div ref={ref} className="h-full w-full">

@@ -27,9 +27,9 @@ function slimExploreList(list: CuratedList): CuratedList {
     creator: {
       id: list.creator.id,
       name: list.creator.name,
-      username: list.creator.username,
-      avatarUrl: list.creator.avatarUrl,
-      levelTitle: list.creator.levelTitle,
+      username: '',
+      avatarUrl: null,
+      levelTitle: '',
       badges: list.creator.badges,
     },
     createdAt: list.createdAt,

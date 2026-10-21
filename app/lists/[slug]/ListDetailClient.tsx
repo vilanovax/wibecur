@@ -12,7 +12,7 @@ import { useDeferReady } from '@/hooks/useDeferReady';
 import { useLazyInView } from '@/hooks/useLazyInView';
 import { prefetchListSimilar } from '@/lib/list-similar-client';
 import { listBadgeLabel, listBadgeSolidClass } from '@/lib/list-badge-styles';
-import { Share2, MoreVertical, Flame, Bookmark, Plus, Settings, Link2, Flag, Lightbulb, Map, LayoutGrid, Check, Shuffle, ListOrdered } from 'lucide-react';
+import { Share2, MoreVertical, Flame, Bookmark, Plus, Settings, Link2, Flag, Lightbulb, Map as MapIcon, LayoutGrid, Check, Shuffle, ListOrdered } from 'lucide-react';
 import ListItemsGrid from '@/components/mobile/lists/ListItemsGrid';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
 import JsonLdBreadcrumb from '@/components/shared/JsonLdBreadcrumb';
@@ -33,7 +33,8 @@ import {
 import SearchInput from '@/components/mobile/search/SearchInput';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { getDisplayListTitle } from '@/lib/list-display-title';
-import { filterItemsByQuery, LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
+import { LIST_INNER_SEARCH_MIN_ITEMS } from '@/lib/item-display-utils';
+import { buildItemSearchHaystack } from '@/lib/search-keywords';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 import { itemHasMapLocation } from '@/lib/list-item-quick-actions';
 import { normalizeSearchQuery } from '@/lib/list-search';
@@ -848,15 +849,28 @@ export default function ListDetailClient({
   const normalizedItemSearch = normalizeSearchQuery(debouncedItemSearchQuery);
   const isItemSearchActive = normalizedItemSearch.length > 0;
 
+  const itemSearchHaystacks = useMemo(() => {
+    const haystacks = new Map<string, string>();
+    for (const entry of allItemEntries) {
+      haystacks.set(
+        entry.item.id,
+        buildItemSearchHaystack({
+          title: entry.item.title,
+          description: entry.item.description,
+          metadata: entry.item.metadata,
+        })
+      );
+    }
+    return haystacks;
+  }, [allItemEntries]);
+
   const filteredItemEntries = useMemo(() => {
     if (!isItemSearchActive) return allItemEntries;
-    const filtered = filterItemsByQuery(
-      allItemEntries.map((e) => e.item),
-      normalizedItemSearch
+    const query = normalizedItemSearch.toLowerCase();
+    return allItemEntries.filter((entry) =>
+      (itemSearchHaystacks.get(entry.item.id) ?? '').includes(query)
     );
-    const ids = new Set(filtered.map((i) => i.id));
-    return allItemEntries.filter((e) => ids.has(e.item.id));
-  }, [allItemEntries, isItemSearchActive, normalizedItemSearch]);
+  }, [allItemEntries, isItemSearchActive, itemSearchHaystacks, normalizedItemSearch]);
 
   const showItemSearch = itemCount >= LIST_INNER_SEARCH_MIN_ITEMS;
   const showSimilarLists = !isItemSearchActive;
@@ -871,11 +885,11 @@ export default function ListDetailClient({
   const gridWindowActive = viewMode === 'grid' && !isItemSearchActive && !tonightTop5;
   const hasMoreToReveal =
     gridWindowActive && (visibleCount < allItemEntries.length || hasMoreRemote);
-  const nonSearchEntries = tonightTop5
-    ? allItemEntries.slice(0, 5)
-    : gridWindowActive
-      ? allItemEntries.slice(0, visibleCount)
-      : allItemEntries;
+  const nonSearchEntries = useMemo(() => {
+    if (tonightTop5) return allItemEntries.slice(0, 5);
+    if (gridWindowActive) return allItemEntries.slice(0, visibleCount);
+    return allItemEntries;
+  }, [allItemEntries, gridWindowActive, tonightTop5, visibleCount]);
 
   useEffect(() => {
     if (!hasMoreToReveal) return;
@@ -1086,11 +1100,11 @@ export default function ListDetailClient({
               className="h-full w-full object-cover object-center"
               fallbackIcon={categoryIcon ?? '📋'}
               fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-5xl"
-              categorySlug={categorySlug}
-              listSlug={list.slug}
-              listTitle={list.title}
-              priority
-            />
+            categorySlug={categorySlug}
+            listSlug={list.slug}
+            listTitle={list.title}
+            priority
+          />
             <Button
               type="button"
               variant="secondary"
@@ -1312,7 +1326,7 @@ export default function ListDetailClient({
                       {viewMode === 'map' ? (
                         <LayoutGrid className="h-4 w-4" />
                       ) : (
-                        <Map className="h-4 w-4" />
+                        <MapIcon className="h-4 w-4" />
                       )}
                       {viewMode === 'map' ? 'شبکه' : 'نقشه'}
                     </Button>
