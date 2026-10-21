@@ -19,7 +19,7 @@ export default function FeaturedHistoryAccordion({ past, formatDate }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-right hover:bg-[var(--color-bg)] transition-colors"
+        className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-start hover:bg-[var(--color-bg)]"
       >
         <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text)]">
           <History className="w-4 h-4 text-[var(--color-text-muted)]" />

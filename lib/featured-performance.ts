@@ -79,16 +79,16 @@ export function getFeaturedRecommendations(
   const { ctr, saveLiftPercent, scoreLiftPercent } = performance;
 
   if (ctr > 0.18 && saveLiftPercent != null && saveLiftPercent > 200) {
-    out.push('High Impact Featured: این لیست عملکرد بسیار قوی داشته است.');
+    out.push('این لیست در منتخب هوم خیلی خوب عمل کرده است.');
   }
   if (ctr < 0.05) {
-    out.push('CTR پایین است. تصویر یا عنوان نیاز به بهبود دارد.');
+    out.push('نرخ کلیک پایین است. تصویر یا عنوان را عوض کنید.');
   }
   if (saveLiftPercent != null && saveLiftPercent < 50) {
-    out.push('افزایش ذخیره پایین بوده. شاید دسته‌بندی مناسب نبوده.');
+    out.push('رشد ذخیره کم بوده. شاید دستهٔ مناسبی نبوده.');
   }
   if (scoreLiftPercent != null && scoreLiftPercent > 150) {
-    out.push('Featured باعث رشد چشمگیر در Trending شده است.');
+    out.push('این منتخب امتیاز ترند را خیلی بالا برده است.');
   }
 
   return out;
@@ -216,16 +216,16 @@ export async function getWeeklyFeaturedReport(
 
   const recommendations: string[] = [];
   if (avgCTR < 0.08) {
-    recommendations.push('میانگین CTR پایین است. پیشنهاد: بهبود طراحی Hero یا تصویر و عنوان.');
+    recommendations.push('میانگین نرخ کلیک پایین است. تصویر یا عنوان بنر را عوض کنید.');
   }
   if (avgSaveLift != null && avgSaveLift < 50) {
-    recommendations.push('میانگین Save Lift پایین. پیشنهاد: امتحان دسته‌بندی‌های دیگر برای Featured.');
+    recommendations.push('میانگین رشد ذخیره پایین است. دستهٔ دیگری را برای منتخب امتحان کنید.');
   }
   if (avgSaveLift != null && avgSaveLift >= 150 && avgCTR < 0.1) {
-    recommendations.push('Hero جذابیت کلیک پایین دارد؛ لیست‌ها خوب عمل می‌کنند. تصویر یا عنوان Hero را تقویت کنید.');
+    recommendations.push('لیست‌ها خوب ذخیره می‌شوند ولی بنر کلیک نمی‌گیرد. تصویر یا عنوان بنر را قوی‌تر کنید.');
   }
   if (avgCTR >= 0.12 && avgSaveLift != null && avgSaveLift < 80) {
-    recommendations.push('CTR بالا ولی Save Lift پایین: عنوان یا تصویر قوی است ولی محتوا انتظار را برآورده نکرده.');
+    recommendations.push('نرخ کلیک بالا و رشد ذخیره پایین است. عنوان جذب می‌کند ولی محتوا انتظار را برآورده نمی‌کند.');
   }
 
   return {
@@ -363,19 +363,19 @@ export async function getFeaturedCategoryInsights(
   const recommendations: string[] = [];
   if (categories.length > 0) {
     const top = categories[0];
-    recommendations.push(`دسته «${top.categoryName}» در بازهٔ اخیر بیشترین امتیاز تأثیر (${top.impactScore.toFixed(1)}) را داشته. پیشنهاد: بیشتر از این دسته Featured بگذارید.`);
+    recommendations.push(`دسته «${top.categoryName}» در بازهٔ اخیر بیشترین اثر را داشته. بیشتر از این دسته در منتخب بگذارید.`);
   }
   if (categories.length > 1) {
     const last = categories[categories.length - 1];
     if (last.impactScore < 20) {
-      recommendations.push(`دسته «${last.categoryName}» عملکرد ضعیف در Featured داشته. پیشنهاد: بازبینی انتخاب لیست‌های این دسته یا زمان‌بندی.`);
+      recommendations.push(`دسته «${last.categoryName}» در منتخب ضعیف بوده. لیست‌ها یا زمان‌بندی این دسته را بازبینی کنید.`);
     }
   }
   const withHighCTRLowSave = categories.find(
     (c) => (c.avgCTR >= 0.1 && c.avgSaveLift != null && c.avgSaveLift < 60)
   );
   if (withHighCTRLowSave) {
-    recommendations.push(`دسته «${withHighCTRLowSave.categoryName}» CTR بالا ولی Save Lift پایین دارد؛ احتمالاً عنوان جذاب ولی محتوا ضعیف.`);
+    recommendations.push(`دسته «${withHighCTRLowSave.categoryName}» کلیک بالا و رشد ذخیره پایین دارد. عنوان جذب می‌کند ولی محتوا ضعیف است.`);
   }
 
   return {

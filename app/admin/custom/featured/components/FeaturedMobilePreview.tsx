@@ -33,7 +33,7 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
     (mode === 'live'
       ? 'نمایش فعلی در اپ'
       : mode === 'fallback'
-        ? 'Fallback (لیست ویژه)'
+        ? 'لیست جایگزین'
         : mode === 'preview'
           ? 'پیش‌نمایش انتخاب'
           : 'پیش‌نمایش');

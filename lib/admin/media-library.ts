@@ -914,7 +914,33 @@ function isUniqueConflict(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
-/** عنوان کاتالوگ و رکوردهای همان آیتم در لیست‌ها. تصویر و توضیح لیست دست نمی‌خورد. */
+async function linkedCatalogPlacements(catalogId: string) {
+  return prisma.items.findMany({
+    where: { catalogItemId: catalogId, deletedAt: null },
+    select: { id: true, lists: { select: { slug: true } } },
+  });
+}
+
+function revalidatePlacements(linked: { id: string; lists: { slug: string } }[]) {
+  for (const item of linked) {
+    revalidateItemDetailCache(item.id);
+    revalidateListDetailCache(item.lists.slug);
+  }
+}
+
+/** تصویر کاتالوگ را روی رکوردهای همان آیتم در لیست‌ها هم می‌گذارد. */
+async function copyCatalogImageToLists(catalogId: string, url: string): Promise<number> {
+  const linked = await linkedCatalogPlacements(catalogId);
+  if (linked.length === 0) return 0;
+  await prisma.items.updateMany({
+    where: { id: { in: linked.map((item) => item.id) }, deletedAt: null },
+    data: { imageUrl: url, updatedAt: new Date() },
+  });
+  revalidatePlacements(linked);
+  return linked.length;
+}
+
+/** عنوان کاتالوگ و رکوردهای همان آیتم در لیست‌ها. توضیح لیست دست نمی‌خورد. */
 async function renameCatalogTitle(
   target: MediaTarget,
   title: string,
@@ -945,19 +971,13 @@ async function renameCatalogTitle(
     });
   }
 
-  const linked = await prisma.items.findMany({
-    where: { catalogItemId: row.id, deletedAt: null },
-    select: { id: true, lists: { select: { slug: true } } },
-  });
+  const linked = await linkedCatalogPlacements(row.id);
   if (linked.length > 0) {
     await prisma.items.updateMany({
       where: { id: { in: linked.map((item) => item.id) }, deletedAt: null },
       data: { title, updatedAt: new Date() },
     });
-    for (const item of linked) {
-      revalidateItemDetailCache(item.id);
-      revalidateListDetailCache(item.lists.slug);
-    }
+    revalidatePlacements(linked);
   }
   return { ok: true, listItems: linked.length };
 }
@@ -982,6 +1002,7 @@ export async function importMediaAssignments(
       continue;
     }
     let changed = false;
+    let rowLists = 0;
     if (row.url) {
       const stored = await storeIncomingUrl(target.kind, row.url);
       if (!stored.ok) {
@@ -992,6 +1013,9 @@ export async function importMediaAssignments(
         else {
           images += 1;
           changed = true;
+          if (target.kind === 'catalog') {
+            rowLists = await copyCatalogImageToLists(target.id, stored.url);
+          }
         }
       }
     }
@@ -1000,15 +1024,16 @@ export async function importMediaAssignments(
       if (!renamed.ok) errors.push({ target: row.target, error: renamed.error });
       else {
         titles += 1;
-        listItems += renamed.listItems;
+        rowLists = Math.max(rowLists, renamed.listItems);
         changed = true;
       }
     }
+    listItems += rowLists;
     if (!changed && !row.url && !row.title) {
       errors.push({ target: row.target, error: 'نه تصویری هست و نه عنوانی.' });
     }
   }
-  if (titles > 0) {
+  if (titles > 0 || listItems > 0) {
     revalidateAdminListsCache();
     revalidateHomeCache();
   }

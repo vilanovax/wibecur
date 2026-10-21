@@ -53,7 +53,7 @@ export function addDays(isoDate: string, days: number): string {
 
 export function formatPct(n: number | null): string {
   if (n == null) return '—';
-  return `${n.toFixed(1)}%`;
+  return `${n.toFixed(1).replace('.', '٫')}٪`.replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
 }
 
 export function impactLabelFa(label: string): string {

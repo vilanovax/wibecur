@@ -50,6 +50,24 @@ const slotSelect = {
   lists: { select: listSelect },
 } as const;
 
+const pastListSelect = {
+  id: true,
+  title: true,
+  slug: true,
+  categories: { select: { name: true, slug: true } },
+} as const;
+
+const pastSlotSelect = {
+  id: true,
+  listId: true,
+  startAt: true,
+  endAt: true,
+  orderIndex: true,
+  lists: { select: pastListSelect },
+} as const;
+
+const PAST_SLOT_LIMIT = 20;
+
 type ListRow = {
   id: string;
   title: string;
@@ -126,6 +144,25 @@ function performanceFromSlot(slot: SlotRow): FeaturedSlotPerformance {
     baselineScore,
     peakScore,
     scoreLiftPercent,
+  };
+}
+
+function toPastList(l: {
+  id: string;
+  title: string;
+  slug: string;
+  categories: { name: string; slug: string } | null;
+}): FeaturedListOption {
+  return {
+    id: l.id,
+    title: l.title,
+    slug: l.slug,
+    description: null,
+    coverImage: null,
+    saveCount: 0,
+    itemCount: 0,
+    badge: null,
+    categories: l.categories,
   };
 }
 
@@ -206,10 +243,24 @@ export async function getFeaturedManagementData(options?: {
       prisma.home_featured_slot.findMany({
         where: { endAt: { lt: now } },
         orderBy: { endAt: 'desc' },
-        take: 50,
-        select: slotSelect,
+        take: PAST_SLOT_LIMIT,
+        select: pastSlotSelect,
       })
-    ) as Promise<SlotRow[]>,
+    ) as Promise<
+      {
+        id: string;
+        listId: string;
+        startAt: Date;
+        endAt: Date | null;
+        orderIndex: number;
+        lists: {
+          id: string;
+          title: string;
+          slug: string;
+          categories: { name: string; slug: string } | null;
+        } | null;
+      }[]
+    >,
     dbQuery(() => getWeeklyFeaturedReport(prisma, weekStart)),
     dbQuery(() =>
       prisma.lists.findFirst({
@@ -227,19 +278,16 @@ export async function getFeaturedManagementData(options?: {
       : Promise.resolve([] as FeaturedListOption[]),
   ]);
 
-  // Expired-as-current only when no live slot (mirrors home, without admin notification)
+  // وقتی اسلات زنده نیست، آخرین اسلات تمام‌شده جای بنر را می‌گیرد.
   let currentRow = activeSlot;
   if (!currentRow) {
-    currentRow =
-      pastSlots.length > 0
-        ? pastSlots[0]
-        : ((await dbQuery(() =>
-            prisma.home_featured_slot.findFirst({
-              where: { endAt: { lt: now } },
-              orderBy: { endAt: 'desc' },
-              select: slotSelect,
-            })
-          )) as SlotRow | null);
+    currentRow = (await dbQuery(() =>
+      prisma.home_featured_slot.findFirst({
+        where: { endAt: { lt: now } },
+        orderBy: { endAt: 'desc' },
+        select: slotSelect,
+      })
+    )) as SlotRow | null;
   }
 
   const relevantSlotIds = [
@@ -281,9 +329,22 @@ export async function getFeaturedManagementData(options?: {
     .map((s) => mapSlot(s, countMap.get(s.id) ?? emptyCounts))
     .filter((s): s is FeaturedSlotItem => s != null);
 
-  const past = pastSlots
-    .map((s) => mapSlot(s, countMap.get(s.id) ?? emptyCounts))
-    .filter((s): s is FeaturedSlotItem => s != null);
+  const past = pastSlots.flatMap((s) => {
+    if (!s.lists) return [];
+    const counts = countMap.get(s.id) ?? emptyCounts;
+    return [
+      {
+        id: s.id,
+        listId: s.listId,
+        list: toPastList(s.lists),
+        startAt: s.startAt.toISOString(),
+        endAt: s.endAt ? s.endAt.toISOString() : null,
+        orderIndex: s.orderIndex,
+        viewListCount: counts.viewList,
+        quickSaveCount: counts.quickSave,
+      },
+    ];
+  });
 
   const fallbackListDetail =
     !current && fallbackRow ? toListOption(fallbackRow) : null;

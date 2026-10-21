@@ -53,9 +53,9 @@ function getRemainingText(slot: SlotItem): string | null {
   if (end <= now) return null;
   const diff = end.getTime() - now.getTime();
   const days = Math.floor(diff / (24 * 60 * 60 * 1000));
-  if (days > 0) return `${days} روز باقی‌مانده`;
+  if (days > 0) return `${days.toLocaleString('fa-IR')} روز باقی‌مانده`;
   const hours = Math.floor(diff / (60 * 60 * 1000));
-  return hours > 0 ? `${hours} ساعت باقی‌مانده` : 'کمتر از یک ساعت';
+  return hours > 0 ? `${hours.toLocaleString('fa-IR')} ساعت باقی‌مانده` : 'کمتر از یک ساعت';
 }
 
 function listToPreview(l: ListOption): PreviewList {
@@ -445,14 +445,6 @@ function FeaturedManagementInner({
         onAddSlot={() => openAddModal()}
       />
 
-      <FeaturedStatsBar
-        hasActiveSlot={!!data.current}
-        upcomingCount={data.upcoming.length}
-        pastCount={data.past.length}
-        refreshKey={statsRefreshKey}
-        initialReport={data.weeklyReport as WeeklyReport | null}
-      />
-
       <FeaturedSchedulerTab
         current={data.current}
         fallbackList={data.fallbackList}
@@ -477,6 +469,14 @@ function FeaturedManagementInner({
         }}
         initialPerformance={data.currentPerformance}
         initialRecommendations={data.currentRecommendations}
+      />
+
+      <FeaturedStatsBar
+        hasActiveSlot={!!data.current}
+        upcomingCount={data.upcoming.length}
+        pastCount={data.past.length}
+        refreshKey={statsRefreshKey}
+        initialReport={data.weeklyReport as WeeklyReport | null}
       />
 
       <FeaturedWeeklyDetails

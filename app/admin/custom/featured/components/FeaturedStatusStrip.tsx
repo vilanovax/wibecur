@@ -42,7 +42,7 @@ export default function FeaturedStatusStrip({
             </div>
             <div className="min-w-0">
               <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-1">الان در هوم اپ</p>
-              <h2 className="text-lg font-bold text-[var(--color-text)] truncate">
+              <h2 className="text-lg font-bold leading-snug text-[var(--color-text)]">
                 {current.list.title}
               </h2>
               <div className="flex flex-wrap gap-2 mt-1 text-sm text-[var(--color-text-muted)]">
@@ -70,7 +70,7 @@ export default function FeaturedStatusStrip({
               href={`/lists/${current.list.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg)]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 text-sm hover:bg-[var(--color-bg)]"
             >
               <ExternalLink className="w-4 h-4" />
               لیست
@@ -78,7 +78,7 @@ export default function FeaturedStatusStrip({
             <button
               type="button"
               onClick={onEdit}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg)]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 text-sm hover:bg-[var(--color-bg)]"
             >
               <Pencil className="w-4 h-4" />
               زمان
@@ -86,7 +86,7 @@ export default function FeaturedStatusStrip({
             <button
               type="button"
               onClick={onRemove}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-red-600 dark:text-red-400 hover:bg-red-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm text-red-700 hover:bg-red-50"
             >
               <Trash2 className="w-4 h-4" />
               حذف

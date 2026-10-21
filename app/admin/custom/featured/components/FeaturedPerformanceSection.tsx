@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { BarChart3, Save, TrendingUp, Lightbulb } from 'lucide-react';
+import { fa, faNumber } from '@/lib/utils';
 import type { FeaturedSlotPerformance } from '@/lib/admin/featured-management-types';
 
 type Performance = FeaturedSlotPerformance;
@@ -15,7 +16,12 @@ type Props = {
 
 function formatNum(n: number | null): string {
   if (n == null) return '—';
-  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+  if (Number.isInteger(n)) return faNumber(n);
+  return fa(n.toFixed(1).replace('.', '٫'));
+}
+
+function formatPct(n: number): string {
+  return `${fa(n.toFixed(1).replace('.', '٫'))}٪`;
 }
 
 function ctrColor(ctr: number): string {
@@ -84,13 +90,11 @@ export default function FeaturedPerformanceSection({
   if (loading) {
     return (
       <section
-        className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
         dir="rtl"
       >
-        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">
-          عملکرد اسلات فعال
-        </h2>
-        <p className="text-sm text-gray-500">در حال بارگذاری…</p>
+        <h2 className="mb-2 text-sm font-semibold text-[var(--color-text)]">عملکرد همین اسلات</h2>
+        <p className="text-sm text-[var(--color-text-muted)]">در حال بارگذاری…</p>
       </section>
     );
   }
@@ -98,13 +102,11 @@ export default function FeaturedPerformanceSection({
   if (error || !performance) {
     return (
       <section
-        className="rounded-3xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm"
+        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
         dir="rtl"
       >
-        <h2 className="text-sm font-semibold text-[var(--color-text)] mb-4">
-          عملکرد اسلات فعال
-        </h2>
-        <p className="text-sm text-red-600 dark:text-red-400">
+        <h2 className="mb-2 text-sm font-semibold text-[var(--color-text)]">عملکرد همین اسلات</h2>
+        <p className="text-sm text-red-700">
           {error || 'داده‌ای یافت نشد'}
         </p>
       </section>
@@ -112,71 +114,59 @@ export default function FeaturedPerformanceSection({
   }
 
   const { ctr, saveLiftPercent, scoreLiftPercent } = performance;
+  const quiet =
+    performance.impressions === 0 &&
+    performance.clicks === 0 &&
+    saveLiftPercent == null &&
+    scoreLiftPercent == null;
 
   return (
-    <section className="space-y-6" dir="rtl">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-        عملکرد منتخب
-      </h2>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-3">
-            <BarChart3 className="w-5 h-5" />
-            <span className="text-sm font-medium">تعامل</span>
+    <section className="space-y-4" dir="rtl">
+      <h2 className="text-lg font-semibold leading-snug text-[var(--color-text)]">عملکرد همین اسلات</h2>
+      {quiet ? (
+        <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm leading-relaxed text-[var(--color-text-muted)]">
+          هنوز نمایش یا کلیکی برای این اسلات ثبت نشده.
+        </p>
+      ) : (
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <BarChart3 className="size-4" strokeWidth={1.5} />
+            <span>تعامل</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">
-            {formatNum(performance.impressions)}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">نمایش (Impressions)</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-            {formatNum(performance.clicks)}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">کلیک</p>
-          <p className={`text-lg font-semibold mt-2 ${ctrColor(ctr)}`}>
-            CTR: {(ctr * 100).toFixed(2)}%
+          <p className="text-lg font-bold text-[var(--color-text)]">{formatNum(performance.impressions)}</p>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">نمایش</p>
+          <p className="mt-2 text-lg font-bold text-[var(--color-text)]">{formatNum(performance.clicks)}</p>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">کلیک</p>
+          <p className={`mt-2 text-sm font-semibold ${ctrColor(ctr)}`}>نرخ کلیک {formatPct(ctr * 100)}</p>
+        </div>
+
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <Save className="size-4" strokeWidth={1.5} />
+            <span>رشد ذخیره</span>
+          </div>
+          <p className="text-lg font-bold text-[var(--color-text)]">{formatNum(performance.savesDuring)}</p>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">ذخیره در بازه اسلات</p>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">پایه {formatNum(performance.baselineSaves)}</p>
+          <p className={`mt-2 text-sm font-semibold ${liftColor(saveLiftPercent)}`}>
+            {saveLiftPercent != null ? formatPct(saveLiftPercent) : 'هنوز نیست'}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-3">
-            <Save className="w-5 h-5" />
-            <span className="text-sm font-medium">رشد ذخیره</span>
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <TrendingUp className="size-4" strokeWidth={1.5} />
+            <span>تأثیر ترند</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">
-            {formatNum(performance.savesDuring)}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">ذخیره در بازه اسلات</p>
-          <p className="text-xs text-gray-500 mt-1">
-            baseline: {formatNum(performance.baselineSaves)}
-          </p>
-          <p
-            className={`text-lg font-semibold mt-2 ${liftColor(saveLiftPercent)}`}
-          >
-            Save Lift:{' '}
-            {saveLiftPercent != null ? `${saveLiftPercent.toFixed(1)}%` : '—'}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-3">
-            <TrendingUp className="w-5 h-5" />
-            <span className="text-sm font-medium">تأثیر ترند</span>
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Baseline: {formatNum(performance.baselineScore)}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Peak: {formatNum(performance.peakScore)}
-          </p>
-          <p
-            className={`text-lg font-semibold mt-2 ${liftColor(scoreLiftPercent)}`}
-          >
-            Score Lift:{' '}
-            {scoreLiftPercent != null ? `${scoreLiftPercent.toFixed(1)}%` : '—'}
+          <p className="text-sm text-[var(--color-text-muted)]">پایه {formatNum(performance.baselineScore)}</p>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">اوج {formatNum(performance.peakScore)}</p>
+          <p className={`mt-2 text-sm font-semibold ${liftColor(scoreLiftPercent)}`}>
+            {scoreLiftPercent != null ? formatPct(scoreLiftPercent) : 'هنوز نیست'}
           </p>
         </div>
       </div>
+      )}
 
       {recommendations.length > 0 && (
         <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-900/20 p-4">

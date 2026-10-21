@@ -1,17 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  BarChart3,
-  Save,
-  Award,
-  Calendar,
-  Radio,
-  Layers,
-  ChevronRight,
-  ChevronLeft,
-  Loader2,
-} from 'lucide-react';
+import { BarChart3, Save, Award, Radio, Layers, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { fa } from '@/lib/utils';
 import type { WeeklyReport } from './featured-weekly-types';
 import { addDays, getMonday } from './featured-weekly-types';
 
@@ -88,66 +79,31 @@ export default function FeaturedStatsBar({
     report &&
     `${new Date(report.weekStart).toLocaleDateString('fa-IR', { dateStyle: 'short' })} – ${new Date(report.weekEnd).toLocaleDateString('fa-IR', { dateStyle: 'short' })}`;
 
-  const statCards = [
+  const pct = (n: number, digits = 1) =>
+    `${fa(n.toFixed(digits).replace('.', '٫'))}٪`;
+  const hasSignal =
+    !!report &&
+    (report.avgCTR > 0 || report.avgSaveLift != null || report.bestPerformer != null);
+  const facts = [
     {
       icon: Radio,
       label: 'وضعیت هوم',
-      value: hasActiveSlot ? 'اسلات زنده' : 'Fallback',
-      sub: hasActiveSlot ? 'منتخب زمان‌بندی‌شده' : 'لیست ویژه ستاره‌دار',
-      accent: hasActiveSlot
-        ? 'from-emerald-500/10 to-emerald-600/5 border-emerald-200/60 dark:border-emerald-800/60'
-        : 'from-slate-500/10 to-slate-600/5 border-slate-200/60 dark:border-gray-700',
+      value: hasActiveSlot ? 'اسلات زنده' : 'لیست جایگزین',
     },
     {
       icon: Layers,
-      label: 'صف اسلات',
+      label: 'صف بعدی',
       value: upcomingCount.toLocaleString('fa-IR'),
-      sub: 'آینده',
-      accent:
-        'from-sky-500/10 to-sky-600/5 border-sky-200/50 dark:border-sky-800/60',
-    },
-    {
-      icon: Calendar,
-      label: 'اسلات این هفته',
-      value: loading ? '…' : (report?.totalSlots ?? 0).toLocaleString('fa-IR'),
-      sub: weekLabel ?? 'هفته جاری',
-      accent:
-        'from-blue-500/10 to-blue-600/5 border-blue-200/50 dark:border-blue-800/60',
     },
     {
       icon: BarChart3,
-      label: 'میانگین CTR',
-      value: loading
-        ? '…'
-        : report
-          ? `${(report.avgCTR * 100).toFixed(2)}٪`
-          : '—',
-      accent:
-        'from-teal-500/10 to-teal-600/5 border-teal-200/50 dark:border-teal-800/60',
-    },
-    {
-      icon: Save,
-      label: 'میانگین Save Lift',
-      value: loading
-        ? '…'
-        : report?.avgSaveLift != null
-          ? `${report.avgSaveLift.toFixed(1)}٪`
-          : '—',
-      accent:
-        'from-emerald-500/10 to-emerald-600/5 border-emerald-200/50 dark:border-emerald-800/60',
+      label: 'اسلات این هفته',
+      value: loading ? '…' : (report?.totalSlots ?? 0).toLocaleString('fa-IR'),
     },
     {
       icon: Award,
-      label: 'بهترین لیست هفته',
-      value: loading ? '…' : (report?.bestPerformer?.listTitle ?? '—'),
-      sub:
-        report?.bestPerformer != null
-          ? `+${report.bestPerformer.saveLiftPercent.toFixed(1)}٪`
-          : pastCount > 0
-            ? `${pastCount.toLocaleString('fa-IR')} اسلات گذشته`
-            : undefined,
-      accent:
-        'from-amber-500/10 to-amber-600/5 border-amber-200/50 dark:border-amber-800/60',
+      label: 'بهترین لیست',
+      value: loading ? '…' : report?.bestPerformer?.listTitle || 'هنوز نیست',
     },
   ];
 
@@ -155,39 +111,35 @@ export default function FeaturedStatsBar({
     <section className="space-y-3" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-[var(--color-text-muted)]">
-          <span className="font-medium text-[var(--color-text)]">آمار عملکرد</span>
-          {weekLabel && (
-            <>
-              <span className="mx-2 text-[var(--color-border)]">·</span>
-              {weekLabel}
-            </>
-          )}
+          <span className="font-medium text-[var(--color-text)]">عملکرد هفته</span>
+          {weekLabel ? ` · ${weekLabel}` : ''}
+          {pastCount > 0 ? ` · ${pastCount.toLocaleString('fa-IR')} اسلات در تاریخچه` : ''}
         </p>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => shiftWeek(-1)}
-            className="p-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
             aria-label="هفته قبل"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="size-4" strokeWidth={1.5} />
           </button>
           <button
             type="button"
             onClick={() =>
               setWeekStart(getMonday(new Date()).toISOString().slice(0, 10))
             }
-            className="px-2.5 py-1.5 rounded-lg border border-[var(--color-border)] text-xs font-medium hover:bg-[var(--color-bg)]"
+            className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] px-3 text-sm font-medium hover:bg-[var(--color-bg)]"
           >
             این هفته
           </button>
           <button
             type="button"
             onClick={() => shiftWeek(1)}
-            className="p-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
             aria-label="هفته بعد"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="size-4" strokeWidth={1.5} />
           </button>
           {loading && (
             <Loader2 className="w-4 h-4 animate-spin text-[var(--primary)]" />
@@ -195,30 +147,46 @@ export default function FeaturedStatsBar({
         </div>
       </div>
 
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
-        {statCards.map(({ icon: Icon, label, value, sub, accent }) => (
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {facts.map(({ icon: Icon, label, value }) => (
           <div
             key={label}
-            className={`rounded-2xl border bg-gradient-to-br ${accent} p-3.5 sm:p-4 shadow-sm min-w-0`}
+            className="min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
           >
-            <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] mb-1.5">
-              <Icon className="w-3.5 h-3.5 shrink-0" />
+            <div className="mb-2 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              <Icon className="size-4 shrink-0" strokeWidth={1.5} />
               <span className="truncate">{label}</span>
             </div>
-            <p
-              className="text-lg sm:text-xl font-bold text-[var(--color-text)] truncate"
-              title={String(value)}
-            >
+            <p className="truncate text-lg font-bold leading-snug text-[var(--color-text)]" title={String(value)}>
               {value}
             </p>
-            {sub && (
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
-                {sub}
-              </p>
-            )}
           </div>
         ))}
       </div>
+      {hasSignal && report ? (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              <BarChart3 className="size-4" strokeWidth={1.5} />
+              نرخ کلیک
+            </div>
+            <p className="text-lg font-bold text-[var(--color-text)]">{pct(report.avgCTR * 100, 2)}</p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              <Save className="size-4" strokeWidth={1.5} />
+              رشد ذخیره
+            </div>
+            <p className="text-lg font-bold text-[var(--color-text)]">
+              {report.avgSaveLift != null ? pct(report.avgSaveLift) : 'هنوز نیست'}
+            </p>
+          </div>
+        </div>
+      ) : !loading ? (
+        <p className="text-sm leading-relaxed text-[var(--color-text-muted)]">
+          برای این هفته هنوز نرخ کلیک یا رشد ذخیره‌ای ثبت نشده.
+        </p>
+      ) : null}
     </section>
   );
 }
