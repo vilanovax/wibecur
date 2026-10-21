@@ -36,6 +36,7 @@ export default function MediaSlotRow({
   const [width, setWidth] = useState(slot.width);
   const [height, setHeight] = useState(slot.height);
   const [bytes, setBytes] = useState(slot.bytes);
+  const [previewFailed, setPreviewFailed] = useState(false);
 
   async function replaceFile(file: File) {
     setBusy(true);
@@ -132,22 +133,27 @@ export default function MediaSlotRow({
     if (image.naturalHeight > 0) setHeight(image.naturalHeight);
   }
 
-  const preview = slot.previewUrl ? (
-    <img
-      src={slot.previewUrl}
-      alt=""
-      width={grid ? width || 640 : 64}
-      height={grid ? height || 640 : 64}
-      className={grid ? 'size-full object-cover' : 'size-16 object-cover'}
-      onLoad={onImageLoad}
-    />
-  ) : (
-    <div
-      className={`flex items-center justify-center text-[var(--color-text-muted)] ${grid ? 'size-full' : 'size-16'}`}
-    >
-      <ImageOff className="size-5" strokeWidth={1.5} aria-hidden />
-    </div>
-  );
+  const preview =
+    slot.previewUrl && !previewFailed ? (
+      <img
+        src={slot.previewUrl}
+        alt=""
+        width={grid ? 320 : 64}
+        height={grid ? 320 : 64}
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
+        className={grid ? 'size-full object-cover' : 'size-16 object-cover'}
+        onLoad={onImageLoad}
+        onError={() => setPreviewFailed(true)}
+      />
+    ) : (
+      <div
+        className={`flex items-center justify-center text-[var(--color-text-muted)] ${grid ? 'size-full' : 'size-16'}`}
+      >
+        <ImageOff className="size-5" strokeWidth={1.5} aria-hidden />
+      </div>
+    );
 
   const meta = (
     <>

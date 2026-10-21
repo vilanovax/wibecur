@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Prisma } from '@prisma/client';
+import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getSharp } from '@/lib/get-sharp';
 import { validateImage } from '@/lib/image-validator';
@@ -8,7 +9,6 @@ import { getDisplayImageUrl } from '@/lib/display-image';
 import { isValidHttpImageUrl, normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
 import { listStorageObjectSizes, storageObjectBytes, uploadImageFromUrlDetailed } from '@/lib/object-storage';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
-import { isPublicHttpUrl } from '@/lib/ssrf-guard';
 import type { ImageProfile } from '@/lib/image-config';
 import {
   revalidateAdminCategoriesCache,
@@ -115,7 +115,18 @@ function publicFileFromUrl(url: string): string | null {
   return fs.existsSync(full) ? full : null;
 }
 
-async function fileMeta(filePath: string): Promise<{ bytes: number; width: number | null; height: number | null }> {
+/** فقط حجم فایل — ابعاد از onLoad مرورگر می‌آید تا Sharp روی هر ردیف DB اجرا نشود */
+function fileBytesOnly(filePath: string): number | null {
+  try {
+    return fs.statSync(filePath).size;
+  } catch {
+    return null;
+  }
+}
+
+async function localImageMeta(
+  filePath: string
+): Promise<{ bytes: number; width: number | null; height: number | null }> {
   const bytes = fs.statSync(filePath).size;
   try {
     const sharp = await getSharp();
@@ -134,29 +145,30 @@ function bannerNames(): string[] {
     .sort((a, b) => a.localeCompare(b, 'en'));
 }
 
+/** بنرها تعداد کم‌اند؛ ابعاد را با Sharp می‌خوانیم تا در SSR دیده شود */
 async function bannerSlots(q: string): Promise<MediaSlot[]> {
   const names = bannerNames().filter((name) => !q || name.toLowerCase().includes(q.toLowerCase()));
-  const slots: MediaSlot[] = [];
-  for (const name of names) {
-    const meta = await fileMeta(path.join(BANNERS_DIR, name));
-    const imageUrl = `/images/banners/${name}`;
-    slots.push({
-      key: `banner:${name}`,
-      kind: 'banner',
-      id: name,
-      title: name,
-      detail: 'فایل ثابت سایت',
-      imageUrl,
-      previewUrl: imageUrl,
-      bytes: meta.bytes,
-      width: meta.width,
-      height: meta.height,
-      active: true,
-      canClear: false,
-      editHref: null,
-    });
-  }
-  return slots;
+  return Promise.all(
+    names.map(async (name) => {
+      const imageUrl = `/images/banners/${name}`;
+      const meta = await localImageMeta(path.join(BANNERS_DIR, name));
+      return {
+        key: `banner:${name}`,
+        kind: 'banner' as const,
+        id: name,
+        title: name,
+        detail: 'فایل ثابت سایت',
+        imageUrl,
+        previewUrl: imageUrl,
+        bytes: meta.bytes,
+        width: meta.width,
+        height: meta.height,
+        active: true,
+        canClear: false,
+        editHref: null,
+      };
+    })
+  );
 }
 
 function editHref(kind: MediaKind, id: string, detail: string): string | null {
@@ -172,27 +184,23 @@ function editHref(kind: MediaKind, id: string, detail: string): string | null {
   return null;
 }
 
-async function decorate(row: {
-  kind: string;
-  id: string;
-  title: string;
-  detail: string | null;
-  url: string | null;
-  active: unknown;
-}): Promise<MediaSlot> {
+function decorate(
+  row: {
+    kind: string;
+    id: string;
+    title: string;
+    detail: string | null;
+    url: string | null;
+    active: unknown;
+  },
+  knownBytes?: number | null
+): MediaSlot {
   const kind = row.kind as MediaKind;
   const imageUrl = row.url?.trim() || null;
-  let bytes: number | null = null;
-  let width: number | null = null;
-  let height: number | null = null;
-  if (imageUrl?.startsWith('/images/')) {
+  let bytes: number | null = knownBytes ?? null;
+  if (bytes == null && imageUrl?.startsWith('/images/')) {
     const file = publicFileFromUrl(imageUrl);
-    if (file) {
-      const meta = await fileMeta(file);
-      bytes = meta.bytes;
-      width = meta.width;
-      height = meta.height;
-    }
+    if (file) bytes = fileBytesOnly(file);
   }
   return {
     key: `${kind}:${row.id}`,
@@ -203,31 +211,38 @@ async function decorate(row: {
     imageUrl,
     previewUrl: imageUrl ? getDisplayImageUrl(imageUrl) : '',
     bytes,
-    width,
-    height,
+    width: null,
+    height: null,
     active: isActiveFlag(row.active),
     canClear: kind !== 'banner',
     editHref: editHref(kind, row.id, row.detail?.trim() || ''),
   };
 }
 
-async function probeRemoteBytes(slots: MediaSlot[]): Promise<void> {
-  await Promise.all(
-    slots.map(async (slot) => {
-      if (slot.bytes != null || !slot.imageUrl || !isPublicHttpUrl(slot.imageUrl)) return;
-      try {
-        const response = await fetch(slot.imageUrl, {
-          method: 'HEAD',
-          redirect: 'follow',
-          signal: AbortSignal.timeout(1200),
-        });
-        const length = Number(response.headers.get('content-length'));
-        if (response.ok && Number.isFinite(length) && length > 0) slot.bytes = length;
-      } catch {
-        /* حجم نامشخص می‌ماند */
-      }
-    })
-  );
+async function computeMediaCounts(state: MediaState): Promise<Record<MediaFilter, number>> {
+  const counts = emptyCounts();
+  const grouped = await prisma.$queryRaw<{ kind: string; n: number }[]>(Prisma.sql`
+    SELECT kind, COUNT(*)::int AS n
+    FROM (${slotsFrom}) slots
+    WHERE ${stateWhere(state)}
+    GROUP BY kind
+  `);
+  for (const row of grouped) {
+    if (row.kind in counts) counts[row.kind as MediaKind] = Number(row.n);
+  }
+  counts.banner = state === 'inactive' ? 0 : bannerNames().length;
+  counts.all = MEDIA_KINDS.reduce((sum, kind) => sum + (kind === 'banner' ? 0 : counts[kind]), 0);
+  return counts;
+}
+
+const getCachedMediaCounts = unstable_cache(
+  async (state: MediaState) => computeMediaCounts(state),
+  ['admin-media-counts-v1'],
+  { revalidate: 60, tags: ['admin-media'] }
+);
+
+export async function loadMediaCounts(state: MediaState): Promise<Record<MediaFilter, number>> {
+  return getCachedMediaCounts(state);
 }
 
 export async function loadMediaLibrary(input: {
@@ -236,24 +251,17 @@ export async function loadMediaLibrary(input: {
   missing: boolean;
   state: MediaState;
   page: number;
+  /** وقتی فقط شمارنده‌ها لازم است (مثلاً کنار بزرگ‌ترین حجم) */
+  countsOnly?: boolean;
 }): Promise<MediaLibraryData> {
   const q = input.q.trim().slice(0, 80);
   const page = Number.isFinite(input.page) && input.page > 0 ? Math.floor(input.page) : 1;
   const pattern = likePattern(q);
-  const counts = emptyCounts();
-  const state = stateWhere(input.state);
+  const counts = await loadMediaCounts(input.state);
 
-  const grouped = await prisma.$queryRaw<{ kind: string; n: number }[]>(Prisma.sql`
-    SELECT kind, COUNT(*)::int AS n
-    FROM (${slotsFrom}) slots
-    WHERE ${state}
-    GROUP BY kind
-  `);
-  for (const row of grouped) {
-    if (row.kind in counts) counts[row.kind as MediaKind] = Number(row.n);
+  if (input.countsOnly) {
+    return { slots: [], total: 0, page: 1, pageSize: PAGE_SIZE, counts };
   }
-  counts.banner = input.state === 'inactive' ? 0 : bannerNames().length;
-  counts.all = MEDIA_KINDS.reduce((sum, kind) => sum + (kind === 'banner' ? 0 : counts[kind]), 0);
 
   if (input.filter === 'banner') {
     const all = input.missing || input.state === 'inactive' ? [] : await bannerSlots(q);
@@ -271,7 +279,7 @@ export async function loadMediaLibrary(input: {
     WHERE (${input.filter} = 'all' OR kind = ${input.filter})
       AND (${q} = '' OR title ILIKE ${pattern} ESCAPE '\\' OR detail ILIKE ${pattern} ESCAPE '\\')
       AND (${input.missing} = false OR url IS NULL OR btrim(COALESCE(url, '')) = '')
-      AND ${state}
+      AND ${stateWhere(input.state)}
   `;
 
   const [countRows, rows] = await Promise.all([
@@ -291,11 +299,8 @@ export async function loadMediaLibrary(input: {
     ),
   ]);
 
-  const slots = await Promise.all(rows.map((row) => decorate(row)));
-  await probeRemoteBytes(slots);
-
   return {
-    slots,
+    slots: rows.map((row) => decorate(row)),
     total: Number(countRows[0]?.n ?? 0),
     page,
     pageSize: PAGE_SIZE,
@@ -311,6 +316,8 @@ type SizedSlotRow = {
   url: string;
   active: unknown;
   bytes: number;
+  width?: number | null;
+  height?: number | null;
 };
 
 function localFileBytes(url: string): number | null {
@@ -323,6 +330,10 @@ function localFileBytes(url: string): number | null {
   }
 }
 
+/**
+ * بزرگ‌ترین‌ها را از فهرست حجم استوریج می‌گیرد و فقط همان کلیدها را در DB جور می‌کند —
+ * نه اسکن همهٔ ۵٬۰۰۰+ ردیف.
+ */
 export async function loadHeaviestMedia(input: {
   filter: MediaFilter;
   q: string;
@@ -343,6 +354,8 @@ export async function loadHeaviestMedia(input: {
         url: slot.imageUrl,
         active: true,
         bytes: slot.bytes,
+        width: slot.width,
+        height: slot.height,
       });
     }
   }
@@ -358,43 +371,86 @@ export async function loadHeaviestMedia(input: {
       complete = false;
       console.error('[media] listing storage sizes failed:', error);
     }
-    const rows = await prisma.$queryRaw<
-      { kind: string; id: string; title: string; detail: string | null; url: string | null; active: unknown }[]
-    >(Prisma.sql`
-      SELECT kind, id, title, detail, url, active
-      FROM (${slotsFrom}) slots
-      WHERE (${input.filter} = 'all' OR kind = ${input.filter})
-        AND (${q} = '' OR title ILIKE ${pattern} ESCAPE '\\' OR detail ILIKE ${pattern} ESCAPE '\\')
-        AND url IS NOT NULL
-        AND btrim(url) <> ''
-        AND ${stateWhere(input.state)}
-      ORDER BY kind, title, id
-    `);
-    for (const row of rows) {
-      const url = row.url?.trim() ?? '';
-      if (!url) continue;
-      const bytes = url.startsWith('/images/') ? localFileBytes(url) : storageObjectBytes(url, sizes);
-      if (!bytes) continue;
-      candidates.push({
-        kind: row.kind,
-        id: row.id,
-        title: row.title,
-        detail: row.detail,
-        url,
-        active: row.active,
-        bytes,
+
+    const rankedKeys = [...sizes.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, Math.max(HEAVIEST_IMAGE_LIMIT * 6, 80));
+
+    if (rankedKeys.length > 0) {
+      const likeClauses = rankedKeys.map(([key]) => {
+        const pattern = `%${key.replace(/[\\%_]/g, '\\$&')}`;
+        return Prisma.sql`url LIKE ${pattern} ESCAPE '\\'`;
       });
+      const keyMatch = Prisma.sql`(${Prisma.join(likeClauses, ' OR ')})`;
+      const rows = await prisma.$queryRaw<
+        { kind: string; id: string; title: string; detail: string | null; url: string | null; active: unknown }[]
+      >(Prisma.sql`
+        SELECT kind, id, title, detail, url, active
+        FROM (${slotsFrom}) slots
+        WHERE (${input.filter} = 'all' OR kind = ${input.filter})
+          AND (${q} = '' OR title ILIKE ${pattern} ESCAPE '\\' OR detail ILIKE ${pattern} ESCAPE '\\')
+          AND url IS NOT NULL
+          AND btrim(url) <> ''
+          AND ${keyMatch}
+          AND ${stateWhere(input.state)}
+      `);
+      for (const row of rows) {
+        const url = row.url?.trim() ?? '';
+        if (!url) continue;
+        const bytes = storageObjectBytes(url, sizes);
+        if (!bytes) continue;
+        candidates.push({
+          kind: row.kind,
+          id: row.id,
+          title: row.title,
+          detail: row.detail,
+          url,
+          active: row.active,
+          bytes,
+        });
+      }
+    }
+
+    // فایل‌های محلی غیر از بنر (تعداد کم؛ محدود می‌شود)
+    if (input.filter === 'all' || input.filter === 'category' || input.filter === 'list') {
+      const localRows = await prisma.$queryRaw<
+        { kind: string; id: string; title: string; detail: string | null; url: string | null; active: unknown }[]
+      >(Prisma.sql`
+        SELECT kind, id, title, detail, url, active
+        FROM (${slotsFrom}) slots
+        WHERE (${input.filter} = 'all' OR kind = ${input.filter})
+          AND (${q} = '' OR title ILIKE ${pattern} ESCAPE '\\' OR detail ILIKE ${pattern} ESCAPE '\\')
+          AND url LIKE '/images/%'
+          AND url NOT LIKE '/images/banners/%'
+          AND ${stateWhere(input.state)}
+        LIMIT 200
+      `);
+      for (const row of localRows) {
+        const url = row.url?.trim() ?? '';
+        if (!url || url.startsWith('/images/banners/')) continue;
+        const bytes = localFileBytes(url);
+        if (!bytes) continue;
+        candidates.push({
+          kind: row.kind,
+          id: row.id,
+          title: row.title,
+          detail: row.detail,
+          url,
+          active: row.active,
+          bytes,
+        });
+      }
     }
   }
 
   const top = rankHeaviestImages(candidates, HEAVIEST_IMAGE_LIMIT);
-  const slots = await Promise.all(
-    top.map(async (row) => {
-      const slot = await decorate(row);
-      if (slot.bytes == null) slot.bytes = row.bytes;
-      return slot;
-    })
-  );
+  const slots = top.map((row) => {
+    const slot = decorate(row, row.bytes);
+    if (slot.bytes == null) slot.bytes = row.bytes;
+    if (row.width != null) slot.width = row.width;
+    if (row.height != null) slot.height = row.height;
+    return slot;
+  });
   return { slots, complete };
 }
 

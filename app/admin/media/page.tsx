@@ -83,8 +83,17 @@ export default async function MediaLibraryPage({
   const state = parseMediaState(params.state);
   const heaviest = parseMediaRank(params.rank) === 'bytes';
   const page = Math.max(1, Number(params.page) || 1);
-  const data = await loadMediaLibrary({ filter, q, missing: heaviest ? false : missing, state, page });
-  const heavy = heaviest ? await loadHeaviestMedia({ filter, q, state }) : null;
+  const [data, heavy] = await Promise.all([
+    loadMediaLibrary({
+      filter,
+      q,
+      missing: heaviest ? false : missing,
+      state,
+      page,
+      countsOnly: heaviest,
+    }),
+    heaviest ? loadHeaviestMedia({ filter, q, state }) : Promise.resolve(null),
+  ]);
   const slots = heavy ? heavy.slots : data.slots;
   const pageCount = Math.max(1, Math.ceil(data.total / data.pageSize));
   const filters: MediaFilter[] = ['all', ...MEDIA_KINDS];
