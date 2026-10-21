@@ -12,7 +12,12 @@ import type {
   CityBreakdown,
 } from '@/types/category-page';
 import { getTrendingByCategory } from '@/lib/trending/service';
-import { isFilmCategorySlug, isLocationCategorySlug } from '@/lib/category-layout';
+import {
+  CATEGORY_TRENDING_VISIBLE,
+  isFilmCategorySlug,
+  isLocationCategorySlug,
+} from '@/lib/category-layout';
+import { pickCategoryNewLists } from '@/lib/category-page-lists';
 import { resolveListCover } from '@/lib/resolve-list-cover';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
@@ -73,6 +78,8 @@ const VIRAL_LIKE_THRESHOLD = 50;
 const TRENDING_LIMIT = 12;
 const CURATORS_LIMIT = 4;
 const NEW_LISTS_LIMIT = 4;
+/** بیشتر از حد نمایش تا بعد از حذف هم‌پوشانی با داغ‌ترین‌ها، سکشن جدید خالی نماند */
+const NEW_LISTS_CANDIDATE_LIMIT = NEW_LISTS_LIMIT + CATEGORY_TRENDING_VISIBLE + 1;
 const TOP_SAVED_LIMIT = 6;
 const TRENDING_24H_LIMIT = 10;
 const MOST_DEBATED_LIMIT = 6;
@@ -741,7 +748,8 @@ async function getFilmGenres(
 
 async function getNewLists(
   prisma: PrismaClient,
-  categoryId: string
+  categoryId: string,
+  take: number = NEW_LISTS_LIMIT
 ): Promise<CategoryListCard[]> {
   const lists = await prisma.lists.findMany({
     where: {
@@ -751,7 +759,7 @@ async function getNewLists(
       users: { role: { not: 'USER' } },
     },
     orderBy: { createdAt: 'desc' },
-    take: NEW_LISTS_LIMIT,
+    take,
     select: {
       id: true,
       title: true,
@@ -827,7 +835,7 @@ export async function getCategoryPageData(
   ] = await Promise.all([
     getCategoryAndMetrics(prisma, categoryId),
     getTrendingAndViralLists(prisma, categoryId),
-    getNewLists(prisma, categoryId),
+    getNewLists(prisma, categoryId, NEW_LISTS_CANDIDATE_LIMIT),
     shouldScanCities
       ? getCityBreakdown(prisma, categoryId)
       : Promise.resolve([] as CityBreakdown[]),
@@ -847,7 +855,10 @@ export async function getCategoryPageData(
     trendingLists: applyListCovers(trending, category.slug),
     viralSpotlight: applyListCover(viral, category.slug),
     topCurators: [],
-    newLists: applyListCovers(newLists, category.slug),
+    newLists: applyListCovers(
+      pickCategoryNewLists(newLists, trending, viral, NEW_LISTS_LIMIT),
+      category.slug
+    ),
     cityBreakdown,
     mostSavedItems: mapCategoryItemCards(mostSavedItemsRaw, category.slug),
     latestItems: mapCategoryItemCards(latestItemsRaw, category.slug),

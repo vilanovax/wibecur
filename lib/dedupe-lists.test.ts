@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   dedupeListsByDisplayTitle,
+  excludeListsByIds,
   normalizeDisplayTitleKey,
 } from '@/lib/dedupe-lists';
 
@@ -41,6 +42,20 @@ describe('dedupeListsByDisplayTitle', () => {
       { id: 'b', title: 'فیلم‌های جاسوسی', slug: 'spy' },
     ];
     expect(dedupeListsByDisplayTitle(lists)).toHaveLength(2);
+  });
+});
+
+describe('excludeListsByIds', () => {
+  it('drops excluded ids and keeps order', () => {
+    const lists = [
+      { id: 'a', title: 'یک' },
+      { id: 'b', title: 'دو' },
+      { id: 'c', title: 'سه' },
+    ];
+    expect(excludeListsByIds(lists, ['b'])).toEqual([
+      { id: 'a', title: 'یک' },
+      { id: 'c', title: 'سه' },
+    ]);
   });
 });
 

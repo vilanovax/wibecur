@@ -1,5 +1,15 @@
 import { getDisplayListTitle } from '@/lib/list-display-title';
 
+/** حذف لیست‌هایی که idشان در مجموعهٔ حذف است — ترتیب بقیه حفظ می‌شود */
+export function excludeListsByIds<T extends { id: string }>(
+  lists: readonly T[],
+  excludeIds: Iterable<string>
+): T[] {
+  const exclude = excludeIds instanceof Set ? excludeIds : new Set(excludeIds);
+  if (exclude.size === 0) return lists as T[];
+  return lists.filter((list) => !exclude.has(list.id));
+}
+
 /** حذف تکرار لیست‌ها بر اساس id — حفظ اولین occurrence */
 export function dedupeListsById<T extends { id: string }>(lists: T[]): T[] {
   const seen = new Set<string>();

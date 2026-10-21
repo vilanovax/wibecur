@@ -11,7 +11,7 @@ export async function getCachedCategoryPageData(
 ): Promise<CategoryPageData> {
   const getCached = unstable_cache(
     () => getCategoryPageData(prisma, categoryId, categorySlug),
-    [`category-page-v2-${categoryId}`],
+    [`category-page-v3-${categoryId}`],
     { revalidate: CACHE_SECONDS, tags: [`category-${categoryId}`] }
   );
   return getCached();

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import CategorySectionTitle from './CategorySectionTitle';
-import { CATEGORY_SECTION } from '@/lib/category-layout';
+import { CATEGORY_SECTION, CATEGORY_TRENDING_VISIBLE } from '@/lib/category-layout';
 import type { CategoryListCard } from '@/types/category-page';
 
 interface TrendingListsSectionProps {
@@ -73,7 +73,7 @@ export default function TrendingListsSection({
 }: TrendingListsSectionProps) {
   if (lists.length === 0) return null;
 
-  const visible = lists.slice(0, 8);
+  const visible = lists.slice(0, CATEGORY_TRENDING_VISIBLE);
   const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
 
   return (

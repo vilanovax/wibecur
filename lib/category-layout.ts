@@ -3,6 +3,9 @@ export const CATEGORY_PAGE_SHELL = 'mx-auto w-full max-w-[1024px] px-4 pb-6 lg:p
 
 export const CATEGORY_SECTION = 'py-5 lg:py-6';
 
+/** کارت‌های داغ‌ترین‌ها که روی صفحهٔ دسته دیده می‌شوند */
+export const CATEGORY_TRENDING_VISIBLE = 8;
+
 export function isFilmCategorySlug(slug: string): boolean {
   const s = slug.toLowerCase();
   return (
