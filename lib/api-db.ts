@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
 import { prisma } from './prisma';
 import { dbQuery } from './db';
-import { shouldGracefulDbFallback } from './db-errors';
+import { isDbUnavailableError, shouldGracefulDbFallback } from './db-errors';
 
 /** پاسخ 200 با دادهٔ fallback وقتی DB تحت فشار است */
 export function apiDbOk<T>(data: T, init?: ResponseInit) {
@@ -66,8 +66,8 @@ export async function resolveSessionUserId(session: Session): Promise<string | n
         })
       );
       if (byId && !byId.deletedAt) return byId.id;
-    } catch {
-      /* fallback to email */
+    } catch (error) {
+      if (isDbUnavailableError(error)) throw error;
     }
   }
 
@@ -82,7 +82,8 @@ export async function resolveSessionUserId(session: Session): Promise<string | n
       })
     );
     return byEmail && !byEmail.deletedAt ? byEmail.id : null;
-  } catch {
+  } catch (error) {
+    if (isDbUnavailableError(error)) throw error;
     return null;
   }
 }
