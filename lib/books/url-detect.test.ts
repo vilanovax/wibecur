@@ -14,7 +14,8 @@ describe('detectBookUrl', () => {
     );
     expect(r?.source).toBe('fidibo');
     expect(r?.mode).toBe('category');
-    expect(r?.categorySlug).toBe('lists:16854,15475,15521');
+    if (r?.mode !== 'category') return;
+    expect(r.categorySlug).toBe('lists:16854,15475,15521');
   });
 
   it('detects taaghche category', () => {

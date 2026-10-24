@@ -17,7 +17,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 import { filterListsByQuery, normalizeSearchQuery, pushRecentSearch, SEARCH_MIN_LENGTH } from '@/lib/list-search';
 import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
-import { trackSearch, trackSearchNoResults } from '@/lib/analytics';
+import { trackSearch } from '@/lib/analytics';
 import { useSearch } from '@/contexts/SearchContext';
 import { pickSimilarLists } from '@/lib/lists-page-similar';
 import FilterBottomSheetPro, {
@@ -242,7 +242,6 @@ export default function ListsPageClient({
   }));
   const [searchQuery, setSearchQuery] = useState(initialSearch ?? '');
   const search = useUnifiedSearchQuery(searchQuery);
-  const lastNoResultsQuery = useRef('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
@@ -494,21 +493,6 @@ export default function ListsPageClient({
 
     return result;
   }, [filteredLists, filterState.sortBy, browseMode, trendingListIds, isSearchActive]);
-
-  useEffect(() => {
-    if (!isSearchActive) {
-      lastNoResultsQuery.current = '';
-      return;
-    }
-    if (searchLoading || publicLists.length === 0) return;
-    if (hasSearchResults) {
-      lastNoResultsQuery.current = '';
-      return;
-    }
-    if (lastNoResultsQuery.current === normalizedSearch) return;
-    lastNoResultsQuery.current = normalizedSearch;
-    trackSearchNoResults(normalizedSearch, 'lists_page');
-  }, [isSearchActive, normalizedSearch, searchLoading, hasSearchResults, publicLists.length]);
 
   const setBrowseMode = (mode: BrowseMode) => {
     const { sortBy, vibes } = browseModeToFilter(mode);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SearchInput from '@/components/mobile/search/SearchInput';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
@@ -11,7 +11,7 @@ import {
   pushRecentSearch,
   SEARCH_MIN_LENGTH,
 } from '@/lib/list-search';
-import { trackSearch, trackSearchNoResults } from '@/lib/analytics';
+import { trackSearch } from '@/lib/analytics';
 import { meaningfulSearchTokens } from '@/lib/search-keywords';
 import type { UnifiedSearchResult } from '@/lib/unified-search';
 
@@ -26,7 +26,6 @@ export default function SearchPageClient({
 }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const noResultsTracked = useRef('');
 
   const search = useUnifiedSearchQuery(query, { initialData: initialSearch });
   const { normalized, isActive, loading, hasResults } = search;
@@ -46,13 +45,6 @@ export default function SearchPageClient({
       router.replace('/search', { scroll: false });
     }
   }, [query, router]);
-
-  useEffect(() => {
-    if (!isActive || loading || hasResults) return;
-    if (noResultsTracked.current === normalized) return;
-    noResultsTracked.current = normalized;
-    trackSearchNoResults(normalized, 'search_page');
-  }, [isActive, loading, hasResults, normalized]);
 
   const { refetch } = search;
 

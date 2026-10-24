@@ -31,7 +31,10 @@ describe('ingest http auth', () => {
   it('rejects a wrong bearer token', () => {
     process.env.INGEST_TOKEN = TOKEN;
     expect(authorizeIngest(request('Bearer wrong-token-value-not-the-real')).ok).toBe(false);
-    expect(authorizeIngest(request()).status).toBe(401);
+    const missing = authorizeIngest(request());
+    expect(missing.ok).toBe(false);
+    if (missing.ok) return;
+    expect(missing.status).toBe(401);
   });
 
   it('accepts the configured bearer token', () => {
@@ -42,7 +45,9 @@ describe('ingest http auth', () => {
 
 describe('ingest http body', () => {
   it('requires a boolean dryRun and removes it before parsing', () => {
-    const split = readIngestHttpBody({ ...INGEST_EXAMPLES.movie, dryRun: true });
+    const movie = INGEST_EXAMPLES.movie;
+    if (!movie || typeof movie !== 'object' || Array.isArray(movie)) return;
+    const split = readIngestHttpBody({ ...(movie as Record<string, unknown>), dryRun: true });
     expect(split.ok).toBe(true);
     if (!split.ok) return;
     expect(split.dryRun).toBe(true);

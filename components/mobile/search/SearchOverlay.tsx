@@ -18,7 +18,7 @@ import {
   SEARCH_SUGGESTIONS,
   suggestionLabelForQuery,
 } from '@/lib/list-search';
-import { trackSearch, trackSearchNoResults, trackSearchResultClick } from '@/lib/analytics';
+import { trackSearch, trackSearchResultClick } from '@/lib/analytics';
 import { withResolvedListCover } from '@/lib/resolve-list-cover';
 import { DESKTOP_PAGE_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
 import {
@@ -104,8 +104,6 @@ export default function SearchOverlay({
   const abortRef = useRef<AbortController | null>(null);
   const listsAbortRef = useRef<AbortController | null>(null);
   const listsLoadedForRef = useRef('');
-  const noResultsTracked = useRef('');
-
   useEffect(() => {
     if (!isOpen) return;
     setQuery(initialQuery);
@@ -388,15 +386,6 @@ export default function SearchOverlay({
   const showItemResults = searchViewTab === 'items';
   const showListResults = searchViewTab === 'lists';
   const listNavOffset = showItemResults ? directItems.length + indirectItems.length : 0;
-
-  useEffect(() => {
-    if (!showResults || isLoading || hasAnyResults || normalized.length < SEARCH_MIN_LENGTH) {
-      return;
-    }
-    if (noResultsTracked.current === normalized) return;
-    noResultsTracked.current = normalized;
-    trackSearchNoResults(normalized, 'overlay');
-  }, [showResults, isLoading, hasAnyResults, normalized]);
 
   const analyticsQueries =
     trendingSource === 'analytics'

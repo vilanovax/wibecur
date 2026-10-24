@@ -191,7 +191,8 @@ describe('parseFidiboListRequest', () => {
       listIds: [16854, 15475, 15521],
       sort: 'WEEK_BESTSELLER',
     });
-    expect(buildFidiboListRequestBody({ proposedListId: req!.listIds }, req!.sort)).toEqual({
+    if (req?.kind !== 'listIds') return;
+    expect(buildFidiboListRequestBody({ proposedListId: req.listIds }, req.sort)).toEqual({
       order: 'WEEK_BESTSELLER',
       proposedListId: [16854, 15475, 15521],
     });
