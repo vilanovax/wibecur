@@ -38,6 +38,8 @@ export default function UmamiAnalytics() {
         src={getUmamiScriptUrl()}
         data-website-id={websiteId}
         data-auto-track="false"
+        data-exclude-search="true"
+        data-exclude-hash="true"
         {...(hostUrl ? { 'data-host-url': hostUrl } : {})}
         {...(domains ? { 'data-domains': domains } : {})}
         strategy="lazyOnload"

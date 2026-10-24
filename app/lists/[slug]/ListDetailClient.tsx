@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useListScrollDepth } from '@/hooks/useListScrollDepth';
 import { useInterestTracking } from '@/hooks/useInterestTracking';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useDeferReady } from '@/hooks/useDeferReady';
@@ -529,7 +528,6 @@ export default function ListDetailClient({
     }
   }, [fetchMoreItems]);
 
-  useListScrollDepth(list.slug, list.categories?.slug);
   useInterestTracking({
     type: 'list_view',
     categorySlug: list.categories?.slug,

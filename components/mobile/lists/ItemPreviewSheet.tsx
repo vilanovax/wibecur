@@ -552,7 +552,8 @@ export default function ItemPreviewSheet({
 
   useEffect(() => {
     if (!isOpen || !item) return;
-    if (previewTrackedId.current === item.id) return;
+    // یک رویداد برای باز شدن شیت. ورق‌زدن آیتم‌ها دوباره به Umami نمی‌رود.
+    if (previewTrackedId.current) return;
     previewTrackedId.current = item.id;
     trackItemPreviewOpen({
       item_id: item.id,

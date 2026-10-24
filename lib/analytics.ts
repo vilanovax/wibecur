@@ -32,8 +32,7 @@ export type AnalyticsEvent =
   | 'item_preview_open'
   | 'creator_profile_view'
   | 'signup_complete'
-  | 'first_bookmark'
-  | 'list_scroll_depth';
+  | 'first_bookmark';
 
 export type HomeSectionId =
   | 'trending'
@@ -235,20 +234,6 @@ export function trackFirstBookmark(data: {
     ...(data.list_slug ? { list_slug: data.list_slug } : {}),
     ...(data.category_slug ? { category_slug: data.category_slug } : {}),
     ...(data.source ? { source: data.source } : {}),
-  });
-}
-
-export type ListScrollDepth = 25 | 50 | 75 | 100;
-
-export function trackListScrollDepth(data: {
-  list_slug: string;
-  category_slug?: string;
-  depth: ListScrollDepth;
-}) {
-  track('list_scroll_depth', {
-    list_slug: data.list_slug,
-    depth: data.depth,
-    ...(data.category_slug ? { category_slug: data.category_slug } : {}),
   });
 }
 
