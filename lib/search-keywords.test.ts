@@ -29,6 +29,15 @@ describe('expandSearchTerms', () => {
     expect(terms).toContain('heist');
     expect(terms).toContain('robbery');
   });
+
+  it('expands crime / جنایت synonyms', () => {
+    const terms = expandSearchTerms('جنایت');
+    expect(terms).toContain('جنایت');
+    expect(terms).toContain('جنایی');
+    expect(terms).toContain('crime');
+    expect(terms).toContain('detective');
+    expect(terms).toContain('کارآگاهی');
+  });
 });
 
 describe('buildItemSearchHaystack', () => {
@@ -75,14 +84,30 @@ describe('scoreItemForSearch', () => {
     expect(result.matchHint).toContain('ژانر');
   });
 
-  it('classifies list-context-only matches as indirect', () => {
+  it('classifies list-context-only matches as weak indirect', () => {
     const result = scoreItemForSearch(
-      { title: 'John Wick', listTitle: 'بهترین فیلم‌های اکشن' },
+      { title: 'How I Met Your Mother', listTitle: 'بهترین فیلم‌های اکشن' },
       'اکشن'
     );
     expect(result.score).toBeGreaterThan(0);
+    expect(result.score).toBeLessThan(40);
+    expect(result.intrinsic).toBe(false);
     expect(result.matchTier).toBe('indirect');
     expect(result.matchHint).toContain('در لیست');
+  });
+
+  it('ranks intrinsic genre above list-shell-only', () => {
+    const genreHit = scoreItemForSearch(
+      { title: 'Heat', metadata: { genre: 'Crime, Thriller' } },
+      'جنایت'
+    );
+    const listOnly = scoreItemForSearch(
+      { title: 'Somebody Somewhere', listTitle: 'سایه‌های اروپا: جنایی نوردیک' },
+      'جنایت'
+    );
+    expect(genreHit.intrinsic).toBe(true);
+    expect(listOnly.intrinsic).toBe(false);
+    expect(genreHit.score).toBeGreaterThan(listOnly.score);
   });
 
   it('classifies genre metadata as indirect', () => {
@@ -91,6 +116,7 @@ describe('scoreItemForSearch', () => {
       'اکشن'
     );
     expect(result.matchTier).toBe('indirect');
+    expect(result.intrinsic).toBe(true);
     expect(result.matchHint).toContain('ژانر');
   });
 
@@ -176,5 +202,11 @@ describe('detectBroadQuery', () => {
 
   it('detects horror as broad', () => {
     expect(detectBroadQuery('ترسناک').isBroad).toBe(true);
+  });
+
+  it('detects جنایت as broad with related chips', () => {
+    const result = detectBroadQuery('جنایت');
+    expect(result.isBroad).toBe(true);
+    expect(result.subThemes.length).toBeGreaterThan(0);
   });
 });

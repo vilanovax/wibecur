@@ -195,10 +195,13 @@ function scoreAndRankRows(rows: ItemRow[], rawQuery: string) {
     })
     .filter((entry) => entry.scored.score > 0)
     .sort((a, b) => {
-      if (b.scored.score !== a.scored.score) return b.scored.score - a.scored.score;
       if (a.scored.matchTier !== b.scored.matchTier) {
         return a.scored.matchTier === 'direct' ? -1 : 1;
       }
+      if (a.scored.intrinsic !== b.scored.intrinsic) {
+        return a.scored.intrinsic ? -1 : 1;
+      }
+      if (b.scored.score !== a.scored.score) return b.scored.score - a.scored.score;
       return (b.row.rating ?? 0) - (a.row.rating ?? 0);
     });
 }
@@ -211,7 +214,11 @@ function splitScoredItems(
   indirectOffset = 0
 ) {
   const directScored = scored.filter((e) => e.scored.matchTier === 'direct');
-  const indirectScored = scored.filter((e) => e.scored.matchTier === 'indirect');
+  // مرتبط: اول سیگنال خود آیتم؛ پوستهٔ لیست فقط اگر جا بود
+  const indirectScored = [
+    ...scored.filter((e) => e.scored.matchTier === 'indirect' && e.scored.intrinsic),
+    ...scored.filter((e) => e.scored.matchTier === 'indirect' && !e.scored.intrinsic),
+  ];
   const direct = directScored.slice(directOffset, directOffset + directLimit);
   const indirect = indirectScored.slice(indirectOffset, indirectOffset + indirectLimit);
   const toItem = (e: (typeof scored)[number]) =>
@@ -487,11 +494,13 @@ async function fetchRelatedItems(
   );
   rows.push(...genrePool);
 
-  const terms = expandSearchTerms(q);
+  // فقط سیگنال خود آیتم (ژانر/پروفایل/عنوان…) — نه صرفاً هم‌جواری لیست
+  const RELATED_MIN_SCORE = 40;
   const scored = scoreAndRankRows(rows, q)
     .filter((e) => {
       const key = e.row.catalogItemId?.trim() || e.row.title.trim().toLowerCase();
-      return !excludeKeys.has(key) && !anchorIds.includes(e.row.id);
+      if (excludeKeys.has(key) || anchorIds.includes(e.row.id)) return false;
+      return e.scored.intrinsic && e.scored.score >= RELATED_MIN_SCORE;
     })
     .slice(0, limit);
 

@@ -21,6 +21,8 @@ export type SearchScoreResult = {
   reason: SearchMatchReason | null;
   matchHint: string | null;
   matchTier: SearchMatchTier;
+  /** تطبیق روی خود آیتم (عنوان/ژانر/پروفایل/…) نه فقط پوستهٔ لیست */
+  intrinsic: boolean;
 };
 
 type ItemMeta = Record<string, unknown> | null | undefined;
@@ -51,6 +53,19 @@ const BROAD_THEME_GROUPS: string[][] = [
   ['فانتزی', 'fantasy'],
   ['درام', 'drama'],
   ['معمایی', 'mystery', 'thriller', 'هیجان'],
+  [
+    'جنایت',
+    'جنایی',
+    'crime',
+    'criminal',
+    'detective',
+    'کارآگاهی',
+    'کاراگاه',
+    'نوآر',
+    'noir',
+    'قتل',
+    'پلیسی',
+  ],
   ['انیمیشن', 'animation', 'animated'],
   ['مستند', 'documentary'],
   ['جنگ', 'war'],
@@ -68,6 +83,9 @@ const BROAD_SUBTHEME_CHIPS: Record<string, string[]> = {
   comedy: ['عاشقانه', 'خانوادگی'],
   عاشقانه: ['کمدی', 'درام'],
   romance: ['کمدی', 'درام'],
+  جنایت: ['کارآگاهی', 'معمایی', 'نوآر', 'قتل'],
+  جنایی: ['کارآگاهی', 'معمایی', 'نوآر', 'قتل'],
+  crime: ['detective', 'noir', 'معمایی'],
 };
 
 export type BroadQueryResult = {
@@ -126,6 +144,19 @@ const SYNONYM_GROUPS: string[][] = [
   ['فانتزی', 'fantasy'],
   ['درام', 'drama'],
   ['معمایی', 'mystery', 'thriller', 'هیجان'],
+  [
+    'جنایت',
+    'جنایی',
+    'crime',
+    'criminal',
+    'detective',
+    'کارآگاهی',
+    'کاراگاه',
+    'نوآر',
+    'noir',
+    'قتل',
+    'پلیسی',
+  ],
   ['انیمیشن', 'animation', 'animated'],
   ['مستند', 'documentary'],
   ['جنگ', 'war'],
@@ -380,28 +411,40 @@ export function scoreItemForSearch(
 ): SearchScoreResult {
   const q = normalizeSearchQuery(rawQuery).toLowerCase();
   const title = item.title.toLowerCase();
-  const haystack = buildItemSearchHaystack(item);
   const meta = { ...(item.catalogMetadata ?? {}), ...(item.metadata ?? {}) };
+  // haystack بدون پوستهٔ لیست — تا عضویت در لیستِ مطابق، آیتم بی‌ربط را باد نکند
+  const intrinsicHaystack = buildItemSearchHaystack({
+    ...item,
+    listTitle: null,
+    listDescription: null,
+    listTags: [],
+    categoryName: null,
+  });
 
   let score = 0;
   let reason: SearchMatchReason | null = null;
   let matchHint: string | null = null;
+  let intrinsic = false;
 
   if (title === q) {
     score += 200;
     reason = 'title';
+    intrinsic = true;
   } else if (title.includes(q)) {
     score += 120;
     reason = 'title';
+    intrinsic = true;
   } else if (terms.some((t) => title.includes(t))) {
     score += 90;
     reason = 'title';
+    intrinsic = true;
   } else {
     const fuzzyTitle = findFuzzyTitleMatch(rawQuery, item);
     if (fuzzyTitle) {
       score += Math.max(72, 98 - fuzzyTitle.distance * 12);
       reason = 'title';
       matchHint = `شبیه: ${fuzzyTitle.matchedText}`;
+      intrinsic = true;
     }
   }
 
@@ -410,6 +453,7 @@ export function scoreItemForSearch(
     const genreHit = firstMatchingTerm(genre, terms) ?? (termMatches(genre, q) ? q : null);
     if (genreHit) {
       score += 70;
+      intrinsic = true;
       if (reason !== 'title') {
         reason = 'genre';
         matchHint = `ژانر: ${genre}`;
@@ -420,6 +464,7 @@ export function scoreItemForSearch(
   const director = metaString(meta, 'director');
   if (director && (termMatches(director, q) || terms.some((t) => termMatches(director, t)))) {
     score += 55;
+    intrinsic = true;
     if (!reason) {
       reason = 'director';
       matchHint = `کارگردان: ${director}`;
@@ -429,6 +474,7 @@ export function scoreItemForSearch(
   const author = metaString(meta, 'author');
   if (author && (termMatches(author, q) || terms.some((t) => termMatches(author, t)))) {
     score += 55;
+    intrinsic = true;
     if (!reason) {
       reason = 'author';
       matchHint = `نویسنده: ${author}`;
@@ -440,6 +486,7 @@ export function scoreItemForSearch(
     const actorHit = firstMatchingTerm(actors, terms) ?? (termMatches(actors, q) ? q : null);
     if (actorHit) {
       score += 50;
+      intrinsic = true;
       if (!reason) {
         reason = 'actor';
         const actorName = actors.split(/[,،]/).find((a) => termMatches(a, actorHit)) ?? actorHit;
@@ -450,7 +497,8 @@ export function scoreItemForSearch(
 
   const profileText = extractSearchProfileText(meta);
   if (profileText && terms.some((t) => termMatches(profileText, t))) {
-    score += 40;
+    score += 48;
+    intrinsic = true;
     if (!reason) {
       reason = 'keyword';
       const hit = firstMatchingTerm(profileText, terms);
@@ -458,16 +506,30 @@ export function scoreItemForSearch(
     }
   }
 
+  const desc = (item.description ?? item.catalogDescription ?? '').toLowerCase();
+  if (desc && (desc.includes(q) || terms.some((t) => desc.includes(t)))) {
+    score += 28;
+    intrinsic = true;
+    if (!reason) {
+      reason = 'description';
+      matchHint = 'در توضیحات';
+    }
+  }
+
+  // پوستهٔ لیست — فقط تقویت ضعیف؛ به‌تنهایی آیتم را بالا نمی‌آورد
+  let listOnlyBoost = 0;
   const listTitle = (item.listTitle ?? '').toLowerCase();
   const listDesc = (item.listDescription ?? '').toLowerCase();
   if (listTitle && (listTitle.includes(q) || terms.some((t) => listTitle.includes(t)))) {
-    score += 48;
-    if (reason !== 'title') {
+    listOnlyBoost = Math.max(listOnlyBoost, 14);
+    if (!reason) {
       reason = 'keyword';
+      matchHint = `در لیست: ${item.listTitle}`;
+    } else if (reason !== 'title' && !matchHint) {
       matchHint = `در لیست: ${item.listTitle}`;
     }
   } else if (listDesc && (listDesc.includes(q) || terms.some((t) => listDesc.includes(t)))) {
-    score += 32;
+    listOnlyBoost = Math.max(listOnlyBoost, 10);
     if (!reason) {
       reason = 'keyword';
       matchHint = item.listTitle ? `در لیست: ${item.listTitle}` : 'در توضیحات لیست';
@@ -478,7 +540,7 @@ export function scoreItemForSearch(
     terms.some((t) => tag.toLowerCase().includes(t))
   );
   if (matchedTags.length > 0) {
-    score += 35;
+    listOnlyBoost = Math.max(listOnlyBoost, 12);
     if (!reason) {
       reason = 'tag';
       matchHint = `تگ: ${matchedTags[0]}`;
@@ -486,37 +548,47 @@ export function scoreItemForSearch(
   }
 
   if (item.categoryName && terms.some((t) => termMatches(item.categoryName!, t))) {
-    score += 25;
+    listOnlyBoost = Math.max(listOnlyBoost, 8);
     if (!reason) {
       reason = 'category';
       matchHint = `دسته: ${item.categoryName}`;
     }
   }
 
-  const desc = (item.description ?? item.catalogDescription ?? '').toLowerCase();
-  if (desc && (desc.includes(q) || terms.some((t) => desc.includes(t)))) {
-    score += 20;
-    if (!reason) reason = 'description';
+  if (intrinsic) {
+    score += listOnlyBoost;
+  } else if (listOnlyBoost > 0) {
+    // فقط لیست/تگ/دسته — سقف پایین تا حال‌خوب‌کن‌ها کنار «جنایی» نیایند
+    score = listOnlyBoost;
   }
 
-  if (haystack.includes(q)) {
+  if (intrinsic && intrinsicHaystack.includes(q)) {
     score += 30;
   }
 
   const tokens = tokenizeQuery(rawQuery);
-  const matchedTokenCount = tokens.filter((t) => haystack.includes(t)).length;
-  score += matchedTokenCount * 12;
+  if (intrinsic) {
+    const matchedTokenCount = tokens.filter((t) => intrinsicHaystack.includes(t)).length;
+    score += matchedTokenCount * 12;
+  }
 
   // Multi-token queries (e.g. «کافه ولیعصر») must hit every meaningful token —
   // otherwise a single broad word floods results with false confidence.
   const meaningful = meaningfulSearchTokens(rawQuery);
   if (meaningful.length >= 2 && score > 0) {
+    const haystack = buildItemSearchHaystack(item);
     const matchedAll = meaningful.every((token) => {
       const variants = catalogTermsForToken(token);
       return variants.some((v) => haystack.includes(v));
     });
     if (!matchedAll) {
-      return { score: 0, reason: null, matchHint: null, matchTier: 'indirect' };
+      return {
+        score: 0,
+        reason: null,
+        matchHint: null,
+        matchTier: 'indirect',
+        intrinsic: false,
+      };
     }
   }
 
@@ -530,7 +602,7 @@ export function scoreItemForSearch(
 
   const matchTier = score > 0 ? resolveItemMatchTier(item, rawQuery, terms) : 'indirect';
 
-  return { score, reason, matchHint, matchTier };
+  return { score, reason, matchHint, matchTier, intrinsic };
 }
 
 const itemModerationWhere: Prisma.itemsWhereInput = publicItemWhere;

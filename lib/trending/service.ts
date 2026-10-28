@@ -258,12 +258,14 @@ export async function getGlobalTrending(
 
     allResults.sort((a, b) => b.score - a.score);
 
+    // هر دسته حداقل چند لیست در فید ترند داشته باشد تا سکشن‌های /lists خالی نمانند.
+    const perCategoryCap = 4;
     const perCategory = new Map<string, number>();
     const filtered: TrendingListResult[] = [];
     for (const item of allResults) {
       const key = item.categoryId ?? 'none';
       const count = perCategory.get(key) ?? 0;
-      if (count < 3) {
+      if (count < perCategoryCap) {
         filtered.push(item);
         perCategory.set(key, count + 1);
       }

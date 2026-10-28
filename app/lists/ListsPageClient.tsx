@@ -179,6 +179,50 @@ function inferBrowseMode(state: FilterState): BrowseMode {
   return 'trending';
 }
 
+/**
+ * منتخب: از هر دسته حداکثر یکی تا سکشن‌های پایین (مثل کافه) خالی نشوند.
+ * اگر دستهٔ کافی نبود، در دور دوم همان دسته پر می‌شود.
+ */
+function pickFeaturedAcrossCategories(
+  lists: ListWithCategory[],
+  max = 3
+): ListWithCategory[] {
+  const deduped = dedupeListsByDisplayTitle(lists);
+  const flagged = deduped.filter((l) => l.isFeatured);
+  const picks: ListWithCategory[] = [];
+  const usedCategories = new Set<string>();
+
+  const tryAdd = (list: ListWithCategory, diversify: boolean) => {
+    if (picks.length >= max) return false;
+    if (picks.some((p) => p.id === list.id)) return false;
+    const catKey = list.categoryId ?? `solo:${list.id}`;
+    if (diversify && usedCategories.has(catKey)) return false;
+    picks.push(list);
+    usedCategories.add(catKey);
+    return true;
+  };
+
+  for (const list of flagged) tryAdd(list, true);
+
+  // پر کردن با تنوع دسته — ترتیب لیست (ترند/محبوب) کافی است؛ سقف save اینجا جلوی دسته‌های دیگر را نگیرد.
+  if (picks.length < max) {
+    for (const list of deduped) {
+      tryAdd(list, true);
+      if (picks.length >= max) break;
+    }
+  }
+
+  if (picks.length < Math.min(2, max)) {
+    for (const list of deduped) {
+      if ((list.saveCount ?? 0) < 5 && picks.length > 0) continue;
+      tryAdd(list, false);
+      if (picks.length >= max) break;
+    }
+  }
+
+  return dedupeListsByDisplayTitle(picks).slice(0, max);
+}
+
 /** پیش‌فرض کاتالوگ: ترند — محور اصلی browse mode است، نه وایب‌چیپ‌ها */
 const DEFAULT_FILTER: FilterState = {
   categories: new Set(),
@@ -649,20 +693,7 @@ export default function ListsPageClient({
 
   const featuredLists = useMemo(() => {
     if (!useSectionLayout || sortedLists.length === 0) return [];
-    const featured = dedupeListsByDisplayTitle(sortedLists.filter((l) => l.isFeatured));
-    const picks: ListWithCategory[] = [];
-    for (const list of featured) {
-      if (picks.length >= 3) break;
-      picks.push(list);
-    }
-    if (picks.length < 2) {
-      for (const list of dedupeListsByDisplayTitle(sortedLists)) {
-        if (picks.some((p) => p.id === list.id)) continue;
-        if (picks.length >= 3) break;
-        if ((list.saveCount ?? 0) >= 5 || picks.length === 0) picks.push(list);
-      }
-    }
-    return dedupeListsByDisplayTitle(picks).slice(0, 3);
+    return pickFeaturedAcrossCategories(sortedLists, 3);
   }, [useSectionLayout, sortedLists]);
 
   const featuredIds = useMemo(() => new Set(featuredLists.map((l) => l.id)), [featuredLists]);
