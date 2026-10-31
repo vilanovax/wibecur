@@ -62,10 +62,10 @@ function isTrustedFieldCover(
 
 /**
  * کاور بنر/لیست
- * ۰. کاور پین‌شدهٔ seed (اجباری — جلوگیری از ماشین روی کافه و مشابه)
  * ۱. تصویر واقعی DB/استوریج (اگر placeholder نباشد و با دسته جور باشد)
- * ۲. کاور موضوعی از عنوان/slug
- * ۳. variant متنوع بر اساس دسته + slug
+ * ۲. کاور پین‌شدهٔ seed — فقط وقتی کاور واقعی ثبت نشده
+ * ۳. کاور موضوعی از عنوان/slug
+ * ۴. variant متنوع بر اساس دسته + slug
  */
 export function resolveCoverImage(input: ResolveCoverImageInput): string {
   const cover = normalizeLocalBannerSrc(input.coverImage ?? '');
@@ -89,11 +89,6 @@ export function resolveCoverImage(input: ResolveCoverImageInput): string {
     coverCategory ||
     'default';
 
-  // seedهای شناخته‌شده: همیشه topic پین — حتی اگر DB عکس اشتباه داشته باشد
-  const pinned = getPinnedListTopicCover(listSlug);
-  if (pinned && !coverLooksLikeCar(pinned)) return pinned;
-
-  // ۱) کاور عمودی معتبر ۲) horizontal معتبر ۳) topic/variant
   if (isTrustedFieldCover(cover, coverCategory)) {
     return cover;
   }
@@ -102,6 +97,10 @@ export function resolveCoverImage(input: ResolveCoverImageInput): string {
   if (horizontal && isTrustedFieldCover(horizontal, coverCategory)) {
     return horizontal;
   }
+
+  // فقط وقتی کاور/بنر واقعی نداریم؛ ماشین اشتباه را جایگزین می‌کند
+  const pinned = getPinnedListTopicCover(listSlug);
+  if (pinned && !coverLooksLikeCar(pinned)) return pinned;
 
   const topicCover = getListTopicCoverUrl(listSlug, coverCategory, input.listTitle);
   if (

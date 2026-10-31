@@ -3,7 +3,7 @@ import { coverLooksLikeCar, resolveCoverImage } from '@/lib/resolve-cover-image'
 import { resolveListBannerImage } from '@/lib/list-display-images';
 
 describe('resolveCoverImage — cafe cover trust', () => {
-  it('pins cozy study cafe to cozy banner, never car.webp', () => {
+  it('replaces a wrong car banner with the pinned cozy seed when no real cover exists', () => {
     const url = resolveCoverImage({
       coverImage: '/images/banners/car.webp',
       listSlug: 'cozy-cafes-for-studying',
@@ -12,6 +12,28 @@ describe('resolveCoverImage — cafe cover trust', () => {
     });
     expect(url).toBe('/images/banners/cozy.webp');
     expect(coverLooksLikeCar(url)).toBe(false);
+  });
+
+  it('keeps a real storage cover over the pinned seed for breakfast cafes', () => {
+    const stored =
+      'https://c466145.parspack.net/c466145/wibe/lists/list-great-breakfast-cafes-cover-v3.webp';
+    const url = resolveCoverImage({
+      coverImage: stored,
+      listSlug: 'great-breakfast-cafes',
+      listTitle: 'کافه‌های صبحانه عالی',
+      categorySlug: 'cafe',
+    });
+    expect(url).toBe(stored);
+  });
+
+  it('uses the pinned seed only when the list has no real cover', () => {
+    const url = resolveCoverImage({
+      coverImage: null,
+      listSlug: 'great-breakfast-cafes',
+      listTitle: 'کافه‌های صبحانه عالی',
+      categorySlug: 'cafe',
+    });
+    expect(url).toBe('/images/banners/cafe-2.webp');
   });
 
   it('rejects Wey Coffee 02 style car URLs for cafe lists', () => {
@@ -63,9 +85,19 @@ describe('resolveCoverImage — cafe cover trust', () => {
     expect(url).toBe('/images/banners/cafe-3.webp');
   });
 
-  it('pins view cafes to cafe-3 terrace banner, not cozy desk flatlay', () => {
+  it('keeps a trusted stored banner instead of overriding with the pin', () => {
     const url = resolveCoverImage({
       coverImage: '/images/banners/cozy.webp',
+      listSlug: 'cafes-with-great-views',
+      listTitle: 'کافه‌های با منظره زیبا',
+      categorySlug: 'cafe',
+    });
+    expect(url).toBe('/images/banners/cozy.webp');
+  });
+
+  it('pins view cafes to cafe-3 when no cover is stored', () => {
+    const url = resolveCoverImage({
+      coverImage: null,
       listSlug: 'cafes-with-great-views',
       listTitle: 'کافه‌های با منظره زیبا',
       categorySlug: 'cafe',

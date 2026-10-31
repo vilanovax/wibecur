@@ -289,7 +289,7 @@ function getListTopicCoverFromTitle(
   return null;
 }
 
-/** کاور پین‌شدهٔ seed — همیشه بر DB/آپلود اشتباه اولویت دارد */
+/** کاور پین‌شدهٔ seed — فقط وقتی کاور واقعی در DB نیست */
 export function getPinnedListTopicCover(listSlug?: string | null): string | null {
   const key = normalizeCategorySlug(listSlug);
   if (!key) return null;
