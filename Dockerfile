@@ -8,12 +8,20 @@ WORKDIR /app
 
 FROM base AS deps
 ARG NPM_LOGLEVEL=verbose
+# binaries.prisma.sh از بعضی شبکه‌ها (از جمله ایران) قطع می‌شود.
+# میرور npmmirror همان مسیر all_commits را دارد؛ postinstall موتورها را از اینجا می‌گیرد.
+ARG PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
+ENV PRISMA_ENGINES_MIRROR=$PRISMA_ENGINES_MIRROR
+ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 COPY package.json package-lock.json .npmrc ./
 COPY scripts/install-git-hooks.mjs ./scripts/install-git-hooks.mjs
 RUN npm install --loglevel ${NPM_LOGLEVEL}
 
 FROM base AS builder
 ARG NPM_LOGLEVEL=verbose
+ARG PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
+ENV PRISMA_ENGINES_MIRROR=$PRISMA_ENGINES_MIRROR
+ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -48,7 +56,14 @@ ENV NEXT_PUBLIC_UMAMI_DOMAINS=$NEXT_PUBLIC_UMAMI_DOMAINS
 ENV NEXT_PUBLIC_VERCEL=$NEXT_PUBLIC_VERCEL
 ENV BUILD_ID=$BUILD_ID
 
-RUN npx --loglevel ${NPM_LOGLEVEL} prisma generate
+# checksum/دانلود گاهی از binaries.prisma.sh قطع می‌شود؛ سه بار با میرور امتحان می‌کنیم.
+RUN ok=0; \
+    for i in 1 2 3; do \
+      if npx --loglevel ${NPM_LOGLEVEL} prisma generate; then ok=1; break; fi; \
+      echo "[prisma] generate failed (attempt $i), retrying…"; \
+      sleep $((i * 3)); \
+    done; \
+    test "$ok" = 1
 RUN npm run build --loglevel ${NPM_LOGLEVEL}
 
 FROM base AS runner
