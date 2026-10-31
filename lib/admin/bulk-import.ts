@@ -325,6 +325,15 @@ export function validateBulkImportRow(
     errors.push(metaValidation.error || 'متادیتا نامعتبر');
   }
 
+  const storedMetadata = (
+    metaValidation.success
+      ? (metaValidation.data as Record<string, unknown>) ?? metadata
+      : metadata
+  ) as Record<string, unknown>;
+  if (!parseEntryKind(storedMetadata.entryKind)) {
+    delete storedMetadata.entryKind;
+  }
+
   const imageUrl = normalizeImageUrlForStorage(data.imageUrl);
   const warnings = isLightweight
     ? []
@@ -341,7 +350,7 @@ export function validateBulkImportRow(
     imageUrl,
     externalUrl,
     order: data.order,
-    metadata: metaValidation.success ? (metaValidation.data as Record<string, unknown>) ?? metadata : metadata,
+    metadata: storedMetadata,
   };
 }
 

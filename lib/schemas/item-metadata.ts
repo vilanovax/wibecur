@@ -108,7 +108,8 @@ export type CafeMetadata = z.infer<typeof CafeMetadataSchema>;
 export const LifestyleEntrySchema = z
   .object({
     ...tipField,
-    entryKind: z.enum(ENTRY_KINDS).default('tip'),
+    // بدون entryKind یعنی کاتالوگ. tip فقط وقتی است که خود فایل گفته باشد.
+    entryKind: z.enum(ENTRY_KINDS).optional(),
     factType: z.enum(FACT_TYPES).optional(),
     sourceCategorySlug: z.string().optional(),
     tags: z.array(z.string().min(1)).max(8).optional(),

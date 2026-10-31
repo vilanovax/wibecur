@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateBulkImportRow } from '@/lib/admin/bulk-import';
+import { isBulkImportLightweightRow, validateBulkImportRow } from '@/lib/admin/bulk-import';
 import {
   INGEST_EXAMPLES,
   ingestKindForSlug,
@@ -56,6 +56,37 @@ describe('ingest models', () => {
       items: [{ title: 'کافه', metadata: { address: 'تهران' } }],
     });
     expect(parsed.ok).toBe(false);
+  });
+
+  it('does not turn a lifestyle row without entryKind into a tip', () => {
+    const row = validateBulkImportRow(
+      {
+        title: 'بازی رومیزی',
+        description: 'برای شروع دورهمی',
+        imageUrl: 'https://example.com/board.jpg',
+      },
+      0,
+      'lifestyle'
+    );
+    expect(row.valid).toBe(true);
+    expect(row.metadata.entryKind).toBeUndefined();
+    expect(isBulkImportLightweightRow('lifestyle', { metadata: row.metadata })).toBe(false);
+  });
+
+  it('keeps an explicit lifestyle tip as a lightweight row', () => {
+    const row = validateBulkImportRow(
+      { title: 'نکته', entryKind: 'tip', tip: 'متن نکته' },
+      0,
+      'lifestyle'
+    );
+    expect(row.valid).toBe(true);
+    expect(row.metadata.entryKind).toBe('tip');
+    expect(
+      isBulkImportLightweightRow('lifestyle', {
+        metadata: row.metadata,
+        entryKind: 'tip',
+      })
+    ).toBe(true);
   });
 
   it('rejects a lifestyle fact without factType', () => {

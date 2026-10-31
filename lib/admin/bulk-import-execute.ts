@@ -29,6 +29,7 @@ import {
 import {
   isLightweightEntryKind,
   isMixedListCategory,
+  parseEntryKind,
 } from '@/lib/list-entry';
 import type { BulkImportPayloadItem } from '@/lib/admin/bulk-import';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
@@ -189,6 +190,9 @@ async function importOneRow(
 
     const meta = metadataValidation.data || {};
     const metaRecord = meta as Record<string, unknown>;
+    if (!parseEntryKind(metaRecord.entryKind)) {
+      delete metaRecord.entryKind;
+    }
 
     if (
       isMixedListCategory(ctx.categorySlug) &&
