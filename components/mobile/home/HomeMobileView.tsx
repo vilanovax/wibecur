@@ -33,10 +33,11 @@ export default function HomeMobileView({
   mobileFeed,
   initialCategories,
 }: HomeMobileViewProps) {
-  const { isGuest, isNewUser, isLoading: userLoading } = useHomeUserState();
+  const { isGuest, isNewUser, hasSaves, isLoading: userLoading } = useHomeUserState();
   const { shouldShowStartStrip, hydrated } = useHomeOnboardingInterests();
   const onboarding = (!hydrated && isNewUser) || (hydrated && shouldShowStartStrip && isNewUser);
-  const showSaved = !userLoading && !isGuest && !onboarding;
+  // فقط با ذخیرهٔ واقعی — ترند را زیر عنوان «ذخیره‌شده» تکرار نکن
+  const showSaved = !userLoading && !isGuest && !onboarding && hasSaves;
   const showForYou = !userLoading && !isGuest;
 
   return (

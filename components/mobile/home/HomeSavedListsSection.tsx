@@ -5,19 +5,21 @@ import { Bookmark } from 'lucide-react';
 import HomeSectionTitle from './HomeSectionTitle';
 import HomeGridListCard, { SAVED_LIST_BADGE } from './HomeGridListCard';
 import HomeFeedGrid from './HomeFeedGrid';
-import { useHomeData } from '@/contexts/HomeDataContext';
 import { useHomeUserState } from '@/hooks/useHomeUserState';
 import { useHomeBookmarks } from '@/hooks/useHomeBookmarks';
 import { HOME_FEED_GRID_CLASS } from '@/lib/layout-tokens';
 import { buildDesktopFeedCells } from '@/lib/home-feed-grid';
 
+/**
+ * فقط وقتی کاربر واقعاً ذخیره دارد نشان داده می‌شود.
+ * بدون ذخیره، ترند را به‌عنوان «ذخیره‌شده» تکرار نمی‌کنیم.
+ */
 export default function HomeSavedListsSection() {
   const { status } = useSession();
   const { isGuest, hasSaves, isLoading: userLoading } = useHomeUserState();
-  const { data: homeData } = useHomeData();
-  const trendingFallback = (homeData?.trending ?? []).slice(0, 4);
-
-  const { data: allSavedLists = [], isLoading } = useHomeBookmarks();
+  const { data: allSavedLists = [], isLoading } = useHomeBookmarks({
+    enabled: status === 'authenticated' && hasSaves,
+  });
   const savedLists = allSavedLists.slice(0, 8);
 
   if (status === 'loading' || userLoading) {
@@ -31,27 +33,25 @@ export default function HomeSavedListsSection() {
     );
   }
 
-  if (isGuest) {
+  if (isGuest || !hasSaves) {
     return null;
   }
 
-  const showSaved = hasSaves && savedLists.length > 0;
-  const suggestionLists = trendingFallback.map((list) => ({
-    id: list.id,
-    title: list.title,
-    slug: list.slug,
-    coverImage: list.coverImage ?? '',
-    saveCount: list.saveCount ?? 0,
-    categories: list.categories,
-  }));
-  const suggestionCells = buildDesktopFeedCells(suggestionLists, {
-    maxLists: 4,
-    seeAll: {
-      href: '/lists?mode=trending',
-      label: 'مشاهده همه',
-      description: 'لیست‌های ترند',
-    },
-  });
+  if (isLoading) {
+    return (
+      <section className="mb-6">
+        <div className="mb-3 px-4 lg:px-0">
+          <div className="h-6 w-36 animate-pulse rounded bg-muted" />
+        </div>
+        <div className="mx-4 h-28 animate-pulse rounded-xl bg-muted lg:mx-0" />
+      </section>
+    );
+  }
+
+  if (savedLists.length === 0) {
+    return null;
+  }
+
   const desktopGridLists = savedLists.map((list) => ({
     id: list.id,
     title: list.title,
@@ -74,73 +74,37 @@ export default function HomeSavedListsSection() {
       <HomeSectionTitle
         iconVariant="bookmark"
         title="ذخیره‌شده‌های تو"
-        subtitle={
-          showSaved ? 'آخرین لیست‌هایی که ذخیره کردی' : 'لیست‌های محبوب — با یک ذخیره شخصی‌تر می‌شود'
-        }
-        actionHref={showSaved ? '/profile' : '/lists?mode=trending'}
-        actionLabel={showSaved ? 'همه' : 'ترندها'}
+        subtitle="آخرین لیست‌هایی که ذخیره کردی"
+        actionHref="/profile"
+        actionLabel="همه"
         analyticsSection="saved"
       />
 
-      {isLoading ? (
-        <div className="mx-4 h-28 animate-pulse rounded-xl bg-muted lg:mx-0" />
-      ) : showSaved ? (
-        <>
-          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
-            {savedLists.map((list) => (
-              <HomeGridListCard
-                key={list.id}
-                list={{
-                  id: list.id,
-                  title: list.title,
-                  slug: list.slug,
-                  coverImage: list.coverImage ?? '',
-                  saveCount: list.saveCount ?? 0,
-                  categories: list.categories,
-                }}
-                badge={SAVED_LIST_BADGE}
-                homeSection="saved"
-              />
-            ))}
-          </div>
-          <div className={`hidden lg:grid lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
-            <HomeFeedGrid
-              cells={desktopCells}
-              badge={SAVED_LIST_BADGE}
-              homeSection="saved"
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
-            {suggestionLists.map((list) => (
-              <HomeGridListCard
-                key={list.id}
-                list={list}
-                badge="پیشنهاد"
-                badgeClassName="bg-brand text-brand-foreground"
-                homeSection="saved"
-              />
-            ))}
-          </div>
-          <div className={`hidden lg:grid lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
-            <HomeFeedGrid
-              cells={suggestionCells}
-              badge="پیشنهاد"
-              badgeClassName="bg-brand text-brand-foreground"
-              homeSection="saved"
-            />
-          </div>
-        </>
-      )}
+      <div className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-0.5 scrollbar-hide lg:hidden">
+        {savedLists.map((list) => (
+          <HomeGridListCard
+            key={list.id}
+            list={{
+              id: list.id,
+              title: list.title,
+              slug: list.slug,
+              coverImage: list.coverImage ?? '',
+              saveCount: list.saveCount ?? 0,
+              categories: list.categories,
+            }}
+            badge={SAVED_LIST_BADGE}
+            homeSection="saved"
+          />
+        ))}
+      </div>
+      <div className={`hidden lg:grid lg:px-0 ${HOME_FEED_GRID_CLASS}`}>
+        <HomeFeedGrid cells={desktopCells} badge={SAVED_LIST_BADGE} homeSection="saved" />
+      </div>
 
-      {showSaved ? (
-        <p className="mt-2 hidden px-4 text-xs text-muted-foreground lg:block lg:px-0">
-          <Bookmark className="me-1 inline size-4 text-brand" />
-          برای مدیریت کامل به پروفایل برو
-        </p>
-      ) : null}
+      <p className="mt-2 hidden px-4 text-xs text-muted-foreground lg:block lg:px-0">
+        <Bookmark className="me-1 inline size-4 text-brand" />
+        برای مدیریت کامل به پروفایل برو
+      </p>
     </section>
   );
 }

@@ -5,7 +5,7 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Bookmark, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { DEFAULT_PACK_AVATARS } from '@/lib/vibe-avatars';
 import {
   digitsFromPhoneInput,
@@ -216,9 +216,12 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
   if (!isRegister) {
     return (
-      <AuthShell>
+      <AuthShell mode="login">
         <div className="flex flex-col gap-6">
-          <AuthBrandHeader />
+          <AuthBrandHeader
+            title="ورود"
+            subtitle="با شماره موبایل وارد شو و لیست‌هایت را ادامه بده."
+          />
 
           <AuthFormCard>
             <form
@@ -359,7 +362,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
   }
 
   return (
-    <AuthShell>
+    <AuthShell mode="register">
       <div className="flex flex-col gap-6">
         <AuthBrandHeader title="ساخت حساب" subtitle="چند ثانیه تا شروع کشف لیست‌ها" />
 
@@ -477,26 +480,23 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 function AuthBrandHeader({
   title = 'وایب',
   subtitle = 'لیست‌های خوب را پیدا کن، ذخیره کن، بعداً برگرد.',
+  className,
 }: {
   title?: string;
   subtitle?: string;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 text-center">
-      <div className="flex size-12 items-center justify-center rounded-2xl bg-primary">
-        <Bookmark className="size-6 fill-primary-foreground text-primary-foreground" strokeWidth={2} aria-hidden />
-      </div>
-      <div className="flex flex-col gap-2">
-        <h1 className="wibe-h2">{title}</h1>
-        <p className="text-pretty wibe-small text-muted-foreground">{subtitle}</p>
-      </div>
+    <div className={cn('flex flex-col gap-2 text-center lg:text-start', className)}>
+      <h1 className="wibe-h2">{title}</h1>
+      <p className="text-pretty wibe-small text-muted-foreground">{subtitle}</p>
     </div>
   );
 }
 
 function AuthFormCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2 rounded-2xl border border-border bg-popover p-5! shadow-overlay">
+    <div className="flex flex-col gap-2 rounded-2xl border border-border bg-popover/95 p-5! shadow-overlay backdrop-blur-sm">
       {children}
     </div>
   );

@@ -40,7 +40,8 @@ export default function HomeDesktopView({
   const { shouldShowStartStrip, hydrated } = useHomeOnboardingInterests();
   const onboarding = (!hydrated && isNewUser) || (hydrated && shouldShowStartStrip && isNewUser);
   const showCombinedPersonal = isLoggedIn && hasSaves && !userLoading && !onboarding;
-  const showSavedSection = isLoggedIn && !isGuest && !userLoading && !onboarding;
+  // بدون ذخیره سکشن را نشان نده (fallback ترند گمراه‌کننده بود)
+  const showSavedSection = isLoggedIn && hasSaves && !isGuest && !userLoading && !onboarding;
 
   return (
     <div className="flex flex-col gap-6 xl:gap-7">
