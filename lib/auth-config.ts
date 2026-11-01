@@ -68,7 +68,7 @@ const config: NextAuthConfig = {
             const normalizedPhone = normalizeIranPhone(identifier);
             if (!normalizedPhone) return null;
 
-            const consumed = consumeOtp(normalizedPhone, normalizeOtpInput(otp));
+            const consumed = await consumeOtp(normalizedPhone, normalizeOtpInput(otp));
             if (!consumed.ok) return null;
 
             const { resolveUserAfterOtp } = await import('@/lib/otp-auth');

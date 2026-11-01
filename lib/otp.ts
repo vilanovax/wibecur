@@ -1,8 +1,7 @@
 /**
- * تولید، ذخیره و تأیید کد OTP موبایل (در حافظهٔ پروسه — فقط سرور).
+ * تولید، ذخیره و تأیید کد OTP موبایل (حافظهٔ پروسه — Edge-safe، بدون node:crypto).
  */
 
-import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
 import {
   OTP_LENGTH,
   OTP_MAX_ATTEMPTS,
@@ -35,16 +34,26 @@ type OtpRecord = {
 
 const store = new Map<string, OtpRecord>();
 
-function hashOtp(phone: string, code: string): string {
+function toHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+async function hashOtp(phone: string, code: string): Promise<string> {
   const pepper = process.env.NEXTAUTH_SECRET || 'wibecur-dev-secret';
-  return createHash('sha256').update(`${pepper}:${phone}:${code}`).digest('hex');
+  const data = new TextEncoder().encode(`${pepper}:${phone}:${code}`);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return toHex(digest);
 }
 
 function safeEqualHex(a: string, b: string): boolean {
-  const left = Buffer.from(a, 'hex');
-  const right = Buffer.from(b, 'hex');
-  if (left.length !== right.length) return false;
-  return timingSafeEqual(left, right);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i)! ^ b.charCodeAt(i)!;
+  }
+  return diff === 0;
 }
 
 function remember(phone: string, record: OtpRecord) {
@@ -65,7 +74,15 @@ function remember(phone: string, record: OtpRecord) {
 export function generateOtpCode(length = OTP_LENGTH): string {
   const max = 10 ** length;
   const min = 10 ** (length - 1);
-  return String(randomInt(min, max));
+  const range = max - min;
+  const limit = Math.floor(0x1_0000_0000 / range) * range;
+  const buf = new Uint32Array(1);
+  let value = 0;
+  do {
+    crypto.getRandomValues(buf);
+    value = buf[0]!;
+  } while (value >= limit);
+  return String(min + (value % range));
 }
 
 export function clearOtpsForTests(): void {
@@ -81,10 +98,10 @@ type SaveOtpInput = {
   now?: number;
 };
 
-export function saveOtp(input: SaveOtpInput): { expiresAt: number; resendAt: number } {
+export async function saveOtp(input: SaveOtpInput): Promise<{ expiresAt: number; resendAt: number }> {
   const now = input.now ?? Date.now();
   const record: OtpRecord = {
-    hash: hashOtp(input.phone, input.code),
+    hash: await hashOtp(input.phone, input.code),
     purpose: input.purpose,
     expiresAt: now + OTP_TTL_MS,
     resendAt: now + OTP_RESEND_COOLDOWN_MS,
@@ -115,11 +132,11 @@ export type ConsumeOtpResult =
       reason: 'missing' | 'expired' | 'mismatch' | 'locked';
     };
 
-export function consumeOtp(
+export async function consumeOtp(
   phone: string,
   code: string,
   options?: { purpose?: OtpPurpose; now?: number }
-): ConsumeOtpResult {
+): Promise<ConsumeOtpResult> {
   const now = options?.now ?? Date.now();
   const record = store.get(phone);
 
@@ -136,7 +153,7 @@ export function consumeOtp(
   }
 
   const nextAttempts = record.attempts + 1;
-  const matches = safeEqualHex(record.hash, hashOtp(phone, code));
+  const matches = safeEqualHex(record.hash, await hashOtp(phone, code));
 
   if (!matches) {
     remember(phone, { ...record, attempts: nextAttempts });
@@ -156,10 +173,10 @@ export function consumeOtp(
 }
 
 /** فقط برای تست */
-export function __setOtpForTests(
+export async function __setOtpForTests(
   phone: string,
   code: string,
   purpose: OtpPurpose = 'login'
-): void {
-  saveOtp({ phone, code, purpose });
+): Promise<void> {
+  await saveOtp({ phone, code, purpose });
 }

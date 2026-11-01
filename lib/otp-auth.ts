@@ -9,7 +9,8 @@ import { dbQuery } from '@/lib/db';
 import { normalizeAdminPermissions } from '@/lib/auth/has-permission';
 import { phoneToAuthEmail } from '@/lib/phone-auth';
 import { DEFAULT_PACK_AVATARS, resolveVibeAvatarId } from '@/lib/vibe-avatars';
-import type { OtpPurpose } from '@/lib/otp';
+import type { OtpPurpose } from '@/lib/otp-shared';
+import type { AppRole } from '@/types/next-auth';
 
 const DEFAULT_AVATAR_IDS = new Set(DEFAULT_PACK_AVATARS.map((a) => a.id));
 
@@ -17,7 +18,7 @@ export type OtpAuthUser = {
   id: string;
   email: string;
   name: string | null;
-  role: string;
+  role: AppRole;
   isActive: boolean;
   adminPermissions: ReturnType<typeof normalizeAdminPermissions>;
 };
@@ -65,7 +66,7 @@ export async function resolveUserAfterOtp(options: {
       id: existing.id,
       email: existing.email,
       name: existing.name,
-      role: existing.role,
+      role: existing.role as AppRole,
       isActive: existing.isActive,
       adminPermissions: normalizeAdminPermissions(existing.adminPermissions),
     };
@@ -103,7 +104,7 @@ export async function resolveUserAfterOtp(options: {
     id: created.id,
     email: created.email,
     name: created.name,
-    role: created.role,
+    role: created.role as AppRole,
     isActive: created.isActive,
     adminPermissions: normalizeAdminPermissions(created.adminPermissions),
   };

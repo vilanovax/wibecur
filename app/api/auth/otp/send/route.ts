@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { expiresAt, resendAt } = saveOtp({
+    const { expiresAt, resendAt } = await saveOtp({
       phone: normalizedPhone,
       code,
       purpose,

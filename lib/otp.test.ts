@@ -34,34 +34,38 @@ describe('normalizeOtpInput / validateOtpInput', () => {
 });
 
 describe('saveOtp / consumeOtp', () => {
-  it('accepts the correct code once', () => {
-    __setOtpForTests('989121234567', '12345', 'login');
-    expect(consumeOtp('989121234567', '12345')).toEqual({
+  it('accepts the correct code once', async () => {
+    await __setOtpForTests('989121234567', '12345', 'login');
+    expect(await consumeOtp('989121234567', '12345')).toEqual({
       ok: true,
       purpose: 'login',
       name: undefined,
       avatarId: undefined,
     });
-    expect(consumeOtp('989121234567', '12345').ok).toBe(false);
+    expect((await consumeOtp('989121234567', '12345')).ok).toBe(false);
   });
 
-  it('locks after too many mismatches', () => {
-    saveOtp({ phone: '989121234567', code: '12345', purpose: 'login' });
+  it('locks after too many mismatches', async () => {
+    await saveOtp({ phone: '989121234567', code: '12345', purpose: 'login' });
     for (let i = 0; i < OTP_MAX_ATTEMPTS - 1; i++) {
-      expect(consumeOtp('989121234567', '00000').reason).toBe('mismatch');
+      const result = await consumeOtp('989121234567', '00000');
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toBe('mismatch');
     }
-    expect(consumeOtp('989121234567', '00000').reason).toBe('locked');
+    const locked = await consumeOtp('989121234567', '00000');
+    expect(locked.ok).toBe(false);
+    if (!locked.ok) expect(locked.reason).toBe('locked');
   });
 
-  it('stores register profile fields', () => {
-    saveOtp({
+  it('stores register profile fields', async () => {
+    await saveOtp({
       phone: '989121234567',
       code: '54321',
       purpose: 'register',
       name: 'سارا',
       avatarId: 'vibe',
     });
-    expect(consumeOtp('989121234567', '54321')).toMatchObject({
+    expect(await consumeOtp('989121234567', '54321')).toMatchObject({
       ok: true,
       purpose: 'register',
       name: 'سارا',
@@ -69,9 +73,9 @@ describe('saveOtp / consumeOtp', () => {
     });
   });
 
-  it('enforces resend cooldown', () => {
+  it('enforces resend cooldown', async () => {
     const now = 1_700_000_000_000;
-    saveOtp({ phone: '989121234567', code: '12345', purpose: 'login', now });
+    await saveOtp({ phone: '989121234567', code: '12345', purpose: 'login', now });
     expect(getOtpResendRemainingMs('989121234567', now + 10_000)).toBeGreaterThan(0);
     expect(getOtpResendRemainingMs('989121234567', now + 61_000)).toBe(0);
   });

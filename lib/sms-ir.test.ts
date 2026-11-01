@@ -1,10 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getSmsIrConfig, sendSmsIrVerify, toSmsIrMobile } from './sms-ir';
 
-const ORIGINAL_ENV = { ...process.env };
-
 afterEach(() => {
-  process.env = { ...ORIGINAL_ENV };
+  vi.unstubAllEnvs();
   vi.restoreAllMocks();
 });
 
@@ -16,10 +14,10 @@ describe('toSmsIrMobile', () => {
 
 describe('getSmsIrConfig', () => {
   it('defaults template and param', () => {
-    delete process.env.SMS_IR_API_KEY;
-    delete process.env.SMS_IR_TEMPLATE_ID;
-    delete process.env.SMS_IR_OTP_PARAM;
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('SMS_IR_API_KEY', '');
+    vi.stubEnv('SMS_IR_TEMPLATE_ID', '');
+    vi.stubEnv('SMS_IR_OTP_PARAM', '');
+    vi.stubEnv('SMS_IR_DRY_RUN', '');
     const config = getSmsIrConfig();
     expect(config.templateId).toBe(727683);
     expect(config.paramName).toBe('CODE');
@@ -29,12 +27,13 @@ describe('getSmsIrConfig', () => {
 
 describe('sendSmsIrVerify', () => {
   it('posts verify payload with x-api-key', async () => {
-    const fetchImpl = vi.fn(async () =>
-      Response.json({
-        status: 1,
-        message: 'موفق',
-        data: { messageId: 42, cost: 1 },
-      })
+    const fetchImpl = vi.fn(
+      async (_input: RequestInfo | URL, init?: RequestInit) =>
+        Response.json({
+          status: 1,
+          message: 'موفق',
+          data: { messageId: 42, cost: 1 },
+        })
     );
 
     const result = await sendSmsIrVerify({
@@ -47,7 +46,7 @@ describe('sendSmsIrVerify', () => {
 
     expect(result).toEqual({ ok: true, messageId: 42, cost: 1 });
     expect(fetchImpl).toHaveBeenCalledOnce();
-    const [, init] = fetchImpl.mock.calls[0]!;
+    const init = fetchImpl.mock.calls[0]?.[1];
     expect(init?.method).toBe('POST');
     expect((init?.headers as Record<string, string>)['x-api-key']).toBe('test-key');
     expect(JSON.parse(String(init?.body))).toEqual({
