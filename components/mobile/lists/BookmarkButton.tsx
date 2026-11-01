@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Bookmark, Check } from 'lucide-react';
 import { track, listAnalyticsPayload, trackFirstBookmark, type ListAnalyticsContext } from '@/lib/analytics';
+import { homeBookmarksQueryKey } from '@/hooks/useHomeBookmarks';
 
 interface BookmarkButtonProps {
   listId: string;
@@ -40,6 +42,7 @@ export default function BookmarkButton({
 }: BookmarkButtonProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
   const [bookmarkCount, setBookmarkCount] = useState(initialBookmarkCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,10 +51,15 @@ export default function BookmarkButton({
   const isCompact = variant === 'compact';
 
   useEffect(() => {
+    setIsBookmarked(initialIsBookmarked);
+    setBookmarkCount(initialBookmarkCount);
+  }, [initialIsBookmarked, initialBookmarkCount, listId]);
+
+  useEffect(() => {
     if (session?.user && initialIsBookmarked === false && initialBookmarkCount === 0) {
-      fetchBookmarkStatus();
+      void fetchBookmarkStatus();
     }
-  }, [session, listId]);
+  }, [session, listId, initialIsBookmarked, initialBookmarkCount]);
 
   const fetchBookmarkStatus = async () => {
     try {
@@ -70,8 +78,13 @@ export default function BookmarkButton({
     e.preventDefault();
     e.stopPropagation();
 
-    if (!session?.user) return;
+    if (!session?.user || isLoading) return;
 
+    const previousBookmarked = isBookmarked;
+    const previousCount = bookmarkCount;
+    const nextBookmarked = !previousBookmarked;
+    setIsBookmarked(nextBookmarked);
+    setBookmarkCount((count) => Math.max(0, count + (nextBookmarked ? 1 : -1)));
     setIsLoading(true);
 
     try {
@@ -81,25 +94,34 @@ export default function BookmarkButton({
 
       const data = await response.json();
 
-      if (data.success) {
-        setIsBookmarked(data.data.isBookmarked);
-        setBookmarkCount(data.data.bookmarkCount);
-        onToggle?.(data.data.isBookmarked);
-        const payload = listAnalyticsPayload({ listId, ...analytics });
-        track(
-          data.data.isBookmarked ? 'list_bookmark' : 'list_unbookmark',
-          payload
-        );
-        if (data.data.isBookmarked && data.data.isFirstBookmark) {
-          trackFirstBookmark({
-            list_slug: analytics?.listSlug ?? undefined,
-            category_slug: analytics?.categorySlug ?? undefined,
-            source: analytics?.source,
-          });
-        }
+      if (!response.ok || !data.success) {
+        setIsBookmarked(previousBookmarked);
+        setBookmarkCount(previousCount);
+        return;
       }
+
+      setIsBookmarked(Boolean(data.data.isBookmarked));
+      setBookmarkCount(data.data.bookmarkCount ?? previousCount);
+      onToggle?.(Boolean(data.data.isBookmarked));
+      const payload = listAnalyticsPayload({ listId, ...analytics });
+      track(data.data.isBookmarked ? 'list_bookmark' : 'list_unbookmark', payload);
+      if (data.data.isBookmarked && data.data.isFirstBookmark) {
+        trackFirstBookmark({
+          list_slug: analytics?.listSlug ?? undefined,
+          category_slug: analytics?.categorySlug ?? undefined,
+          source: analytics?.source,
+        });
+      }
+      void queryClient.invalidateQueries({
+        queryKey: homeBookmarksQueryKey(session.user.id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['user', session.user.id, 'bookmarks'],
+      });
     } catch (error) {
       console.error('Error toggling bookmark:', error);
+      setIsBookmarked(previousBookmarked);
+      setBookmarkCount(previousCount);
     } finally {
       setIsLoading(false);
     }

@@ -6,10 +6,18 @@ import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
 import { getProfilePickStatus, MAX_PICKS_PER_CATEGORY } from '@/lib/profile-picks';
 
+type SavedListRef = {
+  id: string;
+  title: string;
+  isPublic: boolean;
+  /** شناسهٔ ردیف آیتم داخل لیست شخصی — برای حذف ذخیره */
+  placementItemId: string;
+};
+
 const EMPTY_SAVED = {
   savedInPrivateList: false,
   savedInPublicList: false,
-  lists: [] as Array<{ id: string; title: string; isPublic: boolean }>,
+  lists: [] as SavedListRef[],
 };
 
 /** GET /api/items/[id]/viewer-state — like + save + profile pick در یک درخواست */
@@ -54,11 +62,14 @@ export async function GET(
         ),
         dbQuery(() =>
           prisma.items.findMany({
-            where: {
-              title: { equals: item.title, mode: 'insensitive' },
-              lists: { userId },
-            },
+            where: item.catalogItemId
+              ? { catalogItemId: item.catalogItemId, lists: { userId } }
+              : {
+                  title: { equals: item.title, mode: 'insensitive' },
+                  lists: { userId },
+                },
             select: {
+              id: true,
               lists: { select: { id: true, title: true, isPublic: true } },
             },
           })
@@ -80,6 +91,7 @@ export async function GET(
           id: row.lists.id,
           title: row.lists.title,
           isPublic: row.lists.isPublic,
+          placementItemId: row.id,
         })),
       };
       profilePick = {

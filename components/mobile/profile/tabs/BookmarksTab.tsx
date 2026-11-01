@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useSyncExternalStore } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bookmark, RefreshCw } from 'lucide-react';
+import { Bookmark, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCardStats from '@/components/shared/ListCardStats';
+import Toast from '@/components/shared/Toast';
+import { homeBookmarksQueryKey } from '@/hooks/useHomeBookmarks';
 import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
 
 type ListWithMeta = {
@@ -84,8 +86,11 @@ export default function BookmarksTab({
   initialBookmarksTotal = 0,
 }: BookmarksTabProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const desktop = useDesktopBookmarks();
   const hasInitial = Boolean(initialBookmarks?.length);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['user', userId, 'bookmarks'],
@@ -109,6 +114,35 @@ export default function BookmarksTab({
   const [showAll, setShowAll] = useState(false);
 
   const displayedBookmarks = showAll ? bookmarks : bookmarks.slice(0, 12);
+
+  const handleRemoveBookmark = async (listId: string) => {
+    if (removingId) return;
+    setRemovingId(listId);
+    try {
+      const res = await fetch(`/api/lists/${listId}/bookmark`, { method: 'POST' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error || 'حذف ذخیره انجام نشد');
+      }
+      // API تoggle است؛ اگر هنوز ذخیره بود یک‌بار دیگر بزن
+      if (json.data?.isBookmarked) {
+        const again = await fetch(`/api/lists/${listId}/bookmark`, { method: 'POST' });
+        const againJson = await again.json().catch(() => null);
+        if (!again.ok || !againJson?.success || againJson.data?.isBookmarked) {
+          throw new Error('حذف ذخیره انجام نشد');
+        }
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user', userId, 'bookmarks'] }),
+        queryClient.invalidateQueries({ queryKey: homeBookmarksQueryKey(userId) }),
+      ]);
+      setToast('از ذخیره‌ها حذف شد');
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : 'حذف ذخیره انجام نشد');
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   if (isLoading && bookmarks.length === 0 && !hasInitial) {
     return (
@@ -204,39 +238,52 @@ export default function BookmarksTab({
           const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
 
           return (
-            <Link
+            <Card
               key={bookmark.id}
-              href={`/lists/${list.slug}`}
-              prefetch={false}
-              onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
-              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              className="flex gap-2.5 bg-popover p-2.5 transition-transform active:scale-95"
             >
-              <Card className="flex gap-2.5 bg-popover p-2.5 transition-transform active:scale-95">
-              <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-                <ListCoverImage
-                  coverImage={list.coverImage}
-                  title={list.title}
-                  slug={list.slug}
-                  categorySlug={list.categories?.slug}
-                  sizes="64px"
-                  fetchPriority="low"
-                  className="h-full w-full object-cover"
-                  fallbackIcon={list.categories?.icon}
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
-                />
-              </div>
-              <div className="min-w-0 flex-1 text-start">
-                <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
-                {list.categories?.name ? (
-                  <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">
-                    {list.categories.icon ? `${list.categories.icon} ` : ''}
-                    {list.categories.name}
-                  </p>
-                ) : null}
-                <ListCardStats saves={saves} itemCount={items} variant="compact" className="mt-1" />
-              </div>
-              </Card>
-            </Link>
+              <Link
+                href={`/lists/${list.slug}`}
+                prefetch={false}
+                onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
+                className="flex min-w-0 flex-1 gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              >
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+                  <ListCoverImage
+                    coverImage={list.coverImage}
+                    title={list.title}
+                    slug={list.slug}
+                    categorySlug={list.categories?.slug}
+                    sizes="64px"
+                    fetchPriority="low"
+                    className="h-full w-full object-cover"
+                    fallbackIcon={list.categories?.icon}
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
+                  />
+                </div>
+                <div className="min-w-0 flex-1 text-start">
+                  <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
+                    {list.title}
+                  </h3>
+                  {list.categories?.name ? (
+                    <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">
+                      {list.categories.icon ? `${list.categories.icon} ` : ''}
+                      {list.categories.name}
+                    </p>
+                  ) : null}
+                  <ListCardStats saves={saves} itemCount={items} variant="compact" className="mt-1" />
+                </div>
+              </Link>
+              <button
+                type="button"
+                onClick={() => void handleRemoveBookmark(list.id)}
+                disabled={removingId === list.id}
+                className="flex size-11 shrink-0 items-center justify-center self-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+                aria-label={`حذف «${list.title}» از ذخیره‌ها`}
+              >
+                <X className="size-5" strokeWidth={1.75} />
+              </button>
+            </Card>
           );
         })}
       </div>
@@ -250,35 +297,43 @@ export default function BookmarksTab({
           const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
 
           return (
-            <Link
-              key={bookmark.id}
-              href={`/lists/${list.slug}`}
-              prefetch={false}
-              onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
-              className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-            >
-              <Card className="overflow-hidden bg-popover p-0">
-              <div className="relative aspect-video max-h-40 bg-muted">
-                <ListCoverImage
-                  coverImage={list.coverImage}
-                  title={list.title}
-                  slug={list.slug}
-                  categorySlug={list.categories?.slug}
-                  sizes="(min-width: 1280px) 25vw, 33vw"
-                  fetchPriority="low"
-                  className="h-full w-full object-cover"
-                  fallbackIcon={list.categories?.icon}
-                  fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"
-                />
-              </div>
-              <div className="p-2.5">
-                <h3 className="mb-1 line-clamp-2 wibe-small font-semibold text-foreground">
-                  {list.title}
-                </h3>
-                <ListCardStats saves={saves} itemCount={items} variant="compact" />
-              </div>
-              </Card>
-            </Link>
+            <Card key={bookmark.id} className="relative overflow-hidden bg-popover p-0">
+              <button
+                type="button"
+                onClick={() => void handleRemoveBookmark(list.id)}
+                disabled={removingId === list.id}
+                className="absolute end-2 top-2 z-10 flex size-11 items-center justify-center rounded-full border border-border bg-popover/95 text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground disabled:opacity-50"
+                aria-label={`حذف «${list.title}» از ذخیره‌ها`}
+              >
+                <X className="size-5" strokeWidth={1.75} />
+              </button>
+              <Link
+                href={`/lists/${list.slug}`}
+                prefetch={false}
+                onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
+                className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              >
+                <div className="relative aspect-video max-h-40 bg-muted">
+                  <ListCoverImage
+                    coverImage={list.coverImage}
+                    title={list.title}
+                    slug={list.slug}
+                    categorySlug={list.categories?.slug}
+                    sizes="(min-width: 1280px) 25vw, 33vw"
+                    fetchPriority="low"
+                    className="h-full w-full object-cover"
+                    fallbackIcon={list.categories?.icon}
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"
+                  />
+                </div>
+                <div className="p-2.5">
+                  <h3 className="mb-1 line-clamp-2 wibe-small font-semibold text-foreground">
+                    {list.title}
+                  </h3>
+                  <ListCardStats saves={saves} itemCount={items} variant="compact" />
+                </div>
+              </Link>
+            </Card>
           );
         })}
       </div>
@@ -303,6 +358,9 @@ export default function BookmarksTab({
         </Button>
       )}
 
+      {toast ? (
+        <Toast message={toast} type="success" duration={2800} onClose={() => setToast(null)} />
+      ) : null}
     </div>
   );
 }

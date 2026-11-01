@@ -141,6 +141,12 @@ export default function HomeListSaveControl({
       void queryClient.invalidateQueries({
         queryKey: homeBookmarksQueryKey(session.user.id),
       });
+      void queryClient.invalidateQueries({
+        queryKey: ['user', 'interaction-count', session.user.id],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['user', session.user.id, 'bookmarks'],
+      });
     } catch {
       setIsBookmarked(previous);
       setErrorToast(

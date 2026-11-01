@@ -6,7 +6,12 @@ import { useSession } from 'next-auth/react';
 export type ItemViewerSavedState = {
   savedInPrivateList: boolean;
   savedInPublicList: boolean;
-  lists: Array<{ id: string; title: string; isPublic: boolean }>;
+  lists: Array<{
+    id: string;
+    title: string;
+    isPublic: boolean;
+    placementItemId: string;
+  }>;
 };
 
 export type ItemViewerState = {

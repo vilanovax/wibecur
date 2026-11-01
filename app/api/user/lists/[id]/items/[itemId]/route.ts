@@ -51,32 +51,52 @@ export async function DELETE(
       );
     }
 
-    // Check if item exists and belongs to this list
-    const item = await dbQuery(() =>
-      prisma.items.findUnique({
-        where: { id: itemId },
+    // placement در همین لیست، یا کپی هم‌کاتالوگ/هم‌عنوان از آیتم مبدأ
+    let placement = await dbQuery(() =>
+      prisma.items.findFirst({
+        where: { id: itemId, listId },
+        select: { id: true },
       })
     );
 
-    if (!item) {
+    if (!placement) {
+      const source = await dbQuery(() =>
+        prisma.items.findUnique({
+          where: { id: itemId },
+          select: { catalogItemId: true, title: true },
+        })
+      );
+      if (source?.catalogItemId) {
+        placement = await dbQuery(() =>
+          prisma.items.findFirst({
+            where: { listId, catalogItemId: source.catalogItemId },
+            select: { id: true },
+          })
+        );
+      } else if (source?.title) {
+        placement = await dbQuery(() =>
+          prisma.items.findFirst({
+            where: {
+              listId,
+              title: { equals: source.title, mode: 'insensitive' },
+            },
+            select: { id: true },
+          })
+        );
+      }
+    }
+
+    if (!placement) {
       return NextResponse.json(
-        { error: 'آیتم یافت نشد' },
+        { error: 'این آیتم در این لیست نیست' },
         { status: 404 }
       );
     }
 
-    if (item.listId !== listId) {
-      return NextResponse.json(
-        { error: 'این آیتم به این لیست تعلق ندارد' },
-        { status: 400 }
-      );
-    }
-
-    // Delete item and update list itemCount
     await dbQuery(() =>
       prisma.$transaction([
         prisma.items.delete({
-          where: { id: itemId },
+          where: { id: placement!.id },
         }),
         prisma.lists.update({
           where: { id: listId },
