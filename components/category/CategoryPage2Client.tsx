@@ -199,15 +199,14 @@ export default function CategoryPage2Client({
         )}
 
         {showCityExplorer && (
-          <SectionReveal defer>
-            <HomeDeferredMount fallback={<CategorySectionSkeleton />}>
-              <ExploreByCityPillsLazy
-                inset
-                categorySlug={category.slug}
-                cityCounts={cityCounts}
-                accentColor={accentColor}
-              />
-            </HomeDeferredMount>
+          <SectionReveal>
+            {/* بدون defer تا #explore-by-city از هیرو همیشه در DOM باشد */}
+            <ExploreByCityPillsLazy
+              inset
+              categorySlug={category.slug}
+              cityCounts={cityCounts}
+              accentColor={accentColor}
+            />
           </SectionReveal>
         )}
 

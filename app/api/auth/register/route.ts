@@ -17,9 +17,9 @@ const DEFAULT_AVATAR_IDS = new Set(DEFAULT_PACK_AVATARS.map((a) => a.id));
 
 export async function POST(request: Request) {
   try {
-    // ضد-اتوماسیون: حداکثر ۵ ثبت‌نام در ساعت به‌ازای هر IP (جلوگیری از ساخت انبوه حساب).
+    // ضد-اتوماسیون: حداکثر ۳ ثبت‌نام در ساعت به‌ازای هر IP (جلوگیری از ساخت انبوه حساب).
     const ip = getClientIp(request.headers);
-    const { success } = await checkActionRateLimit(`register:${ip}`, 5, '1 h');
+    const { success } = await checkActionRateLimit(`register:${ip}`, 3, '1 h');
     if (!success) {
       return NextResponse.json(
         { success: false, error: 'تعداد تلاش‌ها زیاد است. کمی بعد دوباره امتحان کن.' },
@@ -56,9 +56,13 @@ export async function POST(request: Request) {
     );
 
     if (existing) {
+      // ضد-enumeration: وجود حساب را لو نده
       return NextResponse.json(
-        { success: false, error: 'این شماره قبلاً ثبت شده — وارد شو' },
-        { status: 409 }
+        {
+          success: false,
+          error: 'ثبت‌نام ممکن نشد. اگر حساب داری وارد شو، وگرنه کمی بعد دوباره تلاش کن.',
+        },
+        { status: 400 }
       );
     }
 

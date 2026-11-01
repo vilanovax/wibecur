@@ -15,6 +15,7 @@ import {
 import { GUEST_HEADER_AVATAR, resolveVibeAvatar } from '@/lib/vibe-avatars';
 import VibeAvatarDisplay from '@/components/shared/VibeAvatarDisplay';
 import { usePermissions } from '@/hooks/usePermissions';
+import { accountDisplayLabel } from '@/lib/phone-auth';
 
 export type HeaderActionsProfile = {
   image: string | null;
@@ -83,7 +84,7 @@ export default function HeaderActions({
   const pathname = usePathname();
   const { data: session } = useSession();
   const { isAdmin } = usePermissions();
-  const userName = session?.user?.name || session?.user?.email || 'کاربر';
+  const userName = accountDisplayLabel(session?.user?.name, session?.user?.email);
   const isProfilePage = pathname === '/profile';
   const isDark = variant === 'dark';
   const notifications = useNotifications(!hideNotifications);

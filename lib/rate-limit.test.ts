@@ -30,13 +30,13 @@ describe('checkActionRateLimit', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
 
-    for (let i = 0; i < 5; i += 1) {
-      expect((await checkActionRateLimit('register:198.51.100.8', 5, '1 h')).success).toBe(true);
+    for (let i = 0; i < 3; i += 1) {
+      expect((await checkActionRateLimit('register:198.51.100.8', 3, '1 h')).success).toBe(true);
     }
-    expect((await checkActionRateLimit('register:198.51.100.8', 5, '1 h')).success).toBe(false);
+    expect((await checkActionRateLimit('register:198.51.100.8', 3, '1 h')).success).toBe(false);
 
     vi.setSystemTime(new Date('2026-01-01T01:00:00Z'));
-    expect((await checkActionRateLimit('register:198.51.100.8', 5, '1 h')).success).toBe(true);
+    expect((await checkActionRateLimit('register:198.51.100.8', 3, '1 h')).success).toBe(true);
   });
 
   it('keeps separate buckets per identifier', async () => {

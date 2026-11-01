@@ -1089,11 +1089,23 @@ export default function ListsPageClient({
               );
             })}
             {canRemotePaginate && hasMoreRemote ? (
-              <InfiniteScrollSentinel
-                hasMore={hasMoreRemote}
-                onLoadMore={fetchMoreRemoteLists}
-                loading={isLoadingRemote}
-              />
+              <div className="flex flex-col items-center gap-2 py-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="min-h-11"
+                  disabled={isLoadingRemote}
+                  onClick={() => void fetchMoreRemoteLists()}
+                >
+                  {isLoadingRemote ? 'در حال بارگذاری…' : 'مشاهده لیست‌های بیشتر'}
+                </Button>
+                <InfiniteScrollSentinel
+                  hasMore={hasMoreRemote}
+                  onLoadMore={fetchMoreRemoteLists}
+                  loading={isLoadingRemote}
+                />
+              </div>
             ) : null}
             {pageSimilarLists.length > 0 && (
               <HomeDeferredMount

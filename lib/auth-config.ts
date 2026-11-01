@@ -27,17 +27,26 @@ const config: NextAuthConfig = {
       credentials: {
         phone: { label: 'Phone', type: 'text' },
         password: { label: 'Password', type: 'password' },
+        otp: { label: 'OTP', type: 'text' },
       },
       async authorize(credentials, request) {
         const identifier = credentials?.phone;
         const password = credentials?.password;
+        const otp = credentials?.otp;
 
-        if (typeof identifier !== 'string' || typeof password !== 'string') {
+        if (typeof identifier !== 'string') {
+          return null;
+        }
+
+        const hasOtp = typeof otp === 'string' && otp.trim().length > 0;
+        const hasPassword = typeof password === 'string' && password.length > 0;
+
+        if (!hasOtp && !hasPassword) {
           return null;
         }
 
         try {
-          const { resolveLoginEmail } = await import('@/lib/phone-auth');
+          const { resolveLoginEmail, normalizeIranPhone } = await import('@/lib/phone-auth');
           const email = resolveLoginEmail(identifier);
           if (!email) return null;
 
@@ -50,6 +59,47 @@ const config: NextAuthConfig = {
             '15 m'
           );
           if (!underLimit) return null;
+
+          if (hasOtp) {
+            const { consumeOtp, normalizeOtpInput, validateOtpInput } = await import('@/lib/otp');
+            const otpError = validateOtpInput(otp);
+            if (otpError) return null;
+
+            const normalizedPhone = normalizeIranPhone(identifier);
+            if (!normalizedPhone) return null;
+
+            const consumed = consumeOtp(normalizedPhone, normalizeOtpInput(otp));
+            if (!consumed.ok) return null;
+
+            const { resolveUserAfterOtp } = await import('@/lib/otp-auth');
+            const user = await resolveUserAfterOtp({
+              normalizedPhone,
+              purpose: consumed.purpose,
+              name: consumed.name,
+              avatarId: consumed.avatarId,
+            });
+            if (!user) return null;
+
+            const { isAdminRole } = await import('@/lib/auth/roles');
+            const { recordAdminLogin } = await import('@/lib/auth/record-admin-login');
+            if (isAdminRole(user.role)) {
+              await recordAdminLogin({
+                userId: user.id,
+                role: user.role,
+                success: true,
+                request,
+              });
+            }
+
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+              isActive: user.isActive,
+              adminPermissions: user.adminPermissions,
+            };
+          }
 
           const { prisma } = await import('@/lib/prisma');
           const { dbQuery } = await import('@/lib/db');
@@ -76,12 +126,12 @@ const config: NextAuthConfig = {
           };
 
           if (!user || !user.password || !user.isActive || user.deletedAt) {
-            bcrypt.compareSync(password, DUMMY_HASH);
+            bcrypt.compareSync(password as string, DUMMY_HASH);
             await trackAdmin(false);
             return null;
           }
 
-          const isPasswordValid = bcrypt.compareSync(password, user.password);
+          const isPasswordValid = bcrypt.compareSync(password as string, user.password);
 
           if (!isPasswordValid) {
             await trackAdmin(false);

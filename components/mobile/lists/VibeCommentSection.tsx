@@ -227,6 +227,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
 function VibeCommentItem({
   comment,
   isOwner,
+  currentUserId,
   onApprove,
   onReject,
   onVote,
@@ -234,6 +235,7 @@ function VibeCommentItem({
 }: {
   comment: Comment;
   isOwner: boolean;
+  currentUserId?: string | null;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onVote: (id: string, value: 1 | -1) => void;
@@ -248,7 +250,13 @@ function VibeCommentItem({
 
   const handleVote = (value: 1 | -1) => {
     const prev = localVote;
-    if (prev === value) return;
+    if (prev === value) {
+      setLocalVote(null);
+      if (value === 1) setLocalUp((u) => Math.max(0, u - 1));
+      else setLocalDown((d) => Math.max(0, d - 1));
+      onVote(comment.id, value);
+      return;
+    }
     setLocalVote(value);
     if (prev === 1) setLocalUp((u) => Math.max(0, u - 1));
     else if (prev === -1) setLocalDown((d) => Math.max(0, d - 1));
@@ -256,6 +264,8 @@ function VibeCommentItem({
     else setLocalDown((d) => d + 1);
     onVote(comment.id, value);
   };
+
+  const isOwnComment = Boolean(currentUserId && comment.users.id === currentUserId);
 
   const isSuggestion = comment.type === 'suggestion';
   const isPending = comment.suggestionStatus === 'pending';
@@ -346,8 +356,8 @@ function VibeCommentItem({
             <span>✔</span> به لیست اضافه شد
           </p>
         )}
-        <div className="flex items-center gap-3 mt-2">
-          <div className="flex items-center gap-3">
+        {!isOwnComment ? (
+          <div className="mt-2 flex items-center gap-3">
             <button
               type="button"
               onClick={() => handleVote(1)}
@@ -355,7 +365,7 @@ function VibeCommentItem({
               className={`flex h-11 items-center gap-1 text-xs ${localVote === 1 ? 'font-medium text-success' : 'text-muted-foreground'}`}
               title="مفید بود"
             >
-              <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />
+              <ThumbsUp className={`h-4 w-4 ${localVote === 1 ? 'fill-current' : ''}`} />
               {localUp > 0 && <span className="tabular-nums">{localUp.toLocaleString('fa-IR')}</span>}
             </button>
             <button
@@ -365,11 +375,17 @@ function VibeCommentItem({
               className={`flex h-11 items-center gap-1 text-xs ${localVote === -1 ? 'font-medium text-warning' : 'text-muted-foreground'}`}
               title="مفید نبود"
             >
-              <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />
+              <ThumbsDown className={`h-4 w-4 ${localVote === -1 ? 'fill-current' : ''}`} />
               {localDown > 0 && <span className="tabular-nums">{localDown.toLocaleString('fa-IR')}</span>}
             </button>
           </div>
-        </div>
+        ) : (localUp > 0 || localDown > 0) ? (
+          <p className="mt-2 wibe-caption text-muted-foreground tabular-nums">
+            {localUp > 0 ? `${localUp.toLocaleString('fa-IR')} مفید` : null}
+            {localUp > 0 && localDown > 0 ? ' · ' : null}
+            {localDown > 0 ? `${localDown.toLocaleString('fa-IR')} مفید نبود` : null}
+          </p>
+        ) : null}
         {isSuggestion && isOwner && isPending && (
           <div className="flex gap-2 mt-2">
             <Button type="button" variant="outline" size="sm" className="h-11 border-success/30 text-success" onClick={() => onApprove(comment.id)}>
@@ -779,6 +795,7 @@ export default function VibeCommentSection({
                     key={c.id}
                     comment={c}
                     isOwner={isOwner}
+                    currentUserId={session?.user?.id}
                     onApprove={handleApprove}
                     onReject={handleReject}
                     onVote={handleVote}

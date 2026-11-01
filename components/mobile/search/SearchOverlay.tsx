@@ -423,13 +423,16 @@ export default function SearchOverlay({
     }
 
     for (const item of analyticsQueries.slice(0, 3)) {
-      const q = item.query.toLowerCase();
+      const raw = item.query.trim();
+      // لاگ‌های داخلی دستیار کشف را در UI نشان نده
+      if (!raw || raw.startsWith('[دستیار]')) continue;
+      const q = raw.toLowerCase();
       if (seen.has(q)) continue;
       seen.add(q);
       chips.push({
         key: `a-${q}`,
-        label: item.query,
-        query: item.query,
+        label: raw,
+        query: raw,
         variant: 'primary',
         prefix: 'hot',
       });

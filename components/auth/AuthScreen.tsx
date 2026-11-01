@@ -4,18 +4,18 @@ import dynamic from 'next/dynamic';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { DEFAULT_PACK_AVATARS } from '@/lib/vibe-avatars';
 import {
   digitsFromPhoneInput,
   formatIranPhoneDisplay,
   formatPhoneDigitsForDisplay,
   normalizeIranPhone,
-  validateAuthPassword,
   validatePhoneInput,
 } from '@/lib/phone-auth';
-import { cn } from '@/lib/utils';
+import { OTP_LENGTH, normalizeOtpInput, validateOtpInput } from '@/lib/otp-shared';
+import { cn, fa } from '@/lib/utils';
 import { trackSignupComplete, type SignupSource } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ const RegisterAvatarPicker = dynamic(() => import('./RegisterAvatarPicker'), {
 });
 
 export type AuthMode = 'login' | 'register';
-type LoginStep = 'phone' | 'password';
+type AuthStep = 'form' | 'otp';
 
 interface AuthScreenProps {
   mode: AuthMode;
@@ -64,15 +64,21 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [avatarId, setAvatarId] = useState(defaultAvatarId);
-  const [showPassword, setShowPassword] = useState(false);
-  const [loginStep, setLoginStep] = useState<LoginStep>('phone');
+  const [step, setStep] = useState<AuthStep>('form');
   const [error, setError] = useState('');
   const [fieldError, setFieldError] = useState('');
-  const [fieldErrorTarget, setFieldErrorTarget] = useState<'phone' | 'password' | null>(null);
+  const [fieldErrorTarget, setFieldErrorTarget] = useState<'phone' | 'otp' | null>(null);
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => setResendSeconds((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
 
   const handlePhoneChange = (value: string) => {
     setPhone(digitsFromPhoneInput(value));
@@ -82,7 +88,14 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     }
   };
 
-  const passwordStrength = getPasswordStrength(password);
+  const handleOtpChange = (value: string) => {
+    setOtp(normalizeOtpInput(value));
+    if (fieldErrorTarget === 'otp') {
+      setFieldError('');
+      setFieldErrorTarget(null);
+    }
+  };
+
   const sourceQuery =
     signupSource !== 'direct' ? `&source=${encodeURIComponent(signupSource)}` : '';
   const registerHref = `/register?callbackUrl=${encodeURIComponent(callbackUrl)}${sourceQuery}`;
@@ -96,104 +109,102 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     setNotice('');
   };
 
-  const showFieldError = (target: 'phone' | 'password', message: string) => {
+  const showFieldError = (target: 'phone' | 'otp', message: string) => {
     setFieldErrorTarget(target);
     setFieldError(message);
   };
 
-  const handlePhoneContinue = (e: React.FormEvent) => {
-    e.preventDefault();
-    clearFeedback();
-
+  const sendOtp = async (): Promise<boolean> => {
     const phoneError = validatePhoneInput(phone);
     if (phoneError) {
       showFieldError('phone', phoneError);
-      return;
-    }
-
-    setLoginStep('password');
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearFeedback();
-
-    const passwordError = validateAuthPassword(password);
-    if (passwordError) {
-      showFieldError('password', passwordError);
-      return;
+      return false;
     }
 
     setLoading(true);
-
-    try {
-      const result = await signIn('credentials', {
-        phone,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('شماره یا رمز عبور اشتباه است');
-        return;
-      }
-
-      router.push(callbackUrl);
-      router.refresh();
-    } catch {
-      setError('خطایی رخ داد. دوباره تلاش کن.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     clearFeedback();
 
-    const phoneError = validatePhoneInput(phone);
-    if (phoneError) {
-      showFieldError('phone', phoneError);
-      return;
-    }
-
-    const passwordError = validateAuthPassword(password);
-    if (passwordError) {
-      showFieldError('password', passwordError);
-      return;
-    }
-
-    setLoading(true);
-
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('/api/auth/otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone,
-          password,
-          name: name.trim() || undefined,
-          avatarId,
+          purpose: isRegister ? 'register' : 'login',
+          ...(isRegister
+            ? {
+                name: name.trim() || undefined,
+                avatarId,
+              }
+            : {}),
         }),
       });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        setError(json.error || 'خطا در ثبت‌نام');
-        return;
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.success) {
+        const retry = Number(json?.data?.retryAfterSeconds);
+        if (Number.isFinite(retry) && retry > 0) {
+          setResendSeconds(retry);
+        }
+        if (fieldLooksLikePhone(json?.error)) {
+          showFieldError('phone', String(json.error));
+        } else {
+          setError(json?.error || 'ارسال کد ناموفق بود. دوباره تلاش کن.');
+        }
+        return false;
       }
 
+      const retry = Number(json?.data?.retryAfterSeconds);
+      setResendSeconds(Number.isFinite(retry) && retry > 0 ? retry : 60);
+      setStep('otp');
+      setOtp('');
+      setNotice('کد تأیید به شماره موبایلت پیامک شد.');
+      if (typeof json?.data?.devCode === 'string' && process.env.NODE_ENV !== 'production') {
+        setNotice(`کد تأیید (حالت توسعه): ${fa(json.data.devCode)}`);
+      }
+      return true;
+    } catch {
+      setError('خطایی رخ داد. دوباره تلاش کن.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFormContinue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearFeedback();
+    await sendOtp();
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearFeedback();
+
+    const otpError = validateOtpInput(otp);
+    if (otpError) {
+      showFieldError('otp', otpError);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
       const result = await signIn('credentials', {
         phone,
-        password,
+        otp: normalizeOtpInput(otp),
         redirect: false,
       });
 
       if (result?.error) {
-        setError('ثبت‌نام شد ولی ورود ناموفق بود — دوباره تلاش کن');
+        setError('کد تأیید نادرست است یا منقضی شده');
         return;
       }
 
-      trackSignupComplete(signupSource);
+      if (isRegister) {
+        trackSignupComplete(signupSource);
+      }
+
       router.push(callbackUrl);
       router.refresh();
     } catch {
@@ -203,9 +214,10 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     }
   };
 
-  const resetLoginStep = () => {
-    setLoginStep('phone');
-    setPassword('');
+  const resetToForm = () => {
+    setStep('form');
+    setOtp('');
+    setResendSeconds(0);
     clearFeedback();
   };
 
@@ -214,22 +226,43 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     return normalized ? formatIranPhoneDisplay(normalized) : formatPhoneDigitsForDisplay(phone);
   }, [phone]);
 
-  if (!isRegister) {
-    return (
-      <AuthShell mode="login">
-        <div className="flex flex-col gap-6">
-          <AuthBrandHeader
-            title="ورود"
-            subtitle="با شماره موبایل وارد شو و لیست‌هایت را ادامه بده."
-          />
+  return (
+    <AuthShell mode={isRegister ? 'register' : 'login'}>
+      <div className="flex flex-col gap-6">
+        <AuthBrandHeader
+          title={isRegister ? 'ساخت حساب' : 'ورود'}
+          subtitle={
+            isRegister
+              ? 'با شماره موبایل حساب بساز و لیست‌ها را شروع کن.'
+              : 'با شماره موبایل وارد شو؛ کد تأیید پیامک می‌شود.'
+          }
+        />
 
-          <AuthFormCard>
-            <form
-              onSubmit={loginStep === 'phone' ? handlePhoneContinue : handleLogin}
-              className="flex flex-col gap-4"
-              noValidate
-            >
-              {loginStep === 'phone' ? (
+        <AuthFormCard>
+          <form
+            onSubmit={step === 'form' ? handleFormContinue : handleVerifyOtp}
+            className="flex flex-col gap-4"
+            noValidate
+          >
+            {step === 'form' ? (
+              <>
+                {isRegister ? (
+                  <>
+                    <RegisterAvatarPicker value={avatarId} onChange={setAvatarId} />
+                    <AuthField
+                      id="auth-name"
+                      label="نام"
+                      hint="اختیاری — در پروفایل نمایش داده می‌شود"
+                      type="text"
+                      name="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="مثلاً رامین"
+                      autoComplete="name"
+                    />
+                  </>
+                ) : null}
+
                 <AuthField
                   id="auth-phone"
                   label="شماره موبایل"
@@ -240,241 +273,111 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
                   autoComplete="tel"
-                  enterKeyHint="next"
+                  enterKeyHint="send"
                   required
                   dir="ltr"
                   autoFocus
                   error={fieldErrorTarget === 'phone' ? fieldError : undefined}
                 />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4! py-2!">
+                  <div className="min-w-0">
+                    <p className="wibe-caption text-muted-foreground">شماره موبایل</p>
+                    <p className="truncate wibe-small font-medium text-foreground" dir="ltr">
+                      {displayPhone}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetToForm}
+                    className="flex min-h-11 shrink-0 items-center px-2! wibe-small font-medium text-brand"
+                  >
+                    تغییر
+                  </button>
+                </div>
+
+                <AuthField
+                  id="auth-otp"
+                  label="کد تأیید"
+                  type="text"
+                  inputMode="numeric"
+                  name="one-time-code"
+                  value={otp ? fa(otp) : ''}
+                  onChange={(e) => handleOtpChange(e.target.value)}
+                  placeholder={'۰'.repeat(OTP_LENGTH)}
+                  autoComplete="one-time-code"
+                  enterKeyHint="done"
+                  required
+                  maxLength={OTP_LENGTH}
+                  dir="ltr"
+                  autoFocus
+                  error={fieldErrorTarget === 'otp' ? fieldError : undefined}
+                />
+
+                <div className="flex items-center justify-between gap-3">
+                  <p className="wibe-caption text-muted-foreground">کد را دریافت نکردی؟</p>
+                  <button
+                    type="button"
+                    disabled={loading || resendSeconds > 0}
+                    onClick={() => {
+                      void sendOtp();
+                    }}
+                    className="flex min-h-11 items-center px-2! wibe-caption font-medium text-brand disabled:text-muted-foreground"
+                  >
+                    {resendSeconds > 0 ? `ارسال دوباره (${fa(resendSeconds)})` : 'ارسال دوباره'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {notice ? (
+              <p role="status" className="wibe-caption text-muted-foreground">
+                {notice}
+              </p>
+            ) : null}
+
+            {error ? <AuthErrorAlert message={error} /> : null}
+
+            <AuthPrimaryButton
+              loading={loading}
+              loadingLabel={step === 'form' ? 'در حال ارسال کد…' : isRegister ? 'در حال ساخت حساب…' : 'در حال ورود…'}
+            >
+              {step === 'form' ? (
+                'دریافت کد تأیید'
               ) : (
                 <>
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4! py-2!">
-                    <div className="min-w-0">
-                      <p className="wibe-caption text-muted-foreground">شماره موبایل</p>
-                      <p className="truncate wibe-small font-medium text-foreground" dir="ltr">
-                        {displayPhone}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={resetLoginStep}
-                      className="flex min-h-11 shrink-0 items-center px-2! wibe-small font-medium text-brand"
-                    >
-                      تغییر
-                    </button>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <label htmlFor="auth-password" className="wibe-small font-medium text-foreground">
-                        رمز عبور
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setNotice(
-                            'بازیابی رمز عبور به‌زودی اضافه می‌شود. فعلاً ثبت‌نام کن یا با پشتیبانی تماس بگیر.'
-                          )
-                        }
-                        className="flex min-h-11 items-center px-2! wibe-caption font-medium text-brand"
-                      >
-                        فراموشی رمز؟
-                      </button>
-                    </div>
-                    <AuthField
-                      id="auth-password"
-                      label="رمز عبور"
-                      hideLabel
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (fieldErrorTarget === 'password') {
-                          setFieldError('');
-                          setFieldErrorTarget(null);
-                        }
-                      }}
-                      placeholder="رمز عبور"
-                      autoComplete="current-password"
-                      enterKeyHint="done"
-                      required
-                      minLength={6}
-                      dir="ltr"
-                      autoFocus
-                      error={fieldErrorTarget === 'password' ? fieldError : undefined}
-                      trailing={
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((value) => !value)}
-                          className="absolute end-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-                          aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="size-5" strokeWidth={1.5} />
-                          ) : (
-                            <Eye className="size-5" strokeWidth={1.5} />
-                          )}
-                        </button>
-                      }
-                    />
-                  </div>
+                  {isRegister ? 'تأیید و ساخت حساب' : 'ورود'}
+                  <ArrowLeft className="size-4" aria-hidden />
                 </>
               )}
+            </AuthPrimaryButton>
+          </form>
 
-              {notice ? (
-                <p role="status" className="wibe-caption text-muted-foreground">
-                  {notice}
-                </p>
-              ) : null}
-
-              {error ? <AuthErrorAlert message={error} /> : null}
-
-              <AuthPrimaryButton loading={loading} loadingLabel="در حال ورود…">
-                {loginStep === 'phone' ? (
-                  'ادامه'
-                ) : (
-                  <>
-                    ورود
-                    <ArrowLeft className="size-4" aria-hidden />
-                  </>
-                )}
-              </AuthPrimaryButton>
-            </form>
-
+          {!isRegister ? (
             <Link
               href={guestHref}
               className="flex min-h-11 items-center justify-center wibe-small text-muted-foreground hover:text-foreground"
             >
               بعداً وارد می‌شوم
             </Link>
-          </AuthFormCard>
-
-          <AuthFooter
-            legal={<AuthLegalNotice mode="login" />}
-            prompt="حساب نداری؟"
-            actionHref={registerHref}
-            actionLabel="ثبت‌نام"
-          />
-        </div>
-      </AuthShell>
-    );
-  }
-
-  return (
-    <AuthShell mode="register">
-      <div className="flex flex-col gap-6">
-        <AuthBrandHeader title="ساخت حساب" subtitle="چند ثانیه تا شروع کشف لیست‌ها" />
-
-        <AuthFormCard>
-          <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4" noValidate>
-            <RegisterAvatarPicker value={avatarId} onChange={setAvatarId} />
-
-            <AuthField
-              id="auth-name"
-              label="نام"
-              hint="اختیاری — در پروفایل نمایش داده می‌شود"
-              type="text"
-              name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="مثلاً رامین"
-              autoComplete="name"
-            />
-
-            <AuthField
-              id="auth-phone"
-              label="شماره موبایل"
-              type="tel"
-              inputMode="tel"
-              name="tel"
-              value={formatPhoneDigitsForDisplay(phone)}
-              onChange={(e) => handlePhoneChange(e.target.value)}
-              placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
-              autoComplete="tel"
-              required
-              dir="ltr"
-              autoFocus
-              error={fieldErrorTarget === 'phone' ? fieldError : undefined}
-            />
-
-            <div className="flex flex-col gap-2">
-              <AuthField
-                id="auth-new-password"
-                label="رمز عبور"
-                type={showPassword ? 'text' : 'password'}
-                name="new-password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (fieldErrorTarget === 'password') {
-                    setFieldError('');
-                    setFieldErrorTarget(null);
-                  }
-                }}
-                placeholder="حداقل ۶ کاراکتر"
-                autoComplete="new-password"
-                required
-                minLength={6}
-                dir="ltr"
-                error={fieldErrorTarget === 'password' ? fieldError : undefined}
-                trailing={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((value) => !value)}
-                    className="absolute end-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-                    aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="size-5" strokeWidth={1.5} />
-                    ) : (
-                      <Eye className="size-5" strokeWidth={1.5} />
-                    )}
-                  </button>
-                }
-              />
-              {password.length > 0 ? (
-                <div className="flex flex-col gap-1">
-                  <div className="flex gap-1" aria-hidden>
-                    {[1, 2, 3].map((level) => (
-                      <div
-                        key={level}
-                        className={cn(
-                          'h-1 flex-1 rounded-full',
-                          passwordStrength >= level
-                            ? passwordStrengthColor(passwordStrength)
-                            : 'bg-muted',
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <p className="wibe-caption text-muted-foreground">
-                    {passwordStrengthLabel(passwordStrength)}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-
-            {error ? <AuthErrorAlert message={error} /> : null}
-
-            <AuthPrimaryButton loading={loading} loadingLabel="در حال ساخت حساب…">
-              <>
-                ساخت حساب
-                <ArrowLeft className="size-4" aria-hidden />
-              </>
-            </AuthPrimaryButton>
-          </form>
+          ) : null}
         </AuthFormCard>
 
         <AuthFooter
-          legal={<AuthLegalNotice mode="register" />}
-          prompt="حساب داری؟"
-          actionHref={loginHref}
-          actionLabel="ورود"
+          legal={<AuthLegalNotice mode={isRegister ? 'register' : 'login'} />}
+          prompt={isRegister ? 'حساب داری؟' : 'حساب نداری؟'}
+          actionHref={isRegister ? loginHref : registerHref}
+          actionLabel={isRegister ? 'ورود' : 'ثبت‌نام'}
         />
       </div>
     </AuthShell>
   );
+}
+
+function fieldLooksLikePhone(error: unknown): boolean {
+  return typeof error === 'string' && error.includes('موبایل');
 }
 
 function AuthBrandHeader({
@@ -633,24 +536,4 @@ function AuthField({
       ) : null}
     </div>
   );
-}
-
-function getPasswordStrength(password: string): number {
-  if (password.length >= 10) return 3;
-  if (password.length >= 8) return 2;
-  if (password.length >= 6) return 1;
-  return 0;
-}
-
-function passwordStrengthColor(level: number): string {
-  if (level >= 3) return 'bg-success';
-  if (level >= 2) return 'bg-warning';
-  return 'bg-destructive';
-}
-
-function passwordStrengthLabel(level: number): string {
-  if (level >= 3) return 'رمز قوی';
-  if (level >= 2) return 'رمز مناسب';
-  if (level >= 1) return 'حداقل ۶ کاراکتر — قابل قبول';
-  return 'خیلی کوتاه';
 }

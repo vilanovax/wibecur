@@ -104,9 +104,18 @@ export default function CommentItem({
   const showReadMore = comment.content.length > COMMENT_CLAMP_CHAR_THRESHOLD;
   const profileUrl = comment.user.username ? `/u/${encodeURIComponent(comment.user.username)}` : null;
 
+  const isOwnComment = Boolean(comment.canDelete); // owner can delete own comment
+
   const handleVote = (value: 1 | -1) => {
+    if (isOwnComment) return;
     const prev = localVote;
-    if (prev === value) return;
+    if (prev === value) {
+      setLocalVote(null);
+      if (value === 1) setLocalUp((u) => Math.max(0, u - 1));
+      else setLocalDown((d) => Math.max(0, d - 1));
+      onVote(comment.id, value);
+      return;
+    }
     setLocalVote(value);
     if (prev === 1) setLocalUp((u) => Math.max(0, u - 1));
     else if (prev === -1) setLocalDown((d) => Math.max(0, d - 1));
@@ -194,32 +203,34 @@ export default function CommentItem({
           </button>
         )}
 
-        <div className="flex items-center gap-3 mt-2">
-          <button
-            type="button"
-            onClick={() => handleVote(1)}
-            disabled={isLoading}
-            aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
-            className={`inline-flex min-h-11 items-center gap-1 px-1 text-sm transition-colors disabled:opacity-50 ${
-              localVote === 1 ? 'font-medium text-success' : 'text-muted-foreground hover:text-success'
-            }`}
-          >
-            <ThumbsUp className={`w-4 h-4 ${localVote === 1 ? 'fill-current' : ''}`} />
-            {localUp > 0 && <span className="tabular-nums">{localUp.toLocaleString('fa-IR')}</span>}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleVote(-1)}
-            disabled={isLoading}
-            aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
-            className={`flex items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
-              localVote === -1 ? 'font-medium text-warning' : 'text-muted-foreground hover:text-warning'
-            }`}
-          >
-            <ThumbsDown className={`w-4 h-4 ${localVote === -1 ? 'fill-current' : ''}`} />
-            {localDown > 0 && <span className="tabular-nums">{localDown.toLocaleString('fa-IR')}</span>}
-          </button>
-        </div>
+        {!isOwnComment ? (
+          <div className="mt-2 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleVote(1)}
+              disabled={isLoading}
+              aria-label={`مفید بود${localUp > 0 ? `، ${localUp} رأی` : ''}`}
+              className={`inline-flex min-h-11 items-center gap-1 px-1 text-sm transition-colors disabled:opacity-50 ${
+                localVote === 1 ? 'font-medium text-success' : 'text-muted-foreground hover:text-success'
+              }`}
+            >
+              <ThumbsUp className={`h-4 w-4 ${localVote === 1 ? 'fill-current' : ''}`} />
+              {localUp > 0 && <span className="tabular-nums">{localUp.toLocaleString('fa-IR')}</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVote(-1)}
+              disabled={isLoading}
+              aria-label={`مفید نبود${localDown > 0 ? `، ${localDown} رأی` : ''}`}
+              className={`flex min-h-11 items-center gap-1 text-xs transition-colors disabled:opacity-50 ${
+                localVote === -1 ? 'font-medium text-warning' : 'text-muted-foreground hover:text-warning'
+              }`}
+            >
+              <ThumbsDown className={`h-4 w-4 ${localVote === -1 ? 'fill-current' : ''}`} />
+              {localDown > 0 && <span className="tabular-nums">{localDown.toLocaleString('fa-IR')}</span>}
+            </button>
+          </div>
+        ) : null}
       </div>
     </Card>
   );

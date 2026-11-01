@@ -5,6 +5,8 @@ import {
   resolveItemTypeLabel,
 } from '@/lib/notification-messages';
 
+const NOTIFICATION_DEDUPE_MS = 60 * 60 * 1000;
+
 export async function createNotification(
   userId: string,
   type: string,
@@ -12,17 +14,42 @@ export async function createNotification(
   message: string,
   link?: string
 ) {
-  return dbQuery(() =>
-    prisma.notifications.create({
+  return dbQuery(async () => {
+    const linkValue = link || null;
+    const since = new Date(Date.now() - NOTIFICATION_DEDUPE_MS);
+
+    // جلوگیری از اعلان‌های تکراری هم‌نوع در یک ساعت اخیر
+    const existing = await prisma.notifications.findFirst({
+      where: {
+        userId,
+        type,
+        link: linkValue,
+        createdAt: { gte: since },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, title: true, message: true },
+    });
+
+    if (existing) {
+      if (existing.title === title && existing.message === message) {
+        return existing;
+      }
+      return prisma.notifications.update({
+        where: { id: existing.id },
+        data: { title, message, read: false },
+      });
+    }
+
+    return prisma.notifications.create({
       data: {
         userId,
         type,
         title,
         message,
-        link: link || null,
+        link: linkValue,
       },
-    })
-  );
+    });
+  });
 }
 
 export type NotifyListBookmarkersOptions = {

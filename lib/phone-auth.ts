@@ -61,6 +61,20 @@ export function isPhoneAuthEmail(email: string): boolean {
   return email.endsWith(`@${PHONE_EMAIL_DOMAIN}`);
 }
 
+/** برچسب امن برای UI/aria — ایمیل داخلی phone.wibe را لو نمی‌دهد */
+export function accountDisplayLabel(
+  name?: string | null,
+  email?: string | null,
+  username?: string | null
+): string {
+  const trimmedName = name?.trim();
+  if (trimmedName && trimmedName !== 'null') return trimmedName;
+  const trimmedUser = username?.trim();
+  if (trimmedUser && trimmedUser !== 'null') return trimmedUser;
+  if (email?.trim() && !isPhoneAuthEmail(email)) return email.trim();
+  return 'حساب من';
+}
+
 export function validateAuthPassword(password: string): string | null {
   if (!password || password.length < 6) {
     return 'رمز عبور باید حداقل ۶ کاراکتر باشد';

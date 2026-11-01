@@ -62,15 +62,42 @@ export async function POST(
 
     let newUp = comment.helpfulUp;
     let newDown = comment.helpfulDown;
+    let userVote: number | null = value;
 
     if (existing) {
-      if (existing.value === value) {
-        return NextResponse.json({ success: false, error: 'قبلاً رای داده‌اید' }, { status: 400 });
-      }
       if (existing.value === 1) {
         newUp = Math.max(0, newUp - 1);
       } else {
         newDown = Math.max(0, newDown - 1);
+      }
+
+      if (existing.value === value) {
+        const weightedScore = computeWeightedScore(newUp, newDown);
+        await dbQuery(async () => {
+          return prisma.$transaction(async (tx) => {
+            await tx.comment_votes.delete({
+              where: { userId_commentId: { userId, commentId } },
+            });
+            await tx.comments.update({
+              where: { id: commentId },
+              data: {
+                helpfulUp: newUp,
+                helpfulDown: newDown,
+                weightedScore,
+                updatedAt: new Date(),
+              },
+            });
+          });
+        });
+        return NextResponse.json({
+          success: true,
+          data: {
+            helpfulUp: newUp,
+            helpfulDown: newDown,
+            weightedScore,
+            userVote: null,
+          },
+        });
       }
     }
 
@@ -112,7 +139,7 @@ export async function POST(
         helpfulUp: newUp,
         helpfulDown: newDown,
         weightedScore,
-        userVote: value,
+        userVote,
       },
     });
   } catch (error) {

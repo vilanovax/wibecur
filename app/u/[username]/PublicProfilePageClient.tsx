@@ -111,6 +111,13 @@ export default function PublicProfilePageClient({
 
   const handleFollowToggle = async () => {
     if (!data?.user?.id || !currentUserId) return;
+    if (isFollowing) {
+      const confirmed =
+        typeof window !== 'undefined'
+          ? window.confirm('دنبال کردن این کاربر لغو شود؟')
+          : true;
+      if (!confirmed) return;
+    }
     setFollowLoading(true);
     try {
       if (isFollowing) {
@@ -118,6 +125,7 @@ export default function PublicProfilePageClient({
         const json = await res.json();
         if (json.success) {
           setIsFollowing(false);
+          setToast({ message: 'دیگر دنبالش نمی‌کنی', type: 'success' });
           if (data.stats) {
             setData((d) =>
               d ? { ...d, stats: { ...d.stats, followersCount: json.data.followersCount } } : d
